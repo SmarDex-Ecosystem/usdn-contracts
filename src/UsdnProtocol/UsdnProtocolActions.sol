@@ -38,6 +38,26 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     using HugeUint for HugeUint.Uint512;
 
     /**
+     * @dev Structure to hold the transient data during `_initiateDeposit`
+     * @param pendingActionPrice The adjusted price with position fees applied
+     * @param isLiquidationPending Whether some liquidations still need to be performed
+     * @param totalExpo The total expo of the long side
+     * @param balanceLong The long side balance
+     * @param balanceVault The vault side balance, calculated according to the pendingActionPrice
+     * @param usdnTotalShares Total minted shares of USDN
+     * @param sdexToBurn The amount of SDEX to burn for the deposit
+     */
+    struct InitiateDepositData {
+        uint128 pendingActionPrice;
+        bool isLiquidationPending;
+        uint256 totalExpo;
+        uint256 balanceLong;
+        uint256 balanceVault;
+        uint256 usdnTotalShares;
+        uint256 sdexToBurn;
+    }
+
+    /**
      * @dev Structure to hold the transient data during `_initiateWithdrawal`
      * @param pendingActionPrice The adjusted price with position fees applied
      * @param totalExpo The current total expo
@@ -112,20 +132,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 tempPositionValue;
         uint256 longTradingExpo;
         HugeUint.Uint512 liqMulAcc;
-        bool isLiquidationPending;
-    }
-
-    /**
-     * @dev Structure to hold the transient data during `_initiateDeposit`
-     * @param usdnToMintEstimated The estimated usdn amount to mint
-     * @param burnRatio The burn ratio
-     * @param sdexToBurn The sdex amount to burn
-     * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
-     */
-    struct InitiateDepositData {
-        uint256 usdnToMintEstimated;
-        uint32 burnRatio;
-        uint256 sdexToBurn;
         bool isLiquidationPending;
     }
 
@@ -552,10 +558,103 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _balanceVault -= liquidationRewards;
         }
 
-        // transfer rewards (wsteth) to the liquidator
+        // transfer rewards (assets) to the liquidator
         _asset.safeTransfer(msg.sender, liquidationRewards);
 
         emit LiquidatorRewarded(msg.sender, liquidationRewards);
+    }
+
+    /**
+     * @notice Prepare the data for the `initiateDeposit` function
+     * @param validator The validator address
+     * @param amount The amount of asset to deposit
+     * @param currentPriceData The price data for the initiate action
+     * @return data_ The transient data for the deposit action
+     */
+    function _prepareInitiateDepositData(address validator, uint128 amount, bytes calldata currentPriceData)
+        internal
+        returns (InitiateDepositData memory data_)
+    {
+        PriceInfo memory currentPrice = _getOraclePrice(
+            ProtocolAction.InitiateDeposit,
+            block.timestamp,
+            _calcActionId(validator, uint128(block.timestamp)),
+            currentPriceData
+        );
+
+        (, data_.isLiquidationPending) = _applyPnlAndFundingAndLiquidate(
+            currentPrice.neutralPrice,
+            currentPrice.timestamp,
+            _liquidationIteration,
+            false,
+            ProtocolAction.InitiateDeposit,
+            currentPriceData
+        );
+
+        if (data_.isLiquidationPending) {
+            return data_;
+        }
+
+        _checkImbalanceLimitDeposit(amount);
+
+        // apply fees on price
+        data_.pendingActionPrice = (currentPrice.price - currentPrice.price * _vaultFeeBps / BPS_DIVISOR).toUint128();
+
+        data_.totalExpo = _totalExpo;
+        data_.balanceLong = _balanceLong;
+        data_.balanceVault = _vaultAssetAvailable(
+            data_.totalExpo, _balanceVault, data_.balanceLong, data_.pendingActionPrice, _lastPrice
+        ).toUint256();
+        data_.usdnTotalShares = _usdn.totalShares();
+
+        // calculate the amount of SDEX tokens to burn
+        uint256 usdnSharesToMintEstimated =
+            _calcMintUsdnShares(amount, data_.balanceVault, data_.usdnTotalShares, data_.pendingActionPrice);
+        uint256 usdnToMintEstimated = _usdn.convertToTokens(usdnSharesToMintEstimated);
+        // we want to at least mint 1 wei of USDN
+        if (usdnToMintEstimated == 0) {
+            revert UsdnProtocolDepositTooSmall();
+        }
+        uint32 burnRatio = _sdexBurnOnDepositRatio;
+        data_.sdexToBurn = _calcSdexToBurn(usdnToMintEstimated, burnRatio);
+        // we want to at least burn 1 wei of SDEX if SDEX burning is enabled
+        if (burnRatio != 0 && data_.sdexToBurn == 0) {
+            revert UsdnProtocolDepositTooSmall();
+        }
+    }
+
+    /**
+     * @notice Prepare the pending action struct for a deposit and add it to the queue
+     * @param to The address that will receive the minted USDN
+     * @param validator The address that will validate the deposit
+     * @param securityDepositValue The value of the security deposit for the newly created pending action
+     * @param amount The amount of assets to deposit
+     * @param data The deposit action data
+     * @return amountToRefund_ Refund The security deposit value of a stale pending action
+     */
+    function _createDepositPendingAction(
+        address to,
+        address validator,
+        uint64 securityDepositValue,
+        uint128 amount,
+        InitiateDepositData memory data
+    ) internal returns (uint256 amountToRefund_) {
+        DepositPendingAction memory pendingAction = DepositPendingAction({
+            action: ProtocolAction.ValidateDeposit,
+            timestamp: uint40(block.timestamp),
+            to: to,
+            validator: validator,
+            securityDepositValue: securityDepositValue,
+            _unused: 0,
+            amount: amount,
+            assetPrice: data.pendingActionPrice,
+            totalExpo: data.totalExpo,
+            balanceVault: data.balanceVault,
+            balanceLong: data.balanceLong,
+            usdnTotalShares: data.usdnTotalShares
+        });
+
+        amountToRefund_ = _addPendingAction(validator, _convertDepositPendingAction(pendingAction));
     }
 
     /**
@@ -592,65 +691,15 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolZeroAmount();
         }
 
-        PriceInfo memory currentPrice = _getOraclePrice(
-            ProtocolAction.InitiateDeposit,
-            block.timestamp,
-            _calcActionId(validator, uint128(block.timestamp)),
-            currentPriceData
-        );
-
-        InitiateDepositData memory data;
-        (, data.isLiquidationPending) = _applyPnlAndFundingAndLiquidate(
-            currentPrice.neutralPrice,
-            currentPrice.timestamp,
-            _liquidationIteration,
-            false,
-            ProtocolAction.InitiateDeposit,
-            currentPriceData
-        );
+        InitiateDepositData memory data = _prepareInitiateDepositData(validator, amount, currentPriceData);
 
         // early return in case there are still pending liquidations
         if (data.isLiquidationPending) {
             return (securityDepositValue, false);
         }
 
-        _checkImbalanceLimitDeposit(amount);
+        amountToRefund_ = _createDepositPendingAction(to, validator, securityDepositValue, amount, data);
 
-        // apply fees on price
-        uint128 pendingActionPrice = (currentPrice.price - currentPrice.price * _vaultFeeBps / BPS_DIVISOR).toUint128();
-
-        DepositPendingAction memory pendingAction = DepositPendingAction({
-            action: ProtocolAction.ValidateDeposit,
-            timestamp: uint40(block.timestamp),
-            to: to,
-            validator: validator,
-            securityDepositValue: securityDepositValue,
-            _unused: 0,
-            amount: amount,
-            assetPrice: pendingActionPrice,
-            totalExpo: _totalExpo,
-            balanceVault: _vaultAssetAvailable(_totalExpo, _balanceVault, _balanceLong, pendingActionPrice, _lastPrice)
-                .toUint256(),
-            balanceLong: _balanceLong,
-            usdnTotalSupply: _usdn.totalSupply()
-        });
-
-        amountToRefund_ = _addPendingAction(validator, _convertDepositPendingAction(pendingAction));
-
-        // calculate the amount of SDEX tokens to burn
-        data.usdnToMintEstimated = _calcMintUsdn(
-            pendingAction.amount, pendingAction.balanceVault, pendingAction.usdnTotalSupply, pendingAction.assetPrice
-        );
-        data.burnRatio = _sdexBurnOnDepositRatio;
-        data.sdexToBurn = _calcSdexToBurn(data.usdnToMintEstimated, data.burnRatio);
-        // we want to at least mint 1 wei of USDN
-        if (data.usdnToMintEstimated == 0) {
-            revert UsdnProtocolDepositTooSmall();
-        }
-        // we want to at least burn 1 wei of SDEX if SDEX burning is enabled
-        if (data.burnRatio != 0 && data.sdexToBurn == 0) {
-            revert UsdnProtocolDepositTooSmall();
-        }
         if (data.sdexToBurn > 0) {
             // send SDEX to the dead address
             _sdex.safeTransferFrom(user, DEAD_ADDRESS, data.sdexToBurn);
@@ -720,32 +769,32 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // apply fees on price
         uint128 priceWithFees = (currentPrice.price - currentPrice.price * _vaultFeeBps / BPS_DIVISOR).toUint128();
 
-        uint256 usdnToMint1 =
-            _calcMintUsdn(deposit.amount, deposit.balanceVault, deposit.usdnTotalSupply, deposit.assetPrice);
+        uint256 usdnSharesToMint1 =
+            _calcMintUsdnShares(deposit.amount, deposit.balanceVault, deposit.usdnTotalShares, deposit.assetPrice);
 
-        uint256 usdnToMint2 = _calcMintUsdn(
+        uint256 usdnSharesToMint2 = _calcMintUsdnShares(
             deposit.amount,
             // calculate the available balance in the vault side if the price moves to `priceWithFees`
             _vaultAssetAvailable(
                 deposit.totalExpo, deposit.balanceVault, deposit.balanceLong, priceWithFees, deposit.assetPrice
             ).toUint256(),
-            deposit.usdnTotalSupply,
+            deposit.usdnTotalShares,
             priceWithFees
         );
 
-        uint256 usdnToMint;
+        uint256 usdnSharesToMint;
         // we use the lower of the two amounts to mint
-        if (usdnToMint1 <= usdnToMint2) {
-            usdnToMint = usdnToMint1;
+        if (usdnSharesToMint1 <= usdnSharesToMint2) {
+            usdnSharesToMint = usdnSharesToMint1;
         } else {
-            usdnToMint = usdnToMint2;
+            usdnSharesToMint = usdnSharesToMint2;
         }
 
         _balanceVault += deposit.amount;
 
-        _usdn.mint(deposit.to, usdnToMint);
+        uint256 mintedTokens = _usdn.mintShares(deposit.to, usdnSharesToMint);
         isValidated_ = true;
-        emit ValidatedDeposit(deposit.to, deposit.validator, deposit.amount, usdnToMint, deposit.timestamp);
+        emit ValidatedDeposit(deposit.to, deposit.validator, deposit.amount, mintedTokens, deposit.timestamp);
     }
 
     /**

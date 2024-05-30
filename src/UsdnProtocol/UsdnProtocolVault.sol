@@ -146,29 +146,36 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
     }
 
     /**
-     * @notice Calculates the amount of USDN to mint for a given amount of asset
+     * @notice Calculates the amount of USDN shares to mint for a given amount of asset
      * @param amount The amount of asset to be converted into USDN
      * @param vaultBalance The balance of the vault (not used for initialization)
-     * @param usdnTotalSupply The total supply of USDN (not used for initialization)
+     * @param usdnTotalShares The total supply of USDN (not used for initialization)
      * @param price The price of the asset (only used for initialization)
      * @return toMint_ The amount of USDN to mint
-     * @dev The amount of USDN to mint is calculated as follows:
+     * @dev The amount of USDN shares to mint is calculated as follows:
      * amountUsdn = amountAsset * priceAsset / priceUsdn,
      * but since priceUsdn = vaultBalance * priceAsset / totalSupply, we can simplify to
-     * amountUsdn = amountAsset * totalSupply / vaultBalance.
+     * amountUsdn = amountAsset * totalSupply / vaultBalance, and
+     * sharesUsdn = amountAsset * totalShares / vaultBalance
      */
-    function _calcMintUsdn(uint256 amount, uint256 vaultBalance, uint256 usdnTotalSupply, uint256 price)
+    function _calcMintUsdnShares(uint256 amount, uint256 vaultBalance, uint256 usdnTotalShares, uint256 price)
         internal
         view
         returns (uint256 toMint_)
     {
         if (vaultBalance == 0) {
             // initialization, we consider the USDN price to be 1 USD
-            return FixedPointMathLib.fullMulDiv(
-                amount, price, 10 ** (_assetDecimals + _priceFeedDecimals - TOKENS_DECIMALS)
+            // the conversion here is necessary since we calculate an amount in tokens and we want the corresponding
+            // amount of shares
+            return _usdn.convertToShares(
+                FixedPointMathLib.fullMulDiv(
+                    amount, price, 10 ** (_assetDecimals + _priceFeedDecimals - TOKENS_DECIMALS)
+                )
             );
         }
-        toMint_ = FixedPointMathLib.fullMulDiv(amount, usdnTotalSupply, vaultBalance);
+        // for subsequent calculations, we can simply mint a proportional number of shares corresponding to the new
+        // assets deposited into the vault
+        toMint_ = FixedPointMathLib.fullMulDiv(amount, usdnTotalShares, vaultBalance);
     }
 
     /**

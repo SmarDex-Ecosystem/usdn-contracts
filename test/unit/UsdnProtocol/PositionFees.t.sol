@@ -203,10 +203,10 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, depositAmount, 2000 ether);
 
-        uint256 expectedBalanceA = protocol.i_calcMintUsdn(
+        uint256 expectedSharesBalanceA = protocol.i_calcMintUsdnShares(
             depositAmount,
             protocol.getBalanceVault(),
-            usdn.totalSupply(),
+            usdn.totalShares(),
             2000 ether - 2000 ether * uint256(protocol.getVaultFeeBps()) / protocol.BPS_DIVISOR()
         );
 
@@ -216,7 +216,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         DepositPendingAction memory deposit = protocol.i_toDepositPendingAction(action);
 
         // Check stored position asset price
-        uint256 expectedBalanceB = protocol.i_calcMintUsdn(
+        uint256 expectedSharesBalanceB = protocol.i_calcMintUsdnShares(
             depositAmount,
             uint256(
                 protocol.i_vaultAssetAvailable(
@@ -227,18 +227,24 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
                     deposit.assetPrice
                 )
             ),
-            deposit.usdnTotalSupply,
+            deposit.usdnTotalShares,
             2000 ether - 2000 ether * uint256(protocol.getVaultFeeBps()) / protocol.BPS_DIVISOR()
         );
 
-        uint256 expectedBalance = expectedBalanceA < expectedBalanceB ? expectedBalanceA : expectedBalanceB;
+        uint256 expectedSharesBalance =
+            expectedSharesBalanceA < expectedSharesBalanceB ? expectedSharesBalanceA : expectedSharesBalanceB;
+        uint256 expectedBalance = usdn.convertToTokens(expectedSharesBalance);
 
         uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
+        uint256 usdnSharesBefore = usdn.sharesOf(address(this));
         protocol.validateDeposit(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
         uint256 usdnBalanceAfter = usdn.balanceOf(address(this));
+        uint256 usdnSharesAfter = usdn.sharesOf(address(this));
         uint256 mintedUsdn = usdnBalanceAfter - usdnBalanceBefore;
+        uint256 mintedShares = usdnSharesAfter - usdnSharesBefore;
 
         assertEq(mintedUsdn, expectedBalance, "Minted USDN");
+        assertEq(mintedShares, expectedSharesBalance, "Minted USDN Shares");
     }
 
     /**

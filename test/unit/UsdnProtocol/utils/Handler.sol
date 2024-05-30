@@ -256,12 +256,12 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _getOraclePrice(action, timestamp, actionId, priceData);
     }
 
-    function i_calcMintUsdn(uint256 amount, uint256 vaultBalance, uint256 usdnTotalSupply, uint256 price)
+    function i_calcMintUsdnShares(uint256 amount, uint256 vaultBalance, uint256 usdnTotalShares, uint256 price)
         external
         view
         returns (uint256 toMint_)
     {
-        return _calcMintUsdn(amount, vaultBalance, usdnTotalSupply, price);
+        return _calcMintUsdnShares(amount, vaultBalance, usdnTotalShares, price);
     }
 
     function i_calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) external pure returns (uint256) {

@@ -222,8 +222,10 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
     {
         sdex.mintAndApprove(
             user,
-            protocol.i_calcMintUsdn(
-                positionSize, uint256(protocol.i_vaultAssetAvailable(uint128(price))), usdn.totalSupply(), price
+            usdn.convertToTokens(
+                protocol.i_calcMintUsdnShares(
+                    positionSize, uint256(protocol.i_vaultAssetAvailable(uint128(price))), usdn.totalShares(), price
+                )
             ) * protocol.getSdexBurnOnDepositRatio() / protocol.SDEX_BURN_ON_DEPOSIT_DIVISOR(),
             address(protocol),
             type(uint256).max

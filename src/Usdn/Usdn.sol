@@ -217,11 +217,12 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     }
 
     /// @inheritdoc IUsdn
-    function mintShares(address to, uint256 amount) external onlyRole(MINTER_ROLE) {
+    function mintShares(address to, uint256 amount) external onlyRole(MINTER_ROLE) returns (uint256 mintedTokens_) {
         if (to == address(0)) {
             revert ERC20InvalidReceiver(address(0));
         }
-        _updateShares(address(0), to, amount, _convertToTokens(amount, Rounding.Closest, _divisor));
+        mintedTokens_ = _convertToTokens(amount, Rounding.Closest, _divisor);
+        _updateShares(address(0), to, amount, mintedTokens_);
     }
 
     /// @inheritdoc IUsdn

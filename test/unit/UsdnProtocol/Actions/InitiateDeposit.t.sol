@@ -80,9 +80,11 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         uint128 depositAmount = 1 ether;
         uint128 price = 2000 ether;
         bytes memory currentPrice = abi.encode(price); // only used to apply PnL + funding
-        uint256 usdnToMint =
-            protocol.i_calcMintUsdn(depositAmount, protocol.getBalanceVault(), protocol.getUsdn().totalSupply(), price);
-        uint256 expectedSdexBurnAmount = protocol.i_calcSdexToBurn(usdnToMint, protocol.getSdexBurnOnDepositRatio());
+        uint256 usdnSharesToMint = protocol.i_calcMintUsdnShares(
+            depositAmount, protocol.getBalanceVault(), protocol.getUsdn().totalShares(), price
+        );
+        uint256 expectedSdexBurnAmount =
+            protocol.i_calcSdexToBurn(usdn.convertToTokens(usdnSharesToMint), protocol.getSdexBurnOnDepositRatio());
         uint256 sdexBalanceBefore = sdex.balanceOf(address(this));
         address deadAddress = protocol.DEAD_ADDRESS();
 
@@ -168,7 +170,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario The user initiates a small deposit and no USDN would be minted
      * @custom:given The price of wstETH is $0.1
-     * @custom:when The user initiates a deposit of 9 wei of wstETH
+     * @custom:when The user initiates a deposit of 4 wei of wstETH
      * @custom:then The protocol reverts with `UsdnProtocolDepositTooSmall`
      */
     function test_RevertWhen_depositTooSmallNoUSDN() public {
@@ -179,11 +181,12 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         wstETH.mintAndApprove(address(this), INITIAL_WSTETH_BALANCE, address(protocol), type(uint256).max);
         sdex.mintAndApprove(address(this), 200_000_000 ether, address(protocol), type(uint256).max);
 
-        uint128 deposited = 9;
+        uint128 deposited = 4;
 
-        uint256 usdnToMintEstimated =
-            protocol.i_calcMintUsdn(deposited, protocol.getBalanceVault(), usdn.totalSupply(), params.initialPrice);
-        assertEq(usdnToMintEstimated, 0, "usdn minted");
+        uint256 usdnSharesToMintEstimated = protocol.i_calcMintUsdnShares(
+            deposited, protocol.getBalanceVault(), usdn.totalShares(), params.initialPrice
+        );
+        assertEq(usdn.convertToTokens(usdnSharesToMintEstimated), 0, "usdn minted");
 
         vm.expectRevert(UsdnProtocolDepositTooSmall.selector);
         protocol.initiateDeposit(
@@ -210,11 +213,14 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
 
         uint128 deposited = 99;
 
-        uint256 usdnToMintEstimated =
-            protocol.i_calcMintUsdn(deposited, protocol.getBalanceVault(), usdn.totalSupply(), params.initialPrice);
-        assertGt(usdnToMintEstimated, 0, "usdn minted");
+        uint256 usdnSharesToMintEstimated = protocol.i_calcMintUsdnShares(
+            deposited, protocol.getBalanceVault(), usdn.totalShares(), params.initialPrice
+        );
+        assertGt(usdnSharesToMintEstimated, 0, "usdn minted");
 
-        uint256 sdexToBurn = protocol.i_calcSdexToBurn(usdnToMintEstimated, protocol.getSdexBurnOnDepositRatio());
+        uint256 sdexToBurn = protocol.i_calcSdexToBurn(
+            usdn.convertToTokens(usdnSharesToMintEstimated), protocol.getSdexBurnOnDepositRatio()
+        );
         assertEq(sdexToBurn, 0, "sdex burned");
 
         vm.expectRevert(UsdnProtocolDepositTooSmall.selector);
@@ -239,9 +245,10 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
 
         uint128 deposited = 99;
 
-        uint256 usdnToMintEstimated =
-            protocol.i_calcMintUsdn(deposited, protocol.getBalanceVault(), usdn.totalSupply(), params.initialPrice);
-        assertGt(usdnToMintEstimated, 0, "usdn minted");
+        uint256 usdnSharesToMintEstimated = protocol.i_calcMintUsdnShares(
+            deposited, protocol.getBalanceVault(), usdn.totalShares(), params.initialPrice
+        );
+        assertGt(usdnSharesToMintEstimated, 0, "usdn minted");
 
         protocol.initiateDeposit(
             deposited, address(this), address(this), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
