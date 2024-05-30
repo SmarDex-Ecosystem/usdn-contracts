@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { ADMIN, USER_1 } from "test/utils/Constants.sol";
 
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction, PositionId, Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 
 contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
@@ -57,6 +57,35 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
         _removeBlockedVaultScenario(ProtocolAction.InitiateWithdrawal, 10 ether, false);
         assertEq(usdn.balanceOf(address(this)), usdnBalanceBefore, "usdn balance after");
+        assertEq(address(this).balance, balanceBefore, "balance after");
+    }
+
+    function test_removeBlockedOpenPositionSafe() public {
+        PositionId memory posId = setUpUserPositionInLong(
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: 10 ether,
+                desiredLiqPrice: params.initialPrice / 2,
+                price: params.initialPrice
+            })
+        );
+        _wait();
+
+        (, uint128 rawIndex) = protocol.i_getPendingAction(USER_1);
+
+        uint256 balanceBefore = address(this).balance;
+
+        vm.prank(ADMIN);
+        protocol.i_removeBlockedPendingAction(rawIndex, payable(address(this)), false);
+
+        assertTrue(protocol.getUserPendingAction(USER_1).action == ProtocolAction.None, "pending action");
+        vm.expectRevert(DoubleEndedQueue.QueueOutOfBounds.selector);
+        protocol.getQueueItem(rawIndex);
+
+        (Position memory pos,) = protocol.getLongPosition(posId);
+        assertEq(pos.user, address(0), "pos user");
+
         assertEq(address(this).balance, balanceBefore, "balance after");
     }
 
