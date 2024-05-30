@@ -13,10 +13,11 @@ import { Commands } from "src/UniversalRouter/libraries/Commands.sol";
  * @custom:background Given a forked ethereum mainnet chain
  */
 contract TestForkUniversalRouterInitiateWithdrawal is UniversalRouterBaseFixture {
-    uint256 constant WITHDRAW_AMOUNT = 1000;
+    uint256 internal WITHDRAW_AMOUNT;
 
     function setUp() public {
         _setUp();
+        WITHDRAW_AMOUNT = usdn.sharesOf(DEPLOYER) / 100;
         vm.prank(DEPLOYER);
         usdn.transferShares(address(this), WITHDRAW_AMOUNT);
     }

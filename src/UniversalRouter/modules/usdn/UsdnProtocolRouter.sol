@@ -49,7 +49,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
      * @notice Initiate a withdrawal from the USDN protocol vault
      * @dev Check the protocol's documentation for information about how this function should be used
      * Note: the withdrawal can fail without reverting, in case there are some pending liquidations in the protocol
-     * @param amount The amount of USDN shares to withdraw from the vault
+     * @param amount The amount of USDN shares to burn
      * @param to The address that will receive the asset upon validation
      * @param validator The address that should validate the withdrawal (receives the security deposit back)
      * @param currentPriceData The current price data
