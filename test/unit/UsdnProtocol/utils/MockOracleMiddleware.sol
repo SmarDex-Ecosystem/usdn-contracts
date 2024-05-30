@@ -113,4 +113,8 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
             revert OracleMiddlewareTransferFailed(to);
         }
     }
+
+    function getLowLatencyDelay() external pure returns (uint256) {
+        return 20 minutes;
+    }
 }

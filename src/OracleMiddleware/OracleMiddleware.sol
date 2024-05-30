@@ -32,7 +32,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     uint8 internal constant MIDDLEWARE_DECIMALS = 18;
 
     /// @notice The duration during which the low latency price will be returned
-    uint256 internal constant LOW_LATENCY_DURATION = 20 minutes;
+    uint256 internal constant LOW_LATENCY_DELAY = 20 minutes;
 
     /**
      * @notice The delay (in seconds) between the moment an action is initiated and the timestamp of the
@@ -125,6 +125,11 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     /// @inheritdoc IOracleMiddleware
     function getConfRatioBps() external view returns (uint16) {
         return _confRatioBps;
+    }
+
+    /// @inheritdoc IOracleMiddleware
+    function getLowLatencyDelay() external pure returns (uint256) {
+        return LOW_LATENCY_DELAY;
     }
 
     /// @inheritdoc IBaseOracleMiddleware
@@ -263,7 +268,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         internal
         returns (PriceInfo memory price_)
     {
-        if (block.timestamp < targetTimestamp + LOW_LATENCY_DURATION) {
+        if (block.timestamp < targetTimestamp + LOW_LATENCY_DELAY) {
             return _getLowLatencyPrice(data, targetTimestamp, dir);
         } else {
             // chainlink calls do not require a fee
@@ -281,7 +286,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
             }
 
             // if the next roundId timestamp is too early
-            if (chainlinkOnChainPrice.timestamp <= targetTimestamp + LOW_LATENCY_DURATION) {
+            if (chainlinkOnChainPrice.timestamp <= targetTimestamp + LOW_LATENCY_DELAY) {
                 revert OracleMiddlewarePriceTooEarly(targetTimestamp, chainlinkOnChainPrice.timestamp);
             }
 

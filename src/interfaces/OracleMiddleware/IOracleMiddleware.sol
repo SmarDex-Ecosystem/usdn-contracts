@@ -37,6 +37,9 @@ interface IOracleMiddleware is IBaseOracleMiddleware, IOracleMiddlewareErrors, I
      */
     function getConfRatioBps() external view returns (uint16);
 
+    /// @notice Return the delay during which a low latency oracle validation is available
+    function getLowLatencyDelay() external pure returns (uint256);
+
     /* -------------------------------------------------------------------------- */
     /*                               Owner features                               */
     /* -------------------------------------------------------------------------- */
