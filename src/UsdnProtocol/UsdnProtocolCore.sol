@@ -770,13 +770,11 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
                         _liqMultiplierAccumulator.sub(HugeUint.wrap(unadjustedTickPrice * pos.totalExpo));
                 }
             }
-        } else if (pending.action == ProtocolAction.ValidateClosePosition) {
+        } else if (pending.action == ProtocolAction.ValidateClosePosition && unsafe) {
             // for pending closes, the position is already out of the protocol
             LongPendingAction memory close = _toLongPendingAction(pending);
-            if (unsafe) {
-                // credit the full amount to the vault to preserve the total balance invariant (like a liquidation)
-                _balanceVault += close.closeBoundedPositionValue;
-            }
+            // credit the full amount to the vault to preserve the total balance invariant (like a liquidation)
+            _balanceVault += close.closeBoundedPositionValue;
         }
 
         // in all cases, we retrieve the security deposit
