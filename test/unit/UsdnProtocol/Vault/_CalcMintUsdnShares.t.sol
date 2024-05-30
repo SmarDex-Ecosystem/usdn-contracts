@@ -85,11 +85,11 @@ contract TestUsdnProtocolCalcMintUsdnShares is UsdnProtocolBaseFixture {
         // Sanity check
         require(keccak256(result) != keccak256(""), "Rust implementation returned an error");
 
-        uint256 calcMintUsdnSharseRust = abi.decode(result, (uint256));
+        uint256 calcMintUsdnSharesRust = abi.decode(result, (uint256));
         uint256 calcMintUsdnSharesSol = protocol.i_calcMintUsdnShares(amount, vaultBalance, usdnTotalShares, 1);
         assertEq(
             calcMintUsdnSharesSol,
-            calcMintUsdnSharseRust,
+            calcMintUsdnSharesRust,
             "The rust and solidity implementations should return the same value"
         );
     }
