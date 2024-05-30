@@ -14,38 +14,32 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         super._setUp(params);
     }
 
-    function test_removeBlockedDepositUnsafe() public {
-        setUpUserPositionInVault(USER_1, ProtocolAction.InitiateDeposit, 10 ether, params.initialPrice);
+    function _removeBlockedDepositScenario(uint128 amount, bool unsafe) internal {
+        setUpUserPositionInVault(USER_1, ProtocolAction.InitiateDeposit, amount, params.initialPrice);
         _wait();
 
-        uint256 balanceBefore = address(this).balance;
-        uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
         (, uint128 rawIndex) = protocol.i_getPendingAction(USER_1);
 
         vm.prank(ADMIN);
-        protocol.i_removeBlockedPendingAction(rawIndex, payable(address(this)), true);
+        protocol.i_removeBlockedPendingAction(rawIndex, payable(address(this)), unsafe);
 
         assertTrue(protocol.getUserPendingAction(USER_1).action == ProtocolAction.None, "pending action");
         vm.expectRevert(DoubleEndedQueue.QueueOutOfBounds.selector);
         protocol.getQueueItem(rawIndex);
+    }
+
+    function test_removeBlockedDepositUnsafe() public {
+        uint256 balanceBefore = address(this).balance;
+        uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
+        _removeBlockedDepositScenario(10 ether, true);
         assertEq(wstETH.balanceOf(address(this)), assetBalanceBefore + 10 ether, "asset balance after");
         assertEq(address(this).balance, balanceBefore + protocol.getSecurityDepositValue(), "balance after");
     }
 
     function test_removeBlockedDepositSafe() public {
-        setUpUserPositionInVault(USER_1, ProtocolAction.InitiateDeposit, 10 ether, params.initialPrice);
-        _wait();
-
         uint256 balanceBefore = address(this).balance;
         uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
-        (, uint128 rawIndex) = protocol.i_getPendingAction(USER_1);
-
-        vm.prank(ADMIN);
-        protocol.i_removeBlockedPendingAction(rawIndex, payable(address(this)), false);
-
-        assertTrue(protocol.getUserPendingAction(USER_1).action == ProtocolAction.None, "pending action");
-        vm.expectRevert(DoubleEndedQueue.QueueOutOfBounds.selector);
-        protocol.getQueueItem(rawIndex);
+        _removeBlockedDepositScenario(10 ether, false);
         assertEq(wstETH.balanceOf(address(this)), assetBalanceBefore, "asset balance after");
         assertEq(address(this).balance, balanceBefore, "balance after");
     }
