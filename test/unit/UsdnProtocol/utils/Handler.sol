@@ -112,6 +112,10 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         _balanceVault = tempVaultBalance.toUint256();
     }
 
+    function setTickVersion(int24 tick, uint256 version) external {
+        _tickVersion[tick] = version;
+    }
+
     function i_initiateClosePosition(
         address owner,
         address to,

@@ -554,8 +554,9 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario The `removeStalePendingAction` function return 0 when there is no pending action, the action
      * is different than ValidateOpenPosition or version calculated equal to tickVersion
-     * @custom:given A protocol without any pending action, a pending action different than ValidateOpenPosition or a
-     * version calculated equal to tickVersion
+     * @custom:given A protocol without any pending action
+     * @custom:or a pending action different than `ValidateOpenPosition`
+     * @custom:or a pending action with a tick version equal to the current tick version
      * @custom:when removeStalePendingAction is called
      * @custom:then The protocol should return 0
      */
@@ -592,7 +593,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
             tick: 1,
             closeAmount: 0,
             closePosTotalExpo: 0,
-            tickVersion: 0,
+            tickVersion: protocol.getTickVersion(1),
             index: 0,
             closeLiqMultiplier: 0,
             closeBoundedPositionValue: 0
@@ -610,6 +611,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:then The protocol should return the security deposit value
      */
     function test_removeStalePendingAction() public {
+        protocol.setTickVersion(1, 5);
         LongPendingAction memory longPendingAction = LongPendingAction({
             action: ProtocolAction.ValidateOpenPosition,
             timestamp: uint40(block.timestamp - 1 days),
@@ -619,7 +621,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
             tick: 1,
             closeAmount: 0,
             closePosTotalExpo: 0,
-            tickVersion: 1,
+            tickVersion: protocol.getTickVersion(1) - 1,
             index: 0,
             closeLiqMultiplier: 0,
             closeBoundedPositionValue: 0

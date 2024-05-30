@@ -1407,7 +1407,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             currentPriceData
         );
 
-        (, uint256 version) = _tickHash(posId.tick);
+        uint256 version = _tickVersion[posId.tick];
         if (version != posId.tickVersion) {
             // the current tick version doesn't match the version from the position,
             // that means that the position has been liquidated in this transaction
