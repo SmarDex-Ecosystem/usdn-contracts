@@ -98,9 +98,8 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         }
         PROTOCOL_ASSET.forceApprove(address(USDN_PROTOCOL), amount);
         // we send the full ETH balance, the protocol will refund any excess
-        USDN_PROTOCOL.initiateOpenPosition{ value: address(this).balance }(
+        (success_,) = USDN_PROTOCOL.initiateOpenPosition{ value: address(this).balance }(
             amount.toUint128(), desiredLiqPrice.toUint128(), to, validator, currentPriceData, previousActionsData
         );
-        success_ = true; // TODO: retrieve success status from initiateDeposit return value (when implemented)
     }
 }
