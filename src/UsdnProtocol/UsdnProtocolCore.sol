@@ -749,19 +749,19 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
                 // we only need to modify storage if the pos was not liquidated already
 
                 // safe cleanup operations
-                TickData storage tickData = _tickData[tickHash];
                 Position[] storage tickArray = _longPositions[tickHash];
                 Position memory pos = tickArray[open.index];
-                --_totalLongPositions;
                 delete _longPositions[tickHash][index];
-                tickData.totalPos -= 1;
-                if (tickData.totalPos == 0) {
-                    // we removed the last position in the tick
-                    _tickBitmap.unset(_calcBitmapIndexFromTick(tick));
-                }
 
                 // more unsafe cleanup operations
                 if (unsafe) {
+                    TickData storage tickData = _tickData[tickHash];
+                    --_totalLongPositions;
+                    tickData.totalPos -= 1;
+                    if (tickData.totalPos == 0) {
+                        // we removed the last position in the tick
+                        _tickBitmap.unset(_calcBitmapIndexFromTick(tick));
+                    }
                     uint256 unadjustedTickPrice =
                         TickMath.getPriceAtTick(open.tick - int24(uint24(tickData.liquidationPenalty)) * _tickSpacing);
                     _totalExpo -= pos.totalExpo;
