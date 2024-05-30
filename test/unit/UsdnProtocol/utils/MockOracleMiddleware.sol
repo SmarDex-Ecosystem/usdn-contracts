@@ -11,6 +11,8 @@ import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareType
 contract MockOracleMiddleware is IOracleMiddleware, Ownable {
     uint16 public constant BPS_DIVISOR = 10_000;
     uint16 public constant MAX_CONF_RATIO = BPS_DIVISOR * 2;
+    uint16 public constant MIN_LOW_LATENCY_DELAY = 15 minutes;
+    uint16 public constant MAX_LOW_LATENCY_DELAY = 90 minutes;
     uint8 internal constant DECIMALS = 18;
 
     uint16 internal _confRatioBps = 4000;
@@ -116,5 +118,9 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
 
     function getLowLatencyDelay() external pure returns (uint16) {
         return uint16(20 minutes);
+    }
+
+    function setLowLatencyDelay(uint16) external {
+        // do something if needed
     }
 }

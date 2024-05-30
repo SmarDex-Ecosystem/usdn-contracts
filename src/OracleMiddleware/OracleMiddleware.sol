@@ -28,11 +28,14 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     /// @inheritdoc IOracleMiddleware
     uint16 public constant MAX_CONF_RATIO = BPS_DIVISOR * 2;
 
+    /// @inheritdoc IOracleMiddleware
+    uint16 public constant MIN_LOW_LATENCY_DELAY = 15 minutes;
+
+    /// @inheritdoc IOracleMiddleware
+    uint16 public constant MAX_LOW_LATENCY_DELAY = 90 minutes;
+
     /// @notice The number of decimals for the returned price
     uint8 internal constant MIDDLEWARE_DECIMALS = 18;
-
-    /// @notice The delay during which a low latency oracle price validation is available
-    uint16 internal constant LOW_LATENCY_DELAY = 20 minutes;
 
     /**
      * @notice The delay (in seconds) between the moment an action is initiated and the timestamp of the
@@ -42,6 +45,9 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
 
     /// @notice confidence ratio in basis points: default 40%
     uint16 internal _confRatioBps = 4000; // to divide by BPS_DIVISOR
+
+    /// @notice The delay during which a low latency oracle price validation is available
+    uint16 internal _lowLatencyDelay = 20 minutes;
 
     /**
      * @param pythContract Address of the Pyth contract
@@ -128,8 +134,8 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     }
 
     /// @inheritdoc IOracleMiddleware
-    function getLowLatencyDelay() external pure returns (uint16) {
-        return LOW_LATENCY_DELAY;
+    function getLowLatencyDelay() external view returns (uint16) {
+        return _lowLatencyDelay;
     }
 
     /// @inheritdoc IBaseOracleMiddleware
@@ -268,7 +274,8 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         internal
         returns (PriceInfo memory price_)
     {
-        if (block.timestamp <= targetTimestamp + LOW_LATENCY_DELAY) {
+        uint16 lowLatencyDelay = _lowLatencyDelay;
+        if (block.timestamp <= targetTimestamp + lowLatencyDelay) {
             return _getLowLatencyPrice(data, targetTimestamp, dir);
         } else {
             // chainlink calls do not require a fee
@@ -276,25 +283,17 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
                 revert OracleMiddlewareIncorrectFee();
             }
 
-            uint80 nextRoundId = abi.decode(data, (uint80)) + 1;
             ChainlinkPriceInfo memory chainlinkOnChainPrice =
-                _getFormattedChainlinkPrice(MIDDLEWARE_DECIMALS, nextRoundId);
+                _getFormattedChainlinkPrice(MIDDLEWARE_DECIMALS, abi.decode(data, (uint80)));
 
-            while (true) {
-                if (chainlinkOnChainPrice.price <= 0) {
-                    // if the price is negative or zero, revert
-                    revert OracleMiddlewareWrongPrice(chainlinkOnChainPrice.price);
-                } else {
-                    if (chainlinkOnChainPrice.timestamp <= targetTimestamp + LOW_LATENCY_DELAY) {
-                        // if the price timestamp is too early, increment roundId
-                        ++nextRoundId;
-                    } else {
-                        break;
-                    }
-                }
+            // if the price is negative or zero, revert
+            if (chainlinkOnChainPrice.price <= 0) {
+                revert OracleMiddlewareWrongPrice(chainlinkOnChainPrice.price);
+            }
 
-                // get the next roundId price
-                chainlinkOnChainPrice = _getFormattedChainlinkPrice(MIDDLEWARE_DECIMALS, nextRoundId);
+            // price before delay
+            if (chainlinkOnChainPrice.timestamp <= targetTimestamp + lowLatencyDelay) {
+                revert OracleMiddlewarePriceBeforeLowLatencyDelay(targetTimestamp, chainlinkOnChainPrice.timestamp);
             }
 
             price_ = PriceInfo({
@@ -346,6 +345,20 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         _confRatioBps = newConfRatio;
 
         emit ConfRatioUpdated(newConfRatio);
+    }
+
+    function setLowLatencyDelay(uint16 newLowLatencyDelay) external onlyOwner {
+        if (newLowLatencyDelay < MIN_LOW_LATENCY_DELAY) {
+            revert OracleMiddlewareInvalidLowLatencyDelay();
+        }
+
+        if (MAX_LOW_LATENCY_DELAY < newLowLatencyDelay) {
+            revert OracleMiddlewareInvalidLowLatencyDelay();
+        }
+
+        _lowLatencyDelay = newLowLatencyDelay;
+
+        emit LowLatencyDelayUpdated(newLowLatencyDelay);
     }
 
     /// @inheritdoc IOracleMiddleware

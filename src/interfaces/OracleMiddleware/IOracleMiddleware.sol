@@ -27,6 +27,12 @@ interface IOracleMiddleware is IBaseOracleMiddleware, IOracleMiddlewareErrors, I
      */
     function MAX_CONF_RATIO() external pure returns (uint16);
 
+    /// @notice The minimum low latency delay
+    function MIN_LOW_LATENCY_DELAY() external pure returns (uint16);
+
+    /// @notice The maximum low latency delay
+    function MAX_LOW_LATENCY_DELAY() external pure returns (uint16);
+
     /* -------------------------------------------------------------------------- */
     /*                              Generic features                              */
     /* -------------------------------------------------------------------------- */
@@ -38,7 +44,7 @@ interface IOracleMiddleware is IBaseOracleMiddleware, IOracleMiddlewareErrors, I
     function getConfRatioBps() external view returns (uint16);
 
     /// @notice Return the delay during which a low latency oracle price validation is available
-    function getLowLatencyDelay() external pure returns (uint16);
+    function getLowLatencyDelay() external view returns (uint16);
 
     /* -------------------------------------------------------------------------- */
     /*                               Owner features                               */
@@ -77,4 +83,10 @@ interface IOracleMiddleware is IBaseOracleMiddleware, IOracleMiddlewareErrors, I
      * @param to The address to send the ether to
      */
     function withdrawEther(address to) external;
+
+    /**
+     * @notice Set the new low latency delay
+     * @param newLowLatencyDelay The new low latency delay
+     */
+    function setLowLatencyDelay(uint16 newLowLatencyDelay) external;
 }

@@ -29,4 +29,10 @@ interface IOracleMiddlewareEvents {
      * @param newConfRatio new confidence ratio.
      */
     event ConfRatioUpdated(uint256 newConfRatio);
+
+    /**
+     * @notice Emitted when the low latency delay is updated
+     * @param newLowLatencyDelay The new low latency delay
+     */
+    event LowLatencyDelayUpdated(uint16 newLowLatencyDelay);
 }
