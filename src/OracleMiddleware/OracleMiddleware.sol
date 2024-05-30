@@ -311,7 +311,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     /// @inheritdoc IOracleMiddleware
     function setPenaltyBps(uint16 newPenaltyBps) external onlyOwner {
         // penalty greater than max 10%
-        if (newPenaltyBps > 100) {
+        if (newPenaltyBps > 1000) {
             revert OracleMiddlewareInvalidPenaltyBps();
         }
         _penaltyBps = newPenaltyBps;

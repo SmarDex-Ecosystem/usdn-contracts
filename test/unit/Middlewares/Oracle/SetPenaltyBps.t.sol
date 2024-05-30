@@ -23,14 +23,14 @@ contract TestOracleMiddlewareSetPenaltyBps is OracleMiddlewareBaseFixture {
     }
 
     /**
-     * @custom:scenario Revert when the owner set a new penaltyBps value that is greater than 100
+     * @custom:scenario Revert when the owner set a new penaltyBps value that is greater than 1000
      * @custom:given The caller being the owner
      * @custom:when setPenaltyBps is called
      * @custom:then the transaction reverts with an OracleMiddlewareInvalidPenaltyBps error
      */
     function test_RevertWhen_setPenaltyBpsGreaterThanOneHundred() public {
         vm.expectRevert(OracleMiddlewareInvalidPenaltyBps.selector);
-        oracleMiddleware.setPenaltyBps(101);
+        oracleMiddleware.setPenaltyBps(1001);
     }
 
     /**
@@ -41,9 +41,9 @@ contract TestOracleMiddlewareSetPenaltyBps is OracleMiddlewareBaseFixture {
      */
     function test_setPenaltyBps() public {
         vm.expectEmit();
-        emit PenaltyBpsUpdated(100);
-        oracleMiddleware.setPenaltyBps(100);
+        emit PenaltyBpsUpdated(1000);
+        oracleMiddleware.setPenaltyBps(1000);
 
-        assertEq(oracleMiddleware.getPenaltyBps(), 100, "Invalid penaltyBps value");
+        assertEq(oracleMiddleware.getPenaltyBps(), 1000, "Invalid penaltyBps value");
     }
 }
