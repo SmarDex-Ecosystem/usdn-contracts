@@ -274,7 +274,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         wstETH.mintAndApprove(openParams.user, openParams.positionSize, address(protocol), openParams.positionSize);
         bytes memory priceData = abi.encode(openParams.price);
 
-        posId_ = protocol.initiateOpenPosition{ value: securityDepositValue }(
+        bool success;
+        (success, posId_) = protocol.initiateOpenPosition{ value: securityDepositValue }(
             openParams.positionSize,
             openParams.desiredLiqPrice,
             openParams.user,
@@ -282,6 +283,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             priceData,
             EMPTY_PREVIOUS_DATA
         );
+        assertTrue(success, "initiate open position success");
         _waitDelay();
         if (openParams.untilAction == ProtocolAction.InitiateOpenPosition) return (posId_);
 

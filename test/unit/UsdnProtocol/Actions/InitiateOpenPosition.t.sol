@@ -114,9 +114,10 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             CURRENT_PRICE,
             PositionId(expectedTick, 0, 0)
         );
-        PositionId memory posId = protocol.initiateOpenPosition(
+        (bool success, PositionId memory posId) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT), desiredLiqPrice, to, validator, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA
         );
+        assertTrue(success, "success");
 
         // check state after opening the position
         assertEq(posId.tick, expectedTick, "tick number");
@@ -201,7 +202,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             protocol.i_calculatePositionTotalExpo(uint128(LONG_AMOUNT), CURRENT_PRICE, expectedLiqPrice);
 
         // create position which ends up in the same tick
-        PositionId memory posId2 = protocol.initiateOpenPosition(
+        (, PositionId memory posId2) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
             desiredLiqPrice,
             address(this),
@@ -239,7 +240,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
 
         uint256 wstethBalanceBefore = wstETH.balanceOf(address(this));
 
-        protocol.initiateOpenPosition(
+        (bool success, PositionId memory posId) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
             params.initialPrice / 10,
             address(this),
@@ -247,6 +248,8 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             abi.encode(params.initialPrice / 3),
             EMPTY_PREVIOUS_DATA
         );
+        assertFalse(success, "success");
+        assertEq(posId.tick, protocol.NO_POSITION_TICK(), "pos tick");
 
         PendingAction memory pending = protocol.getUserPendingAction(address(this));
         assertEq(uint256(pending.action), uint256(ProtocolAction.None), "user 0 should not have a pending action");

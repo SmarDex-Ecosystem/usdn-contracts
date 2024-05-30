@@ -166,8 +166,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         vm.expectEmit(true, true, false, false);
         emit ValidatedClosePosition(address(this), address(this), posId, POSITION_AMOUNT, -1);
-        protocol.validateClosePosition(address(this), priceData, EMPTY_PREVIOUS_DATA);
-
+        bool success = protocol.validateClosePosition(address(this), priceData, EMPTY_PREVIOUS_DATA);
+        assertTrue(success, "success");
         assertEq(oracleMiddleware.lastActionId(), actionId, "middleware action ID");
     }
 
@@ -623,7 +623,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         _waitMockMiddlewarePriceDelay();
 
         vm.prank(USER_1);
-        protocol.validateClosePosition(USER_1, abi.encode(params.initialPrice / 3), EMPTY_PREVIOUS_DATA);
+        bool success = protocol.validateClosePosition(USER_1, abi.encode(params.initialPrice / 3), EMPTY_PREVIOUS_DATA);
+        assertFalse(success, "success");
 
         PendingAction memory pending = protocol.getUserPendingAction(USER_1);
         assertEq(

@@ -331,4 +331,12 @@ interface IUsdnProtocolEvents {
      * @param amount Amount of security deposit refunded
      */
     event SecurityDepositRefunded(address indexed pendingActionValidator, address indexed receivedBy, uint256 amount);
+
+    /**
+     * @notice Emitted when a position changes ownership
+     * @param posId The unique position ID
+     * @param oldOwner The old owner
+     * @param newOwner The new owner
+     */
+    event PositionOwnershipTransferred(PositionId indexed posId, address indexed oldOwner, address indexed newOwner);
 }
