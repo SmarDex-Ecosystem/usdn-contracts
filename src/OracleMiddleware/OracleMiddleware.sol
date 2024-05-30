@@ -256,10 +256,10 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
 
     /**
      * @notice Get the price for an validate action of the protocol
-     * @dev If if the low latency duration is not exceeded, validate the price with PythOracle. Else, get the specified
+     * @dev If if the low latency delay is not exceeded, validate the price with PythOracle. Else, get the specified
      * roundId on-chain price from Chainlink. In case of chainlink price, we don't have a confidence interval
      * and so both `neutralPrice` and `price` are equal
-     * @param data An optional VAA from Pyth or roundId for chainlink
+     * @param data An optional VAA from Pyth or a chainlink roundId
      * @param targetTimestamp The target timestamp
      * @param dir The direction for applying the confidence interval (in case we use a Pyth price)
      * @return price_ The price to use for the user action

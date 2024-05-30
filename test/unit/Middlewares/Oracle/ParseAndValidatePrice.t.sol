@@ -140,22 +140,23 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
     }
 
     /**
-     * @custom:scenario Parse and validate price for "validate" actions using chainlink with roundId data
+     * @custom:scenario Parse and validate price for "validate" actions using chainlink with a roundId data
      * @custom:given The chainlink target roundId data is provided
      * @custom:and The next chainlink roundId is provided
      * @custom:when Calling parseAndValidatePrice for "validate" actions after waiting the proper delay
      * @custom:then It returns the onchain price from chainlink
      */
-    function test_getPriceFromChainlinkWhitRoundId() public {
+    function test_getValidatePriceFromChainlinkNextRoundId() public {
         uint128 targetTimestamp = uint128(block.timestamp);
-        uint128 earlyTimestamp = targetTimestamp + 20 minutes + 1;
 
         mockChainlinkOnChain.setRoundTimestamp(0, targetTimestamp);
-        mockChainlinkOnChain.setRoundTimestamp(1, earlyTimestamp);
+        mockChainlinkOnChain.setRoundTimestamp(1, targetTimestamp + 20 minutes + 1);
+
         (, int256 mockedChainlinkPrice,,,) = mockChainlinkOnChain.getRoundData(0);
         uint256 mockedChainlinkFormattedPrice =
             uint256(mockedChainlinkPrice) * 10 ** (oracleMiddleware.getDecimals() - mockChainlinkOnChain.decimals());
         bytes memory roundIdData = abi.encode(uint80(0));
+
         skip(1 days);
 
         PriceInfo memory priceInfo =
@@ -175,6 +176,50 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
             "", targetTimestamp, ProtocolAction.ValidateClosePosition, roundIdData
         );
         assertEq(priceInfo.price, mockedChainlinkFormattedPrice);
+    }
+
+    /**
+     * @custom:scenario Parse and validate price for "validate" actions using chainlink with a roundId data
+     * @custom:given The chainlink target roundId data is provided
+     * @custom:and The next chainlink roundId timestamp is before the end of low latency delay
+     * @custom:and The last chainlink roundId timestamp is after the end of low latency delay
+     * @custom:when Calling parseAndValidatePrice for "validate" actions after waiting the proper delay
+     * @custom:then It returns the onchain price from chainlink
+     */
+    function test_getValidatePriceFromChainlinkNotNextRoundId() public {
+        uint128 targetTimestamp = uint128(block.timestamp);
+
+        (, int256 mockedChainlinkPrice,,,) = mockChainlinkOnChain.getRoundData(0);
+
+        mockChainlinkOnChain.setRoundTimestamp(0, targetTimestamp);
+        mockChainlinkOnChain.setRoundTimestamp(1, targetTimestamp + 20 minutes); // wrong
+        mockChainlinkOnChain.setRoundTimestamp(2, targetTimestamp + 20 minutes + 1); // correct
+        mockChainlinkOnChain.setRoundPrice(2, mockedChainlinkPrice + 1);
+
+        bytes memory roundIdData = abi.encode(uint80(0));
+
+        uint256 updatedChainlinkFormattedPrice =
+            uint256(mockedChainlinkPrice + 1) * 10 ** (oracleMiddleware.getDecimals() - mockChainlinkOnChain.decimals());
+
+        skip(1 days);
+
+        PriceInfo memory priceInfo =
+            oracleMiddleware.parseAndValidatePrice("", targetTimestamp, ProtocolAction.ValidateDeposit, roundIdData);
+        assertEq(priceInfo.price, updatedChainlinkFormattedPrice);
+
+        priceInfo =
+            oracleMiddleware.parseAndValidatePrice("", targetTimestamp, ProtocolAction.ValidateWithdrawal, roundIdData);
+        assertEq(priceInfo.price, updatedChainlinkFormattedPrice);
+
+        priceInfo = oracleMiddleware.parseAndValidatePrice(
+            "", targetTimestamp, ProtocolAction.ValidateOpenPosition, roundIdData
+        );
+        assertEq(priceInfo.price, updatedChainlinkFormattedPrice);
+
+        priceInfo = oracleMiddleware.parseAndValidatePrice(
+            "", targetTimestamp, ProtocolAction.ValidateClosePosition, roundIdData
+        );
+        assertEq(priceInfo.price, updatedChainlinkFormattedPrice);
     }
 
     /* -------------------------------------------------------------------------- */
