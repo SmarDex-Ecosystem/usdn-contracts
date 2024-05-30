@@ -74,4 +74,35 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         );
         success_ = true; // TODO: retrieve success status from initiateWithdraw return value (when implemented)
     }
+
+    /**
+     * @notice Initiate an open position in the USDN protocol
+     * @dev Check the protocol's documentation for information about how this function should be used
+     * Note: the open position can fail without reverting, in case there are some pending liquidations in the protocol
+     * @param amount The amount of asset used to open the position
+     * @param to The address that will receive the position
+     * @param validator The address that should validate the open position (receives the security deposit back)
+     * @param currentPriceData The current price data
+     * @param previousActionsData The data needed to validate actionable pending actions
+     * @return success_ Whether the open position was successful
+     */
+    function _usdnInitiateOpenPosition(
+        uint256 amount,
+        uint256 desiredLiqPrice,
+        address to,
+        address validator,
+        bytes memory currentPriceData,
+        PreviousActionsData memory previousActionsData
+    ) internal returns (bool success_) {
+        // use amount == Constants.CONTRACT_BALANCE as a flag to deposit the entire balance of the contract
+        if (amount == Constants.CONTRACT_BALANCE) {
+            amount = PROTOCOL_ASSET.balanceOf(address(this));
+        }
+        PROTOCOL_ASSET.forceApprove(address(USDN_PROTOCOL), amount);
+        // we send the full ETH balance, the protocol will refund any excess
+        USDN_PROTOCOL.initiateOpenPosition{ value: address(this).balance }(
+            amount.toUint128(), desiredLiqPrice.toUint128(), to, validator, currentPriceData, previousActionsData
+        );
+        success_ = true; // TODO: retrieve success status from initiateDeposit return value (when implemented)
+    }
 }
