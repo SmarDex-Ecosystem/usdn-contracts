@@ -104,7 +104,9 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
 
         _waitMockMiddlewarePriceDelay();
 
-        protocol.validateOpenPosition(address(this), abi.encode(params.initialPrice / 4), EMPTY_PREVIOUS_DATA);
+        bool success =
+            protocol.validateOpenPosition(address(this), abi.encode(params.initialPrice / 4), EMPTY_PREVIOUS_DATA);
+        assertFalse(success, "success");
 
         PendingAction memory pending = protocol.getUserPendingAction(address(this));
         assertEq(
@@ -154,7 +156,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
     function _validateOpenPositionScenario(address to, address validator) internal {
         uint256 initialTotalExpo = protocol.getTotalExpo();
         uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
-        PositionId memory posId = protocol.initiateOpenPosition(
+        (, PositionId memory posId) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT), desiredLiqPrice, to, validator, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA
         );
         (Position memory tempPos,) = protocol.getLongPosition(posId);
@@ -177,7 +179,8 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
 
         vm.expectEmit();
         emit ValidatedOpenPosition(to, validator, expectedPosTotalExpo, newPrice, posId);
-        protocol.validateOpenPosition(validator, abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
+        bool success = protocol.validateOpenPosition(validator, abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
+        assertTrue(success, "success");
 
         (Position memory pos,) = protocol.getLongPosition(posId);
         assertEq(pos.user, tempPos.user, "user");
@@ -208,7 +211,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         TestData memory testData;
         int24 liqPenalty = int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
         // leverage approx 10x
-        PositionId memory posId = protocol.initiateOpenPosition(
+        (, PositionId memory posId) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
             CURRENT_PRICE * 9 / 10,
             address(this),
@@ -315,7 +318,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
 
         uint128 initiateTimeStamp = uint128(block.timestamp);
         // initiate deposit with leverage close to 10x
-        data.tempPosId = protocol.initiateOpenPosition(
+        (, data.tempPosId) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
             CURRENT_PRICE * 9 / 10,
             address(this),

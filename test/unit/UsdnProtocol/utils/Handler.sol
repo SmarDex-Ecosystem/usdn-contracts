@@ -119,7 +119,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         uint128 amountToClose,
         uint64 securityDepositValue,
         bytes calldata currentPriceData
-    ) external returns (uint256 securityDepositValue_, bool isLiquidationPending_) {
+    ) external returns (uint256 securityDepositValue_, bool isLiquidationPending_, bool liq_) {
         return _initiateClosePosition(owner, to, posId, amountToClose, securityDepositValue, currentPriceData);
     }
 

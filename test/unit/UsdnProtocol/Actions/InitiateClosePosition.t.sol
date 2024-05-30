@@ -226,7 +226,9 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
 
         vm.expectEmit();
         emit InitiatedClosePosition(address(this), address(this), posId, POSITION_AMOUNT, POSITION_AMOUNT, 0);
-        protocol.initiateClosePosition(posId, POSITION_AMOUNT, address(this), priceData, EMPTY_PREVIOUS_DATA);
+        bool success =
+            protocol.initiateClosePosition(posId, POSITION_AMOUNT, address(this), priceData, EMPTY_PREVIOUS_DATA);
+        assertTrue(success, "success");
     }
 
     /* -------------------------------------------------------------------------- */
@@ -362,9 +364,10 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         _waitMockMiddlewarePriceDelay();
 
         vm.prank(DEPLOYER);
-        protocol.initiateClosePosition(
+        bool success = protocol.initiateClosePosition(
             initialPosition, POSITION_AMOUNT, DEPLOYER, abi.encode(params.initialPrice / 3), EMPTY_PREVIOUS_DATA
         );
+        assertFalse(success, "success");
 
         PendingAction memory pending = protocol.getUserPendingAction(DEPLOYER);
         assertEq(uint256(pending.action), uint256(ProtocolAction.None), "pending action should not exist");
@@ -462,7 +465,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
 
         vm.startPrank(address(rebalancer));
         wstETH.approve(address(protocol), type(uint256).max);
-        rebalancerPos_ = protocol.initiateOpenPosition(
+        (, rebalancerPos_) = protocol.initiateOpenPosition(
             2 * userDeposit,
             params.initialPrice / 2,
             address(rebalancer),
