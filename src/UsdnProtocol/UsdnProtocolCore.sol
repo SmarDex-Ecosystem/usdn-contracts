@@ -14,10 +14,15 @@ import {
     DepositPendingAction,
     WithdrawalPendingAction,
     LongPendingAction,
-    PositionId
+    PositionId,
+    Position,
+    TickData
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
+import { TickMath } from "src/libraries/TickMath.sol";
+import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
+import { HugeUint } from "src/libraries/HugeUint.sol";
 
 abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     using SafeERC20 for IERC20Metadata;
@@ -25,6 +30,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     using SafeCast for int256;
     using SignedMath for int256;
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
+    using LibBitmap for LibBitmap.Bitmap;
+    using HugeUint for HugeUint.Uint512;
 
     /// @inheritdoc IUsdnProtocolCore
     address public constant DEAD_ADDRESS = address(0xdead);
@@ -484,6 +491,28 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         usdnShares_ = sharesLSB | uint256(sharesMSB) << 24;
     }
 
+    /**
+     * @dev Convert a signed tick to an unsigned index into the Bitmap using the tick spacing in storage
+     * @param tick The tick to convert, a multiple of the tick spacing
+     * @return index_ The index into the Bitmap
+     */
+    function _calcBitmapIndexFromTick(int24 tick) internal view returns (uint256 index_) {
+        index_ = _calcBitmapIndexFromTick(tick, _tickSpacing);
+    }
+
+    /**
+     * @dev Convert a signed tick to an unsigned index into the Bitmap using the provided tick spacing
+     * @param tick The tick to convert, a multiple of `tickSpacing`
+     * @param tickSpacing The tick spacing to use
+     * @return index_ The index into the Bitmap
+     */
+    function _calcBitmapIndexFromTick(int24 tick, int24 tickSpacing) internal pure returns (uint256 index_) {
+        index_ = uint256( // cast is safe as the min tick is always above TickMath.MIN_TICK
+            (int256(tick) - TickMath.MIN_TICK) // shift into positive
+                / tickSpacing
+        );
+    }
+
     /* -------------------------- Pending actions queue ------------------------- */
 
     /**
@@ -756,7 +785,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
                 // safe cleanup operations
                 Position[] storage tickArray = _longPositions[tickHash];
                 Position memory pos = tickArray[open.index];
-                delete _longPositions[tickHash][index];
+                delete _longPositions[tickHash][open.index];
 
                 // more unsafe cleanup operations
                 if (unsafe) {
@@ -765,7 +794,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
                     tickData.totalPos -= 1;
                     if (tickData.totalPos == 0) {
                         // we removed the last position in the tick
-                        _tickBitmap.unset(_calcBitmapIndexFromTick(tick));
+                        _tickBitmap.unset(_calcBitmapIndexFromTick(open.tick));
                     }
                     uint256 unadjustedTickPrice =
                         TickMath.getPriceAtTick(open.tick - int24(uint24(tickData.liquidationPenalty)) * _tickSpacing);
