@@ -719,12 +719,17 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @notice Remove a stuck pending action and perform the minimal amount of cleanup necessary
      * @dev This function should only be called by the owner of the protocol, it serves as an escape hatch if a
      * pending action ever gets stuck due to something internal reverting unexpectedly
+     * The owner must wait at least 1 hour after the validation deadline to call this function. This is to give the
+     * chance to normal users to validate the action if possible
      * @param rawIndex The raw index of the pending action in the queue
      * @param to Where the retrieved funds should be sent (security deposit, assets, usdn)
      * @param unsafe If `true`, will attempt to perform more cleanup at the risk of reverting. Always try `true` first
      */
     function _removeBlockedPendingAction(uint128 rawIndex, address payable to, bool unsafe) internal {
         PendingAction memory pending = _pendingActionsQueue.atRaw(rawIndex);
+        if (block.timestamp < pending.timestamp + _validationDeadline + 1 hours) {
+            revert UsdnProtocolUnauthorized();
+        }
         uint256 pendingActionIndex = _pendingActions[pending.validator];
         if (pendingActionIndex != 0) {
             delete _pendingActions[pending.validator];
