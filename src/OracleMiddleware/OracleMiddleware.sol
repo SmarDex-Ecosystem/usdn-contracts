@@ -31,8 +31,8 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     /// @notice The number of decimals for the returned price
     uint8 internal constant MIDDLEWARE_DECIMALS = 18;
 
-    /// @notice The duration during which the low latency price will be returned
-    uint256 internal constant LOW_LATENCY_DELAY = 20 minutes;
+    /// @notice The delay during which a low latency oracle price validation is available
+    uint16 internal constant LOW_LATENCY_DELAY = 20 minutes;
 
     /**
      * @notice The delay (in seconds) between the moment an action is initiated and the timestamp of the
@@ -80,19 +80,19 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
             return _getInitiateActionPrice(data, ConfidenceInterval.None);
         } else if (action == ProtocolAction.ValidateDeposit) {
             // Use the lowest price in the confidence interval to ensure a minimum benefit for the user in case
-            // of price inaccuracies until low latency duration is exceeded then use chainlink
+            // of price inaccuracies until low latency delay is exceeded then use chainlink specified roundId
             return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Down);
         } else if (action == ProtocolAction.ValidateWithdrawal) {
             // Use the highest price in the confidence interval to ensure a minimum benefit for the user in case
-            // of price inaccuracies until low latency duration is exceeded then use chainlink
+            // of price inaccuracies until low latency delay is exceeded then use chainlink specified roundId
             return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Up);
         } else if (action == ProtocolAction.ValidateOpenPosition) {
             // Use the highest price in the confidence interval to ensure a minimum benefit for the user in case
-            // of price inaccuracies until low latency duration is exceeded then use chainlink
+            // of price inaccuracies until low latency delay is exceeded then use chainlink specified roundId
             return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Up);
         } else if (action == ProtocolAction.ValidateClosePosition) {
             // Use the lowest price in the confidence interval to ensure a minimum benefit for the user in case
-            // of price inaccuracies until low latency duration is exceeded then use chainlink
+            // of price inaccuracies until low latency delay is exceeded then use chainlink specified roundId
             return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Down);
         } else if (action == ProtocolAction.Liquidation) {
             // Special case, if we pass a timestamp of zero, then we accept all prices newer than `_recentPriceDelay`
@@ -128,7 +128,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     }
 
     /// @inheritdoc IOracleMiddleware
-    function getLowLatencyDelay() external pure returns (uint256) {
+    function getLowLatencyDelay() external pure returns (uint16) {
         return LOW_LATENCY_DELAY;
     }
 
@@ -268,7 +268,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         internal
         returns (PriceInfo memory price_)
     {
-        if (block.timestamp < targetTimestamp + LOW_LATENCY_DELAY) {
+        if (block.timestamp <= targetTimestamp + LOW_LATENCY_DELAY) {
             return _getLowLatencyPrice(data, targetTimestamp, dir);
         } else {
             // chainlink calls do not require a fee
@@ -280,14 +280,21 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
             ChainlinkPriceInfo memory chainlinkOnChainPrice =
                 _getFormattedChainlinkPrice(MIDDLEWARE_DECIMALS, nextRoundId);
 
-            // if the price is negative or zero, revert
-            if (chainlinkOnChainPrice.price <= 0) {
-                revert OracleMiddlewareWrongPrice(chainlinkOnChainPrice.price);
-            }
+            while (true) {
+                if (chainlinkOnChainPrice.price <= 0) {
+                    // if the price is negative or zero, revert
+                    revert OracleMiddlewareWrongPrice(chainlinkOnChainPrice.price);
+                } else {
+                    if (chainlinkOnChainPrice.timestamp <= targetTimestamp + LOW_LATENCY_DELAY) {
+                        // if the price timestamp is too early, increment roundId
+                        ++nextRoundId;
+                    } else {
+                        break;
+                    }
+                }
 
-            // if the next roundId timestamp is too early
-            if (chainlinkOnChainPrice.timestamp <= targetTimestamp + LOW_LATENCY_DELAY) {
-                revert OracleMiddlewarePriceTooEarly(targetTimestamp, chainlinkOnChainPrice.timestamp);
+                // get the next roundId price
+                chainlinkOnChainPrice = _getFormattedChainlinkPrice(MIDDLEWARE_DECIMALS, nextRoundId);
             }
 
             price_ = PriceInfo({

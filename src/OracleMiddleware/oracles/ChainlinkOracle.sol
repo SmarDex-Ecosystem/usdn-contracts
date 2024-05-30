@@ -82,7 +82,7 @@ abstract contract ChainlinkOracle is IChainlinkOracle, IOracleMiddlewareErrors {
     }
 
     /**
-     * @notice Get a specific roundId price of the asset from Chainlink, formatted to the specified number of decimals
+     * @notice Get a specified roundId price of the asset from Chainlink, formatted to the specified number of decimals
      * @param middlewareDecimals The number of decimals to format the price to
      * @param roundId The targeted roundId
      * @return formattedPrice_ The formatted price of the asset

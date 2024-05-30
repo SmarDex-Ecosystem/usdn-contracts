@@ -19,13 +19,6 @@ interface IOracleMiddlewareErrors {
     error OracleMiddlewarePriceTooOld(uint256 timestamp);
 
     /**
-     * @notice The oracle price is too early
-     * @param targetedTimestamp The targeted timestamp
-     * @param priceTimestamp The timestamp of the price given by the oracle
-     */
-    error OracleMiddlewarePriceTooEarly(uint256 targetedTimestamp, uint256 priceTimestamp);
-
-    /**
      * @notice The pyth price reported a positive exponent (negative decimals)
      * @param expo The price exponent
      */
