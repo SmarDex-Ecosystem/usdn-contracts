@@ -105,10 +105,10 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
             })
         );
         // Simulate the second item in the queue being empty (sets it to zero values)
-        protocol.i_removePendingAction(1, USER_2);
+        protocol.removePendingAction(1, USER_2);
         // Simulate the first item in the queue being empty
         // This will pop the first item, but leave the second empty
-        protocol.i_removePendingAction(0, USER_1);
+        protocol.removePendingAction(0, USER_1);
     }
 
     /**

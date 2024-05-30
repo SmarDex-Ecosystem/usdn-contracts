@@ -61,6 +61,10 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _pendingActionsQueue.empty();
     }
 
+    function getQueueItem(uint128 rawIndex) external view returns (PendingAction memory) {
+        return _pendingActionsQueue.atRaw(rawIndex);
+    }
+
     /**
      * @dev Use this function in unit tests to make sure we provide a fresh price that updates the balances
      * The function reverts the price given by the mock oracle middleware is not fresh enough to trigger a balance
@@ -112,6 +116,11 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         _balanceVault = tempVaultBalance.toUint256();
     }
 
+    function removePendingAction(uint128 rawIndex, address user) external {
+        _pendingActionsQueue.clearAt(rawIndex);
+        delete _pendingActions[user];
+    }
+
     function i_initiateClosePosition(
         address owner,
         address to,
@@ -151,11 +160,6 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         returns (uint128 totalExpo_)
     {
         return _calculatePositionTotalExpo(amount, startPrice, liquidationPrice);
-    }
-
-    function i_removePendingAction(uint128 rawIndex, address user) external {
-        _pendingActionsQueue.clearAt(rawIndex);
-        delete _pendingActions[user];
     }
 
     function i_getActionablePendingAction() external returns (PendingAction memory, uint128) {
@@ -460,5 +464,9 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
 
     function i_clearPendingAction(address user, uint128 rawIndex) external {
         _clearPendingAction(user, rawIndex);
+    }
+
+    function i_removeBlockedPendingAction(uint128 rawIndex, address payable to, bool unsafe) external {
+        _removeBlockedPendingAction(rawIndex, to, unsafe);
     }
 }
