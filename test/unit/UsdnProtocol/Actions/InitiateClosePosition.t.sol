@@ -235,7 +235,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:scenario Closing a position that was not validated yet
      * @custom:given A position that is pending validation and has a validator different from the owner
      * @custom:when The owner tries to close the position
-     * @custom:then The transaction reverts with ...
+     * @custom:then The transaction reverts with UsdnProtocolPendingAction
      */
     function test_RevertWhen_initiateClosePendingPosition() external {
         bytes memory priceData = abi.encode(params.initialPrice);
