@@ -418,7 +418,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             IOwnershipCallback(newOwner).ownershipCallback(msg.sender, posId);
         }
 
-        emit PositionOwnershipTransferred(msg.sender, newOwner, posId);
+        emit PositionOwnershipTransferred(posId, msg.sender, newOwner);
     }
 
     /**

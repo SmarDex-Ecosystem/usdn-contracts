@@ -334,9 +334,9 @@ interface IUsdnProtocolEvents {
 
     /**
      * @notice Emitted when a position changes ownership
+     * @param posId The unique position ID
      * @param oldOwner The old owner
      * @param newOwner The new owner
-     * @param posId The unique position ID
      */
-    event PositionOwnershipTransferred(address indexed oldOwner, address indexed newOwner, PositionId posId);
+    event PositionOwnershipTransferred(PositionId indexed posId, address indexed oldOwner, address indexed newOwner);
 }
