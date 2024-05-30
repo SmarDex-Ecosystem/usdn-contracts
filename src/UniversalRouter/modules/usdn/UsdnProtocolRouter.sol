@@ -38,11 +38,10 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         PROTOCOL_ASSET.forceApprove(address(USDN_PROTOCOL), amount);
         SDEX.approve(address(USDN_PROTOCOL), type(uint256).max);
         // we send the full ETH balance, the protocol will refund any excess
-        USDN_PROTOCOL.initiateDeposit{ value: address(this).balance }(
+        success_ = USDN_PROTOCOL.initiateDeposit{ value: address(this).balance }(
             amount.toUint128(), to, validator, currentPriceData, previousActionsData
         );
         SDEX.approve(address(USDN_PROTOCOL), 0);
-        success_ = true; // TODO: retrieve success status from initiateDeposit return value (when implemented)
     }
 
     /**
@@ -69,9 +68,8 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         }
         USDN.approve(address(USDN_PROTOCOL), USDN.convertToTokensRoundUp(amount));
         // we send the full ETH balance, the protocol will refund any excess
-        USDN_PROTOCOL.initiateWithdrawal{ value: address(this).balance }(
+        success_ = USDN_PROTOCOL.initiateWithdrawal{ value: address(this).balance }(
             amount.toUint152(), to, validator, currentPriceData, previousActionsData
         );
-        success_ = true; // TODO: retrieve success status from initiateWithdraw return value (when implemented)
     }
 }
