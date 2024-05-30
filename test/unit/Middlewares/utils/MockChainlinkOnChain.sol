@@ -45,6 +45,19 @@ contract MockChainlinkOnChain {
         _latestRoundData = RoundData(roundId, answer, startedAt, 0, answeredInRound);
     }
 
+    /**
+     * @notice Update manually the roundId publish time.
+     * @param _roundId The price round id
+     * @param _timestamp The price timestamp
+     */
+    function setRoundTimestamp(uint80 _roundId, uint256 _timestamp) external {
+        _roundData[_roundId].updatedAt = _timestamp;
+    }
+
+    function setRoundPrice(uint80 _roundId, int256 _price) external {
+        _roundData[_roundId].answer = _price;
+    }
+
     function setRoundData(uint80 roundId, int256 answer, uint256 startedAt, uint256 updateAt, uint80 answeredInRound)
         external
     {
@@ -99,7 +112,7 @@ contract MockChainlinkOnChain {
     {
         return (
             _roundData[_roundId].roundId,
-            alwaysRevertOnCall ? int256(-1) : _latestRoundData.answer,
+            alwaysRevertOnCall ? int256(-1) : _roundData[_roundId].answer,
             _roundData[_roundId].startedAt,
             _roundData[_roundId].updatedAt,
             _roundData[_roundId].answeredInRound

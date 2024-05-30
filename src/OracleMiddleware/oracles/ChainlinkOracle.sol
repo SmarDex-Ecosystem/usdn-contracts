@@ -94,6 +94,9 @@ abstract contract ChainlinkOracle is IChainlinkOracle, IOracleMiddlewareErrors {
     {
         uint8 oracleDecimals = _priceFeed.decimals();
         formattedPrice_ = _getChainlinkPrice(roundId);
+        if (formattedPrice_.price <= 0) {
+            return formattedPrice_;
+        }
         formattedPrice_.price = formattedPrice_.price * int256(10 ** middlewareDecimals) / int256(10 ** oracleDecimals);
     }
 

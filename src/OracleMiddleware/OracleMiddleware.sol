@@ -126,7 +126,8 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
 
     /// @inheritdoc IBaseOracleMiddleware
     function validationCost(bytes calldata data, ProtocolAction) public view virtual returns (uint256 result_) {
-        if (data.length > 0) {
+        // TODO add a unique identifier by oracle
+        if (data.length > 32) {
             result_ = _getPythUpdateFee(data);
         }
     }
@@ -251,17 +252,22 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
      * roundId on-chain price from Chainlink. In case of chainlink price, we don't have a confidence interval
      * and so both `neutralPrice` and `price` are equal
      * @param data An optional VAA from Pyth or roundId for chainlink
-     * @param targetedTimestamp The targeted timestamp
+     * @param targetTimestamp The target timestamp
      * @param dir The direction for applying the confidence interval (in case we use a Pyth price)
      * @return price_ The price to use for the user action
      */
-    function _getValidateActionPrice(bytes calldata data, uint128 targetedTimestamp, ConfidenceInterval dir)
+    function _getValidateActionPrice(bytes calldata data, uint128 targetTimestamp, ConfidenceInterval dir)
         internal
         returns (PriceInfo memory price_)
     {
-        if (block.timestamp < targetedTimestamp + LOW_LATENCY_DURATION) {
-            return _getLowLatencyPrice(data, targetedTimestamp, dir);
+        if (block.timestamp < targetTimestamp + LOW_LATENCY_DURATION) {
+            return _getLowLatencyPrice(data, targetTimestamp, dir);
         } else {
+            // chainlink calls do not require a fee
+            if (msg.value > 0) {
+                revert OracleMiddlewareIncorrectFee();
+            }
+
             uint80 nextRoundId = abi.decode(data, (uint80)) + 1;
             ChainlinkPriceInfo memory chainlinkOnChainPrice =
                 _getFormattedChainlinkPrice(MIDDLEWARE_DECIMALS, nextRoundId);
@@ -272,8 +278,8 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
             }
 
             // if the next roundId timestamp is too early
-            if (targetedTimestamp + LOW_LATENCY_DURATION <= chainlinkOnChainPrice.timestamp) {
-                revert OracleMiddlewarePriceTooEarly(targetedTimestamp, chainlinkOnChainPrice.timestamp);
+            if (chainlinkOnChainPrice.timestamp <= targetTimestamp + LOW_LATENCY_DURATION) {
+                revert OracleMiddlewarePriceTooEarly(targetTimestamp, chainlinkOnChainPrice.timestamp);
             }
 
             price_ = PriceInfo({
