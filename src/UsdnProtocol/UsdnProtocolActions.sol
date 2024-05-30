@@ -1174,6 +1174,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // Register position and adjust contract state
         Position memory long = Position({
+            validated: false,
             user: to,
             amount: amount,
             totalExpo: data.positionTotalExpo,
@@ -1337,6 +1338,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // update position total expo (because of new leverage / liq price)
             data.pos.totalExpo =
                 _calculatePositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenalty);
+            // mark the position as validated
+            data.pos.validated = true;
             // insert position into new tick
             (newPosId.tickVersion, newPosId.index) = _saveNewPosition(newPosId.tick, data.pos, liquidationPenalty);
             // no long balance update is necessary (collateral didn't change)
@@ -1357,7 +1360,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 expoAfter = _calculatePositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenalty);
 
         // update the total expo of the position
-        _longPositions[data.tickHash][data.action.index].totalExpo = expoAfter;
+        data.pos.totalExpo = expoAfter;
+        // mark the position as validated
+        data.pos.validated = true;
+        // SSTORE
+        _longPositions[data.tickHash][data.action.index] = data.pos;
         // update the total expo by adding the position's new expo and removing the old one
         // do not use += or it will underflow
         _totalExpo = _totalExpo + expoAfter - expoBefore;
@@ -1384,8 +1391,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
     /**
      * @notice Perform checks for the initiate close position action
-     * @dev Reverts if the position is not owned by the user, the amount to close is higher than the position amount, or
-     * the amount to close is zero
+     * @dev Reverts if the to address is zero, the position was not validated yet, the position is not owned by the
+     * user, the amount to close is higher than the position amount, or the amount to close is zero
      * @param owner The owner of the position
      * @param to The address that will receive the assets
      * @param amountToClose The amount of collateral to remove from the position's amount
@@ -1401,6 +1408,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         if (pos.user != owner) {
             revert UsdnProtocolUnauthorized();
+        }
+
+        if (!pos.validated) {
+            revert UsdnProtocolPendingAction();
         }
 
         if (amountToClose > pos.amount) {
