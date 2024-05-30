@@ -367,6 +367,23 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         }
     }
 
+    /// @inheritdoc IUsdnProtocol
+    function removeBlockedPendingAction(address validator, address payable to, bool unsafe) external onlyOwner {
+        uint256 pendingActionIndex = _pendingActions[validator];
+        if (pendingActionIndex == 0) {
+            // no pending action
+            // use the `rawIndex` variant below if for some reason the `_pendingActions` mapping is messed up
+            return;
+        }
+        uint128 rawIndex = uint128(pendingActionIndex - 1);
+        _removeBlockedPendingAction(rawIndex, to, unsafe);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function removeBlockedPendingAction(uint128 rawIndex, address payable to, bool unsafe) external onlyOwner {
+        _removeBlockedPendingAction(rawIndex, to, unsafe);
+    }
+
     /**
      * @notice Create initial deposit
      * @dev To be called from `initialize`
