@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
@@ -27,6 +28,7 @@ import {
 import { HugeUint } from "src/libraries/HugeUint.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
+import { IOwnershipCallback } from "src/interfaces/UsdnProtocol/IOwnershipCallback.sol";
 
 abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong {
     using SafeERC20 for IERC20Metadata;
@@ -405,6 +407,33 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         } while (validatedActions_ < maxValidations);
         _refundExcessEther(0, amountToRefund, balanceBefore);
         _checkPendingFee();
+    }
+
+    /// @inheritdoc IUsdnProtocolActions
+    function transferPositionOwnership(PositionId calldata posId, address newOwner)
+        external
+        initializedAndNonReentrant
+    {
+        (bytes32 tickHash, uint256 version) = _tickHash(posId.tick);
+        if (posId.tickVersion != version) {
+            revert UsdnProtocolOutdatedTick(version, posId.tickVersion);
+        }
+        Position storage pos = _longPositions[tickHash][posId.index];
+
+        if (msg.sender != pos.user) {
+            revert UsdnProtocolUnauthorized();
+        }
+        if (newOwner == address(0)) {
+            revert UsdnProtocolInvalidAddressTo();
+        }
+
+        pos.user = newOwner;
+
+        if (ERC165Checker.supportsInterface(newOwner, type(IOwnershipCallback).interfaceId)) {
+            IOwnershipCallback(newOwner).ownershipCallback(msg.sender, posId);
+        }
+
+        emit PositionOwnershipTransferred(posId, msg.sender, newOwner);
     }
 
     /**

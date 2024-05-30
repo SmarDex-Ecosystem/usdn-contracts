@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
+import { PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+
 /**
  * @title Interface containing event signatures from various external contracts
  */
@@ -17,4 +19,10 @@ interface IEventsErrors {
     event TestCallback();
 
     error RebaseHandlerFailure();
+
+    /* ----------------------------- IOwnershipCallback ---------------------------- */
+
+    event TestOwnershipCallback(address oldOwner, PositionId posId);
+
+    error OwnershipCallbackFailure();
 }
