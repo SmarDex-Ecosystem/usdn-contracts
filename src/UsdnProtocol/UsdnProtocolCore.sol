@@ -721,7 +721,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * pending action ever gets stuck due to something internal reverting unexpectedly
      * @param rawIndex The raw index of the pending action in the queue
      * @param to Where the retrieved funds should be sent (security deposit, assets, usdn)
-     * @param unsafe If `true`, will attempt to perform more cleanup at the risk of reverting
+     * @param unsafe If `true`, will attempt to perform more cleanup at the risk of reverting. Always try `true` first
      */
     function _removeBlockedPendingAction(uint128 rawIndex, address payable to, bool unsafe) internal {
         PendingAction memory pending = _pendingActionsQueue.atRaw(rawIndex);
