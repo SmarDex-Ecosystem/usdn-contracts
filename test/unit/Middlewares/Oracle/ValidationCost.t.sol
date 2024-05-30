@@ -64,7 +64,7 @@ contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
 
     /**
      * @custom:scenario Call `getValidationCost` function
-     * @custom:when Data is filled with a bytes length above than the limit
+     * @custom:when Data is filled with a bytes length higher than the limit
      * @custom:then The validation cost is higher than 0
      */
     function test_parseAndValidatePriceHigherThanLimit() public {
