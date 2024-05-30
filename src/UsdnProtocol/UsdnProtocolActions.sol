@@ -1411,7 +1411,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         if (!pos.validated) {
-            revert UsdnProtocolPendingAction();
+            revert UsdnProtocolPositionNotValidated();
         }
 
         if (amountToClose > pos.amount) {
