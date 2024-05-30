@@ -730,12 +730,12 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             delete _pendingActions[pending.validator];
         }
         _pendingActionsQueue.clearAt(rawIndex);
-        if (pending.action == ProtocolAction.ValidateDeposit) {
+        if (pending.action == ProtocolAction.ValidateDeposit && unsafe) {
             // for pending deposits, we send back the locked assets
             DepositPendingAction memory deposit = _toDepositPendingAction(pending);
             // TODO: decrease the _pendingBalanceVault here
             _asset.safeTransfer(to, deposit.amount);
-        } else if (pending.action == ProtocolAction.ValidateWithdrawal) {
+        } else if (pending.action == ProtocolAction.ValidateWithdrawal && unsafe) {
             // for pending withdrawals, we send the locked USDN
             WithdrawalPendingAction memory withdrawal = _toWithdrawalPendingAction(pending);
             uint256 shares = _mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
@@ -773,8 +773,10 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         } else if (pending.action == ProtocolAction.ValidateClosePosition) {
             // for pending closes, the position is already out of the protocol
             LongPendingAction memory close = _toLongPendingAction(pending);
-            // credit the full amount to the vault to preserve the total balance invariant (like a liquidation)
-            _balanceVault += close.closeBoundedPositionValue;
+            if (unsafe) {
+                // credit the full amount to the vault to preserve the total balance invariant (like a liquidation)
+                _balanceVault += close.closeBoundedPositionValue;
+            }
         }
 
         // in all cases, we retrieve the security deposit
