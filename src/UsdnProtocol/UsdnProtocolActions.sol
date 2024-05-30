@@ -350,7 +350,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         returns (uint256 liquidatedPositions_)
     {
         uint256 balanceBefore = address(this).balance;
-        PriceInfo memory currentPrice = _getOraclePrice(ProtocolAction.Liquidation, 0, currentPriceData);
+        PriceInfo memory currentPrice = _getOraclePrice(ProtocolAction.Liquidation, 0, "", currentPriceData);
 
         (liquidatedPositions_,) = _applyPnlAndFundingAndLiquidate(
             currentPrice.neutralPrice,
@@ -592,8 +592,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolZeroAmount();
         }
 
-        PriceInfo memory currentPrice =
-            _getOraclePrice(ProtocolAction.InitiateDeposit, block.timestamp, currentPriceData);
+        PriceInfo memory currentPrice = _getOraclePrice(
+            ProtocolAction.InitiateDeposit,
+            block.timestamp,
+            _calcActionId(validator, uint128(block.timestamp)),
+            currentPriceData
+        );
 
         InitiateDepositData memory data;
         (, data.isLiquidationPending) = _applyPnlAndFundingAndLiquidate(
@@ -689,7 +693,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     {
         DepositPendingAction memory deposit = _toDepositPendingAction(pending);
 
-        PriceInfo memory currentPrice = _getOraclePrice(ProtocolAction.ValidateDeposit, deposit.timestamp, priceData);
+        PriceInfo memory currentPrice = _getOraclePrice(
+            ProtocolAction.ValidateDeposit,
+            deposit.timestamp,
+            _calcActionId(deposit.validator, deposit.timestamp),
+            priceData
+        );
 
         // adjust balances
         (, bool isLiquidationPending) = _applyPnlAndFundingAndLiquidate(
@@ -742,16 +751,21 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     /**
      * @notice Update protocol balances, then prepare the data for the withdrawal action
      * @dev Reverts if the imbalance limit is reached
+     * @param validator The validator address
      * @param usdnShares The amount of USDN shares to burn
      * @param currentPriceData The current price data
      * @return data_ The withdrawal data struct
      */
-    function _prepareWithdrawalData(uint152 usdnShares, bytes calldata currentPriceData)
+    function _prepareWithdrawalData(address validator, uint152 usdnShares, bytes calldata currentPriceData)
         internal
         returns (WithdrawalData memory data_)
     {
-        PriceInfo memory currentPrice =
-            _getOraclePrice(ProtocolAction.InitiateWithdrawal, block.timestamp, currentPriceData);
+        PriceInfo memory currentPrice = _getOraclePrice(
+            ProtocolAction.InitiateWithdrawal,
+            block.timestamp,
+            _calcActionId(validator, uint128(block.timestamp)),
+            currentPriceData
+        );
 
         (, data_.isLiquidationPending) = _applyPnlAndFundingAndLiquidate(
             currentPrice.neutralPrice,
@@ -851,7 +865,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolZeroAmount();
         }
 
-        WithdrawalData memory data = _prepareWithdrawalData(usdnShares, currentPriceData);
+        WithdrawalData memory data = _prepareWithdrawalData(validator, usdnShares, currentPriceData);
 
         if (data.isLiquidationPending) {
             return (securityDepositValue, false);
@@ -894,8 +908,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     {
         WithdrawalPendingAction memory withdrawal = _toWithdrawalPendingAction(pending);
 
-        PriceInfo memory currentPrice =
-            _getOraclePrice(ProtocolAction.ValidateWithdrawal, withdrawal.timestamp, priceData);
+        PriceInfo memory currentPrice = _getOraclePrice(
+            ProtocolAction.ValidateWithdrawal,
+            withdrawal.timestamp,
+            _calcActionId(withdrawal.validator, withdrawal.timestamp),
+            priceData
+        );
 
         (, bool isLiquidationPending) = _applyPnlAndFundingAndLiquidate(
             currentPrice.neutralPrice,
@@ -958,17 +976,24 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     /**
      * @notice Update protocol balances, then prepare the data for the initiate open position action
      * @dev Reverts if the imbalance limit is reached, or if the safety margin is not respected
+     * @param validator The address of the validator
      * @param amount The amount of wstETH to deposit
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
      * @param currentPriceData The current price data
      * @return data_ The temporary data for the open position action
      */
-    function _prepareInitiateOpenPositionData(uint128 amount, uint128 desiredLiqPrice, bytes calldata currentPriceData)
-        internal
-        returns (InitiateOpenPositionData memory data_)
-    {
-        PriceInfo memory currentPrice =
-            _getOraclePrice(ProtocolAction.InitiateOpenPosition, block.timestamp, currentPriceData);
+    function _prepareInitiateOpenPositionData(
+        address validator,
+        uint128 amount,
+        uint128 desiredLiqPrice,
+        bytes calldata currentPriceData
+    ) internal returns (InitiateOpenPositionData memory data_) {
+        PriceInfo memory currentPrice = _getOraclePrice(
+            ProtocolAction.InitiateOpenPosition,
+            block.timestamp,
+            _calcActionId(validator, uint128(block.timestamp)),
+            currentPriceData
+        );
         data_.adjustedPrice = (currentPrice.price + currentPrice.price * _positionFeeBps / BPS_DIVISOR).toUint128();
 
         uint128 neutralPrice = currentPrice.neutralPrice.toUint128();
@@ -1081,7 +1106,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         InitiateOpenPositionData memory data =
-            _prepareInitiateOpenPositionData(amount, desiredLiqPrice, currentPriceData);
+            _prepareInitiateOpenPositionData(validator, amount, desiredLiqPrice, currentPriceData);
 
         if (data.isLiquidationPending) {
             // value to indicate the position was not created
@@ -1144,8 +1169,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         returns (ValidateOpenPositionData memory data_, bool liq_)
     {
         data_.action = _toLongPendingAction(pending);
-        PriceInfo memory currentPrice =
-            _getOraclePrice(ProtocolAction.ValidateOpenPosition, data_.action.timestamp, priceData);
+        PriceInfo memory currentPrice = _getOraclePrice(
+            ProtocolAction.ValidateOpenPosition,
+            data_.action.timestamp,
+            _calcActionId(data_.action.validator, data_.action.timestamp),
+            priceData
+        );
         // apply fees on price
         data_.startPrice = (currentPrice.price + currentPrice.price * _positionFeeBps / BPS_DIVISOR).toUint128();
 
@@ -1362,8 +1391,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         _checkInitiateClosePosition(owner, to, amountToClose, data_.pos);
 
-        PriceInfo memory currentPrice =
-            _getOraclePrice(ProtocolAction.InitiateClosePosition, block.timestamp, currentPriceData);
+        PriceInfo memory currentPrice = _getOraclePrice(
+            ProtocolAction.InitiateClosePosition,
+            block.timestamp,
+            _calcActionId(owner, uint128(block.timestamp)),
+            currentPriceData
+        );
 
         (, data_.isLiquidationPending) = _applyPnlAndFundingAndLiquidate(
             currentPrice.neutralPrice,
@@ -1523,7 +1556,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     {
         LongPendingAction memory long = _toLongPendingAction(pending);
 
-        PriceInfo memory currentPrice = _getOraclePrice(ProtocolAction.ValidateClosePosition, long.timestamp, priceData);
+        PriceInfo memory currentPrice = _getOraclePrice(
+            ProtocolAction.ValidateClosePosition,
+            long.timestamp,
+            _calcActionId(long.validator, long.timestamp),
+            priceData
+        );
 
         (, bool isLiquidationPending) = _applyPnlAndFundingAndLiquidate(
             currentPrice.neutralPrice,
@@ -1740,7 +1778,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
     }
 
-    function _getOraclePrice(ProtocolAction action, uint256 timestamp, bytes calldata priceData)
+    function _getOraclePrice(ProtocolAction action, uint256 timestamp, bytes32 actionId, bytes calldata priceData)
         internal
         returns (PriceInfo memory price_)
     {
@@ -1748,7 +1786,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         if (address(this).balance < validationCost) {
             revert UsdnProtocolInsufficientOracleFee();
         }
-        price_ = _oracleMiddleware.parseAndValidatePrice{ value: validationCost }(uint128(timestamp), action, priceData);
+        price_ = _oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
+            actionId, uint128(timestamp), action, priceData
+        );
     }
 
     /**
@@ -1852,5 +1892,16 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             emit ProtocolFeeDistributed(_feeCollector, _pendingProtocolFee);
             _pendingProtocolFee = 0;
         }
+    }
+
+    /**
+     * @notice Calculate a unique identifier for a pending action, that can be used by the oracle middleware to link
+     * a `Initiate` call with the corresponding `Validate` call
+     * @param validator The address of the validator
+     * @param initiateTimestamp The timestamp of the initiate action
+     * @return actionId_ The unique action ID
+     */
+    function _calcActionId(address validator, uint128 initiateTimestamp) internal pure returns (bytes32 actionId_) {
+        actionId_ = keccak256(abi.encodePacked(validator, initiateTimestamp));
     }
 }

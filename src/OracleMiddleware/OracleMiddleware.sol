@@ -64,8 +64,11 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     /*                           Public view functions                            */
     /* -------------------------------------------------------------------------- */
 
-    /// @inheritdoc IBaseOracleMiddleware
-    function parseAndValidatePrice(uint128 targetTimestamp, ProtocolAction action, bytes calldata data)
+    /**
+     * @inheritdoc IBaseOracleMiddleware
+     * @dev In the current implementation, the `actionId` value is not used
+     */
+    function parseAndValidatePrice(bytes32, uint128 targetTimestamp, ProtocolAction action, bytes calldata data)
         public
         payable
         virtual

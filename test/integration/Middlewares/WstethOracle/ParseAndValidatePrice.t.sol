@@ -60,10 +60,10 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
                 // Since we force the usage of Pyth for initiate actions, Pyth requires that the price data timestamp
                 // is recent compared to block.timestamp
                 vm.warp(pythTimestamp);
-                middlewarePrice = wstethMiddleware.parseAndValidatePrice{ value: validationCost }(0, action, data);
+                middlewarePrice = wstethMiddleware.parseAndValidatePrice{ value: validationCost }("", 0, action, data);
             } else {
                 middlewarePrice = wstethMiddleware.parseAndValidatePrice{ value: validationCost }(
-                    uint128(pythTimestamp - wstethMiddleware.getValidationDelay()), action, data
+                    "", uint128(pythTimestamp - wstethMiddleware.getValidationDelay()), action, data
                 );
             }
 
@@ -135,7 +135,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
             (uint256 chainlinkPrice, uint256 chainlinkTimestamp) = getChainlinkPrice();
             // middleware data
             PriceInfo memory middlewarePrice =
-                wstethMiddleware.parseAndValidatePrice(uint128(block.timestamp), action, "");
+                wstethMiddleware.parseAndValidatePrice("", uint128(block.timestamp), action, "");
             // timestamp check
             assertEq(middlewarePrice.timestamp, chainlinkTimestamp, timestampError);
             // price check
@@ -189,10 +189,11 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
                     // Since we force the usage of Pyth for initiate actions,
                     // Pyth requires that the price data timestamp is recent compared to block.timestamp
                     vm.warp(pythTimestamp);
-                    middlewarePrice = wstethMiddleware.parseAndValidatePrice{ value: validationCost }(0, action, data);
+                    middlewarePrice =
+                        wstethMiddleware.parseAndValidatePrice{ value: validationCost }("", 0, action, data);
                 } else {
                     middlewarePrice = wstethMiddleware.parseAndValidatePrice{ value: validationCost }(
-                        uint128(pythTimestamp - wstethMiddleware.getValidationDelay()), action, data
+                        "", uint128(pythTimestamp - wstethMiddleware.getValidationDelay()), action, data
                     );
                 }
             }
@@ -283,7 +284,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
             (uint256 chainlinkPrice, uint256 chainlinkTimestamp) = getChainlinkPrice();
             // middleware data
             PriceInfo memory middlewarePrice =
-                wstethMiddleware.parseAndValidatePrice(uint128(block.timestamp), action, "");
+                wstethMiddleware.parseAndValidatePrice("", uint128(block.timestamp), action, "");
             // timestamp check
             assertEq(middlewarePrice.timestamp, chainlinkTimestamp, timestampError);
             // price check

@@ -83,7 +83,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
 
             PriceInfo memory price = oracleMiddleware.parseAndValidatePrice{
                 value: oracleMiddleware.validationCost(abi.encode("data"), action)
-            }(uint128(block.timestamp - oracleMiddleware.getValidationDelay()), action, abi.encode("data"));
+            }("", uint128(block.timestamp - oracleMiddleware.getValidationDelay()), action, abi.encode("data"));
 
             // Price + conf
             if (
@@ -117,22 +117,25 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
         mockChainlinkOnChain.setLatestRoundData(1, mockedChainlinkPrice, block.timestamp, 1);
 
         PriceInfo memory priceInfo =
-            oracleMiddleware.parseAndValidatePrice(uint128(block.timestamp), ProtocolAction.Initialize, "");
-        assertEq(priceInfo.price, mockedChainlinkFormattedPrice);
-
-        priceInfo = oracleMiddleware.parseAndValidatePrice(uint128(block.timestamp), ProtocolAction.InitiateDeposit, "");
+            oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.Initialize, "");
         assertEq(priceInfo.price, mockedChainlinkFormattedPrice);
 
         priceInfo =
-            oracleMiddleware.parseAndValidatePrice(uint128(block.timestamp), ProtocolAction.InitiateWithdrawal, "");
+            oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.InitiateDeposit, "");
         assertEq(priceInfo.price, mockedChainlinkFormattedPrice);
 
         priceInfo =
-            oracleMiddleware.parseAndValidatePrice(uint128(block.timestamp), ProtocolAction.InitiateOpenPosition, "");
+            oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.InitiateWithdrawal, "");
         assertEq(priceInfo.price, mockedChainlinkFormattedPrice);
 
-        priceInfo =
-            oracleMiddleware.parseAndValidatePrice(uint128(block.timestamp), ProtocolAction.InitiateClosePosition, "");
+        priceInfo = oracleMiddleware.parseAndValidatePrice(
+            "", uint128(block.timestamp), ProtocolAction.InitiateOpenPosition, ""
+        );
+        assertEq(priceInfo.price, mockedChainlinkFormattedPrice);
+
+        priceInfo = oracleMiddleware.parseAndValidatePrice(
+            "", uint128(block.timestamp), ProtocolAction.InitiateClosePosition, ""
+        );
         assertEq(priceInfo.price, mockedChainlinkFormattedPrice);
     }
 
@@ -156,19 +159,21 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
         skip(1 days);
 
         PriceInfo memory priceInfo =
-            oracleMiddleware.parseAndValidatePrice(targetTimestamp, ProtocolAction.ValidateDeposit, roundIdData);
+            oracleMiddleware.parseAndValidatePrice("", targetTimestamp, ProtocolAction.ValidateDeposit, roundIdData);
         assertEq(priceInfo.price, mockedChainlinkFormattedPrice);
 
         priceInfo =
-            oracleMiddleware.parseAndValidatePrice(targetTimestamp, ProtocolAction.ValidateWithdrawal, roundIdData);
+            oracleMiddleware.parseAndValidatePrice("", targetTimestamp, ProtocolAction.ValidateWithdrawal, roundIdData);
         assertEq(priceInfo.price, mockedChainlinkFormattedPrice);
 
-        priceInfo =
-            oracleMiddleware.parseAndValidatePrice(targetTimestamp, ProtocolAction.ValidateOpenPosition, roundIdData);
+        priceInfo = oracleMiddleware.parseAndValidatePrice(
+            "", targetTimestamp, ProtocolAction.ValidateOpenPosition, roundIdData
+        );
         assertEq(priceInfo.price, mockedChainlinkFormattedPrice);
 
-        priceInfo =
-            oracleMiddleware.parseAndValidatePrice(targetTimestamp, ProtocolAction.ValidateClosePosition, roundIdData);
+        priceInfo = oracleMiddleware.parseAndValidatePrice(
+            "", targetTimestamp, ProtocolAction.ValidateClosePosition, roundIdData
+        );
         assertEq(priceInfo.price, mockedChainlinkFormattedPrice);
     }
 
@@ -192,42 +197,42 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
         uint256 validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.None);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.None, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.None, abi.encode("data")
         );
 
         // Expect revert when validating price for ValidateDeposit action
         validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.ValidateDeposit);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.ValidateDeposit, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.ValidateDeposit, abi.encode("data")
         );
 
         // Expect revert when validating price for ValidateWithdrawal action
         validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.ValidateWithdrawal);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.ValidateWithdrawal, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.ValidateWithdrawal, abi.encode("data")
         );
 
         // Expect revert when validating price for ValidateOpenPosition action
         validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.ValidateOpenPosition);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.ValidateOpenPosition, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.ValidateOpenPosition, abi.encode("data")
         );
 
         // Expect revert when validating price for ValidateClosePosition action
         validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.ValidateClosePosition);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.ValidateClosePosition, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.ValidateClosePosition, abi.encode("data")
         );
 
         // Expect revert when validating price for Liquidation action
         validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.Liquidation);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.Liquidation, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.Liquidation, abi.encode("data")
         );
 
         /* --------------------- Initiate actions revert as well -------------------- */
@@ -235,31 +240,31 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
         validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateDeposit);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data")
         );
 
         validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateWithdrawal);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.InitiateWithdrawal, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.InitiateWithdrawal, abi.encode("data")
         );
 
         validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateOpenPosition);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.InitiateOpenPosition, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.InitiateOpenPosition, abi.encode("data")
         );
 
         validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateClosePosition);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.InitiateClosePosition, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.InitiateClosePosition, abi.encode("data")
         );
 
         validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.Initialize);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.Initialize, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.Initialize, abi.encode("data")
         );
 
         /* --------------------- Validate actions revert as well -------------------- */
@@ -274,22 +279,22 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
         validationCost = oracleMiddleware.validationCost(abi.encode(1), ProtocolAction.ValidateDeposit);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            targetTimestamp, ProtocolAction.ValidateDeposit, abi.encode(0)
+            "", targetTimestamp, ProtocolAction.ValidateDeposit, abi.encode(0)
         );
 
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            targetTimestamp, ProtocolAction.ValidateWithdrawal, abi.encode(0)
+            "", targetTimestamp, ProtocolAction.ValidateWithdrawal, abi.encode(0)
         );
 
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            targetTimestamp, ProtocolAction.ValidateOpenPosition, abi.encode(0)
+            "", targetTimestamp, ProtocolAction.ValidateOpenPosition, abi.encode(0)
         );
 
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            targetTimestamp, ProtocolAction.ValidateClosePosition, abi.encode(0)
+            "", targetTimestamp, ProtocolAction.ValidateClosePosition, abi.encode(0)
         );
     }
 
@@ -312,42 +317,42 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
         uint256 validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.None);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.None, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.None, abi.encode("data")
         );
 
         // Expect revert when validating price for ValidateDeposit action
         validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.ValidateDeposit);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.ValidateDeposit, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.ValidateDeposit, abi.encode("data")
         );
 
         // Expect revert when validating price for ValidateWithdrawal action
         validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.ValidateWithdrawal);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.ValidateWithdrawal, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.ValidateWithdrawal, abi.encode("data")
         );
 
         // Expect revert when validating price for ValidateOpenPosition action
         validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.ValidateOpenPosition);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.ValidateOpenPosition, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.ValidateOpenPosition, abi.encode("data")
         );
 
         // Expect revert when validating price for ValidateClosePosition action
         validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.ValidateClosePosition);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.ValidateClosePosition, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.ValidateClosePosition, abi.encode("data")
         );
 
         // Expect revert when validating price for Liquidation action
         validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.Liquidation);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.Liquidation, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.Liquidation, abi.encode("data")
         );
 
         /* ---------- Initiate actions revert if data provided is not empty --------- */
@@ -355,31 +360,31 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
         validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateDeposit);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data")
         );
 
         validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateWithdrawal);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.InitiateWithdrawal, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.InitiateWithdrawal, abi.encode("data")
         );
 
         validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateOpenPosition);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.InitiateOpenPosition, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.InitiateOpenPosition, abi.encode("data")
         );
 
         validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateClosePosition);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.InitiateClosePosition, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.InitiateClosePosition, abi.encode("data")
         );
 
         validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.Initialize);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.Initialize, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.Initialize, abi.encode("data")
         );
     }
 
@@ -399,42 +404,42 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
         uint256 validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.None);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.None, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.None, abi.encode("data")
         );
 
         // Expect revert when validating price for ValidateDeposit action
         validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.ValidateDeposit);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.ValidateDeposit, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.ValidateDeposit, abi.encode("data")
         );
 
         // Expect revert when validating price for ValidateWithdrawal action
         validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.ValidateWithdrawal);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.ValidateWithdrawal, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.ValidateWithdrawal, abi.encode("data")
         );
 
         // Expect revert when validating price for ValidateOpenPosition action
         validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.ValidateOpenPosition);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.ValidateOpenPosition, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.ValidateOpenPosition, abi.encode("data")
         );
 
         // Expect revert when validating price for ValidateClosePosition action
         validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.ValidateClosePosition);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.ValidateClosePosition, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.ValidateClosePosition, abi.encode("data")
         );
 
         // Expect revert when validating price for Liquidation action
         validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.Liquidation);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.Liquidation, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.Liquidation, abi.encode("data")
         );
 
         /* ------------------ All initiate actions revert as well ------------------ */
@@ -442,31 +447,31 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
         validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.Initialize);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.Initialize, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.Initialize, abi.encode("data")
         );
 
         validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateDeposit);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data")
         );
 
         validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateWithdrawal);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.InitiateWithdrawal, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.InitiateWithdrawal, abi.encode("data")
         );
 
         validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateOpenPosition);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.InitiateOpenPosition, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.InitiateOpenPosition, abi.encode("data")
         );
 
         validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateClosePosition);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.InitiateClosePosition, abi.encode("data")
+            "", uint128(timestamp), ProtocolAction.InitiateClosePosition, abi.encode("data")
         );
     }
 
@@ -494,31 +499,31 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
         uint256 validationCost = oracleMiddleware.validationCost("", ProtocolAction.Initialize);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePriceTooOld.selector, tooOldTimestamp));
         PriceInfo memory priceInfo = oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.Initialize, ""
+            "", uint128(timestamp), ProtocolAction.Initialize, ""
         );
 
         validationCost = oracleMiddleware.validationCost("", ProtocolAction.InitiateDeposit);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePriceTooOld.selector, tooOldTimestamp));
         priceInfo = oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.InitiateDeposit, ""
+            "", uint128(timestamp), ProtocolAction.InitiateDeposit, ""
         );
 
         validationCost = oracleMiddleware.validationCost("", ProtocolAction.InitiateWithdrawal);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePriceTooOld.selector, tooOldTimestamp));
         priceInfo = oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.InitiateWithdrawal, ""
+            "", uint128(timestamp), ProtocolAction.InitiateWithdrawal, ""
         );
 
         validationCost = oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePriceTooOld.selector, tooOldTimestamp));
         priceInfo = oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.InitiateOpenPosition, ""
+            "", uint128(timestamp), ProtocolAction.InitiateOpenPosition, ""
         );
 
         validationCost = oracleMiddleware.validationCost("", ProtocolAction.InitiateClosePosition);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePriceTooOld.selector, tooOldTimestamp));
         priceInfo = oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(timestamp), ProtocolAction.InitiateClosePosition, ""
+            "", uint128(timestamp), ProtocolAction.InitiateClosePosition, ""
         );
     }
 
@@ -536,22 +541,25 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
 
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1 * 1e10));
         PriceInfo memory priceInfo =
-            oracleMiddleware.parseAndValidatePrice(uint128(block.timestamp), ProtocolAction.Initialize, "");
-
-        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1 * 1e10));
-        priceInfo = oracleMiddleware.parseAndValidatePrice(uint128(block.timestamp), ProtocolAction.InitiateDeposit, "");
+            oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.Initialize, "");
 
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1 * 1e10));
         priceInfo =
-            oracleMiddleware.parseAndValidatePrice(uint128(block.timestamp), ProtocolAction.InitiateWithdrawal, "");
+            oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.InitiateDeposit, "");
 
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1 * 1e10));
         priceInfo =
-            oracleMiddleware.parseAndValidatePrice(uint128(block.timestamp), ProtocolAction.InitiateOpenPosition, "");
+            oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.InitiateWithdrawal, "");
 
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1 * 1e10));
-        priceInfo =
-            oracleMiddleware.parseAndValidatePrice(uint128(block.timestamp), ProtocolAction.InitiateClosePosition, "");
+        priceInfo = oracleMiddleware.parseAndValidatePrice(
+            "", uint128(block.timestamp), ProtocolAction.InitiateOpenPosition, ""
+        );
+
+        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1 * 1e10));
+        priceInfo = oracleMiddleware.parseAndValidatePrice(
+            "", uint128(block.timestamp), ProtocolAction.InitiateClosePosition, ""
+        );
     }
 
     function test_RevertWhen_ChainlinkPriceIsTooEarly() external {
@@ -567,22 +575,22 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
 
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePriceTooEarly.selector, targetTimestamp, earlyTimestamp));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            targetTimestamp, ProtocolAction.ValidateDeposit, abi.encode(0)
+            "", targetTimestamp, ProtocolAction.ValidateDeposit, abi.encode(0)
         );
 
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePriceTooEarly.selector, targetTimestamp, earlyTimestamp));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            targetTimestamp, ProtocolAction.ValidateWithdrawal, abi.encode(0)
+            "", targetTimestamp, ProtocolAction.ValidateWithdrawal, abi.encode(0)
         );
 
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePriceTooEarly.selector, targetTimestamp, earlyTimestamp));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            targetTimestamp, ProtocolAction.ValidateOpenPosition, abi.encode(0)
+            "", targetTimestamp, ProtocolAction.ValidateOpenPosition, abi.encode(0)
         );
 
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePriceTooEarly.selector, targetTimestamp, earlyTimestamp));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            targetTimestamp, ProtocolAction.ValidateClosePosition, abi.encode(0)
+            "", targetTimestamp, ProtocolAction.ValidateClosePosition, abi.encode(0)
         );
     }
 
@@ -603,25 +611,27 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
         // Fee too low
         vm.expectRevert(OracleMiddlewareIncorrectFee.selector);
         oracleMiddleware.parseAndValidatePrice{ value: validationCost - 1 }(
-            uint128(block.timestamp), ProtocolAction.ValidateDeposit, abi.encode("data")
+            "", uint128(block.timestamp), ProtocolAction.ValidateDeposit, abi.encode("data")
         );
 
         // Fee too high
         vm.expectRevert(OracleMiddlewareIncorrectFee.selector);
         oracleMiddleware.parseAndValidatePrice{ value: validationCost + 1 }(
-            uint128(block.timestamp), ProtocolAction.ValidateDeposit, abi.encode("data")
+            "", uint128(block.timestamp), ProtocolAction.ValidateDeposit, abi.encode("data")
         );
 
         // No fee required if there's no data
         vm.expectRevert(OracleMiddlewareIncorrectFee.selector);
-        oracleMiddleware.parseAndValidatePrice{ value: 1 }(uint128(block.timestamp), ProtocolAction.InitiateDeposit, "");
+        oracleMiddleware.parseAndValidatePrice{ value: 1 }(
+            "", uint128(block.timestamp), ProtocolAction.InitiateDeposit, ""
+        );
 
         skip(20 minutes);
 
         // No fee required if data length above the limit
         vm.expectRevert(OracleMiddlewareIncorrectFee.selector);
         oracleMiddleware.parseAndValidatePrice{ value: 1 }(
-            uint128(block.timestamp - 20 minutes), ProtocolAction.ValidateDeposit, abi.encode(0)
+            "", uint128(block.timestamp - 20 minutes), ProtocolAction.ValidateDeposit, abi.encode(0)
         );
     }
 }

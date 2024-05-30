@@ -37,15 +37,14 @@ contract WstEthOracleMiddleware is OracleMiddleware {
      * @dev The data format is specific to the middleware and is simply forwarded from the user transaction's calldata
      * Wsteth price is calculated as follows : stethPrice x stEthPerToken / 1 ether
      */
-    function parseAndValidatePrice(uint128 targetTimestamp, ProtocolAction action, bytes calldata data)
-        public
-        payable
-        virtual
-        override
-        returns (PriceInfo memory)
-    {
+    function parseAndValidatePrice(
+        bytes32 actionId,
+        uint128 targetTimestamp,
+        ProtocolAction action,
+        bytes calldata data
+    ) public payable virtual override returns (PriceInfo memory) {
         // fetched steth price
-        PriceInfo memory stethPrice = super.parseAndValidatePrice(targetTimestamp, action, data);
+        PriceInfo memory stethPrice = super.parseAndValidatePrice(actionId, targetTimestamp, action, data);
 
         // stEth ratio for one wstEth
         uint256 stEthPerToken = _wstEth.stEthPerToken();
