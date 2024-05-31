@@ -8,6 +8,7 @@ import { ProtocolAction, PositionId, Position, TickData } from "src/interfaces/U
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
 
+/// @custom:feature The `_removeBlockedPendingAction` admin function of the protocol
 contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
     function setUp() public {
         params = DEFAULT_PARAMS;
@@ -15,6 +16,12 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         super._setUp(params);
     }
 
+    /**
+     * @notice Helper function to setup a vault pending action and remove it with the admin function
+     * @param untilAction Whether to initiate a deposit or a withdrawal
+     * @param amount The amount to deposit
+     * @param unsafe Whether to remove the action in an unsafe way
+     */
     function _removeBlockedVaultScenario(ProtocolAction untilAction, uint128 amount, bool unsafe) internal {
         setUpUserPositionInVault(USER_1, untilAction, amount, params.initialPrice);
         _wait();
@@ -29,6 +36,13 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         protocol.getQueueItem(rawIndex);
     }
 
+    /**
+     * @custom:scenario Remove a stuck deposit in an unsafe way
+     * @custom:given A user has initiated a deposit which gets stuck for any reason
+     * @custom:when The admin removes the pending action in an unsafe way
+     * @custom:then The pending action is removed
+     * @custom:and The `to` address receives the deposited assets and the security deposit
+     */
     function test_removeBlockedDepositUnsafe() public {
         uint256 balanceBefore = address(this).balance;
         uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
@@ -37,6 +51,13 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         assertEq(address(this).balance, balanceBefore + protocol.getSecurityDepositValue(), "balance after");
     }
 
+    /**
+     * @custom:scenario Remove a stuck deposit in a safe way
+     * @custom:given A user has initiated a deposit which gets stuck for any reason
+     * @custom:when The admin removes the pending action in a safe way
+     * @custom:then The pending action is removed
+     * @custom:and The `to` address does not receive any assets or security deposit
+     */
     function test_removeBlockedDepositSafe() public {
         uint256 balanceBefore = address(this).balance;
         uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
@@ -45,6 +66,13 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         assertEq(address(this).balance, balanceBefore, "balance after");
     }
 
+    /**
+     * @custom:scenario Remove a stuck withdrawal in an unsafe way
+     * @custom:given A user has initiated a withdrawal which gets stuck for any reason
+     * @custom:when The admin removes the pending action in an unsafe way
+     * @custom:then The pending action is removed
+     * @custom:and The `to` address receives the USDN and the security deposit
+     */
     function test_removeBlockedWithdrawalUnsafe() public {
         uint256 balanceBefore = address(this).balance;
         uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
@@ -53,6 +81,13 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         assertEq(address(this).balance, balanceBefore + protocol.getSecurityDepositValue(), "balance after");
     }
 
+    /**
+     * @custom:scenario Remove a stuck withdrawal in a safe way
+     * @custom:given A user has initiated a withdrawal which gets stuck for any reason
+     * @custom:when The admin removes the pending action in a safe way
+     * @custom:then The pending action is removed
+     * @custom:and The `to` address does not receive any USDN or security deposit
+     */
     function test_removeBlockedWithdrawalSafe() public {
         uint256 balanceBefore = address(this).balance;
         uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
@@ -61,6 +96,12 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         assertEq(address(this).balance, balanceBefore, "balance after");
     }
 
+    /**
+     * @notice Helper function to setup a long side pending action and remove it with the admin function
+     * @param untilAction Whether to initiate an open or a close position
+     * @param amount The amount of collateral
+     * @param unsafe Whether to remove the action in an unsafe way
+     */
     function _removeBlockedLongScenario(ProtocolAction untilAction, uint128 amount, bool unsafe)
         internal
         returns (PositionId memory posId_)
@@ -89,14 +130,13 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         assertEq(pos.user, address(0), "pos user");
     }
 
-    function test_removeBlockedOpenPositionSafe() public {
-        uint256 balanceBefore = address(this).balance;
-
-        _removeBlockedLongScenario(ProtocolAction.InitiateOpenPosition, 10 ether, false);
-
-        assertEq(address(this).balance, balanceBefore, "balance after");
-    }
-
+    /**
+     * @custom:scenario Remove a stuck open position in an unsafe way
+     * @custom:given A user has initiated an open position which gets stuck for any reason
+     * @custom:when The admin removes the pending action in an unsafe way
+     * @custom:then The pending action is removed
+     * @custom:and The protocol state is updated to remove the position
+     */
     function test_removeBlockedOpenPositionUnsafe() public {
         uint256 balanceBefore = address(this).balance;
         int24 expectedTick = protocol.getEffectiveTickForPrice(params.initialPrice / 2);
@@ -125,14 +165,34 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         assertEq(address(this).balance, balanceBefore + protocol.getSecurityDepositValue(), "balance after");
     }
 
-    function test_removeBlockedClosePositionSafe() public {
+    /**
+     * @custom:scenario Remove a stuck open position in a safe way
+     * @custom:given A user has initiated an open position which gets stuck for any reason
+     * @custom:when The admin removes the pending action in a safe way
+     * @custom:then The pending action is removed
+     * @custom:and The protocol state is not updated
+     */
+    function test_removeBlockedOpenPositionSafe() public {
         uint256 balanceBefore = address(this).balance;
+        uint256 totalPosBefore = protocol.getTotalLongPositions();
+        uint256 totalExpoBefore = protocol.getTotalExpo();
 
-        _removeBlockedLongScenario(ProtocolAction.InitiateClosePosition, 10 ether, false);
+        _removeBlockedLongScenario(ProtocolAction.InitiateOpenPosition, 10 ether, false);
+
+        assertEq(protocol.getTotalLongPositions(), totalPosBefore + 1, "total pos");
+        assertGt(protocol.getTotalExpo(), totalExpoBefore, "total expo");
 
         assertEq(address(this).balance, balanceBefore, "balance after");
     }
 
+    /**
+     * @custom:scenario Remove a stuck close position in an unsafe way
+     * @custom:given A user has initiated a close position which gets stuck for any reason
+     * @custom:when The admin removes the pending action in an unsafe way
+     * @custom:then The pending action is removed
+     * @custom:and The protocol balances are updated to cleanup the position
+     * @custom:and The `to` address receives the the security deposit
+     */
     function test_removeBlockedClosePositionUnsafe() public {
         uint256 balanceBefore = address(this).balance;
         uint256 balanceLongBefore = protocol.getBalanceLong();
@@ -142,8 +202,43 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
 
         assertApproxEqAbs(protocol.getBalanceLong(), balanceLongBefore, 1, "balance long");
         assertApproxEqAbs(protocol.getBalanceVault(), balanceVaultBefore + 10 ether, 1, "balance vault");
+        assertEq(
+            protocol.getBalanceLong() + protocol.getBalanceVault(),
+            balanceLongBefore + balanceVaultBefore + 10 ether,
+            "total balance"
+        );
 
         assertEq(address(this).balance, balanceBefore + protocol.getSecurityDepositValue(), "balance after");
+    }
+
+    /**
+     * @custom:scenario Remove a stuck close position in a safe way
+     * @custom:given A user has initiated a close position which gets stuck for any reason
+     * @custom:when The admin removes the pending action in a safe way
+     * @custom:then The pending action is removed
+     * @custom:and The protocol balances are not updated
+     * @custom:and The `to` address does not receive any security deposit
+     */
+    function test_removeBlockedClosePositionSafe() public {
+        uint256 balanceBefore = address(this).balance;
+        uint256 balanceLongBefore = protocol.getBalanceLong();
+        uint256 balanceVaultBefore = protocol.getBalanceVault();
+
+        _removeBlockedLongScenario(ProtocolAction.InitiateClosePosition, 10 ether, false);
+
+        // during the initiateClosePosition, we optimistically decrease the long balance by the position value
+        // (10 ether +- 1 wei) which we do not add back to any balances since we are doing the safe fix
+
+        assertApproxEqAbs(protocol.getBalanceLong(), balanceLongBefore, 1, "balance long");
+        assertApproxEqAbs(protocol.getBalanceVault(), balanceVaultBefore, 1, "balance vault");
+        assertApproxEqAbs(
+            protocol.getBalanceLong() + protocol.getBalanceVault(),
+            balanceLongBefore + balanceVaultBefore,
+            1,
+            "total balance"
+        );
+
+        assertEq(address(this).balance, balanceBefore, "balance after");
     }
 
     function _wait() internal {
