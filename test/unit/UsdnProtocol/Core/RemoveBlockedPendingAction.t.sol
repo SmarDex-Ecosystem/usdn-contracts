@@ -4,8 +4,9 @@ pragma solidity 0.8.20;
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { ADMIN, USER_1 } from "test/utils/Constants.sol";
 
-import { ProtocolAction, PositionId, Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction, PositionId, Position, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
+import { HugeUint } from "src/libraries/HugeUint.sol";
 
 contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
     function setUp() public {
@@ -60,12 +61,15 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         assertEq(address(this).balance, balanceBefore, "balance after");
     }
 
-    function test_removeBlockedOpenPositionSafe() public {
-        PositionId memory posId = setUpUserPositionInLong(
+    function _removeBlockedLongScenario(ProtocolAction untilAction, uint128 amount, bool unsafe)
+        internal
+        returns (PositionId memory posId_)
+    {
+        posId_ = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
-                untilAction: ProtocolAction.InitiateOpenPosition,
-                positionSize: 10 ether,
+                untilAction: untilAction,
+                positionSize: amount,
                 desiredLiqPrice: params.initialPrice / 2,
                 price: params.initialPrice
             })
@@ -74,19 +78,49 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
 
         (, uint128 rawIndex) = protocol.i_getPendingAction(USER_1);
 
-        uint256 balanceBefore = address(this).balance;
-
         vm.prank(ADMIN);
-        protocol.i_removeBlockedPendingAction(rawIndex, payable(address(this)), false);
+        protocol.i_removeBlockedPendingAction(rawIndex, payable(address(this)), unsafe);
 
         assertTrue(protocol.getUserPendingAction(USER_1).action == ProtocolAction.None, "pending action");
         vm.expectRevert(DoubleEndedQueue.QueueOutOfBounds.selector);
         protocol.getQueueItem(rawIndex);
 
-        (Position memory pos,) = protocol.getLongPosition(posId);
+        (Position memory pos,) = protocol.getLongPosition(posId_);
         assertEq(pos.user, address(0), "pos user");
+    }
+
+    function test_removeBlockedOpenPositionSafe() public {
+        uint256 balanceBefore = address(this).balance;
+
+        _removeBlockedLongScenario(ProtocolAction.InitiateOpenPosition, 10 ether, false);
 
         assertEq(address(this).balance, balanceBefore, "balance after");
+    }
+
+    function test_removeBlockedOpenPositionUnsafe() public {
+        uint256 balanceBefore = address(this).balance;
+        int24 expectedTick = protocol.getEffectiveTickForPrice(params.initialPrice / 2);
+        TickData memory tickDataBefore = protocol.getTickData(expectedTick);
+        uint256 totalPosBefore = protocol.getTotalLongPositions();
+        HugeUint.Uint512 memory accBefore = protocol.getLiqMultiplierAccumulator();
+        uint256 totalExpoBefore = protocol.getTotalExpo();
+
+        PositionId memory posId = _removeBlockedLongScenario(ProtocolAction.InitiateOpenPosition, 10 ether, true);
+        assertEq(posId.tick, expectedTick, "expected tick");
+
+        TickData memory tickDataAfter = protocol.getTickData(posId.tick);
+        assertEq(tickDataAfter.totalExpo, tickDataBefore.totalExpo, "tick total expo");
+        assertEq(tickDataAfter.totalPos, tickDataBefore.totalPos, "tick total pos");
+
+        assertEq(protocol.getTotalLongPositions(), totalPosBefore, "total pos");
+
+        HugeUint.Uint512 memory accAfter = protocol.getLiqMultiplierAccumulator();
+        assertEq(accAfter.hi, accBefore.hi, "accumulator hi");
+        assertEq(accAfter.lo, accBefore.lo, "accumulator lo");
+
+        assertEq(protocol.getTotalExpo(), totalExpoBefore, "total expo");
+
+        assertEq(address(this).balance, balanceBefore + protocol.getSecurityDepositValue(), "balance after");
     }
 
     function _wait() internal {
