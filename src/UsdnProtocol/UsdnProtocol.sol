@@ -373,7 +373,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         if (pendingActionIndex == 0) {
             // no pending action
             // use the `rawIndex` variant below if for some reason the `_pendingActions` mapping is messed up
-            return;
+            revert UsdnProtocolNoPendingAction();
         }
         uint128 rawIndex = uint128(pendingActionIndex - 1);
         _removeBlockedPendingAction(rawIndex, to, unsafe);
