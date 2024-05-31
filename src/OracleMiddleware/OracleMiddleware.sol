@@ -285,7 +285,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
 
             uint80 validateRoundId = abi.decode(data, (uint80));
 
-            // Check the previous round id
+            // check the previous round id
             ChainlinkPriceInfo memory chainlinkOnChainPrice =
                 _getFormattedChainlinkPrice(MIDDLEWARE_DECIMALS, validateRoundId - 1);
 
@@ -299,7 +299,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
                 revert OracleMiddlewarePriceAfterTargetTimestamp(targetTimestamp, chainlinkOnChainPrice.timestamp);
             }
 
-            // Check the validate round id
+            // check the validate round id
             chainlinkOnChainPrice = _getFormattedChainlinkPrice(MIDDLEWARE_DECIMALS, validateRoundId);
 
             // if the price is negative or zero, revert
@@ -307,7 +307,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
                 revert OracleMiddlewareWrongPrice(chainlinkOnChainPrice.price);
             }
 
-            // price before delay
+            // if price before low latency delay
             if (chainlinkOnChainPrice.timestamp <= targetTimestamp + lowLatencyDelay) {
                 revert OracleMiddlewarePriceBeforeLowLatencyDelay(targetTimestamp, chainlinkOnChainPrice.timestamp);
             }

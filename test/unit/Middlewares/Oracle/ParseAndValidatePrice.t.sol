@@ -179,11 +179,10 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
     }
 
     /**
-     * @custom:scenario Parse and validate price for "validate" actions using chainlink with a too old previous roundId
-     * price
-     * @custom:given The chainlink target roundId data
-     * @custom:and A first too old chainlink roundId
-     * @custom:and A second correct chainlink roundId
+     * @custom:scenario Parse and validate price for "validate" actions using chainlink
+     * with a previous roundId timestamp equal the target timestamp
+     * @custom:given The chainlink target roundId data for validation
+     * @custom:and A previous chainlink roundId with a timestamp equal to the target timestamp
      * @custom:when Calling parseAndValidatePrice for "validate" actions after waiting the proper delay
      * @custom:then It should revert with `OracleMiddlewarePriceAfterTargetTimestamp`
      */
@@ -214,10 +213,10 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
     }
 
     /**
-     * @custom:scenario Parse and validate price for "validate" actions using chainlink with a early next roundId price
-     * @custom:given The chainlink target roundId data
-     * @custom:and A first too early chainlink roundId
-     * @custom:and A second correct chainlink roundId
+     * @custom:scenario Parse and validate price for "validate" actions using chainlink
+     * with a validate roundId timestamp before the low latency delay
+     * @custom:given The chainlink target roundId data for validation before the delay
+     * @custom:and A correct previous chainlink roundId
      * @custom:when Calling parseAndValidatePrice for "validate" actions after waiting the proper delay
      * @custom:then It should revert with `OracleMiddlewarePriceBeforeLowLatencyDelay`
      */
@@ -346,6 +345,8 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
 
         skip(1 days);
 
+        // wrong previous roundId price
+
         validationCost = oracleMiddleware.validationCost(abi.encode(1), ProtocolAction.ValidateDeposit);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
@@ -366,6 +367,8 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
             "", targetTimestamp, ProtocolAction.ValidateClosePosition, abi.encode(1)
         );
+
+        // wrong validate roundId price
 
         mockChainlinkOnChain.setRoundPrice(0, int256(2000 * 10 ** mockChainlinkOnChain.decimals()));
         mockChainlinkOnChain.setRoundPrice(1, -1);
@@ -664,51 +667,51 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
      */
     function test_RevertWhen_parseAndValidatePriceIncorrectFee() public {
         uint256 validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.ValidateDeposit);
-
+        bytes4 errorSelector = OracleMiddlewareIncorrectFee.selector;
         // Sanity check
         assertGt(validationCost, 0, "The validation cost must be higher than 0");
 
         // Fee too low
-        vm.expectRevert(OracleMiddlewareIncorrectFee.selector);
+        vm.expectRevert(errorSelector);
         oracleMiddleware.parseAndValidatePrice{ value: validationCost - 1 }(
             "", uint128(block.timestamp), ProtocolAction.ValidateDeposit, abi.encode("data")
         );
 
         // Fee too high
-        vm.expectRevert(OracleMiddlewareIncorrectFee.selector);
+        vm.expectRevert(errorSelector);
         oracleMiddleware.parseAndValidatePrice{ value: validationCost + 1 }(
             "", uint128(block.timestamp), ProtocolAction.ValidateDeposit, abi.encode("data")
         );
 
         // No fee required if there's no data
-        vm.expectRevert(OracleMiddlewareIncorrectFee.selector);
+        vm.expectRevert(errorSelector);
         oracleMiddleware.parseAndValidatePrice{ value: 1 }(
             "", uint128(block.timestamp), ProtocolAction.InitiateDeposit, ""
         );
 
-        uint256 lowLatencyDelay = uint256(oracleMiddleware.getLowLatencyDelay() + 1);
+        // No fee required if the validation timestamp is after the low latency delay
+        uint128 targetTimestamp = uint128(block.timestamp);
 
-        skip(lowLatencyDelay);
+        skip(targetTimestamp + uint256(oracleMiddleware.getLowLatencyDelay() + 1));
 
-        // No fee required if data length above the limit
-        vm.expectRevert(OracleMiddlewareIncorrectFee.selector);
+        vm.expectRevert(errorSelector);
         oracleMiddleware.parseAndValidatePrice{ value: 1 }(
-            "", uint128(block.timestamp - lowLatencyDelay), ProtocolAction.ValidateDeposit, abi.encode(0)
+            "", targetTimestamp, ProtocolAction.ValidateDeposit, abi.encode(1)
         );
 
-        vm.expectRevert(OracleMiddlewareIncorrectFee.selector);
+        vm.expectRevert(errorSelector);
         oracleMiddleware.parseAndValidatePrice{ value: 1 }(
-            "", uint128(block.timestamp - lowLatencyDelay), ProtocolAction.ValidateWithdrawal, abi.encode(0)
+            "", targetTimestamp, ProtocolAction.ValidateWithdrawal, abi.encode(1)
         );
 
-        vm.expectRevert(OracleMiddlewareIncorrectFee.selector);
+        vm.expectRevert(errorSelector);
         oracleMiddleware.parseAndValidatePrice{ value: 1 }(
-            "", uint128(block.timestamp - lowLatencyDelay), ProtocolAction.ValidateOpenPosition, abi.encode(0)
+            "", targetTimestamp, ProtocolAction.ValidateOpenPosition, abi.encode(1)
         );
 
-        vm.expectRevert(OracleMiddlewareIncorrectFee.selector);
+        vm.expectRevert(errorSelector);
         oracleMiddleware.parseAndValidatePrice{ value: 1 }(
-            "", uint128(block.timestamp - lowLatencyDelay), ProtocolAction.ValidateClosePosition, abi.encode(0)
+            "", targetTimestamp, ProtocolAction.ValidateClosePosition, abi.encode(1)
         );
     }
 }
