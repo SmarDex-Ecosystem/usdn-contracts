@@ -46,6 +46,13 @@ interface IOracleMiddlewareErrors {
     error OracleMiddlewareInvalidRecentPriceDelay(uint64 newDelay);
 
     /**
+     * @notice The price is after or equal to the target timestamp
+     * @param targetTimestamp The target timestamp
+     * @param roundTimestamp The roundId timestamp
+     */
+    error OracleMiddlewarePriceAfterTargetTimestamp(uint256 targetTimestamp, uint256 roundTimestamp);
+
+    /**
      * @notice The price is before the low latency delay
      * @param targetTimestamp The target timestamp
      * @param roundTimestamp The roundId timestamp

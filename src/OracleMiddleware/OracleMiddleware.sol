@@ -283,8 +283,24 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
                 revert OracleMiddlewareIncorrectFee();
             }
 
+            uint80 validateRoundId = abi.decode(data, (uint80));
+
+            // Check the previous round id
             ChainlinkPriceInfo memory chainlinkOnChainPrice =
-                _getFormattedChainlinkPrice(MIDDLEWARE_DECIMALS, abi.decode(data, (uint80)));
+                _getFormattedChainlinkPrice(MIDDLEWARE_DECIMALS, validateRoundId - 1);
+
+            // if the price is negative or zero, revert
+            if (chainlinkOnChainPrice.price <= 0) {
+                revert OracleMiddlewareWrongPrice(chainlinkOnChainPrice.price);
+            }
+
+            // if price after or equal target timestamp
+            if (targetTimestamp <= chainlinkOnChainPrice.timestamp) {
+                revert OracleMiddlewarePriceAfterTargetTimestamp(targetTimestamp, chainlinkOnChainPrice.timestamp);
+            }
+
+            // Check the validate round id
+            chainlinkOnChainPrice = _getFormattedChainlinkPrice(MIDDLEWARE_DECIMALS, validateRoundId);
 
             // if the price is negative or zero, revert
             if (chainlinkOnChainPrice.price <= 0) {
