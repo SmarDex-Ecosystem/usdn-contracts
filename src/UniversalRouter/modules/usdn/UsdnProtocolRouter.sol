@@ -56,7 +56,9 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         bytes memory depositPriceData,
         PreviousActionsData memory previousActionsData
     ) internal returns (bool success_) {
-        success_ = USDN_PROTOCOL.validateDeposit(validator, depositPriceData, previousActionsData);
+        success_ = USDN_PROTOCOL.validateDeposit{ value: address(this).balance }(
+            validator, depositPriceData, previousActionsData
+        );
     }
 
     /**
