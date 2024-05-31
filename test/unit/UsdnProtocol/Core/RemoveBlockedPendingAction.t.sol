@@ -111,6 +111,8 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         TickData memory tickDataAfter = protocol.getTickData(posId.tick);
         assertEq(tickDataAfter.totalExpo, tickDataBefore.totalExpo, "tick total expo");
         assertEq(tickDataAfter.totalPos, tickDataBefore.totalPos, "tick total pos");
+        assertEq(tickDataAfter.totalPos, 0, "no more pos in tick");
+        assertFalse(protocol.tickBitmapStatus(posId.tick), "tick bitmap status");
 
         assertEq(protocol.getTotalLongPositions(), totalPosBefore, "total pos");
 
@@ -119,6 +121,27 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         assertEq(accAfter.lo, accBefore.lo, "accumulator lo");
 
         assertEq(protocol.getTotalExpo(), totalExpoBefore, "total expo");
+
+        assertEq(address(this).balance, balanceBefore + protocol.getSecurityDepositValue(), "balance after");
+    }
+
+    function test_removeBlockedClosePositionSafe() public {
+        uint256 balanceBefore = address(this).balance;
+
+        _removeBlockedLongScenario(ProtocolAction.InitiateClosePosition, 10 ether, false);
+
+        assertEq(address(this).balance, balanceBefore, "balance after");
+    }
+
+    function test_removeBlockedClosePositionUnsafe() public {
+        uint256 balanceBefore = address(this).balance;
+        uint256 balanceLongBefore = protocol.getBalanceLong();
+        uint256 balanceVaultBefore = protocol.getBalanceVault();
+
+        _removeBlockedLongScenario(ProtocolAction.InitiateClosePosition, 10 ether, true);
+
+        assertApproxEqAbs(protocol.getBalanceLong(), balanceLongBefore, 1, "balance long");
+        assertApproxEqAbs(protocol.getBalanceVault(), balanceVaultBefore + 10 ether, 1, "balance vault");
 
         assertEq(address(this).balance, balanceBefore + protocol.getSecurityDepositValue(), "balance after");
     }

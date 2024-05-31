@@ -121,6 +121,14 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         delete _pendingActions[user];
     }
 
+    function findLastSetInTickBitmap(int24 searchFrom) external view returns (uint256 index) {
+        return _tickBitmap.findLastSet(_calcBitmapIndexFromTick(searchFrom));
+    }
+
+    function tickBitmapStatus(int24 tick) external view returns (bool isSet_) {
+        return _tickBitmap.get(_calcBitmapIndexFromTick(tick));
+    }
+
     function i_initiateClosePosition(
         address owner,
         address to,
@@ -336,10 +344,6 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
 
     function i_findHighestPopulatedTick(int24 searchStart) external view returns (int24 tick_) {
         return _findHighestPopulatedTick(searchStart);
-    }
-
-    function findLastSetInTickBitmap(int24 searchFrom) external view returns (uint256 index) {
-        return _tickBitmap.findLastSet(_calcBitmapIndexFromTick(searchFrom));
     }
 
     function i_updateEMA(uint128 secondsElapsed) external returns (int256) {
