@@ -205,6 +205,10 @@ abstract contract Dispatcher is
                         }
                     }
                 } else {
+                    // Comment for the eights actions(INITIATE and VALIDATE) of the USDN protocol.
+                    // We don't allow the transaction to revert if the actions was not successful (due to pending
+                    // liquidations), so we ignore the success boolean. This is because it's important to perform
+                    // liquidations if they are needed, and it would be a big waste of gas for the user to revert
                     if (command == Commands.INITIATE_DEPOSIT) {
                         (
                             uint256 amount,
@@ -213,12 +217,18 @@ abstract contract Dispatcher is
                             bytes memory currentPriceData,
                             PreviousActionsData memory previousActionsData
                         ) = abi.decode(inputs, (uint256, address, address, bytes, PreviousActionsData));
-                        // we don't allow the transaction to revert if the deposit was not successful (due to pending
-                        // liquidations), so we ignore the success boolean. This is because it's important to perform
-                        // liquidations if they are needed, and it would be a big waste of gas for the user to revert
                         _usdnInitiateDeposit(amount, map(to), map(validator), currentPriceData, previousActionsData);
                     } else if (command == Commands.INITIATE_WITHDRAWAL) {
-                        // TODO INITIATE_WITHDRAWAL
+                        (
+                            uint256 usdnShares,
+                            address to,
+                            address validator,
+                            bytes memory currentPriceData,
+                            PreviousActionsData memory previousActionsData
+                        ) = abi.decode(inputs, (uint256, address, address, bytes, PreviousActionsData));
+                        _usdnInitiateWithdrawal(
+                            usdnShares, map(to), map(validator), currentPriceData, previousActionsData
+                        );
                     } else if (command == Commands.INITIATE_OPEN) {
                         // TODO INITIATE_OPEN
                     } else if (command == Commands.INITIATE_CLOSE) {

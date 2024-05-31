@@ -222,8 +222,10 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
     {
         sdex.mintAndApprove(
             user,
-            protocol.i_calcMintUsdn(
-                positionSize, uint256(protocol.i_vaultAssetAvailable(uint128(price))), usdn.totalSupply(), price
+            usdn.convertToTokens(
+                protocol.i_calcMintUsdnShares(
+                    positionSize, uint256(protocol.i_vaultAssetAvailable(uint128(price))), usdn.totalShares(), price
+                )
             ) * protocol.getSdexBurnOnDepositRatio() / protocol.SDEX_BURN_ON_DEPOSIT_DIVISOR(),
             address(protocol),
             type(uint256).max
@@ -272,7 +274,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         wstETH.mintAndApprove(openParams.user, openParams.positionSize, address(protocol), openParams.positionSize);
         bytes memory priceData = abi.encode(openParams.price);
 
-        posId_ = protocol.initiateOpenPosition{ value: securityDepositValue }(
+        bool success;
+        (success, posId_) = protocol.initiateOpenPosition{ value: securityDepositValue }(
             openParams.positionSize,
             openParams.desiredLiqPrice,
             openParams.user,
@@ -280,6 +283,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             priceData,
             EMPTY_PREVIOUS_DATA
         );
+        assertTrue(success, "initiate open position success");
         _waitDelay();
         if (openParams.untilAction == ProtocolAction.InitiateOpenPosition) return (posId_);
 

@@ -145,16 +145,17 @@ enum Commands {
         d: U512,
     },
     /// Compare different mint usdn calculation implementations
-    CalcMintUsdn {
+    CalcMintUsdnShares {
         amount: Integer,
         vault_balance: Integer,
-        usdn_total_supply: Integer,
+        usdn_total_shares: Integer,
     },
     /// Compare different mint usdn calculation implementations (with vaultBalance equal to zero)
-    CalcMintUsdnVaultBalanceZero {
+    CalcMintUsdnSharesVaultBalanceZero {
         amount: Integer,
         price: Integer,
         decimals: u32,
+        usdn_divisor: Integer,
     },
 }
 
@@ -304,23 +305,25 @@ fn main() -> Result<()> {
             let x_bytes: FixedBytes<32> = bytes.into();
             print!("{x_bytes}");
         }
-        Commands::CalcMintUsdn {
+        Commands::CalcMintUsdnShares {
             amount,
             vault_balance,
-            usdn_total_supply,
+            usdn_total_shares,
         } => {
-            let numerator = amount * usdn_total_supply;
+            let numerator = amount * usdn_total_shares;
             let total_mint = numerator / vault_balance;
             print_int_u256_hex(total_mint)?;
         }
-        Commands::CalcMintUsdnVaultBalanceZero {
+        Commands::CalcMintUsdnSharesVaultBalanceZero {
             amount,
             price,
             decimals,
+            usdn_divisor,
         } => {
             let numerator = amount * price;
             let total_mint = numerator / 10u128.pow(decimals);
-            print_int_u256_hex(total_mint)?;
+            let total_mint_shares = total_mint * usdn_divisor;
+            print_int_u256_hex(total_mint_shares)?;
         }
     }
     Ok(())

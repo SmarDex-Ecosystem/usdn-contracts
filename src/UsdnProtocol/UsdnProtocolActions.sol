@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
@@ -27,6 +28,7 @@ import {
 import { HugeUint } from "src/libraries/HugeUint.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
+import { IOwnershipCallback } from "src/interfaces/UsdnProtocol/IOwnershipCallback.sol";
 
 abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong {
     using SafeERC20 for IERC20Metadata;
@@ -36,6 +38,26 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     using LibBitmap for LibBitmap.Bitmap;
     using SignedMath for int256;
     using HugeUint for HugeUint.Uint512;
+
+    /**
+     * @dev Structure to hold the transient data during `_initiateDeposit`
+     * @param pendingActionPrice The adjusted price with position fees applied
+     * @param isLiquidationPending Whether some liquidations still need to be performed
+     * @param totalExpo The total expo of the long side
+     * @param balanceLong The long side balance
+     * @param balanceVault The vault side balance, calculated according to the pendingActionPrice
+     * @param usdnTotalShares Total minted shares of USDN
+     * @param sdexToBurn The amount of SDEX to burn for the deposit
+     */
+    struct InitiateDepositData {
+        uint128 pendingActionPrice;
+        bool isLiquidationPending;
+        uint256 totalExpo;
+        uint256 balanceLong;
+        uint256 balanceVault;
+        uint256 usdnTotalShares;
+        uint256 sdexToBurn;
+    }
 
     /**
      * @dev Structure to hold the transient data during `_initiateWithdrawal`
@@ -115,20 +137,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         bool isLiquidationPending;
     }
 
-    /**
-     * @dev Structure to hold the transient data during `_initiateDeposit`
-     * @param usdnToMintEstimated The estimated usdn amount to mint
-     * @param burnRatio The burn ratio
-     * @param sdexToBurn The sdex amount to burn
-     * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
-     */
-    struct InitiateDepositData {
-        uint256 usdnToMintEstimated;
-        uint32 burnRatio;
-        uint256 sdexToBurn;
-        bool isLiquidationPending;
-    }
-
     /// @inheritdoc IUsdnProtocolActions
     uint256 public constant MIN_USDN_SUPPLY = 1000;
 
@@ -139,17 +147,18 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         address validator,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable initializedAndNonReentrant {
+    ) external payable initializedAndNonReentrant returns (bool success_) {
         uint64 securityDepositValue = _securityDepositValue;
         if (msg.value < securityDepositValue) {
             revert UsdnProtocolSecurityDepositTooLow();
         }
         uint256 balanceBefore = address(this).balance;
 
-        (uint256 amountToRefund, bool isInitiated) =
+        uint256 amountToRefund;
+        (amountToRefund, success_) =
             _initiateDeposit(msg.sender, to, validator, amount, securityDepositValue, currentPriceData);
 
-        if (isInitiated) {
+        if (success_) {
             unchecked {
                 amountToRefund += _executePendingActionOrRevert(previousActionsData);
             }
@@ -164,16 +173,17 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         address validator,
         bytes calldata depositPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable initializedAndNonReentrant {
+    ) external payable initializedAndNonReentrant returns (bool success_) {
         uint256 balanceBefore = address(this).balance;
 
-        (uint256 amountToRefund, bool isValidated) = _validateDeposit(validator, depositPriceData);
+        uint256 amountToRefund;
+        (amountToRefund, success_) = _validateDeposit(validator, depositPriceData);
         if (msg.sender != validator) {
             _refundEther(amountToRefund, validator);
             balanceBefore -= amountToRefund;
             amountToRefund = 0;
         }
-        if (isValidated) {
+        if (success_) {
             unchecked {
                 amountToRefund += _executePendingActionOrRevert(previousActionsData);
             }
@@ -190,7 +200,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         address validator,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable initializedAndNonReentrant {
+    ) external payable initializedAndNonReentrant returns (bool success_) {
         uint64 securityDepositValue = _securityDepositValue;
         if (msg.value < securityDepositValue) {
             revert UsdnProtocolSecurityDepositTooLow();
@@ -198,10 +208,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         uint256 balanceBefore = address(this).balance;
 
-        (uint256 amountToRefund, bool isInitiated) =
+        uint256 amountToRefund;
+        (amountToRefund, success_) =
             _initiateWithdrawal(msg.sender, to, validator, usdnShares, securityDepositValue, currentPriceData);
 
-        if (isInitiated) {
+        if (success_) {
             unchecked {
                 amountToRefund += _executePendingActionOrRevert(previousActionsData);
             }
@@ -216,16 +227,17 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         address validator,
         bytes calldata withdrawalPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable initializedAndNonReentrant {
+    ) external payable initializedAndNonReentrant returns (bool success_) {
         uint256 balanceBefore = address(this).balance;
 
-        (uint256 amountToRefund, bool isValidated) = _validateWithdrawal(validator, withdrawalPriceData);
+        uint256 amountToRefund;
+        (amountToRefund, success_) = _validateWithdrawal(validator, withdrawalPriceData);
         if (msg.sender != validator) {
             _refundEther(amountToRefund, validator);
             balanceBefore -= amountToRefund;
             amountToRefund = 0;
         }
-        if (isValidated) {
+        if (success_) {
             unchecked {
                 amountToRefund += _executePendingActionOrRevert(previousActionsData);
             }
@@ -243,21 +255,20 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         address validator,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable initializedAndNonReentrant returns (PositionId memory posId_) {
+    ) external payable initializedAndNonReentrant returns (bool success_, PositionId memory posId_) {
         uint64 securityDepositValue = _securityDepositValue;
         if (msg.value < securityDepositValue) {
             revert UsdnProtocolSecurityDepositTooLow();
         }
 
         uint256 balanceBefore = address(this).balance;
-        uint256 amountToRefund;
-        bool isInitiated;
 
-        (posId_, amountToRefund, isInitiated) = _initiateOpenPosition(
+        uint256 amountToRefund;
+        (posId_, amountToRefund, success_) = _initiateOpenPosition(
             msg.sender, to, validator, amount, desiredLiqPrice, securityDepositValue, currentPriceData
         );
 
-        if (isInitiated) {
+        if (success_) {
             unchecked {
                 amountToRefund += _executePendingActionOrRevert(previousActionsData);
             }
@@ -271,16 +282,18 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         address validator,
         bytes calldata openPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable initializedAndNonReentrant {
+    ) external payable initializedAndNonReentrant returns (bool success_) {
         uint256 balanceBefore = address(this).balance;
 
-        (uint256 amountToRefund, bool isValidated, bool liquidated) = _validateOpenPosition(validator, openPriceData);
+        uint256 amountToRefund;
+        bool liquidated;
+        (amountToRefund, success_, liquidated) = _validateOpenPosition(validator, openPriceData);
         if (msg.sender != validator) {
             _refundEther(amountToRefund, validator);
             balanceBefore -= amountToRefund;
             amountToRefund = 0;
         }
-        if (isValidated || liquidated) {
+        if (success_ || liquidated) {
             unchecked {
                 amountToRefund += _executePendingActionOrRevert(previousActionsData);
             }
@@ -297,7 +310,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         address to,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable initializedAndNonReentrant {
+    ) external payable initializedAndNonReentrant returns (bool success_) {
         uint64 securityDepositValue = _securityDepositValue;
         if (msg.value < securityDepositValue) {
             revert UsdnProtocolSecurityDepositTooLow();
@@ -305,10 +318,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         uint256 balanceBefore = address(this).balance;
 
-        (uint256 amountToRefund, bool isInitiated) =
+        uint256 amountToRefund;
+        bool liq;
+        (amountToRefund, success_, liq) =
             _initiateClosePosition(msg.sender, to, posId, amountToClose, securityDepositValue, currentPriceData);
 
-        if (isInitiated) {
+        if (success_ || liq) {
             unchecked {
                 amountToRefund += _executePendingActionOrRevert(previousActionsData);
             }
@@ -323,16 +338,18 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         address owner,
         bytes calldata closePriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable initializedAndNonReentrant {
+    ) external payable initializedAndNonReentrant returns (bool success_) {
         uint256 balanceBefore = address(this).balance;
 
-        (uint256 amountToRefund, bool isValidated, bool liq) = _validateClosePosition(owner, closePriceData);
+        uint256 amountToRefund;
+        bool liq;
+        (amountToRefund, success_, liq) = _validateClosePosition(owner, closePriceData);
         if (msg.sender != owner) {
             _refundEther(amountToRefund, owner);
             balanceBefore -= amountToRefund;
             amountToRefund = 0;
         }
-        if (isValidated || liq) {
+        if (success_ || liq) {
             unchecked {
                 amountToRefund += _executePendingActionOrRevert(previousActionsData);
             }
@@ -390,6 +407,33 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         } while (validatedActions_ < maxValidations);
         _refundExcessEther(0, amountToRefund, balanceBefore);
         _checkPendingFee();
+    }
+
+    /// @inheritdoc IUsdnProtocolActions
+    function transferPositionOwnership(PositionId calldata posId, address newOwner)
+        external
+        initializedAndNonReentrant
+    {
+        (bytes32 tickHash, uint256 version) = _tickHash(posId.tick);
+        if (posId.tickVersion != version) {
+            revert UsdnProtocolOutdatedTick(version, posId.tickVersion);
+        }
+        Position storage pos = _longPositions[tickHash][posId.index];
+
+        if (msg.sender != pos.user) {
+            revert UsdnProtocolUnauthorized();
+        }
+        if (newOwner == address(0)) {
+            revert UsdnProtocolInvalidAddressTo();
+        }
+
+        pos.user = newOwner;
+
+        if (ERC165Checker.supportsInterface(newOwner, type(IOwnershipCallback).interfaceId)) {
+            IOwnershipCallback(newOwner).ownershipCallback(msg.sender, posId);
+        }
+
+        emit PositionOwnershipTransferred(posId, msg.sender, newOwner);
     }
 
     /**
@@ -552,10 +596,103 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _balanceVault -= liquidationRewards;
         }
 
-        // transfer rewards (wsteth) to the liquidator
+        // transfer rewards (assets) to the liquidator
         _asset.safeTransfer(msg.sender, liquidationRewards);
 
         emit LiquidatorRewarded(msg.sender, liquidationRewards);
+    }
+
+    /**
+     * @notice Prepare the data for the `initiateDeposit` function
+     * @param validator The validator address
+     * @param amount The amount of asset to deposit
+     * @param currentPriceData The price data for the initiate action
+     * @return data_ The transient data for the deposit action
+     */
+    function _prepareInitiateDepositData(address validator, uint128 amount, bytes calldata currentPriceData)
+        internal
+        returns (InitiateDepositData memory data_)
+    {
+        PriceInfo memory currentPrice = _getOraclePrice(
+            ProtocolAction.InitiateDeposit,
+            block.timestamp,
+            _calcActionId(validator, uint128(block.timestamp)),
+            currentPriceData
+        );
+
+        (, data_.isLiquidationPending) = _applyPnlAndFundingAndLiquidate(
+            currentPrice.neutralPrice,
+            currentPrice.timestamp,
+            _liquidationIteration,
+            false,
+            ProtocolAction.InitiateDeposit,
+            currentPriceData
+        );
+
+        if (data_.isLiquidationPending) {
+            return data_;
+        }
+
+        _checkImbalanceLimitDeposit(amount);
+
+        // apply fees on price
+        data_.pendingActionPrice = (currentPrice.price - currentPrice.price * _vaultFeeBps / BPS_DIVISOR).toUint128();
+
+        data_.totalExpo = _totalExpo;
+        data_.balanceLong = _balanceLong;
+        data_.balanceVault = _vaultAssetAvailable(
+            data_.totalExpo, _balanceVault, data_.balanceLong, data_.pendingActionPrice, _lastPrice
+        ).toUint256();
+        data_.usdnTotalShares = _usdn.totalShares();
+
+        // calculate the amount of SDEX tokens to burn
+        uint256 usdnSharesToMintEstimated =
+            _calcMintUsdnShares(amount, data_.balanceVault, data_.usdnTotalShares, data_.pendingActionPrice);
+        uint256 usdnToMintEstimated = _usdn.convertToTokens(usdnSharesToMintEstimated);
+        // we want to at least mint 1 wei of USDN
+        if (usdnToMintEstimated == 0) {
+            revert UsdnProtocolDepositTooSmall();
+        }
+        uint32 burnRatio = _sdexBurnOnDepositRatio;
+        data_.sdexToBurn = _calcSdexToBurn(usdnToMintEstimated, burnRatio);
+        // we want to at least burn 1 wei of SDEX if SDEX burning is enabled
+        if (burnRatio != 0 && data_.sdexToBurn == 0) {
+            revert UsdnProtocolDepositTooSmall();
+        }
+    }
+
+    /**
+     * @notice Prepare the pending action struct for a deposit and add it to the queue
+     * @param to The address that will receive the minted USDN
+     * @param validator The address that will validate the deposit
+     * @param securityDepositValue The value of the security deposit for the newly created pending action
+     * @param amount The amount of assets to deposit
+     * @param data The deposit action data
+     * @return amountToRefund_ Refund The security deposit value of a stale pending action
+     */
+    function _createDepositPendingAction(
+        address to,
+        address validator,
+        uint64 securityDepositValue,
+        uint128 amount,
+        InitiateDepositData memory data
+    ) internal returns (uint256 amountToRefund_) {
+        DepositPendingAction memory pendingAction = DepositPendingAction({
+            action: ProtocolAction.ValidateDeposit,
+            timestamp: uint40(block.timestamp),
+            to: to,
+            validator: validator,
+            securityDepositValue: securityDepositValue,
+            _unused: 0,
+            amount: amount,
+            assetPrice: data.pendingActionPrice,
+            totalExpo: data.totalExpo,
+            balanceVault: data.balanceVault,
+            balanceLong: data.balanceLong,
+            usdnTotalShares: data.usdnTotalShares
+        });
+
+        amountToRefund_ = _addPendingAction(validator, _convertDepositPendingAction(pendingAction));
     }
 
     /**
@@ -592,65 +729,15 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolZeroAmount();
         }
 
-        PriceInfo memory currentPrice = _getOraclePrice(
-            ProtocolAction.InitiateDeposit,
-            block.timestamp,
-            _calcActionId(validator, uint128(block.timestamp)),
-            currentPriceData
-        );
-
-        InitiateDepositData memory data;
-        (, data.isLiquidationPending) = _applyPnlAndFundingAndLiquidate(
-            currentPrice.neutralPrice,
-            currentPrice.timestamp,
-            _liquidationIteration,
-            false,
-            ProtocolAction.InitiateDeposit,
-            currentPriceData
-        );
+        InitiateDepositData memory data = _prepareInitiateDepositData(validator, amount, currentPriceData);
 
         // early return in case there are still pending liquidations
         if (data.isLiquidationPending) {
             return (securityDepositValue, false);
         }
 
-        _checkImbalanceLimitDeposit(amount);
+        amountToRefund_ = _createDepositPendingAction(to, validator, securityDepositValue, amount, data);
 
-        // apply fees on price
-        uint128 pendingActionPrice = (currentPrice.price - currentPrice.price * _vaultFeeBps / BPS_DIVISOR).toUint128();
-
-        DepositPendingAction memory pendingAction = DepositPendingAction({
-            action: ProtocolAction.ValidateDeposit,
-            timestamp: uint40(block.timestamp),
-            to: to,
-            validator: validator,
-            securityDepositValue: securityDepositValue,
-            _unused: 0,
-            amount: amount,
-            assetPrice: pendingActionPrice,
-            totalExpo: _totalExpo,
-            balanceVault: _vaultAssetAvailable(_totalExpo, _balanceVault, _balanceLong, pendingActionPrice, _lastPrice)
-                .toUint256(),
-            balanceLong: _balanceLong,
-            usdnTotalSupply: _usdn.totalSupply()
-        });
-
-        amountToRefund_ = _addPendingAction(validator, _convertDepositPendingAction(pendingAction));
-
-        // calculate the amount of SDEX tokens to burn
-        data.usdnToMintEstimated = _calcMintUsdn(
-            pendingAction.amount, pendingAction.balanceVault, pendingAction.usdnTotalSupply, pendingAction.assetPrice
-        );
-        data.burnRatio = _sdexBurnOnDepositRatio;
-        data.sdexToBurn = _calcSdexToBurn(data.usdnToMintEstimated, data.burnRatio);
-        // we want to at least mint 1 wei of USDN
-        if (data.usdnToMintEstimated == 0) {
-            revert UsdnProtocolDepositTooSmall();
-        }
-        // we want to at least burn 1 wei of SDEX if SDEX burning is enabled
-        if (data.burnRatio != 0 && data.sdexToBurn == 0) {
-            revert UsdnProtocolDepositTooSmall();
-        }
         if (data.sdexToBurn > 0) {
             // send SDEX to the dead address
             _sdex.safeTransferFrom(user, DEAD_ADDRESS, data.sdexToBurn);
@@ -720,32 +807,32 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // apply fees on price
         uint128 priceWithFees = (currentPrice.price - currentPrice.price * _vaultFeeBps / BPS_DIVISOR).toUint128();
 
-        uint256 usdnToMint1 =
-            _calcMintUsdn(deposit.amount, deposit.balanceVault, deposit.usdnTotalSupply, deposit.assetPrice);
+        uint256 usdnSharesToMint1 =
+            _calcMintUsdnShares(deposit.amount, deposit.balanceVault, deposit.usdnTotalShares, deposit.assetPrice);
 
-        uint256 usdnToMint2 = _calcMintUsdn(
+        uint256 usdnSharesToMint2 = _calcMintUsdnShares(
             deposit.amount,
             // calculate the available balance in the vault side if the price moves to `priceWithFees`
             _vaultAssetAvailable(
                 deposit.totalExpo, deposit.balanceVault, deposit.balanceLong, priceWithFees, deposit.assetPrice
             ).toUint256(),
-            deposit.usdnTotalSupply,
+            deposit.usdnTotalShares,
             priceWithFees
         );
 
-        uint256 usdnToMint;
+        uint256 usdnSharesToMint;
         // we use the lower of the two amounts to mint
-        if (usdnToMint1 <= usdnToMint2) {
-            usdnToMint = usdnToMint1;
+        if (usdnSharesToMint1 <= usdnSharesToMint2) {
+            usdnSharesToMint = usdnSharesToMint1;
         } else {
-            usdnToMint = usdnToMint2;
+            usdnSharesToMint = usdnSharesToMint2;
         }
 
         _balanceVault += deposit.amount;
 
-        _usdn.mint(deposit.to, usdnToMint);
+        uint256 mintedTokens = _usdn.mintShares(deposit.to, usdnSharesToMint);
         isValidated_ = true;
-        emit ValidatedDeposit(deposit.to, deposit.validator, deposit.amount, usdnToMint, deposit.timestamp);
+        emit ValidatedDeposit(deposit.to, deposit.validator, deposit.amount, mintedTokens, deposit.timestamp);
     }
 
     /**
@@ -1497,6 +1584,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @return amountToRefund_ If there are pending liquidations we'll refund the securityDepositValue,
      * else we'll only refund the security deposit value of the stale pending action
      * @return isInitiated_ Whether the action is initiated
+     * @return liq_ Whether the position was liquidated
      */
     function _initiateClosePosition(
         address owner,
@@ -1505,13 +1593,13 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 amountToClose,
         uint64 securityDepositValue,
         bytes calldata currentPriceData
-    ) internal returns (uint256 amountToRefund_, bool isInitiated_) {
-        (ClosePositionData memory data, bool liq) =
-            _prepareClosePositionData(owner, to, posId, amountToClose, currentPriceData);
+    ) internal returns (uint256 amountToRefund_, bool isInitiated_, bool liq_) {
+        ClosePositionData memory data;
+        (data, liq_) = _prepareClosePositionData(owner, to, posId, amountToClose, currentPriceData);
 
-        if (liq || data.isLiquidationPending) {
+        if (liq_ || data.isLiquidationPending) {
             // position was liquidated in this transaction or liquidations are pending
-            return (securityDepositValue, !data.isLiquidationPending);
+            return (securityDepositValue, !data.isLiquidationPending, liq_);
         }
 
         amountToRefund_ = _createClosePendingAction(owner, to, posId, amountToClose, securityDepositValue, data);

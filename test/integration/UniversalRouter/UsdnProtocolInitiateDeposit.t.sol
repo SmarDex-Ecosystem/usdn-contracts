@@ -79,8 +79,10 @@ contract TestForkUniversalRouterInitiateDeposit is UniversalRouterBaseFixture {
     }
 
     function _transferSdex(uint256 depositAmount) internal returns (uint256 sdexToBurn_) {
-        uint256 usdnToMintEstimated =
-            protocol.i_calcMintUsdn(depositAmount, protocol.getBalanceVault(), usdn.totalSupply(), params.initialPrice);
+        uint256 usdnSharesToMintEstimated = protocol.i_calcMintUsdnShares(
+            depositAmount, protocol.getBalanceVault(), usdn.totalShares(), params.initialPrice
+        );
+        uint256 usdnToMintEstimated = usdn.convertToTokens(usdnSharesToMintEstimated);
         sdexToBurn_ = protocol.i_calcSdexToBurn(usdnToMintEstimated, protocol.getSdexBurnOnDepositRatio());
         sdex.transfer(address(router), sdexToBurn_);
     }
