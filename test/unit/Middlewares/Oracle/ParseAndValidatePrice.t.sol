@@ -183,16 +183,12 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
     }
 
     /**
-     * @custom:scenario Parse and validate price for "validate" actions using chainlink
-     * with a previous roundId timestamp equal the target timestamp
-     * @custom:given The chainlink validate roundId data
-     * @custom:and A too high chainlink previous roundId
-     * @custom:and A correct chainlink validate roundId
-     * @custom:and A previous chainlink roundId with a timestamp equal to the target timestamp
-     * @custom:when Calling parseAndValidatePrice for "validate" actions after waiting the proper delay
+     * @custom:scenario Parse and validate price for "validate" actions using chainlink, roundId is too high
+     * @custom:given The previous roundId has a timestamp later than the limit timestamp
+     * @custom:when The `parseAndValidatePrice` for "validate" actions is called with a roundId that is too high
      * @custom:then It should revert with `OracleMiddlewareRoundIdTooHigh`
      */
-    function test_RevertWhen_getValidatePriceFromChainlinkOldPreviousRoundId() public {
+    function test_RevertWhen_getValidatePriceFromChainlinkRoundIdTooHigh() public {
         uint128 targetTimestamp = uint128(block.timestamp);
         uint128 lowLatencyDelay = uint128(oracleMiddleware.getLowLatencyDelay());
         uint128 limitTimestamp = targetTimestamp + lowLatencyDelay;
@@ -219,15 +215,12 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
     }
 
     /**
-     * @custom:scenario Parse and validate price for "validate" actions using chainlink
-     * with a validate roundId timestamp before the low latency delay
-     * @custom:given The chainlink validate roundId data
-     * @custom:and A correct chainlink previous roundId
-     * @custom:and A too low chainlink validate roundId
-     * @custom:when Calling parseAndValidatePrice for "validate" actions after waiting the proper delay
-     * @custom:then It should revert with `OracleMiddlewareRoundIdTooLow`
+     * @custom:scenario Parse and validate price for "validate" actions using chainlink, roundId is too low
+     * @custom:given The roundId has a timestamp equal to the limit timestamp
+     * @custom:when The parseAndValidatePrice for "validate" actions is called with a roundId that is too low
+     * @custom:then It should revert with OracleMiddlewareRoundIdTooHigh
      */
-    function test_RevertWhen_getValidatePriceFromChainlinkEarlyRoundId() public {
+    function test_RevertWhen_getValidatePriceFromChainlinkRoundIdTooLow() public {
         uint128 targetTimestamp = uint128(block.timestamp);
         uint128 lowLatencyDelay = uint128(oracleMiddleware.getLowLatencyDelay());
         uint128 limitTimestamp = targetTimestamp + lowLatencyDelay;
