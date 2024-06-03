@@ -8,7 +8,7 @@ import { OracleMiddleware } from "src/OracleMiddleware/OracleMiddleware.sol";
 
 /**
  * @title Contract to apply and return wsteth price
- * @notice This contract is used to get the price of wsteth from eth price oracle
+ * @notice This contract is used to get the price of wsteth from the eth price oracle
  */
 contract WstEthOracleMiddleware is OracleMiddleware {
     /// @notice wsteth instance
@@ -35,7 +35,7 @@ contract WstEthOracleMiddleware is OracleMiddleware {
      * @inheritdoc OracleMiddleware
      * @notice Parses and validates price data by applying eth/wsteth ratio
      * @dev The data format is specific to the middleware and is simply forwarded from the user transaction's calldata
-     * Wsteth price is calculated as follows : ethPrice x stEthPerToken / 1 ether
+     * Wsteth price is calculated as follows: ethPrice x stEthPerToken / 1 ether
      */
     function parseAndValidatePrice(
         bytes32 actionId,

@@ -30,10 +30,10 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
      * @custom:scenario Parse and validate price with mocked hermes API signature for pyth
      * @custom:given The price feed is ETH/USD for pyth and chainlink
      * @custom:and The validationDelay is respected
-     * @custom:when Protocol action is any targeted action
-     * @custom:then The price signature is well decoded
+     * @custom:when The Protocol action is any targeted action
+     * @custom:then The price signature is well-decoded
      * @custom:and The price retrieved by the oracle middleware is the same as the one from the hermes API by applying
-     * Steth/Wsteth onchain price ratio.
+     * Steth/Wsteth on-chain price ratio
      */
     function test_ForkethParseAndValidatePriceForAllActionsWithPyth() public ethMainnetFork reSetUp {
         // all targeted actions loop
@@ -57,8 +57,8 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
                     || action == ProtocolAction.InitiateDeposit || action == ProtocolAction.InitiateWithdrawal
                     || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.InitiateClosePosition
             ) {
-                // Since we force the usage of Pyth for initiate actions, Pyth requires that the price data timestamp
-                // is recent compared to block.timestamp
+                // since we force the usage of Pyth for initiate actions, Pyth requires
+                // that the price data timestamp is recent compared to block.timestamp
                 vm.warp(pythTimestamp);
                 middlewarePrice = wstethMiddleware.parseAndValidatePrice{ value: validationCost }("", 0, action, data);
             } else {
@@ -73,13 +73,12 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
             // formatted pyth price
             uint256 formattedPythPrice = pythPrice * 10 ** wstethMiddleware.getDecimals() / 10 ** pythDecimals;
 
-            // Apply conf ratio to pyth confidence
+            // apply conf ratio to pyth confidence
             uint256 formattedPythConf = (
                 pythConf * 10 ** (wstethMiddleware.getDecimals() - pythDecimals) * wstethMiddleware.getConfRatioBps()
             ) / wstethMiddleware.BPS_DIVISOR();
 
-            // TO DO : not needed anymore
-            // Price + conf
+            // price + conf
             if (
                 action == ProtocolAction.InitiateWithdrawal || action == ProtocolAction.ValidateWithdrawal
                     || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.ValidateOpenPosition
@@ -87,7 +86,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
                 // check price
                 assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice + formattedPythConf), priceError);
 
-                // Price - conf
+                // price - conf
             } else if (
                 action == ProtocolAction.InitiateDeposit || action == ProtocolAction.ValidateDeposit
                     || action == ProtocolAction.InitiateClosePosition || action == ProtocolAction.ValidateClosePosition
@@ -95,7 +94,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
                 // check price
                 assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice - formattedPythConf), priceError);
 
-                // Price only
+                // price only
             } else {
                 // check price
                 assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice), priceError);
@@ -106,9 +105,9 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
     /**
      * @custom:scenario Parse and validate price with chainlink onchain
      * @custom:given The price feed is ETH/USD for chainlink
-     * @custom:when Protocol action is any InitiateDeposit
+     * @custom:when The Protocol action is any InitiateDeposit
      * @custom:then The price retrieved by the oracle middleware is the same as the one from the chainlink onchain data
-     * by applying Steth/Wsteth onchain price ratio.
+     * by applying Steth/Wsteth onchain price ratio
      */
     function test_ForkethParseAndValidatePriceForInitiateDepositWithChainlink() public ethMainnetFork reSetUp {
         // all targeted actions loop
@@ -116,7 +115,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
             // action type
             ProtocolAction action = actions[i];
 
-            // If the action is only available for pyth, skip it
+            // if the action is only available for pyth, skip it
             if (
                 action == ProtocolAction.None || action == ProtocolAction.ValidateDeposit
                     || action == ProtocolAction.ValidateWithdrawal || action == ProtocolAction.ValidateOpenPosition
@@ -159,10 +158,10 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
      * @custom:scenario Parse and validate price with real hermes API signature for pyth
      * @custom:given The price feed is ETH/USD for pyth
      * @custom:and The validationDelay is respected
-     * @custom:when Protocol action is any targeted action
-     * @custom:then The price signature is well decoded
+     * @custom:when The Protocol action is any targeted action
+     * @custom:then The price signature is well-decoded
      * @custom:and The price retrieved by the oracle middleware is the same as the one from the hermes API by applying
-     * Steth/Wsteth onchain price ratio.
+     * Steth/Wsteth onchain price ratio
      */
     function test_ForkFFIParseAndValidatePriceForAllActionsWithPyth() public ethMainnetFork reSetUp {
         // all targeted actions loop
@@ -187,7 +186,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
                         || action == ProtocolAction.InitiateDeposit || action == ProtocolAction.InitiateWithdrawal
                         || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.InitiateClosePosition
                 ) {
-                    // Since we force the usage of Pyth for initiate actions,
+                    // since we force the usage of Pyth for initiate actions,
                     // Pyth requires that the price data timestamp is recent compared to block.timestamp
                     vm.warp(pythTimestamp);
                     middlewarePrice =
@@ -205,26 +204,26 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
             // formatted pyth price
             uint256 formattedPythPrice = pythPrice * 10 ** wstethMiddleware.getDecimals() / 10 ** pythDecimals;
 
-            // Apply conf ratio to pyth confidence
+            // apply conf ratio to pyth confidence
             uint256 formattedPythConf = (
                 pythConf * 10 ** (wstethMiddleware.getDecimals() - pythDecimals) * wstethMiddleware.getConfRatioBps()
             ) / wstethMiddleware.BPS_DIVISOR();
 
-            // Price + conf
+            // price + conf
             if (
                 action == ProtocolAction.InitiateWithdrawal || action == ProtocolAction.ValidateWithdrawal
                     || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.ValidateOpenPosition
             ) {
                 assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice + formattedPythConf), priceError);
             }
-            // Price - conf
+            // price - conf
             else if (
                 action == ProtocolAction.InitiateDeposit || action == ProtocolAction.ValidateDeposit
                     || action == ProtocolAction.InitiateClosePosition || action == ProtocolAction.ValidateClosePosition
             ) {
                 assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice - formattedPythConf), priceError);
             }
-            // Price only
+            // price only
             else {
                 // check price
                 assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice), priceError);
@@ -239,9 +238,9 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
 
                 assertEq(middlewarePrice.timestamp, pythWstethTimestamp, "Wrong similar timestamp");
 
-                // Should obtain a short different price between pyth wsteth price feed
-                // and pyth eth price feed adjusted with ratio.
-                // We are ok with a delta below pyth wsteth confidence.
+                // should obtain a short different price between the pyth wsteth price feed
+                // and the pyth eth price feed adjusted with ratio.
+                // We are ok with a delta below the pyth wsteth confidence.
                 assertApproxEqAbs(
                     middlewarePrice.price,
                     pythWstethPrice * 10 ** wstethMiddleware.getDecimals() / 10 ** pythDecimals,
@@ -257,7 +256,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
      * @custom:given The price feed is ETH/USD for chainlink
      * @custom:when Protocol action is InitiateDeposit
      * @custom:then The price retrieved by the oracle middleware is the same as the one from the chainlink onchain data
-     * by applying Steth/Wsteth onchain price ratio.
+     * by applying Steth/Wsteth on-chain price ratio
      */
     function test_ForkFFIParseAndValidatePriceForInitiateDepositWithChainlink() public ethMainnetFork reSetUp {
         // all targeted actions loop
@@ -265,7 +264,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
             // action type
             ProtocolAction action = actions[i];
 
-            // If the action is only available for pyth, skip it
+            // if the action is only available for pyth, skip it
             if (
                 action == ProtocolAction.None || action == ProtocolAction.ValidateDeposit
                     || action == ProtocolAction.ValidateWithdrawal || action == ProtocolAction.ValidateOpenPosition

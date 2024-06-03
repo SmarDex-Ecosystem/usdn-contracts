@@ -22,7 +22,7 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
 
 /**
  * @title ActionsIntegrationFixture
- * @dev required integration actions tests
+ * @dev Required integration actions tests
  */
 contract ActionsIntegrationFixture is IOracleMiddlewareErrors {
     // all action types

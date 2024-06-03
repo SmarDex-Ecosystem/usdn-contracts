@@ -13,7 +13,7 @@ import { PendingAction, ProtocolAction, PreviousActionsData } from "src/interfac
 contract TestForkUsdnProtocolValidateTwoPos is UsdnProtocolBaseIntegrationFixture {
     function setUp() public {
         params = DEFAULT_PARAMS;
-        params.fork = true; // all tests in this contract must be labelled `Fork`
+        params.fork = true; // all tests in this contract must be labeled `Fork`
         _setUp(params);
     }
 

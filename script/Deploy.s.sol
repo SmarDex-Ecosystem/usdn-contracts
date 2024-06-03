@@ -18,7 +18,7 @@ import { Usdn } from "src/Usdn/Usdn.sol";
 
 contract Deploy is Script {
     /**
-     * @notice deploy the USDN ecosystem
+     * @notice Deploy the USDN ecosystem
      * @return WstETH_ The WstETH token
      * @return Sdex_ The SDEX token
      * @return WstEthOracleMiddleware_ The WstETH oracle middleware
@@ -46,14 +46,14 @@ contract Deploy is Script {
         uint256 depositAmount = vm.envOr("INIT_DEPOSIT_AMOUNT", uint256(0));
         uint256 longAmount = vm.envOr("INIT_LONG_AMOUNT", uint256(0));
 
-        // Deploy contracts
+        // deploy contracts
         WstETH_ = _deployWstETH(depositAmount, longAmount);
         WstEthOracleMiddleware_ = _deployWstEthOracleMiddleware(isProdEnv, address(WstETH_));
         LiquidationRewardsManager_ = _deployLiquidationRewardsManager(isProdEnv, address(WstETH_));
         Usdn_ = _deployUsdn();
         Sdex_ = _deploySdex();
 
-        // Deploy the protocol with tick spacing 100 = 1%
+        // deploy the protocol with tick spacing 100 = 1%
         UsdnProtocol_ = new UsdnProtocol(
             Usdn_,
             Sdex_,
@@ -64,13 +64,13 @@ contract Deploy is Script {
             vm.envAddress("FEE_COLLECTOR")
         );
 
-        // Deploy the rebalancer
+        // deploy the rebalancer
         Rebalancer_ = _deployRebalancer(UsdnProtocol_);
 
-        // Set the rebalancer on the USDN protocol
+        // set the rebalancer on the USDN protocol
         UsdnProtocol_.setRebalancer(Rebalancer_);
 
-        // Grant USDN minter & rebaser roles to protocol and approve wstETH spending
+        // grant USDN minter and rebaser roles to protocol and approve wstETH spending
         Usdn_.grantRole(Usdn_.MINTER_ROLE(), address(UsdnProtocol_));
         Usdn_.grantRole(Usdn_.REBASER_ROLE(), address(UsdnProtocol_));
         WstETH_.approve(address(UsdnProtocol_), depositAmount + longAmount);
@@ -85,9 +85,9 @@ contract Deploy is Script {
     /**
      * @notice Deploy the WstETH oracle middleware if necessary
      * @dev Will return the already deployed one if an address is in the env variables
-     * @param isProdEnv env check
-     * @param wstETHAddress the address of the WstETH token
-     * @return wstEthOracleMiddleware_ the deployed contract
+     * @param isProdEnv Env check
+     * @param wstETHAddress The address of the WstETH token
+     * @return wstEthOracleMiddleware_ The deployed contract
      */
     function _deployWstEthOracleMiddleware(bool isProdEnv, address wstETHAddress)
         internal
@@ -121,9 +121,9 @@ contract Deploy is Script {
     /**
      * @notice Deploy the liquidation rewards manager if necessary
      * @dev Will return the already deployed one if an address is in the env variables
-     * @param isProdEnv env check
-     * @param wstETHAddress the address of the WstETH token
-     * @return liquidationRewardsManager_ the deployed contract
+     * @param isProdEnv Env check
+     * @param wstETHAddress The address of the WstETH token
+     * @return liquidationRewardsManager_ The deployed contract
      */
     function _deployLiquidationRewardsManager(bool isProdEnv, address wstETHAddress)
         internal
@@ -153,7 +153,7 @@ contract Deploy is Script {
     /**
      * @notice Deploy the USDN token
      * @dev Will return the already deployed one if an address is in the env variables
-     * @return usdn_ the deployed contract
+     * @return usdn_ The deployed contract
      */
     function _deployUsdn() internal returns (Usdn usdn_) {
         address usdnAddress = vm.envOr("USDN_ADDRESS", address(0));
@@ -167,7 +167,7 @@ contract Deploy is Script {
     /**
      * @notice Deploy the SDEX token
      * @dev Will return the already deployed one if an address is in the env variables
-     * @return sdex_ the deployed contract
+     * @return sdex_ The deployed contract
      */
     function _deploySdex() internal returns (Sdex sdex_) {
         address sdexAddress = payable(vm.envOr("SDEX_ADDRESS", address(0)));
@@ -181,9 +181,9 @@ contract Deploy is Script {
     /**
      * @notice Deploy the WstETH token
      * @dev Will return the already deployed one if an address is in the env variables
-     * @param depositAmount the amount to deposit during the protocol initialization
-     * @param longAmount the size of the long to open during the protocol initialization
-     * @return wstEth_ the deployed contract
+     * @param depositAmount The amount to deposit during the protocol initialization
+     * @param longAmount The size of the long to open during the protocol initialization
+     * @return wstEth_ The deployed contract
      */
     function _deployWstETH(uint256 depositAmount, uint256 longAmount) internal returns (WstETH wstEth_) {
         address payable wstETHAddress = payable(vm.envOr("WSTETH_ADDRESS", address(0)));
@@ -202,8 +202,8 @@ contract Deploy is Script {
     /**
      * @notice Deploy the Rebalancer contract if necessary
      * @dev Will return the already deployed one if an address is in the env variables
-     * @param usdnProtocol the USDN protocol
-     * @return rebalancer_ the deployed contract
+     * @param usdnProtocol The USDN protocol
+     * @return rebalancer_ The deployed contract
      */
     function _deployRebalancer(UsdnProtocol usdnProtocol) internal returns (Rebalancer rebalancer_) {
         address rebalancerAddress = vm.envOr("REBALANCER_ADDRESS", address(0));
@@ -216,11 +216,11 @@ contract Deploy is Script {
 
     /**
      * @notice Initialize the USDN Protocol
-     * @param isProdEnv env check
-     * @param UsdnProtocol_ the USDN protocol
-     * @param WstEthOracleMiddleware_ the WstETH oracle middleware
-     * @param depositAmount the amount to deposit during the protocol initialization
-     * @param longAmount the size of the long to open during the protocol initialization
+     * @param isProdEnv Env check
+     * @param UsdnProtocol_ The USDN protocol
+     * @param WstEthOracleMiddleware_ The WstETH oracle middleware
+     * @param depositAmount The amount to deposit during the protocol initialization
+     * @param longAmount The size of the long to open during the protocol initialization
      */
     function _initializeUsdnProtocol(
         bool isProdEnv,

@@ -41,7 +41,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         uint128 initialLong;
         uint128 initialLiqPrice;
         uint128 initialPrice;
-        uint256 initialTimestamp; // ignored if fork is true
+        uint256 initialTimestamp; // ignored if `fork` is true
         bool fork;
         uint256 forkWarp; // warp to this timestamp after forking, before deploying protocol. Zero to disable
     }

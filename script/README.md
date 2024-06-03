@@ -11,12 +11,12 @@ Environment variables can be used to control the script execution:
 - `WSTETH_ADDRESS`: if provided, skips deployment of the mock wstETH token
 - `MIDDLEWARE_ADDRESS`: if provided, skips deployment of the oracle middleware
 - `PYTH_ADDRESS`: required if middleware address not provided, the contract address of the pyth oracle
-- `PYTH_ETH_PRICE_ID`: required if middleware address not provided, the price id of the ETH pyth oracle
+- `PYTH_ETH_PRICE_ID`: required if middleware address not provided, the price ID of the ETH pyth oracle
 - `CHAINLINK_ETH_PRICE_ADDRESS`: required if middleware address not provided, the address of the ETH chainlink oracle
 - `CHAINLINK_ETH_PRICE_VALIDITY`: the amount of time (in seconds) we consider the price valid. A tolerance should be added to avoid reverting if chainlink misses the heartbeat by a few minutes
 - `LIQUIDATION_REWARDS_MANAGER_ADDRESS`: if provided, skips deployment of the liquidation rewards manager
 - `REBALANCER_ADDRESS`: if provided, skips deployment of the rebalancer
-- `CHAINLINK_GAS_PRICE_ADDRESS`: required if liquidation rewards manager address not provided, the address of the gas price chainlink oracle
+- `CHAINLINK_GAS_PRICE_ADDRESS`: required if liquidation rewards manager address is not provided, the address of the gas price chainlink oracle
 - `CHAINLINK_GAS_PRICE_VALIDITY`: the amount of time (in seconds) we consider the price valid. A tolerance should be added to avoid reverting if chainlink misses the heartbeat by a few minutes
 - `USDN_ADDRESS`: if provided, skips deployment of the USDN token
 - `INIT_DEPOSIT_AMOUNT`: amount to use for the `initialize` function call (if not provided, then initialization is skipped).

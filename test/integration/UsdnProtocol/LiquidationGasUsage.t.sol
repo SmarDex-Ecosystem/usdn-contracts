@@ -21,7 +21,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is UsdnProtocolBaseIntegrationF
         params = DEFAULT_PARAMS;
         params.initialLong = 10 ether;
         params.initialDeposit = 100 ether;
-        params.fork = true; // all tests in this contract must be labelled `Fork`
+        params.fork = true; // all tests in this contract must be labeled `Fork`
         params.forkWarp = 1_709_794_800; // thu mar 07 2024 07:00:00 UTC
         _setUp(params);
 
@@ -51,7 +51,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is UsdnProtocolBaseIntegrationF
      * LiquidationRewardsManager.getRewardsParameters
      * @custom:given There are one or more ticks that can be liquidated
      * @custom:and No rebase occurs
-     * @custom:when A liquidator calls the function liquidate
+     * @custom:when A liquidator calls the function `liquidate`
      * @custom:then The gas usage matches the LiquidationRewardsManager parameters
      */
     function test_ForkGasUsageOfLiquidateFunction() public {
@@ -63,7 +63,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is UsdnProtocolBaseIntegrationF
      * LiquidationRewardsManager.getRewardsParameters
      * @custom:given There are one or more ticks that can be liquidated
      * @custom:and A rebase occurs
-     * @custom:when A liquidator calls the function liquidate
+     * @custom:when A liquidator calls the function `liquidate`
      * @custom:then The gas usage matches the LiquidationRewardsManager parameters
      */
     function test_ForkGasUsageOfLiquidateFunctionRebase() public {
@@ -83,7 +83,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is UsdnProtocolBaseIntegrationF
         protocol.setOracleMiddleware(mockOracle);
         mockOracle.setWstethMockedPrice(pythPriceNormalized + 1000 ether);
         // turn off pyth signature verification to avoid updating the price feed
-        // this allows us to be in the worst case scenario gas wise later
+        // this allows us to be in the worst-case scenario gas-wise later
         mockOracle.setVerifySignature(false);
 
         // disable rebase for setup
