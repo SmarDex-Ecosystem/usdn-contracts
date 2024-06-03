@@ -78,14 +78,14 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
      * @notice Initiate an open position in the USDN protocol
      * @dev Check the protocol's documentation for information about how this function should be used
      * Note: the open position can fail without reverting, in case there are some pending liquidations in the protocol
-     * @param amount The amount of asset used to open the position
+     * @param amount The amount of assets used to open the position
      * @param desiredLiqPrice The desired liquidation price for the position
      * @param to The address that will receive the position
      * @param validator The address that should validate the open position (receives the security deposit back)
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions
      * @return success_ Whether the open position was successful
-     * @return output_ The position ID of the newly opened position in bytes format
+     * @return posId_ The position ID of the newly opened position
      */
     function _usdnInitiateOpenPosition(
         uint256 amount,
@@ -94,17 +94,15 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         address validator,
         bytes memory currentPriceData,
         PreviousActionsData memory previousActionsData
-    ) internal returns (bool success_, bytes memory output_) {
+    ) internal returns (bool success_, PositionId memory posId_) {
         // use amount == Constants.CONTRACT_BALANCE as a flag to deposit the entire balance of the contract
         if (amount == Constants.CONTRACT_BALANCE) {
             amount = PROTOCOL_ASSET.balanceOf(address(this));
         }
         PROTOCOL_ASSET.forceApprove(address(USDN_PROTOCOL), amount);
         // we send the full ETH balance, the protocol will refund any excess
-        PositionId memory posId;
-        (success_, posId) = USDN_PROTOCOL.initiateOpenPosition{ value: address(this).balance }(
+        (success_, posId_) = USDN_PROTOCOL.initiateOpenPosition{ value: address(this).balance }(
             amount.toUint128(), desiredLiqPrice, to, validator, currentPriceData, previousActionsData
         );
-        output_ = abi.encode(posId);
     }
 }
