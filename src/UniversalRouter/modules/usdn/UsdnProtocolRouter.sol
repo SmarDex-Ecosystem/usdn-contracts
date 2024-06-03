@@ -72,4 +72,23 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
             amount.toUint152(), to, validator, currentPriceData, previousActionsData
         );
     }
+
+    /**
+     * @notice Validate a withdrawal into the USDN protocol vault
+     * @dev Check the protocol's documentation for information about how this function should be used
+     * Note: the withdrawal can fail without reverting, in case there are some pending liquidations in the protocol
+     * @param validator The address that should validate the withdrawal
+     * @param withdrawalPriceData The price data at the time of the withdrawal
+     * @param previousActionsData The data needed to validate actionable pending actions
+     * @return success_ Whether the withdrawal was successful
+     */
+    function _usdnValidateWithdrawal(
+        address validator,
+        bytes calldata withdrawalPriceData,
+        PreviousActionsData calldata previousActionsData
+    ) internal returns (bool success_) {
+        success_ = USDN_PROTOCOL.validateWithdrawal{ value: address(this).balance }(
+            validator, withdrawalPriceData, previousActionsData
+        );
+    }
 }
