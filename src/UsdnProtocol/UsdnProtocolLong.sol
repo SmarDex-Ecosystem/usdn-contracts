@@ -750,16 +750,13 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         }
 
         Position memory pos = _longPositions[tickHash][posId.index];
-        uint8 liquidationPenalty = _tickData[tickHash].liquidationPenalty;
 
+        // fully close the position
         _removeAmountFromPosition(posId.tick, posId.index, pos, pos.amount, pos.totalExpo);
-        // TODO might not be necessary, check if you can use the other variant of getEffectivePriceForTick
-        uint256 closeLiqMultiplier =
-            _calcFixedPrecisionMultiplier(neutralPrice, longTradingExpo, _liqMultiplierAccumulator);
 
         int256 positionValue = _positionValue(
             neutralPrice,
-            _getEffectivePriceForTick(_calcTickWithoutPenalty(posId.tick, liquidationPenalty), closeLiqMultiplier),
+            getEffectivePriceForTick(posId.tick, neutralPrice, longTradingExpo, _liqMultiplierAccumulator),
             pos.totalExpo
         );
 

@@ -1893,7 +1893,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // TODO technically not needed here, could just add pendingAssets + bonus to the long balance later
             longBalance_ -= positionValue;
 
-            // cast is safe as positionValue cannot be lower than 0
             positionAmount = positionValue + pendingAssets; // TODO add bonus
         }
 
