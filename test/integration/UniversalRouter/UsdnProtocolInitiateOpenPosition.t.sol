@@ -31,7 +31,7 @@ contract TestForkUniversalRouterInitiateOpenPosition is UniversalRouterBaseFixtu
         uint256 ethBalanceBefore = address(this).balance;
         uint256 wstETHBefore = wstETH.balanceOf(address(this));
 
-        // send funds to router
+        // send funds to the router
         wstETH.transfer(address(router), OPEN_POSITION_AMOUNT);
 
         // commands
@@ -52,7 +52,7 @@ contract TestForkUniversalRouterInitiateOpenPosition is UniversalRouterBaseFixtu
     /**
      * @custom:scenario Initiating an open position through the router with a "full balance" amount
      * @custom:given The user sent the `OPEN_POSITION_AMOUNT` of wstETH to the router
-     * @custom:when The user initiates an open position through the router with amount `CONTRACT_BALANCE`
+     * @custom:when The user initiates an open position through the router with the amount `CONTRACT_BALANCE`
      * @custom:then The open position is initiated successfully with the full balance of the router
      * @custom:and The user's asset balance is reduced by `OPEN_POSITION_AMOUNT`
      */
@@ -60,7 +60,7 @@ contract TestForkUniversalRouterInitiateOpenPosition is UniversalRouterBaseFixtu
         uint256 ethBalanceBefore = address(this).balance;
         uint256 wstETHBefore = wstETH.balanceOf(address(this));
 
-        // send funds to router
+        // send funds to the router
         wstETH.transfer(address(router), OPEN_POSITION_AMOUNT);
 
         // commands
