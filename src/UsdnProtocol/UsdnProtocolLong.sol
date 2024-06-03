@@ -730,4 +730,84 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         longBalance_ = tempLongBalance.toUint256();
         vaultBalance_ = tempVaultBalance.toUint256();
     }
+
+    /**
+     * @notice Immediately close a position with the given price
+     * @dev Should only be used to close the rebalancer position
+     * @param posId The ID of the position to close
+     * @param neutralPrice The current neutral price
+     * @param longTradingExpo The long trading expo of the protocol
+     * @return positionValue_ The value of the closed position
+     */
+    function _flashClosePosition(PositionId memory posId, uint128 neutralPrice, uint256 longTradingExpo)
+        internal
+        returns (uint256 positionValue_)
+    {
+        (bytes32 tickHash, uint256 version) = _tickHash(posId.tick);
+        // if the tick version is outdated, the position was liquidated and its value is 0
+        if (posId.tickVersion != version) {
+            return positionValue_;
+        }
+
+        Position memory pos = _longPositions[tickHash][posId.index];
+        uint8 liquidationPenalty = _tickData[tickHash].liquidationPenalty;
+
+        _removeAmountFromPosition(posId.tick, posId.index, pos, pos.amount, pos.totalExpo);
+        // TODO might not be necessary, check if you can use the other variant of getEffectivePriceForTick
+        uint256 closeLiqMultiplier =
+            _calcFixedPrecisionMultiplier(neutralPrice, longTradingExpo, _liqMultiplierAccumulator);
+
+        int256 positionValue = _positionValue(
+            neutralPrice,
+            _getEffectivePriceForTick(_calcTickWithoutPenalty(posId.tick, liquidationPenalty), closeLiqMultiplier),
+            pos.totalExpo
+        );
+
+        // if positionValue is lower than 0, return 0
+        if (positionValue < 0) {
+            return positionValue_;
+        }
+
+        // cast is safe as positionValue cannot be lower than 0
+        positionValue_ = uint256(positionValue);
+
+        // emit both initiate and validate events
+        // its so that the position is considered the same as other positions by event indexers
+        emit InitiatedClosePosition(pos.user, pos.user, posId, pos.amount, pos.amount, 0);
+        emit ValidatedClosePosition(pos.user, pos.user, posId, positionValue_, positionValue - _toInt256(pos.amount));
+    }
+
+    /**
+     * @notice Immediately open a position with the given price
+     * @dev Should only be used to open the rebalancer position
+     * @param user The address of the user
+     * @param neutralPrice The current neutral price
+     * @param desiredLiqPrice The desired liquidation price
+     * @param amount The amount of collateral in the position
+     * @return posId_ The ID of the position that got created
+     */
+    function _flashOpenPosition(address user, uint128 neutralPrice, uint128 desiredLiqPrice, uint128 amount)
+        internal
+        returns (PositionId memory posId_)
+    {
+        // we calculate the closest valid tick down for the desired liq price with liquidation penalty
+        posId_.tick = getEffectiveTickForPrice(desiredLiqPrice);
+        uint8 liquidationPenalty = getTickLiquidationPenalty(posId_.tick);
+
+        // remove liquidation penalty for the total expo calculation
+        uint128 liqPriceWithoutPenalty =
+            getEffectivePriceForTick(_calcTickWithoutPenalty(posId_.tick, liquidationPenalty));
+
+        uint128 totalExpo = _calculatePositionTotalExpo(amount, neutralPrice, liqPriceWithoutPenalty);
+        Position memory long =
+            Position({ user: user, amount: amount, totalExpo: totalExpo, timestamp: uint40(block.timestamp) });
+
+        // save the position on the provided tick
+        (posId_.tickVersion, posId_.index) = _saveNewPosition(posId_.tick, long, liquidationPenalty);
+
+        // emit both initiate and validate events
+        // its so that the position is considered the same as other positions by event indexers
+        emit InitiatedOpenPosition(user, user, uint40(block.timestamp), totalExpo, long.amount, neutralPrice, posId_);
+        emit ValidatedOpenPosition(user, user, totalExpo, neutralPrice, posId_);
+    }
 }
