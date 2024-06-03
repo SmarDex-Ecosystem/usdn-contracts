@@ -232,12 +232,12 @@ abstract contract Dispatcher is
                     } else if (command == Commands.INITIATE_OPEN) {
                         (
                             uint256 amount,
-                            uint256 desiredLiqPrice,
+                            uint128 desiredLiqPrice,
                             address to,
                             address validator,
                             bytes memory currentPriceData,
                             PreviousActionsData memory previousActionsData
-                        ) = abi.decode(inputs, (uint256, uint256, address, address, bytes, PreviousActionsData));
+                        ) = abi.decode(inputs, (uint256, uint128, address, address, bytes, PreviousActionsData));
                         _usdnInitiateOpenPosition(
                             amount, desiredLiqPrice, map(to), map(validator), currentPriceData, previousActionsData
                         );
