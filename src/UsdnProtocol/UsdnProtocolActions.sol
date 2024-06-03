@@ -1917,10 +1917,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 highestUsableTradingExpo = tradingExpoToFill;
             }
 
-            // If that's the case, open position with max leverage
+            // if that's the case, open the position with the max leverage
             // TODO it's not really the desired price, but more the liq price without penalty
             // TODO we probably need the same logic as in the validate just in case the application of the penalty makes
             // the position's leverage go higher than the max leverage
+            // maybe possible to take the liquidation penalty into account when calculating highestUsableTradingExpo ?
             desiredLiqPrice = _calcLiqPriceFromTradingExpo(neutralPrice, positionAmount, highestUsableTradingExpo);
         }
 

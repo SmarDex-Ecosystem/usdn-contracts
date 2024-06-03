@@ -244,9 +244,8 @@ contract Rebalancer is Ownable, IRebalancer {
                 _positionData[positionVersion].pnlMultiplier = pnlMultiplier;
 
                 // update the multiplier accumulator
-                // TODO use amounts to avoid
                 accMultiplier = FixedPointMathLib.fullMulDiv(
-                    currentPositionData.entryAccMultiplier, pnlMultiplier, MULTIPLIER_FACTOR
+                    previousPosValue, currentPositionData.entryAccMultiplier, currentPositionData.amount
                 );
             } else {
                 // update the last liquidated version tracker
