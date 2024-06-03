@@ -10,7 +10,6 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { UsdnProtocolLong } from "src/UsdnProtocol/UsdnProtocolLong.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
-import { IRebalancerTypes } from "src/interfaces/Rebalancer/IRebalancerTypes.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolActions } from "src/interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 import {
@@ -1848,11 +1847,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     /**
-     * TODO move those functions into UsdnProtocolLong
      * @notice Trigger the rebalancer if the imbalance on the long side is too high
      * It will close the rebalancer position (if there is one) and open a new one with
      * the pending assets, the value of the previous position and the liquidation bonus (if available)
-     * and a leverage to fill enough trading expo to reach the desired imbalance, up to the max leverages.
+     * and a leverage to fill enough trading expo to reach the desired imbalance, up to the max leverages
      * @dev Will do nothing if no rebalancer is set in the contract
      * @param longBalance The balance of the long side
      * @param vaultBalance The balance of the vault side
@@ -1883,8 +1881,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         (uint128 pendingAssets, uint256 rebalancerMaxLeverage, PositionId memory rebalancerPosId) =
             rebalancer.getRebalancerData();
-        // TODO Ask if the position fee should be applied
-        uint128 adjustedPrice = neutralPrice + (neutralPrice * _positionFeeBps / BPS_DIVISOR).toUint128();
 
         // Close the rebalancer position and get its value to open the next one
         uint128 positionAmount;
@@ -1892,7 +1888,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // But don't want to assume values as they are separate contracts
         if (rebalancerPosId.tick != rebalancer.NO_POSITION_TICK()) {
             uint128 positionValue =
-                _flashClosePosition(rebalancerPosId, neutralPrice, adjustedPrice, totalExpo - longBalance_).toUint128();
+                _flashClosePosition(rebalancerPosId, neutralPrice, totalExpo - longBalance_).toUint128();
             // TODO Make sure positionValue > longBalance_ ?
             // TODO technically not needed here, could just add pendingAssets + bonus to the long balance later
             longBalance_ -= positionValue;
@@ -1930,8 +1926,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         // open a new position for the rebalancer
-        PositionId memory posId =
-            _flashOpenPosition(address(rebalancer), neutralPrice, adjustedPrice, desiredLiqPrice, positionAmount);
+        PositionId memory posId = _flashOpenPosition(address(rebalancer), neutralPrice, desiredLiqPrice, positionAmount);
 
         // update the long balance
         longBalance_ += positionAmount;
@@ -1948,16 +1943,13 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @dev Should only be used to close the rebalancer position
      * @param posId The ID of the position to close
      * @param neutralPrice The current neutral price
-     * @param adjustedPrice The price with the position fees
      * @param longTradingExpo The long trading expo of the protocol
      * @return positionValue_ The value of the closed position
      */
-    function _flashClosePosition(
-        PositionId memory posId,
-        uint128 neutralPrice,
-        uint128 adjustedPrice,
-        uint256 longTradingExpo
-    ) internal returns (uint256 positionValue_) {
+    function _flashClosePosition(PositionId memory posId, uint128 neutralPrice, uint256 longTradingExpo)
+        internal
+        returns (uint256 positionValue_)
+    {
         (bytes32 tickHash, uint256 version) = _tickHash(posId.tick);
         // if the tick version is outdated, the position was liquidated and its value is 0
         if (posId.tickVersion != version) {
@@ -1973,7 +1965,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _calcFixedPrecisionMultiplier(neutralPrice, longTradingExpo, _liqMultiplierAccumulator);
 
         int256 positionValue = _positionValue(
-            adjustedPrice,
+            neutralPrice,
             _getEffectivePriceForTick(_calcTickWithoutPenalty(posId.tick, liquidationPenalty), closeLiqMultiplier),
             pos.totalExpo
         );
@@ -1997,18 +1989,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @dev Should only be used to open the rebalancer position
      * @param user The address of the user
      * @param neutralPrice The current neutral price
-     * @param adjustedPrice The price with the position fee
      * @param desiredLiqPrice The desired liquidation price
      * @param amount The amount of collateral in the position
      * @return posId_ The ID of the position that got created
      */
-    function _flashOpenPosition(
-        address user,
-        uint128 neutralPrice,
-        uint128 adjustedPrice,
-        uint128 desiredLiqPrice,
-        uint128 amount
-    ) internal returns (PositionId memory posId_) {
+    function _flashOpenPosition(address user, uint128 neutralPrice, uint128 desiredLiqPrice, uint128 amount)
+        internal
+        returns (PositionId memory posId_)
+    {
         // we calculate the closest valid tick down for the desired liq price with liquidation penalty
         posId_.tick = getEffectiveTickForPrice(desiredLiqPrice);
         uint8 liquidationPenalty = getTickLiquidationPenalty(posId_.tick);
@@ -2017,7 +2005,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 liqPriceWithoutPenalty =
             getEffectivePriceForTick(_calcTickWithoutPenalty(posId_.tick, liquidationPenalty));
 
-        uint128 totalExpo = _calculatePositionTotalExpo(amount, adjustedPrice, liqPriceWithoutPenalty);
+        uint128 totalExpo = _calculatePositionTotalExpo(amount, neutralPrice, liqPriceWithoutPenalty);
         Position memory long =
             Position({ user: user, amount: amount, totalExpo: totalExpo, timestamp: uint40(block.timestamp) });
 
@@ -2026,7 +2014,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // emit both initiate and validate events
         // its so that the position is considered the same as other positions by event indexers
-        emit InitiatedOpenPosition(user, user, uint40(block.timestamp), totalExpo, long.amount, adjustedPrice, posId_);
+        emit InitiatedOpenPosition(user, user, uint40(block.timestamp), totalExpo, long.amount, neutralPrice, posId_);
         emit ValidatedOpenPosition(user, user, totalExpo, neutralPrice, posId_);
     }
 
