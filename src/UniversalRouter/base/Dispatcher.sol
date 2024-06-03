@@ -205,7 +205,7 @@ abstract contract Dispatcher is
                         }
                     }
                 } else {
-                    // Comment for the eights actions(INITIATE and VALIDATE) of the USDN protocol.
+                    // Comment for the eights actions(INITIATE and VALIDATE) of the USDN protocol
                     // We don't allow the transaction to revert if the actions was not successful (due to pending
                     // liquidations), so we ignore the success boolean. This is because it's important to perform
                     // liquidations if they are needed, and it would be a big waste of gas for the user to revert
