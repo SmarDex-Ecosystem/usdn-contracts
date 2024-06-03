@@ -8,7 +8,7 @@ import { OracleMiddleware } from "src/OracleMiddleware/OracleMiddleware.sol";
 
 /**
  * @title Contract to apply and return wsteth price
- * @notice This contract is used to get the price of wsteth from steth price oracle
+ * @notice This contract is used to get the price of wsteth from eth price oracle
  */
 contract WstEthOracleMiddleware is OracleMiddleware {
     /// @notice wsteth instance
@@ -33,9 +33,9 @@ contract WstEthOracleMiddleware is OracleMiddleware {
 
     /**
      * @inheritdoc OracleMiddleware
-     * @notice Parses and validates price data by applying steth/wsteth ratio
+     * @notice Parses and validates price data by applying eth/wsteth ratio
      * @dev The data format is specific to the middleware and is simply forwarded from the user transaction's calldata
-     * Wsteth price is calculated as follows : stethPrice x stEthPerToken / 1 ether
+     * Wsteth price is calculated as follows : ethPrice x stEthPerToken / 1 ether
      */
     function parseAndValidatePrice(
         bytes32 actionId,
@@ -43,17 +43,17 @@ contract WstEthOracleMiddleware is OracleMiddleware {
         ProtocolAction action,
         bytes calldata data
     ) public payable virtual override returns (PriceInfo memory) {
-        // fetched steth price
-        PriceInfo memory stethPrice = super.parseAndValidatePrice(actionId, targetTimestamp, action, data);
+        // fetched eth price
+        PriceInfo memory ethPrice = super.parseAndValidatePrice(actionId, targetTimestamp, action, data);
 
         // stEth ratio for one wstEth
         uint256 stEthPerToken = _wstEth.stEthPerToken();
 
         // wsteth price
         return PriceInfo({
-            price: stethPrice.price * stEthPerToken / 1 ether,
-            neutralPrice: stethPrice.neutralPrice * stEthPerToken / 1 ether,
-            timestamp: stethPrice.timestamp
+            price: ethPrice.price * stEthPerToken / 1 ether,
+            neutralPrice: ethPrice.neutralPrice * stEthPerToken / 1 ether,
+            timestamp: ethPrice.timestamp
         });
     }
 }

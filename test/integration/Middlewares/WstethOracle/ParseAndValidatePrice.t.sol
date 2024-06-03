@@ -11,7 +11,7 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
 
 /**
  * @custom:feature The `parseAndValidatePrice` function of `WstethMiddleware`
- * @custom:background Given the price of STETH is ~1739 USD
+ * @custom:background Given the price of ETH is ~1739 USD
  * @custom:and The confidence interval is 20 USD
  * @custom:and The oracles are not mocked
  */
@@ -240,7 +240,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
                 assertEq(middlewarePrice.timestamp, pythWstethTimestamp, "Wrong similar timestamp");
 
                 // Should obtain a short different price between pyth wsteth price feed
-                // and pyth steth price feed adjusted with ratio.
+                // and pyth eth price feed adjusted with ratio.
                 // We are ok with a delta below pyth wsteth confidence.
                 assertApproxEqAbs(
                     middlewarePrice.price,
@@ -254,7 +254,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
 
     /**
      * @custom:scenario Parse and validate price with chainlink onchain
-     * @custom:given The price feed is stETH/USD for chainlink
+     * @custom:given The price feed is ETH/USD for chainlink
      * @custom:when Protocol action is InitiateDeposit
      * @custom:then The price retrieved by the oracle middleware is the same as the one from the chainlink onchain data
      * by applying Steth/Wsteth onchain price ratio.

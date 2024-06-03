@@ -12,7 +12,7 @@ import {
     WSTETH,
     PYTH_ETH_USD,
     PYTH_ORACLE,
-    CHAINLINK_ORACLE_STETH,
+    CHAINLINK_ORACLE_ETH,
     CHAINLINK_ORACLE_GAS
 } from "test/utils/Constants.sol";
 import {
@@ -82,7 +82,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             wstETH = WstETH(payable(WSTETH));
             sdex = Sdex(SDEX);
             IPyth pyth = IPyth(PYTH_ORACLE);
-            AggregatorV3Interface chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE_STETH);
+            AggregatorV3Interface chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE_ETH);
             oracleMiddleware = new WstEthOracleMiddleware(
                 address(pyth), PYTH_ETH_USD, address(chainlinkOnChain), address(wstETH), 1 hours
             );

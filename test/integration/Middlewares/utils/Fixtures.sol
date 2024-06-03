@@ -144,7 +144,6 @@ contract WstethIntegrationFixture is CommonBaseIntegrationFixture, ActionsIntegr
         return (PYTH_DATA_ETH_PRICE, PYTH_DATA_ETH_CONF, PYTH_DATA_ETH_DECIMALS, PYTH_DATA_TIMESTAMP, PYTH_DATA_ETH);
     }
 
-    // TO DO : remove this function
     function stethToWsteth(uint256 amount) public view returns (uint256) {
         return amount * WST_ETH.stEthPerToken() / 1 ether;
     }
