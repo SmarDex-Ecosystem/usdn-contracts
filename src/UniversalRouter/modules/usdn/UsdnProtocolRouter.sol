@@ -78,6 +78,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
      * @dev Check the protocol's documentation for information about how this function should be used
      * Note: the open position can fail without reverting, in case there are some pending liquidations in the protocol
      * @param amount The amount of asset used to open the position
+     * @param desiredLiqPrice The desired liquidation price for the position
      * @param to The address that will receive the position
      * @param validator The address that should validate the open position (receives the security deposit back)
      * @param currentPriceData The current price data
