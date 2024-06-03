@@ -47,15 +47,20 @@ contract MockChainlinkOnChain {
 
     /**
      * @notice Update manually the roundId publish time.
-     * @param _roundId The price round id
-     * @param _timestamp The price timestamp
+     * @param roundId The price round id
+     * @param timestamp The price timestamp
      */
-    function setRoundTimestamp(uint80 _roundId, uint256 _timestamp) external {
-        _roundData[_roundId].updatedAt = _timestamp;
+    function setRoundTimestamp(uint80 roundId, uint256 timestamp) external {
+        _roundData[roundId].updatedAt = timestamp;
     }
 
-    function setRoundPrice(uint80 _roundId, int256 _price) external {
-        _roundData[_roundId].answer = _price;
+    /**
+     * @notice Update manually the roundId price
+     * @param roundId The round id
+     * @param price The price
+     */
+    function setRoundPrice(uint80 roundId, int256 price) external {
+        _roundData[roundId].answer = price;
     }
 
     function setRoundData(uint80 roundId, int256 answer, uint256 startedAt, uint256 updateAt, uint80 answeredInRound)
@@ -73,16 +78,16 @@ contract MockChainlinkOnChain {
 
     /**
      * @notice Get the last publish time.
-     * @return roundId The round id.
-     * @return answer The actual asset price.
-     * @return startedAt The timestamp when the round was started.
-     * @return updatedAt The timestamp when the round was updated.
-     * @return answeredInRound the round ID of the round in which the answer was computed.
+     * @return roundId_ The round id.
+     * @return answer_ The actual asset price.
+     * @return startedAt_ The timestamp when the round was started.
+     * @return updatedAt_ The timestamp when the round was updated.
+     * @return answeredInRound_ the round ID of the round in which the answer was computed.
      */
     function latestRoundData()
         external
         view
-        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
+        returns (uint80 roundId_, int256 answer_, uint256 startedAt_, uint256 updatedAt_, uint80 answeredInRound_)
     {
         return (
             _latestRoundData.roundId,
@@ -99,23 +104,24 @@ contract MockChainlinkOnChain {
 
     /**
      * @notice Get the round data by roundId
-     * @return roundId The round id.
-     * @return answer The actual asset price.
-     * @return startedAt The timestamp when the round was started.
-     * @return updatedAt The timestamp when the round was updated.
-     * @return answeredInRound the round ID of the round in which the answer was computed.
+     * @param roundId The round id
+     * @return roundId_ The round id
+     * @return answer_ The actual asset price
+     * @return startedAt_ The timestamp when the round was started
+     * @return updatedAt_ The timestamp when the round was updated
+     * @return answeredInRound_ the round ID of the round in which the answer was computed
      */
-    function getRoundData(uint80 _roundId)
+    function getRoundData(uint80 roundId)
         external
         view
-        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
+        returns (uint80 roundId_, int256 answer_, uint256 startedAt_, uint256 updatedAt_, uint80 answeredInRound_)
     {
         return (
-            _roundData[_roundId].roundId,
-            alwaysRevertOnCall ? int256(-1) : _roundData[_roundId].answer,
-            _roundData[_roundId].startedAt,
-            _roundData[_roundId].updatedAt,
-            _roundData[_roundId].answeredInRound
+            _roundData[roundId].roundId,
+            alwaysRevertOnCall ? int256(-1) : _roundData[roundId].answer,
+            _roundData[roundId].startedAt,
+            _roundData[roundId].updatedAt,
+            _roundData[roundId].answeredInRound
         );
     }
 }

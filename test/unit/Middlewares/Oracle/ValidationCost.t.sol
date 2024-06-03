@@ -58,7 +58,7 @@ contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
      * @custom:then The validation cost is 0
      */
     function test_parseAndValidatePriceLowerThanLimit() public {
-        uint256 fee = oracleMiddleware.validationCost(abi.encode(type(uint256).max), ProtocolAction.None);
+        uint256 fee = oracleMiddleware.validationCost(new bytes(32), ProtocolAction.ValidateDeposit);
         assertEq(fee, 0, "Validation should be 0 when data length is below the limit");
     }
 
@@ -68,8 +68,7 @@ contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
      * @custom:then The validation cost is higher than 0
      */
     function test_parseAndValidatePriceHigherThanLimit() public {
-        uint256 fee =
-            oracleMiddleware.validationCost(abi.encodePacked(type(uint256).max, type(uint8).max), ProtocolAction.None);
+        uint256 fee = oracleMiddleware.validationCost(new bytes(33), ProtocolAction.ValidateDeposit);
         assertGt(fee, 0, "Validation should be greater than 0 when data length is above the limit");
     }
 }

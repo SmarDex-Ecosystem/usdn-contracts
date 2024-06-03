@@ -150,14 +150,17 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
         (, int256 mockedChainlinkPrice,,,) = mockChainlinkOnChain.getRoundData(0);
 
         uint128 targetTimestamp = uint128(block.timestamp);
-        mockChainlinkOnChain.setRoundTimestamp(0, targetTimestamp - 1);
-        mockChainlinkOnChain.setRoundTimestamp(1, targetTimestamp + uint128(oracleMiddleware.getLowLatencyDelay()) + 1);
+        uint128 lowLatencyDelay = uint128(oracleMiddleware.getLowLatencyDelay());
+        uint128 limitTimestamp = targetTimestamp + lowLatencyDelay;
+
+        mockChainlinkOnChain.setRoundTimestamp(0, limitTimestamp);
+        mockChainlinkOnChain.setRoundTimestamp(1, limitTimestamp + 1);
 
         uint256 mockedChainlinkFormattedPrice =
             uint256(mockedChainlinkPrice) * 10 ** (oracleMiddleware.getDecimals() - mockChainlinkOnChain.decimals());
         bytes memory roundIdData = abi.encode(uint80(1));
 
-        skip(1 days);
+        skip(lowLatencyDelay + 1);
 
         PriceInfo memory priceInfo =
             oracleMiddleware.parseAndValidatePrice("", targetTimestamp, ProtocolAction.ValidateDeposit, roundIdData);
@@ -184,31 +187,31 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
      * @custom:given The chainlink target roundId data for validation
      * @custom:and A previous chainlink roundId with a timestamp equal to the target timestamp
      * @custom:when Calling parseAndValidatePrice for "validate" actions after waiting the proper delay
-     * @custom:then It should revert with `OracleMiddlewarePriceAfterTargetTimestamp`
+     * @custom:then It should revert with `OracleMiddlewarePriceAfterTargetLimit`
      */
-    function test_getValidatePriceFromChainlinkOldPreviousRoundId() public {
+    function test_RevertWhen_getValidatePriceFromChainlinkOldPreviousRoundId() public {
         uint128 targetTimestamp = uint128(block.timestamp);
-        uint128 nextTimestamp = targetTimestamp + uint128(oracleMiddleware.getLowLatencyDelay());
+        uint128 lowLatencyDelay = uint128(oracleMiddleware.getLowLatencyDelay());
+        uint128 limitTimestamp = targetTimestamp + lowLatencyDelay;
 
-        mockChainlinkOnChain.setRoundTimestamp(0, targetTimestamp); // too old
-        mockChainlinkOnChain.setRoundTimestamp(1, nextTimestamp);
+        mockChainlinkOnChain.setRoundTimestamp(0, limitTimestamp + 1); // too old
+        mockChainlinkOnChain.setRoundTimestamp(1, limitTimestamp + 2);
 
         bytes memory roundIdData = abi.encode(uint80(1));
-        bytes memory customError =
-            abi.encodeWithSelector(OracleMiddlewarePriceAfterTargetTimestamp.selector, targetTimestamp, targetTimestamp);
+        bytes4 errorSelector = OracleMiddlewareRoundIdTooHigh.selector;
 
-        skip(1 days);
+        skip(lowLatencyDelay + 1);
 
-        vm.expectRevert(customError);
+        vm.expectRevert(errorSelector);
         oracleMiddleware.parseAndValidatePrice("", targetTimestamp, ProtocolAction.ValidateDeposit, roundIdData);
 
-        vm.expectRevert(customError);
+        vm.expectRevert(errorSelector);
         oracleMiddleware.parseAndValidatePrice("", targetTimestamp, ProtocolAction.ValidateWithdrawal, roundIdData);
 
-        vm.expectRevert(customError);
+        vm.expectRevert(errorSelector);
         oracleMiddleware.parseAndValidatePrice("", targetTimestamp, ProtocolAction.ValidateOpenPosition, roundIdData);
 
-        vm.expectRevert(customError);
+        vm.expectRevert(errorSelector);
         oracleMiddleware.parseAndValidatePrice("", targetTimestamp, ProtocolAction.ValidateClosePosition, roundIdData);
     }
 
@@ -220,29 +223,29 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
      * @custom:when Calling parseAndValidatePrice for "validate" actions after waiting the proper delay
      * @custom:then It should revert with `OracleMiddlewarePriceBeforeLowLatencyDelay`
      */
-    function test_getValidatePriceFromChainlinkEarlyRoundId() public {
+    function test_RevertWhen_getValidatePriceFromChainlinkEarlyRoundId() public {
         uint128 targetTimestamp = uint128(block.timestamp);
-        uint128 earlyTimestamp = targetTimestamp + uint128(oracleMiddleware.getLowLatencyDelay());
+        uint128 lowLatencyDelay = uint128(oracleMiddleware.getLowLatencyDelay());
+        uint128 limitTimestamp = targetTimestamp + lowLatencyDelay;
 
-        mockChainlinkOnChain.setRoundTimestamp(0, targetTimestamp - 1); // old enough
-        mockChainlinkOnChain.setRoundTimestamp(1, earlyTimestamp); // too early
+        mockChainlinkOnChain.setRoundTimestamp(0, limitTimestamp - 1); // correct
+        mockChainlinkOnChain.setRoundTimestamp(1, limitTimestamp); // too early
 
         bytes memory roundIdData = abi.encode(uint80(1));
-        bytes memory customError =
-            abi.encodeWithSelector(OracleMiddlewarePriceBeforeLowLatencyDelay.selector, targetTimestamp, earlyTimestamp);
+        bytes4 errorSelector = OracleMiddlewareRoundIdTooLow.selector;
 
-        skip(1 days);
+        skip(lowLatencyDelay + 1);
 
-        vm.expectRevert(customError);
+        vm.expectRevert(errorSelector);
         oracleMiddleware.parseAndValidatePrice("", targetTimestamp, ProtocolAction.ValidateDeposit, roundIdData);
 
-        vm.expectRevert(customError);
+        vm.expectRevert(errorSelector);
         oracleMiddleware.parseAndValidatePrice("", targetTimestamp, ProtocolAction.ValidateWithdrawal, roundIdData);
 
-        vm.expectRevert(customError);
+        vm.expectRevert(errorSelector);
         oracleMiddleware.parseAndValidatePrice("", targetTimestamp, ProtocolAction.ValidateOpenPosition, roundIdData);
 
-        vm.expectRevert(customError);
+        vm.expectRevert(errorSelector);
         oracleMiddleware.parseAndValidatePrice("", targetTimestamp, ProtocolAction.ValidateClosePosition, roundIdData);
     }
 
@@ -339,11 +342,13 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
         /* --------------------- Validate actions revert as well -------------------- */
 
         uint128 targetTimestamp = uint128(block.timestamp);
-        mockChainlinkOnChain.setRoundTimestamp(0, targetTimestamp - 1);
-        mockChainlinkOnChain.setRoundTimestamp(1, targetTimestamp + uint128(oracleMiddleware.getLowLatencyDelay()) + 1);
+        uint128 lowLatencyDelay = uint128(oracleMiddleware.getLowLatencyDelay());
+        uint128 limitTimestamp = targetTimestamp + lowLatencyDelay;
+        mockChainlinkOnChain.setRoundTimestamp(0, limitTimestamp);
+        mockChainlinkOnChain.setRoundTimestamp(1, limitTimestamp + 1);
         mockChainlinkOnChain.setRoundPrice(0, -1);
 
-        skip(1 days);
+        skip(lowLatencyDelay + 1);
 
         // wrong previous roundId price
 
@@ -692,7 +697,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
         // No fee required if the validation timestamp is after the low latency delay
         uint128 targetTimestamp = uint128(block.timestamp);
 
-        skip(targetTimestamp + uint256(oracleMiddleware.getLowLatencyDelay() + 1));
+        skip(oracleMiddleware.getLowLatencyDelay() + 1);
 
         vm.expectRevert(errorSelector);
         oracleMiddleware.parseAndValidatePrice{ value: 1 }(

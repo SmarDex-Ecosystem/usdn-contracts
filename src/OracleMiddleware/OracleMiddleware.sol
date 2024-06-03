@@ -261,11 +261,11 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     }
 
     /**
-     * @notice Get the price for an validate action of the protocol
-     * @dev If if the low latency delay is not exceeded, validate the price with PythOracle. Else, get the specified
-     * roundId on-chain price from Chainlink. In case of chainlink price, we don't have a confidence interval
-     * and so both `neutralPrice` and `price` are equal
-     * @param data An optional VAA from Pyth or a chainlink roundId
+     * @notice Get the price for a validate action of the protocol
+     * @dev If the low latency delay is not exceeded, validate the price with the low-latency oracle(s).
+     * Else, get the specified roundId on-chain price from Chainlink. In case of chainlink price,
+     * we don't have a confidence interval and so both `neutralPrice` and `price` are equal
+     * @param data An optional VAA from Pyth or a chainlink roundId (abi-encoded uint80)
      * @param targetTimestamp The target timestamp
      * @param dir The direction for applying the confidence interval (in case we use a Pyth price)
      * @return price_ The price to use for the user action
@@ -274,8 +274,8 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         internal
         returns (PriceInfo memory price_)
     {
-        uint16 lowLatencyDelay = _lowLatencyDelay;
-        if (block.timestamp <= targetTimestamp + lowLatencyDelay) {
+        uint128 targetLimit = targetTimestamp + _lowLatencyDelay;
+        if (block.timestamp <= targetLimit) {
             return _getLowLatencyPrice(data, targetTimestamp, dir);
         } else {
             // chainlink calls do not require a fee
@@ -294,9 +294,9 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
                 revert OracleMiddlewareWrongPrice(chainlinkOnChainPrice.price);
             }
 
-            // if price after or equal target timestamp
-            if (targetTimestamp <= chainlinkOnChainPrice.timestamp) {
-                revert OracleMiddlewarePriceAfterTargetTimestamp(targetTimestamp, chainlinkOnChainPrice.timestamp);
+            // if previous price is higher than targetLimit
+            if (chainlinkOnChainPrice.timestamp > targetLimit) {
+                revert OracleMiddlewareRoundIdTooHigh();
             }
 
             // check the validate round id
@@ -307,11 +307,10 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
                 revert OracleMiddlewareWrongPrice(chainlinkOnChainPrice.price);
             }
 
-            // if price before low latency delay
-            if (chainlinkOnChainPrice.timestamp <= targetTimestamp + lowLatencyDelay) {
-                revert OracleMiddlewarePriceBeforeLowLatencyDelay(targetTimestamp, chainlinkOnChainPrice.timestamp);
+            // if validate price is lower or equal than targetLimit
+            if (chainlinkOnChainPrice.timestamp <= targetLimit) {
+                revert OracleMiddlewareRoundIdTooLow();
             }
-
             price_ = PriceInfo({
                 price: uint256(chainlinkOnChainPrice.price),
                 neutralPrice: uint256(chainlinkOnChainPrice.price),

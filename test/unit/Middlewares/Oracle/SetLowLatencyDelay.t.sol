@@ -27,7 +27,7 @@ contract TestOracleMiddlewareSetLowLatencyDelay is OracleMiddlewareBaseFixture {
 
     /**
      * @custom:scenario Call `setLowLatencyDelay` from non admin
-     * @custom:when The function is called
+     * @custom:when The function is called from an account that is not the owner
      * @custom:then It should revert
      */
     function test_RevertWhen_SetLowLatencyDelayNonAdmin() public {
@@ -38,7 +38,7 @@ contract TestOracleMiddlewareSetLowLatencyDelay is OracleMiddlewareBaseFixture {
 
     /**
      * @custom:scenario Call `setLowLatencyDelay` lower than minimum
-     * @custom:when The function is called
+     * @custom:when The function is called with a value that is below the minimum allowed
      * @custom:then It should revert with `OracleMiddlewareInvalidLowLatencyDelay`
      */
     function test_RevertWhen_SetLowLatencyDelayMin() public {
@@ -49,7 +49,7 @@ contract TestOracleMiddlewareSetLowLatencyDelay is OracleMiddlewareBaseFixture {
 
     /**
      * @custom:scenario Call `setLowLatencyDelay` higher than maximum
-     * @custom:when The function is called
+     * @custom:when The function is called with a value that is above the maximum allowed
      * @custom:then It should revert with `OracleMiddlewareInvalidLowLatencyDelay`
      */
     function test_RevertWhen_SetLowLatencyDelayMax() public {
@@ -60,10 +60,10 @@ contract TestOracleMiddlewareSetLowLatencyDelay is OracleMiddlewareBaseFixture {
 
     /**
      * @custom:scenario Call `setLowLatencyDelay` with a correct value
-     * @custom:when The function is called
+     * @custom:when The function is called with a value that is equal to the maximum allowed
      * @custom:then It should update the value
      */
-    function test_SetLowLatencyDelayMax() public {
+    function test_setLowLatencyDelayMax() public {
         uint16 expectedValue = oracleMiddleware.MAX_LOW_LATENCY_DELAY();
         oracleMiddleware.setLowLatencyDelay(expectedValue);
         assertEq(oracleMiddleware.getLowLatencyDelay(), expectedValue, "Low latency delay should be updated");

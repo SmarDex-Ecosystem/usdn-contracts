@@ -39,7 +39,7 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         mockChainlinkOnChain.setLastPublishTime(1_708_090_186 - 10 minutes);
         mockChainlinkOnChain.setLastPrice(3290e8);
 
-        bytes memory pythSelector = abi.encodePacked(type(uint8).max, type(uint256).max);
+        bytes memory pythData = new bytes(33); // pyth data must be longer than 32 bytes
 
         vm.startPrank(USER_1);
         (bool success,) = address(wstETH).call{ value: 200 ether }("");
@@ -56,8 +56,8 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         mockPyth.setPrice(3290e8);
         mockPyth.setLastPublishTime(1_708_090_186 + 24);
         protocol.validateOpenPosition{
-            value: oracleMiddleware.validationCost(pythSelector, ProtocolAction.ValidateOpenPosition)
-        }(address(this), pythSelector, EMPTY_PREVIOUS_DATA);
+            value: oracleMiddleware.validationCost(pythData, ProtocolAction.ValidateOpenPosition)
+        }(address(this), pythData, EMPTY_PREVIOUS_DATA);
 
         vm.warp(1_708_090_342);
         mockChainlinkOnChain.setLastPublishTime(1_708_090_342 - 10 minutes);
@@ -72,8 +72,8 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         mockPyth.setLastPublishTime(1_708_090_342 + 24);
 
         protocol.validateOpenPosition{
-            value: oracleMiddleware.validationCost(pythSelector, ProtocolAction.ValidateOpenPosition)
-        }(address(this), pythSelector, EMPTY_PREVIOUS_DATA);
+            value: oracleMiddleware.validationCost(pythData, ProtocolAction.ValidateOpenPosition)
+        }(address(this), pythData, EMPTY_PREVIOUS_DATA);
 
         vm.stopPrank();
 
