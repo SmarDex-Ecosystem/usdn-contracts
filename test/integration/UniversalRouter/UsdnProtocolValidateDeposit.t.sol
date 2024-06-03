@@ -21,11 +21,11 @@ contract TestForkUniversalRouterValidateDeposit is UniversalRouterBaseFixture {
         deal(address(sdex), address(this), 1e6 ether);
         wstETH.approve(address(protocol), type(uint256).max);
         sdex.approve(address(protocol), type(uint256).max);
-        // initiate deposit in the past
-        vm.warp(block.timestamp - 120 minutes);
+        // initiate deposit
         protocol.initiateDeposit{ value: protocol.getSecurityDepositValue() }(
             0.1 ether, USER_2, USER_1, "", EMPTY_PREVIOUS_DATA
         );
+        skip(120 minutes);
     }
 
     /**
@@ -37,7 +37,6 @@ contract TestForkUniversalRouterValidateDeposit is UniversalRouterBaseFixture {
     function test_ForkValidateDeposit() public {
         uint256 ts1 = protocol.getUserPendingAction(USER_1).timestamp;
         (,,,, bytes memory data) = getHermesApiSignature(PYTH_STETH_USD, ts1 + oracleMiddleware.getValidationDelay());
-        vm.warp(ts1 + oracleMiddleware.getValidationDelay()); //to be realistic because not mandatory
 
         uint256 ethBalanceBefore = address(this).balance;
         uint256 ethBalanceBeforeUser = USER_1.balance;
