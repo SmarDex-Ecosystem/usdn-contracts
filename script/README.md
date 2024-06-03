@@ -11,7 +11,6 @@ Environment variables can be used to control the script execution:
 - `WSTETH_ADDRESS`: if provided, skips deployment of the mock wstETH token
 - `MIDDLEWARE_ADDRESS`: if provided, skips deployment of the oracle middleware
 - `PYTH_ADDRESS`: required if middleware address not provided, the contract address of the pyth oracle
-- `PYTH_WSTETH_PRICE_ID`: required if middleware address not provided, the price id of the wstETH pyth oracle
 - `PYTH_ETH_PRICE_ID`: required if middleware address not provided, the price id of the wstETH pyth oracle
 - `CHAINLINK_ETH_PRICE_ADDRESS`: required if middleware address not provided, the address of the stETH chainlink oracle
 - `CHAINLINK_ETH_PRICE_VALIDITY`: the amount of time (in seconds) we consider the price valid. A tolerance should be added to avoid reverting if chainlink misses the heartbeat by a few minutes
@@ -40,7 +39,6 @@ export INIT_DEPOSIT_AMOUNT=1000000000000000000
 export INIT_LONG_AMOUNT=1000000000000000000
 export INIT_LONG_LIQPRICE=1000000000000000000
 export PYTH_ADDRESS=0x4305FB66699C3B2702D4d05CF36551390A4c69C6
-export PYTH_WSTETH_PRICE_ID=0x6df640f3b8963d8f8358f791f352b8364513f6ab1cca5ed3f1f7b5448980e784
 export PYTH_ETH_PRICE_ID=0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace
 export CHAINLINK_ETH_PRICE_ADDRESS=0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8
 export CHAINLINK_ETH_PRICE_VALIDITY=3720
