@@ -38,10 +38,7 @@ contract Rebalancer is Ownable, IRebalancer {
     }
 
     /// @inheritdoc IRebalancer
-    uint256 public constant MULTIPLIER_DECIMALS = 21;
-
-    // TODO Use this constant instead of the doing the multiplication everywhere
-    uint256 public constant MULTIPLIER_FACTOR = 10 ** MULTIPLIER_DECIMALS;
+    uint256 public constant MULTIPLIER_FACTOR = 1e38;
 
     /// @inheritdoc IRebalancer
     int24 public constant NO_POSITION_TICK = type(int24).min;
@@ -236,7 +233,7 @@ contract Rebalancer is Ownable, IRebalancer {
         uint128 positionVersion = _positionVersion;
         PositionData memory currentPositionData = _positionData[positionVersion];
         // set the multiplier accumulator to 1 by default
-        uint256 accMultiplier = 10 ** MULTIPLIER_DECIMALS;
+        uint256 accMultiplier = MULTIPLIER_FACTOR;
 
         // if the current position version exists
         if (currentPositionData.amount > 0) {
@@ -249,7 +246,7 @@ contract Rebalancer is Ownable, IRebalancer {
                 // update the multiplier accumulator
                 // TODO use amounts to avoid
                 accMultiplier = FixedPointMathLib.fullMulDiv(
-                    currentPositionData.entryAccMultiplier, pnlMultiplier, 10 ** MULTIPLIER_DECIMALS
+                    currentPositionData.entryAccMultiplier, pnlMultiplier, MULTIPLIER_FACTOR
                 );
             } else {
                 // update the last liquidated version tracker
@@ -285,7 +282,7 @@ contract Rebalancer is Ownable, IRebalancer {
             return 0;
         }
 
-        pnlMultiplier_ = FixedPointMathLib.fullMulDiv(value, 10 ** MULTIPLIER_DECIMALS, openAmount).toUint128();
+        pnlMultiplier_ = FixedPointMathLib.fullMulDiv(value, MULTIPLIER_FACTOR, openAmount).toUint128();
     }
 
     /* -------------------------------------------------------------------------- */

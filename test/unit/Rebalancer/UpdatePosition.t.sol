@@ -78,9 +78,7 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
         PositionData memory positionData = rebalancer.getPositionData(rebalancer.getPositionVersion());
         assertEq(positionData.amount, pendingAssetsBefore);
         assertEq(
-            positionData.entryAccMultiplier,
-            10 ** rebalancer.MULTIPLIER_DECIMALS(),
-            "Entry multiplier accumulator should be 1"
+            positionData.entryAccMultiplier, rebalancer.MULTIPLIER_FACTOR(), "Entry multiplier accumulator should be 1x"
         );
         assertEq(positionData.pnlMultiplier, 0, "PnL multiplier should be 0");
         assertEq(
@@ -143,8 +141,8 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
         PositionData memory positionData = rebalancer.getPositionData(positionVersionBefore + 1);
         assertEq(
             positionData.pnlMultiplier,
-            10 ** rebalancer.MULTIPLIER_DECIMALS() + 10 ** (rebalancer.MULTIPLIER_DECIMALS() - 1),
-            "PnL multiplier of the first position should be 1.1"
+            rebalancer.MULTIPLIER_FACTOR() + rebalancer.MULTIPLIER_FACTOR() / 10,
+            "PnL multiplier of the first position should be 1.1x"
         );
 
         // check the position data of the second version
@@ -152,8 +150,8 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
         assertEq(positionData.amount, posVersion2Value + user2DepositedAmount);
         assertEq(
             positionData.entryAccMultiplier,
-            10 ** rebalancer.MULTIPLIER_DECIMALS() + 10 ** (rebalancer.MULTIPLIER_DECIMALS() - 1),
-            "Entry multiplier accumulator of the position position should be 1.1"
+            rebalancer.MULTIPLIER_FACTOR() + rebalancer.MULTIPLIER_FACTOR() / 10,
+            "Entry multiplier accumulator of the position position should be 1.1x"
         );
         assertEq(positionData.pnlMultiplier, 0, "PnL multiplier should be 0");
         assertEq(positionData.id.tick, posId2.tick, "Tick mismatch");
@@ -204,9 +202,7 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
         positionData = rebalancer.getPositionData(rebalancer.getPositionVersion());
         assertEq(positionData.amount, user2DepositedAmount, "Only the funds of USER_2 should be in the position");
         assertEq(
-            positionData.entryAccMultiplier,
-            10 ** rebalancer.MULTIPLIER_DECIMALS(),
-            "Entry multiplier accumulator should be 1"
+            positionData.entryAccMultiplier, rebalancer.MULTIPLIER_FACTOR(), "Entry multiplier accumulator should be 1x"
         );
     }
 }
