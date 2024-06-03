@@ -50,6 +50,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
      * @param validator The address that should validate the deposit (receives the security deposit)
      * @param depositPriceData The price data at the time of the deposit
      * @param previousActionsData The data needed to validate actionable pending actions
+     * @return success_ Whether the deposit was successfully
      */
     function _usdnValidateDeposit(
         address validator,
