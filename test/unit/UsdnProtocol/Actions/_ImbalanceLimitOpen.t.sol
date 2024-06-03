@@ -2,7 +2,7 @@
 pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { ADMIN } from "test/utils/Constants.sol";
+import { ADMIN, DEPLOYER } from "test/utils/Constants.sol";
 
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
@@ -75,17 +75,51 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
         protocol.i_checkImbalanceLimitOpen(0, 0);
     }
 
+    /**
+     * @custom:scenario Check open imbalance when there are pending withdrawals
+     * @custom:given The protocol is in an unbalanced state due to pending withdrawals
+     * @custom:when The `_checkImbalanceLimitOpen` function is called
+     * @custom:then The transaction should revert with the expected imbalance
+     */
+    function test_RevertWhen_checkImbalanceLimitOpenPendingVaultActions() public {
+        (, uint256 longAmount, uint256 totalExpoValueToLimit) = _getOpenLimitValues();
+
+        // this action will affect the vault trading expo once it's validated
+        vm.startPrank(DEPLOYER);
+        usdn.approve(address(protocol), type(uint256).max);
+        protocol.initiateWithdrawal(
+            uint152(usdn.sharesOf(DEPLOYER) / 2),
+            DEPLOYER,
+            DEPLOYER,
+            abi.encode(params.initialPrice),
+            EMPTY_PREVIOUS_DATA
+        );
+        vm.stopPrank();
+
+        int256 currentVaultExpo = int256(protocol.getBalanceVault()) + protocol.getPendingBalanceVault();
+        int256 expectedImbalance = (
+            int256(protocol.getTotalExpo() + totalExpoValueToLimit) - int256(protocol.getBalanceLong() + longAmount)
+                - currentVaultExpo
+        ) * int256(protocol.BPS_DIVISOR()) / currentVaultExpo;
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, uint256(expectedImbalance)
+            )
+        );
+        protocol.i_checkImbalanceLimitOpen(totalExpoValueToLimit, longAmount);
+    }
+
     function _getOpenLimitValues()
         private
         view
         returns (int256 openLimitBps_, uint256 longAmount_, uint256 totalExpoValueToLimit_)
     {
         // current vault expo
-        uint256 vaultExpo = protocol.getBalanceVault();
+        int256 vaultExpo = int256(protocol.getBalanceVault()) + protocol.getPendingBalanceVault();
         // open limit bps
         openLimitBps_ = protocol.getOpenExpoImbalanceLimitBps();
         // current long expo value to unbalance protocol
-        uint256 longExpoValueToLimit = vaultExpo * uint256(openLimitBps_) / protocol.BPS_DIVISOR();
+        uint256 longExpoValueToLimit = uint256(vaultExpo) * uint256(openLimitBps_) / protocol.BPS_DIVISOR();
         // long amount for vaultExpoValueToLimit and any leverage
         longAmount_ =
             longExpoValueToLimit * 10 ** protocol.LEVERAGE_DECIMALS() / protocol.i_getLeverage(2000 ether, 1500 ether);

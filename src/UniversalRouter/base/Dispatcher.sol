@@ -230,7 +230,17 @@ abstract contract Dispatcher is
                             usdnShares, map(to), map(validator), currentPriceData, previousActionsData
                         );
                     } else if (command == Commands.INITIATE_OPEN) {
-                        // TODO INITIATE_OPEN
+                        (
+                            uint256 amount,
+                            uint128 desiredLiqPrice,
+                            address to,
+                            address validator,
+                            bytes memory currentPriceData,
+                            PreviousActionsData memory previousActionsData
+                        ) = abi.decode(inputs, (uint256, uint128, address, address, bytes, PreviousActionsData));
+                        _usdnInitiateOpenPosition(
+                            amount, desiredLiqPrice, map(to), map(validator), currentPriceData, previousActionsData
+                        );
                     } else if (command == Commands.INITIATE_CLOSE) {
                         // TODO INITIATE_CLOSE
                     } else if (command == Commands.VALIDATE_DEPOSIT) {
