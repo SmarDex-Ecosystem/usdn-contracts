@@ -2,7 +2,7 @@
 pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseIntegrationFixture } from "test/integration/UsdnProtocol/utils/Fixtures.sol";
-import { DEPLOYER, USER_1, USER_2, USER_3, PYTH_STETH_USD, PYTH_WSTETH_USD } from "test/utils/Constants.sol";
+import { DEPLOYER, USER_1, USER_2, USER_3, PYTH_ETH_USD, PYTH_WSTETH_USD } from "test/utils/Constants.sol";
 
 import { ILiquidationRewardsManagerErrorsEventsTypes } from
     "src/interfaces/OracleMiddleware/ILiquidationRewardsManagerErrorsEventsTypes.sol";
@@ -11,7 +11,7 @@ import { IUsdnEvents } from "src/interfaces/Usdn/IUsdnEvents.sol";
 import { MockWstEthOracleMiddleware } from "src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
 
 /**
- * @custom:feature Checking the gas usage of a liquidation.
+ * @custom:feature Checking the gas usage of a liquidation
  * @custom:background Given a forked ethereum mainnet chain
  */
 contract TestForkUsdnProtocolLiquidationGasUsage is UsdnProtocolBaseIntegrationFixture, IUsdnEvents {
@@ -22,7 +22,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is UsdnProtocolBaseIntegrationF
         params.initialLong = 10 ether;
         params.initialDeposit = 100 ether;
         params.fork = true; // all tests in this contract must be labelled `Fork`
-        params.forkWarp = 1_709_794_800; // Thu Mar 07 2024 07:00:00 UTC
+        params.forkWarp = 1_709_794_800; // thu mar 07 2024 07:00:00 UTC
         _setUp(params);
 
         vm.startPrank(USER_1);
@@ -75,18 +75,18 @@ contract TestForkUsdnProtocolLiquidationGasUsage is UsdnProtocolBaseIntegrationF
             getHermesApiSignature(PYTH_WSTETH_USD, block.timestamp + oracleMiddleware.getValidationDelay());
         uint128 pythPriceNormalized = uint128(pythPriceWstETH * 10 ** 10);
 
-        // Use the mock oracle to open positions to avoid hermes calls
+        // use the mock oracle to open positions to avoid hermes calls
         MockWstEthOracleMiddleware mockOracle = new MockWstEthOracleMiddleware(
-            address(mockPyth), PYTH_STETH_USD, address(mockChainlinkOnChain), address(wstETH), 1 hours
+            address(mockPyth), PYTH_ETH_USD, address(mockChainlinkOnChain), address(wstETH), 1 hours
         );
         vm.prank(DEPLOYER);
         protocol.setOracleMiddleware(mockOracle);
         mockOracle.setWstethMockedPrice(pythPriceNormalized + 1000 ether);
-        // Turn off pyth signature verification to avoid updating the price feed
-        // This allows us to be in the worst case scenario gas wise later
+        // turn off pyth signature verification to avoid updating the price feed
+        // this allows us to be in the worst case scenario gas wise later
         mockOracle.setVerifySignature(false);
 
-        // Disable rebase for setup
+        // disable rebase for setup
         vm.startPrank(DEPLOYER);
         protocol.setUsdnRebaseThreshold(1000 ether);
         protocol.setTargetUsdnPrice(1000 ether);
@@ -115,7 +115,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is UsdnProtocolBaseIntegrationF
         protocol.validateOpenPosition(address(this), hex"beef", EMPTY_PREVIOUS_DATA);
 
         /* ---------------------------- Start the checks ---------------------------- */
-        // Put the original oracle back
+        // put the original oracle back
         vm.prank(DEPLOYER);
         protocol.setOracleMiddleware(oracleMiddleware);
 
@@ -124,10 +124,10 @@ contract TestForkUsdnProtocolLiquidationGasUsage is UsdnProtocolBaseIntegrationF
             liquidationRewardsManager.getRewardsParameters();
 
         skip(1 minutes);
-        (,,,, bytes memory data) = getHermesApiSignature(PYTH_STETH_USD, block.timestamp);
+        (,,,, bytes memory data) = getHermesApiSignature(PYTH_ETH_USD, block.timestamp);
         uint256 oracleFee = oracleMiddleware.validationCost(data, ProtocolAction.Liquidation);
 
-        // If required, enable rebase
+        // if required, enable rebase
         if (withRebase) {
             vm.startPrank(DEPLOYER);
             protocol.setTargetUsdnPrice(1 ether);
@@ -135,45 +135,45 @@ contract TestForkUsdnProtocolLiquidationGasUsage is UsdnProtocolBaseIntegrationF
             vm.stopPrank();
         }
 
-        // Take a snapshot to re-do liquidations with different iterations
+        // take a snapshot to re-do liquidations with different iterations
         uint256 snapshotId = vm.snapshot();
         for (uint16 ticksToLiquidate = 1; ticksToLiquidate <= 3; ++ticksToLiquidate) {
             if (withRebase) {
-                // Sanity check, make sure a rebase was executed
+                // sanity check, make sure a rebase was executed
                 vm.expectEmit(false, false, false, false);
                 emit Rebase(0, 0);
             }
 
-            // Get a price that liquidates `ticksToLiquidate` ticks
+            // get a price that liquidates `ticksToLiquidate` ticks
             uint256 startGas = gasleft();
             uint256 positionsLiquidated = protocol.liquidate{ value: oracleFee }(data, ticksToLiquidate);
             uint256 gasUsed = startGas - gasleft();
             gasUsedArray[ticksToLiquidate - 1] = gasUsed;
 
-            // Make sure the expected amount of computation was executed
+            // make sure the expected amount of computation was executed
             assertEq(
                 positionsLiquidated,
                 ticksToLiquidate,
                 "We expect 1, 2 or 3 positions liquidated depending on the iteration"
             );
 
-            // Cancel the liquidation so it's available again
+            // cancel the liquidation so it's available again
             vm.revertTo(snapshotId);
         }
 
-        // Calculate the average gas used exclusively by a loop of tick liquidation
+        // calculate the average gas used exclusively by a loop of tick liquidation
         uint256 averageGasUsedPerTick = (gasUsedArray[1] - gasUsedArray[0] + gasUsedArray[2] - gasUsedArray[1]) / 2;
-        // Calculate the average gas used by everything BUT loops of tick liquidation
+        // calculate the average gas used by everything BUT loops of tick liquidation
         uint256 averageOtherGasUsed =
             (gasUsedArray[0] + gasUsedArray[1] + gasUsedArray[2] - (averageGasUsedPerTick * 6)) / 3;
 
-        // Check that the gas usage per tick matches the gasUsedPerTick parameter in the LiquidationRewardsManager
+        // check that the gas usage per tick matches the gasUsedPerTick parameter in the LiquidationRewardsManager
         assertEq(
             averageGasUsedPerTick,
             rewardsParameters.gasUsedPerTick,
             "The result should match the gasUsedPerTick parameter set in LiquidationRewardsManager's constructor"
         );
-        // Check that the other gas usage matches the otherGasUsed parameter in the LiquidationRewardsManager
+        // check that the other gas usage matches the otherGasUsed parameter in the LiquidationRewardsManager
         uint256 otherGasUsed = rewardsParameters.otherGasUsed;
         if (withRebase) {
             otherGasUsed += rewardsParameters.rebaseGasUsed;

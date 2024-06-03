@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { USER_1, USER_2, PYTH_STETH_USD } from "test/utils/Constants.sol";
+import { USER_1, USER_2, PYTH_ETH_USD } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "test/integration/UsdnProtocol/utils/Fixtures.sol";
 
 import { PendingAction, ProtocolAction, PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -25,7 +25,7 @@ contract TestForkUsdnProtocolValidateTwoPos is UsdnProtocolBaseIntegrationFixtur
      * @custom:then Both pending actions get validated
      */
     function test_ForkFFIValidateTwoPos() public {
-        // Setup 2 pending actions
+        // setup 2 pending actions
         vm.startPrank(USER_1);
         (bool success,) = address(wstETH).call{ value: 10 ether }("");
         require(success, "USER_1 wstETH mint failed");
@@ -49,13 +49,13 @@ contract TestForkUsdnProtocolValidateTwoPos is UsdnProtocolBaseIntegrationFixtur
         uint256 ts2 = block.timestamp;
         vm.stopPrank();
 
-        // Wait
+        // wait
         skip(2 hours);
 
-        // Second user tries to validate their action
-        (,,,, bytes memory data1) = getHermesApiSignature(PYTH_STETH_USD, ts1 + oracleMiddleware.getValidationDelay());
+        // second user tries to validate their action
+        (,,,, bytes memory data1) = getHermesApiSignature(PYTH_ETH_USD, ts1 + oracleMiddleware.getValidationDelay());
         uint256 data1Fee = oracleMiddleware.validationCost(data1, ProtocolAction.ValidateOpenPosition);
-        (,,,, bytes memory data2) = getHermesApiSignature(PYTH_STETH_USD, ts2 + oracleMiddleware.getValidationDelay());
+        (,,,, bytes memory data2) = getHermesApiSignature(PYTH_ETH_USD, ts2 + oracleMiddleware.getValidationDelay());
         uint256 data2Fee = oracleMiddleware.validationCost(data2, ProtocolAction.ValidateOpenPosition);
         bytes[] memory previousData = new bytes[](1);
         previousData[0] = data1;
@@ -65,7 +65,7 @@ contract TestForkUsdnProtocolValidateTwoPos is UsdnProtocolBaseIntegrationFixtur
         protocol.validateOpenPosition{ value: data1Fee + data2Fee }(
             USER_2, data2, PreviousActionsData(previousData, rawIndices)
         );
-        // No more pending action
+        // no more pending action
         (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 0, "pending actions length");
         vm.stopPrank();

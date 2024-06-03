@@ -10,7 +10,7 @@ import {
     ADMIN,
     SDEX,
     WSTETH,
-    PYTH_STETH_USD,
+    PYTH_ETH_USD,
     PYTH_ORACLE,
     CHAINLINK_ORACLE_STETH,
     CHAINLINK_ORACLE_GAS
@@ -84,7 +84,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             IPyth pyth = IPyth(PYTH_ORACLE);
             AggregatorV3Interface chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE_STETH);
             oracleMiddleware = new WstEthOracleMiddleware(
-                address(pyth), PYTH_STETH_USD, address(chainlinkOnChain), address(wstETH), 1 hours
+                address(pyth), PYTH_ETH_USD, address(chainlinkOnChain), address(wstETH), 1 hours
             );
             PriceInfo memory currentPrice =
                 oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.Initialize, "");
@@ -97,7 +97,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             mockChainlinkOnChain.setLastPublishTime(testParams.initialTimestamp - 10 minutes);
             mockChainlinkOnChain.setLastPrice(int256(uint256(testParams.initialPrice / 10 ** (18 - 8))));
             oracleMiddleware = new WstEthOracleMiddleware(
-                address(mockPyth), PYTH_STETH_USD, address(mockChainlinkOnChain), address(wstETH), 1 hours
+                address(mockPyth), PYTH_ETH_USD, address(mockChainlinkOnChain), address(wstETH), 1 hours
             );
             vm.warp(testParams.initialTimestamp);
         }
