@@ -6,7 +6,7 @@ pragma solidity ^0.8.17;
  * @notice Command Flags used to decode commands
  */
 library Commands {
-    // Masks to extract certain bits of commands
+    // masks to extract certain bits of commands
     bytes1 internal constant FLAG_ALLOW_REVERT = 0x80;
     bytes1 internal constant COMMAND_TYPE_MASK = 0x3f;
 
@@ -18,8 +18,8 @@ library Commands {
     uint256 constant TRANSFER = 0x05;
     uint256 constant PAY_PORTION = 0x06;
 
-    // The commands are executed in nested if blocks to minimise gas consumption
-    // The following constant defines one of the boundaries where the if blocks split commands
+    // the commands are executed in nested if blocks to minimise gas consumption
+    // the following constant defines one of the boundaries where the if blocks split commands
     uint256 constant FIRST_IF_BOUNDARY = 0x08;
 
     uint256 constant V2_SWAP_EXACT_IN = 0x08;
@@ -29,8 +29,8 @@ library Commands {
     uint256 constant UNWRAP_WETH = 0x0c;
     uint256 constant PERMIT2_TRANSFER_FROM_BATCH = 0x0d;
 
-    // The commands are executed in nested if blocks to minimise gas consumption
-    // The following constant defines one of the boundaries where the if blocks split commands
+    // the commands are executed in nested if blocks to minimise gas consumption
+    // the following constant defines one of the boundaries where the if blocks split commands
     uint256 constant SECOND_IF_BOUNDARY = 0x10;
 
     uint256 constant INITIATE_DEPOSIT = 0x10;
@@ -44,8 +44,8 @@ library Commands {
     uint256 constant LIQUIDATE = 0x18;
     uint256 constant VALIDATE_PENDING = 0x19;
 
-    // The commands are executed in nested if blocks to minimise gas consumption
-    // The following constant defines one of the boundaries where the if blocks split commands
+    // the commands are executed in nested if blocks to minimise gas consumption
+    // the following constant defines one of the boundaries where the if blocks split commands
     uint256 constant THIRD_IF_BOUNDARY = 0x1a;
 
     uint256 constant WRAP_USDN = 0x1b;
@@ -54,8 +54,8 @@ library Commands {
     uint256 constant UNWRAP_WSTETH = 0x1e;
     // COMMAND_PLACEHOLDER = 0x1f;
 
-    // The commands are executed in nested if blocks to minimise gas consumption
-    // The following constant defines one of the boundaries where the if blocks split commands
+    // the commands are executed in nested if blocks to minimise gas consumption
+    // the following constant defines one of the boundaries where the if blocks split commands
     uint256 constant FOURTH_IF_BOUNDARY = 0x20;
 
     uint256 constant SMARDEX_SWAP_EXACT_IN = 0x20;
