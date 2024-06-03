@@ -8,6 +8,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 import { UsdnProtocolImmutables } from "src/UniversalRouter/modules/usdn/UsdnProtocolImmutables.sol";
 import { PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
     using SafeCast for uint256;
@@ -84,6 +85,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions
      * @return success_ Whether the open position was successful
+     * @return output_ The position ID of the newly opened position in bytes format
      */
     function _usdnInitiateOpenPosition(
         uint256 amount,
@@ -92,15 +94,17 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         address validator,
         bytes memory currentPriceData,
         PreviousActionsData memory previousActionsData
-    ) internal returns (bool success_) {
+    ) internal returns (bool success_, bytes memory output_) {
         // use amount == Constants.CONTRACT_BALANCE as a flag to deposit the entire balance of the contract
         if (amount == Constants.CONTRACT_BALANCE) {
             amount = PROTOCOL_ASSET.balanceOf(address(this));
         }
         PROTOCOL_ASSET.forceApprove(address(USDN_PROTOCOL), amount);
         // we send the full ETH balance, the protocol will refund any excess
-        (success_,) = USDN_PROTOCOL.initiateOpenPosition{ value: address(this).balance }(
+        PositionId memory posId_;
+        (success_, posId_) = USDN_PROTOCOL.initiateOpenPosition{ value: address(this).balance }(
             amount.toUint128(), desiredLiqPrice, to, validator, currentPriceData, previousActionsData
         );
+        output_ = abi.encode(posId_);
     }
 }

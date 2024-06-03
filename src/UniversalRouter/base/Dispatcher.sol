@@ -238,7 +238,7 @@ abstract contract Dispatcher is
                             bytes memory currentPriceData,
                             PreviousActionsData memory previousActionsData
                         ) = abi.decode(inputs, (uint256, uint128, address, address, bytes, PreviousActionsData));
-                        _usdnInitiateOpenPosition(
+                        (, output_) = _usdnInitiateOpenPosition(
                             amount, desiredLiqPrice, map(to), map(validator), currentPriceData, previousActionsData
                         );
                     } else if (command == Commands.INITIATE_CLOSE) {
