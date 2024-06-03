@@ -8,6 +8,8 @@ import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareType
 
 /// @custom:feature The `PythOracle` specific functions
 contract TestOracleMiddlewarePythOracle is OracleMiddlewareBaseFixture {
+    bytes constant PYTH_DATA = new bytes(33);
+
     function setUp() public override {
         super.setUp();
     }
@@ -22,12 +24,11 @@ contract TestOracleMiddlewarePythOracle is OracleMiddlewareBaseFixture {
     function test_pythConfGreaterThanPrice() public {
         mockPyth.setPrice(10e8);
         mockPyth.setConf(30e8);
-        bytes memory pythData = new bytes(33);
 
         // ValidateDeposit adjusts down with conf
         PriceInfo memory price = oracleMiddleware.parseAndValidatePrice{
-            value: oracleMiddleware.validationCost(pythData, ProtocolAction.ValidateDeposit)
-        }("", uint128(block.timestamp), ProtocolAction.ValidateDeposit, pythData);
+            value: oracleMiddleware.validationCost(PYTH_DATA, ProtocolAction.ValidateDeposit)
+        }("", uint128(block.timestamp), ProtocolAction.ValidateDeposit, PYTH_DATA);
         assertEq(price.price, 1, "price should be 1");
     }
 
@@ -39,11 +40,10 @@ contract TestOracleMiddlewarePythOracle is OracleMiddlewareBaseFixture {
      */
     function test_pythInvalidExponent() public {
         mockPyth.setExpo(1);
-        bytes memory pythData = abi.encodePacked(type(uint8).max, type(uint256).max);
-        uint256 validationCost = oracleMiddleware.validationCost(pythData, ProtocolAction.Liquidation);
+        uint256 validationCost = oracleMiddleware.validationCost(PYTH_DATA, ProtocolAction.Liquidation);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePythPositiveExponent.selector, 1));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            "", uint128(block.timestamp), ProtocolAction.Liquidation, pythData
+            "", uint128(block.timestamp), ProtocolAction.Liquidation, PYTH_DATA
         );
     }
 }
