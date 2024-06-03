@@ -337,7 +337,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         assertEq(depositAction.totalExpo, action.var4, "action expo");
         assertEq(depositAction.balanceVault, action.var5, "action balance vault");
         assertEq(depositAction.balanceLong, action.var6, "action balance long");
-        assertEq(depositAction.usdnTotalSupply, action.var7, "action total supply");
+        assertEq(depositAction.usdnTotalShares, action.var7, "action total shares");
         PendingAction memory result = protocol.i_convertDepositPendingAction(depositAction);
         _assertActionsEqual(action, result, "deposit pending action conversion");
     }

@@ -44,4 +44,7 @@ interface IOracleMiddlewareErrors {
      * @param newDelay The delay that was provided
      */
     error OracleMiddlewareInvalidRecentPriceDelay(uint64 newDelay);
+
+    /// @dev Indicates that the new penaltyBps value is invalid
+    error OracleMiddlewareInvalidPenaltyBps();
 }

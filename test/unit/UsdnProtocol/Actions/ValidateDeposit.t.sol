@@ -128,7 +128,8 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
 
         _waitDelay();
 
-        protocol.validateDeposit(address(this), abi.encode(params.initialPrice / 3), EMPTY_PREVIOUS_DATA);
+        bool success = protocol.validateDeposit(address(this), abi.encode(params.initialPrice / 3), EMPTY_PREVIOUS_DATA);
+        assertFalse(success, "success");
 
         PendingAction memory pending = protocol.getUserPendingAction(address(this));
         assertEq(
@@ -190,7 +191,8 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit ValidatedDeposit(to, address(this), DEPOSIT_AMOUNT, mintedAmount, initiateDepositTimestamp); // expected
             // event
-        protocol.validateDeposit(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+        bool success = protocol.validateDeposit(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+        assertTrue(success, "success");
 
         assertEq(usdn.balanceOf(to), mintedAmount, "USDN to balance");
         if (address(this) != to) {
