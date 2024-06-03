@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { OracleMiddlewareBaseIntegrationFixture } from "test/integration/Middlewares/utils/Fixtures.sol";
-import { PYTH_STETH_USD } from "test/utils/Constants.sol";
+import { PYTH_ETH_USD } from "test/utils/Constants.sol";
 
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
@@ -28,7 +28,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
     /**
      * @custom:scenario Parse and validate price with mocked hermes API signature for pyth
-     * @custom:given The price feed is wstETH/USD for pyth
+     * @custom:given The price feed is ETH/USD for pyth
      * @custom:and The validationDelay is respected
      * @custom:when Protocol action is any targeted action
      * @custom:then The price signature is well decoded
@@ -45,7 +45,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
             // pyth data
             (uint256 pythPrice, uint256 pythConf, uint256 pythDecimals, uint256 pythTimestamp, bytes memory data) =
-                getMockedPythSignatureStETH();
+                getMockedPythSignatureETH();
             // Apply conf ratio to pyth confidence
             pythConf = (
                 pythConf * 10 ** (oracleMiddleware.getDecimals() - pythDecimals) * oracleMiddleware.getConfRatioBps()
@@ -99,7 +99,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
     /**
      * @custom:scenario Parse and validate price with chainlink onchain
-     * @custom:given The price feed is steth/usd for chainlink
+     * @custom:given The price feed is eth/usd for chainlink
      * @custom:when Protocol action is any targeted action
      * @custom:then The price retrieved by the oracle middleware is the same as the one from chainlink onchain data
      */
@@ -147,7 +147,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
     /**
      * @custom:scenario Parse and validate price with mocked hermes API signature for pyth
-     * @custom:given The price feed is wstETH/USD for pyth
+     * @custom:given The price feed is ETH/USD for pyth
      * @custom:and The validation delay is respected
      * @custom:when Protocol action is any targeted action
      * @custom:then The price signature is well decoded
@@ -164,7 +164,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
             // pyth data
             (uint256 pythPrice, uint256 pythConf, uint256 pythDecimals, uint256 pythTimestamp, bytes memory data) =
-                getHermesApiSignature(PYTH_STETH_USD, block.timestamp);
+                getHermesApiSignature(PYTH_ETH_USD, block.timestamp);
             // Apply conf ratio to pyth confidence
             pythConf = (
                 pythConf * 10 ** (oracleMiddleware.getDecimals() - pythDecimals) * oracleMiddleware.getConfRatioBps()
@@ -216,7 +216,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
     /**
      * @custom:scenario Parse and validate price with chainlink onchain
-     * @custom:given The price feed is steth/usd for chainlink
+     * @custom:given The price feed is eth/usd for chainlink
      * @custom:when Protocol action is an initiateDeposit
      * @custom:then The price signature is well decoded
      * @custom:and The price retrieved by the oracle middleware is the same as the one from the chainlink onchain data
@@ -270,7 +270,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
         (uint256 chainlinkPrice, uint256 chainlinkTimestamp) = getChainlinkPrice();
 
         // get pyth price that must be more recent than chainlink data
-        (,,,, bytes memory data) = getHermesApiSignature(PYTH_STETH_USD, chainlinkTimestamp + 1);
+        (,,,, bytes memory data) = getHermesApiSignature(PYTH_ETH_USD, chainlinkTimestamp + 1);
         uint256 validationCost = oracleMiddleware.validationCost(data, ProtocolAction.ValidateDeposit);
 
         // submit to oracle middleware so it gets cached by Pyth
@@ -306,7 +306,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
         (, uint256 chainlinkTimestamp) = getChainlinkPrice();
 
         // get pyth price that must be more recent than chainlink data
-        (,,,, bytes memory data) = getHermesApiSignature(PYTH_STETH_USD, chainlinkTimestamp + 1);
+        (,,,, bytes memory data) = getHermesApiSignature(PYTH_ETH_USD, chainlinkTimestamp + 1);
         uint256 validationCost = oracleMiddleware.validationCost(data, ProtocolAction.ValidateDeposit);
 
         // submit to oracle middleware so it gets cached by Pyth

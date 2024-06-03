@@ -16,10 +16,10 @@ import {
     CHAINLINK_ORACLE_GAS
 } from "test/utils/Constants.sol";
 import {
-    PYTH_DATA_STETH_PRICE,
-    PYTH_DATA_STETH_CONF,
+    PYTH_DATA_ETH_PRICE,
+    PYTH_DATA_ETH_CONF,
     PYTH_DATA_TIMESTAMP,
-    PYTH_DATA_STETH
+    PYTH_DATA_ETH
 } from "test/integration/Middlewares/utils/Constants.sol";
 import { WstETH } from "test/utils/WstEth.sol";
 import { Sdex } from "test/utils/Sdex.sol";
@@ -140,7 +140,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
     }
 
     function getMockedPythSignature() internal pure returns (uint256, uint256, uint256, bytes memory) {
-        return (PYTH_DATA_STETH_PRICE, PYTH_DATA_STETH_CONF, PYTH_DATA_TIMESTAMP, PYTH_DATA_STETH);
+        return (PYTH_DATA_ETH_PRICE, PYTH_DATA_ETH_CONF, PYTH_DATA_TIMESTAMP, PYTH_DATA_ETH);
     }
 
     function _waitDelay() internal {
