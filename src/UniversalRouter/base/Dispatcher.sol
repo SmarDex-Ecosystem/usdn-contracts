@@ -236,7 +236,12 @@ abstract contract Dispatcher is
                     } else if (command == Commands.VALIDATE_DEPOSIT) {
                         // TODO VALIDATE_DEPOSIT
                     } else if (command == Commands.VALIDATE_WITHDRAWAL) {
-                        // TODO VALIDATE_WITHDRAWAL
+                        (
+                            address validator,
+                            bytes memory withdrawalPriceData,
+                            PreviousActionsData memory previousActionsData
+                        ) = abi.decode(inputs, (address, bytes, PreviousActionsData));
+                        _usdnValidateWithdrawal(map(validator), withdrawalPriceData, previousActionsData);
                     } else if (command == Commands.VALIDATE_OPEN) {
                         // TODO VALIDATE_OPEN
                     } else if (command == Commands.VALIDATE_CLOSE) {

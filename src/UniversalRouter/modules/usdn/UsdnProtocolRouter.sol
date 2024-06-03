@@ -84,8 +84,8 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
      */
     function _usdnValidateWithdrawal(
         address validator,
-        bytes calldata withdrawalPriceData,
-        PreviousActionsData calldata previousActionsData
+        bytes memory withdrawalPriceData,
+        PreviousActionsData memory previousActionsData
     ) internal returns (bool success_) {
         success_ = USDN_PROTOCOL.validateWithdrawal{ value: address(this).balance }(
             validator, withdrawalPriceData, previousActionsData
