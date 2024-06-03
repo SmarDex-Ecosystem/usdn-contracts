@@ -285,46 +285,46 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         uint128 targetLimit = targetTimestamp + _lowLatencyDelay;
         if (block.timestamp <= targetLimit) {
             return _getLowLatencyPrice(data, targetTimestamp, dir);
-        } else {
-            // chainlink calls do not require a fee
-            if (msg.value > 0) {
-                revert OracleMiddlewareIncorrectFee();
-            }
-
-            uint80 validateRoundId = abi.decode(data, (uint80));
-
-            // previous round id
-            ChainlinkPriceInfo memory chainlinkOnChainPrice =
-                _getFormattedChainlinkPrice(MIDDLEWARE_DECIMALS, validateRoundId - 1);
-
-            // if the price is negative or zero, revert
-            if (chainlinkOnChainPrice.price <= 0) {
-                revert OracleMiddlewareWrongPrice(chainlinkOnChainPrice.price);
-            }
-
-            // if previous price is higher than targetLimit
-            if (chainlinkOnChainPrice.timestamp > targetLimit) {
-                revert OracleMiddlewareRoundIdTooHigh();
-            }
-
-            // validate round id
-            chainlinkOnChainPrice = _getFormattedChainlinkPrice(MIDDLEWARE_DECIMALS, validateRoundId);
-
-            // if the price is negative or zero, revert
-            if (chainlinkOnChainPrice.price <= 0) {
-                revert OracleMiddlewareWrongPrice(chainlinkOnChainPrice.price);
-            }
-
-            // if validate price is lower or equal than targetLimit
-            if (chainlinkOnChainPrice.timestamp <= targetLimit) {
-                revert OracleMiddlewareRoundIdTooLow();
-            }
-            price_ = PriceInfo({
-                price: uint256(chainlinkOnChainPrice.price),
-                neutralPrice: uint256(chainlinkOnChainPrice.price),
-                timestamp: chainlinkOnChainPrice.timestamp
-            });
         }
+
+        // chainlink calls do not require a fee
+        if (msg.value > 0) {
+            revert OracleMiddlewareIncorrectFee();
+        }
+
+        uint80 validateRoundId = abi.decode(data, (uint80));
+
+        // previous round id
+        ChainlinkPriceInfo memory chainlinkOnChainPrice =
+            _getFormattedChainlinkPrice(MIDDLEWARE_DECIMALS, validateRoundId - 1);
+
+        // if the price is negative or zero, revert
+        if (chainlinkOnChainPrice.price <= 0) {
+            revert OracleMiddlewareWrongPrice(chainlinkOnChainPrice.price);
+        }
+
+        // if previous price is higher than targetLimit
+        if (chainlinkOnChainPrice.timestamp > targetLimit) {
+            revert OracleMiddlewareRoundIdTooHigh();
+        }
+
+        // validate round id
+        chainlinkOnChainPrice = _getFormattedChainlinkPrice(MIDDLEWARE_DECIMALS, validateRoundId);
+
+        // if the price is negative or zero, revert
+        if (chainlinkOnChainPrice.price <= 0) {
+            revert OracleMiddlewareWrongPrice(chainlinkOnChainPrice.price);
+        }
+
+        // if validate price is lower or equal than targetLimit
+        if (chainlinkOnChainPrice.timestamp <= targetLimit) {
+            revert OracleMiddlewareRoundIdTooLow();
+        }
+        price_ = PriceInfo({
+            price: uint256(chainlinkOnChainPrice.price),
+            neutralPrice: uint256(chainlinkOnChainPrice.price),
+            timestamp: chainlinkOnChainPrice.timestamp
+        });
     }
 
     /* -------------------------------------------------------------------------- */
