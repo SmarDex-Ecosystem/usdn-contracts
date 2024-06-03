@@ -35,7 +35,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
      * @custom:and The price retrieved by the oracle middleware is the same as the one from the hermes API by applying
      * Steth/Wsteth on-chain price ratio
      */
-    function test_ForkethParseAndValidatePriceForAllActionsWithPyth() public ethMainnetFork reSetUp {
+    function test_ForkEthParseAndValidatePriceForAllActionsWithPyth() public ethMainnetFork reSetUp {
         // all targeted actions loop
         for (uint256 i; i < actions.length; i++) {
             // action type
@@ -103,13 +103,13 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
     }
 
     /**
-     * @custom:scenario Parse and validate price with chainlink onchain
+     * @custom:scenario Parse and validate price with chainlink on-chain
      * @custom:given The price feed is ETH/USD for chainlink
      * @custom:when The Protocol action is any InitiateDeposit
-     * @custom:then The price retrieved by the oracle middleware is the same as the one from the chainlink onchain data
-     * by applying Steth/Wsteth onchain price ratio
+     * @custom:then The price retrieved by the oracle middleware is the same as the one from the chainlink on-chain data
+     * by applying Steth/Wsteth on-chain price ratio
      */
-    function test_ForkethParseAndValidatePriceForInitiateDepositWithChainlink() public ethMainnetFork reSetUp {
+    function test_ForkEthParseAndValidatePriceForInitiateDepositWithChainlink() public ethMainnetFork reSetUp {
         // all targeted actions loop
         for (uint256 i; i < actions.length; i++) {
             // action type
@@ -252,10 +252,10 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
     }
 
     /**
-     * @custom:scenario Parse and validate price with chainlink onchain
+     * @custom:scenario Parse and validate price with chainlink on-chain
      * @custom:given The price feed is ETH/USD for chainlink
      * @custom:when Protocol action is InitiateDeposit
-     * @custom:then The price retrieved by the oracle middleware is the same as the one from the chainlink onchain data
+     * @custom:then The price retrieved by the oracle middleware is the same as the one from the chainlink on-chain data
      * by applying Steth/Wsteth on-chain price ratio
      */
     function test_ForkFFIParseAndValidatePriceForInitiateDepositWithChainlink() public ethMainnetFork reSetUp {

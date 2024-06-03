@@ -298,7 +298,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
      * @custom:given A pyth signature was provided to the oracle more recently than the last chainlink price
      * @custom:and The chainlink price is too old (there is a problem with chainlink)
      * @custom:when A user retrieves a price for a `initiate` action without providing data
-     * @custom:then The price is retrieved from Pyth but checked for freshness and the tx reverts with
+     * @custom:then The price is retrieved from Pyth but checked for freshness and the transaction reverts with
      * `OracleMiddlewarePriceTooOld`
      */
     function test_RevertWhen_ForkFFIOldCachedPythPrice() public ethMainnetFork reSetUp {
