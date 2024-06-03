@@ -37,6 +37,9 @@ interface IOracleMiddleware is IBaseOracleMiddleware, IOracleMiddlewareErrors, I
      */
     function getConfRatioBps() external view returns (uint16);
 
+    // @notice Return the _penaltyBps value
+    function getPenaltyBps() external view returns (uint16);
+
     /* -------------------------------------------------------------------------- */
     /*                               Owner features                               */
     /* -------------------------------------------------------------------------- */
@@ -74,4 +77,10 @@ interface IOracleMiddleware is IBaseOracleMiddleware, IOracleMiddlewareErrors, I
      * @param to The address to send the ether to
      */
     function withdrawEther(address to) external;
+
+    /**
+     * @notice Set the penalty basis points
+     * @param newPenaltyBps The new penalty basis points
+     */
+    function setPenaltyBps(uint16 newPenaltyBps) external;
 }
