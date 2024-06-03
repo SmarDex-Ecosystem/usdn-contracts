@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { Constants } from "@uniswap/universal-router/contracts/libraries/Constants.sol";
-
 import { PYTH_STETH_USD } from "test/utils/Constants.sol";
 import { USER_1, USER_2 } from "test/utils/Constants.sol";
 import { UniversalRouterBaseFixture } from "test/integration/UniversalRouter/utils/Fixtures.sol";
