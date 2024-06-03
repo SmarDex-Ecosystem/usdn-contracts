@@ -102,7 +102,7 @@ contract Deploy is Script {
             }
         } else {
             address pythAddress = vm.envAddress("PYTH_ADDRESS");
-            bytes32 pythPriceId = vm.envBytes32("PYTH_STETH_PRICE_ID");
+            bytes32 pythPriceId = vm.envBytes32("PYTH_ETH_PRICE_ID");
             address chainlinkPriceAddress = vm.envAddress("CHAINLINK_ETH_PRICE_ADDRESS");
             uint256 chainlinkPriceValidity = vm.envOr("CHAINLINK_ETH_PRICE_VALIDITY", uint256(1 hours + 2 minutes));
 
