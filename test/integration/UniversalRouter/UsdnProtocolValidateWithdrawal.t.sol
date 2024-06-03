@@ -21,13 +21,13 @@ contract TestForkUniversalRouterValidateWithdrawal is UniversalRouterBaseFixture
 
     function setUp() public {
         _setUp();
-        WITHDRAW_AMOUNT = usdn.sharesOf(DEPLOYER) / 10_000;
+        WITHDRAW_AMOUNT = usdn.sharesOf(DEPLOYER) / 100;
         vm.prank(DEPLOYER);
         usdn.transferShares(address(this), WITHDRAW_AMOUNT);
         usdn.approve(address(protocol), type(uint256).max);
         // initiate withdrawal
         protocol.initiateWithdrawal{ value: protocol.getSecurityDepositValue() }(
-            WITHDRAW_AMOUNT.toUint128(), USER_2, USER_1, "", EMPTY_PREVIOUS_DATA
+            WITHDRAW_AMOUNT.toUint152(), USER_2, USER_1, "", EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -38,6 +38,7 @@ contract TestForkUniversalRouterValidateWithdrawal is UniversalRouterBaseFixture
      * @custom:then The withdrawal is validated successfully
      */
     function test_ForkValidateWithdraw() public {
+        _waitDelay(); //to be realistic because not mandatory
         uint256 ts1 = protocol.getUserPendingAction(USER_1).timestamp;
         (,,,, bytes memory data) = getHermesApiSignature(PYTH_STETH_USD, ts1 + oracleMiddleware.getValidationDelay());
 
