@@ -112,6 +112,10 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         _balanceVault = tempVaultBalance.toUint256();
     }
 
+    function setTickVersion(int24 tick, uint256 version) external {
+        _tickVersion[tick] = version;
+    }
+
     function i_initiateClosePosition(
         address owner,
         address to,
@@ -460,5 +464,9 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
 
     function i_clearPendingAction(address user, uint128 rawIndex) external {
         _clearPendingAction(user, rawIndex);
+    }
+
+    function i_removeStalePendingAction(address user) external returns (uint256) {
+        return _removeStalePendingAction(user);
     }
 }

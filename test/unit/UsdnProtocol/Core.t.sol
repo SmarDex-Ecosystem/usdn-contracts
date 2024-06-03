@@ -2,8 +2,15 @@
 pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { USER_1 } from "test/utils/Constants.sol";
 
-import { ProtocolAction, PendingAction, Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import {
+    ProtocolAction,
+    PendingAction,
+    Position,
+    PositionId,
+    LongPendingAction
+} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 
 /**
@@ -542,5 +549,97 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         assertTrue(action.action == ProtocolAction.None, "action should be None");
         assertEq(rawIndex, 0, "rawIndex should be 0");
         assertTrue(protocol.queueEmpty(), "queue should be empty");
+    }
+
+    /**
+     * @custom:scenario The `removeStalePendingAction` function return 0 when there is no pending action, the action
+     * is different than ValidateOpenPosition or version calculated equal to tickVersion
+     * @custom:given A protocol without any pending action
+     * @custom:or a pending action different than `ValidateOpenPosition`
+     * @custom:or a pending action with a tick version equal to the current tick version
+     * @custom:when removeStalePendingAction is called
+     * @custom:then The protocol should return 0
+     */
+    function test_removeStalePendingActionReturnZero() public {
+        assertEq(protocol.i_removeStalePendingAction(address(this)), 0, "should return 0, no pending action");
+
+        PendingAction memory pendingAction = PendingAction({
+            action: ProtocolAction.InitiateWithdrawal,
+            timestamp: uint40(block.timestamp - 1 days),
+            to: address(this),
+            validator: address(this),
+            securityDepositValue: 0.01 ether,
+            var1: 0,
+            var2: 0,
+            var3: 0,
+            var4: 1,
+            var5: 0,
+            var6: 0,
+            var7: 0
+        });
+        protocol.i_addPendingAction(address(this), pendingAction);
+        assertEq(
+            protocol.i_removeStalePendingAction(address(this)),
+            0,
+            "should return 0, action is different than ValidateOpenPosition"
+        );
+
+        LongPendingAction memory longPendingAction = LongPendingAction({
+            action: ProtocolAction.ValidateOpenPosition,
+            timestamp: uint40(block.timestamp - 1 days),
+            to: address(this),
+            validator: USER_1,
+            securityDepositValue: 0.01 ether,
+            tick: 1,
+            closeAmount: 0,
+            closePosTotalExpo: 0,
+            tickVersion: protocol.getTickVersion(1),
+            index: 0,
+            closeLiqMultiplier: 0,
+            closeBoundedPositionValue: 0
+        });
+        protocol.i_addPendingAction(USER_1, protocol.i_convertLongPendingAction(longPendingAction));
+        assertEq(
+            protocol.i_removeStalePendingAction(USER_1), 0, "should return 0, version calculated equal to tickVersion"
+        );
+    }
+
+    /**
+     * @custom:scenario The `removeStalePendingAction` function return the security deposit value
+     * @custom:given A protocol with a pending action that is stale
+     * @custom:when removeStalePendingAction is called
+     * @custom:then The protocol should return the security deposit value
+     */
+    function test_removeStalePendingAction() public {
+        protocol.setTickVersion(1, 5);
+        LongPendingAction memory longPendingAction = LongPendingAction({
+            action: ProtocolAction.ValidateOpenPosition,
+            timestamp: uint40(block.timestamp - 1 days),
+            to: address(this),
+            validator: USER_1,
+            securityDepositValue: 0.01 ether,
+            tick: 1,
+            closeAmount: 0,
+            closePosTotalExpo: 0,
+            tickVersion: protocol.getTickVersion(1) - 1,
+            index: 0,
+            closeLiqMultiplier: 0,
+            closeBoundedPositionValue: 0
+        });
+        protocol.i_addPendingAction(USER_1, protocol.i_convertLongPendingAction(longPendingAction));
+        vm.expectEmit();
+        emit StalePendingActionRemoved(
+            USER_1,
+            PositionId({
+                tick: longPendingAction.tick,
+                tickVersion: longPendingAction.tickVersion,
+                index: longPendingAction.index
+            })
+        );
+        uint256 securityDeposit = protocol.i_removeStalePendingAction(USER_1);
+        assertEq(securityDeposit, 0.01 ether, "should return the security deposit value");
+        (PendingAction memory action, uint128 rawIndex) = protocol.i_getPendingAction(USER_1);
+        assertTrue(action.action == ProtocolAction.None, "action should be None");
+        assertEq(rawIndex, 0, "rawIndex should be 0");
     }
 }
