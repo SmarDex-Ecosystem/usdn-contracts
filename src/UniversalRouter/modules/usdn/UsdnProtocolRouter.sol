@@ -48,7 +48,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
      * @notice Validate a deposit into the USDN protocol vault
      * @dev Check the protocol's documentation for information about how this function should be used
      * @param validator The address that should validate the deposit (receives the security deposit)
-     * @param depositPriceData The price data at the time of the deposit
+     * @param depositPriceData The price data corresponding to the validator's pending deposit action
      * @param previousActionsData The data needed to validate actionable pending actions
      * @return success_ Whether the deposit was successfully
      */

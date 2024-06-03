@@ -23,7 +23,6 @@ contract TestForkUniversalRouterValidateDeposit is UniversalRouterBaseFixture {
         protocol.initiateDeposit{ value: protocol.getSecurityDepositValue() }(
             0.1 ether, USER_2, USER_1, "", EMPTY_PREVIOUS_DATA
         );
-        skip(120 minutes);
     }
 
     /**
@@ -33,6 +32,7 @@ contract TestForkUniversalRouterValidateDeposit is UniversalRouterBaseFixture {
      * @custom:then The deposit is validated successfully
      */
     function test_ForkValidateDeposit() public {
+        _waitDelay(); //to be realistic because not mandatory
         uint256 ts1 = protocol.getUserPendingAction(USER_1).timestamp;
         (,,,, bytes memory data) = getHermesApiSignature(PYTH_STETH_USD, ts1 + oracleMiddleware.getValidationDelay());
 
