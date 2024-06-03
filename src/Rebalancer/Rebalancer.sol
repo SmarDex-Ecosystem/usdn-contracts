@@ -40,6 +40,9 @@ contract Rebalancer is Ownable, IRebalancer {
     /// @inheritdoc IRebalancer
     uint256 public constant MULTIPLIER_DECIMALS = 21;
 
+    // TODO Use this constant instead of the doing the multiplication everywhere
+    uint256 public constant MULTIPLIER_FACTOR = 10 ** MULTIPLIER_DECIMALS;
+
     /// @inheritdoc IRebalancer
     int24 public constant NO_POSITION_TICK = type(int24).min;
 
@@ -244,6 +247,7 @@ contract Rebalancer is Ownable, IRebalancer {
                 _positionData[positionVersion].pnlMultiplier = pnlMultiplier;
 
                 // update the multiplier accumulator
+                // TODO use amounts to avoid
                 accMultiplier = FixedPointMathLib.fullMulDiv(
                     currentPositionData.entryAccMultiplier, pnlMultiplier, 10 ** MULTIPLIER_DECIMALS
                 );

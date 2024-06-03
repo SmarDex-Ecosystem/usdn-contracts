@@ -1848,6 +1848,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     /**
+     * TODO move those functions into UsdnProtocolLong
      * @notice Trigger the rebalancer if the imbalance on the long side is too high
      * It will close the rebalancer position (if there is one) and open a new one with
      * the pending assets, the value of the previous position and the liquidation bonus (if available)
@@ -1862,13 +1863,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         returns (uint256 longBalance_)
     {
         longBalance_ = longBalance;
-        uint256 totalExpo = _totalExpo;
         IRebalancer rebalancer = _rebalancer;
 
         // if the rebalancer is not set, do nothing
         if (address(rebalancer) == address(0)) {
             return longBalance_;
         }
+
+        uint256 totalExpo = _totalExpo;
 
         // calculate the current imbalance
         int256 currentImbalance = (
@@ -1879,11 +1881,15 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             return longBalance_;
         }
 
-        (uint128 pendingAssets, uint256 maxLeverage, PositionId memory rebalancerPosId) = rebalancer.getRebalancerData();
+        (uint128 pendingAssets, uint256 rebalancerMaxLeverage, PositionId memory rebalancerPosId) =
+            rebalancer.getRebalancerData();
+        // TODO Ask if the position fee should be applied
         uint128 adjustedPrice = neutralPrice + (neutralPrice * _positionFeeBps / BPS_DIVISOR).toUint128();
 
         // Close the rebalancer position and get its value to open the next one
         uint128 positionAmount;
+        // TODO really needed to call NO_POSITION_TICK here? seems suboptimal
+        // But don't want to assume values as they are separate contracts
         if (rebalancerPosId.tick != rebalancer.NO_POSITION_TICK()) {
             uint128 positionValue =
                 _flashClosePosition(rebalancerPosId, neutralPrice, adjustedPrice, totalExpo - longBalance_).toUint128();
@@ -1902,10 +1908,25 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             uint256 tradingExpoToFill = vaultBalance
                 - (vaultBalance * (BPS_DIVISOR.toInt256() - _longImbalanceTargetBps).toUint256() / BPS_DIVISOR);
 
-            // TODO i'm sure there's a better way to calculate this than to calculate the leverage
-            // TODO check if position's leverage is not greater than maxLeverage of rebalancer and protocol
+            // use the lowest max leverage
+            uint256 protocolMaxLeverage = _maxLeverage;
+            if (rebalancerMaxLeverage > protocolMaxLeverage) {
+                rebalancerMaxLeverage = protocolMaxLeverage;
+            }
+
+            // TODO check the min usable trading expo as well
+            // check that the trading expo filled by the position would not exceed the max leverage
+            uint256 highestUsableTradingExpo =
+                positionAmount * rebalancerMaxLeverage / LEVERAGE_DECIMALS - positionAmount;
+            if (highestUsableTradingExpo > tradingExpoToFill) {
+                highestUsableTradingExpo = tradingExpoToFill;
+            }
+
             // If that's the case, open position with max leverage
-            desiredLiqPrice = _calcLiqPriceFromTradingExpo(neutralPrice, positionAmount, tradingExpoToFill);
+            // TODO it's not really the desired price, but more the liq price without penalty
+            // TODO we probably need the same logic as in the validate just in case the application of the penalty makes
+            // the position's leverage go higher than the max leverage
+            desiredLiqPrice = _calcLiqPriceFromTradingExpo(neutralPrice, positionAmount, highestUsableTradingExpo);
         }
 
         // open a new position for the rebalancer
@@ -1947,6 +1968,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint8 liquidationPenalty = _tickData[tickHash].liquidationPenalty;
 
         _removeAmountFromPosition(posId.tick, posId.index, pos, pos.amount, pos.totalExpo);
+        // TODO might not be necessary, check if you can use the other variant of getEffectivePriceForTick
         uint256 closeLiqMultiplier =
             _calcFixedPrecisionMultiplier(neutralPrice, longTradingExpo, _liqMultiplierAccumulator);
 
