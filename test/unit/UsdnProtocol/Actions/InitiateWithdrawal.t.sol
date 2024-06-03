@@ -104,13 +104,14 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
 
         _waitMockMiddlewarePriceDelay();
 
-        protocol.initiateWithdrawal(
+        bool success = protocol.initiateWithdrawal(
             uint128(usdn.balanceOf(address(this))),
             address(this),
             address(this),
             abi.encode(params.initialPrice / 3),
             EMPTY_PREVIOUS_DATA
         );
+        assertFalse(success, "success");
 
         PendingAction memory pending = protocol.getUserPendingAction(address(this));
         assertEq(uint256(pending.action), uint256(ProtocolAction.None), "user 0 should not have a pending action");
@@ -128,7 +129,8 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit InitiatedWithdrawal(to, address(this), USDN_AMOUNT, block.timestamp); // expected event
-        protocol.initiateWithdrawal(withdrawShares, to, address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+        bool success = protocol.initiateWithdrawal(withdrawShares, to, address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+        assertTrue(success, "success");
 
         assertEq(usdn.sharesOf(address(this)), initialUsdnShares - withdrawShares, "usdn user balance");
         assertEq(usdn.sharesOf(address(protocol)), protocolUsdnInitialShares + withdrawShares, "usdn protocol balance");

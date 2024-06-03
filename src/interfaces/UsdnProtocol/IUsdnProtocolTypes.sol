@@ -87,7 +87,7 @@ struct PendingAction {
  * @param totalExpo The total exposure at the time of the last update.
  * @param balanceVault The balance of the vault at the time of the last update.
  * @param balanceLong The balance of the long position at the time of the last update.
- * @param usdnTotalSupply The total supply of USDN at the time of the action.
+ * @param usdnTotalShares The total supply of USDN shares at the time of the action.
  */
 struct DepositPendingAction {
     ProtocolAction action; // 1 byte
@@ -101,7 +101,7 @@ struct DepositPendingAction {
     uint256 totalExpo; // 32 bytes
     uint256 balanceVault; // 32 bytes
     uint256 balanceLong; // 32 bytes
-    uint256 usdnTotalSupply; // 32 bytes
+    uint256 usdnTotalShares; // 32 bytes
 }
 
 /**

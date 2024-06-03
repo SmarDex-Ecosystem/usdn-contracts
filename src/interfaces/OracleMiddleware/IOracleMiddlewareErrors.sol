@@ -39,6 +39,9 @@ interface IOracleMiddlewareErrors {
     /// @notice The address supposed to receive the ether is the zero address
     error OracleMiddlewareTransferToZeroAddress();
 
+    /// @dev Indicates that the new penaltyBps value is invalid
+    error OracleMiddlewareInvalidPenaltyBps();
+
     /**
      * @notice The recent price delay is outside of the limits
      * @param newDelay The delay that was provided

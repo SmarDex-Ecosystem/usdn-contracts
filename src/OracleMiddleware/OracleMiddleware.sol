@@ -49,6 +49,9 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     /// @notice The delay during which a low latency oracle price validation is available
     uint16 internal _lowLatencyDelay = 20 minutes;
 
+    /// @notice The penalty for using a non-Pyth price with low latency oracle, in basis points: default 0.25%
+    uint16 internal _penaltyBps = 25; // to divide by BPS_DIVISOR
+
     /**
      * @param pythContract Address of the Pyth contract
      * @param pythPriceID The price ID of the asset in Pyth
@@ -136,6 +139,11 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     /// @inheritdoc IOracleMiddleware
     function getLowLatencyDelay() external view returns (uint16) {
         return _lowLatencyDelay;
+    }
+
+    /// @inheritdoc IOracleMiddleware
+    function getPenaltyBps() external view returns (uint16) {
+        return _penaltyBps;
     }
 
     /// @inheritdoc IBaseOracleMiddleware
@@ -386,5 +394,16 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         if (!success) {
             revert OracleMiddlewareTransferFailed(to);
         }
+    }
+
+    /// @inheritdoc IOracleMiddleware
+    function setPenaltyBps(uint16 newPenaltyBps) external onlyOwner {
+        // penalty greater than max 10%
+        if (newPenaltyBps > 1000) {
+            revert OracleMiddlewareInvalidPenaltyBps();
+        }
+        _penaltyBps = newPenaltyBps;
+
+        emit PenaltyBpsUpdated(newPenaltyBps);
     }
 }

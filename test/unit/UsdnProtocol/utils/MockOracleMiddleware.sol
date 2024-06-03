@@ -16,6 +16,7 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
     uint8 internal constant DECIMALS = 18;
 
     uint16 internal _confRatioBps = 4000;
+    uint16 internal _penaltyBps = 25;
     uint256 internal _validationDelay = 24 seconds;
     uint256 internal _timeElapsedLimit = 1 hours;
     // if true, then the middleware requires a payment of 1 wei for any action
@@ -79,6 +80,11 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
     }
 
     /// @inheritdoc IOracleMiddleware
+    function getPenaltyBps() external view returns (uint16) {
+        return _penaltyBps;
+    }
+
+    /// @inheritdoc IOracleMiddleware
     function setValidationDelay(uint256 newDelay) external {
         _validationDelay = newDelay;
     }
@@ -122,5 +128,9 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
 
     function setLowLatencyDelay(uint16) external {
         // do something if needed
+    }
+
+    function setPenaltyBps(uint16 newPenaltyBps) external onlyOwner {
+        // Do something if needed
     }
 }

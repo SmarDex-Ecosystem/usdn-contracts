@@ -112,6 +112,10 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         _balanceVault = tempVaultBalance.toUint256();
     }
 
+    function setTickVersion(int24 tick, uint256 version) external {
+        _tickVersion[tick] = version;
+    }
+
     function i_initiateClosePosition(
         address owner,
         address to,
@@ -119,7 +123,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         uint128 amountToClose,
         uint64 securityDepositValue,
         bytes calldata currentPriceData
-    ) external returns (uint256 securityDepositValue_, bool isLiquidationPending_) {
+    ) external returns (uint256 securityDepositValue_, bool isLiquidationPending_, bool liq_) {
         return _initiateClosePosition(owner, to, posId, amountToClose, securityDepositValue, currentPriceData);
     }
 
@@ -256,12 +260,12 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _getOraclePrice(action, timestamp, actionId, priceData);
     }
 
-    function i_calcMintUsdn(uint256 amount, uint256 vaultBalance, uint256 usdnTotalSupply, uint256 price)
+    function i_calcMintUsdnShares(uint256 amount, uint256 vaultBalance, uint256 usdnTotalShares, uint256 price)
         external
         view
         returns (uint256 toMint_)
     {
-        return _calcMintUsdn(amount, vaultBalance, usdnTotalSupply, price);
+        return _calcMintUsdnShares(amount, vaultBalance, usdnTotalShares, price);
     }
 
     function i_calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) external pure returns (uint256) {
@@ -460,5 +464,9 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
 
     function i_clearPendingAction(address user, uint128 rawIndex) external {
         _clearPendingAction(user, rawIndex);
+    }
+
+    function i_removeStalePendingAction(address user) external returns (uint256) {
+        return _removeStalePendingAction(user);
     }
 }

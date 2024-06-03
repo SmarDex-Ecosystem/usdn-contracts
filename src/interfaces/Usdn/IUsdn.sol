@@ -59,8 +59,9 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
      * @dev Caller must have the MINTER_ROLE
      * @param to Account to receive the new shares
      * @param amount Amount of shares to mint
+     * @return mintedTokens_ Amount of tokens that were minted (informational)
      */
-    function mintShares(address to, uint256 amount) external;
+    function mintShares(address to, uint256 amount) external returns (uint256 mintedTokens_);
 
     /**
      * @notice Destroy a `value` amount of tokens from the caller, reducing the total supply
