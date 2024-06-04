@@ -1122,7 +1122,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             getEffectivePriceForTick(_calcTickWithoutPenalty(data_.posId.tick, data_.liquidationPenalty));
         _checkOpenPositionLeverage(data_.adjustedPrice, liqPriceWithoutPenalty);
 
-        data_.positionTotalExpo = _calculatePositionTotalExpo(amount, data_.adjustedPrice, liqPriceWithoutPenalty);
+        data_.positionTotalExpo = _calcPositionTotalExpo(amount, data_.adjustedPrice, liqPriceWithoutPenalty);
         _checkImbalanceLimitOpen(data_.positionTotalExpo, amount);
     }
 
@@ -1373,8 +1373,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 data.action.tick, data.action.index, data.pos, data.pos.amount, data.pos.totalExpo
             );
             // update position total expo (because of new leverage / liq price)
-            data.pos.totalExpo =
-                _calculatePositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenalty);
+            data.pos.totalExpo = _calcPositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenalty);
             // mark the position as validated
             data.pos.validated = true;
             // insert position into new tick
@@ -1394,7 +1393,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
         // calculate the new total expo
         uint128 expoBefore = data.pos.totalExpo;
-        uint128 expoAfter = _calculatePositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenalty);
+        uint128 expoAfter = _calcPositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenalty);
 
         // update the total expo of the position
         data.pos.totalExpo = expoAfter;

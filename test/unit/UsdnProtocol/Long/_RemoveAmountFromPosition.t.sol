@@ -86,7 +86,7 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
         uint256 totalExpoBefore = protocol.getTotalExpo();
         TickData memory tickData = protocol.getTickData(_posId.tick);
         uint128 amountToRemove = posBefore.amount / 2;
-        uint128 totalExpoToRemove = protocol.i_calculatePositionTotalExpo(
+        uint128 totalExpoToRemove = protocol.i_calcPositionTotalExpo(
             amountToRemove, params.initialPrice, params.initialPrice - (params.initialPrice / 5)
         );
 
