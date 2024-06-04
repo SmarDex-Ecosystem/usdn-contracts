@@ -779,21 +779,29 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @dev Should only be used to open the rebalancer position
      * @param user The address of the user
      * @param neutralPrice The current neutral price
-     * @param desiredLiqPrice The desired liquidation price
+     * @param tickWithoutPenalty ...
      * @param amount The amount of collateral in the position
      * @return posId_ The ID of the position that got created
      */
-    function _flashOpenPosition(address user, uint128 neutralPrice, uint128 desiredLiqPrice, uint128 amount)
+    function _flashOpenPosition(address user, uint128 neutralPrice, int24 tickWithoutPenalty, uint128 amount)
         internal
         returns (PositionId memory posId_)
     {
         // we calculate the closest valid tick down for the desired liq price with liquidation penalty
-        posId_.tick = getEffectiveTickForPrice(desiredLiqPrice);
+        uint8 currentLiqPenalty = _liquidationPenalty;
+
+        posId_.tick = tickWithoutPenalty + int24(uint24(currentLiqPenalty)) * _tickSpacing;
+
         uint8 liquidationPenalty = getTickLiquidationPenalty(posId_.tick);
+        uint128 liqPriceWithoutPenalty;
 
         // remove liquidation penalty for the total expo calculation
-        uint128 liqPriceWithoutPenalty =
-            getEffectivePriceForTick(_calcTickWithoutPenalty(posId_.tick, liquidationPenalty));
+        // TODO explain
+        if (liquidationPenalty == currentLiqPenalty) {
+            liqPriceWithoutPenalty = getEffectivePriceForTick(tickWithoutPenalty);
+        } else {
+            liqPriceWithoutPenalty = getEffectivePriceForTick(_calcTickWithoutPenalty(posId_.tick, liquidationPenalty));
+        }
 
         uint128 totalExpo = _calculatePositionTotalExpo(amount, neutralPrice, liqPriceWithoutPenalty);
         Position memory long =

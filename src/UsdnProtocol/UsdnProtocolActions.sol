@@ -1882,22 +1882,19 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         (uint128 pendingAssets, uint256 rebalancerMaxLeverage, PositionId memory rebalancerPosId) =
             rebalancer.getRebalancerData();
 
-        // Close the rebalancer position and get its value to open the next one
+        // close the rebalancer position and get its value to open the next one
         uint128 positionAmount;
         // TODO really needed to call NO_POSITION_TICK here? seems suboptimal
-        // But don't want to assume values as they are separate contracts
+        // but don't want to assume values as they are separate contracts
         if (rebalancerPosId.tick != rebalancer.NO_POSITION_TICK()) {
             uint128 positionValue =
                 _flashClosePosition(rebalancerPosId, neutralPrice, totalExpo - longBalance_).toUint128();
-            // TODO Make sure positionValue > longBalance_ ?
-            // TODO technically not needed here, could just add pendingAssets + bonus to the long balance later
-            longBalance_ -= positionValue;
 
             positionAmount = positionValue + pendingAssets; // TODO add bonus
         }
 
-        // calculate the liquidation price of the rebalancer position
-        uint128 desiredLiqPrice;
+        // calculate the rebalancer position's tick
+        int24 tickWithoutLiqPenalty;
         {
             // calculate the trading expo missing to reach the imbalance target
             uint256 tradingExpoToFill = vaultBalance
@@ -1917,19 +1914,17 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 highestUsableTradingExpo = tradingExpoToFill;
             }
 
-            // if that's the case, open the position with the max leverage
-            // TODO it's not really the desired price, but more the liq price without penalty
-            // TODO we probably need the same logic as in the validate just in case the application of the penalty makes
-            // the position's leverage go higher than the max leverage
-            // maybe possible to take the liquidation penalty into account when calculating highestUsableTradingExpo ?
-            desiredLiqPrice = _calcLiqPriceFromTradingExpo(neutralPrice, positionAmount, highestUsableTradingExpo);
+            tickWithoutLiqPenalty = getEffectiveTickForPrice(
+                _calcLiqPriceFromTradingExpo(neutralPrice, positionAmount, highestUsableTradingExpo)
+            );
         }
 
         // open a new position for the rebalancer
-        PositionId memory posId = _flashOpenPosition(address(rebalancer), neutralPrice, desiredLiqPrice, positionAmount);
+        PositionId memory posId =
+            _flashOpenPosition(address(rebalancer), neutralPrice, tickWithoutLiqPenalty, positionAmount);
 
         // update the long balance
-        longBalance_ += positionAmount;
+        longBalance_ += pendingAssets; // TODO add bonus
 
         // transfer the pending assets from the rebalancer to this contract
         _asset.safeTransferFrom(address(rebalancer), address(this), pendingAssets);
