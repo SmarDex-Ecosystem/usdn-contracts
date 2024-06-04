@@ -385,6 +385,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     }
 
     /**
+     * @inheritdoc ERC20
      * @notice Transfer a `value` amount of tokens from `from` to `to`, or mint (or burn) if `from` or `to`
      * is the zero address
      * @dev Emits a {Transfer} event
