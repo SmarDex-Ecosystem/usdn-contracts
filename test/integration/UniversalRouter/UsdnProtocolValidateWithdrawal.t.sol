@@ -25,7 +25,6 @@ contract TestForkUniversalRouterValidateWithdrawal is UniversalRouterBaseFixture
         vm.prank(DEPLOYER);
         usdn.transferShares(address(this), WITHDRAW_AMOUNT);
         usdn.approve(address(protocol), type(uint256).max);
-        // initiate withdrawal
         protocol.initiateWithdrawal{ value: protocol.getSecurityDepositValue() }(
             WITHDRAW_AMOUNT.toUint152(), USER_2, USER_1, "", EMPTY_PREVIOUS_DATA
         );
@@ -33,12 +32,12 @@ contract TestForkUniversalRouterValidateWithdrawal is UniversalRouterBaseFixture
 
     /**
      * @custom:scenario Validating a withdrawal through the router
-     * @custom:given The user has initiated a withdrawal and we have price know by the oracle
+     * @custom:given The user has initiated a withdrawal
      * @custom:when The user validates a withdrawal through the router
      * @custom:then The withdrawal is validated successfully
      */
     function test_ForkValidateWithdraw() public {
-        _waitDelay(); //to be realistic because not mandatory
+        _waitDelay(); // to be realistic because not mandatory
         uint256 ts1 = protocol.getUserPendingAction(USER_1).timestamp;
         (,,,, bytes memory data) = getHermesApiSignature(PYTH_ETH_USD, ts1 + oracleMiddleware.getValidationDelay());
 
@@ -46,14 +45,9 @@ contract TestForkUniversalRouterValidateWithdrawal is UniversalRouterBaseFixture
         uint256 ethBalanceBeforeUser = USER_1.balance;
         uint256 validationCost = oracleMiddleware.validationCost(data, ProtocolAction.ValidateWithdrawal);
 
-        // commands
         bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.VALIDATE_WITHDRAWAL)));
-
-        // inputs
         bytes[] memory inputs = new bytes[](1);
         inputs[0] = abi.encode(USER_1, data, EMPTY_PREVIOUS_DATA);
-
-        // execution
         router.execute{ value: validationCost }(commands, inputs);
 
         assertEq(address(this).balance, ethBalanceBefore - validationCost, "ether balance");
