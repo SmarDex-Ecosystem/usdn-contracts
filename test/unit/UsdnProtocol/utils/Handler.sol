@@ -474,8 +474,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         _clearPendingAction(user, rawIndex);
     }
 
-    function i_removeBlockedPendingAction(uint128 rawIndex, address payable to, bool unsafe) external {
-        _removeBlockedPendingAction(rawIndex, to, unsafe);
+    function i_removeBlockedPendingAction(uint128 rawIndex, address payable to, bool cleanup) external {
+        _removeBlockedPendingAction(rawIndex, to, cleanup);
     }
 
     function i_checkInitImbalance(uint128 positionTotalExpo, uint128 longAmount, uint128 depositAmount) external view {

@@ -752,21 +752,21 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * chance to normal users to validate the action if possible
      * @param rawIndex The raw index of the pending action in the queue
      * @param to Where the retrieved funds should be sent (security deposit, assets, usdn)
-     * @param unsafe If `true`, will attempt to perform more cleanup at the risk of reverting. Always try `true` first
+     * @param cleanup If `true`, will attempt to perform more cleanup at the risk of reverting. Always try `true` first
      */
-    function _removeBlockedPendingAction(uint128 rawIndex, address payable to, bool unsafe) internal {
+    function _removeBlockedPendingAction(uint128 rawIndex, address payable to, bool cleanup) internal {
         PendingAction memory pending = _pendingActionsQueue.atRaw(rawIndex);
         if (block.timestamp < pending.timestamp + _validationDeadline + 1 hours) {
             revert UsdnProtocolUnauthorized();
         }
         delete _pendingActions[pending.validator];
         _pendingActionsQueue.clearAt(rawIndex);
-        if (pending.action == ProtocolAction.ValidateDeposit && unsafe) {
+        if (pending.action == ProtocolAction.ValidateDeposit && cleanup) {
             // for pending deposits, we send back the locked assets
             DepositPendingAction memory deposit = _toDepositPendingAction(pending);
             _pendingBalanceVault -= _toInt256(deposit.amount);
             _asset.safeTransfer(to, deposit.amount);
-        } else if (pending.action == ProtocolAction.ValidateWithdrawal && unsafe) {
+        } else if (pending.action == ProtocolAction.ValidateWithdrawal && cleanup) {
             // for pending withdrawals, we send the locked USDN
             WithdrawalPendingAction memory withdrawal = _toWithdrawalPendingAction(pending);
             uint256 shares = _mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
@@ -786,8 +786,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
                 Position memory pos = tickArray[open.index];
                 delete _longPositions[tickHash][open.index];
 
-                // more unsafe cleanup operations
-                if (unsafe) {
+                // more cleanup operations
+                if (cleanup) {
                     TickData storage tickData = _tickData[tickHash];
                     --_totalLongPositions;
                     tickData.totalPos -= 1;
@@ -803,7 +803,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
                         _liqMultiplierAccumulator.sub(HugeUint.wrap(unadjustedTickPrice * pos.totalExpo));
                 }
             }
-        } else if (pending.action == ProtocolAction.ValidateClosePosition && unsafe) {
+        } else if (pending.action == ProtocolAction.ValidateClosePosition && cleanup) {
             // for pending closes, the position is already out of the protocol
             LongPendingAction memory close = _toLongPendingAction(pending);
             // credit the full amount to the vault to preserve the total balance invariant (like a liquidation)
@@ -811,7 +811,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         }
 
         // we retrieve the security deposit
-        if (unsafe) {
+        if (cleanup) {
             (bool success,) = to.call{ value: pending.securityDepositValue }("");
             if (!success) {
                 revert UsdnProtocolEtherRefundFailed();

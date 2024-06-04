@@ -20,16 +20,16 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
      * @notice Helper function to setup a vault pending action and remove it with the admin function
      * @param untilAction Whether to initiate a deposit or a withdrawal
      * @param amount The amount to deposit
-     * @param unsafe Whether to remove the action in an unsafe way
+     * @param cleanup Whether to remove the action with more cleanup
      */
-    function _removeBlockedVaultScenario(ProtocolAction untilAction, uint128 amount, bool unsafe) internal {
+    function _removeBlockedVaultScenario(ProtocolAction untilAction, uint128 amount, bool cleanup) internal {
         setUpUserPositionInVault(USER_1, untilAction, amount, params.initialPrice);
         _wait();
 
         (, uint128 rawIndex) = protocol.i_getPendingAction(USER_1);
 
         vm.prank(ADMIN);
-        protocol.i_removeBlockedPendingAction(rawIndex, payable(address(this)), unsafe);
+        protocol.i_removeBlockedPendingAction(rawIndex, payable(address(this)), cleanup);
 
         assertTrue(protocol.getUserPendingAction(USER_1).action == ProtocolAction.None, "pending action");
         vm.expectRevert(DoubleEndedQueue.QueueOutOfBounds.selector);
@@ -37,14 +37,14 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Remove a stuck deposit in an unsafe way
+     * @custom:scenario Remove a stuck deposit with cleanup
      * @custom:given A user has initiated a deposit which gets stuck for any reason
-     * @custom:when The admin removes the pending action in an unsafe way
+     * @custom:when The admin removes the pending action with cleanup
      * @custom:then The pending action is removed
      * @custom:and The `to` address receives the deposited assets and the security deposit
      * @custom:and The pending vault balance is decremented
      */
-    function test_removeBlockedDepositUnsafe() public {
+    function test_removeBlockedDepositCleanup() public {
         uint256 balanceBefore = address(this).balance;
         uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
         _removeBlockedVaultScenario(ProtocolAction.InitiateDeposit, 10 ether, true);
@@ -54,14 +54,14 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Remove a stuck deposit in a safe way
+     * @custom:scenario Remove a stuck deposit without cleanup
      * @custom:given A user has initiated a deposit which gets stuck for any reason
-     * @custom:when The admin removes the pending action in a safe way
+     * @custom:when The admin removes the pending action without cleanup
      * @custom:then The pending action is removed
      * @custom:and The `to` address does not receive any assets or security deposit
      * @custom:and The pending vault balance remains unchanged
      */
-    function test_removeBlockedDepositSafe() public {
+    function test_removeBlockedDepositNoCleanup() public {
         uint256 balanceBefore = address(this).balance;
         uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
         _removeBlockedVaultScenario(ProtocolAction.InitiateDeposit, 10 ether, false);
@@ -71,14 +71,14 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Remove a stuck withdrawal in an unsafe way
+     * @custom:scenario Remove a stuck withdrawal with cleanup
      * @custom:given A user has initiated a withdrawal which gets stuck for any reason
-     * @custom:when The admin removes the pending action in an unsafe way
+     * @custom:when The admin removes the pending action with cleanup
      * @custom:then The pending action is removed
      * @custom:and The `to` address receives the USDN and the security deposit
      * @custom:and The pending vault balance is incremented
      */
-    function test_removeBlockedWithdrawalUnsafe() public {
+    function test_removeBlockedWithdrawalCleanup() public {
         uint256 balanceBefore = address(this).balance;
         uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
         _removeBlockedVaultScenario(ProtocolAction.InitiateWithdrawal, 10 ether, true);
@@ -88,14 +88,14 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Remove a stuck withdrawal in a safe way
+     * @custom:scenario Remove a stuck withdrawal without cleanup
      * @custom:given A user has initiated a withdrawal which gets stuck for any reason
-     * @custom:when The admin removes the pending action in a safe way
+     * @custom:when The admin removes the pending action without cleanup
      * @custom:then The pending action is removed
      * @custom:and The `to` address does not receive any USDN or security deposit
      * @custom:and The pending vault balance remains unchanged
      */
-    function test_removeBlockedWithdrawalSafe() public {
+    function test_removeBlockedWithdrawalNoCleanup() public {
         uint256 balanceBefore = address(this).balance;
         uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
         _removeBlockedVaultScenario(ProtocolAction.InitiateWithdrawal, 10 ether, false);
@@ -108,9 +108,9 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
      * @notice Helper function to setup a long side pending action and remove it with the admin function
      * @param untilAction Whether to initiate an open or a close position
      * @param amount The amount of collateral
-     * @param unsafe Whether to remove the action in an unsafe way
+     * @param cleanup Whether to remove the action with more cleanup
      */
-    function _removeBlockedLongScenario(ProtocolAction untilAction, uint128 amount, bool unsafe)
+    function _removeBlockedLongScenario(ProtocolAction untilAction, uint128 amount, bool cleanup)
         internal
         returns (PositionId memory posId_)
     {
@@ -128,7 +128,7 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         (, uint128 rawIndex) = protocol.i_getPendingAction(USER_1);
 
         vm.prank(ADMIN);
-        protocol.i_removeBlockedPendingAction(rawIndex, payable(address(this)), unsafe);
+        protocol.i_removeBlockedPendingAction(rawIndex, payable(address(this)), cleanup);
 
         assertTrue(protocol.getUserPendingAction(USER_1).action == ProtocolAction.None, "pending action");
         vm.expectRevert(DoubleEndedQueue.QueueOutOfBounds.selector);
@@ -139,13 +139,13 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Remove a stuck open position in an unsafe way
+     * @custom:scenario Remove a stuck open position with cleanup
      * @custom:given A user has initiated an open position which gets stuck for any reason
-     * @custom:when The admin removes the pending action in an unsafe way
+     * @custom:when The admin removes the pending action with cleanup
      * @custom:then The pending action is removed
      * @custom:and The protocol state is updated to remove the position
      */
-    function test_removeBlockedOpenPositionUnsafe() public {
+    function test_removeBlockedOpenPositionCleanup() public {
         uint256 balanceBefore = address(this).balance;
         int24 expectedTick = protocol.getEffectiveTickForPrice(params.initialPrice / 2);
         TickData memory tickDataBefore = protocol.getTickData(expectedTick);
@@ -174,13 +174,13 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Remove a stuck open position in a safe way
+     * @custom:scenario Remove a stuck open position without cleanup
      * @custom:given A user has initiated an open position which gets stuck for any reason
-     * @custom:when The admin removes the pending action in a safe way
+     * @custom:when The admin removes the pending action without cleanup
      * @custom:then The pending action is removed
      * @custom:and The protocol state is not updated
      */
-    function test_removeBlockedOpenPositionSafe() public {
+    function test_removeBlockedOpenPositionNoCleanup() public {
         uint256 balanceBefore = address(this).balance;
         uint256 totalPosBefore = protocol.getTotalLongPositions();
         uint256 totalExpoBefore = protocol.getTotalExpo();
@@ -194,14 +194,14 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Remove a stuck close position in an unsafe way
+     * @custom:scenario Remove a stuck close position with cleanup
      * @custom:given A user has initiated a close position which gets stuck for any reason
-     * @custom:when The admin removes the pending action in an unsafe way
+     * @custom:when The admin removes the pending action with cleanup
      * @custom:then The pending action is removed
      * @custom:and The protocol balances are updated to cleanup the position
      * @custom:and The `to` address receives the the security deposit
      */
-    function test_removeBlockedClosePositionUnsafe() public {
+    function test_removeBlockedClosePositionCleanup() public {
         uint256 balanceBefore = address(this).balance;
         uint256 balanceLongBefore = protocol.getBalanceLong();
         uint256 balanceVaultBefore = protocol.getBalanceVault();
@@ -220,14 +220,14 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Remove a stuck close position in a safe way
+     * @custom:scenario Remove a stuck close position without cleanup
      * @custom:given A user has initiated a close position which gets stuck for any reason
-     * @custom:when The admin removes the pending action in a safe way
+     * @custom:when The admin removes the pending action without cleanup
      * @custom:then The pending action is removed
      * @custom:and The protocol balances are not updated
      * @custom:and The `to` address does not receive any security deposit
      */
-    function test_removeBlockedClosePositionSafe() public {
+    function test_removeBlockedClosePositionNoCleanup() public {
         uint256 balanceBefore = address(this).balance;
         uint256 balanceLongBefore = protocol.getBalanceLong();
         uint256 balanceVaultBefore = protocol.getBalanceVault();

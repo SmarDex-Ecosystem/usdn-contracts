@@ -182,21 +182,37 @@ interface IUsdnProtocol is IUsdnProtocolActions {
      * @notice Remove a stuck pending action and perform the minimal amount of cleanup necessary
      * @dev This function can only be called by the owner of the protocol, it serves as an escape hatch if a
      * pending action ever gets stuck due to something internal reverting unexpectedly
-     * Always try with `unsafe = true` first and only set to false if it's not working
      * @param validator The address of the validator
      * @param to Where the retrieved funds should be sent (security deposit, assets, usdn)
-     * @param unsafe If `true`, will attempt to perform more cleanup at the risk of reverting
      */
-    function removeBlockedPendingAction(address validator, address payable to, bool unsafe) external;
+    function removeBlockedPendingAction(address validator, address payable to) external;
+
+    /**
+     * @notice Remove a stuck pending action with no cleanup
+     * @dev This function can only be called by the owner of the protocol, it serves as an escape hatch if a
+     * pending action ever gets stuck due to something internal reverting unexpectedly
+     * Always try to use `removeBlockedPendingAction` first, and only call this function is the other one fails
+     * @param validator The address of the validator
+     * @param to Where the retrieved funds should be sent (security deposit, assets, usdn)
+     */
+    function removeBlockedPendingActionNoCleanup(address validator, address payable to) external;
 
     /**
      * @notice Remove a stuck pending action and perform the minimal amount of cleanup necessary
      * @dev This function can only be called by the owner of the protocol, it serves as an escape hatch if a
      * pending action ever gets stuck due to something internal reverting unexpectedly
-     * Always try with `unsafe = true` first and only set to false if it's not working
      * @param rawIndex The raw index of the pending action in the queue
      * @param to Where the retrieved funds should be sent (security deposit, assets, usdn)
-     * @param unsafe If `true`, will attempt to perform more cleanup at the risk of reverting
      */
-    function removeBlockedPendingAction(uint128 rawIndex, address payable to, bool unsafe) external;
+    function removeBlockedPendingAction(uint128 rawIndex, address payable to) external;
+
+    /**
+     * @notice Remove a stuck pending action with no cleanup
+     * @dev This function can only be called by the owner of the protocol, it serves as an escape hatch if a
+     * pending action ever gets stuck due to something internal reverting unexpectedly
+     * Always try to use `removeBlockedPendingAction` first, and only call this function is the other one fails
+     * @param rawIndex The raw index of the pending action in the queue
+     * @param to Where the retrieved funds should be sent (security deposit, assets, usdn)
+     */
+    function removeBlockedPendingActionNoCleanup(uint128 rawIndex, address payable to) external;
 }
