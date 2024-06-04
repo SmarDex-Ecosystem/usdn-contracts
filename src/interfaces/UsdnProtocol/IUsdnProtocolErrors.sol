@@ -129,7 +129,7 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the new `fundingSF` value is invalid
     error UsdnProtocolInvalidFundingSF();
 
-    /// @dev Indicates that the provided address for the `LiquidationRewardsManager` contract address is invalid.
+    /// @dev Indicates that the provided address for the `LiquidationRewardsManager` contract address is invalid
     error UsdnProtocolInvalidLiquidationRewardsManagerAddress();
 
     /// @dev Indicates that the provided fee basis point value is invalid

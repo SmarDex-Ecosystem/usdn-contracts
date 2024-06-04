@@ -83,7 +83,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /**
      * @notice The liquidation tick spacing for storing long positions
      * @dev A tick spacing of 1 is equivalent to a 0.01% increase in liquidation price between ticks. A tick spacing of
-     * 100 is equivalent to a 1% increase in liquidation price between ticks.
+     * 100 is equivalent to a 1% increase in liquidation price between ticks
      * @return The tick spacing
      */
     function getTickSpacing() external view returns (int24);
@@ -162,7 +162,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getMaxLeverage() external view returns (uint256);
 
     /**
-     * @notice Get the amount of time a user can validate its own action, after which other users can do it
+     * @notice Get the amount of time a user can validate its action, after which other users can do it
      * and will claim the security deposit
      * @return The validation deadline (in seconds)
      */
@@ -218,7 +218,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getVaultFeeBps() external view returns (uint16);
 
     /**
-     * @notice Get the part of the remaining collateral that is given as bonus to the Rebalancer upon liquidation of a
+     * @notice Get the part of the remaining collateral that is given as a bonus to the Rebalancer upon liquidation of a
      * tick
      * @return The collateral bonus for the Rebalancer (in basis points)
      */
@@ -281,7 +281,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
 
     /**
      * @notice Returns the target imbalance to have on the long side after the creation of a rebalancer position
-     * @dev The creation of the rebalancer position aims for this target, but does not guarantee hitting it
+     * @dev The creation of the rebalancer position aims for this target but does not guarantee hitting it
      * @return targetLongImbalance_ The target long imbalance
      */
     function getLongImbalanceTargetBps() external view returns (int256 targetLongImbalance_);
@@ -315,7 +315,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Get last value of the funding rate at last timestamp (getLastUpdateTimestamp)
+     * @notice Get the last value of the funding rate at the last timestamp (getLastUpdateTimestamp)
      * @return The last value of the funding rate
      */
     function getLastFunding() external view returns (int256);
@@ -342,7 +342,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /**
      * @notice Get the pending action of the user (1 per user max)
      * @dev The value stored is an index into the `pendingActionsQueue` deque, shifted by one. A value of 0 means no
-     * pending action. Since the deque uses uint128 indices, the highest index will not overflow when adding one.
+     * pending action. Since the deque uses uint128 indices, the highest index will not overflow when adding one
      * @param user The user's address
      * @return The pending action of the user (if there is one)
      */

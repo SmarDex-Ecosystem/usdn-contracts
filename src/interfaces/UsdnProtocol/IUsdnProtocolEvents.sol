@@ -12,7 +12,7 @@ interface IUsdnProtocolEvents {
      * @notice Emitted when a user initiates a deposit
      * @param to The address that will receive the USDN tokens
      * @param validator The address of the validator that will validate the deposit
-     * @param amount The amount of asset that were deposited
+     * @param amount The amount of assets that were deposited
      * @param timestamp The timestamp of the action
      */
     event InitiatedDeposit(address indexed to, address indexed validator, uint256 amount, uint256 timestamp);
@@ -21,8 +21,8 @@ interface IUsdnProtocolEvents {
      * @notice Emitted when a user validates a deposit
      * @param to The address that received the USDN tokens
      * @param validator The address of the validator that validated the deposit
-     * @param amountDeposited The amount of asset that were deposited
-     * @param usdnMinted The amount of USDN that were minted
+     * @param amountDeposited The amount of assets that were deposited
+     * @param usdnMinted The amount of USDN that was minted
      * @param timestamp The timestamp of the InitiatedDeposit action
      */
     event ValidatedDeposit(
@@ -42,8 +42,8 @@ interface IUsdnProtocolEvents {
      * @notice Emitted when a user validates a withdrawal
      * @param to The address that received the assets
      * @param validator The address of the validator that validated the withdrawal
-     * @param amountWithdrawn The amount of asset that were withdrawn
-     * @param usdnBurned The amount of USDN that were burned
+     * @param amountWithdrawn The amount of assets that were withdrawn
+     * @param usdnBurned The amount of USDN that was burned
      * @param timestamp The timestamp of the InitiatedWithdrawal action
      */
     event ValidatedWithdrawal(
@@ -56,7 +56,7 @@ interface IUsdnProtocolEvents {
      * @param validator The address of the validator that will validate the position
      * @param timestamp The timestamp of the action
      * @param totalExpo The initial total expo of the position (pending validation)
-     * @param amount The amount of asset that were deposited as collateral
+     * @param amount The amount of assets that were deposited as collateral
      * @param startPrice The asset price at the moment of the position creation (pending validation)
      * @param posId The unique position identifier
      */
@@ -96,9 +96,9 @@ interface IUsdnProtocolEvents {
      * @param to The address that will receive the assets
      * @param posId The unique position identifier
      * @param originalAmount The amount of collateral originally on the position
-     * @param amountToClose The amount of collateral to close from the position.
-     * If the entirety of the position is being closed, this value equals originalAmount
-     * @param totalExpoRemaining The total expo remaining in the position.
+     * @param amountToClose The amount of collateral to close from the position
+     * If the entirety of the position is being closed, this value equals `originalAmount`
+     * @param totalExpoRemaining The total expo remaining in the position
      * If the entirety of the position is being closed, this value is zero
      */
     event InitiatedClosePosition(
@@ -115,7 +115,7 @@ interface IUsdnProtocolEvents {
      * @param owner The owner of the initial position
      * @param to The address that received the assets
      * @param posId The unique position identifier
-     * @param amountReceived The amount of asset that were sent to the user
+     * @param amountReceived The amount of assets that were sent to the user
      * @param profit The profit that the user made
      */
     event ValidatedClosePosition(
@@ -151,7 +151,7 @@ interface IUsdnProtocolEvents {
     );
 
     /**
-     * @notice Emitted when a user's position was liquidated while pending validation and we remove the pending action
+     * @notice Emitted when a user's position was liquidated while pending validation and we removed the pending action
      * @param validator The validator address
      * @param posId The unique position identifier
      */
@@ -193,32 +193,32 @@ interface IUsdnProtocolEvents {
     event OracleMiddlewareUpdated(address newMiddleware);
 
     /**
-     * @notice Emitted when the minLeverage is updated
-     * @param newMinLeverage The new minLeverage
+     * @notice Emitted when the `minLeverage` is updated
+     * @param newMinLeverage The new `minLeverage`
      */
     event MinLeverageUpdated(uint256 newMinLeverage);
 
     /**
-     * @notice Emitted when the maxLeverage is updated
-     * @param newMaxLeverage The new maxLeverage
+     * @notice Emitted when the `maxLeverage` is updated
+     * @param newMaxLeverage The new `maxLeverage`
      */
     event MaxLeverageUpdated(uint256 newMaxLeverage);
 
     /**
-     * @notice Emitted when the validationDeadline is updated
-     * @param newValidationDeadline The new validationDeadline
+     * @notice Emitted when the `validationDeadline` is updated
+     * @param newValidationDeadline The new `validationDeadline`
      */
     event ValidationDeadlineUpdated(uint256 newValidationDeadline);
 
     /**
-     * @notice Emitted when the liquidationPenalty is updated
-     * @param newLiquidationPenalty The new liquidationPenalty
+     * @notice Emitted when the `liquidationPenalty` is updated
+     * @param newLiquidationPenalty The new `liquidationPenalty`
      */
     event LiquidationPenaltyUpdated(uint8 newLiquidationPenalty);
 
     /**
-     * @notice Emitted when the safetyMargin is updated
-     * @param newSafetyMargin The new safetyMargin
+     * @notice Emitted when the `safetyMargin` is updated
+     * @param newSafetyMargin The new `safetyMargin`
      */
     event SafetyMarginBpsUpdated(uint256 newSafetyMargin);
 
@@ -235,8 +235,8 @@ interface IUsdnProtocolEvents {
     event EMAPeriodUpdated(uint128 newEMAPeriod);
 
     /**
-     * @notice Emitted when the fundingSF is updated
-     * @param newFundingSF The new fundingSF
+     * @notice Emitted when the `fundingSF` is updated
+     * @param newFundingSF The new `fundingSF`
      */
     event FundingSFUpdated(uint256 newFundingSF);
 
@@ -261,7 +261,7 @@ interface IUsdnProtocolEvents {
 
     /**
      * @notice Emitted when the pending protocol fee is distributed
-     * @param feeCollector The collector address
+     * @param feeCollector The collector's address
      * @param amount The amount of fee transferred
      */
     event ProtocolFeeDistributed(address feeCollector, uint256 amount);
