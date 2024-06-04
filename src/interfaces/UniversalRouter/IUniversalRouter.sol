@@ -2,8 +2,6 @@
 pragma solidity ^0.8.17;
 
 interface IUniversalRouter {
-    /// @notice Thrown when a required command has failed
-
     /**
      * @notice Indicates that a required command has failed
      * @param commandIndex The index of the command that failed
