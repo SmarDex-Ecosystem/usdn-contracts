@@ -359,7 +359,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param liquidationPrice The liquidation price of the position
      * @return totalExpo_ The total exposure of a position
      */
-    function _calculatePositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
+    function _calcPositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
         internal
         pure
         returns (uint128 totalExpo_)
