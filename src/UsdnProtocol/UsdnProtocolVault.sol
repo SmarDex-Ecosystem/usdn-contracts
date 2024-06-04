@@ -195,18 +195,4 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
     function _calcWithdrawalAmountMSB(uint152 usdnShares) internal pure returns (uint128 sharesMSB_) {
         sharesMSB_ = uint128(usdnShares >> 24);
     }
-
-    /**
-     * @notice Merge the two parts of the withdrawal amount (USDN shares) stored in the `WithdrawalPendingAction`.
-     * @param sharesLSB The lower 24 bits of the USDN shares
-     * @param sharesMSB The higher bits of the USDN shares
-     * @return usdnShares_ The amount of USDN shares
-     */
-    function _mergeWithdrawalAmountParts(uint24 sharesLSB, uint128 sharesMSB)
-        internal
-        pure
-        returns (uint256 usdnShares_)
-    {
-        usdnShares_ = sharesLSB | uint256(sharesMSB) << 24;
-    }
 }

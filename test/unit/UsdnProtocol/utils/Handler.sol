@@ -61,6 +61,10 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _pendingActionsQueue.empty();
     }
 
+    function getQueueItem(uint128 rawIndex) external view returns (PendingAction memory) {
+        return _pendingActionsQueue.atRaw(rawIndex);
+    }
+
     /**
      * @dev Use this function in unit tests to make sure we provide a fresh price that updates the balances
      * The function reverts the price given by the mock oracle middleware is not fresh enough to trigger a balance
@@ -112,6 +116,19 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         _balanceVault = tempVaultBalance.toUint256();
     }
 
+    function removePendingAction(uint128 rawIndex, address user) external {
+        _pendingActionsQueue.clearAt(rawIndex);
+        delete _pendingActions[user];
+    }
+
+    function findLastSetInTickBitmap(int24 searchFrom) external view returns (uint256 index) {
+        return _tickBitmap.findLastSet(_calcBitmapIndexFromTick(searchFrom));
+    }
+
+    function tickBitmapStatus(int24 tick) external view returns (bool isSet_) {
+        return _tickBitmap.get(_calcBitmapIndexFromTick(tick));
+    }
+
     function setTickVersion(int24 tick, uint256 version) external {
         _tickVersion[tick] = version;
     }
@@ -157,11 +174,6 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         returns (uint128 totalExpo_)
     {
         return _calcPositionTotalExpo(amount, startPrice, liquidationPrice);
-    }
-
-    function i_removePendingAction(uint128 rawIndex, address user) external {
-        _pendingActionsQueue.clearAt(rawIndex);
-        delete _pendingActions[user];
     }
 
     function i_getActionablePendingAction() external returns (PendingAction memory, uint128) {
@@ -340,10 +352,6 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _findHighestPopulatedTick(searchStart);
     }
 
-    function findLastSetInTickBitmap(int24 searchFrom) external view returns (uint256 index) {
-        return _tickBitmap.findLastSet(_calcBitmapIndexFromTick(searchFrom));
-    }
-
     function i_updateEMA(uint128 secondsElapsed) external returns (int256) {
         return _updateEMA(secondsElapsed);
     }
@@ -466,6 +474,10 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
 
     function i_clearPendingAction(address user, uint128 rawIndex) external {
         _clearPendingAction(user, rawIndex);
+    }
+
+    function i_removeBlockedPendingAction(uint128 rawIndex, address payable to, bool cleanup) external {
+        _removeBlockedPendingAction(rawIndex, to, cleanup);
     }
 
     function i_checkInitImbalance(uint128 positionTotalExpo, uint128 longAmount, uint128 depositAmount) external view {

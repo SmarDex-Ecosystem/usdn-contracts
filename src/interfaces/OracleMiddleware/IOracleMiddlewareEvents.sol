@@ -35,4 +35,10 @@ interface IOracleMiddlewareEvents {
      * @param newPenaltyBps The new penalty
      */
     event PenaltyBpsUpdated(uint16 newPenaltyBps);
+
+    /**
+     * @notice Emitted when the low latency delay is updated
+     * @param newLowLatencyDelay The new low latency delay
+     */
+    event LowLatencyDelayUpdated(uint16 newLowLatencyDelay);
 }

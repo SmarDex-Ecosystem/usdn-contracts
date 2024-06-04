@@ -101,9 +101,7 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
         _timeElapsedLimit = newTimeElapsedLimit;
     }
 
-    function setRecentPriceDelay(uint64) external {
-        // Do something if needed
-    }
+    function setRecentPriceDelay(uint64) external { }
 
     function requireValidationCost() external view returns (bool) {
         return _requireValidationCost;
@@ -120,7 +118,11 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
         }
     }
 
-    function setPenaltyBps(uint16 newPenaltyBps) external onlyOwner {
-        // Do something if needed
+    function getLowLatencyDelay() external pure returns (uint16) {
+        return uint16(20 minutes);
     }
+
+    function setLowLatencyDelay(uint16) external { }
+
+    function setPenaltyBps(uint16 newPenaltyBps) external onlyOwner { }
 }

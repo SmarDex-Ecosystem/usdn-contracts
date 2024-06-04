@@ -367,6 +367,40 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         }
     }
 
+    /// @inheritdoc IUsdnProtocol
+    function removeBlockedPendingAction(address validator, address payable to) external onlyOwner {
+        uint256 pendingActionIndex = _pendingActions[validator];
+        if (pendingActionIndex == 0) {
+            // no pending action
+            // use the `rawIndex` variant below if for some reason the `_pendingActions` mapping is messed up
+            revert UsdnProtocolNoPendingAction();
+        }
+        uint128 rawIndex = uint128(pendingActionIndex - 1);
+        _removeBlockedPendingAction(rawIndex, to, true);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function removeBlockedPendingActionNoCleanup(address validator, address payable to) external onlyOwner {
+        uint256 pendingActionIndex = _pendingActions[validator];
+        if (pendingActionIndex == 0) {
+            // no pending action
+            // use the `rawIndex` variant below if for some reason the `_pendingActions` mapping is messed up
+            revert UsdnProtocolNoPendingAction();
+        }
+        uint128 rawIndex = uint128(pendingActionIndex - 1);
+        _removeBlockedPendingAction(rawIndex, to, false);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function removeBlockedPendingAction(uint128 rawIndex, address payable to) external onlyOwner {
+        _removeBlockedPendingAction(rawIndex, to, true);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function removeBlockedPendingActionNoCleanup(uint128 rawIndex, address payable to) external onlyOwner {
+        _removeBlockedPendingAction(rawIndex, to, false);
+    }
+
     /**
      * @notice Check if the initialize parameters lead to a balanced protocol
      * @dev This function reverts if the imbalance is exceeded for the deposit or open long action
