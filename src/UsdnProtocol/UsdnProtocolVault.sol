@@ -47,7 +47,7 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
      * @param usdnShares The amount of USDN shares
      * @param available The available asset in the vault
      * @param usdnTotalShares The total supply of USDN shares
-     * @return assetExpected_ The expected amount of asset to be received
+     * @return assetExpected_ The expected amount of assets to be received
      */
     function _calcBurnUsdn(uint256 usdnShares, uint256 available, uint256 usdnTotalShares)
         internal
@@ -61,7 +61,7 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
 
     /**
      * @notice Calculate the price of the USDN token as a function of its total supply, the vault balance and the
-     * underlying asset price.
+     * underlying asset price
      * @param vaultBalance The vault balance
      * @param assetPrice The price of the asset
      * @param usdnTotalSupply The total supply of the USDN token
@@ -79,8 +79,8 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
     }
 
     /**
-     * @notice Calculate the amount of sdex to burn when minting USDN tokens
-     * @param usdnAmount The amount of usdn to be minted
+     * @notice Calculate the amount of SDEX to burn when minting USDN tokens
+     * @param usdnAmount The amount of USDN to be minted
      * @param sdexBurnRatio The ratio of SDEX to burn for each minted USDN
      * @return sdexToBurn_ The amount of SDEX to burn for the given USDN amount
      */
@@ -107,8 +107,8 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
     }
 
     /**
-     * @notice Check if a USDN rebase is required and adjust divisor if needed.
-     * @dev Note: only call this function after `_applyPnlAndFunding` has been called to update the balances.
+     * @notice Check if a USDN rebase is required and adjust the divisor if needed
+     * @dev Note: only call this function after `_applyPnlAndFunding` has been called to update the balances
      * @param assetPrice The current price of the underlying asset
      * @param ignoreInterval If true, then the price check will be performed regardless of when the last check happened
      * @return rebased_ Whether a rebase was performed
@@ -179,7 +179,7 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
     }
 
     /**
-     * @notice Get the lower 24 bits of the withdrawal amount (USDN shares).
+     * @notice Get the lower 24 bits of the withdrawal amount (USDN shares)
      * @param usdnShares The amount of USDN shares
      * @return sharesLSB_ The 24 least significant bits of the USDN shares
      */
@@ -188,7 +188,7 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
     }
 
     /**
-     * @notice Get the higher 128 bits of the withdrawal amount (USDN shares).
+     * @notice Get the higher 128 bits of the withdrawal amount (USDN shares)
      * @param usdnShares The amount of USDN shares
      * @return sharesMSB_ The 128 most significant bits of the USDN shares
      */
@@ -197,7 +197,7 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
     }
 
     /**
-     * @notice Merge the two parts of the withdrawal amount (USDN shares) stored in the `WithdrawalPendingAction`.
+     * @notice Merge the two parts of the withdrawal amount (USDN shares) stored in the `WithdrawalPendingAction`
      * @param sharesLSB The lower 24 bits of the USDN shares
      * @param sharesMSB The higher bits of the USDN shares
      * @return usdnShares_ The amount of USDN shares

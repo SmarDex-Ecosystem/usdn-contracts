@@ -144,7 +144,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @dev Get the price from the low-latency oracle (at the moment only Pyth, later maybe others might be supported).
+     * @dev Get the price from the low-latency oracle (at the moment only Pyth, later maybe others might be supported)
      * @param data The signed price update data
      * @param actionTimestamp The timestamp of the action corresponding to the price. If zero, then we must accept all
      * recent prices according to `_recentPriceDelay`
@@ -155,9 +155,9 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         internal
         returns (PriceInfo memory price_)
     {
-        // If actionTimestamp is 0 we're performing a liquidation and we don't add the validation delay
+        // if actionTimestamp is 0 we're performing a liquidation and we don't add the validation delay
         if (actionTimestamp > 0) {
-            // Add the validation delay to the action timestamp to get the timestamp of the price data used to
+            // add the validation delay to the action timestamp to get the timestamp of the price data used to
             // validate
             actionTimestamp += uint128(_validationDelay);
         }
@@ -167,11 +167,11 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     }
 
     /**
-     * @notice Get the price for an initiate action of the protocol
+     * @notice Get the price for an `initiate` action of the protocol
      * @dev If the data parameter is not empty, validate the price with PythOracle. Else, get the on-chain price from
      * Chainlink and compare its timestamp with the latest seen Pyth price (cached). If Pyth is more recent, we return
-     * it. Otherwise we return the chainlink price. In case of chainlink price, we don't have a confidence interval and
-     * so both `neutralPrice` and `price` are equal
+     * it. Otherwise, we return the chainlink price. In the case of chainlink price, we don't have a confidence interval
+     * and so both `neutralPrice` and `price` are equal
      * @param data An optional VAA from Pyth
      * @param dir The direction for applying the confidence interval (in case we use a Pyth price)
      * @return price_ The price to use for the user action

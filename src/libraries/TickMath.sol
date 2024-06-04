@@ -38,7 +38,7 @@ library TickMath {
     int256 public constant LN_BASE = 99_995_000_333_308;
 
     /**
-     * @notice Get the largest usable tick, given a tick spacing.
+     * @notice Get the largest usable tick, given a tick spacing
      * @param tickSpacing Only uses ticks that are a multiple of this value
      * @return tick_ The largest tick that can be used
      */
@@ -54,7 +54,7 @@ library TickMath {
     }
 
     /**
-     * @notice Get the smallest usable tick, given a tick spacing.
+     * @notice Get the smallest usable tick, given a tick spacing
      * @param tickSpacing Only uses ticks that are a multiple of this value
      * @return tick_ The smallest tick that can be used
      */
@@ -86,7 +86,7 @@ library TickMath {
     }
 
     /**
-     * @notice Get the tick corresponding to a price, rounded down towards negative infinity.
+     * @notice Get the tick corresponding to a price, rounded down towards negative infinity
      * @dev log_1.0001(price) = ln(price)/ln(1.0001) gives the tick
      * @param price The price
      * @return tick_ The largest tick whose price is less than or equal to the given price

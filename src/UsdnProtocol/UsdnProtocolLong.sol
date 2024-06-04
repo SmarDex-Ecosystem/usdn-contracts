@@ -87,9 +87,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         (Position memory pos, uint8 liquidationPenalty) = getLongPosition(posId);
         int256 longTradingExpo = longTradingExpoWithFunding(price, timestamp);
         if (longTradingExpo < 0) {
-            // In case the long balance is equal to the total expo (or exceeds it), the trading expo will become zero.
+            // In case the long balance is equal to the total expo (or exceeds it), the trading expo will become zero
             // In this case, the liquidation price will fall to zero, and the position value will be equal to its
-            // total expo (initial collateral * initial leverage).
+            // total expo (initial collateral * initial leverage)
             longTradingExpo = 0;
         }
         uint128 liqPrice = getEffectivePriceForTick(
@@ -170,7 +170,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
     /**
      * @notice Knowing the liquidation price of a position, get the corresponding unadjusted price, which can be used
-     * to find the corresponding tick.
+     * to find the corresponding tick
      * @param price An adjusted liquidation price (taking into account the effects of funding)
      * @param assetPrice The current price of the asset
      * @param longTradingExpo The trading expo of the long side (total expo - balance long)
@@ -360,7 +360,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
     /**
      * @notice Calculate the total exposure of a position
-     * @dev Reverts when startPrice <= liquidationPrice
+     * @dev Reverts when `startPrice` <= `liquidationPrice`
      * @param amount The amount of asset used as collateral
      * @param startPrice The price of the asset when the position was created
      * @param liquidationPrice The liquidation price of the position
@@ -407,7 +407,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         bytes32 tickHash;
         (tickHash, tickVersion_) = _tickHash(tick);
 
-        // Add to tick array
+        // add to tick array
         Position[] storage tickArray = _longPositions[tickHash];
         index_ = tickArray.length;
         if (tick > _highestPopulatedTick) {
@@ -416,13 +416,13 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         }
         tickArray.push(long);
 
-        // Adjust state
+        // adjust state
         _totalExpo += long.totalExpo;
         ++_totalLongPositions;
 
-        // Update tick data
+        // update tick data
         TickData storage tickData = _tickData[tickHash];
-        // The unadjusted tick price for the accumulator might be different depending if we already have positions in
+        // the unadjusted tick price for the accumulator might be different depending if we already have positions in
         // the tick or not
         uint256 unadjustedTickPrice;
         if (tickData.totalPos == 0) {
@@ -440,7 +440,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             unadjustedTickPrice =
                 TickMath.getPriceAtTick(tick - int24(uint24(tickData.liquidationPenalty)) * _tickSpacing);
         }
-        // Update the accumulator with the correct tick price (depending on the liquidation penalty value)
+        // update the accumulator with the correct tick price (depending on the liquidation penalty value)
         _liqMultiplierAccumulator = _liqMultiplierAccumulator.add(HugeUint.wrap(unadjustedTickPrice * long.totalExpo));
     }
 
@@ -477,7 +477,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             tickData.totalPos -= 1;
             --_totalLongPositions;
 
-            // Remove from tick array (set to zero to avoid shifting indices)
+            // remove from tick array (set to zero to avoid shifting indices)
             delete _longPositions[tickHash][index];
             if (tickData.totalPos == 0) {
                 // we removed the last position in the tick
@@ -499,8 +499,8 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
     /**
      * @notice Retrieve the liquidation penalty assigned to the tick and version corresponding to `tickHash`, if there
-     * are positions in it, otherwise retrieve the current setting value from storage.
-     * @dev This method allows to re-use a pre-computed tickHash if available
+     * are positions in it, otherwise retrieve the current setting value from storage
+     * @dev This method allows to reuse a pre-computed tickHash if available
      * @param tickHash The tick hash
      * @return liquidationPenalty_ The liquidation penalty, in tick spacing units
      */
@@ -567,11 +567,11 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /**
-     * @notice Liquidate positions which have a liquidation price lower than the current price
+     * @notice Liquidate positions that have a liquidation price lower than the current price
      * @param currentPrice The current price of the asset
      * @param iteration The maximum number of ticks to liquidate (minimum is 1)
-     * @param tempLongBalance The temporary long balance as calculated when applying PnL and funding
-     * @param tempVaultBalance The temporary vault balance as calculated when applying PnL and funding
+     * @param tempLongBalance The temporary long balance as calculated when applying the PnL and funding
+     * @param tempVaultBalance The temporary vault balance as calculated when applying the PnL and funding
      * @return effects_ The effects of the liquidations on the protocol
      */
     function _liquidatePositions(
@@ -582,8 +582,8 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     ) internal returns (LiquidationsEffects memory effects_) {
         int256 longTradingExpo = _totalExpo.toInt256() - tempLongBalance;
         if (longTradingExpo <= 0) {
-            // In case the long balance is equal to the total expo (or exceeds it), the trading expo will become zero.
-            // In this case, it's not possible to calculate the current tick, so we can't perform any liquidations.
+            // in case the long balance is equal to the total expo (or exceeds it), the trading expo will become zero
+            // in this case, it's not possible to calculate the current tick, so we can't perform any liquidations
             (effects_.newLongBalance, effects_.newVaultBalance) =
                 _handleNegativeBalances(tempLongBalance, tempVaultBalance);
             return effects_;
@@ -623,21 +623,21 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             (bytes32 tickHash,) = _tickHash(data.iTick);
 
             TickData memory tickData = _tickData[tickHash];
-            // Update transient data
+            // update transient data
             data.totalExpoToRemove += tickData.totalExpo;
             uint256 unadjustedTickPrice =
                 TickMath.getPriceAtTick(data.iTick - int24(uint24(tickData.liquidationPenalty)) * _tickSpacing);
             data.accumulatorValueToRemove += unadjustedTickPrice * tickData.totalExpo;
-            // Update return values
+            // update return values
             effects_.liquidatedPositions += tickData.totalPos;
             ++effects_.liquidatedTicks;
             int256 tickValue =
                 _tickValue(data.iTick, data.currentPrice, data.longTradingExpo, data.accumulator, tickData);
             effects_.remainingCollateral += tickValue;
 
-            // Reset tick by incrementing the tick version
+            // reset tick by incrementing the tick version
             ++_tickVersion[data.iTick];
-            // Update bitmap to reflect that the tick is empty
+            // update bitmap to reflect that the tick is empty
             _tickBitmap.unset(index);
 
             emit LiquidatedTick(
@@ -683,7 +683,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             }
         }
 
-        // Transfer remaining collateral to vault or pay bad debt
+        // transfer remaining collateral to vault or pay bad debt
         data.tempLongBalance -= effects.remainingCollateral;
         data.tempVaultBalance += effects.remainingCollateral;
 
@@ -706,16 +706,16 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         pure
         returns (uint256 longBalance_, uint256 vaultBalance_)
     {
-        // This can happen if the funding is larger than the remaining balance in the long side after applying PnL.
-        // Test case: test_assetToTransferZeroBalance()
+        // this can happen if the funding is larger than the remaining balance in the long side after applying PnL
+        // test case: test_assetToTransferZeroBalance()
         if (tempLongBalance < 0) {
             tempVaultBalance += tempLongBalance;
             tempLongBalance = 0;
         }
 
-        // This can happen if there is not enough balance in the vault to pay the bad debt of the long side, for
-        // example if the protocol fees reduce the vault balance.
-        // Test case: test_funding_NegLong_ZeroVault()
+        // this can happen if there is not enough balance in the vault to pay the bad debt in the long side, for
+        // example if the protocol fees reduce the vault balance
+        // test case: test_funding_NegLong_ZeroVault()
         if (tempVaultBalance < 0) {
             tempLongBalance += tempVaultBalance;
             tempVaultBalance = 0;

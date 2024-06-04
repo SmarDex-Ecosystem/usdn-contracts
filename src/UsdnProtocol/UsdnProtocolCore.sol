@@ -290,7 +290,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         }
         int256 priceDiff = _toInt256(newPrice) - _toInt256(oldPrice);
         uint256 tradingExpo;
-        // balanceLong is strictly inferior to totalExpo
+        // `balanceLong` is strictly inferior to totalExpo
         unchecked {
             tradingExpo = totalExpo - balanceLong;
         }
@@ -647,9 +647,9 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         if (_pendingActions[user] > 0) {
             revert UsdnProtocolPendingAction();
         }
-        // Add the action to the queue
+        // add the action to the queue
         uint128 rawIndex = _pendingActionsQueue.pushBack(action);
-        // Store the index shifted by one, so that zero means no pending action
+        // store the index shifted by one, so that zero means no pending action
         _pendingActions[user] = uint256(rawIndex) + 1;
     }
 

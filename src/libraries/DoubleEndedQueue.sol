@@ -205,7 +205,7 @@ library DoubleEndedQueue {
         } else if (rawIndex == backIndex) {
             popBack(deque); // reverts if empty
         } else {
-            // we don't really care to revert if this is not a valid index, since we're just clearing it
+            // we don't care to revert if this is not a valid index, since we're just clearing it
             delete deque._data[rawIndex];
         }
     }
