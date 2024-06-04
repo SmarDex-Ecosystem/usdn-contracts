@@ -11,8 +11,6 @@ import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareType
 contract MockOracleMiddleware is IOracleMiddleware, Ownable {
     uint16 public constant BPS_DIVISOR = 10_000;
     uint16 public constant MAX_CONF_RATIO = BPS_DIVISOR * 2;
-    uint16 public constant MIN_LOW_LATENCY_DELAY = 15 minutes;
-    uint16 public constant MAX_LOW_LATENCY_DELAY = 90 minutes;
     uint8 internal constant DECIMALS = 18;
 
     uint16 internal _confRatioBps = 4000;
@@ -103,9 +101,7 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
         _timeElapsedLimit = newTimeElapsedLimit;
     }
 
-    function setRecentPriceDelay(uint64) external {
-        // Do something if needed
-    }
+    function setRecentPriceDelay(uint64) external { }
 
     function requireValidationCost() external view returns (bool) {
         return _requireValidationCost;
@@ -126,11 +122,7 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
         return uint16(20 minutes);
     }
 
-    function setLowLatencyDelay(uint16) external {
-        // do something if needed
-    }
+    function setLowLatencyDelay(uint16) external { }
 
-    function setPenaltyBps(uint16 newPenaltyBps) external onlyOwner {
-        // Do something if needed
-    }
+    function setPenaltyBps(uint16 newPenaltyBps) external onlyOwner { }
 }

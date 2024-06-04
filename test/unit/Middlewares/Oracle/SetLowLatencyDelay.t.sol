@@ -42,9 +42,8 @@ contract TestOracleMiddlewareSetLowLatencyDelay is OracleMiddlewareBaseFixture {
      * @custom:then It should revert with `OracleMiddlewareInvalidLowLatencyDelay`
      */
     function test_RevertWhen_SetLowLatencyDelayMin() public {
-        uint16 minValue = oracleMiddleware.MIN_LOW_LATENCY_DELAY();
         vm.expectRevert(IOracleMiddlewareErrors.OracleMiddlewareInvalidLowLatencyDelay.selector);
-        oracleMiddleware.setLowLatencyDelay(minValue - 1);
+        oracleMiddleware.setLowLatencyDelay(15 minutes - 1);
     }
 
     /**
@@ -53,9 +52,8 @@ contract TestOracleMiddlewareSetLowLatencyDelay is OracleMiddlewareBaseFixture {
      * @custom:then It should revert with `OracleMiddlewareInvalidLowLatencyDelay`
      */
     function test_RevertWhen_SetLowLatencyDelayMax() public {
-        uint16 maxValue = oracleMiddleware.MAX_LOW_LATENCY_DELAY();
         vm.expectRevert(IOracleMiddlewareErrors.OracleMiddlewareInvalidLowLatencyDelay.selector);
-        oracleMiddleware.setLowLatencyDelay(maxValue + 1);
+        oracleMiddleware.setLowLatencyDelay(90 minutes + 1);
     }
 
     /**
@@ -64,7 +62,7 @@ contract TestOracleMiddlewareSetLowLatencyDelay is OracleMiddlewareBaseFixture {
      * @custom:then It should update the value
      */
     function test_setLowLatencyDelayMax() public {
-        uint16 expectedValue = oracleMiddleware.MAX_LOW_LATENCY_DELAY();
+        uint16 expectedValue = 90 minutes;
         oracleMiddleware.setLowLatencyDelay(expectedValue);
         assertEq(oracleMiddleware.getLowLatencyDelay(), expectedValue, "Low latency delay should be updated");
     }

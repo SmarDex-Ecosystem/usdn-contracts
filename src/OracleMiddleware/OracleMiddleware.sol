@@ -28,12 +28,6 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     /// @inheritdoc IOracleMiddleware
     uint16 public constant MAX_CONF_RATIO = BPS_DIVISOR * 2;
 
-    /// @inheritdoc IOracleMiddleware
-    uint16 public constant MIN_LOW_LATENCY_DELAY = 15 minutes;
-
-    /// @inheritdoc IOracleMiddleware
-    uint16 public constant MAX_LOW_LATENCY_DELAY = 90 minutes;
-
     /// @notice The number of decimals for the returned price
     uint8 internal constant MIDDLEWARE_DECIMALS = 18;
 
@@ -305,7 +299,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
 
         // if previous price is higher than targetLimit
         if (chainlinkOnChainPrice.timestamp > targetLimit) {
-            revert OracleMiddlewareRoundIdTooHigh();
+            revert OracleMiddlewareInvalidRoundId();
         }
 
         // validate round id
@@ -318,7 +312,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
 
         // if validate price is lower or equal than targetLimit
         if (chainlinkOnChainPrice.timestamp <= targetLimit) {
-            revert OracleMiddlewareRoundIdTooLow();
+            revert OracleMiddlewareInvalidRoundId();
         }
         price_ = PriceInfo({
             price: uint256(chainlinkOnChainPrice.price),
@@ -370,15 +364,14 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         emit ConfRatioUpdated(newConfRatio);
     }
 
+    /// @inheritdoc IOracleMiddleware
     function setLowLatencyDelay(uint16 newLowLatencyDelay) external onlyOwner {
-        if (newLowLatencyDelay < MIN_LOW_LATENCY_DELAY) {
+        if (newLowLatencyDelay < 15 minutes) {
             revert OracleMiddlewareInvalidLowLatencyDelay();
         }
-
-        if (newLowLatencyDelay > MAX_LOW_LATENCY_DELAY) {
+        if (newLowLatencyDelay > 90 minutes) {
             revert OracleMiddlewareInvalidLowLatencyDelay();
         }
-
         _lowLatencyDelay = newLowLatencyDelay;
 
         emit LowLatencyDelayUpdated(newLowLatencyDelay);

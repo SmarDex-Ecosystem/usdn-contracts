@@ -48,11 +48,8 @@ interface IOracleMiddlewareErrors {
      */
     error OracleMiddlewareInvalidRecentPriceDelay(uint64 newDelay);
 
-    /// @notice The chainlink roundId provided is too high
-    error OracleMiddlewareRoundIdTooHigh();
-
-    /// @notice The chainlink roundId provided is too low
-    error OracleMiddlewareRoundIdTooLow();
+    /// @notice Indicates that the chainlink roundId provided is invalid
+    error OracleMiddlewareInvalidRoundId();
 
     /// @notice The new low latency delay is invalid
     error OracleMiddlewareInvalidLowLatencyDelay();

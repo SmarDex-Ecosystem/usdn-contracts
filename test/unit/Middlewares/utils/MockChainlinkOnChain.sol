@@ -22,11 +22,10 @@ contract MockChainlinkOnChain {
     mapping(uint80 => RoundData) _roundData;
 
     constructor() {
-        _latestRoundData = RoundData(0, int256(2000 * (10 ** decimals)), uint64(block.timestamp), 0, 0);
-        _roundData[0] =
-            RoundData(0, int256(2000 * (10 ** decimals)), uint64(block.timestamp), uint64(block.timestamp), 0);
+        _latestRoundData = RoundData(0, int256(2000 * 10 ** decimals), uint64(block.timestamp), 0, 0);
+        _roundData[0] = RoundData(0, int256(2000 * 10 ** decimals), uint64(block.timestamp), uint64(block.timestamp), 0);
         _roundData[1] =
-            RoundData(0, int256(2000 * (10 ** decimals)), uint64(block.timestamp + 1), uint64(block.timestamp + 1), 0);
+            RoundData(0, int256(2000 * 10 ** decimals), uint64(block.timestamp + 1), uint64(block.timestamp + 1), 0);
     }
 
     /**

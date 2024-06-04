@@ -27,12 +27,6 @@ interface IOracleMiddleware is IBaseOracleMiddleware, IOracleMiddlewareErrors, I
      */
     function MAX_CONF_RATIO() external pure returns (uint16);
 
-    /// @notice The minimum low latency delay
-    function MIN_LOW_LATENCY_DELAY() external pure returns (uint16);
-
-    /// @notice The maximum low latency delay
-    function MAX_LOW_LATENCY_DELAY() external pure returns (uint16);
-
     /* -------------------------------------------------------------------------- */
     /*                              Generic features                              */
     /* -------------------------------------------------------------------------- */
