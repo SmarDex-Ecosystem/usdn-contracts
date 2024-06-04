@@ -734,6 +734,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     /**
      * @notice Immediately close a position with the given price
      * @dev Should only be used to close the rebalancer position
+     * TODO tests
      * @param posId The ID of the position to close
      * @param neutralPrice The current neutral price
      * @param longTradingExpo The long trading expo of the protocol
@@ -777,6 +778,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     /**
      * @notice Immediately open a position with the given price
      * @dev Should only be used to open the rebalancer position
+     * TODO tests
      * @param user The address of the user
      * @param neutralPrice The current neutral price
      * @param tickWithoutPenalty The tick the position should be opened in
@@ -846,7 +848,6 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         uint256 tradingExpoToFill =
             vaultBalance - (vaultBalance * (BPS_DIVISOR.toInt256() - _longImbalanceTargetBps).toUint256() / BPS_DIVISOR);
 
-        // TODO check the min usable trading expo as well
         // check that the trading expo filled by the position would not exceed the max leverage
         uint256 highestUsableTradingExpo = positionAmount * rebalancerMaxLeverage / LEVERAGE_DECIMALS - positionAmount;
         if (highestUsableTradingExpo > tradingExpoToFill) {
