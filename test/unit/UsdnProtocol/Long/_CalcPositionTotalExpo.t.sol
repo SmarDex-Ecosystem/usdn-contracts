@@ -8,7 +8,7 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 import { TickMath } from "src/libraries/TickMath.sol";
 
 /**
- * @custom:feature The _calcPositionTotalExpo internal function of the UsdnProtocolLong contract.
+ * @custom:feature The `_calcPositionTotalExpo` internal function of the UsdnProtocolLong contract.
  * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a
  * leverage of ~2x
  */
@@ -21,7 +21,7 @@ contract TestUsdnProtocolLongCalcPositionTotalExpo is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario Compare calculations of `_calcPositionTotalExpo` with more precise values
-     * @custom:when The function "_calcPositionTotalExpo" is called with some parameters
+     * @custom:when The function `_calcPositionTotalExpo` is called with some parameters
      * @custom:then The result is equal to the result of the Rust implementation
      */
     function testFuzzFFI_calcPositionTotalExpo(uint128 amount, uint256 startPrice, uint256 liqPrice) public {
@@ -51,8 +51,8 @@ contract TestUsdnProtocolLongCalcPositionTotalExpo is UsdnProtocolBaseFixture {
      * @custom:scenario Call `_calcPositionTotalExpo` reverts when the liquidation price is greater than
      * the start price.
      * @custom:given A liquidation price greater than or equal to the start price
-     * @custom:when _calcPositionTotalExpo is called
-     * @custom:then The transaction reverts with a UsdnProtocolInvalidLiquidationPrice error
+     * @custom:when `_calcPositionTotalExpo` is called
+     * @custom:then The transaction reverts with a `UsdnProtocolInvalidLiquidationPrice` error
      */
     function test_RevertWhen_calcPositionTotalExpoWithLiqPriceGreaterThanStartPrice() public {
         uint128 startPrice = 2000 ether;
@@ -71,7 +71,7 @@ contract TestUsdnProtocolLongCalcPositionTotalExpo is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Check calculations of `_calcPositionTotalExpo`
      * @custom:given An amount, a startPrice and a liquidationPrice
-     * @custom:when The function "_calcPositionTotalExpo" is called with some parameters
+     * @custom:when The function `_calcPositionTotalExpo` is called with some parameters
      * @custom:then Expo is calculated correctly
      */
     function test_calcPositionTotalExpo() public {

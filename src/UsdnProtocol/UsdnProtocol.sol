@@ -375,6 +375,8 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
      * @param depositAmount The amount of assets for the deployer's deposit
      */
     function _checkInitImbalance(uint128 positionTotalExpo, uint128 longAmount, uint128 depositAmount) internal view {
+        _checkUninitialized(); // prevent using this function after initialization
+
         int256 longTradingExpo = _toInt256(positionTotalExpo - longAmount);
         int256 depositLimit = _depositExpoImbalanceLimitBps;
         if (depositLimit != 0) {
