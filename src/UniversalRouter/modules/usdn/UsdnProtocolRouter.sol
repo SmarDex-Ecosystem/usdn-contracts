@@ -40,7 +40,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         SDEX.approve(address(USDN_PROTOCOL), type(uint256).max);
         // we send the full ETH balance, the protocol will refund any excess
         success_ = USDN_PROTOCOL.initiateDeposit{ value: address(this).balance }(
-            amount.toUint128(), to, validator, currentPriceData, previousActionsData
+            amount.toUint128(), to, payable(validator), currentPriceData, previousActionsData
         );
         SDEX.approve(address(USDN_PROTOCOL), 0);
     }
@@ -59,7 +59,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         PreviousActionsData memory previousActionsData
     ) internal returns (bool success_) {
         success_ = USDN_PROTOCOL.validateDeposit{ value: address(this).balance }(
-            validator, depositPriceData, previousActionsData
+            payable(validator), depositPriceData, previousActionsData
         );
     }
 
@@ -88,7 +88,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         USDN.approve(address(USDN_PROTOCOL), USDN.convertToTokensRoundUp(amount));
         // we send the full ETH balance, the protocol will refund any excess
         success_ = USDN_PROTOCOL.initiateWithdrawal{ value: address(this).balance }(
-            amount.toUint152(), to, validator, currentPriceData, previousActionsData
+            amount.toUint152(), to, payable(validator), currentPriceData, previousActionsData
         );
     }
 
@@ -120,7 +120,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         PROTOCOL_ASSET.forceApprove(address(USDN_PROTOCOL), amount);
         // we send the full ETH balance, and the protocol will refund any excess
         (success_, posId_) = USDN_PROTOCOL.initiateOpenPosition{ value: address(this).balance }(
-            amount.toUint128(), desiredLiqPrice, to, validator, currentPriceData, previousActionsData
+            amount.toUint128(), desiredLiqPrice, to, payable(validator), currentPriceData, previousActionsData
         );
     }
 }

@@ -85,7 +85,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateDeposit);
         assertEq(validationCost, 1);
         protocol.initiateDeposit{ value: validationCost }(
-            DEPOSIT_AMOUNT, address(this), address(this), currentPrice, EMPTY_PREVIOUS_DATA
+            DEPOSIT_AMOUNT, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
@@ -93,7 +93,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.ValidateDeposit);
         assertEq(validationCost, 1);
         uint256 balanceBefore = address(this).balance;
-        protocol.validateDeposit{ value: 0.5 ether }(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit{ value: 0.5 ether }(payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
 
@@ -123,12 +123,13 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
 
         protocol.initiateDeposit(
-            DEPOSIT_AMOUNT, address(this), address(this), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
+            DEPOSIT_AMOUNT, address(this), payable(address(this)), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
 
-        bool success = protocol.validateDeposit(address(this), abi.encode(params.initialPrice / 3), EMPTY_PREVIOUS_DATA);
+        bool success =
+            protocol.validateDeposit(payable(address(this)), abi.encode(params.initialPrice / 3), EMPTY_PREVIOUS_DATA);
         assertFalse(success, "success");
 
         PendingAction memory pending = protocol.getUserPendingAction(address(this));
@@ -169,7 +170,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         uint256 initiateDepositTimestamp = block.timestamp;
         vm.expectEmit();
         emit InitiatedDeposit(to, address(this), DEPOSIT_AMOUNT, initiateDepositTimestamp); // expected event
-        protocol.initiateDeposit(DEPOSIT_AMOUNT, to, address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.initiateDeposit(DEPOSIT_AMOUNT, to, payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
         uint256 vaultBalance = protocol.getBalanceVault(); // save for mint amount calculation in case price increases
         bytes32 actionId = oracleMiddleware.lastActionId();
 
@@ -191,7 +192,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit ValidatedDeposit(to, address(this), DEPOSIT_AMOUNT, mintedAmount, initiateDepositTimestamp); // expected
             // event
-        bool success = protocol.validateDeposit(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+        bool success = protocol.validateDeposit(payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
         assertTrue(success, "success");
 
         assertEq(usdn.balanceOf(to), mintedAmount, "USDN to balance");
@@ -214,7 +215,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
 
         if (_reenter) {
             vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
-            protocol.validateDeposit(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+            protocol.validateDeposit(payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
             return;
         }
 
@@ -224,7 +225,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         // If a reentrancy occurred, the function should have been called 2 times
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.validateDeposit.selector), 2);
         // The value sent will cause a refund, which will trigger the receive() function of this contract
-        protocol.validateDeposit{ value: 1 }(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit{ value: 1 }(payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
     }
 
     /**

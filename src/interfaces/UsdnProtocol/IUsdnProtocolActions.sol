@@ -29,7 +29,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
     function initiateDeposit(
         uint128 amount,
         address to,
-        address validator,
+        address payable validator,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_);
@@ -53,7 +53,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * @return success_ Whether the deposit was validated
      */
     function validateDeposit(
-        address validator,
+        address payable validator,
         bytes calldata depositPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_);
@@ -77,7 +77,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
     function initiateWithdrawal(
         uint152 usdnShares,
         address to,
-        address validator,
+        address payable validator,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_);
@@ -101,7 +101,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * @return success_ Whether the withdrawal was validated
      */
     function validateWithdrawal(
-        address validator,
+        address payable validator,
         bytes calldata withdrawalPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_);
@@ -131,7 +131,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
         uint128 amount,
         uint128 desiredLiqPrice,
         address to,
-        address validator,
+        address payable validator,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_, PositionId memory posId_);
@@ -159,7 +159,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * @return success_ Whether the position was validated
      */
     function validateOpenPosition(
-        address validator,
+        address payable validator,
         bytes calldata openPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_);
@@ -182,6 +182,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * @param posId The unique identifier of the position to close
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param to The address that will receive the assets
+     * @param validator The address that will validate the close action
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions
      * @return success_ Whether the closing was initiated
@@ -190,6 +191,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
         PositionId calldata posId,
         uint128 amountToClose,
         address to,
+        address payable validator,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_);
@@ -209,13 +211,13 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * `validateActionablePendingActions` to earn the corresponding security deposit
      * In case liquidations are pending or the position was liquidated, this function might not validate the closing
      * (and `success_` would be false)
-     * @param owner The owner of the initial position
+     * @param validator The validator of the close pending action, not necessarily the position owner
      * @param closePriceData The price data corresponding to the sender's pending close position action
      * @param previousActionsData The data needed to validate actionable pending actions
      * @return success_ Whether the closing was validated
      */
     function validateClosePosition(
-        address owner,
+        address payable validator,
         bytes calldata closePriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_);

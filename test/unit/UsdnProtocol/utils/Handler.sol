@@ -119,12 +119,14 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     function i_initiateClosePosition(
         address owner,
         address to,
+        address validator,
         PositionId memory posId,
         uint128 amountToClose,
         uint64 securityDepositValue,
         bytes calldata currentPriceData
     ) external returns (uint256 securityDepositValue_, bool isLiquidationPending_, bool liq_) {
-        return _initiateClosePosition(owner, to, posId, amountToClose, securityDepositValue, currentPriceData);
+        return
+            _initiateClosePosition(owner, to, validator, posId, amountToClose, securityDepositValue, currentPriceData);
     }
 
     function i_validateClosePosition(address user, bytes calldata priceData) external {
@@ -393,7 +395,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
     }
 
-    function i_refundEther(uint256 amount, address to) external payable {
+    function i_refundEther(uint256 amount, address payable to) external payable {
         _refundEther(amount, to);
     }
 
