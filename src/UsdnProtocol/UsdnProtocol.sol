@@ -329,6 +329,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         );
     }
 
+    /// @inheritdoc IUsdnProtocol
     function setTargetUsdnPrice(uint128 newPrice) external onlyOwner {
         if (newPrice > _usdnRebaseThreshold) {
             revert UsdnProtocolInvalidTargetUsdnPrice();

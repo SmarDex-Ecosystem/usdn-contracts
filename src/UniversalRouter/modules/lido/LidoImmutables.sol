@@ -9,10 +9,10 @@ contract LidoImmutables {
     /// @dev The address of steth
     IERC20Metadata public immutable STETH;
 
-    /// @dev The address of wrapped steth
+    /// @dev The address of the wrapped steth
     IWstETH internal immutable WSTETH;
 
-    /// @param wsteth Address of wrapped steth
+    /// @param wsteth The address of wrapped steth
     constructor(address wsteth) {
         WSTETH = IWstETH(wsteth);
         STETH = IERC20Metadata(WSTETH.stETH());

@@ -164,7 +164,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param liqMultiplier The liquidation price multiplier, with LIQUIDATION_MULTIPLIER_DECIMALS decimals
      * @return price_ The adjusted price for the tick
      */
-    function _getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) public pure returns (uint128 price_) {
+    function _getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) internal pure returns (uint128 price_) {
         price_ = _adjustPrice(TickMath.getPriceAtTick(tick), liqMultiplier);
     }
 
@@ -182,7 +182,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         uint256 assetPrice,
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator
-    ) public pure returns (uint256 unadjustedPrice_) {
+    ) internal pure returns (uint256 unadjustedPrice_) {
         if (accumulator.hi == 0 && accumulator.lo == 0) {
             // no position in long, we assume a liquidation multiplier of 1.0
             return price;
@@ -200,7 +200,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
     /**
      * @notice Knowing the unadjusted price for a tick, get the adjusted price taking into account the effects of the
-     * funding.
+     * funding
      * @param unadjustedPrice The unadjusted price for the tick
      * @param assetPrice The current price of the asset
      * @param longTradingExpo The trading expo of the long side (total expo - balance long)
@@ -212,7 +212,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         uint256 assetPrice,
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator
-    ) public pure returns (uint128 price_) {
+    ) internal pure returns (uint128 price_) {
         if (accumulator.hi == 0 && accumulator.lo == 0) {
             // no position in long, we assume a liquidation multiplier of 1.0
             return unadjustedPrice.toUint128();
@@ -231,7 +231,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param liqMultiplier The liquidation price multiplier, with LIQUIDATION_MULTIPLIER_DECIMALS decimals
      * @return price_ The adjusted price for the tick
      */
-    function _adjustPrice(uint256 unadjustedPrice, uint256 liqMultiplier) public pure returns (uint128 price_) {
+    function _adjustPrice(uint256 unadjustedPrice, uint256 liqMultiplier) internal pure returns (uint128 price_) {
         // price = unadjustedPrice * M
         price_ = FixedPointMathLib.fullMulDiv(unadjustedPrice, liqMultiplier, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS)
             .toUint128();
@@ -278,6 +278,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @notice Calculate the theoretical liquidation price of a position knowing its start price and leverage
      * @param startPrice Entry price of the position
      * @param leverage Leverage of the position
+     * @return price_ The liquidation price of the position
      */
     function _getLiquidationPrice(uint128 startPrice, uint128 leverage) internal pure returns (uint128 price_) {
         price_ = (startPrice - ((uint256(10) ** LEVERAGE_DECIMALS * startPrice) / leverage)).toUint128();
@@ -340,11 +341,17 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         }
     }
 
-    /// @dev This does not take into account the liquidation penalty
+    /**
+     * @notice Calculate the leverage of a position, knowing its start price and liquidation price
+     * @dev This does not take into account the liquidation penalty
+     * @param startPrice Entry price of the position
+     * @param liquidationPrice Liquidation price of the position
+     * @return leverage_ The leverage of the position
+     */
     function _getLeverage(uint128 startPrice, uint128 liquidationPrice) internal pure returns (uint128 leverage_) {
         if (startPrice <= liquidationPrice) {
             // this situation is not allowed (newly open position must be solvent)
-            // Also, calculation below would underflow
+            // Also, the calculation below would underflow
             revert UsdnProtocolInvalidLiquidationPrice(liquidationPrice, startPrice);
         }
 
@@ -371,6 +378,12 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         totalExpo_ = FixedPointMathLib.fullMulDiv(amount, startPrice, startPrice - liquidationPrice).toUint128();
     }
 
+    /**
+     * @notice Check if the safety margin is respected
+     * @dev Reverts if not respected
+     * @param currentPrice The current price of the asset
+     * @param liquidationPrice The liquidation price of the position
+     */
     function _checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) internal view {
         uint128 maxLiquidationPrice = (currentPrice * (BPS_DIVISOR - _safetyMarginBps) / BPS_DIVISOR).toUint128();
         if (liquidationPrice >= maxLiquidationPrice) {
@@ -384,6 +397,8 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param tick The tick to hold the new position
      * @param long The position to save
      * @param liquidationPenalty The liquidation penalty for the tick
+     * @return tickVersion_ The version of the tick
+     * @return index_ The index of the position in the tick array
      */
     function _saveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty)
         internal

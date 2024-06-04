@@ -755,6 +755,13 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         emit InitiatedDeposit(to, validator, amount, block.timestamp);
     }
 
+    /**
+     * @notice Get the pending action data of the owner, try to validate it and clear it if successful
+     * @param validator The address of the validator
+     * @param priceData The current price data
+     * @return securityDepositValue_ The value of the security deposit
+     * @return isValidated_ Whether the action is validated
+     */
     function _validateDeposit(address validator, bytes calldata priceData)
         internal
         returns (uint256 securityDepositValue_, bool isValidated_)
@@ -778,6 +785,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
     }
 
+    /**
+     * @notice Update protocol balances, liquidate positions if necessary, then validate the `deposit` action
+     * @param pending The pending action data
+     * @param priceData The current price data
+     * @return isValidated_ Whether the action is validated
+     */
     function _validateDepositWithAction(PendingAction memory pending, bytes calldata priceData)
         internal
         returns (bool isValidated_)
@@ -972,6 +985,13 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         emit InitiatedWithdrawal(to, validator, _usdn.convertToTokens(usdnShares), block.timestamp);
     }
 
+    /**
+     * @notice Get the pending action data of the owner, try to validate it and clear it if successful
+     * @param validator The address of the validator
+     * @param priceData The current price data
+     * @return securityDepositValue_ The value of the security deposit
+     * @return isValidated_ Whether the action is validated
+     */
     function _validateWithdrawal(address validator, bytes calldata priceData)
         internal
         returns (uint256 securityDepositValue_, bool isValidated_)
@@ -995,6 +1015,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
     }
 
+    /**
+     * @notice Update protocol balances, liquidate positions if necessary, then validate the `withdrawal` action
+     * @param pending The pending action data
+     * @param priceData The current price data
+     * @return isValidated_ Whether the action is validated
+     */
     function _validateWithdrawalWithAction(PendingAction memory pending, bytes calldata priceData)
         internal
         returns (bool isValidated_)
@@ -1231,6 +1257,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         );
     }
 
+    /**
+     * @notice Get the pending action data of the owner, try to validate it and clear it if successful
+     * @param validator The address of the validator
+     * @param priceData The current price data
+     * @return securityDepositValue_ The value of the security deposit
+     * @return isValidated_ Whether the action is validated
+     * @return liquidated_ Whether the pending action has been liquidated
+     */
     function _validateOpenPosition(address validator, bytes calldata priceData)
         internal
         returns (uint256 securityDepositValue_, bool isValidated_, bool liquidated_)
@@ -1254,15 +1288,15 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     /**
-     * @notice Update protocol balances, then prepare the data for the validate open position action
+     * @notice Update protocol balances, liquidate positions if necessary, then validate the `open position` action
      * @param pending The pending action data
      * @param priceData The current price data
      * @return data_ The validate open position data struct
-     * @return liq_ Whether the position was liquidated and the caller should return early
+     * @return liquidated_ Whether the position was liquidated and the caller should return early
      */
     function _prepareValidateOpenPositionData(PendingAction memory pending, bytes calldata priceData)
         internal
-        returns (ValidateOpenPositionData memory data_, bool liq_)
+        returns (ValidateOpenPositionData memory data_, bool liquidated_)
     {
         data_.action = _toLongPendingAction(pending);
         PriceInfo memory currentPrice = _getOraclePrice(
@@ -1483,7 +1517,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param currentPriceData The current price data
      * @return data_ The close position data
-     * @return liq_ Whether the position was liquidated and the caller should return early
+     * @return liquidated_ Whether the position was liquidated and the caller should return early
      */
     function _prepareClosePositionData(
         address owner,
@@ -1491,7 +1525,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         PositionId memory posId,
         uint128 amountToClose,
         bytes calldata currentPriceData
-    ) internal returns (ClosePositionData memory data_, bool liq_) {
+    ) internal returns (ClosePositionData memory data_, bool liquidated_) {
         (data_.pos, data_.liquidationPenalty) = getLongPosition(posId);
 
         _checkInitiateClosePosition(owner, to, amountToClose, data_.pos);
@@ -1603,7 +1637,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @return amountToRefund_ If there are pending liquidations we'll refund the securityDepositValue,
      * else we'll only refund the security deposit value of the stale pending action
      * @return isInitiated_ Whether the action is initiated
-     * @return liq_ Whether the position was liquidated
+     * @return liquidated_ Whether the position was liquidated
      */
     function _initiateClosePosition(
         address owner,
@@ -1612,13 +1646,13 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 amountToClose,
         uint64 securityDepositValue,
         bytes calldata currentPriceData
-    ) internal returns (uint256 amountToRefund_, bool isInitiated_, bool liq_) {
+    ) internal returns (uint256 amountToRefund_, bool isInitiated_, bool liquidated_) {
         ClosePositionData memory data;
-        (data, liq_) = _prepareClosePositionData(owner, to, posId, amountToClose, currentPriceData);
+        (data, liquidated_) = _prepareClosePositionData(owner, to, posId, amountToClose, currentPriceData);
 
-        if (liq_ || data.isLiquidationPending) {
+        if (liquidated_ || data.isLiquidationPending) {
             // position was liquidated in this transaction or liquidations are pending
-            return (securityDepositValue, !data.isLiquidationPending, liq_);
+            return (securityDepositValue, !data.isLiquidationPending, liquidated_);
         }
 
         amountToRefund_ = _createClosePendingAction(owner, to, posId, amountToClose, securityDepositValue, data);
@@ -1633,9 +1667,17 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         );
     }
 
+    /**
+     * @notice Get the pending action data of the owner, try to validate it and clear it if successful
+     * @param owner The owner of the pending action
+     * @param priceData The current price data
+     * @return securityDepositValue_ The value of the security deposit of the pending action
+     * @return isValidated_ Whether the action is validated
+     * @return liquidated_ Whether the pending action has been liquidated
+     */
     function _validateClosePosition(address owner, bytes calldata priceData)
         internal
-        returns (uint256 securityDepositValue_, bool isValidated_, bool liq_)
+        returns (uint256 securityDepositValue_, bool isValidated_, bool liquidated_)
     {
         (PendingAction memory pending, uint128 rawIndex) = _getPendingActionOrRevert(owner);
 
@@ -1648,17 +1690,24 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolInvalidPendingAction();
         }
 
-        (isValidated_, liq_) = _validateClosePositionWithAction(pending, priceData);
+        (isValidated_, liquidated_) = _validateClosePositionWithAction(pending, priceData);
 
-        if (isValidated_ || liq_) {
+        if (isValidated_ || liquidated_) {
             _clearPendingAction(owner, rawIndex);
-            return (pending.securityDepositValue, isValidated_, liq_);
+            return (pending.securityDepositValue, isValidated_, liquidated_);
         }
     }
 
+    /**
+     * @notice Update protocol balances, liquidate positions if necessary, then validate the close position action
+     * @param pending The pending action data
+     * @param priceData The current price data
+     * @return isValidated_ Whether the action is validated
+     * @return liquidated_ Whether the pending action has been liquidated
+     */
     function _validateClosePositionWithAction(PendingAction memory pending, bytes calldata priceData)
         internal
-        returns (bool isValidated_, bool _liq)
+        returns (bool isValidated_, bool liquidated_)
     {
         LongPendingAction memory long = _toLongPendingAction(pending);
 
@@ -1835,16 +1884,16 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     /**
-     * @notice Execute the first actionable pending action and report success
+     * @notice Execute the first actionable pending action and report the success
      * @param data The price data and raw indices
      * @return success_ Whether the price data is valid
      * @return executed_ Whether the pending action was executed (false if the queue has no actionable item)
-     * @return liq_ Whether the position corresponding to the pending action was liquidated
+     * @return liquidated_ Whether the position corresponding to the pending action was liquidated
      * @return securityDepositValue_ The security deposit value of the executed action
      */
     function _executePendingAction(PreviousActionsData calldata data)
         internal
-        returns (bool success_, bool executed_, bool liq_, uint256 securityDepositValue_)
+        returns (bool success_, bool executed_, bool liquidated_, uint256 securityDepositValue_)
     {
         (PendingAction memory pending, uint128 rawIndex) = _getActionablePendingAction();
         if (pending.action == ProtocolAction.None) {
@@ -1870,20 +1919,28 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         } else if (pending.action == ProtocolAction.ValidateWithdrawal) {
             executed_ = _validateWithdrawalWithAction(pending, priceData);
         } else if (pending.action == ProtocolAction.ValidateOpenPosition) {
-            (executed_, liq_) = _validateOpenPositionWithAction(pending, priceData);
+            (executed_, liquidated_) = _validateOpenPositionWithAction(pending, priceData);
         } else if (pending.action == ProtocolAction.ValidateClosePosition) {
-            (executed_, liq_) = _validateClosePositionWithAction(pending, priceData);
+            (executed_, liquidated_) = _validateClosePositionWithAction(pending, priceData);
         }
 
         success_ = true;
 
-        if (executed_ || liq_) {
+        if (executed_ || liquidated_) {
             _clearPendingAction(pending.validator, rawIndex);
             securityDepositValue_ = pending.securityDepositValue;
             emit SecurityDepositRefunded(pending.validator, msg.sender, securityDepositValue_);
         }
     }
 
+    /**
+     * @notice Get the oracle price for the given action and timestamp and validate it
+     * @param action The type of action that is being performed by the user
+     * @param timestamp The timestamp at which the wanted price was recorded
+     * @param actionId The unique identifier of the action
+     * @param priceData The price oracle data
+     * @return price_ The validated price
+     */
     function _getOraclePrice(ProtocolAction action, uint256 timestamp, bytes32 actionId, bytes calldata priceData)
         internal
         returns (PriceInfo memory price_)
@@ -1991,6 +2048,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
     }
 
+    /**
+     * @notice Distribute the protocol fee to the fee collector if it exceeds the threshold
+     * @dev This function is called after every action that changes the protocol fee balance
+     */
     function _checkPendingFee() internal {
         // if the pending protocol fee is above the threshold, send it to the fee collector
         if (_pendingProtocolFee >= _feeThreshold) {

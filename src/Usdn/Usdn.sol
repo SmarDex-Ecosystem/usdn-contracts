@@ -14,7 +14,7 @@ import { IRebaseCallback } from "src/interfaces/Usdn/IRebaseCallback.sol";
 /**
  * @title USDN token contract
  * @notice The USDN token supports the USDN Protocol and is minted when assets are deposited into the vault. When assets
- * are withdrawn from the vault, tokens are burned. The total supply and balances are increased periodically by
+ * are withdrawn from the vault, and tokens are burned. The total supply and balances are increased periodically by
  * adjusting a global divisor, so that the price of the token doesn't grow too far past 1 USD
  *
  * @dev Base implementation of the ERC-20 interface by OpenZeppelin, adapted to support growable balances
