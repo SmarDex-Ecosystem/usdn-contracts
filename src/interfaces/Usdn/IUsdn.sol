@@ -39,7 +39,7 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
     /**
      * @notice Transfer a given amount of shares from the `from` to `to`
      * @dev There should be sufficient allowance for the spender
-     * @param from Owner of the shares
+     * @param from The owner of the shares
      * @param to Recipient of the shares
      * @param value Number of shares to transfer
      * @return `true` in case of success
@@ -90,7 +90,7 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
     function burnSharesFrom(address account, uint256 value) external;
 
     /**
-     * @notice Convert a number of tokens to the corresponding amount of shares
+     * @notice Convert some tokens to the corresponding amount of shares
      * @dev The conversion reverts with `UsdnMaxTokensExceeded` if the corresponding amount of shares overflows
      * @param amountTokens The amount of tokens to convert to shares
      * @return shares_ The corresponding amount of shares
@@ -98,16 +98,16 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
     function convertToShares(uint256 amountTokens) external view returns (uint256 shares_);
 
     /**
-     * @notice Convert a number of shares to the corresponding amount of tokens
+     * @notice Convert some shares to the corresponding amount of tokens
      * @dev The conversion never overflows as we are performing a division. The conversion rounds to the nearest amount
-     * of tokens that minimizes the error when converting back to shares
+     * of tokens that minimize the error when converting back to shares
      * @param amountShares The amount of shares to convert to tokens
      * @return tokens_ The corresponding amount of tokens
      */
     function convertToTokens(uint256 amountShares) external view returns (uint256 tokens_);
 
     /**
-     * @notice Convert a number of shares to the corresponding amount of tokens, rounding up
+     * @notice Convert some shares to the corresponding amount of tokens, rounding up
      * @dev Use this function to determine the amount of a token approval, as we always round up when deducting from
      * a token transfer allowance
      * @param amountShares The amount of shares to convert to tokens
@@ -127,9 +127,9 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
      * supply
      * @dev If the provided divisor is larger than or equal to the current divisor value, no rebase will happen
      * If the new divisor is smaller than `MIN_DIVISOR`, the value will be clamped to `MIN_DIVISOR`
+     * Caller must have the `REBASER_ROLE`
      * @param divisor The new divisor, should be strictly smaller than the current one and greater or equal to
      * `MIN_DIVISOR`
-     * Caller must have the `REBASER_ROLE`
      * @return rebased_ Whether a rebase happened
      * @return oldDivisor_ The previous value of the divisor
      * @return callbackResult_ The result of the callback, if a rebase happened and a callback handler is defined
@@ -164,13 +164,13 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
     function rebaseHandler() external view returns (IRebaseCallback);
 
     /**
-     * @notice Minter role signature
+     * @notice The minter role signature
      * @return The role signature
      */
     function MINTER_ROLE() external pure returns (bytes32);
 
     /**
-     * @notice Rebaser role signature
+     * @notice The rebaser role signature
      * @return The role signature
      */
     function REBASER_ROLE() external pure returns (bytes32);
