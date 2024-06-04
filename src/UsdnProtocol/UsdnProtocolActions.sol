@@ -1821,7 +1821,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 _liquidatePositions(_lastPrice, iterations, tempLongBalance, tempVaultBalance);
 
             _triggerRebalancer(
-                uint128(neutralPrice), liquidationEffects.newLongBalance, liquidationEffects.newVaultBalance
+                uint128(neutralPrice),
+                liquidationEffects.newLongBalance,
+                liquidationEffects.newVaultBalance,
+                liquidationEffects.remainingCollateral
             );
 
             isLiquidationPending_ = liquidationEffects.isLiquidationPending;
@@ -1852,79 +1855,66 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * the pending assets, the value of the previous position and the liquidation bonus (if available)
      * and a leverage to fill enough trading expo to reach the desired imbalance, up to the max leverages
      * @dev Will do nothing if no rebalancer is set in the contract
+     * @param neutralPrice The neutral/average price of the asset
      * @param longBalance The balance of the long side
      * @param vaultBalance The balance of the vault side
+     * @param remainingCollateral The collateral remaining after the liquidations
      * @return longBalance_ The temporary balance of the long side
      */
-    function _triggerRebalancer(uint128 neutralPrice, uint256 longBalance, uint256 vaultBalance)
-        internal
-        returns (uint256 longBalance_)
-    {
+    function _triggerRebalancer(
+        uint128 neutralPrice,
+        uint256 longBalance,
+        uint256 vaultBalance,
+        int256 remainingCollateral
+    ) internal returns (uint256 longBalance_) {
         longBalance_ = longBalance;
         IRebalancer rebalancer = _rebalancer;
 
-        // if the rebalancer is not set, do nothing
         if (address(rebalancer) == address(0)) {
             return longBalance_;
+        }
+
+        uint128 bonus;
+        if (remainingCollateral > 0) {
+            bonus = (uint256(remainingCollateral) * _rebalancerBonusBps / BPS_DIVISOR).toUint128();
         }
 
         uint256 totalExpo = _totalExpo;
 
         // calculate the current imbalance
-        int256 currentImbalance = (
-            (totalExpo.toInt256().safeSub(longBalance_.toInt256())).safeSub(vaultBalance.toInt256())
-        ).safeMul(int256(BPS_DIVISOR)).safeDiv(vaultBalance.toInt256());
-        // if the imbalance is lower than the threshold, do nothing
-        if (currentImbalance < _closeExpoImbalanceLimitBps) {
-            return longBalance_;
+        {
+            int256 currentImbalance = (
+                (totalExpo.toInt256().safeSub(longBalance_.toInt256())).safeSub(vaultBalance.toInt256())
+            ).safeMul(int256(BPS_DIVISOR)).safeDiv(vaultBalance.toInt256());
+            // if the imbalance is lower than the threshold, do nothing
+            if (currentImbalance < _closeExpoImbalanceLimitBps) {
+                return longBalance_;
+            }
         }
 
         (uint128 pendingAssets, uint256 rebalancerMaxLeverage, PositionId memory rebalancerPosId) =
             rebalancer.getRebalancerData();
 
+        uint128 positionAmount = pendingAssets + bonus;
+
         // close the rebalancer position and get its value to open the next one
-        uint128 positionAmount;
         // TODO really needed to call NO_POSITION_TICK here? seems suboptimal
         // but don't want to assume values as they are separate contracts
         if (rebalancerPosId.tick != rebalancer.NO_POSITION_TICK()) {
             uint128 positionValue =
                 _flashClosePosition(rebalancerPosId, neutralPrice, totalExpo - longBalance_).toUint128();
 
-            positionAmount = positionValue + pendingAssets; // TODO add bonus
+            positionAmount += positionValue;
         }
 
-        // calculate the rebalancer position's tick
-        int24 tickWithoutLiqPenalty;
-        {
-            // calculate the trading expo missing to reach the imbalance target
-            uint256 tradingExpoToFill = vaultBalance
-                - (vaultBalance * (BPS_DIVISOR.toInt256() - _longImbalanceTargetBps).toUint256() / BPS_DIVISOR);
-
-            // use the lowest max leverage
-            uint256 protocolMaxLeverage = _maxLeverage;
-            if (rebalancerMaxLeverage > protocolMaxLeverage) {
-                rebalancerMaxLeverage = protocolMaxLeverage;
-            }
-
-            // TODO check the min usable trading expo as well
-            // check that the trading expo filled by the position would not exceed the max leverage
-            uint256 highestUsableTradingExpo =
-                positionAmount * rebalancerMaxLeverage / LEVERAGE_DECIMALS - positionAmount;
-            if (highestUsableTradingExpo > tradingExpoToFill) {
-                highestUsableTradingExpo = tradingExpoToFill;
-            }
-
-            tickWithoutLiqPenalty = getEffectiveTickForPrice(
-                _calcLiqPriceFromTradingExpo(neutralPrice, positionAmount, highestUsableTradingExpo)
-            );
-        }
+        int24 tickWithoutLiqPenalty =
+            _calculateRebalancerPositionTick(neutralPrice, positionAmount, rebalancerMaxLeverage, vaultBalance);
 
         // open a new position for the rebalancer
         PositionId memory posId =
             _flashOpenPosition(address(rebalancer), neutralPrice, tickWithoutLiqPenalty, positionAmount);
 
-        // update the long balance
-        longBalance_ += pendingAssets; // TODO add bonus
+        longBalance_ += pendingAssets + bonus;
 
         // transfer the pending assets from the rebalancer to this contract
         _asset.safeTransferFrom(address(rebalancer), address(this), pendingAssets);
