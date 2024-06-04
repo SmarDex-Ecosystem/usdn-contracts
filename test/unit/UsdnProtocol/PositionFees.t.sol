@@ -46,7 +46,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         // Price without the liquidation penalty
         uint128 effectiveTickPrice = protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(expectedTick));
         uint128 expectedPosTotalExpo =
-            protocol.i_calculatePositionTotalExpo(1 ether, uint128(expectedPrice), effectiveTickPrice);
+            protocol.i_calcPositionTotalExpo(1 ether, uint128(expectedPrice), effectiveTickPrice);
 
         wstETH.mintAndApprove(address(this), 1 ether, address(protocol), 1 ether);
         vm.recordLogs();
@@ -99,7 +99,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint128 effectiveTickPrice = protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(posId.tick));
         uint256 expectedPrice = 2000 ether + 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
         uint128 expectedPosTotalExpo =
-            protocol.i_calculatePositionTotalExpo(1 ether, uint128(expectedPrice), effectiveTickPrice);
+            protocol.i_calcPositionTotalExpo(1 ether, uint128(expectedPrice), effectiveTickPrice);
 
         vm.recordLogs();
 
