@@ -8,23 +8,26 @@ import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
 
 /**
  * @title IUsdnProtocol
- * @notice Interface for the USDN protocol.
+ * @notice Interface for the USDN protocol
  */
 interface IUsdnProtocol is IUsdnProtocolActions {
-    /// @dev The minimum amount of wstETH for the initialization deposit and long.
+    /**
+     * @notice Get the minimum amount of wstETH for the initialization deposit and long
+     * @return The minimum amount of wstETH
+     */
     function MIN_INIT_DEPOSIT() external pure returns (uint256);
 
     /**
-     * @notice Initialize the protocol, making a first deposit and creating a first long position.
-     * @dev This function can only be called once, and no other user action can be performed until it was called.
+     * @notice Initialize the protocol, making a first deposit and creating a first long position
+     * @dev This function can only be called once, and no other user action can be performed until it is called
      * Consult the current oracle middleware implementation to know the expected format for the price data, using the
-     * `ProtocolAction.Initialize` action.
+     * `ProtocolAction.Initialize` action
      * The price validation might require payment according to the return value of the `getValidationCost` function of
-     * the middleware.
-     * @param depositAmount the amount of wstETH for the deposit.
-     * @param longAmount the amount of wstETH for the long.
-     * @param desiredLiqPrice the desired liquidation price for the long.
-     * @param currentPriceData the current price data.
+     * the middleware
+     * @param depositAmount The amount of wstETH for the deposit
+     * @param longAmount The amount of wstETH for the long
+     * @param desiredLiqPrice The desired liquidation price for the long
+     * @param currentPriceData The current price data
      */
     function initialize(
         uint128 depositAmount,
@@ -34,54 +37,78 @@ interface IUsdnProtocol is IUsdnProtocolActions {
     ) external payable;
 
     /**
-     * @notice Replace the OracleMiddleware contract with a new implementation.
-     * @dev Cannot be the 0 address.
-     * @param newOracleMiddleware the address of the new contract.
+     * @notice Replace the OracleMiddleware contract with a new implementation
+     * @dev Cannot be the 0 address
+     * @param newOracleMiddleware The address of the new contract
      */
     function setOracleMiddleware(IOracleMiddleware newOracleMiddleware) external;
 
     /**
-     * @notice Replace the LiquidationRewardsManager contract with a new implementation.
-     * @dev Cannot be the 0 address.
-     * @param newLiquidationRewardsManager the address of the new contract.
+     * @notice Replace the LiquidationRewardsManager contract with a new implementation
+     * @dev Cannot be the 0 address
+     * @param newLiquidationRewardsManager The address of the new contract
      */
     function setLiquidationRewardsManager(ILiquidationRewardsManager newLiquidationRewardsManager) external;
 
     /**
-     * @notice Replace the Rebalancer contract with a new implementation.
-     * @param newRebalancer the address of the new contract.
+     * @notice Replace the Rebalancer contract with a new implementation
+     * @param newRebalancer The address of the new contract
      */
     function setRebalancer(IRebalancer newRebalancer) external;
 
-    /// @notice Set the new minimum leverage for a position.
+    /**
+     * @notice Set the new minimum leverage for a position
+     * @param newMinLeverage The new minimum leverage
+     */
     function setMinLeverage(uint256 newMinLeverage) external;
 
-    /// @notice Set the new maximum leverage for a position.
+    /**
+     * @notice Set the new maximum leverage for a position
+     * @param newMaxLeverage The new maximum leverage
+     */
     function setMaxLeverage(uint256 newMaxLeverage) external;
 
-    /// @notice Set the new deadline for a user to confirm their own action.
+    /**
+     * @notice Set the new deadline for a user to confirm their action
+     * @param newValidationDeadline The new deadline
+     */
     function setValidationDeadline(uint256 newValidationDeadline) external;
 
-    /// @notice Set the new liquidation penalty (in tick spacing units).
+    /**
+     * @notice Set the new liquidation penalty (in tick spacing units)
+     * @param newLiquidationPenalty The new liquidation penalty
+     */
     function setLiquidationPenalty(uint8 newLiquidationPenalty) external;
 
-    /// @notice Set the new safety margin bps for the liquidation price of newly open positions.
+    /**
+     * @notice Set the new safety margin bps for the liquidation price of newly open positions
+     * @param newSafetyMarginBps The new safety margin bps
+     */
     function setSafetyMarginBps(uint256 newSafetyMarginBps) external;
 
-    /// @notice Set the new user current liquidation iteration in tick.
+    /**
+     * @notice Set the new user's current liquidation iteration in the tick
+     * @param newLiquidationIteration The new number of liquidation iteration
+     */
     function setLiquidationIteration(uint16 newLiquidationIteration) external;
 
-    /// @notice Set the new exponential moving average period of the funding rate.
+    /**
+     * @notice Set the new exponential moving average period of the funding rate
+     * @param newEMAPeriod The new EMA period
+     */
     function setEMAPeriod(uint128 newEMAPeriod) external;
 
-    /// @notice Set the new scaling factor (SF) of the funding rate.
+    /**
+     * @notice Set the new scaling factor (SF) of the funding rate
+     * @param newFundingSF The new scaling factor (SF) of the funding rate
+     */
     function setFundingSF(uint256 newFundingSF) external;
 
     /**
-     * @notice Set the fee basis points.
-     * @param newFeeBps The fee bps to be charged.
+     * @notice Set the fee basis points
+     * @param newFeeBps The fee bps to be charged
      * @dev Fees are charged when transfers occur between the vault and the long
-     * example: 50 bps -> 0.5%
+     * Example: 50 bps -> 0.5%
      */
     function setProtocolFeeBps(uint16 newFeeBps) external;
 
@@ -104,15 +131,15 @@ interface IUsdnProtocol is IUsdnProtocolActions {
     function setRebalancerBonusBps(uint16 newBonus) external;
 
     /**
-     * @notice Update the ratio of USDN to SDEX tokens to burn on deposit.
-     * @param newRatio The new ratio.
+     * @notice Update the ratio of USDN to SDEX tokens to burn on deposit
+     * @param newRatio The new ratio
      */
     function setSdexBurnOnDepositRatio(uint32 newRatio) external;
 
     /**
-     * @notice Set the security deposit value.
+     * @notice Set the security deposit value
      * @dev The maximum value of the security deposit is 2^64 - 1 = 18446744073709551615 = 18.4 ethers
-     * @param securityDepositValue The security deposit value.
+     * @param securityDepositValue The security deposit value
      */
     function setSecurityDepositValue(uint64 securityDepositValue) external;
 
@@ -123,8 +150,8 @@ interface IUsdnProtocol is IUsdnProtocolActions {
     function setFeeThreshold(uint256 newFeeThreshold) external;
 
     /**
-     * @notice Set the fee collector address.
-     * @param newFeeCollector The address of the fee collector.
+     * @notice Set the fee collector address
+     * @param newFeeCollector The address of the fee collector
      * @dev The fee collector is the address that receives the fees charged by the protocol
      * The fee collector must be different from the zero address
      */
@@ -132,7 +159,8 @@ interface IUsdnProtocol is IUsdnProtocolActions {
 
     /**
      * @notice Set imbalance limits basis point
-     * @dev newLongImbalanceTargetBps needs to be lower than newCloseLimitBps and higher than -newWithdrawalLimitBps
+     * @dev `newLongImbalanceTargetBps` needs to be lower than newCloseLimitBps and
+     * higher than `- newWithdrawalLimitBps`
      * @param newOpenLimitBps The new open limit
      * @param newDepositLimitBps The new deposit limit
      * @param newWithdrawalLimitBps The new withdrawal limit
@@ -150,24 +178,24 @@ interface IUsdnProtocol is IUsdnProtocolActions {
     /**
      * @notice Set the target USDN price
      * @param newPrice The new target price (with _priceFeedDecimals)
-     * @dev When a rebase of USDN occurs, it will bring the price back down to this value.
-     * This value cannot be greater than `_usdnRebaseThreshold`.
+     * @dev When a rebase of USDN occurs, it will bring the price back down to this value
+     * This value cannot be greater than `_usdnRebaseThreshold`
      */
     function setTargetUsdnPrice(uint128 newPrice) external;
 
     /**
      * @notice Set the USDN rebase threshold
      * @param newThreshold The new threshold value (with _priceFeedDecimals)
-     * @dev When the price of USDN exceeds this value, a rebase might be triggered.
-     * This value cannot be smaller than `_targetUsdnPrice`.
+     * @dev When the price of USDN exceeds this value, a rebase might be triggered
+     * This value cannot be smaller than `_targetUsdnPrice`
      */
     function setUsdnRebaseThreshold(uint128 newThreshold) external;
 
     /**
      * @notice Set the USDN rebase interval
      * @param newInterval The new interval duration
-     * @dev When the duration since the last rebase check exceeds this value, a rebase check will be performed.
-     * When calling `liquidate`, this limit is ignored and the check is always performed.
+     * @dev When the duration since the last rebase check exceeds this value, a rebase check will be performed
+     * When calling `liquidate`, this limit is ignored and the check is always performed
      */
     function setUsdnRebaseInterval(uint256 newInterval) external;
 
