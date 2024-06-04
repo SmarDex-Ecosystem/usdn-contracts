@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
+import { IOracleMiddlewareEvents } from "src/interfaces/OracleMiddleware/IOracleMiddlewareEvents.sol";
 
 import { OracleMiddlewareBaseFixture } from "test/unit/Middlewares/utils/Fixtures.sol";
 import { USER_1 } from "test/utils/Constants.sol";
@@ -30,7 +31,7 @@ contract TestOracleMiddlewareSetLowLatencyDelay is OracleMiddlewareBaseFixture {
      * @custom:when The function is called from an account that is not the owner
      * @custom:then It should revert
      */
-    function test_RevertWhen_SetLowLatencyDelayNonAdmin() public {
+    function test_RevertWhen_setLowLatencyDelayNonAdmin() public {
         vm.prank(USER_1);
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, USER_1));
         oracleMiddleware.setLowLatencyDelay(DEFAULT_LOW_LATENCY_DELAY);
@@ -41,7 +42,7 @@ contract TestOracleMiddlewareSetLowLatencyDelay is OracleMiddlewareBaseFixture {
      * @custom:when The function is called with a value that is below the minimum allowed
      * @custom:then It should revert with `OracleMiddlewareInvalidLowLatencyDelay`
      */
-    function test_RevertWhen_SetLowLatencyDelayMin() public {
+    function test_RevertWhen_setLowLatencyDelayMin() public {
         vm.expectRevert(IOracleMiddlewareErrors.OracleMiddlewareInvalidLowLatencyDelay.selector);
         oracleMiddleware.setLowLatencyDelay(15 minutes - 1);
     }
@@ -51,19 +52,22 @@ contract TestOracleMiddlewareSetLowLatencyDelay is OracleMiddlewareBaseFixture {
      * @custom:when The function is called with a value that is above the maximum allowed
      * @custom:then It should revert with `OracleMiddlewareInvalidLowLatencyDelay`
      */
-    function test_RevertWhen_SetLowLatencyDelayMax() public {
+    function test_RevertWhen_setLowLatencyDelayMax() public {
         vm.expectRevert(IOracleMiddlewareErrors.OracleMiddlewareInvalidLowLatencyDelay.selector);
         oracleMiddleware.setLowLatencyDelay(90 minutes + 1);
     }
 
     /**
-     * @custom:scenario Call `setLowLatencyDelay` with a correct value
-     * @custom:when The function is called with a value that is equal to the maximum allowed
+     * @custom:scenario Call `setLowLatencyDelay`
+     * @custom:when The function is called with a correct value
      * @custom:then It should update the value
      */
-    function test_setLowLatencyDelayMax() public {
-        uint16 expectedValue = 90 minutes;
-        oracleMiddleware.setLowLatencyDelay(expectedValue);
-        assertEq(oracleMiddleware.getLowLatencyDelay(), expectedValue, "Low latency delay should be updated");
+    function test_setLowLatencyDelay() public {
+        vm.expectEmit();
+        emit IOracleMiddlewareEvents.LowLatencyDelayUpdated(DEFAULT_LOW_LATENCY_DELAY);
+        oracleMiddleware.setLowLatencyDelay(DEFAULT_LOW_LATENCY_DELAY);
+        assertEq(
+            oracleMiddleware.getLowLatencyDelay(), DEFAULT_LOW_LATENCY_DELAY, "Low latency delay should be updated"
+        );
     }
 }
