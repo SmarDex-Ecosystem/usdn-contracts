@@ -149,12 +149,12 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _positionValue(currentPrice, liqPriceWithoutPenalty, positionTotalExpo);
     }
 
-    function i_calculatePositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
+    function i_calcPositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
         external
         pure
         returns (uint128 totalExpo_)
     {
-        return _calculatePositionTotalExpo(amount, startPrice, liquidationPrice);
+        return _calcPositionTotalExpo(amount, startPrice, liquidationPrice);
     }
 
     function i_removePendingAction(uint128 rawIndex, address user) external {
@@ -464,6 +464,10 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
 
     function i_clearPendingAction(address user, uint128 rawIndex) external {
         _clearPendingAction(user, rawIndex);
+    }
+
+    function i_checkInitImbalance(uint128 positionTotalExpo, uint128 longAmount, uint128 depositAmount) external view {
+        _checkInitImbalance(positionTotalExpo, longAmount, depositAmount);
     }
 
     function i_removeStalePendingAction(address user) external returns (uint256) {

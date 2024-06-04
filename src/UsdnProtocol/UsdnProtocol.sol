@@ -59,7 +59,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         if (longAmount < MIN_INIT_DEPOSIT) {
             revert UsdnProtocolMinInitAmount(MIN_INIT_DEPOSIT);
         }
-        // Since all USDN must be minted by the protocol, we check that the total supply is 0
+        // since all USDN must be minted by the protocol, we check that the total supply is 0
         IUsdn usdn = _usdn;
         if (usdn.totalSupply() != 0) {
             revert UsdnProtocolInvalidUsdn(address(usdn));
@@ -68,21 +68,21 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         PriceInfo memory currentPrice =
             _getOraclePrice(ProtocolAction.Initialize, block.timestamp, "", currentPriceData);
 
-        // Create vault deposit
-        _createInitialDeposit(depositAmount, currentPrice.price.toUint128());
-
         _lastUpdateTimestamp = uint128(block.timestamp);
         _lastPrice = currentPrice.price.toUint128();
 
         int24 tick = getEffectiveTickForPrice(desiredLiqPrice); // without penalty
         uint128 liquidationPriceWithoutPenalty = getEffectivePriceForTick(tick);
         uint128 positionTotalExpo =
-            _calculatePositionTotalExpo(longAmount, currentPrice.price.toUint128(), liquidationPriceWithoutPenalty);
+            _calcPositionTotalExpo(longAmount, currentPrice.price.toUint128(), liquidationPriceWithoutPenalty);
 
-        // verify expo is not imbalanced on long side
-        _checkImbalanceLimitOpen(positionTotalExpo, longAmount);
+        // check for imbalance
+        _checkInitImbalance(positionTotalExpo, longAmount, depositAmount);
 
-        // Create long position
+        // create vault deposit
+        _createInitialDeposit(depositAmount, currentPrice.price.toUint128());
+
+        // create long position
         _createInitialPosition(longAmount, currentPrice.price.toUint128(), tick, positionTotalExpo);
 
         _refundEther(address(this).balance, msg.sender);
@@ -368,6 +368,34 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     }
 
     /**
+     * @notice Check if the initialize parameters lead to a balanced protocol
+     * @dev This function reverts if the imbalance is exceeded for the deposit or open long action
+     * @param positionTotalExpo The total expo of the deployer's long position
+     * @param longAmount The amount (collateral) of the deployer's long position
+     * @param depositAmount The amount of assets for the deployer's deposit
+     */
+    function _checkInitImbalance(uint128 positionTotalExpo, uint128 longAmount, uint128 depositAmount) internal view {
+        _checkUninitialized(); // prevent using this function after initialization
+
+        int256 longTradingExpo = _toInt256(positionTotalExpo - longAmount);
+        int256 depositLimit = _depositExpoImbalanceLimitBps;
+        if (depositLimit != 0) {
+            int256 imbalanceBps = (_toInt256(depositAmount) - longTradingExpo) * int256(BPS_DIVISOR) / longTradingExpo;
+            if (imbalanceBps > depositLimit) {
+                revert UsdnProtocolImbalanceLimitReached(imbalanceBps);
+            }
+        }
+        int256 openLimit = _openExpoImbalanceLimitBps;
+        if (openLimit != 0) {
+            int256 imbalanceBps =
+                (longTradingExpo - _toInt256(depositAmount)) * int256(BPS_DIVISOR) / _toInt256(depositAmount);
+            if (imbalanceBps > openLimit) {
+                revert UsdnProtocolImbalanceLimitReached(imbalanceBps);
+            }
+        }
+    }
+
+    /**
      * @notice Create initial deposit
      * @dev To be called from `initialize`
      * @param amount The initial deposit amount
@@ -414,8 +442,13 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         uint8 liquidationPenalty = _liquidationPenalty;
         PositionId memory posId;
         posId.tick = tick + int24(uint24(liquidationPenalty)) * _tickSpacing;
-        Position memory long =
-            Position({ user: msg.sender, amount: amount, totalExpo: totalExpo, timestamp: uint40(block.timestamp) });
+        Position memory long = Position({
+            validated: true,
+            user: msg.sender,
+            amount: amount,
+            totalExpo: totalExpo,
+            timestamp: uint40(block.timestamp)
+        });
         // Save the position and update the state
         (posId.tickVersion, posId.index) = _saveNewPosition(posId.tick, long, liquidationPenalty);
         _balanceLong += long.amount;
