@@ -133,7 +133,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
      * @return gasPrice_ The gas price
      */
     function _getGasPrice(RewardsParameters memory rewardsParameters) internal view returns (uint256 gasPrice_) {
-        ChainlinkPriceInfo memory priceInfo = _getChainlinkPrice();
+        ChainlinkPriceInfo memory priceInfo = _getChainlinkLatestPrice();
 
         // If the gas price is invalid, return 0 and do not distribute rewards
         if (priceInfo.price <= 0) {

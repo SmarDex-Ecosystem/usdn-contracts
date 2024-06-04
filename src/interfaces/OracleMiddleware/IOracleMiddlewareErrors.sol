@@ -47,4 +47,10 @@ interface IOracleMiddlewareErrors {
 
     /// @dev Indicates that the new penaltyBps value is invalid
     error OracleMiddlewareInvalidPenaltyBps();
+
+    /// @notice Indicates that the chainlink roundId provided is invalid
+    error OracleMiddlewareInvalidRoundId();
+
+    /// @notice The new low latency delay is invalid
+    error OracleMiddlewareInvalidLowLatencyDelay();
 }

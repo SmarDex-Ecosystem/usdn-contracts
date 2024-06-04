@@ -171,13 +171,8 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
             balanceSenderAfter + balanceProtocolAfter,
             "total balance"
         );
-        // TODO view function to have the amount of wsETH to be withdrawn (remove +/- 1)
-        assertEq(balanceSenderAfter, balanceSenderBefore + expectedLiquidatorRewards + 1, "sender balance");
-        assertEq(
-            balanceProtocolAfter,
-            balanceProtocolBefore + depositAmount - expectedLiquidatorRewards - 1,
-            "protocol balance"
-        );
+        assertEq(balanceSenderAfter, balanceSenderBefore + expectedLiquidatorRewards + depositAmount, "sender balance");
+        assertEq(balanceProtocolAfter, balanceProtocolBefore - expectedLiquidatorRewards, "protocol balance");
     }
 
     /**

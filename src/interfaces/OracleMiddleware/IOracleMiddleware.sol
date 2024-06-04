@@ -40,6 +40,12 @@ interface IOracleMiddleware is IBaseOracleMiddleware, IOracleMiddlewareErrors, I
     function getConfRatioBps() external view returns (uint16);
 
     /**
+     * @notice Getter for the delay during which a low latency oracle price validation is available
+     * @return The low latency delay
+     */
+    function getLowLatencyDelay() external view returns (uint16);
+
+    /**
      * @notice Getter for the penalty value
      * @return The penalty basis points
      */
@@ -82,6 +88,12 @@ interface IOracleMiddleware is IBaseOracleMiddleware, IOracleMiddlewareErrors, I
      * @param to The address to send the ether to
      */
     function withdrawEther(address to) external;
+
+    /**
+     * @notice Set the new low latency delay
+     * @param newLowLatencyDelay The new low latency delay
+     */
+    function setLowLatencyDelay(uint16 newLowLatencyDelay) external;
 
     /**
      * @notice Set the penalty basis points

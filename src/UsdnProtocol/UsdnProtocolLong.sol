@@ -510,28 +510,6 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /**
-     * @dev Convert a signed tick to an unsigned index into the Bitmap using the tick spacing in storage
-     * @param tick The tick to convert, a multiple of the tick spacing
-     * @return index_ The index into the Bitmap
-     */
-    function _calcBitmapIndexFromTick(int24 tick) internal view returns (uint256 index_) {
-        index_ = _calcBitmapIndexFromTick(tick, _tickSpacing);
-    }
-
-    /**
-     * @dev Convert a signed tick to an unsigned index into the Bitmap using the provided tick spacing
-     * @param tick The tick to convert, a multiple of `tickSpacing`
-     * @param tickSpacing The tick spacing to use
-     * @return index_ The index into the Bitmap
-     */
-    function _calcBitmapIndexFromTick(int24 tick, int24 tickSpacing) internal pure returns (uint256 index_) {
-        index_ = uint256( // cast is safe as the min tick is always above TickMath.MIN_TICK
-            (int256(tick) - TickMath.MIN_TICK) // shift into positive
-                / tickSpacing
-        );
-    }
-
-    /**
      * @dev Convert a Bitmap index to a signed tick using the tick spacing in storage
      * @param index The index into the Bitmap
      * @return tick_ The tick corresponding to the index, a multiple of the tick spacing
