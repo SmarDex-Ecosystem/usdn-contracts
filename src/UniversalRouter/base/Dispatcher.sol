@@ -178,7 +178,7 @@ abstract contract Dispatcher is
                             assembly {
                                 permitSingle := inputs.offset
                             }
-                            bytes calldata data = inputs.toBytes(6); // PermitSingle takes first 6 slots (0..5)
+                            bytes calldata data = inputs.toBytes(6); // permitSingle takes first 6 slots (0..5)
                             PERMIT2.permit(lockedBy, permitSingle, data);
                         } else if (command == Commands.WRAP_ETH) {
                             // equivalent: abi.decode(inputs, (address, uint256))
@@ -205,8 +205,8 @@ abstract contract Dispatcher is
                         }
                     }
                 } else {
-                    // Comment for the eights actions(INITIATE and VALIDATE) of the USDN protocol.
-                    // We don't allow the transaction to revert if the actions was not successful (due to pending
+                    // comment for the eights actions(INITIATE and VALIDATE) of the USDN protocol
+                    // we don't allow the transaction to revert if the actions was not successful (due to pending
                     // liquidations), so we ignore the success boolean. This is because it's important to perform
                     // liquidations if they are needed, and it would be a big waste of gas for the user to revert
                     if (command == Commands.INITIATE_DEPOSIT) {
@@ -251,7 +251,12 @@ abstract contract Dispatcher is
                         ) = abi.decode(inputs, (address, bytes, PreviousActionsData));
                         _usdnValidateDeposit(map(validator), depositPriceData, previousActionsData);
                     } else if (command == Commands.VALIDATE_WITHDRAWAL) {
-                        // TODO VALIDATE_WITHDRAWAL
+                        (
+                            address validator,
+                            bytes memory withdrawalPriceData,
+                            PreviousActionsData memory previousActionsData
+                        ) = abi.decode(inputs, (address, bytes, PreviousActionsData));
+                        _usdnValidateWithdrawal(map(validator), withdrawalPriceData, previousActionsData);
                     } else if (command == Commands.VALIDATE_OPEN) {
                         // TODO VALIDATE_OPEN
                     } else if (command == Commands.VALIDATE_CLOSE) {

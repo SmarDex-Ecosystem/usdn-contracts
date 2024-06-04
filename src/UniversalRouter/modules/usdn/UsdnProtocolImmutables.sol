@@ -23,6 +23,7 @@ contract UsdnProtocolImmutables {
     /// @dev The address of the USDN
     IUsdn internal immutable USDN;
 
+    /// @param params The immutable parameters for the USDN protocol
     constructor(UsdnProtocolParameters memory params) {
         USDN_PROTOCOL = params.usdnProtocol;
         PROTOCOL_ASSET = params.usdnProtocol.getAsset();

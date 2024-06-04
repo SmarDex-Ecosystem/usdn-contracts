@@ -19,7 +19,6 @@ contract TestForkUniversalRouterValidateDeposit is UniversalRouterBaseFixture {
         deal(address(sdex), address(this), 1e6 ether);
         wstETH.approve(address(protocol), type(uint256).max);
         sdex.approve(address(protocol), type(uint256).max);
-        // initiate deposit
         protocol.initiateDeposit{ value: protocol.getSecurityDepositValue() }(
             0.1 ether, USER_2, USER_1, "", EMPTY_PREVIOUS_DATA
         );
@@ -40,14 +39,9 @@ contract TestForkUniversalRouterValidateDeposit is UniversalRouterBaseFixture {
         uint256 ethBalanceBeforeUser = USER_1.balance;
         uint256 validationCost = oracleMiddleware.validationCost(data, ProtocolAction.ValidateDeposit);
 
-        // commands
         bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.VALIDATE_DEPOSIT)));
-
-        // inputs
         bytes[] memory inputs = new bytes[](1);
         inputs[0] = abi.encode(USER_1, data, EMPTY_PREVIOUS_DATA);
-
-        // execution
         router.execute{ value: validationCost }(commands, inputs);
 
         assertEq(address(this).balance, ethBalanceBefore - validationCost, "ether balance");
