@@ -1898,9 +1898,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 positionAmount = pendingAssets + bonus;
 
         // close the rebalancer position and get its value to open the next one
-        // TODO really needed to call NO_POSITION_TICK here? seems suboptimal
-        // but don't want to assume values as they are separate contracts
-        if (rebalancerPosId.tick != rebalancer.NO_POSITION_TICK()) {
+        if (rebalancerPosId.tick != NO_POSITION_TICK) {
             uint128 positionValue =
                 _flashClosePosition(rebalancerPosId, neutralPrice, totalExpo - longBalance_).toUint128();
 

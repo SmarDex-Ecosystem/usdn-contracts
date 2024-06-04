@@ -779,7 +779,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @dev Should only be used to open the rebalancer position
      * @param user The address of the user
      * @param neutralPrice The current neutral price
-     * @param tickWithoutPenalty ...
+     * @param tickWithoutPenalty The tick the position should be opened in
      * @param amount The amount of collateral in the position
      * @return posId_ The ID of the position that got created
      */
@@ -795,8 +795,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         uint8 liquidationPenalty = getTickLiquidationPenalty(posId_.tick);
         uint128 liqPriceWithoutPenalty;
 
-        // remove liquidation penalty for the total expo calculation
-        // TODO explain
+        // check if the penalty for that tick is different from the current setting
+        // this can happen if the setting has been changed, but the position is added in a tick that was never empty
+        // after said change, so the first value is still applied
         if (liquidationPenalty == currentLiqPenalty) {
             liqPriceWithoutPenalty = getEffectivePriceForTick(tickWithoutPenalty);
         } else {

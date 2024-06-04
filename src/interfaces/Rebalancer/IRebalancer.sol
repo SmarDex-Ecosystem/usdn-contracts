@@ -13,9 +13,6 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
     /// @notice The value of the multiplier at 1x
     function MULTIPLIER_FACTOR() external view returns (uint256);
 
-    /// @notice The tick which indicates that there is no position for the current version
-    function NO_POSITION_TICK() external view returns (int24);
-
     /**
      * @notice Returns the address of the asset used by the USDN protocol
      * @return The address of the asset used by the USDN protocol

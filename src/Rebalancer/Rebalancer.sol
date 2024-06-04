@@ -40,9 +40,6 @@ contract Rebalancer is Ownable, IRebalancer {
     /// @inheritdoc IRebalancer
     uint256 public constant MULTIPLIER_FACTOR = 1e38;
 
-    /// @inheritdoc IRebalancer
-    int24 public constant NO_POSITION_TICK = type(int24).min;
-
     /// @notice The address of the asset used by the USDN protocol
     IERC20Metadata internal immutable _asset;
 
@@ -86,7 +83,7 @@ contract Rebalancer is Ownable, IRebalancer {
         asset.forceApprove(address(usdnProtocol), type(uint256).max);
 
         // indicate that there are no position for version 0
-        _positionData[0].id = PositionId({ tick: NO_POSITION_TICK, tickVersion: 0, index: 0 });
+        _positionData[0].id = PositionId({ tick: usdnProtocol.NO_POSITION_TICK(), tickVersion: 0, index: 0 });
     }
 
     /// @inheritdoc IRebalancer
