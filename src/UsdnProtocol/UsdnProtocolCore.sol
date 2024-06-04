@@ -759,10 +759,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         if (block.timestamp < pending.timestamp + _validationDeadline + 1 hours) {
             revert UsdnProtocolUnauthorized();
         }
-        uint256 pendingActionIndex = _pendingActions[pending.validator];
-        if (pendingActionIndex != 0) {
-            delete _pendingActions[pending.validator];
-        }
+        delete _pendingActions[pending.validator];
         _pendingActionsQueue.clearAt(rawIndex);
         if (pending.action == ProtocolAction.ValidateDeposit && unsafe) {
             // for pending deposits, we send back the locked assets
