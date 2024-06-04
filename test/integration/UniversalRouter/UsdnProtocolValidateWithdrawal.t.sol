@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import { PYTH_STETH_USD } from "test/utils/Constants.sol";
+import { PYTH_ETH_USD } from "test/utils/Constants.sol";
 import { DEPLOYER, USER_1, USER_2 } from "test/utils/Constants.sol";
 import { UniversalRouterBaseFixture } from "test/integration/UniversalRouter/utils/Fixtures.sol";
 
@@ -40,7 +40,7 @@ contract TestForkUniversalRouterValidateWithdrawal is UniversalRouterBaseFixture
     function test_ForkValidateWithdraw() public {
         _waitDelay(); //to be realistic because not mandatory
         uint256 ts1 = protocol.getUserPendingAction(USER_1).timestamp;
-        (,,,, bytes memory data) = getHermesApiSignature(PYTH_STETH_USD, ts1 + oracleMiddleware.getValidationDelay());
+        (,,,, bytes memory data) = getHermesApiSignature(PYTH_ETH_USD, ts1 + oracleMiddleware.getValidationDelay());
 
         uint256 ethBalanceBefore = address(this).balance;
         uint256 ethBalanceBeforeUser = USER_1.balance;
