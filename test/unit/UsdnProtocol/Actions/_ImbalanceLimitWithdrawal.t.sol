@@ -5,7 +5,7 @@ import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolEr
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { ADMIN } from "test/utils/Constants.sol";
+import { ADMIN, DEPLOYER } from "test/utils/Constants.sol";
 
 /**
  * @custom:feature Test of the protocol expo limit for `_checkImbalanceLimitWithdrawal` function in balanced state
@@ -79,6 +79,49 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
         protocol.i_checkImbalanceLimitWithdrawal(withdrawalValueToLimit + 1, totalExpo);
     }
 
+    /**
+     * @custom:scenario Check withdrawal imbalance when there are pending withdrawals
+     * @custom:given The protocol is in an unbalanced state due to pending withdrawals
+     * @custom:when The `_checkImbalanceLimitWithdrawal` function is called
+     * @custom:then The transaction should revert with the expected imbalance
+     */
+    function test_RevertWhen_checkImbalanceLimitWithdrawalPendingVaultActions() public {
+        (, uint256 withdrawalValueToLimit) = _getWithdrawalLimitValues();
+
+        // temporarily disable limits to put the protocol in an unbalanced state
+        vm.prank(ADMIN);
+        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
+
+        // this action will affect the vault trading expo once it's validated
+        vm.startPrank(DEPLOYER);
+        usdn.approve(address(protocol), type(uint256).max);
+        protocol.initiateWithdrawal(
+            uint152(usdn.sharesOf(DEPLOYER) / 2),
+            DEPLOYER,
+            DEPLOYER,
+            abi.encode(params.initialPrice),
+            EMPTY_PREVIOUS_DATA
+        );
+        vm.stopPrank();
+
+        // restore limits
+        vm.prank(ADMIN);
+        protocol.setExpoImbalanceLimits(0, 0, 600, 0, 0);
+
+        uint256 totalExpo = protocol.getTotalExpo();
+        int256 newVaultExpo =
+            int256(protocol.getBalanceVault()) + protocol.getPendingBalanceVault() - int256(withdrawalValueToLimit);
+        int256 expectedImbalance = (int256(totalExpo - protocol.getBalanceLong()) - newVaultExpo)
+            * int256(protocol.BPS_DIVISOR()) / newVaultExpo;
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, uint256(expectedImbalance)
+            )
+        );
+        protocol.i_checkImbalanceLimitWithdrawal(withdrawalValueToLimit, totalExpo);
+    }
+
     function _getWithdrawalLimitValues()
         private
         view
@@ -99,6 +142,9 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
             FixedPointMathLib.divWadUp(longExpo, FixedPointMathLib.WAD + scaledWithdrawalImbalanceRatio);
 
         // withdrawal value to reach limit
-        withdrawalValueToLimit_ = protocol.getBalanceVault() - vaultExpoValueLimit;
+        int256 withdrawalValueToLimit =
+            int256(protocol.getBalanceVault()) + protocol.getPendingBalanceVault() - int256(vaultExpoValueLimit);
+        require(withdrawalValueToLimit > 0, "_ImbalanceLimitWithdrawal: withdrawal is not allowed");
+        withdrawalValueToLimit_ = uint256(withdrawalValueToLimit);
     }
 }
