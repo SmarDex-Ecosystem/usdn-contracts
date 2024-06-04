@@ -41,7 +41,7 @@ contract TestForkUniversalRouterValidateDeposit is UniversalRouterBaseFixture {
 
         bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.VALIDATE_DEPOSIT)));
         bytes[] memory inputs = new bytes[](1);
-        inputs[0] = abi.encode(USER_1, data, EMPTY_PREVIOUS_DATA);
+        inputs[0] = abi.encode(USER_1, data, EMPTY_PREVIOUS_DATA, validationCost);
         router.execute{ value: validationCost }(commands, inputs);
 
         assertEq(address(this).balance, ethBalanceBefore - validationCost, "ether balance");

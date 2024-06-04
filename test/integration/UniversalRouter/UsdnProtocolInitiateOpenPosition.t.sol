@@ -30,16 +30,18 @@ contract TestForkUniversalRouterInitiateOpenPosition is UniversalRouterBaseFixtu
     function test_ForkInitiateOpenPosition() public {
         uint256 ethBalanceBefore = address(this).balance;
         uint256 wstETHBefore = wstETH.balanceOf(address(this));
+        uint256 securityDeposit = protocol.getSecurityDepositValue();
 
         wstETH.transfer(address(router), OPEN_POSITION_AMOUNT);
 
         bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.INITIATE_OPEN)));
         bytes[] memory inputs = new bytes[](1);
-        inputs[0] =
-            abi.encode(OPEN_POSITION_AMOUNT, DESIRED_LIQUIDATION, USER_1, address(this), "", EMPTY_PREVIOUS_DATA);
-        router.execute{ value: protocol.getSecurityDepositValue() }(commands, inputs);
+        inputs[0] = abi.encode(
+            OPEN_POSITION_AMOUNT, DESIRED_LIQUIDATION, USER_1, address(this), "", EMPTY_PREVIOUS_DATA, securityDeposit
+        );
+        router.execute{ value: securityDeposit }(commands, inputs);
 
-        assertEq(address(this).balance, ethBalanceBefore - protocol.getSecurityDepositValue(), "ether balance");
+        assertEq(address(this).balance, ethBalanceBefore - securityDeposit, "ether balance");
         assertEq(wstETH.balanceOf(address(this)), wstETHBefore - OPEN_POSITION_AMOUNT, "wstETH balance");
     }
 
@@ -53,16 +55,24 @@ contract TestForkUniversalRouterInitiateOpenPosition is UniversalRouterBaseFixtu
     function test_ForkInitiateOpenPositionFullBalance() public {
         uint256 ethBalanceBefore = address(this).balance;
         uint256 wstETHBefore = wstETH.balanceOf(address(this));
+        uint256 securityDeposit = protocol.getSecurityDepositValue();
 
         wstETH.transfer(address(router), OPEN_POSITION_AMOUNT);
 
         bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.INITIATE_OPEN)));
         bytes[] memory inputs = new bytes[](1);
-        inputs[0] =
-            abi.encode(Constants.CONTRACT_BALANCE, DESIRED_LIQUIDATION, USER_1, address(this), "", EMPTY_PREVIOUS_DATA);
-        router.execute{ value: protocol.getSecurityDepositValue() }(commands, inputs);
+        inputs[0] = abi.encode(
+            Constants.CONTRACT_BALANCE,
+            DESIRED_LIQUIDATION,
+            USER_1,
+            address(this),
+            "",
+            EMPTY_PREVIOUS_DATA,
+            securityDeposit
+        );
+        router.execute{ value: securityDeposit }(commands, inputs);
 
-        assertEq(address(this).balance, ethBalanceBefore - protocol.getSecurityDepositValue(), "ether balance");
+        assertEq(address(this).balance, ethBalanceBefore - securityDeposit, "ether balance");
         assertEq(wstETH.balanceOf(address(this)), wstETHBefore - OPEN_POSITION_AMOUNT, "wstETH balance");
     }
 }
