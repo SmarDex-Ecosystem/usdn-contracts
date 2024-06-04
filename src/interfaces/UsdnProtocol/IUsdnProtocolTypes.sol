@@ -2,13 +2,15 @@
 pragma solidity >=0.8.0;
 
 /**
- * @notice Information about a long user position.
- * @param timestamp The timestamp of the position start.
- * @param user The user address.
- * @param totalExpo The total expo of the position (0 for vault deposits).
- * @param amount The amount of the position.
+ * @notice Information about a long user position
+ * @param validated Whether the position was validated
+ * @param timestamp The timestamp of the position start
+ * @param user The user address
+ * @param totalExpo The total expo of the position (0 for vault deposits)
+ * @param amount The amount of the position
  */
 struct Position {
+    bool validated; // 1 byte
     uint40 timestamp; // 5 bytes. Max 1_099_511_627_775 (36812-02-20 01:36:15)
     address user; // 20 bytes
     uint128 totalExpo; // 16 bytes. Max 340_282_366_920_938_463_463.374_607_431_768_211_455 ether

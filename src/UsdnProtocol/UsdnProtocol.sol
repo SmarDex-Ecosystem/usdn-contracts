@@ -442,8 +442,13 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         uint8 liquidationPenalty = _liquidationPenalty;
         PositionId memory posId;
         posId.tick = tick + int24(uint24(liquidationPenalty)) * _tickSpacing;
-        Position memory long =
-            Position({ user: msg.sender, amount: amount, totalExpo: totalExpo, timestamp: uint40(block.timestamp) });
+        Position memory long = Position({
+            validated: true,
+            user: msg.sender,
+            amount: amount,
+            totalExpo: totalExpo,
+            timestamp: uint40(block.timestamp)
+        });
         // Save the position and update the state
         (posId.tickVersion, posId.index) = _saveNewPosition(posId.tick, long, liquidationPenalty);
         _balanceLong += long.amount;

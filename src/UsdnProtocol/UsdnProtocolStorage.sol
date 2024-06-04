@@ -227,6 +227,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The balance of deposits (with asset decimals)
     uint256 internal _balanceVault;
 
+    /// @notice The unreflected balance change due to pending vault actions (with asset decimals)
+    int256 internal _pendingBalanceVault;
+
     /// @notice The timestamp when the last USDN rebase check was performed
     uint256 internal _lastRebaseCheck;
 
@@ -519,6 +522,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function getBalanceVault() external view returns (uint256) {
         return _balanceVault;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getPendingBalanceVault() external view returns (int256) {
+        return _pendingBalanceVault;
     }
 
     /// @inheritdoc IUsdnProtocolStorage

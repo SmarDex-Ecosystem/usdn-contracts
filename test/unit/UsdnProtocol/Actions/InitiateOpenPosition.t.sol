@@ -155,6 +155,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
 
         Position memory position;
         (position,) = protocol.getLongPosition(posId);
+        assertFalse(position.validated, "pos validated");
         assertEq(position.user, to, "user position");
         assertEq(position.timestamp, action.timestamp, "timestamp position");
         assertEq(position.amount, uint128(LONG_AMOUNT), "amount position");

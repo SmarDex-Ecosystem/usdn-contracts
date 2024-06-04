@@ -183,6 +183,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         assertTrue(success, "success");
 
         (Position memory pos,) = protocol.getLongPosition(posId);
+        assertTrue(pos.validated, "validated");
         assertEq(pos.user, tempPos.user, "user");
         assertEq(pos.amount, tempPos.amount, "amount");
         assertEq(pos.timestamp, tempPos.timestamp, "timestamp");
