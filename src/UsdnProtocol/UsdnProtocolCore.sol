@@ -767,13 +767,15 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         if (pending.action == ProtocolAction.ValidateDeposit && unsafe) {
             // for pending deposits, we send back the locked assets
             DepositPendingAction memory deposit = _toDepositPendingAction(pending);
-            // TODO: decrease the _pendingBalanceVault here
+            _pendingBalanceVault -= _toInt256(deposit.amount);
             _asset.safeTransfer(to, deposit.amount);
         } else if (pending.action == ProtocolAction.ValidateWithdrawal && unsafe) {
             // for pending withdrawals, we send the locked USDN
             WithdrawalPendingAction memory withdrawal = _toWithdrawalPendingAction(pending);
             uint256 shares = _mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
-            // TODO: increase the _pendingBalanceVault here
+            uint256 pendingAmount =
+                FixedPointMathLib.fullMulDiv(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares);
+            _pendingBalanceVault += pendingAmount.toInt256();
             _usdn.transferShares(to, shares);
         } else if (pending.action == ProtocolAction.ValidateOpenPosition) {
             // for pending opens, we need to remove the position

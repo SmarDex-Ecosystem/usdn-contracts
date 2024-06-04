@@ -42,6 +42,7 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
      * @custom:when The admin removes the pending action in an unsafe way
      * @custom:then The pending action is removed
      * @custom:and The `to` address receives the deposited assets and the security deposit
+     * @custom:and The pending vault balance is decremented
      */
     function test_removeBlockedDepositUnsafe() public {
         uint256 balanceBefore = address(this).balance;
@@ -49,6 +50,7 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         _removeBlockedVaultScenario(ProtocolAction.InitiateDeposit, 10 ether, true);
         assertEq(wstETH.balanceOf(address(this)), assetBalanceBefore + 10 ether, "asset balance after");
         assertEq(address(this).balance, balanceBefore + protocol.getSecurityDepositValue(), "balance after");
+        assertEq(protocol.getPendingBalanceVault(), 0, "pending vault balance");
     }
 
     /**
@@ -57,6 +59,7 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
      * @custom:when The admin removes the pending action in a safe way
      * @custom:then The pending action is removed
      * @custom:and The `to` address does not receive any assets or security deposit
+     * @custom:and The pending vault balance remains unchanged
      */
     function test_removeBlockedDepositSafe() public {
         uint256 balanceBefore = address(this).balance;
@@ -64,6 +67,7 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         _removeBlockedVaultScenario(ProtocolAction.InitiateDeposit, 10 ether, false);
         assertEq(wstETH.balanceOf(address(this)), assetBalanceBefore, "asset balance after");
         assertEq(address(this).balance, balanceBefore, "balance after");
+        assertEq(protocol.getPendingBalanceVault(), 10 ether, "pending vault balance");
     }
 
     /**
@@ -72,6 +76,7 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
      * @custom:when The admin removes the pending action in an unsafe way
      * @custom:then The pending action is removed
      * @custom:and The `to` address receives the USDN and the security deposit
+     * @custom:and The pending vault balance is incremented
      */
     function test_removeBlockedWithdrawalUnsafe() public {
         uint256 balanceBefore = address(this).balance;
@@ -79,6 +84,7 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         _removeBlockedVaultScenario(ProtocolAction.InitiateWithdrawal, 10 ether, true);
         assertEq(usdn.balanceOf(address(this)), usdnBalanceBefore + 20_000 ether, "usdn balance after");
         assertEq(address(this).balance, balanceBefore + protocol.getSecurityDepositValue(), "balance after");
+        assertEq(protocol.getPendingBalanceVault(), 0, "pending vault balance");
     }
 
     /**
@@ -87,6 +93,7 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
      * @custom:when The admin removes the pending action in a safe way
      * @custom:then The pending action is removed
      * @custom:and The `to` address does not receive any USDN or security deposit
+     * @custom:and The pending vault balance remains unchanged
      */
     function test_removeBlockedWithdrawalSafe() public {
         uint256 balanceBefore = address(this).balance;
@@ -94,6 +101,7 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         _removeBlockedVaultScenario(ProtocolAction.InitiateWithdrawal, 10 ether, false);
         assertEq(usdn.balanceOf(address(this)), usdnBalanceBefore, "usdn balance after");
         assertEq(address(this).balance, balanceBefore, "balance after");
+        assertEq(protocol.getPendingBalanceVault(), -10 ether, "pending vault balance");
     }
 
     /**
