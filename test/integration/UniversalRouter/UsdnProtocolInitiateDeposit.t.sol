@@ -29,18 +29,12 @@ contract TestForkUniversalRouterInitiateDeposit is UniversalRouterBaseFixture {
      * @custom:then The deposit is initiated successfully
      */
     function test_ForkInitiateDeposit() public {
-        // send funds to router
         wstETH.transfer(address(router), DEPOSIT_AMOUNT);
         _transferSdex(DEPOSIT_AMOUNT);
 
-        // commands
         bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.INITIATE_DEPOSIT)));
-
-        // inputs
         bytes[] memory inputs = new bytes[](1);
         inputs[0] = abi.encode(DEPOSIT_AMOUNT, USER_1, address(this), "", EMPTY_PREVIOUS_DATA);
-
-        // execution
         router.execute{ value: protocol.getSecurityDepositValue() }(commands, inputs);
 
         DepositPendingAction memory action =
@@ -61,18 +55,12 @@ contract TestForkUniversalRouterInitiateDeposit is UniversalRouterBaseFixture {
     function test_ForkInitiateDepositFullBalance() public {
         uint256 wstEthBalanceBefore = wstETH.balanceOf(address(this));
 
-        // send assets to the router
         wstETH.transfer(address(router), DEPOSIT_AMOUNT);
         _transferSdex(DEPOSIT_AMOUNT);
 
-        // commands
         bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.INITIATE_DEPOSIT)));
-
-        // inputs
         bytes[] memory inputs = new bytes[](1);
         inputs[0] = abi.encode(Constants.CONTRACT_BALANCE, USER_1, address(this), "", EMPTY_PREVIOUS_DATA);
-
-        // execution
         router.execute{ value: protocol.getSecurityDepositValue() }(commands, inputs);
 
         assertEq(wstETH.balanceOf(address(this)), wstEthBalanceBefore - DEPOSIT_AMOUNT, "asset balance");
