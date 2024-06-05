@@ -23,7 +23,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
      * @param validator The address that should validate the deposit (receives the security deposit back)
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions
-     * @param ethAmount  The amount of Ether to send with the transaction
+     * @param ethAmount The amount of Ether to send with the transaction
      * @return success_ Whether the deposit was successful
      */
     function _usdnInitiateDeposit(
@@ -53,7 +53,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
      * @param validator The address that should validate the deposit (receives the security deposit)
      * @param depositPriceData The price data corresponding to the validator's pending deposit action
      * @param previousActionsData The data needed to validate actionable pending actions
-     * @param ethAmount  The amount of Ether to send with the transaction
+     * @param ethAmount The amount of Ether to send with the transaction
      * @return success_ Whether the deposit was successfully
      */
     function _usdnValidateDeposit(
@@ -74,7 +74,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
      * @param validator The address that should validate the withdrawal (receives the security deposit back)
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions
-     * @param ethAmount  The amount of Ether to send with the transaction
+     * @param ethAmount The amount of Ether to send with the transaction
      * @return success_ Whether the withdrawal was successful
      */
     function _usdnInitiateWithdrawal(
@@ -103,7 +103,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
      * @param validator The address that should validate the withdrawal (receives the security deposit)
      * @param withdrawalPriceData The price data corresponding to the validator's pending deposit action
      * @param previousActionsData The data needed to validate actionable pending actions
-     * @param ethAmount  The amount of Ether to send with the transaction
+     * @param ethAmount The amount of Ether to send with the transaction
      * @return success_ Whether the withdrawal was successful
      */
     function _usdnValidateWithdrawal(
@@ -126,7 +126,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
      * @param validator The address that should validate the open position (receives the security deposit back)
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions
-     * @param ethAmount  The amount of Ether to send with the transaction
+     * @param ethAmount The amount of Ether to send with the transaction
      * @return success_ Whether the open position was successful
      * @return posId_ The position ID of the newly opened position
      */
