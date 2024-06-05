@@ -18,7 +18,6 @@ import { SmardexImmutables } from "src/UniversalRouter/modules/smardex/SmardexIm
 abstract contract SmardexSwapRouter is SmardexImmutables, Permit2Payments {
     error tooLittleReceived();
 
-    // using V3Path for bytes;
     using Path for bytes;
     using Path for address[];
     using SafeCast for uint256;
@@ -59,7 +58,7 @@ abstract contract SmardexSwapRouter is SmardexImmutables, Permit2Payments {
         if (_isExactInput) {
             _payOrPermit2Transfer(_tokenIn, _decodedData.payer, msg.sender, _amountToPay);
         } else if (_decodedData.path.hasMultiplePools()) {
-            _decodedData.path = _decodedData.path.skipToken();
+            _decodedData.path = _decodedData.path.skipTokenMemory();
             _swapExactOut(_amountToPay, msg.sender, _decodedData);
         } else {
             amountInCached = _amountToPay;
@@ -84,13 +83,12 @@ abstract contract SmardexSwapRouter is SmardexImmutables, Permit2Payments {
         // use amountIn == Constants.CONTRACT_BALANCE as a flag to swap the entire balance of the contract
         if (amountIn == Constants.CONTRACT_BALANCE) {
             address tokenIn = V3Path.decodeFirstToken(path);
-            amountIn = IERC20(tokenIn).balanceOf(payer);
+            amountIn = IERC20(tokenIn).balanceOf(address(this));
         }
 
         uint256 amountOut;
         while (true) {
             bool hasMultiplePools = path.hasMultiplePools();
-
             amountIn = _swapExactIn(
                 amountIn,
                 // for intermediate swaps, this contract custodies
@@ -102,7 +100,7 @@ abstract contract SmardexSwapRouter is SmardexImmutables, Permit2Payments {
             // decide whether to continue or terminate
             if (hasMultiplePools) {
                 payer = address(this);
-                path = V3Path.skipToken(path);
+                path = Path.skipToken(path);
             } else {
                 amountOut = amountIn;
                 break;
@@ -177,7 +175,6 @@ abstract contract SmardexSwapRouter is SmardexImmutables, Permit2Payments {
         bool _zeroForOne = _tokenIn < _tokenOut;
         (int256 _amount0, int256 _amount1) = ISmardexPair(ISmardexFactory(SMARDEX_FACTORY).getPair(_tokenIn, _tokenOut))
             .swap(_to, _zeroForOne, _amountIn.toInt256(), abi.encode(_data));
-
         amountOut_ = (_zeroForOne ? -_amount1 : -_amount0).toUint256();
     }
 
@@ -187,7 +184,6 @@ abstract contract SmardexSwapRouter is SmardexImmutables, Permit2Payments {
      * @param _payer The entity that must pay
      * @param _to The entity that will receive payment
      * @param _value The amount to pay
-     *
      * @custom:from UniV3 PeripheryPayments.sol
      * @custom:url https://github.com/Uniswap/v3-periphery/blob/v1.3.0/contracts/base/PeripheryPayments.sol
      */

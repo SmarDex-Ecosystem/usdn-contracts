@@ -8,15 +8,16 @@ import { RouterParameters } from "src/UniversalRouter/base/RouterImmutables.sol"
 import { DEPLOYER, WETH } from "test/utils/Constants.sol";
 import { UniversalRouterHandler } from "test/integration/UniversalRouter/utils/Handler.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "test/integration/UsdnProtocol/utils/Fixtures.sol";
-import { Wusdn } from "src/Wusdn.sol";
+import { ISmardexFactory } from "src/UniversalRouter/interfaces/ISmardexFactory.sol";
 
 /**
  * @title UniversalRouterBaseFixture
  * @dev Utils for testing the Universal Router
  */
 contract UniversalRouterBaseIntegrationFixture is UsdnProtocolBaseIntegrationFixture {
-    UniversalRouterHandler public router;
+    UniversalRouterHandler router;
     IAllowanceTransfer permit2;
+    ISmardexFactory factory;
 
     function _setUp() internal {
         params = DEFAULT_PARAMS;
@@ -37,5 +38,6 @@ contract UniversalRouterBaseIntegrationFixture is UsdnProtocolBaseIntegrationFix
         vm.prank(DEPLOYER);
         router = new UniversalRouterHandler(routerParams);
         permit2 = IAllowanceTransfer(routerParams.permit2);
+        factory = ISmardexFactory(routerParams.smardexFactory);
     }
 }

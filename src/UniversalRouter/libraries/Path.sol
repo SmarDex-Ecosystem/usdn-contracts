@@ -56,7 +56,14 @@ library Path {
     /// @notice Skips a token from the buffer and returns the remainder
     /// @param _path The swap path
     /// @return The remaining token elements in the path
-    function skipToken(bytes memory _path) internal pure returns (bytes memory) {
+    function skipToken(bytes calldata _path) internal pure returns (bytes calldata) {
+        return _path[NEXT_OFFSET:];
+    }
+
+    /// @notice Skips a token from the buffer and returns the remainder
+    /// @param _path The swap path
+    /// @return The remaining token elements in the path
+    function skipTokenMemory(bytes memory _path) internal pure returns (bytes memory) {
         return _path.slice(NEXT_OFFSET, _path.length - NEXT_OFFSET);
     }
 
@@ -90,12 +97,12 @@ library Path {
     /// @param _path The swap path
     /// @return encoded_ The bytes array containing the packed addresses
     function encodeTightlyPackedReversed(bytes calldata _path) external pure returns (bytes memory encoded_) {
-        address[] memory pathAddress = abi.decode(_path, (address[]));
-
-        uint256 len = pathAddress.length;
+        uint256 len = _path.length / ADDR_SIZE;
+        uint256 offSet = (len - 1) * ADDR_SIZE;
         for (uint256 i = len; i != 0;) {
-            encoded_ = bytes.concat(encoded_, abi.encodePacked(pathAddress[i - 1]));
+            encoded_ = bytes.concat(encoded_, abi.encodePacked(_path.toAddress(offSet)));
             unchecked {
+                offSet -= ADDR_SIZE;
                 --i;
             }
         }
