@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Based on the OpenZeppelin implementation
+// based on the OpenZeppelin implementation
 pragma solidity ^0.8.20;
 
 import { PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";

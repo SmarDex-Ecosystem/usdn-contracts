@@ -27,10 +27,10 @@ library TickMath {
     /// @dev The maximum tick is determined by the limits of the libraries used for math and testing
     int24 public constant MAX_TICK = 980_000;
 
-    /// @dev Minimum representable values for the price
+    /// @dev The minimum representable values for the price
     uint256 public constant MIN_PRICE = 10_000;
 
-    /// @dev Maximum representable values for the price
+    /// @dev The maximum representable values for the price
     uint256 public constant MAX_PRICE =
         3_620_189_675_065_328_806_679_850_654_316_367_931_456_599_175_372_999_068_724_197;
 

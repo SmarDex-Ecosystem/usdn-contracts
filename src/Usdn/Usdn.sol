@@ -399,7 +399,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
         uint256 fromBalance = balanceOf(from);
 
         if (from == address(0)) {
-            // Mint
+            // mint
             unchecked {
                 uint256 res = _totalShares + valueShares;
                 // overflow check required, the rest of the code assumes that `totalShares` never overflows

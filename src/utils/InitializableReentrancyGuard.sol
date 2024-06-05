@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Based on the OpenZeppelin implementation
+// based on the OpenZeppelin implementation
 
 pragma solidity 0.8.20;
 
@@ -8,11 +8,9 @@ pragma solidity 0.8.20;
  * @dev Contract module that helps prevent reentrant calls to a function and ensures the initializer has been called
  */
 abstract contract InitializableReentrancyGuard {
-    // Booleans are more expensive than uint256 or any type that takes up a full
-    // word because each write operation emits an extra SLOAD to first read the
-    // slot's contents, replace the bits taken up by the boolean and then write
-    // back. This is the compiler's defense against contract upgrades and
-    // pointer aliasing, and it cannot be disabled
+    // booleans are more expensive than uint256 or any type that takes up a full word because each write operation emits
+    // an extra SLOAD to first read the slot's contents, replace the bits taken up by the boolean and then write back.
+    // This is the compiler's defense against contract upgrades and pointer aliasing, and it cannot be disabled
 
     /// @notice The uninitialized state of the contract
     uint256 private constant UNINITIALIZED = 0;
@@ -84,8 +82,7 @@ abstract contract InitializableReentrancyGuard {
 
     /// @notice Set `_status` to `NOT_ENTERED`
     function _nonReentrantAfter() private {
-        // By storing the original value once again, a refund is triggered (see
-        // https://eips.ethereum.org/EIPS/eip-2200)
+        // by storing the original value once again, a refund is triggered (see https://eips.ethereum.org/EIPS/eip-2200)
         _status = NOT_ENTERED;
     }
 }

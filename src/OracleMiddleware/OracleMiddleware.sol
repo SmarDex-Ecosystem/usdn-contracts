@@ -82,23 +82,23 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         } else if (action == ProtocolAction.Initialize) {
             return _getInitiateActionPrice(data, ConfidenceInterval.None);
         } else if (action == ProtocolAction.ValidateDeposit) {
-            // Use the lowest price in the confidence interval to ensure a minimum benefit for the user in case
+            // use the lowest price in the confidence interval to ensure a minimum benefit for the user in case
             // of price inaccuracies until low latency delay is exceeded then use chainlink specified roundId
             return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Down);
         } else if (action == ProtocolAction.ValidateWithdrawal) {
-            // Use the highest price in the confidence interval to ensure a minimum benefit for the user in case
+            // use the highest price in the confidence interval to ensure a minimum benefit for the user in case
             // of price inaccuracies until low latency delay is exceeded then use chainlink specified roundId
             return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Up);
         } else if (action == ProtocolAction.ValidateOpenPosition) {
-            // Use the highest price in the confidence interval to ensure a minimum benefit for the user in case
+            // use the highest price in the confidence interval to ensure a minimum benefit for the user in case
             // of price inaccuracies until low latency delay is exceeded then use chainlink specified roundId
             return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Up);
         } else if (action == ProtocolAction.ValidateClosePosition) {
-            // Use the lowest price in the confidence interval to ensure a minimum benefit for the user in case
+            // use the lowest price in the confidence interval to ensure a minimum benefit for the user in case
             // of price inaccuracies until low latency delay is exceeded then use chainlink specified roundId
             return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Down);
         } else if (action == ProtocolAction.Liquidation) {
-            // Special case, if we pass a timestamp of zero, then we accept all prices newer than `_recentPriceDelay`
+            // special case, if we pass a timestamp of zero, then we accept all prices newer than `_recentPriceDelay`
             return _getLowLatencyPrice(data, 0, ConfidenceInterval.None);
         } else if (action == ProtocolAction.InitiateDeposit) {
             // If the user chooses to initiate with a pyth price, we apply the relevant confidence interval adjustment
@@ -264,7 +264,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
 
     /**
      * @notice Get the price for a validate action of the protocol
-     * @dev If the low latency delay is not exceeded, validate the price with the low-latency oracle(s).
+     * @dev If the low latency delay is not exceeded, validate the price with the low-latency oracle(s)
      * Else, get the specified roundId on-chain price from Chainlink. In case of chainlink price,
      * we don't have a confidence interval and so both `neutralPrice` and `price` are equal
      * @param data An optional VAA from Pyth or a chainlink roundId (abi-encoded uint80)

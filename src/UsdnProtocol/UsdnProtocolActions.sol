@@ -1048,7 +1048,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             return false;
         }
 
-        // Apply fees on price
+        // apply fees on price
         uint128 withdrawalPriceWithFees =
             (currentPrice.price + currentPrice.price * _vaultFeeBps / BPS_DIVISOR).toUint128();
 
@@ -1235,7 +1235,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             return (posId_, securityDepositValue, false);
         }
 
-        // Register position and adjust contract state
+        // register position and adjust contract state
         Position memory long = Position({
             validated: false,
             user: to,

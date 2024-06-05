@@ -33,7 +33,7 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
         view
         returns (uint256 assetExpected_)
     {
-        // Apply fees on price
+        // apply fees on price
         uint128 withdrawalPriceWithFees = (price + price * _vaultFeeBps / BPS_DIVISOR).toUint128();
         int256 available = vaultAssetAvailableWithFunding(withdrawalPriceWithFees, timestamp);
         if (available < 0) {

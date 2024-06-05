@@ -65,7 +65,7 @@ contract Rebalancer is Ownable, IRebalancer {
         _maxLeverage = usdnProtocol.getMaxLeverage();
         _minAssetDeposit = usdnProtocol.getMinLongPosition();
 
-        // Set allowance to allow the protocol to pull assets from this contract
+        // set allowance to allow the protocol to pull assets from this contract
         asset.forceApprove(address(usdnProtocol), type(uint256).max);
     }
 

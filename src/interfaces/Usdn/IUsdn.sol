@@ -98,7 +98,7 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
     function convertToShares(uint256 amountTokens) external view returns (uint256 shares_);
 
     /**
-     * @notice Convert some shares to the corresponding amount of tokens
+     * @notice Convert a number of shares to the corresponding amount of tokens
      * @dev The conversion never overflows as we are performing a division. The conversion rounds to the nearest amount
      * of tokens that minimize the error when converting back to shares
      * @param amountShares The amount of shares to convert to tokens
@@ -107,7 +107,7 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
     function convertToTokens(uint256 amountShares) external view returns (uint256 tokens_);
 
     /**
-     * @notice Convert some shares to the corresponding amount of tokens, rounding up
+     * @notice Convert a number of shares to the corresponding amount of tokens, rounding up
      * @dev Use this function to determine the amount of a token approval, as we always round up when deducting from
      * a token transfer allowance
      * @param amountShares The amount of shares to convert to tokens
