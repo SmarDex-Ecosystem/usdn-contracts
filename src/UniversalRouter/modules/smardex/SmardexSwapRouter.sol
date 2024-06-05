@@ -6,7 +6,6 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { TransferHelper } from "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import { Permit2Payments } from "@uniswap/universal-router/contracts/modules/Permit2Payments.sol";
 import { Constants } from "@uniswap/universal-router/contracts/libraries/Constants.sol";
-import { V3Path } from "@uniswap/universal-router/contracts/modules/uniswap/v3/V3Path.sol";
 
 import { ISmardexFactory } from "src/interfaces/UniversalRouter/smardex/ISmardexFactory.sol";
 import { ISmardexPair } from "src/interfaces/UniversalRouter/smardex/ISmardexPair.sol";
@@ -22,7 +21,6 @@ abstract contract SmardexSwapRouter is SmardexImmutables, Permit2Payments {
     error tooLittleReceived();
 
     using Path for bytes;
-    using Path for address[];
     using SafeCast for uint256;
     using SafeCast for int256;
 
@@ -96,7 +94,7 @@ abstract contract SmardexSwapRouter is SmardexImmutables, Permit2Payments {
     ) internal {
         // use amountIn == Constants.CONTRACT_BALANCE as a flag to swap the entire balance of the contract
         if (amountIn == Constants.CONTRACT_BALANCE) {
-            address tokenIn = V3Path.decodeFirstToken(path);
+            address tokenIn = path.decodeFirstToken();
             amountIn = IERC20(tokenIn).balanceOf(address(this));
         }
 
@@ -114,7 +112,7 @@ abstract contract SmardexSwapRouter is SmardexImmutables, Permit2Payments {
             // decide whether to continue or terminate
             if (hasMultiplePools) {
                 payer = address(this);
-                path = Path.skipToken(path);
+                path = path.skipToken();
             } else {
                 amountOut = amountIn;
                 break;
