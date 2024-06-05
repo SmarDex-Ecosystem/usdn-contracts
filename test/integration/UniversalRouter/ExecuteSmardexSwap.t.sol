@@ -7,14 +7,14 @@ import { Constants } from "@uniswap/universal-router/contracts/libraries/Constan
 import { Commands } from "src/UniversalRouter/libraries/Commands.sol";
 import { SmardexSwapRouter } from "src/UniversalRouter/modules/smardex/SmardexSwapRouter.sol";
 
-import { UniversalRouterBaseIntegrationFixture } from "test/integration/UniversalRouter/utils/Fixtures.sol";
+import { UniversalRouterBaseFixture } from "test/integration/UniversalRouter/utils/Fixtures.sol";
 import { WETH, SDEX, WBTC } from "test/utils/Constants.sol";
 
 /**
  * @custom:feature Test smardex swap commands
  * @custom:background A initiated universal router
  */
-contract TestExecuteSmardexSwap is UniversalRouterBaseIntegrationFixture {
+contract TestExecuteSmardexSwap is UniversalRouterBaseFixture {
     uint256 constant BASE_AMOUNT = 1 ether;
 
     function setUp() external {

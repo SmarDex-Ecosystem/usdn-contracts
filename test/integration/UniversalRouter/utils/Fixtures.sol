@@ -40,6 +40,6 @@ contract UniversalRouterBaseFixture is UsdnProtocolBaseIntegrationFixture {
 
         permit2 = IAllowanceTransfer(params.permit2);
 
-        factory = routerParams.smardexFactory;
+        factory = params.smardexFactory;
     }
 }
