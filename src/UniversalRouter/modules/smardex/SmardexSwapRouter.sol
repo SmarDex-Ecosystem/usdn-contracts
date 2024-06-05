@@ -6,7 +6,6 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { TransferHelper } from "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import { Permit2Payments } from "@uniswap/universal-router/contracts/modules/Permit2Payments.sol";
 import { Constants } from "@uniswap/universal-router/contracts/libraries/Constants.sol";
-import { IWETH9 } from "@uniswap/universal-router/contracts/interfaces/external/IWETH9.sol";
 import { V3Path } from "@uniswap/universal-router/contracts/modules/uniswap/v3/V3Path.sol";
 
 import { ISmardexFactory } from "src/UniversalRouter/interfaces/ISmardexFactory.sol";
@@ -16,6 +15,10 @@ import { SmardexImmutables } from "src/UniversalRouter/modules/smardex/SmardexIm
 
 /// @title Router for Smardex
 abstract contract SmardexSwapRouter is SmardexImmutables, Permit2Payments {
+    /**
+     * @notice Indicates that the amount received by a smardex
+     * swapExactIn is lower than the minimum expected amount
+     */
     error tooLittleReceived();
 
     using Path for bytes;
@@ -32,14 +35,22 @@ abstract contract SmardexSwapRouter is SmardexImmutables, Permit2Payments {
         bytes path;
         address payer;
     }
-    /// @dev Used as the placeholder value for maxAmountIn, because the computed amount in for an exact output swap
-    /// can never actually be this value
 
+    /**
+     * @dev Used as the placeholder value for maxAmountIn, because the computed amount
+     * in for an exact output swap can never actually be this value
+     */
     uint256 private constant DEFAULT_MAX_AMOUNT_IN = type(uint256).max;
 
     /// @dev Transient storage variable used for checking slippage
     uint256 private amountInCached = DEFAULT_MAX_AMOUNT_IN;
 
+    /**
+     * @notice callback data for smardex swap
+     * @param _amount0Delta amount of token0 for the swap (negative is incoming, positive is required to pay to pair)
+     * @param _amount1Delta amount of token1 for the swap (negative is incoming, positive is required to pay to pair)
+     * @param _data for Router path and payer for the swap
+     */
     function smardexSwapCallback(int256 _amount0Delta, int256 _amount1Delta, bytes calldata _data) external {
         require(_amount0Delta > 0 || _amount1Delta > 0, "SmardexRouter: Callback Invalid amount");
 
@@ -67,12 +78,15 @@ abstract contract SmardexSwapRouter is SmardexImmutables, Permit2Payments {
         }
     }
 
-    /// @notice Performs a Smardex exact input swap
-    /// @param recipient The recipient of the output tokens
-    /// @param amountIn The amount of input tokens for the trade
-    /// @param amountOutMinimum The minimum desired amount of output tokens
-    /// @param path The path of the trade as a bytes string
-    /// @param payer The address that will be paying the input
+    /**
+     * @notice Performs a Smardex exact input swap
+     * @dev Use router balance if payer is the router or use permit2 from msg.sender
+     * @param recipient The recipient of the output tokens
+     * @param amountIn The amount of input tokens for the trade
+     * @param amountOutMinimum The minimum desired amount of output tokens
+     * @param path The path of the trade as a bytes string
+     * @param payer The address that will be paying the input
+     */
     function smardexSwapExactInput(
         address recipient,
         uint256 amountIn,
@@ -110,12 +124,15 @@ abstract contract SmardexSwapRouter is SmardexImmutables, Permit2Payments {
         if (amountOut < amountOutMinimum) revert tooLittleReceived();
     }
 
-    /// @notice Performs a Smardex exact output swap
-    /// @param recipient The recipient of the output tokens
-    /// @param amountOut The amount of output tokens to receive for the trade
-    /// @param amountInMaximum The maximum desired amount of input tokens
-    /// @param path The path of the trade as a bytes string
-    /// @param payer The address that will be paying the input
+    /**
+     * @notice Performs a Smardex exact output swap
+     * @dev Use router balance if payer is the router or use permit2 from msg.sender
+     * @param recipient The recipient of the output tokens
+     * @param amountOut The amount of output tokens to receive for the trade
+     * @param amountInMaximum The maximum desired amount of input tokens
+     * @param path The path of the trade as a bytes string
+     * @param payer The address that will be paying the input
+     */
     function smardexSwapExactOutput(
         address recipient,
         uint256 amountOut,
@@ -188,10 +205,10 @@ abstract contract SmardexSwapRouter is SmardexImmutables, Permit2Payments {
      * @custom:url https://github.com/Uniswap/v3-periphery/blob/v1.3.0/contracts/base/PeripheryPayments.sol
      */
     function _pay(address _token, address _payer, address _to, uint256 _value) internal {
-        if (_token == WETH && address(this).balance >= _value) {
+        if (_token == address(WETH) && address(this).balance >= _value) {
             // pay with WETH
-            IWETH9(WETH).deposit{ value: _value }(); // wrap only what is needed to pay
-            IWETH9(WETH).transfer(_to, _value);
+            WETH.deposit{ value: _value }(); // wrap only what is needed to pay
+            WETH.transfer(_to, _value);
             //refund dust eth, if any ?
         } else if (_payer == address(this)) {
             // pay with tokens already in the contract (for the exact input multihop case)
@@ -202,11 +219,13 @@ abstract contract SmardexSwapRouter is SmardexImmutables, Permit2Payments {
         }
     }
 
-    /// @notice Either performs a regular payment or transferFrom on Permit2, depending on the payer address
-    /// @param token The token to transfer
-    /// @param payer The address to pay for the transfer
-    /// @param recipient The recipient of the transfer
-    /// @param amount The amount to transfer
+    /**
+     * @notice Either performs a regular payment or transferFrom on Permit2, depending on the payer address
+     * @param token The token to transfer
+     * @param payer The address to pay for the transfer
+     * @param recipient The recipient of the transfer
+     * @param amount The amount to transfer
+     */
     function _payOrPermit2Transfer(address token, address payer, address recipient, uint256 amount) internal {
         if (payer == address(this)) {
             _pay(token, address(this), recipient, amount);
