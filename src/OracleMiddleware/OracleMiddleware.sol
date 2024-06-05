@@ -189,13 +189,13 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, RedstoneOracle, Chai
             // not reliable
             ChainlinkPriceInfo memory chainlinkPrice = _getFormattedChainlinkLatestPrice(MIDDLEWARE_DECIMALS);
             // we check that the chainlink price is valid and not too old
-            if (
-                chainlinkPrice.price > 0
-                    && (
-                        price_.price > uint256(chainlinkPrice.price) * 3 || price_.price < uint256(chainlinkPrice.price) / 3
-                    )
-            ) {
-                revert OracleMiddlewareRedstoneSafeguard();
+            if (chainlinkPrice.price > 0) {
+                if (price_.price > uint256(chainlinkPrice.price) * 3) {
+                    revert OracleMiddlewareRedstoneSafeguard();
+                }
+                if (price_.price < uint256(chainlinkPrice.price) / 3) {
+                    revert OracleMiddlewareRedstoneSafeguard();
+                }
             }
         }
     }
