@@ -2,6 +2,7 @@
 pragma solidity 0.8.20;
 
 import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IWusdn } from "src/interfaces/Usdn/IWusdn.sol";
 
 /**
  * @dev Structure to hold the immutable parameters for the router
@@ -25,6 +26,5 @@ struct RouterParameters {
     bytes32 poolInitCodeHash;
     IUsdnProtocol usdnProtocol;
     address wstEth;
-    address usdn;
-    address wusdn;
+    IWusdn wusdn;
 }

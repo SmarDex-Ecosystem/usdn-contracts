@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Constants } from "@uniswap/universal-router/contracts/libraries/Constants.sol";
 
 import { Commands } from "src/UniversalRouter/libraries/Commands.sol";
-
-import { UniversalRouterBaseIntegrationFixture } from "test/integration/UniversalRouter/utils/Fixtures.sol";
+import { UniversalRouterBaseFixture } from "test/integration/UniversalRouter/utils/Fixtures.sol";
 
 import { DEPLOYER, WETH, SDEX, WSTETH } from "test/utils/Constants.sol";
 
@@ -14,7 +12,7 @@ import { DEPLOYER, WETH, SDEX, WSTETH } from "test/utils/Constants.sol";
  * @custom:feature Test commands lower than first boundary of the `execute` function
  * @custom:background A initiated universal router
  */
-contract TestExecuteFourthBoundary is UniversalRouterBaseIntegrationFixture {
+contract TestForkExecuteWusdn is UniversalRouterBaseFixture {
     uint256 constant BASE_AMOUNT = 1 ether;
 
     function setUp() external {
@@ -43,7 +41,7 @@ contract TestExecuteFourthBoundary is UniversalRouterBaseIntegrationFixture {
      * @custom:then The `WRAP_USDN` command should be executed
      * @custom:and The `usdn` user balance should be increased
      */
-    function test_execute_wrap_usdn() external {
+    function test_ForkExecuteWrapUsdn() external {
         // commands
         bytes memory commands = abi.encodePacked(bytes1(bytes32(Commands.WRAP_USDN) << (256 - 8)));
 
@@ -70,7 +68,7 @@ contract TestExecuteFourthBoundary is UniversalRouterBaseIntegrationFixture {
      * @custom:then The `UNWRAP_WUSDN` command should be executed
      * @custom:and The `usdn` user balance should be increased
      */
-    function test_execute_unwrap_usdn() external {
+    function test_ForkExecuteUnwrapUsdn() external {
         wusdn.deposit(BASE_AMOUNT, address(this));
         uint256 wusdnBalance = wusdn.balanceOf(address(this));
         // commands

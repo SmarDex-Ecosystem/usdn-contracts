@@ -12,7 +12,6 @@ import { V2SwapRouter } from "src/UniversalRouter/modules/uniswap/v2/V2SwapRoute
 import { UsdnProtocolRouter } from "src/UniversalRouter/modules/usdn/UsdnProtocolRouter.sol";
 import { PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { LidoRouter } from "src/UniversalRouter/modules/lido/LidoRouter.sol";
-import { UsdnRouter } from "src/UniversalRouter/modules/usdn/UsdnRouter.sol";
 
 /**
  * @title Decodes and Executes Commands
@@ -24,7 +23,6 @@ abstract contract Dispatcher is
     V3SwapRouter,
     UsdnProtocolRouter,
     LidoRouter,
-    UsdnRouter,
     LockAndMsgSender
 {
     using BytesLib for bytes;

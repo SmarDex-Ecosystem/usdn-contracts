@@ -5,14 +5,17 @@ import { Constants } from "@uniswap/universal-router/contracts/libraries/Constan
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Permit2Payments } from "@uniswap/universal-router/contracts/modules/Permit2Payments.sol";
 
 import { UsdnProtocolImmutables } from "src/UniversalRouter/modules/usdn/UsdnProtocolImmutables.sol";
 import { PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IWusdn } from "src/interfaces/Usdn/IWusdn.sol";
 
-abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
+abstract contract UsdnProtocolRouter is UsdnProtocolImmutables, Permit2Payments {
     using SafeCast for uint256;
     using SafeERC20 for IERC20Metadata;
+    using SafeERC20 for IWusdn;
 
     /**
      * @notice Initiate a deposit into the USDN protocol vault
@@ -141,5 +144,49 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         (success_, posId_) = USDN_PROTOCOL.initiateOpenPosition{ value: address(this).balance }(
             amount.toUint128(), desiredLiqPrice, to, validator, currentPriceData, previousActionsData
         );
+    }
+
+    /**
+     * @notice Wrap the usdn value into wusdn
+     * @param value The usdn value
+     * @param receiver The wusdn receiver
+     */
+    function _wrapUSDN(uint256 value, address receiver) internal {
+        IERC20Metadata usdn = IERC20Metadata(USDN);
+        uint256 balance = usdn.balanceOf(address(this));
+
+        if (value == Constants.CONTRACT_BALANCE) {
+            value = balance;
+        } else if (value > balance) {
+            revert InsufficientToken();
+        }
+
+        if (value > 0) {
+            uint256 allowance = usdn.allowance(address(this), address(WUSDN));
+            if (allowance < value) {
+                usdn.safeIncreaseAllowance(address(WUSDN), value - allowance);
+                IWusdn(WUSDN).deposit(value, receiver);
+            }
+        }
+    }
+
+    /**
+     * @notice Unwrap the wusdn value into usdn
+     * @param value The wusdn value
+     * @param receiver The usdn receiver
+     */
+    function _unwrapUSDN(uint256 value, address receiver, address owner) internal {
+        IWusdn wusdn = IWusdn(WUSDN);
+        uint256 balance = wusdn.balanceOf(address(this));
+
+        if (value == Constants.CONTRACT_BALANCE) {
+            value = balance;
+        } else if (value > balance) {
+            revert InsufficientToken();
+        }
+
+        if (value > 0) {
+            wusdn.redeem(value, receiver, owner);
+        }
     }
 }

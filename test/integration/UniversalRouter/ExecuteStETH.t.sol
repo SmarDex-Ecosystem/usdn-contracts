@@ -31,7 +31,7 @@ contract TestForkUniversalRouterExecuteStETH is UniversalRouterBaseFixture {
      * @custom:then The `WRAP_STETH` command should be executed
      * @custom:and The `wsteth` user balance should be increased
      */
-    function test_executeWrapStETH() external {
+    function test_ForkExecuteWrapStETH() external {
         wstETH.unwrap(BASE_AMOUNT);
         stETH.transferShares(address(router), stETH.sharesOf(address(this)));
 
@@ -58,7 +58,7 @@ contract TestForkUniversalRouterExecuteStETH is UniversalRouterBaseFixture {
      * @custom:then The `WRAP_STETH` command should be executed
      * @custom:and The `wsteth` router balance should be increased
      */
-    function test_executeWrapStETHForRouter() external {
+    function test_ForkExecuteWrapStETHForRouter() external {
         wstETH.unwrap(BASE_AMOUNT);
         stETH.transferShares(address(router), stETH.sharesOf(address(this)));
 
@@ -85,7 +85,7 @@ contract TestForkUniversalRouterExecuteStETH is UniversalRouterBaseFixture {
      * @custom:then The `UNWRAP_WSTETH` command should be executed
      * @custom:and The `stETH` user balance should be increased
      */
-    function test_executeUnwrapStETH() external {
+    function test_ForkExecuteUnwrapStETH() external {
         wstETH.transfer(address(router), BASE_AMOUNT);
         uint256 sharesOfStETHBefore = stETH.sharesOf(address(this));
 
@@ -111,7 +111,7 @@ contract TestForkUniversalRouterExecuteStETH is UniversalRouterBaseFixture {
      * @custom:then The `UNWRAP_WSTETH` command should be executed
      * @custom:and The `stETH` router balance should be increased
      */
-    function test_executeUnwrapStETHForRouter() external {
+    function test_ForkExecuteUnwrapStETHForRouter() external {
         wstETH.transfer(address(router), BASE_AMOUNT);
         uint256 sharesOfStETHBefore = stETH.sharesOf(address(this));
 

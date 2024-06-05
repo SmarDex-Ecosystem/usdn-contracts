@@ -78,7 +78,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             if (testParams.forkWarp > 0) {
                 vm.warp(testParams.forkWarp);
             }
-            (uint256 price,, uint256 decimals,,) = getHermesApiSignature(PYTH_STETH_USD, block.timestamp - 1000);
+            (uint256 price,, uint256 decimals,,) = getHermesApiSignature(PYTH_ETH_USD, block.timestamp - 1000);
 
             testParams.initialPrice = uint128(price * 10 ** (18 - decimals));
             testParams.initialLiqPrice = testParams.initialPrice / 2;

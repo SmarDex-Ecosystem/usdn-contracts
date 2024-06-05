@@ -17,7 +17,6 @@ import {
     UsdnProtocolImmutables, UsdnProtocolParameters
 } from "src/UniversalRouter/modules/usdn/UsdnProtocolImmutables.sol";
 import { LidoImmutables } from "src/UniversalRouter/modules/lido/LidoImmutables.sol";
-import { UsdnImmutables, UsdnParameters } from "src/UniversalRouter/modules/usdn/UsdnImmutables.sol";
 
 contract UniversalRouter is IUniversalRouter, Dispatcher {
     /**
@@ -37,8 +36,7 @@ contract UniversalRouter is IUniversalRouter, Dispatcher {
             UniswapParameters(params.v2Factory, params.v3Factory, params.pairInitCodeHash, params.poolInitCodeHash)
         )
         PaymentsImmutables(PaymentsParameters(params.permit2, params.weth9, address(0), address(0)))
-        UsdnImmutables(UsdnParameters(params.usdn, params.wusdn, params.usdnProtocol))
-        UsdnProtocolImmutables(UsdnProtocolParameters(params.usdnProtocol))
+        UsdnProtocolImmutables(UsdnProtocolParameters(params.usdnProtocol, params.wusdn))
         LidoImmutables(params.wstEth)
     { }
 
