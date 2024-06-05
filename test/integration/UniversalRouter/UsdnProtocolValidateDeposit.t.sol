@@ -13,15 +13,16 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
  * @custom:background Given a forked ethereum mainnet chain
  */
 contract TestForkUniversalRouterValidateDeposit is UniversalRouterBaseFixture {
+    uint256 internal _securityDeposit;
+
     function setUp() public {
         _setUp();
         deal(address(wstETH), address(this), 1e6 ether);
         deal(address(sdex), address(this), 1e6 ether);
         wstETH.approve(address(protocol), type(uint256).max);
         sdex.approve(address(protocol), type(uint256).max);
-        protocol.initiateDeposit{ value: protocol.getSecurityDepositValue() }(
-            0.1 ether, USER_2, USER_1, "", EMPTY_PREVIOUS_DATA
-        );
+        _securityDeposit = protocol.getSecurityDepositValue();
+        protocol.initiateDeposit{ value: _securityDeposit }(0.1 ether, USER_2, USER_1, "", EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -45,7 +46,7 @@ contract TestForkUniversalRouterValidateDeposit is UniversalRouterBaseFixture {
         router.execute{ value: validationCost }(commands, inputs);
 
         assertEq(address(this).balance, ethBalanceBefore - validationCost, "ether balance");
-        assertEq(USER_1.balance, ethBalanceBeforeUser + protocol.getSecurityDepositValue(), "user balance");
+        assertEq(USER_1.balance, ethBalanceBeforeUser + _securityDeposit, "user balance");
         assertEq(usdn.sharesOf(address(this)), 0, "usdn shares");
         assertEq(usdn.sharesOf(USER_1), 0, "usdn shares USER_1");
         assertGt(usdn.sharesOf(USER_2), 0, "usdn shares USER_2");

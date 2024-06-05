@@ -14,12 +14,14 @@ import { Commands } from "src/UniversalRouter/libraries/Commands.sol";
  */
 contract TestForkUniversalRouterInitiateWithdrawal is UniversalRouterBaseFixture {
     uint256 internal WITHDRAW_AMOUNT;
+    uint256 internal _securityDeposit;
 
     function setUp() public {
         _setUp();
         WITHDRAW_AMOUNT = usdn.sharesOf(DEPLOYER) / 100;
         vm.prank(DEPLOYER);
         usdn.transferShares(address(this), WITHDRAW_AMOUNT);
+        _securityDeposit = protocol.getSecurityDepositValue();
     }
 
     /**
@@ -31,16 +33,15 @@ contract TestForkUniversalRouterInitiateWithdrawal is UniversalRouterBaseFixture
     function test_ForkInitiateWithdraw() public {
         uint256 ethBalanceBefore = address(this).balance;
         uint256 usdnSharesBefore = usdn.sharesOf(address(this));
-        uint256 securityDeposit = protocol.getSecurityDepositValue();
 
         usdn.transferShares(address(router), WITHDRAW_AMOUNT);
 
         bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.INITIATE_WITHDRAWAL)));
         bytes[] memory inputs = new bytes[](1);
-        inputs[0] = abi.encode(WITHDRAW_AMOUNT, USER_1, address(this), "", EMPTY_PREVIOUS_DATA, securityDeposit);
-        router.execute{ value: securityDeposit }(commands, inputs);
+        inputs[0] = abi.encode(WITHDRAW_AMOUNT, USER_1, address(this), "", EMPTY_PREVIOUS_DATA, _securityDeposit);
+        router.execute{ value: _securityDeposit }(commands, inputs);
 
-        assertEq(address(this).balance, ethBalanceBefore - securityDeposit, "ether balance");
+        assertEq(address(this).balance, ethBalanceBefore - _securityDeposit, "ether balance");
         assertEq(usdn.sharesOf(address(this)), usdnSharesBefore - WITHDRAW_AMOUNT, "usdn shares");
     }
 
@@ -54,17 +55,16 @@ contract TestForkUniversalRouterInitiateWithdrawal is UniversalRouterBaseFixture
     function test_ForkInitiateWithdrawFullBalance() public {
         uint256 ethBalanceBefore = address(this).balance;
         uint256 usdnSharesBefore = usdn.sharesOf(address(this));
-        uint256 securityDeposit = protocol.getSecurityDepositValue();
 
         usdn.transferShares(address(router), WITHDRAW_AMOUNT);
 
         bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.INITIATE_WITHDRAWAL)));
         bytes[] memory inputs = new bytes[](1);
         inputs[0] =
-            abi.encode(Constants.CONTRACT_BALANCE, USER_1, address(this), "", EMPTY_PREVIOUS_DATA, securityDeposit);
-        router.execute{ value: securityDeposit }(commands, inputs);
+            abi.encode(Constants.CONTRACT_BALANCE, USER_1, address(this), "", EMPTY_PREVIOUS_DATA, _securityDeposit);
+        router.execute{ value: _securityDeposit }(commands, inputs);
 
-        assertEq(address(this).balance, ethBalanceBefore - securityDeposit, "ether balance");
+        assertEq(address(this).balance, ethBalanceBefore - _securityDeposit, "ether balance");
         assertEq(usdn.sharesOf(address(this)), usdnSharesBefore - WITHDRAW_AMOUNT, "usdn shares");
     }
 }

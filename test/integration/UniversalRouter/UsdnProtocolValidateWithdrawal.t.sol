@@ -18,6 +18,7 @@ contract TestForkUniversalRouterValidateWithdrawal is UniversalRouterBaseFixture
     using SafeCast for uint256;
 
     uint256 internal WITHDRAW_AMOUNT;
+    uint256 internal _securityDeposit;
 
     function setUp() public {
         _setUp();
@@ -25,7 +26,8 @@ contract TestForkUniversalRouterValidateWithdrawal is UniversalRouterBaseFixture
         vm.prank(DEPLOYER);
         usdn.transferShares(address(this), WITHDRAW_AMOUNT);
         usdn.approve(address(protocol), type(uint256).max);
-        protocol.initiateWithdrawal{ value: protocol.getSecurityDepositValue() }(
+        _securityDeposit = protocol.getSecurityDepositValue();
+        protocol.initiateWithdrawal{ value: _securityDeposit }(
             WITHDRAW_AMOUNT.toUint152(), USER_2, USER_1, "", EMPTY_PREVIOUS_DATA
         );
     }
@@ -51,7 +53,7 @@ contract TestForkUniversalRouterValidateWithdrawal is UniversalRouterBaseFixture
         router.execute{ value: validationCost }(commands, inputs);
 
         assertEq(address(this).balance, ethBalanceBefore - validationCost, "ether balance");
-        assertEq(USER_1.balance, ethBalanceBeforeUser + protocol.getSecurityDepositValue(), "user balance");
+        assertEq(USER_1.balance, ethBalanceBeforeUser + _securityDeposit, "user balance");
         assertEq(wstETH.balanceOf(address(this)), 0, "wstETH balance");
         assertEq(wstETH.balanceOf(USER_1), 0, "wstETH balance USER_1");
         assertGt(wstETH.balanceOf(USER_2), 0, "wstETH balance USER_2");
