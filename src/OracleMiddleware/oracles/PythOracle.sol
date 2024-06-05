@@ -65,6 +65,10 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
         pricesUpdateData[0] = priceUpdateData;
 
         uint256 pythFee = _pyth.getUpdateFee(pricesUpdateData);
+        // sanity check on the fee requested by Pyth
+        if (pythFee > 0.01 ether) {
+            revert OracleMiddlewarePythFeeSafeguard(pythFee);
+        }
         if (msg.value != pythFee) {
             revert OracleMiddlewareIncorrectFee();
         }

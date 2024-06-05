@@ -36,6 +36,9 @@ interface IOracleMiddlewareErrors {
     /// @notice An incorrect amount of ether was provided to cover the cost of price validation
     error OracleMiddlewareIncorrectFee();
 
+    /// @notice The fee returned by the Pyth contract exceeded the safeguard value
+    error OracleMiddlewarePythFeeSafeguard(uint256 fee);
+
     /**
      * @notice The withdrawal of the ether in the contract failed
      * @param to The address that was supposed to receive the ether
