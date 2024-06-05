@@ -216,10 +216,10 @@ abstract contract Dispatcher is
                             address validator,
                             bytes memory currentPriceData,
                             PreviousActionsData memory previousActionsData,
-                            uint256 amounEther
+                            uint256 ethAmount
                         ) = abi.decode(inputs, (uint256, address, address, bytes, PreviousActionsData, uint256));
                         _usdnInitiateDeposit(
-                            amount, map(to), map(validator), currentPriceData, previousActionsData, amounEther
+                            amount, map(to), map(validator), currentPriceData, previousActionsData, ethAmount
                         );
                     } else if (command == Commands.INITIATE_WITHDRAWAL) {
                         (
@@ -228,10 +228,10 @@ abstract contract Dispatcher is
                             address validator,
                             bytes memory currentPriceData,
                             PreviousActionsData memory previousActionsData,
-                            uint256 amounEther
+                            uint256 ethAmount
                         ) = abi.decode(inputs, (uint256, address, address, bytes, PreviousActionsData, uint256));
                         _usdnInitiateWithdrawal(
-                            usdnShares, map(to), map(validator), currentPriceData, previousActionsData, amounEther
+                            usdnShares, map(to), map(validator), currentPriceData, previousActionsData, ethAmount
                         );
                     } else if (command == Commands.INITIATE_OPEN) {
                         (
@@ -241,7 +241,7 @@ abstract contract Dispatcher is
                             address validator,
                             bytes memory currentPriceData,
                             PreviousActionsData memory previousActionsData,
-                            uint256 amounEther
+                            uint256 ethAmount
                         ) = abi.decode(
                             inputs, (uint256, uint128, address, address, bytes, PreviousActionsData, uint256)
                         );
@@ -252,7 +252,7 @@ abstract contract Dispatcher is
                             map(validator),
                             currentPriceData,
                             previousActionsData,
-                            amounEther
+                            ethAmount
                         );
                     } else if (command == Commands.INITIATE_CLOSE) {
                         // TODO INITIATE_CLOSE
@@ -261,17 +261,17 @@ abstract contract Dispatcher is
                             address validator,
                             bytes memory depositPriceData,
                             PreviousActionsData memory previousActionsData,
-                            uint256 amounEther
+                            uint256 ethAmount
                         ) = abi.decode(inputs, (address, bytes, PreviousActionsData, uint256));
-                        _usdnValidateDeposit(map(validator), depositPriceData, previousActionsData, amounEther);
+                        _usdnValidateDeposit(map(validator), depositPriceData, previousActionsData, ethAmount);
                     } else if (command == Commands.VALIDATE_WITHDRAWAL) {
                         (
                             address validator,
                             bytes memory withdrawalPriceData,
                             PreviousActionsData memory previousActionsData,
-                            uint256 amounEther
+                            uint256 ethAmount
                         ) = abi.decode(inputs, (address, bytes, PreviousActionsData, uint256));
-                        _usdnValidateWithdrawal(map(validator), withdrawalPriceData, previousActionsData, amounEther);
+                        _usdnValidateWithdrawal(map(validator), withdrawalPriceData, previousActionsData, ethAmount);
                     } else if (command == Commands.VALIDATE_OPEN) {
                         // TODO VALIDATE_OPEN
                     } else if (command == Commands.VALIDATE_CLOSE) {
