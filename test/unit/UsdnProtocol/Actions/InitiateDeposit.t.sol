@@ -4,7 +4,13 @@ pragma solidity 0.8.20;
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { USER_1 } from "test/utils/Constants.sol";
 
-import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import {
+    PendingAction,
+    ProtocolAction,
+    Position,
+    PositionId,
+    DepositPendingAction
+} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 
 /**
@@ -14,6 +20,7 @@ import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyG
  */
 contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
     uint256 internal constant INITIAL_WSTETH_BALANCE = 10 ether;
+    uint128 internal constant POSITION_AMOUNT = 1 ether;
     /// @notice Trigger a reentrancy after receiving ether
     bool internal _reenter;
 
@@ -44,7 +51,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
      * @custom:and The pending action is actionable after the validation deadline has elapsed
      */
     function test_initiateDeposit() public {
-        _initiateDepositScenario(address(this));
+        _initiateDepositScenario(address(this), address(this));
     }
 
     /**
@@ -55,24 +62,38 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
      * @custom:and The user has a pending action of type `InitiateDeposit` with the right beneficiary
      */
     function test_initiateDepositForAnotherUser() public {
-        _initiateDepositScenario(USER_1);
+        _initiateDepositScenario(USER_1, USER_1);
     }
 
-    function _initiateDepositScenario(address to) internal {
+    /**
+     * @custom:scenario The user initiates a deposit of 1 wstETH with another validator
+     * @custom:given The validator parameter is different from the sender of the transaction
+     * @custom:when initiateDeposit function is called
+     * @custom:then The protocol emits an `InitiatedDeposit` event with the right validator
+     * @custom:and The user has a pending action of type `InitiateDeposit` with the right validator
+     */
+    function test_initiateDepositDifferentValidator() public {
+        _initiateDepositScenario(address(this), USER_1);
+    }
+
+    function _initiateDepositScenario(address to, address validator) internal {
         uint128 depositAmount = 1 ether;
         uint128 price = 2000 ether;
         bytes memory currentPrice = abi.encode(price); // only used to apply PnL + funding
-        uint256 usdnToMint =
-            protocol.i_calcMintUsdn(depositAmount, protocol.getBalanceVault(), protocol.getUsdn().totalSupply(), price);
-        uint256 expectedSdexBurnAmount = protocol.i_calcSdexToBurn(usdnToMint, protocol.getSdexBurnOnDepositRatio());
+        uint256 usdnSharesToMint = protocol.i_calcMintUsdnShares(
+            depositAmount, protocol.getBalanceVault(), protocol.getUsdn().totalShares(), price
+        );
+        uint256 expectedSdexBurnAmount =
+            protocol.i_calcSdexToBurn(usdn.convertToTokens(usdnSharesToMint), protocol.getSdexBurnOnDepositRatio());
         uint256 sdexBalanceBefore = sdex.balanceOf(address(this));
         address deadAddress = protocol.DEAD_ADDRESS();
 
         vm.expectEmit(address(sdex));
         emit Transfer(address(this), deadAddress, expectedSdexBurnAmount); // SDEX transfer
         vm.expectEmit();
-        emit InitiatedDeposit(address(this), to, depositAmount, block.timestamp);
-        protocol.initiateDeposit(depositAmount, currentPrice, EMPTY_PREVIOUS_DATA, to);
+        emit InitiatedDeposit(to, validator, depositAmount, block.timestamp);
+        bool success = protocol.initiateDeposit(depositAmount, to, validator, currentPrice, EMPTY_PREVIOUS_DATA);
+        assertTrue(success, "success");
 
         assertEq(wstETH.balanceOf(address(this)), INITIAL_WSTETH_BALANCE - depositAmount, "wstETH user balance");
         assertEq(
@@ -96,17 +117,18 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 0, "no pending action");
 
-        PendingAction memory action = protocol.getUserPendingAction(address(this));
+        PendingAction memory action = protocol.getUserPendingAction(validator);
         assertTrue(action.action == ProtocolAction.ValidateDeposit, "action type");
         assertEq(action.timestamp, block.timestamp, "action timestamp");
-        assertEq(action.user, address(this), "action user");
         assertEq(action.to, to, "action to");
+        assertEq(action.validator, validator, "action validator");
         assertEq(action.var2, depositAmount, "action amount");
 
         // the pending action should be actionable after the validation deadline
         skip(protocol.getValidationDeadline() + 1);
         (actions,) = protocol.getActionablePendingActions(address(0));
-        assertEq(actions[0].user, address(this), "pending action user");
+        assertEq(actions[0].to, to, "pending action to");
+        assertEq(actions[0].validator, validator, "pending action validator");
     }
 
     /**
@@ -117,7 +139,22 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_zeroAddressTo() public {
         vm.expectRevert(UsdnProtocolInvalidAddressTo.selector);
-        protocol.initiateDeposit(1 ether, abi.encode(uint128(2000 ether)), EMPTY_PREVIOUS_DATA, address(0));
+        protocol.initiateDeposit(
+            1 ether, address(0), address(this), abi.encode(uint128(2000 ether)), EMPTY_PREVIOUS_DATA
+        );
+    }
+
+    /**
+     * @custom:scenario The user initiates a deposit with parameter validator defined at zero
+     * @custom:given An initialized USDN protocol
+     * @custom:when The user initiates a deposit with parameter validator defined at zero
+     * @custom:then The protocol reverts with `UsdnProtocolInvalidAddressValidator`
+     */
+    function test_RevertWhen_zeroAddressValidator() public {
+        vm.expectRevert(UsdnProtocolInvalidAddressValidator.selector);
+        protocol.initiateDeposit(
+            1 ether, address(this), address(0), abi.encode(uint128(2000 ether)), EMPTY_PREVIOUS_DATA
+        );
     }
 
     /**
@@ -128,13 +165,13 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
     function test_RevertWhen_zeroAmount() public {
         bytes memory priceData = abi.encode(uint128(2000 ether));
         vm.expectRevert(UsdnProtocolZeroAmount.selector);
-        protocol.initiateDeposit(0, priceData, EMPTY_PREVIOUS_DATA, address(this));
+        protocol.initiateDeposit(0, address(this), address(this), priceData, EMPTY_PREVIOUS_DATA);
     }
 
     /**
      * @custom:scenario The user initiates a small deposit and no USDN would be minted
      * @custom:given The price of wstETH is $0.1
-     * @custom:when The user initiates a deposit of 9 wei of wstETH
+     * @custom:when The user initiates a deposit of 4 wei of wstETH
      * @custom:then The protocol reverts with `UsdnProtocolDepositTooSmall`
      */
     function test_RevertWhen_depositTooSmallNoUSDN() public {
@@ -145,14 +182,17 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         wstETH.mintAndApprove(address(this), INITIAL_WSTETH_BALANCE, address(protocol), type(uint256).max);
         sdex.mintAndApprove(address(this), 200_000_000 ether, address(protocol), type(uint256).max);
 
-        uint128 deposited = 9;
+        uint128 deposited = 4;
 
-        uint256 usdnToMintEstimated =
-            protocol.i_calcMintUsdn(deposited, protocol.getBalanceVault(), usdn.totalSupply(), params.initialPrice);
-        assertEq(usdnToMintEstimated, 0, "usdn minted");
+        uint256 usdnSharesToMintEstimated = protocol.i_calcMintUsdnShares(
+            deposited, protocol.getBalanceVault(), usdn.totalShares(), params.initialPrice
+        );
+        assertEq(usdn.convertToTokens(usdnSharesToMintEstimated), 0, "usdn minted");
 
         vm.expectRevert(UsdnProtocolDepositTooSmall.selector);
-        protocol.initiateDeposit(deposited, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA, address(this));
+        protocol.initiateDeposit(
+            deposited, address(this), address(this), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
+        );
     }
 
     /**
@@ -174,15 +214,20 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
 
         uint128 deposited = 99;
 
-        uint256 usdnToMintEstimated =
-            protocol.i_calcMintUsdn(deposited, protocol.getBalanceVault(), usdn.totalSupply(), params.initialPrice);
-        assertGt(usdnToMintEstimated, 0, "usdn minted");
+        uint256 usdnSharesToMintEstimated = protocol.i_calcMintUsdnShares(
+            deposited, protocol.getBalanceVault(), usdn.totalShares(), params.initialPrice
+        );
+        assertGt(usdnSharesToMintEstimated, 0, "usdn minted");
 
-        uint256 sdexToBurn = protocol.i_calcSdexToBurn(usdnToMintEstimated, protocol.getSdexBurnOnDepositRatio());
+        uint256 sdexToBurn = protocol.i_calcSdexToBurn(
+            usdn.convertToTokens(usdnSharesToMintEstimated), protocol.getSdexBurnOnDepositRatio()
+        );
         assertEq(sdexToBurn, 0, "sdex burned");
 
         vm.expectRevert(UsdnProtocolDepositTooSmall.selector);
-        protocol.initiateDeposit(deposited, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA, address(this));
+        protocol.initiateDeposit(
+            deposited, address(this), address(this), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
+        );
     }
 
     /**
@@ -201,11 +246,14 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
 
         uint128 deposited = 99;
 
-        uint256 usdnToMintEstimated =
-            protocol.i_calcMintUsdn(deposited, protocol.getBalanceVault(), usdn.totalSupply(), params.initialPrice);
-        assertGt(usdnToMintEstimated, 0, "usdn minted");
+        uint256 usdnSharesToMintEstimated = protocol.i_calcMintUsdnShares(
+            deposited, protocol.getBalanceVault(), usdn.totalShares(), params.initialPrice
+        );
+        assertGt(usdnSharesToMintEstimated, 0, "usdn minted");
 
-        protocol.initiateDeposit(deposited, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA, address(this));
+        protocol.initiateDeposit(
+            deposited, address(this), address(this), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
+        );
     }
 
     /**
@@ -219,7 +267,9 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         uint256 balanceBefore = address(this).balance;
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateDeposit);
-        protocol.initiateDeposit{ value: 0.5 ether }(1 ether, currentPrice, EMPTY_PREVIOUS_DATA, address(this));
+        protocol.initiateDeposit{ value: 0.5 ether }(
+            1 ether, address(this), address(this), currentPrice, EMPTY_PREVIOUS_DATA
+        );
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
 
@@ -235,7 +285,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
 
         if (_reenter) {
             vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
-            protocol.initiateDeposit(1 ether, currentPrice, EMPTY_PREVIOUS_DATA, address(this));
+            protocol.initiateDeposit(1 ether, address(this), address(this), currentPrice, EMPTY_PREVIOUS_DATA);
             return;
         }
 
@@ -243,7 +293,46 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         // If a reentrancy occurred, the function should have been called 2 times
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.initiateDeposit.selector), 2);
         // The value sent will cause a refund, which will trigger the receive() function of this contract
-        protocol.initiateDeposit{ value: 1 }(1 ether, currentPrice, EMPTY_PREVIOUS_DATA, address(this));
+        protocol.initiateDeposit{ value: 1 }(1 ether, address(this), address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+    }
+
+    /**
+     * @custom:scenario A initiate deposit liquidates a tick but is not initiated because another tick still needs to
+     * be liquidated
+     * @custom:given Two long positions in different ticks
+     * @custom:when A user calls `initiateDeposit` with a price below both liquidation prices
+     * @custom:then One of the two long positions is liquidated
+     * @custom:and The deposit action isn't initiated due to a pending liquidation
+     * @custom:and The user wsteth balance should not change
+     */
+    function test_initiateDepositIsPendingLiquidation() public {
+        PositionId memory userPosId = setUpUserPositionInLong(
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: POSITION_AMOUNT,
+                desiredLiqPrice: params.initialPrice - params.initialPrice / 5,
+                price: params.initialPrice
+            })
+        );
+
+        _waitMockMiddlewarePriceDelay();
+
+        uint256 wstethBalanceBefore = wstETH.balanceOf(address(this));
+
+        bool success = protocol.initiateDeposit(
+            POSITION_AMOUNT, address(this), address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
+        );
+        assertFalse(success, "success");
+
+        PendingAction memory pending = protocol.getUserPendingAction(address(this));
+        assertEq(uint256(pending.action), uint256(ProtocolAction.None), "user 0 deposit should not be initiated");
+
+        assertEq(
+            userPosId.tickVersion + 1, protocol.getTickVersion(userPosId.tick), "user 1 position should be liquidated"
+        );
+
+        assertEq(wstethBalanceBefore, wstETH.balanceOf(address(this)), "user 1 should not have spent wstETH");
     }
 
     // test refunds

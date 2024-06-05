@@ -10,24 +10,36 @@ import {
 } from "@uniswap/universal-router/contracts/modules/PaymentsImmutables.sol";
 
 import { Dispatcher } from "src/UniversalRouter/base/Dispatcher.sol";
-import { IUniversalRouter } from "src/UniversalRouter/interfaces/IUniversalRouter.sol";
+import { IUniversalRouter } from "src/interfaces/UniversalRouter/IUniversalRouter.sol";
 import { RouterParameters } from "src/UniversalRouter/base/RouterImmutables.sol";
 import { Commands } from "src/UniversalRouter/libraries/Commands.sol";
-
+import {
+    UsdnProtocolImmutables, UsdnProtocolParameters
+} from "src/UniversalRouter/modules/usdn/UsdnProtocolImmutables.sol";
+import { LidoImmutables } from "src/UniversalRouter/modules/lido/LidoImmutables.sol";
 import { UsdnImmutables, UsdnParameters } from "src/UniversalRouter/modules/usdn/UsdnImmutables.sol";
 
 contract UniversalRouter is IUniversalRouter, Dispatcher {
+    /**
+     * @notice Reverts if the transaction deadline has passed
+     * @param deadline The deadline to check
+     */
     modifier checkDeadline(uint256 deadline) {
         if (block.timestamp > deadline) revert TransactionDeadlinePassed();
         _;
     }
 
+    /**
+     * @param params The immutable parameters of the router
+     */
     constructor(RouterParameters memory params)
         UniswapImmutables(
             UniswapParameters(params.v2Factory, params.v3Factory, params.pairInitCodeHash, params.poolInitCodeHash)
         )
         PaymentsImmutables(PaymentsParameters(params.permit2, params.weth9, address(0), address(0)))
         UsdnImmutables(UsdnParameters(params.usdn, params.wusdn, params.usdnProtocol))
+        UsdnProtocolImmutables(UsdnProtocolParameters(params.usdnProtocol))
+        LidoImmutables(params.wstEth)
     { }
 
     /// @inheritdoc IUniversalRouter
@@ -39,8 +51,8 @@ contract UniversalRouter is IUniversalRouter, Dispatcher {
         execute(commands, inputs);
     }
 
-    /// @inheritdoc Dispatcher
-    function execute(bytes calldata commands, bytes[] calldata inputs) public payable override isNotLocked {
+    /// @inheritdoc IUniversalRouter
+    function execute(bytes calldata commands, bytes[] calldata inputs) public payable isNotLocked {
         bool success;
         bytes memory output;
         uint256 numCommands = commands.length;
@@ -66,6 +78,11 @@ contract UniversalRouter is IUniversalRouter, Dispatcher {
         }
     }
 
+    /**
+     * @notice Verifies if a command requires success or not
+     * @param command The command to check
+     * @return True if the command requires success, false otherwise
+     */
     function successRequired(bytes1 command) internal pure returns (bool) {
         return command & Commands.FLAG_ALLOW_REVERT == 0;
     }

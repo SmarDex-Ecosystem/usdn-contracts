@@ -2,11 +2,11 @@
 pragma solidity 0.8.20;
 
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { PreviousActionsData, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PreviousActionsData, PositionId, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { ADMIN, DEPLOYER } from "test/utils/Constants.sol";
+import { ADMIN, DEPLOYER, USER_1 } from "test/utils/Constants.sol";
 
 /**
  * @custom:feature Test of the protocol expo limit for `_checkImbalanceLimitClose` function in a balanced state
@@ -17,7 +17,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
 
         // we enable only close limit
         vm.prank(ADMIN);
-        protocol.setExpoImbalanceLimits(0, 0, 0, 600);
+        protocol.setExpoImbalanceLimits(0, 0, 0, 600, 0);
     }
 
     /**
@@ -57,8 +57,8 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
         (, uint256 longAmount, uint256 totalExpoValueToLimit) = _getCloseLimitValues();
 
         vm.prank(ADMIN);
-        // disable limit
-        protocol.setExpoImbalanceLimits(200, 200, 600, 0);
+        // disable close limit
+        protocol.setExpoImbalanceLimits(200, 200, 600, 0, 0);
 
         protocol.i_checkImbalanceLimitClose(totalExpoValueToLimit + 1, longAmount);
     }
@@ -72,11 +72,11 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_checkImbalanceLimitCloseZeroLongExpo() public {
         // initial limit
-        (,,, int256 initialCloseLimit) = protocol.getExpoImbalanceLimits();
+        int256 initialCloseLimit = protocol.getCloseExpoImbalanceLimitBps();
 
         // disable limits
         vm.prank(ADMIN);
-        protocol.setExpoImbalanceLimits(0, 0, 0, 0);
+        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
 
         // the initialized tick
         int24 tick = protocol.getHighestPopulatedTick();
@@ -90,14 +90,14 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
 
         // initiate close
         protocol.initiateClosePosition(
-            PositionId(tick, 0, 0), params.initialLong, abi.encode(params.initialPrice), data, DEPLOYER
+            PositionId(tick, 0, 0), params.initialLong, DEPLOYER, abi.encode(params.initialPrice), data
         );
 
         // wait more than 2 blocks
         _waitDelay();
 
         // validate close
-        protocol.validateClosePosition(abi.encode(params.initialPrice), data);
+        protocol.validateClosePosition(DEPLOYER, abi.encode(params.initialPrice), data);
 
         vm.stopPrank();
 
@@ -106,11 +106,36 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
 
         // reassign limit to activate verification
         vm.prank(ADMIN);
-        protocol.setExpoImbalanceLimits(0, 0, 0, uint256(initialCloseLimit));
+        protocol.setExpoImbalanceLimits(0, 0, 0, uint256(initialCloseLimit), 0);
 
         // should revert
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidLongExpo.selector);
         protocol.i_checkImbalanceLimitClose(0, 0);
+    }
+
+    /**
+     * @custom:scenario Check close imbalance when there are pending deposits
+     * @custom:given The protocol is in an unbalanced state due to pending deposits
+     * @custom:when The `_checkImbalanceLimitClose` function is called
+     * @custom:then The transaction should revert with the expected imbalance
+     */
+    function test_RevertWhen_checkImbalanceLimitClosePendingVaultActions() public {
+        (, uint256 longAmount, uint256 totalExpoValueToLimit) = _getCloseLimitValues();
+
+        // this action will affect the vault trading expo once it's validated
+        setUpUserPositionInVault(USER_1, ProtocolAction.InitiateDeposit, params.initialDeposit, params.initialPrice);
+
+        int256 currentVaultExpo = int256(protocol.getBalanceVault()) + protocol.getPendingBalanceVault();
+        int256 newLongExpo =
+            int256(protocol.getTotalExpo() - totalExpoValueToLimit) - int256(protocol.getBalanceLong() - longAmount);
+        int256 expectedImbalance = (currentVaultExpo - newLongExpo) * int256(protocol.BPS_DIVISOR()) / newLongExpo;
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, uint256(expectedImbalance)
+            )
+        );
+        protocol.i_checkImbalanceLimitClose(totalExpoValueToLimit, longAmount);
     }
 
     function _getCloseLimitValues()
@@ -122,15 +147,16 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
         uint256 longExpo = protocol.getTotalExpo() - protocol.getBalanceLong();
 
         // close limit bps
-        (,,, closeLimitBps_) = protocol.getExpoImbalanceLimits();
+        closeLimitBps_ = protocol.getCloseExpoImbalanceLimitBps();
 
         // the imbalance ratio: must be scaled for calculation
         uint256 scaledImbalanceRatio = FixedPointMathLib.divWad(uint256(closeLimitBps_), protocol.BPS_DIVISOR());
 
+        uint256 vaultExpo = uint256(int256(protocol.getBalanceVault()) + protocol.getPendingBalanceVault());
+
         // long expo value limit from current vault expo: numerator and denominator
         // are at the same scale and result is rounded up
-        uint256 longExpoLimit =
-            FixedPointMathLib.divWadUp(protocol.getBalanceVault(), FixedPointMathLib.WAD + scaledImbalanceRatio);
+        uint256 longExpoLimit = FixedPointMathLib.divWadUp(vaultExpo, FixedPointMathLib.WAD + scaledImbalanceRatio);
 
         // the long expo value to reach limit from current long expo
         uint256 longExpoValueToLimit = longExpo - longExpoLimit;

@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { OracleMiddlewareBaseIntegrationFixture } from "test/integration/Middlewares/utils/Fixtures.sol";
-import { PYTH_STETH_USD } from "test/utils/Constants.sol";
+import { PYTH_ETH_USD } from "test/utils/Constants.sol";
 
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
@@ -28,10 +28,10 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
     /**
      * @custom:scenario Parse and validate price with mocked hermes API signature for pyth
-     * @custom:given The price feed is wstETH/USD for pyth
+     * @custom:given The price feed is ETH/USD for pyth
      * @custom:and The validationDelay is respected
-     * @custom:when Protocol action is any targeted action
-     * @custom:then The price signature is well decoded
+     * @custom:when The Protocol action is any targeted action
+     * @custom:then The price signature is well-decoded
      * @custom:and The price retrieved by the oracle middleware is the same as the one from the hermes API
      */
     function test_ForkParseAndValidatePriceForAllActionsWithPyth() public ethMainnetFork reSetUp {
@@ -45,11 +45,11 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
             // pyth data
             (uint256 pythPrice, uint256 pythConf, uint256 pythDecimals, uint256 pythTimestamp, bytes memory data) =
-                getMockedPythSignatureStETH();
-            // Apply conf ratio to pyth confidence
+                getMockedPythSignatureETH();
+            // apply conf ratio to pyth confidence
             pythConf = (
-                pythConf * 10 ** (oracleMiddleware.getDecimals() - pythDecimals) * oracleMiddleware.getConfRatio()
-            ) / oracleMiddleware.getConfRatioDenom();
+                pythConf * 10 ** (oracleMiddleware.getDecimals() - pythDecimals) * oracleMiddleware.getConfRatioBps()
+            ) / oracleMiddleware.BPS_DIVISOR();
 
             // middleware data
             PriceInfo memory middlewarePrice;
@@ -60,13 +60,13 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
                     || action == ProtocolAction.InitiateDeposit || action == ProtocolAction.InitiateWithdrawal
                     || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.InitiateClosePosition
             ) {
-                // Since we force the usage of Pyth for initiate actions, Pyth requires that the price data timestamp
-                // is recent compared to block.timestamp
+                // since we force the usage of Pyth for initiate actions, Pyth requires
+                // that the price data timestamp is recent compared to block.timestamp
                 vm.warp(pythTimestamp);
-                middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: validationCost }(0, action, data);
+                middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: validationCost }("", 0, action, data);
             } else {
                 middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-                    uint128(pythTimestamp - oracleMiddleware.getValidationDelay()), action, data
+                    "", uint128(pythTimestamp - oracleMiddleware.getValidationDelay()), action, data
                 );
             }
 
@@ -75,21 +75,21 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
             uint256 formattedPythPrice = pythPrice * 10 ** (oracleMiddleware.getDecimals() - pythDecimals);
 
-            // Price + conf
+            // price + conf
             if (
                 action == ProtocolAction.InitiateWithdrawal || action == ProtocolAction.ValidateWithdrawal
                     || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.ValidateOpenPosition
             ) {
                 assertEq(middlewarePrice.price, formattedPythPrice + pythConf, priceError);
             }
-            // Price - conf
+            // price - conf
             else if (
                 action == ProtocolAction.InitiateDeposit || action == ProtocolAction.ValidateDeposit
                     || action == ProtocolAction.InitiateClosePosition || action == ProtocolAction.ValidateClosePosition
             ) {
                 assertEq(middlewarePrice.price, formattedPythPrice - pythConf, priceError);
             }
-            // Price only
+            // price only
             else {
                 // check price
                 assertEq(middlewarePrice.price, formattedPythPrice, priceError);
@@ -98,10 +98,10 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
     }
 
     /**
-     * @custom:scenario Parse and validate price with chainlink onchain
-     * @custom:given The price feed is steth/usd for chainlink
-     * @custom:when Protocol action is any targeted action
-     * @custom:then The price retrieved by the oracle middleware is the same as the one from chainlink onchain data
+     * @custom:scenario Parse and validate price with chainlink on-chain
+     * @custom:given The price feed is eth/usd for chainlink
+     * @custom:when The protocol action is any targeted action
+     * @custom:then The price retrieved by the oracle middleware is the same as the one from chainlink on-chain data
      */
     function test_ForkParseAndValidatePriceForAllInitiateActionsWithChainlink() public ethMainnetFork reSetUp {
         // all targeted actions loop
@@ -109,7 +109,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             // action type
             ProtocolAction action = actions[i];
 
-            // If the action is only available for pyth, skip it
+            // if the action is only available for pyth, skip it
             if (
                 action == ProtocolAction.None || action == ProtocolAction.ValidateDeposit
                     || action == ProtocolAction.ValidateWithdrawal || action == ProtocolAction.ValidateOpenPosition
@@ -127,7 +127,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             (uint256 chainlinkPrice, uint256 chainlinkTimestamp) = getChainlinkPrice();
             // middleware data
             PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice(
-                uint128(block.timestamp - oracleMiddleware.getValidationDelay()), action, ""
+                "", uint128(block.timestamp - oracleMiddleware.getValidationDelay()), action, ""
             );
             // timestamp check
             assertEq(middlewarePrice.timestamp, chainlinkTimestamp, timestampError);
@@ -147,10 +147,10 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
     /**
      * @custom:scenario Parse and validate price with mocked hermes API signature for pyth
-     * @custom:given The price feed is wstETH/USD for pyth
+     * @custom:given The price feed is ETH/USD for pyth
      * @custom:and The validation delay is respected
-     * @custom:when Protocol action is any targeted action
-     * @custom:then The price signature is well decoded
+     * @custom:when The Protocol action is any targeted action
+     * @custom:then The price signature is well-decoded
      * @custom:and The price retrieved by the oracle middleware is the same as the one from the hermes API
      */
     function test_ForkFFIParseAndValidatePriceForAllActionsWithPyth() public ethMainnetFork reSetUp {
@@ -164,11 +164,11 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
             // pyth data
             (uint256 pythPrice, uint256 pythConf, uint256 pythDecimals, uint256 pythTimestamp, bytes memory data) =
-                getHermesApiSignature(PYTH_STETH_USD, block.timestamp);
-            // Apply conf ratio to pyth confidence
+                getHermesApiSignature(PYTH_ETH_USD, block.timestamp);
+            // apply conf ratio to pyth confidence
             pythConf = (
-                pythConf * 10 ** (oracleMiddleware.getDecimals() - pythDecimals) * oracleMiddleware.getConfRatio()
-            ) / oracleMiddleware.getConfRatioDenom();
+                pythConf * 10 ** (oracleMiddleware.getDecimals() - pythDecimals) * oracleMiddleware.getConfRatioBps()
+            ) / oracleMiddleware.BPS_DIVISOR();
 
             // middleware data
             PriceInfo memory middlewarePrice;
@@ -178,13 +178,13 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
                     || action == ProtocolAction.InitiateDeposit || action == ProtocolAction.InitiateWithdrawal
                     || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.InitiateClosePosition
             ) {
-                // Since we force the usage of Pyth for initiate actions, Pyth requires that the price data timestamp
-                // is recent compared to block.timestamp
+                // since we force the usage of Pyth for initiate actions, Pyth requires
+                // that the price data timestamp is recent compared to block.timestamp
                 vm.warp(pythTimestamp);
-                middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: validationCost }(0, action, data);
+                middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: validationCost }("", 0, action, data);
             } else {
                 middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-                    uint128(pythTimestamp - oracleMiddleware.getValidationDelay()), action, data
+                    "", uint128(pythTimestamp - oracleMiddleware.getValidationDelay()), action, data
                 );
             }
 
@@ -192,21 +192,21 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
             // timestamp check
             assertEq(middlewarePrice.timestamp, pythTimestamp);
-            // Price + conf
+            // price + conf
             if (
                 action == ProtocolAction.InitiateWithdrawal || action == ProtocolAction.ValidateWithdrawal
                     || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.ValidateOpenPosition
             ) {
                 assertEq(middlewarePrice.price, formattedPythPrice + pythConf, priceError);
             }
-            // Price - conf
+            // price - conf
             else if (
                 action == ProtocolAction.InitiateDeposit || action == ProtocolAction.ValidateDeposit
                     || action == ProtocolAction.InitiateClosePosition || action == ProtocolAction.ValidateClosePosition
             ) {
                 assertEq(middlewarePrice.price, formattedPythPrice - pythConf, priceError);
             }
-            // Price only
+            // price only
             else {
                 // check price
                 assertEq(middlewarePrice.price, formattedPythPrice, priceError);
@@ -215,11 +215,11 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
     }
 
     /**
-     * @custom:scenario Parse and validate price with chainlink onchain
-     * @custom:given The price feed is steth/usd for chainlink
-     * @custom:when Protocol action is an initiateDeposit
-     * @custom:then The price signature is well decoded
-     * @custom:and The price retrieved by the oracle middleware is the same as the one from the chainlink onchain data
+     * @custom:scenario Parse and validate price with chainlink on-chain
+     * @custom:given The price feed is eth/usd for chainlink
+     * @custom:when Protocol action is an `initiateDeposit`
+     * @custom:then The price signature is well-decoded
+     * @custom:and The price retrieved by the oracle middleware is the same as the one from the chainlink on-chain data
      */
     function test_ForkFFIParseAndValidatePriceForAllInitiateActionsWithChainlink() public ethMainnetFork reSetUp {
         // all targeted actions loop
@@ -227,7 +227,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             // action type
             ProtocolAction action = actions[i];
 
-            // If the action is only available for pyth, skip it
+            // if the action is only available for pyth, skip it
             if (
                 action == ProtocolAction.None || action == ProtocolAction.ValidateDeposit
                     || action == ProtocolAction.ValidateWithdrawal || action == ProtocolAction.ValidateOpenPosition
@@ -245,7 +245,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             (uint256 chainlinkPrice, uint256 chainlinkTimestamp) = getChainlinkPrice();
             // middleware data
             PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice(
-                uint128(block.timestamp - oracleMiddleware.getValidationDelay()), action, ""
+                "", uint128(block.timestamp - oracleMiddleware.getValidationDelay()), action, ""
             );
             // timestamp check
             assertEq(middlewarePrice.timestamp, chainlinkTimestamp, timestampError);
@@ -260,7 +260,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
     }
 
     /**
-     * @custom:scenario Use cached Pyth value for initiate actions if possible
+     * @custom:scenario Use cached Pyth value for `initiate` actions if possible
      * @custom:given A pyth signature was provided to the oracle more recently than the latest chainlink on-chain data
      * @custom:when A user retrieves a price for a `initiate` action without providing data
      * @custom:then The price retrieved by the oracle middleware is the one from pyth
@@ -270,11 +270,12 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
         (uint256 chainlinkPrice, uint256 chainlinkTimestamp) = getChainlinkPrice();
 
         // get pyth price that must be more recent than chainlink data
-        (,,,, bytes memory data) = getHermesApiSignature(PYTH_STETH_USD, chainlinkTimestamp + 1);
+        (,,,, bytes memory data) = getHermesApiSignature(PYTH_ETH_USD, chainlinkTimestamp + 1);
         uint256 validationCost = oracleMiddleware.validationCost(data, ProtocolAction.ValidateDeposit);
 
         // submit to oracle middleware so it gets cached by Pyth
         PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
+            "",
             uint128(chainlinkTimestamp + 1 - oracleMiddleware.getValidationDelay()),
             ProtocolAction.ValidateDeposit,
             data
@@ -282,7 +283,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
         // get oracle middleware price without providing data
         PriceInfo memory cachedMiddlewarePrice =
-            oracleMiddleware.parseAndValidatePrice(uint128(block.timestamp), ProtocolAction.InitiateDeposit, "");
+            oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.InitiateDeposit, "");
 
         // timestamp check
         assertEq(cachedMiddlewarePrice.timestamp, middlewarePrice.timestamp, "timestamp equal to pyth timestamp");
@@ -297,7 +298,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
      * @custom:given A pyth signature was provided to the oracle more recently than the last chainlink price
      * @custom:and The chainlink price is too old (there is a problem with chainlink)
      * @custom:when A user retrieves a price for a `initiate` action without providing data
-     * @custom:then The price is retrieved from Pyth but checked for freshness and the tx reverts with
+     * @custom:then The price is retrieved from Pyth but checked for freshness and the transaction reverts with
      * `OracleMiddlewarePriceTooOld`
      */
     function test_RevertWhen_ForkFFIOldCachedPythPrice() public ethMainnetFork reSetUp {
@@ -305,11 +306,12 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
         (, uint256 chainlinkTimestamp) = getChainlinkPrice();
 
         // get pyth price that must be more recent than chainlink data
-        (,,,, bytes memory data) = getHermesApiSignature(PYTH_STETH_USD, chainlinkTimestamp + 1);
+        (,,,, bytes memory data) = getHermesApiSignature(PYTH_ETH_USD, chainlinkTimestamp + 1);
         uint256 validationCost = oracleMiddleware.validationCost(data, ProtocolAction.ValidateDeposit);
 
         // submit to oracle middleware so it gets cached by Pyth
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
+            "",
             uint128(chainlinkTimestamp + 1 - oracleMiddleware.getValidationDelay()),
             ProtocolAction.ValidateDeposit,
             data
@@ -320,7 +322,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
         // get oracle middleware price without providing data
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePriceTooOld.selector, chainlinkTimestamp + 1));
-        oracleMiddleware.parseAndValidatePrice(uint128(block.timestamp), ProtocolAction.InitiateDeposit, "");
+        oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.InitiateDeposit, "");
     }
 
     // receive ether refunds

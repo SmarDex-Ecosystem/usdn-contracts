@@ -17,11 +17,9 @@ contract TestImbalanceLimitDepositFuzzing is UsdnProtocolBaseFixture {
      * @custom:when The `imbalanceLimitDeposit` is called with a random amount
      * @custom:then The transaction should revert in case imbalance or pass if still balanced
      */
-    function testFuzz_checkImbalanceLimitDeposit(uint128 initialDeposit, uint128 initialLong, uint256 depositAmount)
-        public
-    {
+    function testFuzz_checkImbalanceLimitDeposit(uint128 initialAmount, uint256 depositAmount) public {
         // initialize random balanced protocol
-        _randInitBalanced(initialDeposit, initialLong);
+        _randInitBalanced(initialAmount);
         // range depositAmount properly
         depositAmount = bound(depositAmount, 1, type(uint128).max);
         // new vault expo
@@ -33,7 +31,7 @@ contract TestImbalanceLimitDepositFuzzing is UsdnProtocolBaseFixture {
             (newExpoVault - int256(initialLongExpo)) * int256(protocol.BPS_DIVISOR()) / int256(initialLongExpo);
 
         // initial deposit limit bps
-        (, int256 depositLimit,,) = protocol.getExpoImbalanceLimits();
+        int256 depositLimit = protocol.getDepositExpoImbalanceLimitBps();
 
         if (imbalanceBps >= depositLimit) {
             // should revert with above deposit imbalance limit

@@ -10,10 +10,27 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @title Router for Uniswap v2 Trades
 abstract contract V2SwapRouter is UniswapImmutables, Permit2Payments {
+    /// @notice Error emitted when the amount received is too low
     error V2TooLittleReceived();
+    /// @notice Error emitted when the amount requested is too high
     error V2TooMuchRequested();
+    /// @notice Error emitted when the path is invalid
     error V2InvalidPath();
 
+    /**
+     * @dev Structure to hold the data for a swap
+     * @param input The input token address
+     * @param output The output token address
+     * @param nextPair The next pair to swap to
+     * @param reserve0 The reserve0 of the pair
+     * @param reserve1 The reserve1 of the pair
+     * @param reserveInput The reserve of the input token
+     * @param reserveOutput The reserve of the output token
+     * @param amountInput The amount of input tokens
+     * @param amountOutput The amount of output tokens
+     * @param amount0Out The amount of token0 to swap
+     * @param amount1Out The amount of token1 to swap
+     */
     struct V2SwapData {
         address input;
         address output;
@@ -28,6 +45,12 @@ abstract contract V2SwapRouter is UniswapImmutables, Permit2Payments {
         uint256 amount1Out;
     }
 
+    /**
+     * @notice Checks if the path is valid and performs the swap
+     * @param path The path of the trade as an array of token addresses
+     * @param recipient The recipient of the output tokens
+     * @param pair The address of the pair to start the swap
+     */
     function _v2Swap(address[] calldata path, address recipient, address pair) private {
         unchecked {
             if (path.length < 2) {
@@ -66,12 +89,14 @@ abstract contract V2SwapRouter is UniswapImmutables, Permit2Payments {
         }
     }
 
-    /// @notice Performs a Uniswap v2 exact input swap
-    /// @param recipient The recipient of the output tokens
-    /// @param amountIn The amount of input tokens for the trade
-    /// @param amountOutMinimum The minimum desired amount of output tokens
-    /// @param path The path of the trade as an array of token addresses
-    /// @param payer The address that will be paying the input
+    /**
+     * @notice Performs a Uniswap v2 exact input swap
+     * @param recipient The recipient of the output tokens
+     * @param amountIn The amount of input tokens for the trade
+     * @param amountOutMinimum The minimum desired amount of output tokens
+     * @param path The path of the trade as an array of token addresses
+     * @param payer The address that will be paying the input
+     */
     function v2SwapExactInput(
         address recipient,
         uint256 amountIn,
@@ -98,12 +123,14 @@ abstract contract V2SwapRouter is UniswapImmutables, Permit2Payments {
         }
     }
 
-    /// @notice Performs a Uniswap v2 exact output swap
-    /// @param recipient The recipient of the output tokens
-    /// @param amountOut The amount of output tokens to receive for the trade
-    /// @param amountInMaximum The maximum desired amount of input tokens
-    /// @param path The path of the trade as an array of token addresses
-    /// @param payer The address that will be paying the input
+    /**
+     * @notice Performs a Uniswap v2 exact output swap
+     * @param recipient The recipient of the output tokens
+     * @param amountOut The amount of output tokens to receive for the trade
+     * @param amountInMaximum The maximum desired amount of input tokens
+     * @param path The path of the trade as an array of token addresses
+     * @param payer The address that will be paying the input
+     */
     function v2SwapExactOutput(
         address recipient,
         uint256 amountOut,

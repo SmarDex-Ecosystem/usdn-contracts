@@ -27,20 +27,14 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
         price_ = usdnPrice(currentPrice, uint128(block.timestamp));
     }
 
-    /**
-     * @notice Calculate an estimation of assets received when withdrawing
-     * @param usdnShares The amount of USDN shares
-     * @param price The price of the asset
-     * @param timestamp The timestamp of the operation
-     * @return assetExpected_ The expected amount of asset to be received
-     */
+    /// @inheritdoc IUsdnProtocolVault
     function previewWithdraw(uint256 usdnShares, uint256 price, uint128 timestamp)
-        public
+        external
         view
         returns (uint256 assetExpected_)
     {
         // Apply fees on price
-        uint128 withdrawalPriceWithFees = (price + price * _positionFeeBps / BPS_DIVISOR).toUint128();
+        uint128 withdrawalPriceWithFees = (price + price * _vaultFeeBps / BPS_DIVISOR).toUint128();
         int256 available = vaultAssetAvailableWithFunding(withdrawalPriceWithFees, timestamp);
         if (available < 0) {
             return 0;
@@ -118,55 +112,70 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
      * @param assetPrice The current price of the underlying asset
      * @param ignoreInterval If true, then the price check will be performed regardless of when the last check happened
      * @return rebased_ Whether a rebase was performed
+     * @return callbackResult_ The rebase callback result, if any
      */
-    function _usdnRebase(uint128 assetPrice, bool ignoreInterval) internal returns (bool rebased_) {
+    function _usdnRebase(uint128 assetPrice, bool ignoreInterval)
+        internal
+        returns (bool rebased_, bytes memory callbackResult_)
+    {
         if (!ignoreInterval && block.timestamp - _lastRebaseCheck < _usdnRebaseInterval) {
-            return false;
+            return (false, callbackResult_);
         }
         _lastRebaseCheck = block.timestamp;
         IUsdn usdn = _usdn;
         uint256 divisor = usdn.divisor();
         if (divisor <= _usdnMinDivisor) {
             // no need to rebase, the USDN divisor cannot go lower
-            return false;
+            return (false, callbackResult_);
         }
         uint256 balanceVault = _balanceVault;
         uint8 assetDecimals = _assetDecimals;
         uint256 usdnTotalSupply = usdn.totalSupply();
         uint256 uPrice = _calcUsdnPrice(balanceVault, assetPrice, usdnTotalSupply, assetDecimals);
         if (uPrice <= _usdnRebaseThreshold) {
-            return false;
+            return (false, callbackResult_);
         }
         uint256 targetTotalSupply = _calcRebaseTotalSupply(balanceVault, assetPrice, _targetUsdnPrice, assetDecimals);
         uint256 newDivisor = FixedPointMathLib.fullMulDiv(usdnTotalSupply, divisor, targetTotalSupply);
-        usdn.rebase(newDivisor);
-        rebased_ = true;
+        // since the USDN token can call a handler after the rebase, we want to make sure we do not block the user
+        // action in case the rebase fails
+        try usdn.rebase(newDivisor) returns (bool rebased, uint256, bytes memory callbackResult) {
+            rebased_ = rebased;
+            callbackResult_ = callbackResult;
+        } catch { }
     }
 
     /**
-     * @notice Calculates the amount of USDN to mint for a given amount of asset
+     * @notice Calculates the amount of USDN shares to mint for a given amount of asset
      * @param amount The amount of asset to be converted into USDN
      * @param vaultBalance The balance of the vault (not used for initialization)
-     * @param usdnTotalSupply The total supply of USDN (not used for initialization)
+     * @param usdnTotalShares The total supply of USDN (not used for initialization)
      * @param price The price of the asset (only used for initialization)
      * @return toMint_ The amount of USDN to mint
-     * @dev The amount of USDN to mint is calculated as follows:
+     * @dev The amount of USDN shares to mint is calculated as follows:
      * amountUsdn = amountAsset * priceAsset / priceUsdn,
      * but since priceUsdn = vaultBalance * priceAsset / totalSupply, we can simplify to
-     * amountUsdn = amountAsset * totalSupply / vaultBalance.
+     * amountUsdn = amountAsset * totalSupply / vaultBalance, and
+     * sharesUsdn = amountAsset * totalShares / vaultBalance
      */
-    function _calcMintUsdn(uint256 amount, uint256 vaultBalance, uint256 usdnTotalSupply, uint256 price)
+    function _calcMintUsdnShares(uint256 amount, uint256 vaultBalance, uint256 usdnTotalShares, uint256 price)
         internal
         view
         returns (uint256 toMint_)
     {
         if (vaultBalance == 0) {
             // initialization, we consider the USDN price to be 1 USD
-            return FixedPointMathLib.fullMulDiv(
-                amount, price, 10 ** (_assetDecimals + _priceFeedDecimals - TOKENS_DECIMALS)
+            // the conversion here is necessary since we calculate an amount in tokens and we want the corresponding
+            // amount of shares
+            return _usdn.convertToShares(
+                FixedPointMathLib.fullMulDiv(
+                    amount, price, 10 ** (_assetDecimals + _priceFeedDecimals - TOKENS_DECIMALS)
+                )
             );
         }
-        toMint_ = FixedPointMathLib.fullMulDiv(amount, usdnTotalSupply, vaultBalance);
+        // for subsequent calculations, we can simply mint a proportional number of shares corresponding to the new
+        // assets deposited into the vault
+        toMint_ = FixedPointMathLib.fullMulDiv(amount, usdnTotalShares, vaultBalance);
     }
 
     /**
@@ -185,19 +194,5 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
      */
     function _calcWithdrawalAmountMSB(uint152 usdnShares) internal pure returns (uint128 sharesMSB_) {
         sharesMSB_ = uint128(usdnShares >> 24);
-    }
-
-    /**
-     * @notice Merge the two parts of the withdrawal amount (USDN shares) stored in the `WithdrawalPendingAction`.
-     * @param sharesLSB The lower 24 bits of the USDN shares
-     * @param sharesMSB The higher bits of the USDN shares
-     * @return usdnShares_ The amount of USDN shares
-     */
-    function _mergeWithdrawalAmountParts(uint24 sharesLSB, uint128 sharesMSB)
-        internal
-        pure
-        returns (uint256 usdnShares_)
-    {
-        usdnShares_ = sharesLSB | uint256(sharesMSB) << 24;
     }
 }

@@ -94,6 +94,10 @@ Fuzzing tests take one or more parameters which will be fuzzed and should be nam
 
 Invariant tests start with the keyword `invariant`: `invariant_totalSupply()`.
 
+Tests that require to fork mainnet are named `test_ForkSomethingHappens()`. If a test suite (contract) has all of its
+tests running through a mainnet fork, the test contract should be prefixed with `TestFork`:
+`TestForkContractNameMethod`.
+
 ### NatSpec
 
 For tests, a special set of NatSpec keywords are used to describe the test context and content, similar to what

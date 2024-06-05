@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { USER_1, USER_2, PYTH_STETH_USD } from "test/utils/Constants.sol";
+import { USER_1, USER_2, PYTH_ETH_USD } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "test/integration/UsdnProtocol/utils/Fixtures.sol";
 
 import { PendingAction, ProtocolAction, PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -10,10 +10,10 @@ import { PendingAction, ProtocolAction, PreviousActionsData } from "src/interfac
  * @custom:feature Validating two positions with Pyth prices at the same time
  * @custom:background Given a forked ethereum mainnet chain
  */
-contract ForkUsdnProtocolValidateTwoPosTest is UsdnProtocolBaseIntegrationFixture {
+contract TestForkUsdnProtocolValidateTwoPos is UsdnProtocolBaseIntegrationFixture {
     function setUp() public {
         params = DEFAULT_PARAMS;
-        params.fork = true; // all tests in this contract must be labelled `Fork`
+        params.fork = true; // all tests in this contract must be labeled `Fork`
         _setUp(params);
     }
 
@@ -25,7 +25,7 @@ contract ForkUsdnProtocolValidateTwoPosTest is UsdnProtocolBaseIntegrationFixtur
      * @custom:then Both pending actions get validated
      */
     function test_ForkFFIValidateTwoPos() public {
-        // Setup 2 pending actions
+        // setup 2 pending actions
         vm.startPrank(USER_1);
         (bool success,) = address(wstETH).call{ value: 10 ether }("");
         require(success, "USER_1 wstETH mint failed");
@@ -33,7 +33,9 @@ contract ForkUsdnProtocolValidateTwoPosTest is UsdnProtocolBaseIntegrationFixtur
         uint256 ethValue = oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition)
             + protocol.getSecurityDepositValue();
 
-        protocol.initiateOpenPosition{ value: ethValue }(2.5 ether, 1000 ether, "", EMPTY_PREVIOUS_DATA, address(this));
+        protocol.initiateOpenPosition{ value: ethValue }(
+            2.5 ether, 1000 ether, address(this), USER_1, "", EMPTY_PREVIOUS_DATA
+        );
         uint256 ts1 = block.timestamp;
         vm.stopPrank();
         skip(30);
@@ -41,17 +43,19 @@ contract ForkUsdnProtocolValidateTwoPosTest is UsdnProtocolBaseIntegrationFixtur
         (success,) = address(wstETH).call{ value: 10 ether }("");
         require(success, "USER_2 wstETH mint failed");
         wstETH.approve(address(protocol), type(uint256).max);
-        protocol.initiateOpenPosition{ value: ethValue }(2.5 ether, 1000 ether, "", EMPTY_PREVIOUS_DATA, address(this));
+        protocol.initiateOpenPosition{ value: ethValue }(
+            2.5 ether, 1000 ether, address(this), USER_2, "", EMPTY_PREVIOUS_DATA
+        );
         uint256 ts2 = block.timestamp;
         vm.stopPrank();
 
-        // Wait
+        // wait
         skip(2 hours);
 
-        // Second user tries to validate their action
-        (,,,, bytes memory data1) = getHermesApiSignature(PYTH_STETH_USD, ts1 + oracleMiddleware.getValidationDelay());
+        // second user tries to validate their action
+        (,,,, bytes memory data1) = getHermesApiSignature(PYTH_ETH_USD, ts1 + oracleMiddleware.getValidationDelay());
         uint256 data1Fee = oracleMiddleware.validationCost(data1, ProtocolAction.ValidateOpenPosition);
-        (,,,, bytes memory data2) = getHermesApiSignature(PYTH_STETH_USD, ts2 + oracleMiddleware.getValidationDelay());
+        (,,,, bytes memory data2) = getHermesApiSignature(PYTH_ETH_USD, ts2 + oracleMiddleware.getValidationDelay());
         uint256 data2Fee = oracleMiddleware.validationCost(data2, ProtocolAction.ValidateOpenPosition);
         bytes[] memory previousData = new bytes[](1);
         previousData[0] = data1;
@@ -59,9 +63,9 @@ contract ForkUsdnProtocolValidateTwoPosTest is UsdnProtocolBaseIntegrationFixtur
         rawIndices[0] = 0;
         vm.prank(USER_2);
         protocol.validateOpenPosition{ value: data1Fee + data2Fee }(
-            data2, PreviousActionsData(previousData, rawIndices)
+            USER_2, data2, PreviousActionsData(previousData, rawIndices)
         );
-        // No more pending action
+        // no more pending action
         (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 0, "pending actions length");
         vm.stopPrank();

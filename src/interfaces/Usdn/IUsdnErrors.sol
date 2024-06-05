@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
 /**
@@ -22,4 +22,7 @@ interface IUsdnErrors {
      * @param needed The desired amount of shares to transfer
      */
     error UsdnInsufficientSharesBalance(address sender, uint256 balance, uint256 needed);
+
+    /// @dev Indicates that the divisor value in storage is invalid
+    error UsdnInvalidDivisor();
 }

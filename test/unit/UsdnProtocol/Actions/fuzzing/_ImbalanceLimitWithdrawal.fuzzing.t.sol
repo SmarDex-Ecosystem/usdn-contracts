@@ -17,13 +17,9 @@ contract TestImbalanceLimitWithdrawalFuzzing is UsdnProtocolBaseFixture {
      * @custom:when The `imbalanceLimitWithdrawal` is called with a random amount
      * @custom:then The transaction should revert in case imbalance or pass if still balanced
      */
-    function testFuzz_checkImbalanceLimitWithdrawal(
-        uint128 initialDeposit,
-        uint128 initialLong,
-        uint256 withdrawalAmount
-    ) public {
+    function testFuzz_checkImbalanceLimitWithdrawal(uint128 initialAmount, uint256 withdrawalAmount) public {
         // initialize random balanced protocol
-        _randInitBalanced(initialDeposit, initialLong);
+        _randInitBalanced(initialAmount);
         uint256 vaultExpo = protocol.getBalanceVault();
         int256 currentLongExpo = int256(protocol.getTotalExpo() - protocol.getBalanceLong());
         // range withdrawalAmount properly
@@ -39,7 +35,7 @@ contract TestImbalanceLimitWithdrawalFuzzing is UsdnProtocolBaseFixture {
         }
 
         // initial withdrawal limit bps
-        (,, int256 withdrawalLimit,) = protocol.getExpoImbalanceLimits();
+        int256 withdrawalLimit = protocol.getWithdrawalExpoImbalanceLimitBps();
 
         uint256 totalExpo = protocol.getTotalExpo();
         if (newVaultExpo == 0) {

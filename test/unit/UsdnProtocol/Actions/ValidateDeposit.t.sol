@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { ADMIN, USER_1 } from "test/utils/Constants.sol";
 
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction, PositionId, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 
 /**
@@ -16,6 +16,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
     uint256 internal constant INITIAL_WSTETH_BALANCE = 10 ether;
     /// @notice Trigger a reentrancy after receiving ether
     bool internal _reenter;
+    uint128 constant DEPOSIT_AMOUNT = 1 ether;
 
     function setUp() public {
         params = DEFAULT_PARAMS;
@@ -83,15 +84,67 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateDeposit);
         assertEq(validationCost, 1);
-        protocol.initiateDeposit{ value: validationCost }(1 ether, currentPrice, EMPTY_PREVIOUS_DATA, address(this));
+        protocol.initiateDeposit{ value: validationCost }(
+            DEPOSIT_AMOUNT, address(this), address(this), currentPrice, EMPTY_PREVIOUS_DATA
+        );
 
         _waitDelay();
         // validate
         validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.ValidateDeposit);
         assertEq(validationCost, 1);
         uint256 balanceBefore = address(this).balance;
-        protocol.validateDeposit{ value: 0.5 ether }(currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit{ value: 0.5 ether }(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
+    }
+
+    /**
+     * @custom:scenario A validate deposit liquidates a tick but is not validated because another tick still needs to
+     * be liquidated
+     * @custom:given Two positions with different liquidation prices
+     * @custom:and A user initiated a deposit action
+     * @custom:when The `validateDeposit` function is called with a price below the liq price of both positions
+     * @custom:then One of the positions is liquidated
+     * @custom:and The deposit action isn't validated
+     * @custom:and The user's usdn balance should not change
+     */
+    function test_validateDepositIsPendingLiquidation() public {
+        PositionId memory userPosId = setUpUserPositionInLong(
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: params.initialPrice - params.initialPrice / 5,
+                price: params.initialPrice
+            })
+        );
+
+        _waitMockMiddlewarePriceDelay();
+
+        uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
+
+        protocol.initiateDeposit(
+            DEPOSIT_AMOUNT, address(this), address(this), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
+        );
+
+        _waitDelay();
+
+        bool success = protocol.validateDeposit(address(this), abi.encode(params.initialPrice / 3), EMPTY_PREVIOUS_DATA);
+        assertFalse(success, "success");
+
+        PendingAction memory pending = protocol.getUserPendingAction(address(this));
+        assertEq(
+            uint256(pending.action),
+            uint256(ProtocolAction.ValidateDeposit),
+            "user 0 pending action should not have been cleared"
+        );
+
+        assertEq(
+            userPosId.tickVersion + 1,
+            protocol.getTickVersion(userPosId.tick),
+            "user 1 position should have been liquidated"
+        );
+
+        assertEq(usdnBalanceBefore, usdn.balanceOf(address(this)), "user 0 should not have gotten any USDN");
     }
 
     /**
@@ -111,14 +164,14 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         vm.prank(ADMIN);
         protocol.setPositionFeeBps(0); // 0% fees
 
-        uint128 depositAmount = 1 ether;
         bytes memory currentPrice = abi.encode(initialPrice); // only used to apply PnL + funding
 
         uint256 initiateDepositTimestamp = block.timestamp;
         vm.expectEmit();
-        emit InitiatedDeposit(address(this), to, depositAmount, initiateDepositTimestamp); // expected event
-        protocol.initiateDeposit(depositAmount, currentPrice, EMPTY_PREVIOUS_DATA, to);
+        emit InitiatedDeposit(to, address(this), DEPOSIT_AMOUNT, initiateDepositTimestamp); // expected event
+        protocol.initiateDeposit(DEPOSIT_AMOUNT, to, address(this), currentPrice, EMPTY_PREVIOUS_DATA);
         uint256 vaultBalance = protocol.getBalanceVault(); // save for mint amount calculation in case price increases
+        bytes32 actionId = oracleMiddleware.lastActionId();
 
         // wait the required delay between initiation and validation
         _waitDelay();
@@ -132,19 +185,21 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         }
 
         // theoretical minted amount
-        uint256 mintedAmount = uint256(depositAmount) * usdn.totalSupply() / vaultBalance;
+        uint256 mintedAmount = uint256(DEPOSIT_AMOUNT) * usdn.totalSupply() / vaultBalance;
         assertEq(mintedAmount, expectedUsdnAmount, "minted amount");
 
         vm.expectEmit();
-        emit ValidatedDeposit(address(this), to, depositAmount, mintedAmount, initiateDepositTimestamp); // expected
+        emit ValidatedDeposit(to, address(this), DEPOSIT_AMOUNT, mintedAmount, initiateDepositTimestamp); // expected
             // event
-        protocol.validateDeposit(currentPrice, EMPTY_PREVIOUS_DATA);
+        bool success = protocol.validateDeposit(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+        assertTrue(success, "success");
 
         assertEq(usdn.balanceOf(to), mintedAmount, "USDN to balance");
         if (address(this) != to) {
             assertEq(usdn.balanceOf(address(this)), 0, "USDN user balance");
         }
         assertEq(usdn.totalSupply(), usdnInitialTotalSupply + mintedAmount, "USDN total supply");
+        assertEq(oracleMiddleware.lastActionId(), actionId, "middleware action ID");
     }
 
     /**
@@ -159,17 +214,47 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
 
         if (_reenter) {
             vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
-            protocol.validateDeposit(currentPrice, EMPTY_PREVIOUS_DATA);
+            protocol.validateDeposit(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
             return;
         }
 
-        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 1 ether, 2000 ether);
+        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, DEPOSIT_AMOUNT, 2000 ether);
 
         _reenter = true;
         // If a reentrancy occurred, the function should have been called 2 times
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.validateDeposit.selector), 2);
         // The value sent will cause a refund, which will trigger the receive() function of this contract
-        protocol.validateDeposit{ value: 1 }(currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit{ value: 1 }(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+    }
+
+    /**
+     * @custom:scenario The user initiates and validates (after the validationDeadline)
+     * a deposit with another validator
+     * @custom:given The user initiated a deposit of 1 wstETH
+     * @custom:and we wait until the validation deadline is passed
+     * @custom:when The user validates the deposit
+     * @custom:then The security deposit is refunded to the validator
+     */
+    function test_validateDepositEtherRefundToValidator() public {
+        vm.startPrank(ADMIN);
+        protocol.setPositionFeeBps(0); // 0% fees
+        protocol.setSecurityDepositValue(0.5 ether);
+        vm.stopPrank();
+
+        bytes memory currentPrice = abi.encode(uint128(2000 ether));
+
+        uint64 securityDepositValue = protocol.getSecurityDepositValue();
+        uint256 balanceUserBefore = USER_1.balance;
+        uint256 balanceContractBefore = address(this).balance;
+
+        protocol.initiateDeposit{ value: 0.5 ether }(
+            DEPOSIT_AMOUNT, address(this), USER_1, currentPrice, EMPTY_PREVIOUS_DATA
+        );
+        _waitBeforeActionablePendingAction();
+        protocol.validateDeposit(USER_1, currentPrice, EMPTY_PREVIOUS_DATA);
+
+        assertEq(USER_1.balance, balanceUserBefore + securityDepositValue, "user balance after refund");
+        assertEq(address(this).balance, balanceContractBefore - securityDepositValue, "contract balance after refund");
     }
 
     // test refunds

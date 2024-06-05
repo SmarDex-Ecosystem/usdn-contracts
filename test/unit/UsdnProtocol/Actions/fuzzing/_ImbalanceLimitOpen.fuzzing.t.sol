@@ -17,14 +17,9 @@ contract TestImbalanceLimitOpenFuzzing is UsdnProtocolBaseFixture {
      * @custom:when The `imbalanceLimitOpen` is called with a random amount
      * @custom:then The transaction should revert in case imbalance or pass if still balanced
      */
-    function testFuzz_checkImbalanceLimitOpen(
-        uint128 initialDeposit,
-        uint128 initialLong,
-        uint256 openAmount,
-        uint256 leverage
-    ) public {
+    function testFuzz_checkImbalanceLimitOpen(uint128 initialAmount, uint256 openAmount, uint256 leverage) public {
         // initialize random balanced protocol
-        _randInitBalanced(initialDeposit, initialLong);
+        _randInitBalanced(initialAmount);
 
         leverage = bound(leverage, protocol.getMinLeverage(), protocol.getMaxLeverage());
         // range withdrawalAmount properly
@@ -40,7 +35,7 @@ contract TestImbalanceLimitOpenFuzzing is UsdnProtocolBaseFixture {
         ) * int256(protocol.BPS_DIVISOR()) / vaultExpo;
 
         // initial open limit bps
-        (int256 openLimit,,,) = protocol.getExpoImbalanceLimits();
+        int256 openLimit = protocol.getOpenExpoImbalanceLimitBps();
 
         if (imbalanceBps >= openLimit) {
             // should revert with above open imbalance limit

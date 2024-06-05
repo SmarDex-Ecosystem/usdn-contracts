@@ -70,4 +70,7 @@ contract WstETH is ERC20, ERC20Permit, IWstETH {
     function decimals() public view override(ERC20, IERC20Metadata) returns (uint8) {
         return testDecimals;
     }
+
+    /// @dev Needed for interface compatibility
+    function stETH() external pure returns (address) { }
 }
