@@ -258,7 +258,13 @@ abstract contract Dispatcher is
                         ) = abi.decode(inputs, (address, bytes, PreviousActionsData));
                         _usdnValidateWithdrawal(map(validator), withdrawalPriceData, previousActionsData);
                     } else if (command == Commands.VALIDATE_OPEN) {
-                        // TODO VALIDATE_OPEN
+                        (
+                            address validator,
+                            bytes memory depositPriceData,
+                            PreviousActionsData memory previousActionsData,
+                            uint256 amounEther
+                        ) = abi.decode(inputs, (address, bytes, PreviousActionsData, uint256));
+                        _usdnValidateOpenPosition(map(validator), depositPriceData, previousActionsData, amounEther);
                     } else if (command == Commands.VALIDATE_CLOSE) {
                         // TODO VALIDATE_CLOSE
                     } else if (command == Commands.LIQUIDATE) {
