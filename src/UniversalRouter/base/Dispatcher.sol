@@ -272,24 +272,24 @@ abstract contract Dispatcher is
             } else {
                 if (command == Commands.WRAP_USDN) {
                     // equivalent: abi.decode(inputs, (uint256, address))
-                    uint256 assetAmount;
+                    uint256 usdnAmount;
                     address recipient;
                     assembly {
-                        assetAmount := calldataload(inputs.offset)
+                        usdnAmount := calldataload(inputs.offset)
                         recipient := calldataload(add(inputs.offset, 0x20))
                     }
-                    _wrapUSDN(assetAmount, map(recipient));
+                    _wrapUSDN(usdnAmount, map(recipient));
                 } else if (command == Commands.UNWRAP_WUSDN) {
                     // equivalent: abi.decode(inputs, (uint256, address, address))
-                    uint256 assetAmount;
+                    uint256 wusdnAmount;
                     address recipient;
                     address owner;
                     assembly {
-                        assetAmount := calldataload(inputs.offset)
+                        wusdnAmount := calldataload(inputs.offset)
                         recipient := calldataload(add(inputs.offset, 0x20))
                         owner := calldataload(add(inputs.offset, 0x40))
                     }
-                    _unwrapUSDN(assetAmount, map(recipient), map(owner));
+                    _unwrapUSDN(wusdnAmount, map(recipient), map(owner));
                 } else if (command == Commands.WRAP_STETH) {
                     // equivalent: abi.decode(inputs, address)
                     address recipient;

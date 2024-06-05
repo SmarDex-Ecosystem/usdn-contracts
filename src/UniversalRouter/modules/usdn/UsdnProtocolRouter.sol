@@ -11,11 +11,12 @@ import { UsdnProtocolImmutables } from "src/UniversalRouter/modules/usdn/UsdnPro
 import { PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IWusdn } from "src/interfaces/Usdn/IWusdn.sol";
+import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 
 abstract contract UsdnProtocolRouter is UsdnProtocolImmutables, Permit2Payments {
     using SafeCast for uint256;
     using SafeERC20 for IERC20Metadata;
-    using SafeERC20 for IWusdn;
+    using SafeERC20 for IUsdn;
 
     /**
      * @notice Initiate a deposit into the USDN protocol vault
@@ -152,8 +153,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables, Permit2Payments 
      * @param receiver The wusdn receiver
      */
     function _wrapUSDN(uint256 value, address receiver) internal {
-        IERC20Metadata usdn = IERC20Metadata(USDN);
-        uint256 balance = usdn.balanceOf(address(this));
+        uint256 balance = USDN.balanceOf(address(this));
 
         if (value == Constants.CONTRACT_BALANCE) {
             value = balance;
@@ -162,11 +162,8 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables, Permit2Payments 
         }
 
         if (value > 0) {
-            uint256 allowance = usdn.allowance(address(this), address(WUSDN));
-            if (allowance < value) {
-                usdn.safeIncreaseAllowance(address(WUSDN), value - allowance);
-                IWusdn(WUSDN).deposit(value, receiver);
-            }
+            USDN.forceApprove(address(WUSDN), value);
+            IWusdn(WUSDN).deposit(value, receiver);
         }
     }
 
@@ -176,8 +173,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables, Permit2Payments 
      * @param receiver The usdn receiver
      */
     function _unwrapUSDN(uint256 value, address receiver, address owner) internal {
-        IWusdn wusdn = IWusdn(WUSDN);
-        uint256 balance = wusdn.balanceOf(address(this));
+        uint256 balance = WUSDN.balanceOf(address(this));
 
         if (value == Constants.CONTRACT_BALANCE) {
             value = balance;
@@ -186,7 +182,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables, Permit2Payments 
         }
 
         if (value > 0) {
-            wusdn.redeem(value, receiver, owner);
+            WUSDN.redeem(value, receiver, owner);
         }
     }
 }
