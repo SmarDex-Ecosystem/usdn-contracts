@@ -36,8 +36,14 @@ interface IOracleMiddlewareErrors {
     /// @notice An incorrect amount of ether was provided to cover the cost of price validation
     error OracleMiddlewareIncorrectFee();
 
-    /// @notice The fee returned by the Pyth contract exceeded the safeguard value
+    /**
+     * @notice The validation fee returned by the Pyth contract exceeded the safeguard value
+     * @param fee The value of the fee returned by Pyth
+     */
     error OracleMiddlewarePythFeeSafeguard(uint256 fee);
+
+    /// @notice The redstone price is more than triple or less than a third of the latest chainlink price
+    error OracleMiddlewareRedstoneSafeguard();
 
     /**
      * @notice The withdrawal of the ether in the contract failed

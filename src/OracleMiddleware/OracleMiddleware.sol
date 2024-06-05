@@ -184,6 +184,19 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, RedstoneOracle, Chai
             // note: redstone automatically retrieves data from the end of the calldata, no need to pass the pointer
             RedstonePriceInfo memory redstonePrice = _getFormattedRedstonePrice(actionTimestamp, MIDDLEWARE_DECIMALS);
             price_ = _adjustRedstonePrice(redstonePrice, dir);
+            // sanity check the order of magnitude of the redstone price against chainlink
+            // if the redstone price is more than 3x the chainlink price or less than a third, we consider that it's
+            // not reliable
+            ChainlinkPriceInfo memory chainlinkPrice = _getFormattedChainlinkLatestPrice(MIDDLEWARE_DECIMALS);
+            // we check that the chainlink price is valid and not too old
+            if (
+                chainlinkPrice.price > 0
+                    && (
+                        price_.price > uint256(chainlinkPrice.price) * 3 || price_.price < uint256(chainlinkPrice.price) / 3
+                    )
+            ) {
+                revert OracleMiddlewareRedstoneSafeguard();
+            }
         }
     }
 

@@ -13,8 +13,10 @@ import { RedstonePriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddle
  * It is used by the USDN protocol to get the price of the underlying asset
  */
 abstract contract RedstoneOracle is PrimaryProdDataServiceConsumerBase, IOracleMiddlewareErrors {
+    /// @notice Interval between two Redstone price updates
     uint48 public constant REDSTONE_HEARTBEAT = 10 seconds;
 
+    /// @notice Number of decimals for prices contained in Redstone price updates
     uint8 public constant REDSTONE_DECIMALS = 8;
 
     /// @notice The ID of the Redstone price feed
