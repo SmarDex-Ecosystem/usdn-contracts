@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.17;
 
-import { ISmardexFactory } from "src/UniversalRouter/interfaces/ISmardexFactory.sol";
+import { ISmardexFactory } from "src/interfaces/UniversalRouter/smardex/ISmardexFactory.sol";
 import { IWETH9 } from "@uniswap/universal-router/contracts/interfaces/external/IWETH9.sol";
 
 /**

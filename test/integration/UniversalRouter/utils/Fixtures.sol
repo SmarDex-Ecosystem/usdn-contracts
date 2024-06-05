@@ -7,7 +7,7 @@ import { DEPLOYER, WETH, WSTETH } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "test/integration/UsdnProtocol/utils/Fixtures.sol";
 import { UniversalRouterHandler } from "test/integration/UniversalRouter/utils/Handler.sol";
 import { RouterParameters } from "src/UniversalRouter/base/RouterImmutables.sol";
-import { ISmardexFactory } from "src/UniversalRouter/interfaces/ISmardexFactory.sol";
+import { ISmardexFactory } from "src/interfaces/UniversalRouter/smardex/ISmardexFactory.sol";
 
 /**
  * @title UniversalRouterBaseFixture

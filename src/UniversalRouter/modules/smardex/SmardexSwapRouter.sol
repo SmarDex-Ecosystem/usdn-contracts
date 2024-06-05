@@ -8,8 +8,8 @@ import { Permit2Payments } from "@uniswap/universal-router/contracts/modules/Per
 import { Constants } from "@uniswap/universal-router/contracts/libraries/Constants.sol";
 import { V3Path } from "@uniswap/universal-router/contracts/modules/uniswap/v3/V3Path.sol";
 
-import { ISmardexFactory } from "src/UniversalRouter/interfaces/ISmardexFactory.sol";
-import { ISmardexPair } from "src/UniversalRouter/interfaces/ISmardexPair.sol";
+import { ISmardexFactory } from "src/interfaces/UniversalRouter/smardex/ISmardexFactory.sol";
+import { ISmardexPair } from "src/interfaces/UniversalRouter/smardex/ISmardexPair.sol";
 import { Path } from "src/UniversalRouter/libraries/Path.sol";
 import { SmardexImmutables } from "src/UniversalRouter/modules/smardex/SmardexImmutables.sol";
 

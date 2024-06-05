@@ -2,7 +2,7 @@
 pragma solidity 0.8.20;
 
 import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import { ISmardexFactory } from "src/UniversalRouter/interfaces/ISmardexFactory.sol";
+import { ISmardexFactory } from "src/interfaces/UniversalRouter/smardex/ISmardexFactory.sol";
 
 /**
  * @dev Structure to hold the immutable parameters for the router
