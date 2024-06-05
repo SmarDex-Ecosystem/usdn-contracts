@@ -358,6 +358,9 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, RedstoneOracle, Chai
      * @return Whether the data is for a Pyth message
      */
     function _isPythData(bytes calldata data) internal pure returns (bool) {
+        if (data.length <= 32) {
+            return false;
+        }
         // check the first 4 bytes of the data to identify a pyth message
         uint32 magic;
         assembly {
