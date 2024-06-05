@@ -1820,12 +1820,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             LiquidationsEffects memory liquidationEffects =
                 _liquidatePositions(_lastPrice, iterations, tempLongBalance, tempVaultBalance);
 
-            _triggerRebalancer(
-                uint128(neutralPrice),
-                liquidationEffects.newLongBalance,
-                liquidationEffects.newVaultBalance,
-                liquidationEffects.remainingCollateral
-            );
+            if (liquidationEffects.liquidatedTicks > 0) {
+                liquidationEffects.newLongBalance = _triggerRebalancer(
+                    uint128(neutralPrice),
+                    liquidationEffects.newLongBalance,
+                    liquidationEffects.newVaultBalance,
+                    liquidationEffects.remainingCollateral
+                );
+            }
 
             isLiquidationPending_ = liquidationEffects.isLiquidationPending;
             _balanceLong = liquidationEffects.newLongBalance;
@@ -1854,7 +1856,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * It will close the rebalancer position (if there is one) and open a new one with
      * the pending assets, the value of the previous position and the liquidation bonus (if available)
      * and a leverage to fill enough trading expo to reach the desired imbalance, up to the max leverages
-     * @dev Will do nothing if no rebalancer is set in the contract
+     * @dev Will return the provided long balance if no rebalancer is set
      * TODO tests
      * @param neutralPrice The neutral/average price of the asset
      * @param longBalance The balance of the long side
@@ -1884,10 +1886,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // calculate the current imbalance
         {
+            // TODO make a separate function that can be fuzzed?
             int256 currentImbalance = (
-                (totalExpo.toInt256().safeSub(longBalance_.toInt256())).safeSub(vaultBalance.toInt256())
+                (vaultBalance.toInt256()).safeSub(totalExpo.toInt256().safeSub(longBalance_.toInt256()))
             ).safeMul(int256(BPS_DIVISOR)).safeDiv(vaultBalance.toInt256());
-            // if the imbalance is lower than the threshold, do nothing
+
+            // if the imbalance is lower than the threshold, return
             if (currentImbalance < _closeExpoImbalanceLimitBps) {
                 return longBalance_;
             }
@@ -1900,14 +1904,16 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // close the rebalancer position and get its value to open the next one
         if (rebalancerPosId.tick != NO_POSITION_TICK) {
+            // TODO update longBalance_ here
             uint128 positionValue =
                 _flashClosePosition(rebalancerPosId, neutralPrice, totalExpo - longBalance_).toUint128();
 
             positionAmount += positionValue;
         }
 
-        int24 tickWithoutLiqPenalty =
-            _calculateRebalancerPositionTick(neutralPrice, positionAmount, rebalancerMaxLeverage, vaultBalance);
+        int24 tickWithoutLiqPenalty = _calculateRebalancerPositionTick(
+            neutralPrice, positionAmount, rebalancerMaxLeverage, totalExpo - longBalance_, vaultBalance
+        );
 
         // open a new position for the rebalancer
         PositionId memory posId =
@@ -1919,7 +1925,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _asset.safeTransferFrom(address(rebalancer), address(this), pendingAssets);
 
         // call the rebalancer to update the internal bookkeeping
-        rebalancer.updatePosition(posId, positionAmount - pendingAssets);
+        rebalancer.updatePosition(posId, positionAmount - pendingAssets - bonus);
     }
 
     /**

@@ -34,12 +34,12 @@ contract TestUsdnProtocolLongCalcLiqPriceFromTradingExpo is UsdnProtocolBaseFixt
         // leverage 4x
         uint256 tradingExpo = uint256(amount) * 3;
         uint128 result = protocol.i_calcLiqPriceFromTradingExpo(price, amount, tradingExpo);
-        assertEq(result, 1500 ether, "The result should be 0 (lowest possible index)");
+        assertEq(result, 1500 ether, "The result should equal the price - price / 4");
 
         // leverage 10x
         tradingExpo = uint256(amount) * 9;
         result = protocol.i_calcLiqPriceFromTradingExpo(price, amount, tradingExpo);
-        assertEq(result, 1800 ether, "The result should be 0 (lowest possible index)");
+        assertEq(result, 1800 ether, "The result should equal the price - price / 10");
     }
 
     /**

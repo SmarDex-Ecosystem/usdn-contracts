@@ -832,6 +832,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         uint128 neutralPrice,
         uint128 positionAmount,
         uint256 rebalancerMaxLeverage,
+        uint256 tradingExpo,
         uint256 vaultBalance
     ) internal returns (int24 tickWithoutLiqPenalty_) {
         // use the lowest max leverage above the min leverage
@@ -846,7 +847,14 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
         // calculate the trading expo missing to reach the imbalance target
         uint256 tradingExpoToFill =
-            vaultBalance - (vaultBalance * (BPS_DIVISOR.toInt256() - _longImbalanceTargetBps).toUint256() / BPS_DIVISOR);
+            (vaultBalance * (BPS_DIVISOR.toInt256() - _longImbalanceTargetBps).toUint256() / BPS_DIVISOR);
+
+        // check that the target is not already exceeded
+        if (tradingExpoToFill <= tradingExpo) {
+            return 0; // TODO throw an error or return sentinel value
+        }
+
+        tradingExpoToFill -= tradingExpo;
 
         // check that the trading expo filled by the position would not exceed the max leverage
         uint256 highestUsableTradingExpo = positionAmount * rebalancerMaxLeverage / LEVERAGE_DECIMALS - positionAmount;
