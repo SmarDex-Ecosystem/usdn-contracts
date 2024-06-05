@@ -10,7 +10,6 @@ import { Permit2Payments } from "@uniswap/universal-router/contracts/modules/Per
 import { UsdnProtocolImmutables } from "src/UniversalRouter/modules/usdn/UsdnProtocolImmutables.sol";
 import { PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { IWusdn } from "src/interfaces/Usdn/IWusdn.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 
 abstract contract UsdnProtocolRouter is UsdnProtocolImmutables, Permit2Payments {
@@ -163,7 +162,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables, Permit2Payments 
 
         if (value > 0) {
             USDN.forceApprove(address(WUSDN), value);
-            IWusdn(WUSDN).deposit(value, receiver);
+            WUSDN.deposit(value, receiver);
         }
     }
 

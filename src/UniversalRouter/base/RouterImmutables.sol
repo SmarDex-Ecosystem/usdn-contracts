@@ -14,7 +14,6 @@ import { IWusdn } from "src/interfaces/Usdn/IWusdn.sol";
  * @param poolInitCodeHash The v3 pool hash
  * @param usdnProtocol The USDN protocol address
  * @param wstEth The WstETH address
- * @param usdn The usdn address
  * @param wusdn The wrapped usdn address
  */
 struct RouterParameters {
