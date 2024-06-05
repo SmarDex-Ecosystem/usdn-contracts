@@ -17,6 +17,8 @@ import {
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { IBaseOracleMiddleware } from "src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 
+import { console2 } from "forge-std/console2.sol";
+
 /**
  * @title OracleMiddleware contract
  * @notice This contract is used to get the price of an asset from different price oracle
@@ -50,18 +52,19 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, RedstoneOracle, Chai
 
     /**
      * @param pythContract Address of the Pyth contract
-     * @param pythPriceID The price ID of the asset in Pyth
+     * @param pythFeedId The Pyth price feed ID for the asset
+     * @param redstoneFeedId The Redstone price feed ID for the asset
      * @param chainlinkPriceFeed Address of the Chainlink price feed
      * @param chainlinkTimeElapsedLimit The duration after which a Chainlink price is considered stale
      */
     constructor(
         address pythContract,
-        bytes32 pythPriceID,
+        bytes32 pythFeedId,
         bytes32 redstoneFeedId,
         address chainlinkPriceFeed,
         uint256 chainlinkTimeElapsedLimit
     )
-        PythOracle(pythContract, pythPriceID)
+        PythOracle(pythContract, pythFeedId)
         RedstoneOracle(redstoneFeedId)
         ChainlinkOracle(chainlinkPriceFeed, chainlinkTimeElapsedLimit)
         Ownable(msg.sender)
@@ -366,7 +369,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, RedstoneOracle, Chai
         assembly {
             magic := shr(224, calldataload(data.offset))
         }
-        // Pyth magic stands of PNAU (Pyth Network Accumulator Update)
+        // Pyth magic stands for PNAU (Pyth Network Accumulator Update)
         return magic == 0x504e4155;
     }
 

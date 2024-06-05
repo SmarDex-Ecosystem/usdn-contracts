@@ -12,9 +12,9 @@ interface IPythOracle {
 
     /**
      * @notice Get the Pyth price ID
-     * @return priceID_ The Pyth price ID
+     * @return feedId_ The Pyth price feed ID
      */
-    function getPriceID() external view returns (bytes32 priceID_);
+    function getPythFeedId() external view returns (bytes32 feedId_);
 
     /**
      * @notice Get the recent price delay

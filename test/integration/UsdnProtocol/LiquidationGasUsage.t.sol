@@ -5,10 +5,11 @@ import { UsdnProtocolBaseIntegrationFixture } from "test/integration/UsdnProtoco
 import {
     DEPLOYER, USER_1, USER_2, USER_3, PYTH_ETH_USD, PYTH_WSTETH_USD, REDSTONE_ETH_USD
 } from "test/utils/Constants.sol";
+import { MOCK_PYTH_DATA } from "test/unit/Middlewares/utils/Constants.sol";
 
 import { ILiquidationRewardsManagerErrorsEventsTypes } from
     "src/interfaces/OracleMiddleware/ILiquidationRewardsManagerErrorsEventsTypes.sol";
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IUsdnEvents } from "src/interfaces/Usdn/IUsdnEvents.sol";
 import { MockWstEthOracleMiddleware } from "src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
 
@@ -21,8 +22,6 @@ contract TestForkUsdnProtocolLiquidationGasUsage is UsdnProtocolBaseIntegrationF
 
     function setUp() public {
         params = DEFAULT_PARAMS;
-        params.initialLong = 10 ether;
-        params.initialDeposit = 100 ether;
         params.fork = true; // all tests in this contract must be labeled `Fork`
         params.forkWarp = 1_709_794_800; // thu mar 07 2024 07:00:00 UTC
         _setUp(params);
@@ -46,6 +45,10 @@ contract TestForkUsdnProtocolLiquidationGasUsage is UsdnProtocolBaseIntegrationF
         vm.stopPrank();
 
         securityDepositValue = protocol.getSecurityDepositValue();
+
+        // reduce minimum size to avoid creating a large imbalance in the tests below
+        vm.prank(DEPLOYER);
+        protocol.setMinLongPosition(0.01 ether);
     }
 
     /**
@@ -73,6 +76,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is UsdnProtocolBaseIntegrationF
     }
 
     function _forkGasUsageHelper(bool withRebase) public {
+        skip(1 hours); // make sure we update _lastPrice when opening positions below
         (uint256 pythPriceWstETH,,,,) =
             getHermesApiSignature(PYTH_WSTETH_USD, block.timestamp + oracleMiddleware.getValidationDelay());
         uint128 pythPriceNormalized = uint128(pythPriceWstETH * 10 ** 10);
@@ -96,25 +100,26 @@ contract TestForkUsdnProtocolLiquidationGasUsage is UsdnProtocolBaseIntegrationF
 
         /* ---------------------------- Set up positions ---------------------------- */
 
+        uint128 minLongPosition = uint128(protocol.getMinLongPosition());
         vm.prank(USER_1);
         protocol.initiateOpenPosition{ value: securityDepositValue }(
-            1 ether, pythPriceNormalized + 150e18, address(this), address(this), hex"beef", EMPTY_PREVIOUS_DATA
+            minLongPosition, pythPriceNormalized + 200 ether, USER_1, USER_1, hex"beef", EMPTY_PREVIOUS_DATA
         );
         vm.prank(USER_2);
         protocol.initiateOpenPosition{ value: securityDepositValue }(
-            1 ether, pythPriceNormalized + 100e18, address(this), address(this), hex"beef", EMPTY_PREVIOUS_DATA
+            minLongPosition, pythPriceNormalized + 150 ether, USER_2, USER_2, hex"beef", EMPTY_PREVIOUS_DATA
         );
         vm.prank(USER_3);
         protocol.initiateOpenPosition{ value: securityDepositValue }(
-            1 ether, pythPriceNormalized + 50e18, address(this), address(this), hex"beef", EMPTY_PREVIOUS_DATA
+            minLongPosition, pythPriceNormalized + 100 ether, USER_3, USER_3, hex"beef", EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         vm.prank(USER_1);
-        protocol.validateOpenPosition(address(this), hex"beef", EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(USER_1, hex"beef", EMPTY_PREVIOUS_DATA);
         vm.prank(USER_2);
-        protocol.validateOpenPosition(address(this), hex"beef", EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(USER_2, hex"beef", EMPTY_PREVIOUS_DATA);
         vm.prank(USER_3);
-        protocol.validateOpenPosition(address(this), hex"beef", EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(USER_3, hex"beef", EMPTY_PREVIOUS_DATA);
 
         /* ---------------------------- Start the checks ---------------------------- */
         // put the original oracle back

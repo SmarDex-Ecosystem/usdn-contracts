@@ -15,7 +15,7 @@ import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracle
  */
 abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
     /// @notice The ID of the Pyth price feed
-    bytes32 internal immutable _priceID;
+    bytes32 internal immutable _pythFeedId;
 
     /// @notice The address of the Pyth contract
     IPyth internal immutable _pyth;
@@ -25,11 +25,11 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
 
     /**
      * @param pythAddress The address of the Pyth contract
-     * @param pythPriceID The ID of the Pyth price feed
+     * @param pythFeedId The ID of the Pyth price feed
      */
-    constructor(address pythAddress, bytes32 pythPriceID) {
+    constructor(address pythAddress, bytes32 pythFeedId) {
         _pyth = IPyth(pythAddress);
-        _priceID = pythPriceID;
+        _pythFeedId = pythFeedId;
     }
 
     /// @inheritdoc IPythOracle
@@ -38,8 +38,8 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
     }
 
     /// @inheritdoc IPythOracle
-    function getPriceID() external view returns (bytes32) {
-        return _priceID;
+    function getPythFeedId() external view returns (bytes32) {
+        return _pythFeedId;
     }
 
     /// @inheritdoc IPythOracle
@@ -58,8 +58,8 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
         returns (PythStructs.Price memory)
     {
         // parse the price feed update and get the price feed
-        bytes32[] memory priceIds = new bytes32[](1);
-        priceIds[0] = _priceID;
+        bytes32[] memory feedIds = new bytes32[](1);
+        feedIds[0] = _pythFeedId;
 
         bytes[] memory pricesUpdateData = new bytes[](1);
         pricesUpdateData[0] = priceUpdateData;
@@ -74,14 +74,14 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
             // we want to validate that the price is recent
             // we don't enforce that the price update is the first one in a given second
             priceFeeds = _pyth.parsePriceFeedUpdates{ value: pythFee }(
-                pricesUpdateData, priceIds, uint64(block.timestamp) - _recentPriceDelay, uint64(block.timestamp)
+                pricesUpdateData, feedIds, uint64(block.timestamp) - _recentPriceDelay, uint64(block.timestamp)
             );
         } else {
             // we want to validate that the price is exactly at targetTimestamp (first in the second) or the next
             // available price in the future, as identified by the prevPublishTime being strictly less than
             // targetTimestamp
             priceFeeds = _pyth.parsePriceFeedUpdatesUnique{ value: pythFee }(
-                pricesUpdateData, priceIds, uint64(targetTimestamp), type(uint64).max
+                pricesUpdateData, feedIds, uint64(targetTimestamp), type(uint64).max
             );
         }
 
@@ -156,7 +156,7 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
         returns (FormattedPythPrice memory price_)
     {
         // we use getPriceUnsafe to get the latest price without reverting, no mater how old
-        PythStructs.Price memory pythPrice = _pyth.getPriceUnsafe(_priceID);
+        PythStructs.Price memory pythPrice = _pyth.getPriceUnsafe(_pythFeedId);
         // negative or zero prices are considered invalid, we return zero
         if (pythPrice.price <= 0) {
             return price_;

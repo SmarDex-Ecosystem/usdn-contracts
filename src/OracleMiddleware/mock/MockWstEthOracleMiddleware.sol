@@ -28,7 +28,7 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
 
     constructor(
         address pythContract,
-        bytes32 pythPriceID,
+        bytes32 pythFeedId,
         bytes32 redstoneFeedId,
         address chainlinkPriceFeed,
         address wsteth,
@@ -36,7 +36,7 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
     )
         WstEthOracleMiddleware(
             pythContract,
-            pythPriceID,
+            pythFeedId,
             redstoneFeedId,
             chainlinkPriceFeed,
             wsteth,
