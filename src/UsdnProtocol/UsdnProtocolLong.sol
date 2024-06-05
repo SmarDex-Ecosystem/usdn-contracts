@@ -87,8 +87,8 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         (Position memory pos, uint8 liquidationPenalty) = getLongPosition(posId);
         int256 longTradingExpo = longTradingExpoWithFunding(price, timestamp);
         if (longTradingExpo < 0) {
-            // In case the long balance is equal to the total expo (or exceeds it), the trading expo will become zero
-            // In this case, the liquidation price will fall to zero, and the position value will be equal to its
+            // in case the long balance is equal to the total expo (or exceeds it), the trading expo will become zero
+            // in this case, the liquidation price will fall to zero, and the position value will be equal to its
             // total expo (initial collateral * initial leverage)
             longTradingExpo = 0;
         }
@@ -351,7 +351,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     function _getLeverage(uint128 startPrice, uint128 liquidationPrice) internal pure returns (uint128 leverage_) {
         if (startPrice <= liquidationPrice) {
             // this situation is not allowed (newly open position must be solvent)
-            // Also, the calculation below would underflow
+            // also, the calculation below would underflow
             revert UsdnProtocolInvalidLiquidationPrice(liquidationPrice, startPrice);
         }
 
@@ -360,7 +360,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
     /**
      * @notice Calculate the total exposure of a position
-     * @dev Reverts when `startPrice` <= `liquidationPrice`
+     * @dev Reverts when startPrice <= liquidationPrice
      * @param amount The amount of asset used as collateral
      * @param startPrice The price of the asset when the position was created
      * @param liquidationPrice The liquidation price of the position
@@ -422,8 +422,8 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
         // update tick data
         TickData storage tickData = _tickData[tickHash];
-        // the unadjusted tick price for the accumulator might be different depending if we already have positions in
-        // the tick or not
+        // the unadjusted tick price for the accumulator might be different depending
+        // if we already have positions in the tick or not
         uint256 unadjustedTickPrice;
         if (tickData.totalPos == 0) {
             // first position in this tick, we need to reflect that it is populated
@@ -436,7 +436,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         } else {
             tickData.totalExpo += long.totalExpo;
             tickData.totalPos += 1;
-            // we do not need to adjust the tick's liquidationPenalty since it remains constant
+            // we do not need to adjust the tick's `liquidationPenalty` since it remains constant
             unadjustedTickPrice =
                 TickMath.getPriceAtTick(tick - int24(uint24(tickData.liquidationPenalty)) * _tickSpacing);
         }

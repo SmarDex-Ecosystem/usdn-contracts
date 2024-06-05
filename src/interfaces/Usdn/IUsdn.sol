@@ -90,7 +90,7 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
     function burnSharesFrom(address account, uint256 value) external;
 
     /**
-     * @notice Convert some tokens to the corresponding amount of shares
+     * @notice Convert a number of tokens to the corresponding amount of shares
      * @dev The conversion reverts with `UsdnMaxTokensExceeded` if the corresponding amount of shares overflows
      * @param amountTokens The amount of tokens to convert to shares
      * @return shares_ The corresponding amount of shares

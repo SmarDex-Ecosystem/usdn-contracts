@@ -133,7 +133,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             revert UsdnProtocolInvalidMaxLeverage();
         }
 
-        // `maxLeverage` greater than max 100
+        // `maxLeverage` greater than 100
         if (newMaxLeverage > 100 * 10 ** LEVERAGE_DECIMALS) {
             revert UsdnProtocolInvalidMaxLeverage();
         }
@@ -168,7 +168,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setSafetyMarginBps(uint256 newSafetyMarginBps) external onlyOwner {
-        // safetyMarginBps greater than max 2000: 20%
+        // safetyMarginBps greater than 20%
         if (newSafetyMarginBps > 2000) {
             revert UsdnProtocolInvalidSafetyMarginBps();
         }
@@ -179,7 +179,6 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setLiquidationIteration(uint16 newLiquidationIteration) external onlyOwner {
-        // `newLiquidationIteration` greater than MAX_LIQUIDATION_ITERATION
         if (newLiquidationIteration > MAX_LIQUIDATION_ITERATION) {
             revert UsdnProtocolInvalidLiquidationIteration();
         }
@@ -190,7 +189,6 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setEMAPeriod(uint128 newEMAPeriod) external onlyOwner {
-        // `EMAPeriod` is greater than max 3 months
         if (newEMAPeriod > 90 days) {
             revert UsdnProtocolInvalidEMAPeriod();
         }
@@ -220,7 +218,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setPositionFeeBps(uint16 newPositionFee) external onlyOwner {
-        // `newPositionFee` greater than max 2000: 20%
+        // `newPositionFee` greater than 20%
         if (newPositionFee > 2000) {
             revert UsdnProtocolInvalidPositionFee();
         }
@@ -230,7 +228,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setVaultFeeBps(uint16 newVaultFee) external onlyOwner {
-        // `newVaultFee` greater than max 2000: 20%
+        // `newVaultFee` greater than 20%
         if (newVaultFee > 2000) {
             revert UsdnProtocolInvalidVaultFee();
         }
@@ -240,7 +238,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setRebalancerBonusBps(uint16 newBonus) external onlyOwner {
-        // `newBonus` greater than max 100%
+        // `newBonus` greater than 100%
         if (newBonus > BPS_DIVISOR) {
             revert UsdnProtocolInvalidRebalancerBonus();
         }
@@ -250,7 +248,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setSdexBurnOnDepositRatio(uint32 newRatio) external onlyOwner {
-        // if the `newRatio` is greater than 5%
+        // `newRatio` greater than 5%
         if (newRatio > SDEX_BURN_ON_DEPOSIT_DIVISOR / 20) {
             revert UsdnProtocolInvalidBurnSdexOnDepositRatio();
         }
@@ -304,7 +302,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         }
         _closeExpoImbalanceLimitBps = newCloseLimitBps.toInt256();
 
-        // Casts are safe here as values are safely casted earlier
+        // casts are safe here as values are safely casted earlier
         if (
             newLongImbalanceTargetBps > int256(newCloseLimitBps)
                 || newLongImbalanceTargetBps < -int256(newWithdrawalLimitBps)

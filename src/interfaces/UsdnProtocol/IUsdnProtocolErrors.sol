@@ -152,7 +152,7 @@ interface IUsdnProtocolErrors {
 
     /**
      * @dev Indicates that the protocol imbalance limit is reached
-     * @param imbalanceBps The wanted imbalance in basis points
+     * @param imbalanceBps The imbalance in basis points
      */
     error UsdnProtocolImbalanceLimitReached(int256 imbalanceBps);
 

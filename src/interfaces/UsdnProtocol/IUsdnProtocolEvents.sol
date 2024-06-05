@@ -223,8 +223,8 @@ interface IUsdnProtocolEvents {
     event SafetyMarginBpsUpdated(uint256 newSafetyMargin);
 
     /**
-     * @notice Emitted when the liquidationIteration is updated
-     * @param newLiquidationIteration The new liquidationIteration
+     * @notice Emitted when the `liquidationIteration` is updated
+     * @param newLiquidationIteration The new `liquidationIteration`
      */
     event LiquidationIterationUpdated(uint16 newLiquidationIteration);
 
@@ -248,13 +248,13 @@ interface IUsdnProtocolEvents {
     event LiquidatorRewarded(address indexed liquidator, uint256 rewards);
 
     /**
-     * @notice Emitted when the LiquidationRewardsManager contract is updated
+     * @notice Emitted when the `LiquidationRewardsManager` contract is updated
      * @param newAddress The address of the new (current) contract
      */
     event LiquidationRewardsManagerUpdated(address newAddress);
 
     /**
-     * @notice Emitted when the Rebalancer contract is updated
+     * @notice Emitted when the rebalancer contract is updated
      * @param newAddress The address of the new (current) contract
      */
     event RebalancerUpdated(address newAddress);

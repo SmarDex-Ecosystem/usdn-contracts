@@ -45,7 +45,7 @@ contract Rebalancer is Ownable, IRebalancer {
     /// @notice The amount of assets waiting to be used in the next version of the position
     uint256 internal _pendingAssetsAmount;
 
-    /// @notice The maximum leverage of a position can have
+    /// @notice The maximum leverage that a position can have
     uint256 internal _maxLeverage;
 
     /// @notice The version of the last position that got liquidated

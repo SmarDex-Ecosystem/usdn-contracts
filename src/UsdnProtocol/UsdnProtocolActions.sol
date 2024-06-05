@@ -442,7 +442,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @notice The deposit vault imbalance limit state verification
      * @dev To ensure that the protocol does not imbalance more than
      * the deposit limit on the vault side, otherwise revert
-     * @param depositValue The deposit value in assets
+     * @param depositValue The deposit value in asset
      */
     function _checkImbalanceLimitDeposit(uint256 depositValue) internal view {
         int256 depositExpoImbalanceLimitBps = _depositExpoImbalanceLimitBps;
@@ -470,10 +470,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     /**
-     * @notice The withdrawal imbalance limits state verification
+     * @notice The withdrawal imbalance limit state verification
      * @dev To ensure that the protocol does not imbalance more than
-     * the withdrawal limit is on the long side, otherwise revert
-     * @param withdrawalValue The withdrawal value in assets
+     * the withdrawal limit on the long side, otherwise revert
+     * @param withdrawalValue The withdrawal value in asset
      * @param totalExpo The current total expo
      */
     function _checkImbalanceLimitWithdrawal(uint256 withdrawalValue, uint256 totalExpo) internal view {
@@ -589,7 +589,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             liquidatedTicks, remainingCollateral, rebased, action, rebaseCallbackResult, priceData
         );
 
-        // avoid underflows in situations of extremely bad debt
+        // avoid underflows in the situation of extreme bad debt
         if (_balanceVault < liquidationRewards) {
             liquidationRewards = _balanceVault;
         }
@@ -1291,8 +1291,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @notice Update protocol balances, liquidate positions if necessary, then validate the `open position` action
      * @param pending The pending action data
      * @param priceData The current price data
-     * @return data_ The validate open position data struct
-     * @return liquidated_ Whether the position was liquidated and the caller should return early
+     * @return data_ The `ValidateOpenPosition` data struct
+     * @return liquidated_ Whether the position was liquidated
      */
     function _prepareValidateOpenPositionData(PendingAction memory pending, bytes calldata priceData)
         internal
@@ -1568,7 +1568,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // the approximate value position to remove is calculated with `_lastPrice`, so not taking into account
         // any fees. This way, the removal of the position doesn't affect the liquidation multiplier calculations
 
-        // to have the maximum precision, we do not pre-compute the liquidation multiplier with a fixed
+        // to have maximum precision, we do not pre-compute the liquidation multiplier with a fixed
         // precision just now, we will store it in the pending action later, to be used in the validate action
         data_.tempPositionValue = _assetToRemove(
             data_.lastPrice,
@@ -1786,16 +1786,18 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 if (missingValue > balanceVault) {
                     _balanceVault = 0;
                     unchecked {
-                        // since `missingValue` is strictly larger than balanceVault, their subtraction can't underflow
+                        // since `missingValue` is strictly larger than `balanceVault`, their subtraction can't
+                        // underflow
                         // moreover, since (missingValue - balanceVault) is smaller than or equal to `missingValue`,
-                        // and since missingValue is smaller than or equal to assetToTransfer,
-                        // (missingValue - balanceVault) is smaller than or equal to assetToTransfer, and their
+                        // and since `missingValue` is smaller than or equal to `assetToTransfer`,
+                        // (missingValue - balanceVault) is smaller than or equal to `assetToTransfer`, and their
                         // subtraction can't underflow
                         assetToTransfer -= missingValue - balanceVault;
                     }
                 } else {
                     unchecked {
-                        // since missingValue is smaller than or equal to balanceVault, this operation can't underflow
+                        // since `missingValue` is smaller than or equal to `balanceVault`, this operation can't
+                        // underflow
                         _balanceVault = balanceVault - missingValue;
                     }
                 }
@@ -1811,7 +1813,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         isValidated_ = true;
 
         emit ValidatedClosePosition(
-            long.validator, // position owner
+            long.validator,
             long.to,
             PositionId({ tick: long.tick, tickVersion: long.tickVersion, index: long.index }),
             assetToTransfer,
@@ -1934,7 +1936,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     /**
-     * @notice Get the oracle price for the given action and timestamp and validate it
+     * @notice Get the oracle price for the given action and timestamp then validate it
      * @param action The type of action that is being performed by the user
      * @param timestamp The timestamp at which the wanted price was recorded
      * @param actionId The unique identifier of the action
@@ -2053,7 +2055,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @dev This function is called after every action that changes the protocol fee balance
      */
     function _checkPendingFee() internal {
-        // if the pending protocol fee is above the threshold, send it to the fee collector
         if (_pendingProtocolFee >= _feeThreshold) {
             _asset.safeTransfer(_feeCollector, _pendingProtocolFee);
             emit ProtocolFeeDistributed(_feeCollector, _pendingProtocolFee);

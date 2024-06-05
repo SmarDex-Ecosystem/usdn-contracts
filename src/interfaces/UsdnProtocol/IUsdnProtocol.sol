@@ -219,7 +219,7 @@ interface IUsdnProtocol is IUsdnProtocolActions {
      * @notice Remove a stuck pending action with no cleanup
      * @dev This function can only be called by the owner of the protocol, it serves as an escape hatch if a
      * pending action ever gets stuck due to something internal reverting unexpectedly
-     * Always try to use `removeBlockedPendingAction` first, and only call this function is the other one fails
+     * Always try to use `removeBlockedPendingAction` first, and only call this function if the other one fails
      * @param validator The address of the validator
      * @param to Where the retrieved funds should be sent (security deposit, assets, usdn)
      */
@@ -238,7 +238,7 @@ interface IUsdnProtocol is IUsdnProtocolActions {
      * @notice Remove a stuck pending action with no cleanup
      * @dev This function can only be called by the owner of the protocol, it serves as an escape hatch if a
      * pending action ever gets stuck due to something internal reverting unexpectedly
-     * Always try to use `removeBlockedPendingAction` first, and only call this function is the other one fails
+     * Always try to use `removeBlockedPendingAction` first, and only call this function if the other one fails
      * @param rawIndex The raw index of the pending action in the queue
      * @param to Where the retrieved funds should be sent (security deposit, assets, usdn)
      */

@@ -149,7 +149,7 @@ struct WithdrawalPendingAction {
  * @param tickVersion The version of the tick
  * @param index The index of the position in the tick list
  * @param closeLiqMultiplier A fixed precision representation of the liquidation multiplier (with
- * LIQUIDATION_MULTIPLIER_DECIMALS decimals) used to calculate the effective price for a given tick number (only used
+ * `LIQUIDATION_MULTIPLIER_DECIMALS` decimals) used to calculate the effective price for a given tick number (only used
  * when closing a position)
  * @param closeBoundedPositionValue The amount that was removed from the long balance on `initiateClosePosition` (only
  * used when closing a position)
