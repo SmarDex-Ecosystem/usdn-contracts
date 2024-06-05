@@ -14,7 +14,7 @@ import { WETH, SDEX, WBTC } from "test/utils/Constants.sol";
  * @custom:feature Test smardex swap commands
  * @custom:background A initiated universal router
  */
-contract TestExecuteSmardexSwap is UniversalRouterBaseFixture {
+contract TestForkExecuteSmardexSwap is UniversalRouterBaseFixture {
     uint256 constant BASE_AMOUNT = 1 ether;
 
     function setUp() external {
@@ -33,7 +33,7 @@ contract TestExecuteSmardexSwap is UniversalRouterBaseFixture {
      * @custom:then The `SMARDEX_SWAP_EXACT_IN` command should be executed
      * @custom:and The weth user balance should be increased
      */
-    function test_executeSmardexSwapExactInBalance() external {
+    function test_ForkExecuteSmardexSwapExactInBalance() external {
         // commands
         bytes memory commands = abi.encodePacked(uint8(Commands.SMARDEX_SWAP_EXACT_IN));
 
@@ -60,7 +60,7 @@ contract TestExecuteSmardexSwap is UniversalRouterBaseFixture {
      * @custom:then The `SMARDEX_SWAP_EXACT_IN` command should be executed
      * @custom:and The weth user balance should be increased
      */
-    function test_executeSmardexSwapExactInBalanceMulti() external {
+    function test_ForkExecuteSmardexSwapExactInBalanceMulti() external {
         // commands
         bytes memory commands = abi.encodePacked(uint8(Commands.SMARDEX_SWAP_EXACT_IN));
 
@@ -88,7 +88,7 @@ contract TestExecuteSmardexSwap is UniversalRouterBaseFixture {
      * @custom:then The `SMARDEX_SWAP_EXACT_IN` command should be executed
      * @custom:and The weth user balance should be increased
      */
-    function test_executeSmardexSwapExactInPermit2() external {
+    function test_ForkExecuteSmardexSwapExactInPermit2() external {
         // commands
         bytes memory commands = abi.encodePacked(uint8(Commands.SMARDEX_SWAP_EXACT_IN));
 
@@ -116,7 +116,7 @@ contract TestExecuteSmardexSwap is UniversalRouterBaseFixture {
      * @custom:then The `SMARDEX_SWAP_EXACT_IN` command should be executed
      * @custom:and The sdex user balance should be increased
      */
-    function test_executeSmardexSwapExactInPermit2Multi() external {
+    function test_ForkExecuteSmardexSwapExactInPermit2Multi() external {
         // commands
         bytes memory commands = abi.encodePacked(uint8(Commands.SMARDEX_SWAP_EXACT_IN));
 
@@ -144,7 +144,7 @@ contract TestExecuteSmardexSwap is UniversalRouterBaseFixture {
      * @custom:then The `SMARDEX_SWAP_EXACT_IN` command should be executed
      * @custom:and The sdex user balance should be increased
      */
-    function test_RevertWhen_executeSmardexSwapExactInAmountMin() external {
+    function test_RevertWhen_ForkExecuteSmardexSwapExactInAmountMin() external {
         // commands
         bytes memory commands = abi.encodePacked(uint8(Commands.SMARDEX_SWAP_EXACT_IN));
 
@@ -170,7 +170,7 @@ contract TestExecuteSmardexSwap is UniversalRouterBaseFixture {
      * @custom:then The `SMARDEX_SWAP_EXACT_OUT` command should be executed
      * @custom:and The weth user balance should be increased
      */
-    function test_executeSmardexSwapExactOutBalance() external {
+    function test_ForkExecuteSmardexSwapExactOutBalance() external {
         // commands
         bytes memory commands = abi.encodePacked(uint8(Commands.SMARDEX_SWAP_EXACT_OUT));
 
@@ -197,7 +197,7 @@ contract TestExecuteSmardexSwap is UniversalRouterBaseFixture {
      * @custom:then The `SMARDEX_SWAP_EXACT_OUT` command should be executed
      * @custom:and The weth user balance should be increased
      */
-    function test_executeSmardexSwapExactOutBalanceMulti() external {
+    function test_ForkExecuteSmardexSwapExactOutBalanceMulti() external {
         // commands
         bytes memory commands = abi.encodePacked(uint8(Commands.SMARDEX_SWAP_EXACT_OUT));
 
@@ -225,7 +225,7 @@ contract TestExecuteSmardexSwap is UniversalRouterBaseFixture {
      * @custom:then The `SMARDEX_SWAP_EXACT_OUT` command should be executed
      * @custom:and The weth user balance should be increased
      */
-    function test_executeSmardexSwapExactOutPermit2() external {
+    function test_ForkExecuteSmardexSwapExactOutPermit2() external {
         // commands
         bytes memory commands = abi.encodePacked(uint8(Commands.SMARDEX_SWAP_EXACT_OUT));
 
@@ -253,7 +253,7 @@ contract TestExecuteSmardexSwap is UniversalRouterBaseFixture {
      * @custom:then The `SMARDEX_SWAP_EXACT_OUT` command should be executed
      * @custom:and The weth user balance should be increased
      */
-    function test_executeSmardexSwapExactOutPermit2Multi() external {
+    function test_ForkExecuteSmardexSwapExactOutPermit2Multi() external {
         // commands
         bytes memory commands = abi.encodePacked(uint8(Commands.SMARDEX_SWAP_EXACT_OUT));
 
