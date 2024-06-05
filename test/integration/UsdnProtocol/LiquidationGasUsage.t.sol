@@ -2,7 +2,9 @@
 pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseIntegrationFixture } from "test/integration/UsdnProtocol/utils/Fixtures.sol";
-import { DEPLOYER, USER_1, USER_2, USER_3, PYTH_ETH_USD, PYTH_WSTETH_USD } from "test/utils/Constants.sol";
+import {
+    DEPLOYER, USER_1, USER_2, USER_3, PYTH_ETH_USD, PYTH_WSTETH_USD, REDSTONE_ETH_USD
+} from "test/utils/Constants.sol";
 
 import { ILiquidationRewardsManagerErrorsEventsTypes } from
     "src/interfaces/OracleMiddleware/ILiquidationRewardsManagerErrorsEventsTypes.sol";
@@ -77,7 +79,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is UsdnProtocolBaseIntegrationF
 
         // use the mock oracle to open positions to avoid hermes calls
         MockWstEthOracleMiddleware mockOracle = new MockWstEthOracleMiddleware(
-            address(mockPyth), PYTH_ETH_USD, address(mockChainlinkOnChain), address(wstETH), 1 hours
+            address(mockPyth), PYTH_ETH_USD, REDSTONE_ETH_USD, address(mockChainlinkOnChain), address(wstETH), 1 hours
         );
         vm.prank(DEPLOYER);
         protocol.setOracleMiddleware(mockOracle);

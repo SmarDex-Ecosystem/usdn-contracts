@@ -29,10 +29,20 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
     constructor(
         address pythContract,
         bytes32 pythPriceID,
+        bytes32 redstoneFeedId,
         address chainlinkPriceFeed,
         address wsteth,
         uint256 chainlinkTimeElapsedLimit
-    ) WstEthOracleMiddleware(pythContract, pythPriceID, chainlinkPriceFeed, wsteth, chainlinkTimeElapsedLimit) { }
+    )
+        WstEthOracleMiddleware(
+            pythContract,
+            pythPriceID,
+            redstoneFeedId,
+            chainlinkPriceFeed,
+            wsteth,
+            chainlinkTimeElapsedLimit
+        )
+    { }
 
     /// @inheritdoc OracleMiddleware
     function parseAndValidatePrice(

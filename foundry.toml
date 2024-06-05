@@ -23,6 +23,7 @@ remappings = [
     "@uniswap/universal-router/=node_modules/@uniswap/universal-router/",
     "permit2/=node_modules/@uniswap/permit2/",
     "solmate/=node_modules/solmate/",
+    "@redstone-finance/evm-connector/=node_modules/@redstone-finance/evm-connector/",
 ]
 
 # ---------------------------------- Format ---------------------------------- #

@@ -103,6 +103,8 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
 
     function setRecentPriceDelay(uint64) external { }
 
+    function setRedstoneRecentPriceDelay(uint48) external { }
+
     function requireValidationCost() external view returns (bool) {
         return _requireValidationCost;
     }

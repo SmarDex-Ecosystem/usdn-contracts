@@ -19,6 +19,12 @@ interface IOracleMiddlewareErrors {
     error OracleMiddlewarePriceTooOld(uint256 timestamp);
 
     /**
+     * @notice The oracle price is too recent
+     * @param timestamp The timestamp of the price given by the oracle
+     */
+    error OracleMiddlewarePriceTooRecent(uint256 timestamp);
+
+    /**
      * @notice The pyth price reported a positive exponent (negative decimals)
      * @param expo The price exponent
      */
