@@ -4,41 +4,54 @@ pragma solidity 0.8.20;
 import { ChainlinkPriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IWstETH } from "src/interfaces/IWstETH.sol";
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
+import { ChainlinkOracle } from "src/OracleMiddleware/oracles/ChainlinkOracle.sol";
 
 /**
- * @title Contract to change liquidator rewards by setting a mocked gas price.
- * @notice This contract is used to calculate the rewards given on liquidation and manipulate the reported gas price.
+ * @title Contract to change liquidator rewards by setting a mocked gas price
+ * @notice This contract is used to calculate the rewards given on liquidation and manipulate the reported gas price
  */
 contract MockLiquidationRewardsManager is LiquidationRewardsManager {
     /**
      * @notice Mocked gas price
-     * @dev This price will be used if greater than zero.
+     * @dev This price will be used if greater than zero
      */
     int256 _mockedGasPrice;
 
+    /**
+     * @param chainlinkGasPriceFeed The address of the Chainlink gas price feed
+     * @param wstETH The address of the wstETH token
+     * @param chainlinkElapsedTimeLimit The duration after which the Chainlink gas price is considered stale
+     */
     constructor(address chainlinkGasPriceFeed, IWstETH wstETH, uint256 chainlinkElapsedTimeLimit)
         LiquidationRewardsManager(chainlinkGasPriceFeed, wstETH, chainlinkElapsedTimeLimit)
     { }
 
     /**
-     * @notice Return the gas price from chainlink or the mocked gas price if set.
-     * @return price_ Price information from the chainlink oracle.
+     * @inheritdoc ChainlinkOracle
+     * @notice Return the gas price from chainlink or the mocked gas price if set
+     * @return price_ Price information from the chainlink oracle
      */
-    function _getChainlinkPrice() internal view override returns (ChainlinkPriceInfo memory price_) {
-        price_ = super._getChainlinkPrice();
+    function _getChainlinkLatestPrice() internal view override returns (ChainlinkPriceInfo memory price_) {
+        price_ = super._getChainlinkLatestPrice();
 
         if (_mockedGasPrice > 0) {
             price_.price = _mockedGasPrice;
         }
     }
 
-    /// @notice Set a new mocked gas price.
+    /**
+     * @notice Set a new mocked gas price
+     * @param newMockedGasPrice The new gas price
+     */
     function setMockedGasPrice(int256 newMockedGasPrice) external {
         _mockedGasPrice = newMockedGasPrice;
     }
 
-    /// @notice Get the current mocked gas price.
-    function getMockedGasPrice() external view returns (int256) {
-        return _mockedGasPrice;
+    /**
+     * @notice Get the current mocked gas price
+     * @return price_ The mocked gas price
+     */
+    function getMockedGasPrice() external view returns (int256 price_) {
+        price_ = _mockedGasPrice;
     }
 }

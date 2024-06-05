@@ -3,31 +3,34 @@ pragma solidity 0.8.20;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-import {
-    IOracleMiddleware,
-    ProtocolAction,
-    PriceInfo,
-    IOracleMiddlewareErrors
-} from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
+import { IBaseOracleMiddleware } from "src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
+import { IOracleMiddleware, IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
 contract MockOracleMiddleware is IOracleMiddleware, Ownable {
+    uint16 public constant BPS_DIVISOR = 10_000;
+    uint16 public constant MAX_CONF_RATIO = BPS_DIVISOR * 2;
     uint8 internal constant DECIMALS = 18;
-    uint16 private constant CONF_RATIO_DENOM = 10_000;
-    uint16 private constant MAX_CONF_RATIO = CONF_RATIO_DENOM * 2;
-    uint16 private _confRatio = 4000; // to divide by CONF_RATIO_DENOM
+
+    uint16 internal _confRatioBps = 4000;
+    uint16 internal _penaltyBps = 25;
     uint256 internal _validationDelay = 24 seconds;
     uint256 internal _timeElapsedLimit = 1 hours;
     // if true, then the middleware requires a payment of 1 wei for any action
     bool internal _requireValidationCost = false;
 
+    bytes32 public lastActionId;
+
     constructor() Ownable(msg.sender) { }
 
-    /// @inheritdoc IOracleMiddleware
-    function parseAndValidatePrice(uint128 targetTimestamp, ProtocolAction action, bytes calldata data)
-        external
-        payable
-        returns (PriceInfo memory)
-    {
+    /// @inheritdoc IBaseOracleMiddleware
+    function parseAndValidatePrice(
+        bytes32 actionId,
+        uint128 targetTimestamp,
+        ProtocolAction action,
+        bytes calldata data
+    ) external payable returns (PriceInfo memory) {
         require(block.timestamp >= 30 minutes, "MockOracleMiddleware: set block timestamp before calling");
         uint256 priceValue = abi.decode(data, (uint128));
         uint256 ts;
@@ -48,38 +51,35 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
         // the timestamp cannot be in the future (the caller must `skip` before calling this function)
         require(ts < block.timestamp, "MockOracleMiddleware: timestamp is in the future");
 
+        lastActionId = actionId;
+
         PriceInfo memory price = PriceInfo({ price: priceValue, neutralPrice: priceValue, timestamp: ts });
         return price;
     }
 
-    /// @inheritdoc IOracleMiddleware
+    /// @inheritdoc IBaseOracleMiddleware
     function getDecimals() external pure returns (uint8) {
         return DECIMALS;
     }
 
-    /// @inheritdoc IOracleMiddleware
+    /// @inheritdoc IBaseOracleMiddleware
     function getValidationDelay() external view returns (uint256) {
         return _validationDelay;
     }
 
-    /// @inheritdoc IOracleMiddleware
+    /// @inheritdoc IBaseOracleMiddleware
     function validationCost(bytes calldata, ProtocolAction) external view returns (uint256) {
         return _requireValidationCost ? 1 : 0;
     }
 
     /// @inheritdoc IOracleMiddleware
-    function getMaxConfRatio() external pure returns (uint16) {
-        return MAX_CONF_RATIO;
+    function getConfRatioBps() external view returns (uint16) {
+        return _confRatioBps;
     }
 
     /// @inheritdoc IOracleMiddleware
-    function getConfRatioDenom() external pure returns (uint16) {
-        return CONF_RATIO_DENOM;
-    }
-
-    /// @inheritdoc IOracleMiddleware
-    function getConfRatio() external view returns (uint16) {
-        return _confRatio;
+    function getPenaltyBps() external view returns (uint16) {
+        return _penaltyBps;
     }
 
     /// @inheritdoc IOracleMiddleware
@@ -93,7 +93,7 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
         if (newConfRatio > MAX_CONF_RATIO) {
             revert IOracleMiddlewareErrors.OracleMiddlewareConfRatioTooHigh();
         }
-        _confRatio = newConfRatio;
+        _confRatioBps = newConfRatio;
     }
 
     /// @inheritdoc IOracleMiddleware
@@ -101,9 +101,7 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
         _timeElapsedLimit = newTimeElapsedLimit;
     }
 
-    function setRecentPriceDelay(uint64) external {
-        // Do something if needed
-    }
+    function setRecentPriceDelay(uint64) external { }
 
     function requireValidationCost() external view returns (bool) {
         return _requireValidationCost;
@@ -119,4 +117,12 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
             revert OracleMiddlewareTransferFailed(to);
         }
     }
+
+    function getLowLatencyDelay() external pure returns (uint16) {
+        return uint16(20 minutes);
+    }
+
+    function setLowLatencyDelay(uint16) external { }
+
+    function setPenaltyBps(uint16 newPenaltyBps) external onlyOwner { }
 }

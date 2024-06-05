@@ -68,7 +68,7 @@ contract TestGetLongPosition is UsdnProtocolBaseFixture {
             uint128(FixedPointMathLib.fullMulDiv(OPEN_AMOUNT, adjustedPrice, adjustedPrice - liqPriceWithoutPenalty));
 
         vm.prank(USER_1);
-        protocol.validateOpenPosition(abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(USER_1, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA);
 
         (position, liquidationPenalty) = protocol.getLongPosition(posId);
 
@@ -83,7 +83,7 @@ contract TestGetLongPosition is UsdnProtocolBaseFixture {
      * @custom:scenario Check the function `getLongPosition` revert in case tick version is outdated
      * @custom:given A initialized protocol
      * @custom:and A user position is opened with a initial tick version
-     * @custom:and The wsteth price drop below the position liquidation price
+     * @custom:and The wsteth price drops below the position liquidation price
      * @custom:and The position is liquidated
      * @custom:and The tick version of the position tick is incremented
      * @custom:when The function is called with user position arguments

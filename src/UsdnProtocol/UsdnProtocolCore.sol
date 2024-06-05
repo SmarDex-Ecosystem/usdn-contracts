@@ -14,10 +14,15 @@ import {
     DepositPendingAction,
     WithdrawalPendingAction,
     LongPendingAction,
-    PositionId
+    PositionId,
+    Position,
+    TickData
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
+import { TickMath } from "src/libraries/TickMath.sol";
+import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
+import { HugeUint } from "src/libraries/HugeUint.sol";
 
 abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     using SafeERC20 for IERC20Metadata;
@@ -25,6 +30,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     using SafeCast for int256;
     using SignedMath for int256;
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
+    using LibBitmap for LibBitmap.Bitmap;
+    using HugeUint for HugeUint.Uint512;
 
     /// @inheritdoc IUsdnProtocolCore
     address public constant DEAD_ADDRESS = address(0xdead);
@@ -119,12 +126,11 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         do {
             // since `i` cannot be greater or equal to `queueLength`, there is no risk of reverting
             (PendingAction memory candidate, uint128 rawIndex) = _pendingActionsQueue.at(i);
-
-            // if the msg.sender is equal to the user of the pending action, then the pending action is not actionable
-            // by this user (it will get validated automatically by their action)
+            // if the msg.sender is equal to the validator of the pending action, then the pending action is not
+            // actionable by this user (it will get validated automatically by their action)
             // and so we need to return the next item in the queue so that they can validate a third-party pending
             // action (if any)
-            if (candidate.timestamp == 0 || candidate.user == currentUser) {
+            if (candidate.timestamp == 0 || candidate.validator == currentUser) {
                 rawIndices_[i] = rawIndex;
                 // try the next one
                 unchecked {
@@ -259,50 +265,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     /**
-     * @notice Calculate the new liquidation multiplier
-     * @param fund The funding rate
-     * @param liquidationMultiplier The current liquidation multiplier
-     * @return multiplier_ The new liquidation multiplier
-     */
-    function _getLiquidationMultiplier(int256 fund, uint256 liquidationMultiplier)
-        internal
-        pure
-        returns (uint256 multiplier_)
-    {
-        multiplier_ = liquidationMultiplier;
-
-        // newMultiplier = oldMultiplier * (1 + funding)
-        if (fund > 0) {
-            multiplier_ += FixedPointMathLib.fullMulDiv(multiplier_, uint256(fund), 10 ** FUNDING_RATE_DECIMALS);
-        } else {
-            multiplier_ -= FixedPointMathLib.fullMulDiv(multiplier_, uint256(-fund), 10 ** FUNDING_RATE_DECIMALS);
-        }
-    }
-
-    /**
-     * @notice Calculate the PnL in asset units of the long side, considering the overall total expo and change in
-     * price
-     * @param totalExpo The total exposure of the long side
-     * @param balanceLong The (old) balance of the long side
-     * @param newPrice The new price
-     * @param oldPrice The old price when the old balance was updated
-     * @return pnl_ The PnL in asset units
-     */
-    function _pnlAsset(uint256 totalExpo, uint256 balanceLong, uint128 newPrice, uint128 oldPrice)
-        internal
-        pure
-        returns (int256 pnl_)
-    {
-        // in case of a negative trading expo, we can't allow calculation of PnL because it would invert the sign of the
-        // calculated amount. We thus disable any balance update due to PnL in such a case
-        if (balanceLong >= totalExpo) {
-            return 0;
-        }
-        int256 priceDiff = _toInt256(newPrice) - _toInt256(oldPrice);
-        pnl_ = totalExpo.toInt256().safeSub(balanceLong.toInt256()).safeMul(priceDiff).safeDiv(_toInt256(newPrice));
-    }
-
-    /**
      * @notice Calculate the long balance taking into account unreflected PnL (but not funding)
      * @dev This function uses the latest total expo, balance and stored price as the reference values, and adds the PnL
      * due to the price change to `currentPrice`
@@ -326,13 +288,22 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         pure
         returns (int256 available_)
     {
-        // Avoid division by zero
-        // slither-disable-next-line incorrect-equality
-        if (totalExpo == 0) {
-            return 0;
+        // if balanceLong == totalExpo or the long trading expo is negative (theoretically impossible), the PnL is
+        // zero
+        // we can't calculate a proper PnL value if the long trading expo is negative because it would invert the
+        // sign of the amount
+        if (balanceLong >= totalExpo) {
+            return balanceLong.toInt256();
         }
+        int256 priceDiff = _toInt256(newPrice) - _toInt256(oldPrice);
+        uint256 tradingExpo;
+        // balanceLong is strictly inferior to totalExpo
+        unchecked {
+            tradingExpo = totalExpo - balanceLong;
+        }
+        int256 pnl = tradingExpo.toInt256().safeMul(priceDiff).safeDiv(_toInt256(newPrice));
 
-        available_ = balanceLong.toInt256().safeAdd(_pnlAsset(totalExpo, balanceLong, newPrice, oldPrice));
+        available_ = balanceLong.toInt256().safeAdd(pnl);
     }
 
     /**
@@ -393,19 +364,19 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * update the balances. This is left to the caller
      * @param currentPrice The current price
      * @param timestamp The timestamp of the current price
-     * @return priceUpdated_ Whether the price was updated
+     * @return isPriceRecent_ Whether the price was updated or was already the most recent price
      * @return tempLongBalance_ The new balance of the long side, could be negative (temporarily)
      * @return tempVaultBalance_ The new balance of the vault side, could be negative (temporarily)
      */
     function _applyPnlAndFunding(uint128 currentPrice, uint128 timestamp)
         internal
-        returns (bool priceUpdated_, int256 tempLongBalance_, int256 tempVaultBalance_)
+        returns (bool isPriceRecent_, int256 tempLongBalance_, int256 tempVaultBalance_)
     {
         // cache variable for optimization
         uint128 lastUpdateTimestamp = _lastUpdateTimestamp;
         // if the price is not fresh, do nothing
         if (timestamp <= lastUpdateTimestamp) {
-            return (false, _balanceLong.toInt256(), _balanceVault.toInt256());
+            return (timestamp == lastUpdateTimestamp, _balanceLong.toInt256(), _balanceVault.toInt256());
         }
 
         // update the funding EMA
@@ -439,7 +410,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         _lastUpdateTimestamp = timestamp;
         _lastFunding = fundWithFee;
 
-        priceUpdated_ = true;
+        isPriceRecent_ = true;
     }
 
     /**
@@ -491,7 +462,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     {
         int256 protocolFeeBps = _toInt256(_protocolFeeBps);
         fundWithFee_ = fund;
-        fee_ = (fundAsset * protocolFeeBps) / int256(BPS_DIVISOR);
+        fee_ = fundAsset * protocolFeeBps / int256(BPS_DIVISOR);
         // fundAsset and fee_ have the same sign, we can safely subtract them to reduce the absolute amount of asset
         fundAssetWithFee_ = fundAsset - fee_;
 
@@ -504,6 +475,42 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         }
 
         _pendingProtocolFee += uint256(fee_);
+    }
+
+    /**
+     * @notice Merge the two parts of the withdrawal amount (USDN shares) stored in the `WithdrawalPendingAction`.
+     * @param sharesLSB The lower 24 bits of the USDN shares
+     * @param sharesMSB The higher bits of the USDN shares
+     * @return usdnShares_ The amount of USDN shares
+     */
+    function _mergeWithdrawalAmountParts(uint24 sharesLSB, uint128 sharesMSB)
+        internal
+        pure
+        returns (uint256 usdnShares_)
+    {
+        usdnShares_ = sharesLSB | uint256(sharesMSB) << 24;
+    }
+
+    /**
+     * @dev Convert a signed tick to an unsigned index into the Bitmap using the tick spacing in storage
+     * @param tick The tick to convert, a multiple of the tick spacing
+     * @return index_ The index into the Bitmap
+     */
+    function _calcBitmapIndexFromTick(int24 tick) internal view returns (uint256 index_) {
+        index_ = _calcBitmapIndexFromTick(tick, _tickSpacing);
+    }
+
+    /**
+     * @dev Convert a signed tick to an unsigned index into the Bitmap using the provided tick spacing
+     * @param tick The tick to convert, a multiple of `tickSpacing`
+     * @param tickSpacing The tick spacing to use
+     * @return index_ The index into the Bitmap
+     */
+    function _calcBitmapIndexFromTick(int24 tick, int24 tickSpacing) internal pure returns (uint256 index_) {
+        index_ = uint256( // cast is safe as the min tick is always above TickMath.MIN_TICK
+            (int256(tick) - TickMath.MIN_TICK) // shift into positive
+                / tickSpacing
+        );
     }
 
     /* -------------------------- Pending actions queue ------------------------- */
@@ -655,7 +662,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         // slither-disable-next-line incorrect-equality
         if (action.action == ProtocolAction.ValidateOpenPosition) {
             LongPendingAction memory openAction = _toLongPendingAction(action);
-            (, uint256 version) = _tickHash(openAction.tick);
+            uint256 version = _tickVersion[openAction.tick];
             if (version != openAction.tickVersion) {
                 securityDepositValue_ = openAction.securityDepositValue;
                 // the position was liquidated while pending
@@ -675,13 +682,10 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @dev This reverts if there is already a pending action for this user
      * @param user The user's address
      * @param action The pending action struct
-     * @return securityDepositValue_ The security deposit value of the stale pending action
+     * @return amountToRefund_ The security deposit value of the stale pending action
      */
-    function _addPendingAction(address user, PendingAction memory action)
-        internal
-        returns (uint256 securityDepositValue_)
-    {
-        securityDepositValue_ = _removeStalePendingAction(user); // check if there is a pending action that was
+    function _addPendingAction(address user, PendingAction memory action) internal returns (uint256 amountToRefund_) {
+        amountToRefund_ = _removeStalePendingAction(user); // check if there is a pending action that was
             // liquidated and remove it
         if (_pendingActions[user] > 0) {
             revert UsdnProtocolPendingAction();
@@ -731,29 +735,87 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     /**
-     * @notice Clear the user pending action and return it
+     * @notice Clear the pending action for a user
      * @param user The user's address
-     * @return action_ The cleared pending action struct
+     * @param rawIndex The rawIndex of the pending action in the queue
      */
-    function _getAndClearPendingAction(address user) internal returns (PendingAction memory action_) {
-        uint128 rawIndex;
-        (action_, rawIndex) = _getPendingActionOrRevert(user);
+    function _clearPendingAction(address user, uint128 rawIndex) internal {
         _pendingActionsQueue.clearAt(rawIndex);
         delete _pendingActions[user];
     }
 
     /**
-     * @notice Clear the pending action for a user
-     * @param user The user's address
+     * @notice Remove a stuck pending action and perform the minimal amount of cleanup necessary
+     * @dev This function should only be called by the owner of the protocol, it serves as an escape hatch if a
+     * pending action ever gets stuck due to something internal reverting unexpectedly
+     * The caller must wait at least 1 hour after the validation deadline to call this function. This is to give the
+     * chance to normal users to validate the action if possible
+     * @param rawIndex The raw index of the pending action in the queue
+     * @param to Where the retrieved funds should be sent (security deposit, assets, usdn)
+     * @param cleanup If `true`, will attempt to perform more cleanup at the risk of reverting. Always try `true` first
      */
-    function _clearPendingAction(address user) internal {
-        uint256 pendingActionIndex = _pendingActions[user];
-        // slither-disable-next-line incorrect-equality
-        if (pendingActionIndex == 0) {
-            revert UsdnProtocolNoPendingAction();
+    function _removeBlockedPendingAction(uint128 rawIndex, address payable to, bool cleanup) internal {
+        PendingAction memory pending = _pendingActionsQueue.atRaw(rawIndex);
+        if (block.timestamp < pending.timestamp + _validationDeadline + 1 hours) {
+            revert UsdnProtocolUnauthorized();
         }
-        uint128 rawIndex = uint128(pendingActionIndex - 1);
+        delete _pendingActions[pending.validator];
         _pendingActionsQueue.clearAt(rawIndex);
-        delete _pendingActions[user];
+        if (pending.action == ProtocolAction.ValidateDeposit && cleanup) {
+            // for pending deposits, we send back the locked assets
+            DepositPendingAction memory deposit = _toDepositPendingAction(pending);
+            _pendingBalanceVault -= _toInt256(deposit.amount);
+            _asset.safeTransfer(to, deposit.amount);
+        } else if (pending.action == ProtocolAction.ValidateWithdrawal && cleanup) {
+            // for pending withdrawals, we send the locked USDN
+            WithdrawalPendingAction memory withdrawal = _toWithdrawalPendingAction(pending);
+            uint256 shares = _mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
+            uint256 pendingAmount =
+                FixedPointMathLib.fullMulDiv(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares);
+            _pendingBalanceVault += pendingAmount.toInt256();
+            _usdn.transferShares(to, shares);
+        } else if (pending.action == ProtocolAction.ValidateOpenPosition) {
+            // for pending opens, we need to remove the position
+            LongPendingAction memory open = _toLongPendingAction(pending);
+            (bytes32 tickHash, uint256 tickVersion) = _tickHash(open.tick);
+            if (tickVersion == open.tickVersion) {
+                // we only need to modify storage if the pos was not liquidated already
+
+                // safe cleanup operations
+                Position[] storage tickArray = _longPositions[tickHash];
+                Position memory pos = tickArray[open.index];
+                delete _longPositions[tickHash][open.index];
+
+                // more cleanup operations
+                if (cleanup) {
+                    TickData storage tickData = _tickData[tickHash];
+                    --_totalLongPositions;
+                    tickData.totalPos -= 1;
+                    if (tickData.totalPos == 0) {
+                        // we removed the last position in the tick
+                        _tickBitmap.unset(_calcBitmapIndexFromTick(open.tick));
+                    }
+                    uint256 unadjustedTickPrice =
+                        TickMath.getPriceAtTick(open.tick - int24(uint24(tickData.liquidationPenalty)) * _tickSpacing);
+                    _totalExpo -= pos.totalExpo;
+                    tickData.totalExpo -= pos.totalExpo;
+                    _liqMultiplierAccumulator =
+                        _liqMultiplierAccumulator.sub(HugeUint.wrap(unadjustedTickPrice * pos.totalExpo));
+                }
+            }
+        } else if (pending.action == ProtocolAction.ValidateClosePosition && cleanup) {
+            // for pending closes, the position is already out of the protocol
+            LongPendingAction memory close = _toLongPendingAction(pending);
+            // credit the full amount to the vault to preserve the total balance invariant (like a liquidation)
+            _balanceVault += close.closeBoundedPositionValue;
+        }
+
+        // we retrieve the security deposit
+        if (cleanup) {
+            (bool success,) = to.call{ value: pending.securityDepositValue }("");
+            if (!success) {
+                revert UsdnProtocolEtherRefundFailed();
+            }
+        }
     }
 }

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
 /**
@@ -44,4 +44,13 @@ interface IOracleMiddlewareErrors {
      * @param newDelay The delay that was provided
      */
     error OracleMiddlewareInvalidRecentPriceDelay(uint64 newDelay);
+
+    /// @dev Indicates that the new penaltyBps value is invalid
+    error OracleMiddlewareInvalidPenaltyBps();
+
+    /// @notice Indicates that the chainlink roundId provided is invalid
+    error OracleMiddlewareInvalidRoundId();
+
+    /// @notice The new low latency delay is invalid
+    error OracleMiddlewareInvalidLowLatencyDelay();
 }

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
@@ -53,4 +53,10 @@ interface IWstETH is IERC20Metadata, IERC20Permit {
      * @return Amount of wstETH for a 1 stETH
      */
     function tokensPerStEth() external view returns (uint256);
+
+    /**
+     * @notice Get the address of stETH
+     * @return Address of stETH
+     */
+    function stETH() external view returns (address);
 }

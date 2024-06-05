@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
 /**
@@ -17,6 +17,9 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the provided to address is invalid
     error UsdnProtocolInvalidAddressTo();
+
+    /// @dev Indicates that the provided validator address is invalid
+    error UsdnProtocolInvalidAddressValidator();
 
     /// @dev Indicates that the initialization deposit is too low
     error UsdnProtocolMinInitAmount(uint256 minInitAmount);
@@ -66,8 +69,17 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the provided tick version is outdated (transactions have been liquidated)
     error UsdnProtocolOutdatedTick(uint256 currentVersion, uint256 providedVersion);
 
+    /// @dev Indicates that the position cannot be closed because it's not validated yet
+    error UsdnProtocolPositionNotValidated();
+
     /// @dev Indicates that the provided position fee exceeds the maximum allowed
     error UsdnProtocolInvalidPositionFee();
+
+    /// @dev Indicates that the provided vault fee exceeds the maximum allowed
+    error UsdnProtocolInvalidVaultFee();
+
+    /// @dev Indicates that the provided Rebalancer bonus exceeds the maximum allowed
+    error UsdnProtocolInvalidRebalancerBonus();
 
     /// @dev Indicates that the provided ratio exceeds the maximum allowed
     error UsdnProtocolInvalidBurnSdexOnDepositRatio();
@@ -119,6 +131,9 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the soft longExpo imbalance limit provided is invalid
     error UsdnProtocolInvalidExpoImbalanceLimit();
+
+    /// @dev The imbalance target on the long side is invalid
+    error UsdnProtocolInvalidLongImbalanceTarget();
 
     /// @dev Indicates that the protocol imbalance limit is reached
     error UsdnProtocolImbalanceLimitReached(int256 imbalanceBps);

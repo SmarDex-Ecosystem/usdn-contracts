@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
 import { IUsdnProtocolCore } from "src/interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
@@ -24,4 +24,16 @@ interface IUsdnProtocolVault is IUsdnProtocolCore {
      * @param currentPrice The most recent/current asset price
      */
     function usdnPrice(uint128 currentPrice) external view returns (uint256);
+
+    /**
+     * @notice Calculate an estimation of assets received when withdrawing
+     * @param usdnShares The amount of USDN shares
+     * @param price The price of the asset
+     * @param timestamp The timestamp of the operation
+     * @return assetExpected_ The expected amount of asset to be received
+     */
+    function previewWithdraw(uint256 usdnShares, uint256 price, uint128 timestamp)
+        external
+        view
+        returns (uint256 assetExpected_);
 }

@@ -1,15 +1,15 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
+import { IBaseOracleMiddleware } from "src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { Position, PendingAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
-import { IOrderManager } from "src/interfaces/OrderManager/IOrderManager.sol";
+import { IBaseLiquidationRewardsManager } from "src/interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
+import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
 
 /**
@@ -70,6 +70,12 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      */
     function MAX_LIQUIDATION_ITERATION() external pure returns (uint16);
 
+    /**
+     * @notice Get the sentinel value indicating that a `PositionId` represents no position
+     * @return The tick value for a `PositionId` that represents no position
+     */
+    function NO_POSITION_TICK() external pure returns (int24);
+
     /* -------------------------------------------------------------------------- */
     /*                                 Immutables getters                         */
     /* -------------------------------------------------------------------------- */
@@ -127,19 +133,19 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * @notice Get the oracle middleware contract
      * @return The address of the oracle middleware contract
      */
-    function getOracleMiddleware() external view returns (IOracleMiddleware);
+    function getOracleMiddleware() external view returns (IBaseOracleMiddleware);
 
     /**
      * @notice Get the liquidation rewards manager contract
      * @return The address of the liquidation rewards manager contract
      */
-    function getLiquidationRewardsManager() external view returns (ILiquidationRewardsManager);
+    function getLiquidationRewardsManager() external view returns (IBaseLiquidationRewardsManager);
 
     /**
-     * @notice Get the order manager contract
-     * @return The address of the order manager contract
+     * @notice Get the rebalancer contract
+     * @return The address of the rebalancer contract
      */
-    function getOrderManager() external view returns (IOrderManager);
+    function getRebalancer() external view returns (IRebalancer);
 
     /**
      * @notice Get the lowest leverage used to open a position
@@ -200,10 +206,23 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getProtocolFeeBps() external view returns (uint16);
 
     /**
-     * @notice Get the fee applied when a position is opened
+     * @notice Get the fee applied when a long position is opened or closed
      * @return The position fee (in basis points)
      */
     function getPositionFeeBps() external view returns (uint16);
+
+    /**
+     * @notice Get the fee applied during a vault deposit or withdrawal
+     * @return The action fee (in basis points)
+     */
+    function getVaultFeeBps() external view returns (uint16);
+
+    /**
+     * @notice Get the part of the remaining collateral that is given as bonus to the Rebalancer upon liquidation of a
+     * tick
+     * @return The collateral bonus for the Rebalancer (in basis points)
+     */
+    function getRebalancerBonusBps() external view returns (uint16);
 
     /**
      * @notice Get the ratio of USDN to SDEX tokens to burn on deposit
@@ -237,21 +256,35 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getMiddlewareValidationDelay() external view returns (uint256);
 
     /**
-     * @notice Get expo imbalance limits (in basis points)
-     * @return openExpoImbalanceLimitBps_ The open expo imbalance limit
+     * @notice Get the expo imbalance limit when depositing assets (in basis points)
      * @return depositExpoImbalanceLimitBps_ The deposit expo imbalance limit
+     */
+    function getDepositExpoImbalanceLimitBps() external view returns (int256 depositExpoImbalanceLimitBps_);
+
+    /**
+     * @notice Get the expo imbalance limit when withdrawing assets (in basis points)
      * @return withdrawalExpoImbalanceLimitBps_ The withdrawal expo imbalance limit
+     */
+    function getWithdrawalExpoImbalanceLimitBps() external view returns (int256 withdrawalExpoImbalanceLimitBps_);
+
+    /**
+     * @notice Get the expo imbalance limit when opening a position (in basis points)
+     * @return openExpoImbalanceLimitBps_ The open expo imbalance limit
+     */
+    function getOpenExpoImbalanceLimitBps() external view returns (int256 openExpoImbalanceLimitBps_);
+
+    /**
+     * @notice Get the expo imbalance limit when closing a position (in basis points)
      * @return closeExpoImbalanceLimitBps_ The close expo imbalance limit
      */
-    function getExpoImbalanceLimits()
-        external
-        view
-        returns (
-            int256 openExpoImbalanceLimitBps_,
-            int256 depositExpoImbalanceLimitBps_,
-            int256 withdrawalExpoImbalanceLimitBps_,
-            int256 closeExpoImbalanceLimitBps_
-        );
+    function getCloseExpoImbalanceLimitBps() external view returns (int256 closeExpoImbalanceLimitBps_);
+
+    /**
+     * @notice Returns the target imbalance to have on the long side after the creation of a rebalancer position
+     * @dev The creation of the rebalancer position aims for this target, but does not guarantee hitting it
+     * @return targetLongImbalance_ The target long imbalance
+     */
+    function getLongImbalanceTargetBps() external view returns (int256 targetLongImbalance_);
 
     /**
      * @notice Get the nominal (target) price of USDN
@@ -327,6 +360,12 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * @return The amount of assets on the vault side (with asset decimals)
      */
     function getBalanceVault() external view returns (uint256);
+
+    /**
+     * @notice Get the pending balance updates due to pending vault actions
+     * @return The unreflected balance change due to pending vault actions (with asset decimals)
+     */
+    function getPendingBalanceVault() external view returns (int256);
 
     /**
      * @notice Get the timestamp when the last USDN rebase check was performed

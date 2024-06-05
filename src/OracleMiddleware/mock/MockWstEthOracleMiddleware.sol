@@ -7,16 +7,13 @@ import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddlew
 import { OracleMiddleware } from "src/OracleMiddleware/OracleMiddleware.sol";
 
 /**
- * @title Contract to apply and return a mocked wsteth price
- * @notice This contract is used to get the price of wsteth
- * by setting up a price or forward to wstethMiddleware.
- * This aim to simulate price up or down. Do not use it in production.
+ * @title Contract to apply and return a mocked wstETH price
+ * @notice This contract is used to get the price of wsteth by setting up a price or forward to wstethMiddleware
+ * @dev This aims at simulating price action. Do not use in production
  */
 contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
-    /// @notice Confidence interval denominator
-    uint16 internal constant CONF_DENOM = 10_000;
     /// @notice Confidence interval percentage numerator
-    uint16 internal _wstethMockedConfPct = 20; // default 0.2% conf
+    uint16 internal _wstethMockedConfBps = 20; // default 0.2% conf
 
     /**
      * @notice Wsteth mocked price
@@ -24,7 +21,7 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
      */
     uint256 internal _wstethMockedPrice;
     /**
-     * @notice If we need to verify the provided signature data or not.
+     * @notice If we need to verify the provided signature data or not
      * @dev If _wstethMockedPrice == 0, this setting is ignored
      */
     bool internal _verifySignature = true;
@@ -38,79 +35,75 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
     ) WstEthOracleMiddleware(pythContract, pythPriceID, chainlinkPriceFeed, wsteth, chainlinkTimeElapsedLimit) { }
 
     /// @inheritdoc OracleMiddleware
-    function parseAndValidatePrice(uint128 targetTimestamp, ProtocolAction action, bytes calldata data)
-        public
-        payable
-        override
-        returns (PriceInfo memory price_)
-    {
-        // Parse and validate from parent wsteth middleware.
-        // This aim to verify pyth price hermes signature in any case.
+    function parseAndValidatePrice(
+        bytes32 actionId,
+        uint128 targetTimestamp,
+        ProtocolAction action,
+        bytes calldata data
+    ) public payable override returns (PriceInfo memory price_) {
+        // parse and validate from parent wsteth middleware
+        // this aim to verify pyth price hermes signature in any case
         if (_verifySignature || _wstethMockedPrice == 0) {
-            price_ = super.parseAndValidatePrice(targetTimestamp, action, data);
+            price_ = super.parseAndValidatePrice(actionId, targetTimestamp, action, data);
         } else {
             price_.timestamp = targetTimestamp;
         }
 
-        // If mocked price is not set, return.
+        // if mocked price is not set, return.
         if (_wstethMockedPrice == 0) {
             return price_;
         }
 
-        // neutralPrice.
         price_.neutralPrice = _wstethMockedPrice;
-        // price initialized with neutralPrice.
         price_.price = price_.neutralPrice;
 
         // ConfidenceInterval Down cases
         if (
             action == ProtocolAction.ValidateDeposit || action == ProtocolAction.ValidateClosePosition
-                || action == ProtocolAction.Liquidation
+                || action == ProtocolAction.InitiateDeposit || action == ProtocolAction.InitiateClosePosition
         ) {
-            price_.price -= price_.price * _wstethMockedConfPct / CONF_DENOM;
+            price_.price -= price_.price * _wstethMockedConfBps / BPS_DIVISOR;
 
             // ConfidenceInterval Up case
-        } else if (action == ProtocolAction.ValidateOpenPosition) {
-            price_.price += price_.price * _wstethMockedConfPct / CONF_DENOM;
+        } else if (
+            action == ProtocolAction.ValidateWithdrawal || action == ProtocolAction.ValidateOpenPosition
+                || action == ProtocolAction.InitiateWithdrawal || action == ProtocolAction.InitiateOpenPosition
+        ) {
+            price_.price += price_.price * _wstethMockedConfBps / BPS_DIVISOR;
         }
     }
 
     /**
-     * @notice Set Wsteth mocked price.
-     * @dev If new mocked wsteth is greater than zero this will validate this mocked price
-     * else this will validate the parent middleware price.
-     * @param newWstethMockedPrice .
+     * @notice Set Wsteth mocked price
+     * @dev If new mocked wsteth is greater than zero this will validate this mocked price else this will validate the
+     * parent middleware price
+     * @param newWstethMockedPrice The mock price to set
      */
     function setWstethMockedPrice(uint256 newWstethMockedPrice) external {
         _wstethMockedPrice = newWstethMockedPrice;
     }
 
     /**
-     * @notice Set Wsteth mocked confidence interval percentage.
-     * @dev To calculate a percentage of neutral price up or down in some protocol actions.
-     * @param newWstethMockedConfPct .
+     * @notice Set Wsteth mocked confidence interval percentage
+     * @dev To calculate a percentage of neutral price up or down in some protocol actions
+     * @param newWstethMockedConfPct The mock confidence interval
      */
-    function setWstethMockedConfPct(uint16 newWstethMockedConfPct) external {
+    function setWstethMockedConfBps(uint16 newWstethMockedConfPct) external {
         require(newWstethMockedConfPct <= 1500, "15% max");
-        _wstethMockedConfPct = newWstethMockedConfPct;
+        _wstethMockedConfBps = newWstethMockedConfPct;
     }
 
-    /// @notice Get current wsteth mocked price.
+    /// @notice Get current wsteth mocked price
     function getWstethMockedPrice() external view returns (uint256) {
         return _wstethMockedPrice;
     }
 
-    /// @notice Get current wsteth mocked confidence interval.
-    function getWstethMockedConfPct() external view returns (uint64) {
-        return _wstethMockedConfPct;
+    /// @notice Get current wsteth mocked confidence interval
+    function getWstethMockedConfBps() external view returns (uint64) {
+        return _wstethMockedConfBps;
     }
 
-    /// @notice Get constant wsteth mocked confidence interval denominator.
-    function getWstethMockedConfDenom() external pure returns (uint64) {
-        return CONF_DENOM;
-    }
-
-    /// @notice Set the signature verification flag.
+    /// @notice Set the signature verification flag
     function setVerifySignature(bool verify) external {
         _verifySignature = verify;
     }
@@ -122,7 +115,7 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
         override
         returns (uint256 result_)
     {
-        // No signature verification -> no oracle fee
+        // no signature verification -> no oracle fee
         if (!_verifySignature) return 0;
 
         return super.validationCost(data, action);

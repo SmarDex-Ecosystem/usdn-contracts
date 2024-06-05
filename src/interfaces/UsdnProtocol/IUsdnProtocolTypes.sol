@@ -1,14 +1,16 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
 /**
- * @notice Information about a long user position.
- * @param timestamp The timestamp of the position start.
- * @param user The user address.
- * @param totalExpo The total expo of the position (0 for vault deposits).
- * @param amount The amount of the position.
+ * @notice Information about a long user position
+ * @param validated Whether the position was validated
+ * @param timestamp The timestamp of the position start
+ * @param user The user address
+ * @param totalExpo The total expo of the position (0 for vault deposits)
+ * @param amount The amount of the position
  */
 struct Position {
+    bool validated; // 1 byte
     uint40 timestamp; // 5 bytes. Max 1_099_511_627_775 (36812-02-20 01:36:15)
     address user; // 20 bytes
     uint128 totalExpo; // 16 bytes. Max 340_282_366_920_938_463_463.374_607_431_768_211_455 ether
@@ -48,8 +50,8 @@ enum ProtocolAction {
  * @notice A pending action in the queue.
  * @param action The action type (Validate...).
  * @param timestamp The timestamp of the initiate action.
- * @param user The user address.
  * @param to The to address.
+ * @param validator The validator address.
  * @param securityDepositValue The security deposit of the pending action.
  * @param var1 See `DepositPendingAction`, `WithdrawalPendingAction` and `LongPendingAction`.
  * @param var2 See `DepositPendingAction`, `WithdrawalPendingAction` and `LongPendingAction`.
@@ -62,8 +64,8 @@ enum ProtocolAction {
 struct PendingAction {
     ProtocolAction action; // 1 byte
     uint40 timestamp; // 5 bytes
-    address user; // 20 bytes
     address to; // 20 bytes
+    address validator; // 20 bytes
     uint64 securityDepositValue; // 8 bytes
     int24 var1; // 3 bytes
     uint128 var2; // 16 bytes
@@ -78,8 +80,8 @@ struct PendingAction {
  * @notice A pending action in the queue for a vault deposit.
  * @param action The action type (Validate...).
  * @param timestamp The timestamp of the initiate action.
- * @param user The user address.
  * @param to The to address.
+ * @param validator The validator address.
  * @param securityDepositValue The security deposit of the pending action.
  * @param _unused Unused field to align the struct to `PendingAction`.
  * @param amount The amount of assets of the pending deposit.
@@ -87,13 +89,13 @@ struct PendingAction {
  * @param totalExpo The total exposure at the time of the last update.
  * @param balanceVault The balance of the vault at the time of the last update.
  * @param balanceLong The balance of the long position at the time of the last update.
- * @param usdnTotalSupply The total supply of USDN at the time of the action.
+ * @param usdnTotalShares The total supply of USDN shares at the time of the action.
  */
 struct DepositPendingAction {
     ProtocolAction action; // 1 byte
     uint40 timestamp; // 5 bytes
-    address user; // 20 bytes
     address to; // 20 bytes
+    address validator; // 20 bytes
     uint64 securityDepositValue; // 8 bytes
     int24 _unused; // 3 bytes
     uint128 amount; // 16 bytes
@@ -101,15 +103,15 @@ struct DepositPendingAction {
     uint256 totalExpo; // 32 bytes
     uint256 balanceVault; // 32 bytes
     uint256 balanceLong; // 32 bytes
-    uint256 usdnTotalSupply; // 32 bytes
+    uint256 usdnTotalShares; // 32 bytes
 }
 
 /**
  * @notice A pending action in the queue for a vault withdrawal.
  * @param action The action type (Validate...).
  * @param timestamp The timestamp of the initiate action.
- * @param user The user address.
  * @param to The to address.
+ * @param validator The validator address.
  * @param securityDepositValue The security deposit of the pending action.
  * @param sharesLSB 3 least significant bytes of the withdrawal shares amount (uint152).
  * @param sharesMSB 16 most significant bytes of the withdrawal shares amount (uint152).
@@ -122,8 +124,8 @@ struct DepositPendingAction {
 struct WithdrawalPendingAction {
     ProtocolAction action; // 1 byte
     uint40 timestamp; // 5 bytes
-    address user; // 20 bytes
     address to; // 20 bytes
+    address validator; // 20 bytes
     uint64 securityDepositValue; // 8 bytes
     uint24 sharesLSB; // 3 bytes
     uint128 sharesMSB; // 16 bytes
@@ -138,8 +140,8 @@ struct WithdrawalPendingAction {
  * @notice A pending action in the queue for a long position.
  * @param action The action type (Validate...).
  * @param timestamp The timestamp of the initiate action.
- * @param user The user address.
  * @param to The to address.
+ * @param validator The validator address.
  * @param securityDepositValue The security deposit of the pending action.
  * @param tick The tick of the position.
  * @param closeAmount The amount of the pending action (only used when closing a position).
@@ -155,8 +157,8 @@ struct WithdrawalPendingAction {
 struct LongPendingAction {
     ProtocolAction action; // 1 byte
     uint40 timestamp; // 5 bytes
-    address user; // 20 bytes
     address to; // 20 bytes
+    address validator; // 20 bytes
     uint64 securityDepositValue; // 8 bytes
     int24 tick; // 3 bytes
     uint128 closeAmount; // 16 bytes
@@ -186,6 +188,7 @@ struct PreviousActionsData {
  * @param remainingCollateral The collateral remaining after the liquidations
  * @param newLongBalance The new balance of the long side
  * @param newVaultBalance The new balance of the vault side
+ * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
  */
 struct LiquidationsEffects {
     uint256 liquidatedPositions;
@@ -193,6 +196,7 @@ struct LiquidationsEffects {
     int256 remainingCollateral;
     uint256 newLongBalance;
     uint256 newVaultBalance;
+    bool isLiquidationPending;
 }
 
 /**
