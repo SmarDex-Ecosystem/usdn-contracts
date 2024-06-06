@@ -235,25 +235,25 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         bytes memory priceData = abi.encode(price);
 
         protocol.initiateDeposit{ value: securityDepositValue }(
-            positionSize, user, user, priceData, EMPTY_PREVIOUS_DATA
+            positionSize, user, payable(user), priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         if (untilAction == ProtocolAction.InitiateDeposit) return;
 
-        protocol.validateDeposit(user, priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit(payable(user), priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
         if (untilAction == ProtocolAction.ValidateDeposit) return;
 
         uint256 sharesOf = usdn.sharesOf(user);
         usdn.approve(address(protocol), usdn.convertToTokensRoundUp(sharesOf));
         protocol.initiateWithdrawal{ value: securityDepositValue }(
-            uint152(sharesOf), user, user, priceData, EMPTY_PREVIOUS_DATA
+            uint152(sharesOf), user, payable(user), priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
         if (untilAction == ProtocolAction.InitiateWithdrawal) return;
 
-        protocol.validateWithdrawal(user, priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateWithdrawal(payable(user), priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
     }
 
@@ -278,7 +278,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             openParams.positionSize,
             openParams.desiredLiqPrice,
             openParams.user,
-            openParams.user,
+            payable(openParams.user),
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -286,17 +286,17 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         _waitDelay();
         if (openParams.untilAction == ProtocolAction.InitiateOpenPosition) return (posId_);
 
-        protocol.validateOpenPosition(openParams.user, priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(payable(openParams.user), priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
         if (openParams.untilAction == ProtocolAction.ValidateOpenPosition) return (posId_);
 
         protocol.initiateClosePosition{ value: securityDepositValue }(
-            posId_, openParams.positionSize, openParams.user, priceData, EMPTY_PREVIOUS_DATA
+            posId_, openParams.positionSize, openParams.user, payable(openParams.user), priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         if (openParams.untilAction == ProtocolAction.InitiateClosePosition) return (posId_);
 
-        protocol.validateClosePosition(openParams.user, priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateClosePosition(payable(openParams.user), priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
     }
 

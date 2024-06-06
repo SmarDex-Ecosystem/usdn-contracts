@@ -48,7 +48,7 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
         PendingAction memory action = protocol.getUserPendingAction(address(this));
         assertEq(action.validator, address(this), "pending action validator");
 
-        protocol.validateOpenPosition(address(this), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(payable(address(this)), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -78,7 +78,9 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
         assertEq(pos.user, USER_1, "position user");
 
         vm.prank(USER_1);
-        protocol.initiateClosePosition(posId, pos.amount, USER_1, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA);
+        protocol.initiateClosePosition(
+            posId, pos.amount, USER_1, USER_1, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
+        );
 
         // the close action should have USER_1 as the validator
         PendingAction memory action = protocol.getUserPendingAction(USER_1);
