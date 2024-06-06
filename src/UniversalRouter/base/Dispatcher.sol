@@ -279,7 +279,9 @@ abstract contract Dispatcher is
                     } else if (command == Commands.LIQUIDATE) {
                         // TODO LIQUIDATE
                     } else if (command == Commands.VALIDATE_PENDING) {
-                        // TODO VALIDATE_PENDING
+                        (PreviousActionsData memory previousActionsData, uint256 maxValidations, uint256 ethAmount) =
+                            abi.decode(inputs, (PreviousActionsData, uint256, uint256));
+                        _usdnValidateActionablePendingActions(previousActionsData, maxValidations, ethAmount);
                     } else {
                         revert InvalidCommandType(command);
                     }
