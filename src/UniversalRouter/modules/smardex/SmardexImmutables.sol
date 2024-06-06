@@ -5,7 +5,7 @@ import { ISmardexFactory } from "src/interfaces/UniversalRouter/smardex/ISmardex
 import { IWETH9 } from "@uniswap/universal-router/contracts/interfaces/external/IWETH9.sol";
 
 /**
- * @notice The smardex parameter struct
+ * @notice The smardex parameters struct
  * @param smardexFactory The smardex factory
  * @param weth The wrapped ETH address
  */

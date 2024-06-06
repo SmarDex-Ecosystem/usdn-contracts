@@ -29,9 +29,7 @@ contract UniversalRouter is IUniversalRouter, Dispatcher {
         _;
     }
 
-    /**
-     * @param params The immutable parameters of the router
-     */
+    /// @param params The immutable parameters of the router
     constructor(RouterParameters memory params)
         UniswapImmutables(
             UniswapParameters(params.v2Factory, params.v3Factory, params.pairInitCodeHash, params.poolInitCodeHash)

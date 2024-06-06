@@ -14,11 +14,20 @@ import { SmardexImmutables } from "src/UniversalRouter/modules/smardex/SmardexIm
 
 /// @title Router for Smardex
 abstract contract SmardexSwapRouter is SmardexImmutables, Permit2Payments {
-    /**
-     * @notice Indicates that the amount received by a smardex
-     * swapExactIn is lower than the minimum expected amount
-     */
+    /// @notice Indicates that the amountOut is lower than the minAmountOut
     error tooLittleReceived();
+
+    /// @notice Indicates that the amountIn is higher than the maxAmountIn
+    error excessiveInputAmount();
+
+    /// @notice Indicates that the recipient is invalid
+    error invalidRecipient();
+
+    /// @notice Indicates that msg.sender is not the pair
+    error invalidPair();
+
+    /// @notice Indicates that the callback amount is invalid
+    error callbackInvalidAmount();
 
     using Path for bytes;
     using SafeCast for uint256;
@@ -45,34 +54,35 @@ abstract contract SmardexSwapRouter is SmardexImmutables, Permit2Payments {
 
     /**
      * @notice callback data for smardex swap
-     * @param _amount0Delta amount of token0 for the swap (negative is incoming, positive is required to pay to pair)
-     * @param _amount1Delta amount of token1 for the swap (negative is incoming, positive is required to pay to pair)
-     * @param _data for Router path and payer for the swap
+     * @param amount0Delta amount of token0 for the swap (negative is incoming, positive is required to pay to pair)
+     * @param amount1Delta amount of token1 for the swap (negative is incoming, positive is required to pay to pair)
+     * @param data for Router path and payer for the swap
      */
-    function smardexSwapCallback(int256 _amount0Delta, int256 _amount1Delta, bytes calldata _data) external {
-        require(_amount0Delta > 0 || _amount1Delta > 0, "SmardexRouter: Callback Invalid amount");
+    function smardexSwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata data) external {
+        if (amount0Delta <= 0 && amount1Delta <= 0) {
+            revert callbackInvalidAmount();
+        }
 
-        SwapCallbackData memory _decodedData = abi.decode(_data, (SwapCallbackData));
-        (address _tokenIn, address _tokenOut) = _decodedData.path.decodeFirstPool();
+        SwapCallbackData memory decodedData = abi.decode(data, (SwapCallbackData));
+        (address tokenIn, address tokenOut) = decodedData.path.decodeFirstPool();
 
         // ensure that msg.sender is a pair
-        require(
-            msg.sender == ISmardexFactory(SMARDEX_FACTORY).getPair(_tokenIn, _tokenOut), "SmarDexRouter: INVALID_PAIR"
-        );
+        if (msg.sender != ISmardexFactory(SMARDEX_FACTORY).getPair(tokenIn, tokenOut)) {
+            revert invalidPair();
+        }
 
-        (bool _isExactInput, uint256 _amountToPay) = _amount0Delta > 0
-            ? (_tokenIn < _tokenOut, uint256(_amount0Delta))
-            : (_tokenOut < _tokenIn, uint256(_amount1Delta));
+        (bool isExactInput, uint256 amountToPay) =
+            amount0Delta > 0 ? (tokenIn < tokenOut, uint256(amount0Delta)) : (tokenOut < tokenIn, uint256(amount1Delta));
 
-        if (_isExactInput) {
-            _payOrPermit2Transfer(_tokenIn, _decodedData.payer, msg.sender, _amountToPay);
-        } else if (_decodedData.path.hasMultiplePools()) {
-            _decodedData.path = _decodedData.path.skipTokenMemory();
-            _swapExactOut(_amountToPay, msg.sender, _decodedData);
+        if (isExactInput) {
+            _payOrPermit2Transfer(tokenIn, decodedData.payer, msg.sender, amountToPay);
+        } else if (decodedData.path.hasMultiplePools()) {
+            decodedData.path = decodedData.path.skipTokenMemory();
+            _swapExactOut(amountToPay, msg.sender, decodedData);
         } else {
-            amountInCached = _amountToPay;
-            _tokenIn = _tokenOut; // swap in/out because exact output swaps are reversed
-            _payOrPermit2Transfer(_tokenIn, _decodedData.payer, msg.sender, _amountToPay);
+            amountInCached = amountToPay;
+            tokenIn = tokenOut; // swap in/out because exact output swaps are reversed
+            _payOrPermit2Transfer(tokenIn, decodedData.payer, msg.sender, amountToPay);
         }
     }
 
@@ -85,7 +95,7 @@ abstract contract SmardexSwapRouter is SmardexImmutables, Permit2Payments {
      * @param path The path of the trade as a bytes string
      * @param payer The address that will be paying the input
      */
-    function smardexSwapExactInput(
+    function _smardexSwapExactInput(
         address recipient,
         uint256 amountIn,
         uint256 amountOutMinimum,
@@ -119,7 +129,9 @@ abstract contract SmardexSwapRouter is SmardexImmutables, Permit2Payments {
             }
         }
 
-        if (amountOut < amountOutMinimum) revert tooLittleReceived();
+        if (amountOut < amountOutMinimum) {
+            revert tooLittleReceived();
+        }
     }
 
     /**
@@ -131,7 +143,7 @@ abstract contract SmardexSwapRouter is SmardexImmutables, Permit2Payments {
      * @param path The path of the trade as a bytes string
      * @param payer The address that will be paying the input
      */
-    function smardexSwapExactOutput(
+    function _smardexSwapExactOutput(
         address recipient,
         uint256 amountOut,
         uint256 amountInMaximum,
@@ -143,77 +155,88 @@ abstract contract SmardexSwapRouter is SmardexImmutables, Permit2Payments {
         bytes memory _reversedPath = path.encodeTightlyPackedReversed();
         uint256 amountIn = _swapExactOut(amountOut, recipient, SwapCallbackData({ path: _reversedPath, payer: payer }));
         // amount In is only the right one for one Hop, otherwise we need cached amountIn from callback
-        if (path.length > 2) amountIn = amountInCached;
-        require(amountIn <= amountInMaximum, "SmarDexRouter: EXCESSIVE_INPUT_AMOUNT");
+        if (path.length > 2) {
+            amountIn = amountInCached;
+        }
+
+        if (amountIn > amountInMaximum) {
+            revert excessiveInputAmount();
+        }
         amountInCached = DEFAULT_MAX_AMOUNT_IN;
     }
 
     /**
      * @notice internal function to swap quantity of token to receive a determined quantity
-     * @param _amountOut quantity to receive
-     * @param _to address that will receive the token
-     * @param _data SwapCallbackData data of the swap to transmit
+     * @param amountOut quantity to receive
+     * @param to address that will receive the token
+     * @param data SwapCallbackData data of the swap to transmit
      * @return amountIn_ amount of token to pay
      */
-    function _swapExactOut(uint256 _amountOut, address _to, SwapCallbackData memory _data)
+    function _swapExactOut(uint256 amountOut, address to, SwapCallbackData memory data)
         private
         returns (uint256 amountIn_)
     {
-        require(_to != address(0), "SmarDexRouter: INVALID_RECIPIENT");
+        if (to == address(0)) {
+            revert invalidRecipient();
+        }
 
-        (address _tokenOut, address _tokenIn) = _data.path.decodeFirstPool();
-        bool _zeroForOne = _tokenIn < _tokenOut;
+        (address tokenOut, address tokenIn) = data.path.decodeFirstPool();
+        bool zeroForOne = tokenIn < tokenOut;
 
-        (int256 _amount0, int256 _amount1) = ISmardexPair(ISmardexFactory(SMARDEX_FACTORY).getPair(_tokenIn, _tokenOut))
-            .swap(_to, _zeroForOne, -_amountOut.toInt256(), abi.encode(_data));
+        (int256 amount0, int256 amount1) = ISmardexPair(ISmardexFactory(SMARDEX_FACTORY).getPair(tokenIn, tokenOut))
+            .swap(to, zeroForOne, -amountOut.toInt256(), abi.encode(data));
 
-        amountIn_ = _zeroForOne ? uint256(_amount0) : uint256(_amount1);
+        if (zeroForOne) {
+            amountIn_ = uint256(amount0);
+        } else {
+            amountIn_ = uint256(amount1);
+        }
     }
 
     /**
      * @notice internal function to swap a determined quantity of token
-     * @param _amountIn quantity to swap
-     * @param _to address that will receive the token
-     * @param _data SwapCallbackData data of the swap to transmit
+     * @param amountIn quantity to swap
+     * @param to address that will receive the token
+     * @param data SwapCallbackData data of the swap to transmit
      * @return amountOut_ amount of token that _to will receive
      */
-    function _swapExactIn(uint256 _amountIn, address _to, SwapCallbackData memory _data)
+    function _swapExactIn(uint256 amountIn, address to, SwapCallbackData memory data)
         internal
         returns (uint256 amountOut_)
     {
         // allow swapping to the router address with address 0
-        if (_to == address(0)) {
-            _to = address(this);
+        if (to == address(0)) {
+            to = address(this);
         }
 
-        (address _tokenIn, address _tokenOut) = _data.path.decodeFirstPool();
-        bool _zeroForOne = _tokenIn < _tokenOut;
-        (int256 _amount0, int256 _amount1) = ISmardexPair(ISmardexFactory(SMARDEX_FACTORY).getPair(_tokenIn, _tokenOut))
-            .swap(_to, _zeroForOne, _amountIn.toInt256(), abi.encode(_data));
-        amountOut_ = (_zeroForOne ? -_amount1 : -_amount0).toUint256();
+        (address tokenIn, address tokenOut) = data.path.decodeFirstPool();
+        bool _zeroForOne = tokenIn < tokenOut;
+        (int256 amount0, int256 amount1) = ISmardexPair(ISmardexFactory(SMARDEX_FACTORY).getPair(tokenIn, tokenOut))
+            .swap(to, _zeroForOne, amountIn.toInt256(), abi.encode(data));
+        amountOut_ = (_zeroForOne ? -amount1 : -amount0).toUint256();
     }
 
     /**
      * @notice send tokens to a user. Handle transfer/transferFrom and WETH / ETH or any ERC20 token
-     * @param _token The token to pay
-     * @param _payer The entity that must pay
-     * @param _to The entity that will receive payment
-     * @param _value The amount to pay
+     * @param token The token to pay
+     * @param payer The entity that must pay
+     * @param to The entity that will receive payment
+     * @param value The amount to pay
      * @custom:from UniV3 PeripheryPayments.sol
      * @custom:url https://github.com/Uniswap/v3-periphery/blob/v1.3.0/contracts/base/PeripheryPayments.sol
      */
-    function _pay(address _token, address _payer, address _to, uint256 _value) internal {
-        if (_token == address(WETH) && address(this).balance >= _value) {
+    function _pay(address token, address payer, address to, uint256 value) internal {
+        if (token == address(WETH) && address(this).balance >= value) {
             // pay with WETH
-            WETH.deposit{ value: _value }(); // wrap only what is needed to pay
-            WETH.transfer(_to, _value);
+            WETH.deposit{ value: value }(); // wrap only what is needed to pay
+            WETH.transfer(to, value);
             //refund dust eth, if any ?
-        } else if (_payer == address(this)) {
+        } else if (payer == address(this)) {
             // pay with tokens already in the contract (for the exact input multihop case)
-            TransferHelper.safeTransfer(_token, _to, _value);
+            TransferHelper.safeTransfer(token, to, value);
         } else {
             // pull payment
-            TransferHelper.safeTransferFrom(_token, _payer, _to, _value);
+            TransferHelper.safeTransferFrom(token, payer, to, value);
         }
     }
 

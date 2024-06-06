@@ -55,7 +55,7 @@ contract TestForkExecuteSmardexSwap is UniversalRouterBaseFixture {
     /**
      * @custom:scenario Test the `SMARDEX_SWAP_EXACT_IN` command using the router balance by multi hops
      * @custom:given The initiated universal router
-     * @custom:given The router should be funded with some wbtc
+     * @custom:and The router should be funded with some wbtc
      * @custom:when The `execute` function is called for `SMARDEX_SWAP_EXACT_IN` command
      * @custom:then The `SMARDEX_SWAP_EXACT_IN` command should be executed
      * @custom:and The weth user balance should be increased
@@ -84,6 +84,7 @@ contract TestForkExecuteSmardexSwap is UniversalRouterBaseFixture {
      * @custom:scenario Test the `SMARDEX_SWAP_EXACT_IN` command using permit2
      * @custom:given The initiated universal router
      * @custom:and The user should be funded with some sdex
+     * @custom:and The permit2 contract should be approved
      * @custom:when The `execute` function is called for `SMARDEX_SWAP_EXACT_IN` command
      * @custom:then The `SMARDEX_SWAP_EXACT_IN` command should be executed
      * @custom:and The weth user balance should be increased
@@ -111,7 +112,8 @@ contract TestForkExecuteSmardexSwap is UniversalRouterBaseFixture {
     /**
      * @custom:scenario Test the `SMARDEX_SWAP_EXACT_IN` command using permit2 by multi hops
      * @custom:given The initiated universal router
-     * @custom:and The user should be funded with some sdex
+     * @custom:and The user should be funded with some wbtc
+     * @custom:and The permit2 contract should be approved
      * @custom:when The `execute` function is called for `SMARDEX_SWAP_EXACT_IN` command
      * @custom:then The `SMARDEX_SWAP_EXACT_IN` command should be executed
      * @custom:and The sdex user balance should be increased
@@ -137,14 +139,14 @@ contract TestForkExecuteSmardexSwap is UniversalRouterBaseFixture {
     }
 
     /**
-     * @custom:scenario Test the `SMARDEX_SWAP_EXACT_IN` command using permit2 by multi hops
+     * @custom:scenario Test the `SMARDEX_SWAP_EXACT_IN` command with too little token received
      * @custom:given The initiated universal router
-     * @custom:and The user should be funded with some sdex
+     * @custom:and The user should be funded with some wbtc
+     * @custom:and The permit2 contract should be approved
      * @custom:when The `execute` function is called for `SMARDEX_SWAP_EXACT_IN` command
-     * @custom:then The `SMARDEX_SWAP_EXACT_IN` command should be executed
-     * @custom:and The sdex user balance should be increased
+     * @custom:then The `SMARDEX_SWAP_EXACT_IN` command should revert with `tooLittleReceived`
      */
-    function test_RevertWhen_ForkExecuteSmardexSwapExactInAmountMin() external {
+    function test_RevertWhen_ForkExecuteSmardexSwapExactInTooLittleReceived() external {
         // commands
         bytes memory commands = abi.encodePacked(uint8(Commands.SMARDEX_SWAP_EXACT_IN));
 
@@ -165,7 +167,7 @@ contract TestForkExecuteSmardexSwap is UniversalRouterBaseFixture {
     /**
      * @custom:scenario Test the `SMARDEX_SWAP_EXACT_OUT` command using the router balance
      * @custom:given The initiated universal router
-     * @custom:given The router should be funded with some sdex
+     * @custom:and The router should be funded with some sdex
      * @custom:when The `execute` function is called for `SMARDEX_SWAP_EXACT_OUT` command
      * @custom:then The `SMARDEX_SWAP_EXACT_OUT` command should be executed
      * @custom:and The weth user balance should be increased
@@ -192,7 +194,7 @@ contract TestForkExecuteSmardexSwap is UniversalRouterBaseFixture {
     /**
      * @custom:scenario Test the `SMARDEX_SWAP_EXACT_OUT` command using the router balance by multi hops
      * @custom:given The initiated universal router
-     * @custom:given The router should be funded with some sdex
+     * @custom:and The router should be funded with some wbtc
      * @custom:when The `execute` function is called for `SMARDEX_SWAP_EXACT_OUT` command
      * @custom:then The `SMARDEX_SWAP_EXACT_OUT` command should be executed
      * @custom:and The weth user balance should be increased
@@ -220,7 +222,8 @@ contract TestForkExecuteSmardexSwap is UniversalRouterBaseFixture {
     /**
      * @custom:scenario Test the `SMARDEX_SWAP_EXACT_OUT` command using permit2
      * @custom:given The initiated universal router
-     * @custom:given The router should be funded with some sdex
+     * @custom:and The user should be funded with some sdex
+     * @custom:and The permit2 contract should be approved
      * @custom:when The `execute` function is called for `SMARDEX_SWAP_EXACT_OUT` command
      * @custom:then The `SMARDEX_SWAP_EXACT_OUT` command should be executed
      * @custom:and The weth user balance should be increased
@@ -248,10 +251,11 @@ contract TestForkExecuteSmardexSwap is UniversalRouterBaseFixture {
     /**
      * @custom:scenario Test the `SMARDEX_SWAP_EXACT_OUT` command using permit2 by multi hops
      * @custom:given The initiated universal router
-     * @custom:given The router should be funded with some sdex
+     * @custom:and The user should be funded with some wbtc
+     * @custom:and The permit2 contract should be approved
      * @custom:when The `execute` function is called for `SMARDEX_SWAP_EXACT_OUT` command
      * @custom:then The `SMARDEX_SWAP_EXACT_OUT` command should be executed
-     * @custom:and The weth user balance should be increased
+     * @custom:and The sdex user balance should be increased
      */
     function test_ForkExecuteSmardexSwapExactOutPermit2Multi() external {
         // commands
@@ -271,5 +275,28 @@ contract TestForkExecuteSmardexSwap is UniversalRouterBaseFixture {
 
         // assert
         assertGt(sdex.balanceOf(address(this)), balanceSdexBefore, "wrong sdex balance");
+    }
+
+    /**
+     * @custom:scenario Test the `SMARDEX_SWAP_EXACT_OUT` command with too much token sent
+     * @custom:given The initiated universal router
+     * @custom:and The router should be funded with some sdex
+     * @custom:when The `execute` function is called for `SMARDEX_SWAP_EXACT_OUT` command
+     * @custom:then The command should revert with `tooLittleReceived`
+     */
+    function test_RevertWhen_ForkExecuteSmardexSwapExactOutTooLittleReceived() external {
+        // commands
+        bytes memory commands = abi.encodePacked(uint8(Commands.SMARDEX_SWAP_EXACT_OUT));
+
+        // inputs
+        bytes[] memory inputs = new bytes[](1);
+        inputs[0] = abi.encode(Constants.MSG_SENDER, BASE_AMOUNT, 1, abi.encodePacked(WETH, SDEX), false);
+
+        // transfer
+        IERC20(WETH).transfer(address(router), BASE_AMOUNT);
+
+        // execution
+        vm.expectRevert(SmardexSwapRouter.excessiveInputAmount.selector);
+        router.execute(commands, inputs);
     }
 }

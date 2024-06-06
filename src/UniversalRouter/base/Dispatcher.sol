@@ -310,7 +310,7 @@ abstract contract Dispatcher is
                 }
                 bytes calldata path = inputs.toBytes(3);
                 address payer = payerIsUser ? lockedBy : address(this);
-                smardexSwapExactInput(map(recipient), amountIn, amountOutMin, path, payer);
+                _smardexSwapExactInput(map(recipient), amountIn, amountOutMin, path, payer);
             } else if (command == Commands.SMARDEX_SWAP_EXACT_OUT) {
                 // equivalent: abi.decode(inputs, (address, uint256, uint256, bytes, bool))
                 address recipient;
@@ -326,7 +326,7 @@ abstract contract Dispatcher is
                 }
                 bytes calldata path = inputs.toBytes(3);
                 address payer = payerIsUser ? lockedBy : address(this);
-                smardexSwapExactOutput(map(recipient), amountOut, amountInMax, path, payer);
+                _smardexSwapExactOutput(map(recipient), amountOut, amountInMax, path, payer);
             } else {
                 revert InvalidCommandType(command);
             }
