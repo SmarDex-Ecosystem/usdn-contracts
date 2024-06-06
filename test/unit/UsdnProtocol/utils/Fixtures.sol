@@ -22,7 +22,6 @@ import {
     PositionId
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Usdn } from "src/Usdn/Usdn.sol";
-import { TickMath } from "src/libraries/TickMath.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
 
 /**
