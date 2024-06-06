@@ -26,7 +26,7 @@ interface IOracleMiddlewareEvents {
 
     /**
      * @notice Emitted when the confidence ratio is updated
-     * @param newConfRatio new confidence ratio
+     * @param newConfRatio The new confidence ratio
      */
     event ConfRatioUpdated(uint256 newConfRatio);
 

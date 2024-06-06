@@ -8,6 +8,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
     /**
      * @notice The minimum total supply of USDN that we allow
      * @dev Upon the first deposit, this amount is sent to the dead address and cannot be later recovered
+     * @return The minimum total supply of USDN
      */
     function MIN_USDN_SUPPLY() external pure returns (uint256);
 
@@ -17,7 +18,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * the `ProtocolAction.InitiateDeposit` action
      * The price validation might require payment according to the return value of the `getValidationCost` function
      * of the middleware
-     * The transaction must have _securityDepositValue in value
+     * The transaction must have `_securityDepositValue` in value
      * In case liquidations are pending, this function might not initiate the deposit (and `success_` would be false)
      * @param amount The amount of wstETH to deposit
      * @param to The address that will receive the USDN tokens
@@ -41,7 +42,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * The price validation might require payment according to the return value of the `validationCost` function
      * of the middleware
      * The timestamp corresponding to the price data is calculated by adding the mandatory `validationDelay`
-     * (from the oracle middleware) to the timestamp of the initiate action
+     * (from the oracle middleware) to the timestamp of the `initiate` action
      * Note: this function always sends the security deposit of the validator's pending action to the validator, even
      * if the validation deadline has passed
      * Users wanting to validate an actionable pending action must use another function such as
@@ -64,7 +65,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * the `ProtocolAction.InitiateWithdrawal` action
      * The price validation might require payment according to the return value of the `getValidationCost` function
      * of the middleware
-     * The transaction must have _securityDepositValue in value
+     * The transaction must have `_securityDepositValue` in value
      * @param usdnShares The amount of USDN shares to burn (Max 5708990770823839524233143877797980545530986495 which is
      * equivalent to 5.7B USDN token before any rebase. The token amount limit increases with each rebase)
      * In case liquidations are pending, this function might not initiate the withdrawal (and `success_` would be false)
@@ -89,7 +90,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * The price validation might require payment according to the return value of the `getValidationCost` function
      * of the middleware
      * The timestamp corresponding to the price data is calculated by adding the mandatory `validationDelay`
-     * (from the oracle middleware) to the timestamp of the initiate action
+     * (from the oracle middleware) to the timestamp of the `initiate` action
      * Note: this function always sends the security deposit of the validator's pending action to the validator, even
      * if the validation deadline has passed
      * Users wanting to validate an actionable pending action must use another function such as
@@ -114,7 +115,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * of the middleware
      * The position is immediately included in the protocol calculations with a temporary entry price (and thus
      * leverage). The validation operation then updates the entry price and leverage with fresher data
-     * The transaction must have _securityDepositValue in value
+     * The transaction must have `_securityDepositValue` in value
      * In case liquidations are pending, this function might not initiate the position (and `success_` would be false)
      * @param amount The amount of wstETH to deposit
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
@@ -124,7 +125,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * pending validation)
      * @param previousActionsData The data needed to validate actionable pending actions
      * @return success_ Whether the position was initiated
-     * @return posId_ The unique position identifier. In case the position could not be initiated, the tick number will
+     * @return posId_ The unique position identifier. In case the position cannot be initiated, the tick number will
      * be `NO_POSITION_TICK`
      */
     function initiateOpenPosition(
@@ -143,9 +144,9 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * The price validation might require payment according to the return value of the `getValidationCost` function
      * of the middleware
      * The timestamp corresponding to the price data is calculated by adding the mandatory `validationDelay`
-     * (from the oracle middleware) to the timestamp of the initiate action
+     * (from the oracle middleware) to the timestamp of the `initiate` action
      * This operation adjusts the entry price and initial leverage of the position
-     * It is also possible for this operation to change the tick, tickVersion and index of the position, in which case
+     * It is also possible for this operation to change the tick, `tickVersion` and index of the position, in which case
      * we emit the `LiquidationPriceUpdated` event
      * Note: this function always sends the security deposit of the validator's pending action to the validator, even
      * if the validation deadline has passed
@@ -166,7 +167,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
 
     /**
      * @notice Initiate a close position action
-     * @dev Currently, the `msg.sender` must match the positions' user address
+     * @dev Currently, the `msg.sender` must match the position's user address
      * Consult the current oracle middleware implementation to know the expected format for the price data, using
      * the `ProtocolAction.InitiateClosePosition` action
      * The price validation might require payment according to the return value of the `getValidationCost` function
@@ -175,8 +176,8 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * position has been liquidated and the transaction will revert
      * The appropriate amount and total expo are taken out of the tick and put in a pending state during this operation
      * Thus, calculations don't consider those anymore. The exit price (and thus profit) is not yet set definitively,
-     * and will be done during the validate action
-     * The transaction must have _securityDepositValue in value
+     * and will be done during the `validate` action
+     * The transaction must have `_securityDepositValue` in value
      * In case liquidations are pending or the position was liquidated, this function might not initiate the closing
      * (and `success_` would be false)
      * @param posId The unique identifier of the position to close
@@ -203,7 +204,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * The price validation might require payment according to the return value of the `getValidationCost` function
      * of the middleware
      * The timestamp corresponding to the price data is calculated by adding the mandatory `validationDelay`
-     * (from the oracle middleware) to the timestamp of the initiate action
+     * (from the oracle middleware) to the timestamp of the `initiate` action
      * This operation calculates the final exit price and profit of the long position and performs the payout
      * Note: this function always sends the security deposit of the validator's pending action to the validator, even
      * if the validation deadline has passed
@@ -258,7 +259,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
     /**
      * @notice Transfer the ownership of a position to another address
      * @dev This function reverts if the msg.sender is not the position owner, if the position does not exist or if the
-     * new owner address is the zero address
+     * new owner's address is the zero address
      * If the new owner is a contract that supports the `IOwnershipCallback` interface, its `ownershipCallback` function
      * will be called after the transfer of ownership
      * @param posId The unique position ID

@@ -6,7 +6,7 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol
 import { PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
- * @notice This interface can be implemented by contracts that wish to be notified when they become owner of an USDN
+ * @notice This interface can be implemented by contracts that wish to be notified when they become owner of a USDN
  * protocol position
  * @dev The contract must implement the ERC-165 interface detection mechanism
  */

@@ -25,6 +25,7 @@ import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareType
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
 import { Position, LiquidationsEffects } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { SignedMath } from "src/libraries/SignedMath.sol";
 
 /**
  * @title UsdnProtocolHandler
@@ -34,6 +35,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
     using LibBitmap for LibBitmap.Bitmap;
     using SafeCast for int256;
+    using SafeCast for uint256;
+    using SignedMath for int256;
 
     constructor(
         IUsdn usdn,
@@ -178,14 +181,6 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
 
     function i_getActionablePendingAction() external returns (PendingAction memory, uint128) {
         return _getActionablePendingAction();
-    }
-
-    function i_vaultTradingExpo(uint128 currentPrice) external view returns (int256) {
-        return _vaultTradingExpo(currentPrice);
-    }
-
-    function i_longTradingExpo(uint128 currentPrice) external view returns (int256) {
-        return _longTradingExpo(currentPrice);
     }
 
     function i_lastFunding() external view returns (int256) {
@@ -486,5 +481,13 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
 
     function i_removeStalePendingAction(address user) external returns (uint256) {
         return _removeStalePendingAction(user);
+    }
+
+    /**
+     * @notice Helper to calculate the trading exposure of the long side at the time of the last balance update and
+     * currentPrice
+     */
+    function getLongTradingExpo(uint128 currentPrice) external view returns (int256 expo_) {
+        expo_ = _totalExpo.toInt256().safeSub(_longAssetAvailable(currentPrice));
     }
 }
