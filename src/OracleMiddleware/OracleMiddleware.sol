@@ -103,7 +103,8 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, RedstoneOracle, Chai
             // of price inaccuracies until low latency delay is exceeded then use chainlink specified roundId
             return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Down);
         } else if (action == ProtocolAction.Liquidation) {
-            // special case, if we pass a timestamp of zero, then we accept all prices newer than `_recentPriceDelay`
+            // special case, if we pass a timestamp of zero, then we accept all prices newer than
+            // `_pythRecentPriceDelay`
             return _getLowLatencyPrice(data, 0, ConfidenceInterval.None);
         } else if (action == ProtocolAction.InitiateDeposit) {
             // If the user chooses to initiate with a pyth price, we apply the relevant confidence interval adjustment
@@ -160,7 +161,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, RedstoneOracle, Chai
      * @dev Get the price from the low-latency oracle (Pyth or Redstone)
      * @param data The signed price update data
      * @param actionTimestamp The timestamp of the action corresponding to the price. If zero, then we must accept all
-     * recent prices according to `_recentPriceDelay` or `_redstoneRecentPriceDelay`
+     * recent prices according to `_pythRecentPriceDelay` or `_redstoneRecentPriceDelay`
      * @param dir The direction for the confidence interval adjusted price
      * @return price_ The price from the low-latency oracle, adjusted according to the confidence interval direction
      */
@@ -403,16 +404,16 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, RedstoneOracle, Chai
     }
 
     /// @inheritdoc IOracleMiddleware
-    function setRecentPriceDelay(uint64 newDelay) external onlyOwner {
+    function setPythRecentPriceDelay(uint64 newDelay) external onlyOwner {
         if (newDelay < 10 seconds) {
             revert OracleMiddlewareInvalidRecentPriceDelay(newDelay);
         }
         if (newDelay > 10 minutes) {
             revert OracleMiddlewareInvalidRecentPriceDelay(newDelay);
         }
-        _recentPriceDelay = newDelay;
+        _pythRecentPriceDelay = newDelay;
 
-        emit RecentPriceDelayUpdated(newDelay);
+        emit PythRecentPriceDelayUpdated(newDelay);
     }
 
     /// @inheritdoc IOracleMiddleware

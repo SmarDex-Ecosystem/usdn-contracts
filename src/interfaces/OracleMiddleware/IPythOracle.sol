@@ -20,5 +20,5 @@ interface IPythOracle {
      * @notice Get the recent price delay
      * @return recentPriceDelay_ The maximum age of a recent price to be considered valid
      */
-    function getRecentPriceDelay() external view returns (uint64 recentPriceDelay_);
+    function getPythRecentPriceDelay() external view returns (uint64 recentPriceDelay_);
 }

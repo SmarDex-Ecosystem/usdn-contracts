@@ -19,10 +19,10 @@ interface IOracleMiddlewareEvents {
     event ValidationDelayUpdated(uint256 newValidationDelay);
 
     /**
-     * @notice Emitted when recent price delay is updated
+     * @notice Emitted when Pyth recent price delay is updated
      * @param newDelay The new recent price delay
      */
-    event RecentPriceDelayUpdated(uint64 newDelay);
+    event PythRecentPriceDelayUpdated(uint64 newDelay);
 
     /**
      * @notice Emitted when the redstone recent price delay is updated

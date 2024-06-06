@@ -21,7 +21,7 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
     IPyth internal immutable _pyth;
 
     /// @notice The maximum age of a recent price to be considered valid
-    uint64 internal _recentPriceDelay = 45 seconds;
+    uint64 internal _pythRecentPriceDelay = 45 seconds;
 
     /**
      * @param pythAddress The address of the Pyth contract
@@ -43,8 +43,8 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
     }
 
     /// @inheritdoc IPythOracle
-    function getRecentPriceDelay() external view returns (uint64) {
-        return _recentPriceDelay;
+    function getPythRecentPriceDelay() external view returns (uint64) {
+        return _pythRecentPriceDelay;
     }
 
     /**
@@ -78,7 +78,7 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
             // we want to validate that the price is recent
             // we don't enforce that the price update is the first one in a given second
             priceFeeds = _pyth.parsePriceFeedUpdates{ value: pythFee }(
-                pricesUpdateData, feedIds, uint64(block.timestamp) - _recentPriceDelay, uint64(block.timestamp)
+                pricesUpdateData, feedIds, uint64(block.timestamp) - _pythRecentPriceDelay, uint64(block.timestamp)
             );
         } else {
             // we want to validate that the price is exactly at `targetTimestamp` (first in the second) or the next
