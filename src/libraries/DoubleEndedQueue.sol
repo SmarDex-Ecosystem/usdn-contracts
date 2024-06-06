@@ -162,8 +162,8 @@ library DoubleEndedQueue {
         if (index >= length(deque)) {
             revert QueueOutOfBounds();
         }
-        // by construction, length is a uint128, so the check above ensures that the index can be safely downcast to
-        // uint128
+        // by construction, length is a uint128, so the check above ensures that
+        // the index can be safely downcasted to a uint128
         unchecked {
             rawIndex_ = deque._begin + uint128(index);
             value_ = deque._data[rawIndex_];

@@ -1288,10 +1288,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     /**
-     * @notice Update protocol balances, liquidate positions if necessary, then validate the `open position` action
+     * @notice Update protocol balances, liquidate positions if necessary, then validate the open position action
      * @param pending The pending action data
      * @param priceData The current price data
-     * @return data_ The `ValidateOpenPosition` data struct
+     * @return data_ The {ValidateOpenPosition} data struct
      * @return liquidated_ Whether the position was liquidated
      */
     function _prepareValidateOpenPositionData(PendingAction memory pending, bytes calldata priceData)
@@ -1796,8 +1796,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                     }
                 } else {
                     unchecked {
-                        // since `missingValue` is smaller than or equal to `balanceVault`, this operation can't
-                        // underflow
+                        // as `missingValue` is smaller than or equal to `balanceVault`, this operation can't underflow
                         _balanceVault = balanceVault - missingValue;
                     }
                 }

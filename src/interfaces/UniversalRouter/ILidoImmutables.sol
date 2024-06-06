@@ -5,8 +5,8 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 
 interface ILidoImmutables {
     /**
-     * @notice Getter for the address of steth
-     * @return The address of steth
+     * @notice Getter for the address of the steth token
+     * @return The address of the steth token
      */
     function STETH() external view returns (IERC20Metadata);
 }

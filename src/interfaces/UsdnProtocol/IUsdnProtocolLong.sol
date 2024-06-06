@@ -14,7 +14,7 @@ interface IUsdnProtocolLong is IUsdnProtocolVault {
      * @notice Get the value of the lowest usable tick, taking into account the tick spacing
      * @dev Note that the effective minimum tick of a newly open long position also depends on the minimum allowed
      * leverage value and the current value of the liquidation price multiplier
-     * @return The minimum tick
+     * @return The lowest usable tick
      */
     function minTick() external view returns (int24);
 
@@ -22,7 +22,7 @@ interface IUsdnProtocolLong is IUsdnProtocolVault {
      * @notice Get the value of the highest usable tick, taking into account the tick spacing
      * @dev Note that the effective maximum tick of a newly open long position also depends on the maximum allowed
      * leverage value and the current value of the liquidation price multiplier
-     * @return The maximum tick
+     * @return The highest usable tick
      */
     function maxTick() external view returns (int24);
 

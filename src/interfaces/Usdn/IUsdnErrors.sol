@@ -8,7 +8,7 @@ pragma solidity >=0.8.0;
 interface IUsdnErrors {
     /**
      * @dev Indicates that the number of tokens exceeds the maximum allowed value
-     * @param value Invalid token value
+     * @param value The invalid token value
      */
     error UsdnMaxTokensExceeded(uint256 value);
 
