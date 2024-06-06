@@ -1,5 +1,57 @@
 # Changelog
 
+## [0.15.0](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.14.0...v0.15.0) (2024-06-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* **actions:** `initiateClosePosition` has a new `validator` argument, `validateClosePosition` now expects the validator as first argument, the `InitiatedClosePosition` event has an additional `validator` parameter, the `ValidatedClosePosition` event now reports the validator address instead of the owner.
+* **actions:** the `initiateOpenPosition` action now returns a boolean as first argument on top of the position ID
+* **middleware:** the `IBaseOracleMiddleware.parseAndValidatePrice` function has an additional `bytes32` parameter for the unique action identifier
+* **rewards:** the `getLiquidationRewards` function has an additional parameter for the protocol action enum
+* **rebalancer:** `setExpoImbalanceLimits` has a fifth argument called `newLongImbalanceTargetBps`, and the `ImbalanceLimitsUpdated` event has the same fifth argument. Also, the getter `getExpoImbalanceLimits` has been removed and split into 4 functions, one for each imbalance limit.
+
+### Features
+
+* **actions:** add validator argument to `initiateClosePosition` ([#302](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/302)) ([ad88128](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/ad881286aeef8eda7dd510f372a57780fb846c1d))
+* **actions:** allow rebalancer user position close with full amount ([#270](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/270)) ([4422071](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/4422071b8de0c545641b3dd05dc59fb3f0854568))
+* **actions:** block actions pending liquidations ([#227](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/227)) ([d10bb22](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/d10bb22541b25f8c19cd20d5b5c92340f518d685))
+* **actions:** return success status in all external user actions ([#281](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/281)) ([28120c3](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/28120c34fd7fb5b01986b77cad9d6f7c5a80f354))
+* **actions:** transfer position ownership ([#282](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/282)) ([9a0fee7](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/9a0fee77e13372969e4129211346db76f1241dda))
+* **admin:** remove blocked pending action ([#293](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/293)) ([c8d354b](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/c8d354be0303f05f9ce50e886932c67026e6926e))
+* default validation deadline ([#286](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/286)) ([186a58b](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/186a58bfab1931cbac8389de028f811f3e0cf5cc))
+* ETH price feed ([#298](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/298)) ([c4eab34](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/c4eab34a782850650380b158ffb7df08c7484c5d))
+* **middleware:** chainlink validate ([#292](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/292)) ([8399439](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/839943901df3db75c281fc5edd71909f0d44dd77))
+* **oracle:** add penaltyBps ([#291](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/291)) ([ddab421](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/ddab4217efec8d711c92f1c80a669a80d0dc6830))
+* **rebalancer:** add a variable for the max leverage of the rebalancer ([#267](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/267)) ([6784245](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/6784245c2231e575ad0a3096cc30e3ff58f214a8))
+* **rebalancer:** add a variable to track which version got liquidated last ([#266](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/266)) ([7f4c984](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/7f4c9845d36ae59952f79efcf590f81a83ebe140))
+* **rebalancer:** add imbalance target setting ([#263](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/263)) ([296b53b](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/296b53bd8e0783db465b65bea7637d7e5f6c733a))
+* **rebalancer:** set allowance of the usdn protocol ([#271](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/271)) ([b5b684b](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/b5b684be64d45a0c3e9c8e35dfe6030e7bbb5ddf))
+* **rewards:** add protocol action to the rewards manager input ([#274](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/274)) ([7a14bdf](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/7a14bdf585e8f3f592b59f4b6179314ef025ce04))
+* **router:** add commands for wsteth and steth ([#277](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/277)) ([995d6b0](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/995d6b0c43e651b1280f17bd1b139921dbd4b3b3))
+* **router:** add ethAmount in src and tests ([#301](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/301)) ([95d5a02](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/95d5a021e03914930c298b42e5f12d5497f7917c))
+* **router:** initiate deposit command ([#278](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/278)) ([02ea2e4](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/02ea2e473ed6a21a883b33be906691d7c351a313))
+* **router:** initiate open position ([#296](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/296)) ([777cbbf](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/777cbbf473356cfed989bfd9c0478035508874f6))
+* **router:** initiate withdrawal ([#285](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/285)) ([d4379ed](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/d4379ede721e526c3c7d7a8905daf66d67b65aee))
+* **router:** refacto natspec ([#300](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/300)) ([115ba2e](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/115ba2e095185e6d419078922aead25185dabd0f))
+* **router:** retrieve success from external call ([#294](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/294)) ([f965832](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/f965832fb8ced5de7fd3b91fa381d2f68d5c2bb8))
+* **router:** universal router skeleton ([#245](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/245)) ([844b4f7](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/844b4f776c0e804f882fff01cbc9a6ed43ec7cf4))
+* **router:** validate deposit ([#297](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/297)) ([bb71753](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/bb71753043903cfcdfccff44a005017561e7c759))
+* **router:** validate withdraw ([#299](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/299)) ([ba2b8f0](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/ba2b8f0925117d106abb1b36d3d1692ac03807c3))
+* standardize and fix natspec erros ([#303](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/303)) ([8b3f871](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/8b3f871d1e859e1c3ee5c77cb723abadf99b18ec))
+
+
+### Bug Fixes
+
+* **actions:** disallow closing a position that was not validated ([#295](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/295)) ([ff8f8cb](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/ff8f8cbb140653151b5590c508a8b5c3f387983d))
+* **actions:** take pending vault actions into account in imbalance checks ([#287](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/287)) ([045c9b7](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/045c9b7e063aaff3c0046dae663566e7536b227f))
+* **init:** add imbalance checks during initialization ([#290](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/290)) ([5689657](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/5689657dc301662400b35ec79b5dc322f4733d0d))
+
+
+### Code Refactoring
+
+* **middleware:** add unique action ID to middleware params ([#284](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/284)) ([ceccd7a](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/ceccd7abde23bfb33be7a7bc794fe17efe6ccc13))
+
 ## [0.14.0](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.13.0...v0.14.0) (2024-05-17)
 
 
