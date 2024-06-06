@@ -2,7 +2,8 @@
 pragma solidity 0.8.20;
 
 // Temporary measure, forked the contracts to remove dependency on safemath
-import { PrimaryProdDataServiceConsumerBase } from "src/redstone/data-services/PrimaryProdDataServiceConsumerBase.sol";
+import { PrimaryProdDataServiceConsumerBase } from
+    "src/vendored/Redstone/data-services/PrimaryProdDataServiceConsumerBase.sol";
 
 import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
 import { RedstonePriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
