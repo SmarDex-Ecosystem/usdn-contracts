@@ -149,4 +149,22 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
             amount.toUint128(), desiredLiqPrice, to, validator, currentPriceData, previousActionsData
         );
     }
+
+    /**
+     * @notice Validate a close position in the USDN protocol
+     * @dev Check the protocol's documentation for information about how this function should be used
+     * @param owner The address of the position owner
+     * @param closePriceData The price data corresponding to the position's close
+     * @param previousActionsData The data needed to validate actionable pending actions
+     * @param ethAmount The amount of Ether to send with the transaction
+     * @return success_ Whether the close position was successful
+     */
+    function _usdnValidateClosePosition(
+        address owner,
+        bytes memory closePriceData,
+        PreviousActionsData memory previousActionsData,
+        uint256 ethAmount
+    ) internal returns (bool success_) {
+        success_ = USDN_PROTOCOL.validateClosePosition{ value: ethAmount }(owner, closePriceData, previousActionsData);
+    }
 }
