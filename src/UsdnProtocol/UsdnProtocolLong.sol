@@ -382,8 +382,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @notice Calculate the liquidation price of a position with the trading expo
      * @dev If the sum of `amount` and `tradingExpo` equals 0, reverts
      * @param currentPrice The price of the asset
-     * @param amount the amount of asset
-     * @param tradingExpo the trading expo
+     * @param amount The amount of asset
+     * @param tradingExpo The trading expo
+     * @return liqPrice_ The liquidation price
      */
     function _calcLiqPriceFromTradingExpo(uint128 currentPrice, uint128 amount, uint256 tradingExpo)
         internal
@@ -789,6 +790,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param neutralPrice The current neutral price
      * @param tickWithoutPenalty The tick the position should be opened in
      * @param amount The amount of collateral in the position
+     * @param longTradingExpo The long trading expo of the protocol
      * @return posId_ The ID of the position that got created
      */
     function _flashOpenPosition(

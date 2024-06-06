@@ -10,7 +10,10 @@ import { PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes {
-    /// @notice The value of the multiplier at 1x
+    /**
+     * @notice The value of the multiplier at 1x
+     * @return The multiplier factor
+     */
     function MULTIPLIER_FACTOR() external view returns (uint256);
 
     /**
@@ -60,6 +63,13 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
      * @return The minimum amount of assets to be deposited by a user
      */
     function getMinAssetDeposit() external view returns (uint256);
+
+    /**
+     * @notice Returns the data of the provided version of the position
+     * @param version The version of the position
+     * @return positionData_ The date for the provided version of the position
+     */
+    function getPositionData(uint128 version) external view returns (PositionData memory positionData_);
 
     /**
      * @notice Returns the data regarding the assets deposited by the provided user

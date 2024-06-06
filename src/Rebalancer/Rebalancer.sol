@@ -135,6 +135,7 @@ contract Rebalancer is Ownable, IRebalancer {
         return _minAssetDeposit;
     }
 
+    /// @inheritdoc IRebalancer
     function getPositionData(uint128 version) external view returns (PositionData memory positionData_) {
         // TODO revert if version > _positionVersion ?
         positionData_ = _positionData[version];
@@ -271,6 +272,7 @@ contract Rebalancer is Ownable, IRebalancer {
      * @notice Calculate the PnL multiplier of a position
      * @param openAmount The amount of assets used to open the position
      * @param value The value of the position right now
+     * @return pnlMultiplier_ The PnL multiplier
      */
     function _calcPnlMultiplier(uint128 openAmount, uint128 value) internal pure returns (uint128 pnlMultiplier_) {
         // prevent division by 0
