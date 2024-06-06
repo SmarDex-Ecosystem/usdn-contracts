@@ -5,17 +5,18 @@ import { DEPLOYER } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "test/integration/UsdnProtocol/utils/Fixtures.sol";
 import { MockChainlinkOnChain } from "test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
 
-import { TickMath } from "src/libraries/TickMath.sol";
+import { IRebalancerEvents } from "src/interfaces/Rebalancer/IRebalancerEvents.sol";
 import { ProtocolAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
+import { TickMath } from "src/libraries/TickMath.sol";
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
 
 /**
  * @custom:feature The rebalancer is triggered after liquidations
  * @custom:background A rebalancer is set and the USDN protocol is initialized with the default params
  */
-contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture {
+contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture, IRebalancerEvents {
     bytes constant PYTH_DATA = new bytes(33);
 
     MockChainlinkOnChain public chainlinkGasPriceFeed;
@@ -94,9 +95,11 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
 
     /**
      * @custom:scenario The imbalance is high enough so that the rebalancer is triggered after liquidations
-     * @custom:given Long positions opened at lower prices
-     * @custom:when
-     * @custom:then
+     * @custom:given A long position ready to be liquidated
+     * @custom:and An imbalance high enough after liquidations to trigger the rebalancer
+     * @custom:when The liquidations are executed
+     * @custom:then The rebalancer is triggered
+     * @custom:and A rebalancer position is created
      */
     function test_rebalancerTrigger() public {
         skip(5 minutes);
@@ -144,7 +147,7 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
         );
 
         uint256 oracleFee = oracleMiddleware.validationCost(PYTH_DATA, ProtocolAction.Liquidation);
-        _expectEmits(wstEthPrice, amountInRebalancer + bonus, liqPriceWithoutPenalty, expectedTickWithoutPenalty);
+        _expectEmits(wstEthPrice, amountInRebalancer + bonus, liqPriceWithoutPenalty, expectedTickWithoutPenalty, 1);
         protocol.liquidate{ value: oracleFee }(PYTH_DATA, 1);
 
         imbalance = protocol.i_calcLongImbalanceBps(
@@ -157,14 +160,18 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
     }
 
     /// @dev Prepare the expectEmits
-    function _expectEmits(uint128 price, uint128 amount, uint128 liqPriceWithoutPenalty, int24 tickWithoutPenalty)
-        internal
-    {
+    function _expectEmits(
+        uint128 price,
+        uint128 amount,
+        uint128 liqPriceWithoutPenalty,
+        int24 tickWithoutPenalty,
+        uint128 newPositionVersion
+    ) internal {
         uint128 positionTotalExpo = protocol.i_calcPositionTotalExpo(amount, price, liqPriceWithoutPenalty);
 
         vm.expectEmit(false, false, false, false);
         emit LiquidatedTick(0, 0, 0, 0, 0);
-        vm.expectEmit();
+        vm.expectEmit(address(protocol));
         emit InitiatedOpenPosition(
             address(rebalancer),
             address(rebalancer),
@@ -174,7 +181,7 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
             price,
             PositionId(tickWithoutPenalty + (int24(uint24(tickToLiquidateData.liquidationPenalty)) * tickSpacing), 0, 0)
         );
-        vm.expectEmit();
+        vm.expectEmit(address(protocol));
         emit ValidatedOpenPosition(
             address(rebalancer),
             address(rebalancer),
@@ -182,6 +189,8 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
             price,
             PositionId(tickWithoutPenalty + (int24(uint24(tickToLiquidateData.liquidationPenalty)) * tickSpacing), 0, 0)
         );
+        vm.expectEmit(address(rebalancer));
+        emit PositionVersionUpdated(newPositionVersion);
     }
 
     receive() external payable { }
