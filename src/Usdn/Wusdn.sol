@@ -19,6 +19,10 @@ contract Wusdn is ERC4626, ERC20Permit {
     /// @notice Token symbol
     string internal constant SYMBOL = "WUSDN";
 
+    /**
+     * @notice Construct the WUSDN token
+     * @param asset The address of the USDN token
+     */
     constructor(IERC20 asset) ERC20(NAME, SYMBOL) ERC4626(asset) ERC20Permit(NAME) { }
 
     /// @inheritdoc ERC20

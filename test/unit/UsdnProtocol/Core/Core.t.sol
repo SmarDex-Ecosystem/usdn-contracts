@@ -128,10 +128,10 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:then fund should be equal to EMA
      */
     function test_fundingWhenEqualExpo() public {
+        int256 vaultTradingExpo = protocol.i_vaultAssetAvailable(params.initialPrice);
+
         assertEq(
-            protocol.i_longTradingExpo(params.initialPrice),
-            protocol.i_vaultTradingExpo(params.initialPrice),
-            "long and vault expos should be equal"
+            protocol.getLongTradingExpo(params.initialPrice), vaultTradingExpo, "long and vault expos should be equal"
         );
 
         int256 EMA = protocol.getEMA();

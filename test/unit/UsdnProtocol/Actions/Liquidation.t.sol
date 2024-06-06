@@ -465,7 +465,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         int256 collateralLiquidated = protocol.i_tickValue(
             posId.tick,
             price,
-            uint256(protocol.i_longTradingExpo(price)),
+            uint256(protocol.getLongTradingExpo(price)),
             protocol.getLiqMultiplierAccumulator(),
             protocol.getTickData(posId.tick)
         );
@@ -542,7 +542,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         int256 collateralLiquidated = protocol.i_tickValue(
             posId.tick,
             price,
-            uint256(protocol.i_longTradingExpo(price)),
+            uint256(protocol.getLongTradingExpo(price)),
             protocol.getLiqMultiplierAccumulator(),
             protocol.getTickData(posId.tick)
         );

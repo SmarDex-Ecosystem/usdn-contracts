@@ -2,21 +2,21 @@
 pragma solidity ^0.8.20;
 
 /**
- * @notice A library for manipulating uint512 quantities.
+ * @notice A library for manipulating uint512 quantities
  * The 512-bit unsigned integers are represented as two uint256 "limbs", a `hi` limb for the most significant bits,
- * and a `lo` limb for the least-significant bits. The resulting uint512 quantity is obtained with `hi * 2^256 + lo`.
+ * and a `lo` limb for the least-significant bits. The resulting uint512 quantity is obtained with `hi * 2^256 + lo`
  */
 library HugeUint {
-    /// @notice Indicates that the division failed because the divisor is zero or the result overflows a uint256.
+    /// @notice Indicates that the division failed because the divisor is zero or the result overflows a uint256
     error HugeUintDivisionFailed();
 
-    /// @notice Indicates that the addition overflowed a uint512.
+    /// @notice Indicates that the addition overflowed a uint512
     error HugeUintAddOverflow();
 
-    /// @notice Indicates that the subtraction underflowed.
+    /// @notice Indicates that the subtraction underflowed
     error HugeUintSubUnderflow();
 
-    /// @notice Indicates that the multiplication overflowed a uint512.
+    /// @notice Indicates that the multiplication overflowed a uint512
     error HugeUintMulOverflow();
 
     /**
@@ -40,8 +40,8 @@ library HugeUint {
     }
 
     /**
-     * @notice Calculate the sum `a + b` of two 512-bit unsigned integers.
-     * @dev This function will revert if the result overflows a uint512.
+     * @notice Calculate the sum `a + b` of two 512-bit unsigned integers
+     * @dev This function will revert if the result overflows a uint512
      * @param a The first operand
      * @param b The second operand
      * @return res_ The sum of `a` and `b`
@@ -55,8 +55,8 @@ library HugeUint {
     }
 
     /**
-     * @notice Calculate the difference `a - b` of two 512-bit unsigned integers.
-     * @dev This function will revert if `b > a`.
+     * @notice Calculate the difference `a - b` of two 512-bit unsigned integers
+     * @dev This function will revert if `b > a`
      * @param a The first operand
      * @param b The second operand
      * @return res_ The difference `a - b`
@@ -70,7 +70,7 @@ library HugeUint {
     }
 
     /**
-     * @notice Calculate the product `a * b` of two 256-bit unsigned integers using the chinese remainder theorem.
+     * @notice Calculate the product `a * b` of two 256-bit unsigned integers using the Chinese remainder theorem
      * @param a The first operand
      * @param b The second operand
      * @return res_ The product `a * b` of the operands as an unsigned 512-bit integer
@@ -80,8 +80,8 @@ library HugeUint {
     }
 
     /**
-     * @notice Calculate the product `a * b` of a 512-bit unsigned integer and a 256-bit unsigned integer.
-     * @dev This function reverts if the result overflows a uint512.
+     * @notice Calculate the product `a * b` of a 512-bit unsigned integer and a 256-bit unsigned integer
+     * @dev This function reverts if the result overflows a uint512
      * @param a The first operand
      * @param b The second operand
      * @return res_ The product `a * b` of the operands as an unsigned 512-bit integer
@@ -104,8 +104,8 @@ library HugeUint {
     }
 
     /**
-     * @notice Calculate the division `floor(a / b)` of a 512-bit unsigned integer by an unsigned 256-bit integer.
-     * @dev The call will revert if the result doesn't fit inside a uint256 or if the denominator is zero.
+     * @notice Calculate the division `floor(a / b)` of a 512-bit unsigned integer by an unsigned 256-bit integer
+     * @dev The call will revert if the result doesn't fit inside a uint256 or if the denominator is zero
      * @param a The numerator as a 512-bit unsigned integer
      * @param b The denominator as a 256-bit unsigned integer
      * @return res_ The division `floor(a / b)` of the operands as an unsigned 256-bit integer
@@ -129,9 +129,9 @@ library HugeUint {
     }
 
     /**
-     * @notice Compute the division floor(a/b) of two 512-bit integers, knowing the result fits inside a uint256.
+     * @notice Compute the division floor(a/b) of two 512-bit integers, knowing the result fits inside a uint256
      * @dev Credits chfast (Apache 2.0 License): https://github.com/chfast/intx
-     * This function will revert if the second operand is zero or if the result doesn't fit inside a uint256.
+     * This function will revert if the second operand is zero or if the result doesn't fit inside a uint256
      * @param a The numerator as a 512-bit integer
      * @param b The denominator as a 512-bit integer
      * @return res_ The quotient floor(a/b)
@@ -141,9 +141,9 @@ library HugeUint {
     }
 
     /**
-     * @notice Calculate the sum `a + b` of two 512-bit unsigned integers.
+     * @notice Calculate the sum `a + b` of two 512-bit unsigned integers
      * @dev Credits Remco Bloemen (MIT license): https://2π.com/17/512-bit-division/
-     * The result is not checked for overflow, the caller must ensure that the result fits inside a uint512.
+     * The result is not checked for overflow, the caller must ensure that the result fits inside a uint512
      * @param a0 The low limb of the first operand
      * @param a1 The high limb of the first operand
      * @param b0 The low limb of the second operand
@@ -159,10 +159,10 @@ library HugeUint {
     }
 
     /**
-     * @notice Calculate the difference `a - b` of two 512-bit unsigned integers.
+     * @notice Calculate the difference `a - b` of two 512-bit unsigned integers
      * @dev Credits Remco Bloemen (MIT license): https://2π.com/17/512-bit-division/
      * The result is not checked for underflow, the caller must ensure that the second operand is less than or equal to
-     * the first operand.
+     * the first operand
      * @param a0 The low limb of the first operand
      * @param a1 The high limb of the first operand
      * @param b0 The low limb of the second operand
@@ -178,7 +178,7 @@ library HugeUint {
     }
 
     /**
-     * @notice Calculate the product `a * b` of two 256-bit unsigned integers using the chinese remainder theorem.
+     * @notice Calculate the product `a * b` of two 256-bit unsigned integers using the Chinese remainder theorem
      * @dev Credits Remco Bloemen (MIT license): https://2π.com/17/chinese-remainder-theorem/
      * and Solady (MIT license): https://github.com/Vectorized/solady/
      * @param a The first operand
@@ -195,10 +195,10 @@ library HugeUint {
     }
 
     /**
-     * @notice Calculate the division `floor(a / b)` of a 512-bit unsigned integer by an unsigned 256-bit integer.
+     * @notice Calculate the division `floor(a / b)` of a 512-bit unsigned integer by an unsigned 256-bit integer
      * @dev Credits Solady (MIT license): https://github.com/Vectorized/solady/
-     * The caller must ensure that the result fits inside a uint256 and that the division is non-zero.
-     * For performance reasons, the caller should ensure that the numerator high limb (hi) is non-zero.
+     * The caller must ensure that the result fits inside a uint256 and that the division is non-zero
+     * For performance reasons, the caller should ensure that the numerator high limb (hi) is non-zero
      * @param a0 The low limb of the numerator
      * @param a1 The high limb of the  numerator
      * @param b The denominator as a 256-bit unsigned integer
@@ -207,25 +207,25 @@ library HugeUint {
     function _div256(uint256 a0, uint256 a1, uint256 b) internal pure returns (uint256 res_) {
         uint256 r;
         assembly {
-            // To make the division exact, we find out the remainder of the division of a by b
+            // to make the division exact, we find out the remainder of the division of a by b
             r := mulmod(a1, not(0), b) // (a1 * uint256.max) % b
             r := addmod(r, a1, b) // (r + a1) % b
             r := addmod(r, a0, b) // (r + a0) % b
 
-            // `t` is the least significant bit of `b`.
-            // Always greater or equal to 1.
+            // `t` is the least significant bit of `b`
+            // always greater or equal to 1
             let t := and(b, sub(0, b))
-            // Divide `b` by `t`, which is a power of two.
+            // divide `b` by `t`, which is a power of two
             b := div(b, t)
-            // Invert `b mod 2**256`
-            // Now that `b` is an odd number, it has an inverse
-            // modulo `2**256` such that `b * inv = 1 mod 2**256`.
-            // Compute the inverse by starting with a seed that is
-            // correct for four bits. That is, `b * inv = 1 mod 2**4`.
+            // invert `b mod 2**256`
+            // now that `b` is an odd number, it has an inverse
+            // modulo `2**256` such that `b * inv = 1 mod 2**256`
+            // compute the inverse by starting with a seed that is
+            // correct for four bits. That is, `b * inv = 1 mod 2**4`
             let inv := xor(2, mul(3, b))
-            // Now use Newton-Raphson iteration to improve the precision.
-            // Thanks to Hensel's lifting lemma, this also works in modular
-            // arithmetic, doubling the correct bits in each step.
+            // now use Newton-Raphson iteration to improve the precision
+            // thanks to Hensel's lifting lemma, this also works in modular
+            // arithmetic, doubling the correct bits in each step
             inv := mul(inv, sub(2, mul(b, inv))) // inverse mod 2**8
             inv := mul(inv, sub(2, mul(b, inv))) // inverse mod 2**16
             inv := mul(inv, sub(2, mul(b, inv))) // inverse mod 2**32
@@ -233,9 +233,9 @@ library HugeUint {
             inv := mul(inv, sub(2, mul(b, inv))) // inverse mod 2**128
             res_ :=
                 mul(
-                    // Divide [a1 a0] by the factors of two.
-                    // Shift in bits from `a1` into `a0`. For this we need
-                    // to flip `t` such that it is `2**256 / t`.
+                    // divide [a1 a0] by the factors of two
+                    // shift in bits from `a1` into `a0`
+                    // for this we need to flip `t` such that it is `2**256 / t`
                     or(mul(sub(a1, gt(r, a0)), add(div(sub(0, t), t), 1)), div(sub(a0, r), t)),
                     // inverse mod 2**256
                     mul(inv, sub(2, mul(b, inv)))
@@ -289,7 +289,7 @@ library HugeUint {
     }
 
     /**
-     * @notice Compute the division floor(a/b) of two 512-bit integers, knowing the result fits inside a uint256.
+     * @notice Compute the division floor(a/b) of two 512-bit integers, knowing the result fits inside a uint256
      * @dev Credits chfast (Apache 2.0 License): https://github.com/chfast/intx
      * @param a0 LSB of the numerator
      * @param a1 MSB of the numerator
@@ -321,10 +321,10 @@ library HugeUint {
             return 0;
         }
 
-        // Division algo
+        // division algo
         uint256 lsh = _clz(b1);
         if (lsh == 0) {
-            // numerator is equal or larger than the denominator, and denominator is at least 0b1000...
+            // numerator is equal or larger than the denominator, and the denominator is at least 0b1000...
             // the result is necessarily 1
             return 1;
         }
