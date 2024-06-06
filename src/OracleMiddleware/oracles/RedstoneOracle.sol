@@ -71,15 +71,6 @@ abstract contract RedstoneOracle is PrimaryProdDataServiceConsumerBase, IOracleM
     }
 
     function _extractPriceUpdateTimestamp() internal pure returns (uint48 extractedTimestamp_) {
-        uint256 calldataNegativeOffset = _extractByteSizeOfUnsignedMetadata();
-        calldataNegativeOffset += DATA_PACKAGES_COUNT_BS;
-        uint256 timestampCalldataOffset =
-            msg.data.length - (calldataNegativeOffset + TIMESTAMP_NEGATIVE_OFFSET_IN_DATA_PACKAGE_WITH_STANDARD_SLOT_BS);
-        assembly {
-            // this is in milliseconds
-            extractedTimestamp_ := calldataload(timestampCalldataOffset)
-            // convert to seconds
-            extractedTimestamp_ := div(extractedTimestamp_, 1000)
-        }
+        extractedTimestamp_ = uint48(extractTimestampsAndAssertAllAreEqual()) / 1000;
     }
 }

@@ -3,6 +3,7 @@ pragma solidity 0.8.20;
 
 import { Test } from "forge-std/Test.sol";
 
+import { RedstonePriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { OracleMiddleware } from "src/OracleMiddleware/OracleMiddleware.sol";
 
 /**
@@ -24,5 +25,13 @@ contract OracleMiddlewareHandler is OracleMiddleware, Test {
 
     function i_extractPriceUpdateTimestamp(bytes calldata) external pure returns (uint48) {
         return _extractPriceUpdateTimestamp(); // redstone wants to parse the last argument in calldata
+    }
+
+    function i_getFormattedRedstonePrice(uint128 targetTimestamp, uint256 middlewareDecimals, bytes calldata)
+        external
+        view
+        returns (RedstonePriceInfo memory)
+    {
+        return _getFormattedRedstonePrice(targetTimestamp, middlewareDecimals);
     }
 }
