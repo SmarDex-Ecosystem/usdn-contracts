@@ -21,4 +21,8 @@ contract OracleMiddlewareHandler is OracleMiddleware, Test {
     function i_isPythData(bytes calldata data) external pure returns (bool) {
         return _isPythData(data);
     }
+
+    function i_extractPriceUpdateTimestamp(bytes calldata) external pure returns (uint48) {
+        return _extractPriceUpdateTimestamp(); // redstone wants to parse the last argument in calldata
+    }
 }
