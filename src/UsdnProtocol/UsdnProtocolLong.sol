@@ -726,10 +726,10 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /**
+     * TODO add tests
      * @notice Calculates the current imbalance between the vault and long sides
      * @dev If the value is positive, there's not enough assets borrowed, if negative, there's too much
-     * TODO tests
-     * @param cache ...
+     * @param cache The cached protocol state variables
      * @return imbalanceBps_ The imbalance in basis points
      */
     function _calcLongImbalanceBps(CachedProtocolState memory cache) internal pure returns (int256 imbalanceBps_) {
@@ -739,9 +739,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /**
+     * TODO add tests
      * @notice Immediately close a position with the given price
      * @dev Should only be used to close the rebalancer position
-     * TODO tests
      * @param posId The ID of the position to close
      * @param neutralPrice The current neutral price
      * @param longTradingExpo The long trading expo of the protocol
@@ -777,15 +777,15 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         positionValue_ = uint256(positionValue);
 
         // emit both initiate and validate events
-        // its so that the position is considered the same as other positions by event indexers
+        // so the position is considered the same as other positions by event indexers
         emit InitiatedClosePosition(pos.user, pos.user, pos.user, posId, pos.amount, pos.amount, 0);
         emit ValidatedClosePosition(pos.user, pos.user, posId, positionValue_, positionValue - _toInt256(pos.amount));
     }
 
     /**
+     * TODO add tests
      * @notice Immediately open a position with the given price
      * @dev Should only be used to open the rebalancer position
-     * TODO tests
      * @param user The address of the user
      * @param neutralPrice The current neutral price
      * @param tickWithoutPenalty The tick the position should be opened in
@@ -836,18 +836,20 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         (posId_.tickVersion, posId_.index) = _saveNewPosition(posId_.tick, long, liquidationPenalty);
 
         // emit both initiate and validate events
-        // its so that the position is considered the same as other positions by event indexers
+        // so the position is considered the same as other positions by event indexers
         emit InitiatedOpenPosition(user, user, uint40(block.timestamp), totalExpo, long.amount, neutralPrice, posId_);
         emit ValidatedOpenPosition(user, user, totalExpo, neutralPrice, posId_);
     }
 
     /**
+     * TODO add tests
      * @notice Calculates the tick of the rebalancer position to open
-     * @dev TODO tests
+     * @dev The returned tick must be higher than or equal to the min leverage of the protocol
+     * and lower than or equal to the rebalancer and USDN protocol leverages (lower of the 2)
      * @param neutralPrice The neutral asset price
      * @param positionAmount The amount of assets in the position
      * @param rebalancerMaxLeverage The max leverage supported by the rebalancer
-     * @param cache The protocol state
+     * @param cache The cached protocol state values
      * @return tickWithoutLiqPenalty_ The tick the position will be in
      */
     function _calcRebalancerPositionTick(
@@ -872,7 +874,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
         // check that the target is not already exceeded
         if (tradingExpoToFill <= cache.tradingExpo) {
-            return 0; // TODO throw an error or return sentinel value
+            return NO_POSITION_TICK;
         }
 
         tradingExpoToFill -= cache.tradingExpo;
@@ -892,7 +894,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             tickSpacing
         );
 
-        if (_calcLongImbalanceBps(cache) > _longImbalanceTargetBps) {
+        // due to the rounding down, if the imbalance is still below the desired imbalance
+        // and the position is not at the max leverage, add one tick
+        if (highestUsableTradingExpo != tradingExpoToFill && _calcLongImbalanceBps(cache) > _longImbalanceTargetBps) {
             tickWithoutLiqPenalty_ += tickSpacing;
         }
     }

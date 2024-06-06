@@ -2032,12 +2032,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     /**
+     * TODO add tests
      * @notice Trigger the rebalancer if the imbalance on the long side is too high
      * It will close the rebalancer position (if there is one) and open a new one with
      * the pending assets, the value of the previous position and the liquidation bonus (if available)
      * and a leverage to fill enough trading expo to reach the desired imbalance, up to the max leverages
-     * @dev Will return the provided long balance if no rebalancer is set
-     * TODO tests
+     * @dev Will return the provided long balance if no rebalancer is set or if the imbalance is not high enough
      * @param neutralPrice The neutral/average price of the asset
      * @param longBalance The balance of the long side
      * @param vaultBalance The balance of the vault side
@@ -2095,6 +2095,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         int24 tickWithoutLiqPenalty =
             _calcRebalancerPositionTick(neutralPrice, positionAmount, rebalancerMaxLeverage, cache);
+
+        // make sure that the rebalancer was not triggered without a sufficient imbalance
+        // as we check the imbalance above, this should not happen
+        if (tickWithoutLiqPenalty == NO_POSITION_TICK) {
+            revert UsdnProtocolRebalancerTick();
+        }
 
         // open a new position for the rebalancer
         PositionId memory posId = _flashOpenPosition(

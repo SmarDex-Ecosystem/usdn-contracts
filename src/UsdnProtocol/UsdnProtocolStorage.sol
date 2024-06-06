@@ -20,11 +20,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
     /**
-     * @notice Structure to hold data of the protocol
-     * @param totalExpo The total expo o the long side
-     * @param tradingExpo The trading expo of the long side
-     * @param longBalance The balance on the long side
-     * @param vaultBalance The balance on the vault side
+     * @notice Structure to hold the state of the protocol
+     * @param totalExpo The long total expo
+     * @param tradingExpo The long trading expo
+     * @param longBalance The long balance
+     * @param vaultBalance The vault balance
      */
     struct CachedProtocolState {
         uint256 totalExpo;
