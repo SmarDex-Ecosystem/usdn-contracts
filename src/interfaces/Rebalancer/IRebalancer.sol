@@ -53,7 +53,7 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
      * @return maxLeverage_ The max leverage of the rebalancer
      * @return currentPosId_ The ID of the current position (tick == NO_POSITION_TICK if no position)
      */
-    function getRebalancerData()
+    function getCurrentStateData()
         external
         view
         returns (uint128 pendingAssets_, uint256 maxLeverage_, PositionId memory currentPosId_);

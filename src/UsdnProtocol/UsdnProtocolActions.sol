@@ -2081,7 +2081,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         (uint128 pendingAssets, uint256 rebalancerMaxLeverage, PositionId memory rebalancerPosId) =
-            rebalancer.getRebalancerData();
+            rebalancer.getCurrentStateData();
 
         uint128 positionAmount = pendingAssets + bonus;
 

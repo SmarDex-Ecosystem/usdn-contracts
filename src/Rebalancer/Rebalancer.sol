@@ -115,9 +115,8 @@ contract Rebalancer is Ownable, IRebalancer {
         }
     }
 
-    // TODO name sucks, find a better one
     /// @inheritdoc IRebalancer
-    function getRebalancerData()
+    function getCurrentStateData()
         external
         view
         returns (uint128 pendingAssets_, uint256 maxLeverage_, PositionId memory currentPosId_)
@@ -137,7 +136,6 @@ contract Rebalancer is Ownable, IRebalancer {
 
     /// @inheritdoc IRebalancer
     function getPositionData(uint128 version) external view returns (PositionData memory positionData_) {
-        // TODO revert if version > _positionVersion ?
         positionData_ = _positionData[version];
     }
 
