@@ -217,30 +217,6 @@ abstract contract SmardexSwapRouter is SmardexImmutables, Permit2Payments {
     }
 
     /**
-     * @notice send tokens to a user. Handle transfer/transferFrom and WETH / ETH or any ERC20 token
-     * @param token The token to pay
-     * @param payer The entity that must pay
-     * @param to The entity that will receive payment
-     * @param value The amount to pay
-     * @custom:from UniV3 PeripheryPayments.sol
-     * @custom:url https://github.com/Uniswap/v3-periphery/blob/v1.3.0/contracts/base/PeripheryPayments.sol
-     */
-    function _pay(address token, address payer, address to, uint256 value) internal {
-        if (token == address(WETH) && address(this).balance >= value) {
-            // pay with WETH
-            WETH.deposit{ value: value }(); // wrap only what is needed to pay
-            WETH.transfer(to, value);
-            //refund dust eth, if any ?
-        } else if (payer == address(this)) {
-            // pay with tokens already in the contract (for the exact input multihop case)
-            TransferHelper.safeTransfer(token, to, value);
-        } else {
-            // pull payment
-            TransferHelper.safeTransferFrom(token, payer, to, value);
-        }
-    }
-
-    /**
      * @notice Either performs a regular payment or transferFrom on Permit2, depending on the payer address
      * @param token The token to transfer
      * @param payer The address to pay for the transfer
@@ -249,7 +225,7 @@ abstract contract SmardexSwapRouter is SmardexImmutables, Permit2Payments {
      */
     function _payOrPermit2Transfer(address token, address payer, address recipient, uint256 amount) internal {
         if (payer == address(this)) {
-            _pay(token, address(this), recipient, amount);
+            TransferHelper.safeTransfer(token, recipient, amount);
         } else {
             permit2TransferFrom(token, payer, recipient, amount.toUint160());
         }
