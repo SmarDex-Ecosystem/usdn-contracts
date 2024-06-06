@@ -262,9 +262,9 @@ abstract contract Dispatcher is
                             address validator,
                             bytes memory depositPriceData,
                             PreviousActionsData memory previousActionsData,
-                            uint256 amounEther
+                            uint256 ethAmount
                         ) = abi.decode(inputs, (address, bytes, PreviousActionsData, uint256));
-                        _usdnValidateOpenPosition(map(validator), depositPriceData, previousActionsData, amounEther);
+                        _usdnValidateOpenPosition(map(validator), depositPriceData, previousActionsData, ethAmount);
                     } else if (command == Commands.VALIDATE_CLOSE) {
                         // TODO VALIDATE_CLOSE
                     } else if (command == Commands.LIQUIDATE) {
