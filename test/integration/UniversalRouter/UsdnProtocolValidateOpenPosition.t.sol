@@ -19,13 +19,15 @@ contract TestForkUniversalRouterValidateOpenPosition is UniversalRouterBaseFixtu
 
     uint256 constant OPEN_POSITION_AMOUNT = 2 ether;
     uint256 constant DESIRED_LIQUIDATION = 2500 ether;
-    PositionId internal posId;
+    PositionId internal _posId;
+    uint256 _securityDeposit;
 
     function setUp() public {
         _setUp();
         deal(address(wstETH), address(this), OPEN_POSITION_AMOUNT * 2);
         wstETH.approve(address(protocol), type(uint256).max);
-        (, posId) = protocol.initiateOpenPosition{ value: protocol.getSecurityDepositValue() }(
+        _securityDeposit = protocol.getSecurityDepositValue();
+        (, _posId) = protocol.initiateOpenPosition{ value: _securityDeposit }(
             OPEN_POSITION_AMOUNT.toUint128(), DESIRED_LIQUIDATION.toUint128(), USER_2, USER_1, "", EMPTY_PREVIOUS_DATA
         );
     }
@@ -51,10 +53,10 @@ contract TestForkUniversalRouterValidateOpenPosition is UniversalRouterBaseFixtu
         router.execute{ value: validationCost }(commands, inputs);
 
         assertEq(address(this).balance, ethBalanceBefore - validationCost, "ether balance");
-        assertEq(USER_1.balance, ethBalanceBeforeUser + protocol.getSecurityDepositValue(), "user balance");
+        assertEq(USER_1.balance, ethBalanceBeforeUser + _securityDeposit, "user balance");
         assertEq(wstETH.balanceOf(address(this)), OPEN_POSITION_AMOUNT, "wstETH balance");
 
-        (Position memory pos_,) = protocol.getLongPosition(posId);
+        (Position memory pos_,) = protocol.getLongPosition(_posId);
         assertEq(pos_.user, USER_2, "position does not belong to the user");
     }
 }
