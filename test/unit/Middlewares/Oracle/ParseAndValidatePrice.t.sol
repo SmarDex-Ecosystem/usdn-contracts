@@ -672,7 +672,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
     }
 
     /**
-     * @custom:scenario Validate a price with Redstone but the chianlink price is way less
+     * @custom:scenario Validate a price with Redstone but the chainlink price is way less
      * @custom:given The chainlink price is less than a third of the redstone price
      * @custom:when The `parseAndValidatePrice` function is called with valid redstone data
      * @custom:then The middleware reverts with `OracleMiddlewareRedstoneSafeguard`
@@ -695,7 +695,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
     }
 
     /**
-     * @custom:scenario Validate a price with Redstone but the chianlink price is way more
+     * @custom:scenario Validate a price with Redstone but the chainlink price is way more
      * @custom:given The chainlink price is more than thrice the redstone price
      * @custom:when The `parseAndValidatePrice` function is called with valid redstone data
      * @custom:then The middleware reverts with `OracleMiddlewareRedstoneSafeguard`
@@ -711,6 +711,27 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
             uint256 validationCost = oracleMiddleware.validationCost(REDSTONE_ETH_DATA, action);
 
             vm.expectRevert(OracleMiddlewareRedstoneSafeguard.selector);
+            oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
+                "", uint128(REDSTONE_ETH_TIMESTAMP - validationDelay), action, REDSTONE_ETH_DATA
+            );
+        }
+    }
+
+    /**
+     * @custom:scenario Validate a price with Redstone but the price is zero
+     * @custom:given The Redstone price is zero
+     * @custom:when The `parseAndValidatePrice` function is called with mocked Redstone data with price zero
+     * @custom:then The middleware reverts with `OracleMiddlewareWrongPrice`
+     */
+    function test_RevertWhen_parseAndValidatePriceWithRedstoneZeroPrice() public {
+        oracleMiddleware.setMockRedstonePriceZero(true);
+        uint256 validationDelay = oracleMiddleware.getValidationDelay();
+
+        for (uint256 i; i < actions.length; i++) {
+            ProtocolAction action = actions[i];
+            uint256 validationCost = oracleMiddleware.validationCost(REDSTONE_ETH_DATA, action);
+
+            vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, 0));
             oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
                 "", uint128(REDSTONE_ETH_TIMESTAMP - validationDelay), action, REDSTONE_ETH_DATA
             );

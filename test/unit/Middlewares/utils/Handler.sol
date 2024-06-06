@@ -11,6 +11,8 @@ import { OracleMiddleware } from "src/OracleMiddleware/OracleMiddleware.sol";
  * @dev
  */
 contract OracleMiddlewareHandler is OracleMiddleware, Test {
+    bool internal _mockRedstonePriceZero;
+
     constructor(
         address pythContract,
         bytes32 pythFeedId,
@@ -18,6 +20,17 @@ contract OracleMiddlewareHandler is OracleMiddleware, Test {
         address chainlinkPriceFeed,
         uint256 chainlinkTimeElapsedLimit
     ) OracleMiddleware(pythContract, pythFeedId, redstoneFeedId, chainlinkPriceFeed, chainlinkTimeElapsedLimit) { }
+
+    function setMockRedstonePriceZero(bool mock) external {
+        _mockRedstonePriceZero = mock;
+    }
+
+    function getOracleNumericValueFromTxMsg(bytes32 feedId) internal view override returns (uint256) {
+        if (_mockRedstonePriceZero) {
+            return 0;
+        }
+        return super.getOracleNumericValueFromTxMsg(feedId);
+    }
 
     function i_isPythData(bytes calldata data) external pure returns (bool) {
         return _isPythData(data);
