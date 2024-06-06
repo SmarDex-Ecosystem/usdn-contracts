@@ -777,7 +777,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
         // emit both initiate and validate events
         // its so that the position is considered the same as other positions by event indexers
-        emit InitiatedClosePosition(pos.user, pos.user, posId, pos.amount, pos.amount, 0);
+        emit InitiatedClosePosition(pos.user, pos.user, pos.user, posId, pos.amount, pos.amount, 0);
         emit ValidatedClosePosition(pos.user, pos.user, posId, positionValue_, positionValue - _toInt256(pos.amount));
     }
 
@@ -821,9 +821,14 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             );
         }
 
-        uint128 totalExpo = _calculatePositionTotalExpo(amount, neutralPrice, liqPriceWithoutPenalty);
-        Position memory long =
-            Position({ user: user, amount: amount, totalExpo: totalExpo, timestamp: uint40(block.timestamp) });
+        uint128 totalExpo = _calcPositionTotalExpo(amount, neutralPrice, liqPriceWithoutPenalty);
+        Position memory long = Position({
+            validated: true,
+            user: user,
+            amount: amount,
+            totalExpo: totalExpo,
+            timestamp: uint40(block.timestamp)
+        });
 
         // save the position on the provided tick
         (posId_.tickVersion, posId_.index) = _saveNewPosition(posId_.tick, long, liquidationPenalty);
