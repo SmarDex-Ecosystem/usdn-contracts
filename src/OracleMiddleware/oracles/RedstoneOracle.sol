@@ -5,6 +5,7 @@ pragma solidity 0.8.20;
 import { PrimaryProdDataServiceConsumerBase } from
     "src/vendored/Redstone/data-services/PrimaryProdDataServiceConsumerBase.sol";
 
+import { IRedstoneOracle } from "src/interfaces/OracleMiddleware/IRedstoneOracle.sol";
 import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
 import { RedstonePriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
@@ -13,11 +14,11 @@ import { RedstonePriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddle
  * @notice This contract is used to validate asset prices coming from the Redstone oracle
  * It is used by the USDN protocol to get the price of the underlying asset
  */
-abstract contract RedstoneOracle is PrimaryProdDataServiceConsumerBase, IOracleMiddlewareErrors {
-    /// @notice Interval between two Redstone price updates
+abstract contract RedstoneOracle is IRedstoneOracle, PrimaryProdDataServiceConsumerBase, IOracleMiddlewareErrors {
+    /// @inheritdoc IRedstoneOracle
     uint48 public constant REDSTONE_HEARTBEAT = 10 seconds;
 
-    /// @notice Number of decimals for prices contained in Redstone price updates
+    /// @inheritdoc IRedstoneOracle
     uint8 public constant REDSTONE_DECIMALS = 8;
 
     /// @notice The ID of the Redstone price feed
@@ -31,10 +32,12 @@ abstract contract RedstoneOracle is PrimaryProdDataServiceConsumerBase, IOracleM
         _redstoneFeedId = redstoneFeedId;
     }
 
+    /// @inheritdoc IRedstoneOracle
     function getRedstoneFeedId() external view returns (bytes32) {
         return _redstoneFeedId;
     }
 
+    /// @inheritdoc IRedstoneOracle
     function getRedstoneRecentPriceDelay() external view returns (uint48) {
         return _redstoneRecentPriceDelay;
     }
@@ -44,6 +47,12 @@ abstract contract RedstoneOracle is PrimaryProdDataServiceConsumerBase, IOracleM
         return;
     }
 
+    /**
+     * @notice Get the price of the asset from Redstone
+     * @param targetTimestamp The target timestamp to validate the price. If zero, then we accept a price between the
+     * block timestamp and the recent price delay
+     * @param middlewareDecimals The number of decimals for the middleware
+     */
     function _getFormattedRedstonePrice(uint128 targetTimestamp, uint256 middlewareDecimals)
         internal
         view
@@ -70,6 +79,10 @@ abstract contract RedstoneOracle is PrimaryProdDataServiceConsumerBase, IOracleM
         formattedPrice_.price = price * 10 ** middlewareDecimals / 10 ** REDSTONE_DECIMALS;
     }
 
+    /**
+     * @notice Extract the timestamp from the price update
+     * @return extractedTimestamp_ The timestamp of the price update
+     */
     function _extractPriceUpdateTimestamp() internal pure returns (uint48 extractedTimestamp_) {
         extractedTimestamp_ = uint48(extractTimestampsAndAssertAllAreEqual()) / 1000;
     }
