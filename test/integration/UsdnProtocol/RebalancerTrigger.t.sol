@@ -4,7 +4,6 @@ pragma solidity 0.8.20;
 import { DEPLOYER } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "test/integration/UsdnProtocol/utils/Fixtures.sol";
 import { MockChainlinkOnChain } from "test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
-import { PYTH_ETH_USD } from "test/utils/Constants.sol";
 
 import { TickMath } from "src/libraries/TickMath.sol";
 import { ProtocolAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -17,6 +16,8 @@ import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewar
  * @custom:background A rebalancer is set and the USDN protocol is initialized with the default params
  */
 contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture {
+    bytes constant PYTH_DATA = new bytes(33);
+
     MockChainlinkOnChain public chainlinkGasPriceFeed;
     PositionId public posToLiquidate;
     TickData public tickToLiquidateData;
@@ -48,8 +49,8 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
         wstETH.approve(address(protocol), type(uint256).max);
         wstETH.approve(address(rebalancer), type(uint256).max);
 
-        uint256 messageValue = oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition)
-            + protocol.getSecurityDepositValue();
+        uint256 messageValue =
+            oracleMiddleware.validationCost("", ProtocolAction.InitiateDeposit) + protocol.getSecurityDepositValue();
 
         // deposit assets in the rebalancer
         rebalancer.depositAssets(10 ether, payable(address(this)));
@@ -65,10 +66,12 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
         mockPyth.setPrice(2000e8);
         mockPyth.setLastPublishTime(block.timestamp);
 
-        (,,,, bytes memory data) = getHermesApiSignature(PYTH_ETH_USD, block.timestamp);
-        uint256 oracleFee = oracleMiddleware.validationCost(data, ProtocolAction.ValidateDeposit);
+        uint256 oracleFee = oracleMiddleware.validationCost(PYTH_DATA, ProtocolAction.ValidateDeposit);
 
-        protocol.validateDeposit{ value: oracleFee }(payable(address(this)), data, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit{ value: oracleFee }(payable(address(this)), PYTH_DATA, EMPTY_PREVIOUS_DATA);
+
+        messageValue = oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition)
+            + protocol.getSecurityDepositValue();
 
         // open a position to liquidate and trigger the rebalancer
         (, posToLiquidate) = protocol.initiateOpenPosition{ value: messageValue }(
@@ -80,9 +83,8 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
         mockPyth.setPrice(2000e8);
         mockPyth.setLastPublishTime(block.timestamp);
 
-        (,,,, data) = getHermesApiSignature(PYTH_ETH_USD, block.timestamp);
-        oracleFee = oracleMiddleware.validationCost(data, ProtocolAction.ValidateOpenPosition);
-        protocol.validateOpenPosition{ value: oracleFee }(payable(address(this)), data, EMPTY_PREVIOUS_DATA);
+        oracleFee = oracleMiddleware.validationCost(PYTH_DATA, ProtocolAction.ValidateOpenPosition);
+        protocol.validateOpenPosition{ value: oracleFee }(payable(address(this)), PYTH_DATA, EMPTY_PREVIOUS_DATA);
 
         tickToLiquidateData = protocol.getTickData(posToLiquidate.tick);
 
@@ -141,11 +143,9 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
             expectedTickWithoutPenalty, wstEthPrice, totalExpo - longAssetAvailable, expectedAccumulator
         );
 
-        (,,,, bytes memory data) = getHermesApiSignature(PYTH_ETH_USD, block.timestamp);
-        uint256 oracleFee = oracleMiddleware.validationCost(data, ProtocolAction.Liquidation);
-
+        uint256 oracleFee = oracleMiddleware.validationCost(PYTH_DATA, ProtocolAction.Liquidation);
         _expectEmits(wstEthPrice, amountInRebalancer + bonus, liqPriceWithoutPenalty, expectedTickWithoutPenalty);
-        protocol.liquidate{ value: oracleFee }(data, 1);
+        protocol.liquidate{ value: oracleFee }(PYTH_DATA, 1);
 
         imbalance = protocol.i_calcLongImbalanceBps(
             protocol.getBalanceVault(), protocol.getBalanceLong(), protocol.getTotalExpo()
