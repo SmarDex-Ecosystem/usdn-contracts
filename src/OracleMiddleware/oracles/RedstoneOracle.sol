@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 // Temporary measure, forked the contracts to remove dependency on safemath
 import { PrimaryProdDataServiceConsumerBase } from
     "src/vendored/Redstone/data-services/PrimaryProdDataServiceConsumerBase.sol";
+import { RedstoneConsumerBase } from "src/vendored/Redstone/core/RedstoneConsumerBase.sol";
 
 import { IRedstoneOracle } from "src/interfaces/OracleMiddleware/IRedstoneOracle.sol";
 import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
@@ -42,7 +43,8 @@ abstract contract RedstoneOracle is IRedstoneOracle, PrimaryProdDataServiceConsu
         return _redstoneRecentPriceDelay;
     }
 
-    function validateTimestamp(uint256) public pure override {
+    /// @inheritdoc IRedstoneOracle
+    function validateTimestamp(uint256) public pure override(IRedstoneOracle, RedstoneConsumerBase) {
         // disable default timestamp validation, we accept everything during extraction
         return;
     }
@@ -52,6 +54,7 @@ abstract contract RedstoneOracle is IRedstoneOracle, PrimaryProdDataServiceConsu
      * @param targetTimestamp The target timestamp to validate the price. If zero, then we accept a price between the
      * block timestamp and the recent price delay
      * @param middlewareDecimals The number of decimals for the middleware
+     * @return formattedPrice_ The price in the Redstone message, normalized to the middleware decimals
      */
     function _getFormattedRedstonePrice(uint128 targetTimestamp, uint256 middlewareDecimals)
         internal
