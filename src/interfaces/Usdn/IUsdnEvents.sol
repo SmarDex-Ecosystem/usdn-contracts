@@ -17,7 +17,7 @@ interface IUsdnEvents {
 
     /**
      * @notice Emitted when the rebase handler address is updated
-     * @param newHandler the address of the new rebase handler
+     * @param newHandler The address of the new rebase handler
      */
     event RebaseHandlerUpdated(IRebaseCallback newHandler);
 }

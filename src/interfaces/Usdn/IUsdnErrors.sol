@@ -7,8 +7,8 @@ pragma solidity >=0.8.0;
  */
 interface IUsdnErrors {
     /**
-     * @dev Indicates that the number of tokens exceeds the maximum allowed value.
-     * @param value invalid token value
+     * @dev Indicates that the number of tokens exceeds the maximum allowed value
+     * @param value The invalid token value
      */
     error UsdnMaxTokensExceeded(uint256 value);
 
@@ -17,7 +17,7 @@ interface IUsdnErrors {
 
     /**
      * @dev Indicates that the sender does not have enough balance to transfer shares
-     * @param sender The sender address
+     * @param sender The sender's address
      * @param balance The shares balance of the sender
      * @param needed The desired amount of shares to transfer
      */

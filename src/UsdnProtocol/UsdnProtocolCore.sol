@@ -297,7 +297,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         }
         int256 priceDiff = _toInt256(newPrice) - _toInt256(oldPrice);
         uint256 tradingExpo;
-        // balanceLong is strictly inferior to totalExpo
+        // `balanceLong` is strictly inferior to `totalExpo`
         unchecked {
             tradingExpo = totalExpo - balanceLong;
         }
@@ -337,24 +337,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         int256 newLongBalance = _longAssetAvailable(totalExpo, balanceLong, newPrice, oldPrice);
 
         available_ = totalBalance.safeSub(newLongBalance);
-    }
-
-    /**
-     * @notice Calculate the trading exposure of the long side at the time of the last balance update and currentPrice
-     * @param currentPrice The current price
-     * @return expo_ The trading exposure of the long side
-     */
-    function _longTradingExpo(uint128 currentPrice) internal view returns (int256 expo_) {
-        expo_ = _totalExpo.toInt256().safeSub(_longAssetAvailable(currentPrice));
-    }
-
-    /**
-     * @notice Calculate the trading exposure of the vault side at the time of the last balance update and currentPrice
-     * @param currentPrice The current price
-     * @return expo_ The trading exposure of the vault side
-     */
-    function _vaultTradingExpo(uint128 currentPrice) internal view returns (int256 expo_) {
-        expo_ = _vaultAssetAvailable(currentPrice);
     }
 
     /**
@@ -478,7 +460,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     /**
-     * @notice Merge the two parts of the withdrawal amount (USDN shares) stored in the `WithdrawalPendingAction`.
+     * @notice Merge the two parts of the withdrawal amount (USDN shares) stored in the `WithdrawalPendingAction`
      * @param sharesLSB The lower 24 bits of the USDN shares
      * @param sharesMSB The higher bits of the USDN shares
      * @return usdnShares_ The amount of USDN shares
@@ -690,9 +672,9 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         if (_pendingActions[user] > 0) {
             revert UsdnProtocolPendingAction();
         }
-        // Add the action to the queue
+        // add the action to the queue
         uint128 rawIndex = _pendingActionsQueue.pushBack(action);
-        // Store the index shifted by one, so that zero means no pending action
+        // store the index shifted by one, so that zero means no pending action
         _pendingActions[user] = uint256(rawIndex) + 1;
     }
 

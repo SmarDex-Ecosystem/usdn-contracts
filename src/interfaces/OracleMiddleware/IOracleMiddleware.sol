@@ -8,7 +8,7 @@ import { IOracleMiddlewareEvents } from "src/interfaces/OracleMiddleware/IOracle
 /**
  * @title Oracle Middleware interface
  * @notice The oracle middleware is a contract that is called by the USDN protocol to validate price data. Using a
- * middleware allows the protocol to later upgrade to a new oracle logic without having modify the vault contract
+ * middleware allows the protocol to later upgrade to a new oracle logic without having to modify the vault contract
  */
 interface IOracleMiddleware is IBaseOracleMiddleware, IOracleMiddlewareErrors, IOracleMiddlewareEvents {
     /* -------------------------------------------------------------------------- */
@@ -32,15 +32,23 @@ interface IOracleMiddleware is IBaseOracleMiddleware, IOracleMiddlewareErrors, I
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Return the confidence ratio. This ratio is used to apply a specific portion of the confidence interval
+     * @notice Getter for the confidence ratio
+     * @dev This ratio is used to apply a specific portion of the confidence interval
      * provided by an oracle, which is used to adjust the precision of predictions or estimations
+     * @return The confidence ratio basis points
      */
     function getConfRatioBps() external view returns (uint16);
 
-    /// @notice Return the delay during which a low latency oracle price validation is available
+    /**
+     * @notice Getter for the delay during which a low latency oracle price validation is available
+     * @return The low latency delay
+     */
     function getLowLatencyDelay() external view returns (uint16);
 
-    /// @notice Return the _penaltyBps value
+    /**
+     * @notice Getter for the penalty value
+     * @return The penalty basis points
+     */
     function getPenaltyBps() external view returns (uint16);
 
     /* -------------------------------------------------------------------------- */
@@ -50,7 +58,7 @@ interface IOracleMiddleware is IBaseOracleMiddleware, IOracleMiddlewareErrors, I
     /**
      * @notice Set confidence ratio (admin)
      * @param newConfRatio the new confidence ratio
-     * @dev New value should be lower than max confidence ratio
+     * @dev New value should be lower than the max confidence ratio
      */
     function setConfRatio(uint16 newConfRatio) external;
 
@@ -73,7 +81,7 @@ interface IOracleMiddleware is IBaseOracleMiddleware, IOracleMiddlewareErrors, I
     function setRedstoneRecentPriceDelay(uint48 newDelay) external;
 
     /**
-     * @notice Set the "validation delay" (in seconds) between an action timestamp and the price
+     * @notice Set the validation delay (in seconds) between an action timestamp and the price
      * data timestamp used to validate that action
      * @param newValidationDelay The new validation delay
      */

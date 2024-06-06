@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 /**
  * @title MockChainlinkOnChain contract
- * @dev This contract is used to test the OracleMiddleware contract.
+ * @dev This contract is used to test the OracleMiddleware contract
  */
 contract MockChainlinkOnChain {
     struct RoundData {
@@ -29,8 +29,8 @@ contract MockChainlinkOnChain {
     }
 
     /**
-     * @notice Update manually the last publish time.
-     * @param _lastPublishTime New last publish time.
+     * @notice Update manually the last publish time
+     * @param _lastPublishTime New last publish time
      */
     function setLastPublishTime(uint256 _lastPublishTime) external {
         _latestRoundData.startedAt = uint64(_lastPublishTime);
@@ -45,7 +45,7 @@ contract MockChainlinkOnChain {
     }
 
     /**
-     * @notice Update manually the roundId publish time.
+     * @notice Update manually the roundId publish time
      * @param roundId The price round id
      * @param timestamp The price timestamp
      */
@@ -69,19 +69,19 @@ contract MockChainlinkOnChain {
     }
 
     /**
-     * @notice Toggle the revert on call.
+     * @notice Toggle the revert on call
      */
     function toggleRevert() external {
         alwaysRevertOnCall = !alwaysRevertOnCall;
     }
 
     /**
-     * @notice Get the last publish time.
-     * @return roundId_ The round id.
-     * @return answer_ The actual asset price.
-     * @return startedAt_ The timestamp when the round was started.
-     * @return updatedAt_ The timestamp when the round was updated.
-     * @return answeredInRound_ the round ID of the round in which the answer was computed.
+     * @notice Get the last publish time
+     * @return roundId_ The round id
+     * @return answer_ The actual asset price
+     * @return startedAt_ The timestamp when the round was started
+     * @return updatedAt_ The timestamp when the round was updated
+     * @return answeredInRound_ the round ID of the round in which the answer was computed
      */
     function latestRoundData()
         external

@@ -87,23 +87,23 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, RedstoneOracle, Chai
         } else if (action == ProtocolAction.Initialize) {
             return _getInitiateActionPrice(data, ConfidenceInterval.None);
         } else if (action == ProtocolAction.ValidateDeposit) {
-            // Use the lowest price in the confidence interval to ensure a minimum benefit for the user in case
+            // use the lowest price in the confidence interval to ensure a minimum benefit for the user in case
             // of price inaccuracies until low latency delay is exceeded then use chainlink specified roundId
             return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Down);
         } else if (action == ProtocolAction.ValidateWithdrawal) {
-            // Use the highest price in the confidence interval to ensure a minimum benefit for the user in case
+            // use the highest price in the confidence interval to ensure a minimum benefit for the user in case
             // of price inaccuracies until low latency delay is exceeded then use chainlink specified roundId
             return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Up);
         } else if (action == ProtocolAction.ValidateOpenPosition) {
-            // Use the highest price in the confidence interval to ensure a minimum benefit for the user in case
+            // use the highest price in the confidence interval to ensure a minimum benefit for the user in case
             // of price inaccuracies until low latency delay is exceeded then use chainlink specified roundId
             return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Up);
         } else if (action == ProtocolAction.ValidateClosePosition) {
-            // Use the lowest price in the confidence interval to ensure a minimum benefit for the user in case
+            // use the lowest price in the confidence interval to ensure a minimum benefit for the user in case
             // of price inaccuracies until low latency delay is exceeded then use chainlink specified roundId
             return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Down);
         } else if (action == ProtocolAction.Liquidation) {
-            // Special case, if we pass a timestamp of zero, then we accept all prices newer than `_recentPriceDelay`
+            // special case, if we pass a timestamp of zero, then we accept all prices newer than `_recentPriceDelay`
             return _getLowLatencyPrice(data, 0, ConfidenceInterval.None);
         } else if (action == ProtocolAction.InitiateDeposit) {
             // If the user chooses to initiate with a pyth price, we apply the relevant confidence interval adjustment
@@ -168,9 +168,9 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, RedstoneOracle, Chai
         internal
         returns (PriceInfo memory price_)
     {
-        // If actionTimestamp is 0 we're performing a liquidation and we don't add the validation delay
+        // if actionTimestamp is 0 we're performing a liquidation and we don't add the validation delay
         if (actionTimestamp > 0) {
-            // Add the validation delay to the action timestamp to get the timestamp of the price data used to
+            // add the validation delay to the action timestamp to get the timestamp of the price data used to
             // validate
             actionTimestamp += uint128(_validationDelay);
         }
@@ -199,11 +199,11 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, RedstoneOracle, Chai
     }
 
     /**
-     * @notice Get the price for an initiate action of the protocol
+     * @notice Get the price for an `initiate` action of the protocol
      * @dev If the data parameter is not empty, validate the price with PythOracle. Else, get the on-chain price from
      * Chainlink and compare its timestamp with the latest seen Pyth price (cached). If Pyth is more recent, we return
-     * it. Otherwise we return the chainlink price. In case of chainlink price, we don't have a confidence interval and
-     * so both `neutralPrice` and `price` are equal
+     * it. Otherwise, we return the chainlink price. In the case of chainlink price, we don't have a confidence interval
+     * and so both `neutralPrice` and `price` are equal
      * @param data An optional VAA from Pyth
      * @param dir The direction for applying the confidence interval (in case we use a Pyth price)
      * @return price_ The price to use for the user action
@@ -309,7 +309,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, RedstoneOracle, Chai
 
     /**
      * @notice Get the price for a validate action of the protocol
-     * @dev If the low latency delay is not exceeded, validate the price with the low-latency oracle(s).
+     * @dev If the low latency delay is not exceeded, validate the price with the low-latency oracle(s)
      * Else, get the specified roundId on-chain price from Chainlink. In case of chainlink price,
      * we don't have a confidence interval and so both `neutralPrice` and `price` are equal
      * @param data An optional VAA from Pyth or a chainlink roundId (abi-encoded uint80)

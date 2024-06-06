@@ -68,7 +68,7 @@ contract TestUsdnProtocolActionsAssetToRemove is UsdnProtocolBaseFixture {
         protocol.testLiquidate(abi.encode(price), 10);
 
         assertEq(protocol.getTotalLongPositions(), 0, "total long positions");
-        assertEq(protocol.i_longTradingExpo(price), 0, "long trading expo with funding");
+        assertEq(protocol.getLongTradingExpo(price), 0, "long trading expo with funding");
         assertEq(protocol.getBalanceLong(), 0, "balance long");
         assertEq(protocol.i_longAssetAvailable(price), 0, "long asset available");
 

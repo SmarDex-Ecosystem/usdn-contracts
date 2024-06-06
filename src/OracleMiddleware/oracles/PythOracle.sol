@@ -81,7 +81,7 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
                 pricesUpdateData, feedIds, uint64(block.timestamp) - _recentPriceDelay, uint64(block.timestamp)
             );
         } else {
-            // we want to validate that the price is exactly at targetTimestamp (first in the second) or the next
+            // we want to validate that the price is exactly at `targetTimestamp` (first in the second) or the next
             // available price in the future, as identified by the prevPublishTime being strictly less than
             // targetTimestamp
             priceFeeds = _pyth.parsePriceFeedUpdatesUnique{ value: pythFee }(
@@ -159,7 +159,7 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
         view
         returns (FormattedPythPrice memory price_)
     {
-        // we use getPriceUnsafe to get the latest price without reverting, no mater how old
+        // we use getPriceUnsafe to get the latest price without reverting, no matter how old
         PythStructs.Price memory pythPrice = _pyth.getPriceUnsafe(_pythFeedId);
         // negative or zero prices are considered invalid, we return zero
         if (pythPrice.price <= 0) {

@@ -10,7 +10,7 @@ import { PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.so
  */
 interface IUsdnProtocolCore is IUsdnProtocolStorage {
     /**
-     * @notice The address that holds the minimum supply of USDN and the first minimum long position.
+     * @notice The address that holds the minimum supply of USDN and the first minimum long position
      * @return The address
      */
     function DEAD_ADDRESS() external pure returns (address);
@@ -37,7 +37,7 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
     /**
      * @notice Get the predicted value of the long balance for the given asset price and timestamp
      * @dev The effects of the funding rates and any profit or loss of the long positions since the last contract state
-     * update are taken into account, as well as the fees. If the provided timestamp is older than the last state
+     * update is taken into account, as well as the fees. If the provided timestamp is older than the last state
      * update, the function reverts with `UsdnProtocolTimestampTooOld`
      * @param currentPrice The current or predicted asset price
      * @param timestamp The timestamp corresponding to `currentPrice`
@@ -48,7 +48,7 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
     /**
      * @notice Get the predicted value of the vault balance for the given asset price and timestamp
      * @dev The effects of the funding rates and any profit or loss of the long positions since the last contract state
-     * update are taken into account, as well as the fees. If the provided timestamp is older than the last state
+     * update is taken into account, as well as the fees. If the provided timestamp is older than the last state
      * update, the function reverts with `UsdnProtocolTimestampTooOld`
      * @param currentPrice The current or predicted asset price
      * @param timestamp The timestamp corresponding to `currentPrice`
@@ -59,7 +59,7 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
     /**
      * @notice Get the predicted value of the long trading exposure for the given asset price and timestamp
      * @dev The effects of the funding rates and any profit or loss of the long positions since the last contract state
-     * update are taken into account
+     * update is taken into account
      * @param currentPrice The current or predicted asset price
      * @param timestamp The timestamp corresponding to `currentPrice`
      * @return The long trading exposure
@@ -69,7 +69,7 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
     /**
      * @notice Get the predicted value of the vault trading exposure for the given asset price and timestamp
      * @dev The effects of the funding rates and any profit or loss of the long positions since the last contract state
-     * update are taken into account
+     * update is taken into account
      * @param currentPrice The current or predicted asset price
      * @param timestamp The timestamp corresponding to `currentPrice`
      * @return The vault trading exposure
@@ -82,7 +82,7 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
      * @dev If this function returns a non-empty list of pending actions, then the next user action MUST include the
      * corresponding list of price update data and raw indices as the last parameter
      * @param currentUser The address of the user that will submit the price signatures for third-party actions
-     * validations. This is used to filter out their own actions from the returned list
+     * validations. This is used to filter out their actions from the returned list
      * @return actions_ The pending actions if any, otherwise an empty array. Note that some items can be zero-valued
      * and there is no need to provide price data for those (an empty `bytes` suffices)
      * @return rawIndices_ The raw indices of the actionable pending actions in the queue if any, otherwise an empty
@@ -96,7 +96,8 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
     /**
      * @notice Retrieve a user pending action
      * @param user The user's address
-     * @return action_ The pending action if any, otherwise a struct with all fields set to zero and ProtocolAction.None
+     * @return action_ The pending action if any, otherwise a struct with all fields set to zero and
+     * `ProtocolAction.None`
      */
     function getUserPendingAction(address user) external view returns (PendingAction memory action_);
 
