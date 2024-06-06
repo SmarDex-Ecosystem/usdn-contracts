@@ -23,6 +23,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
      * @param validator The address that should validate the deposit (receives the security deposit back)
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions
+     * @param ethAmount The amount of Ether to send with the transaction
      * @return success_ Whether the deposit was successful
      */
     function _usdnInitiateDeposit(
@@ -30,7 +31,8 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         address to,
         address validator,
         bytes memory currentPriceData,
-        PreviousActionsData memory previousActionsData
+        PreviousActionsData memory previousActionsData,
+        uint256 ethAmount
     ) internal returns (bool success_) {
         // use amount == Constants.CONTRACT_BALANCE as a flag to deposit the entire balance of the contract
         if (amount == Constants.CONTRACT_BALANCE) {
@@ -39,8 +41,8 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         PROTOCOL_ASSET.forceApprove(address(USDN_PROTOCOL), amount);
         SDEX.approve(address(USDN_PROTOCOL), type(uint256).max);
         // we send the full ETH balance, the protocol will refund any excess
-        success_ = USDN_PROTOCOL.initiateDeposit{ value: address(this).balance }(
-            amount.toUint128(), to, validator, currentPriceData, previousActionsData
+        success_ = USDN_PROTOCOL.initiateDeposit{ value: ethAmount }(
+            amount.toUint128(), to, payable(validator), currentPriceData, previousActionsData
         );
         SDEX.approve(address(USDN_PROTOCOL), 0);
     }
@@ -51,16 +53,17 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
      * @param validator The address that should validate the deposit (receives the security deposit)
      * @param depositPriceData The price data corresponding to the validator's pending deposit action
      * @param previousActionsData The data needed to validate actionable pending actions
+     * @param ethAmount The amount of Ether to send with the transaction
      * @return success_ Whether the deposit was successfully
      */
     function _usdnValidateDeposit(
         address validator,
         bytes memory depositPriceData,
-        PreviousActionsData memory previousActionsData
+        PreviousActionsData memory previousActionsData,
+        uint256 ethAmount
     ) internal returns (bool success_) {
-        success_ = USDN_PROTOCOL.validateDeposit{ value: address(this).balance }(
-            validator, depositPriceData, previousActionsData
-        );
+        success_ =
+            USDN_PROTOCOL.validateDeposit{ value: ethAmount }(payable(validator), depositPriceData, previousActionsData);
     }
 
     /**
@@ -72,6 +75,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
      * @param validator The address that should validate the withdrawal (receives the security deposit back)
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions
+     * @param ethAmount The amount of Ether to send with the transaction
      * @return success_ Whether the withdrawal was successful
      */
     function _usdnInitiateWithdrawal(
@@ -79,7 +83,8 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         address to,
         address validator,
         bytes memory currentPriceData,
-        PreviousActionsData memory previousActionsData
+        PreviousActionsData memory previousActionsData,
+        uint256 ethAmount
     ) internal returns (bool success_) {
         // use amount == Constants.CONTRACT_BALANCE as a flag to withdraw the entire balance of the contract
         if (amount == Constants.CONTRACT_BALANCE) {
@@ -87,8 +92,8 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         }
         USDN.approve(address(USDN_PROTOCOL), USDN.convertToTokensRoundUp(amount));
         // we send the full ETH balance, the protocol will refund any excess
-        success_ = USDN_PROTOCOL.initiateWithdrawal{ value: address(this).balance }(
-            amount.toUint152(), to, validator, currentPriceData, previousActionsData
+        success_ = USDN_PROTOCOL.initiateWithdrawal{ value: ethAmount }(
+            amount.toUint152(), to, payable(validator), currentPriceData, previousActionsData
         );
     }
 
@@ -99,15 +104,17 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
      * @param validator The address that should validate the withdrawal (receives the security deposit)
      * @param withdrawalPriceData The price data corresponding to the validator's pending deposit action
      * @param previousActionsData The data needed to validate actionable pending actions
+     * @param ethAmount The amount of Ether to send with the transaction
      * @return success_ Whether the withdrawal was successful
      */
     function _usdnValidateWithdrawal(
         address validator,
         bytes memory withdrawalPriceData,
-        PreviousActionsData memory previousActionsData
+        PreviousActionsData memory previousActionsData,
+        uint256 ethAmount
     ) internal returns (bool success_) {
-        success_ = USDN_PROTOCOL.validateWithdrawal{ value: address(this).balance }(
-            validator, withdrawalPriceData, previousActionsData
+        success_ = USDN_PROTOCOL.validateWithdrawal{ value: ethAmount }(
+            payable(validator), withdrawalPriceData, previousActionsData
         );
     }
 
@@ -121,6 +128,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
      * @param validator The address that should validate the open position (receives the security deposit back)
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions
+     * @param ethAmount The amount of Ether to send with the transaction
      * @return success_ Whether the open position was successful
      * @return posId_ The position ID of the newly opened position
      */
@@ -130,7 +138,8 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         address to,
         address validator,
         bytes memory currentPriceData,
-        PreviousActionsData memory previousActionsData
+        PreviousActionsData memory previousActionsData,
+        uint256 ethAmount
     ) internal returns (bool success_, PositionId memory posId_) {
         // use amount == Constants.CONTRACT_BALANCE as a flag to deposit the entire balance of the contract
         if (amount == Constants.CONTRACT_BALANCE) {
@@ -138,8 +147,8 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         }
         PROTOCOL_ASSET.forceApprove(address(USDN_PROTOCOL), amount);
         // we send the full ETH balance, and the protocol will refund any excess
-        (success_, posId_) = USDN_PROTOCOL.initiateOpenPosition{ value: address(this).balance }(
-            amount.toUint128(), desiredLiqPrice, to, validator, currentPriceData, previousActionsData
+        (success_, posId_) = USDN_PROTOCOL.initiateOpenPosition{ value: ethAmount }(
+            amount.toUint128(), desiredLiqPrice, to, payable(validator), currentPriceData, previousActionsData
         );
     }
 }

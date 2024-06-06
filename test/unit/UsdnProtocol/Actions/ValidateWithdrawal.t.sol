@@ -104,15 +104,16 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         protocol.initiateWithdrawal(
             uint128(usdn.balanceOf(address(this))),
             address(this),
-            address(this),
+            payable(address(this)),
             abi.encode(params.initialPrice),
             EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
 
-        bool success =
-            protocol.validateWithdrawal(address(this), abi.encode(params.initialPrice / 3), EMPTY_PREVIOUS_DATA);
+        bool success = protocol.validateWithdrawal(
+            payable(address(this)), abi.encode(params.initialPrice / 3), EMPTY_PREVIOUS_DATA
+        );
         assertFalse(success, "success");
 
         PendingAction memory pending = protocol.getUserPendingAction(address(this));
@@ -186,14 +187,14 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateWithdrawal);
         protocol.initiateWithdrawal{ value: validationCost }(
-            USDN_AMOUNT, address(this), address(this), currentPrice, EMPTY_PREVIOUS_DATA
+            USDN_AMOUNT, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
         // validate
         validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.ValidateWithdrawal);
         uint256 balanceBefore = address(this).balance;
-        protocol.validateWithdrawal{ value: 0.5 ether }(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.validateWithdrawal{ value: 0.5 ether }(payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
 
@@ -216,7 +217,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         protocol.setPositionFeeBps(0); // 0% fees
 
         data.currentPrice = abi.encode(initialPrice);
-        protocol.initiateWithdrawal(withdrawShares, to, address(this), data.currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.initiateWithdrawal(withdrawShares, to, payable(address(this)), data.currentPrice, EMPTY_PREVIOUS_DATA);
 
         data.actionId = oracleMiddleware.lastActionId();
         PendingAction memory pending = protocol.getUserPendingAction(address(this));
@@ -270,7 +271,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit ValidatedWithdrawal(to, address(this), withdrawnAmount, USDN_AMOUNT, data.withdrawal.timestamp);
-        bool success = protocol.validateWithdrawal(address(this), data.currentPrice, EMPTY_PREVIOUS_DATA);
+        bool success = protocol.validateWithdrawal(payable(address(this)), data.currentPrice, EMPTY_PREVIOUS_DATA);
         assertTrue(success, "success");
         assertEq(oracleMiddleware.lastActionId(), data.actionId, "middleware action ID");
 
@@ -295,7 +296,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
 
         if (_reenter) {
             vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
-            protocol.validateWithdrawal(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+            protocol.validateWithdrawal(payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
             return;
         }
 
@@ -305,7 +306,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         // If a reentrancy occurred, the function should have been called 2 times
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.validateWithdrawal.selector), 2);
         // The value sent will cause a refund, which will trigger the receive() function of this contract
-        protocol.validateWithdrawal{ value: 1 }(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.validateWithdrawal{ value: 1 }(payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
     }
 
     /**

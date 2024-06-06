@@ -17,7 +17,7 @@ interface IBaseLiquidationRewardsManager {
      * @param action The type of protocol action that triggered the liquidation
      * @param rebaseCallbackResult The result of the rebase callback, if any
      * @param priceData The oracle price data blob, if any. This can be used to reward users differently depending on
-     * which oracle they used to provide a liquidation price.
+     * which oracle they have used to provide a liquidation price
      * @return assetRewards_ The asset tokens to send to the liquidator as rewards (in wei)
      */
     function getLiquidationRewards(

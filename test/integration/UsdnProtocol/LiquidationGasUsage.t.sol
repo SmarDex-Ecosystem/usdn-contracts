@@ -96,23 +96,23 @@ contract TestForkUsdnProtocolLiquidationGasUsage is UsdnProtocolBaseIntegrationF
 
         vm.prank(USER_1);
         protocol.initiateOpenPosition{ value: securityDepositValue }(
-            1 ether, pythPriceNormalized + 150e18, address(this), address(this), hex"beef", EMPTY_PREVIOUS_DATA
+            1 ether, pythPriceNormalized + 150e18, address(this), payable(address(this)), hex"beef", EMPTY_PREVIOUS_DATA
         );
         vm.prank(USER_2);
         protocol.initiateOpenPosition{ value: securityDepositValue }(
-            1 ether, pythPriceNormalized + 100e18, address(this), address(this), hex"beef", EMPTY_PREVIOUS_DATA
+            1 ether, pythPriceNormalized + 100e18, address(this), payable(address(this)), hex"beef", EMPTY_PREVIOUS_DATA
         );
         vm.prank(USER_3);
         protocol.initiateOpenPosition{ value: securityDepositValue }(
-            1 ether, pythPriceNormalized + 50e18, address(this), address(this), hex"beef", EMPTY_PREVIOUS_DATA
+            1 ether, pythPriceNormalized + 50e18, address(this), payable(address(this)), hex"beef", EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         vm.prank(USER_1);
-        protocol.validateOpenPosition(address(this), hex"beef", EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(payable(address(this)), hex"beef", EMPTY_PREVIOUS_DATA);
         vm.prank(USER_2);
-        protocol.validateOpenPosition(address(this), hex"beef", EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(payable(address(this)), hex"beef", EMPTY_PREVIOUS_DATA);
         vm.prank(USER_3);
-        protocol.validateOpenPosition(address(this), hex"beef", EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(payable(address(this)), hex"beef", EMPTY_PREVIOUS_DATA);
 
         /* ---------------------------- Start the checks ---------------------------- */
         // put the original oracle back

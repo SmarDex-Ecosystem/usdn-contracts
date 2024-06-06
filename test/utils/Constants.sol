@@ -7,16 +7,16 @@ pragma solidity 0.8.20;
 
 /* -------------------------------- Accounts -------------------------------- */
 // contract deployer
-address constant DEPLOYER = address(0x1234123412341234123412341234123412341234);
+address payable constant DEPLOYER = payable(address(0x1234123412341234123412341234123412341234));
 
 // proxies contract admin
-address constant ADMIN = address(0x1212121212121212121212121212121212121212);
+address payable constant ADMIN = payable(address(0x1212121212121212121212121212121212121212));
 
 // generic users
-address constant USER_1 = address(0x1111111111111111111111111111111111111111);
-address constant USER_2 = address(0x2222222222222222222222222222222222222222);
-address constant USER_3 = address(0x3333333333333333333333333333333333333333);
-address constant USER_4 = address(0x4444444444444444444444444444444444444444);
+address payable constant USER_1 = payable(address(0x1111111111111111111111111111111111111111));
+address payable constant USER_2 = payable(address(0x2222222222222222222222222222222222222222));
+address payable constant USER_3 = payable(address(0x3333333333333333333333333333333333333333));
+address payable constant USER_4 = payable(address(0x4444444444444444444444444444444444444444));
 
 /* -------------------------------------------------------------------------- */
 /*                              Ethereum mainnet                              */

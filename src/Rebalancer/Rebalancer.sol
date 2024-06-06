@@ -45,7 +45,7 @@ contract Rebalancer is Ownable, IRebalancer {
     /// @notice The amount of assets waiting to be used in the next version of the position
     uint256 internal _pendingAssetsAmount;
 
-    /// @notice The maximum leverage a position can have
+    /// @notice The maximum leverage that a position can have
     uint256 internal _maxLeverage;
 
     /// @notice The version of the last position that got liquidated
@@ -65,7 +65,7 @@ contract Rebalancer is Ownable, IRebalancer {
         _maxLeverage = usdnProtocol.getMaxLeverage();
         _minAssetDeposit = usdnProtocol.getMinLongPosition();
 
-        // Set allowance to allow the protocol to pull assets from this contract
+        // set allowance to allow the protocol to pull assets from this contract
         asset.forceApprove(address(usdnProtocol), type(uint256).max);
     }
 
