@@ -93,6 +93,7 @@ interface IUsdnProtocolEvents {
     /**
      * @notice Emitted when a user initiates the closing of all or part of a long position
      * @param owner The owner of this position
+     * @param validator The validator for the pending action
      * @param to The address that will receive the assets
      * @param posId The unique position identifier
      * @param originalAmount The amount of collateral originally on the position
@@ -103,6 +104,7 @@ interface IUsdnProtocolEvents {
      */
     event InitiatedClosePosition(
         address indexed owner,
+        address indexed validator,
         address indexed to,
         PositionId posId,
         uint128 originalAmount,
@@ -112,14 +114,14 @@ interface IUsdnProtocolEvents {
 
     /**
      * @notice Emitted when a user validates the closing of a long position
-     * @param owner The owner of the initial position
+     * @param validator The validator of the close action, not necessarily the position owner
      * @param to The address that received the assets
      * @param posId The unique position identifier
      * @param amountReceived The amount of assets that were sent to the user
      * @param profit The profit that the user made
      */
     event ValidatedClosePosition(
-        address indexed owner, address indexed to, PositionId posId, uint256 amountReceived, int256 profit
+        address indexed validator, address indexed to, PositionId posId, uint256 amountReceived, int256 profit
     );
 
     /**
@@ -141,7 +143,7 @@ interface IUsdnProtocolEvents {
 
     /**
      * @notice Emitted when a position is individually liquidated
-     * @param user the address of the user that owned the position
+     * @param user The validator of the close action, not necessarily the owner of the position
      * @param posId The unique identifier for the position that was liquidated
      * @param liquidationPrice The asset price at the moment of liquidation
      * @param effectiveTickPrice The effective liquidated tick price
