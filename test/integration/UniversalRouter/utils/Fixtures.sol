@@ -19,6 +19,8 @@ contract UniversalRouterBaseFixture is UsdnProtocolBaseIntegrationFixture {
     function _setUp() internal {
         params = DEFAULT_PARAMS;
         params.fork = true;
+        params.initialDeposit = 1000 ether;
+        params.initialLong = 1000 ether;
         _setUp(params);
 
         RouterParameters memory params = RouterParameters({

@@ -105,7 +105,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             vm.warp(testParams.initialTimestamp);
         }
         vm.startPrank(DEPLOYER);
-        (bool success,) = address(wstETH).call{ value: 1000 ether }("");
+        (bool success,) = address(wstETH).call{ value: 3000 ether }("");
         require(success, "DEPLOYER wstETH mint failed");
         usdn = new Usdn(address(0), address(0));
         AggregatorV3Interface chainlinkGasPriceFeed = AggregatorV3Interface(CHAINLINK_ORACLE_GAS);
