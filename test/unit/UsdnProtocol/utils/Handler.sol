@@ -286,6 +286,14 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _tickHash(tick);
     }
 
+    function i_longAssetAvailable(uint256 totalExpo, uint256 balanceLong, uint128 newPrice, uint128 oldPrice)
+        external
+        pure
+        returns (int256 available_)
+    {
+        return _longAssetAvailable(totalExpo, balanceLong, newPrice, oldPrice);
+    }
+
     function i_longAssetAvailable(uint128 currentPrice) external view returns (int256) {
         return _longAssetAvailable(currentPrice);
     }
@@ -468,5 +476,20 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
 
     function i_clearPendingAction(address user, uint128 rawIndex) external {
         _clearPendingAction(user, rawIndex);
+    }
+
+    function i_calcLongImbalanceBps(uint256 vaultBalance, uint256 longBalance, uint256 longTotalExpo)
+        external
+        pure
+        returns (int256 imbalanceBps_)
+    {
+        CachedProtocolState memory cache = CachedProtocolState({
+            totalExpo: longTotalExpo,
+            longBalance: longBalance,
+            vaultBalance: vaultBalance,
+            tradingExpo: longTotalExpo - longBalance
+        });
+
+        return _calcLongImbalanceBps(cache);
     }
 }

@@ -1829,9 +1829,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 );
             }
 
-            isLiquidationPending_ = liquidationEffects.isLiquidationPending;
             _balanceLong = liquidationEffects.newLongBalance;
             _balanceVault = liquidationEffects.newVaultBalance;
+            isLiquidationPending_ = liquidationEffects.isLiquidationPending;
 
             // safecast not needed since done above
             (bool rebased, bytes memory callbackResult) = _usdnRebase(uint128(neutralPrice), ignoreInterval);
@@ -1882,14 +1882,17 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             bonus = (uint256(remainingCollateral) * _rebalancerBonusBps / BPS_DIVISOR).toUint128();
         }
 
-        uint256 totalExpo = _totalExpo;
+        CachedProtocolState memory cache = CachedProtocolState({
+            totalExpo: _totalExpo,
+            longBalance: longBalance,
+            vaultBalance: vaultBalance,
+            tradingExpo: 0
+        });
+        cache.tradingExpo = cache.totalExpo - longBalance;
 
         // calculate the current imbalance
         {
-            // TODO make a separate function that can be fuzzed?
-            int256 currentImbalance = (
-                (vaultBalance.toInt256()).safeSub(totalExpo.toInt256().safeSub(longBalance_.toInt256()))
-            ).safeMul(int256(BPS_DIVISOR)).safeDiv(vaultBalance.toInt256());
+            int256 currentImbalance = _calcLongImbalanceBps(cache);
 
             // if the imbalance is lower than the threshold, return
             if (currentImbalance < _closeExpoImbalanceLimitBps) {
@@ -1904,28 +1907,29 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // close the rebalancer position and get its value to open the next one
         if (rebalancerPosId.tick != NO_POSITION_TICK) {
-            // TODO update longBalance_ here
-            uint128 positionValue =
-                _flashClosePosition(rebalancerPosId, neutralPrice, totalExpo - longBalance_).toUint128();
+            uint128 positionValue = _flashClosePosition(rebalancerPosId, neutralPrice, cache.tradingExpo).toUint128();
 
+            cache.longBalance -= positionValue;
             positionAmount += positionValue;
         }
 
-        int24 tickWithoutLiqPenalty = _calculateRebalancerPositionTick(
-            neutralPrice, positionAmount, rebalancerMaxLeverage, totalExpo - longBalance_, vaultBalance
-        );
+        int24 tickWithoutLiqPenalty =
+            _calcRebalancerPositionTick(neutralPrice, positionAmount, rebalancerMaxLeverage, cache);
 
         // open a new position for the rebalancer
-        PositionId memory posId =
-            _flashOpenPosition(address(rebalancer), neutralPrice, tickWithoutLiqPenalty, positionAmount);
+        PositionId memory posId = _flashOpenPosition(
+            address(rebalancer), neutralPrice, tickWithoutLiqPenalty, positionAmount, cache.tradingExpo
+        );
 
-        longBalance_ += pendingAssets + bonus;
+        cache.longBalance += positionAmount;
 
         // transfer the pending assets from the rebalancer to this contract
         _asset.safeTransferFrom(address(rebalancer), address(this), pendingAssets);
 
         // call the rebalancer to update the internal bookkeeping
         rebalancer.updatePosition(posId, positionAmount - pendingAssets - bonus);
+
+        longBalance_ = cache.longBalance;
     }
 
     /**

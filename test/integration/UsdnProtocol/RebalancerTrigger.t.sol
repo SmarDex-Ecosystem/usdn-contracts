@@ -5,8 +5,10 @@ import { DEPLOYER } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "test/integration/UsdnProtocol/utils/Fixtures.sol";
 import { MockChainlinkOnChain } from "test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
 
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { TickMath } from "src/libraries/TickMath.sol";
+import { ProtocolAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { HugeUint } from "src/libraries/HugeUint.sol";
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
 
 /**
@@ -16,10 +18,14 @@ import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewar
 contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture {
     MockChainlinkOnChain public chainlinkGasPriceFeed;
     PositionId public posToLiquidate;
+    TickData public tickToLiquidateData;
+    uint128 public amountInRebalancer;
+    int24 public tickSpacing;
 
     function setUp() public {
         params = DEFAULT_PARAMS;
         _setUp(params);
+        tickSpacing = protocol.getTickSpacing();
 
         vm.startPrank(DEPLOYER);
         protocol.setFundingSF(0);
@@ -42,6 +48,7 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
 
         // deposit assets in the rebalancer
         rebalancer.depositAssets(10 ether, address(this));
+        amountInRebalancer += 10 ether;
 
         // open a position to liquidate and trigger the rebalancer
         posToLiquidate = protocol.initiateOpenPosition{ value: messageValue }(
@@ -56,6 +63,8 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
         protocol.validateOpenPosition{
             value: oracleMiddleware.validationCost("beef", ProtocolAction.ValidateOpenPosition)
         }(address(this), "beef", EMPTY_PREVIOUS_DATA);
+
+        tickToLiquidateData = protocol.getTickData(posToLiquidate.tick);
     }
 
     /**
@@ -67,17 +76,71 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
     function test_rebalancerTrigger() public {
         skip(5 minutes);
 
-        uint128 price = 1280 ether;
         uint128 wstEthPrice = uint128(wstETH.getWstETHByStETH(1280 ether));
-        mockPyth.setPrice(int64(int128(price) / 1e10));
+        mockPyth.setPrice(1280 ether / 1e10);
         mockPyth.setLastPublishTime(block.timestamp);
 
-        uint256 validationCost = oracleMiddleware.validationCost("beef", ProtocolAction.Liquidation);
-        uint40 timestamp = uint40(block.timestamp);
-        uint128 remainingCollateral =
-            uint128(uint256(protocol.getPositionValue(posToLiquidate, wstEthPrice, timestamp)));
+        uint128 bonus;
+        uint256 totalExpo;
+        uint256 longAssetAvailable;
+        int256 imbalance;
+        uint256 tradingExpoToFill;
+        {
+            uint128 remainingCollateral =
+                uint128(uint256(protocol.getPositionValue(posToLiquidate, wstEthPrice, uint40(block.timestamp))));
 
-        uint128 bonus = uint128(uint256(remainingCollateral)) * protocol.getRebalancerBonusBps() / 10_000;
+            bonus = uint128(uint256(remainingCollateral)) * protocol.getRebalancerBonusBps() / 10_000;
+            totalExpo = protocol.getTotalExpo() - tickToLiquidateData.totalExpo;
+            uint256 vaultAssetAvailable = uint256(protocol.i_vaultAssetAvailable(wstEthPrice)) + remainingCollateral;
+            longAssetAvailable = uint256(protocol.i_longAssetAvailable(wstEthPrice)) - remainingCollateral;
+            imbalance = protocol.i_calcLongImbalanceBps(vaultAssetAvailable, longAssetAvailable, totalExpo);
+            tradingExpoToFill = (vaultAssetAvailable * uint256(10_000 - protocol.getLongImbalanceTargetBps()) / 10_000)
+                - (totalExpo - longAssetAvailable);
+        }
+
+        // Sanity check
+        assertGt(
+            imbalance,
+            protocol.getCloseExpoImbalanceLimitBps(),
+            "The imbalance is not high enough to trigger the rebalancer, adjust the long positions in the setup"
+        );
+
+        HugeUint.Uint512 memory expectedAccumulator = HugeUint.sub(
+            protocol.getLiqMultiplierAccumulator(),
+            HugeUint.wrap(
+                TickMath.getPriceAtTick(
+                    posToLiquidate.tick - int24(uint24(tickToLiquidateData.liquidationPenalty)) * tickSpacing
+                ) * tickToLiquidateData.totalExpo
+            )
+        );
+        int24 expectedTickWithoutPenalty = protocol.getEffectiveTickForPrice(
+            protocol.i_calcLiqPriceFromTradingExpo(wstEthPrice, amountInRebalancer + bonus, tradingExpoToFill),
+            wstEthPrice,
+            totalExpo - longAssetAvailable,
+            expectedAccumulator,
+            tickSpacing
+        ) + tickSpacing;
+        uint128 liqPriceWithoutPenalty = protocol.getEffectivePriceForTick(
+            expectedTickWithoutPenalty, wstEthPrice, totalExpo - longAssetAvailable, expectedAccumulator
+        );
+
+        _expectEmits(wstEthPrice, amountInRebalancer + bonus, liqPriceWithoutPenalty, expectedTickWithoutPenalty);
+        protocol.liquidate{ value: 1 }("beef", 1);
+
+        imbalance = protocol.i_calcLongImbalanceBps(
+            protocol.getBalanceVault(), protocol.getBalanceLong(), protocol.getTotalExpo()
+        );
+
+        assertLe(
+            imbalance, protocol.getLongImbalanceTargetBps(), "The imbalance should be below or equal to the target"
+        );
+    }
+
+    /// @dev Prepare the expectEmits
+    function _expectEmits(uint128 price, uint128 amount, uint128 liqPriceWithoutPenalty, int24 tickWithoutPenalty)
+        internal
+    {
+        uint128 positionTotalExpo = protocol.i_calculatePositionTotalExpo(amount, price, liqPriceWithoutPenalty);
 
         vm.expectEmit(false, false, false, false);
         emit LiquidatedTick(0, 0, 0, 0, 0);
@@ -85,14 +148,20 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
         emit InitiatedOpenPosition(
             address(rebalancer),
             address(rebalancer),
-            timestamp,
-            31_178_357_699_544_775_655,
-            10 ether + bonus,
-            wstEthPrice,
-            PositionId(74_000, 0, 0)
+            uint40(block.timestamp),
+            positionTotalExpo,
+            amount,
+            price,
+            PositionId(tickWithoutPenalty + (int24(uint24(tickToLiquidateData.liquidationPenalty)) * tickSpacing), 0, 0)
         );
-
-        protocol.liquidate{ value: validationCost }("beef", 1);
+        vm.expectEmit();
+        emit ValidatedOpenPosition(
+            address(rebalancer),
+            address(rebalancer),
+            positionTotalExpo,
+            price,
+            PositionId(tickWithoutPenalty + (int24(uint24(tickToLiquidateData.liquidationPenalty)) * tickSpacing), 0, 0)
+        );
     }
 
     receive() external payable { }

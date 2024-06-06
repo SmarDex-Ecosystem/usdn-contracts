@@ -19,6 +19,20 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     using LibBitmap for LibBitmap.Bitmap;
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
+    /**
+     * @notice Structure to hold data of the protocol
+     * @param totalExpo The total expo o the long side
+     * @param tradingExpo The trading expo of the long side
+     * @param longBalance The balance on the long side
+     * @param vaultBalance The balance on the vault side
+     */
+    struct CachedProtocolState {
+        uint256 totalExpo;
+        uint256 tradingExpo;
+        uint256 longBalance;
+        uint256 vaultBalance;
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                                  Constants                                 */
     /* -------------------------------------------------------------------------- */
