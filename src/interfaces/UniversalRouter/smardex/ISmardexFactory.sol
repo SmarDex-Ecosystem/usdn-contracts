@@ -34,27 +34,24 @@ interface ISmardexFactory {
      */
     event FeeToUpdated(address indexed previousFeeTo, address indexed newFeeTo);
 
-    /**
-     * @notice return which address fees will be transferred
-     */
+    /// @return Which the address fees will be transferred
     function feeTo() external view returns (address);
 
     /**
-     * @notice return the address of the pair of 2 tokens
+     * @param tokenA The token A of the pair
+     * @param tokenB The token B of the pair
+     * @return pair_ The address of the pair of 2 tokens
      */
-    function getPair(address _tokenA, address _tokenB) external view returns (address pair_);
+    function getPair(address tokenA, address tokenB) external view returns (address pair_);
 
     /**
      * @notice return the address of the pair at index
-     * @param _index index of the pair
+     * @param index index of the pair
      * @return pair_ address of the pair
      */
-    function allPairs(uint256 _index) external view returns (address pair_);
+    function allPairs(uint256 index) external view returns (address pair_);
 
-    /**
-     * @notice return the quantity of pairs
-     * @return quantity in uint256
-     */
+    /// @return The quantity of pairs
     function allPairsLength() external view returns (uint256);
 
     /**
@@ -72,25 +69,25 @@ interface ISmardexFactory {
 
     /**
      * @notice create pair with 2 address
-     * @param _tokenA address of tokenA
-     * @param _tokenB address of tokenB
+     * @param tokenA address of tokenA
+     * @param tokenB address of tokenB
      * @return pair_ address of the pair created
      */
-    function createPair(address _tokenA, address _tokenB) external returns (address pair_);
+    function createPair(address tokenA, address tokenB) external returns (address pair_);
 
     /**
      * @notice set the address who will receive fees, can only be call by the owner
-     * @param _feeTo address to replace
+     * @param feeTo address to replace
      */
-    function setFeeTo(address _feeTo) external;
+    function setFeeTo(address feeTo) external;
 
     /**
      * @notice set feesLP and feesPool for each new pair (onlyOwner)
      * @notice sum of new feesLp and feesPool must be <= FEES_MAX = 10% FEES_BASE
-     * @param _feesLP new numerator of fees sent to LP, must be >= 1
-     * @param _feesPool new numerator of fees sent to Pool, could be = 0
+     * @param feesLP new numerator of fees sent to LP, must be >= 1
+     * @param feesPool new numerator of fees sent to Pool, could be = 0
      */
-    function setFees(uint128 _feesLP, uint128 _feesPool) external;
+    function setFees(uint128 feesLP, uint128 feesPool) external;
 
     /**
      * @notice disable whitelist (onlyOwner)
@@ -100,7 +97,7 @@ interface ISmardexFactory {
 
     /**
      * @notice add a pair manually
-     * @param _pair pair address to add (must be an ISmardexPair)
+     * @param pair pair address to add (must be an ISmardexPair)
      */
-    function addPair(address _pair) external;
+    function addPair(address pair) external;
 }

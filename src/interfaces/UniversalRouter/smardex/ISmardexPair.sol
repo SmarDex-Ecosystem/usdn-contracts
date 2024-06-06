@@ -32,32 +32,32 @@ interface ISmardexPair is IERC20, IERC20Permit {
 
     /**
      * @notice emitted at each mint
+     * @dev the amount of LP-token sent can be caught using the transfer event of the pair
      * @param sender address calling the mint function (usually the Router contract)
      * @param to address that receives the LP-tokens
      * @param amount0 amount of token0 to be added in liquidity
      * @param amount1 amount of token1 to be added in liquidity
-     * @dev the amount of LP-token sent can be caught using the transfer event of the pair
      */
     event Mint(address indexed sender, address indexed to, uint256 amount0, uint256 amount1);
 
     /**
      * @notice emitted at each burn
+     * @dev the amount of LP-token sent can be caught using the transfer event of the pair
      * @param sender address calling the burn function (usually the Router contract)
      * @param to address that receives the tokens
      * @param amount0 amount of token0 to be withdrawn
      * @param amount1 amount of token1 to be withdrawn
-     * @dev the amount of LP-token sent can be caught using the transfer event of the pair
      */
     event Burn(address indexed sender, address indexed to, uint256 amount0, uint256 amount1);
 
     /**
      * @notice emitted at each swap
+     * @dev one of the 2 amount is always negative, the other one is always positive. The positive one is the one that
+     * the user send to the contract, the negative one is the one that the contract send to the user.
      * @param sender address calling the swap function (usually the Router contract)
      * @param to address that receives the out-tokens
      * @param amount0 amount of token0 to be swapped
      * @param amount1 amount of token1 to be swapped
-     * @dev one of the 2 amount is always negative, the other one is always positive. The positive one is the one that
-     * the user send to the contract, the negative one is the one that the contract send to the user.
      */
     event Swap(address indexed sender, address indexed to, int256 amount0, int256 amount1);
 
@@ -86,32 +86,23 @@ interface ISmardexPair is IERC20, IERC20Permit {
      */
     event FeesChanged(uint256 indexed feesLP, uint256 indexed feesPool);
 
-    /**
-     * @notice get the factory address
-     * @return address of the factory
-     */
+    /// @return The address of the factory
     function factory() external view returns (address);
 
-    /**
-     * @notice get the token0 address
-     * @return address of the token0
-     */
+    /// @return The address of the token0
     function token0() external view returns (address);
 
-    /**
-     * @notice get the token1 address
-     * @return address of the token1
-     */
+    /// @return The address of the token1
     function token1() external view returns (address);
 
     /**
      * @notice called once by the factory at time of deployment
-     * @param _token0 address of token0
-     * @param _token1 address of token1
-     * @param _feesLP uint128 feesLP numerator
-     * @param _feesPool uint128 feesPool numerator
+     * @param token0 address of token0
+     * @param token1 address of token1
+     * @param feesLP uint128 feesLP numerator
+     * @param feesPool uint128 feesPool numerator
      */
-    function initialize(address _token0, address _token1, uint128 _feesLP, uint128 _feesPool) external;
+    function initialize(address token0, address token1, uint128 feesLP, uint128 feesPool) external;
 
     /**
      * @notice return current Reserves of both token in the pair,
@@ -157,71 +148,72 @@ interface ISmardexPair is IERC20, IERC20Permit {
     /**
      * @notice return current price average of both token in the pair for provided currentTimeStamp
      *  read price0Average/price1Average for current price of token0/token1
-     * @param _fictiveReserveIn,
-     * @param _fictiveReserveOut,
-     * @param _priceAverageLastTimestamp,
-     * @param _priceAverageIn current price for token0
-     * @param _priceAverageOut current price for token1
-     * @param _currentTimestamp block timestamp to get price
+     * @param fictiveReserveIn,
+     * @param fictiveReserveOut,
+     * @param priceAverageLastTimestamp,
+     * @param priceAverageIn current price for token0
+     * @param priceAverageOut current price for token1
+     * @param currentTimestamp block timestamp to get price
      * @return priceAverageIn_ current price for token0
      * @return priceAverageOut_ current price for token1
      */
     function getUpdatedPriceAverage(
-        uint256 _fictiveReserveIn,
-        uint256 _fictiveReserveOut,
-        uint256 _priceAverageLastTimestamp,
-        uint256 _priceAverageIn,
-        uint256 _priceAverageOut,
-        uint256 _currentTimestamp
+        uint256 fictiveReserveIn,
+        uint256 fictiveReserveOut,
+        uint256 priceAverageLastTimestamp,
+        uint256 priceAverageIn,
+        uint256 priceAverageOut,
+        uint256 currentTimestamp
     ) external pure returns (uint256 priceAverageIn_, uint256 priceAverageOut_);
 
     /**
      * @notice Mint lp tokens proportionally of added tokens in balance. Should be called from a contract
      * that makes safety checks like the SmardexRouter
-     * @param _to address who will receive minted tokens
-     * @param _amount0 amount of token0 to provide
-     * @param _amount1 amount of token1 to provide
+     * @param to address who will receive minted tokens
+     * @param amount0 amount of token0 to provide
+     * @param amount1 amount of token1 to provide
+     * @param payer The address that will be paying the input
      * @return liquidity_ amount of lp tokens minted and sent to the address defined in parameter
      */
-    function mint(address _to, uint256 _amount0, uint256 _amount1, address _payer)
-        external
-        returns (uint256 liquidity_);
+    function mint(address to, uint256 amount0, uint256 amount1, address payer) external returns (uint256 liquidity_);
 
     /**
      * @notice Burn lp tokens in the balance of the contract. Sends to the defined address the amount of token0 and
      * token1 proportionally of the amount burned. Should be called from a contract that makes safety checks like the
      * SmardexRouter
-     * @param _to address who will receive tokens
+     * @param to address who will receive tokens
      * @return amount0_ amount of token0 sent to the address defined in parameter
      * @return amount1_ amount of token0 sent to the address defined in parameter
      */
-    function burn(address _to) external returns (uint256 amount0_, uint256 amount1_);
+    function burn(address to) external returns (uint256 amount0_, uint256 amount1_);
 
     /**
      * @notice Swaps tokens. Sends to the defined address the amount of token0 and token1 defined in parameters.
      * Tokens to trade should be already sent in the contract.
      * Swap function will check if the resulted balance is correct with current reserves and reserves fictive.
      * Should be called from a contract that makes safety checks like the SmardexRouter
-     * @param _to address who will receive tokens
-     * @param _zeroForOne token0 to token1
-     * @param _amountSpecified amount of token wanted
-     * @param _data used for flash swap, data.length must be 0 for regular swap
+     * @param to address who will receive tokens
+     * @param zeroForOne token0 to token1
+     * @param amountSpecified amount of token wanted
+     * @param data used for flash swap, data.length must be 0 for regular swap
+     * @return amount0_ The amount0
+     * @return amount1_ The amount1
      */
-    function swap(address _to, bool _zeroForOne, int256 _amountSpecified, bytes calldata _data)
+    function swap(address to, bool zeroForOne, int256 amountSpecified, bytes calldata data)
         external
         returns (int256 amount0_, int256 amount1_);
 
     /**
      * @notice set feesLP and feesPool of the pair
      * @notice sum of new feesLp and feesPool must be <= 100_000
-     * @param _feesLP new numerator of fees sent to LP, must be >= 1
-     * @param _feesPool new numerator of fees sent to Pool, could be = 0
+     * @param feesLP new numerator of fees sent to LP, must be >= 1
+     * @param feesPool new numerator of fees sent to Pool, could be = 0
      */
-    function setFees(uint128 _feesLP, uint128 _feesPool) external;
+    function setFees(uint128 feesLP, uint128 feesPool) external;
 
     /**
      * @notice withdraw all reserve on the pair in case no liquidity has never been provided
-     * @param _to address who will receive tokens
+     * @param to address who will receive tokens
      */
-    function skim(address _to) external;
+    function skim(address to) external;
 }

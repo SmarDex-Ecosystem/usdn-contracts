@@ -11,9 +11,10 @@ import { ISmardexFactory } from "src/interfaces/UniversalRouter/smardex/ISmardex
 import { ISmardexPair } from "src/interfaces/UniversalRouter/smardex/ISmardexPair.sol";
 import { Path } from "src/UniversalRouter/libraries/Path.sol";
 import { SmardexImmutables } from "src/UniversalRouter/modules/smardex/SmardexImmutables.sol";
+import { ISmardexSwapRouter } from "src/interfaces/UniversalRouter/smardex/ISmardexSwapRouter.sol";
 
 /// @title Router for Smardex
-abstract contract SmardexSwapRouter is SmardexImmutables, Permit2Payments {
+abstract contract SmardexSwapRouter is ISmardexSwapRouter, SmardexImmutables, Permit2Payments {
     /// @notice Indicates that the amountOut is lower than the minAmountOut
     error tooLittleReceived();
 
@@ -52,12 +53,7 @@ abstract contract SmardexSwapRouter is SmardexImmutables, Permit2Payments {
     /// @dev Transient storage variable used for checking slippage
     uint256 private amountInCached = DEFAULT_MAX_AMOUNT_IN;
 
-    /**
-     * @notice callback data for smardex swap
-     * @param amount0Delta amount of token0 for the swap (negative is incoming, positive is required to pay to pair)
-     * @param amount1Delta amount of token1 for the swap (negative is incoming, positive is required to pay to pair)
-     * @param data for Router path and payer for the swap
-     */
+    /// @inheritdoc ISmardexSwapRouter
     function smardexSwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata data) external {
         if (amount0Delta <= 0 && amount1Delta <= 0) {
             revert callbackInvalidAmount();

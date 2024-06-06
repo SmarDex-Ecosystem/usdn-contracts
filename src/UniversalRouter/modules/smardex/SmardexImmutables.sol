@@ -21,6 +21,7 @@ contract SmardexImmutables {
     /// @dev The wrapped ETH
     IWETH9 internal immutable WETH;
 
+    /// @param params The smardex parameters
     constructor(SmardexParameters memory params) {
         SMARDEX_FACTORY = params.smardexFactory;
         WETH = IWETH9(params.weth);
