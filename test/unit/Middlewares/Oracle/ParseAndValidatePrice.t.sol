@@ -4,7 +4,15 @@ pragma solidity 0.8.20;
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { OracleMiddlewareBaseFixture } from "test/unit/Middlewares/utils/Fixtures.sol";
-import { ETH_PRICE, ETH_CONF, ETH_DECIMALS, MOCK_PYTH_DATA } from "test/unit/Middlewares/utils/Constants.sol";
+import {
+    ETH_PRICE,
+    ETH_CONF,
+    ETH_DECIMALS,
+    MOCK_PYTH_DATA,
+    REDSTONE_ETH_PRICE,
+    REDSTONE_ETH_TIMESTAMP,
+    REDSTONE_ETH_DATA
+} from "test/unit/Middlewares/utils/Constants.sol";
 import { IMockPythError } from "test/unit/Middlewares/utils/MockPyth.sol";
 
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
@@ -23,6 +31,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
     uint128 internal immutable LOW_LATENCY_DELAY;
     uint128 internal immutable TARGET_TIMESTAMP;
     uint128 internal immutable LIMIT_TIMESTAMP;
+    uint128 internal immutable REDSTONE_PENALTY;
 
     constructor() {
         super.setUp();
@@ -34,15 +43,13 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
         LOW_LATENCY_DELAY = uint128(oracleMiddleware.getLowLatencyDelay());
         TARGET_TIMESTAMP = uint128(block.timestamp);
         LIMIT_TIMESTAMP = TARGET_TIMESTAMP + LOW_LATENCY_DELAY;
+        REDSTONE_PENALTY =
+            uint128(REDSTONE_ETH_PRICE * oracleMiddleware.getPenaltyBps() / oracleMiddleware.BPS_DIVISOR());
     }
 
     function setUp() public override {
         super.setUp();
     }
-
-    /* -------------------------------------------------------------------------- */
-    /*                             Unsupported action                             */
-    /* -------------------------------------------------------------------------- */
 
     /**
      * @custom:scenario Parse and validate price
@@ -64,10 +71,6 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
         assertEq(success, false, "Function should revert");
         assertEq(data.length, 0, "Function should revert");
     }
-
-    /* -------------------------------------------------------------------------- */
-    /*                               ETH is 2000 USD                              */
-    /* -------------------------------------------------------------------------- */
 
     /**
      * @custom:scenario Parse and validate price with Pyth when data is provided
@@ -107,6 +110,42 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
                 assertEq(price.price, FORMATTED_ETH_PRICE - FORMATTED_ETH_CONF, errorMessage);
             } else {
                 assertEq(price.price, FORMATTED_ETH_PRICE, errorMessage);
+            }
+        }
+    }
+
+    /**
+     * @custom:scenario Parse and validate price with Redstone
+     * @custom:given ETH price is ~3838 USD in Redstone
+     * @custom:and The validationDelay is respected
+     * @custom:when Calling `parseAndValidatePrice` with a valid Redstone price update
+     * @custom:then The price is adjusted according to the penalty
+     */
+    function test_parseAndValidatePriceWithRedstoneForAllActions() public {
+        for (uint256 i; i < actions.length; i++) {
+            ProtocolAction action = actions[i];
+            string memory errorMessage =
+                string.concat("Wrong oracle middleware price for action: ", uint256(action).toString());
+
+            PriceInfo memory price = oracleMiddleware.parseAndValidatePrice{
+                value: oracleMiddleware.validationCost(REDSTONE_ETH_DATA, action)
+            }("", uint128(REDSTONE_ETH_TIMESTAMP - oracleMiddleware.getValidationDelay()), action, REDSTONE_ETH_DATA);
+
+            // Price + conf
+            if (
+                action == ProtocolAction.InitiateWithdrawal || action == ProtocolAction.ValidateWithdrawal
+                    || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.ValidateOpenPosition
+            ) {
+                assertEq(price.price, REDSTONE_ETH_PRICE + REDSTONE_PENALTY, errorMessage);
+            }
+            // Price - conf
+            else if (
+                action == ProtocolAction.InitiateDeposit || action == ProtocolAction.ValidateDeposit
+                    || action == ProtocolAction.InitiateClosePosition || action == ProtocolAction.ValidateClosePosition
+            ) {
+                assertEq(price.price, REDSTONE_ETH_PRICE - REDSTONE_PENALTY, errorMessage);
+            } else {
+                assertEq(price.price, REDSTONE_ETH_PRICE, errorMessage);
             }
         }
     }
@@ -236,10 +275,6 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
         vm.expectRevert(errorSelector);
         oracleMiddleware.parseAndValidatePrice("", TARGET_TIMESTAMP, ProtocolAction.ValidateClosePosition, roundIdData);
     }
-
-    /* -------------------------------------------------------------------------- */
-    /*                        ETH is -1 USD in pyth oracle                        */
-    /* -------------------------------------------------------------------------- */
 
     /**
      * @custom:scenario Parse and validate price using pyth
@@ -385,10 +420,6 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
             "", TARGET_TIMESTAMP, ProtocolAction.ValidateClosePosition, roundIdData
         );
     }
-
-    /* -------------------------------------------------------------------------- */
-    /*                              Pyth call revert                              */
-    /* -------------------------------------------------------------------------- */
 
     /**
      * @custom:scenario Parse and validate price
@@ -563,10 +594,6 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
         );
     }
 
-    /* -------------------------------------------------------------------------- */
-    /*                           Chainlink call reverts                           */
-    /* -------------------------------------------------------------------------- */
-
     /**
      * @custom:scenario Parse and validate price for "Initiate" actions fails when no data is provided and chainlink's
      * data is too old
@@ -642,6 +669,52 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1 * 1e10));
         priceInfo =
             oracleMiddleware.parseAndValidatePrice("", TARGET_TIMESTAMP, ProtocolAction.InitiateClosePosition, "");
+    }
+
+    /**
+     * @custom:scenario Validate a price with Redstone but the chianlink price is way less
+     * @custom:given The chainlink price is less than a third of the redstone price
+     * @custom:when The `parseAndValidatePrice` function is called with valid redstone data
+     * @custom:then The middleware reverts with `OracleMiddlewareRedstoneSafeguard`
+     */
+    function test_RevertWhen_parseAndValidatePriceWithRedstoneMoreThanChainlink() public {
+        // set chainlink to a price that is less than a third of the redstone price
+        int256 mockedChainlinkPrice = int256(REDSTONE_ETH_PRICE / 3 - 1);
+        mockChainlinkOnChain.setLatestRoundData(1, mockedChainlinkPrice, REDSTONE_ETH_TIMESTAMP, 1);
+        uint256 validationDelay = oracleMiddleware.getValidationDelay();
+
+        for (uint256 i; i < actions.length; i++) {
+            ProtocolAction action = actions[i];
+            uint256 validationCost = oracleMiddleware.validationCost(REDSTONE_ETH_DATA, action);
+
+            vm.expectRevert(OracleMiddlewareRedstoneSafeguard.selector);
+            oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
+                "", uint128(REDSTONE_ETH_TIMESTAMP - validationDelay), action, REDSTONE_ETH_DATA
+            );
+        }
+    }
+
+    /**
+     * @custom:scenario Validate a price with Redstone but the chianlink price is way more
+     * @custom:given The chainlink price is more than thrice the redstone price
+     * @custom:when The `parseAndValidatePrice` function is called with valid redstone data
+     * @custom:then The middleware reverts with `OracleMiddlewareRedstoneSafeguard`
+     */
+    function test_RevertWhen_parseAndValidatePriceWithRedstoneLessThanChainlink() public {
+        // set chainlink to a price that is more than thrice the redstone price
+        int256 mockedChainlinkPrice = int256(REDSTONE_ETH_PRICE * 3 + 1);
+        mockChainlinkOnChain.setLatestRoundData(1, mockedChainlinkPrice, REDSTONE_ETH_TIMESTAMP, 1);
+        uint256 validationDelay = oracleMiddleware.getValidationDelay();
+
+        for (uint256 i; i < actions.length; i++) {
+            ProtocolAction action = actions[i];
+            uint256 validationCost = oracleMiddleware.validationCost(REDSTONE_ETH_DATA, action);
+
+            vm.expectRevert(OracleMiddlewareRedstoneSafeguard.selector);
+            oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
+                "", uint128(REDSTONE_ETH_TIMESTAMP - validationDelay), action, REDSTONE_ETH_DATA
+            );
+        }
     }
 
     /**
