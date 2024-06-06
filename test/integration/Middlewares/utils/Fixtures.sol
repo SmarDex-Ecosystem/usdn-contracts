@@ -5,13 +5,13 @@ import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
 import { BaseFixture } from "test/utils/Fixtures.sol";
-import { PYTH_ORACLE, CHAINLINK_ORACLE_STETH, PYTH_STETH_USD, WSTETH } from "test/utils/Constants.sol";
+import { PYTH_ORACLE, CHAINLINK_ORACLE_ETH, PYTH_ETH_USD, WSTETH } from "test/utils/Constants.sol";
 import {
-    PYTH_DATA_STETH_PRICE,
-    PYTH_DATA_STETH_CONF,
-    PYTH_DATA_STETH_DECIMALS,
+    PYTH_DATA_ETH_PRICE,
+    PYTH_DATA_ETH_CONF,
+    PYTH_DATA_ETH_DECIMALS,
     PYTH_DATA_TIMESTAMP,
-    PYTH_DATA_STETH
+    PYTH_DATA_ETH
 } from "test/integration/Middlewares/utils/Constants.sol";
 
 import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
@@ -22,7 +22,7 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
 
 /**
  * @title ActionsIntegrationFixture
- * @dev required integration actions tests
+ * @dev Required integration actions tests
  */
 contract ActionsIntegrationFixture is IOracleMiddlewareErrors {
     // all action types
@@ -102,18 +102,16 @@ contract OracleMiddlewareBaseIntegrationFixture is CommonBaseIntegrationFixture,
 
     function setUp() public virtual {
         pyth = IPyth(PYTH_ORACLE);
-        chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE_STETH);
-        oracleMiddleware = new OracleMiddleware(address(pyth), PYTH_STETH_USD, address(chainlinkOnChain), 1 hours);
+        chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE_ETH);
+        oracleMiddleware = new OracleMiddleware(address(pyth), PYTH_ETH_USD, address(chainlinkOnChain), 1 hours);
     }
 
-    function getMockedPythSignatureStETH()
+    function getMockedPythSignatureETH()
         internal
         pure
         returns (uint256 price_, uint256 conf_, uint256 decimals_, uint256 publishTime_, bytes memory vaa_)
     {
-        return (
-            PYTH_DATA_STETH_PRICE, PYTH_DATA_STETH_CONF, PYTH_DATA_STETH_DECIMALS, PYTH_DATA_TIMESTAMP, PYTH_DATA_STETH
-        );
+        return (PYTH_DATA_ETH_PRICE, PYTH_DATA_ETH_CONF, PYTH_DATA_ETH_DECIMALS, PYTH_DATA_TIMESTAMP, PYTH_DATA_ETH);
     }
 }
 
@@ -133,19 +131,17 @@ contract WstethIntegrationFixture is CommonBaseIntegrationFixture, ActionsIntegr
 
     function setUp() public virtual {
         pyth = IPyth(PYTH_ORACLE);
-        chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE_STETH);
+        chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE_ETH);
         wstethMiddleware =
-            new WstEthOracleMiddleware(address(pyth), PYTH_STETH_USD, address(chainlinkOnChain), WSTETH, 1 hours);
+            new WstEthOracleMiddleware(address(pyth), PYTH_ETH_USD, address(chainlinkOnChain), WSTETH, 1 hours);
     }
 
-    function getMockedPythSignatureStETH()
+    function getMockedPythSignatureETH()
         internal
         pure
         returns (uint256 price_, uint256 conf_, uint256 decimals_, uint256 publishTime_, bytes memory vaa_)
     {
-        return (
-            PYTH_DATA_STETH_PRICE, PYTH_DATA_STETH_CONF, PYTH_DATA_STETH_DECIMALS, PYTH_DATA_TIMESTAMP, PYTH_DATA_STETH
-        );
+        return (PYTH_DATA_ETH_PRICE, PYTH_DATA_ETH_CONF, PYTH_DATA_ETH_DECIMALS, PYTH_DATA_TIMESTAMP, PYTH_DATA_ETH);
     }
 
     function stethToWsteth(uint256 amount) public view returns (uint256) {

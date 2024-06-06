@@ -65,7 +65,9 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
                 UsdnProtocolAmountToCloseHigherThanPositionAmount.selector, amountToClose, POSITION_AMOUNT
             )
         );
-        protocol.i_initiateClosePosition(address(this), address(this), posId, amountToClose, 0, priceData);
+        protocol.i_initiateClosePosition(
+            address(this), address(this), address(this), posId, amountToClose, 0, priceData
+        );
     }
 
     /**
@@ -90,7 +92,9 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         );
 
         vm.expectRevert(UsdnProtocolLongPositionTooSmall.selector);
-        protocol.i_initiateClosePosition(address(this), address(this), posId, amountToClose, 0, priceData);
+        protocol.i_initiateClosePosition(
+            address(this), address(this), address(this), posId, amountToClose, 0, priceData
+        );
     }
 
     /**
@@ -102,7 +106,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         bytes memory priceData = abi.encode(params.initialPrice);
         vm.expectRevert(UsdnProtocolUnauthorized.selector);
         vm.prank(USER_1);
-        protocol.i_initiateClosePosition(USER_1, address(this), posId, POSITION_AMOUNT, 0, priceData);
+        protocol.i_initiateClosePosition(USER_1, address(this), USER_1, posId, POSITION_AMOUNT, 0, priceData);
     }
 
     /**
@@ -114,7 +118,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     function test_RevertWhen_zeroAddressTo() public {
         bytes memory priceData = abi.encode(params.initialPrice);
         vm.expectRevert(UsdnProtocolInvalidAddressTo.selector);
-        protocol.i_initiateClosePosition(address(this), address(0), posId, POSITION_AMOUNT, 0, priceData);
+        protocol.i_initiateClosePosition(address(this), address(0), address(this), posId, POSITION_AMOUNT, 0, priceData);
     }
 
     /**
@@ -127,7 +131,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         bytes memory priceData = abi.encode(params.initialPrice);
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolAmountToCloseIsZero.selector));
-        protocol.i_initiateClosePosition(address(this), address(this), posId, 0, 0, priceData);
+        protocol.i_initiateClosePosition(address(this), address(this), address(this), posId, 0, 0, priceData);
     }
 
     /**
@@ -152,7 +156,9 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         vm.expectRevert(
             abi.encodeWithSelector(UsdnProtocolOutdatedTick.selector, posId.tickVersion + 1, posId.tickVersion)
         );
-        protocol.i_initiateClosePosition(address(this), address(this), posId, POSITION_AMOUNT / 2, 0, priceData);
+        protocol.i_initiateClosePosition(
+            address(this), address(this), address(this), posId, POSITION_AMOUNT / 2, 0, priceData
+        );
     }
 
     /* -------------------------------------------------------------------------- */
@@ -171,7 +177,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         uint256 etherBalanceBefore = address(this).balance;
 
         protocol.initiateClosePosition{ value: 1 ether }(
-            posId, POSITION_AMOUNT, address(this), priceData, EMPTY_PREVIOUS_DATA
+            posId, POSITION_AMOUNT, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
 
         assertEq(
@@ -211,7 +217,12 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         vm.expectEmit(true, true, false, false);
         emit ValidatedOpenPosition(USER_1, USER_1, 0, 0, PositionId(0, 0, 0));
         protocol.initiateClosePosition(
-            posId, POSITION_AMOUNT, address(this), priceData, PreviousActionsData(previousData, rawIndices)
+            posId,
+            POSITION_AMOUNT,
+            address(this),
+            payable(address(this)),
+            priceData,
+            PreviousActionsData(previousData, rawIndices)
         );
     }
 
@@ -225,8 +236,33 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         bytes memory priceData = abi.encode(params.initialPrice);
 
         vm.expectEmit();
-        emit InitiatedClosePosition(address(this), address(this), posId, POSITION_AMOUNT, POSITION_AMOUNT, 0);
-        protocol.initiateClosePosition(posId, POSITION_AMOUNT, address(this), priceData, EMPTY_PREVIOUS_DATA);
+        emit InitiatedClosePosition(
+            address(this), address(this), address(this), posId, POSITION_AMOUNT, POSITION_AMOUNT, 0
+        );
+        bool success = protocol.initiateClosePosition(
+            posId, POSITION_AMOUNT, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+        );
+        assertTrue(success, "success");
+    }
+
+    /**
+     * @custom:scenario Closing a position that was not validated yet
+     * @custom:given A position that is pending validation and has a validator different from the owner
+     * @custom:when The owner tries to close the position
+     * @custom:then The transaction reverts with UsdnProtocolPositionNotValidated
+     */
+    function test_RevertWhen_initiateClosePendingPosition() external {
+        bytes memory priceData = abi.encode(params.initialPrice);
+
+        wstETH.mintAndApprove(address(this), POSITION_AMOUNT, address(protocol), type(uint256).max);
+        (, posId) = protocol.initiateOpenPosition(
+            POSITION_AMOUNT, params.initialPrice / 2, address(this), USER_1, priceData, EMPTY_PREVIOUS_DATA
+        );
+
+        vm.expectRevert(UsdnProtocolPositionNotValidated.selector);
+        protocol.initiateClosePosition(
+            posId, POSITION_AMOUNT, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+        );
     }
 
     /* -------------------------------------------------------------------------- */
@@ -339,7 +375,12 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         _waitMockMiddlewarePriceDelay();
 
         protocol.initiateClosePosition(
-            posId, POSITION_AMOUNT, address(this), abi.encode(params.initialPrice * 2 / 3), EMPTY_PREVIOUS_DATA
+            posId,
+            POSITION_AMOUNT,
+            address(this),
+            payable(address(this)),
+            abi.encode(params.initialPrice * 2 / 3),
+            EMPTY_PREVIOUS_DATA
         );
 
         PendingAction memory pending = protocol.getUserPendingAction(address(this));
@@ -362,9 +403,15 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         _waitMockMiddlewarePriceDelay();
 
         vm.prank(DEPLOYER);
-        protocol.initiateClosePosition(
-            initialPosition, POSITION_AMOUNT, DEPLOYER, abi.encode(params.initialPrice / 3), EMPTY_PREVIOUS_DATA
+        bool success = protocol.initiateClosePosition(
+            initialPosition,
+            POSITION_AMOUNT,
+            DEPLOYER,
+            DEPLOYER,
+            abi.encode(params.initialPrice / 3),
+            EMPTY_PREVIOUS_DATA
         );
+        assertFalse(success, "success");
 
         PendingAction memory pending = protocol.getUserPendingAction(DEPLOYER);
         assertEq(uint256(pending.action), uint256(ProtocolAction.None), "pending action should not exist");
@@ -400,9 +447,17 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         /* ------------------------ Initiate the close action ----------------------- */
         vm.expectEmit();
         emit InitiatedClosePosition(
-            address(this), to, posId, posBefore.amount, amountToClose, posBefore.totalExpo - totalExpoToClose
+            address(this), // owner
+            address(this), // validator
+            to,
+            posId,
+            posBefore.amount,
+            amountToClose,
+            posBefore.totalExpo - totalExpoToClose
         );
-        protocol.i_initiateClosePosition(address(this), to, posId, amountToClose, 0, abi.encode(params.initialPrice));
+        protocol.i_initiateClosePosition(
+            address(this), to, address(this), posId, amountToClose, 0, abi.encode(params.initialPrice)
+        );
 
         /* ------------------------- Pending action's state ------------------------- */
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(posBefore.user));
@@ -464,16 +519,18 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
 
         vm.startPrank(address(rebalancer));
         wstETH.approve(address(protocol), type(uint256).max);
-        rebalancerPos_ = protocol.initiateOpenPosition(
+        (, rebalancerPos_) = protocol.initiateOpenPosition(
             2 * userDeposit,
             params.initialPrice / 2,
             address(rebalancer),
-            address(rebalancer),
+            payable(address(rebalancer)),
             abi.encode(params.initialPrice),
             EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
-        protocol.validateOpenPosition(address(rebalancer), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(
+            payable(address(rebalancer)), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
+        );
         vm.stopPrank();
     }
 
@@ -495,7 +552,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
 
         vm.prank(address(rebalancer));
         protocol.initiateClosePosition(
-            rebalancerPos, minAssetDeposit, USER_1, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
+            rebalancerPos, minAssetDeposit, USER_1, USER_1, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -518,7 +575,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         vm.expectRevert(UsdnProtocolLongPositionTooSmall.selector);
         vm.prank(address(rebalancer));
         protocol.initiateClosePosition(
-            rebalancerPos, minAssetDeposit / 2, USER_1, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
+            rebalancerPos, minAssetDeposit / 2, USER_1, USER_1, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -534,7 +591,12 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         if (_reenter) {
             vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
             protocol.initiateClosePosition(
-                posId, POSITION_AMOUNT, address(this), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
+                posId,
+                POSITION_AMOUNT,
+                address(this),
+                payable(address(this)),
+                abi.encode(params.initialPrice),
+                EMPTY_PREVIOUS_DATA
             );
             return;
         }
@@ -554,7 +616,12 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.initiateClosePosition.selector), 2);
         // The value sent will cause a refund, which will trigger the receive() function of this contract
         protocol.initiateClosePosition{ value: 1 }(
-            posId, POSITION_AMOUNT, address(this), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
+            posId,
+            POSITION_AMOUNT,
+            address(this),
+            payable(address(this)),
+            abi.encode(params.initialPrice),
+            EMPTY_PREVIOUS_DATA
         );
     }
 

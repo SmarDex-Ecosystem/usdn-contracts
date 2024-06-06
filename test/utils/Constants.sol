@@ -6,17 +6,17 @@ pragma solidity 0.8.20;
 /* -------------------------------------------------------------------------- */
 
 /* -------------------------------- Accounts -------------------------------- */
-// Contract deployer
-address constant DEPLOYER = address(0x1234123412341234123412341234123412341234);
+// contract deployer
+address payable constant DEPLOYER = payable(address(0x1234123412341234123412341234123412341234));
 
-// Proxies contract admin
-address constant ADMIN = address(0x1212121212121212121212121212121212121212);
+// proxies contract admin
+address payable constant ADMIN = payable(address(0x1212121212121212121212121212121212121212));
 
-// Generic users
-address constant USER_1 = address(0x1111111111111111111111111111111111111111);
-address constant USER_2 = address(0x2222222222222222222222222222222222222222);
-address constant USER_3 = address(0x3333333333333333333333333333333333333333);
-address constant USER_4 = address(0x4444444444444444444444444444444444444444);
+// generic users
+address payable constant USER_1 = payable(address(0x1111111111111111111111111111111111111111));
+address payable constant USER_2 = payable(address(0x2222222222222222222222222222222222222222));
+address payable constant USER_3 = payable(address(0x3333333333333333333333333333333333333333));
+address payable constant USER_4 = payable(address(0x4444444444444444444444444444444444444444));
 
 /* -------------------------------------------------------------------------- */
 /*                              Ethereum mainnet                              */
@@ -33,11 +33,9 @@ address constant WSTETH = address(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0);
 /* --------------------------------- Oracles -------------------------------- */
 
 address constant PYTH_ORACLE = address(0x4305FB66699C3B2702D4d05CF36551390A4c69C6);
-address constant CHAINLINK_ORACLE = address(0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419); // ETH-USD
-address constant CHAINLINK_ORACLE_STETH = address(0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8); // STETH-USD
+address constant CHAINLINK_ORACLE_ETH = address(0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419); // ETH-USD
 address constant CHAINLINK_ORACLE_GAS = address(0x169E633A2D1E6c10dD91238Ba11c4A708dfEF37C); // FastGasPrice
 bytes32 constant PYTH_ETH_USD = bytes32(0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace);
-bytes32 constant PYTH_STETH_USD = bytes32(0x846ae1bdb6300b817cee5fdee2a6da192775030db5615b94a465f53bd40850b5);
 bytes32 constant PYTH_WSTETH_USD = bytes32(0x6df640f3b8963d8f8358f791f352b8364513f6ab1cca5ed3f1f7b5448980e784);
 
 /* -------------------------------------------------------------------------- */

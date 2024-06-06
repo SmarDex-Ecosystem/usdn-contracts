@@ -10,16 +10,16 @@ import {
     ADMIN,
     SDEX,
     WSTETH,
-    PYTH_STETH_USD,
+    PYTH_ETH_USD,
     PYTH_ORACLE,
-    CHAINLINK_ORACLE_STETH,
+    CHAINLINK_ORACLE_ETH,
     CHAINLINK_ORACLE_GAS
 } from "test/utils/Constants.sol";
 import {
-    PYTH_DATA_STETH_PRICE,
-    PYTH_DATA_STETH_CONF,
+    PYTH_DATA_ETH_PRICE,
+    PYTH_DATA_ETH_CONF,
     PYTH_DATA_TIMESTAMP,
-    PYTH_DATA_STETH
+    PYTH_DATA_ETH
 } from "test/integration/Middlewares/utils/Constants.sol";
 import { WstETH } from "test/utils/WstEth.sol";
 import { Sdex } from "test/utils/Sdex.sol";
@@ -42,7 +42,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         uint128 initialLong;
         uint128 initialLiqPrice;
         uint128 initialPrice;
-        uint256 initialTimestamp; // ignored if fork is true
+        uint256 initialTimestamp; // ignored if `fork` is true
         bool fork;
         uint256 forkWarp; // warp to this timestamp after forking, before deploying protocol. Zero to disable
     }
@@ -84,9 +84,9 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             wstETH = WstETH(payable(WSTETH));
             sdex = Sdex(SDEX);
             IPyth pyth = IPyth(PYTH_ORACLE);
-            AggregatorV3Interface chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE_STETH);
+            AggregatorV3Interface chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE_ETH);
             oracleMiddleware = new WstEthOracleMiddleware(
-                address(pyth), PYTH_STETH_USD, address(chainlinkOnChain), address(wstETH), 1 hours
+                address(pyth), PYTH_ETH_USD, address(chainlinkOnChain), address(wstETH), 1 hours
             );
             PriceInfo memory currentPrice =
                 oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.Initialize, "");
@@ -97,9 +97,12 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             mockPyth = new MockPyth();
             mockChainlinkOnChain = new MockChainlinkOnChain();
             mockChainlinkOnChain.setLastPublishTime(testParams.initialTimestamp - 10 minutes);
-            mockChainlinkOnChain.setLastPrice(int256(uint256(testParams.initialPrice / 10 ** (18 - 8))));
+            // this is the stETH/USD oracle, we need to convert the initialPrice
+            mockChainlinkOnChain.setLastPrice(
+                int256(wstETH.getStETHByWstETH(uint256(testParams.initialPrice / 10 ** (18 - 8))))
+            );
             oracleMiddleware = new WstEthOracleMiddleware(
-                address(mockPyth), PYTH_STETH_USD, address(mockChainlinkOnChain), address(wstETH), 1 hours
+                address(mockPyth), PYTH_ETH_USD, address(mockChainlinkOnChain), address(wstETH), 1 hours
             );
             vm.warp(testParams.initialTimestamp);
         }
@@ -145,7 +148,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
     }
 
     function getMockedPythSignature() internal pure returns (uint256, uint256, uint256, bytes memory) {
-        return (PYTH_DATA_STETH_PRICE, PYTH_DATA_STETH_CONF, PYTH_DATA_TIMESTAMP, PYTH_DATA_STETH);
+        return (PYTH_DATA_ETH_PRICE, PYTH_DATA_ETH_CONF, PYTH_DATA_TIMESTAMP, PYTH_DATA_ETH);
     }
 
     function _waitDelay() internal {

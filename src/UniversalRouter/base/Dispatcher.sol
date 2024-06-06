@@ -178,7 +178,7 @@ abstract contract Dispatcher is
                             assembly {
                                 permitSingle := inputs.offset
                             }
-                            bytes calldata data = inputs.toBytes(6); // PermitSingle takes first 6 slots (0..5)
+                            bytes calldata data = inputs.toBytes(6); // permitSingle takes first 6 slots (0..5)
                             PERMIT2.permit(lockedBy, permitSingle, data);
                         } else if (command == Commands.WRAP_ETH) {
                             // equivalent: abi.decode(inputs, (address, uint256))
@@ -205,28 +205,73 @@ abstract contract Dispatcher is
                         }
                     }
                 } else {
+                    // comment for the eights actions(INITIATE and VALIDATE) of the USDN protocol
+                    // we don't allow the transaction to revert if the actions was not successful (due to pending
+                    // liquidations), so we ignore the success boolean. This is because it's important to perform
+                    // liquidations if they are needed, and it would be a big waste of gas for the user to revert
                     if (command == Commands.INITIATE_DEPOSIT) {
                         (
                             uint256 amount,
                             address to,
                             address validator,
                             bytes memory currentPriceData,
-                            PreviousActionsData memory previousActionsData
-                        ) = abi.decode(inputs, (uint256, address, address, bytes, PreviousActionsData));
-                        // we don't allow the transaction to revert if the deposit was not successful (due to pending
-                        // liquidations), so we ignore the success boolean. This is because it's important to perform
-                        // liquidations if they are needed, and it would be a big waste of gas for the user to revert
-                        _usdnInitiateDeposit(amount, map(to), map(validator), currentPriceData, previousActionsData);
+                            PreviousActionsData memory previousActionsData,
+                            uint256 ethAmount
+                        ) = abi.decode(inputs, (uint256, address, address, bytes, PreviousActionsData, uint256));
+                        _usdnInitiateDeposit(
+                            amount, map(to), map(validator), currentPriceData, previousActionsData, ethAmount
+                        );
                     } else if (command == Commands.INITIATE_WITHDRAWAL) {
-                        // TODO INITIATE_WITHDRAWAL
+                        (
+                            uint256 usdnShares,
+                            address to,
+                            address validator,
+                            bytes memory currentPriceData,
+                            PreviousActionsData memory previousActionsData,
+                            uint256 ethAmount
+                        ) = abi.decode(inputs, (uint256, address, address, bytes, PreviousActionsData, uint256));
+                        _usdnInitiateWithdrawal(
+                            usdnShares, map(to), map(validator), currentPriceData, previousActionsData, ethAmount
+                        );
                     } else if (command == Commands.INITIATE_OPEN) {
-                        // TODO INITIATE_OPEN
+                        (
+                            uint256 amount,
+                            uint128 desiredLiqPrice,
+                            address to,
+                            address validator,
+                            bytes memory currentPriceData,
+                            PreviousActionsData memory previousActionsData,
+                            uint256 ethAmount
+                        ) = abi.decode(
+                            inputs, (uint256, uint128, address, address, bytes, PreviousActionsData, uint256)
+                        );
+                        _usdnInitiateOpenPosition(
+                            amount,
+                            desiredLiqPrice,
+                            map(to),
+                            map(validator),
+                            currentPriceData,
+                            previousActionsData,
+                            ethAmount
+                        );
                     } else if (command == Commands.INITIATE_CLOSE) {
                         // TODO INITIATE_CLOSE
                     } else if (command == Commands.VALIDATE_DEPOSIT) {
-                        // TODO VALIDATE_DEPOSIT
+                        (
+                            address validator,
+                            bytes memory depositPriceData,
+                            PreviousActionsData memory previousActionsData,
+                            uint256 ethAmount
+                        ) = abi.decode(inputs, (address, bytes, PreviousActionsData, uint256));
+                        _usdnValidateDeposit(map(validator), depositPriceData, previousActionsData, ethAmount);
                     } else if (command == Commands.VALIDATE_WITHDRAWAL) {
-                        // TODO VALIDATE_WITHDRAWAL
+                        (
+                            address validator,
+                            bytes memory withdrawalPriceData,
+                            PreviousActionsData memory previousActionsData,
+                            uint256 ethAmount
+                        ) = abi.decode(inputs, (address, bytes, PreviousActionsData, uint256));
+                        _usdnValidateWithdrawal(map(validator), withdrawalPriceData, previousActionsData, ethAmount);
                     } else if (command == Commands.VALIDATE_OPEN) {
                         // TODO VALIDATE_OPEN
                     } else if (command == Commands.VALIDATE_CLOSE) {

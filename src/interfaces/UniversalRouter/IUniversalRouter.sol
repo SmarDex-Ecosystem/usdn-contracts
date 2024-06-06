@@ -2,8 +2,6 @@
 pragma solidity ^0.8.17;
 
 interface IUniversalRouter {
-    /// @notice Thrown when a required command has failed
-
     /**
      * @notice Indicates that a required command has failed
      * @param commandIndex The index of the command that failed
@@ -21,7 +19,7 @@ interface IUniversalRouter {
     error LengthMismatch();
 
     /**
-     * @notice Executes encoded commands along with provided inputs. Reverts if deadline has expired
+     * @notice Executes encoded commands along with provided inputs. Reverts if the deadline has expired
      * @param commands A set of concatenated commands, each 1 byte in length
      * @param inputs An array of byte strings containing abi encoded inputs for each command
      * @param deadline The deadline by which the transaction must be executed

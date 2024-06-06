@@ -72,13 +72,13 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         bytes calldata,
         bytes calldata
     ) external view returns (uint256 wstETHRewards_) {
-        // Do not give rewards if no ticks were liquidated
+        // do not give rewards if no ticks were liquidated
         if (tickAmount == 0) {
             return 0;
         }
 
         RewardsParameters memory rewardsParameters = _rewardsParameters;
-        // Calculate the amount of gas spent during the liquidation
+        // calculate the amount of gas spent during the liquidation
         uint256 gasUsed = rewardsParameters.otherGasUsed + BASE_GAS_COST
             + (uint256(rewardsParameters.gasUsedPerTick) * tickAmount * rewardsParameters.multiplierBps / BPS_DIVISOR);
 
@@ -86,7 +86,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
             gasUsed += rewardsParameters.rebaseGasUsed;
         }
 
-        // Multiply by the gas price and the rewards multiplier
+        // multiply by the gas price and the rewards multiplier
         wstETHRewards_ = _wstEth.getWstETHByStETH(gasUsed * _getGasPrice(rewardsParameters));
     }
 
@@ -133,20 +133,20 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
      * @return gasPrice_ The gas price
      */
     function _getGasPrice(RewardsParameters memory rewardsParameters) internal view returns (uint256 gasPrice_) {
-        ChainlinkPriceInfo memory priceInfo = _getChainlinkPrice();
+        ChainlinkPriceInfo memory priceInfo = _getChainlinkLatestPrice();
 
-        // If the gas price is invalid, return 0 and do not distribute rewards
+        // if the gas price is invalid, return 0 and do not distribute rewards
         if (priceInfo.price <= 0) {
             return 0;
         }
 
-        // We can safely cast as rawGasPrice cannot be below 0
+        // we can safely cast as rawGasPrice cannot be below 0
         gasPrice_ = uint256(priceInfo.price);
         if (tx.gasprice < gasPrice_) {
             gasPrice_ = tx.gasprice;
         }
 
-        // Avoid paying an insane amount if the network is abnormally congested
+        // avoid paying an insane amount if the network is abnormally congested
         if (gasPrice_ > rewardsParameters.gasPriceLimit) {
             gasPrice_ = rewardsParameters.gasPriceLimit;
         }

@@ -69,41 +69,41 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice The liquidation tick spacing for storing long positions.
+     * @notice The liquidation tick spacing for storing long positions
      * @dev A tick spacing of 1 is equivalent to a 0.1% increase in liquidation price between ticks. A tick spacing of
-     * 10 is equivalent to a 1% increase in liquidation price between ticks.
+     * 10 is equivalent to a 1% increase in liquidation price between ticks
      */
     int24 internal immutable _tickSpacing;
 
-    /// @notice The asset ERC20 contract (wstETH).
+    /// @notice The asset ERC20 contract (wstETH)
     IERC20Metadata internal immutable _asset;
 
-    /// @notice The asset decimals (wstETH => 18).
+    /// @notice The asset decimals (wstETH => 18)
     uint8 internal immutable _assetDecimals;
 
-    /// @notice The price feed decimals (middleware => 18).
+    /// @notice The price feed decimals (middleware => 18)
     uint8 internal immutable _priceFeedDecimals;
 
-    /// @notice The USDN ERC20 contract.
+    /// @notice The USDN ERC20 contract
     IUsdn internal immutable _usdn;
 
-    /// @notice The SDEX ERC20 contract.
+    /// @notice The SDEX ERC20 contract
     IERC20Metadata internal immutable _sdex;
 
-    /// @notice The MIN_DIVISOR constant of the USDN token.
+    /// @notice The MIN_DIVISOR constant of the USDN token
     uint256 internal immutable _usdnMinDivisor;
 
     /* -------------------------------------------------------------------------- */
     /*                                 Parameters                                 */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice The oracle middleware contract.
+    /// @notice The oracle middleware contract
     IBaseOracleMiddleware internal _oracleMiddleware;
 
-    /// @notice The liquidation rewards manager contract.
+    /// @notice The liquidation rewards manager contract
     IBaseLiquidationRewardsManager internal _liquidationRewardsManager;
 
-    /// @notice The rebalancer contract.
+    /// @notice The rebalancer contract
     IRebalancer internal _rebalancer;
 
     /// @notice The minimum leverage for a position (1.000000001)
@@ -112,20 +112,20 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The maximum leverage for a position
     uint256 internal _maxLeverage = 10 * 10 ** LEVERAGE_DECIMALS;
 
-    /// @notice The deadline for a user to confirm their own action
+    /// @notice The deadline for a user to confirm their action
     uint256 internal _validationDeadline = 90 minutes;
 
     /// @notice Safety margin for the liquidation price of newly open positions, in basis points
     uint256 internal _safetyMarginBps = 200; // 2%
 
-    /// @notice User current liquidation iteration in tick.
+    /// @notice User current liquidation iteration in tick
     uint16 internal _liquidationIteration = 1;
 
     /// @notice The protocol fee percentage (in bps)
     uint16 internal _protocolFeeBps = 10;
 
     /**
-     * @notice Part of the remaining collateral that is given as bonus to the Rebalancer upon liquidation of a tick,
+     * @notice Part of the remaining collateral that is given as a bonus to the Rebalancer upon liquidation of a tick,
      * in basis points
      * @dev The rest is sent to the Vault balance
      */
@@ -144,30 +144,32 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint256 internal _feeThreshold = 1 ether;
 
     /**
-     * @notice The imbalance limit of the long expo for open actions (in basis points).
-     * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of long
-     * the open rebalancing mechanism is triggered, preventing the opening of a new long position.
+     * @notice The imbalance limit of the long expo for open actions (in basis points)
+     * @dev As soon as the difference between the vault expo and the long expo exceeds this basis point limit in favor
+     * of long the open rebalancing mechanism is triggered, preventing the opening of a new long position
      */
     int256 internal _openExpoImbalanceLimitBps = 200;
 
     /**
-     * @notice The imbalance limit of the long expo for withdrawal actions (in basis points).
+     * @notice The imbalance limit of the long expo for withdrawal actions (in basis points)
      * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of long,
-     * the withdrawal rebalancing mechanism is triggered, preventing the withdraw of existing vault position.
+     * the withdrawal rebalancing mechanism is triggered, preventing the withdrawal of the existing vault position
      */
     int256 internal _withdrawalExpoImbalanceLimitBps = 600;
 
     /**
-     * @notice The imbalance limit of the vault expo for deposit actions (in basis points).
-     * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of vault,
-     * the deposit vault rebalancing mechanism is triggered, preventing the opening of new vault position.
+     * @notice The imbalance limit of the vault expo for deposit actions (in basis points)
+     * @dev As soon as the difference between the vault expo and the long expo exceeds this basis point limit in favor
+     * of the vault, the deposit vault rebalancing mechanism is triggered, preventing the opening of a new vault
+     * position
      */
     int256 internal _depositExpoImbalanceLimitBps = 200;
 
     /**
-     * @notice The imbalance limit of the vault expo for close actions (in basis points).
-     * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of vault,
-     * the withdrawal vault rebalancing mechanism is triggered, preventing the close of existing long position.
+     * @notice The imbalance limit of the vault expo for close actions (in basis points)
+     * @dev As soon as the difference between the vault expo and the long expo exceeds this basis point limit in favor
+     * of the vault, the withdrawal vault rebalancing mechanism is triggered, preventing the close of an existing long
+     * position
      */
     int256 internal _closeExpoImbalanceLimitBps = 600;
 
@@ -200,12 +202,12 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint128 internal _usdnRebaseThreshold;
 
     /**
-     * @notice The interval between two automatic rebase checks. Disabled by default.
+     * @notice The interval between two automatic rebase checks. Disabled by default
      * @dev A rebase can be forced (if the `_usdnRebaseThreshold` is exceeded) by calling the `liquidate` function
      */
     uint256 internal _usdnRebaseInterval = 0;
 
-    /// @notice The minimum long position size (with _assetDecimals)
+    /// @notice The minimum long position size (with `_assetDecimals`)
     uint256 internal _minLongPosition;
 
     /* -------------------------------------------------------------------------- */
@@ -227,19 +229,22 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /* -------------------------- Pending actions queue ------------------------- */
 
     /**
-     * @notice The pending actions by user (1 per user max).
+     * @notice The pending actions by the user (1 per user max)
      * @dev The value stored is an index into the `pendingActionsQueue` deque, shifted by one. A value of 0 means no
-     * pending action. Since the deque uses uint128 indices, the highest index will not overflow when adding one.
+     * pending action. Since the deque uses uint128 indices, the highest index will not overflow when adding one
      */
     mapping(address => uint256) internal _pendingActions;
 
-    /// @notice The pending actions queue.
+    /// @notice The pending actions queue
     DoubleEndedQueue.Deque internal _pendingActionsQueue;
 
     /* ---------------------------------- Vault --------------------------------- */
 
     /// @notice The balance of deposits (with asset decimals)
     uint256 internal _balanceVault;
+
+    /// @notice The unreflected balance change due to pending vault actions (with asset decimals)
+    int256 internal _pendingBalanceVault;
 
     /// @notice The timestamp when the last USDN rebase check was performed
     uint256 internal _lastRebaseCheck;
@@ -255,15 +260,15 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The total exposure (with asset decimals)
     uint256 internal _totalExpo;
 
-    /*
+    /**
      * @notice The accumulator used to calculate the liquidation multiplier
      * @dev This is the sum, for all ticks, of the total expo of positions inside the tick, multiplied by the
-     * unadjusted price of the tick which is `_tickData[tickHash].liquidationPenalty * _tickSpacing` below.
-     * The unadjusted price is obtained with `TickMath.getPriceAtTick`.
+     * unadjusted price of the tick which is `_tickData[tickHash].liquidationPenalty * _tickSpacing` below
+     * The unadjusted price is obtained with `TickMath.getPriceAtTick`
      */
     HugeUint.Uint512 internal _liqMultiplierAccumulator;
 
-    /// @notice The liquidation tick version.
+    /// @notice The liquidation tick version
     mapping(int24 => uint256) internal _tickVersion;
 
     /// @notice The long positions per versioned tick (liquidation price)
@@ -282,14 +287,14 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     LibBitmap.Bitmap internal _tickBitmap;
 
     /**
-     * @notice Constructor.
-     * @param usdn The USDN ERC20 contract.
-     * @param sdex The SDEX ERC20 contract.
-     * @param asset The asset ERC20 contract (wstETH).
-     * @param oracleMiddleware The oracle middleware contract.
-     * @param liquidationRewardsManager The liquidation rewards manager contract.
-     * @param tickSpacing The positions tick spacing.
-     * @param feeCollector The address of the fee collector.
+     * @notice Constructor
+     * @param usdn The USDN ERC20 contract
+     * @param sdex The SDEX ERC20 contract
+     * @param asset The asset ERC20 contract (wstETH)
+     * @param oracleMiddleware The oracle middleware contract
+     * @param liquidationRewardsManager The liquidation rewards manager contract
+     * @param tickSpacing The positions tick spacing
+     * @param feeCollector The address of the fee collector
      */
     constructor(
         IUsdn usdn,
@@ -300,7 +305,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         int24 tickSpacing,
         address feeCollector
     ) {
-        // Since all USDN must be minted by the protocol, we check that the total supply is 0
+        // since all USDN must be minted by the protocol, we check that the total supply is 0
         if (usdn.totalSupply() != 0) {
             revert UsdnProtocolInvalidUsdn(address(usdn));
         }
@@ -310,7 +315,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
         _usdn = usdn;
         _sdex = sdex;
-        // Those tokens should have 18 decimals
+        // those tokens should have 18 decimals
         if (usdn.decimals() != TOKENS_DECIMALS || sdex.decimals() != TOKENS_DECIMALS) {
             revert UsdnProtocolInvalidTokenDecimals();
         }
@@ -533,6 +538,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function getBalanceVault() external view returns (uint256) {
         return _balanceVault;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getPendingBalanceVault() external view returns (int256) {
+        return _pendingBalanceVault;
     }
 
     /// @inheritdoc IUsdnProtocolStorage

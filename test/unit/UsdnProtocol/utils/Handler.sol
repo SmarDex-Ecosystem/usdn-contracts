@@ -25,6 +25,7 @@ import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareType
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
 import { Position, LiquidationsEffects } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { SignedMath } from "src/libraries/SignedMath.sol";
 
 /**
  * @title UsdnProtocolHandler
@@ -34,6 +35,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
     using LibBitmap for LibBitmap.Bitmap;
     using SafeCast for int256;
+    using SafeCast for uint256;
+    using SignedMath for int256;
 
     constructor(
         IUsdn usdn,
@@ -59,6 +62,10 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     /// @dev Verify if the pending actions queue is empty
     function queueEmpty() external view returns (bool) {
         return _pendingActionsQueue.empty();
+    }
+
+    function getQueueItem(uint128 rawIndex) external view returns (PendingAction memory) {
+        return _pendingActionsQueue.atRaw(rawIndex);
     }
 
     /**
@@ -112,15 +119,34 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         _balanceVault = tempVaultBalance.toUint256();
     }
 
+    function removePendingAction(uint128 rawIndex, address user) external {
+        _pendingActionsQueue.clearAt(rawIndex);
+        delete _pendingActions[user];
+    }
+
+    function findLastSetInTickBitmap(int24 searchFrom) external view returns (uint256 index) {
+        return _tickBitmap.findLastSet(_calcBitmapIndexFromTick(searchFrom));
+    }
+
+    function tickBitmapStatus(int24 tick) external view returns (bool isSet_) {
+        return _tickBitmap.get(_calcBitmapIndexFromTick(tick));
+    }
+
+    function setTickVersion(int24 tick, uint256 version) external {
+        _tickVersion[tick] = version;
+    }
+
     function i_initiateClosePosition(
         address owner,
         address to,
+        address validator,
         PositionId memory posId,
         uint128 amountToClose,
         uint64 securityDepositValue,
         bytes calldata currentPriceData
-    ) external returns (uint256 securityDepositValue_, bool isLiquidationPending_) {
-        return _initiateClosePosition(owner, to, posId, amountToClose, securityDepositValue, currentPriceData);
+    ) external returns (uint256 securityDepositValue_, bool isLiquidationPending_, bool liq_) {
+        return
+            _initiateClosePosition(owner, to, validator, posId, amountToClose, securityDepositValue, currentPriceData);
     }
 
     function i_validateClosePosition(address user, bytes calldata priceData) external {
@@ -145,29 +171,16 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _positionValue(currentPrice, liqPriceWithoutPenalty, positionTotalExpo);
     }
 
-    function i_calculatePositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
+    function i_calcPositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
         external
         pure
         returns (uint128 totalExpo_)
     {
-        return _calculatePositionTotalExpo(amount, startPrice, liquidationPrice);
-    }
-
-    function i_removePendingAction(uint128 rawIndex, address user) external {
-        _pendingActionsQueue.clearAt(rawIndex);
-        delete _pendingActions[user];
+        return _calcPositionTotalExpo(amount, startPrice, liquidationPrice);
     }
 
     function i_getActionablePendingAction() external returns (PendingAction memory, uint128) {
         return _getActionablePendingAction();
-    }
-
-    function i_vaultTradingExpo(uint128 currentPrice) external view returns (int256) {
-        return _vaultTradingExpo(currentPrice);
-    }
-
-    function i_longTradingExpo(uint128 currentPrice) external view returns (int256) {
-        return _longTradingExpo(currentPrice);
     }
 
     function i_lastFunding() external view returns (int256) {
@@ -256,12 +269,12 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _getOraclePrice(action, timestamp, actionId, priceData);
     }
 
-    function i_calcMintUsdn(uint256 amount, uint256 vaultBalance, uint256 usdnTotalSupply, uint256 price)
+    function i_calcMintUsdnShares(uint256 amount, uint256 vaultBalance, uint256 usdnTotalShares, uint256 price)
         external
         view
         returns (uint256 toMint_)
     {
-        return _calcMintUsdn(amount, vaultBalance, usdnTotalSupply, price);
+        return _calcMintUsdnShares(amount, vaultBalance, usdnTotalShares, price);
     }
 
     function i_calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) external pure returns (uint256) {
@@ -350,10 +363,6 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _findHighestPopulatedTick(searchStart);
     }
 
-    function findLastSetInTickBitmap(int24 searchFrom) external view returns (uint256 index) {
-        return _tickBitmap.findLastSet(_calcBitmapIndexFromTick(searchFrom));
-    }
-
     function i_updateEMA(uint128 secondsElapsed) external returns (int256) {
         return _updateEMA(secondsElapsed);
     }
@@ -405,7 +414,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
     }
 
-    function i_refundEther(uint256 amount, address to) external payable {
+    function i_refundEther(uint256 amount, address payable to) external payable {
         _refundEther(amount, to);
     }
 
@@ -491,5 +500,25 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         });
 
         return _calcLongImbalanceBps(cache);
+    }
+
+    function i_removeBlockedPendingAction(uint128 rawIndex, address payable to, bool cleanup) external {
+        _removeBlockedPendingAction(rawIndex, to, cleanup);
+    }
+
+    function i_checkInitImbalance(uint128 positionTotalExpo, uint128 longAmount, uint128 depositAmount) external view {
+        _checkInitImbalance(positionTotalExpo, longAmount, depositAmount);
+    }
+
+    function i_removeStalePendingAction(address user) external returns (uint256) {
+        return _removeStalePendingAction(user);
+    }
+
+    /**
+     * @notice Helper to calculate the trading exposure of the long side at the time of the last balance update and
+     * currentPrice
+     */
+    function getLongTradingExpo(uint128 currentPrice) external view returns (int256 expo_) {
+        expo_ = _totalExpo.toInt256().safeSub(_longAssetAvailable(currentPrice));
     }
 }

@@ -24,14 +24,14 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     uint256 public constant MIN_INIT_DEPOSIT = 1 ether;
 
     /**
-     * @notice Constructor.
-     * @param usdn The USDN ERC20 contract.
-     * @param sdex The SDEX ERC20 contract.
-     * @param asset The asset ERC20 contract (wstETH).
-     * @param oracleMiddleware The oracle middleware contract.
-     * @param liquidationRewardsManager The liquidation rewards manager contract.
-     * @param tickSpacing The positions tick spacing.
-     * @param feeCollector The address of the fee collector.
+     * @notice Constructor
+     * @param usdn The USDN ERC20 contract
+     * @param sdex The SDEX ERC20 contract
+     * @param asset The asset ERC20 contract (wstETH)
+     * @param oracleMiddleware The oracle middleware contract
+     * @param liquidationRewardsManager The liquidation rewards manager contract
+     * @param tickSpacing The positions tick spacing
+     * @param feeCollector The address of the fee collector
      */
     constructor(
         IUsdn usdn,
@@ -59,7 +59,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         if (longAmount < MIN_INIT_DEPOSIT) {
             revert UsdnProtocolMinInitAmount(MIN_INIT_DEPOSIT);
         }
-        // Since all USDN must be minted by the protocol, we check that the total supply is 0
+        // since all USDN must be minted by the protocol, we check that the total supply is 0
         IUsdn usdn = _usdn;
         if (usdn.totalSupply() != 0) {
             revert UsdnProtocolInvalidUsdn(address(usdn));
@@ -68,29 +68,25 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         PriceInfo memory currentPrice =
             _getOraclePrice(ProtocolAction.Initialize, block.timestamp, "", currentPriceData);
 
-        // Create vault deposit
-        _createInitialDeposit(depositAmount, currentPrice.price.toUint128());
-
         _lastUpdateTimestamp = uint128(block.timestamp);
         _lastPrice = currentPrice.price.toUint128();
 
         int24 tick = getEffectiveTickForPrice(desiredLiqPrice); // without penalty
         uint128 liquidationPriceWithoutPenalty = getEffectivePriceForTick(tick);
         uint128 positionTotalExpo =
-            _calculatePositionTotalExpo(longAmount, currentPrice.price.toUint128(), liquidationPriceWithoutPenalty);
+            _calcPositionTotalExpo(longAmount, currentPrice.price.toUint128(), liquidationPriceWithoutPenalty);
 
-        // verify expo is not imbalanced on long side
-        _checkImbalanceLimitOpen(positionTotalExpo, longAmount);
+        _checkInitImbalance(positionTotalExpo, longAmount, depositAmount);
 
-        // Create long position
+        _createInitialDeposit(depositAmount, currentPrice.price.toUint128());
+
         _createInitialPosition(longAmount, currentPrice.price.toUint128(), tick, positionTotalExpo);
 
-        _refundEther(address(this).balance, msg.sender);
+        _refundEther(address(this).balance, payable(msg.sender));
     }
 
     /// @inheritdoc IUsdnProtocol
     function setOracleMiddleware(IOracleMiddleware newOracleMiddleware) external onlyOwner {
-        // check address zero middleware
         if (address(newOracleMiddleware) == address(0)) {
             revert UsdnProtocolInvalidMiddlewareAddress();
         }
@@ -123,7 +119,6 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             revert UsdnProtocolInvalidMinLeverage();
         }
 
-        // minLeverage greater or equal maxLeverage
         if (newMinLeverage >= _maxLeverage) {
             revert UsdnProtocolInvalidMinLeverage();
         }
@@ -134,12 +129,11 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setMaxLeverage(uint256 newMaxLeverage) external onlyOwner {
-        // maxLeverage lower or equal minLeverage
         if (newMaxLeverage <= _minLeverage) {
             revert UsdnProtocolInvalidMaxLeverage();
         }
 
-        // maxLeverage greater than max 100
+        // `maxLeverage` greater than 100
         if (newMaxLeverage > 100 * 10 ** LEVERAGE_DECIMALS) {
             revert UsdnProtocolInvalidMaxLeverage();
         }
@@ -150,12 +144,10 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setValidationDeadline(uint256 newValidationDeadline) external onlyOwner {
-        // validation deadline lower than min 1 minute
         if (newValidationDeadline < 60) {
             revert UsdnProtocolInvalidValidationDeadline();
         }
 
-        // validation deadline greater than max 1 day
         if (newValidationDeadline > 1 days) {
             revert UsdnProtocolInvalidValidationDeadline();
         }
@@ -166,7 +158,6 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setLiquidationPenalty(uint8 newLiquidationPenalty) external onlyOwner {
-        // liquidationPenalty greater than max 15
         if (newLiquidationPenalty > 15) {
             revert UsdnProtocolInvalidLiquidationPenalty();
         }
@@ -177,7 +168,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setSafetyMarginBps(uint256 newSafetyMarginBps) external onlyOwner {
-        // safetyMarginBps greater than max 2000: 20%
+        // safetyMarginBps greater than 20%
         if (newSafetyMarginBps > 2000) {
             revert UsdnProtocolInvalidSafetyMarginBps();
         }
@@ -188,7 +179,6 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setLiquidationIteration(uint16 newLiquidationIteration) external onlyOwner {
-        // newLiquidationIteration greater than MAX_LIQUIDATION_ITERATION
         if (newLiquidationIteration > MAX_LIQUIDATION_ITERATION) {
             revert UsdnProtocolInvalidLiquidationIteration();
         }
@@ -199,7 +189,6 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setEMAPeriod(uint128 newEMAPeriod) external onlyOwner {
-        // EMAPeriod is greater than max 3 months
         if (newEMAPeriod > 90 days) {
             revert UsdnProtocolInvalidEMAPeriod();
         }
@@ -210,7 +199,6 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setFundingSF(uint256 newFundingSF) external onlyOwner {
-        // newFundingSF is greater than max
         if (newFundingSF > 10 ** FUNDING_SF_DECIMALS) {
             revert UsdnProtocolInvalidFundingSF();
         }
@@ -230,7 +218,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setPositionFeeBps(uint16 newPositionFee) external onlyOwner {
-        // newPositionFee greater than max 2000: 20%
+        // `newPositionFee` greater than 20%
         if (newPositionFee > 2000) {
             revert UsdnProtocolInvalidPositionFee();
         }
@@ -240,7 +228,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setVaultFeeBps(uint16 newVaultFee) external onlyOwner {
-        // newVaultFee greater than max 2000: 20%
+        // `newVaultFee` greater than 20%
         if (newVaultFee > 2000) {
             revert UsdnProtocolInvalidVaultFee();
         }
@@ -250,7 +238,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setRebalancerBonusBps(uint16 newBonus) external onlyOwner {
-        // newBonus greater than max 100%
+        // `newBonus` greater than 100%
         if (newBonus > BPS_DIVISOR) {
             revert UsdnProtocolInvalidRebalancerBonus();
         }
@@ -260,7 +248,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setSdexBurnOnDepositRatio(uint32 newRatio) external onlyOwner {
-        // If newRatio is greater than 5%
+        // `newRatio` greater than 5%
         if (newRatio > SDEX_BURN_ON_DEPOSIT_DIVISOR / 20) {
             revert UsdnProtocolInvalidBurnSdexOnDepositRatio();
         }
@@ -314,7 +302,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         }
         _closeExpoImbalanceLimitBps = newCloseLimitBps.toInt256();
 
-        // Casts are safe here as values are safe casted earlier
+        // casts are safe here as values are safely casted earlier
         if (
             newLongImbalanceTargetBps > int256(newCloseLimitBps)
                 || newLongImbalanceTargetBps < -int256(newWithdrawalLimitBps)
@@ -329,6 +317,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         );
     }
 
+    /// @inheritdoc IUsdnProtocol
     function setTargetUsdnPrice(uint128 newPrice) external onlyOwner {
         if (newPrice > _usdnRebaseThreshold) {
             revert UsdnProtocolInvalidTargetUsdnPrice();
@@ -367,6 +356,68 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         }
     }
 
+    /// @inheritdoc IUsdnProtocol
+    function removeBlockedPendingAction(address validator, address payable to) external onlyOwner {
+        uint256 pendingActionIndex = _pendingActions[validator];
+        if (pendingActionIndex == 0) {
+            // no pending action
+            // use the `rawIndex` variant below if for some reason the `_pendingActions` mapping is messed up
+            revert UsdnProtocolNoPendingAction();
+        }
+        uint128 rawIndex = uint128(pendingActionIndex - 1);
+        _removeBlockedPendingAction(rawIndex, to, true);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function removeBlockedPendingActionNoCleanup(address validator, address payable to) external onlyOwner {
+        uint256 pendingActionIndex = _pendingActions[validator];
+        if (pendingActionIndex == 0) {
+            // no pending action
+            // use the `rawIndex` variant below if for some reason the `_pendingActions` mapping is messed up
+            revert UsdnProtocolNoPendingAction();
+        }
+        uint128 rawIndex = uint128(pendingActionIndex - 1);
+        _removeBlockedPendingAction(rawIndex, to, false);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function removeBlockedPendingAction(uint128 rawIndex, address payable to) external onlyOwner {
+        _removeBlockedPendingAction(rawIndex, to, true);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function removeBlockedPendingActionNoCleanup(uint128 rawIndex, address payable to) external onlyOwner {
+        _removeBlockedPendingAction(rawIndex, to, false);
+    }
+
+    /**
+     * @notice Check if the initialize parameters lead to a balanced protocol
+     * @dev This function reverts if the imbalance is exceeded for the deposit or open long action
+     * @param positionTotalExpo The total expo of the deployer's long position
+     * @param longAmount The amount (collateral) of the deployer's long position
+     * @param depositAmount The amount of assets for the deployer's deposit
+     */
+    function _checkInitImbalance(uint128 positionTotalExpo, uint128 longAmount, uint128 depositAmount) internal view {
+        _checkUninitialized(); // prevent using this function after initialization
+
+        int256 longTradingExpo = _toInt256(positionTotalExpo - longAmount);
+        int256 depositLimit = _depositExpoImbalanceLimitBps;
+        if (depositLimit != 0) {
+            int256 imbalanceBps = (_toInt256(depositAmount) - longTradingExpo) * int256(BPS_DIVISOR) / longTradingExpo;
+            if (imbalanceBps > depositLimit) {
+                revert UsdnProtocolImbalanceLimitReached(imbalanceBps);
+            }
+        }
+        int256 openLimit = _openExpoImbalanceLimitBps;
+        if (openLimit != 0) {
+            int256 imbalanceBps =
+                (longTradingExpo - _toInt256(depositAmount)) * int256(BPS_DIVISOR) / _toInt256(depositAmount);
+            if (imbalanceBps > openLimit) {
+                revert UsdnProtocolImbalanceLimitReached(imbalanceBps);
+            }
+        }
+    }
+
     /**
      * @notice Create initial deposit
      * @dev To be called from `initialize`
@@ -376,23 +427,24 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     function _createInitialDeposit(uint128 amount, uint128 price) internal {
         _checkUninitialized(); // prevent using this function after initialization
 
-        // Transfer the wstETH for the deposit
+        // transfer the wstETH for the deposit
         _asset.safeTransferFrom(msg.sender, address(this), amount);
         _balanceVault += amount;
         emit InitiatedDeposit(msg.sender, msg.sender, amount, block.timestamp);
 
-        // Calculate the total minted amount of USDN (vault balance and total supply are zero for now, we assume the
-        // USDN price to be $1)
-        uint256 usdnToMint = _calcMintUsdn(amount, 0, 0, price);
-        // Mint the min amount and send to dead address so it can never be removed from the total supply
-        _usdn.mint(DEAD_ADDRESS, MIN_USDN_SUPPLY);
-        // Mint the user's share
-        uint256 mintToUser = usdnToMint - MIN_USDN_SUPPLY;
-        _usdn.mint(msg.sender, mintToUser);
+        // calculate the total minted amount of USDN shares (vault balance and total supply are zero for now, we assume
+        // the USDN price to be $1 per token)
+        uint256 usdnSharesToMint = _calcMintUsdnShares(amount, 0, 0, price);
+        uint256 minUsdnSharesSupply = _usdn.convertToShares(MIN_USDN_SUPPLY);
+        // mint the minimum amount and send it to the dead address so it can never be removed from the total supply
+        _usdn.mintShares(DEAD_ADDRESS, minUsdnSharesSupply);
+        // mint the user's share
+        uint256 mintSharesToUser = usdnSharesToMint - minUsdnSharesSupply;
+        uint256 mintedTokens = _usdn.mintShares(msg.sender, mintSharesToUser);
 
-        // Emit events
+        // emit events
         emit ValidatedDeposit(DEAD_ADDRESS, DEAD_ADDRESS, 0, MIN_USDN_SUPPLY, block.timestamp);
-        emit ValidatedDeposit(msg.sender, msg.sender, amount, mintToUser, block.timestamp);
+        emit ValidatedDeposit(msg.sender, msg.sender, amount, mintedTokens, block.timestamp);
     }
 
     /**
@@ -406,16 +458,21 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     function _createInitialPosition(uint128 amount, uint128 price, int24 tick, uint128 totalExpo) internal {
         _checkUninitialized(); // prevent using this function after initialization
 
-        // Transfer the wstETH for the long
+        // transfer the wstETH for the long
         _asset.safeTransferFrom(msg.sender, address(this), amount);
 
         // apply liquidation penalty to the deployer's liquidationPriceWithoutPenalty
         uint8 liquidationPenalty = _liquidationPenalty;
         PositionId memory posId;
         posId.tick = tick + int24(uint24(liquidationPenalty)) * _tickSpacing;
-        Position memory long =
-            Position({ user: msg.sender, amount: amount, totalExpo: totalExpo, timestamp: uint40(block.timestamp) });
-        // Save the position and update the state
+        Position memory long = Position({
+            validated: true,
+            user: msg.sender,
+            amount: amount,
+            totalExpo: totalExpo,
+            timestamp: uint40(block.timestamp)
+        });
+        // save the position and update the state
         (posId.tickVersion, posId.index) = _saveNewPosition(posId.tick, long, liquidationPenalty);
         _balanceLong += long.amount;
         emit InitiatedOpenPosition(msg.sender, msg.sender, long.timestamp, totalExpo, long.amount, price, posId);

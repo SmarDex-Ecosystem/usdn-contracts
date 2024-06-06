@@ -15,11 +15,13 @@ import { DepositPendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolT
  */
 contract TestForkUniversalRouterInitiateDeposit is UniversalRouterBaseFixture {
     uint256 constant DEPOSIT_AMOUNT = 0.1 ether;
+    uint256 internal _securityDeposit;
 
     function setUp() public {
         _setUp();
         deal(address(wstETH), address(this), DEPOSIT_AMOUNT * 2);
         deal(address(sdex), address(this), 1e6 ether);
+        _securityDeposit = protocol.getSecurityDepositValue();
     }
 
     /**
@@ -29,19 +31,13 @@ contract TestForkUniversalRouterInitiateDeposit is UniversalRouterBaseFixture {
      * @custom:then The deposit is initiated successfully
      */
     function test_ForkInitiateDeposit() public {
-        // send funds to router
         wstETH.transfer(address(router), DEPOSIT_AMOUNT);
         _transferSdex(DEPOSIT_AMOUNT);
 
-        // commands
         bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.INITIATE_DEPOSIT)));
-
-        // inputs
         bytes[] memory inputs = new bytes[](1);
-        inputs[0] = abi.encode(DEPOSIT_AMOUNT, USER_1, address(this), "", EMPTY_PREVIOUS_DATA);
-
-        // execution
-        router.execute{ value: protocol.getSecurityDepositValue() }(commands, inputs);
+        inputs[0] = abi.encode(DEPOSIT_AMOUNT, USER_1, address(this), "", EMPTY_PREVIOUS_DATA, _securityDeposit);
+        router.execute{ value: _securityDeposit }(commands, inputs);
 
         DepositPendingAction memory action =
             protocol.i_toDepositPendingAction(protocol.getUserPendingAction(address(this)));
@@ -61,26 +57,23 @@ contract TestForkUniversalRouterInitiateDeposit is UniversalRouterBaseFixture {
     function test_ForkInitiateDepositFullBalance() public {
         uint256 wstEthBalanceBefore = wstETH.balanceOf(address(this));
 
-        // send assets to the router
         wstETH.transfer(address(router), DEPOSIT_AMOUNT);
         _transferSdex(DEPOSIT_AMOUNT);
 
-        // commands
         bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.INITIATE_DEPOSIT)));
-
-        // inputs
         bytes[] memory inputs = new bytes[](1);
-        inputs[0] = abi.encode(Constants.CONTRACT_BALANCE, USER_1, address(this), "", EMPTY_PREVIOUS_DATA);
-
-        // execution
-        router.execute{ value: protocol.getSecurityDepositValue() }(commands, inputs);
+        inputs[0] =
+            abi.encode(Constants.CONTRACT_BALANCE, USER_1, address(this), "", EMPTY_PREVIOUS_DATA, _securityDeposit);
+        router.execute{ value: _securityDeposit }(commands, inputs);
 
         assertEq(wstETH.balanceOf(address(this)), wstEthBalanceBefore - DEPOSIT_AMOUNT, "asset balance");
     }
 
     function _transferSdex(uint256 depositAmount) internal returns (uint256 sdexToBurn_) {
-        uint256 usdnToMintEstimated =
-            protocol.i_calcMintUsdn(depositAmount, protocol.getBalanceVault(), usdn.totalSupply(), params.initialPrice);
+        uint256 usdnSharesToMintEstimated = protocol.i_calcMintUsdnShares(
+            depositAmount, protocol.getBalanceVault(), usdn.totalShares(), params.initialPrice
+        );
+        uint256 usdnToMintEstimated = usdn.convertToTokens(usdnSharesToMintEstimated);
         sdexToBurn_ = protocol.i_calcSdexToBurn(usdnToMintEstimated, protocol.getSdexBurnOnDepositRatio());
         sdex.transfer(address(router), sdexToBurn_);
     }

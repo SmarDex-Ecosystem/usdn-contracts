@@ -38,7 +38,7 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
     function getPendingAssetsAmount() external view returns (uint128);
 
     /**
-     * @notice Returns the max leverage a position can have
+     * @notice Returns the maximum leverage a position can have
      * @dev Returns the max leverage of the USDN Protocol if it's lower than the rebalancer's
      * @return maxLeverage_ The max leverage a position can have
      */
@@ -69,7 +69,7 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
     function getUserDepositData(address user) external view returns (UserDeposit memory);
 
     /**
-     * @notice Increase the allowance of assets for the USDN protocol spender by `addAllowance`.
+     * @notice Increase the allowance of assets for the USDN protocol spender by `addAllowance`
      * @param addAllowance Amount to add to the allowance of the UsdnProtocol contract
      */
     function increaseAssetAllowance(uint256 addAllowance) external;

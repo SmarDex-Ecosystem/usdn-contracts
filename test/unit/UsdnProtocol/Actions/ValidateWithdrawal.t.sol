@@ -45,6 +45,13 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         uint128 expectedLeverage;
     }
 
+    struct TestData2 {
+        bytes currentPrice;
+        bytes32 actionId;
+        WithdrawalPendingAction withdrawal;
+        uint256 vaultBalance;
+    }
+
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
         withdrawShares = USDN_AMOUNT * uint152(usdn.MAX_DIVISOR());
@@ -97,14 +104,17 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         protocol.initiateWithdrawal(
             uint128(usdn.balanceOf(address(this))),
             address(this),
-            address(this),
+            payable(address(this)),
             abi.encode(params.initialPrice),
             EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
 
-        protocol.validateWithdrawal(address(this), abi.encode(params.initialPrice / 3), EMPTY_PREVIOUS_DATA);
+        bool success = protocol.validateWithdrawal(
+            payable(address(this)), abi.encode(params.initialPrice / 3), EMPTY_PREVIOUS_DATA
+        );
+        assertFalse(success, "success");
 
         PendingAction memory pending = protocol.getUserPendingAction(address(this));
         assertEq(
@@ -177,14 +187,14 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateWithdrawal);
         protocol.initiateWithdrawal{ value: validationCost }(
-            USDN_AMOUNT, address(this), address(this), currentPrice, EMPTY_PREVIOUS_DATA
+            USDN_AMOUNT, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
         // validate
         validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.ValidateWithdrawal);
         uint256 balanceBefore = address(this).balance;
-        protocol.validateWithdrawal{ value: 0.5 ether }(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.validateWithdrawal{ value: 0.5 ether }(payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
 
@@ -201,31 +211,33 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         uint256 expectedAssetAmount,
         address to
     ) public {
+        TestData2 memory data;
+
         vm.prank(ADMIN);
         protocol.setPositionFeeBps(0); // 0% fees
 
-        bytes memory currentPrice = abi.encode(initialPrice);
-        protocol.initiateWithdrawal(withdrawShares, to, address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+        data.currentPrice = abi.encode(initialPrice);
+        protocol.initiateWithdrawal(withdrawShares, to, payable(address(this)), data.currentPrice, EMPTY_PREVIOUS_DATA);
 
-        bytes32 actionId = oracleMiddleware.lastActionId();
+        data.actionId = oracleMiddleware.lastActionId();
         PendingAction memory pending = protocol.getUserPendingAction(address(this));
-        WithdrawalPendingAction memory withdrawal = protocol.i_toWithdrawalPendingAction(pending);
+        data.withdrawal = protocol.i_toWithdrawalPendingAction(pending);
 
-        uint256 vaultBalance = protocol.getBalanceVault(); // save for withdrawn amount calculation in case price
+        data.vaultBalance = protocol.getBalanceVault(); // save for withdrawn amount calculation in case price
             // decreases
 
         // wait the required delay between initiation and validation
         _waitDelay();
 
-        currentPrice = abi.encode(assetPrice);
+        data.currentPrice = abi.encode(assetPrice);
 
         // if price increases, we need to use the new balance to calculate the withdrawn amount
         if (assetPrice > initialPrice) {
-            vaultBalance = uint256(protocol.i_vaultAssetAvailable(assetPrice));
+            data.vaultBalance = uint256(protocol.i_vaultAssetAvailable(assetPrice));
         }
 
         PriceInfo memory withdrawalPrice = protocol.i_getOraclePrice(
-            ProtocolAction.ValidateWithdrawal, withdrawal.timestamp, "", abi.encode(assetPrice)
+            ProtocolAction.ValidateWithdrawal, data.withdrawal.timestamp, "", abi.encode(assetPrice)
         );
 
         // Apply fees on price
@@ -235,14 +247,14 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         // We calculate the available balance of the vault side, either considering the asset price at the time of the
         // initiate action, or the current price provided for validation. We will use the lower of the two amounts to
         // redeem the underlying asset share.
-        uint256 available1 = withdrawal.balanceVault;
+        uint256 available1 = data.withdrawal.balanceVault;
         uint256 available2 = uint256(
             protocol.i_vaultAssetAvailable(
-                withdrawal.totalExpo,
-                withdrawal.balanceVault,
-                withdrawal.balanceLong,
+                data.withdrawal.totalExpo,
+                data.withdrawal.balanceVault,
+                data.withdrawal.balanceLong,
                 withdrawalPriceWithFees.toUint128(), // new price
-                withdrawal.assetPrice // old price
+                data.withdrawal.assetPrice // old price
             )
         );
         uint256 available;
@@ -252,14 +264,16 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
             available = available2;
         }
 
-        uint256 shares = protocol.i_mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
+        uint256 shares = protocol.i_mergeWithdrawalAmountParts(data.withdrawal.sharesLSB, data.withdrawal.sharesMSB);
         // assetToTransfer = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
-        uint256 withdrawnAmount = FixedPointMathLib.fullMulDiv(shares, available, withdrawal.usdnTotalShares);
+        uint256 withdrawnAmount = FixedPointMathLib.fullMulDiv(shares, available, data.withdrawal.usdnTotalShares);
         assertEq(withdrawnAmount, expectedAssetAmount, "asset amount");
 
         vm.expectEmit();
-        emit ValidatedWithdrawal(to, address(this), withdrawnAmount, USDN_AMOUNT, withdrawal.timestamp);
-        protocol.validateWithdrawal(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+        emit ValidatedWithdrawal(to, address(this), withdrawnAmount, USDN_AMOUNT, data.withdrawal.timestamp);
+        bool success = protocol.validateWithdrawal(payable(address(this)), data.currentPrice, EMPTY_PREVIOUS_DATA);
+        assertTrue(success, "success");
+        assertEq(oracleMiddleware.lastActionId(), data.actionId, "middleware action ID");
 
         assertEq(usdn.balanceOf(address(this)), initialUsdnBalance - USDN_AMOUNT, "final usdn balance");
         if (to == address(this)) {
@@ -268,7 +282,6 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
             assertEq(wstETH.balanceOf(to), withdrawnAmount, "final wstETH balance");
             assertEq(wstETH.balanceOf(address(this)), initialWstETHBalance, "final wstETH balance");
         }
-        assertEq(oracleMiddleware.lastActionId(), actionId, "middleware action ID");
     }
 
     /**
@@ -283,7 +296,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
 
         if (_reenter) {
             vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
-            protocol.validateWithdrawal(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+            protocol.validateWithdrawal(payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
             return;
         }
 
@@ -293,7 +306,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         // If a reentrancy occurred, the function should have been called 2 times
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.validateWithdrawal.selector), 2);
         // The value sent will cause a refund, which will trigger the receive() function of this contract
-        protocol.validateWithdrawal{ value: 1 }(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.validateWithdrawal{ value: 1 }(payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
     }
 
     /**

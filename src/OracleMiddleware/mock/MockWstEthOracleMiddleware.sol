@@ -8,7 +8,7 @@ import { OracleMiddleware } from "src/OracleMiddleware/OracleMiddleware.sol";
 
 /**
  * @title Contract to apply and return a mocked wstETH price
- * @notice This contract is used to get the price of wsteth by setting up a price or forward to wstethMiddleware
+ * @notice This contract is used to get the price of wsteth by setting up a price or forwarding it to wstethMiddleware
  * @dev This aims at simulating price action. Do not use in production
  */
 contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
@@ -17,7 +17,7 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
 
     /**
      * @notice Wsteth mocked price
-     * @dev This price will be used if greater than zero.
+     * @dev This price will be used if greater than zero
      */
     uint256 internal _wstethMockedPrice;
     /**
@@ -42,14 +42,14 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
         bytes calldata data
     ) public payable override returns (PriceInfo memory price_) {
         // parse and validate from parent wsteth middleware
-        // this aim to verify pyth price hermes signature in any case
+        // this aims to verify pyth price hermes signature in any case
         if (_verifySignature || _wstethMockedPrice == 0) {
             price_ = super.parseAndValidatePrice(actionId, targetTimestamp, action, data);
         } else {
             price_.timestamp = targetTimestamp;
         }
 
-        // if mocked price is not set, return.
+        // if the mocked price is not set, return
         if (_wstethMockedPrice == 0) {
             return price_;
         }
@@ -57,14 +57,14 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
         price_.neutralPrice = _wstethMockedPrice;
         price_.price = price_.neutralPrice;
 
-        // ConfidenceInterval Down cases
+        // `ConfidenceInterval` down cases
         if (
             action == ProtocolAction.ValidateDeposit || action == ProtocolAction.ValidateClosePosition
                 || action == ProtocolAction.InitiateDeposit || action == ProtocolAction.InitiateClosePosition
         ) {
             price_.price -= price_.price * _wstethMockedConfBps / BPS_DIVISOR;
 
-            // ConfidenceInterval Up case
+            // `ConfidenceInterval` up case
         } else if (
             action == ProtocolAction.ValidateWithdrawal || action == ProtocolAction.ValidateOpenPosition
                 || action == ProtocolAction.InitiateWithdrawal || action == ProtocolAction.InitiateOpenPosition
@@ -75,8 +75,8 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
 
     /**
      * @notice Set Wsteth mocked price
-     * @dev If new mocked wsteth is greater than zero this will validate this mocked price else this will validate the
-     * parent middleware price
+     * @dev If the new mocked wsteth is greater than zero this will validate this mocked price else this will validate
+     * the parent middleware price
      * @param newWstethMockedPrice The mock price to set
      */
     function setWstethMockedPrice(uint256 newWstethMockedPrice) external {
@@ -85,7 +85,7 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
 
     /**
      * @notice Set Wsteth mocked confidence interval percentage
-     * @dev To calculate a percentage of neutral price up or down in some protocol actions
+     * @dev To calculate a percentage of the neutral price up or down in some protocol actions
      * @param newWstethMockedConfPct The mock confidence interval
      */
     function setWstethMockedConfBps(uint16 newWstethMockedConfPct) external {

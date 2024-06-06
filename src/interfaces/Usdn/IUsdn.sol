@@ -39,7 +39,7 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
     /**
      * @notice Transfer a given amount of shares from the `from` to `to`
      * @dev There should be sufficient allowance for the spender
-     * @param from Owner of the shares
+     * @param from The owner of the shares
      * @param to Recipient of the shares
      * @param value Number of shares to transfer
      * @return `true` in case of success
@@ -59,8 +59,9 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
      * @dev Caller must have the MINTER_ROLE
      * @param to Account to receive the new shares
      * @param amount Amount of shares to mint
+     * @return mintedTokens_ Amount of tokens that were minted (informational)
      */
-    function mintShares(address to, uint256 amount) external;
+    function mintShares(address to, uint256 amount) external returns (uint256 mintedTokens_);
 
     /**
      * @notice Destroy a `value` amount of tokens from the caller, reducing the total supply
@@ -126,9 +127,9 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
      * supply
      * @dev If the provided divisor is larger than or equal to the current divisor value, no rebase will happen
      * If the new divisor is smaller than `MIN_DIVISOR`, the value will be clamped to `MIN_DIVISOR`
+     * Caller must have the `REBASER_ROLE`
      * @param divisor The new divisor, should be strictly smaller than the current one and greater or equal to
      * `MIN_DIVISOR`
-     * Caller must have the `REBASER_ROLE`
      * @return rebased_ Whether a rebase happened
      * @return oldDivisor_ The previous value of the divisor
      * @return callbackResult_ The result of the callback, if a rebase happened and a callback handler is defined
@@ -163,13 +164,13 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
     function rebaseHandler() external view returns (IRebaseCallback);
 
     /**
-     * @notice Minter role signature
+     * @notice The minter role signature
      * @return The role signature
      */
     function MINTER_ROLE() external pure returns (bytes32);
 
     /**
-     * @notice Rebaser role signature
+     * @notice The rebaser role signature
      * @return The role signature
      */
     function REBASER_ROLE() external pure returns (bytes32);
