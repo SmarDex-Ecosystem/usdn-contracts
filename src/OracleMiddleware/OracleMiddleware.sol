@@ -17,8 +17,6 @@ import {
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { IBaseOracleMiddleware } from "src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 
-import { console2 } from "forge-std/console2.sol";
-
 /**
  * @title OracleMiddleware contract
  * @notice This contract is used to get the price of an asset from different price oracle

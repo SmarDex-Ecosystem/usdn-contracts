@@ -7,10 +7,10 @@ import { WstETH } from "test/utils/WstEth.sol";
 import { BaseFixture } from "test/utils/Fixtures.sol";
 import { MockPyth } from "test/unit/Middlewares/utils/MockPyth.sol";
 import { MockChainlinkOnChain } from "test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
+import { OracleMiddlewareHandler } from "test/unit/Middlewares/utils/Handler.sol";
 import { PYTH_ETH_USD, REDSTONE_ETH_USD } from "test/utils/Constants.sol";
 
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
-import { OracleMiddleware } from "src/OracleMiddleware/OracleMiddleware.sol";
 import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IWstETH } from "src/interfaces/IWstETH.sol";
@@ -45,7 +45,7 @@ contract ActionsFixture is IOracleMiddlewareErrors, IOracleMiddlewareEvents {
 contract OracleMiddlewareBaseFixture is BaseFixture, ActionsFixture {
     MockPyth internal mockPyth;
     MockChainlinkOnChain internal mockChainlinkOnChain;
-    OracleMiddleware public oracleMiddleware;
+    OracleMiddlewareHandler public oracleMiddleware;
     uint256 internal chainlinkTimeElapsedLimit = 1 hours;
 
     function setUp() public virtual {
@@ -53,7 +53,7 @@ contract OracleMiddlewareBaseFixture is BaseFixture, ActionsFixture {
 
         mockPyth = new MockPyth();
         mockChainlinkOnChain = new MockChainlinkOnChain();
-        oracleMiddleware = new OracleMiddleware(
+        oracleMiddleware = new OracleMiddlewareHandler(
             address(mockPyth), PYTH_ETH_USD, REDSTONE_ETH_USD, address(mockChainlinkOnChain), chainlinkTimeElapsedLimit
         );
     }
