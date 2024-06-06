@@ -4,7 +4,6 @@ pragma solidity >=0.8.0;
 import { IBaseLiquidationRewardsManager } from "src/interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
 import { ILiquidationRewardsManagerErrorsEventsTypes } from
     "src/interfaces/OracleMiddleware/ILiquidationRewardsManagerErrorsEventsTypes.sol";
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 interface ILiquidationRewardsManager is IBaseLiquidationRewardsManager, ILiquidationRewardsManagerErrorsEventsTypes {
     /* -------------------------------------------------------------------------- */

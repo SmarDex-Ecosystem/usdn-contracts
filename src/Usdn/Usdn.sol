@@ -13,9 +13,9 @@ import { IRebaseCallback } from "src/interfaces/Usdn/IRebaseCallback.sol";
 
 /**
  * @title USDN token contract
- * @notice The USDN token supports the USDN Protocol and is minted when assets are deposited into the vault. When assets
- * are withdrawn from the vault, tokens are burned. The total supply and balances are increased periodically by
- * adjusting a global divisor, so that the price of the token doesn't grow too far past 1 USD
+ * @notice The USDN token supports the USDN Protocol and is minted when assets are deposited or withdrawn from the
+ * vault and tokens are burned. The total supply and balances are increased periodically by adjusting a global divisor,
+ * so that the price of the token doesn't grow too far past 1 USD
  *
  * @dev Base implementation of the ERC-20 interface by OpenZeppelin, adapted to support growable balances
  *
@@ -184,7 +184,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     function transferSharesFrom(address from, address to, uint256 value) external returns (bool) {
         address spender = _msgSender();
         uint256 d = _divisor;
-        // to make sure we spend 1 wei of allowance in case the amount of shares is less than 1 wei of tokens,
+        // to make sure we spend 1 wei of allowance in case the number of shares is less than 1 wei of tokens,
         // we round up
         _spendAllowance(from, spender, _convertToTokens(value, Rounding.Up, d));
         // the amount of tokens below is only used for emitting an event, we round to the closest value
@@ -200,7 +200,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     /// @inheritdoc IUsdn
     function burnSharesFrom(address account, uint256 value) public {
         uint256 d = _divisor;
-        // to make sure we spend 1 wei of allowance in case the amount of shares is less than 1 wei of tokens,
+        // to make sure we spend 1 wei of allowance in case the number of shares is less than 1 wei of tokens,
         // we round up
         _spendAllowance(account, _msgSender(), _convertToTokens(value, Rounding.Up, d));
         // the amount of tokens below is only used for emitting an event, we round to the closest value
@@ -233,14 +233,14 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     {
         oldDivisor_ = _divisor;
         if (newDivisor > oldDivisor_) {
-            // Divisor can only be decreased
+            // divisor can only be decreased
             newDivisor = oldDivisor_;
         } else if (newDivisor < MIN_DIVISOR) {
-            // Divisor cannot be lower than `MIN_DIVISOR`
+            // divisor cannot be lower than `MIN_DIVISOR`
             newDivisor = MIN_DIVISOR;
         }
         if (newDivisor == oldDivisor_) {
-            // No rebase necessary
+            // no rebase necessary
             return (false, oldDivisor_, callbackResult_);
         }
 
@@ -267,7 +267,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
      * @notice Convert an amount of shares into the corresponding amount of tokens, rounding the division according to
      * `rounding`
      * @dev The conversion never overflows as we are performing a division
-     * If rounding to the nearest integer and the result is exactly at the half-way point, we round up
+     * If rounding to the nearest integer and the result is exactly at the halfway point, we round up
      * @param amountShares The amount of shares to convert to tokens
      * @param rounding Whether to round towards zero, the closest integer, or positive infinity
      * @param d Current value of the divisor
@@ -356,7 +356,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
      */
     function _updateShares(address from, address to, uint256 value, uint256 tokenValue) internal {
         if (from == address(0)) {
-            // Overflow check required: The rest of the code assumes that totalShares never overflows
+            // overflow check required: The rest of the code assumes that `totalShares` never overflows
             _totalShares += value;
         } else {
             uint256 fromBalance = _shares[from];
@@ -364,19 +364,19 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
                 revert UsdnInsufficientSharesBalance(from, fromBalance, value);
             }
             unchecked {
-                // Overflow not possible: value <= fromBalance <= totalShares
+                // overflow not possible: value <= fromBalance <= totalShares
                 _shares[from] = fromBalance - value;
             }
         }
 
         if (to == address(0)) {
             unchecked {
-                // Overflow not possible: value <= totalShares or value <= fromBalance <= totalShares
+                // overflow not possible: value <= totalShares or value <= fromBalance <= totalShares
                 _totalShares -= value;
             }
         } else {
             unchecked {
-                // Overflow not possible: balance + value is at most totalShares, which we know fits into a uint256
+                // overflow not possible: balance + value is at most `totalShares`, which we know fits into a uint256
                 _shares[to] += value;
             }
         }
@@ -385,6 +385,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     }
 
     /**
+     * @inheritdoc ERC20
      * @notice Transfer a `value` amount of tokens from `from` to `to`, or mint (or burn) if `from` or `to`
      * is the zero address
      * @dev Emits a {Transfer} event
@@ -393,15 +394,15 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
      * @param value The amount of tokens to transfer, is internally converted to shares
      */
     function _update(address from, address to, uint256 value) internal override {
-        // Convert the value to shares, reverts with `UsdnMaxTokensExceeded()` if value is too high
+        // convert the value to shares, reverts with `UsdnMaxTokensExceeded()` if value is too high
         uint256 valueShares = convertToShares(value);
         uint256 fromBalance = balanceOf(from);
 
         if (from == address(0)) {
-            // Mint
+            // mint
             unchecked {
                 uint256 res = _totalShares + valueShares;
-                // Overflow check required, the rest of the code assumes that totalShares never overflows
+                // overflow check required, the rest of the code assumes that `totalShares` never overflows
                 if (res < _totalShares) {
                     revert UsdnTotalSupplyOverflow();
                 }
@@ -409,18 +410,18 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
             }
         } else {
             uint256 fromShares = _shares[from];
-            // Perform the balance check on the amount of tokens, since due to rounding errors, valueShares can be
-            // slightly larger than fromShares
+            // perform the balance check on the amount of tokens, since due to rounding errors, `valueShares` can be
+            // slightly larger than `fromShares`
             if (fromBalance < value) {
                 revert ERC20InsufficientBalance(from, fromBalance, value);
             }
             if (valueShares <= fromShares) {
-                // Since valueShares <= fromShares, we can safely subtract valueShares from fromShares
+                // since valueShares <= fromShares, we can safely subtract `valueShares` from `fromShares`
                 unchecked {
                     _shares[from] -= valueShares;
                 }
             } else {
-                // Due to a rounding error, valueShares can be slightly larger than fromShares. In this case, we
+                // due to a rounding error, valueShares can be slightly larger than fromShares. In this case, we
                 // simply set the balance to zero and adjust the transferred amount of shares
                 _shares[from] = 0;
                 valueShares = fromShares;
@@ -428,13 +429,13 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
         }
 
         if (to == address(0)) {
-            // Burn: Since valueShares <= fromShares <= totalShares, we can safely subtract valueShares from
-            // totalShares
+            // burn: Since valueShares <= fromShares <= totalShares, we can safely subtract `valueShares` from
+            // `totalShares`
             unchecked {
                 _totalShares -= valueShares;
             }
         } else {
-            // Since shares + valueShares <= totalShares, we can safely add valueShares to the user shares
+            // since shares + valueShares <= totalShares, we can safely add `valueShares` to the user shares
             unchecked {
                 _shares[to] += valueShares;
             }

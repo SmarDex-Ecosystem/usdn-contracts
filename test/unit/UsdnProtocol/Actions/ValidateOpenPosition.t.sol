@@ -229,7 +229,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         testData.validateTick = protocol.getEffectiveTickForPrice(
             newLiqPrice,
             testData.validatePrice,
-            uint256(protocol.i_longTradingExpo(testData.validatePrice)),
+            uint256(protocol.getLongTradingExpo(testData.validatePrice)),
             protocol.getLiqMultiplierAccumulator(),
             protocol.getTickSpacing()
         ) + liqPenalty;
@@ -293,7 +293,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         data.validateTick = protocol.getEffectiveTickForPrice(
             protocol.i_getLiquidationPrice(data.validatePrice, uint128(protocol.getMaxLeverage())),
             data.validatePrice,
-            uint256(protocol.i_longTradingExpo(data.validatePrice)),
+            uint256(protocol.getLongTradingExpo(data.validatePrice)),
             protocol.getLiqMultiplierAccumulator(),
             protocol.getTickSpacing()
         ) + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
@@ -338,7 +338,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
             protocol.getEffectivePriceForTick(
                 protocol.i_calcTickWithoutPenalty(data.validateTick, data.originalLiqPenalty - 1),
                 data.validatePrice,
-                uint256(protocol.i_longTradingExpo(data.validatePrice)),
+                uint256(protocol.getLongTradingExpo(data.validatePrice)),
                 protocol.getLiqMultiplierAccumulator()
             )
         );
