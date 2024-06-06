@@ -505,8 +505,6 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     function _setUpMockRebalancerPosition(uint128 userDeposit) internal returns (PositionId memory rebalancerPos_) {
         vm.startPrank(ADMIN);
         rebalancer.setMinAssetDeposit(userDeposit);
-        // put a close limit so high that the rebalancer is never triggered
-        protocol.setExpoImbalanceLimits(0, 0, 0, uint256(type(int256).max), 0);
         protocol.setRebalancer(rebalancer);
         vm.stopPrank();
 

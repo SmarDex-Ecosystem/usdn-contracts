@@ -63,7 +63,7 @@ contract TestUsdnProtocolLongCalcLiqPriceFromTradingExpo is UsdnProtocolBaseFixt
         uint256 tradingExpo = (amount * leverage - amount) / protocol.LEVERAGE_DECIMALS();
 
         // non-optimized implementation
-        // subtract one to the compensate loss in precision
+        // subtract one to compensate the loss in precision
         uint256 expectedLiquidationPrice = price - (amount * price / (tradingExpo + amount)) - 1;
 
         uint128 liquidationPrice = protocol.i_calcLiqPriceFromTradingExpo(uint128(price), uint128(amount), tradingExpo);

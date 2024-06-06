@@ -110,7 +110,7 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
 
     /**
      * @notice Indicates that the previous version of the position was closed and a new one was opened
-     * @dev If `lastPosValue` equals 0, it means the previous version got liquidated
+     * @dev If `previousPosValue` equals 0, it means the previous version got liquidated
      * @param newPosId The position ID of the new position
      * @param previousPosValue The amount of assets left in the previous position
      */

@@ -2099,7 +2099,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // make sure that the rebalancer was not triggered without a sufficient imbalance
         // as we check the imbalance above, this should not happen
         if (tickWithoutLiqPenalty == NO_POSITION_TICK) {
-            revert UsdnProtocolRebalancerTick();
+            revert UsdnProtocolInvalidRebalancerTick();
         }
 
         // open a new position for the rebalancer

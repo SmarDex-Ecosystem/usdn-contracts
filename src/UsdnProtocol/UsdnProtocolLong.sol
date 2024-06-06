@@ -896,7 +896,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
         // due to the rounding down, if the imbalance is still below the desired imbalance
         // and the position is not at the max leverage, add one tick
-        if (highestUsableTradingExpo != tradingExpoToFill && _calcLongImbalanceBps(cache) > _longImbalanceTargetBps) {
+        if (highestUsableTradingExpo == tradingExpoToFill && _calcLongImbalanceBps(cache) > _longImbalanceTargetBps) {
             tickWithoutLiqPenalty_ += tickSpacing;
         }
     }

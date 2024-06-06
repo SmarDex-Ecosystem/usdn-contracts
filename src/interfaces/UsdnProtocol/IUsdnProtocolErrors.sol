@@ -157,7 +157,7 @@ interface IUsdnProtocolErrors {
     error UsdnProtocolImbalanceLimitReached(int256 imbalanceBps);
 
     /// @dev Indicates that the tick of the rebalancer position is invalid
-    error UsdnProtocolRebalancerTick();
+    error UsdnProtocolInvalidRebalancerTick();
 
     /// @dev Indicates that the protocol vault expo is invalid
     error UsdnProtocolInvalidVaultExpo();
