@@ -12,6 +12,12 @@ contract TestRedstoneOracleExtractPriceUpdateTimestamp is OracleMiddlewareBaseFi
         super.setUp();
     }
 
+    /**
+     * @custom:scenario Check that `extractPriceUpdateTimestamp` function returns the correct timestamp
+     * @custom:given The calldata with a known timestamp and signature
+     * @custom:when The `extractPriceUpdateTimestamp` function is called
+     * @custom:then It should succeed
+     */
     function test_extractPriceUpdateTimestamp() public {
         assertEq(
             oracleMiddleware.i_extractPriceUpdateTimestamp(REDSTONE_ETH_DATA),

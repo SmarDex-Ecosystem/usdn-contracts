@@ -70,9 +70,9 @@ abstract contract RedstoneOracle is IRedstoneOracle, PrimaryProdDataServiceConsu
         } else {
             // we want to validate that the price is in a 10-seconds window starting at the target timestamp
             if (formattedPrice_.timestamp < targetTimestamp) {
-                revert OracleMiddlewarePriceTooOld(formattedPrice_.timestamp);
+                revert OracleMiddlewarePriceTooOld(formattedPrice_.timestamp); // price is too much before the target
             } else if (formattedPrice_.timestamp >= targetTimestamp + REDSTONE_HEARTBEAT) {
-                revert OracleMiddlewarePriceTooRecent(formattedPrice_.timestamp);
+                revert OracleMiddlewarePriceTooRecent(formattedPrice_.timestamp); // price is too much after the target
             }
         }
         uint256 price = getOracleNumericValueFromTxMsg(_redstoneFeedId);
