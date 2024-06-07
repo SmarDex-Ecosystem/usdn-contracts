@@ -4,9 +4,12 @@ pragma solidity 0.8.20;
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { ERC165, IERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
+import { IOwnershipCallback } from "src/interfaces/UsdnProtocol/IOwnershipCallback.sol";
 import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
 import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title Rebalancer
@@ -14,7 +17,7 @@ import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
  * It will manage only one position with enough trading expo to re-balance the protocol after liquidations
  * and close/open again with new and existing funds when the imbalance reaches a certain threshold
  */
-contract Rebalancer is Ownable, IRebalancer {
+contract Rebalancer is Ownable, ERC165, IOwnershipCallback, IRebalancer {
     using SafeERC20 for IERC20Metadata;
 
     /// @notice Modifier to check if the caller is the USDN protocol or the owner
@@ -191,6 +194,17 @@ contract Rebalancer is Ownable, IRebalancer {
         _asset.safeTransfer(to, amount);
 
         emit PendingAssetsWithdrawn(msg.sender, amount, to);
+    }
+
+    /// @inheritdoc IOwnershipCallback
+    function ownershipCallback(address, PositionId calldata) external pure {
+        revert RebalancerUnauthorized(); // This is the first version of the Rebalancer contract
+    }
+
+    /// @inheritdoc IERC165
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
+        return interfaceId == type(IOwnershipCallback).interfaceId || interfaceId == type(IRebalancer).interfaceId
+            || super.supportsInterface(interfaceId);
     }
 
     /* -------------------------------------------------------------------------- */
