@@ -2,7 +2,6 @@
 pragma solidity 0.8.20;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import { console2 } from "forge-std/Test.sol";
 
 import { PYTH_ETH_USD } from "test/utils/Constants.sol";
 import { DEPLOYER, USER_1, USER_2, USER_3, USER_4 } from "test/utils/Constants.sol";
@@ -23,22 +22,19 @@ import {
 contract TestForkUniversalRouterValidatePendingActions is UniversalRouterBaseFixture {
     using SafeCast for uint256;
 
-    uint256 constant OPEN_POSITION_AMOUNT = 2 ether;
-    uint256 constant DESIRED_LIQUIDATION = 2500 ether;
-    PositionId internal _posId;
     uint256 _securityDeposit;
     uint256 ts1;
 
     function setUp() public {
-        // set 4 pending actions
         _setUp();
+        // set 4 pending actions
         ts1 = block.timestamp;
-        // 1. initiateDeposit
-        deal(address(wstETH), address(this), OPEN_POSITION_AMOUNT * 2);
-        wstETH.approve(address(protocol), type(uint256).max);
         _securityDeposit = protocol.getSecurityDepositValue();
+        // 1. initiateDeposit
+        uint256 OPEN_POSITION_AMOUNT = 2 ether;
         deal(address(wstETH), address(this), 1e6 ether);
         deal(address(sdex), address(this), 1e6 ether);
+        wstETH.approve(address(protocol), type(uint256).max);
         sdex.approve(address(protocol), type(uint256).max);
         protocol.initiateDeposit{ value: _securityDeposit }(0.1 ether, USER_2, USER_1, "", EMPTY_PREVIOUS_DATA);
         // 2. initiateWithdrawal
@@ -50,6 +46,7 @@ contract TestForkUniversalRouterValidatePendingActions is UniversalRouterBaseFix
             WITHDRAW_AMOUNT.toUint152(), USER_2, USER_2, "", EMPTY_PREVIOUS_DATA
         );
         // 3. initiateOpenPosition
+        uint256 DESIRED_LIQUIDATION = 2500 ether;
         protocol.initiateOpenPosition{ value: _securityDeposit }(
             OPEN_POSITION_AMOUNT.toUint128(),
             DESIRED_LIQUIDATION.toUint128(),
@@ -74,8 +71,6 @@ contract TestForkUniversalRouterValidatePendingActions is UniversalRouterBaseFix
         protocol.initiateClosePosition{ value: _securityDeposit }(
             posId, OPEN_POSITION_AMOUNT.toUint128(), USER_1, USER_4, "", EMPTY_PREVIOUS_DATA
         );
-        PendingAction memory action_ = protocol.getUserPendingAction(USER_1);
-        assertEq(action_.validator, USER_1, "newRawIndices.length");
     }
 
     /**
@@ -85,19 +80,29 @@ contract TestForkUniversalRouterValidatePendingActions is UniversalRouterBaseFix
      * @custom:then Validate pending actions successfully
      */
     function test_ForkValidatePendingActions() public {
+        // define the low latency limit based on current timestamp and oracle's low latency delay
         uint256 lowLatencyLimit = ts1 + oracleMiddleware.getLowLatencyDelay();
+
+        // fetch the latest round data from the price feed
         (uint80 roundId,,, uint256 updatedAt,) = priceFeed.latestRoundData();
         vm.makePersistent(address(protocol));
         vm.makePersistent(address(router));
         vm.makePersistent(address(oracleMiddleware));
         vm.makePersistent(address(usdn));
         vm.makePersistent(address(wstETH));
-        vm.rollFork(block.number + 99);
-        while (lowLatencyLimit > updatedAt) {
+
+        // initial fork roll to skip 20 minutes
+        vm.rollFork(block.number + 100);
+
+        // roll the fork until the updated timestamp is above the low latency limit
+        while (updatedAt < lowLatencyLimit) {
             vm.rollFork(block.number + 10);
             (roundId,,, updatedAt,) = priceFeed.latestRoundData();
         }
-        uint256 forkOne = block.number;
+
+        uint256 fork = block.number;
+
+        // additional checks to ensure roundId is first one after the low latency limit
         for (uint256 i = 0; i < 10; i++) {
             vm.rollFork(block.number - 1);
             (uint80 newRoundId,,, uint256 newUpdatedAt,) = priceFeed.latestRoundData();
@@ -107,27 +112,28 @@ contract TestForkUniversalRouterValidatePendingActions is UniversalRouterBaseFix
                 break;
             }
         }
-        vm.rollFork(forkOne);
+
+        vm.rollFork(fork);
         skip(protocol.getValidationDeadline());
 
+        // check that the roundId is the first one after the low latency limit
         (,, uint256 startedAtOne,,) = priceFeed.getRoundData(roundId - 1);
         (,, uint256 startedAtTwo,,) = priceFeed.getRoundData(roundId);
         assertTrue(startedAtOne < lowLatencyLimit, "startedAtOne < lowLatencyLimit");
         assertTrue(startedAtTwo >= lowLatencyLimit, "startedAtTwo >= lowLatencyLimit");
 
         bytes memory data = abi.encode(roundId);
-
         bytes[] memory priceData = new bytes[](4);
-        priceData[0] = data;
-        priceData[1] = priceData[0];
-        priceData[2] = priceData[0];
-        priceData[3] = priceData[0];
+        for (uint256 i = 0; i < 4; i++) {
+            priceData[i] = data;
+        }
         (, uint128[] memory newRawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(newRawIndices.length, 4, "newRawIndices.length");
         PreviousActionsData memory previousActionsData =
             PreviousActionsData({ priceData: priceData, rawIndices: newRawIndices });
         uint256 ethBalanceBefore = address(router).balance;
 
+        // validating actionable pending actions through the router
         bytes memory commands = abi.encodePacked(uint8(Commands.VALIDATE_PENDING));
         bytes[] memory inputs = new bytes[](1);
         inputs[0] = abi.encode(previousActionsData, 4, 0);
