@@ -525,7 +525,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         uint256 usdnBalanceUser0Before = usdn.balanceOf(address(this));
         uint256 usdnBalanceUser1Before = usdn.balanceOf(USER_1);
 
-        // we initiate a withdrawal for 1e18 sahres of USDN
+        // we initiate a withdrawal for 1e18 shares of USDN
         usdn.approve(address(protocol), 2);
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(
             1e18, address(this), address(this), priceData, EMPTY_PREVIOUS_DATA
@@ -972,6 +972,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
      * @custom:when The validator tries to validate the deposit
      * @custom:then The transaction reverts with the error `UsdnProtocolEtherRefundFailed`
+     * @custom:and We skip the validation deadline + 1
      * @custom:when A user tries to validate the pending action
      * @custom:then The security deposit is refunded to the user and not to the receiver contract
      */
@@ -1006,6 +1007,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
      * @custom:when The validator tries to validate the deposit
      * @custom:then The transaction reverts with the error `UsdnProtocolEtherRefundFailed`
+     * @custom:and We skip the validation deadline + 1
      * @custom:when A user tries to validate the pending action
      * @custom:then The security deposit is refunded to the user and not to the receiver contract
      */
@@ -1013,7 +1015,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before, balanceReceiverContractBefore) = _getBalances();
 
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
-        // (balanceUser0Before, balanceProtocolBefore,,) = _getBalances();
 
         usdn.approve(address(protocol), 1);
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(
@@ -1026,6 +1027,41 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         // The dummy contract (validator) does not implement a receive function so we expect a revert
         vm.expectRevert(UsdnProtocolEtherRefundFailed.selector);
         receiverContract.validateWithdrawal(address(protocol), priceData, EMPTY_PREVIOUS_DATA);
+
+        _waitBeforeActionablePendingAction();
+
+        PreviousActionsData memory prevActionsData = _assertActionAndCreateStruct();
+
+        // we validate the pending action with the user when the validation deadline has passed
+        vm.prank(USER_1);
+        protocol.validateActionablePendingActions(prevActionsData, 1);
+
+        // we assert that the security deposit has been refunded to the user1 and not to the receiver contract
+        assertBalancesEndDummyContract();
+    }
+
+    /**
+     * @custom:scenario A smartcontract with no {receive} function is the validator of a `open position` action
+     * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
+     * @custom:when The validator tries to validate the deposit
+     * @custom:then The transaction reverts with the error `UsdnProtocolEtherRefundFailed`
+     * @custom:and We skip the validation deadline + 1
+     * @custom:when A user tries to validate the pending action
+     * @custom:then The security deposit is refunded to the user and not to the receiver contract
+     */
+    function test_openPosition_refundSmartContract_noReceive() public {
+        (balanceUser0Before, balanceProtocolBefore, balanceUser1Before, balanceReceiverContractBefore) = _getBalances();
+
+        protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
+            1 ether, params.initialPrice / 2, USER_1, address(receiverContract), priceData, EMPTY_PREVIOUS_DATA
+        );
+
+        _waitDelay();
+        assertSecurityDepositPaidDummyContract();
+
+        // The dummy contract (validator) does not implement a receive function so we expect a revert
+        vm.expectRevert(UsdnProtocolEtherRefundFailed.selector);
+        receiverContract.validateOpenPosition(address(protocol), priceData, EMPTY_PREVIOUS_DATA);
 
         _waitBeforeActionablePendingAction();
 
@@ -1213,5 +1249,13 @@ contract DummyContract {
         PreviousActionsData calldata previousData
     ) external {
         IUsdnProtocol(usdnProtocolAddr).validateWithdrawal(address(this), priceData, previousData);
+    }
+
+    function validateOpenPosition(
+        address usdnProtocolAddr,
+        bytes calldata priceData,
+        PreviousActionsData calldata previousData
+    ) external {
+        IUsdnProtocol(usdnProtocolAddr).validateOpenPosition(address(this), priceData, previousData);
     }
 }
