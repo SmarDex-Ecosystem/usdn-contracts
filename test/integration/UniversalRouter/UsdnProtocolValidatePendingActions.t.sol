@@ -80,11 +80,9 @@ contract TestForkUniversalRouterValidatePendingActions is UniversalRouterBaseFix
      * @custom:then Validate pending actions successfully
      */
     function test_ForkValidatePendingActions() public {
-        // define the low latency limit based on current timestamp and oracle's low latency delay
         uint256 lowLatencyLimit = ts1 + oracleMiddleware.getLowLatencyDelay();
-
-        // fetch the latest round data from the price feed
         (uint80 roundId,,, uint256 updatedAt,) = priceFeed.latestRoundData();
+
         vm.makePersistent(address(protocol));
         vm.makePersistent(address(router));
         vm.makePersistent(address(oracleMiddleware));
