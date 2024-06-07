@@ -2057,6 +2057,16 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             return longBalance_;
         }
 
+        // calculate the current imbalance
+        {
+            int256 currentImbalance = _calcLongImbalanceBps(cache);
+
+            // if the imbalance is lower than the threshold, return
+            if (currentImbalance < _closeExpoImbalanceLimitBps) {
+                return longBalance_;
+            }
+        }
+
         uint128 bonus;
         if (remainingCollateral > 0) {
             bonus = (uint256(remainingCollateral) * _rebalancerBonusBps / BPS_DIVISOR).toUint128();
@@ -2069,16 +2079,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             tradingExpo: 0
         });
         cache.tradingExpo = cache.totalExpo - longBalance;
-
-        // calculate the current imbalance
-        {
-            int256 currentImbalance = _calcLongImbalanceBps(cache);
-
-            // if the imbalance is lower than the threshold, return
-            if (currentImbalance < _closeExpoImbalanceLimitBps) {
-                return longBalance_;
-            }
-        }
 
         (uint128 pendingAssets, uint256 rebalancerMaxLeverage, PositionId memory rebalancerPosId) =
             rebalancer.getCurrentStateData();
