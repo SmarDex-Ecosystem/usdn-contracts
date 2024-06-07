@@ -153,7 +153,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
     }
 
     /**
-     * @notice Perform tick liquidations of the USDN protocol
+     * @notice Performs tick liquidations of the USDN protocol
      * @param currentPriceData The current price data
      * @param iterations The liquidation iterations
      * @param ethAmount The amount of Ether to send with the transaction

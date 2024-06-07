@@ -277,7 +277,16 @@ abstract contract Dispatcher is
                     } else if (command == Commands.VALIDATE_CLOSE) {
                         // TODO VALIDATE_CLOSE
                     } else if (command == Commands.LIQUIDATE) {
-                        // TODO LIQUIDATE
+                        // equivalent: abi.decode(inputs, (bytes, uint16, uint256))
+                        uint16 iterations;
+                        uint256 ethAmount;
+                        assembly {
+                            // 0x00 offset is the currentPriceData, decoded below
+                            iterations := calldataload(add(inputs.offset, 0x20))
+                            ethAmount := calldataload(add(inputs.offset, 0x40))
+                        }
+                        bytes memory currentPriceData = inputs.toBytes(0);
+                        _usdnLiquidate(currentPriceData, iterations, ethAmount);
                     } else if (command == Commands.VALIDATE_PENDING) {
                         // TODO VALIDATE_PENDING
                     } else {
