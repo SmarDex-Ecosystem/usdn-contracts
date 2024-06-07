@@ -1,0 +1,33 @@
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.20;
+
+import { RebalancerFixture } from "test/unit/Rebalancer/utils/Fixtures.sol";
+import { IERC165_ID } from "test/utils/Constants.sol";
+
+import { IOwnershipCallback } from "src/interfaces/UsdnProtocol/IOwnershipCallback.sol";
+import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
+
+/**
+ * @custom:feature The `supportsInterface` function of the rebalancer contract
+ * @custom:background Given a rebalancer contract
+ */
+contract TestRebalancerSupportsInterface is RebalancerFixture {
+    function setUp() public {
+        super._setUp();
+    }
+
+    /**
+     * @custom:scenario Check that the rebalancer contract supports the correct interfaces
+     * @custom:given A deployed rebalancer contract
+     * @custom:when The supportsInterface function is called with the interface IDs
+     * @custom:then The function should return true for the supported interfaces and folse for any other interface
+     */
+    function test_supportsInterface() external {
+        assertEq(rebalancer.supportsInterface(IERC165_ID), true, "IERC165_ID supported");
+        assertEq(
+            rebalancer.supportsInterface(type(IOwnershipCallback).interfaceId), true, "IOwnershipCallback_ID supported"
+        );
+        assertEq(rebalancer.supportsInterface(type(IRebalancer).interfaceId), true, "IRebalancer_ID supported");
+        assertEq(rebalancer.supportsInterface(""), false, "unknown interface ID");
+    }
+}

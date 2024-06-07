@@ -18,6 +18,9 @@ address payable constant USER_2 = payable(address(0x2222222222222222222222222222
 address payable constant USER_3 = payable(address(0x3333333333333333333333333333333333333333));
 address payable constant USER_4 = payable(address(0x4444444444444444444444444444444444444444));
 
+/* ------------------------------ Interface IDs ----------------------------- */
+bytes4 constant IERC165_ID = 0x01ffc9a7;
+
 /* -------------------------------------------------------------------------- */
 /*                              Ethereum mainnet                              */
 /* -------------------------------------------------------------------------- */

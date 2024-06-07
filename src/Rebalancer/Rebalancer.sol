@@ -196,11 +196,6 @@ contract Rebalancer is Ownable, ERC165, IOwnershipCallback, IRebalancer {
         emit PendingAssetsWithdrawn(msg.sender, amount, to);
     }
 
-    /// @inheritdoc IOwnershipCallback
-    function ownershipCallback(address, PositionId calldata) external pure {
-        revert RebalancerUnauthorized(); // This is the first version of the Rebalancer contract
-    }
-
     /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
         return interfaceId == type(IOwnershipCallback).interfaceId || interfaceId == type(IRebalancer).interfaceId
@@ -231,5 +226,10 @@ contract Rebalancer is Ownable, ERC165, IOwnershipCallback, IRebalancer {
 
         _minAssetDeposit = minAssetDeposit;
         emit MinAssetDepositUpdated(minAssetDeposit);
+    }
+
+    /// @inheritdoc IOwnershipCallback
+    function ownershipCallback(address, PositionId calldata) external pure {
+        revert RebalancerUnauthorized(); // This is the first version of the Rebalancer contract
     }
 }
