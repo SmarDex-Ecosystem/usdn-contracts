@@ -107,7 +107,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
         bool success = protocol.initiateWithdrawal(
             uint128(usdn.balanceOf(address(this))),
             address(this),
-            address(this),
+            payable(address(this)),
             abi.encode(params.initialPrice / 3),
             EMPTY_PREVIOUS_DATA
         );
@@ -129,7 +129,8 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit InitiatedWithdrawal(to, address(this), USDN_AMOUNT, block.timestamp); // expected event
-        bool success = protocol.initiateWithdrawal(withdrawShares, to, address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+        bool success =
+            protocol.initiateWithdrawal(withdrawShares, to, payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
         assertTrue(success, "success");
 
         assertEq(usdn.sharesOf(address(this)), initialUsdnShares - withdrawShares, "usdn user balance");
@@ -167,7 +168,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
     function test_RevertWhen_zeroAmount() public {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         vm.expectRevert(UsdnProtocolZeroAmount.selector);
-        protocol.initiateWithdrawal(0, address(this), address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.initiateWithdrawal(0, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -179,7 +180,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
     function test_RevertWhen_zeroAddressTo() public {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         vm.expectRevert(UsdnProtocolInvalidAddressTo.selector);
-        protocol.initiateWithdrawal(1 ether, address(0), address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.initiateWithdrawal(1 ether, address(0), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -191,7 +192,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
     function test_RevertWhen_zeroAddressValidator() public {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         vm.expectRevert(UsdnProtocolInvalidAddressValidator.selector);
-        protocol.initiateWithdrawal(1 ether, address(this), address(0), currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.initiateWithdrawal(1 ether, address(this), payable(address(0)), currentPrice, EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -206,7 +207,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateWithdrawal);
         protocol.initiateWithdrawal{ value: validationCost }(
-            USDN_AMOUNT, address(this), address(this), currentPrice, EMPTY_PREVIOUS_DATA
+            USDN_AMOUNT, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
         );
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
@@ -223,7 +224,9 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
 
         if (_reenter) {
             vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
-            protocol.initiateWithdrawal(USDN_AMOUNT, address(this), address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+            protocol.initiateWithdrawal(
+                USDN_AMOUNT, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
+            );
             return;
         }
 
@@ -234,7 +237,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.initiateWithdrawal.selector), 2);
         // The value sent will cause a refund, which will trigger the receive() function of this contract
         protocol.initiateWithdrawal{ value: 1 }(
-            USDN_AMOUNT, address(this), address(this), currentPrice, EMPTY_PREVIOUS_DATA
+            USDN_AMOUNT, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
         );
     }
 

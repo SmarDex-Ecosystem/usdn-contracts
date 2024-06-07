@@ -53,7 +53,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         bytes memory priceData = abi.encode(2000 ether);
         protocol.initiateOpenPosition(
-            1 ether, desiredLiqPrice, address(this), address(this), priceData, EMPTY_PREVIOUS_DATA
+            1 ether, desiredLiqPrice, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
 
         Vm.Log[] memory logs = vm.getRecordedLogs();
@@ -103,7 +103,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         vm.recordLogs();
 
-        protocol.validateOpenPosition(address(this), priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(payable(address(this)), priceData, EMPTY_PREVIOUS_DATA);
 
         Vm.Log[] memory logs = vm.getRecordedLogs();
         (uint128 posTotalExpo, uint256 price,,,) = abi.decode(logs[0].data, (uint128, uint128, int24, uint256, uint256));
@@ -141,7 +141,9 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         uint256 balanceBefore = wstETH.balanceOf(address(this));
 
-        protocol.initiateClosePosition(posId, 1 ether, address(this), priceData, EMPTY_PREVIOUS_DATA);
+        protocol.initiateClosePosition(
+            posId, 1 ether, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+        );
 
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
 
@@ -157,7 +159,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         _waitDelay();
         vm.recordLogs();
-        protocol.validateClosePosition(address(this), priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateClosePosition(payable(address(this)), priceData, EMPTY_PREVIOUS_DATA);
 
         Vm.Log[] memory logs = vm.getRecordedLogs();
         (,,, uint256 assetToTransfer,) = abi.decode(logs[1].data, (int24, uint256, uint256, uint256, int256));
@@ -237,7 +239,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
         uint256 usdnSharesBefore = usdn.sharesOf(address(this));
-        protocol.validateDeposit(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit(payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
         uint256 usdnBalanceAfter = usdn.balanceOf(address(this));
         uint256 usdnSharesAfter = usdn.sharesOf(address(this));
         uint256 mintedUsdn = usdnBalanceAfter - usdnBalanceBefore;
@@ -266,13 +268,13 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         _waitDelay();
 
         uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
-        protocol.validateDeposit(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit(payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
         uint256 usdnBalanceAfter = usdn.balanceOf(address(this));
         uint256 mintedUsdn = usdnBalanceAfter - usdnBalanceBefore;
 
         usdn.approve(address(protocol), type(uint256).max);
         protocol.initiateWithdrawal(
-            uint128(mintedUsdn), address(this), address(this), currentPrice, EMPTY_PREVIOUS_DATA
+            uint128(mintedUsdn), address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         PendingAction memory action = protocol.getUserPendingAction(address(this));
@@ -299,18 +301,18 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, depositAmount, 2000 ether);
 
         uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
-        protocol.validateDeposit(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit(payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
         uint256 usdnBalanceAfter = usdn.balanceOf(address(this));
         uint256 mintedUsdn = usdnBalanceAfter - usdnBalanceBefore;
 
         usdn.approve(address(protocol), type(uint256).max);
         protocol.initiateWithdrawal(
-            uint128(mintedUsdn), address(this), address(this), currentPrice, EMPTY_PREVIOUS_DATA
+            uint128(mintedUsdn), address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
         usdnBalanceBefore = usdn.balanceOf(address(this));
-        protocol.validateWithdrawal(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.validateWithdrawal(payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
         usdnBalanceAfter = usdn.balanceOf(address(this));
         uint256 finalAssetBalance = wstETH.balanceOf(address(this));
 
@@ -389,10 +391,14 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         protocol.setVaultFeeBps(100); // 1% fees
 
         protocol.initiateWithdrawal(
-            uint128(usdn.balanceOf(address(this))), address(this), address(this), currentPrice, EMPTY_PREVIOUS_DATA
+            uint128(usdn.balanceOf(address(this))),
+            address(this),
+            payable(address(this)),
+            currentPrice,
+            EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
-        protocol.validateWithdrawal(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.validateWithdrawal(payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
 
         uint256 finalAssetBalance = wstETH.balanceOf(address(this));
         uint256 balanceDiffWithFees = finalAssetBalance - initialAssetBalance;
@@ -401,10 +407,14 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         vm.revertTo(snapshotId);
 
         protocol.initiateWithdrawal(
-            uint128(usdn.balanceOf(address(this))), address(this), address(this), currentPrice, EMPTY_PREVIOUS_DATA
+            uint128(usdn.balanceOf(address(this))),
+            address(this),
+            payable(address(this)),
+            currentPrice,
+            EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
-        protocol.validateWithdrawal(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.validateWithdrawal(payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
 
         uint256 finalAssetBalanceWithoutFees = wstETH.balanceOf(address(this));
         uint256 balanceDiffWithoutFees = finalAssetBalanceWithoutFees - initialAssetBalance;
@@ -445,7 +455,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         );
 
         vm.recordLogs();
-        protocol.validateOpenPosition(address(this), priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(payable(address(this)), priceData, EMPTY_PREVIOUS_DATA);
 
         Vm.Log[] memory logsWithoutFees = vm.getRecordedLogs();
         (, uint256 priceWithoutFees,,,) =
@@ -471,7 +481,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         );
 
         vm.recordLogs();
-        protocol.validateOpenPosition(address(this), priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(payable(address(this)), priceData, EMPTY_PREVIOUS_DATA);
 
         Vm.Log[] memory logsWithFees = vm.getRecordedLogs();
         (, uint256 priceWithFees,,,) = abi.decode(logsWithFees[0].data, (uint128, uint128, int24, uint256, uint256));
@@ -513,7 +523,9 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         skip(1 hours);
 
-        protocol.initiateClosePosition(posId, 1 ether, address(this), priceData, EMPTY_PREVIOUS_DATA);
+        protocol.initiateClosePosition(
+            posId, 1 ether, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+        );
 
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
 
@@ -522,7 +534,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint256 balanceBeforeValidateWithoutFees = wstETH.balanceOf(address(this));
 
         vm.recordLogs();
-        protocol.validateClosePosition(address(this), priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateClosePosition(payable(address(this)), priceData, EMPTY_PREVIOUS_DATA);
         Vm.Log[] memory logs = vm.getRecordedLogs();
 
         (,,, uint256 assetToTransferWithoutFees,) = abi.decode(logs[1].data, (int24, uint256, uint256, uint256, int256));
@@ -546,7 +558,9 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         );
         skip(1 hours);
 
-        protocol.initiateClosePosition(posId, 1 ether, address(this), priceData, EMPTY_PREVIOUS_DATA);
+        protocol.initiateClosePosition(
+            posId, 1 ether, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+        );
 
         action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
 
@@ -555,7 +569,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint256 balanceBeforeValidateWithFees = wstETH.balanceOf(address(this));
 
         vm.recordLogs();
-        protocol.validateClosePosition(address(this), priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateClosePosition(payable(address(this)), priceData, EMPTY_PREVIOUS_DATA);
         logs = vm.getRecordedLogs();
 
         (,,, uint256 assetToTransferWithFees,) = abi.decode(logs[1].data, (int24, uint256, uint256, uint256, int256));
