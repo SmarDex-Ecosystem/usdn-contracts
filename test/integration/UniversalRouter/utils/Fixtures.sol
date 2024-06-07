@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
+import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
 
 import { DEPLOYER, WETH, WSTETH } from "test/utils/Constants.sol";
@@ -15,10 +16,13 @@ import { RouterParameters } from "src/UniversalRouter/base/RouterImmutables.sol"
 contract UniversalRouterBaseFixture is UsdnProtocolBaseIntegrationFixture {
     UniversalRouterHandler public router;
     IAllowanceTransfer permit2;
+    AggregatorV3Interface public priceFeed;
 
     function _setUp() internal {
         params = DEFAULT_PARAMS;
         params.fork = true;
+        params.initialDeposit = 1000 ether;
+        params.initialLong = 1000 ether;
         _setUp(params);
 
         RouterParameters memory params = RouterParameters({
@@ -36,5 +40,6 @@ contract UniversalRouterBaseFixture is UsdnProtocolBaseIntegrationFixture {
         router = new UniversalRouterHandler(params);
 
         permit2 = IAllowanceTransfer(params.permit2);
+        priceFeed = AggregatorV3Interface(0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
     }
 }
