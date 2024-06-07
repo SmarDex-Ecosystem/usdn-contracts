@@ -23,6 +23,7 @@ contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
      * @custom:then The validation cost is the same as pythOracle
      */
     function test_RevertWhen_validationCostWithUnsupportedAction() public {
+        // we need to do a low level call to use an enum variant that is invalid
         (bool success, bytes memory _data) = address(oracleMiddleware).call(
             abi.encodeWithSelector(oracleMiddleware.validationCost.selector, abi.encode("data"), 11)
         );
@@ -39,7 +40,7 @@ contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
     function test_parseAndValidatePriceWithData() public {
         uint256 fee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.None);
 
-        assertEq(fee, mockPyth.getUpdateFee(data), "Wrong fee cost when data is not empty");
+        assertEq(fee, mockPyth.getUpdateFee(data), "Wrong fee cost when data is a Pyth message");
     }
 
     /**
