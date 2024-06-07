@@ -379,12 +379,12 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /**
-     * @notice Calculate the liquidation price of a position with the trading expo
+     * @notice Calculate the liquidation price without penalty of a position to reach a certain trading expo
      * @dev If the sum of `amount` and `tradingExpo` equals 0, reverts
      * @param currentPrice The price of the asset
      * @param amount The amount of asset
      * @param tradingExpo The trading expo
-     * @return liqPrice_ The liquidation price
+     * @return liqPrice_ The liquidation price without penalty
      */
     function _calcLiqPriceFromTradingExpo(uint128 currentPrice, uint128 amount, uint256 tradingExpo)
         internal
@@ -728,7 +728,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     /**
      * TODO add tests
      * @notice Calculates the current imbalance between the vault and long sides
-     * @dev If the value is positive, there's not enough assets borrowed, if negative, there's too much
+     * @dev If the value is positive, the long trading expo is smaller than the vault trading expo
      * @param cache The cached protocol state variables
      * @return imbalanceBps_ The imbalance in basis points
      */
