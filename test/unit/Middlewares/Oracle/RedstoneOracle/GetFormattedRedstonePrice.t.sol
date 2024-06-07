@@ -29,12 +29,12 @@ contract TestRedstoneOracleGetFormattedRedstonePrice is OracleMiddlewareBaseFixt
         RedstonePriceInfo memory res = oracleMiddleware.i_getFormattedRedstonePrice(
             REDSTONE_ETH_TIMESTAMP, oracleMiddleware.getDecimals(), REDSTONE_ETH_DATA
         );
-        assertEq(res.timestamp, REDSTONE_ETH_TIMESTAMP, "targetTimestamp = Redstone timestamp - timestamp");
-        assertEq(res.price, REDSTONE_ETH_PRICE, "targetTimestamp = Redstone timestamp - price");
+        assertEq(res.timestamp, REDSTONE_ETH_TIMESTAMP, "targetTimestamp = Redstone timestamp: timestamp");
+        assertEq(res.price, REDSTONE_ETH_PRICE, "targetTimestamp = Redstone timestamp: price");
 
         res = oracleMiddleware.i_getFormattedRedstonePrice(0, oracleMiddleware.getDecimals(), REDSTONE_ETH_DATA);
-        assertEq(res.timestamp, REDSTONE_ETH_TIMESTAMP, "targetTimestamp = 0 - timestamp");
-        assertEq(res.price, REDSTONE_ETH_PRICE, "targetTimestamp = 0 - price");
+        assertEq(res.timestamp, REDSTONE_ETH_TIMESTAMP, "targetTimestamp = 0: timestamp");
+        assertEq(res.price, REDSTONE_ETH_PRICE, "targetTimestamp = 0: price");
     }
 
     /**
