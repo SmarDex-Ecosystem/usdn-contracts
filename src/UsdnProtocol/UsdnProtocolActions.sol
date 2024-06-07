@@ -2001,7 +2001,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 _liquidatePositions(_lastPrice, iterations, tempLongBalance, tempVaultBalance);
 
             if (liquidationEffects.liquidatedTicks > 0) {
-                liquidationEffects.newLongBalance = _triggerRebalancer(
+                (liquidationEffects.newLongBalance, liquidationEffects.newVaultBalance) = _triggerRebalancer(
                     uint128(neutralPrice),
                     liquidationEffects.newLongBalance,
                     liquidationEffects.newVaultBalance,
@@ -2043,18 +2043,20 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param vaultBalance The balance of the vault side
      * @param remainingCollateral The collateral remaining after the liquidations
      * @return longBalance_ The temporary balance of the long side
+     * @return vaultBalance_ The temporary balance of the vault side
      */
     function _triggerRebalancer(
         uint128 neutralPrice,
         uint256 longBalance,
         uint256 vaultBalance,
         int256 remainingCollateral
-    ) internal returns (uint256 longBalance_) {
+    ) internal returns (uint256 longBalance_, uint256 vaultBalance_) {
         longBalance_ = longBalance;
+        vaultBalance_ = vaultBalance;
         IRebalancer rebalancer = _rebalancer;
 
         if (address(rebalancer) == address(0)) {
-            return longBalance_;
+            return (longBalance_, vaultBalance_);
         }
 
         CachedProtocolState memory cache = CachedProtocolState({
@@ -2066,32 +2068,37 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         });
         cache.tradingExpo = cache.totalExpo - longBalance;
 
-        // calculate the current imbalance
         {
             int256 currentImbalance = _calcLongImbalanceBps(cache.vaultBalance, cache.longBalance, cache.totalExpo);
 
             // if the imbalance is lower than the threshold, return
             if (currentImbalance < _closeExpoImbalanceLimitBps) {
-                return longBalance_;
+                return (longBalance_, vaultBalance_);
             }
         }
 
-        uint128 bonus;
-        if (remainingCollateral > 0) {
-            bonus = (uint256(remainingCollateral) * _rebalancerBonusBps / BPS_DIVISOR).toUint128();
-        }
-
-        (uint128 pendingAssets, uint256 rebalancerMaxLeverage, PositionId memory rebalancerPosId) =
+        // the default value of positionAmount is the amount of pendingAssets in the rebalancer
+        (uint128 positionAmount, uint256 rebalancerMaxLeverage, PositionId memory rebalancerPosId) =
             rebalancer.getCurrentStateData();
 
-        uint128 positionAmount = pendingAssets + bonus;
+        // transfer the pending assets from the rebalancer to this contract
+        _asset.safeTransferFrom(address(rebalancer), address(this), positionAmount);
 
+        uint128 positionValue;
         // close the rebalancer position and get its value to open the next one
         if (rebalancerPosId.tick != NO_POSITION_TICK) {
-            uint128 positionValue = _flashClosePosition(rebalancerPosId, neutralPrice, cache.tradingExpo).toUint128();
+            positionValue = _flashClosePosition(rebalancerPosId, neutralPrice, cache.tradingExpo).toUint128();
 
             cache.longBalance -= positionValue;
             positionAmount += positionValue;
+        }
+
+        // if there is enough collateral remaining after liquidations, calculate the bonus and add it to the
+        // new rebalancer position
+        if (remainingCollateral > 0) {
+            uint128 bonus = (uint256(remainingCollateral) * _rebalancerBonusBps / BPS_DIVISOR).toUint128();
+            cache.vaultBalance -= bonus;
+            positionAmount += bonus;
         }
 
         int24 tickWithoutLiqPenalty =
@@ -2110,13 +2117,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         cache.longBalance += positionAmount;
 
-        // transfer the pending assets from the rebalancer to this contract
-        _asset.safeTransferFrom(address(rebalancer), address(this), pendingAssets);
-
         // call the rebalancer to update the internal bookkeeping
-        rebalancer.updatePosition(posId, positionAmount - pendingAssets - bonus);
+        rebalancer.updatePosition(posId, positionValue);
 
         longBalance_ = cache.longBalance;
+        vaultBalance_ = cache.vaultBalance;
     }
 
     /**
