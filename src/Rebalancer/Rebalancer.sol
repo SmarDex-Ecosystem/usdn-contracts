@@ -227,21 +227,21 @@ contract Rebalancer is Ownable, IRebalancer {
     /// @inheritdoc IRebalancer
     function updatePosition(PositionId calldata newPosId, uint128 previousPosValue) external onlyProtocol {
         uint128 positionVersion = _positionVersion;
-        PositionData memory currentPositionData = _positionData[positionVersion];
+        PositionData memory previousPositionData = _positionData[positionVersion];
         // set the multiplier accumulator to 1 by default
         uint256 accMultiplier = MULTIPLIER_FACTOR;
 
         // if the current position version exists
-        if (currentPositionData.amount > 0) {
+        if (previousPositionData.amount > 0) {
             // if the position has not been liquidated
             if (previousPosValue > 0) {
                 // save the pnl multiplier of the position
-                uint256 pnlMultiplier = _calcPnlMultiplier(currentPositionData.amount, previousPosValue);
+                uint256 pnlMultiplier = _calcPnlMultiplier(previousPositionData.amount, previousPosValue);
                 _positionData[positionVersion].pnlMultiplier = pnlMultiplier;
 
                 // update the multiplier accumulator
                 accMultiplier = FixedPointMathLib.fullMulDiv(
-                    previousPosValue, currentPositionData.entryAccMultiplier, currentPositionData.amount
+                    previousPosValue, previousPositionData.entryAccMultiplier, previousPositionData.amount
                 );
             } else {
                 // update the last liquidated version tracker
