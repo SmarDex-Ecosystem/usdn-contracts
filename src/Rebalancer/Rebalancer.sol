@@ -230,6 +230,6 @@ contract Rebalancer is Ownable, ERC165, IOwnershipCallback, IRebalancer {
 
     /// @inheritdoc IOwnershipCallback
     function ownershipCallback(address, PositionId calldata) external pure {
-        revert RebalancerUnauthorized(); // This is the first version of the Rebalancer contract
+        revert RebalancerUnauthorized(); // this is the first version of the rebalancer contract
     }
 }
