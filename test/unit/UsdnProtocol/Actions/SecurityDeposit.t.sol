@@ -382,11 +382,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         assertSecurityDepositPaid();
 
-        (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(USER_1);
-        bytes[] memory previousPriceData = new bytes[](rawIndices.length);
-        previousPriceData[0] = priceData;
-        PreviousActionsData memory previousActionsData =
-            PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
+        PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
 
         vm.expectEmit();
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
@@ -435,11 +431,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         assertSecurityDepositPaidTwoUsers();
 
-        (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(USER_1);
-        bytes[] memory previousPriceData = new bytes[](rawIndices.length);
-        previousPriceData[0] = priceData;
-        PreviousActionsData memory previousActionsData =
-            PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
+        PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
 
         vm.expectEmit();
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
@@ -479,11 +471,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         assertSecurityDepositPaid();
 
-        (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(USER_1);
-        bytes[] memory previousPriceData = new bytes[](rawIndices.length);
-        previousPriceData[0] = priceData;
-        PreviousActionsData memory previousActionsData =
-            PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
+        PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
 
         vm.startPrank(USER_1);
         usdn.approve(address(protocol), 2);
@@ -543,11 +531,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         assertSecurityDepositPaidTwoUsers();
 
-        (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(USER_1);
-        bytes[] memory previousPriceData = new bytes[](rawIndices.length);
-        previousPriceData[0] = priceData;
-        PreviousActionsData memory previousActionsData =
-            PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
+        PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
 
         vm.expectEmit();
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
@@ -580,11 +564,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         assertSecurityDepositPaid();
 
-        (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(USER_1);
-        bytes[] memory previousPriceData = new bytes[](rawIndices.length);
-        previousPriceData[0] = priceData;
-        PreviousActionsData memory previousActionsData =
-            PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
+        PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
 
         vm.expectEmit();
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
@@ -628,11 +608,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         assertSecurityDepositPaidTwoUsers();
 
-        (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(USER_1);
-        bytes[] memory previousPriceData = new bytes[](rawIndices.length);
-        previousPriceData[0] = priceData;
-        PreviousActionsData memory previousActionsData =
-            PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
+        PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
 
         vm.expectEmit();
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
@@ -679,11 +655,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         assertSecurityDepositPaid();
 
-        (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(USER_1);
-        bytes[] memory previousPriceData = new bytes[](rawIndices.length);
-        previousPriceData[0] = priceData;
-        PreviousActionsData memory previousActionsData =
-            PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
+        PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
 
         vm.expectEmit();
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
@@ -746,11 +718,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         assertSecurityDepositPaidTwoUsers();
 
-        (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(USER_1);
-        bytes[] memory previousPriceData = new bytes[](rawIndices.length);
-        previousPriceData[0] = priceData;
-        PreviousActionsData memory previousActionsData =
-            PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
+        PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
 
         vm.expectEmit();
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
@@ -866,11 +834,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             "the security deposit value should have changed"
         );
 
-        (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(USER_1);
-        bytes[] memory previousPriceData = new bytes[](rawIndices.length);
-        previousPriceData[0] = priceData;
-        PreviousActionsData memory previousActionsData =
-            PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
+        PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
 
         vm.expectEmit();
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
@@ -947,6 +911,10 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertBalancesEnd();
     }
 
+    /* -------------------------------------------------------------------------- */
+    /*           validator is a contract with no receive function tests           */
+    /* -------------------------------------------------------------------------- */
+
     /**
      * @custom:scenario A smartcontract with no {receive} function is the validator of a deposit
      * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
@@ -957,7 +925,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         (balanceUser0Before, balanceProtocolBefore,,) = _getBalances();
 
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
-            1 ether, address(this), address(receiverContract), priceData, EMPTY_PREVIOUS_DATA
+            1 ether, address(this), payable(address(receiverContract)), priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -980,7 +948,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before, balanceReceiverContractBefore) = _getBalances();
 
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
-            1 ether, USER_1, address(receiverContract), priceData, EMPTY_PREVIOUS_DATA
+            1 ether, USER_1, payable(address(receiverContract)), priceData, EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
@@ -992,7 +960,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         _waitBeforeActionablePendingAction();
 
-        PreviousActionsData memory prevActionsData = _assertActionAndCreateStruct();
+        PreviousActionsData memory prevActionsData = _createPrevActionDataStruct(address(this), true);
 
         // we validate the pending action with the user when the validation deadline has passed
         vm.prank(USER_1);
@@ -1018,7 +986,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         usdn.approve(address(protocol), 1);
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(
-            1, USER_1, address(receiverContract), priceData, EMPTY_PREVIOUS_DATA
+            1, USER_1, payable(address(receiverContract)), priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -1030,7 +998,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         _waitBeforeActionablePendingAction();
 
-        PreviousActionsData memory prevActionsData = _assertActionAndCreateStruct();
+        PreviousActionsData memory prevActionsData = _createPrevActionDataStruct(address(this), true);
 
         // we validate the pending action with the user when the validation deadline has passed
         vm.prank(USER_1);
@@ -1053,7 +1021,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before, balanceReceiverContractBefore) = _getBalances();
 
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
-            1 ether, params.initialPrice / 2, USER_1, address(receiverContract), priceData, EMPTY_PREVIOUS_DATA
+            1 ether, params.initialPrice / 2, USER_1, payable(address(receiverContract)), priceData, EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
@@ -1065,7 +1033,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         _waitBeforeActionablePendingAction();
 
-        PreviousActionsData memory prevActionsData = _assertActionAndCreateStruct();
+        PreviousActionsData memory prevActionsData = _createPrevActionDataStruct(address(this), true);
 
         // we validate the pending action with the user when the validation deadline has passed
         vm.prank(USER_1);
@@ -1099,9 +1067,8 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
 
-        usdn.approve(address(protocol), 1);
         protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(
-            posId, 1 ether, address(this), priceData, EMPTY_PREVIOUS_DATA
+            posId, 1 ether, USER_1, payable(address(receiverContract)), priceData, EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
@@ -1110,11 +1077,11 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         // The dummy contract (validator) does not implement a receive function so we expect a revert
         vm.expectRevert(UsdnProtocolEtherRefundFailed.selector);
-        receiverContract.validateWithdrawal(address(protocol), priceData, EMPTY_PREVIOUS_DATA);
+        receiverContract.validateClosePosition(address(protocol), priceData, EMPTY_PREVIOUS_DATA);
 
         _waitBeforeActionablePendingAction();
 
-        PreviousActionsData memory prevActionsData = _assertActionAndCreateStruct();
+        PreviousActionsData memory prevActionsData = _createPrevActionDataStruct(address(this), true);
 
         // we validate the pending action with the user when the validation deadline has passed
         vm.prank(USER_1);
@@ -1267,15 +1234,19 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         return (address(this).balance, address(protocol).balance, USER_1.balance, address(receiverContract).balance);
     }
 
-    function _assertActionAndCreateStruct() internal returns (PreviousActionsData memory prevActionsData_) {
-        bytes[] memory prevPriceData = new bytes[](1);
-        prevPriceData[0] = abi.encode(params.initialPrice);
-        (PendingAction[] memory pendingAction, uint128[] memory rawIndices) =
-            protocol.getActionablePendingActions(address(this));
+    function _createPrevActionDataStruct(address user, bool assertValidatorContract)
+        internal
+        returns (PreviousActionsData memory prevActionsData_)
+    {
+        (PendingAction[] memory pendingAction, uint128[] memory rawIndices) = protocol.getActionablePendingActions(user);
+        bytes[] memory prevPriceData = new bytes[](rawIndices.length);
+        prevPriceData[0] = priceData;
 
-        assertEq(pendingAction.length, 1, "actions length");
-        assertEq(pendingAction[0].to, USER_1, "actions length");
-        assertEq(pendingAction[0].validator, address(receiverContract), "actions length");
+        if (assertValidatorContract) {
+            assertEq(pendingAction.length, 1, "actions length");
+            assertEq(pendingAction[0].to, USER_1, "action `to`");
+            assertEq(pendingAction[0].validator, address(receiverContract), "action `validator`");
+        }
 
         prevActionsData_ = PreviousActionsData({ priceData: prevPriceData, rawIndices: rawIndices });
     }
@@ -1289,7 +1260,7 @@ contract DummyContract {
         bytes calldata priceData,
         PreviousActionsData calldata previousData
     ) external {
-        IUsdnProtocol(usdnProtocolAddr).validateDeposit(address(this), priceData, previousData);
+        IUsdnProtocol(usdnProtocolAddr).validateDeposit(payable(address(this)), priceData, previousData);
     }
 
     function validateWithdrawal(
@@ -1297,7 +1268,7 @@ contract DummyContract {
         bytes calldata priceData,
         PreviousActionsData calldata previousData
     ) external {
-        IUsdnProtocol(usdnProtocolAddr).validateWithdrawal(address(this), priceData, previousData);
+        IUsdnProtocol(usdnProtocolAddr).validateWithdrawal(payable(address(this)), priceData, previousData);
     }
 
     function validateOpenPosition(
@@ -1305,6 +1276,14 @@ contract DummyContract {
         bytes calldata priceData,
         PreviousActionsData calldata previousData
     ) external {
-        IUsdnProtocol(usdnProtocolAddr).validateOpenPosition(address(this), priceData, previousData);
+        IUsdnProtocol(usdnProtocolAddr).validateOpenPosition(payable(address(this)), priceData, previousData);
+    }
+
+    function validateClosePosition(
+        address usdnProtocolAddr,
+        bytes calldata priceData,
+        PreviousActionsData calldata previousData
+    ) external {
+        IUsdnProtocol(usdnProtocolAddr).validateClosePosition(payable(address(this)), priceData, previousData);
     }
 }
