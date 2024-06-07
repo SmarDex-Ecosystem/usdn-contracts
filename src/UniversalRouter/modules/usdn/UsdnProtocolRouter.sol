@@ -151,4 +151,14 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
             amount.toUint128(), desiredLiqPrice, to, payable(validator), currentPriceData, previousActionsData
         );
     }
+
+    /**
+     * @notice Perform tick liquidations of the USDN protocol
+     * @param currentPriceData The current price data
+     * @param iterations The liquidation iterations
+     * @param ethAmount The amount of Ether to send with the transaction
+     */
+    function _usdnLiquidate(bytes memory currentPriceData, uint16 iterations, uint256 ethAmount) internal {
+        USDN_PROTOCOL.liquidate{ value: ethAmount }(currentPriceData, iterations);
+    }
 }
