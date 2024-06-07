@@ -24,8 +24,8 @@ interface IRebalancerTypes {
      */
     struct PositionData {
         uint128 amount;
-        uint128 entryAccMultiplier;
-        uint128 pnlMultiplier;
+        uint256 entryAccMultiplier;
+        uint256 pnlMultiplier;
         PositionId id;
     }
 }

@@ -236,7 +236,7 @@ contract Rebalancer is Ownable, IRebalancer {
             // if the position has not been liquidated
             if (previousPosValue > 0) {
                 // save the pnl multiplier of the position
-                uint128 pnlMultiplier = _calcPnlMultiplier(currentPositionData.amount, previousPosValue);
+                uint256 pnlMultiplier = _calcPnlMultiplier(currentPositionData.amount, previousPosValue);
                 _positionData[positionVersion].pnlMultiplier = pnlMultiplier;
 
                 // update the multiplier accumulator
@@ -255,7 +255,7 @@ contract Rebalancer is Ownable, IRebalancer {
 
         // save the data of the new position's version
         PositionData storage newPositionData = _positionData[positionVersion];
-        newPositionData.entryAccMultiplier = accMultiplier.toUint128();
+        newPositionData.entryAccMultiplier = accMultiplier;
         newPositionData.amount = _pendingAssetsAmount + previousPosValue;
         newPositionData.id = newPosId;
 
@@ -272,13 +272,13 @@ contract Rebalancer is Ownable, IRebalancer {
      * @param value The value of the position right now
      * @return pnlMultiplier_ The PnL multiplier
      */
-    function _calcPnlMultiplier(uint128 openAmount, uint128 value) internal pure returns (uint128 pnlMultiplier_) {
+    function _calcPnlMultiplier(uint128 openAmount, uint128 value) internal pure returns (uint256 pnlMultiplier_) {
         // prevent division by 0
         if (openAmount == 0) {
             return 0;
         }
 
-        pnlMultiplier_ = FixedPointMathLib.fullMulDiv(value, MULTIPLIER_FACTOR, openAmount).toUint128();
+        pnlMultiplier_ = value * MULTIPLIER_FACTOR / openAmount;
     }
 
     /* -------------------------------------------------------------------------- */
