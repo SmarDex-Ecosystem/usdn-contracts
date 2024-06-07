@@ -8,7 +8,7 @@ import { IOwnershipCallback } from "src/interfaces/UsdnProtocol/IOwnershipCallba
 import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
 
 /**
- * @custom:feature The `supportsInterface` function of the rebalancer contract
+ * @custom:feature The {supportsInterface} function of the rebalancer contract
  * @custom:background Given a rebalancer contract
  */
 contract TestRebalancerSupportsInterface is RebalancerFixture {

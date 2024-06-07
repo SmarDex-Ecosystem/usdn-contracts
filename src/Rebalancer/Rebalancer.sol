@@ -198,8 +198,9 @@ contract Rebalancer is Ownable, ERC165, IOwnershipCallback, IRebalancer {
 
     /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
-        return interfaceId == type(IOwnershipCallback).interfaceId || interfaceId == type(IRebalancer).interfaceId
-            || super.supportsInterface(interfaceId);
+        if (interfaceId == type(IOwnershipCallback).interfaceId) return true;
+        if (interfaceId == type(IRebalancer).interfaceId) return true;
+        return super.supportsInterface(interfaceId);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -230,6 +231,6 @@ contract Rebalancer is Ownable, ERC165, IOwnershipCallback, IRebalancer {
 
     /// @inheritdoc IOwnershipCallback
     function ownershipCallback(address, PositionId calldata) external pure {
-        revert RebalancerUnauthorized(); // this is the first version of the rebalancer contract
+        revert RebalancerUnauthorized(); // first version of the rebalancer contract so we are always reverting
     }
 }
