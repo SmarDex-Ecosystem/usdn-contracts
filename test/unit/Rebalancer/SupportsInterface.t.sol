@@ -19,7 +19,7 @@ contract TestRebalancerSupportsInterface is RebalancerFixture {
     /**
      * @custom:scenario Check that the rebalancer contract supports the correct interfaces
      * @custom:given A deployed rebalancer contract
-     * @custom:when The supportsInterface function is called with the interface IDs
+     * @custom:when The {supportsInterface} function is called with the interface IDs
      * @custom:then The function should return `true` for the supported interfaces and `false` for any other interface
      */
     function test_supportsInterface() external {
