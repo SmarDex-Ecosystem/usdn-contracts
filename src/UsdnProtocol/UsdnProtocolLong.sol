@@ -873,7 +873,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             (cache.vaultBalance * (BPS_DIVISOR.toInt256() - _longImbalanceTargetBps).toUint256() / BPS_DIVISOR);
 
         // check that the target is not already exceeded
-        if (tradingExpoToFill <= cache.tradingExpo) {
+        if (cache.tradingExpo >= tradingExpoToFill) {
             return NO_POSITION_TICK;
         }
 
