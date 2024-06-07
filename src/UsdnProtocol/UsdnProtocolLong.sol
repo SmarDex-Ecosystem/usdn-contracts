@@ -859,18 +859,21 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         CachedProtocolState memory cache
     ) internal view returns (int24 tickWithoutLiqPenalty_) {
         // use the lowest max leverage above the min leverage
-        uint256 protocolMaxLeverage = _maxLeverage;
-        uint256 protocolMinLeverage = _minLeverage;
-        if (rebalancerMaxLeverage > protocolMaxLeverage) {
-            rebalancerMaxLeverage = protocolMaxLeverage;
-        }
-        if (rebalancerMaxLeverage < protocolMinLeverage) {
-            rebalancerMaxLeverage = protocolMinLeverage;
+        {
+            uint256 protocolMaxLeverage = _maxLeverage;
+            uint256 protocolMinLeverage = _minLeverage;
+            if (rebalancerMaxLeverage > protocolMaxLeverage) {
+                rebalancerMaxLeverage = protocolMaxLeverage;
+            }
+            if (rebalancerMaxLeverage < protocolMinLeverage) {
+                rebalancerMaxLeverage = protocolMinLeverage;
+            }
         }
 
+        int256 longImbalanceTargetBps = _longImbalanceTargetBps;
         // calculate the trading expo missing to reach the imbalance target
         uint256 targetTradingExpo =
-            (cache.vaultBalance * (BPS_DIVISOR.toInt256() - _longImbalanceTargetBps).toUint256() / BPS_DIVISOR);
+            (cache.vaultBalance * (BPS_DIVISOR.toInt256() - longImbalanceTargetBps).toUint256() / BPS_DIVISOR);
 
         // check that the target is not already exceeded
         if (cache.tradingExpo >= targetTradingExpo) {
@@ -885,19 +888,40 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             tradingExpoToFill = highestUsableTradingExpo;
         }
 
-        int24 tickSpacing = _tickSpacing;
         tickWithoutLiqPenalty_ = getEffectiveTickForPrice(
             _calcLiqPriceFromTradingExpo(neutralPrice, positionAmount, tradingExpoToFill),
             neutralPrice,
             cache.tradingExpo,
-            _liqMultiplierAccumulator,
-            tickSpacing
+            cache.liqMultiplierAccumulator,
+            _tickSpacing
         );
+
+        // update the cached values to calculate the imbalance with the position's data
+        CachedProtocolState memory updatedCache = CachedProtocolState({
+            longBalance: cache.longBalance + positionAmount,
+            vaultBalance: cache.vaultBalance,
+            tradingExpo: cache.tradingExpo,
+            totalExpo: cache.totalExpo,
+            liqMultiplierAccumulator: cache.liqMultiplierAccumulator
+        });
+        uint256 positionTotalExpo = _calcPositionTotalExpo(
+            positionAmount,
+            neutralPrice,
+            getEffectivePriceForTick(
+                tickWithoutLiqPenalty_, neutralPrice, cache.tradingExpo, cache.liqMultiplierAccumulator
+            )
+        );
+        // Add the trading expo to the cached value
+        updatedCache.tradingExpo += positionTotalExpo - positionAmount;
+        updatedCache.totalExpo += positionTotalExpo;
 
         // due to the rounding down, if the imbalance is still below the desired imbalance
         // and the position is not at the max leverage, add one tick
-        if (highestUsableTradingExpo != tradingExpoToFill && _calcLongImbalanceBps(cache) > _longImbalanceTargetBps) {
-            tickWithoutLiqPenalty_ += tickSpacing;
+        if (
+            highestUsableTradingExpo != tradingExpoToFill
+                && _calcLongImbalanceBps(updatedCache) > longImbalanceTargetBps
+        ) {
+            tickWithoutLiqPenalty_ += _tickSpacing;
         }
     }
 }

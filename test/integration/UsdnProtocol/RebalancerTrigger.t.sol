@@ -115,17 +115,9 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
         uint256 totalExpo = protocol.getTotalExpo() - tickToLiquidateData.totalExpo;
         uint256 vaultAssetAvailable = uint256(protocol.i_vaultAssetAvailable(wstEthPrice)) + remainingCollateral;
         uint256 longAssetAvailable = uint256(protocol.i_longAssetAvailable(wstEthPrice)) - remainingCollateral;
-        int256 imbalance = protocol.i_calcLongImbalanceBps(vaultAssetAvailable, longAssetAvailable, totalExpo);
         uint256 tradingExpoToFill = (
             vaultAssetAvailable * uint256(10_000 - protocol.getLongImbalanceTargetBps()) / 10_000
         ) - (totalExpo - longAssetAvailable);
-
-        // Sanity check
-        assertGt(
-            imbalance,
-            protocol.getCloseExpoImbalanceLimitBps(),
-            "The imbalance is not high enough to trigger the rebalancer, adjust the long positions in the setup"
-        );
 
         HugeUint.Uint512 memory expectedAccumulator = HugeUint.sub(
             protocol.getLiqMultiplierAccumulator(),
@@ -135,6 +127,16 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
                 ) * tickToLiquidateData.totalExpo
             )
         );
+
+        int256 imbalance =
+            protocol.i_calcLongImbalanceBps(vaultAssetAvailable, longAssetAvailable, totalExpo, expectedAccumulator);
+        // Sanity check
+        assertGt(
+            imbalance,
+            protocol.getCloseExpoImbalanceLimitBps(),
+            "The imbalance is not high enough to trigger the rebalancer, adjust the long positions in the setup"
+        );
+
         int24 expectedTickWithoutPenalty = protocol.getEffectiveTickForPrice(
             protocol.i_calcLiqPriceFromTradingExpo(wstEthPrice, amountInRebalancer + bonus, tradingExpoToFill),
             wstEthPrice,
@@ -151,7 +153,7 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
         protocol.liquidate{ value: oracleFee }(PYTH_DATA, 1);
 
         imbalance = protocol.i_calcLongImbalanceBps(
-            protocol.getBalanceVault(), protocol.getBalanceLong(), protocol.getTotalExpo()
+            protocol.getBalanceVault(), protocol.getBalanceLong(), protocol.getTotalExpo(), expectedAccumulator
         );
 
         assertLe(
