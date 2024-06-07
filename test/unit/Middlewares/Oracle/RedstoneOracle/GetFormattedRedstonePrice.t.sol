@@ -6,45 +6,42 @@ import {
     REDSTONE_ETH_PRICE, REDSTONE_ETH_DATA, REDSTONE_ETH_TIMESTAMP
 } from "test/unit/Middlewares/utils/Constants.sol";
 
-/**
- * @custom:feature The `getFormattedRedstonePrice` function of `RedstoneOracle`
- */
+import { RedstonePriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+
+/// @custom:feature The `getFormattedRedstonePrice` function of `RedstoneOracle`
 contract TestRedstoneOracleGetFormattedRedstonePrice is OracleMiddlewareBaseFixture {
     function setUp() public override {
         super.setUp();
     }
 
     /**
-     * @custom:scenario Check that `getFormattedRedstonePrice` function returns the correct price
-     * @custom:given The calldata with a known price, timestamp and signature
-     * @custom:when The `getFormattedRedstonePrice` function is called with a timestamp set to 0
-     * @custom:and The `getFormattedRedstonePrice` function is called with a timestamp in a 10-seconds window starting
-     * at the target timestamp
-     * @custom:then It should succeed
+     * @custom:scenario Return the correct price and timestamp
+     * @custom:given A valid Redstone update with a known timestamp and price
+     * @custom:and The block timestamp is equal to the Redstone timestamp + `_redstoneRecentPriceDelay`
+     * @custom:when The `getFormattedRedstonePrice` function is called with a target timestamp equal to the Redstone
+     * timestamp
+     * @custom:or The `getFormattedRedstonePrice` function is called with a target timestamp of 0
+     * @custom:then It should return the Redstone price and timestamp
      */
     function test_extractPriceUpdateTimestamp() public {
-        assertEq(
-            oracleMiddleware.i_getFormattedRedstonePrice(
-                REDSTONE_ETH_TIMESTAMP, oracleMiddleware.getDecimals(), REDSTONE_ETH_DATA
-            ).price,
-            REDSTONE_ETH_PRICE,
-            "block timestamp = calldata timestamp"
-        );
         vm.warp(REDSTONE_ETH_TIMESTAMP + oracleMiddleware.getRedstoneRecentPriceDelay());
-        assertEq(
-            oracleMiddleware.i_getFormattedRedstonePrice(0, oracleMiddleware.getDecimals(), REDSTONE_ETH_DATA).timestamp,
-            REDSTONE_ETH_TIMESTAMP,
-            "block timestamp = calldata timestamp + delay"
+
+        RedstonePriceInfo memory res = oracleMiddleware.i_getFormattedRedstonePrice(
+            REDSTONE_ETH_TIMESTAMP, oracleMiddleware.getDecimals(), REDSTONE_ETH_DATA
         );
+        assertEq(res.timestamp, REDSTONE_ETH_TIMESTAMP, "targetTimestamp = Redstone timestamp - timestamp");
+        assertEq(res.price, REDSTONE_ETH_PRICE, "targetTimestamp = Redstone timestamp - price");
+
+        res = oracleMiddleware.i_getFormattedRedstonePrice(0, oracleMiddleware.getDecimals(), REDSTONE_ETH_DATA);
+        assertEq(res.timestamp, REDSTONE_ETH_TIMESTAMP, "targetTimestamp = 0 - timestamp");
+        assertEq(res.price, REDSTONE_ETH_PRICE, "targetTimestamp = 0 - price");
     }
 
     /**
-     * @custom:scenario Check that `getFormattedRedstonePrice` function reverts when the price update timestamp is older
-     * than block timestamp + price delay
-     * @custom:given The calldata with a known timestamp and signature
-     * @custom:when The `getFormattedRedstonePrice` function is called with a timestamp too old of 1 second
-     * (targetTimestamp = 0)
-     * @custom:then It should revert
+     * @custom:scenario Revert when the price update timestamp is older than `_redstoneRecentPriceDelay` seconds
+     * @custom:given The Redstone price update is `_redstoneRecentPriceDelay` + 1 seconds old
+     * @custom:when The `getFormattedRedstonePrice` function is called with a target timestamp of 0
+     * @custom:then It should revert with `OracleMiddlewarePriceTooOld`
      */
     function test_RevertWhen_extractPriceUpdateTimestampRecentTooOld() public {
         vm.warp(REDSTONE_ETH_TIMESTAMP + oracleMiddleware.getRedstoneRecentPriceDelay() + 1);
@@ -54,12 +51,11 @@ contract TestRedstoneOracleGetFormattedRedstonePrice is OracleMiddlewareBaseFixt
     }
 
     /**
-     * @custom:scenario Check that `getFormattedRedstonePrice` function reverts when the price update timestamp is older
-     * than specified target timestamp
-     * @custom:given The calldata with a known timestamp and signature
-     * @custom:when The `getFormattedRedstonePrice` function is called with a timestamp too old of 1 second
-     * (targetTimestamp = calldata timestamp + 1)
-     * @custom:then It should revert
+     * @custom:scenario Revert when the price update timestamp is older than specified target timestamp
+     * @custom:given A Redstone price update with a known timestamp and price
+     * @custom:when The `getFormattedRedstonePrice` function is called with a target timestamp more recent than the
+     * Redstone timestamp
+     * @custom:then It should revert with `OracleMiddlewarePriceTooOld`
      */
     function test_RevertWhen_extractPriceUpdateTimestampTooOld() public {
         uint8 decimals = oracleMiddleware.getDecimals();
@@ -68,15 +64,14 @@ contract TestRedstoneOracleGetFormattedRedstonePrice is OracleMiddlewareBaseFixt
     }
 
     /**
+     * @custom:scenario Revert when the price update timestamp is too recent compared to the target timestamp
+     * @custom:given A Redstone price update with a known timestamp and price
+     * @custom:when The `getFormattedRedstonePrice` function is called with a target timestamp 10 seconds before the
+     * Redstone timestamp
+     * @custom:then It should revert with `OracleMiddlewarePriceTooRecent`
      * @dev Target timestamp + heartbeat represents the external (second) into the interval representing the allowed
      * price extraction window. It is therefore too recent because it representing the maximum + 1 second timestamp that
      * can be accepted
-     * @custom:scenario Check that `getFormattedRedstonePrice` function reverts when the price update timestamp is too
-     * recent (too much after the target timestamp)
-     * @custom:given The calldata with a known timestamp and signature
-     * @custom:when The `getFormattedRedstonePrice` function is called with a timestamp too recent of 1 second
-     * (targetTimestamp = calldata timestamp - heartbeat)
-     * @custom:then It should revert
      */
     function test_RevertWhen_extractPriceUpdateTimestampTooRecent() public {
         uint8 decimals = oracleMiddleware.getDecimals();

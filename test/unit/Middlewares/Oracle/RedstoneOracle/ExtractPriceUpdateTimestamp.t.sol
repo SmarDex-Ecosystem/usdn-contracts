@@ -4,9 +4,7 @@ pragma solidity 0.8.20;
 import { OracleMiddlewareBaseFixture } from "test/unit/Middlewares/utils/Fixtures.sol";
 import { REDSTONE_ETH_TIMESTAMP, REDSTONE_ETH_DATA } from "test/unit/Middlewares/utils/Constants.sol";
 
-/**
- * @custom:feature The `extractPriceUpdateTimestamp` function of `RedstoneOracle`
- */
+/// @custom:feature The `extractPriceUpdateTimestamp` function of `RedstoneOracle`
 contract TestRedstoneOracleExtractPriceUpdateTimestamp is OracleMiddlewareBaseFixture {
     function setUp() public override {
         super.setUp();
@@ -14,9 +12,9 @@ contract TestRedstoneOracleExtractPriceUpdateTimestamp is OracleMiddlewareBaseFi
 
     /**
      * @custom:scenario Check that `extractPriceUpdateTimestamp` function returns the correct timestamp
-     * @custom:given The calldata with a known timestamp and signature
-     * @custom:when The `extractPriceUpdateTimestamp` function is called
-     * @custom:then It should succeed
+     * @custom:given A valid Redstone update with a known timestamp
+     * @custom:when The `extractPriceUpdateTimestamp` function is called with the Redstone message
+     * @custom:then It should return the correct timestamp
      */
     function test_extractPriceUpdateTimestamp() public {
         assertEq(
