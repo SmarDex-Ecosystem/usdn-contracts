@@ -86,13 +86,22 @@ interface ISmardexPair is IERC20, IERC20Permit {
      */
     event FeesChanged(uint256 indexed feesLP, uint256 indexed feesPool);
 
-    /// @return The address of the factory
+    /**
+     * @notice Get the factory address
+     * @return The address of the factory
+     */
     function factory() external view returns (address);
 
-    /// @return The address of the token0
+    /**
+     * @notice Get the token0 address
+     * @return The address of the token0
+     */
     function token0() external view returns (address);
 
-    /// @return The address of the token1
+    /**
+     * @notice Get the token1 address
+     * @return The address of the token1
+     */
     function token1() external view returns (address);
 
     /**

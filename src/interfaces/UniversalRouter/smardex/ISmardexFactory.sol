@@ -34,10 +34,14 @@ interface ISmardexFactory {
      */
     event FeeToUpdated(address indexed previousFeeTo, address indexed newFeeTo);
 
-    /// @return Which the address fees will be transferred
+    /**
+     * @notice Return the address fees will be transferred
+     * @return Which the address fees will be transferred
+     */
     function feeTo() external view returns (address);
 
     /**
+     * @notice Get the pair address of 2 tokens
      * @param tokenA The token A of the pair
      * @param tokenB The token B of the pair
      * @return pair_ The address of the pair of 2 tokens
@@ -51,7 +55,10 @@ interface ISmardexFactory {
      */
     function allPairs(uint256 index) external view returns (address pair_);
 
-    /// @return The quantity of pairs
+    /**
+     * @notice Get the quantity of pairs
+     * @return The quantity of pairs
+     */
     function allPairsLength() external view returns (uint256);
 
     /**
