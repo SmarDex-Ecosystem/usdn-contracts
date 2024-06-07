@@ -1041,7 +1041,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario A smartcontract with no {receive} function is the validator of a `open position` action
+     * @custom:scenario A smartcontract with no {receive} function is the validator of a `openPosition` action
      * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
      * @custom:when The validator tries to validate the deposit
      * @custom:then The transaction reverts with the error `UsdnProtocolEtherRefundFailed`
@@ -1062,6 +1062,55 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         // The dummy contract (validator) does not implement a receive function so we expect a revert
         vm.expectRevert(UsdnProtocolEtherRefundFailed.selector);
         receiverContract.validateOpenPosition(address(protocol), priceData, EMPTY_PREVIOUS_DATA);
+
+        _waitBeforeActionablePendingAction();
+
+        PreviousActionsData memory prevActionsData = _assertActionAndCreateStruct();
+
+        // we validate the pending action with the user when the validation deadline has passed
+        vm.prank(USER_1);
+        protocol.validateActionablePendingActions(prevActionsData, 1);
+
+        // we assert that the security deposit has been refunded to the user1 and not to the receiver contract
+        assertBalancesEndDummyContract();
+    }
+
+    /**
+     * @custom:scenario A smartcontract with no {receive} function is the validator of a `closePosition` action
+     * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
+     * @custom:when The validator tries to validate the deposit
+     * @custom:then The transaction reverts with the error `UsdnProtocolEtherRefundFailed`
+     * @custom:and We skip the validation deadline + 1
+     * @custom:when A user tries to validate the pending action
+     * @custom:then The security deposit is refunded to the user and not to the receiver contract
+     */
+    function test_closePosition_refundSmartContract_noReceive() public {
+        PositionId memory posId = setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: params.initialPrice / 2,
+                price: params.initialPrice
+            })
+        );
+
+        (balanceUser0Before, balanceProtocolBefore, balanceUser1Before, balanceReceiverContractBefore) = _getBalances();
+
+        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
+
+        usdn.approve(address(protocol), 1);
+        protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(
+            posId, 1 ether, address(this), priceData, EMPTY_PREVIOUS_DATA
+        );
+
+        _waitDelay();
+
+        assertSecurityDepositPaidDummyContract();
+
+        // The dummy contract (validator) does not implement a receive function so we expect a revert
+        vm.expectRevert(UsdnProtocolEtherRefundFailed.selector);
+        receiverContract.validateWithdrawal(address(protocol), priceData, EMPTY_PREVIOUS_DATA);
 
         _waitBeforeActionablePendingAction();
 
