@@ -957,7 +957,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         (balanceUser0Before, balanceProtocolBefore,,) = _getBalances();
 
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
-            1 ether, address(this), address(receiverContract), priceData, EMPTY_PREVIOUS_DATA
+            1 ether, address(this), payable(address(receiverContract)), priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -980,7 +980,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before, balanceReceiverContractBefore) = _getBalances();
 
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
-            1 ether, USER_1, address(receiverContract), priceData, EMPTY_PREVIOUS_DATA
+            1 ether, USER_1, payable(address(receiverContract)), priceData, EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
@@ -1018,7 +1018,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         usdn.approve(address(protocol), 1);
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(
-            1, USER_1, address(receiverContract), priceData, EMPTY_PREVIOUS_DATA
+            1, USER_1, payable(address(receiverContract)), priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -1053,7 +1053,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before, balanceReceiverContractBefore) = _getBalances();
 
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
-            1 ether, params.initialPrice / 2, USER_1, address(receiverContract), priceData, EMPTY_PREVIOUS_DATA
+            1 ether, params.initialPrice / 2, USER_1, payable(address(receiverContract)), priceData, EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
@@ -1099,9 +1099,8 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
 
-        usdn.approve(address(protocol), 1);
         protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(
-            posId, 1 ether, address(this), priceData, EMPTY_PREVIOUS_DATA
+            posId, 1 ether, USER_1, payable(address(receiverContract)), priceData, EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
@@ -1110,7 +1109,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         // The dummy contract (validator) does not implement a receive function so we expect a revert
         vm.expectRevert(UsdnProtocolEtherRefundFailed.selector);
-        receiverContract.validateWithdrawal(address(protocol), priceData, EMPTY_PREVIOUS_DATA);
+        receiverContract.validateClosePosition(address(protocol), priceData, EMPTY_PREVIOUS_DATA);
 
         _waitBeforeActionablePendingAction();
 
@@ -1274,8 +1273,8 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             protocol.getActionablePendingActions(address(this));
 
         assertEq(pendingAction.length, 1, "actions length");
-        assertEq(pendingAction[0].to, USER_1, "actions length");
-        assertEq(pendingAction[0].validator, address(receiverContract), "actions length");
+        assertEq(pendingAction[0].to, USER_1, "action `to`");
+        assertEq(pendingAction[0].validator, address(receiverContract), "action `validator`");
 
         prevActionsData_ = PreviousActionsData({ priceData: prevPriceData, rawIndices: rawIndices });
     }
@@ -1289,7 +1288,7 @@ contract DummyContract {
         bytes calldata priceData,
         PreviousActionsData calldata previousData
     ) external {
-        IUsdnProtocol(usdnProtocolAddr).validateDeposit(address(this), priceData, previousData);
+        IUsdnProtocol(usdnProtocolAddr).validateDeposit(payable(address(this)), priceData, previousData);
     }
 
     function validateWithdrawal(
@@ -1297,7 +1296,7 @@ contract DummyContract {
         bytes calldata priceData,
         PreviousActionsData calldata previousData
     ) external {
-        IUsdnProtocol(usdnProtocolAddr).validateWithdrawal(address(this), priceData, previousData);
+        IUsdnProtocol(usdnProtocolAddr).validateWithdrawal(payable(address(this)), priceData, previousData);
     }
 
     function validateOpenPosition(
@@ -1305,6 +1304,14 @@ contract DummyContract {
         bytes calldata priceData,
         PreviousActionsData calldata previousData
     ) external {
-        IUsdnProtocol(usdnProtocolAddr).validateOpenPosition(address(this), priceData, previousData);
+        IUsdnProtocol(usdnProtocolAddr).validateOpenPosition(payable(address(this)), priceData, previousData);
+    }
+
+    function validateClosePosition(
+        address usdnProtocolAddr,
+        bytes calldata priceData,
+        PreviousActionsData calldata previousData
+    ) external {
+        IUsdnProtocol(usdnProtocolAddr).validateClosePosition(payable(address(this)), priceData, previousData);
     }
 }
