@@ -60,6 +60,6 @@ contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
      */
     function test_parseAndValidatePriceLowerThanLimit() public {
         uint256 fee = oracleMiddleware.validationCost(new bytes(48), ProtocolAction.ValidateDeposit);
-        assertEq(fee, 0, "Validation should be 0 when data length is below the limit");
+        assertEq(fee, 0, "Validation should be 0 when data does not contain magic");
     }
 }
