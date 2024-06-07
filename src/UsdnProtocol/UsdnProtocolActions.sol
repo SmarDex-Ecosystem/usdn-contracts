@@ -2057,6 +2057,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             return longBalance_;
         }
 
+        CachedProtocolState memory cache = CachedProtocolState({
+            totalExpo: _totalExpo,
+            longBalance: longBalance,
+            vaultBalance: vaultBalance,
+            tradingExpo: 0
+        });
+        cache.tradingExpo = cache.totalExpo - longBalance;
+
         // calculate the current imbalance
         {
             int256 currentImbalance = _calcLongImbalanceBps(cache);
@@ -2071,14 +2079,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         if (remainingCollateral > 0) {
             bonus = (uint256(remainingCollateral) * _rebalancerBonusBps / BPS_DIVISOR).toUint128();
         }
-
-        CachedProtocolState memory cache = CachedProtocolState({
-            totalExpo: _totalExpo,
-            longBalance: longBalance,
-            vaultBalance: vaultBalance,
-            tradingExpo: 0
-        });
-        cache.tradingExpo = cache.totalExpo - longBalance;
 
         (uint128 pendingAssets, uint256 rebalancerMaxLeverage, PositionId memory rebalancerPosId) =
             rebalancer.getCurrentStateData();

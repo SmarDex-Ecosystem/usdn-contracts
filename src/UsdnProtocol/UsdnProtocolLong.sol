@@ -869,25 +869,25 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         }
 
         // calculate the trading expo missing to reach the imbalance target
-        uint256 tradingExpoToFill =
+        uint256 targetTradingExpo =
             (cache.vaultBalance * (BPS_DIVISOR.toInt256() - _longImbalanceTargetBps).toUint256() / BPS_DIVISOR);
 
         // check that the target is not already exceeded
-        if (cache.tradingExpo >= tradingExpoToFill) {
+        if (cache.tradingExpo >= targetTradingExpo) {
             return NO_POSITION_TICK;
         }
 
-        tradingExpoToFill -= cache.tradingExpo;
+        uint256 tradingExpoToFill = targetTradingExpo - cache.tradingExpo;
 
         // check that the trading expo filled by the position would not exceed the max leverage
         uint256 highestUsableTradingExpo = positionAmount * rebalancerMaxLeverage / LEVERAGE_DECIMALS - positionAmount;
-        if (highestUsableTradingExpo > tradingExpoToFill) {
-            highestUsableTradingExpo = tradingExpoToFill;
+        if (highestUsableTradingExpo < tradingExpoToFill) {
+            tradingExpoToFill = highestUsableTradingExpo;
         }
 
         int24 tickSpacing = _tickSpacing;
         tickWithoutLiqPenalty_ = getEffectiveTickForPrice(
-            _calcLiqPriceFromTradingExpo(neutralPrice, positionAmount, highestUsableTradingExpo),
+            _calcLiqPriceFromTradingExpo(neutralPrice, positionAmount, tradingExpoToFill),
             neutralPrice,
             cache.tradingExpo,
             _liqMultiplierAccumulator,
@@ -896,7 +896,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
         // due to the rounding down, if the imbalance is still below the desired imbalance
         // and the position is not at the max leverage, add one tick
-        if (highestUsableTradingExpo == tradingExpoToFill && _calcLongImbalanceBps(cache) > _longImbalanceTargetBps) {
+        if (highestUsableTradingExpo != tradingExpoToFill && _calcLongImbalanceBps(cache) > _longImbalanceTargetBps) {
             tickWithoutLiqPenalty_ += tickSpacing;
         }
     }
