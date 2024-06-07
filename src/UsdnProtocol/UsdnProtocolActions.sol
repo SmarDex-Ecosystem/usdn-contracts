@@ -2068,7 +2068,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // calculate the current imbalance
         {
-            int256 currentImbalance = _calcLongImbalanceBps(cache);
+            int256 currentImbalance = _calcLongImbalanceBps(cache.vaultBalance, cache.longBalance, cache.totalExpo);
 
             // if the imbalance is lower than the threshold, return
             if (currentImbalance < _closeExpoImbalanceLimitBps) {

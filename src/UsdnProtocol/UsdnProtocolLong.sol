@@ -729,13 +729,18 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * TODO add tests
      * @notice Calculates the current imbalance between the vault and long sides
      * @dev If the value is positive, the long trading expo is smaller than the vault trading expo
-     * @param cache The cached protocol state variables
+     * @param vaultBalance The balance of the vault
+     * @param longBalance The balance of the long side
+     * @param totalExpo The total expo fo the long side
      * @return imbalanceBps_ The imbalance in basis points
      */
-    function _calcLongImbalanceBps(CachedProtocolState memory cache) internal pure returns (int256 imbalanceBps_) {
-        imbalanceBps_ = (
-            (cache.vaultBalance.toInt256()).safeSub(cache.totalExpo.toInt256().safeSub(cache.longBalance.toInt256()))
-        ).safeMul(int256(BPS_DIVISOR)).safeDiv(cache.vaultBalance.toInt256());
+    function _calcLongImbalanceBps(uint256 vaultBalance, uint256 longBalance, uint256 totalExpo)
+        internal
+        pure
+        returns (int256 imbalanceBps_)
+    {
+        imbalanceBps_ = ((vaultBalance.toInt256()).safeSub(totalExpo.toInt256().safeSub(longBalance.toInt256())))
+            .safeMul(int256(BPS_DIVISOR)).safeDiv(vaultBalance.toInt256());
     }
 
     /**
@@ -896,14 +901,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             _tickSpacing
         );
 
-        // update the cached values to calculate the imbalance with the position's data
-        CachedProtocolState memory updatedCache = CachedProtocolState({
-            longBalance: cache.longBalance + positionAmount,
-            vaultBalance: cache.vaultBalance,
-            tradingExpo: cache.tradingExpo,
-            totalExpo: cache.totalExpo,
-            liqMultiplierAccumulator: cache.liqMultiplierAccumulator
-        });
+        // calculate the total expo of the position that will be created with the tick
         uint256 positionTotalExpo = _calcPositionTotalExpo(
             positionAmount,
             neutralPrice,
@@ -911,15 +909,14 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
                 tickWithoutLiqPenalty_, neutralPrice, cache.tradingExpo, cache.liqMultiplierAccumulator
             )
         );
-        // Add the trading expo to the cached value
-        updatedCache.tradingExpo += positionTotalExpo - positionAmount;
-        updatedCache.totalExpo += positionTotalExpo;
 
         // due to the rounding down, if the imbalance is still below the desired imbalance
         // and the position is not at the max leverage, add one tick
         if (
             highestUsableTradingExpo != tradingExpoToFill
-                && _calcLongImbalanceBps(updatedCache) > longImbalanceTargetBps
+                && _calcLongImbalanceBps(
+                    cache.vaultBalance, cache.longBalance + positionAmount, cache.totalExpo + positionTotalExpo
+                ) > longImbalanceTargetBps
         ) {
             tickWithoutLiqPenalty_ += _tickSpacing;
         }

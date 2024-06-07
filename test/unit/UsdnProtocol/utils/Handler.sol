@@ -487,21 +487,12 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         _clearPendingAction(user, rawIndex);
     }
 
-    function i_calcLongImbalanceBps(
-        uint256 vaultBalance,
-        uint256 longBalance,
-        uint256 longTotalExpo,
-        HugeUint.Uint512 memory liqMultiplierAccumulator
-    ) external pure returns (int256 imbalanceBps_) {
-        CachedProtocolState memory cache = CachedProtocolState({
-            totalExpo: longTotalExpo,
-            longBalance: longBalance,
-            vaultBalance: vaultBalance,
-            tradingExpo: longTotalExpo - longBalance,
-            liqMultiplierAccumulator: liqMultiplierAccumulator
-        });
-
-        return _calcLongImbalanceBps(cache);
+    function i_calcLongImbalanceBps(uint256 vaultBalance, uint256 longBalance, uint256 longTotalExpo)
+        external
+        pure
+        returns (int256 imbalanceBps_)
+    {
+        return _calcLongImbalanceBps(vaultBalance, longBalance, longTotalExpo);
     }
 
     function i_removeBlockedPendingAction(uint128 rawIndex, address payable to, bool cleanup) external {
