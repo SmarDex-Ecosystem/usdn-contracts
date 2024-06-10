@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-
 import { PYTH_ETH_USD } from "test/utils/Constants.sol";
 import { USER_1 } from "test/utils/Constants.sol";
 import { UniversalRouterBaseFixture } from "test/integration/UniversalRouter/utils/Fixtures.sol";
@@ -15,10 +13,8 @@ import { ProtocolAction, PositionId } from "src/interfaces/UsdnProtocol/IUsdnPro
  * @custom:background Given a forked ethereum mainnet chain
  */
 contract TestForkUniversalRouterValidateClosePosition is UniversalRouterBaseFixture {
-    using SafeCast for uint256;
-
-    uint256 constant OPEN_POSITION_AMOUNT = 2 ether;
-    uint256 constant DESIRED_LIQUIDATION = 2500 ether;
+    uint128 constant OPEN_POSITION_AMOUNT = 2 ether;
+    uint128 constant DESIRED_LIQUIDATION = 2500 ether;
     uint256 internal _securityDeposit;
 
     function setUp() public {
@@ -27,12 +23,7 @@ contract TestForkUniversalRouterValidateClosePosition is UniversalRouterBaseFixt
         wstETH.approve(address(protocol), type(uint256).max);
         _securityDeposit = protocol.getSecurityDepositValue();
         (, PositionId memory posId) = protocol.initiateOpenPosition{ value: _securityDeposit }(
-            OPEN_POSITION_AMOUNT.toUint128(),
-            DESIRED_LIQUIDATION.toUint128(),
-            address(this),
-            address(this),
-            "",
-            EMPTY_PREVIOUS_DATA
+            OPEN_POSITION_AMOUNT, DESIRED_LIQUIDATION, address(this), address(this), "", EMPTY_PREVIOUS_DATA
         );
         _waitDelay(); // to be realistic because not mandatory
         uint256 ts1 = protocol.getUserPendingAction(address(this)).timestamp;
@@ -40,7 +31,7 @@ contract TestForkUniversalRouterValidateClosePosition is UniversalRouterBaseFixt
         uint256 validationCost = oracleMiddleware.validationCost(data, ProtocolAction.ValidateOpenPosition);
         protocol.validateOpenPosition{ value: validationCost }(address(this), data, EMPTY_PREVIOUS_DATA);
         protocol.initiateClosePosition{ value: _securityDeposit }(
-            posId, OPEN_POSITION_AMOUNT.toUint128(), USER_1, "", EMPTY_PREVIOUS_DATA
+            posId, OPEN_POSITION_AMOUNT, USER_1, "", EMPTY_PREVIOUS_DATA
         );
     }
 
