@@ -29,6 +29,7 @@ interface IOracleMiddlewareEvents {
      * @param newDelay The new recent price delay
      */
     event RedstoneRecentPriceDelayUpdated(uint48 newDelay);
+
     /**
      * @notice Emitted when the confidence ratio is updated
      * @param newConfRatio The new confidence ratio
