@@ -49,7 +49,7 @@ contract TestForkUsdnProtocolValidateTwoPos is UsdnProtocolBaseIntegrationFixtur
         uint256 ts2 = block.timestamp;
         vm.stopPrank();
 
-        // wait to make user1's action actionable
+        // wait to make user1's action is actionable
         skip(20 minutes);
 
         // user1's position must be validated with chainlink

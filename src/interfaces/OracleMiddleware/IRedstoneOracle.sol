@@ -33,7 +33,7 @@ interface IRedstoneOracle {
 
     /**
      * @dev Used by the Redstone contract internally, we override to allow all timestamps
-     * @param timestampMillis the timestamp of the price update in milliseconds
+     * @param timestampMs the timestamp of the price update in milliseconds
      */
-    function validateTimestamp(uint256 timestampMillis) external pure;
+    function validateTimestamp(uint256 timestampMs) external pure;
 }

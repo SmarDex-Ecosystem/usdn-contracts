@@ -68,7 +68,7 @@ abstract contract RedstoneOracle is IRedstoneOracle, PrimaryProdDataServiceConsu
                 revert OracleMiddlewarePriceTooOld(formattedPrice_.timestamp);
             }
         } else {
-            // we want to validate that the price is in a 10-seconds window starting at the target timestamp
+            // we want to validate that the price is in a 1-heartbeat window starting at the target timestamp
             if (formattedPrice_.timestamp < targetTimestamp) {
                 revert OracleMiddlewarePriceTooOld(formattedPrice_.timestamp); // price is too much before the target
             } else if (formattedPrice_.timestamp >= targetTimestamp + REDSTONE_HEARTBEAT) {
