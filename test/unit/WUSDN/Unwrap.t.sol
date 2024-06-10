@@ -8,7 +8,7 @@ import { WusdnTokenFixture } from "test/unit/WUSDN/utils/Fixtures.sol";
  * @custom:background Given this contract has the MINTER_ROLE
  * @custom:and The divisor is MAX_DIVISOR
  */
-contract TestWusdnWithdraw is WusdnTokenFixture {
+contract TestWusdnUnwrap is WusdnTokenFixture {
     /**
      * @custom:scenario Withdraw usdn to wusdn contract
      * @custom:given 100 usdn are minted to a user
@@ -18,7 +18,7 @@ contract TestWusdnWithdraw is WusdnTokenFixture {
      * @custom:and The total assets of usdn are 46
      * @custom:and The total supply of wusdn is 23
      */
-    function test_withdraw() public {
+    function test_unwrap() public {
         uint256 depositAmount = 30 * 10 ** usdnDecimals;
         uint256 depositShares = usdn.convertToShares(depositAmount);
 

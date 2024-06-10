@@ -8,7 +8,7 @@ import { WusdnTokenFixture } from "test/unit/WUSDN/utils/Fixtures.sol";
  * @custom:background Given this contract has the MINTER_ROLE
  * @custom:and The divisor is MAX_DIVISOR
  */
-contract TestWusdnMint is WusdnTokenFixture {
+contract TestWusdnWrap is WusdnTokenFixture {
     /**
      * @custom:scenario Deposit usdn to wusdn contract
      * @custom:given 100 usdn are minted to a user
@@ -18,7 +18,7 @@ contract TestWusdnMint is WusdnTokenFixture {
      * @custom:and The total assets of wusdn are 18 assets
      * @custom:and The total supply of wusdn is the sum of minted shares
      */
-    function test_mint() public {
+    function test_wrap() public {
         uint256 depositAmount = 30 * 10 ** usdnDecimals;
         uint256 depositShares = usdn.convertToShares(depositAmount);
 
