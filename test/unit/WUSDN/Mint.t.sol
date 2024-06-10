@@ -19,14 +19,18 @@ contract TestWusdnMint is WusdnTokenFixture {
      * @custom:and The total supply of wusdn is the sum of minted shares
      */
     function test_mint() public {
-        usdn.approve(address(wusdn), type(uint256).max);
+        uint256 depositAmount = 30 * 10 ** usdnDecimals;
+        uint256 depositShares = usdn.convertToShares(depositAmount);
 
-        uint256 shares1 = 30 ether;
-        wusdn.wrap(shares1);
+        usdn.approve(address(wusdn), depositAmount * 3);
+
+        wusdn.wrap(depositAmount);
         usdn.rebase(usdn.MAX_DIVISOR() / 2);
-        uint256 shares2 = 60 ether;
-        wusdn.wrap(shares2);
-        assertApproxEqAbs(wusdn.totalUsdn(), wusdn.previewUnwrap(shares1 + shares2), 1, "total assets");
-        assertEq(wusdn.totalSupply(), shares1 + shares2, "total supply");
+
+        depositShares += usdn.convertToShares(depositAmount * 2);
+        wusdn.wrap(depositAmount * 2);
+
+        assertEq(wusdn.totalUsdn(), usdn.convertToTokens(depositShares), "total USDN supply in WUSDN");
+        assertEq(wusdn.totalSupply(), depositAmount * 2, "total WUSDN supply");
     }
 }

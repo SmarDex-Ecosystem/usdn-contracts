@@ -36,7 +36,7 @@ contract WusdnHandler is Wusdn, Test {
         if (balanceOf(msg.sender) == 0) {
             return;
         }
-        uint256 maxAssets = previewUnwrap(balanceOf(msg.sender));
+        uint256 maxAssets = this.previewUnwrap(balanceOf(msg.sender));
         console2.log("bound withdraw amount");
         assets = bound(assets, 0, maxAssets);
 

@@ -37,9 +37,9 @@ contract Wusdn is ERC20Permit, IWusdn {
         SHARES_PRECISION_FACTOR = USDN.MAX_DIVISOR();
     }
 
-    function previewWrap(uint256 usdnAmount) public view returns (uint256 wrappedAmount_) {
-        wrappedAmount_ = USDN.convertToShares(usdnAmount) / SHARES_PRECISION_FACTOR;
-    }
+    /* -------------------------------------------------------------------------- */
+    /*                             external functions                             */
+    /* -------------------------------------------------------------------------- */
 
     function wrap(uint256 usdnAmount) external returns (uint256 wrappedAmount_) {
         wrappedAmount_ = _wrap(usdnAmount, msg.sender);
@@ -47,14 +47,6 @@ contract Wusdn is ERC20Permit, IWusdn {
 
     function wrap(uint256 usdnAmount, address to) external returns (uint256 wrappedAmount_) {
         wrappedAmount_ = _wrap(usdnAmount, to);
-    }
-
-    function _wrap(uint256 usdnAmount, address to) internal returns (uint256 wrappedAmount_) {
-        wrappedAmount_ = previewWrap(usdnAmount);
-        USDN.transferSharesFrom(msg.sender, address(this), wrappedAmount_ * SHARES_PRECISION_FACTOR);
-
-        _mint(to, wrappedAmount_);
-        // TO DO emit Wrap(from, to, usdnAmount, wrappedAmount_);
     }
 
     function wrapFrom(address from, uint256 usdnAmount, address to) external returns (uint256 wrappedAmount_) {
@@ -67,7 +59,7 @@ contract Wusdn is ERC20Permit, IWusdn {
         _mint(to, wrappedAmount_);
     }
 
-    function previewUnwrap(uint256 wrappedAmount) public view returns (uint256 usdnAmount_) {
+    function previewUnwrap(uint256 wrappedAmount) external view returns (uint256 usdnAmount_) {
         usdnAmount_ = USDN.convertToTokens(wrappedAmount * SHARES_PRECISION_FACTOR);
     }
 
@@ -86,19 +78,39 @@ contract Wusdn is ERC20Permit, IWusdn {
         _spendAllowance(from, msg.sender, wrappedAmount);
         _burn(from, wrappedAmount);
 
-        USDN.transferSharesFrom(address(this), to, usdnShares);
-    }
-
-    function _unwrap(address from, uint256 wrappedAmount, address to) internal returns (uint256 usdnAmount_) {
-        uint256 usdnShares = wrappedAmount * SHARES_PRECISION_FACTOR;
-        usdnAmount_ = USDN.convertToTokens(usdnShares);
-        _burn(from, wrappedAmount);
-
-        USDN.transferSharesFrom(address(this), to, usdnShares);
-        // TO DO emit Unwrap(from, to, usdnAmount_, wrappedAmount);
+        USDN.transferShares(to, usdnShares);
     }
 
     function totalUsdn() external view returns (uint256) {
         return USDN.balanceOf(address(this));
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                              public functions                              */
+    /* -------------------------------------------------------------------------- */
+
+    function previewWrap(uint256 usdnAmount) public view returns (uint256 wrappedAmount_) {
+        wrappedAmount_ = USDN.convertToShares(usdnAmount) / SHARES_PRECISION_FACTOR;
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                              private functions                             */
+    /* -------------------------------------------------------------------------- */
+
+    function _wrap(uint256 usdnAmount, address to) private returns (uint256 wrappedAmount_) {
+        wrappedAmount_ = previewWrap(usdnAmount);
+        USDN.transferSharesFrom(msg.sender, address(this), wrappedAmount_ * SHARES_PRECISION_FACTOR);
+
+        _mint(to, wrappedAmount_);
+        // TO DO emit Wrap(from, to, usdnAmount, wrappedAmount_);
+    }
+
+    function _unwrap(address from, uint256 wrappedAmount, address to) private returns (uint256 usdnAmount_) {
+        uint256 usdnShares = wrappedAmount * SHARES_PRECISION_FACTOR;
+        usdnAmount_ = USDN.convertToTokens(usdnShares);
+        _burn(from, wrappedAmount);
+
+        USDN.transferShares(to, usdnShares);
+        // TO DO emit Unwrap(from, to, usdnAmount_, wrappedAmount);
     }
 }
