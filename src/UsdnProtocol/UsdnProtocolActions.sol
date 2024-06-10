@@ -2,9 +2,9 @@
 pragma solidity 0.8.20;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
+import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
@@ -31,8 +31,7 @@ import { TickMath } from "src/libraries/TickMath.sol";
 import { IOwnershipCallback } from "src/interfaces/UsdnProtocol/IOwnershipCallback.sol";
 
 abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong {
-    using SafeERC20 for IERC20Metadata;
-    using SafeERC20 for IUsdn;
+    using SafeTransferLib for address;
     using SafeCast for uint256;
     using SafeCast for int256;
     using LibBitmap for LibBitmap.Bitmap;
@@ -602,7 +601,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         // transfer rewards (assets) to the liquidator
-        _asset.safeTransfer(msg.sender, liquidationRewards);
+        address(_asset).safeTransfer(msg.sender, liquidationRewards);
 
         emit LiquidatorRewarded(msg.sender, liquidationRewards);
     }
@@ -745,11 +744,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         if (data.sdexToBurn > 0) {
             // send SDEX to the dead address
-            _sdex.safeTransferFrom(user, DEAD_ADDRESS, data.sdexToBurn);
+            address(_sdex).safeTransferFrom(user, DEAD_ADDRESS, data.sdexToBurn);
         }
 
         // transfer assets
-        _asset.safeTransferFrom(user, address(this), amount);
+        address(_asset).safeTransferFrom(user, address(this), amount);
         _pendingBalanceVault += _toInt256(amount);
 
         isInitiated_ = true;
@@ -1086,7 +1085,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // send the asset to the user
         if (assetToTransfer > 0) {
             _balanceVault -= assetToTransfer;
-            _asset.safeTransfer(withdrawal.to, assetToTransfer);
+            address(_asset).safeTransfer(withdrawal.to, assetToTransfer);
         }
 
         isValidated_ = true;
@@ -1251,7 +1250,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         amountToRefund_ = _createOpenPendingAction(to, validator, securityDepositValue, data);
 
-        _asset.safeTransferFrom(user, address(this), amount);
+        address(_asset).safeTransferFrom(user, address(this), amount);
 
         isInitiated_ = true;
         emit InitiatedOpenPosition(
@@ -1822,7 +1821,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // send the asset to the user
         if (assetToTransfer > 0) {
-            _asset.safeTransfer(long.to, assetToTransfer);
+            address(_asset).safeTransfer(long.to, assetToTransfer);
         }
 
         isValidated_ = true;
@@ -2071,7 +2070,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      */
     function _checkPendingFee() internal {
         if (_pendingProtocolFee >= _feeThreshold) {
-            _asset.safeTransfer(_feeCollector, _pendingProtocolFee);
+            address(_asset).safeTransfer(_feeCollector, _pendingProtocolFee);
             emit ProtocolFeeDistributed(_feeCollector, _pendingProtocolFee);
             _pendingProtocolFee = 0;
         }
