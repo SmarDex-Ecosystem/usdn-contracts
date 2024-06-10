@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+
 import { RebalancerFixture } from "test/unit/Rebalancer/utils/Fixtures.sol";
-import { IERC165_ID } from "test/utils/Constants.sol";
 
 import { IOwnershipCallback } from "src/interfaces/UsdnProtocol/IOwnershipCallback.sol";
 import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
@@ -23,7 +24,7 @@ contract TestRebalancerSupportsInterface is RebalancerFixture {
      * @custom:then The function should return `true` for the supported interfaces and `false` for any other interface
      */
     function test_supportsInterface() external {
-        assertEq(rebalancer.supportsInterface(IERC165_ID), true, "IERC165_ID supported");
+        assertEq(rebalancer.supportsInterface(type(IERC165).interfaceId), true, "IERC165_ID supported");
         assertEq(
             rebalancer.supportsInterface(type(IOwnershipCallback).interfaceId), true, "IOwnershipCallback_ID supported"
         );
