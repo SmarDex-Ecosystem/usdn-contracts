@@ -151,4 +151,24 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
             amount.toUint128(), desiredLiqPrice, to, payable(validator), currentPriceData, previousActionsData
         );
     }
+
+    /**
+     * @notice Validate an open position in the USDN protocol
+     * @dev Check the protocol's documentation for information about how this function should be used
+     * @param validator The address that should validate the open position (receives the security deposit)
+     * @param openPositionPriceData The price data corresponding to the validator's pending open position action
+     * @param previousActionsData The data needed to validate actionable pending actions
+     * @param ethAmount The amount of Ether to send with the transaction
+     * @return success_ Whether the open position was successful
+     */
+    function _usdnValidateOpenPosition(
+        address validator,
+        bytes memory openPositionPriceData,
+        PreviousActionsData memory previousActionsData,
+        uint256 ethAmount
+    ) internal returns (bool success_) {
+        success_ = USDN_PROTOCOL.validateOpenPosition{ value: ethAmount }(
+            validator, openPositionPriceData, previousActionsData
+        );
+    }
 }
