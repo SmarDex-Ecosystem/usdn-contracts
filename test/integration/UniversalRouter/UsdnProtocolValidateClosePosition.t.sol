@@ -50,7 +50,6 @@ contract TestForkUniversalRouterValidateClosePosition is UniversalRouterBaseFixt
         (,,,, bytes memory data) = getHermesApiSignature(PYTH_ETH_USD, ts1 + oracleMiddleware.getValidationDelay());
 
         uint256 ethBalanceBefore = address(this).balance;
-        uint256 wstETHBalanceBefore = wstETH.balanceOf(address(this));
         uint256 validationCost = oracleMiddleware.validationCost(data, ProtocolAction.ValidateClosePosition);
 
         bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.VALIDATE_CLOSE)));
