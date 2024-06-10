@@ -2098,6 +2098,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             positionAmount += positionValue;
         }
 
+        // If there are no pending assets and the previous position was either liquidated or doesn't exist, return
+        if (position + positionAmount = 0) {
+            return (longBalance_, vaultBalance_);
+        }
+
         // if there is enough collateral remaining after liquidations, calculate the bonus and add it to the
         // new rebalancer position
         if (remainingCollateral > 0) {
