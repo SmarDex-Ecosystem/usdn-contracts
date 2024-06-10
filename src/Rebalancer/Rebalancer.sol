@@ -6,10 +6,13 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+import { ERC165, IERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
+import { IOwnershipCallback } from "src/interfaces/UsdnProtocol/IOwnershipCallback.sol";
 import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
 import { PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title Rebalancer
@@ -17,7 +20,7 @@ import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
  * It will manage only one position with enough trading expo to re-balance the protocol after liquidations
  * and close/open again with new and existing funds when the imbalance reaches a certain threshold
  */
-contract Rebalancer is Ownable, IRebalancer {
+contract Rebalancer is Ownable, ERC165, IOwnershipCallback, IRebalancer {
     using SafeCast for uint256;
     using SafeERC20 for IERC20Metadata;
 
@@ -281,6 +284,13 @@ contract Rebalancer is Ownable, IRebalancer {
         pnlMultiplier_ = value * MULTIPLIER_FACTOR / openAmount;
     }
 
+    /// @inheritdoc IERC165
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
+        if (interfaceId == type(IOwnershipCallback).interfaceId) return true;
+        if (interfaceId == type(IRebalancer).interfaceId) return true;
+        return super.supportsInterface(interfaceId);
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                                    Admin                                   */
     /* -------------------------------------------------------------------------- */
@@ -305,5 +315,10 @@ contract Rebalancer is Ownable, IRebalancer {
 
         _minAssetDeposit = minAssetDeposit;
         emit MinAssetDepositUpdated(minAssetDeposit);
+    }
+
+    /// @inheritdoc IOwnershipCallback
+    function ownershipCallback(address, PositionId calldata) external pure {
+        revert RebalancerUnauthorized(); // first version of the rebalancer contract so we are always reverting
     }
 }

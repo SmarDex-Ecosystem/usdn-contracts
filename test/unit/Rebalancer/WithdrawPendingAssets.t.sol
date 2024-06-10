@@ -5,7 +5,7 @@ import { RebalancerFixture } from "test/unit/Rebalancer/utils/Fixtures.sol";
 import { USER_1 } from "test/utils/Constants.sol";
 
 /**
- * @custom:feature The withdrawPendingAssets function of the rebalancer contract
+ * @custom:feature The `withdrawPendingAssets` function of the rebalancer contract
  * @custom:background Given a rebalancer contract
  */
 contract TestRebalancerWithdrawPendingAssets is RebalancerFixture {
