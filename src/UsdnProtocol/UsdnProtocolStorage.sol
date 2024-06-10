@@ -134,7 +134,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
      * @dev As soon as the difference between the vault expo and the long expo exceeds this basis point limit in favor
      * of long the open rebalancing mechanism is triggered, preventing the opening of a new long position
      */
-    int256 internal _openExpoImbalanceLimitBps = 200;
+    int256 internal _openExpoImbalanceLimitBps = 500;
 
     /**
      * @notice The imbalance limit of the long expo for withdrawal actions (in basis points)
@@ -149,7 +149,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
      * of the vault, the deposit vault rebalancing mechanism is triggered, preventing the opening of a new vault
      * position
      */
-    int256 internal _depositExpoImbalanceLimitBps = 200;
+    int256 internal _depositExpoImbalanceLimitBps = 500;
 
     /**
      * @notice The imbalance limit of the vault expo for close actions (in basis points)
