@@ -10,27 +10,22 @@ import { WusdnTokenFixture } from "test/unit/WUSDN/utils/Fixtures.sol";
  * and transfer to other users. Follow invariants in Wusdn
  */
 contract TestWusdnInvariants is WusdnTokenFixture {
-    uint256 internal constant INITIAL_WUSDN_DEPOSIT = 1 ether;
-
     function setUp() public override {
         super.setUp();
         usdn.approve(address(wusdn), type(uint256).max);
 
-        targetContract(address(usdn));
-        bytes4[] memory usdnSelectors = new bytes4[](4);
-        usdnSelectors[0] = usdn.rebaseTest.selector;
-        usdnSelectors[1] = usdn.mintTest.selector;
-        usdnSelectors[2] = usdn.burnTest.selector;
-        usdnSelectors[3] = usdn.transferTest.selector;
-        targetSelector(FuzzSelector({ addr: address(usdn), selectors: usdnSelectors }));
         targetContract(address(wusdn));
-        bytes4[] memory wusdnSelectors = new bytes4[](5);
+        bytes4[] memory wusdnSelectors = new bytes4[](6);
+        // WUSDN functions
         wusdnSelectors[0] = wusdn.depositTest.selector;
-        wusdnSelectors[1] = wusdn.mintTest.selector;
-        wusdnSelectors[2] = wusdn.withdrawTest.selector;
-        wusdnSelectors[3] = wusdn.redeemTest.selector;
-        wusdnSelectors[4] = wusdn.transferTest.selector;
+        wusdnSelectors[1] = wusdn.withdrawTest.selector;
+        wusdnSelectors[2] = wusdn.transferTest.selector;
+        // USDN functions
+        wusdnSelectors[3] = wusdn.usdnMintTest.selector;
+        wusdnSelectors[4] = wusdn.usdnTransferTest.selector;
+        wusdnSelectors[5] = wusdn.usdnBurnTest.selector;
         targetSelector(FuzzSelector({ addr: address(wusdn), selectors: wusdnSelectors }));
+
         targetSender(USER_1);
         targetSender(USER_2);
         targetSender(USER_3);

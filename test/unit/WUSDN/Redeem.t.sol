@@ -22,11 +22,11 @@ contract TestWusdnRedeem is WusdnTokenFixture {
         usdn.approve(address(wusdn), type(uint256).max);
 
         uint256 mintedShares = 30 ether;
-        wusdn.mint(mintedShares, address(this));
+        wusdn.wrap(mintedShares);
         usdn.rebase(usdn.MAX_DIVISOR() / 2);
         uint256 redeemedShares = 15 ether;
-        wusdn.redeem(redeemedShares, address(this), address(this));
-        assertApproxEqAbs(wusdn.totalAssets(), wusdn.convertToAssets(mintedShares - redeemedShares), 1, "total assets");
+        wusdn.unwrap(redeemedShares);
+        assertApproxEqAbs(wusdn.totalUsdn(), wusdn.convertToAssets(mintedShares - redeemedShares), 1, "total assets");
         assertEq(wusdn.totalSupply(), mintedShares - redeemedShares, "total supply");
     }
 }

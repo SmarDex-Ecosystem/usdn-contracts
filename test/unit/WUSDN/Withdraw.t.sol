@@ -21,11 +21,11 @@ contract TestWusdnWithdraw is WusdnTokenFixture {
     function test_withdraw() public {
         usdn.approve(address(wusdn), type(uint256).max);
 
-        wusdn.deposit(30 * 10 ** usdnDecimals, address(this));
+        wusdn.wrap(30 * 10 ** usdnDecimals);
         usdn.rebase(usdn.MAX_DIVISOR() / 2);
-        wusdn.withdraw(14 * 10 ** usdnDecimals, address(this), address(this));
+        wusdn.unwrap(14 * 10 ** usdnDecimals);
 
-        assertEq(wusdn.totalAssets(), (30 * 2 - 14) * 10 ** usdnDecimals, "total assets");
+        assertEq(wusdn.totalUsdn(), (30 * 2 - 14) * 10 ** usdnDecimals, "total assets");
         assertApproxEqAbs(wusdn.totalSupply(), 23 * 10 ** usdnDecimals, 1, "total supply");
     }
 }

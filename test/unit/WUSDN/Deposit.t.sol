@@ -21,11 +21,11 @@ contract TestWusdnDeposit is WusdnTokenFixture {
     function test_deposit() public {
         usdn.approve(address(wusdn), type(uint256).max);
 
-        wusdn.deposit(30 * 10 ** usdnDecimals, address(this));
+        wusdn.wrap(30 * 10 ** usdnDecimals);
         usdn.rebase(usdn.MAX_DIVISOR() / 2);
-        wusdn.deposit(70 * 10 ** usdnDecimals, address(this));
+        wusdn.wrap(70 * 10 ** usdnDecimals);
 
-        assertEq(wusdn.totalAssets(), 130 * 10 ** usdnDecimals, "total assets");
+        assertEq(wusdn.totalUsdn(), 130 * 10 ** usdnDecimals, "total assets");
         assertEq(wusdn.totalSupply(), 65 * 10 ** usdnDecimals, "total supply");
     }
 }

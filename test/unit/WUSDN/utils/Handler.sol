@@ -28,20 +28,8 @@ contract WusdnHandler is Wusdn, Test {
         vm.prank(msg.sender);
         _usdn.approve(address(this), type(uint256).max);
 
-        deposit(assets, msg.sender);
-    }
-
-    function mintTest(uint256 shares) external {
-        if (_usdn.balanceOf(msg.sender) == 0) {
-            return;
-        }
-        uint256 maxShares = convertToShares(_usdn.balanceOf(msg.sender));
-        console2.log("bound mint amount");
-        shares = bound(shares, 0, maxShares);
         vm.prank(msg.sender);
-        _usdn.approve(address(this), type(uint256).max);
-
-        mint(shares, msg.sender);
+        this.wrap(assets);
     }
 
     function withdrawTest(uint256 assets) external {
@@ -52,17 +40,8 @@ contract WusdnHandler is Wusdn, Test {
         console2.log("bound withdraw amount");
         assets = bound(assets, 0, maxAssets);
 
-        withdraw(assets, msg.sender, msg.sender);
-    }
-
-    function redeemTest(uint256 shares) external {
-        if (balanceOf(msg.sender) == 0) {
-            return;
-        }
-        console2.log("bound redeem amount");
-        shares = bound(shares, 0, balanceOf(msg.sender));
-
-        redeem(shares, msg.sender, msg.sender);
+        vm.prank(msg.sender);
+        this.unwrap(assets);
     }
 
     function transferTest(address to, uint256 shares) external {
@@ -72,6 +51,57 @@ contract WusdnHandler is Wusdn, Test {
         console2.log("bound transfer amount");
         shares = bound(shares, 1, balanceOf(msg.sender));
 
-        _transfer(msg.sender, to, shares);
+        vm.prank(msg.sender);
+        this.transfer(to, shares);
+    }
+
+    function usdnTransferTest(address to, uint256 value) external {
+        if (_usdn.balanceOf(msg.sender) == 0 || to == address(0)) {
+            return;
+        }
+        console2.log("bound transfer value");
+        value = bound(value, 1, _usdn.balanceOf(msg.sender));
+
+        vm.prank(msg.sender);
+        _usdn.transfer(to, value);
+    }
+
+    function usdnMintTest(uint256 value) external {
+        uint256 maxTokens = _usdn.maxTokens();
+        uint256 totalSupply = _usdn.totalSupply();
+
+        if (totalSupply >= maxTokens - 1) {
+            return;
+        }
+
+        console2.log("bound mint value");
+        value = bound(value, 1, maxTokens - totalSupply - 1);
+
+        _usdn.mint(msg.sender, value);
+    }
+
+    function usdnBurnTest(uint256 value) external {
+        if (balanceOf(msg.sender) == 0) {
+            return;
+        }
+        console2.log("bound burn value");
+        value = bound(value, 1, balanceOf(msg.sender));
+
+        vm.prank(msg.sender);
+        _usdn.burn(value);
+    }
+
+    function usdnRebaseTest(uint256 newDivisor) external {
+        uint256 divisor = _usdn.divisor();
+        uint256 MIN_DIVISOR = _usdn.MIN_DIVISOR();
+
+        if (divisor == MIN_DIVISOR) {
+            return;
+        }
+
+        console2.log("bound divisor");
+        newDivisor = bound(newDivisor, MIN_DIVISOR, divisor - 1);
+
+        _usdn.rebase(newDivisor);
     }
 }
