@@ -168,7 +168,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         uint256 ethAmount
     ) internal returns (bool success_) {
         success_ = USDN_PROTOCOL.validateOpenPosition{ value: ethAmount }(
-            validator, openPositionPriceData, previousActionsData
+            payable(validator), openPositionPriceData, previousActionsData
         );
     }
 }
