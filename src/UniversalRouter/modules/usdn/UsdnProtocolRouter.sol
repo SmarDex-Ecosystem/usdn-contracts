@@ -42,7 +42,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         SDEX.approve(address(USDN_PROTOCOL), type(uint256).max);
         // we send the full ETH balance, the protocol will refund any excess
         success_ = USDN_PROTOCOL.initiateDeposit{ value: ethAmount }(
-            amount.toUint128(), to, validator, currentPriceData, previousActionsData
+            amount.toUint128(), to, payable(validator), currentPriceData, previousActionsData
         );
         SDEX.approve(address(USDN_PROTOCOL), 0);
     }
@@ -62,7 +62,8 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         PreviousActionsData memory previousActionsData,
         uint256 ethAmount
     ) internal returns (bool success_) {
-        success_ = USDN_PROTOCOL.validateDeposit{ value: ethAmount }(validator, depositPriceData, previousActionsData);
+        success_ =
+            USDN_PROTOCOL.validateDeposit{ value: ethAmount }(payable(validator), depositPriceData, previousActionsData);
     }
 
     /**
@@ -92,7 +93,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         USDN.approve(address(USDN_PROTOCOL), USDN.convertToTokensRoundUp(amount));
         // we send the full ETH balance, the protocol will refund any excess
         success_ = USDN_PROTOCOL.initiateWithdrawal{ value: ethAmount }(
-            amount.toUint152(), to, validator, currentPriceData, previousActionsData
+            amount.toUint152(), to, payable(validator), currentPriceData, previousActionsData
         );
     }
 
@@ -112,8 +113,9 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         PreviousActionsData memory previousActionsData,
         uint256 ethAmount
     ) internal returns (bool success_) {
-        success_ =
-            USDN_PROTOCOL.validateWithdrawal{ value: ethAmount }(validator, withdrawalPriceData, previousActionsData);
+        success_ = USDN_PROTOCOL.validateWithdrawal{ value: ethAmount }(
+            payable(validator), withdrawalPriceData, previousActionsData
+        );
     }
 
     /**
@@ -146,7 +148,27 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         PROTOCOL_ASSET.forceApprove(address(USDN_PROTOCOL), amount);
         // we send the full ETH balance, and the protocol will refund any excess
         (success_, posId_) = USDN_PROTOCOL.initiateOpenPosition{ value: ethAmount }(
-            amount.toUint128(), desiredLiqPrice, to, validator, currentPriceData, previousActionsData
+            amount.toUint128(), desiredLiqPrice, to, payable(validator), currentPriceData, previousActionsData
+        );
+    }
+
+    /**
+     * @notice Validate an open position in the USDN protocol
+     * @dev Check the protocol's documentation for information about how this function should be used
+     * @param validator The address that should validate the open position (receives the security deposit)
+     * @param openPositionPriceData The price data corresponding to the validator's pending open position action
+     * @param previousActionsData The data needed to validate actionable pending actions
+     * @param ethAmount The amount of Ether to send with the transaction
+     * @return success_ Whether the open position was successful
+     */
+    function _usdnValidateOpenPosition(
+        address validator,
+        bytes memory openPositionPriceData,
+        PreviousActionsData memory previousActionsData,
+        uint256 ethAmount
+    ) internal returns (bool success_) {
+        success_ = USDN_PROTOCOL.validateOpenPosition{ value: ethAmount }(
+            payable(validator), openPositionPriceData, previousActionsData
         );
     }
 
