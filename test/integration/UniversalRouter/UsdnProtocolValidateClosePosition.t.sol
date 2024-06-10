@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
+import { Constants } from "@uniswap/universal-router/contracts/libraries/Constants.sol";
+
 import { PYTH_ETH_USD } from "test/utils/Constants.sol";
 import { USER_1 } from "test/utils/Constants.sol";
 import { UniversalRouterBaseFixture } from "test/integration/UniversalRouter/utils/Fixtures.sol";
@@ -53,7 +55,7 @@ contract TestForkUniversalRouterValidateClosePosition is UniversalRouterBaseFixt
 
         bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.VALIDATE_CLOSE)));
         bytes[] memory inputs = new bytes[](1);
-        inputs[0] = abi.encode(address(this), data, EMPTY_PREVIOUS_DATA, validationCost);
+        inputs[0] = abi.encode(Constants.MSG_SENDER, data, EMPTY_PREVIOUS_DATA, validationCost);
         router.execute{ value: validationCost }(commands, inputs);
 
         assertEq(address(this).balance, ethBalanceBefore - validationCost + _securityDeposit, "ether balance");
