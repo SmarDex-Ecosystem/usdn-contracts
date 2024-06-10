@@ -2062,7 +2062,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         CachedProtocolState memory cache = CachedProtocolState({
             totalExpo: _totalExpo,
             longBalance: longBalance,
-            vaultBalance: vaultBalance,
+            vaultBalance: (vaultBalance.toInt256() + _pendingBalanceVault).toUint256(),
             tradingExpo: 0,
             liqMultiplierAccumulator: _liqMultiplierAccumulator
         });
