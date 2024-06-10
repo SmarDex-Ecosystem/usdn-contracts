@@ -26,7 +26,7 @@ contract TestWusdnMint is WusdnTokenFixture {
         usdn.rebase(usdn.MAX_DIVISOR() / 2);
         uint256 shares2 = 60 ether;
         wusdn.wrap(shares2);
-        assertApproxEqAbs(wusdn.totalUsdn(), wusdn.convertToAssets(shares1 + shares2), 1, "total assets");
+        assertApproxEqAbs(wusdn.totalUsdn(), wusdn.previewUnwrap(shares1 + shares2), 1, "total assets");
         assertEq(wusdn.totalSupply(), shares1 + shares2, "total supply");
     }
 }

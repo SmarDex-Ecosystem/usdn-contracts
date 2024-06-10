@@ -36,6 +36,6 @@ contract TestWusdnInvariants is WusdnTokenFixture {
      * @custom:scenario Check that the contract have the expected number of total assets
      */
     function invariant_totalAssetsSum() public {
-        assertGe(usdn.balanceOf(address(wusdn)), wusdn.convertToAssets(wusdn.totalSupply()), "total assets");
+        assertGe(usdn.balanceOf(address(wusdn)), wusdn.previewUnwrap(wusdn.totalSupply()), "total assets");
     }
 }

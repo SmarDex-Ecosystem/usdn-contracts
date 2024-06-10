@@ -37,99 +37,68 @@ contract Wusdn is ERC20Permit, IWusdn {
         SHARES_PRECISION_FACTOR = USDN.MAX_DIVISOR();
     }
 
-    // function wrap(uint256 usdnAmount, address receiver, address owner) external returns (uint256) {
-    //     uint256 maxAssets = maxWithdraw(owner);
-    //     if (usdnAmount > maxAssets) {
-    //         // revert ERC4626ExceededMaxWithdraw(owner, assets, maxAssets);
-    //     }
-
-    //     uint256 shares = previewWrap(usdnAmount);
-    //     _withdraw(_msgSender(), receiver, owner, usdnAmount, shares);
-
-    //     return shares;
-    // }
+    function previewWrap(uint256 usdnAmount) public view returns (uint256 wrappedAmount_) {
+        wrappedAmount_ = USDN.convertToShares(usdnAmount) / SHARES_PRECISION_FACTOR;
+    }
 
     function wrap(uint256 usdnAmount) external returns (uint256 wrappedAmount_) {
-        // uint256 maxAssets = maxDeposit(receiver);
-        // if (usdnAmount > maxAssets) {
-        //     // revert ERC4626ExceededMaxDeposit(receiver, assets, maxAssets);
-        // }
+        wrappedAmount_ = _wrap(usdnAmount, msg.sender);
+    }
 
-        wrappedAmount_ = USDN.convertToShares(usdnAmount) / SHARES_PRECISION_FACTOR;
+    function wrap(uint256 usdnAmount, address to) external returns (uint256 wrappedAmount_) {
+        wrappedAmount_ = _wrap(usdnAmount, to);
+    }
+
+    function _wrap(uint256 usdnAmount, address to) internal returns (uint256 wrappedAmount_) {
+        wrappedAmount_ = previewWrap(usdnAmount);
         USDN.transferSharesFrom(msg.sender, address(this), wrappedAmount_ * SHARES_PRECISION_FACTOR);
 
-        _mint(msg.sender, wrappedAmount_);
+        _mint(to, wrappedAmount_);
+        // TO DO emit Wrap(from, to, usdnAmount, wrappedAmount_);
+    }
+
+    function wrapFrom(address from, uint256 usdnAmount, address to) external returns (uint256 wrappedAmount_) {
+        wrappedAmount_ = previewWrap(usdnAmount);
+
+        uint256 usdnShares = wrappedAmount_ * SHARES_PRECISION_FACTOR;
+        USDN.transferSharesFrom(from, msg.sender, usdnShares);
+        USDN.transferSharesFrom(msg.sender, address(this), usdnShares);
+
+        _mint(to, wrappedAmount_);
+    }
+
+    function previewUnwrap(uint256 wrappedAmount) public view returns (uint256 usdnAmount_) {
+        usdnAmount_ = USDN.convertToTokens(wrappedAmount * SHARES_PRECISION_FACTOR);
     }
 
     function unwrap(uint256 wrappedAmount) external returns (uint256 usdnAmount_) {
-        // uint256 maxShares = maxRedeem(owner);
-        // if (shares > maxShares) {
-        //     // revert ERC4626ExceededMaxRedeem(owner, shares, maxShares);
-        // }
-
-        usdnAmount_ = USDN.convertToTokens(wrappedAmount * SHARES_PRECISION_FACTOR);
-        USDN.transferShares(msg.sender, wrappedAmount * SHARES_PRECISION_FACTOR);
-
-        _burn(msg.sender, wrappedAmount);
+        usdnAmount_ = _unwrap(msg.sender, wrappedAmount, msg.sender);
     }
 
-    /// @inheritdoc ERC20
-    function decimals() public view override(ERC20) returns (uint8) {
-        return super.decimals();
+    function unwrap(uint256 wrappedAmount, address to) external returns (uint256 usdnAmount_) {
+        usdnAmount_ = _unwrap(msg.sender, wrappedAmount, to);
     }
 
-    function totalUsdn() public view returns (uint256) {
+    function unwrapFrom(address from, uint256 wrappedAmount, address to) external returns (uint256 usdnAmount_) {
+        uint256 usdnShares = wrappedAmount * SHARES_PRECISION_FACTOR;
+        usdnAmount_ = USDN.convertToTokens(usdnShares);
+
+        _spendAllowance(from, msg.sender, wrappedAmount);
+        _burn(from, wrappedAmount);
+
+        USDN.transferSharesFrom(address(this), to, usdnShares);
+    }
+
+    function _unwrap(address from, uint256 wrappedAmount, address to) internal returns (uint256 usdnAmount_) {
+        uint256 usdnShares = wrappedAmount * SHARES_PRECISION_FACTOR;
+        usdnAmount_ = USDN.convertToTokens(usdnShares);
+        _burn(from, wrappedAmount);
+
+        USDN.transferSharesFrom(address(this), to, usdnShares);
+        // TO DO emit Unwrap(from, to, usdnAmount_, wrappedAmount);
+    }
+
+    function totalUsdn() external view returns (uint256) {
         return USDN.balanceOf(address(this));
-    }
-
-    function convertToShares(uint256 assets) public view returns (uint256) {
-        return _convertToShares(assets);
-    }
-
-    function convertToAssets(uint256 shares) public view returns (uint256) {
-        return _convertToAssets(shares);
-    }
-
-    function maxWithdraw(address owner) public view returns (uint256) {
-        return _convertToAssets(balanceOf(owner));
-    }
-
-    function maxRedeem(address owner) public view returns (uint256) {
-        return balanceOf(owner);
-    }
-
-    // function previewWrap(uint256 assets) public view returns (uint256 wrappedAmount_) {
-    //     uint256 roundedUsdnShares = USDN.convertToShares(assets) / SHARES_PRECISION_FACTOR * SHARES_PRECISION_FACTOR;
-    //     wrappedAmount_ = USDN.convertToTokens(roundedUsdnShares);
-    // }
-
-    // function previewUnwrap(uint256 wrappedAmount) public view returns (uint256 usdnAmount_) {
-    //     uint256 roundedUsdnShares = USDN.convertToShares(assets) / SHARES_PRECISION_FACTOR * SHARES_PRECISION_FACTOR;
-    //     wrappedAmount_ = USDN.convertToTokens(roundedUsdnShares);
-    // }
-
-    function previewRedeem(uint256 shares) public view returns (uint256) {
-        return _convertToAssets(shares);
-    }
-
-    function _convertToShares(uint256 usdnAmount) internal view returns (uint256 roundedUsdnShares) {
-        uint256 usdnShares = USDN.convertToShares(usdnAmount);
-        roundedUsdnShares = usdnShares / SHARES_PRECISION_FACTOR * SHARES_PRECISION_FACTOR;
-    }
-
-    function _convertToAssets(uint256 shares) internal view returns (uint256 usdnAmount) {
-        uint256 usdnShares = shares * SHARES_PRECISION_FACTOR;
-        usdnAmount = USDN.convertToTokens(usdnShares);
-    }
-
-    function _withdraw(address caller, address receiver, address owner, uint256 assets, uint256 shares) internal {
-        if (caller != owner) {
-            _spendAllowance(owner, caller, shares);
-        }
-
-        _burn(owner, shares);
-        USDN.safeTransfer(receiver, assets);
-
-        emit Withdraw(caller, receiver, owner, assets, shares);
     }
 }

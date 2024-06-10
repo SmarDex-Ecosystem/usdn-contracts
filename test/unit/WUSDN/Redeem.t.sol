@@ -26,7 +26,7 @@ contract TestWusdnRedeem is WusdnTokenFixture {
         usdn.rebase(usdn.MAX_DIVISOR() / 2);
         uint256 redeemedShares = 15 ether;
         wusdn.unwrap(redeemedShares);
-        assertApproxEqAbs(wusdn.totalUsdn(), wusdn.convertToAssets(mintedShares - redeemedShares), 1, "total assets");
+        assertApproxEqAbs(wusdn.totalUsdn(), wusdn.previewUnwrap(mintedShares - redeemedShares), 1, "total assets");
         assertEq(wusdn.totalSupply(), mintedShares - redeemedShares, "total supply");
     }
 }
