@@ -28,8 +28,9 @@ contract TestForkUniversalRouterValidateClosePosition is UniversalRouterBaseFixt
         _waitDelay(); // to be realistic because not mandatory
         uint256 ts1 = protocol.getUserPendingAction(address(this)).timestamp;
         (,,,, bytes memory data) = getHermesApiSignature(PYTH_ETH_USD, ts1 + oracleMiddleware.getValidationDelay());
-        uint256 validationCost = oracleMiddleware.validationCost(data, ProtocolAction.ValidateOpenPosition);
-        protocol.validateOpenPosition{ value: validationCost }(address(this), data, EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition{
+            value: oracleMiddleware.validationCost(data, ProtocolAction.ValidateOpenPosition)
+        }(address(this), data, EMPTY_PREVIOUS_DATA);
         protocol.initiateClosePosition{ value: _securityDeposit }(
             posId, OPEN_POSITION_AMOUNT, USER_1, "", EMPTY_PREVIOUS_DATA
         );
