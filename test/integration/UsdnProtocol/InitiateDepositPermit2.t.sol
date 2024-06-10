@@ -39,7 +39,7 @@ contract TestForkUsdnProtocolInitiateDepositPermit2 is UsdnProtocolBaseIntegrati
         bool success = protocol.initiateDeposit{ value: protocol.getSecurityDepositValue() }(
             DEPOSIT_AMOUNT,
             address(this),
-            payable(this),
+            payable(address(this)),
             Permit2TokenBitfield.Bitfield.wrap(Permit2TokenBitfield.ASSET_MASK),
             "",
             EMPTY_PREVIOUS_DATA
@@ -61,7 +61,7 @@ contract TestForkUsdnProtocolInitiateDepositPermit2 is UsdnProtocolBaseIntegrati
         bool success = protocol.initiateDeposit{ value: protocol.getSecurityDepositValue() }(
             DEPOSIT_AMOUNT,
             address(this),
-            payable(this),
+            payable(address(this)),
             Permit2TokenBitfield.Bitfield.wrap(Permit2TokenBitfield.SDEX_MASK),
             "",
             EMPTY_PREVIOUS_DATA
@@ -84,7 +84,7 @@ contract TestForkUsdnProtocolInitiateDepositPermit2 is UsdnProtocolBaseIntegrati
         bool success = protocol.initiateDeposit{ value: protocol.getSecurityDepositValue() }(
             DEPOSIT_AMOUNT,
             address(this),
-            payable(this),
+            payable(address(this)),
             Permit2TokenBitfield.Bitfield.wrap(Permit2TokenBitfield.ASSET_MASK | Permit2TokenBitfield.SDEX_MASK),
             "",
             EMPTY_PREVIOUS_DATA
@@ -93,7 +93,4 @@ contract TestForkUsdnProtocolInitiateDepositPermit2 is UsdnProtocolBaseIntegrati
         assertEq(wstETH.balanceOf(address(protocol)), assetBalanceBefore + DEPOSIT_AMOUNT);
         assertGt(sdex.balanceOf(protocol.DEAD_ADDRESS()), sdexBalanceBefore);
     }
-
-    /// @dev accept ether from security deposit
-    receive() external payable { }
 }
