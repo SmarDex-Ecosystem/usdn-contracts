@@ -108,7 +108,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint16 internal _liquidationIteration = 1;
 
     /// @notice The protocol fee percentage (in bps)
-    uint16 internal _protocolFeeBps = 10;
+    uint16 internal _protocolFeeBps = 800;
 
     /**
      * @notice Part of the remaining collateral that is given as a bonus to the Rebalancer upon liquidation of a tick,
@@ -164,7 +164,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
      * @dev This value will be used to calculate how much of the missing trading expo
      * the rebalancer position will try to compensate
      */
-    int256 internal _longImbalanceTargetBps = 300;
+    int256 internal _longImbalanceTargetBps = 550;
 
     /// @notice The position fee in basis points
     uint16 internal _positionFeeBps = 4; // 0.04%
