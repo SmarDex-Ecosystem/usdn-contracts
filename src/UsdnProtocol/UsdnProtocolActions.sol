@@ -2099,7 +2099,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         // If there are no pending assets and the previous position was either liquidated or doesn't exist, return
-        if (position + positionAmount = 0) {
+        if (positionAmount + positionValue == 0) {
             return (longBalance_, vaultBalance_);
         }
 
