@@ -92,34 +92,35 @@ contract TestForkUniversalRouterValidatePendingActions is UniversalRouterBaseFix
         // initial fork roll to skip 20 minutes
         vm.rollFork(block.number + 100);
 
-        // roll the fork until the updated timestamp is above the low latency limit
-        while (updatedAt < lowLatencyLimit) {
-            vm.rollFork(block.number + 10);
+        // set the search range
+        uint256 left = block.number;
+        uint256 right = block.number + 300;
+
+        // perform binary search
+        while (left < right) {
+            uint256 mid = (left + right) / 2;
+            vm.rollFork(mid);
             (roundId,,, updatedAt,) = priceFeed.latestRoundData();
-        }
 
-        uint256 fork = block.number;
-
-        // additional checks to ensure roundId is first one after the low latency limit
-        for (uint256 i = 0; i < 10; i++) {
-            vm.rollFork(block.number - 1);
-            (uint80 newRoundId,,, uint256 newUpdatedAt,) = priceFeed.latestRoundData();
-            if (newUpdatedAt >= lowLatencyLimit) {
-                roundId = newRoundId;
-                updatedAt = newUpdatedAt;
-                break;
+            if (updatedAt < lowLatencyLimit) {
+                left = mid + 1;
+            } else {
+                right = mid;
             }
         }
 
-        vm.rollFork(fork);
+        // final fork roll to the first round after the low latency limit
+        vm.rollFork(left);
+        (roundId,,, updatedAt,) = priceFeed.latestRoundData();
         skip(protocol.getValidationDeadline());
 
-        // check that the roundId is the first one after the low latency limit
+        // ensure roundId is first one after the low latency limit
         (,, uint256 startedAtOne,,) = priceFeed.getRoundData(roundId - 1);
         (,, uint256 startedAtTwo,,) = priceFeed.getRoundData(roundId);
         assertTrue(startedAtOne < lowLatencyLimit, "startedAtOne < lowLatencyLimit");
         assertTrue(startedAtTwo >= lowLatencyLimit, "startedAtTwo >= lowLatencyLimit");
 
+        // prepare data for the validation
         bytes memory data = abi.encode(roundId);
         bytes[] memory priceData = new bytes[](4);
         for (uint256 i = 0; i < 4; i++) {
