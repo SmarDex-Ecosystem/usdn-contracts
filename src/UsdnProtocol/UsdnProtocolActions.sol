@@ -2066,6 +2066,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             tradingExpo: 0,
             liqMultiplierAccumulator: _liqMultiplierAccumulator
         });
+
+        if (cache.totalExpo < longBalance) {
+            revert UsdnProtocolInvalidLongExpo();
+        }
+
         cache.tradingExpo = cache.totalExpo - longBalance;
 
         {
