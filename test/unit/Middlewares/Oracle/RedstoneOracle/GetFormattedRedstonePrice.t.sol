@@ -66,7 +66,7 @@ contract TestRedstoneOracleGetFormattedRedstonePrice is OracleMiddlewareBaseFixt
     /**
      * @custom:scenario Revert when the price update timestamp is too recent compared to the target timestamp
      * @custom:given A Redstone price update with a known timestamp and price
-     * @custom:when The `getFormattedRedstonePrice` function is called with a target timestamp 10 seconds before the
+     * @custom:when The `getFormattedRedstonePrice` function is called with a target timestamp 1 heartbeat before the
      * Redstone timestamp
      * @custom:then It should revert with `OracleMiddlewarePriceTooRecent`
      * @dev Target timestamp + heartbeat represents the external (second) into the interval representing the allowed

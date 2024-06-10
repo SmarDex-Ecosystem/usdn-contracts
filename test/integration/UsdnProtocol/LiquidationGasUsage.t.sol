@@ -5,11 +5,10 @@ import { UsdnProtocolBaseIntegrationFixture } from "test/integration/UsdnProtoco
 import {
     DEPLOYER, USER_1, USER_2, USER_3, PYTH_ETH_USD, PYTH_WSTETH_USD, REDSTONE_ETH_USD
 } from "test/utils/Constants.sol";
-import { MOCK_PYTH_DATA } from "test/unit/Middlewares/utils/Constants.sol";
 
 import { ILiquidationRewardsManagerErrorsEventsTypes } from
     "src/interfaces/OracleMiddleware/ILiquidationRewardsManagerErrorsEventsTypes.sol";
-import { ProtocolAction, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IUsdnEvents } from "src/interfaces/Usdn/IUsdnEvents.sol";
 import { MockWstEthOracleMiddleware } from "src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
 
