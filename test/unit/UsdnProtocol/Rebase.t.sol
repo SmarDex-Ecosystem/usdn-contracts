@@ -125,7 +125,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         vm.expectEmit(false, false, false, false);
         emit Rebase(0, 0);
         protocol.initiateDeposit(
-            1 ether, address(this), payable(address(this)), abi.encode(newPrice), EMPTY_PREVIOUS_DATA
+            1 ether, address(this), payable(address(this)), NO_PERMIT2, abi.encode(newPrice), EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -224,6 +224,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
             params.initialPrice / 2,
             address(this),
             payable(address(this)),
+            NO_PERMIT2,
             abi.encode(newPrice),
             EMPTY_PREVIOUS_DATA
         );

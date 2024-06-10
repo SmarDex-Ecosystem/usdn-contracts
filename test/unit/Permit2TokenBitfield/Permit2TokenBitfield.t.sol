@@ -28,35 +28,19 @@ contract TestPermit2TokenBitfield is Permit2TokenBitfieldFixture {
     }
 
     /**
-     * @custom:scenario Test the `useForUsdn` function
+     * @custom:scenario Test the `useForSdex` function
      * @custom:when The bitfield is 0b0000_0010
      * @custom:or The bitfield is uint8.max
      * @custom:then The function should return true
      * @custom:when The bitfield is 0
-     * @custom:or The bitfield is 0b1111_1101
-     * @custom:then The function should return false
-     */
-    function test_usdn() public {
-        assertTrue(handler.useForUsdn(Permit2TokenBitfield.Bitfield.wrap(1 << 1)), "0b0000_0010");
-        assertTrue(handler.useForUsdn(Permit2TokenBitfield.Bitfield.wrap(255)), "uint8.max");
-        assertFalse(handler.useForUsdn(Permit2TokenBitfield.Bitfield.wrap(0)), "0");
-        assertFalse(handler.useForUsdn(Permit2TokenBitfield.Bitfield.wrap(~uint8(1 << 1))), "0b1111_1101");
-    }
-
-    /**
-     * @custom:scenario Test the `useForSdex` function
-     * @custom:when The bitfield is 0b0000_0100
-     * @custom:or The bitfield is uint8.max
-     * @custom:then The function should return true
-     * @custom:when The bitfield is 0
-     * @custom:or The bitfield is 0b1111_11011
+     * @custom:or The bitfield is 0b1111_11101
      * @custom:then The function should return false
      */
     function test_sdex() public {
-        assertTrue(handler.useForSdex(Permit2TokenBitfield.Bitfield.wrap(1 << 2)), "0b0000_0100");
+        assertTrue(handler.useForSdex(Permit2TokenBitfield.Bitfield.wrap(1 << 1)), "0b0000_0010");
         assertTrue(handler.useForSdex(Permit2TokenBitfield.Bitfield.wrap(255)), "uint8.max");
         assertFalse(handler.useForSdex(Permit2TokenBitfield.Bitfield.wrap(0)), "0");
-        assertFalse(handler.useForSdex(Permit2TokenBitfield.Bitfield.wrap(~uint8(1 << 2))), "0b1111_11011");
+        assertFalse(handler.useForSdex(Permit2TokenBitfield.Bitfield.wrap(~uint8(1 << 1))), "0b1111_1101");
     }
 
     /**
@@ -74,7 +58,7 @@ contract TestPermit2TokenBitfield is Permit2TokenBitfieldFixture {
     }
 
     /**
-     * @custom:scenario Test the `useForUsdn` function for a random bitfield
+     * @custom:scenario Test the `useForSdex` function for a random bitfield
      * @custom:given A random bitfield
      * @custom:when The function is called with a bitfield which has its second bit set
      * @custom:then The function should return true
@@ -82,22 +66,8 @@ contract TestPermit2TokenBitfield is Permit2TokenBitfieldFixture {
      * @custom:then The function should return false
      * @param bitfield The bitfield
      */
-    function testFuzz_usdn(uint8 bitfield) public {
-        bool expectedResult = bitfield >> 1 & 1 == 1;
-        assertEq(handler.useForUsdn(Permit2TokenBitfield.Bitfield.wrap(bitfield)), expectedResult);
-    }
-
-    /**
-     * @custom:scenario Test the `useForSdex` function for a random bitfield
-     * @custom:given A random bitfield
-     * @custom:when The function is called with a bitfield which has its third bit set
-     * @custom:then The function should return true
-     * @custom:when The function is called with a bitfield which has its third bit unset
-     * @custom:then The function should return false
-     * @param bitfield The bitfield
-     */
     function testFuzz_sdex(uint8 bitfield) public {
-        bool expectedResult = bitfield >> 2 & 1 == 1;
+        bool expectedResult = bitfield >> 1 & 1 == 1;
         assertEq(handler.useForSdex(Permit2TokenBitfield.Bitfield.wrap(bitfield)), expectedResult);
     }
 }

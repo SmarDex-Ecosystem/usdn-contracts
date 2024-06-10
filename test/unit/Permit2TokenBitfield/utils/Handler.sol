@@ -12,10 +12,6 @@ contract Permit2TokenBitfieldHandler {
         return Permit2TokenBitfield.useForAsset(bitfield);
     }
 
-    function useForUsdn(Permit2TokenBitfield.Bitfield bitfield) external pure returns (bool) {
-        return Permit2TokenBitfield.useForUsdn(bitfield);
-    }
-
     function useForSdex(Permit2TokenBitfield.Bitfield bitfield) external pure returns (bool) {
         return Permit2TokenBitfield.useForSdex(bitfield);
     }

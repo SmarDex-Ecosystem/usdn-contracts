@@ -8,11 +8,8 @@ library Permit2TokenBitfield {
     /// @dev mask for the asset token
     uint8 constant ASSET_MASK = 2 ** 0;
 
-    /// @dev mask for the USDN token
-    uint8 constant USDN_MASK = 2 ** 1;
-
     /// @dev mask for the SDEX token
-    uint8 constant SDEX_MASK = 2 ** 2;
+    uint8 constant SDEX_MASK = 2 ** 1;
 
     /**
      * @notice Check if the bitfield indicates that the asset token should be used with permit2
@@ -22,17 +19,6 @@ library Permit2TokenBitfield {
     function useForAsset(Bitfield bitfield) internal pure returns (bool use_) {
         assembly {
             use_ := gt(and(bitfield, ASSET_MASK), 0)
-        }
-    }
-
-    /**
-     * @notice Check if the bitfield indicates that the USDN token should be used with permit2
-     * @param bitfield The bitfield
-     * @return use_ True if the USDN token should be used with permit2
-     */
-    function useForUsdn(Bitfield bitfield) internal pure returns (bool use_) {
-        assembly {
-            use_ := gt(and(bitfield, USDN_MASK), 0)
         }
     }
 

@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { console2 } from "forge-std/Test.sol";
-
 import { BaseFixture } from "test/utils/Fixtures.sol";
 import { Permit2TokenBitfieldHandler } from "test/unit/Permit2TokenBitfield/utils/Handler.sol";
 
