@@ -43,7 +43,6 @@ contract Rebalancer is Ownable, ERC165, IOwnershipCallback, IRebalancer {
     IUsdnProtocol internal immutable _usdnProtocol;
 
     /// @notice The current position version
-    // slither-disable-next-line uninitialized-state,constable-states
     uint128 internal _positionVersion;
 
     /// @notice The amount of assets waiting to be used in the next version of the position
@@ -53,7 +52,6 @@ contract Rebalancer is Ownable, ERC165, IOwnershipCallback, IRebalancer {
     uint256 internal _maxLeverage;
 
     /// @notice The version of the last position that got liquidated
-    // slither-disable-next-line uninitialized-state,constable-states
     uint128 internal _lastLiquidatedVersion;
 
     /// @notice The minimum amount of assets to be deposited by a user
