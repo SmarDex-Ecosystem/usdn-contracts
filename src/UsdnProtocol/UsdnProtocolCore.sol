@@ -615,7 +615,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             }
             if (candidate.timestamp == 0) {
                 // remove the stale pending action
-                // slither-disable-next-line unused-return
                 _pendingActionsQueue.popFront();
                 // try the next one
                 continue;
@@ -755,7 +754,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             uint256 pendingAmount =
                 FixedPointMathLib.fullMulDiv(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares);
             _pendingBalanceVault += pendingAmount.toInt256();
-            // slither-disable-next-line unused-return
             _usdn.transferShares(to, shares);
         } else if (pending.action == ProtocolAction.ValidateOpenPosition) {
             // for pending opens, we need to remove the position

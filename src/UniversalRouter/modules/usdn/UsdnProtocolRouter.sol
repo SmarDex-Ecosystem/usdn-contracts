@@ -39,14 +39,12 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
             amount = PROTOCOL_ASSET.balanceOf(address(this));
         }
         PROTOCOL_ASSET.forceApprove(address(USDN_PROTOCOL), amount);
-        // slither-disable-next-line unused-return
         SDEX.approve(address(USDN_PROTOCOL), type(uint256).max);
         // we send the full ETH balance, the protocol will refund any excess
         // slither-disable-next-line arbitrary-send-eth
         success_ = USDN_PROTOCOL.initiateDeposit{ value: ethAmount }(
             amount.toUint128(), to, payable(validator), currentPriceData, previousActionsData
         );
-        // slither-disable-next-line unused-return
         SDEX.approve(address(USDN_PROTOCOL), 0);
     }
 
@@ -94,7 +92,6 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         if (amount == Constants.CONTRACT_BALANCE) {
             amount = USDN.sharesOf(address(this));
         }
-        // slither-disable-next-line unused-return
         USDN.approve(address(USDN_PROTOCOL), USDN.convertToTokensRoundUp(amount));
         // we send the full ETH balance, the protocol will refund any excess
         // slither-disable-next-line arbitrary-send-eth

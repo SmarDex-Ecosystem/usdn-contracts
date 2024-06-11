@@ -517,7 +517,6 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
     /// @inheritdoc IUsdnProtocolStorage
     function getPendingActionAt(uint256 index) external view returns (PendingAction memory action_) {
-        // slither-disable-next-line unused-return
         (action_,) = _pendingActionsQueue.at(index);
     }
 
