@@ -159,8 +159,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         Position memory pos,
         uint128 amountToRemove,
         uint128 totalExpoToRemove
-    ) external returns (HugeUint.Uint512 memory) {
-        return _removeAmountFromPosition(tick, index, pos, amountToRemove, totalExpoToRemove);
+    ) external returns (HugeUint.Uint512 memory liqMultiplierAccumulator_) {
+        liqMultiplierAccumulator_ = _removeAmountFromPosition(tick, index, pos, amountToRemove, totalExpoToRemove);
     }
 
     function i_positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)
