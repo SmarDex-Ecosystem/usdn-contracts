@@ -4,7 +4,6 @@ pragma solidity 0.8.20;
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { ERC165, IERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
@@ -21,7 +20,6 @@ import { PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
  * and close/open again with new and existing funds when the imbalance reaches a certain threshold
  */
 contract Rebalancer is Ownable, ERC165, IOwnershipCallback, IRebalancer {
-    using SafeCast for uint256;
     using SafeERC20 for IERC20Metadata;
 
     /// @notice Modifier to check if the caller is the USDN protocol or the owner
