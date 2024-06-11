@@ -71,9 +71,6 @@ contract TestForkUniversalRouterValidatePendingActions is UniversalRouterBaseFix
      * @custom:then Validate pending actions successfully
      */
     function test_ForkValidatePendingActions() public {
-        uint256 lowLatencyLimit = ts1 + oracleMiddleware.getLowLatencyDelay();
-        (uint80 roundId,,, uint256 updatedAt,) = priceFeed.latestRoundData();
-
         vm.makePersistent(address(protocol));
         vm.makePersistent(address(router));
         vm.makePersistent(address(oracleMiddleware));
@@ -84,32 +81,10 @@ contract TestForkUniversalRouterValidatePendingActions is UniversalRouterBaseFix
         vm.rollFork(block.number + 100);
 
         // set the search range
-        uint256 left = block.number;
-        uint256 right = block.number + 300;
+        uint256 startBlock = block.number;
+        uint256 endBlock = block.number + 300;
 
-        // perform binary search
-        while (left < right) {
-            uint256 mid = (left + right) / 2;
-            vm.rollFork(mid);
-            (roundId,,, updatedAt,) = priceFeed.latestRoundData();
-
-            if (updatedAt < lowLatencyLimit) {
-                left = mid + 1;
-            } else {
-                right = mid;
-            }
-        }
-
-        // final fork roll to the first round after the low latency limit
-        vm.rollFork(left);
-        (roundId,,, updatedAt,) = priceFeed.latestRoundData();
-        skip(protocol.getValidationDeadline());
-
-        // ensure roundId is first one after the low latency limit
-        (,, uint256 startedAtOne,,) = priceFeed.getRoundData(roundId - 1);
-        (,, uint256 startedAtTwo,,) = priceFeed.getRoundData(roundId);
-        assertTrue(startedAtOne < lowLatencyLimit, "startedAtOne < lowLatencyLimit");
-        assertTrue(startedAtTwo >= lowLatencyLimit, "startedAtTwo >= lowLatencyLimit");
+        (uint80 roundId,) = getNextChainlinkPriceAfterTimestamp(ts1, startBlock, endBlock);
 
         // prepare data for the validation
         bytes memory data = abi.encode(roundId);

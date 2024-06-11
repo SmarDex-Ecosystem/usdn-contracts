@@ -42,4 +42,44 @@ contract UniversalRouterBaseFixture is UsdnProtocolBaseIntegrationFixture {
         permit2 = IAllowanceTransfer(params.permit2);
         priceFeed = AggregatorV3Interface(0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
     }
+
+    /**
+     * @notice get the first next chainlink price after the pending action timestamp
+     * @dev binary search to find the first roundId after the pending action timestamp,
+     * revert if roundId is not the first one after the low latency limit
+     */
+    function getNextChainlinkPriceAfterTimestamp(uint256 pendingActionTimestamp, uint256 startBlock, uint256 endBlock)
+        public
+        returns (uint80 roundId_, uint256 timestamp_)
+    {
+        uint256 lowLatencyLimit = pendingActionTimestamp + oracleMiddleware.getLowLatencyDelay();
+        // set the search range
+        uint256 left = startBlock;
+        uint256 right = endBlock;
+
+        // perform binary search
+        while (left < right) {
+            uint256 mid = (left + right) / 2;
+            vm.rollFork(mid);
+            (roundId_,,, timestamp_,) = priceFeed.latestRoundData();
+
+            if (timestamp_ < lowLatencyLimit) {
+                left = mid + 1;
+            } else {
+                right = mid;
+            }
+        }
+
+        // final fork roll to the first round after the low latency limit
+        vm.rollFork(left);
+        (roundId_,,, timestamp_,) = priceFeed.latestRoundData();
+        skip(protocol.getValidationDeadline());
+
+        // ensure roundId is first one after the low latency limit
+        (,, uint256 startedAtOne,,) = priceFeed.getRoundData(roundId_ - 1);
+        (,, uint256 startedAtTwo,,) = priceFeed.getRoundData(roundId_);
+        assertTrue(startedAtOne < lowLatencyLimit, "startedAtOne < lowLatencyLimit");
+        assertTrue(startedAtTwo >= lowLatencyLimit, "startedAtTwo >= lowLatencyLimit");
+        return (roundId_, timestamp_);
+    }
 }
