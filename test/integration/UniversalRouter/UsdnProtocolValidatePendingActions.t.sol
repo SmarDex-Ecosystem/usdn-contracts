@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-
 import { PYTH_ETH_USD } from "test/utils/Constants.sol";
 import { DEPLOYER, USER_1, USER_2, USER_3, USER_4 } from "test/utils/Constants.sol";
 import { UniversalRouterBaseFixture } from "test/integration/UniversalRouter/utils/Fixtures.sol";
@@ -20,8 +18,6 @@ import {
  * @custom:background Given a forked ethereum mainnet chain
  */
 contract TestForkUniversalRouterValidatePendingActions is UniversalRouterBaseFixture {
-    using SafeCast for uint256;
-
     uint256 _securityDeposit;
     uint256 ts1;
 
@@ -31,34 +27,29 @@ contract TestForkUniversalRouterValidatePendingActions is UniversalRouterBaseFix
         ts1 = block.timestamp;
         _securityDeposit = protocol.getSecurityDepositValue();
         // 1. initiateDeposit
-        uint256 OPEN_POSITION_AMOUNT = 2 ether;
+        uint256 openPositionAmount = 2 ether;
         deal(address(wstETH), address(this), 1e6 ether);
         deal(address(sdex), address(this), 1e6 ether);
         wstETH.approve(address(protocol), type(uint256).max);
         sdex.approve(address(protocol), type(uint256).max);
         protocol.initiateDeposit{ value: _securityDeposit }(0.1 ether, USER_2, USER_1, "", EMPTY_PREVIOUS_DATA);
         // 2. initiateWithdrawal
-        uint256 WITHDRAW_AMOUNT = usdn.sharesOf(DEPLOYER) / 100;
+        uint256 withdrawAmount = usdn.sharesOf(DEPLOYER) / 100;
         vm.prank(DEPLOYER);
-        usdn.transferShares(address(this), WITHDRAW_AMOUNT);
+        usdn.transferShares(address(this), withdrawAmount);
         usdn.approve(address(protocol), type(uint256).max);
         protocol.initiateWithdrawal{ value: _securityDeposit }(
-            WITHDRAW_AMOUNT.toUint152(), USER_2, USER_2, "", EMPTY_PREVIOUS_DATA
+            uint128(withdrawAmount), USER_2, USER_2, "", EMPTY_PREVIOUS_DATA
         );
         // 3. initiateOpenPosition
-        uint256 DESIRED_LIQUIDATION = 2500 ether;
+        uint256 desiredLiquidation = 2500 ether;
         protocol.initiateOpenPosition{ value: _securityDeposit }(
-            OPEN_POSITION_AMOUNT.toUint128(),
-            DESIRED_LIQUIDATION.toUint128(),
-            address(this),
-            USER_3,
-            "",
-            EMPTY_PREVIOUS_DATA
+            uint128(openPositionAmount), uint128(desiredLiquidation), address(this), USER_3, "", EMPTY_PREVIOUS_DATA
         );
         // 4. initiateClosePosition
         (, PositionId memory posId) = protocol.initiateOpenPosition{ value: _securityDeposit }(
-            OPEN_POSITION_AMOUNT.toUint128(),
-            DESIRED_LIQUIDATION.toUint128(),
+            uint128(openPositionAmount),
+            uint128(desiredLiquidation),
             address(this),
             payable(address(this)),
             "",
@@ -67,9 +58,9 @@ contract TestForkUniversalRouterValidatePendingActions is UniversalRouterBaseFix
         _waitDelay(); // to be realistic because not mandatory
         (,,,, bytes memory data) = getHermesApiSignature(PYTH_ETH_USD, ts1 + oracleMiddleware.getValidationDelay());
         uint256 validationCost = oracleMiddleware.validationCost(data, ProtocolAction.ValidateOpenPosition);
-        protocol.validateOpenPosition{ value: validationCost }(payable(address(this)), data, EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition{ value: validationCost }(payable(this), data, EMPTY_PREVIOUS_DATA);
         protocol.initiateClosePosition{ value: _securityDeposit }(
-            posId, OPEN_POSITION_AMOUNT.toUint128(), USER_1, USER_4, "", EMPTY_PREVIOUS_DATA
+            posId, uint128(openPositionAmount), USER_1, USER_4, "", EMPTY_PREVIOUS_DATA
         );
     }
 
