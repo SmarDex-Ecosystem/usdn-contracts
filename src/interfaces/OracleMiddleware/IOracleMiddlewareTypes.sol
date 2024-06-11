@@ -40,7 +40,7 @@ struct FormattedPythPrice {
 }
 
 /**
- * @notice The price and timestamp returned by the chainlink oracle.
+ * @notice The price and timestamp returned by the redstone oracle.
  * @dev The timestamp is the timestamp of the price data, not the timestamp of the request
  * @param price The asset price formatted by the middleware
  * @param timestamp The timestamp of the price data
