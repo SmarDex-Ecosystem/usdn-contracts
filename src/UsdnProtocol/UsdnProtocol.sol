@@ -463,6 +463,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
         // apply liquidation penalty to the deployer's liquidationPriceWithoutPenalty
         uint8 liquidationPenalty = _liquidationPenalty;
+        // slither-disable-next-line uninitialized-local
         PositionId memory posId;
         posId.tick = tick + int24(uint24(liquidationPenalty)) * _tickSpacing;
         Position memory long = Position({
