@@ -2000,7 +2000,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             LiquidationsEffects memory liquidationEffects =
                 _liquidatePositions(_lastPrice, iterations, tempLongBalance, tempVaultBalance);
 
-            if (liquidationEffects.liquidatedTicks > 0) {
+            isLiquidationPending_ = liquidationEffects.isLiquidationPending;
+            if (!isLiquidationPending_ && liquidationEffects.liquidatedTicks > 0) {
                 (liquidationEffects.newLongBalance, liquidationEffects.newVaultBalance) = _triggerRebalancer(
                     uint128(neutralPrice),
                     liquidationEffects.newLongBalance,
@@ -2011,7 +2012,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
             _balanceLong = liquidationEffects.newLongBalance;
             _balanceVault = liquidationEffects.newVaultBalance;
-            isLiquidationPending_ = liquidationEffects.isLiquidationPending;
 
             // safecast not needed since done above
             (bool rebased, bytes memory callbackResult) = _usdnRebase(uint128(neutralPrice), ignoreInterval);
