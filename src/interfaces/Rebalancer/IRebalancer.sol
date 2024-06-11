@@ -47,6 +47,12 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
     function getMinAssetDeposit() external view returns (uint256);
 
     /**
+     * @notice Returns the limit of the imbalance in bps to close the position
+     * @return The limit of the imbalance in bps to close the position
+     */
+    function getCloseImbalanceLimitBps() external view returns (uint256);
+
+    /**
      * @notice Returns the data regarding the assets deposited by the provided user
      * @param user The address of the user
      * @return The data regarding the assets deposited by the provided user
@@ -102,4 +108,13 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
      * @param minAssetDeposit The new minimum amount of assets to be deposited
      */
     function setMinAssetDeposit(uint256 minAssetDeposit) external;
+
+    /**
+     * @notice Sets the limit of the imbalance in bps to close the position
+     * @dev This function can only be called by the owner or the USDN protocol
+     * if you set the limit greater than the limit on the USDN protocol, _closeImbalanceLimitBps doesn't a restrictive
+     * limit
+     * @param closeImbalanceLimitBps The new limit of the imbalance in bps to close the position
+     */
+    function setCloseImbalanceLimitBps(uint256 closeImbalanceLimitBps) external;
 }
