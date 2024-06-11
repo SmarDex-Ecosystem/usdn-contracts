@@ -13,6 +13,7 @@ import {
     PreviousActionsData,
     PositionId
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 /**
  * @custom:feature The security deposit of the USDN Protocol
@@ -20,8 +21,13 @@ import {
  * @custom:and A security deposit of 0.5 ether
  */
 contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
+    DummyContract receiverContract = new DummyContract();
     uint64 internal SECURITY_DEPOSIT_VALUE;
     bytes priceData;
+    uint256 balanceUser0Before;
+    uint256 balanceUser1Before;
+    uint256 balanceProtocolBefore;
+    uint256 balanceReceiverContractBefore;
 
     function setUp() public {
         params = DEFAULT_PARAMS;
@@ -38,38 +44,36 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @custom:scenario The user initiates and validates a deposit action
-     * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
+     * @custom:scenario The user initiates and validates a `deposit` action
+     * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
      * @custom:then The protocol takes the security deposit from the user at the initialization of the deposit
      * @custom:and The protocol returns the security deposit to the user at the validation of the deposit
      */
-    function test_securityDeposit_deposit() public {
-        uint256 balanceSenderBefore = address(this).balance;
-        uint256 balanceProtocolBefore = address(protocol).balance;
+    function test_deposit() public {
+        (balanceUser0Before, balanceProtocolBefore,,) = _getBalances();
 
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
             1 ether, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
-        assertSecurityDepositPaid(balanceSenderBefore, balanceProtocolBefore);
+        assertSecurityDepositPaid();
 
         protocol.validateDeposit(payable(address(this)), priceData, EMPTY_PREVIOUS_DATA);
 
-        assertBalancesEnd(balanceSenderBefore, balanceProtocolBefore);
+        assertBalancesEnd();
     }
 
     /**
-     * @custom:scenario The user initiates and validates a withdrawal action
-     * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
+     * @custom:scenario The user initiates and validates a `withdraw` action
+     * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
      * @custom:then The protocol takes the security deposit from the user at the initialization of the withdrawal
      * @custom:and The protocol returns the security deposit to the user at the validation of the withdrawal
      */
-    function test_securityDeposit_withdrawal() public {
+    function test_withdrawal() public {
         // we create a position to be able to withdraw
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
-        uint256 balanceSenderBefore = address(this).balance;
-        uint256 balanceProtocolBefore = address(protocol).balance;
+        (balanceUser0Before, balanceProtocolBefore,,) = _getBalances();
 
         // we initiate a 1 wei withdrawal
         usdn.approve(address(protocol), 1);
@@ -78,20 +82,20 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
         _waitDelay();
 
-        assertSecurityDepositPaid(balanceSenderBefore, balanceProtocolBefore);
+        assertSecurityDepositPaid();
 
         protocol.validateWithdrawal(payable(address(this)), priceData, EMPTY_PREVIOUS_DATA);
 
-        assertBalancesEnd(balanceSenderBefore, balanceProtocolBefore);
+        assertBalancesEnd();
     }
 
     /**
-     * @custom:scenario The user initiates and validates a close position action
-     * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
+     * @custom:scenario The user initiates and validates a `close` position action
+     * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
      * @custom:then The protocol takes the security deposit from the user at the initialization of the close position
      * @custom:and The protocol returns the security deposit to the user at the validation of the close position
      */
-    function test_securityDeposit_closePosition() public {
+    function test_closePosition() public {
         PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
@@ -102,55 +106,51 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             })
         );
 
-        uint256 balanceSenderBefore = address(this).balance;
-        uint256 balanceProtocolBefore = address(protocol).balance;
+        (balanceUser0Before, balanceProtocolBefore,,) = _getBalances();
 
         protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(
             posId, 1 ether, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
-        assertSecurityDepositPaid(balanceSenderBefore, balanceProtocolBefore);
+        assertSecurityDepositPaid();
 
         protocol.validateClosePosition(payable(address(this)), priceData, EMPTY_PREVIOUS_DATA);
 
-        assertBalancesEnd(balanceSenderBefore, balanceProtocolBefore);
+        assertBalancesEnd();
     }
 
     /**
-     * @custom:scenario The user initiates and validates an open position action
-     * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
+     * @custom:scenario The user initiates and validates an `open` position action
+     * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
      * @custom:then The protocol takes the security deposit from the user at the initialization of the open position
      * @custom:and The protocol returns the security deposit to the user at the validation of the open position
      */
-    function test_securityDeposit_openPosition() public {
-        uint256 balanceSenderBefore = address(this).balance;
-        uint256 balanceProtocolBefore = address(protocol).balance;
+    function test_openPosition() public {
+        (balanceUser0Before, balanceProtocolBefore,,) = _getBalances();
 
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
             1 ether, params.initialPrice / 2, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
-        assertSecurityDepositPaid(balanceSenderBefore, balanceProtocolBefore);
+        assertSecurityDepositPaid();
 
         protocol.validateOpenPosition(payable(address(this)), priceData, EMPTY_PREVIOUS_DATA);
 
-        assertBalancesEnd(balanceSenderBefore, balanceProtocolBefore);
+        assertBalancesEnd();
     }
 
     /**
-     * @custom:scenario Two users initiate an open position and deposit actions, and a third user validates both
-     * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
+     * @custom:scenario Two users initiate an `open` position and `deposit` actions, and a third user validates both
+     * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
      * @custom:then The protocol takes the security deposit from both users at their initializations
      * @custom:then We skip validation deadline + 1
      * @custom:and The protocol returns both security deposits to the third user when
      * validateActionablePendingActions is called
      */
-    function test_securityDeposit_validateActionablePendingActions() public {
-        uint256 balanceSenderBefore = address(this).balance;
-        uint256 balanceProtocolBefore = address(protocol).balance;
-        uint256 balanceUser1Before = USER_1.balance;
+    function test_validateActionablePendingActions() public {
+        (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
         uint256 balanceUser2Before = USER_2.balance;
 
         setUpUserPositionInVault(USER_1, ProtocolAction.InitiateDeposit, 1 ether, params.initialPrice);
@@ -196,7 +196,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         assertEq(
             address(this).balance,
-            balanceSenderBefore + 2 * SECURITY_DEPOSIT_VALUE,
+            balanceUser0Before + 2 * SECURITY_DEPOSIT_VALUE,
             "the user0 should have retrieved both security deposits from the protocol"
         );
         assertEq(
@@ -221,11 +221,11 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @custom:scenario The user initiates a deposit action with less than the security deposit value
-     * @custom:when The user initiates a deposit with SECURITY_DEPOSIT_VALUE - 1 value
-     * @custom:then The protocol reverts with UsdnProtocolSecurityDepositTooLow
+     * @custom:scenario The user initiates a `deposit` action with less than the security deposit value
+     * @custom:when The user initiates a deposit with `SECURITY_DEPOSIT_VALUE` - 1 value
+     * @custom:then The protocol reverts with {UsdnProtocolSecurityDepositTooLow}
      */
-    function test_RevertWhen_secDec_lt_deposit() public {
+    function test_RevertWhen_securityDeposit_lt_deposit() public {
         vm.expectRevert(UsdnProtocolSecurityDepositTooLow.selector);
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE - 1 }(
             1 ether, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
@@ -233,11 +233,11 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user initiates a withdrawal action with less than the security deposit value
-     * @custom:when The user initiates a withdrawal with SECURITY_DEPOSIT_VALUE - 1 value
-     * @custom:then The protocol reverts with UsdnProtocolSecurityDepositTooLow
+     * @custom:scenario The user initiates a `withdraw` action with less than the security deposit value
+     * @custom:when The user initiates a withdrawal with `SECURITY_DEPOSIT_VALUE` - 1 value
+     * @custom:then The protocol reverts with {UsdnProtocolSecurityDepositTooLow}
      */
-    function test_RevertWhen_secDec_lt_withdrawal() public {
+    function test_RevertWhen_securityDeposit_lt_withdrawal() public {
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
 
         vm.expectRevert(UsdnProtocolSecurityDepositTooLow.selector);
@@ -247,11 +247,11 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user initiates an open position action with less than the security deposit value
-     * @custom:when The user initiates an open position with SECURITY_DEPOSIT_VALUE - 1 value
-     * @custom:then The protocol reverts with UsdnProtocolSecurityDepositTooLow
+     * @custom:scenario The user initiates an `open` position action with less than the security deposit value
+     * @custom:when The user initiates an `open` position with `SECURITY_DEPOSIT_VALUE` - 1 value
+     * @custom:then The protocol reverts with {UsdnProtocolSecurityDepositTooLow}
      */
-    function test_RevertWhen_secDec_lt_openPosition() public {
+    function test_RevertWhen_securityDeposit_lt_openPosition() public {
         vm.expectRevert(UsdnProtocolSecurityDepositTooLow.selector);
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE - 1 }(
             1 ether, params.initialPrice / 2, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
@@ -260,10 +260,10 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario The user initiates a close position action with less than the security deposit value
-     * @custom:when The user initiates a close position with SECURITY_DEPOSIT_VALUE - 1 value
-     * @custom:then The protocol reverts with UsdnProtocolSecurityDepositTooLow
+     * @custom:when The user initiates a close position with `SECURITY_DEPOSIT_VALUE` - 1 value
+     * @custom:then The protocol reverts with {UsdnProtocolSecurityDepositTooLow}
      */
-    function test_RevertWhen_secDec_lt_closePosition() public {
+    function test_RevertWhen_securityDeposit_lt_closePosition() public {
         PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
@@ -285,31 +285,29 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @custom:scenario The user initiates a deposit action with more than the security deposit value
-     * @custom:when The user initiates a deposit with SECURITY_DEPOSIT_VALUE + 100 value
+     * @custom:scenario The user initiates a `deposit` action with more than the security deposit value
+     * @custom:when The user initiates a deposit with `SECURITY_DEPOSIT_VALUE` + 100 value
      * @custom:then The protocol refunds the excess to the user
      */
-    function test_securityDeposit_gt_deposit() public {
-        uint256 balanceSenderBefore = address(this).balance;
-        uint256 balanceProtocolBefore = address(protocol).balance;
+    function test_gt_deposit() public {
+        (balanceUser0Before, balanceProtocolBefore,,) = _getBalances();
 
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE + 100 }(
             1 ether, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
-        assertSecurityDepositPaid(balanceSenderBefore, balanceProtocolBefore);
+        assertSecurityDepositPaid();
     }
 
     /**
-     * @custom:scenario The user initiates a withdrawal action with more than the security deposit value
-     * @custom:when The user initiates a withdrawal with SECURITY_DEPOSIT_VALUE + 100 value
+     * @custom:scenario The user initiates a `withdraw` action with more than the security deposit value
+     * @custom:when The user initiates a withdrawal with `SECURITY_DEPOSIT_VALUE` + 100 value
      * @custom:then The protocol refunds the excess to the user
      */
-    function test_securityDeposit_gt_withdrawal() public {
+    function test_gt_withdrawal() public {
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
-        uint256 balanceSenderBefore = address(this).balance;
-        uint256 balanceProtocolBefore = address(protocol).balance;
+        (balanceUser0Before, balanceProtocolBefore,,) = _getBalances();
 
         usdn.approve(address(protocol), 1);
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE + 100 }(
@@ -317,31 +315,30 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
         _waitDelay();
 
-        assertSecurityDepositPaid(balanceSenderBefore, balanceProtocolBefore);
+        assertSecurityDepositPaid();
     }
 
     /**
-     * @custom:scenario The user initiates an open position action with more than the security deposit value
-     * @custom:when The user initiates a deposit with SECURITY_DEPOSIT_VALUE + 100 value
+     * @custom:scenario The user initiates an `open` position action with more than the security deposit value
+     * @custom:when The user initiates a deposit with `SECURITY_DEPOSIT_VALUE` + 100 value
      * @custom:then The protocol refunds the excess to the user
      */
-    function test_securityDeposit_gt_openPosition() public {
-        uint256 balanceSenderBefore = address(this).balance;
-        uint256 balanceProtocolBefore = address(protocol).balance;
+    function test_gt_openPosition() public {
+        (balanceUser0Before, balanceProtocolBefore,,) = _getBalances();
 
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE + 100 }(
             1 ether, params.initialPrice / 2, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
 
-        assertSecurityDepositPaid(balanceSenderBefore, balanceProtocolBefore);
+        assertSecurityDepositPaid();
     }
 
     /**
      * @custom:scenario The user initiates a close position action with more than the security deposit value
-     * @custom:when The user initiates a close position with SECURITY_DEPOSIT_VALUE + 100 value
+     * @custom:when The user initiates a close position with `SECURITY_DEPOSIT_VALUE` + 100 value
      * @custom:then The protocol refunds the excess to the user
      */
-    function test_securityDeposit_gt_closePosition() public {
+    function test_gt_closePosition() public {
         PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
@@ -351,15 +348,14 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
                 price: params.initialPrice
             })
         );
-        uint256 balanceSenderBefore = address(this).balance;
-        uint256 balanceProtocolBefore = address(protocol).balance;
+        (balanceUser0Before, balanceProtocolBefore,,) = _getBalances();
 
         protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE + 100 }(
             posId, 1 ether, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
-        assertSecurityDepositPaid(balanceSenderBefore, balanceProtocolBefore);
+        assertSecurityDepositPaid();
     }
 
     /* -------------------------------------------------------------------------- */
@@ -367,17 +363,15 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @custom:scenario The user0 initiates a deposit action and user1 validates user0 action with a initiateDeposit
-     * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
+     * @custom:scenario The user0 initiates a `deposit` action and user1 validates user0 action with a {initiateDeposit}
+     * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
      * @custom:when The protocol takes the security deposit from the user0 at the initialization of the deposit
      * @custom:then We skip validation deadline + 1
      * @custom:and The protocol returns the security deposit to the user1 at the initialization of his deposit
      */
-    function test_securityDeposit_initiateDeposit_multipleUsers() public {
+    function test_initiateDeposit_multipleUsers() public {
         wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
-        uint256 balanceUser0Before = address(this).balance;
-        uint256 balanceProtocolBefore = address(protocol).balance;
-        uint256 balanceUser1Before = USER_1.balance;
+        (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
         uint256 usdnBalanceUser0Before = usdn.balanceOf(address(this));
         uint256 usdnBalanceUser1Before = usdn.balanceOf(USER_1);
 
@@ -386,13 +380,9 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
         skip(protocol.getValidationDeadline() + 1);
 
-        assertSecurityDepositPaid(balanceUser0Before, balanceProtocolBefore);
+        assertSecurityDepositPaid();
 
-        (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(USER_1);
-        bytes[] memory previousPriceData = new bytes[](rawIndices.length);
-        previousPriceData[0] = priceData;
-        PreviousActionsData memory previousActionsData =
-            PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
+        PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
 
         vm.expectEmit();
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
@@ -402,12 +392,12 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
         _waitDelay();
 
-        assertRefundEthToUser1(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
+        assertRefundEthToUser1();
 
         vm.prank(USER_1);
         protocol.validateDeposit(USER_1, priceData, EMPTY_PREVIOUS_DATA);
 
-        assertBalancesEndTwoUsers(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
+        assertBalancesEndTwoUsers();
 
         // we assert that both deposits went through
         assertGt(usdn.balanceOf(address(this)), usdnBalanceUser0Before, "user0 should have received usdn");
@@ -415,17 +405,15 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user0 initiates a deposit action and user1 validates user0 action with a validateDeposit
-     * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
+     * @custom:scenario The user0 initiates a `deposit` action and user1 validates user0 action with a {validateDeposit}
+     * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
      * @custom:when The protocol takes the security deposit from the user0 at the initialization of the deposit
      * @custom:then We skip validation deadline + 1
      * @custom:and The protocol returns the security deposit to the user1 at the validation of his deposit
      */
-    function test_securityDeposit_validateDeposit_multipleUsers() public {
+    function test_validateDeposit_multipleUsers() public {
         wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
-        uint256 balanceUser1Before = USER_1.balance;
-        uint256 balanceUser0Before = address(this).balance;
-        uint256 balanceProtocolBefore = address(protocol).balance;
+        (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
         uint256 usdnBalanceUser0Before = usdn.balanceOf(address(this));
         uint256 usdnBalanceUser1Before = usdn.balanceOf(USER_1);
 
@@ -433,7 +421,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             1 ether, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
 
-        assertSecurityDepositPaid(balanceUser0Before, balanceProtocolBefore);
+        assertSecurityDepositPaid();
 
         vm.prank(USER_1);
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
@@ -441,20 +429,16 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
         skip(protocol.getValidationDeadline() + 1);
 
-        assertSecurityDepositPaidTwoUsers(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
+        assertSecurityDepositPaidTwoUsers();
 
-        (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(USER_1);
-        bytes[] memory previousPriceData = new bytes[](rawIndices.length);
-        previousPriceData[0] = priceData;
-        PreviousActionsData memory previousActionsData =
-            PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
+        PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
 
         vm.expectEmit();
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
         vm.prank(USER_1);
         protocol.validateDeposit(USER_1, priceData, previousActionsData);
 
-        assertBalancesEndTwoUsers(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
+        assertBalancesEndTwoUsers();
 
         // we assert that both deposits went through
         assertGt(usdn.balanceOf(address(this)), usdnBalanceUser0Before, "user0 should have received usdn");
@@ -462,18 +446,16 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user0 initiates a withdrawal action and user1 validates user0 action with a
-     * initiateWithdrawal
-     * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
+     * @custom:scenario The user0 initiates a `withdraw` action and user1 validates user0 action with a
+     * {initiateWithdrawal}
+     * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
      * @custom:when The protocol takes the security deposit from the user0 at the initialization of the withdrawal
      * @custom:then We skip validation deadline + 1
      * @custom:and The protocol returns the security deposit to the user1 at the initialization of his withdrawal
      */
-    function test_securityDeposit_initiateWithdrawal_multipleUsers() public {
+    function test_initiateWithdrawal_multipleUsers() public {
         wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
-        uint256 balanceUser0Before = address(this).balance;
-        uint256 balanceProtocolBefore = address(protocol).balance;
-        uint256 balanceUser1Before = USER_1.balance;
+        (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
 
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
         setUpUserPositionInVault(USER_1, ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
@@ -487,13 +469,9 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
         skip(protocol.getValidationDeadline() + 1);
 
-        assertSecurityDepositPaid(balanceUser0Before, balanceProtocolBefore);
+        assertSecurityDepositPaid();
 
-        (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(USER_1);
-        bytes[] memory previousPriceData = new bytes[](rawIndices.length);
-        previousPriceData[0] = priceData;
-        PreviousActionsData memory previousActionsData =
-            PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
+        PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
 
         vm.startPrank(USER_1);
         usdn.approve(address(protocol), 2);
@@ -506,12 +484,12 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         _waitDelay();
 
-        assertRefundEthToUser1(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
+        assertRefundEthToUser1();
 
         protocol.validateWithdrawal(USER_1, priceData, EMPTY_PREVIOUS_DATA);
         vm.stopPrank();
 
-        assertBalancesEndTwoUsers(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
+        assertBalancesEndTwoUsers();
 
         // we assert that both withdrawals went through
         assertLt(usdn.balanceOf(address(this)), usdnBalanceUser0Before, "user0 should have received usdn");
@@ -519,32 +497,30 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user0 initiates a withdrawal action and user1 validates user0 action with a
-     * validateWithdrawal
-     * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
+     * @custom:scenario The user0 initiates a `withdraw` action and user1 validates user0 action with a
+     * {validateWithdrawal}
+     * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
      * @custom:when The protocol takes the security deposit from the user0 at the initialization of the withdrawal
      * @custom:then We skip validation deadline + 1
      * @custom:and The protocol returns the security deposit to the user1 at the validation of his withdrawal
      */
-    function test_securityDeposit_validateWithdrawal_multipleUsers() public {
+    function test_validateWithdrawal_multipleUsers() public {
         wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
-        uint256 balanceUser1Before = USER_1.balance;
-        uint256 balanceUser0Before = address(this).balance;
-        uint256 balanceProtocolBefore = address(protocol).balance;
+        (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
 
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
         setUpUserPositionInVault(USER_1, ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
         uint256 usdnBalanceUser0Before = usdn.balanceOf(address(this));
         uint256 usdnBalanceUser1Before = usdn.balanceOf(USER_1);
 
-        // we initiate a withdrawal for 1e18 sahres of USDN
+        // we initiate a withdrawal for 1e18 shares of USDN
         usdn.approve(address(protocol), 2);
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(
             1e18, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
-        assertSecurityDepositPaid(balanceUser0Before, balanceProtocolBefore);
+        assertSecurityDepositPaid();
 
         vm.startPrank(USER_1);
         usdn.approve(address(protocol), 2);
@@ -553,20 +529,16 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
         skip(protocol.getValidationDeadline() + 1);
 
-        assertSecurityDepositPaidTwoUsers(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
+        assertSecurityDepositPaidTwoUsers();
 
-        (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(USER_1);
-        bytes[] memory previousPriceData = new bytes[](rawIndices.length);
-        previousPriceData[0] = priceData;
-        PreviousActionsData memory previousActionsData =
-            PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
+        PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
 
         vm.expectEmit();
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
         protocol.validateWithdrawal(USER_1, priceData, previousActionsData);
         vm.stopPrank();
 
-        assertBalancesEndTwoUsers(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
+        assertBalancesEndTwoUsers();
 
         // we assert that both withdrawals went through
         assertLt(usdn.balanceOf(address(this)), usdnBalanceUser0Before, "user0 should have received usdn");
@@ -575,30 +547,24 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario The user0 initiates a open position action and user1 validates user0 action with a
-     * initiateOpenPosition
-     * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
+     * {initiateOpenPosition}
+     * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
      * @custom:when The protocol takes the security deposit from the user0 at the initialization of the open position
      * @custom:then We skip validation deadline + 1
      * @custom:and The protocol returns the security deposit to the user1 at the initialization of his open position
      */
-    function test_securityDeposit_initiateOpenPosition_multipleUsers() public {
+    function test_initiateOpenPosition_multipleUsers() public {
         wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
-        uint256 balanceUser0Before = address(this).balance;
-        uint256 balanceProtocolBefore = address(protocol).balance;
-        uint256 balanceUser1Before = USER_1.balance;
+        (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
 
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
             1 ether, params.initialPrice / 2, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
         skip(protocol.getValidationDeadline() + 1);
 
-        assertSecurityDepositPaid(balanceUser0Before, balanceProtocolBefore);
+        assertSecurityDepositPaid();
 
-        (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(USER_1);
-        bytes[] memory previousPriceData = new bytes[](rawIndices.length);
-        previousPriceData[0] = priceData;
-        PreviousActionsData memory previousActionsData =
-            PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
+        PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
 
         vm.expectEmit();
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
@@ -608,33 +574,31 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
         _waitDelay();
 
-        assertRefundEthToUser1(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
+        assertRefundEthToUser1();
 
         vm.prank(USER_1);
         protocol.validateOpenPosition(USER_1, priceData, EMPTY_PREVIOUS_DATA);
 
-        assertBalancesEndTwoUsers(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
+        assertBalancesEndTwoUsers();
     }
 
     /**
-     * @custom:scenario The user0 initiates an open position action and user1 validates user0 action with a
-     * validateOpenPosition
-     * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
+     * @custom:scenario The user0 initiates an `open` position action and user1 validates user0 action with a
+     * {validateOpenPosition}
+     * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
      * @custom:when The protocol takes the security deposit from the user0 at the initialization of the open position
      * @custom:then We skip validation deadline + 1
      * @custom:and The protocol returns the security deposit to the user1 at the validation of his open position
      */
-    function test_securityDeposit_validateOpenPosition_multipleUsers() public {
+    function test_validateOpenPosition_multipleUsers() public {
         wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
-        uint256 balanceUser1Before = USER_1.balance;
-        uint256 balanceUser0Before = address(this).balance;
-        uint256 balanceProtocolBefore = address(protocol).balance;
+        (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
 
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
             1 ether, params.initialPrice / 2, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
 
-        assertSecurityDepositPaid(balanceUser0Before, balanceProtocolBefore);
+        assertSecurityDepositPaid();
 
         vm.prank(USER_1);
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
@@ -642,34 +606,28 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
         skip(protocol.getValidationDeadline() + 1);
 
-        assertSecurityDepositPaidTwoUsers(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
+        assertSecurityDepositPaidTwoUsers();
 
-        (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(USER_1);
-        bytes[] memory previousPriceData = new bytes[](rawIndices.length);
-        previousPriceData[0] = priceData;
-        PreviousActionsData memory previousActionsData =
-            PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
+        PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
 
         vm.expectEmit();
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
         vm.prank(USER_1);
         protocol.validateOpenPosition(USER_1, priceData, previousActionsData);
 
-        assertBalancesEndTwoUsers(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
+        assertBalancesEndTwoUsers();
     }
 
     /**
      * @custom:scenario The user0 initiates a close position action and user1 validates user0 action
-     * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
+     * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
      * @custom:when The protocol takes the security deposit from the user0 at the initialization of the close position
      * @custom:then We skip validation deadline + 1
      * @custom:and The protocol returns the security deposit to the user1 at the initialization of his close position
      */
-    function test_securityDeposit_initiateClosePosition_multipleUsers() public {
+    function test_initiateClosePosition_multipleUsers() public {
         wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
-        uint256 balanceUser0Before = address(this).balance;
-        uint256 balanceProtocolBefore = address(protocol).balance;
-        uint256 balanceUser1Before = USER_1.balance;
+        (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
 
         PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
@@ -695,13 +653,9 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
         skip(protocol.getValidationDeadline() + 1);
 
-        assertSecurityDepositPaid(balanceUser0Before, balanceProtocolBefore);
+        assertSecurityDepositPaid();
 
-        (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(USER_1);
-        bytes[] memory previousPriceData = new bytes[](rawIndices.length);
-        previousPriceData[0] = priceData;
-        PreviousActionsData memory previousActionsData =
-            PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
+        PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
 
         vm.expectEmit();
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
@@ -711,26 +665,24 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
         _waitDelay();
 
-        assertRefundEthToUser1(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
+        assertRefundEthToUser1();
 
         vm.prank(USER_1);
         protocol.validateClosePosition(USER_1, priceData, EMPTY_PREVIOUS_DATA);
 
-        assertBalancesEndTwoUsers(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
+        assertBalancesEndTwoUsers();
     }
 
     /**
      * @custom:scenario The user0 initiates a close position action and user1 validates user0 action
-     * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
+     * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
      * @custom:when The protocol takes the security deposit from the user0 at the initialization of the close position
      * @custom:then We skip validation deadline + 1
      * @custom:and The protocol returns the security deposit to the user1 at the validation of his close position
      */
-    function test_securityDeposit_validateClosePosition_multipleUsers() public {
+    function test_validateClosePosition_multipleUsers() public {
         wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
-        uint256 balanceUser1Before = USER_1.balance;
-        uint256 balanceUser0Before = address(this).balance;
-        uint256 balanceProtocolBefore = address(protocol).balance;
+        (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
 
         PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
@@ -756,7 +708,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
         _waitDelay();
 
-        assertSecurityDepositPaid(balanceUser0Before, balanceProtocolBefore);
+        assertSecurityDepositPaid();
 
         vm.startPrank(USER_1);
         protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(
@@ -764,20 +716,16 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
         skip(protocol.getValidationDeadline() + 1);
 
-        assertSecurityDepositPaidTwoUsers(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
+        assertSecurityDepositPaidTwoUsers();
 
-        (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(USER_1);
-        bytes[] memory previousPriceData = new bytes[](rawIndices.length);
-        previousPriceData[0] = priceData;
-        PreviousActionsData memory previousActionsData =
-            PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
+        PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
 
         vm.expectEmit();
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
         protocol.validateClosePosition(USER_1, priceData, previousActionsData);
         vm.stopPrank();
 
-        assertBalancesEndTwoUsers(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
+        assertBalancesEndTwoUsers();
     }
 
     /* -------------------------------------------------------------------------- */
@@ -785,16 +733,15 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @custom:scenario The user initiates and validates a deposit action with a change in the security deposit value
-     * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
+     * @custom:scenario The user initiates and validates a `deposit` action with a change in the security deposit value
+     * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
      * @custom:when The protocol takes the security deposit from the user at the initialization of the deposit
      * @custom:then We change the value of the security deposit to SECURITY_DEPOSIT_VALUE / 2
      * @custom:and The protocol returns the security deposit to the user at the validation of the deposit
-     * @custom:and The user initiates a withdrawal action with the new security deposit value
+     * @custom:and The user initiates a `withdraw` action with the new security deposit value
      */
-    function test_securityDeposit_changeValue() public {
-        uint256 balanceSenderBefore = address(this).balance;
-        uint256 balanceProtocolBefore = address(protocol).balance;
+    function test_changeValue() public {
+        (balanceUser0Before, balanceProtocolBefore,,) = _getBalances();
         uint64 newSecurityDepositValue = SECURITY_DEPOSIT_VALUE / 2;
 
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
@@ -802,7 +749,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
         _waitDelay();
 
-        assertSecurityDepositPaid(balanceSenderBefore, balanceProtocolBefore);
+        assertSecurityDepositPaid();
 
         vm.prank(ADMIN);
         protocol.setSecurityDepositValue(newSecurityDepositValue);
@@ -816,7 +763,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         assertEq(
             address(this).balance,
-            balanceSenderBefore,
+            balanceUser0Before,
             "balance of the user after validation should be the same than before all actions"
         );
         assertEq(
@@ -833,7 +780,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         assertEq(
             address(this).balance,
-            balanceSenderBefore - newSecurityDepositValue,
+            balanceUser0Before - newSecurityDepositValue,
             "the user should have paid the new security deposit"
         );
         assertEq(
@@ -846,7 +793,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         assertEq(
             address(this).balance,
-            balanceSenderBefore,
+            balanceUser0Before,
             "the user should have retrieved his deposit from the protocol at the end"
         );
         assertEq(
@@ -857,19 +804,17 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user0 initiates a deposit action and user1 validates user0 action after a change of
+     * @custom:scenario The user0 initiates a `deposit` action and user1 validates user0 action after a change of
      * the security deposit value
-     * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
+     * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
      * @custom:when The protocol takes the security deposit from the user0 at the initialization of the deposit
      * @custom:then We skip validation deadline + 1
      * @custom:and We change the value of the security deposit to SECURITY_DEPOSIT_VALUE / 2
-     * @custom:and The protocol returns SECURITY_DEPOSIT_VALUE the user1 at the initialization of his deposit
+     * @custom:and The protocol returns `SECURITY_DEPOSIT_VALUE` the user1 at the initialization of his deposit
      */
-    function test_securityDeposit_changeValue_multipleUsers() public {
+    function test_changeValue_multipleUsers() public {
         wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
-        uint256 balanceUser1Before = USER_1.balance;
-        uint256 balanceUser0Before = address(this).balance;
-        uint256 balanceProtocolBefore = address(protocol).balance;
+        (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
         uint256 usdnBalanceUser0Before = usdn.balanceOf(address(this));
         uint256 usdnBalanceUser1Before = usdn.balanceOf(USER_1);
         uint64 newSecurityDepositValue = SECURITY_DEPOSIT_VALUE / 2;
@@ -879,7 +824,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
         skip(protocol.getValidationDeadline() + 1);
 
-        assertSecurityDepositPaid(balanceUser0Before, balanceProtocolBefore);
+        assertSecurityDepositPaid();
 
         vm.prank(ADMIN);
         protocol.setSecurityDepositValue(newSecurityDepositValue);
@@ -889,11 +834,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             "the security deposit value should have changed"
         );
 
-        (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(USER_1);
-        bytes[] memory previousPriceData = new bytes[](rawIndices.length);
-        previousPriceData[0] = priceData;
-        PreviousActionsData memory previousActionsData =
-            PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
+        PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
 
         vm.expectEmit();
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
@@ -922,7 +863,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         vm.prank(USER_1);
         protocol.validateDeposit(USER_1, priceData, EMPTY_PREVIOUS_DATA);
 
-        assertBalancesEndTwoUsers(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
+        assertBalancesEndTwoUsers();
 
         // we assert that both deposits went through
         assertGt(usdn.balanceOf(address(this)), usdnBalanceUser0Before, "user0 should have received usdn");
@@ -934,18 +875,17 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @custom:scenario The user initiates and validates a deposit action
-     * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
+     * @custom:scenario The user initiates and validates a `deposit` action
+     * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
      * @custom:when The protocol takes the security deposit from the user at the initialization of the deposit
      * @custom:then The protocol returns the security deposit to the user at the validation of the deposit
      */
-    function test_securityDeposit_refundStaleTransaction() public {
-        uint256 balanceSenderBefore = address(this).balance;
-        uint256 balanceProtocolBefore = address(protocol).balance;
+    function test_refundStaleTransaction() public {
+        (balanceUser0Before, balanceProtocolBefore,,) = _getBalances();
 
         PositionId memory posId = _createStalePendingActionHelper();
 
-        assertSecurityDepositPaid(balanceSenderBefore, balanceProtocolBefore);
+        assertSecurityDepositPaid();
 
         wstETH.approve(address(protocol), 1 ether);
         vm.expectEmit();
@@ -957,7 +897,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         assertEq(
             address(this).balance,
-            balanceSenderBefore - SECURITY_DEPOSIT_VALUE,
+            balanceUser0Before - SECURITY_DEPOSIT_VALUE,
             "the user should have retrieved his first security deposit from the stale pending action"
         );
         assertEq(
@@ -968,17 +908,197 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         protocol.validateDeposit(payable(address(this)), priceData, EMPTY_PREVIOUS_DATA);
 
-        assertBalancesEnd(balanceSenderBefore, balanceProtocolBefore);
+        assertBalancesEnd();
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*           validator is a contract with no receive function tests           */
+    /* -------------------------------------------------------------------------- */
+
+    /**
+     * @custom:scenario A smart contract with no {receive} function is the validator of a deposit
+     * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
+     * @custom:when The validator tries to validate the deposit
+     * @custom:then The transaction reverts with the error `UsdnProtocolEtherRefundFailed`
+     */
+    function test_RevertWhen_refundSmartContract_noReceive() public {
+        (balanceUser0Before, balanceProtocolBefore,,) = _getBalances();
+
+        protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
+            1 ether, address(this), payable(address(receiverContract)), priceData, EMPTY_PREVIOUS_DATA
+        );
+        _waitDelay();
+
+        assertSecurityDepositPaid();
+
+        vm.expectRevert(UsdnProtocolEtherRefundFailed.selector);
+        receiverContract.validateDeposit(address(protocol), priceData, EMPTY_PREVIOUS_DATA);
+    }
+
+    /**
+     * @custom:scenario A smart contract with no {receive} function is the validator of a `deposit` action
+     * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
+     * @custom:when The validator tries to validate the deposit
+     * @custom:then The transaction reverts with the error `UsdnProtocolEtherRefundFailed`
+     * @custom:and We skip the validation deadline + 1
+     * @custom:when A user tries to validate the pending action
+     * @custom:then The security deposit is refunded to the user and not to the receiver contract
+     */
+    function test_deposit_refundSmartContract_noReceive() public {
+        (balanceUser0Before, balanceProtocolBefore, balanceUser1Before, balanceReceiverContractBefore) = _getBalances();
+
+        protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
+            1 ether, USER_1, payable(address(receiverContract)), priceData, EMPTY_PREVIOUS_DATA
+        );
+
+        _waitDelay();
+        assertSecurityDepositPaidDummyContract();
+
+        // the dummy contract (validator) does not implement a receive function so we expect a revert
+        vm.expectRevert(UsdnProtocolEtherRefundFailed.selector);
+        receiverContract.validateDeposit(address(protocol), priceData, EMPTY_PREVIOUS_DATA);
+
+        _waitBeforeActionablePendingAction();
+
+        PreviousActionsData memory prevActionsData = _createPrevActionDataStruct(address(this), true);
+
+        // we validate the pending action with the user when the validation deadline has passed
+        vm.prank(USER_1);
+        protocol.validateActionablePendingActions(prevActionsData, 1);
+
+        // we assert that the security deposit has been refunded to the user1 and not to the receiver contract
+        assertBalancesEndDummyContract();
+    }
+
+    /**
+     * @custom:scenario A smart contract with no {receive} function is the validator of a `withdraw` action
+     * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
+     * @custom:when The validator tries to validate the deposit
+     * @custom:then The transaction reverts with the error `UsdnProtocolEtherRefundFailed`
+     * @custom:and We skip the validation deadline + 1
+     * @custom:when A user tries to validate the pending action
+     * @custom:then The security deposit is refunded to the user and not to the receiver contract
+     */
+    function test_withdraw_refundSmartContract_noReceive() public {
+        (balanceUser0Before, balanceProtocolBefore, balanceUser1Before, balanceReceiverContractBefore) = _getBalances();
+
+        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
+
+        usdn.approve(address(protocol), 1);
+        protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(
+            1, USER_1, payable(address(receiverContract)), priceData, EMPTY_PREVIOUS_DATA
+        );
+        _waitDelay();
+
+        assertSecurityDepositPaidDummyContract();
+
+        // the dummy contract (validator) does not implement a receive function so we expect a revert
+        vm.expectRevert(UsdnProtocolEtherRefundFailed.selector);
+        receiverContract.validateWithdrawal(address(protocol), priceData, EMPTY_PREVIOUS_DATA);
+
+        _waitBeforeActionablePendingAction();
+
+        PreviousActionsData memory prevActionsData = _createPrevActionDataStruct(address(this), true);
+
+        // we validate the pending action with the user when the validation deadline has passed
+        vm.prank(USER_1);
+        protocol.validateActionablePendingActions(prevActionsData, 1);
+
+        // we assert that the security deposit has been refunded to the user1 and not to the receiver contract
+        assertBalancesEndDummyContract();
+    }
+
+    /**
+     * @custom:scenario A smart contract with no {receive} function is the validator of a `openPosition` action
+     * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
+     * @custom:when The validator tries to validate the deposit
+     * @custom:then The transaction reverts with the error `UsdnProtocolEtherRefundFailed`
+     * @custom:and We skip the validation deadline + 1
+     * @custom:when A user tries to validate the pending action
+     * @custom:then The security deposit is refunded to the user and not to the receiver contract
+     */
+    function test_openPosition_refundSmartContract_noReceive() public {
+        (balanceUser0Before, balanceProtocolBefore, balanceUser1Before, balanceReceiverContractBefore) = _getBalances();
+
+        protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
+            1 ether, params.initialPrice / 2, USER_1, payable(address(receiverContract)), priceData, EMPTY_PREVIOUS_DATA
+        );
+
+        _waitDelay();
+        assertSecurityDepositPaidDummyContract();
+
+        // the dummy contract (validator) does not implement a receive function so we expect a revert
+        vm.expectRevert(UsdnProtocolEtherRefundFailed.selector);
+        receiverContract.validateOpenPosition(address(protocol), priceData, EMPTY_PREVIOUS_DATA);
+
+        _waitBeforeActionablePendingAction();
+
+        PreviousActionsData memory prevActionsData = _createPrevActionDataStruct(address(this), true);
+
+        // we validate the pending action with the user when the validation deadline has passed
+        vm.prank(USER_1);
+        protocol.validateActionablePendingActions(prevActionsData, 1);
+
+        // we assert that the security deposit has been refunded to the user1 and not to the receiver contract
+        assertBalancesEndDummyContract();
+    }
+
+    /**
+     * @custom:scenario A smart contract with no {receive} function is the validator of a `closePosition` action
+     * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
+     * @custom:when The validator tries to validate the deposit
+     * @custom:then The transaction reverts with the error `UsdnProtocolEtherRefundFailed`
+     * @custom:and We skip the validation deadline + 1
+     * @custom:when A user tries to validate the pending action
+     * @custom:then The security deposit is refunded to the user and not to the receiver contract
+     */
+    function test_closePosition_refundSmartContract_noReceive() public {
+        PositionId memory posId = setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: params.initialPrice / 2,
+                price: params.initialPrice
+            })
+        );
+
+        (balanceUser0Before, balanceProtocolBefore, balanceUser1Before, balanceReceiverContractBefore) = _getBalances();
+
+        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
+
+        protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(
+            posId, 1 ether, USER_1, payable(address(receiverContract)), priceData, EMPTY_PREVIOUS_DATA
+        );
+
+        _waitDelay();
+
+        assertSecurityDepositPaidDummyContract();
+
+        // the dummy contract (validator) does not implement a receive function so we expect a revert
+        vm.expectRevert(UsdnProtocolEtherRefundFailed.selector);
+        receiverContract.validateClosePosition(address(protocol), priceData, EMPTY_PREVIOUS_DATA);
+
+        _waitBeforeActionablePendingAction();
+
+        PreviousActionsData memory prevActionsData = _createPrevActionDataStruct(address(this), true);
+
+        // we validate the pending action with the user when the validation deadline has passed
+        vm.prank(USER_1);
+        protocol.validateActionablePendingActions(prevActionsData, 1);
+
+        // we assert that the security deposit has been refunded to the user1 and not to the receiver contract
+        assertBalancesEndDummyContract();
     }
 
     /* -------------------------------------------------------------------------- */
     /*                                test helpers                                */
     /* -------------------------------------------------------------------------- */
 
-    function assertSecurityDepositPaid(uint256 balanceSenderBefore, uint256 balanceProtocolBefore) public {
+    function assertSecurityDepositPaid() public {
         assertEq(
             address(this).balance,
-            balanceSenderBefore - SECURITY_DEPOSIT_VALUE,
+            balanceUser0Before - SECURITY_DEPOSIT_VALUE,
             "the balance of the user after initialization should have SECURITY_DEPOSIT_VALUE less"
         );
         assertEq(
@@ -988,10 +1108,33 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
     }
 
-    function assertBalancesEnd(uint256 balanceSenderBefore, uint256 balanceProtocolBefore) public {
+    function assertSecurityDepositPaidDummyContract() public {
         assertEq(
             address(this).balance,
-            balanceSenderBefore,
+            balanceUser0Before - SECURITY_DEPOSIT_VALUE,
+            "the balance of the user0 after initialization should have SECURITY_DEPOSIT_VALUE less"
+        );
+        assertEq(
+            address(protocol).balance,
+            balanceProtocolBefore + SECURITY_DEPOSIT_VALUE,
+            "the balance of the protocol after initialization should have SECURITY_DEPOSIT_VALUE more"
+        );
+        assertEq(
+            address(USER_1).balance,
+            balanceUser1Before,
+            "the balance of the user1 after initialization should be the same than before all actions"
+        );
+        assertEq(
+            address(receiverContract).balance,
+            balanceReceiverContractBefore,
+            "the balance of the `receiverContract` after initialization should be the same than before all actions"
+        );
+    }
+
+    function assertBalancesEnd() public {
+        assertEq(
+            address(this).balance,
+            balanceUser0Before,
             "the balance of the user after all actions should be the same than before all actions"
         );
         assertEq(
@@ -1001,11 +1144,30 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
     }
 
-    function assertBalancesEndTwoUsers(
-        uint256 balanceUser0Before,
-        uint256 balanceUser1Before,
-        uint256 balanceProtocolBefore
-    ) public {
+    function assertBalancesEndDummyContract() public {
+        assertEq(
+            address(this).balance,
+            balanceUser0Before - SECURITY_DEPOSIT_VALUE,
+            "the balance of the user0 after all actions should have SECURITY_DEPOSIT_VALUE less"
+        );
+        assertEq(
+            address(protocol).balance,
+            balanceProtocolBefore,
+            "the balance of the protocol after all actions should be the same as before"
+        );
+        assertEq(
+            address(USER_1).balance,
+            balanceUser1Before + SECURITY_DEPOSIT_VALUE,
+            "the balance of the user1 after all actions should have `SECURITY_DEPOSIT_VALUE` more"
+        );
+        assertEq(
+            address(receiverContract).balance,
+            balanceReceiverContractBefore,
+            "the balance of the `receiverContract` after all actions should be the same than before"
+        );
+    }
+
+    function assertBalancesEndTwoUsers() public {
         assertEq(
             address(this).balance,
             balanceUser0Before - SECURITY_DEPOSIT_VALUE,
@@ -1019,15 +1181,11 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertEq(
             address(protocol).balance,
             balanceProtocolBefore,
-            "the protocol balance after all actions should be the same than a the beginning"
+            "the protocol balance after all actions should be the same as a the beginning"
         );
     }
 
-    function assertRefundEthToUser1(
-        uint256 balanceUser0Before,
-        uint256 balanceUser1Before,
-        uint256 balanceProtocolBefore
-    ) public {
+    function assertRefundEthToUser1() public {
         assertEq(
             USER_1.balance,
             balanceUser1Before,
@@ -1045,11 +1203,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
     }
 
-    function assertSecurityDepositPaidTwoUsers(
-        uint256 balanceUser0Before,
-        uint256 balanceUser1Before,
-        uint256 balanceProtocolBefore
-    ) public {
+    function assertSecurityDepositPaidTwoUsers() public {
         assertEq(
             USER_1.balance,
             balanceUser1Before - SECURITY_DEPOSIT_VALUE,
@@ -1067,5 +1221,73 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
     }
 
+    function _getBalances()
+        public
+        view
+        returns (
+            uint256 balanceUser0Before_,
+            uint256 balanceProtocolBefore_,
+            uint256 balanceUser1Before_,
+            uint256 balanceReceiverContractBefore_
+        )
+    {
+        return (address(this).balance, address(protocol).balance, USER_1.balance, address(receiverContract).balance);
+    }
+
+    function _createPrevActionDataStruct(address user, bool assertValidatorContract)
+        internal
+        returns (PreviousActionsData memory prevActionsData_)
+    {
+        (PendingAction[] memory pendingAction, uint128[] memory rawIndices) = protocol.getActionablePendingActions(user);
+        bytes[] memory prevPriceData = new bytes[](rawIndices.length);
+        prevPriceData[0] = priceData;
+
+        if (assertValidatorContract) {
+            assertEq(pendingAction.length, 1, "actions length");
+            assertEq(pendingAction[0].to, USER_1, "action `to`");
+            assertEq(pendingAction[0].validator, address(receiverContract), "action `validator`");
+        }
+
+        prevActionsData_ = PreviousActionsData({ priceData: prevPriceData, rawIndices: rawIndices });
+    }
+
     receive() external payable { }
+}
+
+/**
+ * @title DummyContract
+ * @dev This contract is used to interact with the USDN protocol and does not have a `receive()` function.
+ */
+contract DummyContract {
+    function validateDeposit(
+        address usdnProtocolAddr,
+        bytes calldata priceData,
+        PreviousActionsData calldata previousData
+    ) external {
+        IUsdnProtocol(usdnProtocolAddr).validateDeposit(payable(address(this)), priceData, previousData);
+    }
+
+    function validateWithdrawal(
+        address usdnProtocolAddr,
+        bytes calldata priceData,
+        PreviousActionsData calldata previousData
+    ) external {
+        IUsdnProtocol(usdnProtocolAddr).validateWithdrawal(payable(address(this)), priceData, previousData);
+    }
+
+    function validateOpenPosition(
+        address usdnProtocolAddr,
+        bytes calldata priceData,
+        PreviousActionsData calldata previousData
+    ) external {
+        IUsdnProtocol(usdnProtocolAddr).validateOpenPosition(payable(address(this)), priceData, previousData);
+    }
+
+    function validateClosePosition(
+        address usdnProtocolAddr,
+        bytes calldata priceData,
+        PreviousActionsData calldata previousData
+    ) external {
+        IUsdnProtocol(usdnProtocolAddr).validateClosePosition(payable(address(this)), priceData, previousData);
+    }
 }
