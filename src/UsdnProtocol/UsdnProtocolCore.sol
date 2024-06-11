@@ -755,6 +755,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             uint256 pendingAmount =
                 FixedPointMathLib.fullMulDiv(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares);
             _pendingBalanceVault += pendingAmount.toInt256();
+            // slither-disable-next-line unused-return
             _usdn.transferShares(to, shares);
         } else if (pending.action == ProtocolAction.ValidateOpenPosition) {
             // for pending opens, we need to remove the position

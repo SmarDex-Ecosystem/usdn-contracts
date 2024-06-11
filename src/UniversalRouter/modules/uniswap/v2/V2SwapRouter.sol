@@ -58,6 +58,7 @@ abstract contract V2SwapRouter is UniswapImmutables, Permit2Payments {
             }
 
             // cached to save on duplicate operations
+            // slither-disable-next-line unused-return
             (address token0,) = UniswapV2Library.sortTokens(path[0], path[1]);
             uint256 finalPairIndex = path.length - 1;
             uint256 penultimatePairIndex = finalPairIndex - 1;
@@ -66,6 +67,7 @@ abstract contract V2SwapRouter is UniswapImmutables, Permit2Payments {
 
                 (data.input, data.output) = (path[i], path[i + 1]);
 
+                // slither-disable-next-line unused-return
                 (data.reserve0, data.reserve1,) = IUniswapV2Pair(pair).getReserves();
 
                 (data.reserveInput, data.reserveOutput) =

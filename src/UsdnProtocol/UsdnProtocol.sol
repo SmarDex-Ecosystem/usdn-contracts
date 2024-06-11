@@ -437,6 +437,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         uint256 usdnSharesToMint = _calcMintUsdnShares(amount, 0, 0, price);
         uint256 minUsdnSharesSupply = _usdn.convertToShares(MIN_USDN_SUPPLY);
         // mint the minimum amount and send it to the dead address so it can never be removed from the total supply
+        // slither-disable-next-line unused-return
         _usdn.mintShares(DEAD_ADDRESS, minUsdnSharesSupply);
         // mint the user's share
         uint256 mintSharesToUser = usdnSharesToMint - minUsdnSharesSupply;
