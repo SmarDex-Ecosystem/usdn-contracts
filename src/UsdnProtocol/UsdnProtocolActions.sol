@@ -2067,11 +2067,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             liqMultiplierAccumulator: _liqMultiplierAccumulator
         });
 
-        if (cache.totalExpo < longBalance) {
+        if (cache.totalExpo < cache.longBalance) {
             revert UsdnProtocolInvalidLongExpo();
         }
 
-        cache.tradingExpo = cache.totalExpo - longBalance;
+        cache.tradingExpo = cache.totalExpo - cache.longBalance;
 
         {
             int256 currentImbalance = _calcLongImbalanceBps(cache.vaultBalance, cache.longBalance, cache.totalExpo);
@@ -2092,11 +2092,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 positionValue;
         // close the rebalancer position and get its value to open the next one
         if (rebalancerPosId.tick != NO_POSITION_TICK) {
-            positionValue = _flashClosePosition(rebalancerPosId, neutralPrice, cache.tradingExpo).toUint128();
+            // cached values will be updated during this call
+            positionValue = _flashClosePosition(rebalancerPosId, neutralPrice, cache).toUint128();
 
-            cache.longBalance -= positionValue;
-            cache.totalExpo = _totalExpo;
-            cache.tradingExpo = cache.totalExpo - longBalance;
             cache.liqMultiplierAccumulator = _liqMultiplierAccumulator;
             positionAmount += positionValue;
         }
@@ -2129,12 +2127,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             address(rebalancer), neutralPrice, tickWithoutLiqPenalty, positionAmount, cache.tradingExpo
         );
 
-        cache.longBalance += positionAmount;
+        longBalance_ += positionAmount;
 
         // call the rebalancer to update the internal bookkeeping
         rebalancer.updatePosition(posId, positionValue);
-
-        longBalance_ = cache.longBalance;
     }
 
     /**

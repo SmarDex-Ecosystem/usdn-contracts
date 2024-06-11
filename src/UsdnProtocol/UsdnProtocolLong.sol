@@ -749,10 +749,10 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @dev Should only be used to close the rebalancer position
      * @param posId The ID of the position to close
      * @param neutralPrice The current neutral price
-     * @param longTradingExpo The long trading expo of the protocol
+     * @param cache The cached state of the protocol, will be updated during this call
      * @return positionValue_ The value of the closed position
      */
-    function _flashClosePosition(PositionId memory posId, uint128 neutralPrice, uint256 longTradingExpo)
+    function _flashClosePosition(PositionId memory posId, uint128 neutralPrice, CachedProtocolState memory cache)
         internal
         returns (uint256 positionValue_)
     {
@@ -769,7 +769,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
         int256 positionValue = _positionValue(
             neutralPrice,
-            getEffectivePriceForTick(posId.tick, neutralPrice, longTradingExpo, _liqMultiplierAccumulator),
+            getEffectivePriceForTick(posId.tick, neutralPrice, cache.tradingExpo, cache.liqMultiplierAccumulator),
             pos.totalExpo
         );
 
@@ -780,6 +780,11 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
         // cast is safe as positionValue cannot be lower than 0
         positionValue_ = uint256(positionValue);
+
+        // mutates the cache
+        cache.totalExpo -= pos.totalExpo;
+        cache.longBalance -= positionValue_;
+        cache.tradingExpo = cache.totalExpo - cache.longBalance;
 
         // emit both initiate and validate events
         // so the position is considered the same as other positions by event indexers
