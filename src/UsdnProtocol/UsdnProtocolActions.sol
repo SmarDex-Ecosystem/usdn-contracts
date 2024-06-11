@@ -2096,6 +2096,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
             cache.longBalance -= positionValue;
             cache.totalExpo = _totalExpo;
+            cache.tradingExpo = cache.totalExpo - longBalance;
             cache.liqMultiplierAccumulator = _liqMultiplierAccumulator;
             positionAmount += positionValue;
         }
