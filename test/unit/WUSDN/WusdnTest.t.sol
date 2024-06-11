@@ -17,7 +17,7 @@ contract TestWusdnWrap is WusdnTokenFixture {
         uint256 wusdnAmount = wusdn.wrap(toWrapAmount);
         uint256 usdnAmount = wusdn.unwrap(wusdnAmount);
 
-        assertEq(wusdn.totalUsdn(), 0, "total USDN supply in WUSDN");
+        assertEq(wusdn.totalUsdnBalance(), 0, "total USDN supply in WUSDN");
         assertEq(toWrapAmount, usdnAmount, "USDN amounts should be equal");
         assertEq(usdn.sharesOf(address(wusdn)), 0, "total WUSDN supply");
     }

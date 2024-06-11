@@ -76,7 +76,7 @@ interface IWusdn is IERC20Permit, IWusdnEvents {
      * @notice Returns the total amount of USDN held by the contract
      * @return The total amount of USDN held by the contract
      */
-    function totalUsdn() external view returns (uint256);
+    function totalUsdnBalance() external view returns (uint256);
 
     /**
      * @notice Previews the amount of WUSDN that would be received for a given amount of USDN

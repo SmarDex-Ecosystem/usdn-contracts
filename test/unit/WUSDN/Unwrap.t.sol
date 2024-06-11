@@ -28,7 +28,7 @@ contract TestWusdnUnwrap is WusdnTokenFixture {
         usdn.rebase(usdn.MAX_DIVISOR() / 2);
         wusdn.unwrap(wrappedAmount / 2);
 
-        assertEq(wusdn.totalUsdn(), usdn.convertToTokens(depositShares / 2), "total usdn supply in wusdn");
+        assertEq(wusdn.totalUsdnBalance(), usdn.convertToTokens(depositShares / 2), "total usdn supply in wusdn");
         assertEq(wusdn.totalSupply(), wrappedAmount / 2, "total wrapped supply");
     }
 }

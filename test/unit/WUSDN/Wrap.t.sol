@@ -30,7 +30,7 @@ contract TestWusdnWrap is WusdnTokenFixture {
         depositShares += usdn.convertToShares(depositAmount * 2);
         wusdn.wrap(depositAmount * 2);
 
-        assertEq(wusdn.totalUsdn(), usdn.convertToTokens(depositShares), "total USDN supply in WUSDN");
+        assertEq(wusdn.totalUsdnBalance(), usdn.convertToTokens(depositShares), "total USDN supply in WUSDN");
         assertEq(wusdn.totalSupply(), depositAmount * 2, "total WUSDN supply");
     }
 }
