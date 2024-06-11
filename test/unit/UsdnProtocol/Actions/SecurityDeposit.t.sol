@@ -225,7 +225,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:when The user initiates a deposit with `SECURITY_DEPOSIT_VALUE` - 1 value
      * @custom:then The protocol reverts with {UsdnProtocolSecurityDepositTooLow}
      */
-    function test_RevertWhen_secDec_lt_deposit() public {
+    function test_RevertWhen_securityDeposit_lt_deposit() public {
         vm.expectRevert(UsdnProtocolSecurityDepositTooLow.selector);
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE - 1 }(
             1 ether, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
@@ -237,7 +237,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:when The user initiates a withdrawal with `SECURITY_DEPOSIT_VALUE` - 1 value
      * @custom:then The protocol reverts with {UsdnProtocolSecurityDepositTooLow}
      */
-    function test_RevertWhen_secDec_lt_withdrawal() public {
+    function test_RevertWhen_securityDeposit_lt_withdrawal() public {
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
 
         vm.expectRevert(UsdnProtocolSecurityDepositTooLow.selector);
@@ -251,7 +251,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:when The user initiates an `open` position with `SECURITY_DEPOSIT_VALUE` - 1 value
      * @custom:then The protocol reverts with {UsdnProtocolSecurityDepositTooLow}
      */
-    function test_RevertWhen_secDec_lt_openPosition() public {
+    function test_RevertWhen_securityDeposit_lt_openPosition() public {
         vm.expectRevert(UsdnProtocolSecurityDepositTooLow.selector);
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE - 1 }(
             1 ether, params.initialPrice / 2, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
@@ -263,7 +263,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:when The user initiates a close position with `SECURITY_DEPOSIT_VALUE` - 1 value
      * @custom:then The protocol reverts with {UsdnProtocolSecurityDepositTooLow}
      */
-    function test_RevertWhen_secDec_lt_closePosition() public {
+    function test_RevertWhen_securityDeposit_lt_closePosition() public {
         PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
@@ -916,7 +916,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @custom:scenario A smartcontract with no {receive} function is the validator of a deposit
+     * @custom:scenario A smart contract with no {receive} function is the validator of a deposit
      * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
      * @custom:when The validator tries to validate the deposit
      * @custom:then The transaction reverts with the error `UsdnProtocolEtherRefundFailed`
@@ -936,7 +936,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario A smartcontract with no {receive} function is the validator of a `deposit` action
+     * @custom:scenario A smart contract with no {receive} function is the validator of a `deposit` action
      * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
      * @custom:when The validator tries to validate the deposit
      * @custom:then The transaction reverts with the error `UsdnProtocolEtherRefundFailed`
@@ -954,7 +954,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         _waitDelay();
         assertSecurityDepositPaidDummyContract();
 
-        // The dummy contract (validator) does not implement a receive function so we expect a revert
+        // the dummy contract (validator) does not implement a receive function so we expect a revert
         vm.expectRevert(UsdnProtocolEtherRefundFailed.selector);
         receiverContract.validateDeposit(address(protocol), priceData, EMPTY_PREVIOUS_DATA);
 
@@ -971,7 +971,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario A smartcontract with no {receive} function is the validator of a `withdraw` action
+     * @custom:scenario A smart contract with no {receive} function is the validator of a `withdraw` action
      * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
      * @custom:when The validator tries to validate the deposit
      * @custom:then The transaction reverts with the error `UsdnProtocolEtherRefundFailed`
@@ -992,7 +992,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         assertSecurityDepositPaidDummyContract();
 
-        // The dummy contract (validator) does not implement a receive function so we expect a revert
+        // the dummy contract (validator) does not implement a receive function so we expect a revert
         vm.expectRevert(UsdnProtocolEtherRefundFailed.selector);
         receiverContract.validateWithdrawal(address(protocol), priceData, EMPTY_PREVIOUS_DATA);
 
@@ -1009,7 +1009,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario A smartcontract with no {receive} function is the validator of a `openPosition` action
+     * @custom:scenario A smart contract with no {receive} function is the validator of a `openPosition` action
      * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
      * @custom:when The validator tries to validate the deposit
      * @custom:then The transaction reverts with the error `UsdnProtocolEtherRefundFailed`
@@ -1027,7 +1027,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         _waitDelay();
         assertSecurityDepositPaidDummyContract();
 
-        // The dummy contract (validator) does not implement a receive function so we expect a revert
+        // the dummy contract (validator) does not implement a receive function so we expect a revert
         vm.expectRevert(UsdnProtocolEtherRefundFailed.selector);
         receiverContract.validateOpenPosition(address(protocol), priceData, EMPTY_PREVIOUS_DATA);
 
@@ -1044,7 +1044,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario A smartcontract with no {receive} function is the validator of a `closePosition` action
+     * @custom:scenario A smart contract with no {receive} function is the validator of a `closePosition` action
      * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
      * @custom:when The validator tries to validate the deposit
      * @custom:then The transaction reverts with the error `UsdnProtocolEtherRefundFailed`
@@ -1075,7 +1075,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         assertSecurityDepositPaidDummyContract();
 
-        // The dummy contract (validator) does not implement a receive function so we expect a revert
+        // the dummy contract (validator) does not implement a receive function so we expect a revert
         vm.expectRevert(UsdnProtocolEtherRefundFailed.selector);
         receiverContract.validateClosePosition(address(protocol), priceData, EMPTY_PREVIOUS_DATA);
 
@@ -1254,6 +1254,10 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     receive() external payable { }
 }
 
+/**
+ * @title DummyContract
+ * @dev This contract is used to interact with the USDN protocol and does not have a `receive()` function.
+ */
 contract DummyContract {
     function validateDeposit(
         address usdnProtocolAddr,
