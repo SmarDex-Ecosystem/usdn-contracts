@@ -743,8 +743,10 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         pure
         returns (int256 imbalanceBps_)
     {
-        imbalanceBps_ = ((vaultBalance.toInt256()).safeSub(totalExpo.toInt256().safeSub(longBalance.toInt256())))
-            .safeMul(int256(BPS_DIVISOR)).safeDiv(vaultBalance.toInt256());
+        // imbalanceBps_ = (vaultBalance - (totalExpo - longBalance)) * BPS_DIVISOR / vaultBalance;
+        imbalanceBps_ = (vaultBalance.toInt256().safeSub(totalExpo.toInt256().safeSub(longBalance.toInt256()))).safeMul(
+            int256(BPS_DIVISOR)
+        ).safeDiv(vaultBalance.toInt256());
     }
 
     /**
