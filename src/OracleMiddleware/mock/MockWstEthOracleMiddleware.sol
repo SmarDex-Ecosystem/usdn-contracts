@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
-import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
-import { OracleMiddleware } from "src/OracleMiddleware/OracleMiddleware.sol";
+import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { ProtocolAction } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { WstEthOracleMiddleware } from "../../OracleMiddleware/WstEthOracleMiddleware.sol";
+import { OracleMiddleware } from "../../OracleMiddleware/OracleMiddleware.sol";
 
 /**
  * @title Contract to apply and return a mocked wstETH price

@@ -4,9 +4,9 @@ pragma solidity 0.8.20;
 import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 
-import { IPythOracle } from "src/interfaces/OracleMiddleware/IPythOracle.sol";
-import { FormattedPythPrice } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
+import { IPythOracle } from "../../interfaces/OracleMiddleware/IPythOracle.sol";
+import { FormattedPythPrice } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IOracleMiddlewareErrors } from "../../interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
 
 /**
  * @title PythOracle contract
