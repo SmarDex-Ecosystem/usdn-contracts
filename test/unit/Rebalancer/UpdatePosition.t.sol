@@ -45,10 +45,10 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
     }
 
     /**
-     * @custom:scenario An address that is not the USDN protocol calls updatePosition
+     * @custom:scenario An address that is not the USDN protocol calls {updatePosition}
      * @custom:given The caller not being the USDN protocol
-     * @custom:when updatePosition is called
-     * @custom:then The call reverts with a RebalancerUnauthorized error
+     * @custom:when {updatePosition} is called
+     * @custom:then The call reverts with a {RebalancerUnauthorized} error
      */
     function test_RevertWhen_callerIsNotTheProtocol() external {
         vm.expectRevert(RebalancerUnauthorized.selector);
@@ -58,11 +58,11 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
     /**
      * @custom:scenario The position is updated for the first time (no previous version)
      * @custom:given A new position was created for the rebalancer for the first time
-     * @custom:when The usdn protocol calls updatePosition with the new position ID
+     * @custom:when The usdn protocol calls {updatePosition} with the new position ID
      * @custom:then The data is saved in the new position version
      * @custom:and The amount of pending assets is set back to 0
      * @custom:and The position version is incremented
-     * @custom:and A PositionVersionUpdated event is emitted
+     * @custom:and A {PositionVersionUpdated} event is emitted
      */
     function test_updatePositionForTheFirstTime() external {
         PositionId memory newPosId = PositionId({ tick: 200, tickVersion: 1, index: 3 });
@@ -106,11 +106,11 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
      * @custom:scenario The position is updated 2 times
      * @custom:given A new position was created for the rebalancer twice
      * @custom:and Another user deposited assets between the updates
-     * @custom:when The usdn protocol calls updatePosition with the new position ID
+     * @custom:when The usdn protocol calls {updatePosition} with the new position ID
      * @custom:then The data is saved in the new position version
      * @custom:and The amount of pending assets is set back to 0
      * @custom:and The position version is incremented
-     * @custom:and A PositionVersionUpdated event is emitted
+     * @custom:and A {PositionVersionUpdated} event is emitted
      */
     function test_updatePositionWithAnExistingPosition() external {
         PositionId memory posId1 = PositionId({ tick: 200, tickVersion: 1, index: 3 });
@@ -124,7 +124,7 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
         vm.prank(USER_2);
         rebalancer.depositAssets(user2DepositedAmount, USER_2);
 
-        // Simulate a profit of 10% when closing the position
+        // simulate a profit of 10% when closing the position
         uint128 posVersion2Value = (USER_0_DEPOSIT_AMOUNT + USER_1_DEPOSIT_AMOUNT) * 11 / 10;
         vm.expectEmit();
         emit PositionVersionUpdated(positionVersionBefore + 2);
@@ -164,7 +164,7 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
      * @custom:given A new position was created for the rebalancer for the first time
      * @custom:and It got liquidated
      * @custom:and A user deposited some assets
-     * @custom:when The usdn protocol calls updatePosition with the new position ID
+     * @custom:when The usdn protocol calls {updatePosition} with the new position ID
      * @custom:and The value of the previous version being 0
      * @custom:then The data is saved in the new position version
      * @custom:and The last liquidated version is set to the previous version
