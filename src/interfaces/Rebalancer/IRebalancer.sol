@@ -112,8 +112,8 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
     /**
      * @notice Sets the limit of the imbalance in bps to close the position
      * @dev This function can only be called by the owner
-     * if you set the limit greater than the limit on the USDN protocol, _closeImbalanceLimitBps is not a restrictive
-     * limit
+     * If the new limit is greater than the `_closeExpoImbalanceLimitBps` setting in the USDN protocol,
+     * this new limit will be ineffective
      * @param closeImbalanceLimitBps The new limit of the imbalance in bps to close the position
      */
     function setCloseImbalanceLimitBps(uint256 closeImbalanceLimitBps) external;
