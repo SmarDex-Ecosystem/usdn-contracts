@@ -303,7 +303,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:and an {InitiatedClosePosition} event is emitted
      * @custom:and the position is deleted
      */
-    function test_internalInitiateClosePositionForAnotherValidator() external {
+    function test_internalInitiateClosePositionDifferentValidator() external {
         _internalInitiateClosePositionScenario(address(this), USER_1);
     }
 
@@ -318,7 +318,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:and an {InitiatedClosePosition} event is emitted
      * @custom:and the position is deleted
      */
-    function test_internalInitiateClosePositionForAnotherUserAndValidator() external {
+    function test_internalInitiateClosePositionForAnotherUserDifferentValidator() external {
         _internalInitiateClosePositionScenario(USER_1, USER_2);
     }
 

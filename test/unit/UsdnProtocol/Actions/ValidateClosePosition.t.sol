@@ -5,7 +5,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { ADMIN, USER_1, DEPLOYER } from "test/utils/Constants.sol";
+import { ADMIN, USER_1, USER_2, DEPLOYER } from "test/utils/Constants.sol";
 
 import {
     LongPendingAction,
@@ -96,7 +96,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @custom:scenario A user validate closes a position but sends too much ether
+     * @custom:scenario A user validates closes a position but sends too much ether
      * @custom:given A validated long position
      * @custom:and oracle validation cost == 0
      * @custom:when User calls validateClosePosition with an amount of ether greater than the validation cost
@@ -120,7 +120,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
     }
 
     /**
-     * @custom:scenario A user validate closes a position with a pending action
+     * @custom:scenario A user validates closes a position with a pending action
      * @custom:given A validated long position
      * @custom:and an initiated open position action from another user
      * @custom:when User calls validateClosePosition with valid price data for the pending action
@@ -156,7 +156,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
     }
 
     /**
-     * @custom:scenario A user validate closes a position
+     * @custom:scenario A user validates closes a position
      * @custom:given A validated long position
      * @custom:when User calls validateClosePosition
      * @custom:then The user validate his initiated close position action
@@ -184,28 +184,53 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
     /**
      * @custom:scenario The user validates a close position action
      * @custom:given A validated open position of 1 wsteth
-     * @custom:when The user validate the close of the position
+     * @custom:when The user validates the close of the position
      * @custom:then The state of the protocol is updated
      * @custom:and a ValidatedClosePosition event is emitted
      * @custom:and the user receives the position amount
      */
     function test_internalValidateClosePosition() external {
-        _internalValidateClosePositionScenario(address(this));
+        _internalValidateClosePositionScenario(address(this), address(this));
     }
 
     /**
      * @custom:scenario The user validates a close position action for another recipient
      * @custom:given A validated open position of 1 wsteth
-     * @custom:when The user validate the close of the position with another recipient
+     * @custom:when The user validates the close of the position with another recipient
      * @custom:then The state of the protocol is updated
      * @custom:and a ValidatedClosePosition event is emitted
      * @custom:and the recipient receives the position amount
      */
     function test_internalValidateClosePositionForAnotherUser() external {
-        _internalValidateClosePositionScenario(USER_1);
+        _internalValidateClosePositionScenario(USER_1, address(this));
     }
 
-    function _internalValidateClosePositionScenario(address to) internal {
+    /**
+     * @custom:scenario The validator validates a close position action for another owner
+     * @custom:given A validated open position of 1 wsteth
+     * @custom:when The validator validates the close of the position for another owner
+     * @custom:then The state of the protocol is updated
+     * @custom:and a ValidatedClosePosition event is emitted
+     * @custom:and the recipient receives the position amount
+     */
+    function test_internalValidateClosePositionDifferentValidator() external {
+        _internalValidateClosePositionScenario(address(this), USER_1);
+    }
+
+    /**
+     * @custom:scenario The validator validates a close position action for another recipient and another owner
+     * @custom:given A validated open position of 1 wsteth
+     * @custom:when The validator validates the close of the position with another recipient
+     * @custom:and The validator validates the close of the position for another owner
+     * @custom:then The state of the protocol is updated
+     * @custom:and a ValidatedClosePosition event is emitted
+     * @custom:and the recipient receives the position amount
+     */
+    function test_internalValidateClosePositionForAnotherUserDifferentValidator() external {
+        _internalValidateClosePositionScenario(USER_1, USER_2);
+    }
+
+    function _internalValidateClosePositionScenario(address to, address validator) internal {
         uint128 price = params.initialPrice;
         bytes memory priceData = abi.encode(price);
 
@@ -213,12 +238,12 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         (Position memory pos, uint8 liquidationPenalty) = protocol.getLongPosition(posId);
         uint256 assetBalanceBefore = protocol.getAsset().balanceOf(to);
         protocol.initiateClosePosition(
-            posId, POSITION_AMOUNT, to, payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            posId, POSITION_AMOUNT, to, payable(validator), priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
         /* ------------------------- Validate Close Position ------------------------ */
-        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(pos.user));
+        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(validator));
         uint128 totalExpoToClose = FixedPointMathLib.fullMulDiv(pos.totalExpo, POSITION_AMOUNT, pos.amount).toUint128();
 
         uint256 expectedAmountReceived = protocol.i_assetToRemove(
@@ -230,8 +255,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         );
 
         vm.expectEmit();
-        emit ValidatedClosePosition(pos.user, to, posId, expectedAmountReceived, -1);
-        protocol.i_validateClosePosition(pos.user, priceData);
+        emit ValidatedClosePosition(validator, to, posId, expectedAmountReceived, -1);
+        protocol.i_validateClosePosition(validator, priceData);
 
         /* ----------------------------- User's Balance ----------------------------- */
         assertApproxEqAbs(
