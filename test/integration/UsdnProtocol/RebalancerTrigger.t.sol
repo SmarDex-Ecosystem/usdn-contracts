@@ -7,7 +7,7 @@ import { MockChainlinkOnChain } from "test/unit/Middlewares/utils/MockChainlinkO
 
 import { IRebalancerEvents } from "src/interfaces/Rebalancer/IRebalancerEvents.sol";
 import { ProtocolAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
@@ -17,6 +17,8 @@ import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewar
  * @custom:background A rebalancer is set and the USDN protocol is initialized with the default params
  */
 contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture, IRebalancerEvents {
+    using HugeUint for HugeUint.Uint512;
+
     bytes constant PYTH_DATA = new bytes(33);
 
     MockChainlinkOnChain public chainlinkGasPriceFeed;
@@ -119,6 +121,7 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
             vaultAssetAvailable * uint256(10_000 - protocol.getLongImbalanceTargetBps()) / 10_000
         ) - (totalExpo - longAssetAvailable);
 
+        // calculate the state of the liq accumulator after the liquidations
         HugeUint.Uint512 memory expectedAccumulator = HugeUint.sub(
             protocol.getLiqMultiplierAccumulator(),
             HugeUint.wrap(
@@ -147,8 +150,10 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
             expectedTickWithoutPenalty, wstEthPrice, totalExpo - longAssetAvailable, expectedAccumulator
         );
 
+        int24 expectedTick =
+            expectedTickWithoutPenalty + (int24(uint24(tickToLiquidateData.liquidationPenalty)) * tickSpacing);
         uint256 oracleFee = oracleMiddleware.validationCost(PYTH_DATA, ProtocolAction.Liquidation);
-        _expectEmits(wstEthPrice, amountInRebalancer + bonus, liqPriceWithoutPenalty, expectedTickWithoutPenalty, 1);
+        _expectEmits(wstEthPrice, amountInRebalancer + bonus, liqPriceWithoutPenalty, expectedTick, 1);
         protocol.liquidate{ value: oracleFee }(PYTH_DATA, 1);
 
         imbalance = protocol.i_calcLongImbalanceBps(
@@ -158,6 +163,19 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
         assertLe(
             imbalance, protocol.getLongImbalanceTargetBps(), "The imbalance should be below or equal to the target"
         );
+
+        // get the position that has been created
+        (Position memory pos,) = protocol.getLongPosition(PositionId(expectedTick, 0, 0));
+
+        // update the expected liquidation accumulator
+        uint256 unadjustedTickPrice = TickMath.getPriceAtTick(expectedTickWithoutPenalty);
+        expectedAccumulator = expectedAccumulator.add(HugeUint.wrap(unadjustedTickPrice * pos.totalExpo));
+
+        HugeUint.Uint512 memory liqAcc = protocol.getLiqMultiplierAccumulator();
+        assertEq(liqAcc.hi, 0, "The hi attribute should be 0");
+        assertEq(liqAcc.lo, expectedAccumulator.lo, "The lo attribute should be the expected value");
+
+        assertEq(protocol.getBalanceLong(), longAssetAvailable + amountInRebalancer + bonus);
     }
 
     /// @dev Prepare the expectEmits
@@ -165,7 +183,7 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
         uint128 price,
         uint128 amount,
         uint128 liqPriceWithoutPenalty,
-        int24 tickWithoutPenalty,
+        int24 tick,
         uint128 newPositionVersion
     ) internal {
         uint128 positionTotalExpo = protocol.i_calcPositionTotalExpo(amount, price, liqPriceWithoutPenalty);
@@ -180,15 +198,11 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
             positionTotalExpo,
             amount,
             price,
-            PositionId(tickWithoutPenalty + (int24(uint24(tickToLiquidateData.liquidationPenalty)) * tickSpacing), 0, 0)
+            PositionId(tick, 0, 0)
         );
         vm.expectEmit(address(protocol));
         emit ValidatedOpenPosition(
-            address(rebalancer),
-            address(rebalancer),
-            positionTotalExpo,
-            price,
-            PositionId(tickWithoutPenalty + (int24(uint24(tickToLiquidateData.liquidationPenalty)) * tickSpacing), 0, 0)
+            address(rebalancer), address(rebalancer), positionTotalExpo, price, PositionId(tick, 0, 0)
         );
         vm.expectEmit(address(rebalancer));
         emit PositionVersionUpdated(newPositionVersion);
