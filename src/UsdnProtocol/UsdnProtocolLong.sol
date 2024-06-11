@@ -735,7 +735,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @dev If the value is positive, the long trading expo is smaller than the vault trading expo
      * @param vaultBalance The balance of the vault
      * @param longBalance The balance of the long side
-     * @param totalExpo The total expo fo the long side
+     * @param totalExpo The total expo of the long side
      * @return imbalanceBps_ The imbalance in basis points
      */
     function _calcLongImbalanceBps(uint256 vaultBalance, uint256 longBalance, uint256 totalExpo)
@@ -806,7 +806,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param tickWithoutPenalty The tick the position should be opened in
      * @param amount The amount of collateral in the position
      * @param longTradingExpo The long trading expo of the protocol
-     * @return posId_ The ID of the position that got created
+     * @return posId_ The ID of the position that was created
      */
     function _flashOpenPosition(
         address user,
@@ -815,7 +815,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         uint128 amount,
         uint256 longTradingExpo
     ) internal returns (PositionId memory posId_) {
-        // we calculate the closest valid tick down for the desired liq price with liquidation penalty
+        // we calculate the closest valid tick down for the desired liquidation price with the liquidation penalty
         uint8 currentLiqPenalty = _liquidationPenalty;
 
         posId_.tick = tickWithoutPenalty + int24(uint24(currentLiqPenalty)) * _tickSpacing;
@@ -825,7 +825,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
         // check if the penalty for that tick is different from the current setting
         // this can happen if the setting has been changed, but the position is added in a tick that was never empty
-        // after said change, so the first value is still applied
+        // after the said change, so the first value is still applied
         if (liquidationPenalty == currentLiqPenalty) {
             liqPriceWithoutPenalty =
                 getEffectivePriceForTick(tickWithoutPenalty, neutralPrice, longTradingExpo, _liqMultiplierAccumulator);
@@ -859,13 +859,13 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     /**
      * TODO add tests
      * @notice Calculates the tick of the rebalancer position to open
-     * @dev The returned tick must be higher than or equal to the min leverage of the protocol
+     * @dev The returned tick must be higher than or equal to the minimum leverage of the protocol
      * and lower than or equal to the rebalancer and USDN protocol leverages (lower of the 2)
      * @param neutralPrice The neutral asset price
      * @param positionAmount The amount of assets in the position
      * @param rebalancerMaxLeverage The max leverage supported by the rebalancer
      * @param cache The cached protocol state values
-     * @return tickWithoutLiqPenalty_ The tick the position will be in
+     * @return tickWithoutLiqPenalty_ The tick where the position will be saved
      */
     function _calcRebalancerPositionTick(
         uint128 neutralPrice,

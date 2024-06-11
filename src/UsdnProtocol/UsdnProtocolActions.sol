@@ -2082,7 +2082,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             }
         }
 
-        // the default value of positionAmount is the amount of pendingAssets in the rebalancer
+        // the default value of `positionAmount` is the amount of pendingAssets in the rebalancer
         (uint128 positionAmount, uint256 rebalancerMaxLeverage, PositionId memory rebalancerPosId) =
             rebalancer.getCurrentStateData();
 

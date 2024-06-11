@@ -43,17 +43,17 @@ contract TestUsdnProtocolLongCalcLiqPriceFromTradingExpo is UsdnProtocolBaseFixt
     }
 
     /**
-     * @custom:scenario Check the calculations of _calcLiqPriceFromTradingExpo with
+     * @custom:scenario Check the calculations of `_calcLiqPriceFromTradingExpo` with
      * different amounts, prices and leverages
-     * @custom:given an amount between 1 wei and uint128.max
-     * @custom:and a price between 1 wei and uint128.max
-     * @custom:and a leverage between the min and max leverage
+     * @custom:given An amount between 1 wei and uint128.max
+     * @custom:and A price between 1 wei and uint128.max
+     * @custom:and A leverage between the min and max leverage
      * @custom:when The trading expo is calculated
-     * @custom:and _calcLiqPriceFromTradingExpo is called
+     * @custom:and `_calcLiqPriceFromTradingExpo` is called
      * @custom:then The expected liquidation price is returned
      * @param amount The amount of asset
-     * @param price the current price of the asset
-     * @param leverage the leverage to use
+     * @param price The current price of the asset
+     * @param leverage The leverage to use
      */
     function testFuzz_calcLiqPriceFromTradingExpo(uint256 amount, uint256 price, uint256 leverage) public {
         amount = bound(amount, 1, type(uint128).max);
@@ -63,7 +63,7 @@ contract TestUsdnProtocolLongCalcLiqPriceFromTradingExpo is UsdnProtocolBaseFixt
         uint256 tradingExpo = (amount * leverage - amount) / protocol.LEVERAGE_DECIMALS();
 
         // non-optimized implementation
-        // subtract one to compensate the loss in precision
+        // subtract one to compensate for the loss in precision
         uint256 expectedLiquidationPrice = price - (amount * price / (tradingExpo + amount)) - 1;
 
         uint128 liquidationPrice = protocol.i_calcLiqPriceFromTradingExpo(uint128(price), uint128(amount), tradingExpo);
