@@ -20,7 +20,7 @@ contract Wusdn is ERC20Permit, IWusdn {
     /// @notice Token symbol
     string internal constant SYMBOL = "WUSDN";
 
-    /// @notice The ratio used for between USDN shares and WUSDN amounts
+    /// @notice The ratio used between USDN shares and WUSDN amounts
     uint256 private immutable SHARES_RATIO;
 
     /// @inheritdoc IWusdn
@@ -53,8 +53,8 @@ contract Wusdn is ERC20Permit, IWusdn {
     function wrapFrom(address from, uint256 usdnAmount, address to) external returns (uint256 wrappedAmount_) {
         wrappedAmount_ = previewWrap(usdnAmount);
 
-        // we consecutively divide and multiply by `SHARES_RATIO`
-        // to ensure that the wusdnAmount is a multiple of `SHARES_RATIO`
+        // we consecutively divide (in {previewWrap}) and multiply by `SHARES_RATIO`
+        // to ensure that the `wusdnAmount_` is a multiple of `SHARES_RATIO`
         uint256 usdnShares = wrappedAmount_ * SHARES_RATIO;
         USDN.transferSharesFrom(from, msg.sender, usdnShares);
         USDN.transferSharesFrom(msg.sender, address(this), usdnShares);
@@ -75,6 +75,8 @@ contract Wusdn is ERC20Permit, IWusdn {
 
     /// @inheritdoc IWusdn
     function unwrapFrom(address from, uint256 wusdnAmount, address to) external returns (uint256 usdnAmount_) {
+        // we consecutively multiply and divide (the division takes place in the {convertToTokens} function)
+        // by `SHARES_RATIO` to ensure that the `usdnAmount_` is a multiple of `SHARES_RATIO`
         uint256 usdnShares = wusdnAmount * SHARES_RATIO;
         usdnAmount_ = USDN.convertToTokens(usdnShares);
 
@@ -125,10 +127,9 @@ contract Wusdn is ERC20Permit, IWusdn {
      * @return wrappedAmount_ The amount of WUSDN received
      */
     function _wrap(uint256 usdnAmount, address to) private returns (uint256 wrappedAmount_) {
+        // we consecutively divide (in {previewWrap}) and multiply by `SHARES_RATIO`
+        // to ensure that the `wusdnAmount_` is a multiple of `SHARES_RATIO`
         wrappedAmount_ = previewWrap(usdnAmount);
-
-        // we consecutively divide and multiply by `SHARES_RATIO`
-        // to ensure that the wusdnAmount is a multiple of `SHARES_RATIO`
         USDN.transferSharesFrom(msg.sender, address(this), wrappedAmount_ * SHARES_RATIO);
 
         _mint(to, wrappedAmount_);
@@ -144,6 +145,8 @@ contract Wusdn is ERC20Permit, IWusdn {
      * @return usdnAmount_ The amount of USDN received
      */
     function _unwrap(uint256 wusdnAmount, address to) private returns (uint256 usdnAmount_) {
+        // we consecutively multiply and divide (the division takes place in the {convertToTokens} function)
+        // by `SHARES_RATIO` to ensure that the `usdnAmount_` is a multiple of `SHARES_RATIO`
         uint256 usdnShares = wusdnAmount * SHARES_RATIO;
         usdnAmount_ = USDN.convertToTokens(usdnShares);
         _burn(msg.sender, wusdnAmount);
