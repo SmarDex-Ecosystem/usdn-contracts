@@ -73,6 +73,7 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
         if (targetTimestamp == 0) {
             // we want to validate that the price is recent
             // we don't enforce that the price update is the first one in a given second
+            // slither-disable-next-line arbitrary-send-eth
             priceFeeds = _pyth.parsePriceFeedUpdates{ value: pythFee }(
                 pricesUpdateData, priceIds, uint64(block.timestamp) - _recentPriceDelay, uint64(block.timestamp)
             );

@@ -39,6 +39,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: crytic/slither-action@v0.4.0
         with:
-          target: "src/"
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps
+        run: npm ci && forge install
+
+      - name: Install slither
+        run: pip3 install slither-analyzer
+
+      - name: Run slither
+        run: |
+          slither . --json - | jq '.results.detectors[] | 
+          .elements[0].source_mapping as $src | 
+          "::\( if .impact == "High" then "error" elif .impact == "Medium" then "warning" else "notice" end ) file=\($src.filename_relative),col=\($src.starting_column),endColumn=\($src.ending_column),line=\($src.lines[0])\( if $src.lines[0] == $src.lines[-1] then "" else ",endLine=\($src.lines[-1])" end )::\(.description)"' | 
+          xargs -n1 echo
