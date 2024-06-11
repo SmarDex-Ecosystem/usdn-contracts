@@ -7,23 +7,20 @@ pragma solidity >=0.8.0;
  */
 interface IWusdnEvents {
     /**
-     * @notice Emitted when a user deposits USDN to mint WUSDN
-     * @param sender The address of the user that deposited the USDN
-     * @param owner The address of the user that received the WUSDN
-     * @param assets The amount of USDN tokens deposited
-     * @param shares The number of WUSDN shares minted
+     * @notice Emitted when a user wrap USDN to mint WUSDN
+     * @param from The address of the user that wrapped the USDN
+     * @param to The address of the user that received the WUSDN
+     * @param usdnAmount The amount of USDN wrapped
+     * @param wusdnAmount The amount of WUSDN minted
      */
-    event Deposit(address indexed sender, address indexed owner, uint256 assets, uint256 shares);
+    event Wrap(address indexed from, address indexed to, uint256 usdnAmount, uint256 wusdnAmount);
 
     /**
-     * @notice Emitted when a user withdraws WUSDN to redeem USDN
-     * @param sender The address of the user that withdrew the WUSDN
-     * @param receiver The address of the user that received the USDN
-     * @param owner The address of that owned the WUSDN
-     * @param assets The amount of USDN tokens withdrawn
-     * @param shares The number of WUSDN shares burned
+     * @notice Emitted when a user unwrap WUSDN to redeem USDN
+     * @param from The address of the user that withdrew the WUSDN
+     * @param to The address of the user that received the USDN
+     * @param wusdnAmount The amount of WUSDN unwrapped
+     * @param usdnAmount The amount of USDN redeemed
      */
-    event Withdraw(
-        address indexed sender, address indexed receiver, address indexed owner, uint256 assets, uint256 shares
-    );
+    event Unwrap(address indexed from, address indexed to, uint256 wusdnAmount, uint256 usdnAmount);
 }
