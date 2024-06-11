@@ -12,6 +12,7 @@ import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes {
     /**
      * @notice The value of the multiplier at 1x
+     * @dev Also helps to normalize the result of multiplier calculations
      * @return The multiplier factor
      */
     function MULTIPLIER_FACTOR() external view returns (uint256);

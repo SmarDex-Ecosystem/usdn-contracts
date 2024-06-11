@@ -136,7 +136,7 @@ contract TestRebalancerAdmin is RebalancerFixture {
      * @custom:scenario Setting the max leverage of the rebalancer
      * @custom:given A value lower than the USDN protocol's max leverage
      * @custom:when {setPositionMaxLeverage} is called with this value
-     * @custom:then The value of `_positionMaxLeverageIsUpdated` is updated
+     * @custom:then The value of `_positionMaxLeverage` is updated
      * @custom:and A {PositionMaxLeverageUpdated} event is emitted
      */
     function test_setPositionMaxLeverage() external adminPrank {

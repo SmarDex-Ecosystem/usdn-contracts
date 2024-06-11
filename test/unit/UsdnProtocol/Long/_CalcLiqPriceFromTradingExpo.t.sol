@@ -3,17 +3,17 @@ pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-/// @custom:feature Test the _calcLiqPriceFromTradingExpo internal function of the long layer
+/// @custom:feature Test the {_calcLiqPriceFromTradingExpo} internal function of the long layer
 contract TestUsdnProtocolLongCalcLiqPriceFromTradingExpo is UsdnProtocolBaseFixture {
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
     }
 
     /**
-     * @custom:scenario The call revert when the total expo is 0
+     * @custom:scenario The call reverts when the total expo is 0
      * @custom:given The sum of the trading expo and the amount is 0
-     * @custom:when _calcLiqPriceFromTradingExpo is called
-     * @custom:then The call reverts with a UsdnProtocolZeroTotalExpo error
+     * @custom:when {_calcLiqPriceFromTradingExpo} is called
+     * @custom:then The call reverts with a {UsdnProtocolZeroTotalExpo} error
      */
     function test_RevertWhen_totalExpoIsZero() external {
         vm.expectRevert(UsdnProtocolZeroTotalExpo.selector);
@@ -24,7 +24,7 @@ contract TestUsdnProtocolLongCalcLiqPriceFromTradingExpo is UsdnProtocolBaseFixt
      * @custom:scenario Calculate the liquidation price from the trading expo
      * @custom:given A leverage of 4x
      * @custom:or A leverage of 10x
-     * @custom:when _calcLiqPriceFromTradingExpo is called
+     * @custom:when {_calcLiqPriceFromTradingExpo} is called
      * @custom:then The returned liquidation price is correct
      */
     function test_calcLiqPriceFromTradingExpo() public {
@@ -43,13 +43,13 @@ contract TestUsdnProtocolLongCalcLiqPriceFromTradingExpo is UsdnProtocolBaseFixt
     }
 
     /**
-     * @custom:scenario Check the calculations of `_calcLiqPriceFromTradingExpo` with
+     * @custom:scenario Check the calculations of {_calcLiqPriceFromTradingExpo} with
      * different amounts, prices and leverages
      * @custom:given An amount between 1 wei and uint128.max
      * @custom:and A price between 1 wei and uint128.max
      * @custom:and A leverage between the min and max leverage
      * @custom:when The trading expo is calculated
-     * @custom:and `_calcLiqPriceFromTradingExpo` is called
+     * @custom:and {_calcLiqPriceFromTradingExpo} is called
      * @custom:then The expected liquidation price is returned
      * @param amount The amount of asset
      * @param price The current price of the asset
