@@ -748,7 +748,8 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
     }
 
     /**
-     * @custom:scenario Call "setExpoImbalanceLimits" from admin with a target long imbalance too low
+     * @custom:scenario Call "setExpoImbalanceLimits" from admin with a target long imbalance lower than
+     * the withdrawal limit
      * @custom:given The initial usdnProtocol state from admin wallet
      * @custom:when The long target imbalance is lower than the withdrawal imbalance
      * @custom:then The transaction should revert with an UsdnProtocolInvalidLongImbalanceTarget error
@@ -776,7 +777,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
     /**
      * @custom:scenario Call "setExpoImbalanceLimits" from admin with a target long imbalance too low
      * @custom:given The initial usdnProtocol state from admin wallet
-     * @custom:when The long target imbalance is lower than the withdrawal imbalance
+     * @custom:when The long target imbalance is lower than -5000 (-50%)
      * @custom:then The transaction should revert with an UsdnProtocolInvalidLongImbalanceTarget error
      */
     function test_RevertWhen_setExpoImbalanceLimitsWithLongImbalanceTargetTooLow() external adminPrank {
