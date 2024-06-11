@@ -306,6 +306,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         if (
             newLongImbalanceTargetBps > int256(newCloseLimitBps)
                 || newLongImbalanceTargetBps < -int256(newWithdrawalLimitBps)
+                || newLongImbalanceTargetBps < -int256(BPS_DIVISOR / 2) // The target cannot be lower than -50%
         ) {
             revert UsdnProtocolInvalidLongImbalanceTarget();
         }
