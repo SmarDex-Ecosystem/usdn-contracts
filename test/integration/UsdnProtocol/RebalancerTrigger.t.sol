@@ -176,6 +176,7 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
         assertEq(liqAcc.lo, expectedAccumulator.lo, "The lo attribute should be the expected value");
 
         assertEq(protocol.getBalanceLong(), longAssetAvailable + amountInRebalancer + bonus);
+        assertEq(protocol.getBalanceVault(), vaultAssetAvailable - bonus);
     }
 
     /// @dev Prepare the expectEmits
