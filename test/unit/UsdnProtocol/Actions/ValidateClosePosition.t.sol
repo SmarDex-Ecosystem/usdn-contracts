@@ -237,9 +237,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         /* ------------------------- Initiate Close Position ------------------------ */
         (Position memory pos, uint8 liquidationPenalty) = protocol.getLongPosition(posId);
         uint256 assetBalanceBefore = protocol.getAsset().balanceOf(to);
-        protocol.initiateClosePosition(
-            posId, POSITION_AMOUNT, to, payable(validator), priceData, EMPTY_PREVIOUS_DATA
-        );
+        protocol.initiateClosePosition(posId, POSITION_AMOUNT, to, payable(validator), priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
 
         /* ------------------------- Validate Close Position ------------------------ */
