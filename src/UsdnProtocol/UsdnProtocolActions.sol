@@ -1245,7 +1245,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             totalExpo: data.positionTotalExpo,
             timestamp: uint40(block.timestamp)
         });
-        (data.posId.tickVersion, data.posId.index) = _saveNewPosition(data.posId.tick, long, data.liquidationPenalty);
+        (data.posId.tickVersion, data.posId.index,) = _saveNewPosition(data.posId.tick, long, data.liquidationPenalty);
         _balanceLong += long.amount;
         posId_ = data.posId;
 
@@ -1413,7 +1413,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // mark the position as validated
             data.pos.validated = true;
             // insert position into new tick
-            (newPosId.tickVersion, newPosId.index) = _saveNewPosition(newPosId.tick, data.pos, liquidationPenalty);
+            (newPosId.tickVersion, newPosId.index,) = _saveNewPosition(newPosId.tick, data.pos, liquidationPenalty);
             // no long balance update is necessary (collateral didn't change)
 
             // emit LiquidationPriceUpdated
@@ -2095,7 +2095,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // cached values will be updated during this call
             positionValue = _flashClosePosition(rebalancerPosId, neutralPrice, cache).toUint128();
 
-            cache.liqMultiplierAccumulator = _liqMultiplierAccumulator;
             positionAmount += positionValue;
         }
 

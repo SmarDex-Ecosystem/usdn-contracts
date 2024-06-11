@@ -420,10 +420,11 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param liquidationPenalty The liquidation penalty for the tick
      * @return tickVersion_ The version of the tick
      * @return index_ The index of the position in the tick array
+     * @return liqMultiplierAccumulator_ The updated liquidation multiplier accumulator
      */
     function _saveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty)
         internal
-        returns (uint256 tickVersion_, uint256 index_)
+        returns (uint256 tickVersion_, uint256 index_, HugeUint.Uint512 memory liqMultiplierAccumulator_)
     {
         bytes32 tickHash;
         (tickHash, tickVersion_) = _tickHash(tick);
@@ -462,7 +463,8 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
                 TickMath.getPriceAtTick(tick - int24(uint24(tickData.liquidationPenalty)) * _tickSpacing);
         }
         // update the accumulator with the correct tick price (depending on the liquidation penalty value)
-        _liqMultiplierAccumulator = _liqMultiplierAccumulator.add(HugeUint.wrap(unadjustedTickPrice * long.totalExpo));
+        liqMultiplierAccumulator_ = _liqMultiplierAccumulator.add(HugeUint.wrap(unadjustedTickPrice * long.totalExpo));
+        _liqMultiplierAccumulator = liqMultiplierAccumulator_;
     }
 
     /**
@@ -474,6 +476,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param pos The position to remove the amount from
      * @param amountToRemove The amount to remove from the position
      * @param totalExpoToRemove The total expo to remove from the position
+     * @return liqMultiplierAccumulator_ The updated liquidation multiplier accumulator
      */
     function _removeAmountFromPosition(
         int24 tick,
@@ -481,7 +484,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         Position memory pos,
         uint128 amountToRemove,
         uint128 totalExpoToRemove
-    ) internal {
+    ) internal returns (HugeUint.Uint512 memory liqMultiplierAccumulator_) {
         (bytes32 tickHash,) = _tickHash(tick);
         TickData storage tickData = _tickData[tickHash];
         uint256 unadjustedTickPrice =
@@ -508,8 +511,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
         _totalExpo -= totalExpoToRemove;
         tickData.totalExpo -= totalExpoToRemove;
-        _liqMultiplierAccumulator =
+        liqMultiplierAccumulator_ =
             _liqMultiplierAccumulator.sub(HugeUint.wrap(unadjustedTickPrice * totalExpoToRemove));
+        _liqMultiplierAccumulator = liqMultiplierAccumulator_;
     }
 
     /// @inheritdoc IUsdnProtocolLong
@@ -750,7 +754,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param posId The ID of the position to close
      * @param neutralPrice The current neutral price
      * @param cache The cached state of the protocol, will be updated during this call
-     * @return positionValue_ The value of the closed position
+     * @return positionValue_ The value of the closed position. If 0, the position was/will be liquidated
      */
     function _flashClosePosition(PositionId memory posId, uint128 neutralPrice, CachedProtocolState memory cache)
         internal
@@ -764,8 +768,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
         Position memory pos = _longPositions[tickHash][posId.index];
 
-        // fully close the position
-        _removeAmountFromPosition(posId.tick, posId.index, pos, pos.amount, pos.totalExpo);
+        // fully close the position and update the cache
+        cache.liqMultiplierAccumulator =
+            _removeAmountFromPosition(posId.tick, posId.index, pos, pos.amount, pos.totalExpo);
 
         int256 positionValue = _positionValue(
             neutralPrice,
@@ -781,7 +786,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         // cast is safe as positionValue cannot be lower than 0
         positionValue_ = uint256(positionValue);
 
-        // mutates the cache
+        // update the cache
         cache.totalExpo -= pos.totalExpo;
         cache.longBalance -= positionValue_;
         cache.tradingExpo = cache.totalExpo - cache.longBalance;
@@ -843,7 +848,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         });
 
         // save the position on the provided tick
-        (posId_.tickVersion, posId_.index) = _saveNewPosition(posId_.tick, long, liquidationPenalty);
+        (posId_.tickVersion, posId_.index,) = _saveNewPosition(posId_.tick, long, liquidationPenalty);
 
         // emit both initiate and validate events
         // so the position is considered the same as other positions by event indexers
