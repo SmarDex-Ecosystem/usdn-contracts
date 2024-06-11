@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { IUsdnProtocolCore } from "src/interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
+import { IUsdnProtocolCore } from "./IUsdnProtocolCore.sol";
 
 /**
  * @title IUsdnProtocolVault

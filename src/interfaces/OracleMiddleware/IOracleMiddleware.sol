@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { IBaseOracleMiddleware } from "src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
-import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
-import { IOracleMiddlewareEvents } from "src/interfaces/OracleMiddleware/IOracleMiddlewareEvents.sol";
+import { IBaseOracleMiddleware } from "./IBaseOracleMiddleware.sol";
+import { IOracleMiddlewareErrors } from "./IOracleMiddlewareErrors.sol";
+import { IOracleMiddlewareEvents } from "./IOracleMiddlewareEvents.sol";
 
 /**
  * @title Oracle Middleware interface
