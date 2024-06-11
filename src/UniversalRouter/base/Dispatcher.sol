@@ -280,12 +280,12 @@ abstract contract Dispatcher is
                         _usdnValidateOpenPosition(map(validator), depositPriceData, previousActionsData, ethAmount);
                     } else if (command == Commands.VALIDATE_CLOSE) {
                         (
-                            address owner,
+                            address validator,
                             bytes memory closePriceData,
                             PreviousActionsData memory previousActionsData,
                             uint256 ethAmount
                         ) = abi.decode(inputs, (address, bytes, PreviousActionsData, uint256));
-                        _usdnValidateClosePosition(map(owner), closePriceData, previousActionsData, ethAmount);
+                        _usdnValidateClosePosition(map(validator), closePriceData, previousActionsData, ethAmount);
                     } else if (command == Commands.LIQUIDATE) {
                         // TODO LIQUIDATE
                     } else if (command == Commands.VALIDATE_PENDING) {
