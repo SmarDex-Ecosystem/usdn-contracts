@@ -72,7 +72,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
     /// @inheritdoc IUsdnProtocolLong
     // slither-disable-next-line write-after-write
-    function getMinLiquidationPrice(uint128 price) public view returns (uint128 liquidationPrice_) {
+    function getMinLiquidationPrice(uint128 price) external view returns (uint128 liquidationPrice_) {
         liquidationPrice_ = _getLiquidationPrice(price, uint128(_minLeverage));
         int24 tick = getEffectiveTickForPrice(liquidationPrice_);
         liquidationPrice_ = getEffectivePriceForTick(tick + _tickSpacing);
