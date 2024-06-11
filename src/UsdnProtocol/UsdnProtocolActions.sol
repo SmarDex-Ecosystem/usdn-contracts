@@ -2095,6 +2095,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             positionValue = _flashClosePosition(rebalancerPosId, neutralPrice, cache.tradingExpo).toUint128();
 
             cache.longBalance -= positionValue;
+            cache.totalExpo = _totalExpo;
+            cache.liqMultiplierAccumulator = _liqMultiplierAccumulator;
             positionAmount += positionValue;
         }
 
@@ -2108,6 +2110,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         if (remainingCollateral > 0) {
             uint128 bonus = (uint256(remainingCollateral) * _rebalancerBonusBps / BPS_DIVISOR).toUint128();
             cache.vaultBalance -= bonus;
+            vaultBalance_ -= bonus;
             positionAmount += bonus;
         }
 
@@ -2131,7 +2134,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         rebalancer.updatePosition(posId, positionValue);
 
         longBalance_ = cache.longBalance;
-        vaultBalance_ = cache.vaultBalance;
     }
 
     /**

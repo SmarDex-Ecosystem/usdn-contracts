@@ -910,7 +910,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             )
         );
 
-        // due to the rounding down, if the imbalance is still below the desired imbalance
+        // due to the rounding down, if the imbalance is still greater than the desired imbalance
         // and the position is not at the max leverage, add one tick
         if (
             highestUsableTradingExpo != tradingExpoToFill
