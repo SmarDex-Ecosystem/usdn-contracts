@@ -118,8 +118,8 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
         );
 
         assertEq(
-            keccak256(abi.encode(liqMultiplierAcc)),
-            keccak256(abi.encode(protocol.getLiqMultiplierAccumulator())),
+            abi.encode(liqMultiplierAcc),
+            abi.encode(protocol.getLiqMultiplierAccumulator()),
             "The returned liquidation multiplier accumulator should be equal to the one in storage"
         );
         uint256 unadjustedTickPrice = TickMath.getPriceAtTick(
