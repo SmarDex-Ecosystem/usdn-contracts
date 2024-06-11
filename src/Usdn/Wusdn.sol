@@ -11,8 +11,7 @@ import { IWusdn } from "src/interfaces/Usdn/IWusdn.sol";
 /**
  * @title WUSDN token contract
  * @notice The USDN token is a rebasing token that is inflating its users' balances periodically. To allow for
- * stable balances, the WUSDN token was created, a wrapped token of the USDN that is not inflating, but increasing in
- * value instead
+ * stable balances, the WUSDN token was created, it is not inflating, but increasing in value instead
  */
 contract Wusdn is ERC20Permit, IWusdn {
     /// @notice Token name

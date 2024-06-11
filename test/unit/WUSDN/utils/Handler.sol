@@ -81,11 +81,11 @@ contract WusdnHandler is Wusdn, Test {
     }
 
     function usdnBurnTest(uint256 value) external {
-        if (balanceOf(msg.sender) == 0) {
+        if (_usdn.balanceOf(msg.sender) == 0) {
             return;
         }
         console2.log("bound burn value");
-        value = bound(value, 1, balanceOf(msg.sender));
+        value = bound(value, 1, _usdn.balanceOf(msg.sender));
 
         vm.prank(msg.sender);
         _usdn.burn(value);
