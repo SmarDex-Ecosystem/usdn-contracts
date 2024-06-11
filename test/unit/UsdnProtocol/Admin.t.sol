@@ -775,10 +775,10 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
     }
 
     /**
-     * @custom:scenario Call "setExpoImbalanceLimits" from admin with a target long imbalance too low
+     * @custom:scenario Call {setExpoImbalanceLimits} from admin with a target long imbalance too low
      * @custom:given The initial usdnProtocol state from admin wallet
-     * @custom:when The long target imbalance is lower than -5000 (-50%)
-     * @custom:then The transaction should revert with an UsdnProtocolInvalidLongImbalanceTarget error
+     * @custom:when The long target imbalance is lower than `-5000` (-50%)
+     * @custom:then The transaction should revert with an {UsdnProtocolInvalidLongImbalanceTarget} error
      */
     function test_RevertWhen_setExpoImbalanceLimitsWithLongImbalanceTargetTooLow() external adminPrank {
         int256 openLimitBps = protocol.getOpenExpoImbalanceLimitBps();
@@ -787,7 +787,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         int256 withdrawalLimitBps = 10_000;
 
         vm.expectRevert(UsdnProtocolInvalidLongImbalanceTarget.selector);
-        // call with long imbalance target < withdrawalLimitBps * -1
+        // call with the long imbalance target < `withdrawalLimitBps` * -1
         protocol.setExpoImbalanceLimits(
             uint256(openLimitBps), uint256(depositLimitBps), uint256(withdrawalLimitBps), uint256(closeLimitBps), -5001
         );
