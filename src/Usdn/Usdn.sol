@@ -8,8 +8,8 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 
-import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
-import { IRebaseCallback } from "src/interfaces/Usdn/IRebaseCallback.sol";
+import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
+import { IRebaseCallback } from "../interfaces/Usdn/IRebaseCallback.sol";
 
 /**
  * @title USDN token contract

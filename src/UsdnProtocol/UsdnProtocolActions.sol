@@ -5,14 +5,13 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
-import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
-import { UsdnProtocolLong } from "src/UsdnProtocol/UsdnProtocolLong.sol";
-import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
-import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
-import { IUsdnProtocolActions } from "src/interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
+import { UsdnProtocolLong } from "./UsdnProtocolLong.sol";
+import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IRebalancer } from "../interfaces/Rebalancer/IRebalancer.sol";
+import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
+import { IUsdnProtocolActions } from "../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 import {
     DepositPendingAction,
     LiquidationsEffects,
@@ -24,11 +23,11 @@ import {
     ProtocolAction,
     TickData,
     WithdrawalPendingAction
-} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { HugeUint } from "src/libraries/HugeUint.sol";
-import { SignedMath } from "src/libraries/SignedMath.sol";
-import { TickMath } from "src/libraries/TickMath.sol";
-import { IOwnershipCallback } from "src/interfaces/UsdnProtocol/IOwnershipCallback.sol";
+} from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { HugeUint } from "../libraries/HugeUint.sol";
+import { SignedMath } from "../libraries/SignedMath.sol";
+import { TickMath } from "../libraries/TickMath.sol";
+import { IOwnershipCallback } from "../interfaces/UsdnProtocol/IOwnershipCallback.sol";
 
 abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong {
     using SafeERC20 for IERC20Metadata;

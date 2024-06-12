@@ -4,9 +4,9 @@ pragma solidity 0.8.20;
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { UsdnProtocolCore } from "src/UsdnProtocol/UsdnProtocolCore.sol";
-import { IUsdnProtocolVault } from "src/interfaces/UsdnProtocol/IUsdnProtocolVault.sol";
-import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
+import { UsdnProtocolCore } from "./UsdnProtocolCore.sol";
+import { IUsdnProtocolVault } from "../interfaces/UsdnProtocol/IUsdnProtocolVault.sol";
+import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 
 abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
     using SafeCast for int256;
