@@ -46,7 +46,8 @@ contract UniversalRouterBaseFixture is UsdnProtocolBaseIntegrationFixture {
     /**
      * @notice get the first next chainlink price after the pending action timestamp
      * @dev binary search to find the first roundId after the pending action timestamp,
-     * revert if roundId is not the first one after the low latency limit
+     * revert if roundId is not the first one after the low latency limit. This function
+     * make a rollFork to the block where the roundId is found and return the roundId, price and timestamp
      */
     function getNextChainlinkPriceAfterTimestamp(uint256 pendingActionTimestamp, uint256 startBlock, uint256 endBlock)
         public
@@ -73,7 +74,6 @@ contract UniversalRouterBaseFixture is UsdnProtocolBaseIntegrationFixture {
         // final fork roll to the first round after the low latency limit
         vm.rollFork(left);
         (roundId_, price_,, timestamp_,) = priceFeed.latestRoundData();
-        skip(protocol.getValidationDeadline());
 
         // ensure roundId is first one after the low latency limit
         (,, uint256 startedAtOne,,) = priceFeed.getRoundData(roundId_ - 1);
