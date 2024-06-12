@@ -7,11 +7,11 @@ import { BytesLib } from "@uniswap/universal-router/contracts/modules/uniswap/v3
 import { V3SwapRouter } from "@uniswap/universal-router/contracts/modules/uniswap/v3/V3SwapRouter.sol";
 import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
 
-import { Commands } from "src/UniversalRouter/libraries/Commands.sol";
-import { V2SwapRouter } from "src/UniversalRouter/modules/uniswap/v2/V2SwapRouter.sol";
-import { UsdnProtocolRouter } from "src/UniversalRouter/modules/usdn/UsdnProtocolRouter.sol";
-import { PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { LidoRouter } from "src/UniversalRouter/modules/lido/LidoRouter.sol";
+import { Commands } from "../libraries/Commands.sol";
+import { V2SwapRouter } from "../modules/uniswap/v2/V2SwapRouter.sol";
+import { UsdnProtocolRouter } from "../modules/usdn/UsdnProtocolRouter.sol";
+import { PreviousActionsData } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { LidoRouter } from "../modules/lido/LidoRouter.sol";
 
 /**
  * @title Decodes and Executes Commands
