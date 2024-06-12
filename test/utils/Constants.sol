@@ -37,6 +37,7 @@ address constant CHAINLINK_ORACLE_ETH = address(0x5f4eC3Df9cbd43714FE2740f5E3616
 address constant CHAINLINK_ORACLE_GAS = address(0x169E633A2D1E6c10dD91238Ba11c4A708dfEF37C); // FastGasPrice
 bytes32 constant PYTH_ETH_USD = bytes32(0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace);
 bytes32 constant PYTH_WSTETH_USD = bytes32(0x6df640f3b8963d8f8358f791f352b8364513f6ab1cca5ed3f1f7b5448980e784);
+bytes32 constant REDSTONE_ETH_USD = bytes32("ETH");
 
 /* -------------------------------------------------------------------------- */
 /*                               Polygon mainnet                              */
