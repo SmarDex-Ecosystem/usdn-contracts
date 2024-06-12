@@ -179,6 +179,8 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
      * @notice The target imbalance on the long side (in basis points)
      * @dev This value will be used to calculate how much of the missing trading expo
      * the rebalancer position will try to compensate
+     * A negative value means the rebalancer will compensate enough to go above the equilibrium
+     * A positive value means the rebalancer will compensate but stay below the equilibrium
      */
     int256 internal _longImbalanceTargetBps = 550;
 
