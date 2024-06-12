@@ -17,8 +17,8 @@ contract TestWusdnInvariants is WusdnTokenFixture {
         targetContract(address(wusdn));
         bytes4[] memory wusdnSelectors = new bytes4[](6);
         // WUSDN functions
-        wusdnSelectors[0] = wusdn.depositTest.selector;
-        wusdnSelectors[1] = wusdn.withdrawTest.selector;
+        wusdnSelectors[0] = wusdn.wrapTest.selector;
+        wusdnSelectors[1] = wusdn.unwrapTest.selector;
         wusdnSelectors[2] = wusdn.transferTest.selector;
         // USDN functions
         wusdnSelectors[3] = wusdn.usdnMintTest.selector;
@@ -36,6 +36,8 @@ contract TestWusdnInvariants is WusdnTokenFixture {
      * @custom:scenario Check that the contract have the expected number of total assets
      */
     function invariant_totalAssetsSum() public {
-        assertGe(usdn.balanceOf(address(wusdn)), wusdn.previewUnwrap(wusdn.totalSupply()), "total assets");
+        // assertEq(usdn.balanceOf(address(wusdn)), wusdn.previewUnwrap(wusdn.totalSupply()), "total assets");
+        assertEq(usdn.sharesOf(address(wusdn)), wusdn.totalSupply() * 10 ** 18, "total assets");
+        // assertEq(usdn.sharesOf(address(wusdn)), wusdn.totalSupply() * wusdn.SHARES_RATIO());
     }
 }

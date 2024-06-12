@@ -11,7 +11,7 @@ import { Wusdn } from "src/Usdn/Wusdn.sol";
  * @dev Wrapper to test internal functions and access internal constants, as well as perform invariant testing
  */
 contract WusdnHandler is Wusdn, Test {
-    Usdn public _usdn;
+    Usdn public immutable _usdn;
 
     constructor(Usdn usdn) Wusdn(usdn) {
         _usdn = usdn;
@@ -19,54 +19,61 @@ contract WusdnHandler is Wusdn, Test {
 
     /* ------------------ Functions used for invariant testing ------------------ */
 
-    function depositTest(uint256 assets) external {
-        if (_usdn.balanceOf(msg.sender) == 0) {
+    function wrapTest(uint256 usdnAmount) external {
+        uint256 usdnBalance = _usdn.balanceOf(msg.sender);
+        if (usdnBalance == 0) {
             return;
         }
-        console2.log("bound deposit amount");
-        assets = bound(assets, 0, _usdn.balanceOf(msg.sender));
+
+        console2.log("bound wrap amount");
+        usdnAmount = bound(usdnAmount, 0, usdnBalance);
         vm.prank(msg.sender);
-        _usdn.approve(address(this), type(uint256).max);
+        _usdn.approve(address(this), usdnAmount);
 
         vm.prank(msg.sender);
-        this.wrap(assets);
+        this.wrap(usdnAmount);
     }
 
-    function withdrawTest(uint256 assets) external {
-        if (balanceOf(msg.sender) == 0) {
+    function unwrapTest(uint256 wusdnAmount) external {
+        uint256 wusdnBalance = balanceOf(msg.sender);
+        if (wusdnBalance == 0) {
             return;
         }
-        uint256 maxAssets = this.previewUnwrap(balanceOf(msg.sender));
-        console2.log("bound withdraw amount");
-        assets = bound(assets, 0, maxAssets);
+
+        console2.log("bound unwrap amount");
+        wusdnAmount = bound(wusdnAmount, 0, wusdnBalance);
 
         vm.prank(msg.sender);
-        this.unwrap(assets);
+        this.unwrap(wusdnAmount);
     }
 
-    function transferTest(address to, uint256 shares) external {
-        if (balanceOf(msg.sender) == 0 || to == address(0)) {
+    function transferTest(address to, uint256 wusdnAmount) external {
+        uint256 wusdnBalance = balanceOf(msg.sender);
+        if (wusdnBalance == 0 || to == address(0)) {
             return;
         }
+
         console2.log("bound transfer amount");
-        shares = bound(shares, 1, balanceOf(msg.sender));
+        wusdnAmount = bound(wusdnAmount, 1, wusdnBalance);
 
         vm.prank(msg.sender);
-        this.transfer(to, shares);
+        this.transfer(to, wusdnAmount);
     }
 
     function usdnTransferTest(address to, uint256 value) external {
-        if (_usdn.balanceOf(msg.sender) == 0 || to == address(0)) {
+        uint256 usdnBalance = _usdn.balanceOf(msg.sender);
+        if (usdnBalance == 0 || to == address(0)) {
             return;
         }
+
         console2.log("bound transfer value");
-        value = bound(value, 1, _usdn.balanceOf(msg.sender));
+        value = bound(value, 1, usdnBalance);
 
         vm.prank(msg.sender);
         _usdn.transfer(to, value);
     }
 
-    function usdnMintTest(uint256 value) external {
+    function usdnMintTest(uint256 usdnAmount) external {
         uint256 maxTokens = _usdn.maxTokens();
         uint256 totalSupply = _usdn.totalSupply();
 
@@ -75,20 +82,22 @@ contract WusdnHandler is Wusdn, Test {
         }
 
         console2.log("bound mint value");
-        value = bound(value, 1, maxTokens - totalSupply - 1);
+        usdnAmount = bound(usdnAmount, 1, maxTokens - totalSupply - 1);
 
-        _usdn.mint(msg.sender, value);
+        _usdn.mint(msg.sender, usdnAmount);
     }
 
-    function usdnBurnTest(uint256 value) external {
-        if (_usdn.balanceOf(msg.sender) == 0) {
+    function usdnBurnTest(uint256 usdnAmount) external {
+        uint256 usdnBalance = _usdn.balanceOf(msg.sender);
+        if (usdnBalance == 0) {
             return;
         }
+
         console2.log("bound burn value");
-        value = bound(value, 1, _usdn.balanceOf(msg.sender));
+        usdnAmount = bound(usdnAmount, 1, usdnBalance);
 
         vm.prank(msg.sender);
-        _usdn.burn(value);
+        _usdn.burn(usdnAmount);
     }
 
     function usdnRebaseTest(uint256 newDivisor) external {

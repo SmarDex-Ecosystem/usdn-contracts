@@ -4,31 +4,29 @@ pragma solidity 0.8.20;
 import { WusdnTokenFixture } from "test/unit/WUSDN/utils/Fixtures.sol";
 
 /**
- * @custom:feature The `withdraw` function of `WUSDN`
- * @custom:background Given this contract has the MINTER_ROLE
+ * @custom:feature The `unwrap` function of `WUSDN`
+ * @custom:background Given this contract has the MINTER_ROLE and 100 USDN
  * @custom:and The divisor is MAX_DIVISOR
  */
 contract TestWusdnUnwrap is WusdnTokenFixture {
     /**
-     * @custom:scenario Withdraw usdn to wusdn contract
-     * @custom:given 100 usdn are minted to a user
-     * @custom:and 30 usdn is deposited to wusdn
-     * @custom:and rebased to MAX_DIVISOR / 2
-     * @custom:when 14 usdn are withdrawn from wusdn
-     * @custom:and The total assets of usdn are 46
-     * @custom:and The total supply of wusdn is 23
+     * @custom:scenario Unwrap wusdn
+     * @custom:given `usdnAmount` is minted to a user
+     * @custom:and The half (usdnAmount / 2) is deposited to wusdn
+     * @custom:when The half (wusdnAmount / 2) is withdrawn from wusdn
+     * @custom:then The user sould have usdnAmount * 3 / 4 usdn
+     * @custom:and wusdnAmount / 2 wusdn
      */
     function test_unwrap() public {
-        uint256 depositAmount = 30 * 10 ** usdnDecimals;
-        uint256 depositShares = usdn.convertToShares(depositAmount);
+        uint256 usdnAmount = usdn.balanceOf(address(this));
 
-        usdn.approve(address(wusdn), depositAmount);
-
-        uint256 wrappedAmount = wusdn.wrap(depositAmount);
-        usdn.rebase(usdn.MAX_DIVISOR() / 2);
+        usdn.approve(address(wusdn), usdnAmount / 2);
+        uint256 wrappedAmount = wusdn.wrap(usdnAmount / 2);
         wusdn.unwrap(wrappedAmount / 2);
 
-        assertEq(wusdn.totalUsdnBalance(), usdn.convertToTokens(depositShares / 2), "total usdn supply in wusdn");
+        assertEq(wusdn.totalUsdnBalance(), usdnAmount / 4, "total usdn supply in wusdn");
         assertEq(wusdn.totalSupply(), wrappedAmount / 2, "total wrapped supply");
+        assertEq(usdn.balanceOf(address(this)), usdnAmount * 3 / 4, "usdn balance");
+        assertEq(wusdn.balanceOf(address(this)), wrappedAmount / 2, "wusdn balance");
     }
 }
