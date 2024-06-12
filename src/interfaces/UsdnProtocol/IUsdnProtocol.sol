@@ -166,6 +166,7 @@ interface IUsdnProtocol is IUsdnProtocolActions {
      * @param newWithdrawalLimitBps The new withdrawal limit
      * @param newCloseLimitBps The new close limit
      * @param newLongImbalanceTargetBps The new target imbalance limit for the long side
+     * A positive value will target below equilibrium, a negative one will target above equilibrium
      */
     function setExpoImbalanceLimits(
         uint256 newOpenLimitBps,

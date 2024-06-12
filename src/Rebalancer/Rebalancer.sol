@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { ERC165, IERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 import { IOwnershipCallback } from "src/interfaces/UsdnProtocol/IOwnershipCallback.sol";
 import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
+import { PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
@@ -36,8 +38,14 @@ contract Rebalancer is Ownable, ERC165, IOwnershipCallback, IRebalancer {
         _;
     }
 
+    /// @inheritdoc IRebalancer
+    uint256 public constant MULTIPLIER_FACTOR = 1e38;
+
     /// @notice The address of the asset used by the USDN protocol
     IERC20Metadata internal immutable _asset;
+
+    /// @notice The number of decimals of the asset used by the USDN protocol
+    uint256 internal immutable _assetDecimals;
 
     /// @notice The address of the USDN protocol
     IUsdnProtocol internal immutable _usdnProtocol;
@@ -46,7 +54,7 @@ contract Rebalancer is Ownable, ERC165, IOwnershipCallback, IRebalancer {
     uint128 internal _positionVersion;
 
     /// @notice The amount of assets waiting to be used in the next version of the position
-    uint256 internal _pendingAssetsAmount;
+    uint128 internal _pendingAssetsAmount;
 
     /// @notice The maximum leverage that a position can have
     uint256 internal _maxLeverage;
@@ -63,16 +71,23 @@ contract Rebalancer is Ownable, ERC165, IOwnershipCallback, IRebalancer {
     /// @notice The data about the assets deposited in this contract by users
     mapping(address => UserDeposit) internal _userDeposit;
 
+    /// @notice The data for the specific version of the position
+    mapping(uint256 => PositionData) internal _positionData;
+
     /// @param usdnProtocol The address of the USDN protocol
     constructor(IUsdnProtocol usdnProtocol) Ownable(msg.sender) {
         _usdnProtocol = usdnProtocol;
         IERC20Metadata asset = usdnProtocol.getAsset();
         _asset = asset;
+        _assetDecimals = usdnProtocol.getAssetDecimals();
         _maxLeverage = usdnProtocol.getMaxLeverage();
         _minAssetDeposit = usdnProtocol.getMinLongPosition();
 
         // set allowance to allow the protocol to pull assets from this contract
         asset.forceApprove(address(usdnProtocol), type(uint256).max);
+
+        // indicate that there are no position for version 0
+        _positionData[0].id = PositionId({ tick: usdnProtocol.NO_POSITION_TICK(), tickVersion: 0, index: 0 });
     }
 
     /// @inheritdoc IRebalancer
@@ -86,7 +101,7 @@ contract Rebalancer is Ownable, ERC165, IOwnershipCallback, IRebalancer {
     }
 
     /// @inheritdoc IRebalancer
-    function getPendingAssetsAmount() external view returns (uint256) {
+    function getPendingAssetsAmount() external view returns (uint128) {
         return _pendingAssetsAmount;
     }
 
@@ -105,6 +120,15 @@ contract Rebalancer is Ownable, ERC165, IOwnershipCallback, IRebalancer {
     }
 
     /// @inheritdoc IRebalancer
+    function getCurrentStateData()
+        external
+        view
+        returns (uint128 pendingAssets_, uint256 maxLeverage_, PositionId memory currentPosId_)
+    {
+        return (_pendingAssetsAmount, _maxLeverage, _positionData[_positionVersion].id);
+    }
+
+    /// @inheritdoc IRebalancer
     function getLastLiquidatedVersion() external view returns (uint128) {
         return _lastLiquidatedVersion;
     }
@@ -112,6 +136,11 @@ contract Rebalancer is Ownable, ERC165, IOwnershipCallback, IRebalancer {
     /// @inheritdoc IRebalancer
     function getMinAssetDeposit() external view returns (uint256) {
         return _minAssetDeposit;
+    }
+
+    /// @inheritdoc IRebalancer
+    function getPositionData(uint128 version) external view returns (PositionData memory positionData_) {
+        positionData_ = _positionData[version];
     }
 
     /// @inheritdoc IRebalancer
@@ -202,6 +231,63 @@ contract Rebalancer is Ownable, ERC165, IOwnershipCallback, IRebalancer {
         _asset.safeTransfer(to, amount);
 
         emit PendingAssetsWithdrawn(msg.sender, amount, to);
+    }
+
+    /// @inheritdoc IRebalancer
+    function updatePosition(PositionId calldata newPosId, uint128 previousPosValue) external onlyProtocol {
+        uint128 positionVersion = _positionVersion;
+        PositionData memory previousPositionData = _positionData[positionVersion];
+        // set the multiplier accumulator to 1 by default
+        uint256 accMultiplier = MULTIPLIER_FACTOR;
+
+        // if the current position version exists
+        if (previousPositionData.amount > 0) {
+            // if the position has not been liquidated
+            if (previousPosValue > 0) {
+                // save the pnl multiplier of the position
+                uint256 pnlMultiplier = _calcPnlMultiplier(previousPositionData.amount, previousPosValue);
+                _positionData[positionVersion].pnlMultiplier = pnlMultiplier;
+
+                // update the multiplier accumulator
+                accMultiplier = FixedPointMathLib.fullMulDiv(
+                    previousPosValue, previousPositionData.entryAccMultiplier, previousPositionData.amount
+                );
+            } else {
+                // update the last liquidated version tracker
+                _lastLiquidatedVersion = positionVersion;
+            }
+        }
+
+        // update the position's version
+        ++positionVersion;
+        _positionVersion = positionVersion;
+
+        // save the data of the new position's version
+        PositionData storage newPositionData = _positionData[positionVersion];
+        newPositionData.entryAccMultiplier = accMultiplier;
+        newPositionData.amount = _pendingAssetsAmount + previousPosValue;
+        newPositionData.id = newPosId;
+
+        // Reset the pending assets amount as they are all used in the new position
+        _pendingAssetsAmount = 0;
+
+        emit PositionVersionUpdated(positionVersion);
+    }
+
+    /**
+     * TODO add tests
+     * @notice Calculate the PnL multiplier of a position
+     * @param openAmount The amount of assets used to open the position
+     * @param value The value of the position right now
+     * @return pnlMultiplier_ The PnL multiplier
+     */
+    function _calcPnlMultiplier(uint128 openAmount, uint128 value) internal pure returns (uint256 pnlMultiplier_) {
+        // prevent division by 0
+        if (openAmount == 0) {
+            return 0;
+        }
+
+        pnlMultiplier_ = value * MULTIPLIER_FACTOR / openAmount;
     }
 
     /// @inheritdoc IERC165
