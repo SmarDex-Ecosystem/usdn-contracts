@@ -2,14 +2,13 @@
 pragma solidity 0.8.20;
 
 import { OracleMiddlewareBaseFixture } from "test/unit/Middlewares/utils/Fixtures.sol";
+import { MOCK_PYTH_DATA } from "test/unit/Middlewares/utils/Constants.sol";
 
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
 /// @custom:feature The `PythOracle` specific functions
 contract TestOracleMiddlewarePythOracle is OracleMiddlewareBaseFixture {
-    bytes constant PYTH_DATA = new bytes(33);
-
     function setUp() public override {
         super.setUp();
     }
@@ -27,8 +26,8 @@ contract TestOracleMiddlewarePythOracle is OracleMiddlewareBaseFixture {
 
         // ValidateDeposit adjusts down with conf
         PriceInfo memory price = oracleMiddleware.parseAndValidatePrice{
-            value: oracleMiddleware.validationCost(PYTH_DATA, ProtocolAction.ValidateDeposit)
-        }("", uint128(block.timestamp), ProtocolAction.ValidateDeposit, PYTH_DATA);
+            value: oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.ValidateDeposit)
+        }("", uint128(block.timestamp), ProtocolAction.ValidateDeposit, MOCK_PYTH_DATA);
         assertEq(price.price, 1, "price should be 1");
     }
 
@@ -40,10 +39,10 @@ contract TestOracleMiddlewarePythOracle is OracleMiddlewareBaseFixture {
      */
     function test_pythInvalidExponent() public {
         mockPyth.setExpo(1);
-        uint256 validationCost = oracleMiddleware.validationCost(PYTH_DATA, ProtocolAction.Liquidation);
+        uint256 validationCost = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePythPositiveExponent.selector, 1));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            "", uint128(block.timestamp), ProtocolAction.Liquidation, PYTH_DATA
+            "", uint128(block.timestamp), ProtocolAction.Liquidation, MOCK_PYTH_DATA
         );
     }
 }

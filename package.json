@@ -36,6 +36,7 @@
     "@defi-wonderland/natspec-smells": "^1.1.1",
     "@openzeppelin/contracts": "^5.0.2",
     "@pythnetwork/pyth-sdk-solidity": "^3.1.0",
+    "@redstone-finance/evm-connector": "^0.5.1",
     "@types/luxon": "^3.4.2",
     "@uniswap/permit2": "github:Uniswap/permit2",
     "@uniswap/universal-router": "^1.6.0",

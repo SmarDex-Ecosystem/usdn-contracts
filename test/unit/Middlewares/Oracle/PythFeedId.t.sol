@@ -4,18 +4,18 @@ pragma solidity 0.8.20;
 import { OracleMiddlewareBaseFixture } from "test/unit/Middlewares/utils/Fixtures.sol";
 import { PYTH_ETH_USD } from "test/utils/Constants.sol";
 
-/// @custom:feature The `priceID` function of `OracleMiddleware`
-contract TestOracleMiddlewarePriceID is OracleMiddlewareBaseFixture {
+/// @custom:feature The `getPythFeedId` function of `OracleMiddleware`
+contract TestOracleMiddlewarePythFeedId is OracleMiddlewareBaseFixture {
     function setUp() public override {
         super.setUp();
     }
 
     /**
-     * @custom:scenario Call `priceID` getter
+     * @custom:scenario Call `getPythFeedId` getter
      * @custom:when The result of the result of the function is compared to PYTH_ETH_USD
      * @custom:then It should succeed
      */
-    function test_priceID() public {
-        assertEq(oracleMiddleware.getPriceID(), PYTH_ETH_USD);
+    function test_getPythFeedId() public {
+        assertEq(oracleMiddleware.getPythFeedId(), PYTH_ETH_USD);
     }
 }
