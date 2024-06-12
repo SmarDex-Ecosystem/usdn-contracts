@@ -40,6 +40,9 @@ contract TestRebalancerAdmin is RebalancerFixture {
 
         vm.expectRevert(RebalancerUnauthorized.selector);
         rebalancer.ownershipCallback(address(this), PositionId(0, 0, 0));
+
+        vm.expectRevert(customError);
+        rebalancer.setCloseImbalanceLimitBps(0);
     }
 
     /* -------------------------------------------------------------------------- */
