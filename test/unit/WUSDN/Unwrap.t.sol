@@ -10,12 +10,12 @@ import { WusdnTokenFixture } from "test/unit/WUSDN/utils/Fixtures.sol";
  */
 contract TestWusdnUnwrap is WusdnTokenFixture {
     /**
-     * @custom:scenario Unwrap wusdn
+     * @custom:scenario Unwrap WUSDN to USDN
      * @custom:given `usdnAmount` is minted to a user
-     * @custom:and The half (usdnAmount / 2) is deposited to wusdn
-     * @custom:when The half (wusdnAmount / 2) is withdrawn from wusdn
-     * @custom:then The user sould have usdnAmount * 3 / 4 usdn
-     * @custom:and wusdnAmount / 2 wusdn
+     * @custom:and The half (usdnAmount / 2) is deposited to WUSDN
+     * @custom:when The half (wusdnAmount / 2) is withdrawn from WUSDN
+     * @custom:then The user sould have usdnAmount * 3 / 4 USDN
+     * @custom:and wusdnAmount / 2 WUSDN
      */
     function test_unwrap() public {
         uint256 usdnAmount = usdn.balanceOf(address(this));
