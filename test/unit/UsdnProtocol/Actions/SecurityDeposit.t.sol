@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity 0.8.26;
 
 import { USER_1, USER_2, ADMIN } from "test/utils/Constants.sol";
 
