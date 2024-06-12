@@ -42,6 +42,41 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     /* -------------------------- Public view functions ------------------------- */
 
     /// @inheritdoc IUsdnProtocolCore
+    function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
+        public
+        view
+        returns (int256 available_)
+    {
+        if (timestamp < _lastUpdateTimestamp) {
+            revert UsdnProtocolTimestampTooOld();
+        }
+
+        int256 ema = calcEMA(_lastFunding, timestamp - _lastUpdateTimestamp, _EMAPeriod, _EMA);
+        (int256 fundAsset,) = _fundingAsset(timestamp, ema);
+
+        if (fundAsset > 0) {
+            available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset);
+        } else {
+            int256 fee = fundAsset * _toInt256(_protocolFeeBps) / int256(BPS_DIVISOR);
+            // fees have the same sign as fundAsset (negative here), so we need to sub them
+            available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset - fee);
+        }
+    }
+
+    /// @inheritdoc IUsdnProtocolCore
+    function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
+        public
+        pure
+        returns (int256)
+    {
+        if (secondsElapsed >= emaPeriod) {
+            return lastFunding;
+        }
+
+        return (lastFunding + previousEMA * _toInt256(emaPeriod - secondsElapsed)) / _toInt256(emaPeriod);
+    }
+
+    /// @inheritdoc IUsdnProtocolCore
     function vaultAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
         public
         view
@@ -65,41 +100,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     /// @inheritdoc IUsdnProtocolCore
     function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) public view returns (int256 expo_) {
         expo_ = _totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(currentPrice, timestamp));
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
-    function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
-        public
-        pure
-        returns (int256)
-    {
-        if (secondsElapsed >= emaPeriod) {
-            return lastFunding;
-        }
-
-        return (lastFunding + previousEMA * _toInt256(emaPeriod - secondsElapsed)) / _toInt256(emaPeriod);
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
-    function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
-        public
-        view
-        returns (int256 available_)
-    {
-        if (timestamp < _lastUpdateTimestamp) {
-            revert UsdnProtocolTimestampTooOld();
-        }
-
-        int256 ema = calcEMA(_lastFunding, timestamp - _lastUpdateTimestamp, _EMAPeriod, _EMA);
-        (int256 fundAsset,) = _fundingAsset(timestamp, ema);
-
-        if (fundAsset > 0) {
-            available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset);
-        } else {
-            int256 fee = fundAsset * _toInt256(_protocolFeeBps) / int256(BPS_DIVISOR);
-            // fees have the same sign as fundAsset (negative here), so we need to sub them
-            available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset - fee);
-        }
     }
 
     /* --------------------------  External functions --------------------------- */
