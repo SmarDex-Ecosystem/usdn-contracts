@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import { WusdnTokenFixture } from "test/unit/WUSDN/utils/Fixtures.sol";
 
 /**
- * @custom:feature Functions of `WUSDN`
+ * @custom:feature Functions of `WUSDN` token
  * @custom:background Given this contract has the MINTER_ROLE
  * @custom:and The divisor is MAX_DIVISOR
  */

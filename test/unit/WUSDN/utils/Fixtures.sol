@@ -9,7 +9,7 @@ import { Usdn } from "src/Usdn/Usdn.sol";
 
 /**
  * @title WusdnTokenFixture
- * @dev Utils for testing Wusdn.sol
+ * @dev Utils for testing WUSDN token
  */
 contract WusdnTokenFixture is BaseFixture {
     WusdnHandler public wusdn;

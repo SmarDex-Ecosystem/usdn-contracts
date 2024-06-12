@@ -57,8 +57,8 @@ interface IWusdn is IERC20Permit, IWusdnEvents, IWusdnErrors {
 
     /**
      * @notice Previews the amount of WUSDN that would be received for a given amount of USDN
-     * @dev This function can return a value that is slightly different (1wei) from the actual amount received du to
-     * rounding errors
+     * @dev This function can return a slightly different value (1wei) from the actual amount
+     * received due to rounding errors
      * Do not rely on this function to calculate the exact amount of WUSDN that would be received
      * @param usdnAmount The amount of USDN to preview
      * @return wrappedAmount_ The amount of WUSDN that would be received

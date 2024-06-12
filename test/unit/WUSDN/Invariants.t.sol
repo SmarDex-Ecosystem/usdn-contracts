@@ -6,8 +6,8 @@ import { WusdnTokenFixture } from "test/unit/WUSDN/utils/Fixtures.sol";
 
 /**
  * @custom:feature Invariants of `WUSDN`
- * @custom:background Given four users that can mint tokens to themselves, burn their balance of tokens,
- * and transfer to other users. Follow invariants in Wusdn
+ * @custom:background Given four users that can mint tokens for themselves, burn their balance of tokens,
+ * and transfer to other users
  */
 contract TestWusdnInvariants is WusdnTokenFixture {
     function setUp() public override {
