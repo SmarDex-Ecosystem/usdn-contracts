@@ -762,6 +762,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             return positionValue_;
         }
 
+        uint8 liquidationPenalty = _tickData[tickHash].liquidationPenalty;
         Position memory pos = _longPositions[tickHash][posId.index];
 
         // fully close the position and update the cache
@@ -770,7 +771,12 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
         int256 positionValue = _positionValue(
             neutralPrice,
-            getEffectivePriceForTick(posId.tick, neutralPrice, cache.tradingExpo, cache.liqMultiplierAccumulator),
+            getEffectivePriceForTick(
+                _calcTickWithoutPenalty(posId.tick, liquidationPenalty),
+                neutralPrice,
+                cache.tradingExpo,
+                cache.liqMultiplierAccumulator
+            ),
             pos.totalExpo
         );
 
