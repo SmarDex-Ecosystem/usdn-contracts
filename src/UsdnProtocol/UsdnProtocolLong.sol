@@ -801,7 +801,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param neutralPrice The current neutral price
      * @param tickWithoutPenalty The tick the position should be opened in
      * @param amount The amount of collateral in the position
-     * @param longTradingExpo The long trading expo of the protocol
+     * @param cache The cached state of the protocol
      * @return posId_ The ID of the position that was created
      */
     function _flashOpenPosition(
@@ -809,7 +809,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         uint128 neutralPrice,
         int24 tickWithoutPenalty,
         uint128 amount,
-        uint256 longTradingExpo
+        CachedProtocolState memory cache
     ) internal returns (PositionId memory posId_) {
         // we calculate the closest valid tick down for the desired liquidation price with the liquidation penalty
         uint8 currentLiqPenalty = _liquidationPenalty;
@@ -824,13 +824,13 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         // after the said change, so the first value is still applied
         if (liquidationPenalty == currentLiqPenalty) {
             liqPriceWithoutPenalty = getEffectivePriceForTick(
-                tickWithoutPenalty, neutralPrice, longTradingExpo, cache.liqMultiplierAccumulator
+                tickWithoutPenalty, neutralPrice, cache.tradingExpo, cache.liqMultiplierAccumulator
             );
         } else {
             liqPriceWithoutPenalty = getEffectivePriceForTick(
                 _calcTickWithoutPenalty(posId_.tick, liquidationPenalty),
                 neutralPrice,
-                longTradingExpo,
+                cache.tradingExpo,
                 cache.liqMultiplierAccumulator
             );
         }

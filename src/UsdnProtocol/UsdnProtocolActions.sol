@@ -2121,9 +2121,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         // open a new position for the rebalancer
-        PositionId memory posId = _flashOpenPosition(
-            address(rebalancer), neutralPrice, tickWithoutLiqPenalty, positionAmount, cache.tradingExpo
-        );
+        PositionId memory posId =
+            _flashOpenPosition(address(rebalancer), neutralPrice, tickWithoutLiqPenalty, positionAmount, cache);
 
         longBalance_ += positionAmount;
 
