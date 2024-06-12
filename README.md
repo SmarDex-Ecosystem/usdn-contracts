@@ -53,7 +53,7 @@ The environment provides the following tools:
 
 - load `.env` file as environment variables
 - foundry
-- solc v0.8.25
+- solc v0.8.26
 - slither
 - Node 18
 
