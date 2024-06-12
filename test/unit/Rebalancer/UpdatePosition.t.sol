@@ -141,7 +141,7 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
         PositionData memory positionData = rebalancer.getPositionData(positionVersionBefore + 1);
         assertEq(
             positionData.pnlMultiplier,
-            rebalancer.MULTIPLIER_FACTOR() + rebalancer.MULTIPLIER_FACTOR() / 10,
+            rebalancer.MULTIPLIER_FACTOR() * 11 / 10,
             "PnL multiplier of the first position should be 1.1x"
         );
 
@@ -151,7 +151,7 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
         assertEq(
             positionData.entryAccMultiplier,
             rebalancer.MULTIPLIER_FACTOR() + rebalancer.MULTIPLIER_FACTOR() / 10,
-            "Entry multiplier accumulator of the position position should be 1.1x"
+            "Entry multiplier accumulator of the position should be 1.1x"
         );
         assertEq(positionData.pnlMultiplier, 0, "PnL multiplier should be 0");
         assertEq(positionData.id.tick, posId2.tick, "Tick mismatch");

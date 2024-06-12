@@ -113,12 +113,12 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
         uint128 remainingCollateral =
             uint128(uint256(protocol.getPositionValue(posToLiquidate, wstEthPrice, uint40(block.timestamp))));
 
-        uint128 bonus = uint128(uint256(remainingCollateral)) * protocol.getRebalancerBonusBps() / 10_000;
+        uint128 bonus = uint128(uint256(remainingCollateral)) * protocol.getRebalancerBonusBps() / uint128(BPS_DIVISOR);
         uint256 totalExpo = protocol.getTotalExpo() - tickToLiquidateData.totalExpo;
         uint256 vaultAssetAvailable = uint256(protocol.i_vaultAssetAvailable(wstEthPrice)) + remainingCollateral;
         uint256 longAssetAvailable = uint256(protocol.i_longAssetAvailable(wstEthPrice)) - remainingCollateral;
         uint256 tradingExpoToFill = (
-            vaultAssetAvailable * uint256(10_000 - protocol.getLongImbalanceTargetBps()) / 10_000
+            vaultAssetAvailable * uint256(int256(BPS_DIVISOR) - protocol.getLongImbalanceTargetBps()) / BPS_DIVISOR
         ) - (totalExpo - longAssetAvailable);
 
         // calculate the state of the liq accumulator after the liquidations
