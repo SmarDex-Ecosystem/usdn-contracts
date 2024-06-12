@@ -4,13 +4,14 @@ pragma solidity 0.8.20;
 import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 
 import { IWusdnEvents } from "src/interfaces/Usdn/IWusdnEvents.sol";
+import { IWusdnErrors } from "src/interfaces/Usdn/IWusdnErrors.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 
 /**
  * @title Wusdn Interface
  * @notice Interface for the Wrapped Ultimate Synthetic Delta Neutral (WUSDN) token
  */
-interface IWusdn is IERC20Permit, IWusdnEvents {
+interface IWusdn is IERC20Permit, IWusdnEvents, IWusdnErrors {
     /**
      * @notice Returns the USDN token address
      * @return The address of the USDN token
@@ -55,6 +56,16 @@ interface IWusdn is IERC20Permit, IWusdnEvents {
     function unwrap(uint256 wusdnAmount, address to) external returns (uint256 usdnAmount_);
 
     /**
+     * @notice Previews the amount of WUSDN that would be received for a given amount of USDN
+     * @dev This function can return a value that is slightly different (1wei) from the actual amount received du to
+     * rounding errors
+     * Do not rely on this function to calculate the exact amount of WUSDN that would be received
+     * @param usdnAmount The amount of USDN to preview
+     * @return wrappedAmount_ The amount of WUSDN that would be received
+     */
+    function previewWrap(uint256 usdnAmount) external view returns (uint256 wrappedAmount_);
+
+    /**
      * @notice Previews the amount of USDN that would be received for a given amount of WUSDN
      * @param wusdnAmount The amount of WUSDN to preview
      * @return usdnAmount_ The amount of USDN that would be received
@@ -72,11 +83,4 @@ interface IWusdn is IERC20Permit, IWusdnEvents {
      * @return The total amount of USDN shares held by the contract
      */
     function totalUsdnShares() external view returns (uint256);
-
-    /**
-     * @notice Previews the amount of WUSDN that would be received for a given amount of USDN
-     * @param usdnAmount The amount of USDN to preview
-     * @return wrappedAmount_ The amount of WUSDN that would be received
-     */
-    function previewWrap(uint256 usdnAmount) external view returns (uint256 wrappedAmount_);
 }

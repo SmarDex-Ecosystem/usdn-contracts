@@ -60,6 +60,16 @@ contract Wusdn is ERC20Permit, IWusdn {
     }
 
     /// @inheritdoc IWusdn
+    function previewWrap(uint256 usdnAmount) external view returns (uint256 wrappedAmount_) {
+        wrappedAmount_ = USDN.convertToShares(usdnAmount) / SHARES_RATIO;
+    }
+
+    /// @inheritdoc IWusdn
+    function previewUnwrap(uint256 wusdnAmount) external view returns (uint256 usdnAmount_) {
+        usdnAmount_ = USDN.convertToTokens(wusdnAmount * SHARES_RATIO);
+    }
+
+    /// @inheritdoc IWusdn
     function totalUsdnBalance() external view returns (uint256) {
         return USDN.balanceOf(address(this));
     }
@@ -69,19 +79,9 @@ contract Wusdn is ERC20Permit, IWusdn {
         return USDN.sharesOf(address(this));
     }
 
-    /// @inheritdoc IWusdn
-    function previewUnwrap(uint256 wusdnAmount) external view returns (uint256 usdnAmount_) {
-        usdnAmount_ = USDN.convertToTokens(wusdnAmount * SHARES_RATIO);
-    }
-
     /* -------------------------------------------------------------------------- */
     /*                              public functions                              */
     /* -------------------------------------------------------------------------- */
-
-    /// @inheritdoc IWusdn
-    function previewWrap(uint256 usdnAmount) public view returns (uint256 wrappedAmount_) {
-        wrappedAmount_ = USDN.convertToShares(usdnAmount) / SHARES_RATIO;
-    }
 
     /**
      * @inheritdoc IERC20Permit
@@ -104,12 +104,23 @@ contract Wusdn is ERC20Permit, IWusdn {
      * @return wrappedAmount_ The amount of WUSDN received
      */
     function _wrap(uint256 usdnAmount, address to) private returns (uint256 wrappedAmount_) {
-        // we consecutively divide (in {previewWrap}) and multiply by `SHARES_RATIO`
-        // to ensure that the transferred USDN shares are a multiple of `SHARES_RATIO`
-        wrappedAmount_ = previewWrap(usdnAmount);
+        if (usdnAmount > USDN.balanceOf(msg.sender)) {
+            revert WsdnInsufficientBalance(usdnAmount);
+        }
+
+        uint256 usdnShares = USDN.convertToShares(usdnAmount);
+        uint256 sharesOf = USDN.sharesOf(msg.sender);
+
+        // Du to rounding in the USDN contract, we may have a small difference in the amount
+        // of shares converted from the amount of USDN and the shares of the user
+        if (usdnShares > sharesOf) {
+            usdnShares = sharesOf;
+        }
+
+        wrappedAmount_ = usdnShares / SHARES_RATIO;
 
         _mint(to, wrappedAmount_);
-        USDN.transferSharesFrom(msg.sender, address(this), wrappedAmount_ * SHARES_RATIO);
+        USDN.transferSharesFrom(msg.sender, address(this), usdnShares);
 
         emit Wrap(msg.sender, to, usdnAmount, wrappedAmount_);
     }
