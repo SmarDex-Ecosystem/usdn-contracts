@@ -159,8 +159,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         Position memory pos,
         uint128 amountToRemove,
         uint128 totalExpoToRemove
-    ) external {
-        return _removeAmountFromPosition(tick, index, pos, amountToRemove, totalExpoToRemove);
+    ) external returns (HugeUint.Uint512 memory liqMultiplierAccumulator_) {
+        liqMultiplierAccumulator_ = _removeAmountFromPosition(tick, index, pos, amountToRemove, totalExpoToRemove);
     }
 
     function i_positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)
@@ -299,6 +299,14 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _tickHash(tick);
     }
 
+    function i_longAssetAvailable(uint256 totalExpo, uint256 balanceLong, uint128 newPrice, uint128 oldPrice)
+        external
+        pure
+        returns (int256 available_)
+    {
+        return _longAssetAvailable(totalExpo, balanceLong, newPrice, oldPrice);
+    }
+
     function i_longAssetAvailable(uint128 currentPrice) external view returns (int256) {
         return _longAssetAvailable(currentPrice);
     }
@@ -341,6 +349,14 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
 
     function i_calcBitmapIndexFromTick(int24 tick, int24 tickSpacing) external pure returns (uint256) {
         return _calcBitmapIndexFromTick(tick, tickSpacing);
+    }
+
+    function i_calcLiqPriceFromTradingExpo(uint128 currentPrice, uint128 amount, uint256 tradingExpo)
+        external
+        pure
+        returns (uint128 liqPrice_)
+    {
+        return _calcLiqPriceFromTradingExpo(currentPrice, amount, tradingExpo);
     }
 
     function i_findHighestPopulatedTick(int24 searchStart) external view returns (int24 tick_) {
@@ -469,6 +485,14 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
 
     function i_clearPendingAction(address user, uint128 rawIndex) external {
         _clearPendingAction(user, rawIndex);
+    }
+
+    function i_calcLongImbalanceBps(uint256 vaultBalance, uint256 longBalance, uint256 longTotalExpo)
+        external
+        pure
+        returns (int256 imbalanceBps_)
+    {
+        return _calcLongImbalanceBps(vaultBalance, longBalance, longTotalExpo);
     }
 
     function i_removeBlockedPendingAction(uint128 rawIndex, address payable to, bool cleanup) external {

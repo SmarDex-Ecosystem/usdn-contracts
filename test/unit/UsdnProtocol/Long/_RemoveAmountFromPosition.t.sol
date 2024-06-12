@@ -4,6 +4,8 @@ pragma solidity ^0.8.24;
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { Position, ProtocolAction, TickData, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { HugeUint } from "src/libraries/HugeUint.sol";
+import { TickMath } from "src/libraries/TickMath.sol";
 
 /**
  * @custom:feature The _removeAmountFromPosition internal function of the UsdnProtocolActions contract.
@@ -12,6 +14,8 @@ import { Position, ProtocolAction, TickData, PositionId } from "src/interfaces/U
  * @custom:and a validated long position of 1 ether with 10x leverage
  */
 contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture {
+    using HugeUint for HugeUint.Uint512;
+
     PositionId private _posId;
     uint128 private _positionAmount = 1 ether;
 
@@ -41,9 +45,27 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
         (Position memory posBefore,) = protocol.getLongPosition(_posId);
         uint256 bitmapIndexBefore = protocol.findLastSetInTickBitmap(_posId.tick);
         uint256 totalExpoBefore = protocol.getTotalExpo();
+        HugeUint.Uint512 memory liqMultiplierAccBefore = protocol.getLiqMultiplierAccumulator();
         TickData memory tickData = protocol.getTickData(_posId.tick);
-        protocol.i_removeAmountFromPosition(
+        (HugeUint.Uint512 memory liqMultiplierAcc) = protocol.i_removeAmountFromPosition(
             _posId.tick, _posId.tickVersion, posBefore, posBefore.amount, posBefore.totalExpo
+        );
+
+        assertEq(
+            keccak256(abi.encode(liqMultiplierAcc)),
+            keccak256(abi.encode(protocol.getLiqMultiplierAccumulator())),
+            "The returned liquidation multiplier accumulator should be equal to the one in storage"
+        );
+        uint256 unadjustedTickPrice = TickMath.getPriceAtTick(
+            _posId.tick - int24(uint24(tickData.liquidationPenalty)) * protocol.getTickSpacing()
+        );
+        assertEq(
+            liqMultiplierAccBefore.lo - (unadjustedTickPrice * posBefore.totalExpo),
+            liqMultiplierAcc.lo,
+            "The returned liquidation multiplier accumulator should have been updated"
+        );
+        assertEq(
+            liqMultiplierAccBefore.hi, liqMultiplierAcc.hi, "The high part of the multiplier should not have changed"
         );
 
         /* ----------------------------- Position State ----------------------------- */
@@ -84,14 +106,32 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
         (Position memory posBefore,) = protocol.getLongPosition(_posId);
         uint256 bitmapIndexBefore = protocol.findLastSetInTickBitmap(_posId.tick);
         uint256 totalExpoBefore = protocol.getTotalExpo();
+        HugeUint.Uint512 memory liqMultiplierAccBefore = protocol.getLiqMultiplierAccumulator();
         TickData memory tickData = protocol.getTickData(_posId.tick);
         uint128 amountToRemove = posBefore.amount / 2;
         uint128 totalExpoToRemove = protocol.i_calcPositionTotalExpo(
             amountToRemove, params.initialPrice, params.initialPrice - (params.initialPrice / 5)
         );
 
-        protocol.i_removeAmountFromPosition(
+        (HugeUint.Uint512 memory liqMultiplierAcc) = protocol.i_removeAmountFromPosition(
             _posId.tick, _posId.tickVersion, posBefore, amountToRemove, totalExpoToRemove
+        );
+
+        assertEq(
+            abi.encode(liqMultiplierAcc),
+            abi.encode(protocol.getLiqMultiplierAccumulator()),
+            "The returned liquidation multiplier accumulator should be equal to the one in storage"
+        );
+        uint256 unadjustedTickPrice = TickMath.getPriceAtTick(
+            _posId.tick - int24(uint24(tickData.liquidationPenalty)) * protocol.getTickSpacing()
+        );
+        assertEq(
+            liqMultiplierAccBefore.lo - (unadjustedTickPrice * totalExpoToRemove),
+            liqMultiplierAcc.lo,
+            "The returned liquidation multiplier accumulator should have been updated"
+        );
+        assertEq(
+            liqMultiplierAccBefore.hi, liqMultiplierAcc.hi, "The high part of the multiplier should not have changed"
         );
 
         /* ----------------------------- Position State ----------------------------- */

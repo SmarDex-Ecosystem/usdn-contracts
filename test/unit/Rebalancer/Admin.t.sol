@@ -135,6 +135,24 @@ contract TestRebalancerAdmin is RebalancerFixture {
         rebalancer.setPositionMaxLeverage(maxLeverage - 1);
     }
 
+    /**
+     * @custom:scenario Setting the max leverage of the rebalancer
+     * @custom:given A value lower than the USDN protocol's max leverage
+     * @custom:when {setPositionMaxLeverage} is called with this value
+     * @custom:then The value of `_positionMaxLeverage` is updated
+     * @custom:and A {PositionMaxLeverageUpdated} event is emitted
+     */
+    function test_setPositionMaxLeverage() external adminPrank {
+        uint256 maxLeverage = usdnProtocol.getMaxLeverage();
+        uint256 newMaxLeverage = maxLeverage - 1;
+
+        vm.expectEmit();
+        emit PositionMaxLeverageUpdated(newMaxLeverage);
+        rebalancer.setPositionMaxLeverage(newMaxLeverage);
+
+        assertEq(rebalancer.getPositionMaxLeverage(), newMaxLeverage, "The max leverage should have been updated");
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                             ownershipCallback                              */
     /* -------------------------------------------------------------------------- */

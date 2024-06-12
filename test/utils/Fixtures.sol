@@ -10,6 +10,8 @@ import "test/utils/Constants.sol" as constants;
  * @dev Define labels for various accounts and contracts.
  */
 contract BaseFixture is Test {
+    uint256 constant BPS_DIVISOR = 10_000;
+
     modifier ethMainnetFork() {
         string memory url = vm.rpcUrl("mainnet");
         vm.createSelectFork(url);
