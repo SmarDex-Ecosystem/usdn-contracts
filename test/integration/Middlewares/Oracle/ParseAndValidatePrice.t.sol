@@ -274,6 +274,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
         uint256 validationCost = oracleMiddleware.validationCost(data, ProtocolAction.ValidateDeposit);
 
         // submit to oracle middleware so it gets cached by Pyth
+        vm.warp(chainlinkTimestamp + 2);
         PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
             "",
             uint128(chainlinkTimestamp + 1 - oracleMiddleware.getValidationDelay()),
@@ -310,6 +311,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
         uint256 validationCost = oracleMiddleware.validationCost(data, ProtocolAction.ValidateDeposit);
 
         // submit to oracle middleware so it gets cached by Pyth
+        vm.warp(chainlinkTimestamp + 2);
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
             "",
             uint128(chainlinkTimestamp + 1 - oracleMiddleware.getValidationDelay()),
