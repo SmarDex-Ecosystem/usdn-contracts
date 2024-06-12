@@ -52,7 +52,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /// @inheritdoc IUsdnProtocolLong
-    function maxTick() public view returns (int24 tick_) {
+    function maxTick() external view returns (int24 tick_) {
         tick_ = TickMath.maxUsableTick(_tickSpacing);
     }
 
