@@ -678,9 +678,8 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
      * @custom:then The middleware reverts with `OracleMiddlewareRedstoneSafeguard`
      */
     function test_RevertWhen_parseAndValidatePriceWithRedstoneMoreThanChainlink() public {
-        // set chainlink to a price that is less than a third of the redstone price
-        int256 mockedChainlinkPrice = int256(REDSTONE_ETH_PRICE / 3 - 1);
-        mockedChainlinkPrice /= 10 ** 10; // Chainlink price is in 8 decimals
+        // set chainlink to a price that is less than a third of the redstone price (chainlink has 8 decimals)
+        int256 mockedChainlinkPrice = int256(REDSTONE_ETH_PRICE / 3 * 1e10 - 1);
         mockChainlinkOnChain.setLatestRoundData(1, mockedChainlinkPrice, REDSTONE_ETH_TIMESTAMP, 1);
         uint256 validationDelay = oracleMiddleware.getValidationDelay();
 
@@ -702,9 +701,8 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
      * @custom:then The middleware reverts with `OracleMiddlewareRedstoneSafeguard`
      */
     function test_RevertWhen_parseAndValidatePriceWithRedstoneLessThanChainlink() public {
-        // set chainlink to a price that is more than thrice the redstone price
-        int256 mockedChainlinkPrice = int256(REDSTONE_ETH_PRICE * 3 + 1);
-        mockedChainlinkPrice /= 10 ** 10; // Chainlink price is in 8 decimals
+        // set chainlink to a price that is more than thrice the redstone price (chainlink has 8 decimals)
+        int256 mockedChainlinkPrice = int256(REDSTONE_ETH_PRICE * 3 / 1e10 + 1);
         mockChainlinkOnChain.setLatestRoundData(1, mockedChainlinkPrice, REDSTONE_ETH_TIMESTAMP, 1);
         uint256 validationDelay = oracleMiddleware.getValidationDelay();
 
