@@ -52,7 +52,6 @@ abstract contract ChainlinkOracle is IChainlinkOracle, IOracleMiddlewareErrors {
      * @return price_ The price of the asset
      */
     function _getChainlinkLatestPrice() internal view virtual returns (ChainlinkPriceInfo memory price_) {
-        // slither-disable-next-line unused-return
         (, int256 price,, uint256 timestamp,) = _priceFeed.latestRoundData();
 
         if (timestamp < block.timestamp - _timeElapsedLimit) {
@@ -106,7 +105,6 @@ abstract contract ChainlinkOracle is IChainlinkOracle, IOracleMiddlewareErrors {
      * @return price_ The price of the asset
      */
     function _getChainlinkPrice(uint80 roundId) internal view virtual returns (ChainlinkPriceInfo memory price_) {
-        // slither-disable-next-line unused-return
         (, price_.price,, price_.timestamp,) = _priceFeed.getRoundData(roundId);
     }
 }
