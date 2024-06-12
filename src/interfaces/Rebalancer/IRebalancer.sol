@@ -3,9 +3,9 @@ pragma solidity >=0.8.0;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import { IRebalancerErrors } from "../Rebalancer/IRebalancerErrors.sol";
-import { IRebalancerEvents } from "../Rebalancer/IRebalancerEvents.sol";
-import { IRebalancerTypes } from "../Rebalancer/IRebalancerTypes.sol";
+import { IRebalancerErrors } from "./IRebalancerErrors.sol";
+import { IRebalancerEvents } from "./IRebalancerEvents.sol";
+import { IRebalancerTypes } from "./IRebalancerTypes.sol";
 import { PositionId } from "../UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IUsdnProtocol } from "../UsdnProtocol/IUsdnProtocol.sol";
 

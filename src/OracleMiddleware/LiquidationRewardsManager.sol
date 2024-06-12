@@ -5,7 +5,7 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import { IWstETH } from "../interfaces/IWstETH.sol";
 import { ChainlinkPriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { ChainlinkOracle } from "../OracleMiddleware/oracles/ChainlinkOracle.sol";
+import { ChainlinkOracle } from "./oracles/ChainlinkOracle.sol";
 import { IBaseLiquidationRewardsManager } from "../interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
 import { ILiquidationRewardsManager } from "../interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { ProtocolAction } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";

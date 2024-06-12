@@ -5,6 +5,7 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
 import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { IUsdnProtocolCore } from "../interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
@@ -21,7 +22,6 @@ import {
 import { SignedMath } from "../libraries/SignedMath.sol";
 import { DoubleEndedQueue } from "../libraries/DoubleEndedQueue.sol";
 import { TickMath } from "../libraries/TickMath.sol";
-import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
 
 abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {

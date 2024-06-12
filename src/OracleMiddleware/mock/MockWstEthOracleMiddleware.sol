@@ -3,8 +3,8 @@ pragma solidity 0.8.20;
 
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { ProtocolAction } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { WstEthOracleMiddleware } from "../../OracleMiddleware/WstEthOracleMiddleware.sol";
-import { OracleMiddleware } from "../../OracleMiddleware/OracleMiddleware.sol";
+import { WstEthOracleMiddleware } from "../WstEthOracleMiddleware.sol";
+import { OracleMiddleware } from "../OracleMiddleware.sol";
 
 /**
  * @title Contract to apply and return a mocked wstETH price
