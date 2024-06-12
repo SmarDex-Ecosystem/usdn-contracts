@@ -4,7 +4,6 @@ pragma solidity 0.8.20;
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
-import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
 import { UsdnProtocolLong } from "src/UsdnProtocol/UsdnProtocolLong.sol";
@@ -87,7 +86,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
      * @param securityDepositValue The value of the security deposit for the newly created pending action
      * @param permit2TokenBitfield The permit2 bitfield
-     * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
+     * @param currentPriceData The current price data (used to calculate the temporary leverage and entry price,
      * pending validation)
      */
     struct InitiateOpenPositionParams {
