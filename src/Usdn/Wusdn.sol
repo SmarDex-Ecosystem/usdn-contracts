@@ -50,20 +50,6 @@ contract Wusdn is ERC20Permit, IWusdn {
     }
 
     /// @inheritdoc IWusdn
-    function wrapFrom(address from, uint256 usdnAmount, address to) external returns (uint256 wrappedAmount_) {
-        wrappedAmount_ = previewWrap(usdnAmount);
-
-        // we consecutively divide (in {previewWrap}) and multiply by `SHARES_RATIO`
-        // to ensure that the `wusdnAmount_` is a multiple of `SHARES_RATIO`
-        uint256 usdnShares = wrappedAmount_ * SHARES_RATIO;
-        USDN.transferSharesFrom(from, msg.sender, usdnShares);
-        USDN.transferSharesFrom(msg.sender, address(this), usdnShares);
-
-        _mint(to, wrappedAmount_);
-        emit Wrap(from, to, usdnAmount, wrappedAmount_);
-    }
-
-    /// @inheritdoc IWusdn
     function unwrap(uint256 wusdnAmount) external returns (uint256 usdnAmount_) {
         usdnAmount_ = _unwrap(wusdnAmount, msg.sender);
     }
@@ -74,27 +60,18 @@ contract Wusdn is ERC20Permit, IWusdn {
     }
 
     /// @inheritdoc IWusdn
-    function unwrapFrom(address from, uint256 wusdnAmount, address to) external returns (uint256 usdnAmount_) {
-        // we consecutively multiply and divide (the division takes place in the {convertToTokens} function)
-        // by `SHARES_RATIO` to ensure that the `usdnAmount_` is a multiple of `SHARES_RATIO`
-        uint256 usdnShares = wusdnAmount * SHARES_RATIO;
-        usdnAmount_ = USDN.convertToTokens(usdnShares);
+    function totalUsdnBalance() external view returns (uint256) {
+        return USDN.balanceOf(address(this));
+    }
 
-        _spendAllowance(from, msg.sender, wusdnAmount);
-        _burn(from, wusdnAmount);
-
-        USDN.transferShares(to, usdnShares);
-        emit Unwrap(from, to, wusdnAmount, usdnAmount_);
+    /// @inheritdoc IWusdn
+    function totalUsdnShares() external view returns (uint256) {
+        return USDN.sharesOf(address(this));
     }
 
     /// @inheritdoc IWusdn
     function previewUnwrap(uint256 wusdnAmount) external view returns (uint256 usdnAmount_) {
         usdnAmount_ = USDN.convertToTokens(wusdnAmount * SHARES_RATIO);
-    }
-
-    /// @inheritdoc IWusdn
-    function totalUsdnBalance() external view returns (uint256) {
-        return USDN.balanceOf(address(this));
     }
 
     /* -------------------------------------------------------------------------- */
@@ -121,32 +98,30 @@ contract Wusdn is ERC20Permit, IWusdn {
     /**
      * @notice Internal function to wrap USDN into WUSDN
      * @dev The caller must have already approved the USDN contract to transfer the required amount of USDN
-     * When calling this function, the `from` is always `msg.sender`
+     * When calling this function, we always transfer from the `msg.sender`
      * @param usdnAmount The amount of USDN to wrap
      * @param to The address to receive the WUSDN
      * @return wrappedAmount_ The amount of WUSDN received
      */
     function _wrap(uint256 usdnAmount, address to) private returns (uint256 wrappedAmount_) {
         // we consecutively divide (in {previewWrap}) and multiply by `SHARES_RATIO`
-        // to ensure that the `wusdnAmount_` is a multiple of `SHARES_RATIO`
+        // to ensure that the transferred USDN shares are a multiple of `SHARES_RATIO`
         wrappedAmount_ = previewWrap(usdnAmount);
-        USDN.transferSharesFrom(msg.sender, address(this), wrappedAmount_ * SHARES_RATIO);
 
         _mint(to, wrappedAmount_);
+        USDN.transferSharesFrom(msg.sender, address(this), wrappedAmount_ * SHARES_RATIO);
+
         emit Wrap(msg.sender, to, usdnAmount, wrappedAmount_);
     }
 
     /**
      * @notice Internal function to unwrap WUSDN into USDN
-     * @dev The caller must have already approved the WUSDN contract to transfer the required amount of WUSDN
-     * When calling this function, the `from` is always `msg.sender`
+     * @dev When calling this function, we always burn WUSDN tokens from the `msg.sender`
      * @param wusdnAmount The amount of WUSDN to unwrap
      * @param to The address to receive the USDN
      * @return usdnAmount_ The amount of USDN received
      */
     function _unwrap(uint256 wusdnAmount, address to) private returns (uint256 usdnAmount_) {
-        // we consecutively multiply and divide (the division takes place in the {convertToTokens} function)
-        // by `SHARES_RATIO` to ensure that the `usdnAmount_` is a multiple of `SHARES_RATIO`
         uint256 usdnShares = wusdnAmount * SHARES_RATIO;
         usdnAmount_ = USDN.convertToTokens(usdnShares);
         _burn(msg.sender, wusdnAmount);

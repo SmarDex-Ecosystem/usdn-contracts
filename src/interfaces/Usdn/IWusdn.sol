@@ -33,15 +33,6 @@ interface IWusdn is IERC20Permit, IWusdnEvents {
     function wrap(uint256 usdnAmount, address to) external returns (uint256 wrappedAmount_);
 
     /**
-     * @notice Wraps USDN from a specified address into WUSDN to another address
-     * @param from The address to wrap the USDN from
-     * @param usdnAmount The amount of USDN to wrap
-     * @param to The address to receive the WUSDN
-     * @return wrappedAmount_ The amount of WUSDN received
-     */
-    function wrapFrom(address from, uint256 usdnAmount, address to) external returns (uint256 wrappedAmount_);
-
-    /**
      * @notice Unwraps WUSDN into USDN
      * @param wusdnAmount The amount of WUSDN to unwrap
      * @return usdnAmount_ The amount of USDN received
@@ -57,15 +48,6 @@ interface IWusdn is IERC20Permit, IWusdnEvents {
     function unwrap(uint256 wusdnAmount, address to) external returns (uint256 usdnAmount_);
 
     /**
-     * @notice Unwraps WUSDN from a specified address into USDN to another address
-     * @param from The address to unwrap the WUSDN from
-     * @param wusdnAmount The amount of WUSDN to unwrap
-     * @param to The address to receive the USDN
-     * @return usdnAmount_ The amount of USDN received
-     */
-    function unwrapFrom(address from, uint256 wusdnAmount, address to) external returns (uint256 usdnAmount_);
-
-    /**
      * @notice Previews the amount of USDN that would be received for a given amount of WUSDN
      * @param wusdnAmount The amount of WUSDN to preview
      * @return usdnAmount_ The amount of USDN that would be received
@@ -77,6 +59,12 @@ interface IWusdn is IERC20Permit, IWusdnEvents {
      * @return The total amount of USDN held by the contract
      */
     function totalUsdnBalance() external view returns (uint256);
+
+    /**
+     * @notice Returns the total amount of USDN shares held by the contract
+     * @return The total amount of USDN shares held by the contract
+     */
+    function totalUsdnShares() external view returns (uint256);
 
     /**
      * @notice Previews the amount of WUSDN that would be received for a given amount of USDN

@@ -7,7 +7,7 @@ pragma solidity >=0.8.0;
  */
 interface IWusdnEvents {
     /**
-     * @notice Emitted when a user wrap USDN to mint WUSDN
+     * @notice Emitted when a user wraps USDN to mint WUSDN
      * @param from The address of the user that wrapped the USDN
      * @param to The address of the user that received the WUSDN
      * @param usdnAmount The amount of USDN wrapped
@@ -16,7 +16,7 @@ interface IWusdnEvents {
     event Wrap(address indexed from, address indexed to, uint256 usdnAmount, uint256 wusdnAmount);
 
     /**
-     * @notice Emitted when a user unwrap WUSDN to redeem USDN
+     * @notice Emitted when a user unwraps WUSDN to redeem USDN
      * @param from The address of the user that withdrew the WUSDN
      * @param to The address of the user that received the USDN
      * @param wusdnAmount The amount of WUSDN unwrapped
