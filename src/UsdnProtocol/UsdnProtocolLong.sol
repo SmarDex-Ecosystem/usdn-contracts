@@ -823,14 +823,15 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         // this can happen if the setting has been changed, but the position is added in a tick that was never empty
         // after the said change, so the first value is still applied
         if (liquidationPenalty == currentLiqPenalty) {
-            liqPriceWithoutPenalty =
-                getEffectivePriceForTick(tickWithoutPenalty, neutralPrice, longTradingExpo, _liqMultiplierAccumulator);
+            liqPriceWithoutPenalty = getEffectivePriceForTick(
+                tickWithoutPenalty, neutralPrice, longTradingExpo, cache.liqMultiplierAccumulator
+            );
         } else {
             liqPriceWithoutPenalty = getEffectivePriceForTick(
                 _calcTickWithoutPenalty(posId_.tick, liquidationPenalty),
                 neutralPrice,
                 longTradingExpo,
-                _liqMultiplierAccumulator
+                cache.liqMultiplierAccumulator
             );
         }
 
