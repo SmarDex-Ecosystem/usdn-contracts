@@ -40,6 +40,17 @@ struct FormattedPythPrice {
 }
 
 /**
+ * @notice The price and timestamp returned by the redstone oracle.
+ * @dev The timestamp is the timestamp of the price data, not the timestamp of the request
+ * @param price The asset price formatted by the middleware
+ * @param timestamp The timestamp of the price data
+ */
+struct RedstonePriceInfo {
+    uint256 price;
+    uint256 timestamp;
+}
+
+/**
  * @notice Enum representing the confidence interval of a Pyth price
  * @dev Used by the middleware to determine which price to use in a confidence interval
  */

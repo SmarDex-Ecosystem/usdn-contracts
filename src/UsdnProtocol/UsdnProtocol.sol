@@ -306,6 +306,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         if (
             newLongImbalanceTargetBps > int256(newCloseLimitBps)
                 || newLongImbalanceTargetBps < -int256(newWithdrawalLimitBps)
+                || newLongImbalanceTargetBps < -int256(BPS_DIVISOR / 2) // The target cannot be lower than -50%
         ) {
             revert UsdnProtocolInvalidLongImbalanceTarget();
         }
@@ -473,7 +474,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             timestamp: uint40(block.timestamp)
         });
         // save the position and update the state
-        (posId.tickVersion, posId.index) = _saveNewPosition(posId.tick, long, liquidationPenalty);
+        (posId.tickVersion, posId.index,) = _saveNewPosition(posId.tick, long, liquidationPenalty);
         _balanceLong += long.amount;
         emit InitiatedOpenPosition(msg.sender, msg.sender, long.timestamp, totalExpo, long.amount, price, posId);
         emit ValidatedOpenPosition(msg.sender, msg.sender, totalExpo, price, posId);

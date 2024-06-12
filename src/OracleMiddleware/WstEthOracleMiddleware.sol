@@ -17,6 +17,7 @@ contract WstEthOracleMiddleware is OracleMiddleware {
     /**
      * @param pythContract The address of the Pyth contract
      * @param pythPriceID The ID of the Pyth price feed
+     * @param redstoneFeedId The ID of the Redstone price feed
      * @param chainlinkPriceFeed The address of the Chainlink price feed
      * @param wstETH The address of the wstETH contract
      * @param chainlinkTimeElapsedLimit The duration after which a Chainlink price is considered stale
@@ -24,10 +25,11 @@ contract WstEthOracleMiddleware is OracleMiddleware {
     constructor(
         address pythContract,
         bytes32 pythPriceID,
+        bytes32 redstoneFeedId,
         address chainlinkPriceFeed,
         address wstETH,
         uint256 chainlinkTimeElapsedLimit
-    ) OracleMiddleware(pythContract, pythPriceID, chainlinkPriceFeed, chainlinkTimeElapsedLimit) {
+    ) OracleMiddleware(pythContract, pythPriceID, redstoneFeedId, chainlinkPriceFeed, chainlinkTimeElapsedLimit) {
         _wstEth = IWstETH(wstETH);
     }
 

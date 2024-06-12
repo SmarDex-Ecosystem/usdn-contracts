@@ -1243,7 +1243,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             totalExpo: data.positionTotalExpo,
             timestamp: uint40(block.timestamp)
         });
-        (data.posId.tickVersion, data.posId.index) = _saveNewPosition(data.posId.tick, long, data.liquidationPenalty);
+        (data.posId.tickVersion, data.posId.index,) = _saveNewPosition(data.posId.tick, long, data.liquidationPenalty);
         _balanceLong += long.amount;
         posId_ = data.posId;
 
@@ -1411,7 +1411,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // mark the position as validated
             data.pos.validated = true;
             // insert position into new tick
-            (newPosId.tickVersion, newPosId.index) = _saveNewPosition(newPosId.tick, data.pos, liquidationPenalty);
+            (newPosId.tickVersion, newPosId.index,) = _saveNewPosition(newPosId.tick, data.pos, liquidationPenalty);
             // no long balance update is necessary (collateral didn't change)
 
             // emit LiquidationPriceUpdated
@@ -1999,6 +1999,15 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 _liquidatePositions(_lastPrice, iterations, tempLongBalance, tempVaultBalance);
 
             isLiquidationPending_ = liquidationEffects.isLiquidationPending;
+            if (!isLiquidationPending_ && liquidationEffects.liquidatedTicks > 0) {
+                (liquidationEffects.newLongBalance, liquidationEffects.newVaultBalance) = _triggerRebalancer(
+                    uint128(neutralPrice),
+                    liquidationEffects.newLongBalance,
+                    liquidationEffects.newVaultBalance,
+                    liquidationEffects.remainingCollateral
+                );
+            }
+
             _balanceLong = liquidationEffects.newLongBalance;
             _balanceVault = liquidationEffects.newVaultBalance;
 
@@ -2018,6 +2027,106 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
             liquidatedPositions_ = liquidationEffects.liquidatedPositions;
         }
+    }
+
+    /**
+     * TODO add tests
+     * @notice Trigger the rebalancer if the imbalance on the long side is too high
+     * It will close the rebalancer position (if there is one) and open a new one with
+     * the pending assets, the value of the previous position and the liquidation bonus (if available)
+     * and a leverage to fill enough trading expo to reach the desired imbalance, up to the max leverages
+     * @dev Will return the provided long balance if no rebalancer is set or if the imbalance is not high enough
+     * @param neutralPrice The neutral/average price of the asset
+     * @param longBalance The balance of the long side
+     * @param vaultBalance The balance of the vault side
+     * @param remainingCollateral The collateral remaining after the liquidations
+     * @return longBalance_ The temporary balance of the long side
+     * @return vaultBalance_ The temporary balance of the vault side
+     */
+    function _triggerRebalancer(
+        uint128 neutralPrice,
+        uint256 longBalance,
+        uint256 vaultBalance,
+        int256 remainingCollateral
+    ) internal returns (uint256 longBalance_, uint256 vaultBalance_) {
+        longBalance_ = longBalance;
+        vaultBalance_ = vaultBalance;
+        IRebalancer rebalancer = _rebalancer;
+
+        if (address(rebalancer) == address(0)) {
+            return (longBalance_, vaultBalance_);
+        }
+
+        CachedProtocolState memory cache = CachedProtocolState({
+            totalExpo: _totalExpo,
+            longBalance: longBalance,
+            vaultBalance: (vaultBalance.toInt256() + _pendingBalanceVault).toUint256(),
+            tradingExpo: 0,
+            liqMultiplierAccumulator: _liqMultiplierAccumulator
+        });
+
+        if (cache.totalExpo < cache.longBalance) {
+            revert UsdnProtocolInvalidLongExpo();
+        }
+
+        cache.tradingExpo = cache.totalExpo - cache.longBalance;
+
+        {
+            int256 currentImbalance = _calcLongImbalanceBps(cache.vaultBalance, cache.longBalance, cache.totalExpo);
+
+            // if the imbalance is lower than the threshold, return
+            if (currentImbalance < _closeExpoImbalanceLimitBps) {
+                return (longBalance_, vaultBalance_);
+            }
+        }
+
+        // the default value of `positionAmount` is the amount of pendingAssets in the rebalancer
+        (uint128 positionAmount, uint256 rebalancerMaxLeverage, PositionId memory rebalancerPosId) =
+            rebalancer.getCurrentStateData();
+
+        // transfer the pending assets from the rebalancer to this contract
+        _asset.safeTransferFrom(address(rebalancer), address(this), positionAmount);
+
+        uint128 positionValue;
+        // close the rebalancer position and get its value to open the next one
+        if (rebalancerPosId.tick != NO_POSITION_TICK) {
+            // cached values will be updated during this call
+            positionValue = _flashClosePosition(rebalancerPosId, neutralPrice, cache).toUint128();
+
+            positionAmount += positionValue;
+        }
+
+        // If there are no pending assets and the previous position was either liquidated or doesn't exist, return
+        if (positionAmount + positionValue == 0) {
+            return (longBalance_, vaultBalance_);
+        }
+
+        // if there is enough collateral remaining after liquidations, calculate the bonus and add it to the
+        // new rebalancer position
+        if (remainingCollateral > 0) {
+            uint128 bonus = (uint256(remainingCollateral) * _rebalancerBonusBps / BPS_DIVISOR).toUint128();
+            cache.vaultBalance -= bonus;
+            vaultBalance_ -= bonus;
+            positionAmount += bonus;
+        }
+
+        int24 tickWithoutLiqPenalty =
+            _calcRebalancerPositionTick(neutralPrice, positionAmount, rebalancerMaxLeverage, cache);
+
+        // make sure that the rebalancer was not triggered without a sufficient imbalance
+        // as we check the imbalance above, this should not happen
+        if (tickWithoutLiqPenalty == NO_POSITION_TICK) {
+            revert UsdnProtocolInvalidRebalancerTick();
+        }
+
+        // open a new position for the rebalancer
+        PositionId memory posId =
+            _flashOpenPosition(address(rebalancer), neutralPrice, tickWithoutLiqPenalty, positionAmount, cache);
+
+        longBalance_ += positionAmount;
+
+        // call the rebalancer to update the internal bookkeeping
+        rebalancer.updatePosition(posId, positionValue);
     }
 
     /**

@@ -615,7 +615,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             }
             if (candidate.timestamp == 0) {
                 // remove the stale pending action
-                // slither-disable-next-line unused-return
                 _pendingActionsQueue.popFront();
                 // try the next one
                 continue;

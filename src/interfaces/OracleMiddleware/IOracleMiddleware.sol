@@ -72,7 +72,13 @@ interface IOracleMiddleware is IBaseOracleMiddleware, IOracleMiddlewareErrors, I
      * @notice Set the recent price delay
      * @param newDelay The maximum age of a recent price to be considered valid
      */
-    function setRecentPriceDelay(uint64 newDelay) external;
+    function setPythRecentPriceDelay(uint64 newDelay) external;
+
+    /**
+     * @notice Set the redstone recent price delay
+     * @param newDelay The maximum age of a recent price to be considered valid
+     */
+    function setRedstoneRecentPriceDelay(uint48 newDelay) external;
 
     /**
      * @notice Set the validation delay (in seconds) between an action timestamp and the price
