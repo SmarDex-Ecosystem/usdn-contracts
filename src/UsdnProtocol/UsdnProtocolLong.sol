@@ -627,7 +627,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             );
         } while (effects_.liquidatedTicks < iteration);
 
-        data = _updateStateAfterLiquidation(data, effects_);
+        _updateStateAfterLiquidation(data, effects_); // mutates `data`
         effects_.isLiquidationPending = data.isLiquidationPending;
         (effects_.newLongBalance, effects_.newVaultBalance) =
             _handleNegativeBalances(data.tempLongBalance, data.tempVaultBalance);
@@ -635,14 +635,10 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
     /**
      * @notice Update the state of the contract according to the liquidation effects
-     * @param data The liquidation data
+     * @param data The liquidation data, which gets mutated by the function
      * @param effects The effects of the liquidations
-     * @return The updated liquidation data
      */
-    function _updateStateAfterLiquidation(LiquidationData memory data, LiquidationsEffects memory effects)
-        internal
-        returns (LiquidationData memory)
-    {
+    function _updateStateAfterLiquidation(LiquidationData memory data, LiquidationsEffects memory effects) internal {
         // update the state
         _totalLongPositions -= effects.liquidatedPositions;
         _totalExpo -= data.totalExpoToRemove;
@@ -664,8 +660,6 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         // transfer remaining collateral to vault or pay bad debt
         data.tempLongBalance -= effects.remainingCollateral;
         data.tempVaultBalance += effects.remainingCollateral;
-
-        return data;
     }
 
     /**

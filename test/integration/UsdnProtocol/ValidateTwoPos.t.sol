@@ -14,6 +14,7 @@ contract TestForkUsdnProtocolValidateTwoPos is UsdnProtocolBaseIntegrationFixtur
     function setUp() public {
         params = DEFAULT_PARAMS;
         params.fork = true; // all tests in this contract must be labeled `Fork`
+        params.forkWarp = 1_717_452_000; // Mon Jun 03 2024 22:00:00 UTC
         _setUp(params);
     }
 
@@ -36,9 +37,8 @@ contract TestForkUsdnProtocolValidateTwoPos is UsdnProtocolBaseIntegrationFixtur
         protocol.initiateOpenPosition{ value: ethValue }(
             2.5 ether, 1000 ether, address(this), USER_1, NO_PERMIT2, "", EMPTY_PREVIOUS_DATA
         );
-        uint256 ts1 = block.timestamp;
         vm.stopPrank();
-        skip(30);
+        skip(80 minutes);
         vm.startPrank(USER_2);
         (success,) = address(wstETH).call{ value: 10 ether }("");
         require(success, "USER_2 wstETH mint failed");
@@ -49,18 +49,22 @@ contract TestForkUsdnProtocolValidateTwoPos is UsdnProtocolBaseIntegrationFixtur
         uint256 ts2 = block.timestamp;
         vm.stopPrank();
 
-        // wait
-        skip(2 hours);
+        // wait to make user1's action is actionable
+        skip(20 minutes);
 
-        // second user tries to validate their action
-        (,,,, bytes memory data1) = getHermesApiSignature(PYTH_ETH_USD, ts1 + oracleMiddleware.getValidationDelay());
+        // user1's position must be validated with chainlink
+        // first round ID after the `forkWarp` timestamp + 20 minutes
+        bytes memory data1 = abi.encode(uint80(110_680_464_442_257_327_600));
         uint256 data1Fee = oracleMiddleware.validationCost(data1, ProtocolAction.ValidateOpenPosition);
+        // user2's position must be validated with a low-latency oracle
         (,,,, bytes memory data2) = getHermesApiSignature(PYTH_ETH_USD, ts2 + oracleMiddleware.getValidationDelay());
         uint256 data2Fee = oracleMiddleware.validationCost(data2, ProtocolAction.ValidateOpenPosition);
         bytes[] memory previousData = new bytes[](1);
         previousData[0] = data1;
         uint128[] memory rawIndices = new uint128[](1);
         rawIndices[0] = 0;
+
+        // second user tries to validate their action
         vm.prank(USER_2);
         protocol.validateOpenPosition{ value: data1Fee + data2Fee }(
             USER_2, data2, PreviousActionsData(previousData, rawIndices)

@@ -5,12 +5,14 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import { ChainlinkOracle } from "src/OracleMiddleware/oracles/ChainlinkOracle.sol";
 import { PythOracle } from "src/OracleMiddleware/oracles/PythOracle.sol";
+import { RedstoneOracle } from "src/OracleMiddleware/oracles/RedstoneOracle.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import {
     PriceInfo,
     ChainlinkPriceInfo,
     ConfidenceInterval,
-    FormattedPythPrice
+    FormattedPythPrice,
+    RedstonePriceInfo
 } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { IBaseOracleMiddleware } from "src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
@@ -21,7 +23,7 @@ import { IBaseOracleMiddleware } from "src/interfaces/OracleMiddleware/IBaseOrac
  * It is used by the USDN protocol to get the price of the USDN underlying asset
  * @dev This contract is a middleware between the USDN protocol and the price oracles
  */
-contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Ownable {
+contract OracleMiddleware is IOracleMiddleware, PythOracle, RedstoneOracle, ChainlinkOracle, Ownable {
     /// @inheritdoc IOracleMiddleware
     uint16 public constant BPS_DIVISOR = 10_000;
 
@@ -48,17 +50,20 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
 
     /**
      * @param pythContract Address of the Pyth contract
-     * @param pythPriceID The price ID of the asset in Pyth
+     * @param pythFeedId The Pyth price feed ID for the asset
+     * @param redstoneFeedId The Redstone price feed ID for the asset
      * @param chainlinkPriceFeed Address of the Chainlink price feed
      * @param chainlinkTimeElapsedLimit The duration after which a Chainlink price is considered stale
      */
     constructor(
         address pythContract,
-        bytes32 pythPriceID,
+        bytes32 pythFeedId,
+        bytes32 redstoneFeedId,
         address chainlinkPriceFeed,
         uint256 chainlinkTimeElapsedLimit
     )
-        PythOracle(pythContract, pythPriceID)
+        PythOracle(pythContract, pythFeedId)
+        RedstoneOracle(redstoneFeedId)
         ChainlinkOracle(chainlinkPriceFeed, chainlinkTimeElapsedLimit)
         Ownable(msg.sender)
     { }
@@ -98,7 +103,8 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
             // of price inaccuracies until low latency delay is exceeded then use chainlink specified roundId
             return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Down);
         } else if (action == ProtocolAction.Liquidation) {
-            // special case, if we pass a timestamp of zero, then we accept all prices newer than `_recentPriceDelay`
+            // special case, if we pass a timestamp of zero, then we accept all prices newer than
+            // `_pythRecentPriceDelay`
             return _getLowLatencyPrice(data, 0, ConfidenceInterval.None);
         } else if (action == ProtocolAction.InitiateDeposit) {
             // If the user chooses to initiate with a pyth price, we apply the relevant confidence interval adjustment
@@ -142,8 +148,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
 
     /// @inheritdoc IBaseOracleMiddleware
     function validationCost(bytes calldata data, ProtocolAction) public view virtual returns (uint256 result_) {
-        // TODO add a unique identifier by oracle
-        if (data.length > 32) {
+        if (_isPythData(data)) {
             result_ = _getPythUpdateFee(data);
         }
     }
@@ -153,10 +158,10 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @dev Get the price from the low-latency oracle (at the moment only Pyth, later maybe others might be supported)
+     * @dev Get the price from the low-latency oracle (Pyth or Redstone)
      * @param data The signed price update data
      * @param actionTimestamp The timestamp of the action corresponding to the price. If zero, then we must accept all
-     * recent prices according to `_recentPriceDelay`
+     * recent prices according to `_pythRecentPriceDelay` or `_redstoneRecentPriceDelay`
      * @param dir The direction for the confidence interval adjusted price
      * @return price_ The price from the low-latency oracle, adjusted according to the confidence interval direction
      */
@@ -170,9 +175,28 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
             // validate
             actionTimestamp += uint128(_validationDelay);
         }
-        FormattedPythPrice memory pythPrice = _getFormattedPythPrice(data, actionTimestamp, MIDDLEWARE_DECIMALS);
 
-        price_ = _adjustPythPrice(pythPrice, dir);
+        if (_isPythData(data)) {
+            FormattedPythPrice memory pythPrice = _getFormattedPythPrice(data, actionTimestamp, MIDDLEWARE_DECIMALS);
+            price_ = _adjustPythPrice(pythPrice, dir);
+        } else {
+            // note: redstone automatically retrieves data from the end of the calldata, no need to pass the pointer
+            RedstonePriceInfo memory redstonePrice = _getFormattedRedstonePrice(actionTimestamp, MIDDLEWARE_DECIMALS);
+            price_ = _adjustRedstonePrice(redstonePrice, dir);
+            // sanity check the order of magnitude of the redstone price against chainlink
+            // if the redstone price is more than 3x the chainlink price or less than a third, we consider that it's
+            // not reliable
+            ChainlinkPriceInfo memory chainlinkPrice = _getFormattedChainlinkLatestPrice(MIDDLEWARE_DECIMALS);
+            // we check that the chainlink price is valid and not too old
+            if (chainlinkPrice.price > 0) {
+                if (price_.price > uint256(chainlinkPrice.price) * 3) {
+                    revert OracleMiddlewareRedstoneSafeguard();
+                }
+                if (price_.price < uint256(chainlinkPrice.price) / 3) {
+                    revert OracleMiddlewareRedstoneSafeguard();
+                }
+            }
+        }
     }
 
     /**
@@ -263,6 +287,28 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     }
 
     /**
+     * @notice Apply the confidence interval in the `dir` direction, applying the penalty for non-Pyth oracles
+     * @param redstonePrice The formatted Redstone price object
+     * @param dir The direction to apply the confidence interval
+     * @return price_ The adjusted price according to the confidence interval and penalty
+     */
+    function _adjustRedstonePrice(RedstonePriceInfo memory redstonePrice, ConfidenceInterval dir)
+        internal
+        view
+        returns (PriceInfo memory price_)
+    {
+        if (dir == ConfidenceInterval.Down) {
+            price_.price = redstonePrice.price - (redstonePrice.price * _penaltyBps / BPS_DIVISOR);
+        } else if (dir == ConfidenceInterval.Up) {
+            price_.price = redstonePrice.price + (redstonePrice.price * _penaltyBps / BPS_DIVISOR);
+        } else {
+            price_.price = redstonePrice.price;
+        }
+        price_.neutralPrice = redstonePrice.price;
+        price_.timestamp = redstonePrice.timestamp;
+    }
+
+    /**
      * @notice Get the price for a validate action of the protocol
      * @dev If the low latency delay is not exceeded, validate the price with the low-latency oracle(s)
      * Else, get the specified roundId on-chain price from Chainlink. In case of chainlink price,
@@ -321,6 +367,24 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         });
     }
 
+    /**
+     * @notice Check if the passed calldata corresponds to a Pyth message
+     * @param data The calldata pointer to the message
+     * @return Whether the data is for a Pyth message
+     */
+    function _isPythData(bytes calldata data) internal pure returns (bool) {
+        if (data.length <= 32) {
+            return false;
+        }
+        // check the first 4 bytes of the data to identify a pyth message
+        uint32 magic;
+        assembly {
+            magic := shr(224, calldataload(data.offset))
+        }
+        // Pyth magic stands for PNAU (Pyth Network Accumulator Update)
+        return magic == 0x504e4155;
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                            Privileged functions                            */
     /* -------------------------------------------------------------------------- */
@@ -340,16 +404,29 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     }
 
     /// @inheritdoc IOracleMiddleware
-    function setRecentPriceDelay(uint64 newDelay) external onlyOwner {
+    function setPythRecentPriceDelay(uint64 newDelay) external onlyOwner {
         if (newDelay < 10 seconds) {
             revert OracleMiddlewareInvalidRecentPriceDelay(newDelay);
         }
         if (newDelay > 10 minutes) {
             revert OracleMiddlewareInvalidRecentPriceDelay(newDelay);
         }
-        _recentPriceDelay = newDelay;
+        _pythRecentPriceDelay = newDelay;
 
-        emit RecentPriceDelayUpdated(newDelay);
+        emit PythRecentPriceDelayUpdated(newDelay);
+    }
+
+    /// @inheritdoc IOracleMiddleware
+    function setRedstoneRecentPriceDelay(uint48 newDelay) external onlyOwner {
+        if (newDelay < 10 seconds) {
+            revert OracleMiddlewareInvalidRecentPriceDelay(newDelay);
+        }
+        if (newDelay > 10 minutes) {
+            revert OracleMiddlewareInvalidRecentPriceDelay(newDelay);
+        }
+        _redstoneRecentPriceDelay = newDelay;
+
+        emit RedstoneRecentPriceDelayUpdated(newDelay);
     }
 
     /// @inheritdoc IOracleMiddleware

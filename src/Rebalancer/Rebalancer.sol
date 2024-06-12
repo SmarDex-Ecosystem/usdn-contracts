@@ -57,6 +57,9 @@ contract Rebalancer is Ownable, ERC165, IOwnershipCallback, IRebalancer {
     /// @notice The minimum amount of assets to be deposited by a user
     uint256 internal _minAssetDeposit;
 
+    /// @notice The limit of the imbalance in bps to close the position
+    uint256 internal _closeImbalanceLimitBps = 500;
+
     /// @notice The data about the assets deposited in this contract by users
     mapping(address => UserDeposit) internal _userDeposit;
 
@@ -109,6 +112,11 @@ contract Rebalancer is Ownable, ERC165, IOwnershipCallback, IRebalancer {
     /// @inheritdoc IRebalancer
     function getMinAssetDeposit() external view returns (uint256) {
         return _minAssetDeposit;
+    }
+
+    /// @inheritdoc IRebalancer
+    function getCloseImbalanceLimitBps() external view returns (uint256) {
+        return _closeImbalanceLimitBps;
     }
 
     /// @inheritdoc IRebalancer
@@ -227,6 +235,13 @@ contract Rebalancer is Ownable, ERC165, IOwnershipCallback, IRebalancer {
 
         _minAssetDeposit = minAssetDeposit;
         emit MinAssetDepositUpdated(minAssetDeposit);
+    }
+
+    /// @inheritdoc IRebalancer
+    function setCloseImbalanceLimitBps(uint256 closeImbalanceLimitBps) external onlyOwner {
+        _closeImbalanceLimitBps = closeImbalanceLimitBps;
+
+        emit CloseImbalanceLimitBpsUpdated(closeImbalanceLimitBps);
     }
 
     /// @inheritdoc IOwnershipCallback

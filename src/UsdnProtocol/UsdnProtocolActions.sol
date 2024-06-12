@@ -940,7 +940,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             data_.totalExpo, _balanceVault, data_.balanceLong, data_.pendingActionPrice, _lastPrice
         ).toUint256();
         data_.usdnTotalShares = _usdn.totalShares();
-        data_.withdrawalAmount = FixedPointMathLib.fullMulDiv(usdnShares, data_.balanceVault, data_.usdnTotalShares);
+        data_.withdrawalAmount = _calcBurnUsdn(usdnShares, data_.balanceVault, data_.usdnTotalShares);
 
         _checkImbalanceLimitWithdrawal(data_.withdrawalAmount, data_.totalExpo);
     }
@@ -1118,8 +1118,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 shares = _mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
 
         // we can add back the _pendingBalanceVault we subtracted in the initiate action
-        uint256 tempWithdrawal =
-            FixedPointMathLib.fullMulDiv(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares);
+        uint256 tempWithdrawal = _calcBurnUsdn(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares);
         _pendingBalanceVault += tempWithdrawal.toInt256();
 
         uint256 assetToTransfer = _calcBurnUsdn(shares, available, _usdn.totalShares());

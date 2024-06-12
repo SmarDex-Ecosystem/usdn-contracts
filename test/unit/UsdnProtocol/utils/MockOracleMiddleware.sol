@@ -101,7 +101,9 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
         _timeElapsedLimit = newTimeElapsedLimit;
     }
 
-    function setRecentPriceDelay(uint64) external { }
+    function setPythRecentPriceDelay(uint64) external { }
+
+    function setRedstoneRecentPriceDelay(uint48) external { }
 
     function requireValidationCost() external view returns (bool) {
         return _requireValidationCost;
