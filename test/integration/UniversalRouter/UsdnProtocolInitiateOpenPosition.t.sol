@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.26;
+pragma solidity ^0.8.24;
 
 import { Constants } from "@uniswap/universal-router/contracts/libraries/Constants.sol";
 
