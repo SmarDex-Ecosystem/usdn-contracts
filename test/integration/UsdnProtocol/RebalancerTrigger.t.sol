@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
+import { MOCK_PYTH_DATA } from "test/unit/Middlewares/utils/Constants.sol";
 import { DEPLOYER } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "test/integration/UsdnProtocol/utils/Fixtures.sol";
 import { MockChainlinkOnChain } from "test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
@@ -18,8 +19,6 @@ import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewar
  */
 contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture, IRebalancerEvents {
     using HugeUint for HugeUint.Uint512;
-
-    bytes constant PYTH_DATA = new bytes(33);
 
     MockChainlinkOnChain public chainlinkGasPriceFeed;
     PositionId public posToLiquidate;
@@ -69,9 +68,9 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
         mockPyth.setPrice(2000e8);
         mockPyth.setLastPublishTime(block.timestamp);
 
-        uint256 oracleFee = oracleMiddleware.validationCost(PYTH_DATA, ProtocolAction.ValidateDeposit);
+        uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.ValidateDeposit);
 
-        protocol.validateDeposit{ value: oracleFee }(payable(address(this)), PYTH_DATA, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit{ value: oracleFee }(payable(address(this)), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
 
         messageValue = oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition)
             + protocol.getSecurityDepositValue();
@@ -86,8 +85,8 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
         mockPyth.setPrice(2000e8);
         mockPyth.setLastPublishTime(block.timestamp);
 
-        oracleFee = oracleMiddleware.validationCost(PYTH_DATA, ProtocolAction.ValidateOpenPosition);
-        protocol.validateOpenPosition{ value: oracleFee }(payable(address(this)), PYTH_DATA, EMPTY_PREVIOUS_DATA);
+        oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.ValidateOpenPosition);
+        protocol.validateOpenPosition{ value: oracleFee }(payable(address(this)), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
 
         tickToLiquidateData = protocol.getTickData(posToLiquidate.tick);
 
@@ -152,9 +151,9 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
 
         int24 expectedTick =
             expectedTickWithoutPenalty + (int24(uint24(tickToLiquidateData.liquidationPenalty)) * tickSpacing);
-        uint256 oracleFee = oracleMiddleware.validationCost(PYTH_DATA, ProtocolAction.Liquidation);
+        uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
         _expectEmits(wstEthPrice, amountInRebalancer + bonus, liqPriceWithoutPenalty, expectedTick, 1);
-        protocol.liquidate{ value: oracleFee }(PYTH_DATA, 1);
+        protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA, 1);
 
         imbalance = protocol.i_calcLongImbalanceBps(
             protocol.getBalanceVault(), protocol.getBalanceLong(), protocol.getTotalExpo()
