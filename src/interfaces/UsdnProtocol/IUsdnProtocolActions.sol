@@ -24,7 +24,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * @param amount The amount of wstETH to deposit
      * @param to The address that will receive the USDN tokens
      * @param validator The address that will validate the deposit
-     * @param permit2TokenBitfield Whether to use permit2 for transferring assets (first bit) and SDEX (third bit)
+     * @param permit2TokenBitfield Whether to use permit2 for transferring assets (first bit) and SDEX (second bit)
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions
      * @return success_ Whether the deposit was initiated
