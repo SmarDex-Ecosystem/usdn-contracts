@@ -102,17 +102,28 @@ contract Deploy is Script {
             }
         } else {
             address pythAddress = vm.envAddress("PYTH_ADDRESS");
-            bytes32 pythPriceId = vm.envBytes32("PYTH_ETH_PRICE_ID");
+            bytes32 pythFeedId = vm.envBytes32("PYTH_ETH_FEED_ID");
+            bytes32 redstoneFeedId = vm.envBytes32("REDSTONE_ETH_FEED_ID");
             address chainlinkPriceAddress = vm.envAddress("CHAINLINK_ETH_PRICE_ADDRESS");
             uint256 chainlinkPriceValidity = vm.envOr("CHAINLINK_ETH_PRICE_VALIDITY", uint256(1 hours + 2 minutes));
 
             if (isProdEnv) {
                 wstEthOracleMiddleware_ = new WstEthOracleMiddleware(
-                    pythAddress, pythPriceId, chainlinkPriceAddress, wstETHAddress, chainlinkPriceValidity
+                    pythAddress,
+                    pythFeedId,
+                    redstoneFeedId,
+                    chainlinkPriceAddress,
+                    wstETHAddress,
+                    chainlinkPriceValidity
                 );
             } else {
                 wstEthOracleMiddleware_ = new MockWstEthOracleMiddleware(
-                    pythAddress, pythPriceId, chainlinkPriceAddress, wstETHAddress, chainlinkPriceValidity
+                    pythAddress,
+                    pythFeedId,
+                    redstoneFeedId,
+                    chainlinkPriceAddress,
+                    wstETHAddress,
+                    chainlinkPriceValidity
                 );
             }
         }
