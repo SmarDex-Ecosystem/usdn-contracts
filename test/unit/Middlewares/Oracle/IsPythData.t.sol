@@ -22,7 +22,7 @@ contract TestOracleMiddlewareIsPythData is OracleMiddlewareBaseFixture {
 
     /**
      * @custom:scenario Check if data is pyth when data start with the magic bytes
-     * @custom:given The data length is striclty more than 32 bytes
+     * @custom:given The data length is strictly more than 32 bytes
      * @custom:when The data starts with the magic bytes
      * @custom:then The function should return true
      */
