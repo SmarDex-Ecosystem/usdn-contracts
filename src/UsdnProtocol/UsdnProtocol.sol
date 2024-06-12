@@ -2,6 +2,7 @@
 pragma solidity 0.8.20;
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
@@ -16,7 +17,7 @@ import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddle
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
 
-contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
+contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable2Step {
     using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
 

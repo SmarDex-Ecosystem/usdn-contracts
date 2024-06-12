@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
+import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import { IWstETH } from "src/interfaces/IWstETH.sol";
@@ -16,7 +17,7 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
  * liquidators
  * @dev This contract is a middleware between the USDN protocol and the gas price oracle
  */
-contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracle, Ownable {
+contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracle, Ownable2Step {
     /* -------------------------------------------------------------------------- */
     /*                                  Constants                                 */
     /* -------------------------------------------------------------------------- */
