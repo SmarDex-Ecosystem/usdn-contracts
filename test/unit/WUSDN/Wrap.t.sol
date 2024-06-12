@@ -24,6 +24,7 @@ contract TestWusdnWrap is WusdnTokenFixture {
 
         assertEq(wusdn.totalUsdnBalance(), usdnAmount / 2, "total USDN supply in WUSDN");
         assertEq(wusdn.totalSupply(), wrappedAmount, "total WUSDN supply");
+        assertEq(wrappedAmount, wusdn.balanceOf(address(this)), "WUSDN shares");
         assertEq(wusdn.balanceOf(address(this)), depositShares / usdn.MAX_DIVISOR(), "WUSDN balance");
     }
 }

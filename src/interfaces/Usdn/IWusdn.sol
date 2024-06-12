@@ -18,6 +18,13 @@ interface IWusdn is IERC20Permit, IWusdnEvents {
     function USDN() external view returns (IUsdn);
 
     /**
+     * @notice The ratio used to convert USDN shares to WUSDN amounts
+     * @dev It is initialized in the constructor at the maximum divisor of the USDN token
+     * @return The ratio used between USDN shares and WUSDN amounts
+     */
+    function SHARES_RATIO() external view returns (uint256);
+
+    /**
      * @notice Wraps USDN into WUSDN
      * @param usdnAmount The amount of USDN to wrap
      * @return wrappedAmount_ The amount of WUSDN received

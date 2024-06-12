@@ -36,8 +36,7 @@ contract TestWusdnInvariants is WusdnTokenFixture {
      * @custom:scenario Check that the contract have the expected number of total assets
      */
     function invariant_totalAssetsSum() public {
-        // assertEq(usdn.balanceOf(address(wusdn)), wusdn.previewUnwrap(wusdn.totalSupply()), "total assets");
-        assertEq(usdn.sharesOf(address(wusdn)), wusdn.totalSupply() * 10 ** 18, "total assets");
-        // assertEq(usdn.sharesOf(address(wusdn)), wusdn.totalSupply() * wusdn.SHARES_RATIO());
+        assertEq(usdn.balanceOf(address(wusdn)), wusdn.previewUnwrap(wusdn.totalSupply()), "total assets");
+        assertEq(usdn.sharesOf(address(wusdn)), wusdn.totalSupply() * wusdn.SHARES_RATIO(), "total shares");
     }
 }

@@ -21,7 +21,7 @@ contract Wusdn is ERC20Permit, IWusdn {
     string internal constant SYMBOL = "WUSDN";
 
     /// @notice The ratio used between USDN shares and WUSDN amounts
-    uint256 private immutable SHARES_RATIO;
+    uint256 public immutable SHARES_RATIO;
 
     /// @inheritdoc IWusdn
     IUsdn public immutable USDN;
