@@ -50,7 +50,7 @@ contract UniversalRouterBaseFixture is UsdnProtocolBaseIntegrationFixture {
      */
     function getNextChainlinkPriceAfterTimestamp(uint256 pendingActionTimestamp, uint256 startBlock, uint256 endBlock)
         public
-        returns (uint80 roundId_, uint256 timestamp_)
+        returns (uint80 roundId_, int256 price_, uint256 timestamp_)
     {
         uint256 lowLatencyLimit = pendingActionTimestamp + oracleMiddleware.getLowLatencyDelay();
         // set the search range
@@ -72,7 +72,7 @@ contract UniversalRouterBaseFixture is UsdnProtocolBaseIntegrationFixture {
 
         // final fork roll to the first round after the low latency limit
         vm.rollFork(left);
-        (roundId_,,, timestamp_,) = priceFeed.latestRoundData();
+        (roundId_, price_,, timestamp_,) = priceFeed.latestRoundData();
         skip(protocol.getValidationDeadline());
 
         // ensure roundId is first one after the low latency limit
@@ -80,6 +80,6 @@ contract UniversalRouterBaseFixture is UsdnProtocolBaseIntegrationFixture {
         (,, uint256 startedAtTwo,,) = priceFeed.getRoundData(roundId_);
         assertTrue(startedAtOne < lowLatencyLimit, "startedAtOne < lowLatencyLimit");
         assertTrue(startedAtTwo >= lowLatencyLimit, "startedAtTwo >= lowLatencyLimit");
-        return (roundId_, timestamp_);
+        return (roundId_, price_, timestamp_);
     }
 }

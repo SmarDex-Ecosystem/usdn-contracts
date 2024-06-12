@@ -84,7 +84,7 @@ contract TestForkUniversalRouterValidatePendingActions is UniversalRouterBaseFix
         uint256 startBlock = block.number;
         uint256 endBlock = block.number + 300;
 
-        (uint80 roundId,) = getNextChainlinkPriceAfterTimestamp(ts1, startBlock, endBlock);
+        (uint80 roundId,,) = getNextChainlinkPriceAfterTimestamp(ts1, startBlock, endBlock);
 
         // prepare data for the validation
         bytes memory data = abi.encode(roundId);
