@@ -1,21 +1,23 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { UsdnTokenFixture } from "../../USDN/utils/Fixtures.sol";
 import { WusdnHandler } from "./Handler.sol";
+import { BaseFixture } from "../../../utils/Fixtures.sol";
 
 import { Wusdn } from "../../../../src/Usdn/Wusdn.sol";
+import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 
 /**
  * @title WusdnTokenFixture
- * @dev Utils for testing Wusdn.sol
+ * @dev Utils for testing WUSDN token
  */
-contract WusdnTokenFixture is UsdnTokenFixture {
+contract WusdnTokenFixture is BaseFixture {
     WusdnHandler public wusdn;
     uint256 public usdnDecimals;
+    Usdn public usdn;
 
-    function setUp() public virtual override {
-        super.setUp();
+    function setUp() public virtual {
+        usdn = new Usdn(address(0), address(0));
 
         wusdn = new WusdnHandler(usdn);
         usdnDecimals = usdn.decimals();
