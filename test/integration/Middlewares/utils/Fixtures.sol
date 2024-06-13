@@ -12,7 +12,7 @@ import {
     PYTH_DATA_ETH_DECIMALS,
     PYTH_DATA_TIMESTAMP,
     PYTH_DATA_ETH
-} from "../../Middlewares//utils/Constants.sol";
+} from "../utils/Constants.sol";
 
 import { IOracleMiddlewareErrors } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
 import { IWstETH } from "../../../../src/interfaces/IWstETH.sol";
