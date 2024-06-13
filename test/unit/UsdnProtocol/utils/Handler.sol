@@ -20,7 +20,7 @@ import {
 import { UsdnProtocol, Position } from "../../../../src/UsdnProtocol/UsdnProtocol.sol";
 import { IUsdn } from "../../../../src/interfaces/Usdn/IUsdn.sol";
 import { ILiquidationRewardsManager } from "../../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
-import { IOracleMiddleware } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
+import { IBaseOracleMiddleware } from "../../../../src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { DoubleEndedQueue } from "../../../../src/libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
@@ -42,7 +42,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         IUsdn usdn,
         IERC20Metadata sdex,
         IERC20Metadata asset,
-        IOracleMiddleware oracleMiddleware,
+        IBaseOracleMiddleware oracleMiddleware,
         ILiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector

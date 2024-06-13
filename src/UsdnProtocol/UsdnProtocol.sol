@@ -13,7 +13,7 @@ import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { UsdnProtocolActions } from "./UsdnProtocolActions.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { ILiquidationRewardsManager } from "../interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
-import { IOracleMiddleware } from "../interfaces/OracleMiddleware/IOracleMiddleware.sol";
+import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IRebalancer } from "../interfaces/Rebalancer/IRebalancer.sol";
 
@@ -38,7 +38,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable2Step {
         IUsdn usdn,
         IERC20Metadata sdex,
         IERC20Metadata asset,
-        IOracleMiddleware oracleMiddleware,
+        IBaseOracleMiddleware oracleMiddleware,
         ILiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector
@@ -87,7 +87,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable2Step {
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setOracleMiddleware(IOracleMiddleware newOracleMiddleware) external onlyOwner {
+    function setOracleMiddleware(IBaseOracleMiddleware newOracleMiddleware) external onlyOwner {
         if (address(newOracleMiddleware) == address(0)) {
             revert UsdnProtocolInvalidMiddlewareAddress();
         }
