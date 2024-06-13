@@ -6,6 +6,7 @@ import { USER_1 } from "../../../utils/Constants.sol";
 
 import { Position, TickData, PositionId } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
+import { TickMath } from "../../../../src/libraries/TickMath.sol";
 
 /**
  * @custom:feature The _saveNewPosition internal function of the UsdnProtocolLong contract.
@@ -40,18 +41,21 @@ contract TestUsdnProtocolLongSaveNewPosition is UsdnProtocolBaseFixture {
     function test_saveNewPosition() public {
         uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
         int24 expectedTick = protocol.getEffectiveTickForPrice(desiredLiqPrice);
+        uint8 liquidationPenalty = protocol.getTickLiquidationPenalty(expectedTick);
+        HugeUint.Uint512 memory initialLiqMultiplierAccumulator = protocol.getLiqMultiplierAccumulator();
+        uint256 unadjustedTickPrice =
+            TickMath.getPriceAtTick(expectedTick - int24(uint24(liquidationPenalty)) * protocol.getTickSpacing());
+
+        HugeUint.Uint512 memory expectedLiqMultiplierAccumulator =
+            initialLiqMultiplierAccumulator.add(HugeUint.wrap(unadjustedTickPrice * long.totalExpo));
 
         (uint256 tickVersion, uint256 index, HugeUint.Uint512 memory liqMultiplierAccumulator) =
-            protocol.i_saveNewPosition(expectedTick, long, protocol.getTickLiquidationPenalty(expectedTick));
+            protocol.i_saveNewPosition(expectedTick, long, liquidationPenalty);
 
         assertEq(tickVersion, 0, "tick version");
         assertEq(index, 0, "index");
-        assertEq(liqMultiplierAccumulator.hi, 0, "liqMultiplierAccumulator hi");
-        assertEq(
-            liqMultiplierAccumulator.lo,
-            13_738_076_708_665_551_088_329_799_780_572_461_261_232,
-            "liqMultiplierAccumulator lo"
-        );
+        assertEq(liqMultiplierAccumulator.hi, expectedLiqMultiplierAccumulator.hi, "liqMultiplierAccumulator hi");
+        assertEq(liqMultiplierAccumulator.lo, expectedLiqMultiplierAccumulator.lo, "liqMultiplierAccumulator lo");
     }
 
     /**
