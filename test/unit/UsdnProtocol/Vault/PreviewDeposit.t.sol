@@ -8,8 +8,7 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 /**
  * @custom:feature The previewDeposit function of the UsdnProtocolVault contract
  * @custom:background Given a protocol initialized with default params
- * @custom:and enableFunding = true and enablePositionFees = true
- * @custom:and A user who deposited 1 wstETH at price $2000 to get 2000 USDN
+ * @custom:and enableFunding = true, enablePositionFees = true and enableSdexBurnOnDeposit = true
  */
 contract TestUsdnProtocolPreviewDeposit is UsdnProtocolBaseFixture {
     using SafeCast for uint256;
