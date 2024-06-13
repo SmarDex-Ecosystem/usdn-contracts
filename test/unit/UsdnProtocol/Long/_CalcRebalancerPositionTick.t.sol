@@ -55,7 +55,7 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
      * @custom:given The long total expo is 200 ether
      * @custom:and An amount of 1 ether
      * @custom:when _calcRebalancerPositionTick is called with too much trading expo to fill
-     * @custom:then The result is the expected tick
+     * @custom:then The result has been capped to the protocol's max leverage
      */
     function test_calcRebalancerPositionTickCappedByTheProtocolMaxLeverage() public {
         uint256 rebalancerMaxLeverage = protocol.getMaxLeverage() + 1;
@@ -90,8 +90,8 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
      * to stay above the protocol min leverage
      * @custom:given The missing trading expo is 1 wei
      * @custom:and An amount of 1 ether
-     * @custom:when _calcRebalancerPositionTick is called with too much trading expo to fill
-     * @custom:then The result is the expected tick
+     * @custom:when _calcRebalancerPositionTick is called with too little trading expo to fill
+     * @custom:then The result is the expected tick capped to the protocol's min leverage
      */
     function test_calcRebalancerPositionTickCappedByTheMinLeverage() public {
         uint256 rebalancerMaxLeverage = protocol.getMaxLeverage();
@@ -128,7 +128,7 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
      * @custom:and The rebalancer max leverage is half of the protocol max leverage
      * @custom:and An amount of 1 ether
      * @custom:when _calcRebalancerPositionTick is called with too much trading expo to fill
-     * @custom:then The result is the expected tick
+     * @custom:then The result is the expected tick capped to the rebalancer max's leverage
      */
     function test_calcRebalancerPositionTickCappedByTheRebalancerMaxLeverage() public {
         uint256 rebalancerMaxLeverage = protocol.getMaxLeverage() / 2;
@@ -163,8 +163,9 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
      * @custom:given The missing trading expo is 1 wei
      * @custom:and A rebalancer max leverage below the protocol min leverage
      * @custom:and An amount of 1 ether
-     * @custom:when _calcRebalancerPositionTick is called with too much trading expo to fill
-     * @custom:then The result is the expected tick
+     * @custom:when _calcRebalancerPositionTick is called with a rebalancer leverage lower than
+     * the protocol's min leverage
+     * @custom:then The result is the expected tick capped by the protocol's min leverage
      */
     function test_calcRebalancerPositionTickCappedByTheRebalancerMaxLeverageBelowTheMinLeverage() public {
         uint256 rebalancerMaxLeverage = protocol.getMinLeverage() - 1;
@@ -198,7 +199,7 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
      * @custom:scenario The sentinel value is returned if there is no trading expo to fill
      * @custom:given The trading expo is equal to the vault balance
      * @custom:and An amount of 1 ether
-     * @custom:when _calcRebalancerPositionTick is called with too much trading expo to fill
+     * @custom:when _calcRebalancerPositionTick is called with no trading expo to fill
      * @custom:then The result is NO_POSITION_TICK sentinel value
      */
     function test_calcRebalancerPositionTickWithNoTradingExpoToFill() public {
