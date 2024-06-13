@@ -5,7 +5,7 @@ unless specified otherwise here.
 
 ## Imports
 
-In solidity files, imports should always be relative to the **root of the repo**. Do not use relative imports.
+In the `src` folder, imports should always be relative to ensure compatibility when the protocol is imported as a dependency.
 
 Imports should be sorted in the following way:
 
@@ -27,9 +27,9 @@ import { StdStorage } from "forge-std/Script.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { TickMathFixture } from "test/unit/TickMath/utils/Fixtures.sol";
+import { TickMathFixture } from "../unit/TickMath/utils/Fixtures.sol";
 
-import { TickMath } from "src/libraries/TickMath.sol";
+import { TickMath } from "../../libraries/TickMath.sol";
 ```
 
 ## Errors
