@@ -110,7 +110,7 @@ contract Wusdn is ERC20Permit, IWusdn {
         }
 
         uint256 usdnShares = USDN.convertToShares(usdnAmount);
-        // Due to rounding in the USDN contract, we may have a small difference in the amount
+        // due to rounding in the USDN contract, we may have a small difference in the amount
         // of shares converted from the amount of USDN and the shares of the user
         if (balanceOf == usdnAmount) {
             uint256 sharesOf = USDN.sharesOf(msg.sender);
