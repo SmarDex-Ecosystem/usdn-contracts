@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { ADMIN } from "test/utils/Constants.sol";
+import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
+import { ADMIN } from "../../../utils/Constants.sol";
 
 import { Position } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { ProtocolAction, TickData, PositionId } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";

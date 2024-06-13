@@ -3,7 +3,7 @@ pragma solidity ^0.8.25;
 
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
 
 import { TickMath } from "../../../src/libraries/TickMath.sol";
 

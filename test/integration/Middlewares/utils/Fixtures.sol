@@ -4,15 +4,15 @@ pragma solidity ^0.8.25;
 import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
-import { BaseFixture } from "test/utils/Fixtures.sol";
-import { PYTH_ORACLE, CHAINLINK_ORACLE_ETH, PYTH_ETH_USD, REDSTONE_ETH_USD, WSTETH } from "test/utils/Constants.sol";
+import { BaseFixture } from "../../../utils/Fixtures.sol";
+import { PYTH_ORACLE, CHAINLINK_ORACLE_ETH, PYTH_ETH_USD, REDSTONE_ETH_USD, WSTETH } from "../../../utils/Constants.sol";
 import {
     PYTH_DATA_ETH_PRICE,
     PYTH_DATA_ETH_CONF,
     PYTH_DATA_ETH_DECIMALS,
     PYTH_DATA_TIMESTAMP,
     PYTH_DATA_ETH
-} from "test/integration/Middlewares/utils/Constants.sol";
+} from "../../Middlewares//utils/Constants.sol";
 
 import { IOracleMiddlewareErrors } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
 import { IWstETH } from "../../../../src/interfaces/IWstETH.sol";

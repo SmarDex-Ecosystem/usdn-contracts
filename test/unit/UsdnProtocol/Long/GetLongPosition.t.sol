@@ -6,8 +6,8 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { Position, ProtocolAction, PositionId } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
-import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { USER_1 } from "test/utils/Constants.sol";
+import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
+import { USER_1 } from "../../../utils/Constants.sol";
 
 /**
  * @custom:feature The `getLongPosition` function of the USDN Protocol

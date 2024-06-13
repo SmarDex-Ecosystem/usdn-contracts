@@ -4,7 +4,7 @@ pragma solidity ^0.8.25;
 import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
-import { IEventsErrors } from "test/utils/IEventsErrors.sol";
+import { IEventsErrors } from "../../../utils/IEventsErrors.sol";
 
 import { IOwnershipCallback } from "../../../../src/interfaces/UsdnProtocol/IOwnershipCallback.sol";
 import { PositionId } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";

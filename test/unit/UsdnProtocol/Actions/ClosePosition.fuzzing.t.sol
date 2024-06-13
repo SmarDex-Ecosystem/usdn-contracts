@@ -5,7 +5,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { Position, ProtocolAction, PositionId } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
-import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 /**
  * @custom:feature Fuzzing tests for the "close position" part of the protocol

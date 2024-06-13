@@ -1,10 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { UsdnProtocolBaseIntegrationFixture } from "test/integration/UsdnProtocol/utils/Fixtures.sol";
+import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 import {
-    DEPLOYER, USER_1, USER_2, USER_3, PYTH_ETH_USD, PYTH_WSTETH_USD, REDSTONE_ETH_USD
-} from "test/utils/Constants.sol";
+    DEPLOYER,
+    USER_1,
+    USER_2,
+    USER_3,
+    PYTH_ETH_USD,
+    PYTH_WSTETH_USD,
+    REDSTONE_ETH_USD
+} from "../../utils/Constants.sol";
 
 import { ILiquidationRewardsManagerErrorsEventsTypes } from
     "../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManagerErrorsEventsTypes.sol";

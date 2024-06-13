@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
+import { UsdnTokenFixture } from "./utils/Fixtures.sol";
 
 /**
  * @custom:feature The `convertToShares` and `convertToTokens` functions of `USDN`

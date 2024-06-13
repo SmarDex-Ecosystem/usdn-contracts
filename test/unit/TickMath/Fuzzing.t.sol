@@ -3,7 +3,7 @@ pragma solidity ^0.8.25;
 
 import { console2 } from "forge-std/Test.sol";
 
-import { TickMathFixture } from "test/unit/TickMath/utils/Fixtures.sol";
+import { TickMathFixture } from "./utils/Fixtures.sol";
 
 import { TickMath } from "../../../src/libraries/TickMath.sol";
 

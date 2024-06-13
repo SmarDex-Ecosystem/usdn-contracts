@@ -3,12 +3,12 @@ pragma solidity ^0.8.25;
 
 import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 
-import { WstETH } from "test/utils/WstEth.sol";
-import { BaseFixture } from "test/utils/Fixtures.sol";
-import { MockPyth } from "test/unit/Middlewares/utils/MockPyth.sol";
-import { MockChainlinkOnChain } from "test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
-import { OracleMiddlewareHandler } from "test/unit/Middlewares/utils/Handler.sol";
-import { PYTH_ETH_USD, REDSTONE_ETH_USD } from "test/utils/Constants.sol";
+import { WstETH } from "../../../utils/WstEth.sol";
+import { BaseFixture } from "../../../utils/Fixtures.sol";
+import { MockPyth } from "../utils/MockPyth.sol";
+import { MockChainlinkOnChain } from "../utils/MockChainlinkOnChain.sol";
+import { OracleMiddlewareHandler } from "../utils/Handler.sol";
+import { PYTH_ETH_USD, REDSTONE_ETH_USD } from "../../../utils/Constants.sol";
 
 import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";

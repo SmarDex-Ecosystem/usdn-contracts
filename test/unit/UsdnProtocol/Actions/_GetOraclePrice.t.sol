@@ -3,7 +3,7 @@ pragma solidity ^0.8.25;
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
-import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";

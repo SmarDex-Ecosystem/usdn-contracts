@@ -3,7 +3,7 @@ pragma solidity ^0.8.25;
 
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { SignedMathFixture } from "test/unit/SignedMath/utils/Fixtures.sol";
+import { SignedMathFixture } from ".//utils/Fixtures.sol";
 
 import { SignedMath } from "../../../src/libraries/SignedMath.sol";
 

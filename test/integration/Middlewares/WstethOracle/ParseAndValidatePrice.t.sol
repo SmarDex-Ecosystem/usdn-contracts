@@ -3,8 +3,8 @@ pragma solidity ^0.8.25;
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
-import { WstethIntegrationFixture } from "test/integration/Middlewares/utils/Fixtures.sol";
-import { PYTH_WSTETH_USD, PYTH_ETH_USD } from "test/utils/Constants.sol";
+import { WstethIntegrationFixture } from "../../Middlewares//utils/Fixtures.sol";
+import { PYTH_WSTETH_USD, PYTH_ETH_USD } from "../../../utils/Constants.sol";
 
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";

@@ -3,7 +3,7 @@ pragma solidity ^0.8.25;
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
-import { OracleMiddlewareBaseFixture } from "test/unit/Middlewares/utils/Fixtures.sol";
+import { OracleMiddlewareBaseFixture } from "../utils/Fixtures.sol";
 import {
     ETH_PRICE,
     ETH_CONF,
@@ -12,8 +12,8 @@ import {
     REDSTONE_ETH_PRICE,
     REDSTONE_ETH_TIMESTAMP,
     REDSTONE_ETH_DATA
-} from "test/unit/Middlewares/utils/Constants.sol";
-import { IMockPythError } from "test/unit/Middlewares/utils/MockPyth.sol";
+} from "../utils/Constants.sol";
+import { IMockPythError } from "../utils/MockPyth.sol";
 
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
