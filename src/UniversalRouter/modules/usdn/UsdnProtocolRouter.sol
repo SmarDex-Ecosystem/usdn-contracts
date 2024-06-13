@@ -6,9 +6,9 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import { UsdnProtocolImmutables } from "src/UniversalRouter/modules/usdn/UsdnProtocolImmutables.sol";
-import { PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { UsdnProtocolImmutables } from "./UsdnProtocolImmutables.sol";
+import { PreviousActionsData } from "../../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PositionId } from "../../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Permit2TokenBitfield } from "src/libraries/Permit2TokenBitfield.sol";
 
 abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {

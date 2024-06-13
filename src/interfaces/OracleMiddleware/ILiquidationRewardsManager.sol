@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { IBaseLiquidationRewardsManager } from "src/interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
-import { ILiquidationRewardsManagerErrorsEventsTypes } from
-    "src/interfaces/OracleMiddleware/ILiquidationRewardsManagerErrorsEventsTypes.sol";
+import { IBaseLiquidationRewardsManager } from "./IBaseLiquidationRewardsManager.sol";
+import { ILiquidationRewardsManagerErrorsEventsTypes } from "./ILiquidationRewardsManagerErrorsEventsTypes.sol";
 
 interface ILiquidationRewardsManager is IBaseLiquidationRewardsManager, ILiquidationRewardsManagerErrorsEventsTypes {
     /* -------------------------------------------------------------------------- */

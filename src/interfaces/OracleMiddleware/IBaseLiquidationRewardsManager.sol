@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction } from "../UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @notice This interface exposes the only function used by the UsdnProtocol

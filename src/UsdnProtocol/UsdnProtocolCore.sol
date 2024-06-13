@@ -5,9 +5,10 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
-import { UsdnProtocolStorage } from "src/UsdnProtocol/UsdnProtocolStorage.sol";
-import { IUsdnProtocolCore } from "src/interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
+import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
+import { IUsdnProtocolCore } from "../interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
 import {
     ProtocolAction,
     PendingAction,
@@ -17,12 +18,11 @@ import {
     PositionId,
     Position,
     TickData
-} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { SignedMath } from "src/libraries/SignedMath.sol";
-import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
-import { TickMath } from "src/libraries/TickMath.sol";
-import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
-import { HugeUint } from "src/libraries/HugeUint.sol";
+} from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { SignedMath } from "../libraries/SignedMath.sol";
+import { DoubleEndedQueue } from "../libraries/DoubleEndedQueue.sol";
+import { TickMath } from "../libraries/TickMath.sol";
+import { HugeUint } from "../libraries/HugeUint.sol";
 
 abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     using SafeTransferLib for address;

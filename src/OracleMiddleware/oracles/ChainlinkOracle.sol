@@ -3,9 +3,9 @@ pragma solidity 0.8.20;
 
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
-import { IChainlinkOracle } from "src/interfaces/OracleMiddleware/IChainlinkOracle.sol";
-import { ChainlinkPriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
+import { IChainlinkOracle } from "../../interfaces/OracleMiddleware/IChainlinkOracle.sol";
+import { ChainlinkPriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IOracleMiddlewareErrors } from "../../interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
 
 /**
  * @title ChainlinkOracle contract
