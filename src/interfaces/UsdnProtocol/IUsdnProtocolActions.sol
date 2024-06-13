@@ -3,7 +3,7 @@ pragma solidity >=0.8.0;
 
 import { IUsdnProtocolLong } from "./IUsdnProtocolLong.sol";
 import { PreviousActionsData, PositionId } from "./IUsdnProtocolTypes.sol";
-import { Permit2TokenBitfield } from "src/libraries/Permit2TokenBitfield.sol";
+import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 
 interface IUsdnProtocolActions is IUsdnProtocolLong {
     /**
