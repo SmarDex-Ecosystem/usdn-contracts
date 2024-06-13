@@ -28,6 +28,17 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
     }
 
     /// @inheritdoc IUsdnProtocolVault
+    function previewDeposit(uint256 amount, uint256 price)
+        external
+        view
+        returns (uint256 usdnExpected_, uint256 sdexToBurn_)
+    {
+        uint256 usdnSharesExpected = _calcMintUsdnShares(amount, _balanceVault, _usdn.totalShares(), price);
+        usdnExpected_ = _usdn.convertToTokens(usdnSharesExpected);
+        sdexToBurn_ = _calcSdexToBurn(usdnExpected_, _sdexBurnOnDepositRatio);
+    }
+
+    /// @inheritdoc IUsdnProtocolVault
     function previewWithdraw(uint256 usdnShares, uint256 price, uint128 timestamp)
         external
         view

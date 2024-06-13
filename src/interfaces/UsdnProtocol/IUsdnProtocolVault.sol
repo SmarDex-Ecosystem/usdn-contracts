@@ -38,4 +38,16 @@ interface IUsdnProtocolVault is IUsdnProtocolCore {
         external
         view
         returns (uint256 assetExpected_);
+
+    /**
+     * @notice Calculate an estimation of USDN tokens to be minted and SDEX tokens to be burned for a deposit
+     * @param amount The amount of assets of the pending deposit
+     * @param price The price of the asset at the time of the last update
+     * @return usdnExpected_ The expected amount of USDN tokens to be minted
+     * @return sdexToBurn_ The amount of SDEX tokens to be burned
+     */
+    function previewDeposit(uint256 amount, uint256 price)
+        external
+        view
+        returns (uint256 usdnExpected_, uint256 sdexToBurn_);
 }
