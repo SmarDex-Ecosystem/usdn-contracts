@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import { RebalancerFixture } from "test/unit/Rebalancer/utils/Fixtures.sol";
 
 /**
- * @custom:feature The depositAssets function of the rebalancer contract
+ * @custom:feature The `depositAssets` function of the rebalancer contract
  * @custom:background Given a rebalancer contract
  */
 contract TestRebalancerDepositAssets is RebalancerFixture {

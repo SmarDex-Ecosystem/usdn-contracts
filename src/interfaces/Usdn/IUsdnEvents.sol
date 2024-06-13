@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { IRebaseCallback } from "src/interfaces/Usdn/IRebaseCallback.sol";
+import { IRebaseCallback } from "./IRebaseCallback.sol";
 
 /**
  * @title Events for the USDN token contract

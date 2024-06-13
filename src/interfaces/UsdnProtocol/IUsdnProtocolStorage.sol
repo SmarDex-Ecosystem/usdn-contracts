@@ -3,14 +3,14 @@ pragma solidity >=0.8.0;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import { IBaseOracleMiddleware } from "src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
-import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
-import { Position, PendingAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { IBaseLiquidationRewardsManager } from "src/interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
-import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
-import { HugeUint } from "src/libraries/HugeUint.sol";
+import { IBaseOracleMiddleware } from "../OracleMiddleware/IBaseOracleMiddleware.sol";
+import { IUsdnProtocolEvents } from "./IUsdnProtocolEvents.sol";
+import { IUsdnProtocolErrors } from "./IUsdnProtocolErrors.sol";
+import { IUsdn } from "../Usdn/IUsdn.sol";
+import { Position, PendingAction, TickData } from "./IUsdnProtocolTypes.sol";
+import { IBaseLiquidationRewardsManager } from "../OracleMiddleware/IBaseLiquidationRewardsManager.sol";
+import { IRebalancer } from "../Rebalancer/IRebalancer.sol";
+import { HugeUint } from "../../libraries/HugeUint.sol";
 
 /**
  * @title IUsdnProtocolStorage

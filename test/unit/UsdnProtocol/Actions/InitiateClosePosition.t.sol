@@ -256,7 +256,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
 
         wstETH.mintAndApprove(address(this), POSITION_AMOUNT, address(protocol), type(uint256).max);
         (, posId) = protocol.initiateOpenPosition(
-            POSITION_AMOUNT, params.initialPrice / 2, address(this), USER_1, priceData, EMPTY_PREVIOUS_DATA
+            POSITION_AMOUNT, params.initialPrice / 2, address(this), USER_1, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         );
 
         vm.expectRevert(UsdnProtocolPositionNotValidated.selector);
@@ -278,7 +278,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:and the position is deleted
      */
     function test_internalInitiateClosePosition() external {
-        _internalInitiateClosePositionScenario(address(this));
+        _internalInitiateClosePositionScenario(address(this), address(this));
     }
 
     /**
@@ -291,13 +291,41 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:and the position is deleted
      */
     function test_internalInitiateClosePositionForAnotherUser() external {
-        _internalInitiateClosePositionScenario(USER_1);
+        _internalInitiateClosePositionScenario(USER_1, address(this));
     }
 
-    function _internalInitiateClosePositionScenario(address to) internal {
+    /**
+     * @custom:scenario Initiate close a position fully
+     * @custom:given A validated open position
+     * @custom:when The owner of the position closes all of the position at the same price as the opening
+     * @custom:and the validator parameter is different from the sender
+     * @custom:then The state of the protocol is updated
+     * @custom:and an {InitiatedClosePosition} event is emitted
+     * @custom:and the position is deleted
+     */
+    function test_internalInitiateClosePositionDifferentValidator() external {
+        _internalInitiateClosePositionScenario(address(this), USER_1);
+    }
+
+    /**
+     * @custom:scenario Initiate close a position fully
+     * @custom:given A validated open position
+     * @custom:when The owner of the position closes all of the position at the same price as the opening
+     * @custom:and the `to` parameter is different from the sender
+     * @custom:and the `validator` parameter is different from the sender
+     * @custom:and the `validator` parameter is different from the `to` parameter
+     * @custom:then The state of the protocol is updated
+     * @custom:and an {InitiatedClosePosition} event is emitted
+     * @custom:and the position is deleted
+     */
+    function test_internalInitiateClosePositionForAnotherUserDifferentValidator() external {
+        _internalInitiateClosePositionScenario(USER_1, USER_2);
+    }
+
+    function _internalInitiateClosePositionScenario(address to, address validator) internal {
         uint256 totalLongPositionBefore = protocol.getTotalLongPositions();
         TickData memory tickData = protocol.getTickData(posId.tick);
-        _initiateCloseAPositionHelper(POSITION_AMOUNT, to);
+        _initiateCloseAPositionHelper(POSITION_AMOUNT, to, validator);
 
         /* ---------------------------- Position's state ---------------------------- */
         (Position memory posAfter,) = protocol.getLongPosition(posId);
@@ -335,7 +363,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         (Position memory posBefore,) = protocol.getLongPosition(posId);
         uint128 totalExpoToClose =
             FixedPointMathLib.fullMulDiv(posBefore.totalExpo, amountToClose, posBefore.amount).toUint128();
-        _initiateCloseAPositionHelper(amountToClose, address(this));
+        _initiateCloseAPositionHelper(amountToClose, address(this), address(this));
 
         /* ---------------------------- Position's state ---------------------------- */
         (Position memory posAfter,) = protocol.getLongPosition(posId);
@@ -425,7 +453,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @notice Helper function to avoid duplicating code between the partial and full close position tests
      * @param amountToClose Amount of the position to close
      */
-    function _initiateCloseAPositionHelper(uint128 amountToClose, address to) internal {
+    function _initiateCloseAPositionHelper(uint128 amountToClose, address to, address validator) internal {
         (Position memory posBefore,) = protocol.getLongPosition(posId);
         uint128 totalExpoToClose =
             FixedPointMathLib.fullMulDiv(posBefore.totalExpo, amountToClose, posBefore.amount).toUint128();
@@ -448,7 +476,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         vm.expectEmit();
         emit InitiatedClosePosition(
             address(this), // owner
-            address(this), // validator
+            validator, // validator
             to,
             posId,
             posBefore.amount,
@@ -456,15 +484,15 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             posBefore.totalExpo - totalExpoToClose
         );
         protocol.i_initiateClosePosition(
-            address(this), to, address(this), posId, amountToClose, 0, abi.encode(params.initialPrice)
+            address(this), to, validator, posId, amountToClose, 0, abi.encode(params.initialPrice)
         );
 
         /* ------------------------- Pending action's state ------------------------- */
-        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(posBefore.user));
+        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(validator));
         assertTrue(action.action == ProtocolAction.ValidateClosePosition, "The action type is wrong");
         assertEq(action.timestamp, block.timestamp, "The block timestamp should be now");
         assertEq(action.to, to, "To is wrong");
-        assertEq(action.validator, posBefore.user, "Validator is wrong");
+        assertEq(action.validator, validator, "Validator is wrong");
         assertEq(action.tick, posId.tick, "The position tick is wrong");
         assertEq(
             action.closePosTotalExpo,
@@ -522,6 +550,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             params.initialPrice / 2,
             address(rebalancer),
             payable(address(rebalancer)),
+            NO_PERMIT2,
             abi.encode(params.initialPrice),
             EMPTY_PREVIOUS_DATA
         );

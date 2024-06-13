@@ -5,12 +5,12 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { IUsdnProtocolLong } from "src/interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
-import { Position, LiquidationsEffects, TickData, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { UsdnProtocolVault } from "src/UsdnProtocol/UsdnProtocolVault.sol";
-import { TickMath } from "src/libraries/TickMath.sol";
-import { SignedMath } from "src/libraries/SignedMath.sol";
-import { HugeUint } from "src/libraries/HugeUint.sol";
+import { IUsdnProtocolLong } from "../interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
+import { Position, LiquidationsEffects, TickData, PositionId } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { UsdnProtocolVault } from "./UsdnProtocolVault.sol";
+import { TickMath } from "../libraries/TickMath.sol";
+import { SignedMath } from "../libraries/SignedMath.sol";
+import { HugeUint } from "../libraries/HugeUint.sol";
 
 abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     using LibBitmap for LibBitmap.Bitmap;
@@ -379,6 +379,27 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /**
+     * @notice Calculate the liquidation price without penalty of a position to reach a certain trading expo
+     * @dev If the sum of `amount` and `tradingExpo` equals 0, reverts
+     * @param currentPrice The price of the asset
+     * @param amount The amount of asset
+     * @param tradingExpo The trading expo
+     * @return liqPrice_ The liquidation price without penalty
+     */
+    function _calcLiqPriceFromTradingExpo(uint128 currentPrice, uint128 amount, uint256 tradingExpo)
+        internal
+        pure
+        returns (uint128 liqPrice_)
+    {
+        uint256 totalExpo = amount + tradingExpo;
+        if (totalExpo == 0) {
+            revert UsdnProtocolZeroTotalExpo();
+        }
+
+        liqPrice_ = FixedPointMathLib.fullMulDiv(currentPrice, tradingExpo, totalExpo).toUint128();
+    }
+
+    /**
      * @notice Check if the safety margin is respected
      * @dev Reverts if not respected
      * @param currentPrice The current price of the asset
@@ -399,10 +420,11 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param liquidationPenalty The liquidation penalty for the tick
      * @return tickVersion_ The version of the tick
      * @return index_ The index of the position in the tick array
+     * @return liqMultiplierAccumulator_ The updated liquidation multiplier accumulator
      */
     function _saveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty)
         internal
-        returns (uint256 tickVersion_, uint256 index_)
+        returns (uint256 tickVersion_, uint256 index_, HugeUint.Uint512 memory liqMultiplierAccumulator_)
     {
         bytes32 tickHash;
         (tickHash, tickVersion_) = _tickHash(tick);
@@ -441,7 +463,8 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
                 TickMath.getPriceAtTick(tick - int24(uint24(tickData.liquidationPenalty)) * _tickSpacing);
         }
         // update the accumulator with the correct tick price (depending on the liquidation penalty value)
-        _liqMultiplierAccumulator = _liqMultiplierAccumulator.add(HugeUint.wrap(unadjustedTickPrice * long.totalExpo));
+        liqMultiplierAccumulator_ = _liqMultiplierAccumulator.add(HugeUint.wrap(unadjustedTickPrice * long.totalExpo));
+        _liqMultiplierAccumulator = liqMultiplierAccumulator_;
     }
 
     /**
@@ -453,6 +476,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param pos The position to remove the amount from
      * @param amountToRemove The amount to remove from the position
      * @param totalExpoToRemove The total expo to remove from the position
+     * @return liqMultiplierAccumulator_ The updated liquidation multiplier accumulator
      */
     function _removeAmountFromPosition(
         int24 tick,
@@ -460,7 +484,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         Position memory pos,
         uint128 amountToRemove,
         uint128 totalExpoToRemove
-    ) internal {
+    ) internal returns (HugeUint.Uint512 memory liqMultiplierAccumulator_) {
         (bytes32 tickHash,) = _tickHash(tick);
         TickData storage tickData = _tickData[tickHash];
         uint256 unadjustedTickPrice =
@@ -487,8 +511,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
         _totalExpo -= totalExpoToRemove;
         tickData.totalExpo -= totalExpoToRemove;
-        _liqMultiplierAccumulator =
+        liqMultiplierAccumulator_ =
             _liqMultiplierAccumulator.sub(HugeUint.wrap(unadjustedTickPrice * totalExpoToRemove));
+        _liqMultiplierAccumulator = liqMultiplierAccumulator_;
     }
 
     /// @inheritdoc IUsdnProtocolLong
@@ -627,7 +652,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             );
         } while (effects_.liquidatedTicks < iteration);
 
-        data = _updateStateAfterLiquidation(data, effects_);
+        _updateStateAfterLiquidation(data, effects_); // mutates `data`
         effects_.isLiquidationPending = data.isLiquidationPending;
         (effects_.newLongBalance, effects_.newVaultBalance) =
             _handleNegativeBalances(data.tempLongBalance, data.tempVaultBalance);
@@ -635,14 +660,10 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
     /**
      * @notice Update the state of the contract according to the liquidation effects
-     * @param data The liquidation data
+     * @param data The liquidation data, which gets mutated by the function
      * @param effects The effects of the liquidations
-     * @return The updated liquidation data
      */
-    function _updateStateAfterLiquidation(LiquidationData memory data, LiquidationsEffects memory effects)
-        internal
-        returns (LiquidationData memory)
-    {
+    function _updateStateAfterLiquidation(LiquidationData memory data, LiquidationsEffects memory effects) internal {
         // update the state
         _totalLongPositions -= effects.liquidatedPositions;
         _totalExpo -= data.totalExpoToRemove;
@@ -664,8 +685,6 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         // transfer remaining collateral to vault or pay bad debt
         data.tempLongBalance -= effects.remainingCollateral;
         data.tempVaultBalance += effects.remainingCollateral;
-
-        return data;
     }
 
     /**
@@ -702,5 +721,217 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         // TODO: remove safe cast once we're sure we can never have negative balances
         longBalance_ = tempLongBalance.toUint256();
         vaultBalance_ = tempVaultBalance.toUint256();
+    }
+
+    /**
+     * TODO add tests
+     * @notice Calculates the current imbalance between the vault and long sides
+     * @dev If the value is positive, the long trading expo is smaller than the vault trading expo
+     * @param vaultBalance The balance of the vault
+     * @param longBalance The balance of the long side
+     * @param totalExpo The total expo of the long side
+     * @return imbalanceBps_ The imbalance in basis points
+     */
+    function _calcLongImbalanceBps(uint256 vaultBalance, uint256 longBalance, uint256 totalExpo)
+        internal
+        pure
+        returns (int256 imbalanceBps_)
+    {
+        // imbalanceBps_ = (vaultBalance - (totalExpo - longBalance)) * BPS_DIVISOR / vaultBalance;
+        imbalanceBps_ = (vaultBalance.toInt256().safeSub(totalExpo.toInt256().safeSub(longBalance.toInt256()))).safeMul(
+            int256(BPS_DIVISOR)
+        ).safeDiv(vaultBalance.toInt256());
+    }
+
+    /**
+     * TODO add tests
+     * @notice Immediately close a position with the given price
+     * @dev Should only be used to close the rebalancer position
+     * @param posId The ID of the position to close
+     * @param neutralPrice The current neutral price
+     * @param cache The cached state of the protocol, will be updated during this call
+     * @return positionValue_ The value of the closed position. If 0, the position was/will be liquidated
+     */
+    function _flashClosePosition(PositionId memory posId, uint128 neutralPrice, CachedProtocolState memory cache)
+        internal
+        returns (uint256 positionValue_)
+    {
+        (bytes32 tickHash, uint256 version) = _tickHash(posId.tick);
+        // if the tick version is outdated, the position was liquidated and its value is 0
+        if (posId.tickVersion != version) {
+            return positionValue_;
+        }
+
+        uint8 liquidationPenalty = _tickData[tickHash].liquidationPenalty;
+        Position memory pos = _longPositions[tickHash][posId.index];
+
+        // fully close the position and update the cache
+        cache.liqMultiplierAccumulator =
+            _removeAmountFromPosition(posId.tick, posId.index, pos, pos.amount, pos.totalExpo);
+
+        int256 positionValue = _positionValue(
+            neutralPrice,
+            getEffectivePriceForTick(
+                _calcTickWithoutPenalty(posId.tick, liquidationPenalty),
+                neutralPrice,
+                cache.tradingExpo,
+                cache.liqMultiplierAccumulator
+            ),
+            pos.totalExpo
+        );
+
+        // if positionValue is lower than 0, return 0
+        if (positionValue < 0) {
+            return positionValue_;
+        }
+
+        // cast is safe as positionValue cannot be lower than 0
+        positionValue_ = uint256(positionValue);
+
+        // update the cache
+        cache.totalExpo -= pos.totalExpo;
+        cache.longBalance -= positionValue_;
+        cache.tradingExpo = cache.totalExpo - cache.longBalance;
+
+        // emit both initiate and validate events
+        // so the position is considered the same as other positions by event indexers
+        emit InitiatedClosePosition(pos.user, pos.user, pos.user, posId, pos.amount, pos.amount, 0);
+        emit ValidatedClosePosition(pos.user, pos.user, posId, positionValue_, positionValue - _toInt256(pos.amount));
+    }
+
+    /**
+     * TODO add tests
+     * @notice Immediately open a position with the given price
+     * @dev Should only be used to open the rebalancer position
+     * @param user The address of the user
+     * @param neutralPrice The current neutral price
+     * @param tickWithoutPenalty The tick the position should be opened in
+     * @param amount The amount of collateral in the position
+     * @param cache The cached state of the protocol
+     * @return posId_ The ID of the position that was created
+     */
+    function _flashOpenPosition(
+        address user,
+        uint128 neutralPrice,
+        int24 tickWithoutPenalty,
+        uint128 amount,
+        CachedProtocolState memory cache
+    ) internal returns (PositionId memory posId_) {
+        // we calculate the closest valid tick down for the desired liquidation price with the liquidation penalty
+        uint8 currentLiqPenalty = _liquidationPenalty;
+
+        posId_.tick = tickWithoutPenalty + int24(uint24(currentLiqPenalty)) * _tickSpacing;
+
+        uint8 liquidationPenalty = getTickLiquidationPenalty(posId_.tick);
+        uint128 liqPriceWithoutPenalty;
+
+        // check if the penalty for that tick is different from the current setting
+        // this can happen if the setting has been changed, but the position is added in a tick that was never empty
+        // after the said change, so the first value is still applied
+        if (liquidationPenalty == currentLiqPenalty) {
+            liqPriceWithoutPenalty = getEffectivePriceForTick(
+                tickWithoutPenalty, neutralPrice, cache.tradingExpo, cache.liqMultiplierAccumulator
+            );
+        } else {
+            liqPriceWithoutPenalty = getEffectivePriceForTick(
+                _calcTickWithoutPenalty(posId_.tick, liquidationPenalty),
+                neutralPrice,
+                cache.tradingExpo,
+                cache.liqMultiplierAccumulator
+            );
+        }
+
+        uint128 totalExpo = _calcPositionTotalExpo(amount, neutralPrice, liqPriceWithoutPenalty);
+        Position memory long = Position({
+            validated: true,
+            user: user,
+            amount: amount,
+            totalExpo: totalExpo,
+            timestamp: uint40(block.timestamp)
+        });
+
+        // save the position on the provided tick
+        (posId_.tickVersion, posId_.index,) = _saveNewPosition(posId_.tick, long, liquidationPenalty);
+
+        // emit both initiate and validate events
+        // so the position is considered the same as other positions by event indexers
+        emit InitiatedOpenPosition(user, user, uint40(block.timestamp), totalExpo, long.amount, neutralPrice, posId_);
+        emit ValidatedOpenPosition(user, user, totalExpo, neutralPrice, posId_);
+    }
+
+    /**
+     * TODO add tests
+     * @notice Calculates the tick of the rebalancer position to open
+     * @dev The returned tick must be higher than or equal to the minimum leverage of the protocol
+     * and lower than or equal to the rebalancer and USDN protocol leverages (lower of the 2)
+     * @param neutralPrice The neutral asset price
+     * @param positionAmount The amount of assets in the position
+     * @param rebalancerMaxLeverage The max leverage supported by the rebalancer
+     * @param cache The cached protocol state values
+     * @return tickWithoutLiqPenalty_ The tick where the position will be saved
+     */
+    function _calcRebalancerPositionTick(
+        uint128 neutralPrice,
+        uint128 positionAmount,
+        uint256 rebalancerMaxLeverage,
+        CachedProtocolState memory cache
+    ) internal view returns (int24 tickWithoutLiqPenalty_) {
+        // use the lowest max leverage above the min leverage
+        {
+            uint256 protocolMaxLeverage = _maxLeverage;
+            uint256 protocolMinLeverage = _minLeverage;
+            if (rebalancerMaxLeverage > protocolMaxLeverage) {
+                rebalancerMaxLeverage = protocolMaxLeverage;
+            }
+            if (rebalancerMaxLeverage < protocolMinLeverage) {
+                rebalancerMaxLeverage = protocolMinLeverage;
+            }
+        }
+
+        int256 longImbalanceTargetBps = _longImbalanceTargetBps;
+        // calculate the trading expo missing to reach the imbalance target
+        uint256 targetTradingExpo =
+            (cache.vaultBalance * (BPS_DIVISOR.toInt256() - longImbalanceTargetBps).toUint256() / BPS_DIVISOR);
+
+        // check that the target is not already exceeded
+        if (cache.tradingExpo >= targetTradingExpo) {
+            return NO_POSITION_TICK;
+        }
+
+        uint256 tradingExpoToFill = targetTradingExpo - cache.tradingExpo;
+
+        // check that the trading expo filled by the position would not exceed the max leverage
+        uint256 highestUsableTradingExpo = positionAmount * rebalancerMaxLeverage / LEVERAGE_DECIMALS - positionAmount;
+        if (highestUsableTradingExpo < tradingExpoToFill) {
+            tradingExpoToFill = highestUsableTradingExpo;
+        }
+
+        tickWithoutLiqPenalty_ = getEffectiveTickForPrice(
+            _calcLiqPriceFromTradingExpo(neutralPrice, positionAmount, tradingExpoToFill),
+            neutralPrice,
+            cache.tradingExpo,
+            cache.liqMultiplierAccumulator,
+            _tickSpacing
+        );
+
+        // calculate the total expo of the position that will be created with the tick
+        uint256 positionTotalExpo = _calcPositionTotalExpo(
+            positionAmount,
+            neutralPrice,
+            getEffectivePriceForTick(
+                tickWithoutLiqPenalty_, neutralPrice, cache.tradingExpo, cache.liqMultiplierAccumulator
+            )
+        );
+
+        // due to the rounding down, if the imbalance is still greater than the desired imbalance
+        // and the position is not at the max leverage, add one tick
+        if (
+            highestUsableTradingExpo != tradingExpoToFill
+                && _calcLongImbalanceBps(
+                    cache.vaultBalance, cache.longBalance + positionAmount, cache.totalExpo + positionTotalExpo
+                ) > longImbalanceTargetBps
+        ) {
+            tickWithoutLiqPenalty_ += _tickSpacing;
+        }
     }
 }

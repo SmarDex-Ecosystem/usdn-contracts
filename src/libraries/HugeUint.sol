@@ -398,6 +398,7 @@ library HugeUint {
 
     /**
      * @notice Count the number of consecutive zero bits, starting from the left
+     * @dev Credits Solady (MIT license): https://github.com/Vectorized/solady/
      * @param x An unsigned integer
      * @return n_ The number of zeroes starting from the most significant bit
      */
@@ -406,35 +407,22 @@ library HugeUint {
             return 256;
         }
         assembly {
-            if iszero(and(x, 0xffffffffffffffffffffffffffffffff00000000000000000000000000000000)) {
-                n_ := add(n_, 128)
-                x := shl(128, x)
-            }
-            if iszero(and(x, 0xffffffffffffffff000000000000000000000000000000000000000000000000)) {
-                n_ := add(n_, 64)
-                x := shl(64, x)
-            }
-            if iszero(and(x, 0xffffffff00000000000000000000000000000000000000000000000000000000)) {
-                n_ := add(n_, 32)
-                x := shl(32, x)
-            }
-            if iszero(and(x, 0xffff000000000000000000000000000000000000000000000000000000000000)) {
-                n_ := add(n_, 16)
-                x := shl(16, x)
-            }
-            if iszero(and(x, 0xff00000000000000000000000000000000000000000000000000000000000000)) {
-                n_ := add(n_, 8)
-                x := shl(8, x)
-            }
-            if iszero(and(x, 0xf000000000000000000000000000000000000000000000000000000000000000)) {
-                n_ := add(n_, 4)
-                x := shl(4, x)
-            }
-            if iszero(and(x, 0xc000000000000000000000000000000000000000000000000000000000000000)) {
-                n_ := add(n_, 2)
-                x := shl(2, x)
-            }
-            if iszero(and(x, 0x8000000000000000000000000000000000000000000000000000000000000000)) { n_ := add(n_, 1) }
+            n_ := shl(7, lt(0xffffffffffffffffffffffffffffffff, x))
+            n_ := or(n_, shl(6, lt(0xffffffffffffffff, shr(n_, x))))
+            n_ := or(n_, shl(5, lt(0xffffffff, shr(n_, x))))
+            n_ := or(n_, shl(4, lt(0xffff, shr(n_, x))))
+            n_ := or(n_, shl(3, lt(0xff, shr(n_, x))))
+            n_ :=
+                add(
+                    xor(
+                        n_,
+                        byte(
+                            and(0x1f, shr(shr(n_, x), 0x8421084210842108cc6318c6db6d54be)),
+                            0xf8f9f9faf9fdfafbf9fdfcfdfafbfcfef9fafdfafcfcfbfefafafcfbffffffff
+                        )
+                    ),
+                    iszero(x)
+                )
         }
     }
 }

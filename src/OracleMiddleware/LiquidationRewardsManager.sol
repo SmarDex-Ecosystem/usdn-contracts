@@ -3,12 +3,12 @@ pragma solidity 0.8.20;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-import { IWstETH } from "src/interfaces/IWstETH.sol";
-import { ChainlinkPriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { ChainlinkOracle } from "src/OracleMiddleware/oracles/ChainlinkOracle.sol";
-import { IBaseLiquidationRewardsManager } from "src/interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
-import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IWstETH } from "../interfaces/IWstETH.sol";
+import { ChainlinkPriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { ChainlinkOracle } from "./oracles/ChainlinkOracle.sol";
+import { IBaseLiquidationRewardsManager } from "../interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
+import { ILiquidationRewardsManager } from "../interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
+import { ProtocolAction } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title LiquidationRewardsManager contract
@@ -51,9 +51,9 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     {
         _wstEth = wstETH;
         _rewardsParameters = RewardsParameters({
-            gasUsedPerTick: 32_544,
-            otherGasUsed: 380_690,
-            rebaseGasUsed: 8881,
+            gasUsedPerTick: 36_884,
+            otherGasUsed: 306_685,
+            rebaseGasUsed: 12_014,
             gasPriceLimit: 1000 gwei,
             multiplierBps: 30_000
         });

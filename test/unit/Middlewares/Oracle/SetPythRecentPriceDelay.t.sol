@@ -10,77 +10,77 @@ import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracle
 import { IOracleMiddlewareEvents } from "src/interfaces/OracleMiddleware/IOracleMiddlewareEvents.sol";
 
 /**
- * @custom:feature The `updateValidationDelay` function of `OracleMiddleware`
+ * @custom:feature The `setPythRecentPriceDelay` function of `OracleMiddleware`
  */
-contract TestOracleMiddlewareSetRecentPriceDelay is OracleMiddlewareBaseFixture {
+contract TestOracleMiddlewareSetPythRecentPriceDelay is OracleMiddlewareBaseFixture {
     function setUp() public override {
         super.setUp();
     }
 
     /**
-     * @custom:scenario Call `setRecentPriceDelay` functions from non contract admin
+     * @custom:scenario Call `setPythRecentPriceDelay` functions from non contract admin
      * @custom:given The initial oracle middleware state
-     * @custom:when Non admin wallet trigger `setRecentPriceDelay`
+     * @custom:when Non admin wallet trigger `setPythRecentPriceDelay`
      * @custom:then functions should revert with custom Ownable error
      */
-    function test_RevertWhen_nonAdminWalletCallSetRecentPriceDelay() external {
+    function test_RevertWhen_nonAdminWalletCallSetPythRecentPriceDelay() external {
         vm.startPrank(USER_1);
         // Ownable contract custom error
         bytes memory customError = abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, USER_1);
         vm.expectRevert(customError);
-        oracleMiddleware.setRecentPriceDelay(11);
+        oracleMiddleware.setPythRecentPriceDelay(11);
         vm.stopPrank();
     }
 
     /**
-     * @custom:scenario Call `getRecentPriceDelay` getter
+     * @custom:scenario Call `getPythRecentPriceDelay` getter
      * @custom:given The initial oracle middleware state
      * @custom:when The result of the function is compared to 45
      * @custom:then It should succeed
      */
     function test_recentPriceDelay() public {
-        assertEq(oracleMiddleware.getRecentPriceDelay(), 45);
+        assertEq(oracleMiddleware.getPythRecentPriceDelay(), 45);
     }
 
     /**
-     * @custom:scenario Call `setRecentPriceDelay`
+     * @custom:scenario Call `setPythRecentPriceDelay`
      * @custom:given The initial oracle middleware state
-     * @custom:when The `setRecentPriceDelay` is executed with a too high value
+     * @custom:when The `setPythRecentPriceDelay` is executed with a too high value
      * @custom:then It should revert
      */
-    function test_RevertWhen_setRecentPriceDelayTooHigh() public {
+    function test_RevertWhen_setPythRecentPriceDelayTooHigh() public {
         vm.expectRevert(
             abi.encodeWithSelector(
                 IOracleMiddlewareErrors.OracleMiddlewareInvalidRecentPriceDelay.selector, 10 minutes + 1
             )
         );
-        oracleMiddleware.setRecentPriceDelay(10 minutes + 1);
+        oracleMiddleware.setPythRecentPriceDelay(10 minutes + 1);
     }
 
     /**
-     * @custom:scenario Call `setRecentPriceDelay`
+     * @custom:scenario Call `setPythRecentPriceDelay`
      * @custom:given The initial oracle middleware state
-     * @custom:when The `setRecentPriceDelay` is executed with a too low value
+     * @custom:when The `setPythRecentPriceDelay` is executed with a too low value
      * @custom:then It should revert
      */
-    function test_RevertWhen_setRecentPriceDelayTooLow() public {
+    function test_RevertWhen_setPythRecentPriceDelayTooLow() public {
         vm.expectRevert(
             abi.encodeWithSelector(IOracleMiddlewareErrors.OracleMiddlewareInvalidRecentPriceDelay.selector, 9)
         );
-        oracleMiddleware.setRecentPriceDelay(9);
+        oracleMiddleware.setPythRecentPriceDelay(9);
     }
 
     /**
-     * @custom:scenario Call `setRecentPriceDelay`
+     * @custom:scenario Call `setPythRecentPriceDelay`
      * @custom:given The initial oracle middleware state
-     * @custom:when The `setRecentPriceDelay` is executed with a correct value
-     * @custom:then It should emit RecentPriceDelayUpdated event
+     * @custom:when The `setPythRecentPriceDelay` is executed with a correct value
+     * @custom:then It should emit PythRecentPriceDelayUpdated event
      * @custom:and It should success
      */
-    function test_setRecentPriceDelay() public {
+    function test_setPythRecentPriceDelay() public {
         vm.expectEmit();
-        emit IOracleMiddlewareEvents.RecentPriceDelayUpdated(10);
-        oracleMiddleware.setRecentPriceDelay(10);
-        assertEq(oracleMiddleware.getRecentPriceDelay(), 10);
+        emit IOracleMiddlewareEvents.PythRecentPriceDelayUpdated(10);
+        oracleMiddleware.setPythRecentPriceDelay(10);
+        assertEq(oracleMiddleware.getPythRecentPriceDelay(), 10);
     }
 }

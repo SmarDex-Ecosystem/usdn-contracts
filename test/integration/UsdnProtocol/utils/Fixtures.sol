@@ -12,6 +12,7 @@ import {
     WSTETH,
     PYTH_ETH_USD,
     PYTH_ORACLE,
+    REDSTONE_ETH_USD,
     CHAINLINK_ORACLE_ETH,
     CHAINLINK_ORACLE_GAS
 } from "test/utils/Constants.sol";
@@ -28,12 +29,14 @@ import { MockChainlinkOnChain } from "test/unit/Middlewares/utils/MockChainlinkO
 import { UsdnProtocolHandler } from "test/unit/UsdnProtocol/utils/Handler.sol";
 
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
+import { Rebalancer } from "src/Rebalancer/Rebalancer.sol";
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { ProtocolAction, PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Usdn } from "src/Usdn/Usdn.sol";
 import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { Permit2TokenBitfield } from "src/libraries/Permit2TokenBitfield.sol";
 
 contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProtocolEvents {
     struct SetUpParams {
@@ -45,6 +48,8 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         bool fork;
         uint256 forkWarp; // warp to this timestamp after forking, before deploying protocol. Zero to disable
     }
+
+    Permit2TokenBitfield.Bitfield constant NO_PERMIT2 = Permit2TokenBitfield.Bitfield.wrap(0);
 
     SetUpParams public params;
     SetUpParams public DEFAULT_PARAMS = SetUpParams({
@@ -65,6 +70,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
     MockChainlinkOnChain public mockChainlinkOnChain;
     WstEthOracleMiddleware public oracleMiddleware;
     LiquidationRewardsManager public liquidationRewardsManager;
+    Rebalancer public rebalancer;
 
     PreviousActionsData internal EMPTY_PREVIOUS_DATA =
         PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
@@ -84,7 +90,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             IPyth pyth = IPyth(PYTH_ORACLE);
             AggregatorV3Interface chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE_ETH);
             oracleMiddleware = new WstEthOracleMiddleware(
-                address(pyth), PYTH_ETH_USD, address(chainlinkOnChain), address(wstETH), 1 hours
+                address(pyth), PYTH_ETH_USD, REDSTONE_ETH_USD, address(chainlinkOnChain), address(wstETH), 1 hours
             );
             PriceInfo memory currentPrice =
                 oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.Initialize, "");
@@ -100,12 +106,17 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
                 int256(wstETH.getStETHByWstETH(uint256(testParams.initialPrice / 10 ** (18 - 8))))
             );
             oracleMiddleware = new WstEthOracleMiddleware(
-                address(mockPyth), PYTH_ETH_USD, address(mockChainlinkOnChain), address(wstETH), 1 hours
+                address(mockPyth),
+                PYTH_ETH_USD,
+                REDSTONE_ETH_USD,
+                address(mockChainlinkOnChain),
+                address(wstETH),
+                1 hours
             );
             vm.warp(testParams.initialTimestamp);
         }
         vm.startPrank(DEPLOYER);
-        (bool success,) = address(wstETH).call{ value: 1000 ether }("");
+        (bool success,) = address(wstETH).call{ value: DEPLOYER.balance * 9 / 10 }("");
         require(success, "DEPLOYER wstETH mint failed");
         usdn = new Usdn(address(0), address(0));
         AggregatorV3Interface chainlinkGasPriceFeed = AggregatorV3Interface(CHAINLINK_ORACLE_GAS);
@@ -120,6 +131,9 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             ADMIN
         );
 
+        rebalancer = new Rebalancer(protocol);
+        protocol.setRebalancer(rebalancer);
+
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
@@ -129,6 +143,8 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         );
         vm.stopPrank();
         params = testParams;
+
+        sdex.mintAndApprove(address(this), 50_000 ether, address(protocol), type(uint256).max);
     }
 
     function getHermesApiSignature(bytes32 feed, uint256 timestamp)
