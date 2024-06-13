@@ -749,23 +749,22 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @dev If the value is positive, the long trading expo is larger than the vault trading expo
      * In case of zero vault balance, the function returns `int256.max` since the resulting imbalance would be infinity
      * @param vaultBalance The balance of the vault
-     * @param longBalance The balance of the long side (including the future long position to open)
-     * @param totalExpo The total expo of the long side (including the future long position to open)
+     * @param longBalance The balance of the long side (including the long position to open)
+     * @param totalExpo The total expo of the long side (including the long position to open)
      * @return imbalanceBps_ The imbalance in basis points
      */
-    function _calcImbalanceOpenBps(uint256 vaultBalance, uint256 longBalance, uint256 totalExpo)
+    function _calcImbalanceOpenBps(int256 vaultBalance, int256 longBalance, uint256 totalExpo)
         internal
         pure
         returns (int256 imbalanceBps_)
     {
-        // imbalanceBps_ = ((totalExpo - longBalance) - vaultBalance) * BPS_DIVISOR / vaultBalance;
-        int256 vaultTradingExpo = vaultBalance.toInt256();
         // avoid division by zero
-        if (vaultTradingExpo == 0) {
+        if (vaultBalance == 0) {
             return type(int256).max;
         }
-        int256 longTradingExpo = (totalExpo - longBalance).toInt256(); // should never underflow
-        imbalanceBps_ = longTradingExpo.safeSub(vaultTradingExpo).safeMul(int256(BPS_DIVISOR)).safeDiv(vaultTradingExpo);
+        // imbalanceBps_ = ((totalExpo - longBalance) - vaultBalance) * BPS_DIVISOR / vaultBalance;
+        int256 longTradingExpo = totalExpo.toInt256() - longBalance;
+        imbalanceBps_ = longTradingExpo.safeSub(vaultBalance).safeMul(int256(BPS_DIVISOR)).safeDiv(vaultBalance);
     }
 
     /**
