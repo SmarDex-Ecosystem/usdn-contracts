@@ -105,7 +105,7 @@ contract Wusdn is ERC20Permit, IWusdn {
      */
     function _wrap(uint256 usdnAmount, address to) private returns (uint256 wrappedAmount_) {
         if (usdnAmount > USDN.balanceOf(msg.sender)) {
-            revert WsdnInsufficientBalance(usdnAmount);
+            revert WusdnInsufficientBalance(usdnAmount);
         }
 
         uint256 usdnShares = USDN.convertToShares(usdnAmount);

@@ -10,5 +10,5 @@ interface IWusdnErrors {
      * @dev Indicates that the user has insufficient USDN balance to wrap `usdnAmount`
      * @param usdnAmount The amount of USDN the user attempted to wrap
      */
-    error WsdnInsufficientBalance(uint256 usdnAmount);
+    error WusdnInsufficientBalance(uint256 usdnAmount);
 }
