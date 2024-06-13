@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
-import { MOCK_PYTH_DATA } from "test/unit/Middlewares/utils/Constants.sol";
-import { OracleMiddlewareBaseFixture } from "test/unit/Middlewares/utils/Fixtures.sol";
+import { MOCK_PYTH_DATA } from "../utils/Constants.sol";
+import { OracleMiddlewareBaseFixture } from "../utils/Fixtures.sol";
 
 /// @custom:feature The `_isPythData` function of `OracleMiddleware`
 contract TestOracleMiddlewareIsPythData is OracleMiddlewareBaseFixture {

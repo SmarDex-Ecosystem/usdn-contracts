@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
 import { console2, Test } from "forge-std/Test.sol";
 
 import { EnumerableMap } from "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 
-import { Usdn } from "src/Usdn/Usdn.sol";
+import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 
 /**
  * @title UsdnHandler

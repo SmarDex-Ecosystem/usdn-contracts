@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import { ADMIN } from "test/utils/Constants.sol";
-import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { ADMIN } from "../../utils/Constants.sol";
+import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
 
-import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
-import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
-import { IRebalancerEvents } from "src/interfaces/Rebalancer/IRebalancerEvents.sol";
-import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
+import { IOracleMiddleware } from "../../../src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
+import { ILiquidationRewardsManager } from "../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
+import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
+import { IRebalancer } from "../../../src/interfaces/Rebalancer/IRebalancer.sol";
 
 /**
  * @custom:feature The admin functions of the protocol

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
-import { BaseFixture } from "test/utils/Fixtures.sol";
-import { HugeUintHandler } from "test/unit/HugeUint/utils/Handler.sol";
+import { BaseFixture } from "../../../utils/Fixtures.sol";
+import { HugeUintHandler } from "../utils/Handler.sol";
 
 /**
  * @title HugeUintFixture

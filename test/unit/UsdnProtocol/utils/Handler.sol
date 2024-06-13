@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
 import { Test } from "forge-std/Test.sol";
 
@@ -16,16 +16,16 @@ import {
     PreviousActionsData,
     TickData,
     PositionId
-} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { UsdnProtocol, Position } from "src/UsdnProtocol/UsdnProtocol.sol";
-import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
-import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
-import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
-import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
-import { HugeUint } from "src/libraries/HugeUint.sol";
-import { Position, LiquidationsEffects } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { SignedMath } from "src/libraries/SignedMath.sol";
+} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { UsdnProtocol, Position } from "../../../../src/UsdnProtocol/UsdnProtocol.sol";
+import { IUsdn } from "../../../../src/interfaces/Usdn/IUsdn.sol";
+import { ILiquidationRewardsManager } from "../../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
+import { IOracleMiddleware } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
+import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { DoubleEndedQueue } from "../../../../src/libraries/DoubleEndedQueue.sol";
+import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
+import { Position, LiquidationsEffects } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { SignedMath } from "../../../../src/libraries/SignedMath.sol";
 
 /**
  * @title UsdnProtocolHandler

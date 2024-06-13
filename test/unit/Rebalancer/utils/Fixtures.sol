@@ -1,20 +1,20 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
-import { DEPLOYER, ADMIN } from "test/utils/Constants.sol";
-import { BaseFixture } from "test/utils/Fixtures.sol";
-import { MockChainlinkOnChain } from "test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
-import { RebalancerHandler } from "test/unit/Rebalancer/utils/Handler.sol";
-import { MockOracleMiddleware } from "test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
-import { Sdex } from "test/utils/Sdex.sol";
-import { WstETH } from "test/utils/WstEth.sol";
+import { DEPLOYER, ADMIN } from "../../../utils/Constants.sol";
+import { BaseFixture } from "../../../utils/Fixtures.sol";
+import { MockChainlinkOnChain } from "../../Middlewares/utils/MockChainlinkOnChain.sol";
+import { RebalancerHandler } from "../utils/Handler.sol";
+import { MockOracleMiddleware } from "../../UsdnProtocol/utils/MockOracleMiddleware.sol";
+import { Sdex } from "../../../utils/Sdex.sol";
+import { WstETH } from "../../../utils/WstEth.sol";
 
-import { IRebalancerEvents } from "src/interfaces/Rebalancer/IRebalancerEvents.sol";
-import { IRebalancerErrors } from "src/interfaces/Rebalancer/IRebalancerErrors.sol";
-import { IRebalancerTypes } from "src/interfaces/Rebalancer/IRebalancerTypes.sol";
-import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
-import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
-import { Usdn } from "src/Usdn/Usdn.sol";
+import { IRebalancerEvents } from "../../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
+import { IRebalancerErrors } from "../../../../src/interfaces/Rebalancer/IRebalancerErrors.sol";
+import { IRebalancerTypes } from "../../../../src/interfaces/Rebalancer/IRebalancerTypes.sol";
+import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
+import { UsdnProtocol } from "../../../../src/UsdnProtocol/UsdnProtocol.sol";
+import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 
 /**
  * @title RebalancerFixture

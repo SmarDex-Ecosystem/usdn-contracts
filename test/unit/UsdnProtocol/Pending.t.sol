@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
-import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { USER_1, USER_2, USER_3, USER_4 } from "test/utils/Constants.sol";
+import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
+import { USER_1, USER_2, USER_3, USER_4 } from "../../utils/Constants.sol";
 
 import {
     PendingAction,
@@ -11,7 +11,7 @@ import {
     LongPendingAction,
     ProtocolAction,
     PreviousActionsData
-} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+} from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The functions handling the pending actions queue

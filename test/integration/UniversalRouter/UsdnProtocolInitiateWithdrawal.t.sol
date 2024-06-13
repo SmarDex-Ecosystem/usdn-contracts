@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
 import { Constants } from "@uniswap/universal-router/contracts/libraries/Constants.sol";
 
-import { DEPLOYER, USER_1 } from "test/utils/Constants.sol";
-import { UniversalRouterBaseFixture } from "test/integration/UniversalRouter/utils/Fixtures.sol";
+import { DEPLOYER, USER_1 } from "../../utils/Constants.sol";
+import { UniversalRouterBaseFixture } from "./utils/Fixtures.sol";
 
-import { Commands } from "src/UniversalRouter/libraries/Commands.sol";
+import { Commands } from "../../../src/UniversalRouter/libraries/Commands.sol";
 
 /**
  * @custom:feature Initiating a withdrawal through the router

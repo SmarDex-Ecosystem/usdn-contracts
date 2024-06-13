@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
-import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import { ProtocolAction, LiquidationsEffects, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { TickMath } from "src/libraries/TickMath.sol";
+import {
+    ProtocolAction,
+    LiquidationsEffects,
+    PositionId
+} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { TickMath } from "../../../../src/libraries/TickMath.sol";
 
 /// @custom:feature Test the _liquidatePositions internal function of the long layer
 contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {

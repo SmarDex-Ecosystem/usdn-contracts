@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
@@ -52,7 +52,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /// @inheritdoc IUsdnProtocolLong
-    function maxTick() public view returns (int24 tick_) {
+    function maxTick() external view returns (int24 tick_) {
         tick_ = TickMath.maxUsableTick(_tickSpacing);
     }
 
@@ -72,7 +72,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
     /// @inheritdoc IUsdnProtocolLong
     // slither-disable-next-line write-after-write
-    function getMinLiquidationPrice(uint128 price) public view returns (uint128 liquidationPrice_) {
+    function getMinLiquidationPrice(uint128 price) external view returns (uint128 liquidationPrice_) {
         liquidationPrice_ = _getLiquidationPrice(price, uint128(_minLeverage));
         int24 tick = getEffectiveTickForPrice(liquidationPrice_);
         liquidationPrice_ = getEffectivePriceForTick(tick + _tickSpacing);

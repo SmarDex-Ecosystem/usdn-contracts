@@ -1,20 +1,20 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
 import { Script } from "forge-std/Script.sol";
 
-import { Sdex } from "test/utils/Sdex.sol";
-import { WstETH } from "test/utils/WstEth.sol";
+import { Sdex } from "../test/utils/Sdex.sol";
+import { WstETH } from "../test/utils/WstEth.sol";
 
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { IWstETH } from "src/interfaces/IWstETH.sol";
-import { MockLiquidationRewardsManager } from "src/OracleMiddleware/mock/MockLiquidationRewardsManager.sol";
-import { MockWstEthOracleMiddleware } from "src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
-import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
-import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
-import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
-import { Rebalancer } from "src/Rebalancer/Rebalancer.sol";
-import { Usdn } from "src/Usdn/Usdn.sol";
+import { ProtocolAction } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IWstETH } from "../src/interfaces/IWstETH.sol";
+import { MockLiquidationRewardsManager } from "../src/OracleMiddleware/mock/MockLiquidationRewardsManager.sol";
+import { MockWstEthOracleMiddleware } from "../src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
+import { LiquidationRewardsManager } from "../src/OracleMiddleware/LiquidationRewardsManager.sol";
+import { WstEthOracleMiddleware } from "../src/OracleMiddleware/WstEthOracleMiddleware.sol";
+import { UsdnProtocol } from "../src/UsdnProtocol/UsdnProtocol.sol";
+import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
+import { Usdn } from "../src/Usdn/Usdn.sol";
 
 contract Deploy is Script {
     /**

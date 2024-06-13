@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
-import { MOCK_PYTH_DATA } from "test/unit/Middlewares/utils/Constants.sol";
-import { DEPLOYER } from "test/utils/Constants.sol";
-import { UsdnProtocolBaseIntegrationFixture } from "test/integration/UsdnProtocol/utils/Fixtures.sol";
-import { MockChainlinkOnChain } from "test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
+import { MOCK_PYTH_DATA } from "../../unit/Middlewares/utils/Constants.sol";
+import { DEPLOYER } from "../../utils/Constants.sol";
+import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
+import { MockChainlinkOnChain } from "../../unit/Middlewares/utils/MockChainlinkOnChain.sol";
 
-import { IRebalancerEvents } from "src/interfaces/Rebalancer/IRebalancerEvents.sol";
-import { ProtocolAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { HugeUint } from "src/libraries/HugeUint.sol";
-import { TickMath } from "src/libraries/TickMath.sol";
-import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
+import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
+import { ProtocolAction, TickData } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, PositionId } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { HugeUint } from "../../../src/libraries/HugeUint.sol";
+import { TickMath } from "../../../src/libraries/TickMath.sol";
+import { LiquidationRewardsManager } from "../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
 
 /**
  * @custom:feature The rebalancer is triggered after liquidations
@@ -31,6 +31,8 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
         params.initialDeposit += 100 ether;
         params.initialLong += 100 ether;
         _setUp(params);
+
+        sdex.mintAndApprove(address(this), 50_000 ether, address(protocol), type(uint256).max);
 
         tickSpacing = protocol.getTickSpacing();
 

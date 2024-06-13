@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
-import { WusdnHandler } from "test/unit/WUSDN/utils/Handler.sol";
-import { BaseFixture } from "test/utils/Fixtures.sol";
+import { WusdnHandler } from "./Handler.sol";
+import { BaseFixture } from "../../../utils/Fixtures.sol";
 
-import { Wusdn } from "src/Usdn/Wusdn.sol";
-import { Usdn } from "src/Usdn/Usdn.sol";
+import { Wusdn } from "../../../../src/Usdn/Wusdn.sol";
+import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 
 /**
  * @title WusdnTokenFixture

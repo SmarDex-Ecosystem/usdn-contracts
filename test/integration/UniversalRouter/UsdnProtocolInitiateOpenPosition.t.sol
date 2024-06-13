@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
 import { Constants } from "@uniswap/universal-router/contracts/libraries/Constants.sol";
 
-import { USER_1 } from "test/utils/Constants.sol";
-import { UniversalRouterBaseFixture } from "test/integration/UniversalRouter/utils/Fixtures.sol";
+import { USER_1 } from "../../utils/Constants.sol";
+import { UniversalRouterBaseFixture } from "./utils/Fixtures.sol";
 
-import { Commands } from "src/UniversalRouter/libraries/Commands.sol";
+import { Commands } from "../../../src/UniversalRouter/libraries/Commands.sol";
 
 /**
  * @custom:feature Initiating an open position through the router
@@ -38,7 +38,14 @@ contract TestForkUniversalRouterInitiateOpenPosition is UniversalRouterBaseFixtu
         bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.INITIATE_OPEN)));
         bytes[] memory inputs = new bytes[](1);
         inputs[0] = abi.encode(
-            OPEN_POSITION_AMOUNT, DESIRED_LIQUIDATION, USER_1, address(this), "", EMPTY_PREVIOUS_DATA, _securityDeposit
+            OPEN_POSITION_AMOUNT,
+            DESIRED_LIQUIDATION,
+            USER_1,
+            address(this),
+            NO_PERMIT2,
+            "",
+            EMPTY_PREVIOUS_DATA,
+            _securityDeposit
         );
         router.execute{ value: _securityDeposit }(commands, inputs);
 
@@ -66,6 +73,7 @@ contract TestForkUniversalRouterInitiateOpenPosition is UniversalRouterBaseFixtu
             DESIRED_LIQUIDATION,
             USER_1,
             address(this),
+            NO_PERMIT2,
             "",
             EMPTY_PREVIOUS_DATA,
             _securityDeposit

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
-import { BaseFixture } from "test/utils/Fixtures.sol";
-import { Permit2TokenBitfieldHandler } from "test/unit/Permit2TokenBitfield/utils/Handler.sol";
+import { BaseFixture } from "../../../utils/Fixtures.sol";
+import { Permit2TokenBitfieldHandler } from "../utils/Handler.sol";
 
 /**
  * @title Permit2TokenBitfieldFixture

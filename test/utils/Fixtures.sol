@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
 import { Test } from "forge-std/Test.sol";
 
-import "test/utils/Constants.sol" as constants;
+import "./Constants.sol" as constants;
 
 /**
  * @title BaseFixture

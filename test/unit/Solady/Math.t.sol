@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { BaseFixture } from "test/utils/Fixtures.sol";
+import { BaseFixture } from "../../utils/Fixtures.sol";
 
-import { TickMath } from "src/libraries/TickMath.sol";
+import { TickMath } from "../../../src/libraries/TickMath.sol";
 
 /**
  * @custom:feature Solady math library fuzzing (diff testing)

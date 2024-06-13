@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
-import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import { TickMath } from "src/libraries/TickMath.sol";
+import { TickMath } from "../../../../src/libraries/TickMath.sol";
 
 /// @custom:feature Test the _calcBitmapIndexFromTick internal function of the long layer
 contract TestUsdnProtocolLongCalcBitmapIndexFromTick is UsdnProtocolBaseFixture {

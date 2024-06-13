@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
-import { ADMIN } from "test/utils/Constants.sol";
+import { ADMIN } from "../../utils/Constants.sol";
 
-import { RebalancerFixture } from "test/unit/Rebalancer/utils/Fixtures.sol";
+import { RebalancerFixture } from "./utils/Fixtures.sol";
 
 /**
  * @custom:feature The setter and getter functions of the rebalancer contract

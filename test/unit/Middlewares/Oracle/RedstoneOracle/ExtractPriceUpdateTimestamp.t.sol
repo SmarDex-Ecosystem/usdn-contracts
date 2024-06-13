@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
-import { OracleMiddlewareBaseFixture } from "test/unit/Middlewares/utils/Fixtures.sol";
-import { REDSTONE_ETH_TIMESTAMP, REDSTONE_ETH_DATA } from "test/unit/Middlewares/utils/Constants.sol";
+import { OracleMiddlewareBaseFixture } from "../../utils/Fixtures.sol";
+import { REDSTONE_ETH_TIMESTAMP, REDSTONE_ETH_DATA } from "../../utils/Constants.sol";
 
 /// @custom:feature The `extractPriceUpdateTimestamp` function of `RedstoneOracle`
 contract TestRedstoneOracleExtractPriceUpdateTimestamp is OracleMiddlewareBaseFixture {

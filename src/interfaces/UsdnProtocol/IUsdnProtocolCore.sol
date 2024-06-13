@@ -24,17 +24,6 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
     /* -------------------------- Public view functions ------------------------- */
 
     /**
-     * @notice Get the predicted value of the funding since the last state update for the given timestamp
-     * @dev When multiplied with the long trading exposure, this value gives the asset balance that needs to be paid to
-     * the vault side (or long side if negative). If the provided timestamp is older than the last state update, the
-     * function reverts with `UsdnProtocolTimestampTooOld`
-     * @param timestamp The current timestamp
-     * @return fund_ The magnitude of the funding (with `FUNDING_RATE_DECIMALS` decimals)
-     * @return oldLongExpo_ The long trading exposure after the last state update
-     */
-    function funding(uint128 timestamp) external view returns (int256 fund_, int256 oldLongExpo_);
-
-    /**
      * @notice Get the predicted value of the long balance for the given asset price and timestamp
      * @dev The effects of the funding rates and any profit or loss of the long positions since the last contract state
      * update is taken into account, as well as the fees. If the provided timestamp is older than the last state
@@ -65,6 +54,32 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
      * @return The long trading exposure
      */
     function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256);
+
+    /**
+     * @notice Calculation of the EMA of the funding rate
+     * @param lastFunding The last funding rate
+     * @param secondsElapsed The number of seconds elapsed since the last protocol action
+     * @param emaPeriod The EMA period
+     * @param previousEMA The previous EMA
+     * @return The new EMA value
+     */
+    function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
+        external
+        pure
+        returns (int256);
+
+    /* --------------------------  External functions --------------------------- */
+
+    /**
+     * @notice Get the predicted value of the funding since the last state update for the given timestamp
+     * @dev When multiplied with the long trading exposure, this value gives the asset balance that needs to be paid to
+     * the vault side (or long side if negative). If the provided timestamp is older than the last state update, the
+     * function reverts with `UsdnProtocolTimestampTooOld`
+     * @param timestamp The current timestamp
+     * @return fund_ The magnitude of the funding (with `FUNDING_RATE_DECIMALS` decimals)
+     * @return oldLongExpo_ The long trading exposure after the last state update
+     */
+    function funding(uint128 timestamp) external view returns (int256 fund_, int256 oldLongExpo_);
 
     /**
      * @notice Get the predicted value of the vault trading exposure for the given asset price and timestamp
@@ -100,17 +115,4 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
      * `ProtocolAction.None`
      */
     function getUserPendingAction(address user) external view returns (PendingAction memory action_);
-
-    /**
-     * @notice Calculation of the EMA of the funding rate
-     * @param lastFunding The last funding rate
-     * @param secondsElapsed The number of seconds elapsed since the last protocol action
-     * @param emaPeriod The EMA period
-     * @param previousEMA The previous EMA
-     * @return The new EMA value
-     */
-    function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
-        external
-        pure
-        returns (int256);
 }

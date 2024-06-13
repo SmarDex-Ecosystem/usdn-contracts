@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
 import { Vm } from "forge-std/Vm.sol";
 
-import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { ADMIN } from "test/utils/Constants.sol";
+import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
+import { ADMIN } from "../../utils/Constants.sol";
 
 import {
     PendingAction,
@@ -13,7 +13,7 @@ import {
     LongPendingAction,
     ProtocolAction,
     PositionId
-} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+} from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The entry/exit position fees mechanism of the protocol

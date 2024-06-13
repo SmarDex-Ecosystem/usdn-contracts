@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
-import { RebalancerFixture } from "test/unit/Rebalancer/utils/Fixtures.sol";
-import { USER_1, USER_2 } from "test/utils/Constants.sol";
+import { RebalancerFixture } from "./utils/Fixtures.sol";
+import { USER_1, USER_2 } from "../../utils/Constants.sol";
 
-import { PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PositionId } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The updatePosition function of the rebalancer contract

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
-import { DoubleEndedQueue, PendingAction } from "src/libraries/DoubleEndedQueue.sol";
+import { DoubleEndedQueue, PendingAction } from "../../../../src/libraries/DoubleEndedQueue.sol";
 
 /**
  * @title DequeHandler

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
 import { Vm } from "forge-std/Vm.sol";
 
-import { USER_1 } from "test/utils/Constants.sol";
-import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
-import { RebaseHandler } from "test/unit/USDN/utils/RebaseHandler.sol";
+import { USER_1 } from "../../utils/Constants.sol";
+import { UsdnTokenFixture } from "./utils/Fixtures.sol";
+import { RebaseHandler } from "./utils/RebaseHandler.sol";
 
 /**
  * @custom:feature The `rebase` function of `USDN`

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
 import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 import { PythErrors } from "@pythnetwork/pyth-sdk-solidity/PythErrors.sol";
 
-import { ETH_PRICE, ETH_CONF } from "test/unit/Middlewares/utils/Constants.sol";
+import { ETH_PRICE, ETH_CONF } from "../utils/Constants.sol";
 
 /**
  * @title MockPythError interface

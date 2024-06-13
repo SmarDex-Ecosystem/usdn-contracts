@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 
-import { USER_1 } from "test/utils/Constants.sol";
-import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
+import { USER_1 } from "../../utils/Constants.sol";
+import { UsdnTokenFixture } from "./utils/Fixtures.sol";
 
 /**
  * @custom:feature The `transferSharesFrom` function of `USDN`
