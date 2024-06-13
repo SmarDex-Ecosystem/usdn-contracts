@@ -119,10 +119,12 @@ contract Wusdn is ERC20Permit, IWusdn {
             }
         }
 
+        // we consecutively divide and multiply by `SHARES_RATIO` to have
+        // a share amount that is a multiple of `SHARES_RATIO`
         wrappedAmount_ = usdnShares / SHARES_RATIO;
 
         _mint(to, wrappedAmount_);
-        USDN.transferSharesFrom(msg.sender, address(this), usdnShares);
+        USDN.transferSharesFrom(msg.sender, address(this), wrappedAmount_ * SHARES_RATIO);
 
         emit Wrap(msg.sender, to, usdnAmount, wrappedAmount_);
     }

@@ -35,7 +35,8 @@ contract TestWusdnFuzzing is WusdnTokenFixture {
         vm.startPrank(USER_1);
 
         usdn.approve(address(wusdn), userBalance);
-        wusdn.wrap(userBalance);
+        uint256 wrappedAmount = wusdn.wrap(userBalance);
+        wusdn.unwrap(wrappedAmount);
 
         vm.stopPrank();
         assertEq(usdn.sharesOf(USER_1), usdnShares);
