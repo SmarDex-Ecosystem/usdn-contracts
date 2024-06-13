@@ -38,7 +38,14 @@ contract TestForkUniversalRouterInitiateOpenPosition is UniversalRouterBaseFixtu
         bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.INITIATE_OPEN)));
         bytes[] memory inputs = new bytes[](1);
         inputs[0] = abi.encode(
-            OPEN_POSITION_AMOUNT, DESIRED_LIQUIDATION, USER_1, address(this), "", EMPTY_PREVIOUS_DATA, _securityDeposit
+            OPEN_POSITION_AMOUNT,
+            DESIRED_LIQUIDATION,
+            USER_1,
+            address(this),
+            NO_PERMIT2,
+            "",
+            EMPTY_PREVIOUS_DATA,
+            _securityDeposit
         );
         router.execute{ value: _securityDeposit }(commands, inputs);
 
@@ -66,6 +73,7 @@ contract TestForkUniversalRouterInitiateOpenPosition is UniversalRouterBaseFixtu
             DESIRED_LIQUIDATION,
             USER_1,
             address(this),
+            NO_PERMIT2,
             "",
             EMPTY_PREVIOUS_DATA,
             _securityDeposit
