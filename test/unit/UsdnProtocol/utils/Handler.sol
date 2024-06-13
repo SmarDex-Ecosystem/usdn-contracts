@@ -487,6 +487,26 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         _clearPendingAction(user, rawIndex);
     }
 
+    function i_calcRebalancerPositionTick(
+        uint128 neutralPrice,
+        uint128 positionAmount,
+        uint256 rebalancerMaxLeverage,
+        uint256 totalExpo,
+        uint256 balanceLong,
+        uint256 balanceVault,
+        HugeUint.Uint512 memory liqMultiplierAccumulator
+    ) external view returns (int24 tickWithoutLiqPenalty_) {
+        CachedProtocolState memory cache = CachedProtocolState({
+            totalExpo: totalExpo,
+            longBalance: balanceLong,
+            vaultBalance: balanceVault,
+            tradingExpo: totalExpo - balanceLong,
+            liqMultiplierAccumulator: liqMultiplierAccumulator
+        });
+
+        return _calcRebalancerPositionTick(neutralPrice, positionAmount, rebalancerMaxLeverage, cache);
+    }
+
     function i_calcLongImbalanceBps(uint256 vaultBalance, uint256 longBalance, uint256 longTotalExpo)
         external
         pure

@@ -93,6 +93,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
     uint256 public usdnInitialTotalSupply;
     address[] public users;
 
+    int24 internal _tickSpacing = 100; // tick spacing 100 = 1%
     PreviousActionsData internal EMPTY_PREVIOUS_DATA =
         PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
 
@@ -118,7 +119,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             wstETH,
             oracleMiddleware,
             liquidationRewardsManager,
-            100, // tick spacing 100 = 1%
+            _tickSpacing,
             ADMIN // Fee collector
         );
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));

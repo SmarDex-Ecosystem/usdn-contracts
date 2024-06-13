@@ -17,7 +17,7 @@ import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewar
  * @custom:feature The rebalancer is triggered after liquidations
  * @custom:background A rebalancer is set and the USDN protocol is initialized with the default params
  */
-contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture, IRebalancerEvents {
+contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture, IRebalancerEvents {
     using HugeUint for HugeUint.Uint512;
 
     MockChainlinkOnChain public chainlinkGasPriceFeed;
