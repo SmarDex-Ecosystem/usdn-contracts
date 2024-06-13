@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
+import { console2 } from "./../../lib/forge-std/src/console2.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
@@ -859,7 +860,6 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /**
-     * TODO add tests
      * @notice Calculates the tick of the rebalancer position to open
      * @dev The returned tick must be higher than or equal to the minimum leverage of the protocol
      * and lower than or equal to the rebalancer and USDN protocol leverages (lower of the 2)
@@ -876,9 +876,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         CachedProtocolState memory cache
     ) internal view returns (int24 tickWithoutLiqPenalty_) {
         // use the lowest max leverage above the min leverage
+        uint256 protocolMinLeverage = _minLeverage;
         {
             uint256 protocolMaxLeverage = _maxLeverage;
-            uint256 protocolMinLeverage = _minLeverage;
             if (rebalancerMaxLeverage > protocolMaxLeverage) {
                 rebalancerMaxLeverage = protocolMaxLeverage;
             }
@@ -900,9 +900,19 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         uint256 tradingExpoToFill = targetTradingExpo - cache.tradingExpo;
 
         // check that the trading expo filled by the position would not exceed the max leverage
-        uint256 highestUsableTradingExpo = positionAmount * rebalancerMaxLeverage / LEVERAGE_DECIMALS - positionAmount;
+        uint256 highestUsableTradingExpo =
+            positionAmount * rebalancerMaxLeverage / 10 ** LEVERAGE_DECIMALS - positionAmount;
         if (highestUsableTradingExpo < tradingExpoToFill) {
             tradingExpoToFill = highestUsableTradingExpo;
+        }
+
+        {
+            // check that the trading expo filled by the position would not be below the min leverage
+            uint256 lowestUsableTradingExpo =
+                positionAmount * protocolMinLeverage / 10 ** LEVERAGE_DECIMALS - positionAmount;
+            if (lowestUsableTradingExpo > tradingExpoToFill) {
+                tradingExpoToFill = lowestUsableTradingExpo;
+            }
         }
 
         tickWithoutLiqPenalty_ = getEffectiveTickForPrice(
