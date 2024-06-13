@@ -342,35 +342,40 @@ contract Rebalancer is Ownable, ERC165, IOwnershipCallback, IRebalancer {
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_) {
+        if (to == address(0)) {
+            revert RebalancerInvalidAddressTo();
+        }
+
+        if (validator == address(0)) {
+            revert RebalancerInvalidAddressValidator();
+        }
+
         UserDeposit memory depositData = _userDeposit[msg.sender];
 
         if (depositData.amount == 0) {
-            // TODO add specific custom error
-            revert RebalancerUnauthorized();
+            revert RebalancerUserNotPending();
         }
 
-        // current version
         uint256 positionVersion = _positionVersion;
 
         if (depositData.entryPositionVersion >= positionVersion) {
-            // TODO add specific custom error
-            revert RebalancerUnauthorized();
+            revert RebalancerNoRebalancedAssets();
         }
 
         PositionData memory currentPositionData = _positionData[positionVersion];
 
+        // sanity check
         if (depositData.amount > currentPositionData.amount) {
-            revert RebalancerUnauthorized();
+            revert RebalancerInsufficientDeposited();
         }
 
         if (amount > depositData.amount) {
-            // TODO add specific custom error
-            revert RebalancerUnauthorized();
+            revert RebalancerInvalidAmount();
         }
 
         uint128 remainingAssets = depositData.amount - amount;
         if (remainingAssets < _minAssetDeposit) {
-            revert RebalancerUnauthorized();
+            revert RebalancerInvalidMinAssetDeposit();
         }
 
         uint256 amountToClose = FixedPointMathLib.fullMulDiv(
@@ -388,13 +393,11 @@ contract Rebalancer is Ownable, ERC165, IOwnershipCallback, IRebalancer {
                 delete _userDeposit[msg.sender];
             } else {
                 // TODO check remaining bonus in another PR
-                unchecked {
-                    _userDeposit[msg.sender].amount = remainingAssets;
-                }
+                _userDeposit[msg.sender].amount = remainingAssets;
             }
 
             unchecked {
-                currentPositionData.amount -= amount;
+                _positionData[positionVersion].amount -= amount;
             }
         }
     }
