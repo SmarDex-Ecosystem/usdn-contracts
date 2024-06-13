@@ -104,17 +104,19 @@ contract Wusdn is ERC20Permit, IWusdn {
      * @return wrappedAmount_ The amount of WUSDN received
      */
     function _wrap(uint256 usdnAmount, address to) private returns (uint256 wrappedAmount_) {
-        if (usdnAmount > USDN.balanceOf(msg.sender)) {
+        uint256 balanceOf = USDN.balanceOf(msg.sender);
+        if (usdnAmount > balanceOf) {
             revert WusdnInsufficientBalance(usdnAmount);
         }
 
         uint256 usdnShares = USDN.convertToShares(usdnAmount);
-        uint256 sharesOf = USDN.sharesOf(msg.sender);
-
         // Due to rounding in the USDN contract, we may have a small difference in the amount
         // of shares converted from the amount of USDN and the shares of the user
-        if (usdnShares > sharesOf) {
-            usdnShares = sharesOf;
+        if (balanceOf == usdnAmount) {
+            uint256 sharesOf = USDN.sharesOf(msg.sender);
+            if (usdnShares > sharesOf) {
+                usdnShares = sharesOf;
+            }
         }
 
         wrappedAmount_ = usdnShares / SHARES_RATIO;
