@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.25;
 
 import { TickMathFixture } from "test/unit/TickMath/utils/Fixtures.sol";
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.25;
 
 import { RebalancerFixture } from "test/unit/Rebalancer/utils/Fixtures.sol";
 import { ADMIN } from "test/utils/Constants.sol";

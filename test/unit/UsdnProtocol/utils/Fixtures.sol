@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.25;
 
 import { DEPLOYER, ADMIN } from "test/utils/Constants.sol";
 import { BaseFixture } from "test/utils/Fixtures.sol";

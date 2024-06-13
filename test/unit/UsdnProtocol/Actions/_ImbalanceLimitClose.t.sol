@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.25;
 
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { PreviousActionsData, PositionId, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
