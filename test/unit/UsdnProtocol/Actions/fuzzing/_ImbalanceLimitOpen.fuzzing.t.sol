@@ -3,7 +3,7 @@ pragma solidity ^0.8.25;
 
 import { IUsdnProtocolErrors } from "../../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
-import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { UsdnProtocolBaseFixture } from "../../utils/Fixtures.sol";
 
 /**
  * @custom:feature Fuzzing tests of the protocol expo limit for internal `imbalanceLimitOpen`

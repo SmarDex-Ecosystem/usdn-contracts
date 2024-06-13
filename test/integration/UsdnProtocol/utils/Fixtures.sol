@@ -24,9 +24,9 @@ import {
 } from "../../Middlewares/utils/Constants.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
-import { MockPyth } from "test/unit/Middlewares/utils/MockPyth.sol";
-import { MockChainlinkOnChain } from "test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
-import { UsdnProtocolHandler } from "test/unit/UsdnProtocol/utils/Handler.sol";
+import { MockPyth } from "../../../unit/Middlewares/utils/MockPyth.sol";
+import { MockChainlinkOnChain } from "../../../unit/Middlewares/utils/MockChainlinkOnChain.sol";
+import { UsdnProtocolHandler } from "../../../unit/UsdnProtocol/utils/Handler.sol";
 
 import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { Rebalancer } from "../../../../src/Rebalancer/Rebalancer.sol";

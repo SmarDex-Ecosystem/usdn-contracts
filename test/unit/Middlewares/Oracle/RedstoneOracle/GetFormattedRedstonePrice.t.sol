@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { OracleMiddlewareBaseFixture } from "test/unit/Middlewares/utils/Fixtures.sol";
-import {
-    REDSTONE_ETH_PRICE, REDSTONE_ETH_DATA, REDSTONE_ETH_TIMESTAMP
-} from "test/unit/Middlewares/utils/Constants.sol";
+import { OracleMiddlewareBaseFixture } from "../../utils/Fixtures.sol";
+import { REDSTONE_ETH_PRICE, REDSTONE_ETH_DATA, REDSTONE_ETH_TIMESTAMP } from "../../utils/Constants.sol";
 
 import { RedstonePriceInfo } from "../../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 

@@ -4,7 +4,7 @@ pragma solidity ^0.8.25;
 import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
 
 import { DEPLOYER, WETH, WSTETH } from "../../../utils/Constants.sol";
-import { UsdnProtocolBaseIntegrationFixture } from "test/integration/UsdnProtocol/utils/Fixtures.sol";
+import { UsdnProtocolBaseIntegrationFixture } from "../../UsdnProtocol/utils/Fixtures.sol";
 import { UniversalRouterHandler } from "./Handler.sol";
 import { RouterParameters } from "../../../../src/UniversalRouter/base/RouterImmutables.sol";
 
