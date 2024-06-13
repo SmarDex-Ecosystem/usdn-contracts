@@ -3,9 +3,9 @@ pragma solidity 0.8.20;
 
 import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 
-import { IWusdnEvents } from "src/interfaces/Usdn/IWusdnEvents.sol";
-import { IWusdnErrors } from "src/interfaces/Usdn/IWusdnErrors.sol";
-import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
+import { IWusdnEvents } from "./IWusdnEvents.sol";
+import { IWusdnErrors } from "./IWusdnErrors.sol";
+import { IUsdn } from "./IUsdn.sol";
 
 /**
  * @title Wusdn Interface

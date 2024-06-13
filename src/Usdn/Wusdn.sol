@@ -5,8 +5,8 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 
-import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
-import { IWusdn } from "src/interfaces/Usdn/IWusdn.sol";
+import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
+import { IWusdn } from "../interfaces/Usdn/IWusdn.sol";
 
 /**
  * @title WUSDN token contract
