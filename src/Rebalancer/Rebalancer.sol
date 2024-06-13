@@ -183,12 +183,12 @@ contract Rebalancer is Ownable, ERC165, IOwnershipCallback, IRebalancer {
             }
         }
 
-        _asset.safeTransferFrom(msg.sender, address(this), amount);
-
         depositData.entryPositionVersion = positionVersion + 1;
         depositData.amount += amount;
         _userDeposit[to] = depositData;
         _pendingAssetsAmount += amount;
+
+        _asset.safeTransferFrom(msg.sender, address(this), amount);
 
         emit AssetsDeposited(amount, to, positionVersion + 1);
     }
