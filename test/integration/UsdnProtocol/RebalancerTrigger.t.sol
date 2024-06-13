@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
 import { MOCK_PYTH_DATA } from "test/unit/Middlewares/utils/Constants.sol";
 import { DEPLOYER } from "test/utils/Constants.sol";
@@ -31,6 +31,8 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
         params.initialDeposit += 100 ether;
         params.initialLong += 100 ether;
         _setUp(params);
+
+        sdex.mintAndApprove(address(this), 50_000 ether, address(protocol), type(uint256).max);
 
         tickSpacing = protocol.getTickSpacing();
 

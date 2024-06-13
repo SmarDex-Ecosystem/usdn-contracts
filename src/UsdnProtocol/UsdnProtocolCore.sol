@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
@@ -42,11 +42,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     /* -------------------------- Public view functions ------------------------- */
 
     /// @inheritdoc IUsdnProtocolCore
-    function funding(uint128 timestamp) public view returns (int256 fund_, int256 oldLongExpo_) {
-        (fund_, oldLongExpo_) = _funding(timestamp, _EMA);
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
     function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
         public
         view
@@ -66,6 +61,19 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             // fees have the same sign as fundAsset (negative here), so we need to sub them
             available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset - fee);
         }
+    }
+
+    /// @inheritdoc IUsdnProtocolCore
+    function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
+        public
+        pure
+        returns (int256)
+    {
+        if (secondsElapsed >= emaPeriod) {
+            return lastFunding;
+        }
+
+        return (lastFunding + previousEMA * _toInt256(emaPeriod - secondsElapsed)) / _toInt256(emaPeriod);
     }
 
     /// @inheritdoc IUsdnProtocolCore
@@ -92,6 +100,13 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     /// @inheritdoc IUsdnProtocolCore
     function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) public view returns (int256 expo_) {
         expo_ = _totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(currentPrice, timestamp));
+    }
+
+    /* --------------------------  External functions --------------------------- */
+
+    /// @inheritdoc IUsdnProtocolCore
+    function funding(uint128 timestamp) external view returns (int256 fund_, int256 oldLongExpo_) {
+        (fund_, oldLongExpo_) = _funding(timestamp, _EMA);
     }
 
     /// @inheritdoc IUsdnProtocolCore
@@ -162,19 +177,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     /// @inheritdoc IUsdnProtocolCore
     function getUserPendingAction(address user) external view returns (PendingAction memory action_) {
         (action_,) = _getPendingAction(user);
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
-    function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
-        public
-        pure
-        returns (int256)
-    {
-        if (secondsElapsed >= emaPeriod) {
-            return lastFunding;
-        }
-
-        return (lastFunding + previousEMA * _toInt256(emaPeriod - secondsElapsed)) / _toInt256(emaPeriod);
     }
 
     /* --------------------------  Internal functions --------------------------- */
