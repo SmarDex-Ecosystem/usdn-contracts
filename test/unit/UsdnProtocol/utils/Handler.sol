@@ -534,10 +534,4 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     function getLongTradingExpo(uint128 currentPrice) external view returns (int256 expo_) {
         expo_ = _totalExpo.toInt256().safeSub(_longAssetAvailable(currentPrice));
     }
-
-    function getPendingBalanceVaultSlot() external pure returns (uint256 slot_) {
-        assembly {
-            slot_ := _pendingBalanceVault.slot
-        }
-    }
 }
