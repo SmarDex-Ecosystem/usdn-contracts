@@ -726,6 +726,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     /**
      * @notice Calculates the current imbalance between the vault and long sides
      * @dev If the value is positive, the long trading expo is smaller than the vault trading expo
+     * If the trading expo is equal to 0, the imbalance is infinite and int256.max is returned
      * @param vaultBalance The balance of the vault
      * @param longBalance The balance of the long side
      * @param totalExpo The total expo of the long side
