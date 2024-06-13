@@ -731,15 +731,18 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param totalExpo The total expo of the long side
      * @return imbalanceBps_ The imbalance in basis points
      */
-    function _calcLongImbalanceBps(uint256 vaultBalance, uint256 longBalance, uint256 totalExpo)
+    function _calcImbalanceCloseBps(uint256 vaultBalance, uint256 longBalance, uint256 totalExpo)
         internal
         pure
         returns (int256 imbalanceBps_)
     {
-        // imbalanceBps_ = (vaultBalance - (totalExpo - longBalance)) * BPS_DIVISOR / vaultBalance;
-        imbalanceBps_ = (vaultBalance.toInt256().safeSub(totalExpo.toInt256().safeSub(longBalance.toInt256()))).safeMul(
-            int256(BPS_DIVISOR)
-        ).safeDiv(vaultBalance.toInt256());
+        int256 tradingExpo = totalExpo.toInt256().safeSub(longBalance.toInt256());
+        if (tradingExpo == 0) {
+            return type(int256).max;
+        }
+
+        // imbalanceBps_ = (vaultBalance - (totalExpo - longBalance)) * BPS_DIVISOR / (totalExpo - longBalance);
+        imbalanceBps_ = (vaultBalance.toInt256().safeSub(tradingExpo)).safeMul(int256(BPS_DIVISOR)).safeDiv(tradingExpo);
     }
 
     /**
@@ -889,7 +892,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         int256 longImbalanceTargetBps = _longImbalanceTargetBps;
         // calculate the trading expo missing to reach the imbalance target
         uint256 targetTradingExpo =
-            (cache.vaultBalance * (BPS_DIVISOR.toInt256() - longImbalanceTargetBps).toUint256() / BPS_DIVISOR);
+            (cache.vaultBalance * BPS_DIVISOR / (BPS_DIVISOR.toInt256() + longImbalanceTargetBps).toUint256());
 
         // check that the target is not already exceeded
         if (cache.tradingExpo >= targetTradingExpo) {
@@ -935,7 +938,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         // and the position is not at the max leverage, add one tick
         if (
             highestUsableTradingExpo != tradingExpoToFill
-                && _calcLongImbalanceBps(
+                && _calcImbalanceCloseBps(
                     cache.vaultBalance, cache.longBalance + positionAmount, cache.totalExpo + positionTotalExpo
                 ) > longImbalanceTargetBps
         ) {

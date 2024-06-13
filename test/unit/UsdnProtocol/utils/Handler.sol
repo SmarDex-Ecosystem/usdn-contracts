@@ -507,12 +507,12 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _calcRebalancerPositionTick(neutralPrice, positionAmount, rebalancerMaxLeverage, cache);
     }
 
-    function i_calcLongImbalanceBps(uint256 vaultBalance, uint256 longBalance, uint256 longTotalExpo)
+    function i_calcImbalanceCloseBps(uint256 vaultBalance, uint256 longBalance, uint256 longTotalExpo)
         external
         pure
         returns (int256 imbalanceBps_)
     {
-        return _calcLongImbalanceBps(vaultBalance, longBalance, longTotalExpo);
+        return _calcImbalanceCloseBps(vaultBalance, longBalance, longTotalExpo);
     }
 
     function i_removeBlockedPendingAction(uint128 rawIndex, address payable to, bool cleanup) external {

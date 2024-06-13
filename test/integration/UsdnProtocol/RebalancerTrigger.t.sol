@@ -118,9 +118,8 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
         uint256 totalExpo = protocol.getTotalExpo() - tickToLiquidateData.totalExpo;
         uint256 vaultAssetAvailable = uint256(protocol.i_vaultAssetAvailable(wstEthPrice)) + remainingCollateral;
         uint256 longAssetAvailable = uint256(protocol.i_longAssetAvailable(wstEthPrice)) - remainingCollateral;
-        uint256 tradingExpoToFill = (
-            vaultAssetAvailable * uint256(int256(BPS_DIVISOR) - protocol.getLongImbalanceTargetBps()) / BPS_DIVISOR
-        ) - (totalExpo - longAssetAvailable);
+        uint256 tradingExpoToFill = vaultAssetAvailable * BPS_DIVISOR
+            / uint256(int256(BPS_DIVISOR) + protocol.getLongImbalanceTargetBps()) - (totalExpo - longAssetAvailable);
 
         // calculate the state of the liq accumulator after the liquidations
         HugeUint.Uint512 memory expectedAccumulator = HugeUint.sub(
@@ -132,7 +131,7 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
             )
         );
 
-        int256 imbalance = protocol.i_calcLongImbalanceBps(vaultAssetAvailable, longAssetAvailable, totalExpo);
+        int256 imbalance = protocol.i_calcImbalanceCloseBps(vaultAssetAvailable, longAssetAvailable, totalExpo);
         // Sanity check
         assertGt(
             imbalance,
@@ -157,7 +156,7 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
         _expectEmits(wstEthPrice, amountInRebalancer + bonus, liqPriceWithoutPenalty, expectedTick, 1);
         protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA, 1);
 
-        imbalance = protocol.i_calcLongImbalanceBps(
+        imbalance = protocol.i_calcImbalanceCloseBps(
             protocol.getBalanceVault(), protocol.getBalanceLong(), protocol.getTotalExpo()
         );
 
