@@ -9,9 +9,8 @@ import { ERC165, IERC165 } from "@openzeppelin/contracts/utils/introspection/ERC
 
 import { IOwnershipCallback } from "src/interfaces/UsdnProtocol/IOwnershipCallback.sol";
 import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
-import { PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PositionId, PendingAction, PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import { PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title Rebalancer
@@ -333,5 +332,70 @@ contract Rebalancer is Ownable, ERC165, IOwnershipCallback, IRebalancer {
     /// @inheritdoc IOwnershipCallback
     function ownershipCallback(address, PositionId calldata) external pure {
         revert RebalancerUnauthorized(); // first version of the rebalancer contract so we are always reverting
+    }
+
+    // TODO add natspec
+    function initiateClosePosition(
+        uint128 amount,
+        address to,
+        address payable validator,
+        bytes calldata currentPriceData,
+        PreviousActionsData calldata previousActionsData
+    ) external payable returns (bool success_) {
+        UserDeposit memory depositData = _userDeposit[msg.sender];
+
+        if (depositData.amount == 0) {
+            // TODO add specific custom error
+            revert RebalancerUnauthorized();
+        }
+
+        // current version
+        uint256 positionVersion = _positionVersion;
+
+        if (depositData.entryPositionVersion >= positionVersion) {
+            // TODO add specific custom error
+            revert RebalancerUnauthorized();
+        }
+
+        PositionData memory currentPositionData = _positionData[positionVersion];
+
+        if (depositData.amount > currentPositionData.amount) {
+            revert RebalancerUnauthorized();
+        }
+
+        if (amount > depositData.amount) {
+            // TODO add specific custom error
+            revert RebalancerUnauthorized();
+        }
+
+        uint128 remainingAssets = depositData.amount - amount;
+        if (remainingAssets < _minAssetDeposit) {
+            revert RebalancerUnauthorized();
+        }
+
+        uint256 amountToClose = FixedPointMathLib.fullMulDiv(
+            amount,
+            currentPositionData.entryAccMultiplier,
+            _positionData[depositData.entryPositionVersion].entryAccMultiplier
+        );
+
+        success_ = _usdnProtocol.initiateClosePosition{ value: msg.value }(
+            currentPositionData.id, uint128(amountToClose), to, validator, currentPriceData, previousActionsData
+        );
+
+        if (success_) {
+            if (amount == depositData.amount) {
+                delete _userDeposit[msg.sender];
+            } else {
+                // TODO check remaining bonus in another PR
+                unchecked {
+                    _userDeposit[msg.sender].amount = remainingAssets;
+                }
+            }
+
+            unchecked {
+                currentPositionData.amount -= amount;
+            }
+        }
     }
 }
