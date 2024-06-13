@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
 import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
@@ -36,6 +36,7 @@ import { ProtocolAction, PreviousActionsData } from "src/interfaces/UsdnProtocol
 import { Usdn } from "src/Usdn/Usdn.sol";
 import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { Permit2TokenBitfield } from "src/libraries/Permit2TokenBitfield.sol";
 
 contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProtocolEvents {
     struct SetUpParams {
@@ -47,6 +48,8 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         bool fork;
         uint256 forkWarp; // warp to this timestamp after forking, before deploying protocol. Zero to disable
     }
+
+    Permit2TokenBitfield.Bitfield constant NO_PERMIT2 = Permit2TokenBitfield.Bitfield.wrap(0);
 
     SetUpParams public params;
     SetUpParams public DEFAULT_PARAMS = SetUpParams({
@@ -140,8 +143,6 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         );
         vm.stopPrank();
         params = testParams;
-
-        sdex.mintAndApprove(address(this), 50_000 ether, address(protocol), type(uint256).max);
     }
 
     function getHermesApiSignature(bytes32 feed, uint256 timestamp)

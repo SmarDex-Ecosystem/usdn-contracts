@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
-import { ChainlinkPriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { IWstETH } from "src/interfaces/IWstETH.sol";
-import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
-import { ChainlinkOracle } from "src/OracleMiddleware/oracles/ChainlinkOracle.sol";
+import { ChainlinkPriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IWstETH } from "../../interfaces/IWstETH.sol";
+import { LiquidationRewardsManager } from "../LiquidationRewardsManager.sol";
+import { ChainlinkOracle } from "../oracles/ChainlinkOracle.sol";
 
 /**
  * @title Contract to change liquidator rewards by setting a mocked gas price

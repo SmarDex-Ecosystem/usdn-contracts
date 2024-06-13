@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
 import { ADMIN, USER_1 } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
@@ -164,6 +164,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
             desiredLiqPrice,
             to,
             payable(validator),
+            NO_PERMIT2,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
@@ -225,6 +226,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
             CURRENT_PRICE * 9 / 10,
             address(this),
             payable(address(this)),
+            NO_PERMIT2,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
@@ -332,6 +334,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
             CURRENT_PRICE * 9 / 10,
             address(this),
             payable(address(this)),
+            NO_PERMIT2,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
@@ -461,7 +464,13 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         uint256 balanceContractBefore = address(this).balance;
 
         protocol.initiateOpenPosition{ value: 0.5 ether }(
-            uint128(LONG_AMOUNT), desiredLiqPrice, address(this), USER_1, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA
+            uint128(LONG_AMOUNT),
+            desiredLiqPrice,
+            address(this),
+            USER_1,
+            NO_PERMIT2,
+            abi.encode(CURRENT_PRICE),
+            EMPTY_PREVIOUS_DATA
         );
         _waitBeforeActionablePendingAction();
         protocol.validateOpenPosition(USER_1, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA);

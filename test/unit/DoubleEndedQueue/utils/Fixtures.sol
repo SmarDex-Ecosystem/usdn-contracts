@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
 import { BaseFixture } from "test/utils/Fixtures.sol";
 import { DequeHandler } from "test/unit/DoubleEndedQueue/utils/Handler.sol";

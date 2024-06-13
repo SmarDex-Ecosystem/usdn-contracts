@@ -31,8 +31,8 @@
             ({ pkgs, ... }: {
               packages = with pkgs; [
                 foundry-bin
-                solc_0_8_20
-                (solc.mkDefault pkgs solc_0_8_20)
+                solc_0_8_26
+                (solc.mkDefault pkgs solc_0_8_26)
                 slither-analyzer
                 lcov
               ];

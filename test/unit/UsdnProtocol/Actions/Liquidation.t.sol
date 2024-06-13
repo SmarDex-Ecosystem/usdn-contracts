@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
 import { USER_1, DEPLOYER } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
@@ -59,7 +59,12 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(posId.tick, posId.tickVersion, 0, 0, 0);
         protocol.initiateDeposit(
-            1 ether, address(this), payable(address(this)), abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA
+            1 ether,
+            address(this),
+            payable(address(this)),
+            NO_PERMIT2,
+            abi.encode(effectivePriceForTick),
+            EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -222,6 +227,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             desiredLiqPrice - 200 ether,
             address(this),
             payable(address(this)),
+            NO_PERMIT2,
             abi.encode(effectivePriceForTick),
             EMPTY_PREVIOUS_DATA
         );
@@ -586,7 +592,15 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // create high risk position
         protocol.initiateOpenPosition{
             value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
-        }(5 ether, 9 * currentPrice / 10, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA);
+        }(
+            5 ether,
+            9 * currentPrice / 10,
+            address(this),
+            payable(address(this)),
+            NO_PERMIT2,
+            priceData,
+            EMPTY_PREVIOUS_DATA
+        );
         _waitDelay();
         protocol.validateOpenPosition{
             value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)

@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { IUsdnProtocolLong } from "src/interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
-import { Position, LiquidationsEffects, TickData, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { UsdnProtocolVault } from "src/UsdnProtocol/UsdnProtocolVault.sol";
-import { TickMath } from "src/libraries/TickMath.sol";
-import { SignedMath } from "src/libraries/SignedMath.sol";
-import { HugeUint } from "src/libraries/HugeUint.sol";
+import { IUsdnProtocolLong } from "../interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
+import { Position, LiquidationsEffects, TickData, PositionId } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { UsdnProtocolVault } from "./UsdnProtocolVault.sol";
+import { TickMath } from "../libraries/TickMath.sol";
+import { SignedMath } from "../libraries/SignedMath.sol";
+import { HugeUint } from "../libraries/HugeUint.sol";
 
 abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     using LibBitmap for LibBitmap.Bitmap;
@@ -52,7 +52,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /// @inheritdoc IUsdnProtocolLong
-    function maxTick() public view returns (int24 tick_) {
+    function maxTick() external view returns (int24 tick_) {
         tick_ = TickMath.maxUsableTick(_tickSpacing);
     }
 
@@ -72,7 +72,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
     /// @inheritdoc IUsdnProtocolLong
     // slither-disable-next-line write-after-write
-    function getMinLiquidationPrice(uint128 price) public view returns (uint128 liquidationPrice_) {
+    function getMinLiquidationPrice(uint128 price) external view returns (uint128 liquidationPrice_) {
         liquidationPrice_ = _getLiquidationPrice(price, uint128(_minLeverage));
         int24 tick = getEffectiveTickForPrice(liquidationPrice_);
         liquidationPrice_ = getEffectivePriceForTick(tick + _tickSpacing);

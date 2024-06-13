@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
 import { USER_1 } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
@@ -74,7 +74,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
         protocol.initiateDeposit(
-            depositAmount, address(this), payable(address(this)), liquidationPriceData, EMPTY_PREVIOUS_DATA
+            depositAmount, address(this), payable(address(this)), NO_PERMIT2, liquidationPriceData, EMPTY_PREVIOUS_DATA
         );
 
         uint256 balanceSenderAfter = wstETH.balanceOf(address(this));
@@ -97,7 +97,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
      */
     function test_liquidationRewards_validateDeposit() public {
         protocol.initiateDeposit(
-            depositAmount, address(this), payable(address(this)), initialPriceData, EMPTY_PREVIOUS_DATA
+            depositAmount, address(this), payable(address(this)), NO_PERMIT2, initialPriceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -194,6 +194,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
             initialPrice / 2,
             address(this),
             payable(address(this)),
+            NO_PERMIT2,
             liquidationPriceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -223,6 +224,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
             initialPrice / 2,
             address(this),
             payable(address(this)),
+            NO_PERMIT2,
             initialPriceData,
             EMPTY_PREVIOUS_DATA
         );

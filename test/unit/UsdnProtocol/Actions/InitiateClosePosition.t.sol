@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
@@ -256,7 +256,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
 
         wstETH.mintAndApprove(address(this), POSITION_AMOUNT, address(protocol), type(uint256).max);
         (, posId) = protocol.initiateOpenPosition(
-            POSITION_AMOUNT, params.initialPrice / 2, address(this), USER_1, priceData, EMPTY_PREVIOUS_DATA
+            POSITION_AMOUNT, params.initialPrice / 2, address(this), USER_1, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         );
 
         vm.expectRevert(UsdnProtocolPositionNotValidated.selector);
@@ -550,6 +550,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             params.initialPrice / 2,
             address(rebalancer),
             payable(address(rebalancer)),
+            NO_PERMIT2,
             abi.encode(params.initialPrice),
             EMPTY_PREVIOUS_DATA
         );

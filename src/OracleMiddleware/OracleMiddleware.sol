@@ -1,21 +1,21 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-import { ChainlinkOracle } from "src/OracleMiddleware/oracles/ChainlinkOracle.sol";
-import { PythOracle } from "src/OracleMiddleware/oracles/PythOracle.sol";
-import { RedstoneOracle } from "src/OracleMiddleware/oracles/RedstoneOracle.sol";
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ChainlinkOracle } from "./oracles/ChainlinkOracle.sol";
+import { PythOracle } from "./oracles/PythOracle.sol";
+import { RedstoneOracle } from "./oracles/RedstoneOracle.sol";
+import { ProtocolAction } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import {
     PriceInfo,
     ChainlinkPriceInfo,
     ConfidenceInterval,
     FormattedPythPrice,
     RedstonePriceInfo
-} from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
-import { IBaseOracleMiddleware } from "src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
+} from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IOracleMiddleware } from "../interfaces/OracleMiddleware/IOracleMiddleware.sol";
+import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 
 /**
  * @title OracleMiddleware contract

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
 import { Vm } from "forge-std/Vm.sol";
 
@@ -53,7 +53,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         bytes memory priceData = abi.encode(2000 ether);
         protocol.initiateOpenPosition(
-            1 ether, desiredLiqPrice, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            1 ether, desiredLiqPrice, address(this), payable(address(this)), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         );
 
         Vm.Log[] memory logs = vm.getRecordedLogs();

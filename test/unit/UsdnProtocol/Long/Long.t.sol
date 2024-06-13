@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { ADMIN } from "test/utils/Constants.sol";
@@ -99,6 +99,7 @@ contract TestUsdnProtocolLongLong is UsdnProtocolBaseFixture {
             1000 ether,
             address(this),
             payable(address(this)),
+            NO_PERMIT2,
             abi.encode(2000 ether),
             EMPTY_PREVIOUS_DATA
         );

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
 import { DEPLOYER, ADMIN } from "test/utils/Constants.sol";
 import { BaseFixture } from "test/utils/Fixtures.sol";
@@ -23,6 +23,7 @@ import {
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Usdn } from "src/Usdn/Usdn.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
+import { Permit2TokenBitfield } from "src/libraries/Permit2TokenBitfield.sol";
 
 /**
  * @title UsdnProtocolBaseFixture
@@ -49,6 +50,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         uint256 initialBlock;
         Flags flags;
     }
+
+    Permit2TokenBitfield.Bitfield constant NO_PERMIT2 = Permit2TokenBitfield.Bitfield.wrap(0);
 
     SetUpParams public params;
     SetUpParams public DEFAULT_PARAMS = SetUpParams({
@@ -235,7 +238,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         bytes memory priceData = abi.encode(price);
 
         protocol.initiateDeposit{ value: securityDepositValue }(
-            positionSize, user, payable(user), priceData, EMPTY_PREVIOUS_DATA
+            positionSize, user, payable(user), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         if (untilAction == ProtocolAction.InitiateDeposit) return;
@@ -279,6 +282,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             openParams.desiredLiqPrice,
             openParams.user,
             payable(openParams.user),
+            NO_PERMIT2,
             priceData,
             EMPTY_PREVIOUS_DATA
         );

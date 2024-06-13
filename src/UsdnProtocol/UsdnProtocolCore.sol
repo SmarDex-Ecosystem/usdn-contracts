@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
-import { UsdnProtocolStorage } from "src/UsdnProtocol/UsdnProtocolStorage.sol";
-import { IUsdnProtocolCore } from "src/interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
+import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
+import { IUsdnProtocolCore } from "../interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
 import {
     ProtocolAction,
     PendingAction,
@@ -17,15 +18,14 @@ import {
     PositionId,
     Position,
     TickData
-} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { SignedMath } from "src/libraries/SignedMath.sol";
-import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
-import { TickMath } from "src/libraries/TickMath.sol";
-import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
-import { HugeUint } from "src/libraries/HugeUint.sol";
+} from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { SignedMath } from "../libraries/SignedMath.sol";
+import { DoubleEndedQueue } from "../libraries/DoubleEndedQueue.sol";
+import { TickMath } from "../libraries/TickMath.sol";
+import { HugeUint } from "../libraries/HugeUint.sol";
 
 abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
-    using SafeERC20 for IERC20Metadata;
+    using SafeTransferLib for address;
     using SafeCast for uint256;
     using SafeCast for int256;
     using SignedMath for int256;
@@ -40,11 +40,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     uint256 public constant MAX_ACTIONABLE_PENDING_ACTIONS = 20;
 
     /* -------------------------- Public view functions ------------------------- */
-
-    /// @inheritdoc IUsdnProtocolCore
-    function funding(uint128 timestamp) public view returns (int256 fund_, int256 oldLongExpo_) {
-        (fund_, oldLongExpo_) = _funding(timestamp, _EMA);
-    }
 
     /// @inheritdoc IUsdnProtocolCore
     function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
@@ -66,6 +61,19 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             // fees have the same sign as fundAsset (negative here), so we need to sub them
             available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset - fee);
         }
+    }
+
+    /// @inheritdoc IUsdnProtocolCore
+    function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
+        public
+        pure
+        returns (int256)
+    {
+        if (secondsElapsed >= emaPeriod) {
+            return lastFunding;
+        }
+
+        return (lastFunding + previousEMA * _toInt256(emaPeriod - secondsElapsed)) / _toInt256(emaPeriod);
     }
 
     /// @inheritdoc IUsdnProtocolCore
@@ -92,6 +100,13 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     /// @inheritdoc IUsdnProtocolCore
     function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) public view returns (int256 expo_) {
         expo_ = _totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(currentPrice, timestamp));
+    }
+
+    /* --------------------------  External functions --------------------------- */
+
+    /// @inheritdoc IUsdnProtocolCore
+    function funding(uint128 timestamp) external view returns (int256 fund_, int256 oldLongExpo_) {
+        (fund_, oldLongExpo_) = _funding(timestamp, _EMA);
     }
 
     /// @inheritdoc IUsdnProtocolCore
@@ -162,19 +177,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     /// @inheritdoc IUsdnProtocolCore
     function getUserPendingAction(address user) external view returns (PendingAction memory action_) {
         (action_,) = _getPendingAction(user);
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
-    function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
-        public
-        pure
-        returns (int256)
-    {
-        if (secondsElapsed >= emaPeriod) {
-            return lastFunding;
-        }
-
-        return (lastFunding + previousEMA * _toInt256(emaPeriod - secondsElapsed)) / _toInt256(emaPeriod);
     }
 
     /* --------------------------  Internal functions --------------------------- */
@@ -615,7 +617,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             }
             if (candidate.timestamp == 0) {
                 // remove the stale pending action
-                // slither-disable-next-line unused-return
                 _pendingActionsQueue.popFront();
                 // try the next one
                 continue;
@@ -747,7 +748,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             // for pending deposits, we send back the locked assets
             DepositPendingAction memory deposit = _toDepositPendingAction(pending);
             _pendingBalanceVault -= _toInt256(deposit.amount);
-            _asset.safeTransfer(to, deposit.amount);
+            address(_asset).safeTransfer(to, deposit.amount);
         } else if (pending.action == ProtocolAction.ValidateWithdrawal && cleanup) {
             // for pending withdrawals, we send the locked USDN
             WithdrawalPendingAction memory withdrawal = _toWithdrawalPendingAction(pending);

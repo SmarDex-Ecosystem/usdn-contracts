@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { ADMIN } from "test/utils/Constants.sol";
@@ -125,7 +125,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         vm.expectEmit(false, false, false, false);
         emit Rebase(0, 0);
         protocol.initiateDeposit(
-            1 ether, address(this), payable(address(this)), abi.encode(newPrice), EMPTY_PREVIOUS_DATA
+            1 ether, address(this), payable(address(this)), NO_PERMIT2, abi.encode(newPrice), EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -224,6 +224,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
             params.initialPrice / 2,
             address(this),
             payable(address(this)),
+            NO_PERMIT2,
             abi.encode(newPrice),
             EMPTY_PREVIOUS_DATA
         );

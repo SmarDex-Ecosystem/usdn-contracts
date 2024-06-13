@@ -3,7 +3,7 @@ pragma solidity >=0.8.0;
 
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
-import { PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PositionId } from "./IUsdnProtocolTypes.sol";
 
 /**
  * @notice This interface can be implemented by contracts that wish to be notified when they become owner of a USDN

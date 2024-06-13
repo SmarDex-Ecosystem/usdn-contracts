@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity ^0.8.25;
 
 import { MOCK_PYTH_DATA } from "test/unit/Middlewares/utils/Constants.sol";
 import { DEPLOYER } from "test/utils/Constants.sol";
@@ -32,6 +32,8 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
         params.initialLong += 100 ether;
         _setUp(params);
 
+        sdex.mintAndApprove(address(this), 50_000 ether, address(protocol), type(uint256).max);
+
         tickSpacing = protocol.getTickSpacing();
 
         vm.startPrank(DEPLOYER);
@@ -60,7 +62,7 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
 
         // deposit assets in the protocol to imbalance it
         protocol.initiateDeposit{ value: messageValue }(
-            30 ether, payable(address(this)), payable(address(this)), "", EMPTY_PREVIOUS_DATA
+            30 ether, payable(address(this)), payable(address(this)), NO_PERMIT2, "", EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
@@ -77,7 +79,7 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
 
         // open a position to liquidate and trigger the rebalancer
         (, posToLiquidate) = protocol.initiateOpenPosition{ value: messageValue }(
-            10 ether, 1500 ether, payable(address(this)), payable(address(this)), "", EMPTY_PREVIOUS_DATA
+            10 ether, 1500 ether, payable(address(this)), payable(address(this)), NO_PERMIT2, "", EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
