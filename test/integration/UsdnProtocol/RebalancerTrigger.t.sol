@@ -180,6 +180,38 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
         assertEq(protocol.getBalanceVault(), vaultAssetAvailable - bonus);
     }
 
+    function test_rebalancerTrigger_zeroLimit() public {
+        vm.startPrank(DEPLOYER);
+        protocol.setExpoImbalanceLimits(
+            uint256(protocol.getOpenExpoImbalanceLimitBps()),
+            uint256(protocol.getDepositExpoImbalanceLimitBps()),
+            uint256(protocol.getWithdrawalExpoImbalanceLimitBps()),
+            0,
+            -protocol.getLongImbalanceTargetBps()
+        );
+        vm.stopPrank();
+
+        skip(5 minutes);
+
+        mockPyth.setPrice(1280 ether / 1e10);
+        mockPyth.setLastPublishTime(block.timestamp);
+
+        uint256 pendingAssets = rebalancer.getPendingAssetsAmount();
+        uint256 posVersion = rebalancer.getPositionVersion();
+
+        // Sanity check
+        assertEq(0, protocol.getCloseExpoImbalanceLimitBps(), "The close limit should be zero");
+
+        uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
+
+        vm.expectEmit(false, false, false, false);
+        emit LiquidatedTick(0, 0, 0, 0, 0);
+        protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA, 1);
+
+        assertEq(rebalancer.getPendingAssetsAmount(), pendingAssets);
+        assertEq(rebalancer.getPositionVersion(), posVersion);
+    }
+
     /// @dev Prepare the expectEmits
     function _expectEmits(
         uint128 price,
