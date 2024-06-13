@@ -745,6 +745,31 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
     /**
      * TODO add tests
+     * @notice Calculates the current imbalance for the open action checks
+     * @dev If the value is positive, the long trading expo is larger than the vault trading expo
+     * In case of zero vault balance, the function returns `int256.max` since the resulting imbalance would be infinity
+     * @param vaultBalance The balance of the vault
+     * @param longBalance The balance of the long side (including the future long position to open)
+     * @param totalExpo The total expo of the long side (including the future long position to open)
+     * @return imbalanceBps_ The imbalance in basis points
+     */
+    function _calcImbalanceOpenBps(uint256 vaultBalance, uint256 longBalance, uint256 totalExpo)
+        internal
+        pure
+        returns (int256 imbalanceBps_)
+    {
+        // imbalanceBps_ = ((totalExpo - longBalance) - vaultBalance) * BPS_DIVISOR / vaultBalance;
+        int256 vaultTradingExpo = vaultBalance.toInt256();
+        // avoid division by zero
+        if (vaultTradingExpo == 0) {
+            return type(int256).max;
+        }
+        int256 longTradingExpo = (totalExpo - longBalance).toInt256(); // should never underflow
+        imbalanceBps_ = longTradingExpo.safeSub(vaultTradingExpo).safeMul(int256(BPS_DIVISOR)).safeDiv(vaultTradingExpo);
+    }
+
+    /**
+     * TODO add tests
      * @notice Immediately close a position with the given price
      * @dev Should only be used to close the rebalancer position
      * @param posId The ID of the position to close
