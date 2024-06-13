@@ -3,9 +3,9 @@ pragma solidity ^0.8.25;
 
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
-import { IChainlinkOracle } from "src/interfaces/OracleMiddleware/IChainlinkOracle.sol";
-import { ChainlinkPriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
+import { IChainlinkOracle } from "../../interfaces/OracleMiddleware/IChainlinkOracle.sol";
+import { ChainlinkPriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IOracleMiddlewareErrors } from "../../interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
 
 /**
  * @title ChainlinkOracle contract
@@ -52,7 +52,6 @@ abstract contract ChainlinkOracle is IChainlinkOracle, IOracleMiddlewareErrors {
      * @return price_ The price of the asset
      */
     function _getChainlinkLatestPrice() internal view virtual returns (ChainlinkPriceInfo memory price_) {
-        // slither-disable-next-line unused-return
         (, int256 price,, uint256 timestamp,) = _priceFeed.latestRoundData();
 
         if (timestamp < block.timestamp - _timeElapsedLimit) {
@@ -106,7 +105,6 @@ abstract contract ChainlinkOracle is IChainlinkOracle, IOracleMiddlewareErrors {
      * @return price_ The price of the asset
      */
     function _getChainlinkPrice(uint80 roundId) internal view virtual returns (ChainlinkPriceInfo memory price_) {
-        // slither-disable-next-line unused-return
         (, price_.price,, price_.timestamp,) = _priceFeed.getRoundData(roundId);
     }
 }

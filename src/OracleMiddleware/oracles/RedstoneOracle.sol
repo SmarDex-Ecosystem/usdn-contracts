@@ -3,12 +3,12 @@ pragma solidity ^0.8.25;
 
 // Temporary measure, forked the contracts to remove dependency on safemath
 import { PrimaryProdDataServiceConsumerBase } from
-    "src/vendored/Redstone/data-services/PrimaryProdDataServiceConsumerBase.sol";
-import { RedstoneConsumerBase } from "src/vendored/Redstone/core/RedstoneConsumerBase.sol";
+    "../../vendored/Redstone/data-services/PrimaryProdDataServiceConsumerBase.sol";
+import { RedstoneConsumerBase } from "../../vendored/Redstone/core/RedstoneConsumerBase.sol";
 
-import { IRedstoneOracle } from "src/interfaces/OracleMiddleware/IRedstoneOracle.sol";
-import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
-import { RedstonePriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IRedstoneOracle } from "../../interfaces/OracleMiddleware/IRedstoneOracle.sol";
+import { IOracleMiddlewareErrors } from "../../interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
+import { RedstonePriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
 /**
  * @title Redstone Oracle

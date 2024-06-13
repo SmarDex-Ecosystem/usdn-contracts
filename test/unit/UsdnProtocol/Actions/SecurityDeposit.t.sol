@@ -53,7 +53,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         (balanceUser0Before, balanceProtocolBefore,,) = _getBalances();
 
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
-            1 ether, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            1 ether, address(this), payable(address(this)), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -130,7 +130,13 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         (balanceUser0Before, balanceProtocolBefore,,) = _getBalances();
 
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
-            1 ether, params.initialPrice / 2, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            1 ether,
+            params.initialPrice / 2,
+            address(this),
+            payable(address(this)),
+            NO_PERMIT2,
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -228,7 +234,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     function test_RevertWhen_securityDeposit_lt_deposit() public {
         vm.expectRevert(UsdnProtocolSecurityDepositTooLow.selector);
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE - 1 }(
-            1 ether, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            1 ether, address(this), payable(address(this)), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -254,7 +260,13 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     function test_RevertWhen_securityDeposit_lt_openPosition() public {
         vm.expectRevert(UsdnProtocolSecurityDepositTooLow.selector);
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE - 1 }(
-            1 ether, params.initialPrice / 2, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            1 ether,
+            params.initialPrice / 2,
+            address(this),
+            payable(address(this)),
+            NO_PERMIT2,
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -293,7 +305,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         (balanceUser0Before, balanceProtocolBefore,,) = _getBalances();
 
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE + 100 }(
-            1 ether, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            1 ether, address(this), payable(address(this)), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -327,7 +339,13 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         (balanceUser0Before, balanceProtocolBefore,,) = _getBalances();
 
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE + 100 }(
-            1 ether, params.initialPrice / 2, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            1 ether,
+            params.initialPrice / 2,
+            address(this),
+            payable(address(this)),
+            NO_PERMIT2,
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
 
         assertSecurityDepositPaid();
@@ -376,7 +394,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         uint256 usdnBalanceUser1Before = usdn.balanceOf(USER_1);
 
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
-            1 ether, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            1 ether, address(this), payable(address(this)), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         );
         skip(protocol.getValidationDeadline() + 1);
 
@@ -388,7 +406,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
         vm.prank(USER_1);
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
-            1 ether, USER_1, USER_1, priceData, previousActionsData
+            1 ether, USER_1, USER_1, NO_PERMIT2, priceData, previousActionsData
         );
         _waitDelay();
 
@@ -418,14 +436,14 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         uint256 usdnBalanceUser1Before = usdn.balanceOf(USER_1);
 
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
-            1 ether, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            1 ether, address(this), payable(address(this)), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         );
 
         assertSecurityDepositPaid();
 
         vm.prank(USER_1);
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
-            1 ether, USER_1, USER_1, priceData, EMPTY_PREVIOUS_DATA
+            1 ether, USER_1, USER_1, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         );
         skip(protocol.getValidationDeadline() + 1);
 
@@ -558,7 +576,13 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
 
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
-            1 ether, params.initialPrice / 2, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            1 ether,
+            params.initialPrice / 2,
+            address(this),
+            payable(address(this)),
+            NO_PERMIT2,
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
         skip(protocol.getValidationDeadline() + 1);
 
@@ -570,7 +594,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
         vm.prank(USER_1);
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
-            1 ether, params.initialPrice / 2, USER_1, USER_1, priceData, previousActionsData
+            1 ether, params.initialPrice / 2, USER_1, USER_1, NO_PERMIT2, priceData, previousActionsData
         );
         _waitDelay();
 
@@ -595,14 +619,20 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
 
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
-            1 ether, params.initialPrice / 2, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            1 ether,
+            params.initialPrice / 2,
+            address(this),
+            payable(address(this)),
+            NO_PERMIT2,
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
 
         assertSecurityDepositPaid();
 
         vm.prank(USER_1);
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
-            1 ether, params.initialPrice / 2, address(this), USER_1, priceData, EMPTY_PREVIOUS_DATA
+            1 ether, params.initialPrice / 2, address(this), USER_1, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         );
         skip(protocol.getValidationDeadline() + 1);
 
@@ -745,7 +775,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         uint64 newSecurityDepositValue = SECURITY_DEPOSIT_VALUE / 2;
 
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
-            1 ether, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            1 ether, address(this), payable(address(this)), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -820,7 +850,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         uint64 newSecurityDepositValue = SECURITY_DEPOSIT_VALUE / 2;
 
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
-            1 ether, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            1 ether, address(this), payable(address(this)), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         );
         skip(protocol.getValidationDeadline() + 1);
 
@@ -840,7 +870,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
         vm.prank(USER_1);
         protocol.initiateDeposit{ value: newSecurityDepositValue }(
-            1 ether, USER_1, USER_1, priceData, previousActionsData
+            1 ether, USER_1, USER_1, NO_PERMIT2, priceData, previousActionsData
         );
         _waitDelay();
 
@@ -891,7 +921,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit StalePendingActionRemoved(address(this), posId);
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
-            1 ether, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            1 ether, address(this), payable(address(this)), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -925,7 +955,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         (balanceUser0Before, balanceProtocolBefore,,) = _getBalances();
 
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
-            1 ether, address(this), payable(address(receiverContract)), priceData, EMPTY_PREVIOUS_DATA
+            1 ether, address(this), payable(address(receiverContract)), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -948,7 +978,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before, balanceReceiverContractBefore) = _getBalances();
 
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
-            1 ether, USER_1, payable(address(receiverContract)), priceData, EMPTY_PREVIOUS_DATA
+            1 ether, USER_1, payable(address(receiverContract)), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
@@ -1021,7 +1051,13 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before, balanceReceiverContractBefore) = _getBalances();
 
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
-            1 ether, params.initialPrice / 2, USER_1, payable(address(receiverContract)), priceData, EMPTY_PREVIOUS_DATA
+            1 ether,
+            params.initialPrice / 2,
+            USER_1,
+            payable(address(receiverContract)),
+            NO_PERMIT2,
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();

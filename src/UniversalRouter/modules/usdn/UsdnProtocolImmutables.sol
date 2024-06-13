@@ -3,8 +3,8 @@ pragma solidity ^0.8.25;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
+import { IUsdnProtocol } from "../../../interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IUsdn } from "../../../interfaces/Usdn/IUsdn.sol";
 
 struct UsdnProtocolParameters {
     IUsdnProtocol usdnProtocol;

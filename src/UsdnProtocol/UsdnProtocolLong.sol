@@ -5,12 +5,12 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { IUsdnProtocolLong } from "src/interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
-import { Position, LiquidationsEffects, TickData, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { UsdnProtocolVault } from "src/UsdnProtocol/UsdnProtocolVault.sol";
-import { TickMath } from "src/libraries/TickMath.sol";
-import { SignedMath } from "src/libraries/SignedMath.sol";
-import { HugeUint } from "src/libraries/HugeUint.sol";
+import { IUsdnProtocolLong } from "../interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
+import { Position, LiquidationsEffects, TickData, PositionId } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { UsdnProtocolVault } from "./UsdnProtocolVault.sol";
+import { TickMath } from "../libraries/TickMath.sol";
+import { SignedMath } from "../libraries/SignedMath.sol";
+import { HugeUint } from "../libraries/HugeUint.sol";
 
 abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     using LibBitmap for LibBitmap.Bitmap;

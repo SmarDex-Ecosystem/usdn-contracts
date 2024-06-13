@@ -1,4 +1,5 @@
 {
+  "detectors_to_exclude": "uninitialized-state,uninitialized-local,unused-return",
   "exclude_informational": true,
   "exclude_low": true,
   "exclude_medium": false,

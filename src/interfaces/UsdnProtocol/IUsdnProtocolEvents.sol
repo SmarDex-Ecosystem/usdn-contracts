@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PositionId } from "./IUsdnProtocolTypes.sol";
 
 /**
  * @title IUsdnProtocolEvents

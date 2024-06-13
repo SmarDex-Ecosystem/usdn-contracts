@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.25;
 
-import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IUsdnProtocol } from "../../interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 /**
  * @dev Structure to hold the immutable parameters for the router

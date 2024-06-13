@@ -60,7 +60,7 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
 
         // deposit assets in the protocol to imbalance it
         protocol.initiateDeposit{ value: messageValue }(
-            30 ether, payable(address(this)), payable(address(this)), "", EMPTY_PREVIOUS_DATA
+            30 ether, payable(address(this)), payable(address(this)), NO_PERMIT2, "", EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
@@ -77,7 +77,7 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
 
         // open a position to liquidate and trigger the rebalancer
         (, posToLiquidate) = protocol.initiateOpenPosition{ value: messageValue }(
-            10 ether, 1500 ether, payable(address(this)), payable(address(this)), "", EMPTY_PREVIOUS_DATA
+            10 ether, 1500 ether, payable(address(this)), payable(address(this)), NO_PERMIT2, "", EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();

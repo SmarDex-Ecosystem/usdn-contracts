@@ -4,9 +4,9 @@ pragma solidity ^0.8.25;
 import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 
-import { IPythOracle } from "src/interfaces/OracleMiddleware/IPythOracle.sol";
-import { FormattedPythPrice } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
+import { IPythOracle } from "../../interfaces/OracleMiddleware/IPythOracle.sol";
+import { FormattedPythPrice } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IOracleMiddlewareErrors } from "../../interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
 
 /**
  * @title PythOracle contract
@@ -77,6 +77,7 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
         if (targetTimestamp == 0) {
             // we want to validate that the price is recent
             // we don't enforce that the price update is the first one in a given second
+            // slither-disable-next-line arbitrary-send-eth
             priceFeeds = _pyth.parsePriceFeedUpdates{ value: pythFee }(
                 pricesUpdateData, feedIds, uint64(block.timestamp) - _pythRecentPriceDelay, uint64(block.timestamp)
             );

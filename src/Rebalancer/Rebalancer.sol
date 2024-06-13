@@ -7,11 +7,10 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { ERC165, IERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
-import { IOwnershipCallback } from "src/interfaces/UsdnProtocol/IOwnershipCallback.sol";
-import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
-import { PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import { PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IOwnershipCallback } from "../interfaces/UsdnProtocol/IOwnershipCallback.sol";
+import { IRebalancer } from "../interfaces/Rebalancer/IRebalancer.sol";
+import { IUsdnProtocol } from "../interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { PositionId } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title Rebalancer
