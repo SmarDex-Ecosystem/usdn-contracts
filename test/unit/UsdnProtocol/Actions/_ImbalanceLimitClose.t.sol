@@ -48,6 +48,32 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario The `_checkImbalanceLimitClose` function should revert when the vault balance becomes negative
+     * because of the pending balance vault
+     * @custom:given The pending balance vault is greater than the balance vault
+     * @custom:when The `_checkImbalanceLimitClose` function is called with values above the close limit
+     * @custom:then The transaction should revert with a int256.max imbalance
+     */
+    function test_RevertWhen_checkImbalanceLimitCloseWithPendingBalanceVaultTooHigh() public {
+        (, uint256 longAmount, uint256 totalExpoValueToLimit) = _getCloseLimitValues();
+        uint256 balanceVault = protocol.getBalanceVault();
+
+        vm.store(
+            address(protocol),
+            bytes32(protocol.getPendingBalanceVaultSlot()),
+            bytes32(uint256(-1 * int256(balanceVault) - 1))
+        );
+
+        // sanity check
+        assertEq(protocol.getPendingBalanceVault(), -1 * int256(balanceVault) - 1, "The wrong storage slot was updated");
+
+        vm.expectRevert(
+            abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, type(int256).max)
+        );
+        protocol.i_checkImbalanceLimitClose(totalExpoValueToLimit + 1, longAmount);
+    }
+
+    /**
      * @custom:scenario The `_checkImbalanceLimitClose` function should not revert when limit is disabled
      * @custom:given The protocol is in a balanced state
      * @custom:when The `_checkImbalanceLimitClose` function is called with values above the close limit
