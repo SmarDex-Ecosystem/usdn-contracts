@@ -14,11 +14,11 @@ import {
     PYTH_DATA_ETH
 } from "test/integration/Middlewares/utils/Constants.sol";
 
-import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
-import { IWstETH } from "src/interfaces/IWstETH.sol";
-import { OracleMiddleware } from "src/OracleMiddleware/OracleMiddleware.sol";
-import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IOracleMiddlewareErrors } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
+import { IWstETH } from "../../../../src/interfaces/IWstETH.sol";
+import { OracleMiddleware } from "../../../../src/OracleMiddleware/OracleMiddleware.sol";
+import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
+import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title ActionsIntegrationFixture

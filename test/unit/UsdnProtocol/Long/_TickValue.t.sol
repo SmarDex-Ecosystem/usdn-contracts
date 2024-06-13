@@ -3,8 +3,8 @@ pragma solidity ^0.8.25;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { HugeUint } from "src/libraries/HugeUint.sol";
+import { TickData } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 
 /// @custom:feature the _tickValue internal function of the UsdnProtocolLong contract.
 contract TestUsdnProtocolLongTickValue is UsdnProtocolBaseFixture {

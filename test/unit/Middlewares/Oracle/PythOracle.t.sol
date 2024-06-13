@@ -4,8 +4,8 @@ pragma solidity ^0.8.25;
 import { OracleMiddlewareBaseFixture } from "test/unit/Middlewares/utils/Fixtures.sol";
 import { MOCK_PYTH_DATA } from "test/unit/Middlewares/utils/Constants.sol";
 
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
 /// @custom:feature The `PythOracle` specific functions
 contract TestOracleMiddlewarePythOracle is OracleMiddlewareBaseFixture {

@@ -9,7 +9,7 @@ import {
     ProtocolAction,
     PreviousActionsData,
     PositionId
-} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature Test the _executePendingAction internal function of the actions layer

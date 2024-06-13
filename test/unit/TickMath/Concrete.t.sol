@@ -3,7 +3,7 @@ pragma solidity ^0.8.25;
 
 import { TickMathFixture } from "test/unit/TickMath/utils/Fixtures.sol";
 
-import { TickMath } from "src/libraries/TickMath.sol";
+import { TickMath } from "../../../src/libraries/TickMath.sol";
 
 /// @custom:feature Test helper and conversion functions in `TickMath`
 contract TestTickMathConcrete is TickMathFixture {

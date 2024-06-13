@@ -3,7 +3,7 @@ pragma solidity ^0.8.25;
 
 import { InitializableReentrancyGuardFixtures } from "test/unit/InitializableReentrancyGuard/utils/Fixtures.sol";
 
-import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
+import { InitializableReentrancyGuard } from "../../../src/utils/InitializableReentrancyGuard.sol";
 
 /**
  * @custom:feature Unit tests for the `initializer` modifier of the InitializableReentrancyGuard contract

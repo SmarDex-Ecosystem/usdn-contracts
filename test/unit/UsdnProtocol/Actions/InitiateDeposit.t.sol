@@ -10,8 +10,8 @@ import {
     Position,
     PositionId,
     DepositPendingAction
-} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
+} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
 /**
  * @custom:feature The initiateDeposit function of the USDN Protocol

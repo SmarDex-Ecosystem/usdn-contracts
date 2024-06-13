@@ -11,8 +11,8 @@ import {
     PendingAction,
     TickData,
     PositionId
-} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
+} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
 /**
  * @custom:feature The initiateOpenPosition function of the UsdnProtocolActions contract

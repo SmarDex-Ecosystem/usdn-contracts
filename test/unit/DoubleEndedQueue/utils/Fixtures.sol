@@ -4,7 +4,7 @@ pragma solidity ^0.8.25;
 import { BaseFixture } from "test/utils/Fixtures.sol";
 import { DequeHandler } from "test/unit/DoubleEndedQueue/utils/Handler.sol";
 
-import { PendingAction } from "src/libraries/DoubleEndedQueue.sol";
+import { PendingAction } from "../../../../src/libraries/DoubleEndedQueue.sol";
 
 /**
  * @title DequeFixture

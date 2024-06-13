@@ -6,8 +6,8 @@ import { BaseFixture } from "test/utils/Fixtures.sol";
 import { UsdnHandler } from "test/unit/USDN/utils/Handler.sol";
 import { IEventsErrors } from "test/utils/IEventsErrors.sol";
 
-import { IUsdnEvents } from "src/interfaces/Usdn/IUsdnEvents.sol";
-import { IUsdnErrors } from "src/interfaces/Usdn/IUsdnErrors.sol";
+import { IUsdnEvents } from "../../../../src/interfaces/Usdn/IUsdnEvents.sol";
+import { IUsdnErrors } from "../../../../src/interfaces/Usdn/IUsdnErrors.sol";
 
 /**
  * @title UsdnTokenFixture

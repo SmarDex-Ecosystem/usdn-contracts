@@ -7,8 +7,8 @@ import { PYTH_ETH_USD } from "test/utils/Constants.sol";
 import { DEPLOYER, USER_1, USER_2 } from "test/utils/Constants.sol";
 import { UniversalRouterBaseFixture } from "test/integration/UniversalRouter/utils/Fixtures.sol";
 
-import { Commands } from "src/UniversalRouter/libraries/Commands.sol";
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Commands } from "../../../src/UniversalRouter/libraries/Commands.sol";
+import { ProtocolAction } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature Validating a withdrawal through the router

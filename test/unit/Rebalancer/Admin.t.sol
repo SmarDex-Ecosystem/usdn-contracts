@@ -6,7 +6,7 @@ import { ADMIN } from "test/utils/Constants.sol";
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-import { PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PositionId } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The admin functions of the rebalancer contract

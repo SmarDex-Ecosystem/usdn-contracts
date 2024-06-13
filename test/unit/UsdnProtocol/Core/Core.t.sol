@@ -10,8 +10,8 @@ import {
     Position,
     PositionId,
     LongPendingAction
-} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
+} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { DoubleEndedQueue } from "../../../../src/libraries/DoubleEndedQueue.sol";
 
 /**
  * @custom:feature The functions of the core of the protocol

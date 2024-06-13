@@ -6,7 +6,7 @@ import {
     REDSTONE_ETH_PRICE, REDSTONE_ETH_DATA, REDSTONE_ETH_TIMESTAMP
 } from "test/unit/Middlewares/utils/Constants.sol";
 
-import { RedstonePriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { RedstonePriceInfo } from "../../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
 /// @custom:feature The `getFormattedRedstonePrice` function of `RedstoneOracle`
 contract TestRedstoneOracleGetFormattedRedstonePrice is OracleMiddlewareBaseFixture {

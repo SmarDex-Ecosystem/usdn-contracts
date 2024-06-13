@@ -9,12 +9,12 @@ import { MockOracleMiddleware } from "test/unit/UsdnProtocol/utils/MockOracleMid
 import { Sdex } from "test/utils/Sdex.sol";
 import { WstETH } from "test/utils/WstEth.sol";
 
-import { IRebalancerEvents } from "src/interfaces/Rebalancer/IRebalancerEvents.sol";
-import { IRebalancerErrors } from "src/interfaces/Rebalancer/IRebalancerErrors.sol";
-import { IRebalancerTypes } from "src/interfaces/Rebalancer/IRebalancerTypes.sol";
-import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
-import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
-import { Usdn } from "src/Usdn/Usdn.sol";
+import { IRebalancerEvents } from "../../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
+import { IRebalancerErrors } from "../../../../src/interfaces/Rebalancer/IRebalancerErrors.sol";
+import { IRebalancerTypes } from "../../../../src/interfaces/Rebalancer/IRebalancerTypes.sol";
+import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
+import { UsdnProtocol } from "../../../../src/UsdnProtocol/UsdnProtocol.sol";
+import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 
 /**
  * @title RebalancerFixture

@@ -6,8 +6,8 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { OracleMiddlewareBaseFixture } from "test/unit/Middlewares/utils/Fixtures.sol";
 import { USER_1 } from "test/utils/Constants.sol";
 
-import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
-import { IOracleMiddlewareEvents } from "src/interfaces/OracleMiddleware/IOracleMiddlewareEvents.sol";
+import { IOracleMiddlewareErrors } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
+import { IOracleMiddlewareEvents } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareEvents.sol";
 
 /**
  * @custom:feature The `setPythRecentPriceDelay` function of `OracleMiddleware`

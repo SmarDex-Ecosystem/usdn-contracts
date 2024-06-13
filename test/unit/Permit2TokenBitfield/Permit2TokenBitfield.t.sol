@@ -3,7 +3,7 @@ pragma solidity ^0.8.25;
 
 import { Permit2TokenBitfieldFixture } from "test/unit/Permit2TokenBitfield/utils/Fixtures.sol";
 
-import { Permit2TokenBitfield } from "src/libraries/Permit2TokenBitfield.sol";
+import { Permit2TokenBitfield } from "../../../src/libraries/Permit2TokenBitfield.sol";
 
 /// @custom:feature Test functions in `Permit2TokenBitfield`
 contract TestPermit2TokenBitfield is Permit2TokenBitfieldFixture {

@@ -28,15 +28,15 @@ import { MockPyth } from "test/unit/Middlewares/utils/MockPyth.sol";
 import { MockChainlinkOnChain } from "test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
 import { UsdnProtocolHandler } from "test/unit/UsdnProtocol/utils/Handler.sol";
 
-import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
-import { Rebalancer } from "src/Rebalancer/Rebalancer.sol";
-import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { ProtocolAction, PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { Usdn } from "src/Usdn/Usdn.sol";
-import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
-import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { Permit2TokenBitfield } from "src/libraries/Permit2TokenBitfield.sol";
+import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
+import { Rebalancer } from "../../../../src/Rebalancer/Rebalancer.sol";
+import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
+import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { ProtocolAction, PreviousActionsData } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Usdn } from "../../../../src/Usdn/Usdn.sol";
+import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
+import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { Permit2TokenBitfield } from "../../../../src/libraries/Permit2TokenBitfield.sol";
 
 contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProtocolEvents {
     struct SetUpParams {

@@ -4,8 +4,10 @@ pragma solidity ^0.8.25;
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { ADMIN, USER_1 } from "test/utils/Constants.sol";
 
-import { ProtocolAction, PositionId, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
+import {
+    ProtocolAction, PositionId, PendingAction
+} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
 /**
  * @custom:feature The deposit function of the USDN Protocol

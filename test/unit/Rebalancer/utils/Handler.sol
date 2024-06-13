@@ -3,8 +3,8 @@ pragma solidity ^0.8.25;
 
 import { Test } from "forge-std/Test.sol";
 
-import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import { Rebalancer } from "src/Rebalancer/Rebalancer.sol";
+import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { Rebalancer } from "../../../../src/Rebalancer/Rebalancer.sol";
 
 /**
  * @title RebalancerHandler

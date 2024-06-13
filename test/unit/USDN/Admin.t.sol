@@ -6,7 +6,7 @@ import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.so
 import { ADMIN } from "test/utils/Constants.sol";
 import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
 
-import { IRebaseCallback } from "src/interfaces/Usdn/IRebaseCallback.sol";
+import { IRebaseCallback } from "../../../src/interfaces/Usdn/IRebaseCallback.sol";
 
 /**
  * @custom:feature The admin functions of the USDN token

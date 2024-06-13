@@ -5,7 +5,7 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { TickMathFixture } from "test/unit/TickMath/utils/Fixtures.sol";
 
-import { TickMath } from "src/libraries/TickMath.sol";
+import { TickMath } from "../../../src/libraries/TickMath.sol";
 
 /// @custom:feature Test constants defined in the `TickMath` library
 contract TestTickMathConstants is TickMathFixture {

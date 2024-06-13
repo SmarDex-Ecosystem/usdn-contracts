@@ -4,7 +4,11 @@ pragma solidity ^0.8.25;
 import { USER_1 } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { PendingAction, ProtocolAction, PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import {
+    PendingAction,
+    ProtocolAction,
+    PreviousActionsData
+} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature Test the _executePendingActionOrRevert internal function of the actions layer

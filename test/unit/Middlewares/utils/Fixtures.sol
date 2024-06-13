@@ -10,12 +10,12 @@ import { MockChainlinkOnChain } from "test/unit/Middlewares/utils/MockChainlinkO
 import { OracleMiddlewareHandler } from "test/unit/Middlewares/utils/Handler.sol";
 import { PYTH_ETH_USD, REDSTONE_ETH_USD } from "test/utils/Constants.sol";
 
-import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
-import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { IWstETH } from "src/interfaces/IWstETH.sol";
-import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
-import { IOracleMiddlewareEvents } from "src/interfaces/OracleMiddleware/IOracleMiddlewareEvents.sol";
+import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
+import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
+import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IWstETH } from "../../../../src/interfaces/IWstETH.sol";
+import { IOracleMiddlewareErrors } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
+import { IOracleMiddlewareEvents } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareEvents.sol";
 
 /**
  * @title ActionsFixture

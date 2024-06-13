@@ -6,7 +6,7 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { TickMath } from "src/libraries/TickMath.sol";
+import { TickMath } from "../../../../src/libraries/TickMath.sol";
 
 /**
  * @custom:feature Fuzzing tests for the long part of the protocol

@@ -11,7 +11,7 @@ import {
     LongPendingAction,
     ProtocolAction,
     PreviousActionsData
-} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+} from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The functions handling the pending actions queue

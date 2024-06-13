@@ -6,7 +6,7 @@ import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { UsdnProtocolBaseIntegrationFixture } from "test/integration/UsdnProtocol/utils/Fixtures.sol";
 
-import { Permit2TokenBitfield } from "src/libraries/Permit2TokenBitfield.sol";
+import { Permit2TokenBitfield } from "../../../src/libraries/Permit2TokenBitfield.sol";
 
 /**
  * @custom:feature Initiate a long position by using Permit2 for the transfer of wstETH

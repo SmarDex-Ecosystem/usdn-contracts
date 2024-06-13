@@ -3,9 +3,14 @@ pragma solidity ^0.8.25;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { Position, ProtocolAction, TickData, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { HugeUint } from "src/libraries/HugeUint.sol";
-import { TickMath } from "src/libraries/TickMath.sol";
+import {
+    Position,
+    ProtocolAction,
+    TickData,
+    PositionId
+} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
+import { TickMath } from "../../../../src/libraries/TickMath.sol";
 
 /**
  * @custom:feature The _removeAmountFromPosition internal function of the UsdnProtocolActions contract.

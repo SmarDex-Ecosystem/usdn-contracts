@@ -4,8 +4,8 @@ pragma solidity ^0.8.25;
 import { USER_1, USER_2 } from "test/utils/Constants.sol";
 import { DequeFixture } from "test/unit/DoubleEndedQueue/utils/Fixtures.sol";
 
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { DoubleEndedQueue, PendingAction } from "src/libraries/DoubleEndedQueue.sol";
+import { ProtocolAction } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { DoubleEndedQueue, PendingAction } from "../../../src/libraries/DoubleEndedQueue.sol";
 
 /**
  * @custom:feature Test functions in `DoubleEndedQueue`

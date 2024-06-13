@@ -11,8 +11,8 @@ import {
     ProtocolAction,
     WithdrawalPendingAction,
     PositionId
-} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
+} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
 /**
  * @custom:feature The withdraw function of the USDN Protocol

@@ -11,19 +11,19 @@ import { IEventsErrors } from "test/utils/IEventsErrors.sol";
 import { Sdex } from "test/utils/Sdex.sol";
 import { WstETH } from "test/utils/WstEth.sol";
 
-import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
-import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
+import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
+import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import {
     Position,
     PendingAction,
     ProtocolAction,
     PreviousActionsData,
     PositionId
-} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { Usdn } from "src/Usdn/Usdn.sol";
-import { HugeUint } from "src/libraries/HugeUint.sol";
-import { Permit2TokenBitfield } from "src/libraries/Permit2TokenBitfield.sol";
+} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Usdn } from "../../../../src/Usdn/Usdn.sol";
+import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
+import { Permit2TokenBitfield } from "../../../../src/libraries/Permit2TokenBitfield.sol";
 
 /**
  * @title UsdnProtocolBaseFixture

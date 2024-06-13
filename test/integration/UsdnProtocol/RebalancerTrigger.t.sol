@@ -6,12 +6,12 @@ import { DEPLOYER } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "test/integration/UsdnProtocol/utils/Fixtures.sol";
 import { MockChainlinkOnChain } from "test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
 
-import { IRebalancerEvents } from "src/interfaces/Rebalancer/IRebalancerEvents.sol";
-import { ProtocolAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { HugeUint } from "src/libraries/HugeUint.sol";
-import { TickMath } from "src/libraries/TickMath.sol";
-import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
+import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
+import { ProtocolAction, TickData } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, PositionId } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { HugeUint } from "../../../src/libraries/HugeUint.sol";
+import { TickMath } from "../../../src/libraries/TickMath.sol";
+import { LiquidationRewardsManager } from "../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
 
 /**
  * @custom:feature The rebalancer is triggered after liquidations

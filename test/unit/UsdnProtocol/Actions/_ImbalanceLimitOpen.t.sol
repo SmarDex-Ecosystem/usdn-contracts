@@ -4,7 +4,7 @@ pragma solidity ^0.8.25;
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { ADMIN, DEPLOYER } from "test/utils/Constants.sol";
 
-import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
 /**
  * @custom:feature Test of the protocol expo limit for `_checkImbalanceLimitOpen` function in balanced state

@@ -4,7 +4,7 @@ pragma solidity ^0.8.25;
 import { OracleMiddlewareBaseFixture } from "test/unit/Middlewares/utils/Fixtures.sol";
 import { MOCK_PYTH_DATA } from "test/unit/Middlewares/utils/Constants.sol";
 
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The `getValidationCost` function of `OracleMiddleware`

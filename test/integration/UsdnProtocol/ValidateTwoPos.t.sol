@@ -4,7 +4,11 @@ pragma solidity ^0.8.25;
 import { USER_1, USER_2, PYTH_ETH_USD } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "test/integration/UsdnProtocol/utils/Fixtures.sol";
 
-import { PendingAction, ProtocolAction, PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import {
+    PendingAction,
+    ProtocolAction,
+    PreviousActionsData
+} from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature Validating two positions with Pyth prices at the same time

@@ -3,8 +3,8 @@ pragma solidity ^0.8.25;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { HugeUint } from "src/libraries/HugeUint.sol";
-import { TickMath } from "src/libraries/TickMath.sol";
+import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
+import { TickMath } from "../../../../src/libraries/TickMath.sol";
 
 /**
  * @custom:feature The getEffectiveTickForPrice public function of the UsdnProtocolLong contract.

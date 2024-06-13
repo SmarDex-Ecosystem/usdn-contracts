@@ -5,7 +5,7 @@ import { console2 } from "forge-std/Test.sol";
 
 import { TickMathFixture } from "test/unit/TickMath/utils/Fixtures.sol";
 
-import { TickMath } from "src/libraries/TickMath.sol";
+import { TickMath } from "../../../src/libraries/TickMath.sol";
 
 /// @custom:feature Fuzzing tests for conversion functions in `TickMath`
 contract TestTickMathFuzzing is TickMathFixture {

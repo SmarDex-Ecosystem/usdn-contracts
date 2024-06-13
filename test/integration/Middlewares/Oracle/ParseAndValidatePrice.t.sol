@@ -6,8 +6,8 @@ import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { OracleMiddlewareBaseIntegrationFixture } from "test/integration/Middlewares/utils/Fixtures.sol";
 import { PYTH_ETH_USD } from "test/utils/Constants.sol";
 
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
 /**
  * @custom:feature The `parseAndValidatePrice` function of `OracleMiddleware`

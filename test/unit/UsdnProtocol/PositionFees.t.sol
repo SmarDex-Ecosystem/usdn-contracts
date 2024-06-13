@@ -13,7 +13,7 @@ import {
     LongPendingAction,
     ProtocolAction,
     PositionId
-} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+} from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The entry/exit position fees mechanism of the protocol

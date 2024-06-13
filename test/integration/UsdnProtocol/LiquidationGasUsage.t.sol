@@ -7,10 +7,10 @@ import {
 } from "test/utils/Constants.sol";
 
 import { ILiquidationRewardsManagerErrorsEventsTypes } from
-    "src/interfaces/OracleMiddleware/ILiquidationRewardsManagerErrorsEventsTypes.sol";
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { IUsdnEvents } from "src/interfaces/Usdn/IUsdnEvents.sol";
-import { MockWstEthOracleMiddleware } from "src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
+    "../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManagerErrorsEventsTypes.sol";
+import { ProtocolAction } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnEvents } from "../../../src/interfaces/Usdn/IUsdnEvents.sol";
+import { MockWstEthOracleMiddleware } from "../../../src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
 
 /**
  * @custom:feature Checking the gas usage of a liquidation

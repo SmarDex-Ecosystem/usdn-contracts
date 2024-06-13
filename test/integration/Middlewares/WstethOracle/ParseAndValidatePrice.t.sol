@@ -6,8 +6,8 @@ import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { WstethIntegrationFixture } from "test/integration/Middlewares/utils/Fixtures.sol";
 import { PYTH_WSTETH_USD, PYTH_ETH_USD } from "test/utils/Constants.sol";
 
-import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The `parseAndValidatePrice` function of `WstethMiddleware`

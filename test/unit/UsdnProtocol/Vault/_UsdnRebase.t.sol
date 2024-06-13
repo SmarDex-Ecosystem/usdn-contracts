@@ -7,7 +7,7 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 import { DEPLOYER, ADMIN } from "test/utils/Constants.sol";
 import { RebaseHandler } from "test/unit/USDN/utils/RebaseHandler.sol";
 
-import { IUsdnEvents } from "src/interfaces/Usdn/IUsdnEvents.sol";
+import { IUsdnEvents } from "../../../../src/interfaces/Usdn/IUsdnEvents.sol";
 
 /**
  * @custom:feature The _usdnRebase internal function of the UsdnProtocolVault contract.

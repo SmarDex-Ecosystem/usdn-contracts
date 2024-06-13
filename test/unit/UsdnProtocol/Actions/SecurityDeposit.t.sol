@@ -12,8 +12,8 @@ import {
     PendingAction,
     PreviousActionsData,
     PositionId
-} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 /**
  * @custom:feature The security deposit of the USDN Protocol

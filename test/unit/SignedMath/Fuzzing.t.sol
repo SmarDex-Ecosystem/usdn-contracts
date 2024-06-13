@@ -5,7 +5,7 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { SignedMathFixture } from "test/unit/SignedMath/utils/Fixtures.sol";
 
-import { SignedMath } from "src/libraries/SignedMath.sol";
+import { SignedMath } from "../../../src/libraries/SignedMath.sol";
 
 /**
  * @custom:feature Fuzzing tests for conversion functions in `SignedMath`

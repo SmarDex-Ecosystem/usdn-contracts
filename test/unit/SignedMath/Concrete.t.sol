@@ -3,7 +3,7 @@ pragma solidity ^0.8.25;
 
 import { SignedMathFixture } from "test/unit/SignedMath/utils/Fixtures.sol";
 
-import { SignedMath } from "src/libraries/SignedMath.sol";
+import { SignedMath } from "../../../src/libraries/SignedMath.sol";
 
 /**
  * @custom:feature Test functions in `SignedMath`

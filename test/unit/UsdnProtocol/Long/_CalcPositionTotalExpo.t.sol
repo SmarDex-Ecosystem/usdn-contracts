@@ -5,7 +5,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { TickMath } from "src/libraries/TickMath.sol";
+import { TickMath } from "../../../../src/libraries/TickMath.sol";
 
 /**
  * @custom:feature The `_calcPositionTotalExpo` internal function of the UsdnProtocolLong contract.
