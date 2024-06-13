@@ -2,8 +2,8 @@
 pragma solidity 0.8.20;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolStorage } from "src/UsdnProtocol/UsdnProtocolStorage.sol";
@@ -25,7 +25,7 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
 
 abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
-    using SafeERC20 for IERC20Metadata;
+    using SafeTransferLib for address;
     using SafeCast for uint256;
     using SafeCast for int256;
     using SignedMath for int256;
@@ -746,7 +746,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             // for pending deposits, we send back the locked assets
             DepositPendingAction memory deposit = _toDepositPendingAction(pending);
             _pendingBalanceVault -= _toInt256(deposit.amount);
-            _asset.safeTransfer(to, deposit.amount);
+            address(_asset).safeTransfer(to, deposit.amount);
         } else if (pending.action == ProtocolAction.ValidateWithdrawal && cleanup) {
             // for pending withdrawals, we send the locked USDN
             WithdrawalPendingAction memory withdrawal = _toWithdrawalPendingAction(pending);

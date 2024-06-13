@@ -3,6 +3,7 @@ pragma solidity >=0.8.0;
 
 import { IUsdnProtocolLong } from "src/interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
 import { PreviousActionsData, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Permit2TokenBitfield } from "src/libraries/Permit2TokenBitfield.sol";
 
 interface IUsdnProtocolActions is IUsdnProtocolLong {
     /**
@@ -23,6 +24,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * @param amount The amount of wstETH to deposit
      * @param to The address that will receive the USDN tokens
      * @param validator The address that will validate the deposit
+     * @param permit2TokenBitfield Whether to use permit2 for transferring assets (first bit) and SDEX (second bit)
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions
      * @return success_ Whether the deposit was initiated
@@ -31,6 +33,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
         uint128 amount,
         address to,
         address payable validator,
+        Permit2TokenBitfield.Bitfield permit2TokenBitfield,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_);
@@ -121,6 +124,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
      * @param to The address that will be the owner of the position
      * @param validator The address that will validate the open position
+     * @param permit2TokenBitfield Whether to use permit2 for transferring assets (first bit)
      * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
      * pending validation)
      * @param previousActionsData The data needed to validate actionable pending actions
@@ -133,6 +137,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
         uint128 desiredLiqPrice,
         address to,
         address payable validator,
+        Permit2TokenBitfield.Bitfield permit2TokenBitfield,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_, PositionId memory posId_);
