@@ -5,9 +5,9 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 
-import { IUsdnEvents } from "src/interfaces/Usdn/IUsdnEvents.sol";
-import { IUsdnErrors } from "src/interfaces/Usdn/IUsdnErrors.sol";
-import { IRebaseCallback } from "src/interfaces/Usdn/IRebaseCallback.sol";
+import { IUsdnEvents } from "./IUsdnEvents.sol";
+import { IUsdnErrors } from "./IUsdnErrors.sol";
+import { IRebaseCallback } from "./IRebaseCallback.sol";
 
 /**
  * @title USDN token interface

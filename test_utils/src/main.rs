@@ -2,8 +2,7 @@ use std::ops::DivAssign;
 
 use alloy_primitives::{ruint::aliases::U768, Bytes, FixedBytes, I256, U256, U512};
 use alloy_sol_types::SolValue;
-use anyhow::{anyhow, Result};
-use base64::{engine::general_purpose::STANDARD, Engine as _};
+use anyhow::{anyhow, Context, Result};
 use clap::{Parser, Subcommand};
 use rug::{
     float::Round,
@@ -14,7 +13,17 @@ use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
 struct HermesResponse {
-    vaa: String,
+    binary: PythBinaryData,
+    parsed: Vec<PythParsedData>,
+}
+
+#[derive(Deserialize, Debug)]
+struct PythBinaryData {
+    data: Vec<String>,
+}
+
+#[derive(Deserialize, Debug)]
+struct PythParsedData {
     price: PythPrice,
 }
 
@@ -196,17 +205,18 @@ fn main() -> Result<()> {
             print_int_u256_hex(res)?;
         }
         Commands::PythPrice { feed, publish_time } => {
-            let mut hermes_api_url = std::env::var("HERMES_RA2_NODE_URL")?;
+            let mut hermes_api_url = std::env::var("HERMES_RA2_NODE_URL")
+                .context("getting HERMES_RA2_NODE_URL env variable")?;
             // add / to the end of the url if it's not there
             if !hermes_api_url.ends_with('/') {
                 hermes_api_url.push('/');
             }
 
             let request_url = format!(
-                "{hermes_api_url}get_price_feed?id={feed}&publish_time={publish_time}&binary=true"
+                "{hermes_api_url}v2/updates/price/{publish_time}?ids[]={feed}&encoding=hex&parsed=true"
             );
-            let response = reqwest::blocking::get(request_url)?;
-            let price: HermesResponse = response.json()?;
+            let response = ureq::get(&request_url).call()?;
+            let price: HermesResponse = response.into_json()?;
             print_pyth_response(price)?;
         }
         Commands::CalcExpo {
@@ -362,17 +372,27 @@ fn print_u512_hex(lsb: U256, msb: U256) {
 }
 
 fn print_pyth_response(response: HermesResponse) -> Result<()> {
-    let price_hex = response.price.price.parse::<U256>()?;
-    let conf_hex = response.price.conf.parse::<U256>()?;
-    let decimals: u64 = response.price.expo.abs().try_into()?;
+    let parsed = response
+        .parsed
+        .first()
+        .ok_or_else(|| anyhow!("no parsed price in pyth response"))?;
+    let price_hex = parsed.price.price.parse::<U256>()?;
+    let conf_hex = parsed.price.conf.parse::<U256>()?;
+    let decimals: u64 = parsed.price.expo.abs().try_into()?;
     let decimals_hex = U256::from(decimals);
-    // Decode vaa from base64 to hex
-    let decoded_vaa = STANDARD.decode(response.vaa)?;
+    // Decode vaa from hex
+    let decoded_vaa = const_hex::decode(
+        response
+            .binary
+            .data
+            .first()
+            .ok_or_else(|| anyhow!("no VAA in pyth response"))?,
+    )?;
     let data = (
         price_hex,
         conf_hex,
         decimals_hex,
-        U256::from(response.price.publish_time),
+        U256::from(parsed.price.publish_time),
         &decoded_vaa,
     );
     let bytes = data.abi_encode_params();
