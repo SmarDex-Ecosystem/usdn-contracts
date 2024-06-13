@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { LiquidationRewardsManagerBaseFixture } from "test/unit/Middlewares/utils/Fixtures.sol";
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { LiquidationRewardsManagerBaseFixture } from "../utils/Fixtures.sol";
+import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The `getLiquidationRewards` function of `LiquidationRewardsManager`

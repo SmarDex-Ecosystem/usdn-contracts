@@ -3,12 +3,12 @@ pragma solidity ^0.8.25;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import { PYTH_ETH_USD } from "test/utils/Constants.sol";
-import { USER_1, USER_2 } from "test/utils/Constants.sol";
-import { UniversalRouterBaseFixture } from "test/integration/UniversalRouter/utils/Fixtures.sol";
+import { PYTH_ETH_USD } from "../../utils/Constants.sol";
+import { USER_1, USER_2 } from "../../utils/Constants.sol";
+import { UniversalRouterBaseFixture } from "./utils/Fixtures.sol";
 
-import { Commands } from "src/UniversalRouter/libraries/Commands.sol";
-import { ProtocolAction, Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Commands } from "../../../src/UniversalRouter/libraries/Commands.sol";
+import { ProtocolAction, Position, PositionId } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature Validating an open position through the router

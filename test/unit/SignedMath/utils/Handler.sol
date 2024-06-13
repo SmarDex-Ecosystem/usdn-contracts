@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { SignedMath } from "src/libraries/SignedMath.sol";
+import { SignedMath } from "../../../../src/libraries/SignedMath.sol";
 
 /**
  * @title SignedMathHandler

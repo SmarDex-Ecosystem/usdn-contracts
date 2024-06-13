@@ -3,11 +3,11 @@ pragma solidity ^0.8.25;
 
 import { Constants } from "@uniswap/universal-router/contracts/libraries/Constants.sol";
 
-import { USER_1 } from "test/utils/Constants.sol";
-import { UniversalRouterBaseFixture } from "test/integration/UniversalRouter/utils/Fixtures.sol";
+import { USER_1 } from "../../utils/Constants.sol";
+import { UniversalRouterBaseFixture } from "./utils/Fixtures.sol";
 
-import { Commands } from "src/UniversalRouter/libraries/Commands.sol";
-import { DepositPendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Commands } from "../../../src/UniversalRouter/libraries/Commands.sol";
+import { DepositPendingAction } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature Initiating a deposit through the router

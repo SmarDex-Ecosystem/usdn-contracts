@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { WusdnTokenFixture } from "test/unit/WUSDN/utils/Fixtures.sol";
+import { WusdnTokenFixture } from "./utils/Fixtures.sol";
 
 /**
  * @custom:feature The `deposit` function of `WUSDN`

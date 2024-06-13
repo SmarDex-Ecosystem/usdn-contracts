@@ -3,8 +3,8 @@ pragma solidity ^0.8.25;
 
 import { console2 } from "forge-std/Test.sol";
 
-import { USER_1, USER_2, USER_3, USER_4 } from "test/utils/Constants.sol";
-import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
+import { USER_1, USER_2, USER_3, USER_4 } from "../../utils/Constants.sol";
+import { UsdnTokenFixture } from "./utils/Fixtures.sol";
 
 /**
  * @custom:feature Invariants of `USDN`
