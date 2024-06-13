@@ -5,8 +5,8 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { Permit2Payments } from "@uniswap/universal-router/contracts/modules/Permit2Payments.sol";
 
-import { LidoImmutables } from "src/UniversalRouter/modules/lido/LidoImmutables.sol";
-import { IWstETH } from "src/interfaces/IWstETH.sol";
+import { LidoImmutables } from "./LidoImmutables.sol";
+import { IWstETH } from "../../../interfaces/IWstETH.sol";
 
 /// @title Router for StEth
 abstract contract LidoRouter is LidoImmutables, Permit2Payments {

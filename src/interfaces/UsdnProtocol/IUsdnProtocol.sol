@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { IUsdnProtocolActions } from "src/interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
-import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
-import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
-import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
+import { IUsdnProtocolActions } from "./IUsdnProtocolActions.sol";
+import { IOracleMiddleware } from "../OracleMiddleware/IOracleMiddleware.sol";
+import { ILiquidationRewardsManager } from "../OracleMiddleware/ILiquidationRewardsManager.sol";
+import { IRebalancer } from "../Rebalancer/IRebalancer.sol";
 
 /**
  * @title IUsdnProtocol
@@ -166,6 +166,7 @@ interface IUsdnProtocol is IUsdnProtocolActions {
      * @param newWithdrawalLimitBps The new withdrawal limit
      * @param newCloseLimitBps The new close limit
      * @param newLongImbalanceTargetBps The new target imbalance limit for the long side
+     * A positive value will target below equilibrium, a negative one will target above equilibrium
      */
     function setExpoImbalanceLimits(
         uint256 newOpenLimitBps,

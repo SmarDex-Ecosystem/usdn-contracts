@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { IUsdnProtocolStorage } from "src/interfaces/UsdnProtocol/IUsdnProtocolStorage.sol";
-import { PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolStorage } from "./IUsdnProtocolStorage.sol";
+import { PendingAction } from "./IUsdnProtocolTypes.sol";
 
 /**
  * @title IUsdnProtocolCore

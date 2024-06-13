@@ -1,18 +1,15 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
-import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
-import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
-import { UsdnProtocolLong } from "src/UsdnProtocol/UsdnProtocolLong.sol";
-import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
-import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
-import { IUsdnProtocolActions } from "src/interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
+import { UsdnProtocolLong } from "./UsdnProtocolLong.sol";
+import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IRebalancer } from "../interfaces/Rebalancer/IRebalancer.sol";
+import { IUsdnProtocolActions } from "../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 import {
     DepositPendingAction,
     LiquidationsEffects,
@@ -24,20 +21,21 @@ import {
     ProtocolAction,
     TickData,
     WithdrawalPendingAction
-} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { HugeUint } from "src/libraries/HugeUint.sol";
-import { SignedMath } from "src/libraries/SignedMath.sol";
-import { TickMath } from "src/libraries/TickMath.sol";
-import { IOwnershipCallback } from "src/interfaces/UsdnProtocol/IOwnershipCallback.sol";
+} from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { HugeUint } from "../libraries/HugeUint.sol";
+import { SignedMath } from "../libraries/SignedMath.sol";
+import { TickMath } from "../libraries/TickMath.sol";
+import { Permit2TokenBitfield } from "../libraries/Permit2TokenBitfield.sol";
+import { IOwnershipCallback } from "../interfaces/UsdnProtocol/IOwnershipCallback.sol";
 
 abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong {
-    using SafeERC20 for IERC20Metadata;
-    using SafeERC20 for IUsdn;
+    using SafeTransferLib for address;
     using SafeCast for uint256;
     using SafeCast for int256;
     using LibBitmap for LibBitmap.Bitmap;
     using SignedMath for int256;
     using HugeUint for HugeUint.Uint512;
+    using Permit2TokenBitfield for Permit2TokenBitfield.Bitfield;
 
     /**
      * @dev Structure to hold the transient data during `_initiateDeposit`
@@ -77,6 +75,28 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 balanceVault;
         uint256 withdrawalAmount;
         bool isLiquidationPending;
+    }
+
+    /**
+     * @notice Parameters for the internal `_initiateOpenPosition` function
+     * @param user The address of the user initiating the open position
+     * @param to The address that will be the owner of the position
+     * @param validator The address that will validate the open position
+     * @param amount The amount of wstETH to deposit
+     * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
+     * @param securityDepositValue The value of the security deposit for the newly created pending action
+     * @param permit2TokenBitfield The permit2 bitfield
+     * @param currentPriceData The current price data (used to calculate the temporary leverage and entry price,
+     * pending validation)
+     */
+    struct InitiateOpenPositionParams {
+        address user;
+        address to;
+        address validator;
+        uint128 amount;
+        uint128 desiredLiqPrice;
+        uint64 securityDepositValue;
+        Permit2TokenBitfield.Bitfield permit2TokenBitfield;
     }
 
     /**
@@ -147,6 +167,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 amount,
         address to,
         address payable validator,
+        Permit2TokenBitfield.Bitfield permit2TokenBitfield,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (bool success_) {
@@ -157,8 +178,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 balanceBefore = address(this).balance;
 
         uint256 amountToRefund;
-        (amountToRefund, success_) =
-            _initiateDeposit(msg.sender, to, validator, amount, securityDepositValue, currentPriceData);
+        (amountToRefund, success_) = _initiateDeposit(
+            msg.sender, to, validator, amount, securityDepositValue, permit2TokenBitfield, currentPriceData
+        );
 
         if (success_) {
             unchecked {
@@ -255,6 +277,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 desiredLiqPrice,
         address to,
         address payable validator,
+        Permit2TokenBitfield.Bitfield permit2TokenBitfield,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (bool success_, PositionId memory posId_) {
@@ -267,7 +290,16 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         uint256 amountToRefund;
         (posId_, amountToRefund, success_) = _initiateOpenPosition(
-            msg.sender, to, validator, amount, desiredLiqPrice, securityDepositValue, currentPriceData
+            InitiateOpenPositionParams({
+                user: msg.sender,
+                to: to,
+                validator: validator,
+                amount: amount,
+                desiredLiqPrice: desiredLiqPrice,
+                securityDepositValue: securityDepositValue,
+                permit2TokenBitfield: permit2TokenBitfield
+            }),
+            currentPriceData
         );
 
         if (success_) {
@@ -602,7 +634,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         // transfer rewards (assets) to the liquidator
-        _asset.safeTransfer(msg.sender, liquidationRewards);
+        address(_asset).safeTransfer(msg.sender, liquidationRewards);
 
         emit LiquidatorRewarded(msg.sender, liquidationRewards);
     }
@@ -711,6 +743,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param validator The address that will validate the deposit
      * @param amount The amount of wstETH to deposit
      * @param securityDepositValue The value of the security deposit for the newly created pending action
+     * @param permit2TokenBitfield The permit2 bitfield
      * @param currentPriceData The current price data
      * @return amountToRefund_ If there are pending liquidations we'll refund the `securityDepositValue`,
      * else we'll only refund the security deposit value of the stale pending action
@@ -722,6 +755,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         address validator,
         uint128 amount,
         uint64 securityDepositValue,
+        Permit2TokenBitfield.Bitfield permit2TokenBitfield,
         bytes calldata currentPriceData
     ) internal returns (uint256 amountToRefund_, bool isInitiated_) {
         if (to == address(0)) {
@@ -745,11 +779,19 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         if (data.sdexToBurn > 0) {
             // send SDEX to the dead address
-            _sdex.safeTransferFrom(user, DEAD_ADDRESS, data.sdexToBurn);
+            if (permit2TokenBitfield.useForSdex()) {
+                address(_sdex).permit2TransferFrom(user, DEAD_ADDRESS, data.sdexToBurn);
+            } else {
+                address(_sdex).safeTransferFrom(user, DEAD_ADDRESS, data.sdexToBurn);
+            }
         }
 
         // transfer assets
-        _asset.safeTransferFrom(user, address(this), amount);
+        if (permit2TokenBitfield.useForAsset()) {
+            address(_asset).permit2TransferFrom(user, address(this), amount);
+        } else {
+            address(_asset).safeTransferFrom(user, address(this), amount);
+        }
         _pendingBalanceVault += _toInt256(amount);
 
         isInitiated_ = true;
@@ -1085,7 +1127,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // send the asset to the user
         if (assetToTransfer > 0) {
             _balanceVault -= assetToTransfer;
-            _asset.safeTransfer(withdrawal.to, assetToTransfer);
+            address(_asset).safeTransfer(withdrawal.to, assetToTransfer);
         }
 
         isValidated_ = true;
@@ -1192,12 +1234,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * of the middleware
      * The position is immediately included in the protocol calculations with a temporary entry price (and thus
      * leverage). The validation operation then updates the entry price and leverage with fresher data
-     * @param user The address of the user initiating the open position
-     * @param to The address that will be the owner of the position
-     * @param validator The address that will validate the open position
-     * @param amount The amount of wstETH to deposit
-     * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
-     * @param securityDepositValue The value of the security deposit for the newly created pending action
+     * @param params The parameters for the open position initiation
      * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
      * pending validation)
      * @return posId_ The unique index of the opened position
@@ -1205,56 +1242,61 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * else we'll only refund the security deposit value of the stale pending action
      * @return isInitiated_ Whether the action is initiated
      */
-    function _initiateOpenPosition(
-        address user,
-        address to,
-        address validator,
-        uint128 amount,
-        uint128 desiredLiqPrice,
-        uint64 securityDepositValue,
-        bytes calldata currentPriceData
-    ) internal returns (PositionId memory posId_, uint256 amountToRefund_, bool isInitiated_) {
-        if (to == address(0)) {
+    function _initiateOpenPosition(InitiateOpenPositionParams memory params, bytes calldata currentPriceData)
+        internal
+        returns (PositionId memory posId_, uint256 amountToRefund_, bool isInitiated_)
+    {
+        if (params.to == address(0)) {
             revert UsdnProtocolInvalidAddressTo();
         }
-        if (validator == address(0)) {
+        if (params.validator == address(0)) {
             revert UsdnProtocolInvalidAddressValidator();
         }
-        if (amount == 0) {
+        if (params.amount == 0) {
             revert UsdnProtocolZeroAmount();
         }
-        if (amount < _minLongPosition) {
+        if (params.amount < _minLongPosition) {
             revert UsdnProtocolLongPositionTooSmall();
         }
 
         InitiateOpenPositionData memory data =
-            _prepareInitiateOpenPositionData(validator, amount, desiredLiqPrice, currentPriceData);
+            _prepareInitiateOpenPositionData(params.validator, params.amount, params.desiredLiqPrice, currentPriceData);
 
         if (data.isLiquidationPending) {
             // value to indicate the position was not created
             posId_.tick = NO_POSITION_TICK;
-            return (posId_, securityDepositValue, false);
+            return (posId_, params.securityDepositValue, false);
         }
 
         // register position and adjust contract state
         Position memory long = Position({
             validated: false,
-            user: to,
-            amount: amount,
+            user: params.to,
+            amount: params.amount,
             totalExpo: data.positionTotalExpo,
             timestamp: uint40(block.timestamp)
         });
-        (data.posId.tickVersion, data.posId.index) = _saveNewPosition(data.posId.tick, long, data.liquidationPenalty);
+        (data.posId.tickVersion, data.posId.index,) = _saveNewPosition(data.posId.tick, long, data.liquidationPenalty);
         _balanceLong += long.amount;
         posId_ = data.posId;
 
-        amountToRefund_ = _createOpenPendingAction(to, validator, securityDepositValue, data);
+        amountToRefund_ = _createOpenPendingAction(params.to, params.validator, params.securityDepositValue, data);
 
-        _asset.safeTransferFrom(user, address(this), amount);
+        if (params.permit2TokenBitfield.useForAsset()) {
+            address(_asset).permit2TransferFrom(params.user, address(this), params.amount);
+        } else {
+            address(_asset).safeTransferFrom(params.user, address(this), params.amount);
+        }
 
         isInitiated_ = true;
         emit InitiatedOpenPosition(
-            to, validator, uint40(block.timestamp), data.positionTotalExpo, amount, data.adjustedPrice, posId_
+            params.to,
+            params.validator,
+            uint40(block.timestamp),
+            data.positionTotalExpo,
+            params.amount,
+            data.adjustedPrice,
+            posId_
         );
     }
 
@@ -1412,7 +1454,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // mark the position as validated
             data.pos.validated = true;
             // insert position into new tick
-            (newPosId.tickVersion, newPosId.index) = _saveNewPosition(newPosId.tick, data.pos, liquidationPenalty);
+            (newPosId.tickVersion, newPosId.index,) = _saveNewPosition(newPosId.tick, data.pos, liquidationPenalty);
             // no long balance update is necessary (collateral didn't change)
 
             // emit LiquidationPriceUpdated
@@ -1821,7 +1863,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // send the asset to the user
         if (assetToTransfer > 0) {
-            _asset.safeTransfer(long.to, assetToTransfer);
+            address(_asset).safeTransfer(long.to, assetToTransfer);
         }
 
         isValidated_ = true;
@@ -2000,6 +2042,15 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 _liquidatePositions(_lastPrice, iterations, tempLongBalance, tempVaultBalance);
 
             isLiquidationPending_ = liquidationEffects.isLiquidationPending;
+            if (!isLiquidationPending_ && liquidationEffects.liquidatedTicks > 0) {
+                (liquidationEffects.newLongBalance, liquidationEffects.newVaultBalance) = _triggerRebalancer(
+                    uint128(neutralPrice),
+                    liquidationEffects.newLongBalance,
+                    liquidationEffects.newVaultBalance,
+                    liquidationEffects.remainingCollateral
+                );
+            }
+
             _balanceLong = liquidationEffects.newLongBalance;
             _balanceVault = liquidationEffects.newVaultBalance;
 
@@ -2019,6 +2070,106 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
             liquidatedPositions_ = liquidationEffects.liquidatedPositions;
         }
+    }
+
+    /**
+     * TODO add tests
+     * @notice Trigger the rebalancer if the imbalance on the long side is too high
+     * It will close the rebalancer position (if there is one) and open a new one with
+     * the pending assets, the value of the previous position and the liquidation bonus (if available)
+     * and a leverage to fill enough trading expo to reach the desired imbalance, up to the max leverages
+     * @dev Will return the provided long balance if no rebalancer is set or if the imbalance is not high enough
+     * @param neutralPrice The neutral/average price of the asset
+     * @param longBalance The balance of the long side
+     * @param vaultBalance The balance of the vault side
+     * @param remainingCollateral The collateral remaining after the liquidations
+     * @return longBalance_ The temporary balance of the long side
+     * @return vaultBalance_ The temporary balance of the vault side
+     */
+    function _triggerRebalancer(
+        uint128 neutralPrice,
+        uint256 longBalance,
+        uint256 vaultBalance,
+        int256 remainingCollateral
+    ) internal returns (uint256 longBalance_, uint256 vaultBalance_) {
+        longBalance_ = longBalance;
+        vaultBalance_ = vaultBalance;
+        IRebalancer rebalancer = _rebalancer;
+
+        if (address(rebalancer) == address(0)) {
+            return (longBalance_, vaultBalance_);
+        }
+
+        CachedProtocolState memory cache = CachedProtocolState({
+            totalExpo: _totalExpo,
+            longBalance: longBalance,
+            vaultBalance: (vaultBalance.toInt256() + _pendingBalanceVault).toUint256(),
+            tradingExpo: 0,
+            liqMultiplierAccumulator: _liqMultiplierAccumulator
+        });
+
+        if (cache.totalExpo < cache.longBalance) {
+            revert UsdnProtocolInvalidLongExpo();
+        }
+
+        cache.tradingExpo = cache.totalExpo - cache.longBalance;
+
+        {
+            int256 currentImbalance = _calcLongImbalanceBps(cache.vaultBalance, cache.longBalance, cache.totalExpo);
+
+            // if the imbalance is lower than the threshold, return
+            if (currentImbalance < _closeExpoImbalanceLimitBps) {
+                return (longBalance_, vaultBalance_);
+            }
+        }
+
+        // the default value of `positionAmount` is the amount of pendingAssets in the rebalancer
+        (uint128 positionAmount, uint256 rebalancerMaxLeverage, PositionId memory rebalancerPosId) =
+            rebalancer.getCurrentStateData();
+
+        // transfer the pending assets from the rebalancer to this contract
+        address(_asset).safeTransferFrom(address(rebalancer), address(this), positionAmount);
+
+        uint128 positionValue;
+        // close the rebalancer position and get its value to open the next one
+        if (rebalancerPosId.tick != NO_POSITION_TICK) {
+            // cached values will be updated during this call
+            positionValue = _flashClosePosition(rebalancerPosId, neutralPrice, cache).toUint128();
+
+            positionAmount += positionValue;
+        }
+
+        // If there are no pending assets and the previous position was either liquidated or doesn't exist, return
+        if (positionAmount + positionValue == 0) {
+            return (longBalance_, vaultBalance_);
+        }
+
+        // if there is enough collateral remaining after liquidations, calculate the bonus and add it to the
+        // new rebalancer position
+        if (remainingCollateral > 0) {
+            uint128 bonus = (uint256(remainingCollateral) * _rebalancerBonusBps / BPS_DIVISOR).toUint128();
+            cache.vaultBalance -= bonus;
+            vaultBalance_ -= bonus;
+            positionAmount += bonus;
+        }
+
+        int24 tickWithoutLiqPenalty =
+            _calcRebalancerPositionTick(neutralPrice, positionAmount, rebalancerMaxLeverage, cache);
+
+        // make sure that the rebalancer was not triggered without a sufficient imbalance
+        // as we check the imbalance above, this should not happen
+        if (tickWithoutLiqPenalty == NO_POSITION_TICK) {
+            revert UsdnProtocolInvalidRebalancerTick();
+        }
+
+        // open a new position for the rebalancer
+        PositionId memory posId =
+            _flashOpenPosition(address(rebalancer), neutralPrice, tickWithoutLiqPenalty, positionAmount, cache);
+
+        longBalance_ += positionAmount;
+
+        // call the rebalancer to update the internal bookkeeping
+        rebalancer.updatePosition(posId, positionValue);
     }
 
     /**
@@ -2070,7 +2221,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      */
     function _checkPendingFee() internal {
         if (_pendingProtocolFee >= _feeThreshold) {
-            _asset.safeTransfer(_feeCollector, _pendingProtocolFee);
+            address(_asset).safeTransfer(_feeCollector, _pendingProtocolFee);
             emit ProtocolFeeDistributed(_feeCollector, _pendingProtocolFee);
             _pendingProtocolFee = 0;
         }
