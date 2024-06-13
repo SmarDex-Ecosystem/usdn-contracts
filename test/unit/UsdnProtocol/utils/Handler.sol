@@ -38,7 +38,6 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     using SafeCast for int256;
     using SafeCast for uint256;
     using SignedMath for int256;
-    using HugeUint for HugeUint.Uint512;
 
     constructor(
         IUsdn usdn,
