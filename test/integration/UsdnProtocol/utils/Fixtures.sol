@@ -143,8 +143,6 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         );
         vm.stopPrank();
         params = testParams;
-
-        sdex.mintAndApprove(address(this), 50_000 ether, address(protocol), type(uint256).max);
     }
 
     function getHermesApiSignature(bytes32 feed, uint256 timestamp)

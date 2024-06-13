@@ -32,6 +32,8 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
         params.initialLong += 100 ether;
         _setUp(params);
 
+        sdex.mintAndApprove(address(this), 50_000 ether, address(protocol), type(uint256).max);
+
         tickSpacing = protocol.getTickSpacing();
 
         vm.startPrank(DEPLOYER);
