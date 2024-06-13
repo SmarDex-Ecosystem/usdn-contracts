@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.25;
 
+import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
@@ -16,7 +17,7 @@ import { IOracleMiddleware } from "../interfaces/OracleMiddleware/IOracleMiddlew
 import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IRebalancer } from "../interfaces/Rebalancer/IRebalancer.sol";
 
-contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
+contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable2Step {
     using SafeTransferLib for address;
     using SafeCast for uint256;
 

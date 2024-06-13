@@ -37,6 +37,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
 
         protocol.transferOwnership(address(this));
         vm.stopPrank();
+        protocol.acceptOwnership();
         wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
     }
 
