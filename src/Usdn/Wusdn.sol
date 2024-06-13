@@ -121,6 +121,7 @@ contract Wusdn is ERC20Permit, IWusdn {
 
         // we consecutively divide and multiply by `SHARES_RATIO` to have
         // a share amount that is a multiple of `SHARES_RATIO`
+        // slither-disable-next-line divide-before-multiply
         wrappedAmount_ = usdnShares / SHARES_RATIO;
 
         _mint(to, wrappedAmount_);
