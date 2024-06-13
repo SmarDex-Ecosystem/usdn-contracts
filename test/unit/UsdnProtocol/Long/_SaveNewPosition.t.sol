@@ -5,6 +5,7 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 import { USER_1 } from "test/utils/Constants.sol";
 
 import { Position, TickData, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { HugeUint } from "src/libraries/HugeUint.sol";
 
 /**
  * @custom:feature The _saveNewPosition internal function of the UsdnProtocolLong contract.
@@ -12,6 +13,8 @@ import { Position, TickData, PositionId } from "src/interfaces/UsdnProtocol/IUsd
  * leverage of ~2x
  */
 contract TestUsdnProtocolLongSaveNewPosition is UsdnProtocolBaseFixture {
+    using HugeUint for HugeUint.Uint512;
+
     uint128 internal constant LONG_AMOUNT = 1 ether;
     uint128 internal constant CURRENT_PRICE = 2000 ether;
 
@@ -26,6 +29,29 @@ contract TestUsdnProtocolLongSaveNewPosition is UsdnProtocolBaseFixture {
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
         wstETH.mintAndApprove(address(this), 10 ether, address(protocol), type(uint256).max);
+    }
+
+    /**
+     * @custom:scenario Test that the function returns the expected information
+     * @custom:given A validated long position
+     * @custom:when The function is called with the new position
+     * @custom:then The function should return the expected information
+     */
+    function test_saveNewPosition() public {
+        uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
+        int24 expectedTick = protocol.getEffectiveTickForPrice(desiredLiqPrice);
+
+        (uint256 tickVersion, uint256 index, HugeUint.Uint512 memory liqMultiplierAccumulator) =
+            protocol.i_saveNewPosition(expectedTick, long, protocol.getTickLiquidationPenalty(expectedTick));
+
+        assertEq(tickVersion, 0, "tick version");
+        assertEq(index, 0, "index");
+        assertEq(liqMultiplierAccumulator.hi, 0, "liqMultiplierAccumulator hi");
+        assertEq(
+            liqMultiplierAccumulator.lo,
+            13_738_076_708_665_551_088_329_799_780_572_461_261_232,
+            "liqMultiplierAccumulator lo"
+        );
     }
 
     /**

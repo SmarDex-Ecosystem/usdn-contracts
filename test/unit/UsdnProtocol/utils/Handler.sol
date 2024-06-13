@@ -26,6 +26,7 @@ import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
 import { Position, LiquidationsEffects } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
+import { HugeUint } from "src/libraries/HugeUint.sol";
 
 /**
  * @title UsdnProtocolHandler
@@ -37,6 +38,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     using SafeCast for int256;
     using SafeCast for uint256;
     using SignedMath for int256;
+    using HugeUint for HugeUint.Uint512;
 
     constructor(
         IUsdn usdn,
@@ -438,8 +440,11 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         _createInitialPosition(amount, price, tick, positionTotalExpo);
     }
 
-    function i_saveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty) external {
-        _saveNewPosition(tick, long, liquidationPenalty);
+    function i_saveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty)
+        external
+        returns (uint256, uint256, HugeUint.Uint512 memory)
+    {
+        return _saveNewPosition(tick, long, liquidationPenalty);
     }
 
     function i_checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) external view {
