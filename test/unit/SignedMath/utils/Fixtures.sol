@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { BaseFixture } from "test/utils/Fixtures.sol";
-import { SignedMathHandler } from "test/unit/SignedMath/utils/Handler.sol";
+import { BaseFixture } from "../../../utils/Fixtures.sol";
+import { SignedMathHandler } from "../utils/Handler.sol";
 
 /**
  * @title SignedMathFixture

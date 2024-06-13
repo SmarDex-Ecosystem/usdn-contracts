@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { HugeUintFixture } from "test/unit/HugeUint/utils/Fixtures.sol";
+import { HugeUintFixture } from "./utils/Fixtures.sol";
 
-import { HugeUint } from "src/libraries/HugeUint.sol";
+import { HugeUint } from "../../../src/libraries/HugeUint.sol";
 
 /**
  * @custom:feature Unit tests for the `sub` function of the `HugeUint` uint512 library

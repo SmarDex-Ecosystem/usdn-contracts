@@ -4,9 +4,9 @@ pragma solidity ^0.8.25;
 import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
-import { UsdnProtocolBaseIntegrationFixture } from "test/integration/UsdnProtocol/utils/Fixtures.sol";
+import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 
-import { Permit2TokenBitfield } from "src/libraries/Permit2TokenBitfield.sol";
+import { Permit2TokenBitfield } from "../../../src/libraries/Permit2TokenBitfield.sol";
 
 /**
  * @custom:feature Initiate a long position by using Permit2 for the transfer of wstETH

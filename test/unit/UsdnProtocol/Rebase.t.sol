@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { ADMIN } from "test/utils/Constants.sol";
+import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
+import { ADMIN } from "../../utils/Constants.sol";
 
-import { IUsdnEvents } from "src/interfaces/Usdn/IUsdnEvents.sol";
-import { ProtocolAction, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnEvents } from "../../../src/interfaces/Usdn/IUsdnEvents.sol";
+import { ProtocolAction, PositionId } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature Test the rebasing of the USDN token depending on its price

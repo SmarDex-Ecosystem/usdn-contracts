@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { USER_1 } from "test/utils/Constants.sol";
+import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
+import { USER_1 } from "../../../utils/Constants.sol";
 
 import {
     ProtocolAction,
@@ -10,8 +10,8 @@ import {
     Position,
     PositionId,
     LongPendingAction
-} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
+} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { DoubleEndedQueue } from "../../../../src/libraries/DoubleEndedQueue.sol";
 
 /**
  * @custom:feature The functions of the core of the protocol

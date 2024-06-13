@@ -3,7 +3,7 @@ pragma solidity ^0.8.25;
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
-import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 /**
  * @custom:feature Test the _assetToRemove internal function of the actions layer

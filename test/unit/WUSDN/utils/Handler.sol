@@ -3,8 +3,8 @@ pragma solidity ^0.8.25;
 
 import { console2, Test } from "forge-std/Test.sol";
 
-import { Usdn } from "src/Usdn/Usdn.sol";
-import { Wusdn } from "src/Usdn/Wusdn.sol";
+import { Usdn } from "../../../../src/Usdn/Usdn.sol";
+import { Wusdn } from "../../../../src/Usdn/Wusdn.sol";
 
 /**
  * @title WusdnHandler

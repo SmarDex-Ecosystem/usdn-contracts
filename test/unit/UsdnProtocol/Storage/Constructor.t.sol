@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
-import { Usdn } from "src/Usdn/Usdn.sol";
+import { UsdnProtocol } from "../../../../src/UsdnProtocol/UsdnProtocol.sol";
+import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 
 /**
  * @custom:feature The constructor of the protocol's storage

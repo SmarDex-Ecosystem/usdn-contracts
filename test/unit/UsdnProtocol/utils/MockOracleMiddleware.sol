@@ -3,10 +3,13 @@ pragma solidity ^0.8.25;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-import { IBaseOracleMiddleware } from "src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
-import { IOracleMiddleware, IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IBaseOracleMiddleware } from "../../../../src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
+import {
+    IOracleMiddleware,
+    IOracleMiddlewareErrors
+} from "../../../../src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
+import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
 contract MockOracleMiddleware is IOracleMiddleware, Ownable {
     uint16 public constant BPS_DIVISOR = 10_000;
