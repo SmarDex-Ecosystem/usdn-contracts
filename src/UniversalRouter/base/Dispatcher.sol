@@ -11,7 +11,7 @@ import { Commands } from "../libraries/Commands.sol";
 import { V2SwapRouter } from "../modules/uniswap/v2/V2SwapRouter.sol";
 import { UsdnProtocolRouter } from "../modules/usdn/UsdnProtocolRouter.sol";
 import { PreviousActionsData } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { Permit2TokenBitfield } from "src/libraries/Permit2TokenBitfield.sol";
+import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 import { LidoRouter } from "../modules/lido/LidoRouter.sol";
 
 /**

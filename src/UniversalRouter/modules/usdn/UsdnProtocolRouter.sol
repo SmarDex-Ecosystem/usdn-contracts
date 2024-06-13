@@ -9,7 +9,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { UsdnProtocolImmutables } from "./UsdnProtocolImmutables.sol";
 import { PreviousActionsData } from "../../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PositionId } from "../../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { Permit2TokenBitfield } from "src/libraries/Permit2TokenBitfield.sol";
+import { Permit2TokenBitfield } from "../../../libraries/Permit2TokenBitfield.sol";
 
 abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
     using SafeCast for uint256;
