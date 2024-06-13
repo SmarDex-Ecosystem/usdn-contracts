@@ -44,6 +44,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         PROTOCOL_ASSET.forceApprove(address(USDN_PROTOCOL), amount);
         SDEX.approve(address(USDN_PROTOCOL), type(uint256).max);
         // we send the full ETH balance, the protocol will refund any excess
+        // slither-disable-next-line arbitrary-send-eth
         success_ = USDN_PROTOCOL.initiateDeposit{ value: ethAmount }(
             amount.toUint128(), to, payable(validator), permit2TokenBitfield, currentPriceData, previousActionsData
         );
@@ -65,6 +66,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         PreviousActionsData memory previousActionsData,
         uint256 ethAmount
     ) internal returns (bool success_) {
+        // slither-disable-next-line arbitrary-send-eth
         success_ =
             USDN_PROTOCOL.validateDeposit{ value: ethAmount }(payable(validator), depositPriceData, previousActionsData);
     }
@@ -95,6 +97,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         }
         USDN.approve(address(USDN_PROTOCOL), USDN.convertToTokensRoundUp(amount));
         // we send the full ETH balance, the protocol will refund any excess
+        // slither-disable-next-line arbitrary-send-eth
         success_ = USDN_PROTOCOL.initiateWithdrawal{ value: ethAmount }(
             amount.toUint152(), to, payable(validator), currentPriceData, previousActionsData
         );
@@ -116,6 +119,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         PreviousActionsData memory previousActionsData,
         uint256 ethAmount
     ) internal returns (bool success_) {
+        // slither-disable-next-line arbitrary-send-eth
         success_ = USDN_PROTOCOL.validateWithdrawal{ value: ethAmount }(
             payable(validator), withdrawalPriceData, previousActionsData
         );
@@ -152,6 +156,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         }
         PROTOCOL_ASSET.forceApprove(address(USDN_PROTOCOL), amount);
         // we send the full ETH balance, and the protocol will refund any excess
+        // slither-disable-next-line arbitrary-send-eth
         (success_, posId_) = USDN_PROTOCOL.initiateOpenPosition{ value: ethAmount }(
             amount.toUint128(),
             desiredLiqPrice,
@@ -178,6 +183,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         PreviousActionsData memory previousActionsData,
         uint256 ethAmount
     ) internal returns (bool success_) {
+        // slither-disable-next-line arbitrary-send-eth
         success_ = USDN_PROTOCOL.validateOpenPosition{ value: ethAmount }(
             payable(validator), openPositionPriceData, previousActionsData
         );
