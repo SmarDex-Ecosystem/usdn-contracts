@@ -28,7 +28,13 @@ contract TestForkUniversalRouterValidateOpenPosition is UniversalRouterBaseFixtu
         wstETH.approve(address(protocol), type(uint256).max);
         _securityDeposit = protocol.getSecurityDepositValue();
         (, _posId) = protocol.initiateOpenPosition{ value: _securityDeposit }(
-            OPEN_POSITION_AMOUNT.toUint128(), DESIRED_LIQUIDATION.toUint128(), USER_2, USER_1, "", EMPTY_PREVIOUS_DATA
+            OPEN_POSITION_AMOUNT.toUint128(),
+            DESIRED_LIQUIDATION.toUint128(),
+            USER_2,
+            USER_1,
+            NO_PERMIT2,
+            "",
+            EMPTY_PREVIOUS_DATA
         );
     }
 

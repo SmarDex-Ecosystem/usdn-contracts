@@ -9,6 +9,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { UsdnProtocolImmutables } from "./UsdnProtocolImmutables.sol";
 import { PreviousActionsData } from "../../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PositionId } from "../../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Permit2TokenBitfield } from "src/libraries/Permit2TokenBitfield.sol";
 
 abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
     using SafeCast for uint256;
@@ -21,6 +22,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
      * @param amount The amount of asset to deposit into the vault
      * @param to The address that will receive the USDN tokens upon validation
      * @param validator The address that should validate the deposit (receives the security deposit back)
+     * @param permit2TokenBitfield The bitfield indicating which tokens should be used with permit2
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions
      * @param ethAmount The amount of Ether to send with the transaction
@@ -30,6 +32,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         uint256 amount,
         address to,
         address validator,
+        Permit2TokenBitfield.Bitfield permit2TokenBitfield,
         bytes memory currentPriceData,
         PreviousActionsData memory previousActionsData,
         uint256 ethAmount
@@ -43,7 +46,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         // we send the full ETH balance, the protocol will refund any excess
         // slither-disable-next-line arbitrary-send-eth
         success_ = USDN_PROTOCOL.initiateDeposit{ value: ethAmount }(
-            amount.toUint128(), to, payable(validator), currentPriceData, previousActionsData
+            amount.toUint128(), to, payable(validator), permit2TokenBitfield, currentPriceData, previousActionsData
         );
         SDEX.approve(address(USDN_PROTOCOL), 0);
     }
@@ -130,6 +133,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
      * @param desiredLiqPrice The desired liquidation price for the position
      * @param to The address that will receive the position
      * @param validator The address that should validate the open position (receives the security deposit back)
+     * @param permit2TokenBitfield The bitfield indicating which tokens should be used with permit2
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions
      * @param ethAmount The amount of Ether to send with the transaction
@@ -141,6 +145,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         uint128 desiredLiqPrice,
         address to,
         address validator,
+        Permit2TokenBitfield.Bitfield permit2TokenBitfield,
         bytes memory currentPriceData,
         PreviousActionsData memory previousActionsData,
         uint256 ethAmount
@@ -153,7 +158,13 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         // we send the full ETH balance, and the protocol will refund any excess
         // slither-disable-next-line arbitrary-send-eth
         (success_, posId_) = USDN_PROTOCOL.initiateOpenPosition{ value: ethAmount }(
-            amount.toUint128(), desiredLiqPrice, to, payable(validator), currentPriceData, previousActionsData
+            amount.toUint128(),
+            desiredLiqPrice,
+            to,
+            payable(validator),
+            permit2TokenBitfield,
+            currentPriceData,
+            previousActionsData
         );
     }
 

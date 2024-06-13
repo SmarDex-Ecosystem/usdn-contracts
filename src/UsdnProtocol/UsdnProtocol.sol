@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { IUsdnProtocol } from "../interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { ProtocolAction, Position, PositionId } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -17,7 +17,7 @@ import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes
 import { IRebalancer } from "../interfaces/Rebalancer/IRebalancer.sol";
 
 contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
-    using SafeERC20 for IERC20Metadata;
+    using SafeTransferLib for address;
     using SafeCast for uint256;
 
     /// @inheritdoc IUsdnProtocol
@@ -429,7 +429,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         _checkUninitialized(); // prevent using this function after initialization
 
         // transfer the wstETH for the deposit
-        _asset.safeTransferFrom(msg.sender, address(this), amount);
+        address(_asset).safeTransferFrom(msg.sender, address(this), amount);
         _balanceVault += amount;
         emit InitiatedDeposit(msg.sender, msg.sender, amount, block.timestamp);
 
@@ -460,7 +460,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         _checkUninitialized(); // prevent using this function after initialization
 
         // transfer the wstETH for the long
-        _asset.safeTransferFrom(msg.sender, address(this), amount);
+        address(_asset).safeTransferFrom(msg.sender, address(this), amount);
 
         // apply liquidation penalty to the deployer's liquidationPriceWithoutPenalty
         uint8 liquidationPenalty = _liquidationPenalty;

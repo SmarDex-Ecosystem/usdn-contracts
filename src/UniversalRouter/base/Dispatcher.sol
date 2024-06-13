@@ -11,6 +11,7 @@ import { Commands } from "../libraries/Commands.sol";
 import { V2SwapRouter } from "../modules/uniswap/v2/V2SwapRouter.sol";
 import { UsdnProtocolRouter } from "../modules/usdn/UsdnProtocolRouter.sol";
 import { PreviousActionsData } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Permit2TokenBitfield } from "src/libraries/Permit2TokenBitfield.sol";
 import { LidoRouter } from "../modules/lido/LidoRouter.sol";
 
 /**
@@ -214,12 +215,30 @@ abstract contract Dispatcher is
                             uint256 amount,
                             address to,
                             address validator,
+                            Permit2TokenBitfield.Bitfield permit2TokenBitfield,
                             bytes memory currentPriceData,
                             PreviousActionsData memory previousActionsData,
                             uint256 ethAmount
-                        ) = abi.decode(inputs, (uint256, address, address, bytes, PreviousActionsData, uint256));
+                        ) = abi.decode(
+                            inputs,
+                            (
+                                uint256,
+                                address,
+                                address,
+                                Permit2TokenBitfield.Bitfield,
+                                bytes,
+                                PreviousActionsData,
+                                uint256
+                            )
+                        );
                         _usdnInitiateDeposit(
-                            amount, map(to), map(validator), currentPriceData, previousActionsData, ethAmount
+                            amount,
+                            map(to),
+                            map(validator),
+                            permit2TokenBitfield,
+                            currentPriceData,
+                            previousActionsData,
+                            ethAmount
                         );
                     } else if (command == Commands.INITIATE_WITHDRAWAL) {
                         (
@@ -239,17 +258,29 @@ abstract contract Dispatcher is
                             uint128 desiredLiqPrice,
                             address to,
                             address validator,
+                            Permit2TokenBitfield.Bitfield permit2TokenBitfield,
                             bytes memory currentPriceData,
                             PreviousActionsData memory previousActionsData,
                             uint256 ethAmount
                         ) = abi.decode(
-                            inputs, (uint256, uint128, address, address, bytes, PreviousActionsData, uint256)
+                            inputs,
+                            (
+                                uint256,
+                                uint128,
+                                address,
+                                address,
+                                Permit2TokenBitfield.Bitfield,
+                                bytes,
+                                PreviousActionsData,
+                                uint256
+                            )
                         );
                         _usdnInitiateOpenPosition(
                             amount,
                             desiredLiqPrice,
                             map(to),
                             map(validator),
+                            permit2TokenBitfield,
                             currentPriceData,
                             previousActionsData,
                             ethAmount
