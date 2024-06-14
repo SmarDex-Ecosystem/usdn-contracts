@@ -1608,8 +1608,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         data_.totalExpoToClose = (uint256(data_.pos.totalExpo) * amountToClose / data_.pos.amount).toUint128();
 
-        _checkImbalanceLimitClose(data_.totalExpoToClose, amountToClose);
-
         data_.longTradingExpo = _totalExpo - _balanceLong;
         data_.liqMulAcc = _liqMultiplierAccumulator;
         data_.lastPrice = _lastPrice;
@@ -1629,6 +1627,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             ),
             data_.totalExpoToClose
         );
+
+        // we perform the imbalance check based on the estimated balance change since that's the best we have right now
+        _checkImbalanceLimitClose(data_.totalExpoToClose, data_.tempPositionValue);
     }
 
     /**
