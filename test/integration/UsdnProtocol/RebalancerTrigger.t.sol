@@ -180,6 +180,14 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
         assertEq(protocol.getBalanceVault(), vaultAssetAvailable - bonus);
     }
 
+    /**
+     * @custom:scenario The imbalance is high enough so that the rebalancer tries to trigger but can't because of the
+     * zero close limit
+     * @custom:given A long position ready to be liquidated
+     * @custom:and An imbalance high enough after a liquidation to trigger the rebalancer
+     * @custom:when The liquidation is executed
+     * @custom:then The rebalancer is not triggered
+     */
     function test_rebalancerTrigger_zeroLimit() public {
         vm.startPrank(DEPLOYER);
         protocol.setExpoImbalanceLimits(
