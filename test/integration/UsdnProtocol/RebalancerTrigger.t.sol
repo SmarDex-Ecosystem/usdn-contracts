@@ -2,16 +2,13 @@
 pragma solidity ^0.8.25;
 
 import { MOCK_PYTH_DATA } from "test/unit/Middlewares/utils/Constants.sol";
-import { DEPLOYER } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "test/integration/UsdnProtocol/utils/Fixtures.sol";
-import { MockChainlinkOnChain } from "test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
 
 import { IRebalancerEvents } from "src/interfaces/Rebalancer/IRebalancerEvents.sol";
 import { ProtocolAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
-import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
 
 /**
  * @custom:feature The rebalancer is triggered after liquidations
@@ -20,80 +17,13 @@ import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewar
 contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture, IRebalancerEvents {
     using HugeUint for HugeUint.Uint512;
 
-    MockChainlinkOnChain public chainlinkGasPriceFeed;
     PositionId public posToLiquidate;
     TickData public tickToLiquidateData;
     uint128 public amountInRebalancer;
     int24 public tickSpacing;
 
     function setUp() public {
-        params = DEFAULT_PARAMS;
-        params.initialDeposit += 100 ether;
-        params.initialLong += 100 ether;
-        _setUp(params);
-
-        sdex.mintAndApprove(address(this), 50_000 ether, address(protocol), type(uint256).max);
-
-        tickSpacing = protocol.getTickSpacing();
-
-        vm.startPrank(DEPLOYER);
-        protocol.setFundingSF(0);
-        protocol.resetEMA();
-        protocol.setExpoImbalanceLimits(2000, 2000, 6000, 6000, 300);
-
-        // use a mock for the gas price feed
-        chainlinkGasPriceFeed = new MockChainlinkOnChain();
-        liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
-        protocol.setLiquidationRewardsManager(liquidationRewardsManager);
-        vm.stopPrank();
-
-        // mint wstEth to the test contract
-        (bool success,) = address(wstETH).call{ value: 200 ether }("");
-        require(success, "wstETH mint failed");
-        wstETH.approve(address(protocol), type(uint256).max);
-        wstETH.approve(address(rebalancer), type(uint256).max);
-
-        uint256 messageValue =
-            oracleMiddleware.validationCost("", ProtocolAction.InitiateDeposit) + protocol.getSecurityDepositValue();
-
-        // deposit assets in the rebalancer
-        rebalancer.depositAssets(10 ether, payable(address(this)));
-        amountInRebalancer += 10 ether;
-
-        // deposit assets in the protocol to imbalance it
-        protocol.initiateDeposit{ value: messageValue }(
-            30 ether, payable(address(this)), payable(address(this)), NO_PERMIT2, "", EMPTY_PREVIOUS_DATA
-        );
-
-        _waitDelay();
-
-        mockPyth.setPrice(2000e8);
-        mockPyth.setLastPublishTime(block.timestamp);
-
-        uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.ValidateDeposit);
-
-        protocol.validateDeposit{ value: oracleFee }(payable(address(this)), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
-
-        messageValue = oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition)
-            + protocol.getSecurityDepositValue();
-
-        // open a position to liquidate and trigger the rebalancer
-        (, posToLiquidate) = protocol.initiateOpenPosition{ value: messageValue }(
-            10 ether, 1500 ether, payable(address(this)), payable(address(this)), NO_PERMIT2, "", EMPTY_PREVIOUS_DATA
-        );
-
-        _waitDelay();
-
-        mockPyth.setPrice(2000e8);
-        mockPyth.setLastPublishTime(block.timestamp);
-
-        oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.ValidateOpenPosition);
-        protocol.validateOpenPosition{ value: oracleFee }(payable(address(this)), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
-
-        tickToLiquidateData = protocol.getTickData(posToLiquidate.tick);
-
-        vm.prank(DEPLOYER);
-        protocol.setExpoImbalanceLimits(200, 200, 600, 600, 300);
+        (tickSpacing, amountInRebalancer, posToLiquidate, tickToLiquidateData) = _setUpRebalancer();
     }
 
     /**

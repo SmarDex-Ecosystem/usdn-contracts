@@ -41,4 +41,15 @@ interface IRebalancerEvents {
      * @param closeImbalanceLimitBps The new close imbalance limit in bps
      */
     event CloseImbalanceLimitBpsUpdated(uint256 closeImbalanceLimitBps);
+
+    /**
+     * @notice Emitted when the user initiate a closePosition
+     * @param user The original owner of the position
+     * @param depositedAmount The depositedAmount
+     * @param amountToClose The USDN protocol amount to close
+     * @param remainingDeposited The remaining deposited asset
+     */
+    event ClosePositionInitiated(
+        address user, uint256 depositedAmount, uint256 amountToClose, uint256 remainingDeposited
+    );
 }

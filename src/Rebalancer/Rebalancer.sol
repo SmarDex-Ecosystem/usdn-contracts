@@ -329,12 +329,7 @@ contract Rebalancer is Ownable, ERC165, IOwnershipCallback, IRebalancer {
         emit CloseImbalanceLimitBpsUpdated(closeImbalanceLimitBps);
     }
 
-    /// @inheritdoc IOwnershipCallback
-    function ownershipCallback(address, PositionId calldata) external pure {
-        revert RebalancerUnauthorized(); // first version of the rebalancer contract so we are always reverting
-    }
-
-    // TODO add natspec
+    /// @inheritdoc IRebalancer
     function initiateClosePosition(
         uint128 amount,
         address to,
@@ -350,38 +345,37 @@ contract Rebalancer is Ownable, ERC165, IOwnershipCallback, IRebalancer {
             revert RebalancerInvalidAddressValidator();
         }
 
-        UserDeposit memory depositData = _userDeposit[msg.sender];
+        UserDeposit memory userDepositData = _userDeposit[msg.sender];
 
-        if (depositData.amount == 0) {
+        if (userDepositData.amount == 0) {
             revert RebalancerUserNotPending();
         }
 
         uint256 positionVersion = _positionVersion;
+        PositionData memory currentPositionData = _positionData[positionVersion];
 
-        if (depositData.entryPositionVersion >= positionVersion) {
+        if (userDepositData.entryPositionVersion > positionVersion) {
             revert RebalancerNoRebalancedAssets();
         }
 
-        PositionData memory currentPositionData = _positionData[positionVersion];
-
         // sanity check
-        if (depositData.amount > currentPositionData.amount) {
+        if (userDepositData.amount > currentPositionData.amount) {
             revert RebalancerInsufficientDeposited();
         }
 
-        if (amount > depositData.amount) {
+        if (amount > userDepositData.amount) {
             revert RebalancerInvalidAmount();
         }
 
-        uint128 remainingAssets = depositData.amount - amount;
-        if (remainingAssets < _minAssetDeposit) {
+        uint128 remainingAssets = userDepositData.amount - amount;
+        if (remainingAssets > 0 && remainingAssets < _minAssetDeposit) {
             revert RebalancerInvalidMinAssetDeposit();
         }
 
         uint256 amountToClose = FixedPointMathLib.fullMulDiv(
             amount,
             currentPositionData.entryAccMultiplier,
-            _positionData[depositData.entryPositionVersion].entryAccMultiplier
+            _positionData[userDepositData.entryPositionVersion].entryAccMultiplier
         );
 
         success_ = _usdnProtocol.initiateClosePosition{ value: msg.value }(
@@ -389,7 +383,7 @@ contract Rebalancer is Ownable, ERC165, IOwnershipCallback, IRebalancer {
         );
 
         if (success_) {
-            if (amount == depositData.amount) {
+            if (amount == userDepositData.amount) {
                 delete _userDeposit[msg.sender];
             } else {
                 // TODO check remaining bonus in another PR
@@ -399,6 +393,13 @@ contract Rebalancer is Ownable, ERC165, IOwnershipCallback, IRebalancer {
             unchecked {
                 _positionData[positionVersion].amount -= amount;
             }
+
+            emit ClosePositionInitiated(msg.sender, amount, amountToClose, remainingAssets);
         }
+    }
+
+    /// @inheritdoc IOwnershipCallback
+    function ownershipCallback(address, PositionId calldata) external pure {
+        revert RebalancerUnauthorized(); // first version of the rebalancer contract so we are always reverting
     }
 }

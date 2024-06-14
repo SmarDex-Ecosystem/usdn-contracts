@@ -6,7 +6,7 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 import { IRebalancerErrors } from "./IRebalancerErrors.sol";
 import { IRebalancerEvents } from "./IRebalancerEvents.sol";
 import { IRebalancerTypes } from "./IRebalancerTypes.sol";
-import { PositionId } from "../UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PositionId, PreviousActionsData } from "../UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IUsdnProtocol } from "../UsdnProtocol/IUsdnProtocol.sol";
 
 interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes {
@@ -151,4 +151,23 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
      * @param closeImbalanceLimitBps The new limit of the imbalance in bps to close the position
      */
     function setCloseImbalanceLimitBps(uint256 closeImbalanceLimitBps) external;
+
+    /**
+     * @notice Close a user deposited amount of the rebalancer current position in the UsdnProtocol
+     * @dev The rebalancer allow partial close of the user deposited asset. It should still
+     * have `_minAssetDeposit` user amount deposited in the rebalancer.
+     * @param amount The amount to close (in rebalancer deposited ratio)
+     * @param to The to address
+     * @param validator The validator address
+     * @param currentPriceData The current price data
+     * @param previousActionsData The previous action price data
+     * @return success_ If the UsdnProtocol `initiateClosePosition` was successful
+     */
+    function initiateClosePosition(
+        uint128 amount,
+        address to,
+        address payable validator,
+        bytes calldata currentPriceData,
+        PreviousActionsData calldata previousActionsData
+    ) external payable returns (bool success_);
 }
