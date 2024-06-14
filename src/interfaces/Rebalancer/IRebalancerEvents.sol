@@ -36,7 +36,7 @@ interface IRebalancerEvents {
      */
     event PositionVersionUpdated(uint128 newPositionVersion);
 
-    /*
+    /**
      * @notice Emitted when the close imbalance limit in bps is updated
      * @param closeImbalanceLimitBps The new close imbalance limit in bps
      */

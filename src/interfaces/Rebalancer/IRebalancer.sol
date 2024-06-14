@@ -72,7 +72,7 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
      */
     function getPositionData(uint128 version) external view returns (PositionData memory positionData_);
 
-    /*
+    /**
      * @notice Returns the limit of the imbalance in bps to close the position
      * @return The limit of the imbalance in bps to close the position
      */
