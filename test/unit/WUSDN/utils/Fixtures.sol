@@ -3,7 +3,8 @@ pragma solidity ^0.8.25;
 
 import { WusdnHandler } from "./Handler.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
-
+import { IWusdnErrors } from "../../../../src/interfaces/Usdn/IWusdnErrors.sol";
+import { IWusdnEvents } from "../../../../src/interfaces/Usdn/IWusdnEvents.sol";
 import { Wusdn } from "../../../../src/Usdn/Wusdn.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 
@@ -11,9 +12,12 @@ import { Usdn } from "../../../../src/Usdn/Usdn.sol";
  * @title WusdnTokenFixture
  * @dev Utils for testing WUSDN token
  */
-contract WusdnTokenFixture is BaseFixture {
+contract WusdnTokenFixture is BaseFixture, IWusdnErrors, IWusdnEvents {
+    /// @notice WUSDN token handler
     WusdnHandler public wusdn;
+    /// @notice USDN token decimals
     uint256 public usdnDecimals;
+    /// @notice USDN token
     Usdn public usdn;
 
     function setUp() public virtual {
