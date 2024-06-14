@@ -11,9 +11,6 @@ interface IRebalancerErrors {
     /// @dev Indicates that the `to` address is invalid
     error RebalancerInvalidAddressTo();
 
-    /// @dev Indicates that the `validator` address is invalid
-    error RebalancerInvalidAddressValidator();
-
     /// @dev Indicates that the amount of assets is invalid
     error RebalancerInvalidAmount();
 

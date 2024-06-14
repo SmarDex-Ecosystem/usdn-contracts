@@ -21,26 +21,6 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
     }
 
     /**
-     * @custom:scenario Call the rebalancer `initiateClosePosition` function with invalid `to`
-     * @custom:when The `initiateClosePosition` function is called
-     * @custom:then It should revert with `RebalancerInvalidAddressTo`
-     */
-    function test_RevertWhenRebalancerInvalidTo() external {
-        vm.expectRevert(IRebalancerErrors.RebalancerInvalidAddressTo.selector);
-        rebalancer.initiateClosePosition(minAsset, address(0), payable(address(this)), "", EMPTY_PREVIOUS_DATA);
-    }
-
-    /**
-     * @custom:scenario Call the rebalancer `initiateClosePosition` function with invalid `validator`
-     * @custom:when The `initiateClosePosition` function is called
-     * @custom:then It should revert with `RebalancerInvalidAddressValidator`
-     */
-    function test_RevertWhenRebalancerInvalidValidator() external {
-        vm.expectRevert(IRebalancerErrors.RebalancerInvalidAddressValidator.selector);
-        rebalancer.initiateClosePosition(minAsset, address(this), payable(address(0)), "", EMPTY_PREVIOUS_DATA);
-    }
-
-    /**
      * @custom:scenario Call the rebalancer `initiateClosePosition` function with zero amount
      * @custom:when The `initiateClosePosition` function is called
      * @custom:then It should revert with `RebalancerInvalidAmount`

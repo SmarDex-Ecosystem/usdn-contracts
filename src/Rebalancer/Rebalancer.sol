@@ -338,14 +338,6 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_) {
-        if (to == address(0)) {
-            revert RebalancerInvalidAddressTo();
-        }
-
-        if (validator == address(0)) {
-            revert RebalancerInvalidAddressValidator();
-        }
-
         UserDeposit memory userDepositData = _userDeposit[msg.sender];
 
         if (amount == 0 || amount > userDepositData.amount) {
