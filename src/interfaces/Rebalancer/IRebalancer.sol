@@ -153,10 +153,10 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
     function setCloseImbalanceLimitBps(uint256 closeImbalanceLimitBps) external;
 
     /**
-     * @notice Close a user deposited amount of the rebalancer current position in the UsdnProtocol
-     * @dev The rebalancer allow partial close of the user deposited asset. It should still
-     * have `_minAssetDeposit` user amount deposited in the rebalancer.
-     * @param amount The amount to close (in rebalancer deposited ratio)
+     * @notice Close a user deposited amount of the current UsdnProtocol rebalancer position
+     * @dev The rebalancer allow partial close of the user deposited asset. It should stay at least
+     * `_minAssetDeposit` of user amount deposited in the rebalancer.
+     * @param amount The deposited amount to close (in rebalancer deposited ratio)
      * @param to The to address
      * @param validator The validator address
      * @param currentPriceData The current price data

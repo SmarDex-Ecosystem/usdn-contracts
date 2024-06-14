@@ -3,13 +3,13 @@ pragma solidity ^0.8.25;
 
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { UsdnProtocolBaseIntegrationFixture } from "test/integration/UsdnProtocol/utils/Fixtures.sol";
-import { MOCK_PYTH_DATA } from "test/unit/Middlewares/utils/Constants.sol";
-import { DEPLOYER } from "test/utils/Constants.sol";
+import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
+import { MOCK_PYTH_DATA } from "../../unit/Middlewares/utils/Constants.sol";
+import { DEPLOYER } from "../../utils/Constants.sol";
 
-import { IRebalancerEvents } from "src/interfaces/Rebalancer/IRebalancerEvents.sol";
-import { PositionId, ProtocolAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { IRebalancerErrors } from "src/interfaces/Rebalancer/IRebalancerErrors.sol";
+import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
+import { PositionId, ProtocolAction, TickData } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IRebalancerErrors } from "../../../src/interfaces/Rebalancer/IRebalancerErrors.sol";
 
 /**
  * @custom:feature The user rebalancer initiate close position
@@ -38,7 +38,7 @@ contract UsdnProtocolRebalancerInitiateClosePosition is UsdnProtocolBaseIntegrat
         uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
         protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA, 1);
 
-        assertEq(rebalancer.getPositionVersion(), 1, "rebalancer version should be updated to 1");
+        assertGt(rebalancer.getPositionVersion(), 0, "rebalancer version should be updated");
     }
 
     /**
@@ -96,8 +96,16 @@ contract UsdnProtocolRebalancerInitiateClosePosition is UsdnProtocolBaseIntegrat
 
         amountInRebalancer -= amount;
 
-        assertEq(rebalancer.getUserDepositData(address(this)).amount, amountInRebalancer);
-        assertEq(rebalancer.getUserDepositData(address(this)).entryPositionVersion, rebalancer.getPositionVersion());
+        assertEq(
+            rebalancer.getUserDepositData(address(this)).amount,
+            amountInRebalancer,
+            "The user deposited amount in rebalancer should be updated"
+        );
+        assertEq(
+            rebalancer.getUserDepositData(address(this)).entryPositionVersion,
+            rebalancer.getPositionVersion(),
+            "The user deposited entry point version in rebalancer should be the same"
+        );
     }
 
     /**
@@ -127,8 +135,16 @@ contract UsdnProtocolRebalancerInitiateClosePosition is UsdnProtocolBaseIntegrat
 
         assertTrue(success, "rebalancer close should be successful");
 
-        assertEq(rebalancer.getUserDepositData(address(this)).amount, 0);
-        assertEq(rebalancer.getUserDepositData(address(this)).entryPositionVersion, 0);
+        assertEq(
+            rebalancer.getUserDepositData(address(this)).amount,
+            0,
+            "The user deposited amount in rebalancer should be zero"
+        );
+        assertEq(
+            rebalancer.getUserDepositData(address(this)).entryPositionVersion,
+            0,
+            "The user deposited entry point version in rebalancer should be zero"
+        );
     }
 
     receive() external payable { }

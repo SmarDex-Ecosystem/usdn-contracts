@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { IRebalancerErrors } from "src/interfaces/Rebalancer/IRebalancerErrors.sol";
+import { IRebalancerErrors } from "../../../src/interfaces/Rebalancer/IRebalancerErrors.sol";
 
-import { RebalancerFixture } from "test/unit/Rebalancer/utils/Fixtures.sol";
+import { RebalancerFixture } from "../../../test/unit/Rebalancer/utils/Fixtures.sol";
 
 /**
  * @custom:feature The `initiateClosePosition` function of the rebalancer contract
@@ -17,7 +17,6 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
 
         wstETH.mintAndApprove(address(this), 1000 ether, address(rebalancer), type(uint256).max);
         minAsset = uint128(rebalancer.getMinAssetDeposit());
-        // minimum initial deposit
         rebalancer.depositAssets(minAsset, address(this));
     }
 
