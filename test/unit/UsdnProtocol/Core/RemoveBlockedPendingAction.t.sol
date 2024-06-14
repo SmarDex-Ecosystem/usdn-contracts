@@ -1,12 +1,17 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { ADMIN, USER_1 } from "test/utils/Constants.sol";
+import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
+import { ADMIN, USER_1 } from "../../../utils/Constants.sol";
 
-import { ProtocolAction, PositionId, Position, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
-import { HugeUint } from "src/libraries/HugeUint.sol";
+import {
+    ProtocolAction,
+    PositionId,
+    Position,
+    TickData
+} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { DoubleEndedQueue } from "../../../../src/libraries/DoubleEndedQueue.sol";
+import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 
 /// @custom:feature The `_removeBlockedPendingAction` admin function of the protocol
 contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {

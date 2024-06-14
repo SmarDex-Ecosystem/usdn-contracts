@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { RebalancerFixture } from "test/unit/Rebalancer/utils/Fixtures.sol";
-import { ADMIN } from "test/utils/Constants.sol";
+import { RebalancerFixture } from "./utils/Fixtures.sol";
+import { ADMIN } from "../../utils/Constants.sol";
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-import { PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PositionId } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The admin functions of the rebalancer contract

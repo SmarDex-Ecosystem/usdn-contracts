@@ -193,7 +193,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
         if (timestamp < _lastUpdateTimestamp) {
             revert UsdnProtocolTimestampTooOld();
-            // slither-disable-next-line incorrect-equality
         } else if (timestamp == _lastUpdateTimestamp) {
             return (0, oldLongExpo_);
         }
@@ -207,7 +206,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
         int256 numerator = oldLongExpo_ - oldVaultExpo;
         // optimization: if the numerator is zero, then return the EMA
-        // slither-disable-next-line incorrect-equality
         if (numerator == 0) {
             return (ema, oldLongExpo_);
         }
@@ -636,13 +634,11 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @return securityDepositValue_ The security deposit value of the removed stale pending action
      */
     function _removeStalePendingAction(address user) internal returns (uint256 securityDepositValue_) {
-        // slither-disable-next-line incorrect-equality
         if (_pendingActions[user] == 0) {
             return 0;
         }
         (PendingAction memory action, uint128 rawIndex) = _getPendingAction(user);
         // the position is only at risk of being liquidated while pending if it is an open position action
-        // slither-disable-next-line incorrect-equality
         if (action.action == ProtocolAction.ValidateOpenPosition) {
             LongPendingAction memory openAction = _toLongPendingAction(action);
             uint256 version = _tickVersion[openAction.tick];
@@ -689,7 +685,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      */
     function _getPendingAction(address user) internal view returns (PendingAction memory action_, uint128 rawIndex_) {
         uint256 pendingActionIndex = _pendingActions[user];
-        // slither-disable-next-line incorrect-equality
         if (pendingActionIndex == 0) {
             // no pending action
             return (action_, rawIndex_);
