@@ -744,7 +744,6 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /**
-     * TODO add tests
      * @notice Immediately close a position with the given price
      * @dev Should only be used to close the rebalancer position
      * @param posId The ID of the position to close
@@ -765,20 +764,20 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         uint8 liquidationPenalty = _tickData[tickHash].liquidationPenalty;
         Position memory pos = _longPositions[tickHash][posId.index];
 
-        // fully close the position and update the cache
-        cache.liqMultiplierAccumulator =
-            _removeAmountFromPosition(posId.tick, posId.index, pos, pos.amount, pos.totalExpo);
-
         int256 positionValue = _positionValue(
             neutralPrice,
             getEffectivePriceForTick(
                 _calcTickWithoutPenalty(posId.tick, liquidationPenalty),
-                neutralPrice,
+                _lastPrice,
                 cache.tradingExpo,
                 cache.liqMultiplierAccumulator
             ),
             pos.totalExpo
         );
+
+        // fully close the position and update the cache
+        cache.liqMultiplierAccumulator =
+            _removeAmountFromPosition(posId.tick, posId.index, pos, pos.amount, pos.totalExpo);
 
         // if positionValue is lower than 0, return 0
         if (positionValue < 0) {
@@ -800,7 +799,6 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /**
-     * TODO add tests
      * @notice Immediately open a position with the given price
      * @dev Should only be used to open the rebalancer position
      * @param user The address of the user
