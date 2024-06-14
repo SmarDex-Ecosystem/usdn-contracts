@@ -15,7 +15,7 @@ import { IRebalancerErrors } from "src/interfaces/Rebalancer/IRebalancerErrors.s
  * @custom:feature The user rebalancer initiate close position
  * @custom:background A rebalancer is set and the USDN protocol is initialized with the default params
  */
-contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture, IRebalancerEvents {
+contract UsdnProtocolRebalancerInitiateClosePosition is UsdnProtocolBaseIntegrationFixture, IRebalancerEvents {
     uint256 constant BASE_AMOUNT = 1000 ether;
     uint256 internal securityDepositValue;
     uint128 internal minAsset;
