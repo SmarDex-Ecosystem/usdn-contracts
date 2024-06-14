@@ -507,6 +507,25 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _removeStalePendingAction(user);
     }
 
+    function i_flashClosePosition(
+        PositionId memory posId,
+        uint128 neutralPrice,
+        uint256 totalExpo,
+        uint256 balanceLong,
+        uint256 balanceVault,
+        HugeUint.Uint512 memory liqMultiplierAccumulator
+    ) external returns (uint256 positionValue_) {
+        CachedProtocolState memory cache = CachedProtocolState({
+            totalExpo: totalExpo,
+            longBalance: balanceLong,
+            vaultBalance: balanceVault,
+            tradingExpo: totalExpo - balanceLong,
+            liqMultiplierAccumulator: liqMultiplierAccumulator
+        });
+
+        return _flashClosePosition(posId, neutralPrice, cache);
+    }
+
     function i_flashOpenPosition(
         address user,
         uint128 neutralPrice,

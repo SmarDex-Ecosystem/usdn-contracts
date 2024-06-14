@@ -1,0 +1,120 @@
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.25;
+
+import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
+
+import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
+import { Position, PositionId, ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+
+/**
+ * @custom:feature The `_flashClosePosition` internal function of the UsdnProtocolLong contract
+ * @custom:background Given a protocol initialized with default params
+ * @custom:and A position created with 1 ether and a 2x leverage
+ */
+contract TestUsdnProtocolLongFlashClosePosition is UsdnProtocolBaseFixture {
+    using HugeUint for HugeUint.Uint512;
+
+    int24 internal _tickSpacing = 100;
+
+    uint256 balanceVault;
+    uint256 balanceLong;
+    uint256 totalExpo;
+    HugeUint.Uint512 liqMultiplierAccumulator;
+    uint128 amount = 1 ether;
+    PositionId posId;
+
+    function setUp() public {
+        super._setUp(DEFAULT_PARAMS);
+
+        posId = setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: amount,
+                desiredLiqPrice: DEFAULT_PARAMS.initialPrice / 2,
+                price: DEFAULT_PARAMS.initialPrice
+            })
+        );
+        balanceVault = protocol.getBalanceVault();
+        balanceLong = protocol.getBalanceLong();
+        totalExpo = protocol.getTotalExpo();
+        liqMultiplierAccumulator = protocol.getLiqMultiplierAccumulator();
+    }
+
+    /**
+     * @custom:scenario Flash closing a position
+     * @custom:when _flashClosePosition is called
+     * @custom:then The provided position is closed
+     * @custom:and InitiatedClosePosition and ValidatedClosePosition events are emitted
+     */
+    function test_flashClosePosition() external {
+        (Position memory pos,) = protocol.getLongPosition(posId);
+
+        uint256 longPositionsCountBefore = protocol.getTotalLongPositions();
+        // 10% profit
+        uint128 currentPrice = DEFAULT_PARAMS.initialPrice * 11 / 10;
+        uint128 tickPrice = protocol.getEffectivePriceForTick(
+            protocol.i_calcTickWithoutPenalty(posId.tick, protocol.getLiquidationPenalty()),
+            DEFAULT_PARAMS.initialPrice,
+            totalExpo - balanceLong,
+            liqMultiplierAccumulator
+        );
+        int256 expectedPositionValue = protocol.i_positionValue(currentPrice, tickPrice, pos.totalExpo);
+
+        vm.expectEmit();
+        emit InitiatedClosePosition(address(this), address(this), address(this), posId, amount, amount, 0);
+        vm.expectEmit();
+        emit ValidatedClosePosition(
+            address(this),
+            address(this),
+            posId,
+            uint256(expectedPositionValue),
+            int256(expectedPositionValue) - int128(amount)
+        );
+        uint256 positionValue = protocol.i_flashClosePosition(
+            posId, currentPrice, totalExpo, balanceLong, balanceVault, liqMultiplierAccumulator
+        );
+
+        assertEq(
+            positionValue, uint256(expectedPositionValue), "The returned position value should be the expected one"
+        );
+
+        (pos,) = protocol.getLongPosition(posId);
+        Position memory deletedPos;
+        assertEq(abi.encode(pos), abi.encode(deletedPos), "The position should have been deleted");
+
+        assertEq(
+            longPositionsCountBefore - 1, protocol.getTotalLongPositions(), "The long position should have been closed"
+        );
+    }
+
+    /**
+     * @custom:scenario Flash closing a position with an outdated tick
+     * @custom:given the tick version of the position's tick has been incremented
+     * @custom:when _flashClosePosition is called
+     * @custom:then The returned value is 0 because the position was liquidated
+     */
+    function test_flashClosePositionWithAnOutdatedTick() public {
+        // increment the tick version of the position
+        protocol.setTickVersion(posId.tick, posId.tickVersion + 1);
+
+        uint256 positionValue = protocol.i_flashClosePosition(
+            posId, DEFAULT_PARAMS.initialPrice, totalExpo, balanceLong, balanceVault, liqMultiplierAccumulator
+        );
+
+        assertEq(positionValue, 0, "The returned value should be 0");
+    }
+
+    /**
+     * @custom:scenario Flash closing a position that should be liquidated
+     * @custom:when _flashClosePosition is called with a price is below the liquidation price of the position
+     * @custom:then The returned value is 0
+     */
+    function test_flashClosePositionWithAPositionWithNegativeValue() public {
+        uint256 positionValue = protocol.i_flashClosePosition(
+            posId, DEFAULT_PARAMS.initialPrice / 3, totalExpo, balanceLong, balanceVault, liqMultiplierAccumulator
+        );
+
+        assertEq(positionValue, 0, "The returned value should be 0");
+    }
+}
