@@ -582,10 +582,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         int256 newLongBalance = _balanceLong.toInt256().safeSub(posValueToClose.toInt256());
-        int256 newTotalExpo = _totalExpo.toInt256().safeSub(posTotalExpoToClose.toInt256());
+        uint256 newTotalExpo = _totalExpo - posTotalExpoToClose;
         int256 currentVaultExpo = _balanceVault.toInt256().safeAdd(_pendingBalanceVault);
 
-        int256 imbalanceBps = _calcImbalanceCloseBps(currentVaultExpo, newLongBalance, newTotalExpo.toUint256());
+        int256 imbalanceBps = _calcImbalanceCloseBps(currentVaultExpo, newLongBalance, newTotalExpo);
 
         if (imbalanceBps >= closeExpoImbalanceLimitBps) {
             revert UsdnProtocolImbalanceLimitReached(imbalanceBps);
