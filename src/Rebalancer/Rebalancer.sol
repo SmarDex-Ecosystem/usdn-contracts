@@ -348,24 +348,15 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
 
         UserDeposit memory userDepositData = _userDeposit[msg.sender];
 
-        if (userDepositData.amount == 0) {
-            revert RebalancerUserNotPending();
+        if (amount == 0 || amount > userDepositData.amount) {
+            revert RebalancerInvalidAmount();
         }
 
         uint256 positionVersion = _positionVersion;
         PositionData memory currentPositionData = _positionData[positionVersion];
 
         if (userDepositData.entryPositionVersion > positionVersion) {
-            revert RebalancerNoRebalancedAssets();
-        }
-
-        // sanity check
-        if (userDepositData.amount > currentPositionData.amount) {
-            revert RebalancerInsufficientDeposited();
-        }
-
-        if (amount > userDepositData.amount) {
-            revert RebalancerInvalidAmount();
+            revert RebalancerUserPending();
         }
 
         uint128 remainingAssets = userDepositData.amount - amount;
@@ -391,9 +382,14 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
                 _userDeposit[msg.sender].amount = remainingAssets;
             }
 
-            unchecked {
-                _positionData[positionVersion].amount -= amount;
+            currentPositionData.amount -= amount;
+
+            if (currentPositionData.amount == 0) {
+                currentPositionData.id =
+                    PositionId({ tick: _usdnProtocol.NO_POSITION_TICK(), tickVersion: 0, index: 0 });
             }
+
+            _positionData[positionVersion] = currentPositionData;
 
             emit ClosePositionInitiated(msg.sender, amount, amountToClose, remainingAssets);
         }

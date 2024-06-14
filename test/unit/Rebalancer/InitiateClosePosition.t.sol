@@ -22,7 +22,6 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
 
     /**
      * @custom:scenario Call the rebalancer `initiateClosePosition` function with invalid `to`
-     * @custom:given A rebalancer contract
      * @custom:when The `initiateClosePosition` function is called
      * @custom:then It should revert with `RebalancerInvalidAddressTo`
      */
@@ -33,7 +32,6 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
 
     /**
      * @custom:scenario Call the rebalancer `initiateClosePosition` function with invalid `validator`
-     * @custom:given A rebalancer contract
      * @custom:when The `initiateClosePosition` function is called
      * @custom:then It should revert with `RebalancerInvalidAddressValidator`
      */
@@ -43,25 +41,33 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
     }
 
     /**
-     * @custom:scenario Call the rebalancer `initiateClosePosition` function without user pending deposit
-     * @custom:given A rebalancer contract
+     * @custom:scenario Call the rebalancer `initiateClosePosition` function with zero amount
      * @custom:when The `initiateClosePosition` function is called
-     * @custom:then It should revert with `RebalancerUserNotPending`
+     * @custom:then It should revert with `RebalancerInvalidAmount`
      */
-    function test_RevertWhenRebalancerUserNotPending() external {
-        rebalancer.withdrawPendingAssets(uint128(minAsset), address(this));
-        vm.expectRevert(IRebalancerErrors.RebalancerUserNotPending.selector);
-        rebalancer.initiateClosePosition(minAsset, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA);
+    function test_RevertWhenRebalancerInvalidAmountZero() external {
+        vm.expectRevert(IRebalancerErrors.RebalancerInvalidAmount.selector);
+        rebalancer.initiateClosePosition(0, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA);
     }
 
     /**
-     * @custom:scenario Call the rebalancer `initiateClosePosition` function without rebalanced assets
-     * @custom:given A rebalancer contract
+     * @custom:scenario Call the rebalancer `initiateClosePosition` function with more than user deposited
      * @custom:when The `initiateClosePosition` function is called
-     * @custom:then It should revert with `RebalancerNoRebalancedAssets`
+     * @custom:then It should revert with `RebalancerInvalidAmount`
      */
-    function test_RevertWhenRebalancerNoRebalancedAssets() external {
-        vm.expectRevert(IRebalancerErrors.RebalancerNoRebalancedAssets.selector);
+    function test_RevertWhenRebalancerInvalidAmount() external {
+        rebalancer.withdrawPendingAssets(uint128(minAsset), address(this));
+        vm.expectRevert(IRebalancerErrors.RebalancerInvalidAmount.selector);
+        rebalancer.initiateClosePosition(1, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA);
+    }
+
+    /**
+     * @custom:scenario Call the rebalancer `initiateClosePosition` function with pending assets
+     * @custom:when The `initiateClosePosition` function is called
+     * @custom:then It should revert with `RebalancerUserPending`
+     */
+    function test_RevertWhenRebalancerUserPending() external {
+        vm.expectRevert(IRebalancerErrors.RebalancerUserPending.selector);
         rebalancer.initiateClosePosition(minAsset, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA);
     }
 }

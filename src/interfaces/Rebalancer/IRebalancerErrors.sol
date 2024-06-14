@@ -5,8 +5,8 @@ interface IRebalancerErrors {
     /// @dev Indicates that the user assets are used in a position
     error RebalancerUserNotPending();
 
-    /// @dev Indicates that the user have no rebalanced assets
-    error RebalancerNoRebalancedAssets();
+    /// @dev IndicatesIndicates that the user assets are not used in a position
+    error RebalancerUserPending();
 
     /// @dev Indicates that the `to` address is invalid
     error RebalancerInvalidAddressTo();
@@ -31,7 +31,4 @@ interface IRebalancerErrors {
 
     /// @dev Indicates that the caller is not authorized to perform the action
     error RebalancerUnauthorized();
-
-    /// @dev Indicates that the deposited amount is insufficient
-    error RebalancerInsufficientDeposited();
 }

@@ -50,9 +50,7 @@ contract UsdnProtocolRebalancerInitiateClosePosition is UsdnProtocolBaseIntegrat
      */
     function test_RevertWhenRebalancerInvalidAmount() external {
         vm.expectRevert(IRebalancerErrors.RebalancerInvalidAmount.selector);
-        rebalancer.initiateClosePosition(
-            amountInRebalancer + 1, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA
-        );
+        rebalancer.initiateClosePosition(amountInRebalancer + 1, address(this), payable(this), "", EMPTY_PREVIOUS_DATA);
     }
 
     /**

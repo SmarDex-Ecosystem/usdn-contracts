@@ -51,6 +51,6 @@ interface IRebalancerEvents {
      * @param remainingAmountDeposited The remaining deposited assets
      */
     event ClosePositionInitiated(
-        address user, uint256 depositedAmountToClose , uint256 amountToClose, uint256 remainingAmountDeposited 
+        address user, uint256 depositedAmountToClose, uint256 amountToClose, uint256 remainingAmountDeposited
     );
 }
