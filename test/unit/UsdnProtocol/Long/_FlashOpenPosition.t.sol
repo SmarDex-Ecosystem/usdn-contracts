@@ -24,6 +24,7 @@ contract TestUsdnProtocolLongFlashOpenPosition is UsdnProtocolBaseFixture {
     uint128 totalExpo = 300 ether;
     uint128 amount = 1 ether;
     uint128 longTradingExpo = totalExpo - balanceLong;
+    HugeUint.Uint512 liqMultiplierAccumulator;
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
@@ -36,8 +37,6 @@ contract TestUsdnProtocolLongFlashOpenPosition is UsdnProtocolBaseFixture {
      * @custom:and InitiatedOpenPosition and ValidatedOpenPosition events are emitted
      */
     function test_flashOpenPosition() external {
-        HugeUint.Uint512 memory liqMultiplierAccumulator = HugeUint.Uint512(0, 0);
-
         int24 tickWithoutPenalty = protocol.getEffectiveTickForPrice(
             1500 ether, currentPrice, longTradingExpo, liqMultiplierAccumulator, _tickSpacing
         );
@@ -81,8 +80,6 @@ contract TestUsdnProtocolLongFlashOpenPosition is UsdnProtocolBaseFixture {
      * @custom:and The created position has the same penalty as the positions in the tick
      */
     function test_flashOpenPositionOnTickWithDifferentPenalty() external {
-        HugeUint.Uint512 memory liqMultiplierAccumulator = HugeUint.Uint512(0, 0);
-
         int24 tickWithoutOldPenalty =
             initialPosition.tick - int24(uint24(protocol.getLiquidationPenalty())) * _tickSpacing;
         int24 tickWithoutNewPenalty = initialPosition.tick - _tickSpacing;
