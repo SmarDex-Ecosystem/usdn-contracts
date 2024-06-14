@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { USER_1 } from "test/utils/Constants.sol";
-import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
-import { SigUtils } from "test/utils/SigUtils.sol";
+import { USER_1 } from "../../utils/Constants.sol";
+import { UsdnTokenFixture } from "./utils/Fixtures.sol";
+import { SigUtils } from "../../utils/SigUtils.sol";
 
 /**
  * @custom:feature The `permit` function of `USDN`

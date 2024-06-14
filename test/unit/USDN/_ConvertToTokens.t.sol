@@ -3,9 +3,9 @@ pragma solidity ^0.8.25;
 
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
+import { UsdnTokenFixture } from "./utils/Fixtures.sol";
 
-import { Usdn } from "src/Usdn/Usdn.sol";
+import { Usdn } from "../../../src/Usdn/Usdn.sol";
 
 /// @custom:feature The `_convertToTokens` function of `USDN`
 contract TestUsdnConvertToTokens is UsdnTokenFixture {

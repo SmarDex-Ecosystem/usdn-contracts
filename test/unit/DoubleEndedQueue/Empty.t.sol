@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { DequeFixture } from "test/unit/DoubleEndedQueue/utils/Fixtures.sol";
+import { DequeFixture } from "./utils/Fixtures.sol";
 
-import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
+import { DoubleEndedQueue } from "../../../src/libraries/DoubleEndedQueue.sol";
 
 /**
  * @custom:feature Test functions in `DoubleEndedQueue`

@@ -16,16 +16,17 @@ import {
     PreviousActionsData,
     TickData,
     PositionId
-} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { UsdnProtocol, Position } from "src/UsdnProtocol/UsdnProtocol.sol";
-import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
-import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
-import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
-import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
-import { HugeUint } from "src/libraries/HugeUint.sol";
-import { Position, LiquidationsEffects } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { SignedMath } from "src/libraries/SignedMath.sol";
+} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { UsdnProtocol, Position } from "../../../../src/UsdnProtocol/UsdnProtocol.sol";
+import { IUsdn } from "../../../../src/interfaces/Usdn/IUsdn.sol";
+import { ILiquidationRewardsManager } from "../../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
+import { IBaseOracleMiddleware } from "../../../../src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
+import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { DoubleEndedQueue } from "../../../../src/libraries/DoubleEndedQueue.sol";
+import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
+import { Position, LiquidationsEffects } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { SignedMath } from "../../../../src/libraries/SignedMath.sol";
+import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 
 /**
  * @title UsdnProtocolHandler
@@ -42,7 +43,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         IUsdn usdn,
         IERC20Metadata sdex,
         IERC20Metadata asset,
-        IOracleMiddleware oracleMiddleware,
+        IBaseOracleMiddleware oracleMiddleware,
         ILiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector
@@ -438,8 +439,11 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         _createInitialPosition(amount, price, tick, positionTotalExpo);
     }
 
-    function i_saveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty) external {
-        _saveNewPosition(tick, long, liquidationPenalty);
+    function i_saveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty)
+        external
+        returns (uint256, uint256, HugeUint.Uint512 memory)
+    {
+        return _saveNewPosition(tick, long, liquidationPenalty);
     }
 
     function i_checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) external view {

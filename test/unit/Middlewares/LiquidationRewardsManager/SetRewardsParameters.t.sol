@@ -3,10 +3,10 @@ pragma solidity ^0.8.25;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-import { USER_1 } from "test/utils/Constants.sol";
-import { LiquidationRewardsManagerBaseFixture } from "test/unit/Middlewares/utils/Fixtures.sol";
+import { USER_1 } from "../../../utils/Constants.sol";
+import { LiquidationRewardsManagerBaseFixture } from "../utils/Fixtures.sol";
 import { ILiquidationRewardsManagerErrorsEventsTypes } from
-    "src/interfaces/OracleMiddleware/ILiquidationRewardsManagerErrorsEventsTypes.sol";
+    "../../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManagerErrorsEventsTypes.sol";
 
 /**
  * @custom:feature The `setRewardsParameters` function of `LiquidationRewardsManager`
