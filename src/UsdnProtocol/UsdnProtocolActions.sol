@@ -570,10 +570,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @notice The close vault imbalance limit state verification
      * @dev To ensure that the protocol does not imbalance more than
      * the close limit on the vault side, otherwise revert
-     * @param closePosTotalExpoValue The close position total expo value
-     * @param closeCollatValue The close position collateral value
+     * @param posTotalExpoToClose The total expo to remove position
+     * @param posValueToClose The value to remove from the position
      */
-    function _checkImbalanceLimitClose(uint256 closePosTotalExpoValue, uint256 closeCollatValue) internal view {
+    function _checkImbalanceLimitClose(uint256 posTotalExpoToClose, uint256 posValueToClose) internal view {
         int256 closeExpoImbalanceLimitBps = _closeExpoImbalanceLimitBps;
 
         // early return in case limit is disabled
@@ -581,8 +581,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             return;
         }
 
-        int256 newLongBalance = _balanceLong.toInt256().safeSub(closeCollatValue.toInt256());
-        int256 newTotalExpo = _totalExpo.toInt256().safeSub(closePosTotalExpoValue.toInt256());
+        int256 newLongBalance = _balanceLong.toInt256().safeSub(posValueToClose.toInt256());
+        int256 newTotalExpo = _totalExpo.toInt256().safeSub(posTotalExpoToClose.toInt256());
         int256 currentVaultExpo = _balanceVault.toInt256().safeAdd(_pendingBalanceVault);
 
         int256 imbalanceBps = _calcImbalanceCloseBps(currentVaultExpo, newLongBalance, newTotalExpo.toUint256());

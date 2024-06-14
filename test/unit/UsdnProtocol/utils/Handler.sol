@@ -327,8 +327,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         _checkImbalanceLimitOpen(openTotalExpoValue, openCollatValue);
     }
 
-    function i_checkImbalanceLimitClose(uint256 closeExpoValue, uint256 closeCollatValue) external view {
-        _checkImbalanceLimitClose(closeExpoValue, closeCollatValue);
+    function i_checkImbalanceLimitClose(uint256 posTotalExpoToClose, uint256 posValueToClose) external view {
+        _checkImbalanceLimitClose(posTotalExpoToClose, posValueToClose);
     }
 
     function i_getLeverage(uint128 price, uint128 liqPrice) external pure returns (uint128) {
