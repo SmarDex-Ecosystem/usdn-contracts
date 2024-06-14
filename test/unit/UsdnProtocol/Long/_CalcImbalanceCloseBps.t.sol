@@ -20,8 +20,8 @@ contract TestUsdnProtocolLongCalcImbalanceCloseBps is UsdnProtocolBaseFixture {
      * @custom:then int256.max is returned
      */
     function test_calcImbalanceCloseBpsWith0TradingExpo() public {
-        uint256 vaultBalance = 200 ether;
-        uint256 longBalance = 0;
+        int256 vaultBalance = 200 ether;
+        int256 longBalance = 0;
         uint256 totalExpo = 0;
         int256 imbalanceBps = protocol.i_calcImbalanceCloseBps(vaultBalance, longBalance, totalExpo);
         assertEq(imbalanceBps, type(int256).max, "The imbalance should be infinite (int256.max)");
@@ -39,8 +39,8 @@ contract TestUsdnProtocolLongCalcImbalanceCloseBps is UsdnProtocolBaseFixture {
      * @custom:then The imbalance is -50%
      */
     function test_calcImbalanceCloseBps() public {
-        uint256 vaultBalance = 200 ether;
-        uint256 longBalance = 100 ether;
+        int256 vaultBalance = 200 ether;
+        int256 longBalance = 100 ether;
         uint256 totalExpo = 300 ether;
         int256 imbalanceBps = protocol.i_calcImbalanceCloseBps(vaultBalance, longBalance, totalExpo);
         assertEq(imbalanceBps, 0, "The imbalance should be 0");
@@ -71,7 +71,7 @@ contract TestUsdnProtocolLongCalcImbalanceCloseBps is UsdnProtocolBaseFixture {
         int256 expectedImbalance = (int256(vaultBalance) - int256(totalExpo - longBalance)) * int256(BPS_DIVISOR)
             / int256(totalExpo - longBalance);
 
-        int256 imbalanceBps = protocol.i_calcImbalanceCloseBps(vaultBalance, longBalance, totalExpo);
+        int256 imbalanceBps = protocol.i_calcImbalanceCloseBps(int256(vaultBalance), int256(longBalance), totalExpo);
         assertEq(imbalanceBps, expectedImbalance, "The imbalance should be equal to the expected one");
     }
 }

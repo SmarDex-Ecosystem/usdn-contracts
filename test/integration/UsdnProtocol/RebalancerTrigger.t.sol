@@ -131,7 +131,8 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
             )
         );
 
-        int256 imbalance = protocol.i_calcImbalanceCloseBps(vaultAssetAvailable, longAssetAvailable, totalExpo);
+        int256 imbalance =
+            protocol.i_calcImbalanceCloseBps(int256(vaultAssetAvailable), int256(longAssetAvailable), totalExpo);
         // Sanity check
         assertGt(
             imbalance,
@@ -157,7 +158,7 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
         protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA, 1);
 
         imbalance = protocol.i_calcImbalanceCloseBps(
-            protocol.getBalanceVault(), protocol.getBalanceLong(), protocol.getTotalExpo()
+            int256(protocol.getBalanceVault()), int256(protocol.getBalanceLong()), protocol.getTotalExpo()
         );
 
         assertLe(

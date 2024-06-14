@@ -732,18 +732,18 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param totalExpo The total expo of the long side
      * @return imbalanceBps_ The imbalance in basis points
      */
-    function _calcImbalanceCloseBps(uint256 vaultBalance, uint256 longBalance, uint256 totalExpo)
+    function _calcImbalanceCloseBps(int256 vaultBalance, int256 longBalance, uint256 totalExpo)
         internal
         pure
         returns (int256 imbalanceBps_)
     {
-        int256 tradingExpo = totalExpo.toInt256().safeSub(longBalance.toInt256());
+        int256 tradingExpo = totalExpo.toInt256().safeSub(longBalance);
         if (tradingExpo == 0) {
             return type(int256).max;
         }
 
         // imbalanceBps_ = (vaultBalance - (totalExpo - longBalance)) * BPS_DIVISOR / (totalExpo - longBalance);
-        imbalanceBps_ = (vaultBalance.toInt256().safeSub(tradingExpo)).safeMul(int256(BPS_DIVISOR)).safeDiv(tradingExpo);
+        imbalanceBps_ = (vaultBalance.safeSub(tradingExpo)).safeMul(int256(BPS_DIVISOR)).safeDiv(tradingExpo);
     }
 
     /**
@@ -893,7 +893,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         int256 longImbalanceTargetBps = _longImbalanceTargetBps;
         // calculate the trading expo missing to reach the imbalance target
         uint256 targetTradingExpo =
-            (cache.vaultBalance * BPS_DIVISOR / (BPS_DIVISOR.toInt256() + longImbalanceTargetBps).toUint256());
+            (cache.vaultBalance * BPS_DIVISOR / (int256(BPS_DIVISOR) + longImbalanceTargetBps).toUint256());
 
         // check that the target is not already exceeded
         if (cache.tradingExpo >= targetTradingExpo) {
@@ -940,7 +940,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         if (
             highestUsableTradingExpo != tradingExpoToFill
                 && _calcImbalanceCloseBps(
-                    cache.vaultBalance, cache.longBalance + positionAmount, cache.totalExpo + positionTotalExpo
+                    cache.vaultBalance.toInt256(),
+                    (cache.longBalance + positionAmount).toInt256(),
+                    cache.totalExpo + positionTotalExpo
                 ) > longImbalanceTargetBps
         ) {
             tickWithoutLiqPenalty_ += _tickSpacing;
