@@ -3,6 +3,8 @@ pragma solidity ^0.8.25;
 
 import { console2, Test } from "forge-std/Test.sol";
 
+import { USER_1, USER_2, USER_3, USER_4 } from "../../../utils/Constants.sol";
+
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { Wusdn } from "../../../../src/Usdn/Wusdn.sol";
 
@@ -11,67 +13,115 @@ import { Wusdn } from "../../../../src/Usdn/Wusdn.sol";
  * @dev Wrapper to test internal functions and access internal constants, as well as perform invariant testing
  */
 contract WusdnHandler is Wusdn, Test {
-    Usdn public _usdn;
+    Usdn public immutable _usdn;
+    address[] _actors = new address[](4);
 
     constructor(Usdn usdn) Wusdn(usdn) {
+        _actors[0] = USER_1;
+        _actors[1] = USER_2;
+        _actors[2] = USER_3;
+        _actors[3] = USER_4;
         _usdn = usdn;
     }
 
     /* ------------------ Functions used for invariant testing ------------------ */
 
-    function depositTest(uint256 assets) external {
-        if (_usdn.balanceOf(msg.sender) == 0) {
+    function wrapTest(uint256 usdnAmount) external {
+        uint256 usdnBalance = _usdn.balanceOf(msg.sender);
+        if (usdnBalance == 0) {
             return;
         }
-        console2.log("bound deposit amount");
-        assets = bound(assets, 0, _usdn.balanceOf(msg.sender));
+
+        console2.log("bound wrap amount");
+        usdnAmount = bound(usdnAmount, 0, usdnBalance);
         vm.prank(msg.sender);
-        _usdn.approve(address(this), type(uint256).max);
+        _usdn.approve(address(this), usdnAmount);
 
-        deposit(assets, msg.sender);
-    }
-
-    function mintTest(uint256 shares) external {
-        if (_usdn.balanceOf(msg.sender) == 0) {
-            return;
-        }
-        uint256 maxShares = convertToShares(_usdn.balanceOf(msg.sender));
-        console2.log("bound mint amount");
-        shares = bound(shares, 0, maxShares);
         vm.prank(msg.sender);
-        _usdn.approve(address(this), type(uint256).max);
-
-        mint(shares, msg.sender);
+        this.wrap(usdnAmount);
     }
 
-    function withdrawTest(uint256 assets) external {
-        if (balanceOf(msg.sender) == 0) {
+    function unwrapTest(uint256 wusdnAmount) external {
+        uint256 wusdnBalance = balanceOf(msg.sender);
+        if (wusdnBalance == 0) {
             return;
         }
-        uint256 maxAssets = convertToAssets(balanceOf(msg.sender));
-        console2.log("bound withdraw amount");
-        assets = bound(assets, 0, maxAssets);
 
-        withdraw(assets, msg.sender, msg.sender);
+        console2.log("bound unwrap amount");
+        wusdnAmount = bound(wusdnAmount, 0, wusdnBalance);
+
+        vm.prank(msg.sender);
+        this.unwrap(wusdnAmount);
     }
 
-    function redeemTest(uint256 shares) external {
-        if (balanceOf(msg.sender) == 0) {
+    function transferTest(uint256 to, uint256 wusdnAmount) external {
+        uint256 wusdnBalance = balanceOf(msg.sender);
+        if (wusdnBalance == 0) {
             return;
         }
-        console2.log("bound redeem amount");
-        shares = bound(shares, 0, balanceOf(msg.sender));
 
-        redeem(shares, msg.sender, msg.sender);
-    }
-
-    function transferTest(address to, uint256 shares) external {
-        if (balanceOf(msg.sender) == 0 || to == address(0)) {
-            return;
-        }
         console2.log("bound transfer amount");
-        shares = bound(shares, 1, balanceOf(msg.sender));
+        wusdnAmount = bound(wusdnAmount, 1, wusdnBalance);
+        console2.log("bound to address");
+        to = bound(to, 0, _actors.length - 1);
 
-        _transfer(msg.sender, to, shares);
+        vm.prank(msg.sender);
+        this.transfer(_actors[to], wusdnAmount);
+    }
+
+    function usdnTransferTest(uint256 to, uint256 value) external {
+        uint256 usdnBalance = _usdn.balanceOf(msg.sender);
+        if (usdnBalance == 0) {
+            return;
+        }
+
+        console2.log("bound transfer value");
+        value = bound(value, 1, usdnBalance);
+        console2.log("bound to address");
+        to = bound(to, 0, _actors.length - 1);
+
+        vm.prank(msg.sender);
+        _usdn.transfer(_actors[to], value);
+    }
+
+    function usdnMintTest(uint256 usdnAmount) external {
+        uint256 maxTokens = _usdn.maxTokens();
+        uint256 totalSupply = _usdn.totalSupply();
+
+        if (totalSupply >= maxTokens - 1) {
+            return;
+        }
+
+        console2.log("bound mint value");
+        usdnAmount = bound(usdnAmount, 1, maxTokens - totalSupply - 1);
+
+        _usdn.mint(msg.sender, usdnAmount);
+    }
+
+    function usdnBurnTest(uint256 usdnAmount) external {
+        uint256 usdnBalance = _usdn.balanceOf(msg.sender);
+        if (usdnBalance == 0) {
+            return;
+        }
+
+        console2.log("bound burn value");
+        usdnAmount = bound(usdnAmount, 1, usdnBalance);
+
+        vm.prank(msg.sender);
+        _usdn.burn(usdnAmount);
+    }
+
+    function usdnRebaseTest(uint256 newDivisor) external {
+        uint256 divisor = _usdn.divisor();
+        uint256 MIN_DIVISOR = _usdn.MIN_DIVISOR();
+
+        if (divisor == MIN_DIVISOR) {
+            return;
+        }
+
+        console2.log("bound divisor");
+        newDivisor = bound(newDivisor, MIN_DIVISOR, divisor - 1);
+
+        _usdn.rebase(newDivisor);
     }
 }

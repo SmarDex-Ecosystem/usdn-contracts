@@ -2,7 +2,7 @@
 pragma solidity >=0.8.0;
 
 import { IUsdnProtocolActions } from "./IUsdnProtocolActions.sol";
-import { IOracleMiddleware } from "../OracleMiddleware/IOracleMiddleware.sol";
+import { IBaseOracleMiddleware } from "../OracleMiddleware/IBaseOracleMiddleware.sol";
 import { ILiquidationRewardsManager } from "../OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IRebalancer } from "../Rebalancer/IRebalancer.sol";
 
@@ -22,8 +22,8 @@ interface IUsdnProtocol is IUsdnProtocolActions {
      * @dev This function can only be called once, and no other user action can be performed until it is called
      * Consult the current oracle middleware implementation to know the expected format for the price data, using the
      * `ProtocolAction.Initialize` action
-     * The price validation might require payment according to the return value of the `getValidationCost` function of
-     * the middleware
+     * The price validation might require payment according to the return value of the `getValidationCost` function
+     * of `IBaseOracleMiddleware`
      * @param depositAmount The amount of wstETH for the deposit
      * @param longAmount The amount of wstETH for the long
      * @param desiredLiqPrice The desired liquidation price for the long
@@ -41,7 +41,7 @@ interface IUsdnProtocol is IUsdnProtocolActions {
      * @dev Cannot be the 0 address
      * @param newOracleMiddleware The address of the new contract
      */
-    function setOracleMiddleware(IOracleMiddleware newOracleMiddleware) external;
+    function setOracleMiddleware(IBaseOracleMiddleware newOracleMiddleware) external;
 
     /**
      * @notice Replace the LiquidationRewardsManager contract with a new implementation

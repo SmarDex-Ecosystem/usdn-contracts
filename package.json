@@ -25,7 +25,11 @@
     "clean": "rm -rf dist && rm -rf node_modules && rm -rf .coverage && rm -rf out && rm -rf lib && forge clean && npm i && forge install"
   },
   "main": "dist/index.js",
-  "files": ["dist", "broadcast", "docs"],
+  "files": [
+    "dist",
+    "broadcast",
+    "docs"
+  ],
   "devDependencies": {
     "@biomejs/biome": "^1.7.0",
     "@chainlink/contracts": "^1.0.0",
@@ -34,10 +38,7 @@
     "@pythnetwork/pyth-sdk-solidity": "^3.1.0",
     "@redstone-finance/evm-connector": "^0.5.1",
     "@types/luxon": "^3.4.2",
-    "@uniswap/permit2": "github:Uniswap/permit2",
-    "@uniswap/universal-router": "^1.6.0",
-    "@uniswap/v2-core": "^1.0.1",
-    "@uniswap/v3-core": "^1.0.1",
+    "@uniswap/permit2": "github:uniswap/permit2",
     "abitype": "^1.0.2",
     "commander": "^12.0.0",
     "glob": "^10.3.12",
@@ -46,7 +47,6 @@
     "picocolors": "^1.0.0",
     "solady": "^0.0.191",
     "solhint": "^4.5.4",
-    "solmate": "^6.2.0",
     "ts-node": "^10.9.2",
     "tsup": "^8.0.2",
     "viem": "^2.9.19"
