@@ -41,6 +41,24 @@ contract WusdnHandler is Wusdn, Test {
         this.wrap(usdnAmount);
     }
 
+    function wrapToTest(uint256 to, uint256 usdnAmount) external {
+        uint256 usdnBalance = _usdn.balanceOf(msg.sender);
+        if (usdnBalance == 0) {
+            return;
+        }
+
+        console2.log("bound wrap amount");
+        usdnAmount = bound(usdnAmount, 0, usdnBalance);
+        console2.log("bound to address");
+        to = bound(to, 0, _actors.length - 1);
+
+        vm.prank(msg.sender);
+        _usdn.approve(address(this), usdnAmount);
+
+        vm.prank(msg.sender);
+        this.wrap(usdnAmount, _actors[to]);
+    }
+
     function unwrapTest(uint256 wusdnAmount) external {
         uint256 wusdnBalance = balanceOf(msg.sender);
         if (wusdnBalance == 0) {
