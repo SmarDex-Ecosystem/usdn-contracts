@@ -12,7 +12,7 @@ import { PositionId, ProtocolAction, TickData } from "../../../src/interfaces/Us
 import { IRebalancerErrors } from "../../../src/interfaces/Rebalancer/IRebalancerErrors.sol";
 
 /**
- * @custom:feature The user rebalancer initiate close position
+ * @custom:feature The `initiateClosePosition` function of the rebalancer contract
  * @custom:background A rebalancer is set and the USDN protocol is initialized with the default params
  */
 contract UsdnProtocolRebalancerInitiateClosePosition is UsdnProtocolBaseIntegrationFixture, IRebalancerEvents {
@@ -42,11 +42,11 @@ contract UsdnProtocolRebalancerInitiateClosePosition is UsdnProtocolBaseIntegrat
     }
 
     /**
-     * @custom:scenario The user close an amount higher than his rebalancer deposited amount
-     * @custom:given A rebalancer long position opened into usdn Protocol
-     * @custom:and A deposit user amount invested
-     * @custom:when The user call rebalancer `initiateClosePosition`
-     * @custom:then The transaction should revert with `RebalancerInvalidAmount`
+     * @custom:scenario The user closes an amount higher than his deposited amount
+     * @custom:given A rebalancer long position opened in the USDN Protocol
+     * @custom:and A user having deposited assets in the rebalancer before the first trigger
+     * @custom:when The user calls the rebalancer's `initiateClosePosition` function
+     * @custom:then The transaction should revert with a `RebalancerInvalidAmount` error
      */
     function test_RevertWhenRebalancerInvalidAmount() external {
         vm.expectRevert(IRebalancerErrors.RebalancerInvalidAmount.selector);
@@ -56,11 +56,11 @@ contract UsdnProtocolRebalancerInitiateClosePosition is UsdnProtocolBaseIntegrat
     }
 
     /**
-     * @custom:scenario The user close partially with a remaining deposited amount lower than `_minAssetDeposit`
-     * @custom:given A rebalancer long position opened into usdn Protocol
-     * @custom:and A deposit user amount invested
-     * @custom:when The user call rebalancer `initiateClosePosition`
-     * @custom:then The transaction should revert with `RebalancerInvalidMinAssetDeposit`
+     * @custom:scenario The user partially closes its position with a remaining amount lower than `_minAssetDeposit`
+     * @custom:given A rebalancer long position opened in the USDN Protocol
+     * @custom:and A user having deposited assets in the rebalancer before the first trigger
+     * @custom:when The user calls the rebalancer's `initiateClosePosition` function
+     * @custom:then The transaction should revert with a `RebalancerInvalidMinAssetDeposit` error
      */
     function test_RevertWhenRebalancerInvalidMinAssetDeposit() external {
         vm.expectRevert(IRebalancerErrors.RebalancerInvalidMinAssetDeposit.selector);
@@ -70,12 +70,12 @@ contract UsdnProtocolRebalancerInitiateClosePosition is UsdnProtocolBaseIntegrat
     }
 
     /**
-     * @custom:scenario The user close partially his deposit amount
-     * @custom:given A rebalancer long position opened into usdn Protocol
-     * @custom:and A deposit user amount invested
-     * @custom:when The user call rebalancer `initiateClosePosition`
-     * @custom:then The transaction should be executed
-     * @custom:and The user depositData should be updated
+     * @custom:scenario The user partially closes his deposited amount
+     * @custom:given A rebalancer long position opened in the USDN Protocol
+     * @custom:and A user having deposited assets in the rebalancer before the first trigger
+     * @custom:when The user calls the rebalancer's `initiateClosePosition` function
+     * @custom:then A `ClosePositionInitiated` is emitted
+     * @custom:and The user depositData is updated
      */
     function test_RebalancerInitiateClosePositionPartial() external {
         uint128 amount = amountInRebalancer / 10;
@@ -99,22 +99,22 @@ contract UsdnProtocolRebalancerInitiateClosePosition is UsdnProtocolBaseIntegrat
         assertEq(
             rebalancer.getUserDepositData(address(this)).amount,
             amountInRebalancer,
-            "The user deposited amount in rebalancer should be updated"
+            "The user's deposited amount in the rebalancer should be updated"
         );
         assertEq(
             rebalancer.getUserDepositData(address(this)).entryPositionVersion,
             rebalancer.getPositionVersion(),
-            "The user deposited entry point version in rebalancer should be the same"
+            "The user's entry position's version in the rebalancer should be the same"
         );
     }
 
     /**
-     * @custom:scenario The user close all his deposit amount
-     * @custom:given A rebalancer long position opened into usdn Protocol
-     * @custom:and A deposit user amount invested
-     * @custom:when The user call rebalancer `initiateClosePosition`
-     * @custom:then The transaction should be executed
-     * @custom:and The user depositData should be deleted
+     * @custom:scenario The user closes his position fully
+     * @custom:given A rebalancer long position opened in the USDN Protocol
+     * @custom:and A user having deposited assets in the rebalancer before the first trigger
+     * @custom:when The user calls the rebalancer's `initiateClosePosition`
+     * @custom:then A ClosePositionInitiated is emitted
+     * @custom:and The user depositData is deleted
      */
     function test_RebalancerInitiateClosePosition() external {
         vm.prank(DEPLOYER);
@@ -138,12 +138,12 @@ contract UsdnProtocolRebalancerInitiateClosePosition is UsdnProtocolBaseIntegrat
         assertEq(
             rebalancer.getUserDepositData(address(this)).amount,
             0,
-            "The user deposited amount in rebalancer should be zero"
+            "The user's deposited amount in rebalancer should be zero"
         );
         assertEq(
             rebalancer.getUserDepositData(address(this)).entryPositionVersion,
             0,
-            "The user deposited entry point version in rebalancer should be zero"
+            "The user's entry position version should be zero"
         );
     }
 
