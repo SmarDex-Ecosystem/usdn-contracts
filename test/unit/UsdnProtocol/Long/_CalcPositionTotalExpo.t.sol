@@ -8,7 +8,7 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 import { TickMath } from "src/libraries/TickMath.sol";
 
 /**
- * @custom:feature The `_calcPositionTotalExpo` internal function of the UsdnProtocolLong contract.
+ * @custom:feature The `_calcPositionTotalExpo` internal function of the UsdnProtocolLong contract
  * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a
  * leverage of ~2x
  */
