@@ -27,7 +27,7 @@ contract TestUsdnProtocolLongFlashClosePosition is UsdnProtocolBaseFixture {
                 user: address(this),
                 untilAction: ProtocolAction.ValidateOpenPosition,
                 positionSize: AMOUNT,
-                desiredLiqPrice: DEFAULT_PARAMS.initialPrice * 8 / 10,
+                desiredLiqPrice: DEFAULT_PARAMS.initialPrice / 2,
                 price: DEFAULT_PARAMS.initialPrice
             })
         );
