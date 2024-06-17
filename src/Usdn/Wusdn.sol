@@ -132,6 +132,14 @@ contract Wusdn is ERC20Permit, IWusdn {
         wrappedAmount_ = _wrapShares(usdnShares, to);
     }
 
+    /**
+     * @notice Internal function to wrap USDN shares into WUSDN
+     * @dev The caller must have already approved the USDN contract to transfer the required amount of USDN shares
+     * When calling this function, we always transfer from the `msg.sender`
+     * @param usdnShares The amount of USDN shares to wrap
+     * @param to The address to receive the WUSDN
+     * @return wrappedAmount_ The amount of WUSDN received
+     */
     function _wrapShares(uint256 usdnShares, address to) private returns (uint256 wrappedAmount_) {
         // we consecutively divide and multiply by `SHARES_RATIO` to have
         // a share amount that is a multiple of `SHARES_RATIO`
