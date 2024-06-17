@@ -27,6 +27,8 @@ interface IWusdn is IERC20Permit, IWusdnEvents, IWusdnErrors {
 
     /**
      * @notice Wraps USDN into WUSDN
+     * @dev This function can use less than `usdnAmount` to account for rounding errors
+     * For a more precise amount, use {wrapShares}
      * @param usdnAmount The amount of USDN to wrap
      * @return wrappedAmount_ The amount of WUSDN received
      */
@@ -34,6 +36,8 @@ interface IWusdn is IERC20Permit, IWusdnEvents, IWusdnErrors {
 
     /**
      * @notice Wraps USDN into WUSDN to a specified address
+     * @dev This function can use less than `usdnAmount` to account for rounding errors
+     * For a more precise amount, use {wrapShares}
      * @param usdnAmount The amount of USDN to wrap
      * @param to The address to receive the WUSDN
      * @return wrappedAmount_ The amount of WUSDN received
@@ -67,11 +71,19 @@ interface IWusdn is IERC20Permit, IWusdnEvents, IWusdnErrors {
      * @notice Previews the amount of WUSDN that would be received for a given amount of USDN
      * @dev This function can return a slightly different value (1wei) from the actual amount
      * received due to rounding errors
-     * Do not rely on this function to calculate the exact amount of WUSDN that would be received
+     * Do not rely on this function to calculate the exact amount of WUSDN that would be received, use
+     * {previewWrapShares} instead
      * @param usdnAmount The amount of USDN to preview
      * @return wrappedAmount_ The amount of WUSDN that would be received
      */
     function previewWrap(uint256 usdnAmount) external view returns (uint256 wrappedAmount_);
+
+    /**
+     * @notice Previews the amount of WUSDN that would be received for a given amount of USDN shares
+     * @param usdnShares The amount of USDN shares to preview
+     * @return wrappedAmount_ The amount of WUSDN that would be received
+     */
+    function previewWrapShares(uint256 usdnShares) external view returns (uint256 wrappedAmount_);
 
     /**
      * @notice Previews the amount of USDN that would be received for a given amount of WUSDN
