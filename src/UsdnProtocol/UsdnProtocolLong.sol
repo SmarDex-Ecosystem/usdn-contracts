@@ -776,11 +776,11 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param posId The ID of the position to close
      * @param lastPrice The last price used to update the protocol
      * @param cache The cached state of the protocol, will be updated during this call
-     * @return positionValue_ The value of the closed position. If 0, the position was/will be liquidated
+     * @return positionValue_ The value of the closed position
      */
     function _flashClosePosition(PositionId memory posId, uint128 lastPrice, CachedProtocolState memory cache)
         internal
-        returns (uint256 positionValue_)
+        returns (int256 positionValue_)
     {
         (bytes32 tickHash, uint256 version) = _tickHash(posId.tick);
         // if the tick version is outdated, the position was liquidated and its value is 0
@@ -791,7 +791,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         uint8 liquidationPenalty = _tickData[tickHash].liquidationPenalty;
         Position memory pos = _longPositions[tickHash][posId.index];
 
-        int256 positionValue = _positionValue(
+        positionValue_ = _positionValue(
             lastPrice,
             getEffectivePriceForTick(
                 _calcTickWithoutPenalty(posId.tick, liquidationPenalty),
@@ -802,9 +802,8 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             pos.totalExpo
         );
 
-        // if positionValue is lower than 0, return 0
-        if (positionValue < 0) {
-            // TODO interrupt the process if that happens
+        // if positionValue is lower than 0, return
+        if (positionValue_ < 0) {
             return positionValue_;
         }
 
@@ -812,18 +811,18 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         cache.liqMultiplierAccumulator =
             _removeAmountFromPosition(posId.tick, posId.index, pos, pos.amount, pos.totalExpo);
 
-        // cast is safe as positionValue cannot be lower than 0
-        positionValue_ = uint256(positionValue);
-
         // update the cache
         cache.totalExpo -= pos.totalExpo;
-        cache.longBalance -= positionValue_;
+        // cast is safe as positionValue cannot be lower than 0
+        cache.longBalance -= uint256(positionValue_);
         cache.tradingExpo = cache.totalExpo - cache.longBalance;
 
         // emit both initiate and validate events
         // so the position is considered the same as other positions by event indexers
         emit InitiatedClosePosition(pos.user, pos.user, pos.user, posId, pos.amount, pos.amount, 0);
-        emit ValidatedClosePosition(pos.user, pos.user, posId, positionValue_, positionValue - _toInt256(pos.amount));
+        emit ValidatedClosePosition(
+            pos.user, pos.user, posId, uint256(positionValue_), positionValue_ - _toInt256(pos.amount)
+        );
     }
 
     /**

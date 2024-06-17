@@ -69,7 +69,7 @@ contract TestUsdnProtocolLongFlashClosePosition is UsdnProtocolBaseFixture {
             uint256(expectedPositionValue),
             int256(expectedPositionValue) - int128(AMOUNT)
         );
-        uint256 positionValue = protocol.i_flashClosePosition(
+        int256 positionValue = protocol.i_flashClosePosition(
             posId,
             currentPrice,
             totalExpo,
@@ -78,9 +78,7 @@ contract TestUsdnProtocolLongFlashClosePosition is UsdnProtocolBaseFixture {
             liqMultiplierAccumulator
         );
 
-        assertEq(
-            positionValue, uint256(expectedPositionValue), "The returned position value should be the expected one"
-        );
+        assertEq(positionValue, expectedPositionValue, "The returned position value should be the expected one");
 
         (pos,) = protocol.getLongPosition(posId);
         Position memory deletedPos;
@@ -101,7 +99,7 @@ contract TestUsdnProtocolLongFlashClosePosition is UsdnProtocolBaseFixture {
         // increment the tick version of the position
         protocol.setTickVersion(posId.tick, posId.tickVersion + 1);
 
-        uint256 positionValue = protocol.i_flashClosePosition(
+        int256 positionValue = protocol.i_flashClosePosition(
             posId, DEFAULT_PARAMS.initialPrice, totalExpo, balanceLong, balanceVault, liqMultiplierAccumulator
         );
 
@@ -111,7 +109,7 @@ contract TestUsdnProtocolLongFlashClosePosition is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Flash closing a position that should be liquidated
      * @custom:when _flashClosePosition is called with a price is below the liquidation price of the position
-     * @custom:then The returned value is 0
+     * @custom:then The returned value is less than 0
      */
     function test_flashClosePositionWithAPositionWithNegativeValue() public {
         uint128 lastPrice = DEFAULT_PARAMS.initialPrice * 7 / 10;
@@ -122,7 +120,7 @@ contract TestUsdnProtocolLongFlashClosePosition is UsdnProtocolBaseFixture {
             longAssetAvailable = 0;
         }
 
-        uint256 positionValue = protocol.i_flashClosePosition(
+        int256 positionValue = protocol.i_flashClosePosition(
             posId,
             lastPrice,
             totalExpo,
@@ -131,6 +129,6 @@ contract TestUsdnProtocolLongFlashClosePosition is UsdnProtocolBaseFixture {
             liqMultiplierAccumulator
         );
 
-        assertEq(positionValue, 0, "The returned value should be 0");
+        assertLt(positionValue, 0, "The returned value should be less than 0");
     }
 }

@@ -2115,17 +2115,25 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         (uint128 positionAmount, uint256 rebalancerMaxLeverage, PositionId memory rebalancerPosId) =
             rebalancer.getCurrentStateData();
 
-        // transfer the pending assets from the rebalancer to this contract
-        address(_asset).safeTransferFrom(address(rebalancer), address(this), positionAmount);
-
         uint128 positionValue;
         // close the rebalancer position and get its value to open the next one
         if (rebalancerPosId.tick != NO_POSITION_TICK) {
             // cached values will be updated during this call
-            positionValue = _flashClosePosition(rebalancerPosId, lastPrice, cache).toUint128();
+            int256 realPositionValue = _flashClosePosition(rebalancerPosId, lastPrice, cache);
 
+            // if the position value is less than 0, it should have been liquidated but wasn't
+            // interrupt the whole rebalancer process because there are pending liquidations
+            if (realPositionValue < 0) {
+                return (longBalance_, vaultBalance_);
+            }
+
+            // cast is safe as realPositionValue cannot be lower than 0
+            positionValue = uint256(realPositionValue).toUint128();
             positionAmount += positionValue;
         }
+
+        // transfer the pending assets from the rebalancer to this contract
+        address(_asset).safeTransferFrom(address(rebalancer), address(this), positionAmount - positionValue);
 
         // If there are no pending assets and the previous position was either liquidated or doesn't exist, return
         if (positionAmount + positionValue == 0) {

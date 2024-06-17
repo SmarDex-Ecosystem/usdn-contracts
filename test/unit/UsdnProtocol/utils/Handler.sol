@@ -538,7 +538,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         uint256 balanceLong,
         uint256 balanceVault,
         HugeUint.Uint512 memory liqMultiplierAccumulator
-    ) external returns (uint256 positionValue_) {
+    ) external returns (int256 positionValue_) {
         CachedProtocolState memory cache = CachedProtocolState({
             totalExpo: totalExpo,
             longBalance: balanceLong,
