@@ -12,10 +12,6 @@ import { Position, PositionId, ProtocolAction } from "../../../../src/interfaces
  * @custom:and A position created with 1 ether and a 2x leverage
  */
 contract TestUsdnProtocolLongFlashClosePosition is UsdnProtocolBaseFixture {
-    using HugeUint for HugeUint.Uint512;
-
-    int24 internal _tickSpacing = 100;
-
     uint256 balanceVault;
     uint256 balanceLong;
     uint256 totalExpo;

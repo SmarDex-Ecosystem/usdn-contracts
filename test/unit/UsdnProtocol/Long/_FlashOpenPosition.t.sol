@@ -14,10 +14,6 @@ import { Position, PositionId } from "../../../../src/interfaces/UsdnProtocol/IU
  * @custom:and A total expo of 300 ether and an amount of 1 ether
  */
 contract TestUsdnProtocolLongFlashOpenPosition is UsdnProtocolBaseFixture {
-    using HugeUint for HugeUint.Uint512;
-
-    int24 internal _tickSpacing = 100;
-
     uint128 currentPrice = 2000 ether;
     uint128 balanceVault = 200 ether;
     uint128 balanceLong = 100 ether;
