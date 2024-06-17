@@ -9,7 +9,7 @@ import { IUsdnProtocolErrors } from "./IUsdnProtocolErrors.sol";
 import { IUsdn } from "../Usdn/IUsdn.sol";
 import { Position, PendingAction, TickData } from "./IUsdnProtocolTypes.sol";
 import { IBaseLiquidationRewardsManager } from "../OracleMiddleware/IBaseLiquidationRewardsManager.sol";
-import { IRebalancer } from "../Rebalancer/IRebalancer.sol";
+import { IBaseRebalancer } from "../Rebalancer/IBaseRebalancer.sol";
 import { HugeUint } from "../../libraries/HugeUint.sol";
 
 /**
@@ -145,7 +145,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * @notice Get the rebalancer contract
      * @return The address of the rebalancer contract
      */
-    function getRebalancer() external view returns (IRebalancer);
+    function getRebalancer() external view returns (IBaseRebalancer);
 
     /**
      * @notice Get the lowest leverage used to open a position

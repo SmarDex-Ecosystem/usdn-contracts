@@ -8,7 +8,7 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
 import { UsdnProtocolLong } from "./UsdnProtocolLong.sol";
 import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { IRebalancer } from "../interfaces/Rebalancer/IRebalancer.sol";
+import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IUsdnProtocolActions } from "../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 import {
     DepositPendingAction,
@@ -1524,7 +1524,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // for the Rebalancer, we allow users to close their position fully in every case
         uint128 remainingAmount = pos.amount - amountToClose;
         if (remainingAmount > 0 && remainingAmount < _minLongPosition) {
-            IRebalancer rebalancer = _rebalancer;
+            IBaseRebalancer rebalancer = _rebalancer;
             if (owner == address(rebalancer)) {
                 uint128 userPosAmount = rebalancer.getUserDepositData(to).amount;
                 if (amountToClose != userPosAmount) {
@@ -2081,7 +2081,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     ) internal returns (uint256 longBalance_, uint256 vaultBalance_) {
         longBalance_ = longBalance;
         vaultBalance_ = vaultBalance;
-        IRebalancer rebalancer = _rebalancer;
+        IBaseRebalancer rebalancer = _rebalancer;
 
         if (address(rebalancer) == address(0)) {
             return (longBalance_, vaultBalance_);
