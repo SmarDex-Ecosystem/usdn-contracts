@@ -176,6 +176,11 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
     }
 
     /// @inheritdoc IRebalancer
+    function getTimeLimits() external view returns (TimeLimits memory) {
+        return _timeLimits;
+    }
+
+    /// @inheritdoc IRebalancer
     function getUserDepositData(address user) external view returns (UserDeposit memory) {
         return _userDeposit[user];
     }
@@ -185,6 +190,7 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
         _asset.safeIncreaseAllowance(address(_usdnProtocol), addAllowance);
     }
 
+    /// @inheritdoc IRebalancer
     function initiateDepositAssets(uint88 amount, address to) external {
         if (to == address(0)) {
             revert RebalancerInvalidAddressTo();
@@ -222,6 +228,7 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
         emit InitiatedAssetsDeposit(to, amount, block.timestamp);
     }
 
+    /// @inheritdoc IRebalancer
     function validateDepositAssets() external {
         uint128 positionVersion = _positionVersion;
         UserDeposit memory depositData = _userDeposit[msg.sender];
@@ -252,6 +259,7 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
         emit AssetsDeposited(msg.sender, depositData.amount, positionVersion + 1);
     }
 
+    /// @inheritdoc IRebalancer
     function resetDepositAssets() external {
         UserDeposit memory depositData = _userDeposit[msg.sender];
         if (depositData.initiateTimestamp == 0) {
@@ -267,6 +275,7 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
             revert RebalancerActionCooldown();
         }
 
+        // this unblocks the user
         delete _userDeposit[msg.sender];
 
         _asset.safeTransferFrom(address(this), msg.sender, depositData.amount);
@@ -276,6 +285,7 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
 
     /// @inheritdoc IRebalancer
     function withdrawPendingAssets(uint88 amount, address to) external {
+        // TODO: refactor in two steps
         if (to == address(0)) {
             revert RebalancerInvalidAddressTo();
         }

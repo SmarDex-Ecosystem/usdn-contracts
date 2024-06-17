@@ -79,6 +79,12 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
     function getCloseImbalanceLimitBps() external view returns (uint256);
 
     /**
+     * @notice Get the time limits for the action validation process
+     * @return The time limits
+     */
+    function getTimeLimits() external view returns (TimeLimits memory);
+
+    /**
      * @notice Returns the data regarding the assets deposited by the provided user
      * @param user The address of the user
      * @return The data regarding the assets deposited by the provided user
@@ -97,6 +103,29 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
      * @return The version of the last position that got liquidated
      */
     function getLastLiquidatedVersion() external view returns (uint128);
+
+    /**
+     * @notice Deposit assets into this contract to be included in the next position after validation
+     * @dev The user must call `validateDepositAssets` between `_timeLimits.validationDelay` and
+     * `_timeLimits.validationDeadline` seconds after this action
+     * @param amount The amount in assets that will be deposited into the Rebalancer
+     * @param to The address which will need to validate and which will own the position
+     */
+    function initiateDepositAssets(uint88 amount, address to) external;
+
+    /**
+     * @notice Validate a deposit to be included in the next position version
+     * @dev The `to` from the `initiateDepositAssets` must call this function between `_timeLimits.validationDelay` and
+     * `_timeLimits.validationDeadline` seconds after the initiate action
+     */
+    function validateDepositAssets() external;
+
+    /**
+     * @notice Retrieve the assets for a failed deposit due to waiting too long before calling `validateDepositAssets`
+     * @dev The user must wait `_timeLimits.actionCooldown` since the `initiateDepositAssets` before calling this
+     * function
+     */
+    function resetDepositAssets() external;
 
     /**
      * @notice Withdraw assets if the user is not in a position yet

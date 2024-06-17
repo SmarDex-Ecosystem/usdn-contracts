@@ -9,7 +9,7 @@ import { USER_1 } from "../../utils/Constants.sol";
  * @custom:background Given a rebalancer contract
  */
 contract TestRebalancerWithdrawPendingAssets is RebalancerFixture {
-    uint128 constant INITIAL_DEPOSIT = 2 ether;
+    uint88 constant INITIAL_DEPOSIT = 3 ether;
 
     function setUp() public {
         super._setUp();
@@ -18,7 +18,9 @@ contract TestRebalancerWithdrawPendingAssets is RebalancerFixture {
         wstETH.mintAndApprove(address(this), 10_000 ether, address(rebalancer), type(uint256).max);
 
         assertGe(INITIAL_DEPOSIT, rebalancer.getMinAssetDeposit());
-        rebalancer.depositAssets(INITIAL_DEPOSIT, address(this));
+        rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));
+        skip(rebalancer.getTimeLimits().validationDelay);
+        rebalancer.validateDepositAssets();
     }
 
     /**
@@ -124,14 +126,11 @@ contract TestRebalancerWithdrawPendingAssets is RebalancerFixture {
      * @custom:then The user receives the expected amount
      */
     function test_withdrawPendingAssetsWithAmountLessThanDeposited() external {
-        rebalancer.depositAssets(2 * INITIAL_DEPOSIT, address(this));
-        uint128 totDeposit = INITIAL_DEPOSIT * 3;
-
         uint256 expectedPositionVersion = rebalancer.getPositionVersion() + 1;
         uint256 rebalancerBalanceBefore = wstETH.balanceOf(address(rebalancer));
         uint256 userBalanceBefore = wstETH.balanceOf(address(this));
         uint256 pendingAssetsBefore = rebalancer.getPendingAssetsAmount();
-        uint128 amountToWithdraw = totDeposit * 6 / 10;
+        uint88 amountToWithdraw = INITIAL_DEPOSIT / 3;
 
         vm.expectEmit();
         emit PendingAssetsWithdrawn(address(this), amountToWithdraw, address(this));
@@ -152,7 +151,7 @@ contract TestRebalancerWithdrawPendingAssets is RebalancerFixture {
         assertEq(
             userDeposit.entryPositionVersion, expectedPositionVersion, "The position version should not have changed"
         );
-        assertEq(userDeposit.amount, totDeposit * 4 / 10, "The amount withdrawn should have been subtracted");
+        assertEq(userDeposit.amount, INITIAL_DEPOSIT * 2 / 3, "The amount withdrawn should have been subtracted");
         assertEq(
             rebalancer.getPendingAssetsAmount(),
             pendingAssetsBefore - amountToWithdraw,

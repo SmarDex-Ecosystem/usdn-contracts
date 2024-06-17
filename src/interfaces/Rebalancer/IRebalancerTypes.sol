@@ -13,7 +13,7 @@ interface IRebalancerTypes {
      */
     struct UserDeposit {
         uint40 initiateTimestamp;
-        uint88 amount;
+        uint88 amount; // Max 309'485'009 tokens with 18 decimals
         uint128 entryPositionVersion;
     }
 

@@ -57,7 +57,9 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
             oracleMiddleware.validationCost("", ProtocolAction.InitiateDeposit) + protocol.getSecurityDepositValue();
 
         // deposit assets in the rebalancer
-        rebalancer.depositAssets(10 ether, payable(address(this)));
+        rebalancer.initiateDepositAssets(10 ether, payable(address(this)));
+        skip(rebalancer.getTimeLimits().validationDelay);
+        rebalancer.validateDepositAssets();
         amountInRebalancer += 10 ether;
 
         // deposit assets in the protocol to imbalance it

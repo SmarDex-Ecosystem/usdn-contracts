@@ -14,8 +14,8 @@ import { PositionId } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTy
 contract TestRebalancerUpdatePosition is RebalancerFixture {
     /// @dev The address of this test contract
     address immutable USER_0;
-    uint128 constant USER_0_DEPOSIT_AMOUNT = 2 ether;
-    uint128 constant USER_1_DEPOSIT_AMOUNT = 3 ether;
+    uint88 constant USER_0_DEPOSIT_AMOUNT = 2 ether;
+    uint88 constant USER_1_DEPOSIT_AMOUNT = 3 ether;
 
     constructor() {
         USER_0 = address(this);
@@ -40,8 +40,12 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
             "Amount deposited for USER_1 lower than rebalancer min amount"
         );
 
-        rebalancer.depositAssets(USER_0_DEPOSIT_AMOUNT, address(this));
-        rebalancer.depositAssets(USER_1_DEPOSIT_AMOUNT, USER_1);
+        rebalancer.initiateDepositAssets(USER_0_DEPOSIT_AMOUNT, address(this));
+        rebalancer.initiateDepositAssets(USER_1_DEPOSIT_AMOUNT, USER_1);
+        skip(rebalancer.getTimeLimits().validationDelay);
+        rebalancer.validateDepositAssets();
+        vm.prank(USER_1);
+        rebalancer.validateDepositAssets();
     }
 
     /**
@@ -120,9 +124,12 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
         vm.prank(address(usdnProtocol));
         rebalancer.updatePosition(posId1, 0);
 
-        uint128 user2DepositedAmount = 5 ether;
-        vm.prank(USER_2);
-        rebalancer.depositAssets(user2DepositedAmount, USER_2);
+        uint88 user2DepositedAmount = 5 ether;
+        vm.startPrank(USER_2);
+        rebalancer.initiateDepositAssets(user2DepositedAmount, USER_2);
+        skip(rebalancer.getTimeLimits().validationDelay);
+        rebalancer.validateDepositAssets();
+        vm.stopPrank();
 
         // simulate a profit of 10% when closing the position
         uint128 posVersion2Value = (USER_0_DEPOSIT_AMOUNT + USER_1_DEPOSIT_AMOUNT) * 11 / 10;
@@ -178,9 +185,12 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
         rebalancer.updatePosition(posId1, 0);
 
         // add some pending assets before updating again
-        uint128 user2DepositedAmount = 5 ether;
-        vm.prank(USER_2);
-        rebalancer.depositAssets(user2DepositedAmount, USER_2);
+        uint88 user2DepositedAmount = 5 ether;
+        vm.startPrank(USER_2);
+        rebalancer.initiateDepositAssets(user2DepositedAmount, USER_2);
+        skip(rebalancer.getTimeLimits().validationDelay);
+        rebalancer.validateDepositAssets();
+        vm.stopPrank();
 
         vm.expectEmit();
         emit PositionVersionUpdated(positionVersionBefore + 2);
