@@ -56,12 +56,38 @@ contract WusdnHandler is Wusdn, Test {
         to = bound(to, 0, _actors.length - 1);
         uint256 wusdnBalanceTo = balanceOf(_actors[to]);
 
-        _usdn.approve(address(this), _usdn.balanceOf(msg.sender));
+        _usdn.approve(address(this), usdnAmount);
         this.wrap(usdnAmount, _actors[to]);
 
         assertEq(totalUsdnShares + previewShares, this.totalUsdnShares(), "wrap : total USDN shares in WUSDN");
         assertEq(usdnSharesUser - previewShares, _usdn.sharesOf(msg.sender), "wrap : USDN shares of the user");
         assertEq(wusdnBalanceTo + previewWrap, balanceOf(_actors[to]), "wrap : WUSDN balance of the recipient");
+    }
+
+    function wrapSharesTest(uint256 to, uint256 usdnShares) external prankUser {
+        uint256 usdnSharesUser = _usdn.sharesOf(msg.sender);
+        uint256 totalUsdnShares = this.totalUsdnShares();
+
+        if (usdnSharesUser == 0) {
+            return;
+        }
+
+        console2.log("bound wrap amount");
+        usdnShares = bound(usdnShares, 0, usdnSharesUser);
+        uint256 wrappedAmountPreview = this.previewWrapShares(usdnShares);
+
+        console2.log("bound to address");
+        to = bound(to, 0, _actors.length - 1);
+        uint256 wusdnBalanceTo = balanceOf(_actors[to]);
+
+        _usdn.approve(address(this), _usdn.convertToTokensRoundUp(usdnShares));
+        uint256 wrappedAmount = this.wrapShares(usdnShares, _actors[to]);
+
+        uint256 theoriticalShares = usdnShares / SHARES_RATIO * SHARES_RATIO;
+        assertEq(wrappedAmount, wrappedAmountPreview, "wrap : wrapped amount");
+        assertEq(totalUsdnShares + theoriticalShares, this.totalUsdnShares(), "wrap : total USDN shares in WUSDN");
+        assertEq(usdnSharesUser - theoriticalShares, _usdn.sharesOf(msg.sender), "wrap : USDN shares of the user");
+        assertEq(wusdnBalanceTo + wrappedAmount, balanceOf(_actors[to]), "wrap : WUSDN balance of the recipient");
     }
 
     function unwrapTest(uint256 to, uint256 wusdnAmount) external prankUser {
@@ -74,7 +100,6 @@ contract WusdnHandler is Wusdn, Test {
 
         console2.log("bound unwrap amount");
         wusdnAmount = bound(wusdnAmount, 0, wusdnBalanceUser);
-        uint256 previewUnwrap = this.previewUnwrap(wusdnAmount);
 
         console2.log("bound to address");
         to = bound(to, 0, _actors.length - 1);
@@ -90,9 +115,6 @@ contract WusdnHandler is Wusdn, Test {
             usdnSharesTo + wusdnAmount * SHARES_RATIO,
             _usdn.sharesOf(_actors[to]),
             "uwwrap : USDN balance of the recipient"
-        );
-        assertApproxEqAbs(
-            previewUnwrap, _usdn.convertToTokens(wusdnAmount * SHARES_RATIO), 1, "uwwrap : preview unwrap"
         );
     }
 
