@@ -111,7 +111,7 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
         return _positionVersion;
     }
 
-    /// @inheritdoc IBaseRebalancer
+    /// @inheritdoc IRebalancer
     function getPositionMaxLeverage() external view returns (uint256 maxLeverage_) {
         maxLeverage_ = _maxLeverage;
         uint256 protocolMaxLeverage = _usdnProtocol.getMaxLeverage();
@@ -292,8 +292,16 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
 
     /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
-        if (interfaceId == type(IOwnershipCallback).interfaceId) return true;
-        if (interfaceId == type(IRebalancer).interfaceId) return true;
+        if (interfaceId == type(IOwnershipCallback).interfaceId) {
+            return true;
+        }
+        if (interfaceId == type(IRebalancer).interfaceId) {
+            return true;
+        }
+        if (interfaceId == type(IRebalancer).interfaceId) {
+            return true;
+        }
+
         return super.supportsInterface(interfaceId);
     }
 

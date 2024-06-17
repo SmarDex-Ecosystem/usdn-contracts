@@ -6,13 +6,6 @@ import { PositionId } from "../UsdnProtocol/IUsdnProtocolTypes.sol";
 
 interface IBaseRebalancer {
     /**
-     * @notice Returns the maximum leverage a position can have
-     * @dev Returns the max leverage of the USDN Protocol if it's lower than the rebalancer's
-     * @return maxLeverage_ The max leverage a position can have
-     */
-    function getPositionMaxLeverage() external view returns (uint256 maxLeverage_);
-
-    /**
      * @notice Returns the necessary data for the USDN protocol to update the position
      * @return pendingAssets_ The amount of assets pending
      * @return maxLeverage_ The max leverage of the rebalancer
