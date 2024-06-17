@@ -7,8 +7,8 @@ import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
 import { UsdnProtocolLong } from "./UsdnProtocolLong.sol";
-import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IUsdnProtocolActions } from "../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 import {
     DepositPendingAction,
