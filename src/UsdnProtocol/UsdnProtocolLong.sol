@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.25;
 
+import { console2 } from "./../../lib/forge-std/src/console2.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
@@ -774,11 +775,11 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @notice Immediately close a position with the given price
      * @dev Should only be used to close the rebalancer position
      * @param posId The ID of the position to close
-     * @param neutralPrice The current neutral price
+     * @param lastPrice The last price used to update the protocol
      * @param cache The cached state of the protocol, will be updated during this call
      * @return positionValue_ The value of the closed position. If 0, the position was/will be liquidated
      */
-    function _flashClosePosition(PositionId memory posId, uint128 neutralPrice, CachedProtocolState memory cache)
+    function _flashClosePosition(PositionId memory posId, uint128 lastPrice, CachedProtocolState memory cache)
         internal
         returns (uint256 positionValue_)
     {
@@ -792,24 +793,25 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         Position memory pos = _longPositions[tickHash][posId.index];
 
         int256 positionValue = _positionValue(
-            neutralPrice,
+            lastPrice,
             getEffectivePriceForTick(
                 _calcTickWithoutPenalty(posId.tick, liquidationPenalty),
-                _lastPrice,
+                lastPrice,
                 cache.tradingExpo,
                 cache.liqMultiplierAccumulator
             ),
             pos.totalExpo
         );
 
+        // if positionValue is lower than 0, return 0
+        if (positionValue < 0) {
+            // TODO interrupt the process if that happens
+            return positionValue_;
+        }
+
         // fully close the position and update the cache
         cache.liqMultiplierAccumulator =
             _removeAmountFromPosition(posId.tick, posId.index, pos, pos.amount, pos.totalExpo);
-
-        // if positionValue is lower than 0, return 0
-        if (positionValue < 0) {
-            return positionValue_;
-        }
 
         // cast is safe as positionValue cannot be lower than 0
         positionValue_ = uint256(positionValue);

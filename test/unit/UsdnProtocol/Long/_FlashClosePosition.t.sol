@@ -27,7 +27,7 @@ contract TestUsdnProtocolLongFlashClosePosition is UsdnProtocolBaseFixture {
                 user: address(this),
                 untilAction: ProtocolAction.ValidateOpenPosition,
                 positionSize: amount,
-                desiredLiqPrice: DEFAULT_PARAMS.initialPrice / 2,
+                desiredLiqPrice: DEFAULT_PARAMS.initialPrice * 8 / 10,
                 price: DEFAULT_PARAMS.initialPrice
             })
         );
@@ -47,12 +47,14 @@ contract TestUsdnProtocolLongFlashClosePosition is UsdnProtocolBaseFixture {
         (Position memory pos,) = protocol.getLongPosition(posId);
 
         uint256 longPositionsCountBefore = protocol.getTotalLongPositions();
-        // 10% profit
+        // 10% price increase
         uint128 currentPrice = DEFAULT_PARAMS.initialPrice * 11 / 10;
+        int256 longAssetAvailable = protocol.i_longAssetAvailable(currentPrice);
+        int256 vaultAssetAvailable = protocol.i_vaultAssetAvailable(currentPrice);
         uint128 tickPrice = protocol.getEffectivePriceForTick(
             protocol.i_calcTickWithoutPenalty(posId.tick, protocol.getLiquidationPenalty()),
-            DEFAULT_PARAMS.initialPrice,
-            totalExpo - balanceLong,
+            currentPrice,
+            totalExpo - uint256(longAssetAvailable),
             liqMultiplierAccumulator
         );
         int256 expectedPositionValue = protocol.i_positionValue(currentPrice, tickPrice, pos.totalExpo);
@@ -68,7 +70,12 @@ contract TestUsdnProtocolLongFlashClosePosition is UsdnProtocolBaseFixture {
             int256(expectedPositionValue) - int128(amount)
         );
         uint256 positionValue = protocol.i_flashClosePosition(
-            posId, currentPrice, totalExpo, balanceLong, balanceVault, liqMultiplierAccumulator
+            posId,
+            currentPrice,
+            totalExpo,
+            uint256(longAssetAvailable),
+            uint256(vaultAssetAvailable),
+            liqMultiplierAccumulator
         );
 
         assertEq(
@@ -107,8 +114,21 @@ contract TestUsdnProtocolLongFlashClosePosition is UsdnProtocolBaseFixture {
      * @custom:then The returned value is 0
      */
     function test_flashClosePositionWithAPositionWithNegativeValue() public {
+        uint128 lastPrice = DEFAULT_PARAMS.initialPrice * 7 / 10;
+        int256 longAssetAvailable = protocol.i_longAssetAvailable(lastPrice);
+        int256 vaultAssetAvailable = protocol.i_vaultAssetAvailable(lastPrice);
+        if (longAssetAvailable < 0) {
+            vaultAssetAvailable += longAssetAvailable;
+            longAssetAvailable = 0;
+        }
+
         uint256 positionValue = protocol.i_flashClosePosition(
-            posId, DEFAULT_PARAMS.initialPrice / 3, totalExpo, balanceLong, balanceVault, liqMultiplierAccumulator
+            posId,
+            lastPrice,
+            totalExpo,
+            uint256(longAssetAvailable),
+            uint256(vaultAssetAvailable),
+            liqMultiplierAccumulator
         );
 
         assertEq(positionValue, 0, "The returned value should be 0");
