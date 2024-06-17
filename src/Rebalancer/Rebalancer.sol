@@ -205,9 +205,14 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
 
         UserDeposit memory depositData = _userDeposit[msg.sender];
 
-        if (depositData.amount == 0 || depositData.entryPositionVersion <= _positionVersion) {
+        if (depositData.amount == 0) {
             revert RebalancerUserNotPending();
         }
+
+        if (depositData.entryPositionVersion <= _positionVersion) {
+            revert RebalancerUserNotPending();
+        }
+
         if (depositData.amount < amount) {
             revert RebalancerWithdrawAmountTooLarge();
         }
@@ -340,7 +345,11 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
     ) external payable returns (bool success_) {
         UserDeposit memory userDepositData = _userDeposit[msg.sender];
 
-        if (amount == 0 || amount > userDepositData.amount) {
+        if (amount == 0) {
+            revert RebalancerInvalidAmount();
+        }
+
+        if (amount > userDepositData.amount) {
             revert RebalancerInvalidAmount();
         }
 
@@ -367,7 +376,7 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
         );
 
         if (success_) {
-            if (amount == userDepositData.amount) {
+            if (remainingAssets == 0) {
                 delete _userDeposit[msg.sender];
             } else {
                 // TODO check remaining bonus in another PR

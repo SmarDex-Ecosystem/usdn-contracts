@@ -155,7 +155,7 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
     /**
      * @notice Closes a user deposited amount of the current UsdnProtocol rebalancer position
      * @dev The rebalancer allows partially closing its position to withdraw the user's assets + PnL
-     * The remaining amount needs to be above `_minAssetDeposit`
+     * The remaining amount needs to be above `_minAssetDeposit` as `_minLongPosition` on the USDN protocol side
      * @param amount The amount to close relative to the amount deposited
      * @param to The to address
      * @param validator The validator address

@@ -45,7 +45,7 @@ interface IRebalancerEvents {
     /**
      * @notice Emitted when the user initiates a close position action
      * through the rebalancer
-     * @param user The original owner of the position
+     * @param user The rebalancer user
      * @param depositedAmountToClose The deposited amount to close
      * @param amountToClose The amount to close taking into account the previous versions' PnL
      * @param remainingAmountDeposited The remaining deposited assets

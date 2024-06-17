@@ -56,6 +56,14 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         uint256 forkWarp; // warp to this timestamp after forking, before deploying protocol. Zero to disable
     }
 
+    struct ExpoImbalanceLimitsBps {
+        int256 depositExpoImbalanceLimitBps;
+        int256 withdrawalExpoImbalanceLimitBps;
+        int256 openExpoImbalanceLimitBps;
+        int256 closeExpoImbalanceLimitBps;
+        int256 longImbalanceTargetBps;
+    }
+
     Permit2TokenBitfield.Bitfield constant NO_PERMIT2 = Permit2TokenBitfield.Bitfield.wrap(0);
 
     SetUpParams public params;
@@ -81,6 +89,8 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
     PreviousActionsData internal EMPTY_PREVIOUS_DATA =
         PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
+
+    ExpoImbalanceLimitsBps internal defaultLimits;
 
     function _setUp(SetUpParams memory testParams) public virtual {
         if (testParams.fork) {
@@ -138,6 +148,13 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             ADMIN
         );
 
+        if (!params.fork) {
+            // use a mock for the gas price feed
+            protocol.setLiquidationRewardsManager(
+                new LiquidationRewardsManager(address(new MockChainlinkOnChain()), wstETH, 2 days)
+            );
+        }
+
         rebalancer = new Rebalancer(protocol);
         protocol.setRebalancer(rebalancer);
 
@@ -192,12 +209,17 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         vm.startPrank(DEPLOYER);
         protocol.setFundingSF(0);
         protocol.resetEMA();
-        protocol.setExpoImbalanceLimits(2000, 2000, 6000, 6000, 300);
 
-        // use a mock for the gas price feed
-        protocol.setLiquidationRewardsManager(
-            new LiquidationRewardsManager(address(new MockChainlinkOnChain()), wstETH, 2 days)
-        );
+        defaultLimits = ExpoImbalanceLimitsBps({
+            depositExpoImbalanceLimitBps: protocol.getDepositExpoImbalanceLimitBps(),
+            withdrawalExpoImbalanceLimitBps: protocol.getWithdrawalExpoImbalanceLimitBps(),
+            openExpoImbalanceLimitBps: protocol.getOpenExpoImbalanceLimitBps(),
+            closeExpoImbalanceLimitBps: protocol.getCloseExpoImbalanceLimitBps(),
+            longImbalanceTargetBps: protocol.getLongImbalanceTargetBps()
+        });
+
+        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
+
         vm.stopPrank();
 
         // mint wstEth to the test contract
@@ -242,6 +264,12 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         tickToLiquidateData_ = protocol.getTickData(posToLiquidate_.tick);
 
         vm.prank(DEPLOYER);
-        protocol.setExpoImbalanceLimits(200, 200, 600, 600, 300);
+        protocol.setExpoImbalanceLimits(
+            uint256(defaultLimits.depositExpoImbalanceLimitBps),
+            uint256(defaultLimits.withdrawalExpoImbalanceLimitBps),
+            uint256(defaultLimits.openExpoImbalanceLimitBps),
+            uint256(defaultLimits.closeExpoImbalanceLimitBps),
+            defaultLimits.longImbalanceTargetBps
+        );
     }
 }

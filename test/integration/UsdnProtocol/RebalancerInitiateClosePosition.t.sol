@@ -27,18 +27,21 @@ contract UsdnProtocolRebalancerInitiateClosePosition is UsdnProtocolBaseIntegrat
 
     function setUp() public {
         (tickSpacing, amountInRebalancer, posToLiquidate, tickToLiquidateData) = _setUpRebalancer();
+        vm.prank(DEPLOYER);
+        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
+
         skip(5 minutes);
 
         minAsset = uint128(rebalancer.getMinAssetDeposit());
 
         mockPyth.setPrice(1280 ether / 1e10);
         mockPyth.setLastPublishTime(block.timestamp);
-        assertEq(rebalancer.getPositionVersion(), 0, "rebalancer version should be 0");
+        assertEq(rebalancer.getPositionVersion(), 0, "The rebalancer version should be 0");
 
         uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
         protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA, 1);
 
-        assertGt(rebalancer.getPositionVersion(), 0, "rebalancer version should be updated");
+        assertGt(rebalancer.getPositionVersion(), 0, "The rebalancer version should be updated");
     }
 
     /**
@@ -90,7 +93,7 @@ contract UsdnProtocolRebalancerInitiateClosePosition is UsdnProtocolBaseIntegrat
             amount, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA
         );
 
-        assertTrue(success, "rebalancer close should be successful");
+        assertTrue(success, "The rebalancer close should be successful");
 
         amountInRebalancer -= amount;
 
@@ -131,7 +134,7 @@ contract UsdnProtocolRebalancerInitiateClosePosition is UsdnProtocolBaseIntegrat
             amountInRebalancer, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA
         );
 
-        assertTrue(success, "rebalancer close should be successful");
+        assertTrue(success, "The rebalancer close should be successful");
 
         assertEq(
             rebalancer.getUserDepositData(address(this)).amount,
