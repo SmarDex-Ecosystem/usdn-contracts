@@ -511,6 +511,13 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _removeStalePendingAction(user);
     }
 
+    function i_calculateFee(int256 fund, int256 fundAsset)
+        external
+        returns (int256 fee_, int256 fundWithFee_, int256 fundAssetWithFee_)
+    {
+        return _calculateFee(fund, fundAsset);
+    }
+
     /**
      * @notice Helper to calculate the trading exposure of the long side at the time of the last balance update and
      * currentPrice
