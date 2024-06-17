@@ -244,10 +244,6 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
         if (previousPositionData.amount > 0) {
             // if the position has not been liquidated
             if (previousPosValue > 0) {
-                // save the pnl multiplier of the position
-                uint256 pnlMultiplier = _calcPnlMultiplier(previousPositionData.amount, previousPosValue);
-                _positionData[positionVersion].pnlMultiplier = pnlMultiplier;
-
                 // update the multiplier accumulator
                 accMultiplier = FixedPointMathLib.fullMulDiv(
                     previousPosValue, previousPositionData.entryAccMultiplier, previousPositionData.amount
@@ -272,21 +268,6 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
         _pendingAssetsAmount = 0;
 
         emit PositionVersionUpdated(positionVersion);
-    }
-
-    /**
-     * @notice Calculate the PnL multiplier of a position
-     * @param openAmount The amount of assets used to open the position
-     * @param value The value of the position right now
-     * @return pnlMultiplier_ The PnL multiplier
-     */
-    function _calcPnlMultiplier(uint128 openAmount, uint128 value) internal pure returns (uint256 pnlMultiplier_) {
-        // prevent division by 0
-        if (openAmount == 0) {
-            return 0;
-        }
-
-        pnlMultiplier_ = value * MULTIPLIER_FACTOR / openAmount;
     }
 
     /// @inheritdoc IERC165

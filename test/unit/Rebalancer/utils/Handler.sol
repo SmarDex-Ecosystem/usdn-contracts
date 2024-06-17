@@ -25,8 +25,4 @@ contract RebalancerHandler is Rebalancer, Test {
     function setLastLiquidatedVersion(uint128 version) external {
         _lastLiquidatedVersion = version;
     }
-
-    function i_calcPnlMultiplier(uint128 openAmount, uint128 value) external pure returns (uint256 pnlMultiplier_) {
-        pnlMultiplier_ = _calcPnlMultiplier(openAmount, value);
-    }
 }
