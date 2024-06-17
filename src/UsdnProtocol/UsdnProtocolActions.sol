@@ -2029,12 +2029,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
             isLiquidationPending_ = liquidationEffects.isLiquidationPending;
             if (!isLiquidationPending_ && liquidationEffects.liquidatedTicks > 0) {
-                (liquidationEffects.newLongBalance, liquidationEffects.newVaultBalance) = _triggerRebalancer(
-                    uint128(neutralPrice),
-                    liquidationEffects.newLongBalance,
-                    liquidationEffects.newVaultBalance,
-                    liquidationEffects.remainingCollateral
-                );
+                if (_closeExpoImbalanceLimitBps > 0) {
+                    (liquidationEffects.newLongBalance, liquidationEffects.newVaultBalance) = _triggerRebalancer(
+                        uint128(neutralPrice),
+                        liquidationEffects.newLongBalance,
+                        liquidationEffects.newVaultBalance,
+                        liquidationEffects.remainingCollateral
+                    );
+                }
             }
 
             _balanceLong = liquidationEffects.newLongBalance;
