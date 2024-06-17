@@ -50,6 +50,11 @@ contract Wusdn is ERC20Permit, IWusdn {
     }
 
     /// @inheritdoc IWusdn
+    function wrapShares(uint256 usdnShares, address to) external returns (uint256 wrappedAmount_) {
+        wrappedAmount_ = _wrapShares(usdnShares, to);
+    }
+
+    /// @inheritdoc IWusdn
     function unwrap(uint256 wusdnAmount) external returns (uint256 usdnAmount_) {
         usdnAmount_ = _unwrap(wusdnAmount, msg.sender);
     }
@@ -119,15 +124,20 @@ contract Wusdn is ERC20Permit, IWusdn {
             }
         }
 
+        wrappedAmount_ = _wrapShares(usdnShares, to);
+    }
+
+    function _wrapShares(uint256 usdnShares, address to) private returns (uint256 wrappedAmount_) {
         // we consecutively divide and multiply by `SHARES_RATIO` to have
         // a share amount that is a multiple of `SHARES_RATIO`
         // slither-disable-next-line divide-before-multiply
         wrappedAmount_ = usdnShares / SHARES_RATIO;
 
         _mint(to, wrappedAmount_);
-        USDN.transferSharesFrom(msg.sender, address(this), wrappedAmount_ * SHARES_RATIO);
+        uint256 sharesToTransfer = wrappedAmount_ * SHARES_RATIO;
+        USDN.transferSharesFrom(msg.sender, address(this), sharesToTransfer);
 
-        emit Wrap(msg.sender, to, usdnAmount, wrappedAmount_);
+        emit Wrap(msg.sender, to, USDN.convertToTokens(sharesToTransfer), wrappedAmount_);
     }
 
     /**

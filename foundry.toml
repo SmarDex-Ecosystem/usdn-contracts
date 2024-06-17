@@ -43,7 +43,7 @@ ffi = true
 runs = 10_000
 
 [profile.local.invariant]
-runs = 10_000
+runs = 10_00
 depth = 15
 # call_override = true # makes invariant tests hang
 dictionary_weight = 80

@@ -15,6 +15,7 @@ contract TestWusdnPreviewWrap is WusdnTokenFixture {
     function setUp() public override {
         super.setUp();
         usdn.approve(address(wusdn), usdn.balanceOf(address(this)));
+        usdn.mint(USER_1, 200 ether);
     }
     /**
      * @custom:scenario Preview wrap USDN to WUSDN

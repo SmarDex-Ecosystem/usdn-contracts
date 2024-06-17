@@ -7,7 +7,7 @@ import { IWusdnErrors } from "../../../../src/interfaces/Usdn/IWusdnErrors.sol";
 import { IWusdnEvents } from "../../../../src/interfaces/Usdn/IWusdnEvents.sol";
 import { Wusdn } from "../../../../src/Usdn/Wusdn.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
-import { USER_1 } from "../../../utils/Constants.sol";
+import { USER_1, ADMIN } from "../../../utils/Constants.sol";
 
 /**
  * @title WusdnTokenFixture
@@ -28,10 +28,10 @@ contract WusdnTokenFixture is BaseFixture, IWusdnErrors, IWusdnEvents {
         usdnDecimals = usdn.decimals();
 
         usdn.grantRole(usdn.MINTER_ROLE(), address(this));
-        usdn.grantRole(usdn.MINTER_ROLE(), address(wusdn));
+        usdn.grantRole(usdn.MINTER_ROLE(), ADMIN);
         usdn.grantRole(usdn.REBASER_ROLE(), address(this));
+        usdn.grantRole(usdn.REBASER_ROLE(), ADMIN);
         usdn.mint(address(this), 100 ether);
-        usdn.mint(USER_1, 200 ether);
     }
 
     // force ignore from coverage report
