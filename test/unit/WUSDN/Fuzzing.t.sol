@@ -24,6 +24,7 @@ contract TestWusdnFuzzing is WusdnTokenFixture {
      * @param usdnShares The amount of shares to mint
      */
     function testFuzz_wrap_totalBalance_afterRebase(uint256 divisor, uint128 usdnShares) public {
+        uint256 initialSharesBalance = usdn.sharesOf(USER_1);
         divisor = bound(divisor, usdn.MIN_DIVISOR(), usdn.MAX_DIVISOR());
         usdn.mintShares(USER_1, usdnShares);
 
@@ -39,6 +40,6 @@ contract TestWusdnFuzzing is WusdnTokenFixture {
         wusdn.unwrap(wrappedAmount);
 
         vm.stopPrank();
-        assertEq(usdn.sharesOf(USER_1), usdnShares);
+        assertEq(usdn.sharesOf(USER_1), usdnShares + initialSharesBalance);
     }
 }
