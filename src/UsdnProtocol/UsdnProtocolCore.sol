@@ -38,6 +38,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @param isPriceRecent Whether the price is recent
      * @param tempLongBalance The temporary long balance
      * @param tempVaultBalance The temporary vault balance
+     * @param lastPrice The last price
      */
     struct ApplyPnlAndFundingData {
         bool isPriceRecent;
