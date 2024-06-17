@@ -2132,13 +2132,13 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             positionAmount += positionValue;
         }
 
-        // transfer the pending assets from the rebalancer to this contract
-        address(_asset).safeTransferFrom(address(rebalancer), address(this), positionAmount - positionValue);
-
         // If there are no pending assets and the previous position was either liquidated or doesn't exist, return
         if (positionAmount + positionValue == 0) {
             return (longBalance_, vaultBalance_);
         }
+
+        // transfer the pending assets from the rebalancer to this contract
+        address(_asset).safeTransferFrom(address(rebalancer), address(this), positionAmount - positionValue);
 
         // if there is enough collateral remaining after liquidations, calculate the bonus and add it to the
         // new rebalancer position
