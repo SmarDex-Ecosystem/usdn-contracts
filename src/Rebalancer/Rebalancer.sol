@@ -184,12 +184,12 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
             }
         }
 
-        _asset.safeTransferFrom(msg.sender, address(this), amount);
-
         depositData.entryPositionVersion = positionVersion + 1;
         depositData.amount += amount;
         _userDeposit[to] = depositData;
         _pendingAssetsAmount += amount;
+
+        _asset.safeTransferFrom(msg.sender, address(this), amount);
 
         emit AssetsDeposited(amount, to, positionVersion + 1);
     }
@@ -275,7 +275,6 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
     }
 
     /**
-     * TODO add tests
      * @notice Calculate the PnL multiplier of a position
      * @param openAmount The amount of assets used to open the position
      * @param value The value of the position right now

@@ -724,23 +724,26 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /**
-     * TODO add tests
      * @notice Calculates the current imbalance between the vault and long sides
      * @dev If the value is positive, the long trading expo is smaller than the vault trading expo
+     * If the trading expo is equal to 0, the imbalance is infinite and int256.max is returned
      * @param vaultBalance The balance of the vault
      * @param longBalance The balance of the long side
      * @param totalExpo The total expo of the long side
      * @return imbalanceBps_ The imbalance in basis points
      */
-    function _calcLongImbalanceBps(uint256 vaultBalance, uint256 longBalance, uint256 totalExpo)
+    function _calcImbalanceCloseBps(int256 vaultBalance, int256 longBalance, uint256 totalExpo)
         internal
         pure
         returns (int256 imbalanceBps_)
     {
-        // imbalanceBps_ = (vaultBalance - (totalExpo - longBalance)) * BPS_DIVISOR / vaultBalance;
-        imbalanceBps_ = (vaultBalance.toInt256().safeSub(totalExpo.toInt256().safeSub(longBalance.toInt256()))).safeMul(
-            int256(BPS_DIVISOR)
-        ).safeDiv(vaultBalance.toInt256());
+        int256 tradingExpo = totalExpo.toInt256().safeSub(longBalance);
+        if (tradingExpo == 0) {
+            return type(int256).max;
+        }
+
+        // imbalanceBps_ = (vaultBalance - (totalExpo - longBalance)) * BPS_DIVISOR / (totalExpo - longBalance);
+        imbalanceBps_ = (vaultBalance.safeSub(tradingExpo)).safeMul(int256(BPS_DIVISOR)).safeDiv(tradingExpo);
     }
 
     /**
@@ -884,7 +887,6 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /**
-     * TODO add tests
      * @notice Calculates the tick of the rebalancer position to open
      * @dev The returned tick must be higher than or equal to the minimum leverage of the protocol
      * and lower than or equal to the rebalancer and USDN protocol leverages (lower of the 2)
@@ -901,9 +903,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         CachedProtocolState memory cache
     ) internal view returns (int24 tickWithoutLiqPenalty_) {
         // use the lowest max leverage above the min leverage
+        uint256 protocolMinLeverage = _minLeverage;
         {
             uint256 protocolMaxLeverage = _maxLeverage;
-            uint256 protocolMinLeverage = _minLeverage;
             if (rebalancerMaxLeverage > protocolMaxLeverage) {
                 rebalancerMaxLeverage = protocolMaxLeverage;
             }
@@ -915,7 +917,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         int256 longImbalanceTargetBps = _longImbalanceTargetBps;
         // calculate the trading expo missing to reach the imbalance target
         uint256 targetTradingExpo =
-            (cache.vaultBalance * (BPS_DIVISOR.toInt256() - longImbalanceTargetBps).toUint256() / BPS_DIVISOR);
+            (cache.vaultBalance * BPS_DIVISOR / (int256(BPS_DIVISOR) + longImbalanceTargetBps).toUint256());
 
         // check that the target is not already exceeded
         if (cache.tradingExpo >= targetTradingExpo) {
@@ -925,9 +927,19 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         uint256 tradingExpoToFill = targetTradingExpo - cache.tradingExpo;
 
         // check that the trading expo filled by the position would not exceed the max leverage
-        uint256 highestUsableTradingExpo = positionAmount * rebalancerMaxLeverage / LEVERAGE_DECIMALS - positionAmount;
+        uint256 highestUsableTradingExpo =
+            positionAmount * rebalancerMaxLeverage / 10 ** LEVERAGE_DECIMALS - positionAmount;
         if (highestUsableTradingExpo < tradingExpoToFill) {
             tradingExpoToFill = highestUsableTradingExpo;
+        }
+
+        {
+            // check that the trading expo filled by the position would not be below the min leverage
+            uint256 lowestUsableTradingExpo =
+                positionAmount * protocolMinLeverage / 10 ** LEVERAGE_DECIMALS - positionAmount;
+            if (lowestUsableTradingExpo > tradingExpoToFill) {
+                tradingExpoToFill = lowestUsableTradingExpo;
+            }
         }
 
         tickWithoutLiqPenalty_ = getEffectiveTickForPrice(
@@ -951,8 +963,10 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         // and the position is not at the max leverage, add one tick
         if (
             highestUsableTradingExpo != tradingExpoToFill
-                && _calcLongImbalanceBps(
-                    cache.vaultBalance, cache.longBalance + positionAmount, cache.totalExpo + positionTotalExpo
+                && _calcImbalanceCloseBps(
+                    cache.vaultBalance.toInt256(),
+                    (cache.longBalance + positionAmount).toInt256(),
+                    cache.totalExpo + positionTotalExpo
                 ) > longImbalanceTargetBps
         ) {
             tickWithoutLiqPenalty_ += _tickSpacing;
