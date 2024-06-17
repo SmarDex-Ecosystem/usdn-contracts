@@ -46,6 +46,16 @@ contract TestWusdnFuzzing is WusdnTokenFixture {
         assertEq(usdn.sharesOf(USER_1), usdnShares + initialSharesBalance);
     }
 
+    /**
+     * @custom:scenario Compare the {previewWrapShares} and {wrapShares} functions
+     * @custom:given A divisor between `MAX_DIVISOR` and `MIN_DIVISOR`
+     * @custom:and An amount of shares between 0 and type(uint128).max
+     * @custom:when We wrap the amount of shares
+     * @custom:then The {wrapShares} function should return the same amount as {previewWrapShares}
+     * @param divisor The divisor to use
+     * @param usdnShares The amount of shares to mint for the user
+     * @param shareToWrap The amount of shares to wrap
+     */
     function testFuzz_previewWrapShares(uint256 divisor, uint128 usdnShares, uint256 shareToWrap) public {
         divisor = bound(divisor, usdn.MIN_DIVISOR(), usdn.MAX_DIVISOR());
         usdn.mintShares(USER_1, usdnShares);
@@ -66,6 +76,15 @@ contract TestWusdnFuzzing is WusdnTokenFixture {
         assertEq(wrappedAmount, wrappedAmountPreview);
     }
 
+    /**
+     * @custom:scenario Compare the {previewUnwrap} and {unwrap} functions
+     * @custom:given A divisor between `MAX_DIVISOR` and `MIN_DIVISOR`
+     * @custom:and An amount of WUSDN between 0 and type(uint128).max
+     * @custom:when We unwrap the amount of WUSDN
+     * @custom:then The {unwrapShares} function should return the same amount as {previewUnwrapShares}
+     * @param divisor The divisor to use
+     * @param wusdnAmount The amount of WUSDN to unwrap
+     */
     function testFuzz_previewUnwrapShares(uint256 divisor, uint256 wusdnAmount) public {
         divisor = bound(divisor, usdn.MIN_DIVISOR(), usdn.MAX_DIVISOR());
         wusdn.transfer(USER_1, type(uint128).max);
