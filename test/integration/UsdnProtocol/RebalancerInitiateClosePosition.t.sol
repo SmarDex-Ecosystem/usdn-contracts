@@ -27,10 +27,16 @@ contract UsdnProtocolRebalancerInitiateClosePosition is UsdnProtocolBaseIntegrat
 
     function setUp() public {
         (tickSpacing, amountInRebalancer, posToLiquidate, tickToLiquidateData) = _setUpRebalancer();
-        vm.prank(DEPLOYER);
-        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
-
         skip(5 minutes);
+
+        vm.prank(DEPLOYER);
+        protocol.setExpoImbalanceLimits(
+            uint256(defaultLimits.depositExpoImbalanceLimitBps),
+            uint256(defaultLimits.withdrawalExpoImbalanceLimitBps),
+            uint256(defaultLimits.openExpoImbalanceLimitBps),
+            uint256(defaultLimits.closeExpoImbalanceLimitBps),
+            550
+        );
 
         minAsset = uint128(rebalancer.getMinAssetDeposit());
 

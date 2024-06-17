@@ -3,6 +3,7 @@ pragma solidity ^0.8.25;
 
 import { MOCK_PYTH_DATA } from "../../unit/Middlewares/utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
+import { DEPLOYER } from "../../utils/Constants.sol";
 
 import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
 import { ProtocolAction, TickData } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -125,7 +126,7 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
             uint256(protocol.getDepositExpoImbalanceLimitBps()),
             uint256(protocol.getWithdrawalExpoImbalanceLimitBps()),
             0,
-            -protocol.getLongImbalanceTargetBps()
+            0
         );
         vm.stopPrank();
 

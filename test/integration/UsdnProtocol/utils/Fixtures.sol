@@ -230,9 +230,11 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
         uint256 messageValue = protocol.getSecurityDepositValue();
 
+        uint128 amount = 3 ether;
+
         // deposit assets in the rebalancer
-        rebalancer.depositAssets(10 ether, payable(address(this)));
-        amountInRebalancer_ += 10 ether;
+        rebalancer.depositAssets(amount, payable(address(this)));
+        amountInRebalancer_ += amount;
 
         // deposit assets in the protocol to imbalance it
         protocol.initiateDeposit{ value: messageValue }(
