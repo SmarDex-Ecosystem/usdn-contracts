@@ -2047,8 +2047,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _balanceLong = liquidationEffects.newLongBalance;
             _balanceVault = liquidationEffects.newVaultBalance;
 
-            // safecast not needed since done above
-            (bool rebased, bytes memory callbackResult) = _usdnRebase(uint128(neutralPrice), ignoreInterval);
+            (bool rebased, bytes memory callbackResult) = _usdnRebase(_lastPrice, ignoreInterval);
 
             if (liquidationEffects.liquidatedTicks > 0) {
                 _sendRewardsToLiquidator(
