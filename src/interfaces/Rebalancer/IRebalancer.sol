@@ -92,14 +92,6 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
     function increaseAssetAllowance(uint256 addAllowance) external;
 
     /**
-     * @notice Deposit assets into this contract to be included in the next position
-     * @dev If `to` is already in a position, they need to close it completely before adding more assets
-     * @param amount The amount to deposit (in _assetDecimals)
-     * @param to The address to assign the deposit to
-     */
-    function depositAssets(uint128 amount, address to) external;
-
-    /**
      * @notice Returns the version of the last position that got liquidated
      * @dev 0 means no liquidated version yet
      * @return The version of the last position that got liquidated
@@ -113,7 +105,7 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
      * @param amount The amount to withdraw (in _assetDecimals)
      * @param to The address to send the assets to
      */
-    function withdrawPendingAssets(uint128 amount, address to) external;
+    function withdrawPendingAssets(uint88 amount, address to) external;
 
     /**
      * @notice Indicates that the previous version of the position was closed and a new one was opened

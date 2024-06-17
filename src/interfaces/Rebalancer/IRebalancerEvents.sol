@@ -3,12 +3,27 @@ pragma solidity >=0.8.0;
 
 interface IRebalancerEvents {
     /**
-     * @notice Emitted when assets are deposited in the contract
-     * @param amount The amount of assets deposited
+     * @notice Emitted when a user initiates a deposit into the Rebalancer
      * @param to The address the assets will be assigned to
+     * @param amount The amount of assets deposited
+     * @param timestamp The timestamp of the action
+     */
+    event InitiatedAssetsDeposit(address indexed to, uint256 amount, uint256 timestamp);
+
+    /**
+     * @notice Emitted when assets are deposited in the contract
+     * @param user The address of the user
+     * @param amount The amount of assets deposited
      * @param positionVersion The version of the position those assets will be used in
      */
-    event AssetsDeposited(uint256 amount, address to, uint256 positionVersion);
+    event AssetsDeposited(address indexed user, uint256 amount, uint256 positionVersion);
+
+    /**
+     * @notice Emitted when a deposit failed due to the validation deadline elapsing and the user retrieves their funds
+     * @param user The address of the user
+     * @param amount The amount of assets that was refunded
+     */
+    event DepositRefunded(address indexed user, uint256 amount);
 
     /**
      * @notice Emitted when pending assets are withdrawn from the contract
