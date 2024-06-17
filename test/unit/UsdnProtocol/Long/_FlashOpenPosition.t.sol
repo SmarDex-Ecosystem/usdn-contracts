@@ -14,12 +14,12 @@ import { Position, PositionId } from "../../../../src/interfaces/UsdnProtocol/IU
  * @custom:and A total expo of 300 ether and an amount of 1 ether
  */
 contract TestUsdnProtocolLongFlashOpenPosition is UsdnProtocolBaseFixture {
-    uint128 currentPrice = 2000 ether;
-    uint128 balanceVault = 200 ether;
-    uint128 balanceLong = 100 ether;
-    uint128 totalExpo = 300 ether;
-    uint128 amount = 1 ether;
-    uint128 longTradingExpo = totalExpo - balanceLong;
+    uint128 constant CURRENT_PRICE = 2000 ether;
+    uint128 constant BALANCE_VAULT = 200 ether;
+    uint128 constant BALANCE_LONG = 100 ether;
+    uint128 constant TOTAL_EXPO = 300 ether;
+    uint128 constant AMOUNT = 1 ether;
+    uint128 longTradingExpo = TOTAL_EXPO - BALANCE_LONG;
     HugeUint.Uint512 liqMultiplierAccumulator;
 
     function setUp() public {
@@ -34,24 +34,24 @@ contract TestUsdnProtocolLongFlashOpenPosition is UsdnProtocolBaseFixture {
      */
     function test_flashOpenPosition() external {
         int24 tickWithoutPenalty = protocol.getEffectiveTickForPrice(
-            1500 ether, currentPrice, longTradingExpo, liqMultiplierAccumulator, _tickSpacing
+            1500 ether, CURRENT_PRICE, longTradingExpo, liqMultiplierAccumulator, _tickSpacing
         );
         uint128 tickPriceWithoutPenalty = protocol.getEffectivePriceForTick(
-            tickWithoutPenalty, currentPrice, longTradingExpo, liqMultiplierAccumulator
+            tickWithoutPenalty, CURRENT_PRICE, longTradingExpo, liqMultiplierAccumulator
         );
         int24 tick = tickWithoutPenalty + int24(uint24(protocol.getLiquidationPenalty())) * _tickSpacing;
-        uint128 positionTotalExpo = protocol.i_calcPositionTotalExpo(amount, currentPrice, tickPriceWithoutPenalty);
+        uint128 positionTotalExpo = protocol.i_calcPositionTotalExpo(AMOUNT, CURRENT_PRICE, tickPriceWithoutPenalty);
         uint256 longPositionsCountBefore = protocol.getTotalLongPositions();
 
         _expectEmit(positionTotalExpo, PositionId(tick, 0, 0));
         (PositionId memory posId) = protocol.i_flashOpenPosition(
             address(this),
-            currentPrice,
+            CURRENT_PRICE,
             tickWithoutPenalty,
-            amount,
-            totalExpo,
-            balanceLong,
-            balanceVault,
+            AMOUNT,
+            TOTAL_EXPO,
+            BALANCE_LONG,
+            BALANCE_VAULT,
             liqMultiplierAccumulator
         );
 
@@ -60,7 +60,7 @@ contract TestUsdnProtocolLongFlashOpenPosition is UsdnProtocolBaseFixture {
         assertEq(pos.timestamp, block.timestamp, "the timestamp should be equal to now");
         assertEq(pos.user, address(this), "The user should be the provided address");
         assertEq(pos.totalExpo, positionTotalExpo, "The total expo should be equal to the expected one");
-        assertEq(pos.amount, amount, "The amount should be equal to the provided one");
+        assertEq(pos.amount, AMOUNT, "The amount should be equal to the provided one");
 
         assertEq(
             longPositionsCountBefore + 1, protocol.getTotalLongPositions(), "A long position should have been created"
@@ -80,9 +80,9 @@ contract TestUsdnProtocolLongFlashOpenPosition is UsdnProtocolBaseFixture {
             initialPosition.tick - int24(uint24(protocol.getLiquidationPenalty())) * _tickSpacing;
         int24 tickWithoutNewPenalty = initialPosition.tick - _tickSpacing;
         uint128 tickPriceWithoutOldPenalty = protocol.getEffectivePriceForTick(
-            tickWithoutOldPenalty, currentPrice, longTradingExpo, liqMultiplierAccumulator
+            tickWithoutOldPenalty, CURRENT_PRICE, longTradingExpo, liqMultiplierAccumulator
         );
-        uint128 positionTotalExpo = protocol.i_calcPositionTotalExpo(amount, currentPrice, tickPriceWithoutOldPenalty);
+        uint128 positionTotalExpo = protocol.i_calcPositionTotalExpo(AMOUNT, CURRENT_PRICE, tickPriceWithoutOldPenalty);
         uint256 longPositionsCountBefore = protocol.getTotalLongPositions();
 
         vm.prank(ADMIN);
@@ -91,12 +91,12 @@ contract TestUsdnProtocolLongFlashOpenPosition is UsdnProtocolBaseFixture {
         _expectEmit(positionTotalExpo, PositionId(initialPosition.tick, 0, 1));
         (PositionId memory posId) = protocol.i_flashOpenPosition(
             address(this),
-            currentPrice,
+            CURRENT_PRICE,
             tickWithoutNewPenalty,
-            amount,
-            totalExpo,
-            balanceLong,
-            balanceVault,
+            AMOUNT,
+            TOTAL_EXPO,
+            BALANCE_LONG,
+            BALANCE_VAULT,
             liqMultiplierAccumulator
         );
 
@@ -112,15 +112,15 @@ contract TestUsdnProtocolLongFlashOpenPosition is UsdnProtocolBaseFixture {
         assertEq(pos.timestamp, block.timestamp, "the timestamp should be equal to now");
         assertEq(pos.user, address(this), "The user should be the provided address");
         assertEq(pos.totalExpo, positionTotalExpo, "The total expo should be equal to the expected one");
-        assertEq(pos.amount, amount, "The amount should be equal to the provided one");
+        assertEq(pos.amount, AMOUNT, "The amount should be equal to the provided one");
     }
 
     function _expectEmit(uint128 positionTotalExpo, PositionId memory posId) internal {
         vm.expectEmit();
         emit InitiatedOpenPosition(
-            address(this), address(this), uint40(block.timestamp), positionTotalExpo, amount, currentPrice, posId
+            address(this), address(this), uint40(block.timestamp), positionTotalExpo, AMOUNT, CURRENT_PRICE, posId
         );
         vm.expectEmit();
-        emit ValidatedOpenPosition(address(this), address(this), positionTotalExpo, currentPrice, posId);
+        emit ValidatedOpenPosition(address(this), address(this), positionTotalExpo, CURRENT_PRICE, posId);
     }
 }

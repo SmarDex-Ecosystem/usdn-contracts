@@ -16,7 +16,7 @@ contract TestUsdnProtocolLongFlashClosePosition is UsdnProtocolBaseFixture {
     uint256 balanceLong;
     uint256 totalExpo;
     HugeUint.Uint512 liqMultiplierAccumulator;
-    uint128 amount = 1 ether;
+    uint128 constant AMOUNT = 1 ether;
     PositionId posId;
 
     function setUp() public {
@@ -26,7 +26,7 @@ contract TestUsdnProtocolLongFlashClosePosition is UsdnProtocolBaseFixture {
             OpenParams({
                 user: address(this),
                 untilAction: ProtocolAction.ValidateOpenPosition,
-                positionSize: amount,
+                positionSize: AMOUNT,
                 desiredLiqPrice: DEFAULT_PARAMS.initialPrice * 8 / 10,
                 price: DEFAULT_PARAMS.initialPrice
             })
@@ -60,14 +60,14 @@ contract TestUsdnProtocolLongFlashClosePosition is UsdnProtocolBaseFixture {
         int256 expectedPositionValue = protocol.i_positionValue(currentPrice, tickPrice, pos.totalExpo);
 
         vm.expectEmit();
-        emit InitiatedClosePosition(address(this), address(this), address(this), posId, amount, amount, 0);
+        emit InitiatedClosePosition(address(this), address(this), address(this), posId, AMOUNT, AMOUNT, 0);
         vm.expectEmit();
         emit ValidatedClosePosition(
             address(this),
             address(this),
             posId,
             uint256(expectedPositionValue),
-            int256(expectedPositionValue) - int128(amount)
+            int256(expectedPositionValue) - int128(AMOUNT)
         );
         uint256 positionValue = protocol.i_flashClosePosition(
             posId,
