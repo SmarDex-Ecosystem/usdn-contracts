@@ -11,6 +11,9 @@ import { USER_1 } from "../../utils/Constants.sol";
 contract TestWusdnFuzzing is WusdnTokenFixture {
     function setUp() public override {
         super.setUp();
+        usdn.mint(address(this), type(uint128).max);
+        usdn.approve(address(wusdn), usdn.balanceOf(address(this)));
+        wusdn.wrapShares(usdn.sharesOf(address(this)), address(this));
     }
 
     /**
@@ -41,5 +44,46 @@ contract TestWusdnFuzzing is WusdnTokenFixture {
 
         vm.stopPrank();
         assertEq(usdn.sharesOf(USER_1), usdnShares + initialSharesBalance);
+    }
+
+    function testFuzz_previewWrapShares(uint256 divisor, uint128 usdnShares, uint256 shareToWrap) public {
+        divisor = bound(divisor, usdn.MIN_DIVISOR(), usdn.MAX_DIVISOR());
+        usdn.mintShares(USER_1, usdnShares);
+        shareToWrap = bound(shareToWrap, 0, usdnShares);
+
+        if (divisor < usdn.MAX_DIVISOR()) {
+            usdn.rebase(divisor);
+        }
+
+        vm.startPrank(USER_1);
+
+        usdn.approve(address(wusdn), usdn.convertToTokensRoundUp(shareToWrap));
+        uint256 wrappedAmountPreview = wusdn.previewWrapShares(shareToWrap);
+        uint256 wrappedAmount = wusdn.wrapShares(shareToWrap, address(this));
+
+        vm.stopPrank();
+
+        assertEq(wrappedAmount, wrappedAmountPreview);
+    }
+
+    function testFuzz_previewUnwrapShares(uint256 divisor, uint256 wusdnAmount) public {
+        divisor = bound(divisor, usdn.MIN_DIVISOR(), usdn.MAX_DIVISOR());
+        wusdn.transfer(USER_1, type(uint128).max);
+        wusdnAmount = bound(wusdnAmount, 0, type(uint128).max);
+        uint256 sharesOf = usdn.sharesOf(USER_1);
+
+        if (divisor < usdn.MAX_DIVISOR()) {
+            usdn.rebase(divisor);
+        }
+
+        vm.startPrank(USER_1);
+
+        wusdn.approve(address(wusdn), wusdnAmount);
+        uint256 usdnSharesAmount = wusdn.previewUnwrapShares(wusdnAmount);
+        wusdn.unwrap(wusdnAmount, USER_1);
+
+        vm.stopPrank();
+
+        assertEq(sharesOf + usdnSharesAmount, usdn.sharesOf(USER_1));
     }
 }
