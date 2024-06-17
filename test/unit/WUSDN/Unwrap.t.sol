@@ -46,17 +46,19 @@ contract TestWusdnUnwrap is WusdnTokenFixture {
      * @custom:given A user with some WUSDN
      * @custom:and All the usdnAmount is wrapped to WUSDN
      * @custom:when The wusdnAmount is unwrapped from WUSDN
+     * @custom:and The `to` parameter is USER_1
      * @custom:then The user should have usdnAmount USDN
      * @custom:and wusdnAmount WUSDN
      */
     function test_unwrapTo() public {
+        uint256 initialBalance = usdn.balanceOf(USER_1);
         vm.expectEmit(address(wusdn));
         emit Unwrap(address(this), USER_1, wusdnAmount, usdnAmount);
         wusdn.unwrap(wusdnAmount, USER_1);
 
         assertEq(wusdn.totalUsdnBalance(), 0, "total USDN balance of WUSDN");
         assertEq(wusdn.totalSupply(), 0, "total supply should be 0");
-        assertEq(usdn.balanceOf(USER_1), usdnAmount, "USDN balance");
+        assertEq(usdn.balanceOf(USER_1), usdnAmount + initialBalance, "USDN balance");
         assertEq(wusdn.balanceOf(USER_1), 0, "WUSDN balance");
     }
 }
