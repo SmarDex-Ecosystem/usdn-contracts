@@ -14,7 +14,7 @@ import { TickMath } from "../../../src/libraries/TickMath.sol";
  * @custom:feature The rebalancer is triggered after liquidations
  * @custom:background A rebalancer is set and the USDN protocol is initialized with the default params
  */
-contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture, IRebalancerEvents {
+contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture, IRebalancerEvents {
     using HugeUint for HugeUint.Uint512;
 
     PositionId public posToLiquidate;
@@ -48,9 +48,8 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
         uint256 totalExpo = protocol.getTotalExpo() - tickToLiquidateData.totalExpo;
         uint256 vaultAssetAvailable = uint256(protocol.i_vaultAssetAvailable(wstEthPrice)) + remainingCollateral;
         uint256 longAssetAvailable = uint256(protocol.i_longAssetAvailable(wstEthPrice)) - remainingCollateral;
-        uint256 tradingExpoToFill = (
-            vaultAssetAvailable * uint256(int256(BPS_DIVISOR) - protocol.getLongImbalanceTargetBps()) / BPS_DIVISOR
-        ) - (totalExpo - longAssetAvailable);
+        uint256 tradingExpoToFill = vaultAssetAvailable * BPS_DIVISOR
+            / uint256(int256(BPS_DIVISOR) + protocol.getLongImbalanceTargetBps()) - (totalExpo - longAssetAvailable);
 
         // calculate the state of the liq accumulator after the liquidations
         HugeUint.Uint512 memory expectedAccumulator = HugeUint.sub(
@@ -62,7 +61,8 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
             )
         );
 
-        int256 imbalance = protocol.i_calcLongImbalanceBps(vaultAssetAvailable, longAssetAvailable, totalExpo);
+        int256 imbalance =
+            protocol.i_calcImbalanceCloseBps(int256(vaultAssetAvailable), int256(longAssetAvailable), totalExpo);
         // Sanity check
         assertGt(
             imbalance,
@@ -87,8 +87,8 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
         _expectEmits(wstEthPrice, amountInRebalancer + bonus, liqPriceWithoutPenalty, expectedTick, 1);
         protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA, 1);
 
-        imbalance = protocol.i_calcLongImbalanceBps(
-            protocol.getBalanceVault(), protocol.getBalanceLong(), protocol.getTotalExpo()
+        imbalance = protocol.i_calcImbalanceCloseBps(
+            int256(protocol.getBalanceVault()), int256(protocol.getBalanceLong()), protocol.getTotalExpo()
         );
 
         assertLe(
@@ -108,6 +108,46 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
 
         assertEq(protocol.getBalanceLong(), longAssetAvailable + amountInRebalancer + bonus);
         assertEq(protocol.getBalanceVault(), vaultAssetAvailable - bonus);
+    }
+
+    /**
+     * @custom:scenario The imbalance is high enough so that the rebalancer tries to trigger but can't because of the
+     * zero close limit
+     * @custom:given A long position ready to be liquidated
+     * @custom:and An imbalance high enough after a liquidation to trigger the rebalancer
+     * @custom:when The liquidation is executed
+     * @custom:then The rebalancer is not triggered
+     */
+    function test_rebalancerTrigger_zeroLimit() public {
+        vm.startPrank(DEPLOYER);
+        protocol.setExpoImbalanceLimits(
+            uint256(protocol.getOpenExpoImbalanceLimitBps()),
+            uint256(protocol.getDepositExpoImbalanceLimitBps()),
+            uint256(protocol.getWithdrawalExpoImbalanceLimitBps()),
+            0,
+            -protocol.getLongImbalanceTargetBps()
+        );
+        vm.stopPrank();
+
+        skip(5 minutes);
+
+        mockPyth.setPrice(1280 ether / 1e10);
+        mockPyth.setLastPublishTime(block.timestamp);
+
+        uint256 pendingAssets = rebalancer.getPendingAssetsAmount();
+        uint256 posVersion = rebalancer.getPositionVersion();
+
+        // Sanity check
+        assertEq(0, protocol.getCloseExpoImbalanceLimitBps(), "The close limit should be zero");
+
+        uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
+
+        vm.expectEmit(false, false, false, false);
+        emit LiquidatedTick(0, 0, 0, 0, 0);
+        protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA, 1);
+
+        assertEq(rebalancer.getPendingAssetsAmount(), pendingAssets);
+        assertEq(rebalancer.getPositionVersion(), posVersion);
     }
 
     /// @dev Prepare the expectEmits

@@ -113,7 +113,9 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
         protocol.setExpoImbalanceLimits(0, 0, 0, uint256(initialCloseLimit), 0);
 
         // should revert
-        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidLongExpo.selector);
+        vm.expectRevert(
+            abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, type(int256).max)
+        );
         protocol.i_checkImbalanceLimitClose(0, 0);
     }
 
