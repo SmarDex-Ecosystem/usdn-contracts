@@ -39,10 +39,9 @@ contract WusdnHandler is Wusdn, Test {
     function wrapTest(uint256 to, uint256 usdnAmount) external prankUser {
         uint256 usdnBalanceUser = _usdn.balanceOf(msg.sender);
         uint256 usdnSharesUser = _usdn.sharesOf(msg.sender);
-        uint256 totalUsdnBalance = this.totalUsdnBalance();
         uint256 totalUsdnShares = this.totalUsdnShares();
 
-        if (usdnBalanceUser == 0) {
+        if (usdnSharesUser == 0) {
             return;
         }
 
@@ -57,22 +56,17 @@ contract WusdnHandler is Wusdn, Test {
         to = bound(to, 0, _actors.length - 1);
         uint256 wusdnBalanceTo = balanceOf(_actors[to]);
 
-        console2.log("shares of: ", _usdn.sharesOf(msg.sender));
-        console2.log("ballanceOf ", _usdn.balanceOf(msg.sender));
-
         _usdn.approve(address(this), _usdn.balanceOf(msg.sender));
         this.wrap(usdnAmount, _actors[to]);
 
         assertEq(totalUsdnShares + previewShares, this.totalUsdnShares(), "wrap : total USDN shares in WUSDN");
         assertEq(usdnSharesUser - previewShares, _usdn.sharesOf(msg.sender), "wrap : USDN shares of the user");
-        assertEq(totalUsdnBalance + usdnAmount, this.totalUsdnBalance(), "wrap : total USDN balance in WUSDN");
-        assertEq(usdnBalanceUser - usdnAmount, _usdn.balanceOf(msg.sender), "wrap : USDN balance of the user");
         assertEq(wusdnBalanceTo + previewWrap, balanceOf(_actors[to]), "wrap : WUSDN balance of the recipient");
     }
 
     function unwrapTest(uint256 to, uint256 wusdnAmount) external prankUser {
         uint256 wusdnBalanceUser = balanceOf(msg.sender);
-        uint256 totalUsdnBalance = this.totalUsdnBalance();
+        uint256 totalUsdnShares = this.totalUsdnShares();
 
         if (wusdnBalanceUser == 0) {
             return;
@@ -84,13 +78,22 @@ contract WusdnHandler is Wusdn, Test {
 
         console2.log("bound to address");
         to = bound(to, 0, _actors.length - 1);
-        uint256 usdnBalanceTo = _usdn.balanceOf(_actors[to]);
+        uint256 usdnSharesTo = _usdn.sharesOf(_actors[to]);
 
         this.unwrap(wusdnAmount, _actors[to]);
 
-        // assertEq(totalUsdnBalance - previewUnwrap, this.totalUsdnBalance(), "uwwrap : total USDN shares in WUSDN");
-        // assertEq(wusdnBalanceUser - wusdnAmount, balanceOf(msg.sender), "uwwrap : WUSDN balance of the user");
-        // assertEq(usdnBalanceTo + previewUnwrap, balanceOf(_actors[to]), "uwwrap : USDN balance of the recipient");
+        assertEq(
+            totalUsdnShares - wusdnAmount * SHARES_RATIO, this.totalUsdnShares(), "uwwrap : total USDN shares in WUSDN"
+        );
+        assertEq(wusdnBalanceUser - wusdnAmount, balanceOf(msg.sender), "uwwrap : WUSDN balance of the user");
+        assertEq(
+            usdnSharesTo + wusdnAmount * SHARES_RATIO,
+            _usdn.sharesOf(_actors[to]),
+            "uwwrap : USDN balance of the recipient"
+        );
+        assertApproxEqAbs(
+            previewUnwrap, _usdn.convertToTokens(wusdnAmount * SHARES_RATIO), 1, "uwwrap : preview unwrap"
+        );
     }
 
     function transferTest(uint256 to, uint256 wusdnAmount) external prankUser {

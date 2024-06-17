@@ -70,7 +70,7 @@ interface IWusdn is IERC20Permit, IWusdnEvents, IWusdnErrors {
     /**
      * @notice Previews the amount of WUSDN that would be received for a given amount of USDN
      * @dev This function can return a slightly different value (1wei) from the actual amount
-     * received due to rounding errors
+     * received due to rounding
      * Do not rely on this function to calculate the exact amount of WUSDN that would be received, use
      * {previewWrapShares} instead
      * @param usdnAmount The amount of USDN to preview
@@ -87,10 +87,21 @@ interface IWusdn is IERC20Permit, IWusdnEvents, IWusdnErrors {
 
     /**
      * @notice Previews the amount of USDN that would be received for a given amount of WUSDN
+     * @dev This function can return a slightly different value (1wei) from the actual amount
+     * received due to rounding
+     * Do not rely on this function to calculate the exact amount of USDN that would be received, use
+     * {previewUnwrapShares} instead
      * @param wusdnAmount The amount of WUSDN to preview
      * @return usdnAmount_ The amount of USDN that would be received
      */
     function previewUnwrap(uint256 wusdnAmount) external view returns (uint256 usdnAmount_);
+
+    /**
+     * @notice Previews the amount of USDN shares that would be received for a given amount of WUSDN
+     * @param wusdnAmount The amount of WUSDN to preview
+     * @return usdnSharesAmount_ The amount of USDN shares that would be received
+     */
+    function previewUnwrapShares(uint256 wusdnAmount) external view returns (uint256 usdnSharesAmount_);
 
     /**
      * @notice Returns the total amount of USDN held by the contract
