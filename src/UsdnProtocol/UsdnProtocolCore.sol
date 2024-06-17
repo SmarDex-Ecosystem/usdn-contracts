@@ -33,6 +33,19 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     using LibBitmap for LibBitmap.Bitmap;
     using HugeUint for HugeUint.Uint512;
 
+    /**
+     * @dev Structure to hold return data from the `_applyPnlAndFunding` function
+     * @param isPriceRecent Whether the price is recent
+     * @param tempLongBalance The temporary long balance
+     * @param tempVaultBalance The temporary vault balance
+     */
+    struct ApplyPnlAndFundingData {
+        bool isPriceRecent;
+        int256 tempLongBalance;
+        int256 tempVaultBalance;
+        uint128 lastPrice;
+    }
+
     /// @inheritdoc IUsdnProtocolCore
     address public constant DEAD_ADDRESS = address(0xdead);
 
@@ -346,19 +359,21 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * update the balances. This is left to the caller
      * @param currentPrice The current price
      * @param timestamp The timestamp of the current price
-     * @return isPriceRecent_ Whether the price was updated or was already the most recent price
-     * @return tempLongBalance_ The new balance of the long side, could be negative (temporarily)
-     * @return tempVaultBalance_ The new balance of the vault side, could be negative (temporarily)
+     * @return data_ The return data of the function
      */
     function _applyPnlAndFunding(uint128 currentPrice, uint128 timestamp)
         internal
-        returns (bool isPriceRecent_, int256 tempLongBalance_, int256 tempVaultBalance_)
+        returns (ApplyPnlAndFundingData memory data_)
     {
         // cache variable for optimization
         uint128 lastUpdateTimestamp = _lastUpdateTimestamp;
         // if the price is not fresh, do nothing
         if (timestamp <= lastUpdateTimestamp) {
-            return (timestamp == lastUpdateTimestamp, _balanceLong.toInt256(), _balanceVault.toInt256());
+            data_.isPriceRecent = timestamp == lastUpdateTimestamp;
+            data_.tempLongBalance = _balanceLong.toInt256();
+            data_.tempVaultBalance = _balanceVault.toInt256();
+            data_.lastPrice = _lastPrice;
+            return data_;
         }
 
         // update the funding EMA
@@ -378,21 +393,22 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             // in case of positive funding, the vault balance must be decremented by the totality of the funding amount
             // however, since we deducted the fee amount from the total balance, the vault balance will be incremented
             // only by the funding amount minus the fee amount
-            tempLongBalance_ = _longAssetAvailable(currentPrice).safeSub(fundAsset);
+            data_.tempLongBalance = _longAssetAvailable(currentPrice).safeSub(fundAsset);
         } else {
             // in case of negative funding, the vault balance must be decremented by the totality of the funding amount
             // however, since we deducted the fee amount from the total balance, the long balance will be incremented
             // only by the funding amount minus the fee amount
-            tempLongBalance_ = _longAssetAvailable(currentPrice).safeSub(fundAssetWithFee);
+            data_.tempLongBalance = _longAssetAvailable(currentPrice).safeSub(fundAssetWithFee);
         }
-        tempVaultBalance_ = totalBalance.safeSub(tempLongBalance_);
+        data_.tempVaultBalance = totalBalance.safeSub(data_.tempLongBalance);
 
         // update state variables
         _lastPrice = currentPrice;
+        data_.lastPrice = currentPrice;
         _lastUpdateTimestamp = timestamp;
         _lastFunding = fundWithFee;
 
-        isPriceRecent_ = true;
+        data_.isPriceRecent = true;
     }
 
     /**

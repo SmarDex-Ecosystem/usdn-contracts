@@ -2019,13 +2019,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         bytes calldata priceData
     ) internal returns (uint256 liquidatedPositions_, bool isLiquidationPending_) {
         // adjust balances
-        (bool isPriceRecent, int256 tempLongBalance, int256 tempVaultBalance) =
-            _applyPnlAndFunding(neutralPrice.toUint128(), timestamp.toUint128());
+        ApplyPnlAndFundingData memory data = _applyPnlAndFunding(neutralPrice.toUint128(), timestamp.toUint128());
 
         // liquidate if the price was updated or was already the most recent
-        if (isPriceRecent) {
+        if (data.isPriceRecent) {
             LiquidationsEffects memory liquidationEffects =
-                _liquidatePositions(_lastPrice, iterations, tempLongBalance, tempVaultBalance);
+                _liquidatePositions(data.lastPrice, iterations, data.tempLongBalance, data.tempVaultBalance);
 
             isLiquidationPending_ = liquidationEffects.isLiquidationPending;
             if (!isLiquidationPending_ && liquidationEffects.liquidatedTicks > 0) {
@@ -2042,7 +2041,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _balanceLong = liquidationEffects.newLongBalance;
             _balanceVault = liquidationEffects.newVaultBalance;
 
-            (bool rebased, bytes memory callbackResult) = _usdnRebase(_lastPrice, ignoreInterval);
+            (bool rebased, bytes memory callbackResult) = _usdnRebase(data.lastPrice, ignoreInterval);
 
             if (liquidationEffects.liquidatedTicks > 0) {
                 _sendRewardsToLiquidator(

@@ -111,13 +111,12 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     }
 
     function updateBalances(uint128 currentPrice) external {
-        (bool priceUpdated, int256 tempLongBalance, int256 tempVaultBalance) =
-            _applyPnlAndFunding(currentPrice, uint128(block.timestamp));
-        if (!priceUpdated) {
+        ApplyPnlAndFundingData memory data = _applyPnlAndFunding(currentPrice, uint128(block.timestamp));
+        if (!data.isPriceRecent) {
             revert("price was not updated");
         }
-        _balanceLong = tempLongBalance.toUint256();
-        _balanceVault = tempVaultBalance.toUint256();
+        _balanceLong = data.tempLongBalance.toUint256();
+        _balanceVault = data.tempVaultBalance.toUint256();
     }
 
     function removePendingAction(uint128 rawIndex, address user) external {
@@ -190,7 +189,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
 
     function i_applyPnlAndFunding(uint128 currentPrice, uint128 timestamp)
         external
-        returns (bool priceUpdated_, int256 tempLongBalance_, int256 tempVaultBalance_)
+        returns (ApplyPnlAndFundingData memory data)
     {
         return _applyPnlAndFunding(currentPrice, timestamp);
     }
