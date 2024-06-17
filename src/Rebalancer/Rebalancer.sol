@@ -298,7 +298,7 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
         if (interfaceId == type(IRebalancer).interfaceId) {
             return true;
         }
-        if (interfaceId == type(IRebalancer).interfaceId) {
+        if (interfaceId == type(IBaseRebalancer).interfaceId) {
             return true;
         }
 
