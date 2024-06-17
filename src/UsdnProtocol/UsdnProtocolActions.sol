@@ -2031,7 +2031,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             if (!isLiquidationPending_ && liquidationEffects.liquidatedTicks > 0) {
                 if (_closeExpoImbalanceLimitBps > 0) {
                     (liquidationEffects.newLongBalance, liquidationEffects.newVaultBalance) = _triggerRebalancer(
-                        uint128(neutralPrice),
+                        _lastPrice,
                         liquidationEffects.newLongBalance,
                         liquidationEffects.newVaultBalance,
                         liquidationEffects.remainingCollateral
@@ -2066,7 +2066,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * the pending assets, the value of the previous position and the liquidation bonus (if available)
      * and a leverage to fill enough trading expo to reach the desired imbalance, up to the max leverages
      * @dev Will return the provided long balance if no rebalancer is set or if the imbalance is not high enough
-     * @param neutralPrice The neutral/average price of the asset
+     * @param lastPrice The last price used to update the protocol
      * @param longBalance The balance of the long side
      * @param vaultBalance The balance of the vault side
      * @param remainingCollateral The collateral remaining after the liquidations
@@ -2074,7 +2074,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @return vaultBalance_ The temporary balance of the vault side
      */
     function _triggerRebalancer(
-        uint128 neutralPrice,
+        uint128 lastPrice,
         uint256 longBalance,
         uint256 vaultBalance,
         int256 remainingCollateral
@@ -2115,15 +2115,20 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         (uint128 positionAmount, uint256 rebalancerMaxLeverage, PositionId memory rebalancerPosId) =
             rebalancer.getCurrentStateData();
 
-        // transfer the pending assets from the rebalancer to this contract
-        address(_asset).safeTransferFrom(address(rebalancer), address(this), positionAmount);
-
         uint128 positionValue;
         // close the rebalancer position and get its value to open the next one
         if (rebalancerPosId.tick != NO_POSITION_TICK) {
             // cached values will be updated during this call
-            positionValue = _flashClosePosition(rebalancerPosId, neutralPrice, cache).toUint128();
+            int256 realPositionValue = _flashClosePosition(rebalancerPosId, lastPrice, cache);
 
+            // if the position value is less than 0, it should have been liquidated but wasn't
+            // interrupt the whole rebalancer process because there are pending liquidations
+            if (realPositionValue < 0) {
+                return (longBalance_, vaultBalance_);
+            }
+
+            // cast is safe as realPositionValue cannot be lower than 0
+            positionValue = uint256(realPositionValue).toUint128();
             positionAmount += positionValue;
         }
 
@@ -2131,6 +2136,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         if (positionAmount + positionValue == 0) {
             return (longBalance_, vaultBalance_);
         }
+
+        // transfer the pending assets from the rebalancer to this contract
+        address(_asset).safeTransferFrom(address(rebalancer), address(this), positionAmount - positionValue);
 
         // if there is enough collateral remaining after liquidations, calculate the bonus and add it to the
         // new rebalancer position
@@ -2142,7 +2150,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         int24 tickWithoutLiqPenalty =
-            _calcRebalancerPositionTick(neutralPrice, positionAmount, rebalancerMaxLeverage, cache);
+            _calcRebalancerPositionTick(lastPrice, positionAmount, rebalancerMaxLeverage, cache);
 
         // make sure that the rebalancer was not triggered without a sufficient imbalance
         // as we check the imbalance above, this should not happen
@@ -2152,7 +2160,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // open a new position for the rebalancer
         PositionId memory posId =
-            _flashOpenPosition(address(rebalancer), neutralPrice, tickWithoutLiqPenalty, positionAmount, cache);
+            _flashOpenPosition(address(rebalancer), lastPrice, tickWithoutLiqPenalty, positionAmount, cache);
 
         longBalance_ += positionAmount;
 
