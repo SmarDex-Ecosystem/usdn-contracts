@@ -12,17 +12,17 @@ interface IUsdnErrors {
      */
     error UsdnMaxTokensExceeded(uint256 value);
 
-    /// @dev Indicates that the newly minted tokens would make the total supply of shares overflow uint256
+    /// @dev Indicates that the newly minted tokens would make the {totalSupply} of shares overflow uint256
     error UsdnTotalSupplyOverflow();
 
     /**
-     * @dev Indicates that the sender does not have enough balance to transfer shares
+     * @dev Indicates that the `sender` does not have enough balance to transfer shares
      * @param sender The sender's address
      * @param balance The shares balance of the sender
      * @param needed The desired amount of shares to transfer
      */
     error UsdnInsufficientSharesBalance(address sender, uint256 balance, uint256 needed);
 
-    /// @dev Indicates that the divisor value in storage is invalid
+    /// @dev Indicates that the `_divisor` value in storage is invalid
     error UsdnInvalidDivisor();
 }

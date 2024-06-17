@@ -20,9 +20,9 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Check that setProtocolFeeBps() reverts when the value is too big
-     * @custom:given The fee value is > BPS_DIVISOR
-     * @custom:then The protocol reverts with `UsdnProtocolInvalidProtocolFeeBps`
+     * @custom:scenario Check that {setProtocolFeeBps} reverts when the value is too big
+     * @custom:given The fee value is > `BPS_DIVISOR`
+     * @custom:then The protocol reverts with {UsdnProtocolInvalidProtocolFeeBps}
      */
     function test_RevertWhen_setFeeBps_tooBig() public {
         uint16 bpsDivisor = uint16(protocol.BPS_DIVISOR());
@@ -33,9 +33,9 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Check setProtocolFeeBps() function
+     * @custom:scenario Check {setProtocolFeeBps} function
      * @custom:given The fee bps is 0
-     * @custom:then The protocol emits `FeeBpsUpdated` event with 0
+     * @custom:then The protocol emits {FeeBpsUpdated} event with 0
      * @custom:and Pending protocol fee is 0 after action
      */
     function test_setFeeBps() public adminPrank {
@@ -52,9 +52,9 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Check that setFeeCollector() reverts when the value is address(0)
-     * @custom:given The feeCollector is address(0)
-     * @custom:then The protocol reverts with `UsdnProtocolInvalidFeeCollector`
+     * @custom:scenario Check that {setFeeCollector} reverts when the value is `address(0)`
+     * @custom:given The `feeCollector` is `address(0)`
+     * @custom:then The protocol reverts with {UsdnProtocolInvalidFeeCollector}
      */
     function test_RevertWhen_setFeeCollector_addressZero() public adminPrank {
         vm.expectRevert(UsdnProtocolInvalidFeeCollector.selector);
@@ -62,10 +62,10 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Check setFeeCollector() function
-     * @custom:given The feeCollector is address(this)
-     * @custom:then The protocol emits `FeeCollectorUpdated` event with address(this)
-     * @custom:and The _feeCollector is address(this)
+     * @custom:scenario Check {setFeeCollector} function
+     * @custom:given The `feeCollector` is `address(this)`
+     * @custom:then The protocol emits {FeeCollectorUpdated} event with `address(this)`
+     * @custom:and The `_feeCollector` is `address(this)`
      */
     function test_setFeeCollector() public adminPrank {
         vm.expectEmit();
@@ -75,10 +75,10 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Check setFeeThreshold() function
-     * @custom:given The feeThreshold value is 5 ether
-     * @custom:then The protocol emits `FeeThresholdUpdated` event with address(this)
-     * @custom:and The _feeThreshold is 5 ether
+     * @custom:scenario Check {setFeeThreshold} function
+     * @custom:given The `feeThreshold` value is 5 ether
+     * @custom:then The protocol emits {FeeThresholdUpdated} event with `address(this)`
+     * @custom:and The `_feeThreshold` is 5 ether
      */
     function test_setFeeThreshold() public adminPrank {
         vm.expectEmit();

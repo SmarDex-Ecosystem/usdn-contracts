@@ -309,7 +309,7 @@ library HugeUint {
                     return a0 / b0;
                 }
             }
-            // if the result fits inside a uint256, we can use the `div(Uint512,uint256)` function
+            // if the result fits inside a uint256, we can use the {div(Uint512,uint256)} function
             if (b0 > a1) {
                 return _div256(a0, a1, b0);
             }

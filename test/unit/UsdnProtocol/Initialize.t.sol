@@ -81,7 +81,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      * @custom:scenario Initial deposit internal function cannot be called once the protocol has been initialized
      * @custom:given The protocol has been initialized
      * @custom:when The deployer calls the internal function to create an initial deposit
-     * @custom:then The transaction reverts with the error `InitializableReentrancyGuardInvalidInitialization`
+     * @custom:then The transaction reverts with the error {InitializableReentrancyGuardInvalidInitialization}
      */
     function test_RevertWhen_createInitialDepositAlreadyInitialized() public {
         protocol.initialize(INITIAL_DEPOSIT, INITIAL_POSITION, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE));
@@ -137,7 +137,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      * @custom:scenario Initial position internal function cannot be called once the protocol has been initialized
      * @custom:given The protocol has been initialized
      * @custom:when The deployer calls the internal function to create an initial position
-     * @custom:then The transaction reverts with the error `InitializableReentrancyGuardInvalidInitialization`
+     * @custom:then The transaction reverts with the error {InitializableReentrancyGuardInvalidInitialization}
      */
     function test_RevertWhen_createInitialPositionAlreadyInitialized() public {
         protocol.initialize(INITIAL_DEPOSIT, INITIAL_POSITION, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE));
@@ -191,7 +191,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      * @custom:scenario Imbalanced protocol initialization with too big deposit
      * @custom:given Imbalance checks are 2% for deposits
      * @custom:when The deployer initializes the protocol with a deposit amount that is too big
-     * @custom:then The transaction reverts with the error `UsdnProtocolImbalanceLimitReached`
+     * @custom:then The transaction reverts with the error {UsdnProtocolImbalanceLimitReached}
      */
     function test_RevertWhen_checkInitImbalanceDepositTooBig() public {
         protocol.setExpoImbalanceLimits(0, 200, 0, 0, 0); // 2% for deposit
@@ -207,7 +207,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      * @custom:scenario Imbalanced protocol initialization with too big long position
      * @custom:given Imbalance checks are 2% for open long
      * @custom:when The deployer initializes the protocol with a long amount that is too big
-     * @custom:then The transaction reverts with the error `UsdnProtocolImbalanceLimitReached`
+     * @custom:then The transaction reverts with the error {UsdnProtocolImbalanceLimitReached}
      */
     function test_RevertWhen_checkInitImbalanceLongTooBig() public {
         protocol.setExpoImbalanceLimits(200, 0, 0, 0, 0); // 2% for open
@@ -284,8 +284,8 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario Initialize with low amount for deposit
-     * @custom:when The deployer calls the `initialize` function with a deposit amount lower than the minimum required
-     * @custom:then The transaction reverts with the error `UsdnProtocolMinInitAmount`
+     * @custom:when The deployer calls the {initialize} function with a deposit amount lower than the minimum required
+     * @custom:then The transaction reverts with the error {UsdnProtocolMinInitAmount}
      */
     function test_RevertWhen_initializeDepositAmountLow() public {
         uint256 minDeposit = protocol.MIN_INIT_DEPOSIT();
@@ -295,8 +295,8 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario Initialize with low amount for long
-     * @custom:when The deployer calls the `initialize` function with a long amount lower than the minimum required
-     * @custom:then The transaction reverts with the error `UsdnProtocolMinInitAmount`
+     * @custom:when The deployer calls the {initialize} function with a long amount lower than the minimum required
+     * @custom:then The transaction reverts with the error {UsdnProtocolMinInitAmount}
      */
     function test_RevertWhen_initializeLongAmountLow() public {
         uint256 minDeposit = protocol.MIN_INIT_DEPOSIT();
@@ -307,8 +307,8 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Initialize while some USDN that was minted previously
      * @custom:given Some USDN was minted before initialization
-     * @custom:when The deployer calls the `initialize` function
-     * @custom:then The transaction reverts with the error `UsdnProtocolInvalidUsdn`
+     * @custom:when The deployer calls the {initialize} function
+     * @custom:then The transaction reverts with the error {UsdnProtocolInvalidUsdn}
      */
     function test_RevertWhen_initializeUsdnSupply() public {
         vm.prank(address(protocol));

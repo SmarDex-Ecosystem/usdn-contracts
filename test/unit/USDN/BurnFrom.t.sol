@@ -51,7 +51,7 @@ contract TestUsdnBurnFrom is UsdnTokenFixture {
      * @custom:scenario Burning from a user with insufficient allowance
      * @custom:given An approved amount of 50 USDN
      * @custom:when 51 USDN are burned from the user
-     * @custom:then The transaction reverts with the `ERC20InsufficientAllowance` error
+     * @custom:then The transaction reverts with the {ERC20InsufficientAllowance} error
      */
     function test_RevertWhen_burnFromInsufficientAllowance() public {
         vm.prank(USER_1);
@@ -67,7 +67,7 @@ contract TestUsdnBurnFrom is UsdnTokenFixture {
      * @custom:scenario Burning from a user with insufficient balance
      * @custom:given An approved amount of max
      * @custom:when 150 USDN are burned from the user
-     * @custom:then The transaction reverts with the `ERC20InsufficientBalance` error
+     * @custom:then The transaction reverts with the {ERC20InsufficientBalance} error
      */
     function test_RevertWhen_burnFromInsufficientBalance() public {
         vm.prank(USER_1);

@@ -69,7 +69,7 @@ contract TestRebalancerAdmin is RebalancerFixture {
      * @custom:scenario Try to set the `_minAssetDeposit` value to an amount lower than the USDN Protocol
      * getMinLongPosition
      * @custom:given A deployed rebalancer contract
-     * @custom:when The setter is called with a value lower than `protocol.getMinLongPosition()`
+     * @custom:when The setter is called with a value lower than {protocol.getMinLongPosition()}
      * @custom:then The transaction reverts
      */
     function test_RevertWhen_setMinAssetDeposit_Invalid() public {
@@ -99,7 +99,7 @@ contract TestRebalancerAdmin is RebalancerFixture {
     /**
      * @custom:scenario Trying to set the max leverage lower than the USDN protocol's value
      * @custom:given A value lower than the USDN protocol's max leverage
-     * @custom:when `setPositionMaxLeverage` is called with this value
+     * @custom:when {setPositionMaxLeverage} is called with this value
      * @custom:then The call reverts with a {RebalancerInvalidMaxLeverage} error
      */
     function test_RevertWhen_setPositionMaxLeverageWithLeverageTooLow() external adminPrank {
@@ -112,7 +112,7 @@ contract TestRebalancerAdmin is RebalancerFixture {
     /**
      * @custom:scenario Trying to set the max leverage lower than the USDN protocol's value
      * @custom:given A value lower than the USDN protocol's max leverage
-     * @custom:when `setPositionMaxLeverage` is called with this value
+     * @custom:when {setPositionMaxLeverage} is called with this value
      * @custom:then The call reverts with a {RebalancerInvalidMaxLeverage} error
      */
     function test_RevertWhen_setPositionMaxLeverageWithLeverageTooHigh() external adminPrank {
@@ -125,7 +125,7 @@ contract TestRebalancerAdmin is RebalancerFixture {
     /**
      * @custom:scenario Trying to set the max leverage from an address that is not the owner
      * @custom:given The caller not being the owner
-     * @custom:when `setPositionMaxLeverage` is called
+     * @custom:when {setPositionMaxLeverage} is called
      * @custom:then The call reverts with an {OwnableUnauthorizedAccount} error
      */
     function test_RevertWhen_setPositionMaxLeverageWithCallerNotTheOwner() external {
@@ -158,9 +158,9 @@ contract TestRebalancerAdmin is RebalancerFixture {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @custom:scenario Call the `ownershipCallback()` function
+     * @custom:scenario Call the {ownershipCallback()} function
      * @custom:given A deployed rebalancer contract
-     * @custom:when The function `ownershipCallback()` is called on the first iteration of the rebalancer contract
+     * @custom:when The function {ownershipCallback()} is called on the first iteration of the rebalancer contract
      * @custom:then The functions should revert with an {Ownable.OwnableUnauthorizedAccount} error
      */
     function test_RevertWhen_ownershipCallbackOnFirstIteration() external adminPrank {

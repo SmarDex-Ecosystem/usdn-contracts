@@ -25,7 +25,7 @@ contract TestUsdnTransferSharesFrom is UsdnTokenFixture {
      * @custom:when The test contract transfers a random amount of shares from user 1 to the test contract
      * @custom:then The user's balance is decreased by the transferred amount
      * @custom:and The contract's balance is increased by the transferred amount
-     * @custom:and The token emits a `Transfer` event with the expected values
+     * @custom:and The token emits a {Transfer} event with the expected values
      * @custom:and The total shares supply remains unchanged
      * @param divisor The rebase divisor
      * @param sharesAmount The amount of shares to transfer
@@ -58,7 +58,7 @@ contract TestUsdnTransferSharesFrom is UsdnTokenFixture {
      * @custom:scenario Transfer shares from another user to zero address
      * @custom:given User 1 has approved this contract to transfer their tokens
      * @custom:when We try to transfer user 1's shares to the zero address
-     * @custom:then The transaction reverts with the `ERC20InvalidReceiver` error
+     * @custom:then The transaction reverts with the {ERC20InvalidReceiver} error
      */
     function test_RevertWhen_transferSharesFromToZeroAddress() public {
         vm.prank(USER_1);
@@ -72,7 +72,7 @@ contract TestUsdnTransferSharesFrom is UsdnTokenFixture {
      * @custom:scenario Transfer shares from another user with insufficient allowance
      * @custom:given User 1 has approved this contract to transfer 1 wei of their tokens
      * @custom:when We try to transfer 1e20 shares from user 1 to this contract
-     * @custom:then The transaction reverts with the `ERC20InsufficientAllowance` error
+     * @custom:then The transaction reverts with the {ERC20InsufficientAllowance} error
      */
     function test_RevertWhen_transferSharesFromExceedsAllowance() public {
         vm.prank(USER_1);

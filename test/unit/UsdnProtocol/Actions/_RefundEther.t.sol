@@ -4,7 +4,7 @@ pragma solidity ^0.8.25;
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 /**
- * @custom:feature Test of the protocol `_refundEther` function
+ * @custom:feature Test of the protocol {_refundEther} function
  * @custom:background Given a protocol with a balance of 0.1 ether
  */
 contract TestRefundEther is UsdnProtocolBaseFixture {
@@ -49,7 +49,7 @@ contract TestRefundEther is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Test that the function reverts when to defined at zero
      * @custom:when The function is called with to defined at zero
-     * @custom:then The transaction reverts with `UsdnProtocolInvalidAddressTo`
+     * @custom:then The transaction reverts with {UsdnProtocolInvalidAddressTo}
      */
     function test_RevertWhen_refundEther() public {
         vm.expectRevert(UsdnProtocolInvalidAddressTo.selector);
@@ -59,7 +59,7 @@ contract TestRefundEther is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Test that the function reverts when call fails
      * @custom:when The function is called without enough ether in the contract
-     * @custom:then The transaction reverts with `UsdnProtocolEtherRefundFailed`
+     * @custom:then The transaction reverts with {UsdnProtocolEtherRefundFailed}
      */
     function test_RevertWhen_refundEther_noReceive() public {
         vm.expectRevert(UsdnProtocolEtherRefundFailed.selector);

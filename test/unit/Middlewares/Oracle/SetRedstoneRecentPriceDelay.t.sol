@@ -10,7 +10,7 @@ import { IOracleMiddlewareErrors } from "../../../../src/interfaces/OracleMiddle
 import { IOracleMiddlewareEvents } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareEvents.sol";
 
 /**
- * @custom:feature The `setRedstoneRecentPriceDelay` function of `RedstoneOracle`
+ * @custom:feature The {setRedstoneRecentPriceDelay} function of `RedstoneOracle`
  */
 contract TestSetRedstoneRecentPriceDelay is OracleMiddlewareBaseFixture {
     function setUp() public override {
@@ -18,10 +18,10 @@ contract TestSetRedstoneRecentPriceDelay is OracleMiddlewareBaseFixture {
     }
 
     /**
-     * @custom:scenario Call `setRedstoneRecentPriceDelay` functions from non contract admin
+     * @custom:scenario Call {setRedstoneRecentPriceDelay} functions from non contract admin
      * @custom:given The initial oracle middleware state
-     * @custom:when Non admin wallet trigger `setRedstoneRecentPriceDelay`
-     * @custom:then functions should revert with custom Ownable error
+     * @custom:when Non admin wallet trigger {setRedstoneRecentPriceDelay}
+     * @custom:then functions should revert with custom {OwnableUnauthorizedAccount} error
      */
     function test_RevertWhen_nonAdminWalletCallSetRedstoneRecentPriceDelay() external {
         vm.startPrank(USER_1);
@@ -33,7 +33,7 @@ contract TestSetRedstoneRecentPriceDelay is OracleMiddlewareBaseFixture {
     }
 
     /**
-     * @custom:scenario Call `getRedstoneRecentPriceDelay` getter
+     * @custom:scenario Call {getRedstoneRecentPriceDelay} getter
      * @custom:given The initial oracle middleware state
      * @custom:when The result of the function is compared to 45
      * @custom:then It should succeed
@@ -43,9 +43,9 @@ contract TestSetRedstoneRecentPriceDelay is OracleMiddlewareBaseFixture {
     }
 
     /**
-     * @custom:scenario Call `setRedstoneRecentPriceDelay`
+     * @custom:scenario Call {setRedstoneRecentPriceDelay}
      * @custom:given The initial oracle middleware state
-     * @custom:when The `setRedstoneRecentPriceDelay` is executed with a too high value
+     * @custom:when The {setRedstoneRecentPriceDelay} is executed with a too high value
      * @custom:then It should revert
      */
     function test_RevertWhen_setRedstoneRecentPriceDelayTooHigh() public {
@@ -58,9 +58,9 @@ contract TestSetRedstoneRecentPriceDelay is OracleMiddlewareBaseFixture {
     }
 
     /**
-     * @custom:scenario Call `setRedstoneRecentPriceDelay`
+     * @custom:scenario Call {setRedstoneRecentPriceDelay}
      * @custom:given The initial oracle middleware state
-     * @custom:when The `setRedstoneRecentPriceDelay` is executed with a too low value
+     * @custom:when The {setRedstoneRecentPriceDelay} is executed with a too low value
      * @custom:then It should revert
      */
     function test_RevertWhen_setRedstoneRecentPriceDelayTooLow() public {
@@ -71,10 +71,10 @@ contract TestSetRedstoneRecentPriceDelay is OracleMiddlewareBaseFixture {
     }
 
     /**
-     * @custom:scenario Call `setRedstoneRecentPriceDelay`
+     * @custom:scenario Call {setRedstoneRecentPriceDelay}
      * @custom:given The initial oracle middleware state
-     * @custom:when The `setRedstoneRecentPriceDelay` is executed with a correct value
-     * @custom:then It should emit RecentPriceDelayUpdated event
+     * @custom:when The {setRedstoneRecentPriceDelay} is executed with a correct value
+     * @custom:then It should emit {RecentPriceDelayUpdated} event
      * @custom:and It should success
      */
     function test_setRedstoneRecentPriceDelay() public {

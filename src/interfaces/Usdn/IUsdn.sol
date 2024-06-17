@@ -48,7 +48,7 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
 
     /**
      * @notice Restricted function to mint new shares, providing a token value
-     * @dev Caller must have the MINTER_ROLE
+     * @dev Caller must have the `MINTER_ROLE`
      * @param to Account to receive the new shares
      * @param amount Amount of tokens to mint, is internally converted to the proper shares amounts
      */
@@ -56,7 +56,7 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
 
     /**
      * @notice Restricted function to mint new shares
-     * @dev Caller must have the MINTER_ROLE
+     * @dev Caller must have the `MINTER_ROLE`
      * @param to Account to receive the new shares
      * @param amount Amount of shares to mint
      * @return mintedTokens_ Amount of tokens that were minted (informational)
@@ -91,7 +91,7 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
 
     /**
      * @notice Convert a number of tokens to the corresponding amount of shares
-     * @dev The conversion reverts with `UsdnMaxTokensExceeded` if the corresponding amount of shares overflows
+     * @dev The conversion reverts with {UsdnMaxTokensExceeded} if the corresponding amount of shares overflows
      * @param amountTokens The amount of tokens to convert to shares
      * @return shares_ The corresponding amount of shares
      */
@@ -140,7 +140,7 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
 
     /**
      * @notice Restricted function to set the address of the rebase handler
-     * @dev Emits a `RebaseHandlerUpdated` event
+     * @dev Emits a {RebaseHandlerUpdated} event
      * If set to the zero address, no handler will be called after a rebase
      * Caller must have the `DEFAULT_ADMIN_ROLE`
      * @param newHandler The new handler address

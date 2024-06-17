@@ -6,15 +6,15 @@ import { IUsdnProtocolErrors } from "../../../../../src/interfaces/UsdnProtocol/
 import { UsdnProtocolBaseFixture } from "../../utils/Fixtures.sol";
 
 /**
- * @custom:feature Fuzzing tests of the protocol expo limit for internal `imbalanceLimitWithdrawal`
+ * @custom:feature Fuzzing tests of the protocol expo limit for internal {imbalanceLimitWithdrawal} function
  * @custom:background Given a protocol instance in balanced state with random vault expo and long expo
  */
 contract TestImbalanceLimitWithdrawalFuzzing is UsdnProtocolBaseFixture {
     /**
-     * @custom:scenario The `imbalanceLimitWithdrawal` should pass on still balanced state
+     * @custom:scenario The {imbalanceLimitWithdrawal} should pass on still balanced state
      * or revert when amounts bring protocol out of limits
      * @custom:given The randomized expo balanced protocol state
-     * @custom:when The `imbalanceLimitWithdrawal` is called with a random amount
+     * @custom:when The {imbalanceLimitWithdrawal} is called with a random amount
      * @custom:then The transaction should revert in case imbalance or pass if still balanced
      */
     function testFuzz_checkImbalanceLimitWithdrawal(uint128 initialAmount, uint256 withdrawalAmount) public {
@@ -22,7 +22,7 @@ contract TestImbalanceLimitWithdrawalFuzzing is UsdnProtocolBaseFixture {
         _randInitBalanced(initialAmount);
         uint256 vaultExpo = protocol.getBalanceVault();
         int256 currentLongExpo = int256(protocol.getTotalExpo() - protocol.getBalanceLong());
-        // range withdrawalAmount properly
+        // range `withdrawalAmount` properly
         withdrawalAmount = bound(withdrawalAmount, 1, uint256(vaultExpo));
         // new vault expo
         uint256 newVaultExpo = vaultExpo - withdrawalAmount;
@@ -42,7 +42,8 @@ contract TestImbalanceLimitWithdrawalFuzzing is UsdnProtocolBaseFixture {
             // should revert because calculation is not possible
             vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidVaultExpo.selector);
         } else if (imbalanceBps >= withdrawalLimit) {
-            // should revert with `imbalanceBps` withdrawal imbalance limit
+            // should revert with `imbalanceBps` withdrawal imbalance limit with
+            // {IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached} error
             vm.expectRevert(
                 abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, imbalanceBps)
             );

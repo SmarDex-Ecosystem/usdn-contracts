@@ -109,7 +109,7 @@ contract TestUsdnUpdateShares is UsdnTokenFixture {
      * @custom:when The user transfers a random amount of shares to the test contract
      * @custom:then The user's balance is decreased by the transferred amount
      * @custom:and The contract's balance is increased by the transferred amount
-     * @custom:and The token emits a `Transfer` event with the expected values
+     * @custom:and The token emits a {Transfer} event with the expected values
      * @custom:and The total shares supply remains unchanged
      * @param divisor The rebase divisor
      * @param sharesAmount The amount of shares to transfer
@@ -138,7 +138,7 @@ contract TestUsdnUpdateShares is UsdnTokenFixture {
      * @custom:scenario Transfer more shares than the balance
      * @custom:given 100 tokens are minted to a user
      * @custom:when The user tries to transfer more shares than they have
-     * @custom:then The transaction reverts with the USDNInsufficientSharesBalance error
+     * @custom:then The transaction reverts with the {USDNInsufficientSharesBalance} error
      */
     function test_RevertWhen_transferSharesInsufficientBalance() public {
         usdn.mint(USER_1, 100 ether);
@@ -204,7 +204,7 @@ contract TestUsdnUpdateShares is UsdnTokenFixture {
      * @custom:scenario Burning more shares than the balance
      * @custom:given 100e36 shares are minted to a user
      * @custom:when 101e36 shares are burned
-     * @custom:then The transaction reverts with the `UsdnInsufficientSharesBalance` error
+     * @custom:then The transaction reverts with the {UsdnInsufficientSharesBalance} error
      */
     function test_RevertWhen_burnSharesInsufficientBalance() public {
         usdn.mintShares(USER_1, 100e36);

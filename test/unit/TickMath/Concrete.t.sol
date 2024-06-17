@@ -63,10 +63,10 @@ contract TestTickMathConcrete is TickMathFixture {
     }
 
     /**
-     * @custom:scenario An invalid ticks is provided to `getPriceAtTick`
-     * @custom:given A tick of MIN_TICK - 1 or MAX_TICK + 1
+     * @custom:scenario An invalid ticks is provided to {getPriceAtTick}
+     * @custom:given A tick of `MIN_TICK - 1` or `MAX_TICK + 1`
      * @custom:when The price at the tick is retrieved
-     * @custom:then The call reverts with `TickMathInvalidTick()`
+     * @custom:then The call reverts with {TickMathInvalidTick()}
      */
     function test_RevertWhen_tickIsOutOfBounds() public {
         vm.expectRevert(TickMath.TickMathInvalidTick.selector);
@@ -76,10 +76,10 @@ contract TestTickMathConcrete is TickMathFixture {
     }
 
     /**
-     * @custom:scenario An invalid price is provided to `getTickAtPrice`
-     * @custom:given A price of MIN_PRICE - 1 or MAX_PRICE + 1
-     * @custom:when The tick for the price is retrieved with `getTickAtPrice`
-     * @custom:then The call reverts with `TickMathInvalidPrice()`
+     * @custom:scenario An invalid price is provided to {getTickAtPrice}
+     * @custom:given A price of `MIN_PRICE - 1` or `MAX_PRICE + 1`
+     * @custom:when The tick for the price is retrieved with {getTickAtPrice}
+     * @custom:then The call reverts with {TickMathInvalidPrice()}
      */
     function test_RevertWhen_priceIsOutOfBounds() public {
         vm.expectRevert(TickMath.TickMathInvalidPrice.selector);
@@ -89,10 +89,10 @@ contract TestTickMathConcrete is TickMathFixture {
     }
 
     /**
-     * @custom:scenario An invalid price is provided to `getClosestTickAtPrice`
-     * @custom:given A price of MIN_PRICE - 1 or MAX_PRICE + 1
-     * @custom:when The tick for the price is retrieved with `getClosestTickAtPrice`
-     * @custom:then The call reverts with `TickMathInvalidPrice()`
+     * @custom:scenario An invalid price is provided to {getClosestTickAtPrice}
+     * @custom:given A price of `MIN_PRICE - 1` or `MAX_PRICE + 1`
+     * @custom:when The tick for the price is retrieved with {getClosestTickAtPrice}
+     * @custom:then The call reverts with {TickMathInvalidPrice()}
      */
     function test_RevertWhen_priceIsOutOfBoundsClosest() public {
         vm.expectRevert(TickMath.TickMathInvalidPrice.selector);
@@ -105,7 +105,7 @@ contract TestTickMathConcrete is TickMathFixture {
      * @custom:scenario An invalid tick spacing is provided
      * @custom:given A tick spacing of 0
      * @custom:when The min or max usable tick is retrieved
-     * @custom:then The call reverts with `TickMathInvalidTickSpacing()`
+     * @custom:then The call reverts with {TickMathInvalidTickSpacing()}
      */
     function test_RevertWhen_tickSpacingIsZero() public {
         vm.expectRevert(TickMath.TickMathInvalidTickSpacing.selector);

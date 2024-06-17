@@ -61,10 +61,10 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
      * @custom:when The user initiates a withdrawal for 1000e36 shares of USDN
      * @custom:then The user's USDN shares balance decreases by 1000e36
      * @custom:and The protocol's USDN shares balance increases by 1000e36
-     * @custom:and The protocol emits an `InitiatedWithdrawal` event
+     * @custom:and The protocol emits an {InitiatedWithdrawal} event
      * @custom:and The USDN total supply does not change yet
      * @custom:and The protocol's wstETH balance does not change yet
-     * @custom:and The user has a pending action of type `InitiateWithdrawal` with the amount of 1000 USDN
+     * @custom:and The user has a pending action of type {InitiateWithdrawal} with the amount of 1000 USDN
      * @custom:and The pending action is not actionable yet
      * @custom:and The pending action is actionable after the validation deadline has elapsed
      */
@@ -76,8 +76,8 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
      * @custom:scenario The user initiates a withdrawal for 1000 USDN with another address as the beneficiary
      * @custom:given The price of the asset is $3000
      * @custom:when The user initiates a withdraw for 1000 USDN with another address as the beneficiary
-     * @custom:then The protocol emits an `InitiatedWithdrawal` event with the right beneficiary
-     * @custom:and The user has a pending action of type `InitiateWithdrawal` with the right beneficiary
+     * @custom:then The protocol emits an {InitiatedWithdrawal} event with the right beneficiary
+     * @custom:and The user has a pending action of type {InitiateWithdrawal} with the right beneficiary
      */
     function test_initiateWithdrawForAnotherAddress() public {
         _initiateWithdraw(USER_1);
@@ -87,7 +87,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
      * @custom:scenario A initiate withdrawal action liquidates a tick but is not initiated because another tick still
      * needs to be liquidated
      * @custom:given Two positions in different ticks
-     * @custom:when The `initiateWithdrawal` function is called with a price below the liq price of both positions
+     * @custom:when The {initiateWithdrawal} function is called with a price below the liq price of both positions
      * @custom:then One of the positions is liquidated
      * @custom:and The withdrawal action isn't initiated
      */
@@ -163,7 +163,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario The user initiates a withdrawal for 0 USDN
      * @custom:when The user initiates a withdrawal for 0 USDN
-     * @custom:then The protocol reverts with `UsdnProtocolZeroAmount`
+     * @custom:then The protocol reverts with {UsdnProtocolZeroAmount}
      */
     function test_RevertWhen_zeroAmount() public {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
@@ -175,7 +175,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
      * @custom:scenario The user initiates a deposit with parameter to defined at zero
      * @custom:given An initialized USDN protocol
      * @custom:when The user initiate a withdrawal with parameter to address defined at zero
-     * @custom:then The protocol reverts with `UsdnProtocolInvalidAddressTo`
+     * @custom:then The protocol reverts with {UsdnProtocolInvalidAddressTo}
      */
     function test_RevertWhen_zeroAddressTo() public {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
@@ -187,7 +187,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
      * @custom:scenario The user initiates a withdrawal with parameter validator defined at zero
      * @custom:given An initialized USDN protocol
      * @custom:when The user initiate a withdrawal with parameter validator address defined at zero
-     * @custom:then The protocol reverts with `UsdnProtocolInvalidAddressValidator`
+     * @custom:then The protocol reverts with {UsdnProtocolInvalidAddressValidator}
      */
     function test_RevertWhen_zeroAddressValidator() public {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
@@ -198,8 +198,8 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario The user sends too much ether when initiating a withdrawal
      * @custom:given The user withdraws 1 wstETH
-     * @custom:when The user sends 0.5 ether as value in the `initiateWithdrawal` call
-     * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
+     * @custom:when The user sends 0.5 ether as value in the {initiateWithdrawal} call
+     * @custom:then The user gets refunded the excess ether `0.5 ether - validationCost`
      */
     function test_initiateWithdrawEtherRefund() public {
         oracleMiddleware.setRequireValidationCost(true); // require 1 wei per validation
@@ -214,10 +214,10 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario The user initiates a withdrawal action with a reentrancy attempt
-     * @custom:given A user being a smart contract that calls initiateWithdrawal with too much ether
-     * @custom:and A receive() function that calls initiateWithdrawal again
-     * @custom:when The user calls initiateWithdrawal again from the callback
-     * @custom:then The call reverts with InitializableReentrancyGuardReentrantCall
+     * @custom:given A user being a smart contract that calls {initiateWithdrawal} with too much ether
+     * @custom:and A {receive()} function that calls {initiateWithdrawal} again
+     * @custom:when The user calls {initiateWithdrawal} again from the callback
+     * @custom:then The call reverts with {InitializableReentrancyGuardReentrantCall}
      */
     function test_RevertWhen_initiateWithdrawalCalledWithReentrancy() public {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
@@ -235,7 +235,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
         _reenter = true;
         // If a reentrancy occurred, the function should have been called 2 times
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.initiateWithdrawal.selector), 2);
-        // The value sent will cause a refund, which will trigger the receive() function of this contract
+        // The value sent will cause a refund, which will trigger the {receive()} function of this contract
         protocol.initiateWithdrawal{ value: 1 }(
             USDN_AMOUNT, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
         );

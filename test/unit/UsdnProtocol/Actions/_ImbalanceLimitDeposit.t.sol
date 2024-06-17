@@ -12,7 +12,7 @@ import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 import { ADMIN, DEPLOYER, USER_1 } from "../../../utils/Constants.sol";
 
 /**
- * @custom:feature Test of the protocol expo limit for `_checkImbalanceLimitDeposit` function in balanced state
+ * @custom:feature Test of the protocol expo limit for {_checkImbalanceLimitDeposit} function in balanced state
  */
 contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
     function setUp() public {
@@ -24,11 +24,11 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `_checkImbalanceLimitDeposit` function should not revert when contract is balanced and
+     * @custom:scenario The {_checkImbalanceLimitDeposit} function should not revert when contract is balanced and
      * position
      * is within limit
      * @custom:given The protocol is in a balanced state
-     * @custom:when The `_checkImbalanceLimitDeposit` function is called with a value below the deposit limit
+     * @custom:when The {_checkImbalanceLimitDeposit} function is called with a value below the deposit limit
      * @custom:then The transaction should not revert
      */
     function test_checkImbalanceLimitDeposit() public view {
@@ -37,10 +37,10 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `_checkImbalanceLimitDeposit` function should revert when long expo equal 0
+     * @custom:scenario The {_checkImbalanceLimitDeposit} function should revert when long expo equal 0
      * @custom:given The initial long position is closed
      * @custom:and The protocol is imbalanced
-     * @custom:when The `_checkImbalanceLimitDeposit` function is called
+     * @custom:when The {_checkImbalanceLimitDeposit} function is called
      * @custom:then The transaction should revert
      */
     function test_RevertWhen_checkImbalanceLimitDepositZeroLongExpo() public {
@@ -80,9 +80,9 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `_checkImbalanceLimitDeposit` function should not revert when limit is disabled
+     * @custom:scenario The {_checkImbalanceLimitDeposit} function should not revert when limit is disabled
      * @custom:given The protocol is in a balanced state
-     * @custom:when The `_checkImbalanceLimitDeposit` function is called with a value above the deposit limit
+     * @custom:when The {_checkImbalanceLimitDeposit} function is called with a value above the deposit limit
      * @custom:then The transaction should not revert
      */
     function test_checkImbalanceLimitDepositDisabled() public {
@@ -96,10 +96,10 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `_checkImbalanceLimitDeposit` function should revert when contract is balanced
+     * @custom:scenario The {_checkImbalanceLimitDeposit} function should revert when contract is balanced
      * and position value imbalance it
      * @custom:given The protocol is in a balanced state
-     * @custom:when The `_checkImbalanceLimitDeposit` function is called with a value above the deposit limit
+     * @custom:when The {_checkImbalanceLimitDeposit} function is called with a value above the deposit limit
      * @custom:then The transaction should revert
      */
     function test_RevertWhen_checkImbalanceLimitDepositOutLimit() public {
@@ -113,7 +113,7 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Check deposit imbalance when there are pending deposits
      * @custom:given The protocol is in an unbalanced state due to pending deposits
-     * @custom:when The `_checkImbalanceLimitDeposit` function is called
+     * @custom:when The {_checkImbalanceLimitDeposit} function is called
      * @custom:then The transaction should revert with the expected imbalance
      */
     function test_RevertWhen_checkImbalanceLimitDepositPendingVaultActions() public {

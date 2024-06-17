@@ -16,7 +16,7 @@ contract TestUsdnTransferShares is UsdnTokenFixture {
     /**
      * @custom:scenario Transfer shares from zero address
      * @custom:when We try to transfer shares from the zero address
-     * @custom:then The transaction reverts with the ERC20InvalidSender error
+     * @custom:then The transaction reverts with the {ERC20InvalidSender} error
      */
     function test_RevertWhen_transferSharesFromZeroAddress() public {
         vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InvalidSender.selector, address(0)));
@@ -26,7 +26,7 @@ contract TestUsdnTransferShares is UsdnTokenFixture {
     /**
      * @custom:scenario Transfer shares to zero address
      * @custom:when We try to transfer shares to the zero address
-     * @custom:then The transaction reverts with the ERC20InvalidReceiver error
+     * @custom:then The transaction reverts with the {ERC20InvalidReceiver} error
      */
     function test_RevertWhen_transferSharesToZeroAddress() public {
         vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InvalidReceiver.selector, address(0)));

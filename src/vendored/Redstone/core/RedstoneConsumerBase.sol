@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.4;
 
-import "./RedstoneConstants.sol";
 import "./RedstoneDefaultsLib.sol";
 import "./CalldataExtractor.sol";
 import "../libs/BitmapLib.sol";
@@ -21,8 +20,8 @@ abstract contract RedstoneConsumerBase is CalldataExtractor {
 
     /**
      * @dev This function must be implemented by the child consumer contract.
-     * It should return dataServiceId which DataServiceWrapper will use if not provided explicitly .
-     * If not overridden, value will always have to be provided explicitly in DataServiceWrapper.
+     * It should return `dataServiceId` which `DataServiceWrapper` will use if not provided explicitly .
+     * If not overridden, value will always have to be provided explicitly in `DataServiceWrapper`.
      * @return dataServiceId being consumed by contract
      */
     function getDataServiceId() public view virtual returns (string memory) {
@@ -40,7 +39,7 @@ abstract contract RedstoneConsumerBase is CalldataExtractor {
 
     /**
      * @dev This function may be overridden by the child consumer contract.
-     * It should validate the timestamp against the current time (block.timestamp)
+     * It should validate the timestamp against the current time (`block.timestamp`)
      * It should revert with a helpful message if the timestamp is not valid
      * @param receivedTimestampMilliseconds Timestamp extracted from calldata
      */
@@ -77,7 +76,7 @@ abstract contract RedstoneConsumerBase is CalldataExtractor {
      * insufficient number of authorised signers) do not match, the function will revert.
      *
      * Note! You should not call this function in a consumer contract. You can use
-     * `getOracleNumericValuesFromTxMsg` or `getOracleNumericValueFromTxMsg` instead.
+     * {getOracleNumericValuesFromTxMsg} or {getOracleNumericValueFromTxMsg} instead.
      *
      * @param dataFeedIds An array of unique data feed identifiers
      * @return An array of the extracted and verified oracle values in the same order
@@ -95,7 +94,7 @@ abstract contract RedstoneConsumerBase is CalldataExtractor {
         for (uint256 i = 0; i < dataFeedIds.length; i++) {
             // The line below is commented because newly allocated arrays are filled with zeros
             // But we left it for better readability
-            // signersBitmapForDataFeedIds[i] = 0; // <- setting to an empty bitmap
+            // `signersBitmapForDataFeedIds[i] = 0;` // <- setting to an empty bitmap
             valuesForDataFeeds[i] = new uint256[](getUniqueSignersThreshold());
         }
 
@@ -141,7 +140,7 @@ abstract contract RedstoneConsumerBase is CalldataExtractor {
      * @param uniqueSignerCountForDataFeedIds an array with the numbers of unique signers
      * for each data feed
      * @param signersBitmapForDataFeedIds an array of signer bitmaps for data feeds
-     * @param valuesForDataFeeds 2-dimensional array, valuesForDataFeeds[i][j] contains
+     * @param valuesForDataFeeds 2-dimensional array, `valuesForDataFeeds[i][j]` contains
      * j-th value for the i-th data feed
      * @param calldataNegativeOffset negative calldata offset for the given data package
      *
@@ -168,8 +167,8 @@ abstract contract RedstoneConsumerBase is CalldataExtractor {
             uint256 signedMessageBytesCount;
 
             signedMessageBytesCount = dataPointsCount * (eachDataPointValueByteSize + DATA_POINT_SYMBOL_BS)
-                + DATA_PACKAGE_WITHOUT_DATA_POINTS_AND_SIG_BS; //DATA_POINT_VALUE_BYTE_SIZE_BS + TIMESTAMP_BS +
-                // DATA_POINTS_COUNT_BS
+                + DATA_PACKAGE_WITHOUT_DATA_POINTS_AND_SIG_BS; //`DATA_POINT_VALUE_BYTE_SIZE_BS + TIMESTAMP_BS +
+                // DATA_POINTS_COUNT_BS`
 
             uint256 timestampCalldataOffset = msg.data.length
                 - (calldataNegativeOffset + TIMESTAMP_NEGATIVE_OFFSET_IN_DATA_PACKAGE_WITH_STANDARD_SLOT_BS);

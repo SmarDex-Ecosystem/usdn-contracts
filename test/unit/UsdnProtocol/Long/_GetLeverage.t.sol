@@ -16,9 +16,9 @@ contract TestUsdnProtocolLongGetLeverage is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call `_getLeverage` reverts when the liquidation price is equal or greater than
      * the start price.
-     * @custom:given A liquidationPrice price greater than or equal to the StartPrice
+     * @custom:given A `liquidationPrice` price greater than or equal to the `startPrice`
      * @custom:when _getLeverage is called
-     * @custom:then The transaction reverts with the `UsdnProtocolInvalidLiquidationPrice` error
+     * @custom:then The transaction reverts with the {UsdnProtocolInvalidLiquidationPrice} error
      */
     function test_RevertWhen_getLeverageWithLiquidationPriceGreaterThanStartPrice() public {
         uint128 startPrice = 1000;

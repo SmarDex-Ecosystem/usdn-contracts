@@ -6,15 +6,15 @@ import { IUsdnProtocolErrors } from "../../../../../src/interfaces/UsdnProtocol/
 import { UsdnProtocolBaseFixture } from "../../utils/Fixtures.sol";
 
 /**
- * @custom:feature Fuzzing tests of the protocol expo limit for internal `imbalanceLimitOpen`
+ * @custom:feature Fuzzing tests of the protocol expo limit for internal {imbalanceLimitOpen} function
  * @custom:background Given a protocol instance in balanced state with random vault expo and long expo
  */
 contract TestImbalanceLimitOpenFuzzing is UsdnProtocolBaseFixture {
     /**
-     * @custom:scenario The `imbalanceLimitOpen` should pass on still balanced state
+     * @custom:scenario The {imbalanceLimitOpen} should pass on still balanced state
      * or revert when amounts bring protocol out of limits
      * @custom:given The randomized expo balanced protocol state
-     * @custom:when The `imbalanceLimitOpen` is called with a random amount
+     * @custom:when The {imbalanceLimitOpen} is called with a random amount
      * @custom:then The transaction should revert in case imbalance or pass if still balanced
      */
     function testFuzz_checkImbalanceLimitOpen(uint128 initialAmount, uint256 openAmount, uint256 leverage) public {
@@ -22,7 +22,7 @@ contract TestImbalanceLimitOpenFuzzing is UsdnProtocolBaseFixture {
         _randInitBalanced(initialAmount);
 
         leverage = bound(leverage, protocol.getMinLeverage(), protocol.getMaxLeverage());
-        // range withdrawalAmount properly
+        // range `withdrawalAmount` properly
         openAmount = bound(openAmount, 1, type(uint128).max);
         // total expo to add
         uint256 totalExpoToAdd = openAmount * leverage / 10 ** protocol.LEVERAGE_DECIMALS();
@@ -38,7 +38,8 @@ contract TestImbalanceLimitOpenFuzzing is UsdnProtocolBaseFixture {
         int256 openLimit = protocol.getOpenExpoImbalanceLimitBps();
 
         if (imbalanceBps >= openLimit) {
-            // should revert with above open imbalance limit
+            // should revert with above open imbalance limit with
+            // {IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached} error
             vm.expectRevert(
                 abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, imbalanceBps)
             );

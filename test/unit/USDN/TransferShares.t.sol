@@ -5,7 +5,7 @@ import { USER_1 } from "../../utils/Constants.sol";
 import { UsdnTokenFixture } from "./utils/Fixtures.sol";
 
 /**
- * @custom:feature The `transferShares` function of `USDN`
+ * @custom:feature The {transferShares} function of `USDN`
  * @custom:background Given a user with 100 tokens
  */
 contract TestUsdnTransferShares is UsdnTokenFixture {
@@ -17,11 +17,11 @@ contract TestUsdnTransferShares is UsdnTokenFixture {
     }
 
     /**
-     * @custom:scenario Transfer shares call _transferShares with correct arguments
+     * @custom:scenario Transfer shares call {_transferShares} with correct arguments
      * @custom:when 100 shares are transfer from a user to the contract
-     * @custom:then The `Transfer` event should be emitted with the sender address as the sender,
+     * @custom:then The {Transfer} event should be emitted with the sender address as the sender,
      * the contract address as the recipient, and an amount corresponding to the value calculated by the
-     * `usdn.convertToTokens` function
+     * {usdn.convertToTokens} function
      */
     function test_transferSharesCorrectArguments() public {
         uint256 tokensExpected = usdn.convertToTokens(100 ether);

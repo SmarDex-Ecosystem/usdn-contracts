@@ -142,7 +142,7 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
      * @custom:scenario Transfer position ownership after a position has been initiated to close
      * @custom:given A position that has been initiated to close
      * @custom:when The position ownership is transferred
-     * @custom:then The transaction reverts with `UsdnProtocolUnauthorized`
+     * @custom:then The transaction reverts with {UsdnProtocolUnauthorized}
      */
     function test_RevertWhen_transferOwnershipAfterInitiateClose() public {
         PositionId memory posId = setUpUserPositionInLong(
@@ -163,7 +163,7 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
      * @custom:scenario Transfer position ownership when the caller is not the owner
      * @custom:given A position that has been validated
      * @custom:when The position ownership is transferred by a user that is not the owner
-     * @custom:then The transaction reverts with `UsdnProtocolUnauthorized`
+     * @custom:then The transaction reverts with {UsdnProtocolUnauthorized}
      */
     function test_RevertWhen_transferOwnershipNotOwner() public {
         PositionId memory posId = setUpUserPositionInLong(
@@ -185,7 +185,7 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
      * @custom:scenario Transfer position ownership to the zero address
      * @custom:given A position that has been validated
      * @custom:when The position ownership is transferred to the zero address
-     * @custom:then The transaction reverts with `UsdnProtocolInvalidAddressTo`
+     * @custom:then The transaction reverts with {UsdnProtocolInvalidAddressTo}
      */
     function test_RevertWhen_transferOwnershipToZero() public {
         PositionId memory posId = setUpUserPositionInLong(
@@ -206,7 +206,7 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
      * @custom:scenario Transfer position ownership after a position has been liquidated
      * @custom:given A position that has been liquidated
      * @custom:when The position ownership is transferred
-     * @custom:then The transaction reverts with `UsdnProtocolOutdatedTick`
+     * @custom:then The transaction reverts with {UsdnProtocolOutdatedTick}
      */
     function test_RevertWhen_transferOwnershipAfterLiq() public {
         PositionId memory posId = setUpUserPositionInLong(

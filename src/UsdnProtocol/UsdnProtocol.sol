@@ -463,7 +463,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable2Step {
         // transfer the wstETH for the long
         address(_asset).safeTransferFrom(msg.sender, address(this), amount);
 
-        // apply liquidation penalty to the deployer's liquidationPriceWithoutPenalty
+        // apply liquidation penalty to the deployer's `liquidationPriceWithoutPenalty`
         uint8 liquidationPenalty = _liquidationPenalty;
         PositionId memory posId;
         posId.tick = tick + int24(uint24(liquidationPenalty)) * _tickSpacing;

@@ -10,7 +10,7 @@ import { IOracleMiddlewareErrors } from "../../../../src/interfaces/OracleMiddle
 import { IOracleMiddlewareEvents } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareEvents.sol";
 
 /**
- * @custom:feature The `setPythRecentPriceDelay` function of `OracleMiddleware`
+ * @custom:feature The {setPythRecentPriceDelay} function of `OracleMiddleware`
  */
 contract TestOracleMiddlewareSetPythRecentPriceDelay is OracleMiddlewareBaseFixture {
     function setUp() public override {
@@ -18,10 +18,10 @@ contract TestOracleMiddlewareSetPythRecentPriceDelay is OracleMiddlewareBaseFixt
     }
 
     /**
-     * @custom:scenario Call `setPythRecentPriceDelay` functions from non contract admin
+     * @custom:scenario Call {setPythRecentPriceDelay} functions from non contract admin
      * @custom:given The initial oracle middleware state
-     * @custom:when Non admin wallet trigger `setPythRecentPriceDelay`
-     * @custom:then functions should revert with custom Ownable error
+     * @custom:when Non admin wallet trigger {setPythRecentPriceDelay}
+     * @custom:then functions should revert with {Ownable.OwnableUnauthorizedAccount} error
      */
     function test_RevertWhen_nonAdminWalletCallSetPythRecentPriceDelay() external {
         vm.startPrank(USER_1);
@@ -33,7 +33,7 @@ contract TestOracleMiddlewareSetPythRecentPriceDelay is OracleMiddlewareBaseFixt
     }
 
     /**
-     * @custom:scenario Call `getPythRecentPriceDelay` getter
+     * @custom:scenario Call {getPythRecentPriceDelay} getter
      * @custom:given The initial oracle middleware state
      * @custom:when The result of the function is compared to 45
      * @custom:then It should succeed
@@ -43,9 +43,9 @@ contract TestOracleMiddlewareSetPythRecentPriceDelay is OracleMiddlewareBaseFixt
     }
 
     /**
-     * @custom:scenario Call `setPythRecentPriceDelay`
+     * @custom:scenario Call {setPythRecentPriceDelay}
      * @custom:given The initial oracle middleware state
-     * @custom:when The `setPythRecentPriceDelay` is executed with a too high value
+     * @custom:when The {setPythRecentPriceDelay} is executed with a too high value
      * @custom:then It should revert
      */
     function test_RevertWhen_setPythRecentPriceDelayTooHigh() public {
@@ -58,9 +58,9 @@ contract TestOracleMiddlewareSetPythRecentPriceDelay is OracleMiddlewareBaseFixt
     }
 
     /**
-     * @custom:scenario Call `setPythRecentPriceDelay`
+     * @custom:scenario Call {setPythRecentPriceDelay}
      * @custom:given The initial oracle middleware state
-     * @custom:when The `setPythRecentPriceDelay` is executed with a too low value
+     * @custom:when The {setPythRecentPriceDelay} is executed with a too low value
      * @custom:then It should revert
      */
     function test_RevertWhen_setPythRecentPriceDelayTooLow() public {
@@ -71,10 +71,10 @@ contract TestOracleMiddlewareSetPythRecentPriceDelay is OracleMiddlewareBaseFixt
     }
 
     /**
-     * @custom:scenario Call `setPythRecentPriceDelay`
+     * @custom:scenario Call {setPythRecentPriceDelay}
      * @custom:given The initial oracle middleware state
-     * @custom:when The `setPythRecentPriceDelay` is executed with a correct value
-     * @custom:then It should emit PythRecentPriceDelayUpdated event
+     * @custom:when The {setPythRecentPriceDelay} is executed with a correct value
+     * @custom:then It should emit {PythRecentPriceDelayUpdated} event
      * @custom:and It should success
      */
     function test_setPythRecentPriceDelay() public {

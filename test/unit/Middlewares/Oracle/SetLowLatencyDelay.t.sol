@@ -38,9 +38,9 @@ contract TestOracleMiddlewareSetLowLatencyDelay is OracleMiddlewareBaseFixture {
     }
 
     /**
-     * @custom:scenario Call `setLowLatencyDelay` lower than minimum
+     * @custom:scenario Call {setLowLatencyDelay} lower than minimum
      * @custom:when The function is called with a value that is below the minimum allowed
-     * @custom:then It should revert with `OracleMiddlewareInvalidLowLatencyDelay`
+     * @custom:then It should revert with {OracleMiddlewareInvalidLowLatencyDelay}
      */
     function test_RevertWhen_setLowLatencyDelayMin() public {
         vm.expectRevert(IOracleMiddlewareErrors.OracleMiddlewareInvalidLowLatencyDelay.selector);
@@ -48,9 +48,9 @@ contract TestOracleMiddlewareSetLowLatencyDelay is OracleMiddlewareBaseFixture {
     }
 
     /**
-     * @custom:scenario Call `setLowLatencyDelay` higher than maximum
+     * @custom:scenario Call {setLowLatencyDelay} higher than maximum
      * @custom:when The function is called with a value that is above the maximum allowed
-     * @custom:then It should revert with `OracleMiddlewareInvalidLowLatencyDelay`
+     * @custom:then It should revert with {OracleMiddlewareInvalidLowLatencyDelay}
      */
     function test_RevertWhen_setLowLatencyDelayMax() public {
         vm.expectRevert(IOracleMiddlewareErrors.OracleMiddlewareInvalidLowLatencyDelay.selector);
@@ -58,7 +58,7 @@ contract TestOracleMiddlewareSetLowLatencyDelay is OracleMiddlewareBaseFixture {
     }
 
     /**
-     * @custom:scenario Call `setLowLatencyDelay`
+     * @custom:scenario Call {setLowLatencyDelay}
      * @custom:when The function is called with a correct value
      * @custom:then It should update the value
      */

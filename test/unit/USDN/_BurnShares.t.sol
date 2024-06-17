@@ -16,7 +16,7 @@ contract TestUsdnBurnShares is UsdnTokenFixture {
     /**
      * @custom:scenario Burning shares from the zero address
      * @custom:when 50e36 shares are burned from the zero address
-     * @custom:then The transaction reverts with the `ERC20InvalidSender` error
+     * @custom:then The transaction reverts with the {ERC20InvalidSender} error
      * @dev This function is not available in the USDN contract, only in the test handler
      */
     function test_RevertWhen_burnSharesFromZeroAddress() public {

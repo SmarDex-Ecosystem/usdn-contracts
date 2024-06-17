@@ -96,8 +96,8 @@ contract TestUsdnPermit is UsdnTokenFixture {
     /**
      * @custom:scenario Permitting a spender with a deadline
      * @custom:given Alice has signed a permit for this contract to spend 100 tokens with a timestamp in the past
-     * @custom:when This contract calls the `permit` function with the signature of Alice
-     * @custom:then The transaction reverts with the `ERC2612ExpiredSignature` error
+     * @custom:when This contract calls the {permit} function with the signature of Alice
+     * @custom:then The transaction reverts with the {ERC2612ExpiredSignature} error
      */
     function test_RevertWhen_signatureIsOutdated() public {
         uint256 nonce = usdn.nonces(user);
@@ -119,8 +119,8 @@ contract TestUsdnPermit is UsdnTokenFixture {
     /**
      * @custom:scenario Permitting a spender with an invalid signature
      * @custom:given Bob has signed a permit for this contract to spend 100 of Alice's tokens
-     * @custom:when This contract calls the `permit` function with the signature of Bob
-     * @custom:then The transaction reverts with the `ERC2612InvalidSignature` error
+     * @custom:when This contract calls the {permit} function with the signature of Bob
+     * @custom:then The transaction reverts with the {ERC2612InvalidSignature} error
      */
     function test_RevertWhen_invalidSigner() public {
         SigUtils.Permit memory permit = SigUtils.Permit({

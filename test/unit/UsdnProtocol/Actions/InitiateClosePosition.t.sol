@@ -53,7 +53,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     /**
      * @custom:scenario A user tries to close a position with an amount higher than the position's amount
      * @custom:given A validated open position
-     * @custom:when The owner of the position calls initiateClosePosition with an amount too high
+     * @custom:when The owner of the position calls {initiateClosePosition} with an amount too high
      * @custom:then The call reverts
      */
     function test_RevertWhen_closePartialPositionWithAmountHigherThanPositionAmount() external {
@@ -74,8 +74,8 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:scenario A user tries to close a position with a remaining amount lower than the min long position
      * @custom:given A validated open position
      * @custom:when The owner of the position calls initiateClosePosition with
-     * an amount higher than POSITION_AMOUNT - minLongPosition
-     * @custom:then The call reverts with the UsdnProtocolLongPositionTooSmall error
+     * an amount higher than `POSITION_AMOUNT - minLongPosition`
+     * @custom:then The call reverts with the {UsdnProtocolLongPositionTooSmall} error
      */
     function test_RevertWhen_closePartialPositionWithAmountRemainingLowerThanMinLongPosition() external {
         vm.prank(ADMIN);
@@ -100,7 +100,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     /**
      * @custom:scenario The sender is not the owner of the position
      * @custom:when The user initiates a close of another user's position
-     * @custom:then The protocol reverts with `UsdnProtocolUnauthorized`
+     * @custom:then The protocol reverts with {UsdnProtocolUnauthorized}
      */
     function test_RevertWhen_notUser() public {
         bytes memory priceData = abi.encode(params.initialPrice);
@@ -113,7 +113,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:scenario The user initiates a close position with parameter to defined at zero
      * @custom:given An initialized USDN protocol
      * @custom:when The user initiates a close position with parameter to defined at zero
-     * @custom:then The protocol reverts with `UsdnProtocolInvalidAddressTo`
+     * @custom:then The protocol reverts with {UsdnProtocolInvalidAddressTo}
      */
     function test_RevertWhen_zeroAddressTo() public {
         bytes memory priceData = abi.encode(params.initialPrice);
@@ -124,7 +124,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     /**
      * @custom:scenario A user tries to close a position with 0 as the amount to close
      * @custom:given A validated open position
-     * @custom:when The owner of the position calls initiateClosePosition with 0 as the amount to close
+     * @custom:when The owner of the position calls {initiateClosePosition} with 0 as the amount to close
      * @custom:then The call reverts
      */
     function test_RevertWhen_closePartialPositionWithZeroAmount() external {
@@ -137,7 +137,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     /**
      * @custom:scenario A user tries to close a position that was previously liquidated
      * @custom:given A validated open position gets liquidated
-     * @custom:when The owner of the position calls initiateClosePosition with half of the amount
+     * @custom:when The owner of the position calls {initiateClosePosition} with half of the amount
      * @custom:then The call reverts because the position is not valid anymore
      */
     function test_RevertWhen_closePartialPositionWithAnOutdatedTick() external {
@@ -169,7 +169,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:scenario A user initiates a close position action but sends too much ether
      * @custom:given A validated long position
      * @custom:and oracle validation cost == 0
-     * @custom:when User calls initiateClosePosition with an amount of ether greater than the validation cost
+     * @custom:when User calls {initiateClosePosition} with an amount of ether greater than the validation cost
      * @custom:then The protocol refunds the amount sent
      */
     function test_initiateClosePositionRefundExcessEther() external {
@@ -191,7 +191,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:scenario A user initiates a close position action with a pending action
      * @custom:given A validated long position
      * @custom:and an initiated open position action from another user
-     * @custom:when User calls initiateClosePosition with valid price data for the pending action
+     * @custom:when User calls {initiateClosePosition} with valid price data for the pending action
      * @custom:then The user validates the pending action
      */
     function test_initiateClosePositionValidatePendingAction() external {
@@ -229,7 +229,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     /**
      * @custom:scenario A user initiates a close position action
      * @custom:given A validated long position
-     * @custom:when User calls initiateClosePosition
+     * @custom:when User calls {initiateClosePosition}
      * @custom:then The user initiates a close position action for his position
      */
     function test_initiateClosePosition() external {
@@ -249,7 +249,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:scenario Closing a position that was not validated yet
      * @custom:given A position that is pending validation and has a validator different from the owner
      * @custom:when The owner tries to close the position
-     * @custom:then The transaction reverts with UsdnProtocolPositionNotValidated
+     * @custom:then The transaction reverts with {UsdnProtocolPositionNotValidated}
      */
     function test_RevertWhen_initiateClosePendingPosition() external {
         bytes memory priceData = abi.encode(params.initialPrice);
@@ -274,7 +274,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:given A validated open position
      * @custom:when The owner of the position closes all of the position at the same price as the opening
      * @custom:then The state of the protocol is updated
-     * @custom:and an InitiatedClosePosition event is emitted
+     * @custom:and an {InitiatedClosePosition} event is emitted
      * @custom:and the position is deleted
      */
     function test_internalInitiateClosePosition() external {
@@ -287,7 +287,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:when The owner of the position closes all of the position at the same price as the opening
      * @custom:and the to parameter is different from the sender
      * @custom:then The state of the protocol is updated
-     * @custom:and an InitiatedClosePosition event is emitted
+     * @custom:and an {InitiatedClosePosition} event is emitted
      * @custom:and the position is deleted
      */
     function test_internalInitiateClosePositionForAnotherUser() external {
@@ -353,7 +353,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:given A validated open position
      * @custom:when The owner of the position closes half of the position at the same price as the opening
      * @custom:then The state of the protocol is updated
-     * @custom:and an InitiatedClosePosition event is emitted
+     * @custom:and an {InitiatedClosePosition} event is emitted
      * @custom:and the position still exists
      */
     function test_internalInitiateClosePositionPartially() external {
@@ -395,7 +395,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     /**
      * @custom:scenario A initiate close liquidates a pending tick but is not initiated because of being liquidated
      * @custom:given An existing user position
-     * @custom:when The `initiateClosePosition` function is called with a price below the position's liq price
+     * @custom:when The {initiateClosePosition} function is called with a price below the position's liq price
      * @custom:then The position's tick is liquidated
      * @custom:and The close action isn't initiated
      */
@@ -423,7 +423,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:scenario A initiate close liquidates a pending tick but is not initiated because a tick still needs to
      * be liquidated
      * @custom:given The user position with a liq price above the deployer position's liq price
-     * @custom:when The deployer calls `initiateClosePosition` with a price below both positions' liq price
+     * @custom:when The deployer calls {initiateClosePosition} with a price below both positions' liq price
      * @custom:then The user position's tick is liquidated
      * @custom:and The deployer's close action isn't initiated due to its own position needing to be liquidated
      */
@@ -589,7 +589,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:and The rebalancer's position has 4 ether of initial collateral
      * @custom:and The minimum long position in the protocol is changed to 6 ether
      * @custom:when The user closes their position partially (1 ether) through a rebalancer partial close
-     * @custom:then The partial close is unauthorized and reverts with `UsdnProtocolLongPositionTooSmall`
+     * @custom:then The partial close is unauthorized and reverts with {UsdnProtocolLongPositionTooSmall}
      */
     function test_RevertWhen_closePartialFromRebalancerPartialUserClose() public {
         uint128 minAssetDeposit = 2 ether;
@@ -608,10 +608,10 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
 
     /**
      * @custom:scenario The user initiates a close position action with a reentrancy attempt
-     * @custom:given A user being a smart contract that calls initiateClosePosition with too much ether
-     * @custom:and A receive() function that calls initiateClosePosition again
-     * @custom:when The user calls initiateClosePosition again from the callback
-     * @custom:then The call reverts with InitializableReentrancyGuardReentrantCall
+     * @custom:given A user being a smart contract that calls {initiateClosePosition} with too much ether
+     * @custom:and A {receive} function that calls {initiateClosePosition} again
+     * @custom:when The user calls {initiateClosePosition} again from the callback
+     * @custom:then The call reverts with {InitializableReentrancyGuardReentrantCall}
      */
     function test_RevertWhen_initiateClosePositionCalledWithReentrancy() public {
         // If we are currently in a reentrancy
@@ -641,7 +641,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         _reenter = true;
         // If a reentrancy occurred, the function should have been called 2 times
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.initiateClosePosition.selector), 2);
-        // The value sent will cause a refund, which will trigger the receive() function of this contract
+        // The value sent will cause a refund, which will trigger the `receive()` function of this contract
         protocol.initiateClosePosition{ value: 1 }(
             posId,
             POSITION_AMOUNT,

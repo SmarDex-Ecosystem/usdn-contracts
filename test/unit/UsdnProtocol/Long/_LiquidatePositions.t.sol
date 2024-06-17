@@ -10,7 +10,7 @@ import {
 } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { TickMath } from "../../../../src/libraries/TickMath.sol";
 
-/// @custom:feature Test the _liquidatePositions internal function of the long layer
+/// @custom:feature Test the {_liquidatePositions} internal function of the long layer
 contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
@@ -19,7 +19,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Make sure nothing happens if there are no ticks to liquidate above the provided price
      * @custom:given There are no positions with a liquidation price above current price
-     * @custom:when User calls _liquidatePositions
+     * @custom:when User calls {_liquidatePositions}
      * @custom:then Nothing should happen
      * @custom:and 0s should be returned
      */
@@ -44,7 +44,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario A position is underwater and can be liquidated
      * @custom:given A position has its liquidation price above current price
-     * @custom:when User calls _liquidatePositions
+     * @custom:when User calls {_liquidatePositions}
      * @custom:then It should liquidate the position.
      */
     function test_canLiquidateAPosition() public {
@@ -109,11 +109,11 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
      * @custom:scenario A position becomes underwater because of fundings and can be liquidated
      * @custom:given A position has its liquidation price above current price because of fundings
      * @custom:and the asset's price did not move
-     * @custom:when User calls _liquidatePositions
+     * @custom:when User calls {_liquidatePositions}
      * @custom:then It should liquidate the position.
      */
     function test_canLiquidateAPositionWithFundings() public {
-        vm.skip(true); // TODO: rewrite this test to use the external function, as now `i_applyPnlAndFunding` does not
+        vm.skip(true); // TODO: rewrite this test to use the external function, as now {i_applyPnlAndFunding} does not
         // mutate the balances and the test doesn't pass anymore. The fundings now only have effect through their effect
         // on the long balance.
         params = DEFAULT_PARAMS;
@@ -173,7 +173,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario The last position in the protocol is underwater and can be liquidated
      * @custom:given A position has its liquidation price above current price
-     * @custom:when User calls _liquidatePositions with 2 iterations
+     * @custom:when User calls {_liquidatePositions} with 2 iterations
      * @custom:then It should liquidate the position.
      */
     function test_canLiquidateTheLastPosition() public {
@@ -207,12 +207,12 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Even if the iteration parameter is above MAX_LIQUIDATION_ITERATION,
-     * we will only iterate an amount of time equal to MAX_LIQUIDATION_ITERATION
-     * @custom:given MAX_LIQUIDATION_ITERATION + 1 tick can be liquidated
-     * @custom:when User calls _liquidatePositions with an iteration parameter set at MAX_LIQUIDATION_ITERATION + 1
-     * @custom:then It should liquidate MAX_LIQUIDATION_ITERATION ticks.
-     * @custom:and There should be 1 tick left to liquidate.
+     * @custom:scenario Even if the iteration parameter is above `MAX_LIQUIDATION_ITERATION`,
+     * we will only iterate an amount of time equal to `MAX_LIQUIDATION_ITERATION`
+     * @custom:given `MAX_LIQUIDATION_ITERATION + 1` tick can be liquidated
+     * @custom:when User calls _liquidatePositions with an iteration parameter set at `MAX_LIQUIDATION_ITERATION + 1`
+     * @custom:then It should liquidate `MAX_LIQUIDATION_ITERATION` ticks.
+     * @custom:and There should be `1` tick left to liquidate.
      */
     function test_liquidationIterationsAreCapped() public {
         uint128 price = 2000 ether;
@@ -244,7 +244,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
             ticksToLiquidate[i] = posId.tick;
         }
 
-        // Expect MAX_LIQUIDATION_ITERATION events
+        // Expect `MAX_LIQUIDATION_ITERATION` events
         for (uint256 i = 0; i < maxIterations; ++i) {
             vm.expectEmit(true, true, false, false);
             emit LiquidatedTick(ticksToLiquidate[i], 0, 0, 0, 0);
@@ -255,7 +255,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         int256 balanceLong = protocol.longAssetAvailableWithFunding(liqPrice, uint128(block.timestamp));
         int256 balanceVault = protocol.vaultAssetAvailableWithFunding(liqPrice, uint128(block.timestamp));
 
-        // Make sure no more than MAX_LIQUIDATION_ITERATION events have been emitted
+        // Make sure no more than `MAX_LIQUIDATION_ITERATION` events have been emitted
         vm.recordLogs();
         LiquidationsEffects memory liquidationsEffects =
             protocol.i_liquidatePositions(uint256(liqPrice), maxIterations + 1, balanceLong, balanceVault);
@@ -281,9 +281,9 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario A position can be liquidated but there is not enough balance in the longs to cover
      * the debt to the vault
-     * @custom:given A position with a value of X that can be liquidated
-     * @custom:and A long balance at X - 1
-     * @custom:when User calls _liquidatePositions
+     * @custom:given A position with a value of `X` that can be liquidated
+     * @custom:and A long balance at `X - 1`
+     * @custom:when User calls `_liquidatePositions`
      * @custom:then It should liquidate the position
      * @custom:and The long balance should be at 0
      * @custom:and The vault should have absorbed the long side's debt
@@ -313,7 +313,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit LiquidatedTick(desiredLiqTick, 0, liqPrice, liqPriceAfterFundings, tickValue);
 
-        // Set the tempVaultBalance parameter to less than tickValue to make sure it sends what it can
+        // Set the `tempVaultBalance` parameter to less than tickValue to make sure it sends what it can
         LiquidationsEffects memory liquidationsEffects =
             protocol.i_liquidatePositions(uint256(liqPrice), 1, tickValue - 1, 100 ether);
 
@@ -336,10 +336,10 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
      * @custom:scenario A position can be liquidated but there is not enough balance in the vault to cover
      * the debt to the longs
      * @custom:given A position with a value of X that can be liquidated
-     * @custom:and A vault balance at X - 1
+     * @custom:and A vault balance at `X - 1`
      * @custom:when User calls _liquidatePositions
      * @custom:then It should liquidate the position
-     * @custom:and The vault balance should be at 0
+     * @custom:and The vault balance should be at `0`
      * @custom:and The long side should have absorbed the vault's debt
      */
     function test_canLiquidateEvenWithBadDebtInVault() external {
@@ -371,7 +371,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit LiquidatedTick(posId.tick, 0, price, liqPriceAfterFundings, tickValue);
 
-        // Set the tempVaultBalance parameter to less than tickValue to make sure it sends what it can
+        // Set the `tempVaultBalance` parameter to less than `tickValue` to make sure it sends what it can
         LiquidationsEffects memory liquidationsEffects =
             protocol.i_liquidatePositions(uint256(price), 1, 100 ether, tickValue);
 

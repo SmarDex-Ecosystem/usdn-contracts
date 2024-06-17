@@ -43,7 +43,7 @@ contract TestHugeUintFuzzing is HugeUintFixture {
      * @custom:scenario Reverting when overflow occurs during `add`
      * @custom:given Two 512-bit unsigned integers, the sum of which overflows 512 bits
      * @custom:when The `add` function is called with `a` as the first operand and `b` as the second operand
-     * @custom:then The transaction reverts with `HugeUintAddOverflow`
+     * @custom:then The transaction reverts with {HugeUintAddOverflow}
      * @param a0 The LSB of the first operand
      * @param a1 The MSB of the first operand
      * @param b0 The LSB of the second operand
@@ -90,7 +90,7 @@ contract TestHugeUintFuzzing is HugeUintFixture {
      * @custom:scenario Reverting when underflow occurs during `sub`
      * @custom:given Two 512-bit unsigned integers, with the second being larger than the first
      * @custom:when The `sub` function is called with `a` as the first operand and `b` as the second operand
-     * @custom:then The transaction reverts with `HugeUintSubUnderflow`
+     * @custom:then The transaction reverts with {HugeUintSubUnderflow}
      * @param a0 The LSB of the first operand
      * @param a1 The MSB of the first operand
      * @param b0 The LSB of the second operand
@@ -154,10 +154,10 @@ contract TestHugeUintFuzzing is HugeUintFixture {
     }
 
     /**
-     * @custom:scenario Reverting when overflow occurs during `mul`
+     * @custom:scenario Reverting when overflow occurs during {mul}
      * @custom:given A 512-bit unsigned integer and a 256-bit unsigned integer, the product of which exceeds uint512.max
-     * @custom:when The `mul` function is called with the two integers
-     * @custom:then The transaction reverts with `HugeUintMulOverflow`
+     * @custom:when The {mul} function is called with the two integers
+     * @custom:then The transaction reverts with {HugeUintMulOverflow}
      * @param a0 The LSB of the first operand
      * @param a1 The MSB of the first operand
      * @param b The second operand
@@ -204,10 +204,10 @@ contract TestHugeUintFuzzing is HugeUintFixture {
     }
 
     /**
-     * @custom:scenario Reverting when division by zero occurs during `div`
+     * @custom:scenario Reverting when division by zero occurs during {div}
      * @custom:given A 512-bit unsigned integer
-     * @custom:when The `div` function is called with the integer and 0
-     * @custom:then The transaction reverts with `HugeUintDivisionFailed`
+     * @custom:when The {div} function is called with the integer and 0
+     * @custom:then The transaction reverts with {HugeUintDivisionFailed}
      * @param a0 The LSB of the 512-bit integer
      * @param a1 The MSB of the 512-bit integer
      */
@@ -219,16 +219,16 @@ contract TestHugeUintFuzzing is HugeUintFixture {
 
     /**
      * @custom:scenario Reverting when the division overflows 256 bits
-     * @custom:given A 512-bit unsigned integer larger than uint256.max
+     * @custom:given A 512-bit unsigned integer larger than `uint256.max`
      * @custom:and a divisor which is larger than 0 but smaller than the MSB of the 512-bit integer
-     * @custom:when The `div` function is called with the operands
-     * @custom:then The transaction reverts with `HugeUintDivisionFailed`
+     * @custom:when The {div} function is called with the operands
+     * @custom:then The transaction reverts with {HugeUintDivisionFailed}
      * @param a0 The LSB of the 512-bit numerator
      * @param a1 The MSB of the 512-bit numerator
      * @param b The divisor
      */
     function testFuzz_RevertWhen_div256Overflow(uint256 a0, uint256 a1, uint256 b) public {
-        vm.assume(b > 0 && a1 > 0); // we can't overflow if a1 is zero
+        vm.assume(b > 0 && a1 > 0); // we can't overflow if `a1` is zero
         b = bound(b, 1, a1);
         vm.expectRevert(HugeUint.HugeUintDivisionFailed.selector);
         handler.div(HugeUint.Uint512(a1, a0), b);
@@ -270,10 +270,10 @@ contract TestHugeUintFuzzing is HugeUintFixture {
     }
 
     /**
-     * @custom:scenario Reverting when division by zero occurs during `div(Uint512,Uint512)`
+     * @custom:scenario Reverting when division by zero occurs during {div(Uint512,Uint512)}
      * @custom:given A 512-bit unsigned integer
-     * @custom:when The `div` function is called with the integer and 0
-     * @custom:then The transaction reverts with `HugeUintDivisionFailed`
+     * @custom:when The {div} function is called with the integer and 0
+     * @custom:then The transaction reverts with {HugeUintDivisionFailed}
      * @param a0 The LSB of the 512-bit integer
      * @param a1 The MSB of the 512-bit integer
      */
@@ -286,8 +286,8 @@ contract TestHugeUintFuzzing is HugeUintFixture {
     /**
      * @custom:scenario Reverting when the division overflows 256 bits
      * @custom:given Two 512-bit unsigned integers, the division of which overflows 256 bits
-     * @custom:when The `div` function is called with the operands
-     * @custom:then The transaction reverts with `HugeUintDivisionFailed`
+     * @custom:when The {div} function is called with the operands
+     * @custom:then The transaction reverts with {HugeUintDivisionFailed}
      * @param a0 The LSB of the 512-bit numerator
      * @param a1 The MSB of the 512-bit numerator
      * @param b0 The LSB of the 512-bit denominator

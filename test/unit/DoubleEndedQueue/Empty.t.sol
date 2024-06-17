@@ -16,8 +16,8 @@ contract TestDequeEmpty is DequeFixture {
 
     /**
      * @custom:scenario View functions should handle empty list fine
-     * @custom:when Calling `empty` and `length`
-     * @custom:then Returns `true` and `0`
+     * @custom:when Calling {empty} and {length}
+     * @custom:then Returns {true} and {0}
      */
     function test_view() public {
         assertEq(handler.empty(), true, "empty");
@@ -27,7 +27,7 @@ contract TestDequeEmpty is DequeFixture {
     /**
      * @custom:scenario Popping and accessing items should revert
      * @custom:when Popping or accessing items in an empty list
-     * @custom:then It should revert with `QueueEmpty` or `QueueOutOfBounds`
+     * @custom:then It should revert with {QueueEmpty} or `QueueOutOfBounds}
      */
     function test_RevertWhen_access() public {
         vm.expectRevert(DoubleEndedQueue.QueueEmpty.selector);

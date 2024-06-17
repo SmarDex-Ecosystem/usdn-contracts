@@ -47,7 +47,7 @@ contract TestHugeUintDiv256 is HugeUintFixture {
      * @custom:or The `div` function is called with `uint512.max` and 1
      * @custom:or The `div` function is called with `<uint256.max, 1>` and 0
      * @custom:or The `div` function is called with 1 and 0
-     * @custom:then The function reverts with `HugeUintDivisionFailed`
+     * @custom:then The function {HugeUintDivisionFailed}
      */
     function test_RevertWhen_divOverflow() public {
         HugeUint.Uint512 memory a = HugeUint.Uint512(type(uint256).max, type(uint256).max);

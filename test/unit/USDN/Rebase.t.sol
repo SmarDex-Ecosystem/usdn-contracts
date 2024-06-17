@@ -66,8 +66,8 @@ contract TestUsdnRebase is UsdnTokenFixture {
 
     /**
      * @custom:scenario Rebase when a rebase handler is set
-     * @custom:given A rebase handler contract that returns the abi-encoded callback arguments and emits `TestCallBack`
-     * @custom:when The `rebase` function of USDN is called with a new divisor
+     * @custom:given A rebase handler contract that returns the abi-encoded callback arguments and emits {TestCallBack}
+     * @custom:when The {rebase} function of USDN is called with a new divisor
      * @custom:then The rebase handler is called with the old and new divisor values
      * @custom:and The handler's return value is forwarded to the caller
      */
@@ -89,8 +89,8 @@ contract TestUsdnRebase is UsdnTokenFixture {
     /**
      * @custom:scenario The divisor is adjusted to the same value or larger
      * @custom:given This contract has the `REBASER_ROLE`
-     * @custom:when The divisor is adjusted to MAX_DIVISOR
-     * @custom:or The divisor is adjusted to 2x MAX_DIVISOR
+     * @custom:when The divisor is adjusted to `MAX_DIVISOR`
+     * @custom:or The divisor is adjusted to 2x `MAX_DIVISOR`
      * @custom:then The transaction does not change the divisor or rebase
      * @custom:and The rebased boolean is false
      * @custom:and The unchanged divisor value is returned
@@ -120,9 +120,9 @@ contract TestUsdnRebase is UsdnTokenFixture {
     /**
      * @custom:scenario The divisor is adjusted to a value that is too small
      * @custom:given This contract has the `REBASER_ROLE`
-     * @custom:when The divisor is adjusted to MIN_DIVISOR - 1
-     * @custom:then The transaction sets the divisor to MIN_DIVISOR
-     * @custom:and Emits the Rebase event
+     * @custom:when The divisor is adjusted to `MIN_DIVISOR - 1`
+     * @custom:then The transaction sets the divisor to `MIN_DIVISOR`
+     * @custom:and Emits the {Rebase} event
      * @custom:and The rebased boolean is true
      * @custom:and The old divisor value is returned
      */
@@ -139,9 +139,9 @@ contract TestUsdnRebase is UsdnTokenFixture {
     }
 
     /**
-     * @custom:scenario The rebase function is called with MIN_DIVISOR - 1 but it's already MIN_DIVISOR
-     * @custom:given This contract has the `REBASER_ROLE` and the divisor is MIN_DIVISOR
-     * @custom:when The divisor is adjusted to MIN_DIVISOR - 1
+     * @custom:scenario The rebase function is called with `MIN_DIVISOR - 1` but it's already `MIN_DIVISOR`
+     * @custom:given This contract has the `REBASER_ROLE` and the divisor is `MIN_DIVISOR`
+     * @custom:when The divisor is adjusted to `MIN_DIVISOR - 1`
      * @custom:then The transaction does not change the divisor or rebase
      */
     function test_divisorTooSmallButNoRebase() public {

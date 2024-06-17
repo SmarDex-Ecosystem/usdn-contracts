@@ -9,7 +9,7 @@ import { ILiquidationRewardsManagerErrorsEventsTypes } from
     "../../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManagerErrorsEventsTypes.sol";
 
 /**
- * @custom:feature The `setRewardsParameters` function of `LiquidationRewardsManager`
+ * @custom:feature The {setRewardsParameters} function of `LiquidationRewardsManager`
  */
 contract TestLiquidationRewardsManagerSetRewardsParameters is
     LiquidationRewardsManagerBaseFixture,
@@ -20,11 +20,11 @@ contract TestLiquidationRewardsManagerSetRewardsParameters is
     }
 
     /**
-     * @custom:scenario Call `setRewardsParameters` with valid values
+     * @custom:scenario Call {setRewardsParameters} with valid values
      * @custom:when The values are within the limits
      * @custom:then It should succeed
-     * @custom:and The `getRewardsParameters` should return the newly set values
-     * @custom:and The `RewardsParametersUpdated` event should be emitted
+     * @custom:and The {getRewardsParameters} should return the newly set values
+     * @custom:and The {RewardsParametersUpdated} event should be emitted
      */
     function test_setRewardsParametersWithValidValues() public {
         uint32 gasUsedPerTick = 500_000;
@@ -49,9 +49,9 @@ contract TestLiquidationRewardsManagerSetRewardsParameters is
     }
 
     /**
-     * @custom:scenario Call `setRewardsParameters` reverts when caller is not the owner
+     * @custom:scenario Call {setRewardsParameters} reverts when caller is not the owner
      * @custom:when The caller is not the owner
-     * @custom:then It reverts with a OwnableUnauthorizedAccount error
+     * @custom:then It reverts with a 'OwnableUnauthorizedAccount} error
      */
     function test_RevertWhen_setRewardsParametersCallerIsNotTheOwner() public {
         uint32 gasUsedPerTick = 500_000;
@@ -62,7 +62,7 @@ contract TestLiquidationRewardsManagerSetRewardsParameters is
 
         vm.prank(USER_1);
 
-        // Revert as USER_1 is not the owner
+        // Revert as `USER_1` is not the owner
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, USER_1));
         liquidationRewardsManager.setRewardsParameters(
             gasUsedPerTick, otherGasUsed, rebaseGasUsed, gasPriceLimit, multiplierBps
@@ -70,10 +70,10 @@ contract TestLiquidationRewardsManagerSetRewardsParameters is
     }
 
     /**
-     * @custom:scenario Call `setRewardsParameters` reverts when the gasUsedPerTick is too high
-     * @custom:when The value of gasUsedPerTick is bigger than the limit
+     * @custom:scenario Call {setRewardsParameters} reverts when the `gasUsedPerTick` is too high
+     * @custom:when The value of `gasUsedPerTick` is bigger than the limit
      * @custom:and The other parameters are within the limits
-     * @custom:then It reverts with a LiquidationRewardsManagerGasUsedPerTickTooHigh error
+     * @custom:then It reverts with a {LiquidationRewardsManagerGasUsedPerTickTooHigh} error
      */
     function test_RevertWhen_setRewardsParametersWithGasUsedPerTickTooHigh() public {
         uint32 gasUsedPerTick = 500_001;
@@ -90,10 +90,10 @@ contract TestLiquidationRewardsManagerSetRewardsParameters is
     }
 
     /**
-     * @custom:scenario Call `setRewardsParameters` reverts when the otherGasUsed is too high
-     * @custom:when The value of otherGasUsed is bigger than the limit
+     * @custom:scenario Call {setRewardsParameters} reverts when the otherGasUsed is too high
+     * @custom:when The value of `otherGasUsed` is bigger than the limit
      * @custom:and The other parameters are within the limits
-     * @custom:then It reverts with a LiquidationRewardsManagerOtherGasUsedTooHigh error
+     * @custom:then It reverts with a {LiquidationRewardsManagerOtherGasUsedTooHigh} error
      */
     function test_RevertWhen_setRewardsParametersWithOtherGasUsedTooHigh() public {
         uint32 gasUsedPerTick = 500_000;
@@ -110,10 +110,10 @@ contract TestLiquidationRewardsManagerSetRewardsParameters is
     }
 
     /**
-     * @custom:scenario Call `setRewardsParameters` reverts when the rebaseGasUsed is too high
-     * @custom:when The value of rebaseGasUsed is bigger than the limit
+     * @custom:scenario Call {setRewardsParameters} reverts when the rebaseGasUsed is too high
+     * @custom:when The value of `rebaseGasUsed` is bigger than the limit
      * @custom:and The other parameters are within the limits
-     * @custom:then It reverts with a LiquidationRewardsManagerRebaseGasUsedTooHigh error
+     * @custom:then It reverts with a {LiquidationRewardsManagerRebaseGasUsedTooHigh} error
      */
     function test_RevertWhen_setRewardsParametersWithRebaseGasUsedTooHigh() public {
         uint32 gasUsedPerTick = 500_000;
@@ -130,10 +130,10 @@ contract TestLiquidationRewardsManagerSetRewardsParameters is
     }
 
     /**
-     * @custom:scenario Call `setRewardsParameters` reverts when the gasPriceLimit is too high
-     * @custom:when The value of gasPriceLimit is bigger than the limit
+     * @custom:scenario Call {setRewardsParameters} reverts when the gasPriceLimit is too high
+     * @custom:when The value of `gasPriceLimit` is bigger than the limit
      * @custom:and The other parameters are within the limits
-     * @custom:then It reverts with a LiquidationRewardsManagerGasPriceLimitTooHigh error
+     * @custom:then It reverts with a {LiquidationRewardsManagerGasPriceLimitTooHigh} error
      */
     function test_RevertWhen_setRewardsParametersWithGasPriceLimitTooHigh() public {
         uint32 gasUsedPerTick = 500_000;
@@ -150,10 +150,10 @@ contract TestLiquidationRewardsManagerSetRewardsParameters is
     }
 
     /**
-     * @custom:scenario Call `setRewardsParameters` reverts when the multiplierBps is too high
-     * @custom:when The value of multiplierBps is bigger than the limit
+     * @custom:scenario Call [setRewardsParameters} reverts when the `multiplierBps` is too high
+     * @custom:when The value of `multiplierBps` is bigger than the limit
      * @custom:and The other parameters are within the limits
-     * @custom:then It reverts with a LiquidationRewardsManagerMultiplierBpsTooHigh error
+     * @custom:then It reverts with a {LiquidationRewardsManagerMultiplierBpsTooHigh} error
      */
     function test_RevertWhen_setRewardsParametersWithMultiplierTooHigh() public {
         uint32 gasUsedPerTick = 500_000;
@@ -162,7 +162,7 @@ contract TestLiquidationRewardsManagerSetRewardsParameters is
         uint64 gasPriceLimit = 8000 gwei;
         uint32 multiplierBps = 10 * liquidationRewardsManager.BPS_DIVISOR() + 1;
 
-        // Expect revert when the value of multiplierBps is too high
+        // Expect revert when the value of `multiplierBps` is too high
         vm.expectRevert(abi.encodeWithSelector(LiquidationRewardsManagerMultiplierBpsTooHigh.selector, multiplierBps));
         liquidationRewardsManager.setRewardsParameters(
             gasUsedPerTick, otherGasUsed, rebaseGasUsed, gasPriceLimit, multiplierBps

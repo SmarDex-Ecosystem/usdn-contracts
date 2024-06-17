@@ -63,7 +63,7 @@ contract TestUsdnErc20 is UsdnTokenFixture {
     /**
      * @custom:scenario Approving the zero address
      * @custom:when The zero address is approved to spend 50 tokens
-     * @custom:then The transaction reverts with the `ERC20InvalidSpender` error
+     * @custom:then The transaction reverts with the {ERC20InvalidSpender} error
      */
     function test_RevertWhen_approveZeroAddress() public {
         vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InvalidSpender.selector, address(0)));
@@ -74,7 +74,7 @@ contract TestUsdnErc20 is UsdnTokenFixture {
     /**
      * @custom:scenario Approving with zero address as the owner
      * @custom:when The zero address account wants to approve another address
-     * @custom:then The transaction reverts with the `ERC20InvalidApprover` error
+     * @custom:then The transaction reverts with the {ERC20InvalidApprover} error
      * @dev This function is not available in the USDN contract, only in the test handler
      */
     function test_RevertWhen_approveFromZeroAddress() public {
@@ -103,7 +103,7 @@ contract TestUsdnErc20 is UsdnTokenFixture {
     /**
      * @custom:scenario Transferring tokens to the zero address
      * @custom:when 50 tokens are transferred to the zero address
-     * @custom:then The transaction reverts with the `ERC20InvalidReceiver` error
+     * @custom:then The transaction reverts with the {ERC20InvalidReceiver} error
      */
     function test_RevertWhen_transferToZeroAddress() public {
         vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InvalidReceiver.selector, address(0)));
@@ -114,7 +114,7 @@ contract TestUsdnErc20 is UsdnTokenFixture {
     /**
      * @custom:scenario Transferring tokens from the zero address
      * @custom:when 50 tokens are transferred from the zero address
-     * @custom:then The transaction reverts with the `ERC20InvalidSender` error
+     * @custom:then The transaction reverts with the {ERC20InvalidSender} error
      * @dev This function is not available in the USDN contract, only in the test handler
      */
     function test_RevertWhen_transferFromZeroAddress() public {

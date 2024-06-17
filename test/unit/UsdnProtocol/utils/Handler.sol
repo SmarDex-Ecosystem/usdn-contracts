@@ -72,7 +72,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     /**
      * @dev Use this function in unit tests to make sure we provide a fresh price that updates the balances
      * The function reverts the price given by the mock oracle middleware is not fresh enough to trigger a balance
-     * update. Call `_waitBeforeLiquidation()` before calling this function to make sure enough time has passed.
+     * update. Call {_waitBeforeLiquidation()} before calling this function to make sure enough time has passed.
      * Do not use this function in contexts where ether needs to be refunded.
      */
     function testLiquidate(bytes calldata currentPriceData, uint16 iterations)
@@ -513,7 +513,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
 
     /**
      * @notice Helper to calculate the trading exposure of the long side at the time of the last balance update and
-     * currentPrice
+     * `currentPrice`
      */
     function getLongTradingExpo(uint128 currentPrice) external view returns (int256 expo_) {
         expo_ = _totalExpo.toInt256().safeSub(_longAssetAvailable(currentPrice));

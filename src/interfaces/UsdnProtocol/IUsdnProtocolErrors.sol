@@ -9,7 +9,7 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that not enough ether was provided to cover the cost of price validation
     error UsdnProtocolInsufficientOracleFee();
 
-    /// @dev Indicates that the sender could not accept the ether refund
+    /// @dev Indicates that the `sender` could not accept the ether refund
     error UsdnProtocolEtherRefundFailed();
 
     /// @dev Indicates that the provided amount is zero
@@ -28,7 +28,7 @@ interface IUsdnProtocolErrors {
     error UsdnProtocolMinInitAmount(uint256 minInitAmount);
 
     /**
-     * @dev Indicates that the provided USDN contract has a total supply above zero at deployment
+     * @dev Indicates that the provided USDN contract has a {totalsupply} above zero at deployment
      * @param usdnAddress The USDN contract address
      */
     error UsdnProtocolInvalidUsdn(address usdnAddress);

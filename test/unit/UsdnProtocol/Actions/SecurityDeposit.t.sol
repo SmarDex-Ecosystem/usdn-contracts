@@ -949,7 +949,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:scenario A smart contract with no {receive} function is the validator of a deposit
      * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
      * @custom:when The validator tries to validate the deposit
-     * @custom:then The transaction reverts with the error `UsdnProtocolEtherRefundFailed`
+     * @custom:then The transaction reverts with the error {UsdnProtocolEtherRefundFailed}
      */
     function test_RevertWhen_refundSmartContract_noReceive() public {
         (balanceUser0Before, balanceProtocolBefore,,) = _getBalances();
@@ -969,7 +969,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:scenario A smart contract with no {receive} function is the validator of a `deposit` action
      * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
      * @custom:when The validator tries to validate the deposit
-     * @custom:then The transaction reverts with the error `UsdnProtocolEtherRefundFailed`
+     * @custom:then The transaction reverts with the error {UsdnProtocolEtherRefundFailed}
      * @custom:and We skip the validation deadline + 1
      * @custom:when A user tries to validate the pending action
      * @custom:then The security deposit is refunded to the user and not to the receiver contract
@@ -1004,7 +1004,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:scenario A smart contract with no {receive} function is the validator of a `withdraw` action
      * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
      * @custom:when The validator tries to validate the deposit
-     * @custom:then The transaction reverts with the error `UsdnProtocolEtherRefundFailed`
+     * @custom:then The transaction reverts with the error {UsdnProtocolEtherRefundFailed}
      * @custom:and We skip the validation deadline + 1
      * @custom:when A user tries to validate the pending action
      * @custom:then The security deposit is refunded to the user and not to the receiver contract
@@ -1042,7 +1042,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:scenario A smart contract with no {receive} function is the validator of a `openPosition` action
      * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
      * @custom:when The validator tries to validate the deposit
-     * @custom:then The transaction reverts with the error `UsdnProtocolEtherRefundFailed`
+     * @custom:then The transaction reverts with the error {UsdnProtocolEtherRefundFailed}
      * @custom:and We skip the validation deadline + 1
      * @custom:when A user tries to validate the pending action
      * @custom:then The security deposit is refunded to the user and not to the receiver contract
@@ -1083,7 +1083,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:scenario A smart contract with no {receive} function is the validator of a `closePosition` action
      * @custom:given The value of the security deposit is `SECURITY_DEPOSIT_VALUE`
      * @custom:when The validator tries to validate the deposit
-     * @custom:then The transaction reverts with the error `UsdnProtocolEtherRefundFailed`
+     * @custom:then The transaction reverts with the error {UsdnProtocolEtherRefundFailed}
      * @custom:and We skip the validation deadline + 1
      * @custom:when A user tries to validate the pending action
      * @custom:then The security deposit is refunded to the user and not to the receiver contract

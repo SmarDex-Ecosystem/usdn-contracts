@@ -140,7 +140,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
      * @custom:when The user validates the withdrawal
      * @custom:then The user's wstETH balance increases by 0.347635290659860583
      * @custom:and The USDN total supply decreases by 1000
-     * @custom:and The protocol emits a `ValidatedWithdrawal` event with the withdrawn amount of 0.347635290659860583
+     * @custom:and The protocol emits a {ValidatedWithdrawal} event with the withdrawn amount of 0.347635290659860583
      */
     function test_validateWithdrawPriceUp() public {
         _checkValidateWithdrawWithPrice(
@@ -156,7 +156,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
      * @custom:when The user validates the withdrawal
      * @custom:then The user's wstETH balance increases by 0.416891976723560318
      * @custom:and The USDN total supply decreases by 1000
-     * @custom:and The protocol emits a `ValidatedWithdrawal` event with the withdrawn amount of 0.416891976723560318
+     * @custom:and The protocol emits a {ValidatedWithdrawal} event with the withdrawn amount of 0.416891976723560318
      */
     function test_validateWithdrawPriceDown() public {
         _checkValidateWithdrawWithPrice(
@@ -169,7 +169,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
      * @custom:given The user initiated a withdrawal for 1000 USDN
      * @custom:and The price of the asset is $2000 at the moment of initiation and validation
      * @custom:when The user validates the withdrawal with another address as the beneficiary
-     * @custom:then The protocol emits a `ValidatedWithdrawal` event with the right beneficiary
+     * @custom:then The protocol emits a {ValidatedWithdrawal} event with the right beneficiary
      */
     function test_validateWithdrawDifferentToAddress() public {
         _checkValidateWithdrawWithPrice(uint128(2000 ether), uint128(2000 ether), 0.5 ether, USER_1);
@@ -178,8 +178,8 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario The user sends too much ether when validating a withdrawal
      * @custom:given The user initiated a withdrawal of 1000 USDN and validates it
-     * @custom:when The user sends 0.5 ether as value in the `validateWithdrawal` call
-     * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
+     * @custom:when The user sends 0.5 ether as value in the {validateWithdrawal} call
+     * @custom:then The user gets refunded the excess ether (`0.5 ether - validationCost`)
      */
     function test_validateWithdrawEtherRefund() public {
         oracleMiddleware.setRequireValidationCost(true); // require 1 wei per validation
@@ -286,10 +286,10 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario The user validates a withdrawal action with a reentrancy attempt
-     * @custom:given A user being a smart contract that calls validateWithdrawal with too much ether
-     * @custom:and A receive() function that calls validateWithdrawal again
-     * @custom:when The user calls validateWithdrawal again from the callback
-     * @custom:then The call reverts with InitializableReentrancyGuardReentrantCall
+     * @custom:given A user being a smart contract that calls {validateWithdrawal} with too much ether
+     * @custom:and A {receive()} function that calls {validateWithdrawal} again
+     * @custom:when The user calls {validateWithdrawal} again from the callback
+     * @custom:then The call reverts with {InitializableReentrancyGuardReentrantCall}
      */
     function test_RevertWhen_validateWithdrawalCalledWithReentrancy() public {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
@@ -305,12 +305,12 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         _reenter = true;
         // If a reentrancy occurred, the function should have been called 2 times
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.validateWithdrawal.selector), 2);
-        // The value sent will cause a refund, which will trigger the receive() function of this contract
+        // The value sent will cause a refund, which will trigger the {receive()} function of this contract
         protocol.validateWithdrawal{ value: 1 }(payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
     }
 
     /**
-     * @custom:scenario The user initiates and validates (after the validationDeadline)
+     * @custom:scenario The user initiates and validates (after the `validationDeadline`)
      * a withdraw with another validator
      * @custom:given The user initiated a withdraw of 1000 usdn and validates it
      * @custom:and we wait until the validation deadline is passed

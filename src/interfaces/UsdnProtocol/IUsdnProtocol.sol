@@ -22,7 +22,7 @@ interface IUsdnProtocol is IUsdnProtocolActions {
      * @dev This function can only be called once, and no other user action can be performed until it is called
      * Consult the current oracle middleware implementation to know the expected format for the price data, using the
      * `ProtocolAction.Initialize` action
-     * The price validation might require payment according to the return value of the `getValidationCost` function
+     * The price validation might require payment according to the return value of the {getValidationCost} function
      * of `IBaseOracleMiddleware`
      * @param depositAmount The amount of wstETH for the deposit
      * @param longAmount The amount of wstETH for the long
@@ -37,21 +37,21 @@ interface IUsdnProtocol is IUsdnProtocolActions {
     ) external payable;
 
     /**
-     * @notice Replace the OracleMiddleware contract with a new implementation
+     * @notice Replace the `OracleMiddleware` contract with a new implementation
      * @dev Cannot be the 0 address
      * @param newOracleMiddleware The address of the new contract
      */
     function setOracleMiddleware(IBaseOracleMiddleware newOracleMiddleware) external;
 
     /**
-     * @notice Replace the LiquidationRewardsManager contract with a new implementation
+     * @notice Replace the `LiquidationRewardsManager` contract with a new implementation
      * @dev Cannot be the 0 address
      * @param newLiquidationRewardsManager The address of the new contract
      */
     function setLiquidationRewardsManager(ILiquidationRewardsManager newLiquidationRewardsManager) external;
 
     /**
-     * @notice Replace the Rebalancer contract with a new implementation
+     * @notice Replace the `Rebalancer` contract with a new implementation
      * @param newRebalancer The address of the new contract
      */
     function setRebalancer(IRebalancer newRebalancer) external;
@@ -138,7 +138,7 @@ interface IUsdnProtocol is IUsdnProtocolActions {
 
     /**
      * @notice Set the security deposit value
-     * @dev The maximum value of the security deposit is 2^64 - 1 = 18446744073709551615 = 18.4 ethers
+     * @dev The maximum value of the security deposit is `2^64 - 1 = 18446744073709551615 = 18.4 ethers`
      * @param securityDepositValue The security deposit value
      */
     function setSecurityDepositValue(uint64 securityDepositValue) external;
@@ -159,7 +159,7 @@ interface IUsdnProtocol is IUsdnProtocolActions {
 
     /**
      * @notice Set imbalance limits basis point
-     * @dev `newLongImbalanceTargetBps` needs to be lower than newCloseLimitBps and
+     * @dev `newLongImbalanceTargetBps` needs to be lower than `newCloseLimitBps` and
      * higher than `- newWithdrawalLimitBps`
      * @param newOpenLimitBps The new open limit
      * @param newDepositLimitBps The new deposit limit
@@ -178,7 +178,7 @@ interface IUsdnProtocol is IUsdnProtocolActions {
 
     /**
      * @notice Set the target USDN price
-     * @param newPrice The new target price (with _priceFeedDecimals)
+     * @param newPrice The new target price (with `_priceFeedDecimals`)
      * @dev When a rebase of USDN occurs, it will bring the price back down to this value
      * This value cannot be greater than `_usdnRebaseThreshold`
      */
@@ -186,7 +186,7 @@ interface IUsdnProtocol is IUsdnProtocolActions {
 
     /**
      * @notice Set the USDN rebase threshold
-     * @param newThreshold The new threshold value (with _priceFeedDecimals)
+     * @param newThreshold The new threshold value (with `_priceFeedDecimals`)
      * @dev When the price of USDN exceeds this value, a rebase might be triggered
      * This value cannot be smaller than `_targetUsdnPrice`
      */
@@ -196,7 +196,7 @@ interface IUsdnProtocol is IUsdnProtocolActions {
      * @notice Set the USDN rebase interval
      * @param newInterval The new interval duration
      * @dev When the duration since the last rebase check exceeds this value, a rebase check will be performed
-     * When calling `liquidate`, this limit is ignored and the check is always performed
+     * When calling {liquidate}, this limit is ignored and the check is always performed
      */
     function setUsdnRebaseInterval(uint256 newInterval) external;
 
@@ -220,7 +220,7 @@ interface IUsdnProtocol is IUsdnProtocolActions {
      * @notice Remove a stuck pending action with no cleanup
      * @dev This function can only be called by the owner of the protocol, it serves as an escape hatch if a
      * pending action ever gets stuck due to something internal reverting unexpectedly
-     * Always try to use `removeBlockedPendingAction` first, and only call this function if the other one fails
+     * Always try to use {removeBlockedPendingAction} first, and only call this function if the other one fails
      * @param validator The address of the validator
      * @param to Where the retrieved funds should be sent (security deposit, assets, usdn)
      */
@@ -239,7 +239,7 @@ interface IUsdnProtocol is IUsdnProtocolActions {
      * @notice Remove a stuck pending action with no cleanup
      * @dev This function can only be called by the owner of the protocol, it serves as an escape hatch if a
      * pending action ever gets stuck due to something internal reverting unexpectedly
-     * Always try to use `removeBlockedPendingAction` first, and only call this function if the other one fails
+     * Always try to use {removeBlockedPendingAction} first, and only call this function if the other one fails
      * @param rawIndex The raw index of the pending action in the queue
      * @param to Where the retrieved funds should be sent (security deposit, assets, usdn)
      */

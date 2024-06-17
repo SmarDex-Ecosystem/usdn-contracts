@@ -26,8 +26,8 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
     /**
      * @notice Get the predicted value of the long balance for the given asset price and timestamp
      * @dev The effects of the funding rates and any profit or loss of the long positions since the last contract state
-     * update is taken into account, as well as the fees. If the provided timestamp is older than the last state
-     * update, the function reverts with `UsdnProtocolTimestampTooOld`
+     * update is taken into account, as well as the fees. If the provided `timestamp` is older than the last state
+     * update, the function reverts with {UsdnProtocolTimestampTooOld}
      * @param currentPrice The current or predicted asset price
      * @param timestamp The timestamp corresponding to `currentPrice`
      * @return The long balance
@@ -38,7 +38,7 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
      * @notice Get the predicted value of the vault balance for the given asset price and timestamp
      * @dev The effects of the funding rates and any profit or loss of the long positions since the last contract state
      * update is taken into account, as well as the fees. If the provided timestamp is older than the last state
-     * update, the function reverts with `UsdnProtocolTimestampTooOld`
+     * update, the function reverts with {UsdnProtocolTimestampTooOld}
      * @param currentPrice The current or predicted asset price
      * @param timestamp The timestamp corresponding to `currentPrice`
      * @return The vault balance
@@ -74,7 +74,7 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
      * @notice Get the predicted value of the funding since the last state update for the given timestamp
      * @dev When multiplied with the long trading exposure, this value gives the asset balance that needs to be paid to
      * the vault side (or long side if negative). If the provided timestamp is older than the last state update, the
-     * function reverts with `UsdnProtocolTimestampTooOld`
+     * function reverts with {UsdnProtocolTimestampTooOld}
      * @param timestamp The current timestamp
      * @return fund_ The magnitude of the funding (with `FUNDING_RATE_DECIMALS` decimals)
      * @return oldLongExpo_ The long trading exposure after the last state update

@@ -14,7 +14,7 @@ import {
 import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
 /**
- * @custom:feature The initiateDeposit function of the USDN Protocol
+ * @custom:feature The {initiateDeposit} function of the USDN Protocol
  * @custom:background Given a protocol initialized at equilibrium.
  * @custom:and A user with 10 wstETH in their wallet
  */
@@ -44,9 +44,9 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
      * @custom:and The user's SDEX balance decreases by 20 SDEX
      * @custom:and The dead address's SDEX balance increases by 20 SDEX
      * @custom:and The protocol's wstETH balance increases by 1 wstETH
-     * @custom:and The protocol emits an `InitiatedDeposit` event
+     * @custom:and The protocol emits an {InitiatedDeposit} event
      * @custom:and The USDN total supply does not change yet
-     * @custom:and The user has a pending action of type `ValidateDeposit` with the amount of 1 wstETH
+     * @custom:and The user has a pending action of type {ValidateDeposit} with the amount of 1 wstETH
      * @custom:and The pending action is not actionable yet
      * @custom:and The pending action is actionable after the validation deadline has elapsed
      */
@@ -57,9 +57,9 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario The user initiates a deposit of 1 wstETH with another user as the beneficiary
      * @custom:given The to parameter is different from the sender of the transaction
-     * @custom:when initiateDeposit function is called
-     * @custom:then The protocol emits an `InitiatedDeposit` event with the right beneficiary
-     * @custom:and The user has a pending action of type `InitiateDeposit` with the right beneficiary
+     * @custom:when {initiateDeposit} function is called
+     * @custom:then The protocol emits an {InitiatedDeposit} event with the right beneficiary
+     * @custom:and The user has a pending action of type {InitiateDeposit} with the right beneficiary
      */
     function test_initiateDepositForAnotherUser() public {
         _initiateDepositScenario(USER_1, USER_1);
@@ -67,10 +67,10 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario The user initiates a deposit of 1 wstETH with another validator
-     * @custom:given The validator parameter is different from the sender of the transaction
-     * @custom:when initiateDeposit function is called
-     * @custom:then The protocol emits an `InitiatedDeposit` event with the right validator
-     * @custom:and The user has a pending action of type `InitiateDeposit` with the right validator
+     * @custom:given The `validator` parameter is different from the sender of the transaction
+     * @custom:when {initiateDeposit} function is called
+     * @custom:then The protocol emits an {InitiatedDeposit} event with the right validator
+     * @custom:and The user has a pending action of type {InitiateDeposit} with the right validator
      */
     function test_initiateDepositDifferentValidator() public {
         _initiateDepositScenario(address(this), USER_1);
@@ -137,7 +137,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
      * @custom:scenario The user initiates a deposit with parameter to defined at zero
      * @custom:given An initialized USDN protocol
      * @custom:when The user initiates a deposit with parameter to defined at zero
-     * @custom:then The protocol reverts with `UsdnProtocolInvalidAddressTo`
+     * @custom:then The protocol reverts with {UsdnProtocolInvalidAddressTo}
      */
     function test_RevertWhen_zeroAddressTo() public {
         vm.expectRevert(UsdnProtocolInvalidAddressTo.selector);
@@ -155,7 +155,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
      * @custom:scenario The user initiates a deposit with parameter validator defined at zero
      * @custom:given An initialized USDN protocol
      * @custom:when The user initiates a deposit with parameter validator defined at zero
-     * @custom:then The protocol reverts with `UsdnProtocolInvalidAddressValidator`
+     * @custom:then The protocol reverts with {UsdnProtocolInvalidAddressValidator}
      */
     function test_RevertWhen_zeroAddressValidator() public {
         vm.expectRevert(UsdnProtocolInvalidAddressValidator.selector);
@@ -172,7 +172,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario The user initiates a deposit of 0 wstETH
      * @custom:when The user initiates a deposit of 0 wstETH
-     * @custom:then The protocol reverts with `UsdnProtocolZeroAmount`
+     * @custom:then The protocol reverts with {UsdnProtocolZeroAmount}
      */
     function test_RevertWhen_zeroAmount() public {
         bytes memory priceData = abi.encode(uint128(2000 ether));
@@ -184,7 +184,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
      * @custom:scenario The user initiates a small deposit and no USDN would be minted
      * @custom:given The price of wstETH is $0.1
      * @custom:when The user initiates a deposit of 4 wei of wstETH
-     * @custom:then The protocol reverts with `UsdnProtocolDepositTooSmall`
+     * @custom:then The protocol reverts with {UsdnProtocolDepositTooSmall}
      */
     function test_RevertWhen_depositTooSmallNoUSDN() public {
         params = DEFAULT_PARAMS;
@@ -219,7 +219,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
      * @custom:when The user initiates a deposit of 99 wei of wstETH
      * @custom:then The protocol would mint more than 0 USDN
      * @custom:and The protocol would burn 0 SDEX
-     * @custom:and The protocol reverts with `UsdnProtocolDepositTooSmall`
+     * @custom:and The protocol reverts with {UsdnProtocolDepositTooSmall}
      */
     function test_RevertWhen_depositTooSmallNoSDEXBurned() public {
         params = DEFAULT_PARAMS;
@@ -286,8 +286,8 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario The user sends too much ether when initiating a deposit
      * @custom:given The user deposits 1 wstETH
-     * @custom:when The user sends 0.5 ether as value in the `initiateDeposit` call
-     * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
+     * @custom:when The user sends 0.5 ether as value in the {initiateDeposit} call
+     * @custom:then The user gets refunded the excess ether (`0.5 ether - validationCost`)
      */
     function test_initiateDepositEtherRefund() public {
         oracleMiddleware.setRequireValidationCost(true); // require 1 wei per validation
@@ -302,10 +302,10 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario The user initiates a deposit action with a reentrancy attempt
-     * @custom:given A user being a smart contract that calls initiateDeposit with too much ether
-     * @custom:and A receive() function that calls initiateDeposit again
+     * @custom:given A user being a smart contract that calls {initiateDeposit} with too much ether
+     * @custom:and A {receive()} function that calls initiateDeposit again
      * @custom:when The user calls initiateDeposit again from the callback
-     * @custom:then The call reverts with InitializableReentrancyGuardReentrantCall
+     * @custom:then The call reverts with {InitializableReentrancyGuardReentrantCall}
      */
     function test_RevertWhen_initiateDepositCalledWithReentrancy() public {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
@@ -321,7 +321,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         _reenter = true;
         // If a reentrancy occurred, the function should have been called 2 times
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.initiateDeposit.selector), 2);
-        // The value sent will cause a refund, which will trigger the receive() function of this contract
+        // The value sent will cause a refund, which will trigger the {receive()} function of this contract
         protocol.initiateDeposit{ value: 1 }(
             1 ether, address(this), payable(address(this)), NO_PERMIT2, currentPrice, EMPTY_PREVIOUS_DATA
         );
@@ -331,7 +331,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
      * @custom:scenario A initiate deposit liquidates a tick but is not initiated because another tick still needs to
      * be liquidated
      * @custom:given Two long positions in different ticks
-     * @custom:when A user calls `initiateDeposit` with a price below both liquidation prices
+     * @custom:when A user calls {initiateDeposit} with a price below both liquidation prices
      * @custom:then One of the two long positions is liquidated
      * @custom:and The deposit action isn't initiated due to a pending liquidation
      * @custom:and The user wsteth balance should not change

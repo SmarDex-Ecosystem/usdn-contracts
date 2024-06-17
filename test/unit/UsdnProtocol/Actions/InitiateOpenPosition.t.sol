@@ -15,7 +15,7 @@ import {
 import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
 /**
- * @custom:feature The initiateOpenPosition function of the UsdnProtocolActions contract
+ * @custom:feature The {initiateOpenPosition} function of the `UsdnProtocolActions` contract
  * @custom:background Given a protocol initialized with default params
  * @custom:and A user with 10 wstETH in their wallet
  */
@@ -55,7 +55,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
      * @custom:given The amount of collateral is 1 wstETH and the current price is 2000$
      * @custom:when The user initiates an open position with 1 wstETH and a desired liquidation price of ~1333$ (approx
      * 3x leverage)
-     * @custom:then The protocol creates the position and emits the InitiatedOpenPosition event
+     * @custom:then The protocol creates the position and emits the {InitiatedOpenPosition} event
      * @custom:and the state changes are as expected
      */
     function test_initiateOpenPosition() public {
@@ -68,7 +68,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
      * @custom:when The sender initiates an open position with 1 wstETH and a desired liquidation price of ~1333$
      * (approx 3x leverage)
      * @custom:then The protocol creates the position for the defined
-     * user and emits the InitiatedOpenPosition event
+     * user and emits the {InitiatedOpenPosition} event
      * @custom:and the state changes are as expected
      */
     function test_initiateOpenPositionForAnotherUser() public {
@@ -80,7 +80,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
      * @custom:given The amount of collateral is 1 wstETH and the current price is 2000$
      * @custom:when The user initiates an open position with 1 wstETH and a desired liquidation price of ~1333$
      * (approx 3x leverage) and a different validator
-     * @custom:then The protocol creates the position and emits the InitiatedOpenPosition event
+     * @custom:then The protocol creates the position and emits the {InitiatedOpenPosition} event
      * @custom:and the state changes are as expected
      */
     function test_initiateOpenPositionDifferentValidator() public {
@@ -228,7 +228,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
      * @custom:scenario A initiate open position liquidates a tick but is not initiated because another tick still
      * needs to be liquidated
      * @custom:given Two positions in different ticks
-     * @custom:when The `initiateOpenPosition` function is called with a price below the liq price of both positions
+     * @custom:when The {initiateOpenPosition} function is called with a price below the liq price of both positions
      * @custom:then One of the positions is liquidated
      * @custom:and The new position isn't initiated
      * @custom:and The user wsteth balance does not change
@@ -275,7 +275,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
     /**
      * @custom:scenario The user initiates an open position action with a zero amount
      * @custom:when The user initiates an open position with 0 wstETH
-     * @custom:then The protocol reverts with UsdnProtocolZeroAmount
+     * @custom:then The protocol reverts with {UsdnProtocolZeroAmount}
      */
     function test_RevertWhen_initiateOpenPositionZeroAmount() public {
         vm.expectRevert(UsdnProtocolZeroAmount.selector);
@@ -294,7 +294,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
      * @custom:scenario The user initiates an open position action with no recipient
      * @custom:given An initialized USDN protocol
      * @custom:when The user initiates an open position with the address to at zero
-     * @custom:then The protocol reverts with UsdnProtocolInvalidAddressTo
+     * @custom:then The protocol reverts with {UsdnProtocolInvalidAddressTo}
      */
     function test_RevertWhen_zeroAddressTo() public {
         vm.expectRevert(UsdnProtocolInvalidAddressTo.selector);
@@ -313,7 +313,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
      * @custom:scenario The user initiates an open position action with parameter validator defined at zero
      * @custom:given An initialized USDN protocol
      * @custom:when The user initiates an open position with the address validator at zero
-     * @custom:then The protocol reverts with UsdnProtocolInvalidAddressValidator
+     * @custom:then The protocol reverts with {UsdnProtocolInvalidAddressValidator}
      */
     function test_RevertWhen_zeroAddressValidator() public {
         vm.expectRevert(UsdnProtocolInvalidAddressValidator.selector);
@@ -331,7 +331,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
     /**
      * @custom:scenario The user initiates an open position action with a leverage that's too low
      * @custom:when The user initiates an open position with a desired liquidation price of $0.0000000000001
-     * @custom:then The protocol reverts with UsdnProtocolLeverageTooLow
+     * @custom:then The protocol reverts with {UsdnProtocolLeverageTooLow}
      */
     function test_RevertWhen_initiateOpenPositionLowLeverage() public {
         vm.expectRevert(UsdnProtocolLeverageTooLow.selector);
@@ -350,7 +350,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
      * @custom:scenario The user initiates an open position action with a leverage that's too high
      * @custom:given The maximum leverage is 10x and the current price is $2000
      * @custom:when The user initiates an open position with a desired liquidation price of $1854
-     * @custom:then The protocol reverts with UsdnProtocolLeverageTooHigh
+     * @custom:then The protocol reverts with {UsdnProtocolLeverageTooHigh}
      */
     function test_RevertWhen_initiateOpenPositionHighLeverage() public {
         // max liquidation price without liquidation penalty
@@ -375,7 +375,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
      * @custom:given The safety margin is 2% and the current price is $2000
      * @custom:and The maximum leverage is 100x
      * @custom:when The user initiates an open position with a desired liquidation price of $2000
-     * @custom:then The protocol reverts with UsdnProtocolLiquidationPriceSafetyMargin
+     * @custom:then The protocol reverts with {UsdnProtocolLiquidationPriceSafetyMargin}
      */
     function test_RevertWhen_initiateOpenPositionSafetyMargin() public {
         // set the max leverage very high to allow for such a case
@@ -411,7 +411,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
      * @custom:given A pending new position was liquidated before being validated
      * @custom:and The pending action is stale (tick version mismatch)
      * @custom:when The user opens another position
-     * @custom:then The protocol emits a `StalePendingActionRemoved` event
+     * @custom:then The protocol emits a {StalePendingActionRemoved} event
      * @custom:and The transaction does not revert
      */
     function test_initiateOpenPositionWithStalePendingAction() public {
@@ -430,8 +430,8 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
     /**
      * @custom:scenario The user sends too much ether when initiating a position opening
      * @custom:given The user opens a position
-     * @custom:when The user sends 0.5 ether as value in the `initiateOpenPosition` call
-     * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
+     * @custom:when The user sends 0.5 ether as value in the {initiateOpenPosition} call
+     * @custom:then The user gets refunded the excess ether (`0.5 ether - validationCost`)
      */
     function test_initiateOpenPositionEtherRefund() public {
         oracleMiddleware.setRequireValidationCost(true); // require 1 wei per validation
@@ -452,10 +452,10 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
 
     /**
      * @custom:scenario The user initiates an open position action with a reentrancy attempt
-     * @custom:given A user being a smart contract that calls initiateOpenPosition with too much ether
-     * @custom:and A receive() function that calls initiateOpenPosition again
-     * @custom:when The user calls initiateOpenPosition again from the callback
-     * @custom:then The call reverts with InitializableReentrancyGuardReentrantCall
+     * @custom:given A user being a smart contract that calls {initiateOpenPosition} with too much ether
+     * @custom:and A {receive()} function that calls {initiateOpenPosition} again
+     * @custom:when The user calls {initiateOpenPosition} again from the callback
+     * @custom:then The call reverts with {InitializableReentrancyGuardReentrantCall}
      */
     function test_RevertWhen_initiateOpenPositionCalledWithReentrancy() public {
         if (_reenter) {
@@ -475,7 +475,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         _reenter = true;
         // If a reentrancy occurred, the function should have been called 2 times
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.initiateOpenPosition.selector), 2);
-        // The value sent will cause a refund, which will trigger the receive() function of this contract
+        // The value sent will cause a refund, which will trigger the {receive()} function of this contract
         protocol.initiateOpenPosition{ value: 1 }(
             1 ether,
             1500 ether,

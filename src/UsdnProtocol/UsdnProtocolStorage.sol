@@ -207,7 +207,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
     /**
      * @notice The interval between two automatic rebase checks. Disabled by default
-     * @dev A rebase can be forced (if the `_usdnRebaseThreshold` is exceeded) by calling the `liquidate` function
+     * @dev A rebase can be forced (if the `_usdnRebaseThreshold` is exceeded) by calling the {liquidate} function
      */
     uint256 internal _usdnRebaseInterval = 0;
 

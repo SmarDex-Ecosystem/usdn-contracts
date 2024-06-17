@@ -17,7 +17,7 @@ contract TestSignedMathConcrete is SignedMathFixture {
     /**
      * @custom:scenario Add two operands
      * @custom:given The operands lead to no overflow
-     * @custom:when Calling `safeAdd`
+     * @custom:when Calling {safeAdd}
      * @custom:then Return the sum of the operands
      */
     function test_safeAdd() public {
@@ -30,8 +30,8 @@ contract TestSignedMathConcrete is SignedMathFixture {
     /**
      * @custom:scenario Add two operands
      * @custom:given The operands lead to overflow
-     * @custom:when Calling `safeAdd`
-     * @custom:then Revert with `SignedMathOverflowedAdd`
+     * @custom:when Calling {safeAdd}
+     * @custom:then Revert with {SignedMathOverflowedAdd}
      */
     function test_RevertWhen_addOverflow() public {
         int256 lhs = type(int256).max;
@@ -47,8 +47,8 @@ contract TestSignedMathConcrete is SignedMathFixture {
     /**
      * @custom:scenario Add two operands
      * @custom:given The operands lead to underflow
-     * @custom:when Calling `safeAdd`
-     * @custom:then Revert with `SignedMathOverflowedAdd`
+     * @custom:when Calling {safeAdd}
+     * @custom:then Revert with {SignedMathOverflowedAdd}
      */
     function test_RevertWhen_addUnderflow() public {
         int256 lhs = type(int256).min;
@@ -64,7 +64,7 @@ contract TestSignedMathConcrete is SignedMathFixture {
     /**
      * @custom:scenario Subtract two operands
      * @custom:given The operands lead to no overflow
-     * @custom:when Calling `safeSub`
+     * @custom:when Calling {safeSub}
      * @custom:then Return the difference of the operands
      */
     function test_safeSub() public {
@@ -77,8 +77,8 @@ contract TestSignedMathConcrete is SignedMathFixture {
     /**
      * @custom:scenario Subtract two operands
      * @custom:given The operands lead to overflow
-     * @custom:when Calling `safeSub`
-     * @custom:then Revert with `SignedMathOverflowedSub`
+     * @custom:when Calling {safeSub}
+     * @custom:then Revert with {SignedMathOverflowedSub}
      */
     function test_RevertWhen_subOverflow() public {
         int256 lhs = type(int256).max;
@@ -94,8 +94,8 @@ contract TestSignedMathConcrete is SignedMathFixture {
     /**
      * @custom:scenario Subtract two operands
      * @custom:given The operands lead to underflow
-     * @custom:when Calling `safeSub`
-     * @custom:then Revert with `SignedMathOverflowedSub`
+     * @custom:when Calling {safeSub}
+     * @custom:then Revert with {SignedMathOverflowedSub}
      */
     function test_RevertWhen_subUnderflow() public {
         int256 lhs = type(int256).min;
@@ -111,7 +111,7 @@ contract TestSignedMathConcrete is SignedMathFixture {
     /**
      * @custom:scenario Multiply two operands
      * @custom:given The operands lead to no overflow
-     * @custom:when Calling `safeMul`
+     * @custom:when Calling {safeMul}
      * @custom:then Return the product of the operands
      */
     function test_safeMul() public {
@@ -125,8 +125,8 @@ contract TestSignedMathConcrete is SignedMathFixture {
     /**
      * @custom:scenario Multiply two operands
      * @custom:given The operands lead to overflow
-     * @custom:when Calling `safeMul`
-     * @custom:then Revert with `SignedMathOverflowedMul`
+     * @custom:when Calling {safeMul}
+     * @custom:then Revert with {SignedMathOverflowedMul}
      */
     function test_RevertWhen_mulOverflow() public {
         int256 lhs = type(int256).max;
@@ -151,8 +151,8 @@ contract TestSignedMathConcrete is SignedMathFixture {
     /**
      * @custom:scenario Multiply two operands
      * @custom:given The operands lead to underflow
-     * @custom:when Calling `safeMul`
-     * @custom:then Revert with `SignedMathOverflowedMul`
+     * @custom:when Calling {safeMul}
+     * @custom:then Revert with {SignedMathOverflowedMul}
      */
     function test_RevertWhen_mulUnderflow() public {
         int256 lhs = type(int256).min;
@@ -172,7 +172,7 @@ contract TestSignedMathConcrete is SignedMathFixture {
     /**
      * @custom:scenario Divide two operands
      * @custom:given The second operand is non-zero
-     * @custom:when Calling `safeDiv`
+     * @custom:when Calling {safeDiv}
      * @custom:then Return the quotient of the operands
      */
     function test_safeDiv() public {
@@ -185,8 +185,8 @@ contract TestSignedMathConcrete is SignedMathFixture {
     /**
      * @custom:scenario Divide two operands
      * @custom:given The second operand is zero
-     * @custom:when Calling `safeDiv`
-     * @custom:then Revert with `SignedMathDivideByZero`
+     * @custom:when Calling {safeDiv}
+     * @custom:then Revert with {SignedMathDivideByZero}
      */
     function test_RevertWhen_divZero() public {
         int256 lhs = 42;
@@ -200,9 +200,9 @@ contract TestSignedMathConcrete is SignedMathFixture {
 
     /**
      * @custom:scenario Divide two operands
-     * @custom:given The first operand is int256.min and the second operand is -1
-     * @custom:when Calling `safeDiv`
-     * @custom:then Revert with `SignedMathOverflowedDiv`
+     * @custom:given The first operand is int256.min and the second operand is `-1`
+     * @custom:when Calling {safeDiv}
+     * @custom:then Revert with {SignedMathOverflowedDiv}
      */
     function test_RevertWhen_divOverflow() public {
         int256 lhs = type(int256).min;

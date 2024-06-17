@@ -38,7 +38,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     using Permit2TokenBitfield for Permit2TokenBitfield.Bitfield;
 
     /**
-     * @dev Structure to hold the transient data during `_initiateDeposit`
+     * @dev Structure to hold the transient data during {_initiateDeposit}
      * @param pendingActionPrice The adjusted price with position fees applied
      * @param isLiquidationPending Whether some liquidations still need to be performed
      * @param totalExpo The total expo of the long side
@@ -58,12 +58,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     /**
-     * @dev Structure to hold the transient data during `_initiateWithdrawal`
+     * @dev Structure to hold the transient data during {_initiateWithdrawal}
      * @param pendingActionPrice The adjusted price with position fees applied
      * @param usdnTotalShares The total shares supply of USDN
      * @param totalExpo The current total expo
      * @param balanceLong The current long balance
-     * @param balanceVault The vault balance, adjusted according to the pendingActionPrice
+     * @param balanceVault The vault balance, adjusted according to the `pendingActionPrice`
      * @param withdrawalAmount The predicted amount of assets that will be withdrawn
      * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
      */
@@ -78,7 +78,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     /**
-     * @notice Parameters for the internal `_initiateOpenPosition` function
+     * @notice Parameters for the internal {_initiateOpenPosition} function
      * @param user The address of the user initiating the open position
      * @param to The address that will be the owner of the position
      * @param validator The address that will validate the open position
@@ -100,7 +100,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     /**
-     * @dev Structure to hold the transient data during `_initiateOpenPosition`
+     * @dev Structure to hold the transient data during {_initiateOpenPosition}
      * @param adjustedPrice The adjusted price with position fees applied
      * @param posId The new position id
      * @param liquidationPenalty The liquidation penalty
@@ -116,7 +116,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     /**
-     * @dev Structure to hold the transient data during `_validateOpenPosition`
+     * @dev Structure to hold the transient data during {_validateOpenPosition}
      * @param action The long pending action
      * @param startPrice The new entry price of the position
      * @param tickHash The tick hash
@@ -138,7 +138,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     /**
-     * @dev Structure to hold the transient data during `_initiateClosePosition`
+     * @dev Structure to hold the transient data during {_initiateClosePosition}
      * @param pos The position to close
      * @param liquidationPenalty The liquidation penalty
      * @param totalExpoToClose The total expo to close
@@ -593,7 +593,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
     /**
      * @notice Send rewards to the liquidator
-     * @dev Should still emit an event if liquidationRewards = 0 to better keep track of those anomalies as rewards for
+     * @dev Should still emit an event if `liquidationRewards = 0` to better keep track of those anomalies as rewards
+     * for
      * those will be managed off-chain
      * @param liquidatedTicks The number of ticks that were liquidated
      * @param remainingCollateral The amount of collateral remaining after liquidations
@@ -632,7 +633,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     /**
-     * @notice Prepare the data for the `initiateDeposit` function
+     * @notice Prepare the data for the {initiateDeposit} function
      * @param validator The validator address
      * @param amount The amount of asset to deposit
      * @param currentPriceData The price data for the initiate action
@@ -728,7 +729,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @notice Initiate a deposit of assets into the vault to mint USDN
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
      * the `ProtocolAction.InitiateDeposit` action
-     * The price validation might require payment according to the return value of the `getValidationCost` function
+     * The price validation might require payment according to the return value of the {getValidationCost} function
      * of the middleware
      * @param user The address of the user initiating the deposit
      * @param to The address to receive the USDN tokens
@@ -975,7 +976,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @notice Initiate a withdrawal of assets from the vault by providing USDN tokens
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
      * the `ProtocolAction.InitiateWithdrawal` action
-     * The price validation might require payment according to the return value of the `getValidationCost` function
+     * The price validation might require payment according to the return value of the {getValidationCost} function
      * of the middleware
      * @param user The address of the user initiating the withdrawal
      * @param to The address that will receive the assets
@@ -1222,7 +1223,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @notice Initiate an open position action
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
      * the `ProtocolAction.InitiateOpenPosition` action
-     * The price validation might require payment according to the return value of the `getValidationCost` function
+     * The price validation might require payment according to the return value of the {getValidationCost} function
      * of the middleware
      * The position is immediately included in the protocol calculations with a temporary entry price (and thus
      * leverage). The validation operation then updates the entry price and leverage with fresher data
@@ -1374,7 +1375,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         data_.liquidationPenalty = _tickData[data_.tickHash].liquidationPenalty;
         data_.liqPriceWithoutPenalty =
             getEffectivePriceForTick(_calcTickWithoutPenalty(data_.action.tick, data_.liquidationPenalty));
-        // reverts if liqPriceWithoutPenalty >= startPrice
+        // reverts if `liqPriceWithoutPenalty >= startPrice`
         data_.leverage = _getLeverage(data_.startPrice, data_.liqPriceWithoutPenalty);
     }
 
@@ -1400,12 +1401,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         // leverage is always greater than one (`liquidationPrice` is positive)
-        // even if it drops below _minLeverage between the initiate and validate actions, we still allow it
+        // even if it drops below `_minLeverage` between the initiate and validate actions, we still allow it
         // however, if the leverage exceeds max leverage, then we adjust the liquidation price (tick) to have a leverage
-        // of _maxLeverage
+        // of `_maxLeverage`
         uint128 maxLeverage = uint128(_maxLeverage);
         if (data.leverage > maxLeverage) {
-            // theoretical liquidation price for _maxLeverage
+            // theoretical liquidation price for `_maxLeverage`
             data.liqPriceWithoutPenalty = _getLiquidationPrice(data.startPrice, maxLeverage);
             // adjust to the closest valid tick down
             int24 tickWithoutPenalty = getEffectiveTickForPrice(data.liqPriceWithoutPenalty);
@@ -1436,7 +1437,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                     getEffectivePriceForTick(_calcTickWithoutPenalty(newPosId.tick, liquidationPenalty));
             }
 
-            // move the position to its new tick, update its total expo, and return the new tickVersion and index
+            // move the position to its new tick, update its total expo, and return the new `tickVersion` and index
             // remove position from old tick completely
             _removeAmountFromPosition(
                 data.action.tick, data.action.index, data.pos, data.pos.amount, data.pos.totalExpo
@@ -1449,7 +1450,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             (newPosId.tickVersion, newPosId.index,) = _saveNewPosition(newPosId.tick, data.pos, liquidationPenalty);
             // no long balance update is necessary (collateral didn't change)
 
-            // emit LiquidationPriceUpdated
+            // emit {LiquidationPriceUpdated}
             emit LiquidationPriceUpdated(
                 PositionId({ tick: data.action.tick, tickVersion: data.action.tickVersion, index: data.action.index }),
                 newPosId
@@ -1474,7 +1475,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // do not use += or it will underflow
         _totalExpo = _totalExpo + expoAfter - expoBefore;
 
-        // update the tick data and the liqMultiplierAccumulator
+        // update the tick data and the `liqMultiplierAccumulator`
         {
             TickData storage tickData = _tickData[data.tickHash];
             uint256 unadjustedTickPrice =
@@ -1663,7 +1664,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @notice Initiate a close position action
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
      * the `ProtocolAction.InitiateClosePosition` action
-     * The price validation might require payment according to the return value of the `getValidationCost` function
+     * The price validation might require payment according to the return value of the {getValidationCost} function
      * of the middleware
      * If the current tick version is greater than the tick version of the position (when it was opened), then the
      * position has been liquidated and this function will return 0
@@ -1909,7 +1910,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         if (positionValue <= 0) {
             // should not happen, unless we did not manage to liquidate all ticks that needed to be liquidated during
-            // the initiateClosePosition
+            // the {initiateClosePosition}
             boundedPosValue_ = 0;
         } else if (uint256(positionValue) > available) {
             boundedPosValue_ = available;
@@ -1938,7 +1939,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @notice Execute the first actionable pending action and report the success
      * @param data The price data and raw indices
      * @return success_ Whether the price data is valid
-     * @return executed_ Whether the pending action was executed (false if the queue has no actionable item)
+     * @return executed_ Whether the pending action was executed (`false` if the queue has no actionable item)
      * @return liquidated_ Whether the position corresponding to the pending action was liquidated
      * @return securityDepositValue_ The security deposit value of the executed action
      */
@@ -2015,7 +2016,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param priceData The price oracle update data
      * @return liquidatedPositions_ The number of positions that were liquidated
      * @return isLiquidationPending_ If there are pending positions to liquidate
-     * @dev If there were any liquidated positions, it sends rewards to the msg.sender
+     * @dev If there were any liquidated positions, it sends rewards to the `msg.sender`
      */
     function _applyPnlAndFundingAndLiquidate(
         uint256 neutralPrice,
@@ -2116,7 +2117,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             }
         }
 
-        // the default value of `positionAmount` is the amount of pendingAssets in the rebalancer
+        // the default value of `positionAmount` is the amount of `pendingAssets` in the rebalancer
         (uint128 positionAmount, uint256 rebalancerMaxLeverage, PositionId memory rebalancerPosId) =
             rebalancer.getCurrentStateData();
 

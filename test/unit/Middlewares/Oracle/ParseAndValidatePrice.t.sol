@@ -19,7 +19,7 @@ import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMi
 import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
- * @custom:feature The `parseAndValidatePrice` function of `OracleMiddleware`
+ * @custom:feature The {parseAndValidatePrice} function of `OracleMiddleware`
  * @custom:background Given the price of ETH is 2000 USD
  * @custom:and The confidence interval is 20 USD
  */
@@ -75,9 +75,9 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
     /**
      * @custom:scenario Parse and validate price with Pyth when data is provided
      * @custom:given ETH price is 2000 USD in pyth and chainlink oracles
-     * @custom:and The validationDelay is respected
+     * @custom:and The `validationDelay` is respected
      * @custom:and Non-empty data was given
-     * @custom:when Calling parseAndValidatePrice
+     * @custom:when Calling {parseAndValidatePrice}
      * @custom:then The price is exactly 2000 USD
      */
     function test_parseAndValidatePriceWithPythForAllActions() public {
@@ -118,7 +118,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
      * @custom:scenario Parse and validate price with Redstone
      * @custom:given ETH price is ~3838 USD in Redstone
      * @custom:and The validationDelay is respected
-     * @custom:when Calling `parseAndValidatePrice` with a valid Redstone price update
+     * @custom:when Calling {parseAndValidatePrice} with a valid Redstone price update
      * @custom:then The price is adjusted according to the penalty
      */
     function test_parseAndValidatePriceWithRedstoneForAllActions() public {
@@ -153,7 +153,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
     /**
      * @custom:scenario Parse and validate price for "initiate" actions using chainlink when empty data is provided
      * @custom:given Empty data is provided
-     * @custom:when Calling parseAndValidatePrice for "initiate" actions
+     * @custom:when Calling {parseAndValidatePrice} for "initiate" actions
      * @custom:then It returns the onchain price from chainlink
      */
     function test_getPriceFromChainlinkWhenEmptyDataIsProvided() public {
@@ -186,7 +186,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
      * @custom:given The chainlink validate roundId data
      * @custom:and A correct chainlink previous roundId
      * @custom:and A correct chainlink validate roundId
-     * @custom:when Calling parseAndValidatePrice for "validate" actions after waiting the low latency delay
+     * @custom:when Calling {parseAndValidatePrice} for "validate" actions after waiting the low latency delay
      * @custom:then It returns the onchain price from chainlink
      */
     function test_getValidatePriceFromChainlinkRoundId() public {
@@ -224,7 +224,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
      * @custom:scenario Parse and validate price for "validate" actions using chainlink, roundId is too high
      * @custom:given The previous roundId has a timestamp later than the limit timestamp
      * @custom:when The `parseAndValidatePrice` for "validate" actions is called with a roundId that is too high
-     * @custom:then It should revert with `OracleMiddlewareInvalidRoundId`
+     * @custom:then It should revert with {OracleMiddlewareInvalidRoundId}
      */
     function test_RevertWhen_getValidatePriceFromChainlinkRoundIdTooHigh() public {
         mockChainlinkOnChain.setRoundTimestamp(0, LIMIT_TIMESTAMP + 1);
@@ -252,7 +252,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
      * @custom:scenario Parse and validate price for "validate" actions using chainlink, roundId is too low
      * @custom:given The roundId has a timestamp equal to the limit timestamp
      * @custom:when The parseAndValidatePrice for "validate" actions is called with a roundId that is too low
-     * @custom:then It should revert with OracleMiddlewareInvalidRoundId
+     * @custom:then It should revert with {OracleMiddlewareInvalidRoundId}
      */
     function test_RevertWhen_getValidatePriceFromChainlinkRoundIdTooLow() public {
         mockChainlinkOnChain.setRoundTimestamp(0, LIMIT_TIMESTAMP - 1);
@@ -674,8 +674,8 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
     /**
      * @custom:scenario Validate a price with Redstone but the chainlink price is way less
      * @custom:given The chainlink price is less than a third of the redstone price
-     * @custom:when The `parseAndValidatePrice` function is called with valid redstone data
-     * @custom:then The middleware reverts with `OracleMiddlewareRedstoneSafeguard`
+     * @custom:when The {parseAndValidatePrice} function is called with valid redstone data
+     * @custom:then The middleware reverts with {OracleMiddlewareRedstoneSafeguard}
      */
     function test_RevertWhen_parseAndValidatePriceWithRedstoneMoreThanChainlink() public {
         // set chainlink to a price that is less than a third of the redstone price (chainlink has 8 decimals)
@@ -698,8 +698,8 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
     /**
      * @custom:scenario Validate a price with Redstone but the chainlink price is way more
      * @custom:given The chainlink price is more than thrice the redstone price
-     * @custom:when The `parseAndValidatePrice` function is called with valid redstone data
-     * @custom:then The middleware reverts with `OracleMiddlewareRedstoneSafeguard`
+     * @custom:when The {parseAndValidatePrice} function is called with valid redstone data
+     * @custom:then The middleware reverts with {OracleMiddlewareRedstoneSafeguard}
      */
     function test_RevertWhen_parseAndValidatePriceWithRedstoneLessThanChainlink() public {
         // set chainlink to a price that is more than thrice the redstone price (chainlink has 8 decimals)
@@ -722,8 +722,8 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
     /**
      * @custom:scenario Validate a price with Redstone but the price is zero
      * @custom:given The Redstone price is zero
-     * @custom:when The `parseAndValidatePrice` function is called with mocked Redstone data with price zero
-     * @custom:then The middleware reverts with `OracleMiddlewareWrongPrice`
+     * @custom:when The {parseAndValidatePrice} function is called with mocked Redstone data with price zero
+     * @custom:then The middleware reverts with {OracleMiddlewareWrongPrice}
      */
     function test_RevertWhen_parseAndValidatePriceWithRedstoneZeroPrice() public {
         oracleMiddleware.setMockRedstonePriceZero(true);
@@ -743,10 +743,10 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
     /**
      * @custom:scenario The user doesn't send the right amount of ether when validating a price
      * @custom:given The user validates a price that requires 1 wei of ether
-     * @custom:when The user sends 0 ether as value in the `parseAndValidatePrice` call
-     * @custom:or The user sends 2 wei as value in the `parseAndValidatePrice` call
-     * @custom:or The user sends 1 wei as value with empty data in the `parseAndValidatePrice` call
-     * @custom:then The function reverts with `OracleMiddlewareIncorrectFee`
+     * @custom:when The user sends 0 ether as value in the {parseAndValidatePrice} call
+     * @custom:or The user sends 2 wei as value in the {parseAndValidatePrice} call
+     * @custom:or The user sends 1 wei as value with empty data in the {parseAndValidatePrice} call
+     * @custom:then The function reverts with {OracleMiddlewareIncorrectFee}
      */
     function test_RevertWhen_parseAndValidatePriceIncorrectFee() public {
         uint256 validationCost = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.ValidateDeposit);

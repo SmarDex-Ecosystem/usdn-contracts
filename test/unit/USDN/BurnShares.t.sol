@@ -5,7 +5,7 @@ import { USER_1 } from "../../utils/Constants.sol";
 import { UsdnTokenFixture } from "./utils/Fixtures.sol";
 
 /**
- * @custom:feature The `burnShares` function of `USDN`
+ * @custom:feature The {burnShares} function of `USDN`
  * @custom:background Given a user with 100 tokens
  */
 contract TestUsdnBurnShares is UsdnTokenFixture {
@@ -17,11 +17,11 @@ contract TestUsdnBurnShares is UsdnTokenFixture {
     }
 
     /**
-     * @custom:scenario Burn shares call _burnShares with correct arguments
+     * @custom:scenario Burn shares call {_burnShares} with correct arguments
      * @custom:when 100 shares are burn by a user
-     * @custom:then The `Transfer` event should be emitted with the sender address as the sender,
+     * @custom:then The {Transfer} event should be emitted with the sender address as the sender,
      * 0 address as the recipient, and an amount corresponding to the value calculated by the
-     * `usdn.convertToTokens` function
+     * {usdn.convertToTokens} function
      */
     function test_burnSharesCorrectArguments() public {
         uint256 tokensExpected = usdn.convertToTokens(100 ether);

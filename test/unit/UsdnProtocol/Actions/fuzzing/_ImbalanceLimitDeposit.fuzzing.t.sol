@@ -6,25 +6,25 @@ import { IUsdnProtocolErrors } from "../../../../../src/interfaces/UsdnProtocol/
 import { UsdnProtocolBaseFixture } from "../../utils/Fixtures.sol";
 
 /**
- * @custom:feature Fuzzing tests of the protocol expo limit for internal `imbalanceLimitDeposit`
+ * @custom:feature Fuzzing tests of the protocol expo limit for internal {imbalanceLimitDeposit}` function
  * @custom:background Given a protocol instance in balanced state with random vault expo and long expo
  */
 contract TestImbalanceLimitDepositFuzzing is UsdnProtocolBaseFixture {
     /**
-     * @custom:scenario The `imbalanceLimitDeposit` should pass on still balanced state
+     * @custom:scenario The {imbalanceLimitDeposit} should pass on still balanced state
      * or revert when amounts bring protocol out of limits
      * @custom:given The randomized expo balanced protocol state
-     * @custom:when The `imbalanceLimitDeposit` is called with a random amount
+     * @custom:when The {imbalanceLimitDeposit} is called with a random amount
      * @custom:then The transaction should revert in case imbalance or pass if still balanced
      */
     function testFuzz_checkImbalanceLimitDeposit(uint128 initialAmount, uint256 depositAmount) public {
         // initialize random balanced protocol
         _randInitBalanced(initialAmount);
-        // range depositAmount properly
+        // range `depositAmount` properly
         depositAmount = bound(depositAmount, 1, type(uint128).max);
         // new vault expo
         int256 newExpoVault = int256(uint256(params.initialDeposit) + depositAmount);
-        // initialLongExpo
+        // `initialLongExpo`
         uint256 initialLongExpo = protocol.getTotalExpo() - protocol.getBalanceLong();
         // expected imbalance bps
         int256 imbalanceBps =
@@ -34,7 +34,8 @@ contract TestImbalanceLimitDepositFuzzing is UsdnProtocolBaseFixture {
         int256 depositLimit = protocol.getDepositExpoImbalanceLimitBps();
 
         if (imbalanceBps >= depositLimit) {
-            // should revert with above deposit imbalance limit
+            // should revert with above deposit imbalance limit with
+            // {IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached} error
             vm.expectRevert(
                 abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, imbalanceBps)
             );

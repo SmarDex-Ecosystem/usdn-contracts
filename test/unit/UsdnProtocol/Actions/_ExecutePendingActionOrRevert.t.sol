@@ -11,7 +11,7 @@ import {
 } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
- * @custom:feature Test the _executePendingActionOrRevert internal function of the actions layer
+ * @custom:feature Test the {_executePendingActionOrRevert} internal function of the actions layer
  * @custom:given A protocol with all fees, rebase and funding disabled
  */
 contract TestUsdnProtocolActionsExecutePendingActionOrRevert is UsdnProtocolBaseFixture {
@@ -23,7 +23,7 @@ contract TestUsdnProtocolActionsExecutePendingActionOrRevert is UsdnProtocolBase
      * @custom:scenario Revert when executing a pending action with different lengths of price data and raw indices
      * @custom:given A pending action in the queue
      * @custom:when A `PreviousActionsData` with different lengths of price data and raw indices
-     * @custom:then The execution reverts with `UsdnProtocolInvalidPendingActionData`
+     * @custom:then The execution reverts with {UsdnProtocolInvalidPendingActionData}
      */
     function test_RevertWhen_executePendingActionDifferentLengths() public {
         _addDummyPendingAction();
@@ -40,7 +40,7 @@ contract TestUsdnProtocolActionsExecutePendingActionOrRevert is UsdnProtocolBase
      * @custom:scenario Revert when executing a pending action with empty price data and raw indices
      * @custom:given A pending action in the queue
      * @custom:when A `PreviousActionsData` with empty price data and raw indices
-     * @custom:then The execution reverts with `UsdnProtocolInvalidPendingActionData`
+     * @custom:then The execution reverts with {UsdnProtocolInvalidPendingActionData}
      */
     function test_RevertWhen_executePendingActionEmpty() public {
         _addDummyPendingAction();
@@ -59,7 +59,7 @@ contract TestUsdnProtocolActionsExecutePendingActionOrRevert is UsdnProtocolBase
      * @custom:given A pending action in the queue
      * @custom:when A `PreviousActionsData` with bad ordering of raw indices (the pending action raw index is second
      * and smaller than the first item in the array)
-     * @custom:then The execution reverts with `UsdnProtocolInvalidPendingActionData`
+     * @custom:then The execution reverts with {UsdnProtocolInvalidPendingActionData}
      */
     function test_RevertWhen_executePendingActionBadOrdering() public {
         uint128 rawIndex = _addDummyPendingAction();
@@ -77,8 +77,8 @@ contract TestUsdnProtocolActionsExecutePendingActionOrRevert is UsdnProtocolBase
 
     /**
      * @custom:scenario Executing a pending action with a wrap-around of the raw index
-     * @custom:given Two pending actions in queue, with raw indices uint256.max (USER_1) and 0 (this contract)
-     * @custom:when The second pending action is executed (uint256.max)
+     * @custom:given Two pending actions in queue, with raw indices `uint256.max` (`USER_1`) and 0 (this contract)
+     * @custom:when The second pending action is executed (`uint256.max`)
      * @custom:then The execution does not revert and the first pending action is processed
      * @custom:and The remaining pending action is the one for this contract (rawIndex 0)
      */
@@ -104,7 +104,7 @@ contract TestUsdnProtocolActionsExecutePendingActionOrRevert is UsdnProtocolBase
         rawIndices[1] = rawIndex2;
         PreviousActionsData memory data = PreviousActionsData({ priceData: priceData, rawIndices: rawIndices });
 
-        protocol.i_executePendingActionOrRevert(data); // should validate `pending` for USER_1
+        protocol.i_executePendingActionOrRevert(data); // should validate `pending` for `USER_1`
 
         (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 1, "one pending action left");

@@ -41,7 +41,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
      * @custom:when The user validates the deposit
      * @custom:then The user's USDN balance increases by 2000 USDN
      * @custom:and The USDN total supply increases by 2000 USDN
-     * @custom:and The protocol emits a `ValidatedDeposit` event with the minted amount of 2000 USDN
+     * @custom:and The protocol emits a {ValidatedDeposit} event with the minted amount of 2000 USDN
      */
     function test_validateDepositPriceIncrease() public {
         _checkValidateDepositWithPrice(2000 ether, 2100 ether, 2000 ether, address(this));
@@ -55,7 +55,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
      * @custom:when The user validates the deposit
      * @custom:then The user's USDN balance increases by 1900 USDN
      * @custom:and The USDN total supply increases by 1900 USDN
-     * @custom:and The protocol emits a `ValidatedDeposit` event with the minted amount of 1900 USDN
+     * @custom:and The protocol emits a {ValidatedDeposit} event with the minted amount of 1900 USDN
      */
     function test_validateDepositPriceDecrease() public {
         _checkValidateDepositWithPrice(2000 ether, 1900 ether, 1900 ether, address(this));
@@ -68,7 +68,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
      * @custom:when The user validates the deposit
      * @custom:and The USDN total supply increases by 2000 USDN
      * @custom:and The USDN balance increases by 2000 USDN for the address to
-     * @custom:and The protocol emits a `ValidatedDeposit` event with the minted amount of 2000 USDN
+     * @custom:and The protocol emits a {ValidatedDeposit} event with the minted amount of 2000 USDN
      */
     function test_validateDepositForAnotherUser() public {
         _checkValidateDepositWithPrice(2000 ether, 2000 ether, 2000 ether, USER_1);
@@ -77,8 +77,8 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario The user sends too much ether when validating a deposit
      * @custom:given The user initiated a deposit of 1 wstETH and validates it
-     * @custom:when The user sends 0.5 ether as value in the `validateDeposit` call
-     * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
+     * @custom:when The user sends 0.5 ether as value in the {validateDeposit} call
+     * @custom:then The user gets refunded the excess ether (`0.5 ether - validationCost`)
      */
     function test_validateDepositEtherRefund() public {
         oracleMiddleware.setRequireValidationCost(true); // require 1 wei per validation
@@ -104,7 +104,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
      * be liquidated
      * @custom:given Two positions with different liquidation prices
      * @custom:and A user initiated a deposit action
-     * @custom:when The `validateDeposit` function is called with a price below the liq price of both positions
+     * @custom:when The {validateDeposit} function is called with a price below the liq price of both positions
      * @custom:then One of the positions is liquidated
      * @custom:and The deposit action isn't validated
      * @custom:and The user's usdn balance should not change
@@ -214,10 +214,10 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario The user validates a deposit action with a reentrancy attempt
-     * @custom:given A user being a smart contract that calls validateDeposit with too much ether
-     * @custom:and A receive() function that calls validateDeposit again
-     * @custom:when The user calls validateDeposit again from the callback
-     * @custom:then The call reverts with InitializableReentrancyGuardReentrantCall
+     * @custom:given A user being a smart contract that calls {validateDeposit} with too much ether
+     * @custom:and A {receive()} function that calls {validateDeposit} again
+     * @custom:when The user calls {validateDeposit} again from the callback
+     * @custom:then The call reverts with {InitializableReentrancyGuardReentrantCall}
      */
     function test_RevertWhen_validateDepositCalledWithReentrancy() public {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
@@ -233,7 +233,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         _reenter = true;
         // If a reentrancy occurred, the function should have been called 2 times
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.validateDeposit.selector), 2);
-        // The value sent will cause a refund, which will trigger the receive() function of this contract
+        // The value sent will cause a refund, which will trigger the {receive()} function of this contract
         protocol.validateDeposit{ value: 1 }(payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
     }
 

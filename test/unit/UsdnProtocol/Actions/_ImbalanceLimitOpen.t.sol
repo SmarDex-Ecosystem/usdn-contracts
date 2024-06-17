@@ -7,7 +7,7 @@ import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
 /**
- * @custom:feature Test of the protocol expo limit for `_checkImbalanceLimitOpen` function in balanced state
+ * @custom:feature Test of the protocol expo limit for {_checkImbalanceLimitOpen} function in balanced state
  */
 contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
     function setUp() public {
@@ -19,10 +19,10 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `_checkImbalanceLimitOpen` function should not revert when contract is balanced
+     * @custom:scenario The {_checkImbalanceLimitOpen} function should not revert when contract is balanced
      * and position is within limit
      * @custom:given The protocol is in a balanced state
-     * @custom:when The `_checkImbalanceLimitOpen` function is called with a value below the open limit
+     * @custom:when The {_checkImbalanceLimitOpen} function is called with a value below the open limit
      * @custom:then The transaction should not revert
      */
     function test_checkImbalanceLimitOpen() public view {
@@ -31,9 +31,9 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `_checkImbalanceLimitOpen` function should not revert when limit is disabled
+     * @custom:scenario The {_checkImbalanceLimitOpen} function should not revert when limit is disabled
      * @custom:given The protocol is in a balanced state
-     * @custom:when The `_checkImbalanceLimitOpen` function is called with values above the open limit
+     * @custom:when The {_checkImbalanceLimitOpen} function is called with values above the open limit
      * @custom:then The transaction should not revert
      */
     function test_checkImbalanceLimitOpenDisabled() public {
@@ -47,11 +47,11 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `_checkImbalanceLimitOpen` function should revert when contract is balanced
+     * @custom:scenario The {_checkImbalanceLimitOpen} function should revert when contract is balanced
      * and position value imbalance it
      * @custom:given The protocol is in a balanced state
-     * @custom:when The `_checkImbalanceLimitOpen` function is called with values above the open limit
-     * @custom:then The transaction should revert
+     * @custom:when The {_checkImbalanceLimitOpen} function is called with values above the open limit
+     * @custom:then The transaction should revert with {IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached} error
      */
     function test_RevertWhen_checkImbalanceLimitOpenOutLimit() public {
         (int256 openLimitBps, uint256 longAmount, uint256 totalExpoValueToLimit) = _getOpenLimitValues();
@@ -62,10 +62,10 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `_checkImbalanceLimitOpen` function should revert when vault expo equal 0
+     * @custom:scenario The {_checkImbalanceLimitOpen} function should revert when vault expo equal 0
      * @custom:given The vault has zero balance / expo
-     * @custom:when The `_checkImbalanceLimitOpen` function is called
-     * @custom:then The transaction should revert
+     * @custom:when The {_checkImbalanceLimitOpen} function is called
+     * @custom:then The transaction should revert with {IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached} error
      */
     function test_RevertWhen_checkImbalanceLimitOpenZeroVaultExpo() public {
         protocol.emptyVault();
@@ -80,8 +80,9 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Check open imbalance when there are pending withdrawals
      * @custom:given The protocol is in an unbalanced state due to pending withdrawals
-     * @custom:when The `_checkImbalanceLimitOpen` function is called
-     * @custom:then The transaction should revert with the expected imbalance
+     * @custom:when The {_checkImbalanceLimitOpen} function is called
+     * @custom:then The transaction should revert with the expected imbalance with
+     * {IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached} error
      */
     function test_RevertWhen_checkImbalanceLimitOpenPendingVaultActions() public {
         (, uint256 longAmount, uint256 totalExpoValueToLimit) = _getOpenLimitValues();
@@ -122,7 +123,7 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
         openLimitBps_ = protocol.getOpenExpoImbalanceLimitBps();
         // current long expo value to unbalance protocol
         uint256 longExpoValueToLimit = uint256(vaultExpo) * uint256(openLimitBps_) / protocol.BPS_DIVISOR();
-        // long amount for vaultExpoValueToLimit and any leverage
+        // long amount for `vaultExpoValueToLimit` and any leverage
         longAmount_ =
             longExpoValueToLimit * 10 ** protocol.LEVERAGE_DECIMALS() / protocol.i_getLeverage(2000 ether, 1500 ether);
         // current total expo value to imbalance the protocol

@@ -26,7 +26,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Check return values of the `funding` function
+     * @custom:scenario Check return values of the {funding} function
      * @custom:when The timestamp is the same as the initial timestamp
      * @custom:then The funding should be 0
      */
@@ -38,9 +38,9 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Calling the `funding` function
+     * @custom:scenario Calling the {funding} function
      * @custom:when The timestamp is in the past
-     * @custom:then The protocol reverts with `UsdnProtocolTimestampTooOld`
+     * @custom:then The protocol reverts with {UsdnProtocolTimestampTooOld}
      */
     function test_RevertWhen_funding_pastTimestamp() public {
         vm.expectRevert(UsdnProtocolTimestampTooOld.selector);
@@ -83,7 +83,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:then EMA should be greater than the last funding
      */
     function test_updateEma_negFunding() public {
-        // we create a deposit and skip 1 day and call liquidate() to have a negative funding
+        // we create a deposit and skip 1 day and call {liquidate()} to have a negative funding
         bytes memory priceData = abi.encode(params.initialPrice);
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 10 ether, params.initialPrice);
         skip(1 days);
@@ -91,7 +91,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
 
         int256 lastFunding = protocol.getLastFunding();
         skip(protocol.getEMAPeriod() - 1);
-        // we call liquidate() to update the EMA
+        // we call {liquidate()} to update the EMA
         protocol.testLiquidate(priceData, 1);
 
         assertGt(protocol.getEMA(), lastFunding);
@@ -116,7 +116,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
 
         int256 lastFunding = protocol.getLastFunding();
         skip(protocol.getEMAPeriod() - 1);
-        // we call liquidate() to update the EMA
+        // we call {liquidate()} to update the EMA
         protocol.testLiquidate(abi.encode(params.initialPrice), 1);
 
         assertLt(protocol.getEMA(), lastFunding);
@@ -153,13 +153,13 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     function test_updateEma_whenTimeGtEMAPeriod() public {
         wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
         bytes memory priceData = abi.encode(params.initialPrice);
-        // we skip 1 day and call liquidate() to have a non-zero funding
+        // we skip 1 day and call {liquidate()} to have a non-zero funding
         skip(1 days);
         protocol.testLiquidate(priceData, 1);
 
         int256 lastFunding = protocol.getLastFunding();
         skip(protocol.getEMAPeriod() + 1);
-        // we call liquidate() to update the EMA
+        // we call {liquidate()} to update the EMA
         protocol.testLiquidate(priceData, 1);
 
         assertEq(protocol.getEMA(), lastFunding, "EMA should be equal to last funding");
@@ -169,7 +169,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:scenario Funding calculation
      * @custom:when the long expo is negative
      * @custom:and the vault expo is zero
-     * @custom:then fund should be equal to -fundingSF + EMA
+     * @custom:then fund should be equal to `-fundingSF + EMA`
      */
     function test_funding_NegLong_ZeroVault() public {
         vm.skip(true); // This case is not realistic anymore with the new liquidation multiplier calculations
@@ -206,7 +206,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:scenario Funding calculation
      * @custom:when the long expo is positive
      * @custom:and the vault expo is zero
-     * @custom:then fund should be equal to fundingSF + EMA
+     * @custom:then fund should be equal to `fundingSF + EMA`
      */
     function test_funding_PosLong_ZeroVault() public {
         skip(1 hours);
@@ -238,7 +238,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario longAssetAvailableWithFunding calculation
+     * @custom:scenario {longAssetAvailableWithFunding} calculation
      * @custom:when the funding is positive
      * @custom:then return value should be equal to the long balance
      */
@@ -268,7 +268,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario longAssetAvailableWithFunding calculation
+     * @custom:scenario {longAssetAvailableWithFunding} calculation
      * @custom:when the funding is negative
      * @custom:then return value should be equal to the long balance
      */
@@ -289,9 +289,9 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Calling the `longAssetAvailableWithFunding` function
+     * @custom:scenario Calling the {longAssetAvailableWithFunding} function
      * @custom:when The timestamp is in the past
-     * @custom:then The protocol reverts with `UsdnProtocolTimestampTooOld`
+     * @custom:then The protocol reverts with {UsdnProtocolTimestampTooOld}
      */
     function test_RevertWhen_longAssetAvailableWithFunding_pastTimestamp() public {
         uint128 ts = protocol.getLastUpdateTimestamp();
@@ -300,7 +300,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario vaultAssetAvailableWithFunding calculation
+     * @custom:scenario {vaultAssetAvailableWithFunding} calculation
      * @custom:when the funding is negative
      * @custom:then return value should be equal to the vault balance
      */
@@ -321,7 +321,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario vaultAssetAvailableWithFunding calculation
+     * @custom:scenario {vaultAssetAvailableWithFunding} calculation
      * @custom:when the funding is positive
      * @custom:then return value should be equal to the vault balance
      */
@@ -345,15 +345,15 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
 
         // we have to subtract 30 seconds from the timestamp because of the mock oracle middleware behavior
         int256 available = protocol.vaultAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
-        // call liquidate to update the contract state
+        // call {liquidate} to update the contract state
         protocol.testLiquidate(priceData, 5);
         assertEq(available, int256(protocol.getBalanceVault()), "vault balance != available");
     }
 
     /**
-     * @custom:scenario Calling the `vaultAssetAvailableWithFunding` function
+     * @custom:scenario Calling the {vaultAssetAvailableWithFunding} function
      * @custom:when The timestamp is in the past
-     * @custom:then The protocol reverts with `UsdnProtocolTimestampTooOld`
+     * @custom:then The protocol reverts with {UsdnProtocolTimestampTooOld}
      */
     function test_RevertWhen_vaultAssetAvailableWithFunding_pastTimestamp() public {
         uint128 ts = protocol.getLastUpdateTimestamp();
@@ -362,10 +362,10 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `getPendingAction` function returns an empty pending action when there is none
+     * @custom:scenario The {getPendingAction} function returns an empty pending action when there is none
      * @custom:given There is no pending action for this user
-     * @custom:when getPendingAction is called
-     * @custom:then it returns an empty action and 0 as the rawIndex
+     * @custom:when {getPendingAction} is called
+     * @custom:then it returns an empty action and 0 as the `rawIndex`
      */
     function test_getPendingActionWithoutPendingAction() public {
         (PendingAction memory action, uint128 rawIndex) = protocol.i_getPendingAction(address(this));
@@ -376,10 +376,10 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `getPendingAction` function returns the action when there is one
+     * @custom:scenario The {getPendingAction} function returns the action when there is one
      * @custom:given There is a pending action for this user
-     * @custom:when getPendingAction is called
-     * @custom:then The function should return the action and the rawIndex
+     * @custom:when {getPendingAction} is called
+     * @custom:then The function should return the action and the `rawIndex`
      */
     function test_getPendingAction() public {
         setUpUserPositionInLong(
@@ -399,10 +399,10 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `getPendingActionOrRevert` function return the expected action
+     * @custom:scenario The {getPendingActionOrRevert} function return the expected action
      * @custom:given There is a pending action for this user
-     * @custom:when getPendingActionOrRevert is called
-     * @custom:then The function should return the action and the rawIndex
+     * @custom:when {getPendingActionOrRevert} is called
+     * @custom:then The function should return the action and the `rawIndex`
      */
     function test_getPendingActionOrRevert() public {
         setUpUserPositionInLong(
@@ -422,10 +422,10 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `getPendingActionOrRevert` function revert when there are no pending actions
+     * @custom:scenario The {getPendingActionOrRevert} function revert when there are no pending actions
      * @custom:given There is no pending action for this user
-     * @custom:when getPendingActionOrRevert is called
-     * @custom:then The protocol reverts with `UsdnProtocolNoPendingAction`
+     * @custom:when {getPendingActionOrRevert} is called
+     * @custom:then The protocol reverts with {UsdnProtocolNoPendingAction}
      */
     function test_RevertWhen_getPendingActionOrRevertWithoutPendingAction() public {
         vm.expectRevert(UsdnProtocolNoPendingAction.selector);
@@ -433,10 +433,10 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `addPendingAction` function revert when there are multiple pending actions
+     * @custom:scenario The {addPendingAction} function revert when there are multiple pending actions
      * @custom:given There is a pending action for this user
-     * @custom:when addPendingAction is called
-     * @custom:then The protocol reverts with `UsdnProtocolPendingAction`
+     * @custom:when {addPendingAction} is called
+     * @custom:then The protocol reverts with {UsdnProtocolPendingAction}
      */
     function test_RevertWhen_addPendingActionAlreadyHavePendingAction() public {
         PendingAction memory pendingAction = PendingAction({
@@ -460,9 +460,9 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `addPendingAction` function return the security deposit value and save the action
+     * @custom:scenario The {addPendingAction} function return the security deposit value and save the action
      * @custom:given There is a pending action that can be deleted for this user
-     * @custom:when addPendingAction is called
+     * @custom:when {addPendingAction} is called
      * @custom:then Return the security deposit value and save the expected action
      */
     function test_addPendingAction() public {
@@ -509,10 +509,10 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `clearPendingAction` function revert when the queue is empty
+     * @custom:scenario The {clearPendingAction} function revert when the queue is empty
      * @custom:given A protocol without any pending action
-     * @custom:when clearPendingAction is called
-     * @custom:then The protocol reverts with `QueueEmpty`
+     * @custom:when {clearPendingAction} is called
+     * @custom:then The protocol reverts with {QueueEmpty}
      */
     function test_RevertWhen_clearPendingActionWithoutPendingAction() public {
         vm.expectRevert(DoubleEndedQueue.QueueEmpty.selector);
@@ -520,9 +520,9 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `clearPendingAction` function delete the pending action
+     * @custom:scenario The {clearPendingAction} function delete the pending action
      * @custom:given A protocol with a pending action for a user
-     * @custom:when clearPendingAction is called
+     * @custom:when {clearPendingAction} is called
      * @custom:then The pending action should be deleted
      */
     function test_clearPendingAction() public {
@@ -552,12 +552,12 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `removeStalePendingAction` function return 0 when there is no pending action, the action
-     * is different than ValidateOpenPosition or version calculated equal to tickVersion
+     * @custom:scenario The {removeStalePendingAction} function return 0 when there is no pending action, the action
+     * is different than `ValidateOpenPosition` or version calculated equal to `tickVersion`
      * @custom:given A protocol without any pending action
      * @custom:or a pending action different than `ValidateOpenPosition`
      * @custom:or a pending action with a tick version equal to the current tick version
-     * @custom:when removeStalePendingAction is called
+     * @custom:when {removeStalePendingAction} is called
      * @custom:then The protocol should return 0
      */
     function test_removeStalePendingActionReturnZero() public {
@@ -605,9 +605,9 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `removeStalePendingAction` function return the security deposit value
+     * @custom:scenario The {removeStalePendingAction} function return the security deposit value
      * @custom:given A protocol with a pending action that is stale
-     * @custom:when removeStalePendingAction is called
+     * @custom:when {removeStalePendingAction} is called
      * @custom:then The protocol should return the security deposit value
      */
     function test_removeStalePendingAction() public {

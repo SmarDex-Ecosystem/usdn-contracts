@@ -88,7 +88,7 @@ contract TestUsdnUpdate is UsdnTokenFixture {
      * @custom:scenario Minting tokens that would overflow the total supply of shares
      * @custom:given The max amount of tokens has already been minted
      * @custom:when max amount of additional tokens are minted
-     * @custom:then The transaction reverts with the `UsdnTotalSupplyOverflow` error
+     * @custom:then The transaction reverts with the {UsdnTotalSupplyOverflow} error
      */
     function test_RevertWhen_mintOverflowTotal() public {
         uint256 max = usdn.maxTokens();
@@ -159,7 +159,7 @@ contract TestUsdnUpdate is UsdnTokenFixture {
     /**
      * @custom:scenario Burning more than the balance
      * @custom:when 101 USDN are burned
-     * @custom:then The transaction reverts with the `ERC20InsufficientBalance` error
+     * @custom:then The transaction reverts with the {ERC20InsufficientBalance} error
      */
     function test_RevertWhen_burnInsufficientBalance() public {
         usdn.mint(USER_1, 100 ether);
@@ -174,7 +174,7 @@ contract TestUsdnUpdate is UsdnTokenFixture {
      * @custom:given A divisor of 0.5x MAX_DIVISOR
      * @custom:and A user with 200 USDN
      * @custom:when 201 USDN are burned
-     * @custom:then The transaction reverts with the `ERC20InsufficientBalance` error
+     * @custom:then The transaction reverts with the {ERC20InsufficientBalance} error
      */
     function test_RevertWhen_burnInsufficientBalanceWithMultiplier() public {
         usdn.mint(USER_1, 100 ether);

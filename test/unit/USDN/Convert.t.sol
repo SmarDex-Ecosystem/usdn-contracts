@@ -4,8 +4,8 @@ pragma solidity ^0.8.25;
 import { UsdnTokenFixture } from "./utils/Fixtures.sol";
 
 /**
- * @custom:feature The `convertToShares` and `convertToTokens` functions of `USDN`
- * @custom:background Given the divisor is MAX_DIVISOR at the start
+ * @custom:feature The {convertToShares} and {convertToTokens} functions of `USDN`
+ * @custom:background Given the divisor is `MAX_DIVISOR` at the start
  */
 contract TestUsdnConvert is UsdnTokenFixture {
     function setUp() public override {
@@ -14,7 +14,7 @@ contract TestUsdnConvert is UsdnTokenFixture {
 
     /**
      * @custom:scenario Converting tokens to shares never reverts
-     * @custom:given The divisor is MAX_DIVISOR or MIN_DIVISOR
+     * @custom:given The divisor is `MAX_DIVISOR` or `MIN_DIVISOR`
      * @custom:when The `convertToShares` function is called with MAX_TOKENS
      * @custom:then The call does not revert
      */
@@ -30,8 +30,8 @@ contract TestUsdnConvert is UsdnTokenFixture {
 
     /**
      * @custom:scenario Converting shares to tokens never reverts
-     * @custom:given The divisor is MAX_DIVISOR or MIN_DIVISOR
-     * @custom:and The number of shares to convert corresponds to MAX_TOKENS at the current multiplier
+     * @custom:given The divisor is `MAX_DIVISOR` or `MIN_DIVISOR`
+     * @custom:and The number of shares to convert corresponds to `MAX_TOKENS` at the current multiplier
      * @custom:when The `convertToTokens` function is called with the number of shares
      * @custom:then The call does not revert
      */
@@ -49,8 +49,8 @@ contract TestUsdnConvert is UsdnTokenFixture {
 
     /**
      * @custom:scenario Converting tokens to shares when the number of tokens is too large
-     * @custom:when The `convertToShares` function is called with a value larger than MAX_TOKENS
-     * @custom:then The transaction reverts with `UsdnMaxTokensExceeded`
+     * @custom:when The {convertToShares} function is called with a value larger than `MAX_TOKENS`
+     * @custom:then The transaction reverts with {UsdnMaxTokensExceeded} error
      */
     function test_RevertWhen_tokenAmountOverflows() public {
         uint256 value = usdn.maxTokens() + 1;

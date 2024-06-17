@@ -50,7 +50,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
      * @custom:and the price was 2000$ at the moment of initiation
      * @custom:and the price has increased to 2100$
      * @custom:when The user validates the open position with the new price
-     * @custom:then The protocol validates the position and emits the ValidatedOpenPosition event
+     * @custom:then The protocol validates the position and emits the {ValidatedOpenPosition} event
      * @custom:and the position's leverage decreases
      * @custom:and the rest of the state changes as expected
      */
@@ -86,7 +86,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
      * @custom:scenario A validate open position liquidates a tick but is not validated because another tick still
      * needs to be liquidated
      * @custom:given The deployer position and another user position which was only initiated
-     * @custom:when The `validateOpenPosition` function is called by the user with a price below the liq price of both
+     * @custom:when The {validateOpenPosition} function is called by the user with a price below the liq price of both
      * positions
      * @custom:then The deployer's tick is liquidated
      * @custom:and The open action isn't validated because the user's position still needs to be liquidated
@@ -126,7 +126,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
     /**
      * @custom:scenario A validate open position liquidates itself
      * @custom:given The user has initiated an open position
-     * @custom:when The `validateOpenPosition` function is called with a price below the liq price
+     * @custom:when The {validateOpenPosition} function is called with a price below the liq price
      * @custom:then The position is liquidated
      * @custom:and The pending action is cleared
      */
@@ -213,7 +213,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
      * @custom:and the price was 2000$ at the moment of initiation
      * @custom:and the price has decreased to 1900$
      * @custom:when The user validates the open position with the new price
-     * @custom:then The protocol validates the position and emits the ValidatedOpenPosition event
+     * @custom:then The protocol validates the position and emits the {ValidatedOpenPosition} event
      * @custom:and the position is moved to another lower tick (to avoid exceeding the max leverage)
      * @custom:and the position's leverage stays below the max leverage
      */
@@ -397,7 +397,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
      * @custom:given A pending new position was liquidated before being validated
      * @custom:and The pending action is stale (tick version mismatch)
      * @custom:when The user tries to validate the pending action
-     * @custom:then The protocol emits a `StalePendingActionRemoved` event
+     * @custom:then The protocol emits a {StalePendingActionRemoved} event
      * @custom:and The transaction does not revert
      */
     function test_stalePendingActionValidate() public {
@@ -413,9 +413,9 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
     /**
      * @custom:scenario The user validates an open position action with reentrancy attempt
      * @custom:given A user being a smart contract that calls validateOpenPosition when receiving ether
-     * @custom:and A receive() function that calls validateOpenPosition again
+     * @custom:and A {receive()} function that calls validateOpenPosition again
      * @custom:when The user calls validateOpenPosition with some ether to trigger a refund
-     * @custom:then The protocol reverts with InitializableReentrancyGuardReentrantCall
+     * @custom:then The protocol reverts with {InitializableReentrancyGuardReentrantCall}
      */
     function test_RevertWhen_validateOpenPositionCalledWithReentrancy() public {
         if (_reenter) {
@@ -437,18 +437,18 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         _reenter = true;
         // If a reentrancy occurred, the function should have been called 2 times
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.validateOpenPosition.selector), 2);
-        // The value sent will cause a refund, which will trigger the receive() function of this contract
+        // The value sent will cause a refund, which will trigger the {receive()} function of this contract
         protocol.validateOpenPosition{ value: 1 }(
             payable(address(this)), abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA
         );
     }
 
     /**
-     * @custom:scenario The user initiates and validates (after the validationDeadline)
-     * an openPosition action with another validator
-     * @custom:given The user initiated an openPosition with 1 wstETH and a desired liquidation price of ~1333$
+     * @custom:scenario The user initiates and validates (after the `validationDeadline`)
+     * an `openPosition` action with another validator
+     * @custom:given The user initiated an `openPosition` with 1 wstETH and a desired liquidation price of ~1333$
      * @custom:and we wait until the validation deadline is passed
-     * @custom:when The user validates the openPosition
+     * @custom:when The user validates the `openPosition`
      * @custom:then The security deposit is refunded to the validator
      */
     function test_validateOpenPositionEtherRefundToValidator() public {

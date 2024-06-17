@@ -6,16 +6,17 @@ import { IUsdnProtocolErrors } from "../../../../../src/interfaces/UsdnProtocol/
 import { UsdnProtocolBaseFixture } from "../../utils/Fixtures.sol";
 
 /**
- * @custom:feature Fuzzing tests of the protocol expo limit for internal `imbalanceLimitClose`
+ * @custom:feature Fuzzing tests of the protocol expo limit for internal {imbalanceLimitClose} function
  * @custom:background Given a protocol instance in balanced state with random vault expo and long expo
  */
 contract TestImbalanceLimitCloseFuzzing is UsdnProtocolBaseFixture {
     /**
-     * @custom:scenario The `imbalanceLimitClose` should pass on still balanced state
+     * @custom:scenario The {imbalanceLimitClose} should pass on still balanced state
      * or revert when amounts bring protocol out of limits
      * @custom:given The randomized expo balanced protocol state
-     * @custom:when The `imbalanceLimitClose` is called with a random amount
-     * @custom:then The transaction should revert in case imbalance or pass if still balanced
+     * @custom:when The {imbalanceLimitClose} is called with a random amount
+     * @custom:then The transaction should revert in case imbalance or pass if still balanced with
+     * {IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached} error
      */
     function testFuzz_checkImbalanceLimitClose(uint128 initialAmount, uint256 closeAmount) public {
         // initialize random balanced protocol
@@ -46,7 +47,8 @@ contract TestImbalanceLimitCloseFuzzing is UsdnProtocolBaseFixture {
             // should revert because calculation is not possible
             vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidLongExpo.selector);
         } else if (imbalanceBps >= initialCloseLimit) {
-            // should revert with `imbalanceBps` close imbalance limit
+            // should revert with `imbalanceBps` close imbalance limit with
+            // {IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached} error
             vm.expectRevert(
                 abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, imbalanceBps)
             );

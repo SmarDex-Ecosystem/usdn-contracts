@@ -56,7 +56,7 @@ contract TestDequePopulated is DequeFixture {
 
     /**
      * @custom:scenario View functions should handle populated list fine
-     * @custom:when Calling `empty` and `length`
+     * @custom:when Calling {empty} and {length}
      * @custom:then Returns `false` and `3`
      */
     function test_view() public {
@@ -66,7 +66,7 @@ contract TestDequePopulated is DequeFixture {
 
     /**
      * @custom:scenario Accessing the front item
-     * @custom:when Calling `front`
+     * @custom:when Calling {front}
      * @custom:then Returns the front item
      */
     function test_accessFront() public {
@@ -77,7 +77,7 @@ contract TestDequePopulated is DequeFixture {
 
     /**
      * @custom:scenario Accessing the back item
-     * @custom:when Calling `back`
+     * @custom:when Calling {back}
      * @custom:then Returns the back item
      */
     function test_accessBack() public {
@@ -88,7 +88,7 @@ contract TestDequePopulated is DequeFixture {
 
     /**
      * @custom:scenario Accessing items at a given index
-     * @custom:when Calling `at` with one of the indices
+     * @custom:when Calling {at} with one of the indices
      * @custom:then Returns the item at the given index
      */
     function test_accessAt() public {
@@ -105,7 +105,7 @@ contract TestDequePopulated is DequeFixture {
 
     /**
      * @custom:scenario Accessing items at a given raw index
-     * @custom:when Calling `atRaw` with one of the raw indices
+     * @custom:when Calling {atRaw} with one of the raw indices
      * @custom:then Returns the item at the given raw index
      */
     function test_accessAtRaw() public {
@@ -117,8 +117,8 @@ contract TestDequePopulated is DequeFixture {
     /**
      * @custom:scenario Accessing items at a given index
      * @custom:given The index is out of bounds
-     * @custom:when Calling `at` with an out of bounds index
-     * @custom:then It should revert with `QueueOutOfBounds`
+     * @custom:when Calling {at} with an out of bounds index
+     * @custom:then It should revert with {QueueOutOfBounds}
      */
     function test_RevertWhen_OOB() public {
         vm.expectRevert(DoubleEndedQueue.QueueOutOfBounds.selector);
@@ -129,9 +129,9 @@ contract TestDequePopulated is DequeFixture {
 
     /**
      * @custom:scenario Pushing an item to the front of the queue
-     * @custom:when Calling `pushFront` with an item
+     * @custom:when Calling {pushFront} with an item
      * @custom:then The length should increase by 1
-     * @custom:and The item should be inserted at the front and gettable with `front` or its (raw) index
+     * @custom:and The item should be inserted at the front and gettable with {front} or its (raw) index
      * @custom:and The indices of the other items should be shifted one up
      * @custom:and The raw indices of the other items should not change
      */
@@ -163,9 +163,9 @@ contract TestDequePopulated is DequeFixture {
 
     /**
      * @custom:scenario Pushing an item to the back of the queue
-     * @custom:when Calling `pushBack` with an item
+     * @custom:when Calling {pushBack} with an item
      * @custom:then The length should increase by 1
-     * @custom:and The item should be inserted at the back and gettable with `back` or its (raw) index
+     * @custom:and The item should be inserted at the back and gettable with {back} or its (raw) index
      * @custom:and The indices of the other items should not change
      * @custom:and The raw indices of the other items should not change
      */
@@ -197,7 +197,7 @@ contract TestDequePopulated is DequeFixture {
 
     /**
      * @custom:scenario Popping an item from the front of the queue
-     * @custom:when Calling `popFront`
+     * @custom:when Calling {popFront}
      * @custom:then The length should decrease by 1
      * @custom:and The correct item should be returned
      * @custom:and The indices of the other items should be shifted one down
@@ -217,7 +217,7 @@ contract TestDequePopulated is DequeFixture {
 
     /**
      * @custom:scenario Popping an item from the back of the queue
-     * @custom:when Calling `popBack`
+     * @custom:when Calling {popBack}
      * @custom:then The length should decrease by 1
      * @custom:and The correct item should be returned
      * @custom:and The indices of the other items should not change
@@ -237,7 +237,7 @@ contract TestDequePopulated is DequeFixture {
 
     /**
      * @custom:scenario Clearing the item at the front of the queue
-     * @custom:when Calling `clearAt` with the raw index of the front item
+     * @custom:when Calling {clearAt} with the raw index of the front item
      * @custom:then The length should decrease by 1
      * @custom:and The indices of the other items should be shifted one down
      * @custom:and The raw indices of the other items should not change
@@ -255,7 +255,7 @@ contract TestDequePopulated is DequeFixture {
 
     /**
      * @custom:scenario Clearing the item at the back of the queue
-     * @custom:when Calling `clearAt` with the raw index of the back item
+     * @custom:when Calling {clearAt} with the raw index of the back item
      * @custom:then The length should decrease by 1
      * @custom:and The indices of the other items should not change
      * @custom:and The raw indices of the other items should not change
@@ -273,7 +273,7 @@ contract TestDequePopulated is DequeFixture {
 
     /**
      * @custom:scenario Clearing an item at the middle of the queue
-     * @custom:when Calling `clearAt` with the raw index of a middle item
+     * @custom:when Calling {clearAt} with the raw index of a middle item
      * @custom:then The length should not change
      * @custom:and The indices of the other items should not change
      * @custom:and The raw indices of the other items should not change
@@ -299,7 +299,7 @@ contract TestDequePopulated is DequeFixture {
 
     /**
      * @custom:scenario Clearing all items in the queue
-     * @custom:when Calling `clearAt` with the raw index of each item
+     * @custom:when Calling {clearAt} with the raw index of each item
      * @custom:then The length should decrease to 0
      * @custom:and The queue should be empty
      */

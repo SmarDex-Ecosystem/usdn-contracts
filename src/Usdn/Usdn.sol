@@ -293,7 +293,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
 
             // division can't error because d > 0
             if (tokensDown == type(uint256).max / d) {
-                // early return, we can't have a token amount larger than maxTokens() = uint256.max / _divisor
+                // early return, we can't have a token amount larger than {maxTokens()} = `uint256.max / _divisor`
                 return tokensDown;
             }
             uint256 tokensUp = tokensDown + 1; // this can't overflow because d > 1
@@ -319,7 +319,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
      * @param from The source address
      * @param to The destination address
      * @param value The amount of shares to transfer
-     * @param tokenValue The converted amount in tokens, for inclusion in the `Transfer` event
+     * @param tokenValue The converted amount in tokens, for inclusion in the {Transfer} event
      */
     function _transferShares(address from, address to, uint256 value, uint256 tokenValue) internal {
         if (from == address(0)) {
@@ -336,7 +336,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
      * @dev Reverts if the account is the zero address
      * @param account The owner of the shares
      * @param value The number of shares to burn
-     * @param tokenValue The converted value in tokens, for emitting the `Transfer` event
+     * @param tokenValue The converted value in tokens, for emitting the {Transfer} event
      */
     function _burnShares(address account, uint256 value, uint256 tokenValue) internal {
         if (account == address(0)) {
@@ -352,7 +352,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
      * @param from The source address
      * @param to The destination address
      * @param value The number of shares to transfer
-     * @param tokenValue The value converted to tokens, for inclusion in the `Transfer` event
+     * @param tokenValue The value converted to tokens, for inclusion in the {Transfer} event
      */
     function _updateShares(address from, address to, uint256 value, uint256 tokenValue) internal {
         if (from == address(0)) {
@@ -364,19 +364,19 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
                 revert UsdnInsufficientSharesBalance(from, fromBalance, value);
             }
             unchecked {
-                // overflow not possible: value <= fromBalance <= totalShares
+                // overflow not possible: `value <= fromBalance <= totalShares`
                 _shares[from] = fromBalance - value;
             }
         }
 
         if (to == address(0)) {
             unchecked {
-                // overflow not possible: value <= totalShares or value <= fromBalance <= totalShares
+                // overflow not possible: `value <= totalShares or value <= fromBalance <= totalShares`
                 _totalShares -= value;
             }
         } else {
             unchecked {
-                // overflow not possible: balance + value is at most `totalShares`, which we know fits into a uint256
+                // overflow not possible: `balance + value` is at most `totalShares`, which we know fits into a uint256
                 _shares[to] += value;
             }
         }
@@ -394,7 +394,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
      * @param value The amount of tokens to transfer, is internally converted to shares
      */
     function _update(address from, address to, uint256 value) internal override {
-        // convert the value to shares, reverts with `UsdnMaxTokensExceeded()` if value is too high
+        // convert the value to shares, reverts with {UsdnMaxTokensExceeded} if value is too high
         uint256 valueShares = convertToShares(value);
         uint256 fromBalance = balanceOf(from);
 
@@ -416,12 +416,12 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
                 revert ERC20InsufficientBalance(from, fromBalance, value);
             }
             if (valueShares <= fromShares) {
-                // since valueShares <= fromShares, we can safely subtract `valueShares` from `fromShares`
+                // since `valueShares <= fromShares`, we can safely subtract `valueShares` from `fromShares`
                 unchecked {
                     _shares[from] -= valueShares;
                 }
             } else {
-                // due to a rounding error, valueShares can be slightly larger than fromShares. In this case, we
+                // due to a rounding error, `valueShares` can be slightly larger than `fromShares`. In this case, we
                 // simply set the balance to zero and adjust the transferred amount of shares
                 _shares[from] = 0;
                 valueShares = fromShares;
@@ -429,13 +429,13 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
         }
 
         if (to == address(0)) {
-            // burn: Since valueShares <= fromShares <= totalShares, we can safely subtract `valueShares` from
+            // burn: Since `valueShares <= fromShares <= totalShares`, we can safely subtract `valueShares` from
             // `totalShares`
             unchecked {
                 _totalShares -= valueShares;
             }
         } else {
-            // since shares + valueShares <= totalShares, we can safely add `valueShares` to the user shares
+            // since `shares + valueShares <= totalShares`, we can safely add `valueShares` to the user shares
             unchecked {
                 _shares[to] += valueShares;
             }

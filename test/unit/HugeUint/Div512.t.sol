@@ -54,7 +54,7 @@ contract TestHugeUintDiv512 is HugeUintFixture {
      * @custom:when The `div` function is called with `69` and 0
      * @custom:or The `div` function is called with `uint512.max` and 0
      * @custom:or The `div` function is called with `uint512.max` and `uint256.max`
-     * @custom:then The function reverts with `HugeUintDivisionFailed`
+     * @custom:then The function reverts with {HugeUintDivisionFailed}
      */
     function test_RevertWhen_div() public {
         HugeUint.Uint512 memory a = HugeUint.Uint512(0, 69);
