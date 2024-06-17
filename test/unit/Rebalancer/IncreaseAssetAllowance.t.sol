@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { RebalancerFixture } from "test/unit/Rebalancer/utils/Fixtures.sol";
+import { RebalancerFixture } from "./utils/Fixtures.sol";
 
 /// @custom:feature The `increaseAssetAllowance` function of the Rebalancer
 contract TestRebalancerIncreaseAssetAllowance is RebalancerFixture {

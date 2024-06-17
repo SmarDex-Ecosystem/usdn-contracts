@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.25;
 
+import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import { ChainlinkOracle } from "./oracles/ChainlinkOracle.sol";
@@ -23,7 +24,7 @@ import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracl
  * It is used by the USDN protocol to get the price of the USDN underlying asset
  * @dev This contract is a middleware between the USDN protocol and the price oracles
  */
-contract OracleMiddleware is IOracleMiddleware, PythOracle, RedstoneOracle, ChainlinkOracle, Ownable {
+contract OracleMiddleware is IOracleMiddleware, PythOracle, RedstoneOracle, ChainlinkOracle, Ownable2Step {
     /// @inheritdoc IOracleMiddleware
     uint16 public constant BPS_DIVISOR = 10_000;
 

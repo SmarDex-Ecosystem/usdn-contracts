@@ -1,29 +1,29 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { DEPLOYER, ADMIN } from "test/utils/Constants.sol";
-import { BaseFixture } from "test/utils/Fixtures.sol";
-import { UsdnProtocolHandler } from "test/unit/UsdnProtocol/utils/Handler.sol";
-import { MockOracleMiddleware } from "test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
-import { MockChainlinkOnChain } from "test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
-import { RebalancerHandler } from "test/unit/Rebalancer/utils/Handler.sol";
-import { IEventsErrors } from "test/utils/IEventsErrors.sol";
-import { Sdex } from "test/utils/Sdex.sol";
-import { WstETH } from "test/utils/WstEth.sol";
+import { DEPLOYER, ADMIN } from "../../../utils/Constants.sol";
+import { BaseFixture } from "../../../utils/Fixtures.sol";
+import { UsdnProtocolHandler } from "./Handler.sol";
+import { MockOracleMiddleware } from "./MockOracleMiddleware.sol";
+import { MockChainlinkOnChain } from "../../Middlewares/utils/MockChainlinkOnChain.sol";
+import { RebalancerHandler } from "../../Rebalancer/utils/Handler.sol";
+import { IEventsErrors } from "../../../utils/IEventsErrors.sol";
+import { Sdex } from "../../../utils/Sdex.sol";
+import { WstETH } from "../../../utils/WstEth.sol";
 
-import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
-import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
+import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
+import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import {
     Position,
     PendingAction,
     ProtocolAction,
     PreviousActionsData,
     PositionId
-} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { Usdn } from "src/Usdn/Usdn.sol";
-import { HugeUint } from "src/libraries/HugeUint.sol";
-import { Permit2TokenBitfield } from "src/libraries/Permit2TokenBitfield.sol";
+} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Usdn } from "../../../../src/Usdn/Usdn.sol";
+import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
+import { Permit2TokenBitfield } from "../../../../src/libraries/Permit2TokenBitfield.sol";
 
 /**
  * @title UsdnProtocolBaseFixture
@@ -93,6 +93,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
     uint256 public usdnInitialTotalSupply;
     address[] public users;
 
+    int24 internal _tickSpacing = 100; // tick spacing 100 = 1%
     PreviousActionsData internal EMPTY_PREVIOUS_DATA =
         PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
 
@@ -118,7 +119,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             wstETH,
             oracleMiddleware,
             liquidationRewardsManager,
-            100, // tick spacing 100 = 1%
+            _tickSpacing,
             ADMIN // Fee collector
         );
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
@@ -164,7 +165,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         rebalancer = new RebalancerHandler(protocol);
         if (testParams.flags.enableRebalancer) {
             protocol.setRebalancer(rebalancer);
-            rebalancer.transferOwnership(ADMIN);
         }
 
         // leverage approx 2x
@@ -180,6 +180,11 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         // separate the roles ADMIN and DEPLOYER
         protocol.transferOwnership(ADMIN);
         rebalancer.transferOwnership(ADMIN);
+        vm.stopPrank();
+
+        vm.startPrank(ADMIN);
+        protocol.acceptOwnership();
+        rebalancer.acceptOwnership();
         vm.stopPrank();
 
         usdnInitialTotalSupply = usdn.totalSupply();

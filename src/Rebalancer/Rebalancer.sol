@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.25;
 
+import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -18,7 +19,7 @@ import { PositionId } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
  * It will manage only one position with enough trading expo to re-balance the protocol after liquidations
  * and close/open again with new and existing funds when the imbalance reaches a certain threshold
  */
-contract Rebalancer is Ownable, ERC165, IOwnershipCallback, IRebalancer {
+contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
     using SafeERC20 for IERC20Metadata;
 
     /// @notice Modifier to check if the caller is the USDN protocol or the owner
@@ -183,12 +184,12 @@ contract Rebalancer is Ownable, ERC165, IOwnershipCallback, IRebalancer {
             }
         }
 
-        _asset.safeTransferFrom(msg.sender, address(this), amount);
-
         depositData.entryPositionVersion = positionVersion + 1;
         depositData.amount += amount;
         _userDeposit[to] = depositData;
         _pendingAssetsAmount += amount;
+
+        _asset.safeTransferFrom(msg.sender, address(this), amount);
 
         emit AssetsDeposited(amount, to, positionVersion + 1);
     }
@@ -274,7 +275,6 @@ contract Rebalancer is Ownable, ERC165, IOwnershipCallback, IRebalancer {
     }
 
     /**
-     * TODO add tests
      * @notice Calculate the PnL multiplier of a position
      * @param openAmount The amount of assets used to open the position
      * @param value The value of the position right now

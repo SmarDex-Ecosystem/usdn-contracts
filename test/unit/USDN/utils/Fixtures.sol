@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { USER_1, USER_2, USER_3, USER_4 } from "test/utils/Constants.sol";
-import { BaseFixture } from "test/utils/Fixtures.sol";
-import { UsdnHandler } from "test/unit/USDN/utils/Handler.sol";
-import { IEventsErrors } from "test/utils/IEventsErrors.sol";
+import { USER_1, USER_2, USER_3, USER_4 } from "../../../utils/Constants.sol";
+import { BaseFixture } from "../../../utils/Fixtures.sol";
+import { UsdnHandler } from "./Handler.sol";
+import { IEventsErrors } from "../../../utils/IEventsErrors.sol";
 
-import { IUsdnEvents } from "src/interfaces/Usdn/IUsdnEvents.sol";
-import { IUsdnErrors } from "src/interfaces/Usdn/IUsdnErrors.sol";
+import { IUsdnEvents } from "../../../../src/interfaces/Usdn/IUsdnEvents.sol";
+import { IUsdnErrors } from "../../../../src/interfaces/Usdn/IUsdnErrors.sol";
 
 /**
  * @title UsdnTokenFixture

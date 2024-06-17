@@ -1,23 +1,23 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { MOCK_PYTH_DATA } from "test/unit/Middlewares/utils/Constants.sol";
-import { DEPLOYER } from "test/utils/Constants.sol";
-import { UsdnProtocolBaseIntegrationFixture } from "test/integration/UsdnProtocol/utils/Fixtures.sol";
-import { MockChainlinkOnChain } from "test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
+import { MOCK_PYTH_DATA } from "../../unit/Middlewares/utils/Constants.sol";
+import { DEPLOYER } from "../../utils/Constants.sol";
+import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
+import { MockChainlinkOnChain } from "../../unit/Middlewares/utils/MockChainlinkOnChain.sol";
 
-import { IRebalancerEvents } from "src/interfaces/Rebalancer/IRebalancerEvents.sol";
-import { ProtocolAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { HugeUint } from "src/libraries/HugeUint.sol";
-import { TickMath } from "src/libraries/TickMath.sol";
-import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
+import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
+import { ProtocolAction, TickData } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, PositionId } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { HugeUint } from "../../../src/libraries/HugeUint.sol";
+import { TickMath } from "../../../src/libraries/TickMath.sol";
+import { LiquidationRewardsManager } from "../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
 
 /**
  * @custom:feature The rebalancer is triggered after liquidations
  * @custom:background A rebalancer is set and the USDN protocol is initialized with the default params
  */
-contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture, IRebalancerEvents {
+contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture, IRebalancerEvents {
     using HugeUint for HugeUint.Uint512;
 
     MockChainlinkOnChain public chainlinkGasPriceFeed;
@@ -118,9 +118,8 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
         uint256 totalExpo = protocol.getTotalExpo() - tickToLiquidateData.totalExpo;
         uint256 vaultAssetAvailable = uint256(protocol.i_vaultAssetAvailable(wstEthPrice)) + remainingCollateral;
         uint256 longAssetAvailable = uint256(protocol.i_longAssetAvailable(wstEthPrice)) - remainingCollateral;
-        uint256 tradingExpoToFill = (
-            vaultAssetAvailable * uint256(int256(BPS_DIVISOR) - protocol.getLongImbalanceTargetBps()) / BPS_DIVISOR
-        ) - (totalExpo - longAssetAvailable);
+        uint256 tradingExpoToFill = vaultAssetAvailable * BPS_DIVISOR
+            / uint256(int256(BPS_DIVISOR) + protocol.getLongImbalanceTargetBps()) - (totalExpo - longAssetAvailable);
 
         // calculate the state of the liq accumulator after the liquidations
         HugeUint.Uint512 memory expectedAccumulator = HugeUint.sub(
@@ -132,7 +131,8 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
             )
         );
 
-        int256 imbalance = protocol.i_calcLongImbalanceBps(vaultAssetAvailable, longAssetAvailable, totalExpo);
+        int256 imbalance =
+            protocol.i_calcImbalanceCloseBps(int256(vaultAssetAvailable), int256(longAssetAvailable), totalExpo);
         // Sanity check
         assertGt(
             imbalance,
@@ -157,8 +157,8 @@ contract UsdnProtocolRebalancerTriggerTest is UsdnProtocolBaseIntegrationFixture
         _expectEmits(wstEthPrice, amountInRebalancer + bonus, liqPriceWithoutPenalty, expectedTick, 1);
         protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA, 1);
 
-        imbalance = protocol.i_calcLongImbalanceBps(
-            protocol.getBalanceVault(), protocol.getBalanceLong(), protocol.getTotalExpo()
+        imbalance = protocol.i_calcImbalanceCloseBps(
+            int256(protocol.getBalanceVault()), int256(protocol.getBalanceLong()), protocol.getTotalExpo()
         );
 
         assertLe(

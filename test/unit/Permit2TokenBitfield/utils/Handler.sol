@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { Permit2TokenBitfield } from "src/libraries/Permit2TokenBitfield.sol";
+import { Permit2TokenBitfield } from "../../../../src/libraries/Permit2TokenBitfield.sol";
 
 /**
  * @title Permit2TokenBitfieldHandler

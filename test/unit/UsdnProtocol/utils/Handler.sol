@@ -16,16 +16,17 @@ import {
     PreviousActionsData,
     TickData,
     PositionId
-} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { UsdnProtocol, Position } from "src/UsdnProtocol/UsdnProtocol.sol";
-import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
-import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
-import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
-import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
-import { HugeUint } from "src/libraries/HugeUint.sol";
-import { Position, LiquidationsEffects } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { SignedMath } from "src/libraries/SignedMath.sol";
+} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { UsdnProtocol, Position } from "../../../../src/UsdnProtocol/UsdnProtocol.sol";
+import { IUsdn } from "../../../../src/interfaces/Usdn/IUsdn.sol";
+import { ILiquidationRewardsManager } from "../../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
+import { IBaseOracleMiddleware } from "../../../../src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
+import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { DoubleEndedQueue } from "../../../../src/libraries/DoubleEndedQueue.sol";
+import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
+import { Position, LiquidationsEffects } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { SignedMath } from "../../../../src/libraries/SignedMath.sol";
+import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 
 /**
  * @title UsdnProtocolHandler
@@ -42,7 +43,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         IUsdn usdn,
         IERC20Metadata sdex,
         IERC20Metadata asset,
-        IOracleMiddleware oracleMiddleware,
+        IBaseOracleMiddleware oracleMiddleware,
         ILiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector
@@ -327,8 +328,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         _checkImbalanceLimitOpen(openTotalExpoValue, openCollatValue);
     }
 
-    function i_checkImbalanceLimitClose(uint256 closeExpoValue, uint256 closeCollatValue) external view {
-        _checkImbalanceLimitClose(closeExpoValue, closeCollatValue);
+    function i_checkImbalanceLimitClose(uint256 posTotalExpoToClose, uint256 posValueToClose) external view {
+        _checkImbalanceLimitClose(posTotalExpoToClose, posValueToClose);
     }
 
     function i_getLeverage(uint128 price, uint128 liqPrice) external pure returns (uint128) {
@@ -438,8 +439,11 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         _createInitialPosition(amount, price, tick, positionTotalExpo);
     }
 
-    function i_saveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty) external {
-        _saveNewPosition(tick, long, liquidationPenalty);
+    function i_saveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty)
+        external
+        returns (uint256, uint256, HugeUint.Uint512 memory)
+    {
+        return _saveNewPosition(tick, long, liquidationPenalty);
     }
 
     function i_checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) external view {
@@ -487,12 +491,32 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         _clearPendingAction(user, rawIndex);
     }
 
-    function i_calcLongImbalanceBps(uint256 vaultBalance, uint256 longBalance, uint256 longTotalExpo)
+    function i_calcRebalancerPositionTick(
+        uint128 neutralPrice,
+        uint128 positionAmount,
+        uint256 rebalancerMaxLeverage,
+        uint256 totalExpo,
+        uint256 balanceLong,
+        uint256 balanceVault,
+        HugeUint.Uint512 memory liqMultiplierAccumulator
+    ) external view returns (int24 tickWithoutLiqPenalty_) {
+        CachedProtocolState memory cache = CachedProtocolState({
+            totalExpo: totalExpo,
+            longBalance: balanceLong,
+            vaultBalance: balanceVault,
+            tradingExpo: totalExpo - balanceLong,
+            liqMultiplierAccumulator: liqMultiplierAccumulator
+        });
+
+        return _calcRebalancerPositionTick(neutralPrice, positionAmount, rebalancerMaxLeverage, cache);
+    }
+
+    function i_calcImbalanceCloseBps(int256 vaultBalance, int256 longBalance, uint256 longTotalExpo)
         external
         pure
         returns (int256 imbalanceBps_)
     {
-        return _calcLongImbalanceBps(vaultBalance, longBalance, longTotalExpo);
+        return _calcImbalanceCloseBps(vaultBalance, longBalance, longTotalExpo);
     }
 
     function i_removeBlockedPendingAction(uint128 rawIndex, address payable to, bool cleanup) external {

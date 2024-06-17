@@ -5,7 +5,7 @@ unless specified otherwise here.
 
 ## Imports
 
-In the `src` folder, imports should always be relative to ensure compatibility when the protocol is imported as a dependency.
+All imports should always be relative to ensure compatibility when the protocol is imported as a dependency.
 
 Imports should be sorted in the following way:
 

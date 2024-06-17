@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { BaseFixture } from "test/utils/Fixtures.sol";
+import { BaseFixture } from "../../../utils/Fixtures.sol";
 
-import { InitializableReentrancyGuardHandler } from "test/unit/InitializableReentrancyGuard/utils/Handler.sol";
+import { InitializableReentrancyGuardHandler } from "../utils/Handler.sol";
 
 /**
  * @title InitializableReentrancyGuardFixtures

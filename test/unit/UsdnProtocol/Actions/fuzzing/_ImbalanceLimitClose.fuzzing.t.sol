@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { IUsdnProtocolErrors } from "../../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
-import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { UsdnProtocolBaseFixture } from "../../utils/Fixtures.sol";
 
 /**
  * @custom:feature Fuzzing tests of the protocol expo limit for internal `imbalanceLimitClose`
@@ -43,9 +43,11 @@ contract TestImbalanceLimitCloseFuzzing is UsdnProtocolBaseFixture {
         int256 initialCloseLimit = protocol.getCloseExpoImbalanceLimitBps();
 
         if (newLongExpo == 0) {
-            // should revert because calculation is not possible
-            vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidLongExpo.selector);
-        } else if (imbalanceBps >= initialCloseLimit) {
+            // should revert with the maximum imbalance
+            vm.expectRevert(
+                abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, type(int256).max)
+            );
+        } else if (newLongExpo == 0 || imbalanceBps >= initialCloseLimit) {
             // should revert with `imbalanceBps` close imbalance limit
             vm.expectRevert(
                 abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, imbalanceBps)

@@ -549,17 +549,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         int256 currentVaultExpo = _balanceVault.toInt256().safeAdd(_pendingBalanceVault);
-
-        // cannot be calculated if equal to zero
-        if (currentVaultExpo == 0) {
-            revert UsdnProtocolInvalidVaultExpo();
-        }
-
-        int256 imbalanceBps = (
-            ((_totalExpo + openTotalExpoValue).toInt256().safeSub((_balanceLong + openCollatValue).toInt256())).safeSub(
-                currentVaultExpo
-            )
-        ).safeMul(int256(BPS_DIVISOR)).safeDiv(currentVaultExpo);
+        int256 imbalanceBps = _calcImbalanceOpenBps(
+            currentVaultExpo, (_balanceLong + openCollatValue).toInt256(), _totalExpo + openTotalExpoValue
+        );
 
         if (imbalanceBps >= openExpoImbalanceLimitBps) {
             revert UsdnProtocolImbalanceLimitReached(imbalanceBps);
@@ -570,10 +562,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @notice The close vault imbalance limit state verification
      * @dev To ensure that the protocol does not imbalance more than
      * the close limit on the vault side, otherwise revert
-     * @param closePosTotalExpoValue The close position total expo value
-     * @param closeCollatValue The close position collateral value
+     * @param posTotalExpoToClose The total expo to remove position
+     * @param posValueToClose The value to remove from the position
      */
-    function _checkImbalanceLimitClose(uint256 closePosTotalExpoValue, uint256 closeCollatValue) internal view {
+    function _checkImbalanceLimitClose(uint256 posTotalExpoToClose, uint256 posValueToClose) internal view {
         int256 closeExpoImbalanceLimitBps = _closeExpoImbalanceLimitBps;
 
         // early return in case limit is disabled
@@ -581,18 +573,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             return;
         }
 
-        int256 newLongExpo = (_totalExpo.toInt256().safeSub(closePosTotalExpoValue.toInt256())).safeSub(
-            _balanceLong.toInt256().safeSub(closeCollatValue.toInt256())
-        );
-
-        // cannot be calculated if equal or lower than zero
-        if (newLongExpo <= 0) {
-            revert UsdnProtocolInvalidLongExpo();
-        }
-
+        int256 newLongBalance = _balanceLong.toInt256().safeSub(posValueToClose.toInt256());
+        uint256 newTotalExpo = _totalExpo - posTotalExpoToClose;
         int256 currentVaultExpo = _balanceVault.toInt256().safeAdd(_pendingBalanceVault);
 
-        int256 imbalanceBps = (currentVaultExpo.safeSub(newLongExpo)).safeMul(int256(BPS_DIVISOR)).safeDiv(newLongExpo);
+        int256 imbalanceBps = _calcImbalanceCloseBps(currentVaultExpo, newLongBalance, newTotalExpo);
 
         if (imbalanceBps >= closeExpoImbalanceLimitBps) {
             revert UsdnProtocolImbalanceLimitReached(imbalanceBps);
@@ -1608,8 +1593,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         data_.totalExpoToClose = (uint256(data_.pos.totalExpo) * amountToClose / data_.pos.amount).toUint128();
 
-        _checkImbalanceLimitClose(data_.totalExpoToClose, amountToClose);
-
         data_.longTradingExpo = _totalExpo - _balanceLong;
         data_.liqMulAcc = _liqMultiplierAccumulator;
         data_.lastPrice = _lastPrice;
@@ -1629,6 +1612,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             ),
             data_.totalExpoToClose
         );
+
+        // we perform the imbalance check based on the estimated balance change since that's the best we have right now
+        _checkImbalanceLimitClose(data_.totalExpoToClose, data_.tempPositionValue);
     }
 
     /**
@@ -2054,8 +2040,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _balanceLong = liquidationEffects.newLongBalance;
             _balanceVault = liquidationEffects.newVaultBalance;
 
-            // safecast not needed since done above
-            (bool rebased, bytes memory callbackResult) = _usdnRebase(uint128(neutralPrice), ignoreInterval);
+            (bool rebased, bytes memory callbackResult) = _usdnRebase(_lastPrice, ignoreInterval);
 
             if (liquidationEffects.liquidatedTicks > 0) {
                 _sendRewardsToLiquidator(
@@ -2115,7 +2100,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         cache.tradingExpo = cache.totalExpo - cache.longBalance;
 
         {
-            int256 currentImbalance = _calcLongImbalanceBps(cache.vaultBalance, cache.longBalance, cache.totalExpo);
+            int256 currentImbalance =
+                _calcImbalanceCloseBps(cache.vaultBalance.toInt256(), cache.longBalance.toInt256(), cache.totalExpo);
 
             // if the imbalance is lower than the threshold, return
             if (currentImbalance < _closeExpoImbalanceLimitBps) {
