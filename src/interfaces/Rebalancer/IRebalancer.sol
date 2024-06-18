@@ -68,13 +68,6 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
     function getTimeLimits() external view returns (TimeLimits memory);
 
     /**
-     * @notice Returns the data regarding the assets deposited by the provided user
-     * @param user The address of the user
-     * @return The data regarding the assets deposited by the provided user
-     */
-    function getUserDepositData(address user) external view returns (UserDeposit memory);
-
-    /**
      * @notice Increase the allowance of assets for the USDN protocol spender by `addAllowance`
      * @param addAllowance Amount to add to the allowance of the UsdnProtocol contract
      */
