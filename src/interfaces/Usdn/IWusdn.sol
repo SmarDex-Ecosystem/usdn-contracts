@@ -2,6 +2,7 @@
 pragma solidity >=0.8.0;
 
 import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
+import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import { IWusdnEvents } from "./IWusdnEvents.sol";
 import { IWusdnErrors } from "./IWusdnErrors.sol";
@@ -11,7 +12,7 @@ import { IUsdn } from "./IUsdn.sol";
  * @title Wusdn Interface
  * @notice Interface for the Wrapped Ultimate Synthetic Delta Neutral (WUSDN) token
  */
-interface IWusdn is IERC20Permit, IWusdnEvents, IWusdnErrors {
+interface IWusdn is IERC20Metadata, IERC20Permit, IWusdnEvents, IWusdnErrors {
     /**
      * @notice Returns the USDN token address
      * @return The address of the USDN token
