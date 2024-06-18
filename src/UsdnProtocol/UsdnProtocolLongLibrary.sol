@@ -10,8 +10,7 @@ import { Position, LiquidationsEffects, TickData, PositionId } from "../interfac
 import { TickMath } from "../libraries/TickMath.sol";
 import { SignedMath } from "../libraries/SignedMath.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
-import { CachedProtocolState } from "./UsdnProtocolBaseStorage.sol";
-import { Storage } from "./UsdnProtocolBaseStorage.sol";
+import { Storage, CachedProtocolState } from "./UsdnProtocolBaseStorage.sol";
 
 library UsdnProtocolLongLibrary {
     using LibBitmap for LibBitmap.Bitmap;

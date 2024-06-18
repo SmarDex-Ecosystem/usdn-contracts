@@ -4,21 +4,25 @@ pragma solidity ^0.8.25;
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { UsdnProtocolCore } from "./UsdnProtocolCore.sol";
 import { IUsdnProtocolVault } from "../interfaces/UsdnProtocol/IUsdnProtocolVault.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
+import { Storage } from "./UsdnProtocolBaseStorage.sol";
 
-abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
+library UsdnProtocolVaultLibrary {
     using SafeCast for int256;
     using SafeCast for uint256;
 
     /// @inheritdoc IUsdnProtocolVault
-    function usdnPrice(uint128 currentPrice, uint128 timestamp) public view returns (uint256 price_) {
+    function usdnPrice(Storage storage s, uint128 currentPrice, uint128 timestamp)
+        public
+        view
+        returns (uint256 price_)
+    {
         price_ = _calcUsdnPrice(
             vaultAssetAvailableWithFunding(currentPrice, timestamp).toUint256(),
             currentPrice,
-            _usdn.totalSupply(),
-            _assetDecimals
+            s._usdn.totalSupply(),
+            s._assetDecimals
         );
     }
 
@@ -28,35 +32,35 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
     }
 
     /// @inheritdoc IUsdnProtocolVault
-    function previewDeposit(uint256 amount, uint128 price, uint128 timestamp)
+    function previewDeposit(Storage storage s, uint256 amount, uint128 price, uint128 timestamp)
         external
         view
         returns (uint256 usdnSharesExpected_, uint256 sdexToBurn_)
     {
         // apply fees on price
-        uint128 depositPriceWithFees = price - price * _vaultFeeBps / uint128(BPS_DIVISOR);
+        uint128 depositPriceWithFees = price - price * s._vaultFeeBps / uint128(s.BPS_DIVISOR);
         usdnSharesExpected_ = _calcMintUsdnShares(
             amount,
             vaultAssetAvailableWithFunding(depositPriceWithFees, timestamp).toUint256(),
-            _usdn.totalShares(),
+            s._usdn.totalShares(),
             depositPriceWithFees
         );
-        sdexToBurn_ = _calcSdexToBurn(_usdn.convertToTokens(usdnSharesExpected_), _sdexBurnOnDepositRatio);
+        sdexToBurn_ = _calcSdexToBurn(s._usdn.convertToTokens(usdnSharesExpected_), s._sdexBurnOnDepositRatio);
     }
 
     /// @inheritdoc IUsdnProtocolVault
-    function previewWithdraw(uint256 usdnShares, uint256 price, uint128 timestamp)
+    function previewWithdraw(Storage storage s, uint256 usdnShares, uint256 price, uint128 timestamp)
         external
         view
         returns (uint256 assetExpected_)
     {
         // apply fees on price
-        uint128 withdrawalPriceWithFees = (price + price * _vaultFeeBps / BPS_DIVISOR).toUint128();
+        uint128 withdrawalPriceWithFees = (price + price * s._vaultFeeBps / s.BPS_DIVISOR).toUint128();
         int256 available = vaultAssetAvailableWithFunding(withdrawalPriceWithFees, timestamp);
         if (available < 0) {
             return 0;
         }
-        assetExpected_ = _calcBurnUsdn(usdnShares, uint256(available), _usdn.totalShares());
+        assetExpected_ = _calcBurnUsdn(usdnShares, uint256(available), s._usdn.totalShares());
     }
 
     /**
@@ -85,13 +89,15 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
      * @param assetDecimals The number of decimals of the underlying asset
      * @return price_ The price of the USDN token
      */
-    function _calcUsdnPrice(uint256 vaultBalance, uint128 assetPrice, uint256 usdnTotalSupply, uint8 assetDecimals)
-        internal
-        pure
-        returns (uint256 price_)
-    {
+    function _calcUsdnPrice(
+        Storage storage s,
+        uint256 vaultBalance,
+        uint128 assetPrice,
+        uint256 usdnTotalSupply,
+        uint8 assetDecimals
+    ) internal pure returns (uint256 price_) {
         price_ = FixedPointMathLib.fullMulDiv(
-            vaultBalance, uint256(assetPrice) * 10 ** TOKENS_DECIMALS, usdnTotalSupply * 10 ** assetDecimals
+            vaultBalance, uint256(assetPrice) * 10 ** s.TOKENS_DECIMALS, usdnTotalSupply * 10 ** assetDecimals
         );
     }
 
@@ -101,8 +107,12 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
      * @param sdexBurnRatio The ratio of SDEX to burn for each minted USDN
      * @return sdexToBurn_ The amount of SDEX to burn for the given USDN amount
      */
-    function _calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) internal pure returns (uint256 sdexToBurn_) {
-        sdexToBurn_ = FixedPointMathLib.fullMulDiv(usdnAmount, sdexBurnRatio, SDEX_BURN_ON_DEPOSIT_DIVISOR);
+    function _calcSdexToBurn(Storage storage s, uint256 usdnAmount, uint32 sdexBurnRatio)
+        internal
+        pure
+        returns (uint256 sdexToBurn_)
+    {
+        sdexToBurn_ = FixedPointMathLib.fullMulDiv(usdnAmount, sdexBurnRatio, s.SDEX_BURN_ON_DEPOSIT_DIVISOR);
     }
 
     /**
@@ -113,13 +123,15 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
      * @param assetDecimals The number of decimals of the asset
      * @return totalSupply_ The required total supply to achieve `targetPrice`
      */
-    function _calcRebaseTotalSupply(uint256 vaultBalance, uint128 assetPrice, uint128 targetPrice, uint8 assetDecimals)
-        internal
-        pure
-        returns (uint256 totalSupply_)
-    {
+    function _calcRebaseTotalSupply(
+        Storage storage s,
+        uint256 vaultBalance,
+        uint128 assetPrice,
+        uint128 targetPrice,
+        uint8 assetDecimals
+    ) internal pure returns (uint256 totalSupply_) {
         totalSupply_ = FixedPointMathLib.fullMulDiv(
-            vaultBalance, uint256(assetPrice) * 10 ** TOKENS_DECIMALS, uint256(targetPrice) * 10 ** assetDecimals
+            vaultBalance, uint256(assetPrice) * 10 ** s.TOKENS_DECIMALS, uint256(targetPrice) * 10 ** assetDecimals
         );
     }
 
@@ -131,28 +143,28 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
      * @return rebased_ Whether a rebase was performed
      * @return callbackResult_ The rebase callback result, if any
      */
-    function _usdnRebase(uint128 assetPrice, bool ignoreInterval)
+    function _usdnRebase(Storage storage s, uint128 assetPrice, bool ignoreInterval)
         internal
         returns (bool rebased_, bytes memory callbackResult_)
     {
-        if (!ignoreInterval && block.timestamp - _lastRebaseCheck < _usdnRebaseInterval) {
+        if (!ignoreInterval && block.timestamp - s._lastRebaseCheck < s._usdnRebaseInterval) {
             return (false, callbackResult_);
         }
-        _lastRebaseCheck = block.timestamp;
-        IUsdn usdn = _usdn;
+        s._lastRebaseCheck = block.timestamp;
+        IUsdn usdn = s._usdn;
         uint256 divisor = usdn.divisor();
-        if (divisor <= _usdnMinDivisor) {
+        if (divisor <= s._usdnMinDivisor) {
             // no need to rebase, the USDN divisor cannot go lower
             return (false, callbackResult_);
         }
-        uint256 balanceVault = _balanceVault;
-        uint8 assetDecimals = _assetDecimals;
+        uint256 balanceVault = s._balanceVault;
+        uint8 assetDecimals = s._assetDecimals;
         uint256 usdnTotalSupply = usdn.totalSupply();
         uint256 uPrice = _calcUsdnPrice(balanceVault, assetPrice, usdnTotalSupply, assetDecimals);
-        if (uPrice <= _usdnRebaseThreshold) {
+        if (uPrice <= s._usdnRebaseThreshold) {
             return (false, callbackResult_);
         }
-        uint256 targetTotalSupply = _calcRebaseTotalSupply(balanceVault, assetPrice, _targetUsdnPrice, assetDecimals);
+        uint256 targetTotalSupply = _calcRebaseTotalSupply(balanceVault, assetPrice, s._targetUsdnPrice, assetDecimals);
         uint256 newDivisor = FixedPointMathLib.fullMulDiv(usdnTotalSupply, divisor, targetTotalSupply);
         // since the USDN token can call a handler after the rebase, we want to make sure we do not block the user
         // action in case the rebase fails
@@ -175,18 +187,20 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
      * amountUsdn = amountAsset * totalSupply / vaultBalance, and
      * sharesUsdn = amountAsset * totalShares / vaultBalance
      */
-    function _calcMintUsdnShares(uint256 amount, uint256 vaultBalance, uint256 usdnTotalShares, uint256 price)
-        internal
-        view
-        returns (uint256 toMint_)
-    {
+    function _calcMintUsdnShares(
+        Storage storage s,
+        uint256 amount,
+        uint256 vaultBalance,
+        uint256 usdnTotalShares,
+        uint256 price
+    ) internal view returns (uint256 toMint_) {
         if (vaultBalance == 0) {
             // initialization, we consider the USDN price to be 1 USD
             // the conversion here is necessary since we calculate an amount in tokens and we want the corresponding
             // amount of shares
-            return _usdn.convertToShares(
+            return s._usdn.convertToShares(
                 FixedPointMathLib.fullMulDiv(
-                    amount, price, 10 ** (_assetDecimals + _priceFeedDecimals - TOKENS_DECIMALS)
+                    amount, price, 10 ** (s._assetDecimals + s._priceFeedDecimals - s.TOKENS_DECIMALS)
                 )
             );
         }
