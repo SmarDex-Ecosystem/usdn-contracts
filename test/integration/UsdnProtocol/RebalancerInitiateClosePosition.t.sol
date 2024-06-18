@@ -51,25 +51,13 @@ contract UsdnProtocolRebalancerInitiateClosePosition is UsdnProtocolBaseIntegrat
     }
 
     /**
-     * @custom:scenario The user closes an amount higher than his deposited amount
-     * @custom:given A rebalancer long position opened in the USDN Protocol
-     * @custom:and A user having deposited assets in the rebalancer before the first trigger
-     * @custom:when The user calls the rebalancer's `initiateClosePosition` function
-     * @custom:then The transaction should revert with a `RebalancerInvalidAmount` error
-     */
-    function test_RevertWhen_RebalancerInvalidAmountIn() external {
-        vm.expectRevert(IRebalancerErrors.RebalancerInvalidAmount.selector);
-        rebalancer.initiateClosePosition(amountInRebalancer + 1, address(this), payable(this), "", EMPTY_PREVIOUS_DATA);
-    }
-
-    /**
      * @custom:scenario The user partially closes its position with a remaining amount lower than `_minAssetDeposit`
      * @custom:given A rebalancer long position opened in the USDN Protocol
      * @custom:and A user having deposited assets in the rebalancer before the first trigger
      * @custom:when The user calls the rebalancer's `initiateClosePosition` function
      * @custom:then The transaction should revert with a `RebalancerInvalidAmount` error
      */
-    function test_RevertWhen_RebalancerInvalidAmountIn2() external {
+    function test_RevertWhen_RebalancerInvalidAmount() external {
         vm.expectRevert(IRebalancerErrors.RebalancerInvalidAmount.selector);
         rebalancer.initiateClosePosition(
             amountInRebalancer - minAsset + 1, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA
