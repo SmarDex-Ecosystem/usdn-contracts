@@ -87,6 +87,22 @@ struct Storage {
     LibBitmap.Bitmap _tickBitmap;
 }
 
+/**
+ * @notice Structure to hold the state of the protocol
+ * @param totalExpo The long total expo
+ * @param tradingExpo The long trading expo
+ * @param longBalance The long balance
+ * @param vaultBalance The vault balance
+ * @param liqMultiplierAccumulator The liquidation multiplier accumulator
+ */
+struct CachedProtocolState {
+    uint256 totalExpo;
+    uint256 tradingExpo;
+    uint256 longBalance;
+    uint256 vaultBalance;
+    HugeUint.Uint512 liqMultiplierAccumulator;
+}
+
 contract UsdnProtocolBaseStorage is IUsdnProtocolErrors {
     using LibBitmap for LibBitmap.Bitmap;
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
