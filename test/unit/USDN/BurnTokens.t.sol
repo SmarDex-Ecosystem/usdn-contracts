@@ -19,8 +19,7 @@ contract TestUsdnBurnTokens is UsdnTokenFixture {
      * @custom:scenario Burn shares call _burnShares with correct arguments
      * @custom:when 100 tokens are burned by a user
      * @custom:then The `Transfer` event should be emitted with the sender address as the sender and
-     * 0 address as the recipient, and an amount corresponding to the value calculated by the
-     * the `usdn.convertToTokens` function
+     * 0 address as the recipient, and the amount burned
      */
     function test_burnTokensCorrectArguments() public {
         uint256 balanceBefore = usdn.balanceOf(USER_1);
