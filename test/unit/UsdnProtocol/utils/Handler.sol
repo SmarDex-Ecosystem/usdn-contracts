@@ -519,6 +519,14 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _calcImbalanceCloseBps(vaultBalance, longBalance, longTotalExpo);
     }
 
+    function i_calcImbalanceOpenBps(int256 vaultBalance, int256 longBalance, uint256 longTotalExpo)
+        external
+        pure
+        returns (int256 imbalanceBps_)
+    {
+        return _calcImbalanceOpenBps(vaultBalance, longBalance, longTotalExpo);
+    }
+
     function i_removeBlockedPendingAction(uint128 rawIndex, address payable to, bool cleanup) external {
         _removeBlockedPendingAction(rawIndex, to, cleanup);
     }
