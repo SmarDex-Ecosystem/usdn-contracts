@@ -18,11 +18,11 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
     }
 
     /**
-     * @custom:scenario The user tries to deposit more assets after the position version has changed
+     * @custom:scenario The user tries to deposit assets after the position version has changed
      * @custom:given A user that deposited assets in the contract
      * @custom:when The position version is incremented
      * @custom:and The user tries to deposit more assets
-     * @custom:then The call reverts with a RebalancerUserNotPending error
+     * @custom:then The call reverts with a RebalancerUserInPosition error
      */
     function test_RevertWhen_depositAfterVersionChanged() external {
         rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));
@@ -30,7 +30,7 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
         rebalancer.validateDepositAssets();
         rebalancer.incrementPositionVersion();
 
-        vm.expectRevert(RebalancerUserNotPending.selector);
+        vm.expectRevert(RebalancerUserInPosition.selector);
         rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));
     }
 

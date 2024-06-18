@@ -209,7 +209,7 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
                 delete depositData;
             } else if (depositData.entryPositionVersion <= positionVersion) {
                 // if the user already deposited assets that are in a position, revert
-                revert RebalancerUserNotPending();
+                revert RebalancerUserInPosition();
             } else {
                 // in this case, we know that the user already has a pending deposit
                 revert RebalancerUserAlreadyPending();
@@ -297,7 +297,7 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
         UserDeposit memory depositData = _userDeposit[msg.sender];
 
         if (depositData.amount == 0 || depositData.entryPositionVersion <= _positionVersion) {
-            revert RebalancerUserNotPending();
+            revert RebalancerUserInPosition();
         }
         if (depositData.amount < amount) {
             revert RebalancerWithdrawAmountTooLarge();

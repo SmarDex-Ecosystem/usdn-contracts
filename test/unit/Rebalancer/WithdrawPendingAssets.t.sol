@@ -38,10 +38,10 @@ contract TestRebalancerWithdrawPendingAssets is RebalancerFixture {
      * @custom:scenario The user tries to withdraw assets without having any deposit
      * @custom:given A user with no deposited assets
      * @custom:when The user tries to withdraw assets without having deposited first
-     * @custom:then The call reverts with a RebalancerUserNotPending error
+     * @custom:then The call reverts with a RebalancerUserInPosition error
      */
     function test_RevertWhen_withdrawPendingAssetsWithNoDeposit() external {
-        vm.expectRevert(RebalancerUserNotPending.selector);
+        vm.expectRevert(RebalancerUserInPosition.selector);
         vm.prank(USER_1);
         rebalancer.withdrawPendingAssets(1, USER_1);
     }
@@ -51,12 +51,12 @@ contract TestRebalancerWithdrawPendingAssets is RebalancerFixture {
      * @custom:given A user with deposited assets
      * @custom:when The position version gets incremented
      * @custom:and The user tries to withdraw assets
-     * @custom:then The call reverts with a RebalancerUserNotPending error
+     * @custom:then The call reverts with a RebalancerUserInPosition error
      */
     function test_RevertWhen_withdrawPendingAssetsWithVersionChanged() external {
         rebalancer.incrementPositionVersion();
 
-        vm.expectRevert(RebalancerUserNotPending.selector);
+        vm.expectRevert(RebalancerUserInPosition.selector);
         rebalancer.withdrawPendingAssets(1, address(this));
     }
 
@@ -64,7 +64,7 @@ contract TestRebalancerWithdrawPendingAssets is RebalancerFixture {
      * @custom:scenario The user tries to withdraw more assets than it has deposited
      * @custom:given A user with deposited assets
      * @custom:when The user tries to withdraw assets with an amount higher than what it deposited
-     * @custom:then The call reverts with a RebalancerUserNotPending error
+     * @custom:then The call reverts with a RebalancerUserInPosition error
      */
     function test_RevertWhen_withdrawPendingAssetsWithAmountHigherThanAssetsDeposited() external {
         vm.expectRevert(RebalancerWithdrawAmountTooLarge.selector);
