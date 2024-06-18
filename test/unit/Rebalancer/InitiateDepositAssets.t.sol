@@ -14,6 +14,14 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
         super._setUp();
 
         wstETH.mintAndApprove(address(this), 10_000 ether, address(rebalancer), type(uint256).max);
+    }
+
+    /**
+     * @custom:scenario Test the setup
+     * @custom:when The setup was performed
+     * @custom:then The initial deposit amount is greater than the minimum asset deposit
+     */
+    function test_setUp() public {
         assertGe(INITIAL_DEPOSIT, rebalancer.getMinAssetDeposit());
     }
 
@@ -24,9 +32,10 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
      * @custom:then His assets are transferred to the contract
      * @custom:and The state is updated (position timestamp and amount)
      */
-    function test_initiateDepositAssets() external {
+    function test_initiateDepositAssets() public {
         uint256 rebalancerBalanceBefore = wstETH.balanceOf(address(rebalancer));
         uint256 userBalanceBefore = wstETH.balanceOf(address(this));
+        uint256 pendingBefore = rebalancer.getPendingAssetsAmount();
 
         vm.expectEmit();
         emit InitiatedAssetsDeposit(address(this), INITIAL_DEPOSIT, block.timestamp);
@@ -40,6 +49,7 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
         assertEq(
             userBalanceBefore - INITIAL_DEPOSIT, wstETH.balanceOf(address(this)), "The user should have sent the assets"
         );
+        assertEq(rebalancer.getPendingAssetsAmount(), pendingBefore, "Pending assets should not have changed");
 
         UserDeposit memory userDeposit = rebalancer.getUserDepositData(address(this));
         assertEq(userDeposit.entryPositionVersion, 0, "The position version should be zero");
@@ -53,7 +63,7 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
      * @custom:when The user deposit assets again
      * @custom:then His assets are transferred to the contract
      */
-    function test_depositAfterBeingLiquidated() external {
+    function test_depositAfterBeingLiquidated() public {
         rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));
         skip(rebalancer.getTimeLimits().validationDelay);
         rebalancer.validateDepositAssets();
@@ -78,7 +88,7 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
      * @custom:when The user tries to deposit assets with to as the zero address
      * @custom:then The call reverts with a RebalancerInvalidAddressTo error
      */
-    function test_RevertWhen_depositZeroAddress() external {
+    function test_RevertWhen_depositZeroAddress() public {
         vm.expectRevert(RebalancerInvalidAddressTo.selector);
         rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(0));
     }
@@ -88,7 +98,7 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
      * @custom:when initiateDepositAssets is called with 0 as the amount
      * @custom:then The call reverts with a RebalancerInsufficientAmount error
      */
-    function test_RevertWhen_depositInsufficientAmount() external {
+    function test_RevertWhen_depositInsufficientAmount() public {
         vm.expectRevert(RebalancerInsufficientAmount.selector);
         rebalancer.initiateDepositAssets(0, address(this));
 
@@ -104,7 +114,7 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
      * @custom:and The user tries to deposit more assets
      * @custom:then The call reverts with a RebalancerUserInPosition error
      */
-    function test_RevertWhen_depositAfterVersionChanged() external {
+    function test_RevertWhen_depositAfterVersionChanged() public {
         rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));
         skip(rebalancer.getTimeLimits().validationDelay);
         rebalancer.validateDepositAssets();
@@ -120,7 +130,7 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
      * @custom:when The user deposits assets again with his address as the 'to' address
      * @custom:then The contract reverts with `RebalancerUserAlreadyPending`
      */
-    function test_RevertWhen_depositTwice() external {
+    function test_RevertWhen_depositTwice() public {
         rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));
         skip(rebalancer.getTimeLimits().validationDelay);
         rebalancer.validateDepositAssets();
@@ -135,7 +145,7 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
      * @custom:when The user initiates a second deposit with the same address
      * @custom:then The contract reverts with `RebalancerActionNotValidated`
      */
-    function test_RevertWhen_depositWithUnvalidatedDeposit() external {
+    function test_RevertWhen_depositWithUnvalidatedDeposit() public {
         rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));
 
         vm.expectRevert(RebalancerActionNotValidated.selector);
