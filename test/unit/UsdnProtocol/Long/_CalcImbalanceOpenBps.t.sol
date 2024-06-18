@@ -14,8 +14,9 @@ contract TestUsdnProtocolLongCalcImbalanceOpenBps is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario Calculate the imbalance with no trading expo
-     * @custom:when The vault balance is 200 ether
-     * @custom:and The long balance and total expo are at 0
+     * @custom:when The vault balance is 0
+     * @custom:and The long balance is 100 ether
+     * @custom:and The total expo is 200 ether
      * @custom:then The imbalance is infinite
      * @custom:then int256.max is returned
      */
