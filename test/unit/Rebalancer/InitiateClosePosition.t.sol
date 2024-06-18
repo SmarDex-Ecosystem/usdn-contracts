@@ -31,7 +31,7 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
     }
 
     /**
-     * @custom:scenario Call `initiateClosePosition` function with too large amount
+     * @custom:scenario Call `initiateClosePosition` function with a too large amount
      * @custom:when The `initiateClosePosition` function is called with more than the user rebalancer amount
      * @custom:then It should revert with `RebalancerInvalidAmount`
      */
@@ -43,7 +43,7 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
     }
 
     /**
-     * @custom:scenario Call `initiateClosePosition` function with too low amount
+     * @custom:scenario Call `initiateClosePosition` function with a too low remaining amount
      * @custom:when The `initiateClosePosition` function is called with a remaining amount
      * lower than the rebalancer minimum amount
      * @custom:then It should revert with `RebalancerInvalidAmount`
