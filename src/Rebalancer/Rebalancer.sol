@@ -248,7 +248,7 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
             revert RebalancerValidateTooEarly();
         }
         if (uint40(block.timestamp) > depositData.initiateTimestamp + timeLimits.validationDeadline) {
-            // user must wait until the cooldown has elapsed
+            // user must wait until the cooldown has elapsed, then call `resetDepositAssets` to withdraw the funds
             revert RebalancerActionCooldown();
         }
 
@@ -272,7 +272,7 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
             revert RebalancerActionNotValidated();
         }
         if (uint40(block.timestamp) < depositData.initiateTimestamp + _timeLimits.actionCooldown) {
-            // user must wait until the cooldown has elapsed
+            // user must wait until the cooldown has elapsed, then call this function to withdraw the funds
             revert RebalancerActionCooldown();
         }
 
