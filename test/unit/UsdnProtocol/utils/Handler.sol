@@ -531,6 +531,46 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _removeStalePendingAction(user);
     }
 
+    function i_flashClosePosition(
+        PositionId memory posId,
+        uint128 neutralPrice,
+        uint256 totalExpo,
+        uint256 balanceLong,
+        uint256 balanceVault,
+        HugeUint.Uint512 memory liqMultiplierAccumulator
+    ) external returns (int256 positionValue_) {
+        CachedProtocolState memory cache = CachedProtocolState({
+            totalExpo: totalExpo,
+            longBalance: balanceLong,
+            vaultBalance: balanceVault,
+            tradingExpo: totalExpo - balanceLong,
+            liqMultiplierAccumulator: liqMultiplierAccumulator
+        });
+
+        return _flashClosePosition(posId, neutralPrice, cache);
+    }
+
+    function i_flashOpenPosition(
+        address user,
+        uint128 neutralPrice,
+        int24 tickWithoutPenalty,
+        uint128 amount,
+        uint256 totalExpo,
+        uint256 balanceLong,
+        uint256 balanceVault,
+        HugeUint.Uint512 memory liqMultiplierAccumulator
+    ) external returns (PositionId memory posId_) {
+        CachedProtocolState memory cache = CachedProtocolState({
+            totalExpo: totalExpo,
+            longBalance: balanceLong,
+            vaultBalance: balanceVault,
+            tradingExpo: totalExpo - balanceLong,
+            liqMultiplierAccumulator: liqMultiplierAccumulator
+        });
+
+        return _flashOpenPosition(user, neutralPrice, tickWithoutPenalty, amount, cache);
+    }
+
     /**
      * @notice Helper to calculate the trading exposure of the long side at the time of the last balance update and
      * currentPrice

@@ -3,13 +3,13 @@ pragma solidity >=0.8.0;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
+import { IBaseRebalancer } from "./IBaseRebalancer.sol";
 import { IRebalancerErrors } from "./IRebalancerErrors.sol";
 import { IRebalancerEvents } from "./IRebalancerEvents.sol";
 import { IRebalancerTypes } from "./IRebalancerTypes.sol";
-import { PositionId } from "../UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IUsdnProtocol } from "../UsdnProtocol/IUsdnProtocol.sol";
 
-interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes {
+interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, IRebalancerTypes {
     /**
      * @notice The value of the multiplier at 1x
      * @dev Also helps to normalize the result of multiplier calculations
@@ -36,12 +36,6 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
     function getPositionVersion() external view returns (uint128);
 
     /**
-     * @notice Returns the amount of assets deposited and waiting for the next version to be opened
-     * @return The amount of pending assets
-     */
-    function getPendingAssetsAmount() external view returns (uint128);
-
-    /**
      * @notice Returns the maximum leverage a position can have
      * @dev Returns the max leverage of the USDN Protocol if it's lower than the rebalancer's
      * @return maxLeverage_ The max leverage a position can have
@@ -49,21 +43,10 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
     function getPositionMaxLeverage() external view returns (uint256 maxLeverage_);
 
     /**
-     * @notice Returns the necessary data for the USDN protocol to update the position
-     * @return pendingAssets_ The amount of assets pending
-     * @return maxLeverage_ The max leverage of the rebalancer
-     * @return currentPosId_ The ID of the current position (tick == NO_POSITION_TICK if no position)
+     * @notice Returns the amount of assets deposited and waiting for the next version to be opened
+     * @return The amount of pending assets
      */
-    function getCurrentStateData()
-        external
-        view
-        returns (uint128 pendingAssets_, uint256 maxLeverage_, PositionId memory currentPosId_);
-
-    /**
-     * @notice Returns the minimum amount of assets to be deposited by a user
-     * @return The minimum amount of assets to be deposited by a user
-     */
-    function getMinAssetDeposit() external view returns (uint256);
+    function getPendingAssetsAmount() external view returns (uint128);
 
     /**
      * @notice Returns the data of the provided version of the position
@@ -136,14 +119,6 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
      */
     function withdrawPendingAssets(uint88 amount, address to) external;
 
-    /**
-     * @notice Indicates that the previous version of the position was closed and a new one was opened
-     * @dev If `previousPosValue` equals 0, it means the previous version got liquidated
-     * @param newPosId The position ID of the new position
-     * @param previousPosValue The amount of assets left in the previous position
-     */
-    function updatePosition(PositionId calldata newPosId, uint128 previousPosValue) external;
-
     /* -------------------------------------------------------------------------- */
     /*                                    Admin                                   */
     /* -------------------------------------------------------------------------- */
@@ -155,14 +130,6 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
      * @param newMaxLeverage The new max leverage
      */
     function setPositionMaxLeverage(uint256 newMaxLeverage) external;
-
-    /**
-     * @notice Sets the minimum amount of assets to be deposited by a user
-     * @dev The new minimum amount must be greater than or equal to the minimum long position of the USDN protocol
-     * This function can only be called by the owner or the USDN protocol
-     * @param minAssetDeposit The new minimum amount of assets to be deposited
-     */
-    function setMinAssetDeposit(uint256 minAssetDeposit) external;
 
     /**
      * @notice Sets the limit of the imbalance in bps to close the position

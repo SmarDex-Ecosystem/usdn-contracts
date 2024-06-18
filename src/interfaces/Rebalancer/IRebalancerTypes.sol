@@ -22,13 +22,11 @@ interface IRebalancerTypes {
      * @dev The difference between the amount here and the amount saved in the USDN protocol is the liquidation bonus
      * @param amount The amount of assets used as collateral to open the position
      * @param entryAccMultiplier The accumulated PnL multiplier of all the positions up to this one
-     * @param pnlMultiplier The PnL (as a multiplier) of the position when closed
      * @param id The ID of the position in the USDN protocol
      */
     struct PositionData {
         uint128 amount;
         uint256 entryAccMultiplier;
-        uint256 pnlMultiplier;
         PositionId id;
     }
 
