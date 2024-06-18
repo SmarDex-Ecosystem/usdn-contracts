@@ -23,6 +23,9 @@ interface IRebalancerErrors {
     /// @dev Indicates that the wanted minimum asset deposit is invalid
     error RebalancerInvalidMinAssetDeposit();
 
+    /// @dev Indicates that the provided time limits are invalid
+    error RebalancerInvalidTimeLimits();
+
     /// @dev Indicates that the caller is not authorized to perform the action
     error RebalancerUnauthorized();
 

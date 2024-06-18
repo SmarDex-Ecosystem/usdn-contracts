@@ -139,4 +139,12 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
      * @param closeImbalanceLimitBps The new limit of the imbalance in bps to close the position
      */
     function setCloseImbalanceLimitBps(uint256 closeImbalanceLimitBps) external;
+
+    /**
+     * @notice Set the various time limits in seconds
+     * @param validationDelay The validation delay
+     * @param validationDeadline The validation deadline
+     * @param actionCooldown The cooldown period duration
+     */
+    function setTimeLimits(uint80 validationDelay, uint80 validationDeadline, uint80 actionCooldown) external;
 }

@@ -28,7 +28,7 @@ contract TestRebalancerAdmin is RebalancerFixture {
      * @custom:then The functions should revert with an {Ownable.OwnableUnauthorizedAccount} error
      * @custom:or The functions should revert with a {RebalancerUnauthorized} error
      */
-    function test_RevertWhen_nonAdminWalletCallAdminFunctions() external {
+    function test_RevertWhen_nonAdminWalletCallAdminFunctions() public {
         // ownable contract custom error
         bytes memory customError = abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this));
 
@@ -43,6 +43,9 @@ contract TestRebalancerAdmin is RebalancerFixture {
 
         vm.expectRevert(customError);
         rebalancer.setCloseImbalanceLimitBps(0);
+
+        vm.expectRevert(customError);
+        rebalancer.setTimeLimits(0, 0, 0);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -102,7 +105,7 @@ contract TestRebalancerAdmin is RebalancerFixture {
      * @custom:when `setPositionMaxLeverage` is called with this value
      * @custom:then The call reverts with a {RebalancerInvalidMaxLeverage} error
      */
-    function test_RevertWhen_setPositionMaxLeverageWithLeverageTooLow() external adminPrank {
+    function test_RevertWhen_setPositionMaxLeverageWithLeverageTooLow() public adminPrank {
         uint256 minLeverage = usdnProtocol.getMinLeverage();
 
         vm.expectRevert(RebalancerInvalidMaxLeverage.selector);
@@ -115,7 +118,7 @@ contract TestRebalancerAdmin is RebalancerFixture {
      * @custom:when `setPositionMaxLeverage` is called with this value
      * @custom:then The call reverts with a {RebalancerInvalidMaxLeverage} error
      */
-    function test_RevertWhen_setPositionMaxLeverageWithLeverageTooHigh() external adminPrank {
+    function test_RevertWhen_setPositionMaxLeverageWithLeverageTooHigh() public adminPrank {
         uint256 maxLeverage = usdnProtocol.getMaxLeverage();
 
         vm.expectRevert(RebalancerInvalidMaxLeverage.selector);
@@ -128,7 +131,7 @@ contract TestRebalancerAdmin is RebalancerFixture {
      * @custom:when `setPositionMaxLeverage` is called
      * @custom:then The call reverts with an {OwnableUnauthorizedAccount} error
      */
-    function test_RevertWhen_setPositionMaxLeverageWithCallerNotTheOwner() external {
+    function test_RevertWhen_setPositionMaxLeverageWithCallerNotTheOwner() public {
         uint256 maxLeverage = usdnProtocol.getMaxLeverage();
 
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
@@ -142,7 +145,7 @@ contract TestRebalancerAdmin is RebalancerFixture {
      * @custom:then The value of `_positionMaxLeverage` is updated
      * @custom:and A {PositionMaxLeverageUpdated} event is emitted
      */
-    function test_setPositionMaxLeverage() external adminPrank {
+    function test_setPositionMaxLeverage() public adminPrank {
         uint256 maxLeverage = usdnProtocol.getMaxLeverage();
         uint256 newMaxLeverage = maxLeverage - 1;
 
@@ -151,6 +154,75 @@ contract TestRebalancerAdmin is RebalancerFixture {
         rebalancer.setPositionMaxLeverage(newMaxLeverage);
 
         assertEq(rebalancer.getPositionMaxLeverage(), newMaxLeverage, "The max leverage should have been updated");
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                                 Time limits                                */
+    /* -------------------------------------------------------------------------- */
+
+    /**
+     * @custom:scenario Set the time limits of the rebalancer contract
+     * @custom:given We are the owner
+     * @custom:when We call the setter with valid values
+     * @custom:then The values should have changed
+     * @custom:and The correct event should have been emitted
+     */
+    function test_setTimeLimits() public adminPrank {
+        uint80 newValidationDelay = 0;
+        uint80 newValidationDeadline = 5 minutes;
+        uint80 newActionCooldown = 48 hours;
+
+        vm.expectEmit();
+        emit TimeLimitsUpdated(newValidationDelay, newValidationDeadline, newActionCooldown);
+        rebalancer.setTimeLimits(newValidationDelay, newValidationDeadline, newActionCooldown);
+
+        assertEq(rebalancer.getTimeLimits().validationDelay, newValidationDelay, "validation delay");
+        assertEq(rebalancer.getTimeLimits().validationDeadline, newValidationDeadline, "validation deadline");
+        assertEq(rebalancer.getTimeLimits().actionCooldown, newActionCooldown, "action cooldown");
+    }
+
+    /**
+     * @custom:scenario Try to set the time limits with a delay that is too small (equal to the deadline)
+     * @custom:given We are the owner
+     * @custom:when We call the setter with a delay that is too small (equal to the deadline)
+     * @custom:then The transaction reverts with a {RebalancerInvalidTimeLimits} error
+     */
+    function test_RevertWhen_setTimeLimitsDelayTooSmall() public adminPrank {
+        vm.expectRevert(RebalancerInvalidTimeLimits.selector);
+        rebalancer.setTimeLimits(5 minutes, 5 minutes, 48 hours);
+    }
+
+    /**
+     * @custom:scenario Try to set the time limits with a deadline that is too small
+     * @custom:given We are the owner
+     * @custom:when We call the setter with a deadline that is too small
+     * @custom:then The transaction reverts with a {RebalancerInvalidTimeLimits} error
+     */
+    function test_RevertWhen_setTimeLimitsDeadlineTooSmall() public adminPrank {
+        vm.expectRevert(RebalancerInvalidTimeLimits.selector);
+        rebalancer.setTimeLimits(0, 59, 48 hours);
+    }
+
+    /**
+     * @custom:scenario Try to set the time limits with a cooldown that is too small
+     * @custom:given We are the owner
+     * @custom:when We call the setter with a cooldown that is too small (smaller than the deadline)
+     * @custom:then The transaction reverts with a {RebalancerInvalidTimeLimits} error
+     */
+    function test_RevertWhen_setTimeLimitsCooldownTooSmall() public adminPrank {
+        vm.expectRevert(RebalancerInvalidTimeLimits.selector);
+        rebalancer.setTimeLimits(0, 5 minutes, 5 minutes - 1);
+    }
+
+    /**
+     * @custom:scenario Try to set the time limits with a cooldown that is too big
+     * @custom:given We are the owner
+     * @custom:when We call the setter with a cooldown that is too big
+     * @custom:then The transaction reverts with a {RebalancerInvalidTimeLimits} error
+     */
+    function test_RevertWhen_setTimeLimitsCooldownTooBig() public adminPrank {
+        vm.expectRevert(RebalancerInvalidTimeLimits.selector);
+        rebalancer.setTimeLimits(0, 5 minutes, 48 hours + 1);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -163,7 +235,7 @@ contract TestRebalancerAdmin is RebalancerFixture {
      * @custom:when The function `ownershipCallback()` is called on the first iteration of the rebalancer contract
      * @custom:then The functions should revert with an {Ownable.OwnableUnauthorizedAccount} error
      */
-    function test_RevertWhen_ownershipCallbackOnFirstIteration() external adminPrank {
+    function test_RevertWhen_ownershipCallbackOnFirstIteration() public adminPrank {
         vm.expectRevert(RebalancerUnauthorized.selector);
         rebalancer.ownershipCallback(address(this), PositionId(0, 0, 0));
     }

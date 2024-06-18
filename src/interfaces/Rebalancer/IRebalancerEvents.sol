@@ -56,4 +56,12 @@ interface IRebalancerEvents {
      * @param closeImbalanceLimitBps The new close imbalance limit in bps
      */
     event CloseImbalanceLimitBpsUpdated(uint256 closeImbalanceLimitBps);
+
+    /**
+     * @notice Emitted when the time limits have been updated
+     * @param validationDelay The new validation delay
+     * @param validationDeadline The new validation deadline
+     * @param actionCooldown The new action cooldown
+     */
+    event TimeLimitsUpdated(uint256 validationDelay, uint256 validationDeadline, uint256 actionCooldown);
 }

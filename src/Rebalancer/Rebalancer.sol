@@ -409,6 +409,33 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
         emit CloseImbalanceLimitBpsUpdated(closeImbalanceLimitBps);
     }
 
+    /// @inheritdoc IRebalancer
+    function setTimeLimits(uint80 validationDelay, uint80 validationDeadline, uint80 actionCooldown)
+        external
+        onlyOwner
+    {
+        if (validationDelay >= validationDeadline) {
+            revert RebalancerInvalidTimeLimits();
+        }
+        if (validationDeadline < 1 minutes) {
+            revert RebalancerInvalidTimeLimits();
+        }
+        if (actionCooldown < validationDeadline) {
+            revert RebalancerInvalidTimeLimits();
+        }
+        if (actionCooldown > 48 hours) {
+            revert RebalancerInvalidTimeLimits();
+        }
+
+        _timeLimits = TimeLimits({
+            validationDelay: validationDelay,
+            validationDeadline: validationDeadline,
+            actionCooldown: actionCooldown
+        });
+
+        emit TimeLimitsUpdated(validationDelay, validationDeadline, actionCooldown);
+    }
+
     /// @inheritdoc IOwnershipCallback
     function ownershipCallback(address, PositionId calldata) external pure {
         revert RebalancerUnauthorized(); // first version of the rebalancer contract so we are always reverting
