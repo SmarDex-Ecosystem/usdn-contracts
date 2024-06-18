@@ -59,6 +59,7 @@ contract TestUsdnProtocolLongCalcImbalanceCloseBps is UsdnProtocolBaseFixture {
      * @custom:when The vault balance is between 0 and int256.max / BPS_DIVISOR
      * @custom:and The long balance is between 0 and (int256.max / BPS_DIVISOR) - 1
      * @custom:and The total expo is between the long balance + 1 and int256.max / BPS_DIVISOR
+     * @custom:then The returned imbalance is equal to the expected one
      * @param vaultBalance The vault balance
      * @param longBalance The long balance
      * @param totalExpo The total expo

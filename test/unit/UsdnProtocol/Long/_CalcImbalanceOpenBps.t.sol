@@ -18,7 +18,7 @@ contract TestUsdnProtocolLongCalcImbalanceOpenBps is UsdnProtocolBaseFixture {
      * @custom:and The long balance is 100 ether
      * @custom:and The total expo is 200 ether
      * @custom:then The imbalance is infinite
-     * @custom:then int256.max is returned
+     * @custom:and int256.max is returned
      */
     function test_calcImbalanceOpenBpsWith0VaultBalance() public {
         int256 vaultBalance = 0;
@@ -30,13 +30,13 @@ contract TestUsdnProtocolLongCalcImbalanceOpenBps is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario Calculate the imbalance with different values
-     * @custom:when The vault balance is 200 ether
-     * @custom:and The long balance is 100 ether
+     * @custom:given The long balance is 100 ether
      * @custom:and The total expo is 300 ether
+     * @custom:when The vault balance is 200 ether
      * @custom:then The imbalance is 0
-     * @custom:or The vault balance is 133.33 ether
+     * @custom:when The vault balance is 133.33 ether
      * @custom:then The imbalance is 50%
-     * @custom:or The vault balance is 300 ether
+     * @custom:when The vault balance is 300 ether
      * @custom:then The imbalance is -50%
      */
     function test_calcImbalanceOpenBps() public {
@@ -60,6 +60,7 @@ contract TestUsdnProtocolLongCalcImbalanceOpenBps is UsdnProtocolBaseFixture {
      * @custom:when The vault balance is between 1 and int256.max / BPS_DIVISOR
      * @custom:and The long balance is between 0 and int256.max / BPS_DIVISOR
      * @custom:and The total expo is between the long balance and int256.max / BPS_DIVISOR
+     * @custom:then The returned imbalance is equal to the expected one
      * @param vaultBalance The vault balance
      * @param longBalance The long balance
      * @param totalExpo The total expo
