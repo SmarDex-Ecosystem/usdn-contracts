@@ -41,4 +41,16 @@ interface IRebalancerEvents {
      * @param closeImbalanceLimitBps The new close imbalance limit in bps
      */
     event CloseImbalanceLimitBpsUpdated(uint256 closeImbalanceLimitBps);
+
+    /**
+     * @notice Emitted when the user initiates a close position action
+     * through the rebalancer
+     * @param user The rebalancer user
+     * @param rebalancerAmountToClose The rebalancer amount to close
+     * @param amountToClose The amount to close taking into account the previous versions' PnL
+     * @param rebalancerAmountRemaining The remaining rebalancer assets of the user
+     */
+    event ClosePositionInitiated(
+        address indexed user, uint256 rebalancerAmountToClose, uint256 amountToClose, uint256 rebalancerAmountRemaining
+    );
 }

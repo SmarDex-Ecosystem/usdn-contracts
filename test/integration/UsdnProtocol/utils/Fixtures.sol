@@ -25,6 +25,8 @@ import {
 import { WstETH } from "../../../utils/WstEth.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
 import { MockPyth } from "../../../unit/Middlewares/utils/MockPyth.sol";
+import { MOCK_PYTH_DATA } from "../../../unit/Middlewares/utils/Constants.sol";
+
 import { MockChainlinkOnChain } from "../../../unit/Middlewares/utils/MockChainlinkOnChain.sol";
 import { UsdnProtocolHandler } from "../../../unit/UsdnProtocol/utils/Handler.sol";
 
@@ -32,7 +34,12 @@ import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/Liqu
 import { Rebalancer } from "../../../../src/Rebalancer/Rebalancer.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { ProtocolAction, PreviousActionsData } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import {
+    ProtocolAction,
+    PreviousActionsData,
+    PositionId,
+    TickData
+} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
@@ -47,6 +54,14 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         uint256 initialTimestamp; // ignored if `fork` is true
         bool fork;
         uint256 forkWarp; // warp to this timestamp after forking, before deploying protocol. Zero to disable
+    }
+
+    struct ExpoImbalanceLimitsBps {
+        int256 depositExpoImbalanceLimitBps;
+        int256 withdrawalExpoImbalanceLimitBps;
+        int256 openExpoImbalanceLimitBps;
+        int256 closeExpoImbalanceLimitBps;
+        int256 longImbalanceTargetBps;
     }
 
     Permit2TokenBitfield.Bitfield constant NO_PERMIT2 = Permit2TokenBitfield.Bitfield.wrap(0);
@@ -75,6 +90,8 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
     PreviousActionsData internal EMPTY_PREVIOUS_DATA =
         PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
 
+    ExpoImbalanceLimitsBps internal defaultLimits;
+
     function _setUp(SetUpParams memory testParams) public virtual {
         if (testParams.fork) {
             string memory url = vm.rpcUrl("mainnet");
@@ -95,6 +112,8 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             PriceInfo memory currentPrice =
                 oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.Initialize, "");
             testParams.initialLiqPrice = uint128(currentPrice.neutralPrice) / 2;
+            AggregatorV3Interface chainlinkGasPriceFeed = AggregatorV3Interface(CHAINLINK_ORACLE_GAS);
+            liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
         } else {
             wstETH = new WstETH();
             sdex = new Sdex();
@@ -114,13 +133,14 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
                 1 hours
             );
             vm.warp(testParams.initialTimestamp);
+            liquidationRewardsManager =
+                new LiquidationRewardsManager(address(new MockChainlinkOnChain()), wstETH, 2 days);
         }
         vm.startPrank(DEPLOYER);
         (bool success,) = address(wstETH).call{ value: DEPLOYER.balance * 9 / 10 }("");
         require(success, "DEPLOYER wstETH mint failed");
         usdn = new Usdn(address(0), address(0));
-        AggregatorV3Interface chainlinkGasPriceFeed = AggregatorV3Interface(CHAINLINK_ORACLE_GAS);
-        liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
+
         protocol = new UsdnProtocolHandler(
             usdn,
             sdex,
@@ -133,7 +153,6 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
         rebalancer = new Rebalancer(protocol);
         protocol.setRebalancer(rebalancer);
-
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
@@ -162,5 +181,92 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
     function _waitDelay() internal {
         skip(oracleMiddleware.getValidationDelay() + 1);
+    }
+
+    function _setUpImbalanced()
+        internal
+        returns (
+            int24 tickSpacing_,
+            uint128 amountInRebalancer_,
+            PositionId memory posToLiquidate_,
+            TickData memory tickToLiquidateData_
+        )
+    {
+        params = DEFAULT_PARAMS;
+        params.initialDeposit += 100 ether;
+        params.initialLong += 100 ether;
+        _setUp(params);
+
+        sdex.mintAndApprove(address(this), 50_000 ether, address(protocol), type(uint256).max);
+
+        tickSpacing_ = protocol.getTickSpacing();
+
+        vm.startPrank(DEPLOYER);
+        protocol.setFundingSF(0);
+        protocol.resetEMA();
+
+        defaultLimits = ExpoImbalanceLimitsBps({
+            depositExpoImbalanceLimitBps: protocol.getDepositExpoImbalanceLimitBps(),
+            withdrawalExpoImbalanceLimitBps: protocol.getWithdrawalExpoImbalanceLimitBps(),
+            openExpoImbalanceLimitBps: protocol.getOpenExpoImbalanceLimitBps(),
+            closeExpoImbalanceLimitBps: protocol.getCloseExpoImbalanceLimitBps(),
+            longImbalanceTargetBps: protocol.getLongImbalanceTargetBps()
+        });
+
+        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
+
+        vm.stopPrank();
+
+        // mint wstEth to the test contract
+        (bool success,) = address(wstETH).call{ value: 200 ether }("");
+        require(success, "wstETH mint failed");
+        wstETH.approve(address(protocol), type(uint256).max);
+        wstETH.approve(address(rebalancer), type(uint256).max);
+
+        uint256 messageValue = protocol.getSecurityDepositValue();
+
+        uint128 amount = 3 ether;
+
+        // deposit assets in the rebalancer
+        rebalancer.depositAssets(amount, payable(address(this)));
+        amountInRebalancer_ += amount;
+
+        // deposit assets in the protocol to imbalance it
+        protocol.initiateDeposit{ value: messageValue }(
+            30 ether, payable(address(this)), payable(address(this)), NO_PERMIT2, "", EMPTY_PREVIOUS_DATA
+        );
+
+        _waitDelay();
+
+        mockPyth.setPrice(2000e8);
+        mockPyth.setLastPublishTime(block.timestamp);
+
+        uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.ValidateDeposit);
+
+        protocol.validateDeposit{ value: oracleFee }(payable(address(this)), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
+
+        // open a position to liquidate and trigger the rebalancer
+        (, posToLiquidate_) = protocol.initiateOpenPosition{ value: messageValue }(
+            10 ether, 1500 ether, payable(address(this)), payable(address(this)), NO_PERMIT2, "", EMPTY_PREVIOUS_DATA
+        );
+
+        _waitDelay();
+
+        mockPyth.setPrice(2000e8);
+        mockPyth.setLastPublishTime(block.timestamp);
+
+        oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.ValidateOpenPosition);
+        protocol.validateOpenPosition{ value: oracleFee }(payable(address(this)), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
+
+        tickToLiquidateData_ = protocol.getTickData(posToLiquidate_.tick);
+
+        vm.prank(DEPLOYER);
+        protocol.setExpoImbalanceLimits(
+            uint256(defaultLimits.depositExpoImbalanceLimitBps),
+            uint256(defaultLimits.withdrawalExpoImbalanceLimitBps),
+            uint256(defaultLimits.openExpoImbalanceLimitBps),
+            uint256(defaultLimits.closeExpoImbalanceLimitBps),
+            defaultLimits.longImbalanceTargetBps
+        );
     }
 }
