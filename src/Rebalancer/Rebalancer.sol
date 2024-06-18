@@ -380,7 +380,8 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
                 _userDeposit[msg.sender].amount = remainingAssets;
             }
 
-            currentPositionData.amount -= amountToClose.toUint128();
+            // the safe cast is already made before
+            currentPositionData.amount -= uint128(amountToClose);
 
             if (currentPositionData.amount == 0) {
                 currentPositionData.id =
