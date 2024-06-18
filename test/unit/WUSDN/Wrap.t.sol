@@ -36,7 +36,7 @@ contract TestWusdnWrap is WusdnTokenFixture {
      * @custom:when The contract wraps all USDN
      * @custom:then The contract balance of WUSDN should be equal to the shares of USDN / MAX_DIVISOR
      */
-    function test_wrapAllBalnce() public {
+    function test_wrapAllBalance() public {
         test_wrap(usdn.balanceOf(address(this)), address(this));
     }
 
@@ -45,7 +45,7 @@ contract TestWusdnWrap is WusdnTokenFixture {
      * @custom:when The contract tries to wrap more USDN than it has
      * @custom:then The transaction should revert with the error {WusdnInsufficientBalance}
      */
-    function test_RevertWhen_wrap() public returns (uint256 wrappedAmount_) {
+    function test_RevertWhen_wrapMoreThanBalance() public returns (uint256 wrappedAmount_) {
         uint256 usdnAmount = usdn.balanceOf(address(this)) + 1;
         vm.expectRevert(abi.encodeWithSelector(WusdnInsufficientBalance.selector, usdnAmount));
         wrappedAmount_ = wusdn.wrap(usdnAmount);

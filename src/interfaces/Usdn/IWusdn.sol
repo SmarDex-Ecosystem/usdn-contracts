@@ -70,7 +70,7 @@ interface IWusdn is IERC20Metadata, IERC20Permit, IWusdnEvents, IWusdnErrors {
 
     /**
      * @notice Previews the amount of WUSDN that would be received for a given amount of USDN
-     * @dev This function can return a slightly different value (1wei) from the actual amount
+     * @dev This function can return a slightly different value from the actual amount
      * received due to rounding
      * Do not rely on this function to calculate the exact amount of WUSDN that would be received, use
      * {previewWrapShares} instead
@@ -81,7 +81,7 @@ interface IWusdn is IERC20Metadata, IERC20Permit, IWusdnEvents, IWusdnErrors {
 
     /**
      * @notice Previews the amount of WUSDN that would be received for a given amount of USDN shares
-     * @param usdnShares The amount of USDN shares to preview
+     * @param usdnShares The amount of USDN shares to wrap
      * @return wrappedAmount_ The amount of WUSDN that would be received
      */
     function previewWrapShares(uint256 usdnShares) external view returns (uint256 wrappedAmount_);
@@ -99,7 +99,7 @@ interface IWusdn is IERC20Metadata, IERC20Permit, IWusdnEvents, IWusdnErrors {
 
     /**
      * @notice Previews the amount of USDN shares that would be received for a given amount of WUSDN
-     * @param wusdnAmount The amount of WUSDN to preview
+     * @param wusdnAmount The amount of WUSDN to unwrap
      * @return usdnSharesAmount_ The amount of USDN shares that would be received
      */
     function previewUnwrapShares(uint256 wusdnAmount) external view returns (uint256 usdnSharesAmount_);
