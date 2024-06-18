@@ -344,17 +344,22 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
             revert RebalancerInvalidAmount();
         }
 
+        uint128 remainingAssets = userDepositData.amount - amount;
+        if (remainingAssets > 0 && remainingAssets < _minAssetDeposit) {
+            revert RebalancerInvalidAmount();
+        }
+
+        if (userDepositData.entryPositionVersion == 0) {
+            revert RebalancerUserPending();
+        }
+
         uint256 positionVersion = _positionVersion;
-        PositionData memory currentPositionData = _positionData[positionVersion];
 
         if (userDepositData.entryPositionVersion > positionVersion) {
             revert RebalancerUserPending();
         }
 
-        uint128 remainingAssets = userDepositData.amount - amount;
-        if (remainingAssets > 0 && remainingAssets < _minAssetDeposit) {
-            revert RebalancerInvalidAmount();
-        }
+        PositionData memory currentPositionData = _positionData[positionVersion];
 
         uint256 amountToClose = FixedPointMathLib.fullMulDiv(
             amount,
@@ -375,7 +380,7 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
                 _userDeposit[msg.sender].amount = remainingAssets;
             }
 
-            currentPositionData.amount -= amount;
+            currentPositionData.amount -= amountToClose.toUint128();
 
             if (currentPositionData.amount == 0) {
                 currentPositionData.id =

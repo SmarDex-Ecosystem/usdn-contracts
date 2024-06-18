@@ -7,7 +7,7 @@ import { RebalancerFixture } from "../../../test/unit/Rebalancer/utils/Fixtures.
 
 /**
  * @custom:feature The `initiateClosePosition` function of the rebalancer contract
- * @custom:background Given a rebalancer contract
+ * @custom:background Given a rebalancer contract with an initial user deposit
  */
 contract TestRebalancerInitiateClosePosition is RebalancerFixture {
     uint128 internal minAsset;
@@ -21,32 +21,44 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
     }
 
     /**
-     * @custom:scenario Call the rebalancer `initiateClosePosition` function with zero amount
-     * @custom:when The `initiateClosePosition` function is called
+     * @custom:scenario Call `initiateClosePosition` function with zero amount
+     * @custom:when The `initiateClosePosition` function is called with zero amount
      * @custom:then It should revert with `RebalancerInvalidAmount`
      */
-    function test_RevertWhen_RebalancerInvalidAmountZero() external {
+    function test_RevertWhen_rebalancerInvalidAmountZero() external {
         vm.expectRevert(IRebalancerErrors.RebalancerInvalidAmount.selector);
         rebalancer.initiateClosePosition(0, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA);
     }
 
     /**
-     * @custom:scenario Call the rebalancer `initiateClosePosition` function with more than user deposited
-     * @custom:when The `initiateClosePosition` function is called
+     * @custom:scenario Call `initiateClosePosition` function with too large amount
+     * @custom:when The `initiateClosePosition` function is called with more than the user rebalancer amount
      * @custom:then It should revert with `RebalancerInvalidAmount`
      */
-    function test_RevertWhen_RebalancerInvalidAmount() external {
-        rebalancer.withdrawPendingAssets(uint128(minAsset), address(this));
+    function test_RevertWhen_rebalancerInvalidAmountTooLarge() external {
+        vm.expectRevert(IRebalancerErrors.RebalancerInvalidAmount.selector);
+        rebalancer.initiateClosePosition(
+            uint128(minAsset) + 1, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA
+        );
+    }
+
+    /**
+     * @custom:scenario Call `initiateClosePosition` function with too low amount
+     * @custom:when The `initiateClosePosition` function is called with a remaining amount
+     * lower than the rebalancer minimum amount
+     * @custom:then It should revert with `RebalancerInvalidAmount`
+     */
+    function test_RevertWhen_rebalancerInvalidAmountTooLow() external {
         vm.expectRevert(IRebalancerErrors.RebalancerInvalidAmount.selector);
         rebalancer.initiateClosePosition(1, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA);
     }
 
     /**
-     * @custom:scenario Call the rebalancer `initiateClosePosition` function with pending assets
-     * @custom:when The `initiateClosePosition` function is called
+     * @custom:scenario Call `initiateClosePosition` function with pending assets
+     * @custom:when The `initiateClosePosition` function is called with pending assets
      * @custom:then It should revert with `RebalancerUserPending`
      */
-    function test_RevertWhen_RebalancerUserPending() external {
+    function test_RevertWhen_rebalancerUserPending() external {
         vm.expectRevert(IRebalancerErrors.RebalancerUserPending.selector);
         rebalancer.initiateClosePosition(minAsset, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA);
     }

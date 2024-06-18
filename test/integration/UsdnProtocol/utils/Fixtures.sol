@@ -112,6 +112,8 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             PriceInfo memory currentPrice =
                 oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.Initialize, "");
             testParams.initialLiqPrice = uint128(currentPrice.neutralPrice) / 2;
+            AggregatorV3Interface chainlinkGasPriceFeed = AggregatorV3Interface(CHAINLINK_ORACLE_GAS);
+            liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
         } else {
             wstETH = new WstETH();
             sdex = new Sdex();
@@ -131,13 +133,14 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
                 1 hours
             );
             vm.warp(testParams.initialTimestamp);
+            liquidationRewardsManager =
+                new LiquidationRewardsManager(address(new MockChainlinkOnChain()), wstETH, 2 days);
         }
         vm.startPrank(DEPLOYER);
         (bool success,) = address(wstETH).call{ value: DEPLOYER.balance * 9 / 10 }("");
         require(success, "DEPLOYER wstETH mint failed");
         usdn = new Usdn(address(0), address(0));
-        AggregatorV3Interface chainlinkGasPriceFeed = AggregatorV3Interface(CHAINLINK_ORACLE_GAS);
-        liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
+
         protocol = new UsdnProtocolHandler(
             usdn,
             sdex,
@@ -148,16 +151,8 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             ADMIN
         );
 
-        if (!params.fork) {
-            // use a mock for the gas price feed
-            protocol.setLiquidationRewardsManager(
-                new LiquidationRewardsManager(address(new MockChainlinkOnChain()), wstETH, 2 days)
-            );
-        }
-
         rebalancer = new Rebalancer(protocol);
         protocol.setRebalancer(rebalancer);
-
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
