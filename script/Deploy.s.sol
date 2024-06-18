@@ -15,6 +15,7 @@ import { WstEthOracleMiddleware } from "../src/OracleMiddleware/WstEthOracleMidd
 import { UsdnProtocol } from "../src/UsdnProtocol/UsdnProtocolProxy.sol";
 import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../src/Usdn/Usdn.sol";
+import { IUsdnProtocol } from "./../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 contract Deploy is Script {
     /**
@@ -221,7 +222,8 @@ contract Deploy is Script {
         if (rebalancerAddress != address(0)) {
             rebalancer_ = Rebalancer(rebalancerAddress);
         } else {
-            rebalancer_ = new Rebalancer(usdnProtocol);
+            // TO DO : remove the cast
+            rebalancer_ = new Rebalancer(IUsdnProtocol(address(usdnProtocol)));
         }
     }
 

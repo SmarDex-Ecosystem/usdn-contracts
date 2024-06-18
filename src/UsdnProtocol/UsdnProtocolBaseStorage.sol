@@ -3,7 +3,10 @@ pragma solidity ^0.8.25;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
+import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
+import { InitializableReentrancyGuard } from "../utils/InitializableReentrancyGuard.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { IBaseLiquidationRewardsManager } from "../interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
@@ -13,7 +16,7 @@ import { PendingAction, TickData } from "../interfaces/UsdnProtocol/IUsdnProtoco
 import { DoubleEndedQueue } from "../libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
 import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
+import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
 
 struct Storage {
     // constants
@@ -26,6 +29,9 @@ struct Storage {
     uint256 BPS_DIVISOR;
     uint16 MAX_LIQUIDATION_ITERATION;
     int24 NO_POSITION_TICK;
+    address DEAD_ADDRESS;
+    uint256 MIN_USDN_SUPPLY;
+    uint256 MIN_INIT_DEPOSIT;
     // immutable
     int24 _tickSpacing;
     IERC20Metadata _asset;
@@ -104,7 +110,7 @@ struct CachedProtocolState {
     HugeUint.Uint512 liqMultiplierAccumulator;
 }
 
-contract UsdnProtocolBaseStorage is IUsdnProtocolErrors {
+contract UsdnProtocolBaseStorage is IUsdnProtocolErrors, InitializableReentrancyGuard, Ownable2Step {
     using LibBitmap for LibBitmap.Bitmap;
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
@@ -128,7 +134,7 @@ contract UsdnProtocolBaseStorage is IUsdnProtocolErrors {
         IBaseLiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector
-    ) {
+    ) Ownable(msg.sender) {
         // constants
         s.LEVERAGE_DECIMALS = 21;
         s.FUNDING_RATE_DECIMALS = 18;
@@ -139,6 +145,9 @@ contract UsdnProtocolBaseStorage is IUsdnProtocolErrors {
         s.BPS_DIVISOR = 10_000;
         s.MAX_LIQUIDATION_ITERATION = 10;
         s.NO_POSITION_TICK = type(int24).min;
+        s.DEAD_ADDRESS = address(0xdead);
+        s.MIN_USDN_SUPPLY = 1000;
+        s.MIN_INIT_DEPOSIT = 1 ether;
 
         // parameters
         s._minLeverage = 10 ** s.LEVERAGE_DECIMALS + 10 ** 12;
@@ -195,6 +204,54 @@ contract UsdnProtocolBaseStorage is IUsdnProtocolErrors {
         s._targetUsdnPrice = uint128(10_087 * 10 ** (s._priceFeedDecimals - 4)); // $1.0087
         s._usdnRebaseThreshold = uint128(1009 * 10 ** (s._priceFeedDecimals - 3)); // $1.009
         s._minLongPosition = 2 * 10 ** s._assetDecimals;
+    }
+
+    function LEVERAGE_DECIMALS() external view returns (uint8) {
+        return s.LEVERAGE_DECIMALS;
+    }
+
+    function FUNDING_RATE_DECIMALS() external view returns (uint8) {
+        return s.FUNDING_RATE_DECIMALS;
+    }
+
+    function TOKENS_DECIMALS() external view returns (uint8) {
+        return s.TOKENS_DECIMALS;
+    }
+
+    function LIQUIDATION_MULTIPLIER_DECIMALS() external view returns (uint8) {
+        return s.LIQUIDATION_MULTIPLIER_DECIMALS;
+    }
+
+    function FUNDING_SF_DECIMALS() external view returns (uint8) {
+        return s.FUNDING_SF_DECIMALS;
+    }
+
+    function SDEX_BURN_ON_DEPOSIT_DIVISOR() external view returns (uint256) {
+        return s.SDEX_BURN_ON_DEPOSIT_DIVISOR;
+    }
+
+    function BPS_DIVISOR() external view returns (uint256) {
+        return s.BPS_DIVISOR;
+    }
+
+    function MAX_LIQUIDATION_ITERATION() external view returns (uint16) {
+        return s.MAX_LIQUIDATION_ITERATION;
+    }
+
+    function NO_POSITION_TICK() external view returns (int24) {
+        return s.NO_POSITION_TICK;
+    }
+
+    function DEAD_ADDRESS() external view returns (address) {
+        return s.DEAD_ADDRESS;
+    }
+
+    function MIN_USDN_SUPPLY() external view returns (uint256) {
+        return s.MIN_USDN_SUPPLY;
+    }
+
+    function MIN_INIT_DEPOSIT() external view returns (uint256) {
+        return s.MIN_INIT_DEPOSIT;
     }
 
     /* -------------------------------------------------------------------------- */
@@ -436,14 +493,14 @@ contract UsdnProtocolBaseStorage is IUsdnProtocolErrors {
 
     // / @inheritdoc IUsdnProtocolBaseStorage
     function getTickData(int24 tick) external view returns (TickData memory) {
-        bytes32 cachedTickHash = coreLib.tickHash(tick, s._tickVersion[tick]);
+        bytes32 cachedTickHash = vaultLib.tickHash(tick, s._tickVersion[tick]);
         return s._tickData[cachedTickHash];
     }
 
     // / @inheritdoc IUsdnProtocolBaseStorage
     function getCurrentLongPosition(int24 tick, uint256 index) external view returns (Position memory) {
         uint256 version = s._tickVersion[tick];
-        bytes32 cachedTickHash = coreLib.tickHash(tick, version);
+        bytes32 cachedTickHash = vaultLib.tickHash(tick, version);
         return s._longPositions[cachedTickHash][index];
     }
 

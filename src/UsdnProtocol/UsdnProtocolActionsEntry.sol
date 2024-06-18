@@ -5,6 +5,7 @@ import { Permit2TokenBitfield } from "../libraries/Permit2TokenBitfield.sol";
 import { UsdnProtocolActionsLibrary as lib } from "./UsdnProtocolActionsLibrary.sol";
 import { UsdnProtocolBaseStorage } from "./UsdnProtocolBaseStorage.sol";
 import { PreviousActionsData, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { InitiateOpenPositionParams, InitiateClosePositionParams } from "./UsdnProtocolActionsLibrary.sol";
 
 abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
     function initiateDeposit(
@@ -24,7 +25,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
         bytes calldata depositPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_) {
-        return lib.validateDeposit(validator, depositPriceData, previousActionsData);
+        return lib.validateDeposit(s, validator, depositPriceData, previousActionsData);
     }
 
     function initiateWithdrawal(
@@ -42,7 +43,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
         bytes calldata withdrawalPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_) {
-        return lib.validateWithdrawal(validator, withdrawalPriceData, previousActionsData);
+        return lib.validateWithdrawal(s, validator, withdrawalPriceData, previousActionsData);
     }
 
     function initiateOpenPosition(
@@ -54,9 +55,17 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_, PositionId memory posId_) {
-        return lib.initiateOpenPosition(
-            s, amount, desiredLiqPrice, to, validator, permit2TokenBitfield, currentPriceData, previousActionsData
-        );
+        InitiateOpenPositionParams memory params = InitiateOpenPositionParams({
+            user: msg.sender,
+            to: to,
+            validator: validator,
+            amount: amount,
+            desiredLiqPrice: desiredLiqPrice,
+            securityDepositValue: s._securityDepositValue,
+            permit2TokenBitfield: permit2TokenBitfield
+        });
+
+        return lib.initiateOpenPosition(s, params, currentPriceData, previousActionsData);
     }
 
     function validateOpenPosition(
@@ -64,7 +73,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
         bytes calldata openPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_) {
-        return lib.validateOpenPosition(validator, openPriceData, previousActionsData);
+        return lib.validateOpenPosition(s, validator, openPriceData, previousActionsData);
     }
 
     function initiateClosePosition(
@@ -75,7 +84,10 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_) {
-        return lib.initiateClosePosition(s, posId, amountToClose, to, validator, currentPriceData, previousActionsData);
+        InitiateClosePositionParams memory params =
+            InitiateClosePositionParams({ posId: posId, amountToClose: amountToClose, to: to, validator: validator });
+
+        return lib.initiateClosePosition(s, params, currentPriceData, previousActionsData);
     }
 
     function validateClosePosition(
@@ -83,7 +95,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
         bytes calldata closePriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_) {
-        return lib.validateClosePosition(validator, closePriceData, previousActionsData);
+        return lib.validateClosePosition(s, validator, closePriceData, previousActionsData);
     }
 
     function liquidate(bytes calldata currentPriceData, uint16 iterations)
@@ -91,7 +103,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
         payable
         returns (uint256 liquidatedPositions_)
     {
-        return lib.liquidate(currentPriceData, iterations);
+        return lib.liquidate(s, currentPriceData, iterations);
     }
 
     function validateActionablePendingActions(PreviousActionsData calldata previousActionsData, uint256 maxValidations)
@@ -99,7 +111,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
         payable
         returns (uint256 validatedActions_)
     {
-        return lib.validateActionablePendingActions(previousActionsData, maxValidations);
+        return lib.validateActionablePendingActions(s, previousActionsData, maxValidations);
     }
 
     function transferPositionOwnership(PositionId calldata posId, address newOwner) external {

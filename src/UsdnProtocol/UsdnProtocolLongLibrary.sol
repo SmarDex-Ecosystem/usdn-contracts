@@ -11,6 +11,35 @@ import { TickMath } from "../libraries/TickMath.sol";
 import { SignedMath } from "../libraries/SignedMath.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
 import { Storage, CachedProtocolState } from "./UsdnProtocolBaseStorage.sol";
+import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
+import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
+
+/**
+ * @notice Structure to hold the temporary data during liquidation
+ * @param tempLongBalance The temporary long balance
+ * @param tempVaultBalance The temporary vault balance
+ * @param currentTick The current tick (tick corresponding to the current asset price)
+ * @param iTick Tick iterator index
+ * @param totalExpoToRemove The total expo to remove due to the liquidation of some ticks
+ * @param accumulatorValueToRemove The value to remove from the liquidation multiplier accumulator, due to the
+ * liquidation of some ticks
+ * @param longTradingExpo The long trading expo
+ * @param currentPrice The current price of the asset
+ * @param accumulator The liquidation multiplier accumulator before the liquidation
+ * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
+ */
+struct LiquidationData {
+    int256 tempLongBalance;
+    int256 tempVaultBalance;
+    int24 currentTick;
+    int24 iTick;
+    uint256 totalExpoToRemove;
+    uint256 accumulatorValueToRemove;
+    uint256 longTradingExpo;
+    uint256 currentPrice;
+    HugeUint.Uint512 accumulator;
+    bool isLiquidationPending;
+}
 
 library UsdnProtocolLongLibrary {
     using LibBitmap for LibBitmap.Bitmap;
@@ -19,50 +48,23 @@ library UsdnProtocolLongLibrary {
     using SignedMath for int256;
     using HugeUint for HugeUint.Uint512;
 
-    /**
-     * @notice Structure to hold the temporary data during liquidation
-     * @param tempLongBalance The temporary long balance
-     * @param tempVaultBalance The temporary vault balance
-     * @param currentTick The current tick (tick corresponding to the current asset price)
-     * @param iTick Tick iterator index
-     * @param totalExpoToRemove The total expo to remove due to the liquidation of some ticks
-     * @param accumulatorValueToRemove The value to remove from the liquidation multiplier accumulator, due to the
-     * liquidation of some ticks
-     * @param longTradingExpo The long trading expo
-     * @param currentPrice The current price of the asset
-     * @param accumulator The liquidation multiplier accumulator before the liquidation
-     * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
-     */
-    struct LiquidationData {
-        int256 tempLongBalance;
-        int256 tempVaultBalance;
-        int24 currentTick;
-        int24 iTick;
-        uint256 totalExpoToRemove;
-        uint256 accumulatorValueToRemove;
-        uint256 longTradingExpo;
-        uint256 currentPrice;
-        HugeUint.Uint512 accumulator;
-        bool isLiquidationPending;
-    }
-
-    /// @inheritdoc IUsdnProtocolLong
-    function minTick() public view returns (Storage storage s, int24 tick_) {
+    // / @inheritdoc IUsdnProtocolLong
+    function minTick(Storage storage s) public view returns (int24 tick_) {
         tick_ = TickMath.minUsableTick(s._tickSpacing);
     }
 
-    /// @inheritdoc IUsdnProtocolLong
-    function maxTick() external view returns (Storage storage s, int24 tick_) {
+    // / @inheritdoc IUsdnProtocolLong
+    function maxTick(Storage storage s) external view returns (int24 tick_) {
         tick_ = TickMath.maxUsableTick(s._tickSpacing);
     }
 
-    /// @inheritdoc IUsdnProtocolLong
+    // / @inheritdoc IUsdnProtocolLong
     function getLongPosition(Storage storage s, PositionId memory posId)
         public
         view
         returns (Position memory pos_, uint8 liquidationPenalty_)
     {
-        (bytes32 tickHash, uint256 version) = _tickHash(posId.tick);
+        (bytes32 tickHash, uint256 version) = vaultLib._tickHash(s, posId.tick);
         if (posId.tickVersion != version) {
             // revert UsdnProtocolOutdatedTick(version, posId.tickVersion);
         }
@@ -70,26 +72,26 @@ library UsdnProtocolLongLibrary {
         liquidationPenalty_ = s._tickData[tickHash].liquidationPenalty;
     }
 
-    /// @inheritdoc IUsdnProtocolLong
+    // / @inheritdoc IUsdnProtocolLong
     // slither-disable-next-line write-after-write
     function getMinLiquidationPrice(Storage storage s, uint128 price)
         external
         view
         returns (uint128 liquidationPrice_)
     {
-        liquidationPrice_ = _getLiquidationPrice(price, uint128(s._minLeverage));
-        int24 tick = getEffectiveTickForPrice(liquidationPrice_);
-        liquidationPrice_ = getEffectivePriceForTick(tick + s._tickSpacing);
+        liquidationPrice_ = _getLiquidationPrice(s, price, uint128(s._minLeverage));
+        int24 tick = getEffectiveTickForPrice(s, liquidationPrice_);
+        liquidationPrice_ = getEffectivePriceForTick(s, tick + s._tickSpacing);
     }
 
-    /// @inheritdoc IUsdnProtocolLong
+    // / @inheritdoc IUsdnProtocolLong
     function getPositionValue(Storage storage s, PositionId calldata posId, uint128 price, uint128 timestamp)
         external
         view
         returns (int256 value_)
     {
-        (Position memory pos, uint8 liquidationPenalty) = getLongPosition(posId);
-        int256 longTradingExpo = longTradingExpoWithFunding(price, timestamp);
+        (Position memory pos, uint8 liquidationPenalty) = getLongPosition(s, posId);
+        int256 longTradingExpo = longTradingExpoWithFunding(s, price, timestamp);
         if (longTradingExpo < 0) {
             // in case the long balance is equal to the total expo (or exceeds it), the trading expo will become zero
             // in this case, the liquidation price will fall to zero, and the position value will be equal to its
@@ -97,7 +99,7 @@ library UsdnProtocolLongLibrary {
             longTradingExpo = 0;
         }
         uint128 liqPrice = getEffectivePriceForTick(
-            _calcTickWithoutPenalty(posId.tick, liquidationPenalty),
+            _calcTickWithoutPenalty(s, posId.tick, liquidationPenalty),
             price,
             uint256(longTradingExpo),
             s._liqMultiplierAccumulator
@@ -105,14 +107,14 @@ library UsdnProtocolLongLibrary {
         value_ = _positionValue(price, liqPrice, pos.totalExpo);
     }
 
-    /// @inheritdoc IUsdnProtocolLong
+    // / @inheritdoc IUsdnProtocolLong
     function getEffectiveTickForPrice(Storage storage s, uint128 price) public view returns (int24 tick_) {
         tick_ = getEffectiveTickForPrice(
             price, s._lastPrice, s._totalExpo - s._balanceLong, s._liqMultiplierAccumulator, s._tickSpacing
         );
     }
 
-    /// @inheritdoc IUsdnProtocolLong
+    // / @inheritdoc IUsdnProtocolLong
     function getEffectiveTickForPrice(
         uint128 price,
         uint256 assetPrice,
@@ -146,13 +148,13 @@ library UsdnProtocolLongLibrary {
         }
     }
 
-    /// @inheritdoc IUsdnProtocolLong
+    // / @inheritdoc IUsdnProtocolLong
     function getEffectivePriceForTick(Storage storage s, int24 tick) public view returns (uint128 price_) {
         price_ =
             getEffectivePriceForTick(tick, s._lastPrice, s._totalExpo - s._balanceLong, s._liqMultiplierAccumulator);
     }
 
-    /// @inheritdoc IUsdnProtocolLong
+    // / @inheritdoc IUsdnProtocolLong
     function getEffectivePriceForTick(
         int24 tick,
         uint256 assetPrice,
@@ -162,6 +164,43 @@ library UsdnProtocolLongLibrary {
         price_ = _adjustPrice(TickMath.getPriceAtTick(tick), assetPrice, longTradingExpo, accumulator);
     }
 
+    // / @inheritdoc IUsdnProtocolCore
+    function longAssetAvailableWithFunding(Storage storage s, uint128 currentPrice, uint128 timestamp)
+        public
+        view
+        returns (int256 available_)
+    {
+        if (timestamp < s._lastUpdateTimestamp) {
+            // revert UsdnProtocolTimestampTooOld();
+        }
+
+        int256 ema = coreLib.calcEMA(s._lastFunding, timestamp - s._lastUpdateTimestamp, s._EMAPeriod, s._EMA);
+        (int256 fundAsset,) = coreLib._fundingAsset(s, timestamp, ema);
+
+        if (fundAsset > 0) {
+            available_ = coreLib._longAssetAvailable(s, currentPrice).safeSub(fundAsset);
+        } else {
+            int256 fee = fundAsset * coreLib._toInt256(s._protocolFeeBps) / int256(s.BPS_DIVISOR);
+            // fees have the same sign as fundAsset (negative here), so we need to sub them
+            available_ = coreLib._longAssetAvailable(s, currentPrice).safeSub(fundAsset - fee);
+        }
+    }
+
+    // / @inheritdoc IUsdnProtocolCore
+    function longTradingExpoWithFunding(Storage storage s, uint128 currentPrice, uint128 timestamp)
+        public
+        view
+        returns (int256 expo_)
+    {
+        expo_ = s._totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(s, currentPrice, timestamp));
+    }
+
+    // / @inheritdoc IUsdnProtocolLong
+    function getTickLiquidationPenalty(Storage storage s, int24 tick) public view returns (uint8 liquidationPenalty_) {
+        (bytes32 tickHash,) = vaultLib._tickHash(s, tick);
+        liquidationPenalty_ = _getTickLiquidationPenalty(s, tickHash);
+    }
+
     /**
      * @notice Variant of `getEffectivePriceForTick` when a fixed precision representation of the liquidation multiplier
      * is known
@@ -169,8 +208,12 @@ library UsdnProtocolLongLibrary {
      * @param liqMultiplier The liquidation price multiplier, with LIQUIDATION_MULTIPLIER_DECIMALS decimals
      * @return price_ The adjusted price for the tick
      */
-    function _getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) internal pure returns (uint128 price_) {
-        price_ = _adjustPrice(TickMath.getPriceAtTick(tick), liqMultiplier);
+    function _getEffectivePriceForTick(Storage storage s, int24 tick, uint256 liqMultiplier)
+        internal
+        view
+        returns (uint128 price_)
+    {
+        price_ = _adjustPrice(s, TickMath.getPriceAtTick(tick), liqMultiplier);
     }
 
     /**
@@ -238,7 +281,7 @@ library UsdnProtocolLongLibrary {
      */
     function _adjustPrice(Storage storage s, uint256 unadjustedPrice, uint256 liqMultiplier)
         internal
-        pure
+        view
         returns (uint128 price_)
     {
         // price = unadjustedPrice * M
@@ -258,7 +301,7 @@ library UsdnProtocolLongLibrary {
         uint256 assetPrice,
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator
-    ) internal pure returns (uint256 multiplier_) {
+    ) internal view returns (uint256 multiplier_) {
         if (accumulator.hi == 0 && accumulator.lo == 0) {
             // no position in long, we assume a liquidation multiplier of 1.0
             return 10 ** s.LIQUIDATION_MULTIPLIER_DECIMALS;
@@ -276,11 +319,11 @@ library UsdnProtocolLongLibrary {
      * @return tick_ The next highest tick below `searchStart`
      */
     function _findHighestPopulatedTick(Storage storage s, int24 searchStart) internal view returns (int24 tick_) {
-        uint256 index = s._tickBitmap.findLastSet(_calcBitmapIndexFromTick(searchStart));
+        uint256 index = s._tickBitmap.findLastSet(coreLib._calcBitmapIndexFromTick(s, searchStart));
         if (index == LibBitmap.NOT_FOUND) {
-            tick_ = minTick();
+            tick_ = minTick(s);
         } else {
-            tick_ = _calcTickFromBitmapIndex(index);
+            tick_ = _calcTickFromBitmapIndex(s, index);
         }
     }
 
@@ -292,7 +335,7 @@ library UsdnProtocolLongLibrary {
      */
     function _getLiquidationPrice(Storage storage s, uint128 startPrice, uint128 leverage)
         internal
-        pure
+        view
         returns (uint128 price_)
     {
         price_ = (startPrice - ((uint256(10) ** s.LEVERAGE_DECIMALS * startPrice) / leverage)).toUint128();
@@ -331,6 +374,7 @@ library UsdnProtocolLongLibrary {
      * @return value_ The value of the tick (qty of asset tokens)
      */
     function _tickValue(
+        Storage storage s,
         int24 tick,
         uint256 currentPrice,
         uint256 longTradingExpo,
@@ -338,7 +382,7 @@ library UsdnProtocolLongLibrary {
         TickData memory tickData
     ) internal view returns (int256 value_) {
         uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(
-            _calcTickWithoutPenalty(tick, tickData.liquidationPenalty), currentPrice, longTradingExpo, accumulator
+            _calcTickWithoutPenalty(s, tick, tickData.liquidationPenalty), currentPrice, longTradingExpo, accumulator
         );
 
         // value = totalExpo * (currentPrice - liqPriceWithoutPenalty) / currentPrice
@@ -364,7 +408,7 @@ library UsdnProtocolLongLibrary {
      */
     function _getLeverage(Storage storage s, uint128 startPrice, uint128 liquidationPrice)
         internal
-        pure
+        view
         returns (uint128 leverage_)
     {
         if (startPrice <= liquidationPrice) {
@@ -431,117 +475,6 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Save a new position in the protocol, adjusting the tick data and global variables
-     * @dev Note: this method does not update the long balance
-     * @param tick The tick to hold the new position
-     * @param long The position to save
-     * @param liquidationPenalty The liquidation penalty for the tick
-     * @return tickVersion_ The version of the tick
-     * @return index_ The index of the position in the tick array
-     * @return liqMultiplierAccumulator_ The updated liquidation multiplier accumulator
-     */
-    function _saveNewPosition(Storage storage s, int24 tick, Position memory long, uint8 liquidationPenalty)
-        internal
-        returns (uint256 tickVersion_, uint256 index_, HugeUint.Uint512 memory liqMultiplierAccumulator_)
-    {
-        bytes32 tickHash;
-        (tickHash, tickVersion_) = _tickHash(tick);
-
-        // add to tick array
-        Position[] storage tickArray = s._longPositions[tickHash];
-        index_ = tickArray.length;
-        if (tick > s._highestPopulatedTick) {
-            // keep track of the highest populated tick
-            s._highestPopulatedTick = tick;
-        }
-        tickArray.push(long);
-
-        // adjust state
-        s._totalExpo += long.totalExpo;
-        ++s._totalLongPositions;
-
-        // update tick data
-        TickData storage tickData = s._tickData[tickHash];
-        // the unadjusted tick price for the accumulator might be different depending
-        // if we already have positions in the tick or not
-        uint256 unadjustedTickPrice;
-        if (tickData.totalPos == 0) {
-            // first position in this tick, we need to reflect that it is populated
-            s._tickBitmap.set(_calcBitmapIndexFromTick(tick));
-            // we store the data for this tick
-            tickData.totalExpo = long.totalExpo;
-            tickData.totalPos = 1;
-            tickData.liquidationPenalty = liquidationPenalty;
-            unadjustedTickPrice = TickMath.getPriceAtTick(tick - int24(uint24(liquidationPenalty)) * s._tickSpacing);
-        } else {
-            tickData.totalExpo += long.totalExpo;
-            tickData.totalPos += 1;
-            // we do not need to adjust the tick's `liquidationPenalty` since it remains constant
-            unadjustedTickPrice =
-                TickMath.getPriceAtTick(tick - int24(uint24(tickData.liquidationPenalty)) * s._tickSpacing);
-        }
-        // update the accumulator with the correct tick price (depending on the liquidation penalty value)
-        liqMultiplierAccumulator_ = s._liqMultiplierAccumulator.add(HugeUint.wrap(unadjustedTickPrice * long.totalExpo));
-        s._liqMultiplierAccumulator = liqMultiplierAccumulator_;
-    }
-
-    /**
-     * @notice Remove the provided total amount from its position and update the tick data and position
-     * @dev Note: this method does not update the long balance
-     * If the amount to remove is greater than or equal to the position's total amount, the position is deleted instead
-     * @param tick The tick to remove from
-     * @param index Index of the position in the tick array
-     * @param pos The position to remove the amount from
-     * @param amountToRemove The amount to remove from the position
-     * @param totalExpoToRemove The total expo to remove from the position
-     * @return liqMultiplierAccumulator_ The updated liquidation multiplier accumulator
-     */
-    function _removeAmountFromPosition(
-        Storage storage s,
-        int24 tick,
-        uint256 index,
-        Position memory pos,
-        uint128 amountToRemove,
-        uint128 totalExpoToRemove
-    ) internal returns (HugeUint.Uint512 memory liqMultiplierAccumulator_) {
-        (bytes32 tickHash,) = _tickHash(tick);
-        TickData storage tickData = s._tickData[tickHash];
-        uint256 unadjustedTickPrice =
-            TickMath.getPriceAtTick(tick - int24(uint24(tickData.liquidationPenalty)) * s._tickSpacing);
-        if (amountToRemove < pos.amount) {
-            Position storage position = s._longPositions[tickHash][index];
-            position.totalExpo = pos.totalExpo - totalExpoToRemove;
-
-            unchecked {
-                position.amount = pos.amount - amountToRemove;
-            }
-        } else {
-            totalExpoToRemove = pos.totalExpo;
-            tickData.totalPos -= 1;
-            --s._totalLongPositions;
-
-            // remove from tick array (set to zero to avoid shifting indices)
-            delete s._longPositions[tickHash][index];
-            if (tickData.totalPos == 0) {
-                // we removed the last position in the tick
-                s._tickBitmap.unset(_calcBitmapIndexFromTick(tick));
-            }
-        }
-
-        s._totalExpo -= totalExpoToRemove;
-        tickData.totalExpo -= totalExpoToRemove;
-        liqMultiplierAccumulator_ =
-            s._liqMultiplierAccumulator.sub(HugeUint.wrap(unadjustedTickPrice * totalExpoToRemove));
-        s._liqMultiplierAccumulator = liqMultiplierAccumulator_;
-    }
-
-    /// @inheritdoc IUsdnProtocolLong
-    function getTickLiquidationPenalty(int24 tick) public view returns (uint8 liquidationPenalty_) {
-        (bytes32 tickHash,) = _tickHash(tick);
-        liquidationPenalty_ = _getTickLiquidationPenalty(tickHash);
-    }
-
-    /**
      * @notice Retrieve the liquidation penalty assigned to the tick and version corresponding to `tickHash`, if there
      * are positions in it, otherwise retrieve the current setting value from storage
      * @dev This method allows to reuse a pre-computed tickHash if available
@@ -597,96 +530,6 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Liquidate positions that have a liquidation price lower than the current price
-     * @param currentPrice The current price of the asset
-     * @param iteration The maximum number of ticks to liquidate (minimum is 1)
-     * @param tempLongBalance The temporary long balance as calculated when applying the PnL and funding
-     * @param tempVaultBalance The temporary vault balance as calculated when applying the PnL and funding
-     * @return effects_ The effects of the liquidations on the protocol
-     */
-    function _liquidatePositions(
-        Storage storage s,
-        uint256 currentPrice,
-        uint16 iteration,
-        int256 tempLongBalance,
-        int256 tempVaultBalance
-    ) internal returns (LiquidationsEffects memory effects_) {
-        int256 longTradingExpo = s._totalExpo.toInt256() - tempLongBalance;
-        if (longTradingExpo <= 0) {
-            // in case the long balance is equal to the total expo (or exceeds it), the trading expo will become zero
-            // in this case, it's not possible to calculate the current tick, so we can't perform any liquidations
-            (effects_.newLongBalance, effects_.newVaultBalance) =
-                _handleNegativeBalances(tempLongBalance, tempVaultBalance);
-            return effects_;
-        }
-
-        LiquidationData memory data;
-        data.tempLongBalance = tempLongBalance;
-        data.tempVaultBalance = tempVaultBalance;
-        data.longTradingExpo = uint256(longTradingExpo);
-        data.currentPrice = currentPrice;
-        data.accumulator = s._liqMultiplierAccumulator;
-
-        // max iteration limit
-        if (iteration > s.MAX_LIQUIDATION_ITERATION) {
-            iteration = s.MAX_LIQUIDATION_ITERATION;
-        }
-
-        uint256 unadjustedPrice =
-            _unadjustPrice(data.currentPrice, data.currentPrice, data.longTradingExpo, data.accumulator);
-        data.currentTick = TickMath.getClosestTickAtPrice(unadjustedPrice);
-        data.iTick = s._highestPopulatedTick;
-
-        do {
-            uint256 index = s._tickBitmap.findLastSet(_calcBitmapIndexFromTick(data.iTick));
-            if (index == LibBitmap.NOT_FOUND) {
-                // no populated ticks left
-                break;
-            }
-
-            data.iTick = _calcTickFromBitmapIndex(index);
-            if (data.iTick < data.currentTick) {
-                // all ticks that can be liquidated have been processed
-                break;
-            }
-
-            // we have found a non-empty tick that needs to be liquidated
-            (bytes32 tickHash,) = _tickHash(data.iTick);
-
-            TickData memory tickData = s._tickData[tickHash];
-            // update transient data
-            data.totalExpoToRemove += tickData.totalExpo;
-            uint256 unadjustedTickPrice =
-                TickMath.getPriceAtTick(data.iTick - int24(uint24(tickData.liquidationPenalty)) * s._tickSpacing);
-            data.accumulatorValueToRemove += unadjustedTickPrice * tickData.totalExpo;
-            // update return values
-            effects_.liquidatedPositions += tickData.totalPos;
-            ++effects_.liquidatedTicks;
-            int256 tickValue =
-                _tickValue(data.iTick, data.currentPrice, data.longTradingExpo, data.accumulator, tickData);
-            effects_.remainingCollateral += tickValue;
-
-            // reset tick by incrementing the tick version
-            ++s._tickVersion[data.iTick];
-            // update bitmap to reflect that the tick is empty
-            s._tickBitmap.unset(index);
-
-            // emit LiquidatedTick(
-            //     data.iTick,
-            //     s._tickVersion[data.iTick] - 1,
-            //     data.currentPrice,
-            //     getEffectivePriceForTick(data.iTick, data.currentPrice, data.longTradingExpo, data.accumulator),
-            //     tickValue
-            // );
-        } while (effects_.liquidatedTicks < iteration);
-
-        _updateStateAfterLiquidation(data, effects_); // mutates `data`
-        effects_.isLiquidationPending = data.isLiquidationPending;
-        (effects_.newLongBalance, effects_.newVaultBalance) =
-            _handleNegativeBalances(data.tempLongBalance, data.tempVaultBalance);
-    }
-
-    /**
      * @notice Update the state of the contract according to the liquidation effects
      * @param data The liquidation data, which gets mutated by the function
      * @param effects The effects of the liquidations
@@ -705,10 +548,10 @@ library UsdnProtocolLongLibrary {
         if (effects.liquidatedPositions != 0) {
             if (data.iTick < data.currentTick) {
                 // all ticks above the current tick were liquidated
-                s._highestPopulatedTick = _findHighestPopulatedTick(data.currentTick);
+                s._highestPopulatedTick = _findHighestPopulatedTick(s, data.currentTick);
             } else {
                 // unsure if all ticks above the current tick were liquidated, but some were
-                int24 highestPopulatedTick = _findHighestPopulatedTick(data.iTick);
+                int24 highestPopulatedTick = _findHighestPopulatedTick(s, data.iTick);
                 s._highestPopulatedTick = highestPopulatedTick;
                 data.isLiquidationPending = data.currentTick <= highestPopulatedTick;
             }
@@ -766,7 +609,7 @@ library UsdnProtocolLongLibrary {
      */
     function _calcImbalanceCloseBps(Storage storage s, int256 vaultBalance, int256 longBalance, uint256 totalExpo)
         internal
-        pure
+        view
         returns (int256 imbalanceBps_)
     {
         int256 tradingExpo = totalExpo.toInt256().safeSub(longBalance);
@@ -790,7 +633,7 @@ library UsdnProtocolLongLibrary {
      */
     function _calcImbalanceOpenBps(Storage storage s, int256 vaultBalance, int256 longBalance, uint256 totalExpo)
         internal
-        pure
+        view
         returns (int256 imbalanceBps_)
     {
         // avoid division by zero
@@ -800,123 +643,6 @@ library UsdnProtocolLongLibrary {
         // imbalanceBps_ = ((totalExpo - longBalance) - vaultBalance) *s. vaultBalance;
         int256 longTradingExpo = totalExpo.toInt256() - longBalance;
         imbalanceBps_ = longTradingExpo.safeSub(vaultBalance).safeMul(int256(s.BPS_DIVISOR)).safeDiv(vaultBalance);
-    }
-
-    /**
-     * @notice Immediately close a position with the given price
-     * @dev Should only be used to close the rebalancer position
-     * @param posId The ID of the position to close
-     * @param lastPrice The last price used to update the protocol
-     * @param cache The cached state of the protocol, will be updated during this call
-     * @return positionValue_ The value of the closed position
-     */
-    function _flashClosePosition(
-        Storage storage s,
-        PositionId memory posId,
-        uint128 lastPrice,
-        CachedProtocolState memory cache
-    ) internal returns (int256 positionValue_) {
-        (bytes32 tickHash, uint256 version) = _tickHash(posId.tick);
-        // if the tick version is outdated, the position was liquidated and its value is 0
-        if (posId.tickVersion != version) {
-            return positionValue_;
-        }
-
-        uint8 liquidationPenalty = s._tickData[tickHash].liquidationPenalty;
-        Position memory pos = s._longPositions[tickHash][posId.index];
-
-        positionValue_ = _positionValue(
-            lastPrice,
-            getEffectivePriceForTick(
-                _calcTickWithoutPenalty(posId.tick, liquidationPenalty),
-                lastPrice,
-                cache.tradingExpo,
-                cache.liqMultiplierAccumulator
-            ),
-            pos.totalExpo
-        );
-
-        // if positionValue is lower than 0, return
-        if (positionValue_ < 0) {
-            return positionValue_;
-        }
-
-        // fully close the position and update the cache
-        cache.liqMultiplierAccumulator =
-            _removeAmountFromPosition(posId.tick, posId.index, pos, pos.amount, pos.totalExpo);
-
-        // update the cache
-        cache.totalExpo -= pos.totalExpo;
-        // cast is safe as positionValue cannot be lower than 0
-        cache.longBalance -= uint256(positionValue_);
-        cache.tradingExpo = cache.totalExpo - cache.longBalance;
-
-        // emit both initiate and validate events
-        // so the position is considered the same as other positions by event indexers
-        // emit InitiatedClosePosition(pos.user, pos.user, pos.user, posId, pos.amount, pos.amount, 0);
-        // emit ValidatedClosePosition(
-        //     pos.user, pos.user, posId, uint256(positionValue_), positionValue_ - _toInt256(pos.amount)
-        // );
-    }
-
-    /**
-     * @notice Immediately open a position with the given price
-     * @dev Should only be used to open the rebalancer position
-     * @param user The address of the user
-     * @param lastPrice The last price used to update the protocol
-     * @param tickWithoutPenalty The tick the position should be opened in
-     * @param amount The amount of collateral in the position
-     * @param cache The cached state of the protocol
-     * @return posId_ The ID of the position that was created
-     */
-    function _flashOpenPosition(
-        Storage storage s,
-        address user,
-        uint128 lastPrice,
-        int24 tickWithoutPenalty,
-        uint128 amount,
-        CachedProtocolState memory cache
-    ) internal returns (PositionId memory posId_) {
-        // we calculate the closest valid tick down for the desired liquidation price with the liquidation penalty
-        uint8 currentLiqPenalty = s._liquidationPenalty;
-
-        posId_.tick = tickWithoutPenalty + int24(uint24(currentLiqPenalty)) * s._tickSpacing;
-
-        uint8 liquidationPenalty = getTickLiquidationPenalty(posId_.tick);
-        uint128 liqPriceWithoutPenalty;
-
-        // check if the penalty for that tick is different from the current setting
-        // this can happen if the setting has been changed, but the position is added in a tick that was never empty
-        // after the said change, so the first value is still applied
-        if (liquidationPenalty == currentLiqPenalty) {
-            liqPriceWithoutPenalty = getEffectivePriceForTick(
-                tickWithoutPenalty, lastPrice, cache.tradingExpo, cache.liqMultiplierAccumulator
-            );
-        } else {
-            liqPriceWithoutPenalty = getEffectivePriceForTick(
-                _calcTickWithoutPenalty(posId_.tick, liquidationPenalty),
-                lastPrice,
-                cache.tradingExpo,
-                cache.liqMultiplierAccumulator
-            );
-        }
-
-        uint128 totalExpo = _calcPositionTotalExpo(amount, lastPrice, liqPriceWithoutPenalty);
-        Position memory long = Position({
-            validated: true,
-            user: user,
-            amount: amount,
-            totalExpo: totalExpo,
-            timestamp: uint40(block.timestamp)
-        });
-
-        // save the position on the provided tick
-        (posId_.tickVersion, posId_.index,) = _saveNewPosition(posId_.tick, long, liquidationPenalty);
-
-        // emit both initiate and validate events
-        // so the position is considered the same as other positions by event indexers
-        // emit InitiatedOpenPosition(user, user, uint40(block.timestamp), totalExpo, long.amount, lastPrice, posId_);
-        // emit ValidatedOpenPosition(user, user, totalExpo, lastPrice, posId_);
     }
 
     /**
@@ -998,6 +724,7 @@ library UsdnProtocolLongLibrary {
         if (
             highestUsableTradingExpo != tradingExpoToFill
                 && _calcImbalanceCloseBps(
+                    s,
                     cache.vaultBalance.toInt256(),
                     (cache.longBalance + positionAmount).toInt256(),
                     cache.totalExpo + positionTotalExpo

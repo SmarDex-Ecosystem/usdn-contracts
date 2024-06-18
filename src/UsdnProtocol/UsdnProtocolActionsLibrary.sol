@@ -27,6 +27,38 @@ import { TickMath } from "../libraries/TickMath.sol";
 import { Permit2TokenBitfield } from "../libraries/Permit2TokenBitfield.sol";
 import { IOwnershipCallback } from "../interfaces/UsdnProtocol/IOwnershipCallback.sol";
 import { Storage, CachedProtocolState } from "./UsdnProtocolBaseStorage.sol";
+import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
+import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
+import { UsdnProtocolLongLibrary as longLib, LiquidationData } from "./UsdnProtocolLongLibrary.sol";
+
+struct InitiateClosePositionParams {
+    PositionId posId;
+    uint128 amountToClose;
+    address to;
+    address payable validator;
+}
+
+/**
+ * @notice Parameters for the internal `_initiateOpenPosition` function
+ * @param user The address of the user initiating the open position
+ * @param to The address that will be the owner of the position
+ * @param validator The address that will validate the open position
+ * @param amount The amount of wstETH to deposit
+ * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
+ * @param securityDepositValue The value of the security deposit for the newly created pending action
+ * @param permit2TokenBitfield The permit2 bitfield
+ * @param currentPriceData The current price data (used to calculate the temporary leverage and entry price,
+ * pending validation)
+ */
+struct InitiateOpenPositionParams {
+    address user;
+    address to;
+    address validator;
+    uint128 amount;
+    uint128 desiredLiqPrice;
+    uint64 securityDepositValue;
+    Permit2TokenBitfield.Bitfield permit2TokenBitfield;
+}
 
 library UsdnProtocolActionsLibrary {
     using SafeTransferLib for address;
@@ -75,28 +107,6 @@ library UsdnProtocolActionsLibrary {
         uint256 balanceVault;
         uint256 withdrawalAmount;
         bool isLiquidationPending;
-    }
-
-    /**
-     * @notice Parameters for the internal `_initiateOpenPosition` function
-     * @param user The address of the user initiating the open position
-     * @param to The address that will be the owner of the position
-     * @param validator The address that will validate the open position
-     * @param amount The amount of wstETH to deposit
-     * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
-     * @param securityDepositValue The value of the security deposit for the newly created pending action
-     * @param permit2TokenBitfield The permit2 bitfield
-     * @param currentPriceData The current price data (used to calculate the temporary leverage and entry price,
-     * pending validation)
-     */
-    struct InitiateOpenPositionParams {
-        address user;
-        address to;
-        address validator;
-        uint128 amount;
-        uint128 desiredLiqPrice;
-        uint64 securityDepositValue;
-        Permit2TokenBitfield.Bitfield permit2TokenBitfield;
     }
 
     /**
@@ -159,7 +169,7 @@ library UsdnProtocolActionsLibrary {
         bool isLiquidationPending;
     }
 
-    /// @inheritdoc IUsdnProtocolActions
+    // / @inheritdoc IUsdnProtocolActions
     function initiateDeposit(
         Storage storage s,
         uint128 amount,
@@ -168,7 +178,7 @@ library UsdnProtocolActionsLibrary {
         Permit2TokenBitfield.Bitfield permit2TokenBitfield,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable returns (bool success_) {
+    ) external returns (bool success_) {
         uint64 securityDepositValue = s._securityDepositValue;
         if (msg.value < securityDepositValue) {
             // revert UsdnProtocolSecurityDepositTooLow();
@@ -177,29 +187,30 @@ library UsdnProtocolActionsLibrary {
 
         uint256 amountToRefund;
         (amountToRefund, success_) = _initiateDeposit(
-            msg.sender, to, validator, amount, securityDepositValue, permit2TokenBitfield, currentPriceData
+            s, msg.sender, to, validator, amount, securityDepositValue, permit2TokenBitfield, currentPriceData
         );
 
         if (success_) {
             unchecked {
-                amountToRefund += _executePendingActionOrRevert(previousActionsData);
+                amountToRefund += _executePendingActionOrRevert(s, previousActionsData);
             }
         }
 
         _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
-        _checkPendingFee();
+        _checkPendingFee(s);
     }
 
-    /// @inheritdoc IUsdnProtocolActions
+    // / @inheritdoc IUsdnProtocolActions
     function validateDeposit(
+        Storage storage s,
         address payable validator,
         bytes calldata depositPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable returns (bool success_) {
+    ) external returns (bool success_) {
         uint256 balanceBefore = address(this).balance;
 
         uint256 amountToRefund;
-        (amountToRefund, success_) = _validateDeposit(validator, depositPriceData);
+        (amountToRefund, success_) = _validateDeposit(s, validator, depositPriceData);
         if (msg.sender != validator) {
             _refundEther(amountToRefund, validator);
             balanceBefore -= amountToRefund;
@@ -207,15 +218,15 @@ library UsdnProtocolActionsLibrary {
         }
         if (success_) {
             unchecked {
-                amountToRefund += _executePendingActionOrRevert(previousActionsData);
+                amountToRefund += _executePendingActionOrRevert(s, previousActionsData);
             }
         }
 
         _refundExcessEther(0, amountToRefund, balanceBefore);
-        _checkPendingFee();
+        _checkPendingFee(s);
     }
 
-    /// @inheritdoc IUsdnProtocolActions
+    // / @inheritdoc IUsdnProtocolActions
     function initiateWithdrawal(
         Storage storage s,
         uint152 usdnShares,
@@ -223,7 +234,7 @@ library UsdnProtocolActionsLibrary {
         address payable validator,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable returns (bool success_) {
+    ) external returns (bool success_) {
         uint64 securityDepositValue = s._securityDepositValue;
         if (msg.value < securityDepositValue) {
             // revert UsdnProtocolSecurityDepositTooLow();
@@ -233,28 +244,29 @@ library UsdnProtocolActionsLibrary {
 
         uint256 amountToRefund;
         (amountToRefund, success_) =
-            _initiateWithdrawal(msg.sender, to, validator, usdnShares, securityDepositValue, currentPriceData);
+            _initiateWithdrawal(s, msg.sender, to, validator, usdnShares, securityDepositValue, currentPriceData);
 
         if (success_) {
             unchecked {
-                amountToRefund += _executePendingActionOrRevert(previousActionsData);
+                amountToRefund += _executePendingActionOrRevert(s, previousActionsData);
             }
         }
 
         _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
-        _checkPendingFee();
+        _checkPendingFee(s);
     }
 
-    /// @inheritdoc IUsdnProtocolActions
+    // / @inheritdoc IUsdnProtocolActions
     function validateWithdrawal(
+        Storage storage s,
         address payable validator,
         bytes calldata withdrawalPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable returns (bool success_) {
+    ) external returns (bool success_) {
         uint256 balanceBefore = address(this).balance;
 
         uint256 amountToRefund;
-        (amountToRefund, success_) = _validateWithdrawal(validator, withdrawalPriceData);
+        (amountToRefund, success_) = _validateWithdrawal(s, validator, withdrawalPriceData);
         if (msg.sender != validator) {
             _refundEther(amountToRefund, validator);
             balanceBefore -= amountToRefund;
@@ -262,66 +274,52 @@ library UsdnProtocolActionsLibrary {
         }
         if (success_) {
             unchecked {
-                amountToRefund += _executePendingActionOrRevert(previousActionsData);
+                amountToRefund += _executePendingActionOrRevert(s, previousActionsData);
             }
         }
 
         _refundExcessEther(0, amountToRefund, balanceBefore);
-        _checkPendingFee();
+        _checkPendingFee(s);
     }
 
-    /// @inheritdoc IUsdnProtocolActions
+    // / @inheritdoc IUsdnProtocolActions
     function initiateOpenPosition(
         Storage storage s,
-        uint128 amount,
-        uint128 desiredLiqPrice,
-        address to,
-        address payable validator,
-        Permit2TokenBitfield.Bitfield permit2TokenBitfield,
+        InitiateOpenPositionParams memory params,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable returns (bool success_, PositionId memory posId_) {
+    ) external returns (bool success_, PositionId memory posId_) {
         uint64 securityDepositValue = s._securityDepositValue;
         if (msg.value < securityDepositValue) {
             // revert UsdnProtocolSecurityDepositTooLow();
         }
 
         uint256 balanceBefore = address(this).balance;
-
+        params.securityDepositValue = securityDepositValue;
         uint256 amountToRefund;
-        (posId_, amountToRefund, success_) = _initiateOpenPosition(
-            InitiateOpenPositionParams({
-                user: msg.sender,
-                to: to,
-                validator: validator,
-                amount: amount,
-                desiredLiqPrice: desiredLiqPrice,
-                securityDepositValue: securityDepositValue,
-                permit2TokenBitfield: permit2TokenBitfield
-            }),
-            currentPriceData
-        );
+        (posId_, amountToRefund, success_) = _initiateOpenPosition(s, params, currentPriceData);
 
         if (success_) {
             unchecked {
-                amountToRefund += _executePendingActionOrRevert(previousActionsData);
+                amountToRefund += _executePendingActionOrRevert(s, previousActionsData);
             }
         }
         _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
-        _checkPendingFee();
+        _checkPendingFee(s);
     }
 
-    /// @inheritdoc IUsdnProtocolActions
+    // / @inheritdoc IUsdnProtocolActions
     function validateOpenPosition(
+        Storage storage s,
         address payable validator,
         bytes calldata openPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable returns (bool success_) {
+    ) external returns (bool success_) {
         uint256 balanceBefore = address(this).balance;
 
         uint256 amountToRefund;
         bool liquidated;
-        (amountToRefund, success_, liquidated) = _validateOpenPosition(validator, openPriceData);
+        (amountToRefund, success_, liquidated) = _validateOpenPosition(s, validator, openPriceData);
         if (msg.sender != validator) {
             _refundEther(amountToRefund, validator);
             balanceBefore -= amountToRefund;
@@ -329,24 +327,21 @@ library UsdnProtocolActionsLibrary {
         }
         if (success_ || liquidated) {
             unchecked {
-                amountToRefund += _executePendingActionOrRevert(previousActionsData);
+                amountToRefund += _executePendingActionOrRevert(s, previousActionsData);
             }
         }
 
         _refundExcessEther(0, amountToRefund, balanceBefore);
-        _checkPendingFee();
+        _checkPendingFee(s);
     }
 
-    /// @inheritdoc IUsdnProtocolActions
+    // / @inheritdoc IUsdnProtocolActions
     function initiateClosePosition(
         Storage storage s,
-        PositionId calldata posId,
-        uint128 amountToClose,
-        address to,
-        address payable validator,
+        InitiateClosePositionParams memory params,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable returns (bool success_) {
+    ) external returns (bool success_) {
         uint64 securityDepositValue = s._securityDepositValue;
         if (msg.value < securityDepositValue) {
             // revert UsdnProtocolSecurityDepositTooLow();
@@ -357,30 +352,38 @@ library UsdnProtocolActionsLibrary {
         uint256 amountToRefund;
         bool liq;
         (amountToRefund, success_, liq) = _initiateClosePosition(
-            msg.sender, to, validator, posId, amountToClose, securityDepositValue, currentPriceData
+            s,
+            msg.sender,
+            params.to,
+            params.validator,
+            params.posId,
+            params.amountToClose,
+            securityDepositValue,
+            currentPriceData
         );
 
         if (success_ || liq) {
             unchecked {
-                amountToRefund += _executePendingActionOrRevert(previousActionsData);
+                amountToRefund += _executePendingActionOrRevert(s, previousActionsData);
             }
         }
 
         _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
-        _checkPendingFee();
+        _checkPendingFee(s);
     }
 
-    /// @inheritdoc IUsdnProtocolActions
+    // / @inheritdoc IUsdnProtocolActions
     function validateClosePosition(
+        Storage storage s,
         address payable validator,
         bytes calldata closePriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable returns (bool success_) {
+    ) external returns (bool success_) {
         uint256 balanceBefore = address(this).balance;
 
         uint256 amountToRefund;
         bool liq;
-        (amountToRefund, success_, liq) = _validateClosePosition(validator, closePriceData);
+        (amountToRefund, success_, liq) = _validateClosePosition(s, validator, closePriceData);
         if (msg.sender != validator) {
             _refundEther(amountToRefund, validator);
             balanceBefore -= amountToRefund;
@@ -388,24 +391,24 @@ library UsdnProtocolActionsLibrary {
         }
         if (success_ || liq) {
             unchecked {
-                amountToRefund += _executePendingActionOrRevert(previousActionsData);
+                amountToRefund += _executePendingActionOrRevert(s, previousActionsData);
             }
         }
 
         _refundExcessEther(0, amountToRefund, balanceBefore);
-        _checkPendingFee();
+        _checkPendingFee(s);
     }
 
-    /// @inheritdoc IUsdnProtocolActions
-    function liquidate(bytes calldata currentPriceData, uint16 iterations)
+    // / @inheritdoc IUsdnProtocolActions
+    function liquidate(Storage storage s, bytes calldata currentPriceData, uint16 iterations)
         external
-        payable
         returns (uint256 liquidatedPositions_)
     {
         uint256 balanceBefore = address(this).balance;
-        PriceInfo memory currentPrice = _getOraclePrice(ProtocolAction.Liquidation, 0, "", currentPriceData);
+        PriceInfo memory currentPrice = _getOraclePrice(s, ProtocolAction.Liquidation, 0, "", currentPriceData);
 
         (liquidatedPositions_,) = _applyPnlAndFundingAndLiquidate(
+            s,
             currentPrice.neutralPrice,
             currentPrice.timestamp,
             iterations,
@@ -415,15 +418,15 @@ library UsdnProtocolActionsLibrary {
         );
 
         _refundExcessEther(0, 0, balanceBefore);
-        _checkPendingFee();
+        _checkPendingFee(s);
     }
 
-    /// @inheritdoc IUsdnProtocolActions
-    function validateActionablePendingActions(PreviousActionsData calldata previousActionsData, uint256 maxValidations)
-        external
-        payable
-        returns (uint256 validatedActions_)
-    {
+    // / @inheritdoc IUsdnProtocolActions
+    function validateActionablePendingActions(
+        Storage storage s,
+        PreviousActionsData calldata previousActionsData,
+        uint256 maxValidations
+    ) external returns (uint256 validatedActions_) {
         uint256 balanceBefore = address(this).balance;
         uint256 amountToRefund;
 
@@ -431,7 +434,7 @@ library UsdnProtocolActionsLibrary {
             maxValidations = previousActionsData.rawIndices.length;
         }
         do {
-            (, bool executed, bool liq, uint256 securityDepositValue) = _executePendingAction(previousActionsData);
+            (, bool executed, bool liq, uint256 securityDepositValue) = _executePendingAction(s, previousActionsData);
             if (!executed && !liq) {
                 break;
             }
@@ -441,12 +444,12 @@ library UsdnProtocolActionsLibrary {
             }
         } while (validatedActions_ < maxValidations);
         _refundExcessEther(0, amountToRefund, balanceBefore);
-        _checkPendingFee();
+        _checkPendingFee(s);
     }
 
-    /// @inheritdoc IUsdnProtocolActions
+    // / @inheritdoc IUsdnProtocolActions
     function transferPositionOwnership(Storage storage s, PositionId calldata posId, address newOwner) external {
-        (bytes32 tickHash, uint256 version) = _tickHash(posId.tick);
+        (bytes32 tickHash, uint256 version) = vaultLib._tickHash(s, posId.tick);
         if (posId.tickVersion != version) {
             // revert UsdnProtocolOutdatedTick(version, posId.tickVersion);
         }
@@ -466,6 +469,62 @@ library UsdnProtocolActionsLibrary {
         }
 
         // emit PositionOwnershipTransferred(posId, msg.sender, newOwner);
+    }
+
+    /**
+     * @notice Calculate the profits and losses of the long side, calculate the funding and apply protocol fees,
+     * calculate the new liquidation multiplier and the temporary new balances for each side
+     * @dev This function updates the state of `_lastPrice`, `_lastUpdateTimestamp`, `_lastFunding`, but does not
+     * update the balances. This is left to the caller
+     * @param currentPrice The current price
+     * @param timestamp The timestamp of the current price
+     * @return isPriceRecent_ Whether the price was updated or was already the most recent price
+     * @return tempLongBalance_ The new balance of the long side, could be negative (temporarily)
+     * @return tempVaultBalance_ The new balance of the vault side, could be negative (temporarily)
+     */
+    function _applyPnlAndFunding(Storage storage s, uint128 currentPrice, uint128 timestamp)
+        internal
+        returns (bool isPriceRecent_, int256 tempLongBalance_, int256 tempVaultBalance_)
+    {
+        // cache variable for optimization
+        uint128 lastUpdateTimestamp = s._lastUpdateTimestamp;
+        // if the price is not fresh, do nothing
+        if (timestamp <= lastUpdateTimestamp) {
+            return (timestamp == lastUpdateTimestamp, s._balanceLong.toInt256(), s._balanceVault.toInt256());
+        }
+
+        // update the funding EMA
+        int256 ema = coreLib._updateEMA(s, timestamp - lastUpdateTimestamp);
+
+        // calculate the funding
+        (int256 fundAsset, int256 fund) = coreLib._fundingAsset(s, timestamp, ema);
+
+        // take protocol fee on the funding value
+        (int256 fee, int256 fundWithFee, int256 fundAssetWithFee) = coreLib._calculateFee(s, fund, fundAsset);
+
+        // we subtract the fee from the total balance
+        int256 totalBalance = s._balanceLong.toInt256().safeAdd(s._balanceVault.toInt256()).safeSub(fee);
+        // calculate new balances (for now, any bad debt has not been repaid, balances could become negative)
+
+        if (fund > 0) {
+            // in case of positive funding, the vault balance must be decremented by the totality of the funding amount
+            // however, since we deducted the fee amount from the total balance, the vault balance will be incremented
+            // only by the funding amount minus the fee amount
+            tempLongBalance_ = coreLib._longAssetAvailable(s, currentPrice).safeSub(fundAsset);
+        } else {
+            // in case of negative funding, the vault balance must be decremented by the totality of the funding amount
+            // however, since we deducted the fee amount from the total balance, the long balance will be incremented
+            // only by the funding amount minus the fee amount
+            tempLongBalance_ = coreLib._longAssetAvailable(s, currentPrice).safeSub(fundAssetWithFee);
+        }
+        tempVaultBalance_ = totalBalance.safeSub(tempLongBalance_);
+
+        // update state variables
+        s._lastPrice = currentPrice;
+        s._lastUpdateTimestamp = timestamp;
+        s._lastFunding = fundWithFee;
+
+        isPriceRecent_ = true;
     }
 
     /**
@@ -553,8 +612,8 @@ library UsdnProtocolActionsLibrary {
         }
 
         int256 currentVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault);
-        int256 imbalanceBps = _calcImbalanceOpenBps(
-            currentVaultExpo, (s._balanceLong + openCollatValue).toInt256(), s._totalExpo + openTotalExpoValue
+        int256 imbalanceBps = longLib._calcImbalanceOpenBps(
+            s, currentVaultExpo, (s._balanceLong + openCollatValue).toInt256(), s._totalExpo + openTotalExpoValue
         );
 
         if (imbalanceBps >= openExpoImbalanceLimitBps) {
@@ -584,7 +643,7 @@ library UsdnProtocolActionsLibrary {
         uint256 newTotalExpo = s._totalExpo - posTotalExpoToClose;
         int256 currentVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault);
 
-        int256 imbalanceBps = _calcImbalanceCloseBps(currentVaultExpo, newLongBalance, newTotalExpo);
+        int256 imbalanceBps = longLib._calcImbalanceCloseBps(s, currentVaultExpo, newLongBalance, newTotalExpo);
 
         if (imbalanceBps >= closeExpoImbalanceLimitBps) {
             // revert UsdnProtocolImbalanceLimitReached(imbalanceBps);
@@ -646,6 +705,7 @@ library UsdnProtocolActionsLibrary {
         bytes calldata currentPriceData
     ) internal returns (InitiateDepositData memory data_) {
         PriceInfo memory currentPrice = _getOraclePrice(
+            s,
             ProtocolAction.InitiateDeposit,
             block.timestamp,
             _calcActionId(validator, uint128(block.timestamp)),
@@ -653,6 +713,7 @@ library UsdnProtocolActionsLibrary {
         );
 
         (, data_.isLiquidationPending) = _applyPnlAndFundingAndLiquidate(
+            s,
             currentPrice.neutralPrice,
             currentPrice.timestamp,
             s._liquidationIteration,
@@ -665,7 +726,7 @@ library UsdnProtocolActionsLibrary {
             return data_;
         }
 
-        _checkImbalanceLimitDeposit(amount);
+        _checkImbalanceLimitDeposit(s, amount);
 
         // apply fees on price
         data_.pendingActionPrice =
@@ -673,21 +734,21 @@ library UsdnProtocolActionsLibrary {
 
         data_.totalExpo = s._totalExpo;
         data_.balanceLong = s._balanceLong;
-        data_.balanceVault = _vaultAssetAvailable(
+        data_.balanceVault = vaultLib._vaultAssetAvailable(
             data_.totalExpo, s._balanceVault, data_.balanceLong, data_.pendingActionPrice, s._lastPrice
         ).toUint256();
         data_.usdnTotalShares = s._usdn.totalShares();
 
         // calculate the amount of SDEX tokens to burn
         uint256 usdnSharesToMintEstimated =
-            _calcMintUsdnShares(amount, data_.balanceVault, data_.usdnTotalShares, data_.pendingActionPrice);
+            vaultLib._calcMintUsdnShares(s, amount, data_.balanceVault, data_.usdnTotalShares, data_.pendingActionPrice);
         uint256 usdnToMintEstimated = s._usdn.convertToTokens(usdnSharesToMintEstimated);
         // we want to at least mint 1 wei of USDN
         if (usdnToMintEstimated == 0) {
             // revert UsdnProtocolDepositTooSmall();
         }
         uint32 burnRatio = s._sdexBurnOnDepositRatio;
-        data_.sdexToBurn = _calcSdexToBurn(usdnToMintEstimated, burnRatio);
+        data_.sdexToBurn = vaultLib._calcSdexToBurn(s, usdnToMintEstimated, burnRatio);
         // we want to at least burn 1 wei of SDEX if SDEX burning is enabled
         if (burnRatio != 0 && data_.sdexToBurn == 0) {
             // revert UsdnProtocolDepositTooSmall();
@@ -704,6 +765,7 @@ library UsdnProtocolActionsLibrary {
      * @return amountToRefund_ Refund The security deposit value of a stale pending action
      */
     function _createDepositPendingAction(
+        Storage storage s,
         address to,
         address validator,
         uint64 securityDepositValue,
@@ -725,7 +787,7 @@ library UsdnProtocolActionsLibrary {
             usdnTotalShares: data.usdnTotalShares
         });
 
-        amountToRefund_ = _addPendingAction(validator, _convertDepositPendingAction(pendingAction));
+        amountToRefund_ = coreLib._addPendingAction(s, validator, coreLib._convertDepositPendingAction(pendingAction));
     }
 
     /**
@@ -765,14 +827,14 @@ library UsdnProtocolActionsLibrary {
             // revert UsdnProtocolZeroAmount();
         }
 
-        InitiateDepositData memory data = _prepareInitiateDepositData(validator, amount, currentPriceData);
+        InitiateDepositData memory data = _prepareInitiateDepositData(s, validator, amount, currentPriceData);
 
         // early return in case there are still pending liquidations
         if (data.isLiquidationPending) {
             return (securityDepositValue, false);
         }
 
-        amountToRefund_ = _createDepositPendingAction(to, validator, securityDepositValue, amount, data);
+        amountToRefund_ = _createDepositPendingAction(s, to, validator, securityDepositValue, amount, data);
 
         if (data.sdexToBurn > 0) {
             // send SDEX to the dead address
@@ -789,7 +851,7 @@ library UsdnProtocolActionsLibrary {
         } else {
             address(s._asset).safeTransferFrom(user, address(this), amount);
         }
-        s._pendingBalanceVault += _toInt256(amount);
+        s._pendingBalanceVault += coreLib._toInt256(amount);
 
         isInitiated_ = true;
 
@@ -803,11 +865,11 @@ library UsdnProtocolActionsLibrary {
      * @return securityDepositValue_ The value of the security deposit
      * @return isValidated_ Whether the action is validated
      */
-    function _validateDeposit(address validator, bytes calldata priceData)
+    function _validateDeposit(Storage storage s, address validator, bytes calldata priceData)
         internal
         returns (uint256 securityDepositValue_, bool isValidated_)
     {
-        (PendingAction memory pending, uint128 rawIndex) = _getPendingActionOrRevert(validator);
+        (PendingAction memory pending, uint128 rawIndex) = coreLib._getPendingActionOrRevert(s, validator);
 
         // check type of action
         if (pending.action != ProtocolAction.ValidateDeposit) {
@@ -818,10 +880,10 @@ library UsdnProtocolActionsLibrary {
             // revert UsdnProtocolInvalidPendingAction();
         }
 
-        isValidated_ = _validateDepositWithAction(pending, priceData);
+        isValidated_ = _validateDepositWithAction(s, pending, priceData);
 
         if (isValidated_) {
-            _clearPendingAction(validator, rawIndex);
+            coreLib._clearPendingAction(s, validator, rawIndex);
             return (pending.securityDepositValue, true);
         }
     }
@@ -836,9 +898,10 @@ library UsdnProtocolActionsLibrary {
         internal
         returns (bool isValidated_)
     {
-        DepositPendingAction memory deposit = _toDepositPendingAction(pending);
+        DepositPendingAction memory deposit = coreLib._toDepositPendingAction(pending);
 
         PriceInfo memory currentPrice = _getOraclePrice(
+            s,
             ProtocolAction.ValidateDeposit,
             deposit.timestamp,
             _calcActionId(deposit.validator, deposit.timestamp),
@@ -847,6 +910,7 @@ library UsdnProtocolActionsLibrary {
 
         // adjust balances
         (, bool isLiquidationPending) = _applyPnlAndFundingAndLiquidate(
+            s,
             currentPrice.neutralPrice,
             currentPrice.timestamp,
             s._liquidationIteration,
@@ -865,13 +929,15 @@ library UsdnProtocolActionsLibrary {
         // apply fees on price
         uint128 priceWithFees = (currentPrice.price - currentPrice.price * s._vaultFeeBps / s.BPS_DIVISOR).toUint128();
 
-        uint256 usdnSharesToMint1 =
-            _calcMintUsdnShares(deposit.amount, deposit.balanceVault, deposit.usdnTotalShares, deposit.assetPrice);
+        uint256 usdnSharesToMint1 = vaultLib._calcMintUsdnShares(
+            s, deposit.amount, deposit.balanceVault, deposit.usdnTotalShares, deposit.assetPrice
+        );
 
-        uint256 usdnSharesToMint2 = _calcMintUsdnShares(
+        uint256 usdnSharesToMint2 = vaultLib._calcMintUsdnShares(
+            s,
             deposit.amount,
             // calculate the available balance in the vault side if the price moves to `priceWithFees`
-            _vaultAssetAvailable(
+            vaultLib._vaultAssetAvailable(
                 deposit.totalExpo, deposit.balanceVault, deposit.balanceLong, priceWithFees, deposit.assetPrice
             ).toUint256(),
             deposit.usdnTotalShares,
@@ -887,7 +953,7 @@ library UsdnProtocolActionsLibrary {
         }
 
         s._balanceVault += deposit.amount;
-        s._pendingBalanceVault -= _toInt256(deposit.amount);
+        s._pendingBalanceVault -= coreLib._toInt256(deposit.amount);
 
         uint256 mintedTokens = s._usdn.mintShares(deposit.to, usdnSharesToMint);
         isValidated_ = true;
@@ -909,6 +975,7 @@ library UsdnProtocolActionsLibrary {
         bytes calldata currentPriceData
     ) internal returns (WithdrawalData memory data_) {
         PriceInfo memory currentPrice = _getOraclePrice(
+            s,
             ProtocolAction.InitiateWithdrawal,
             block.timestamp,
             _calcActionId(validator, uint128(block.timestamp)),
@@ -916,6 +983,7 @@ library UsdnProtocolActionsLibrary {
         );
 
         (, data_.isLiquidationPending) = _applyPnlAndFundingAndLiquidate(
+            s,
             currentPrice.neutralPrice,
             currentPrice.timestamp,
             s._liquidationIteration,
@@ -935,13 +1003,13 @@ library UsdnProtocolActionsLibrary {
 
         data_.totalExpo = s._totalExpo;
         data_.balanceLong = s._balanceLong;
-        data_.balanceVault = _vaultAssetAvailable(
+        data_.balanceVault = vaultLib._vaultAssetAvailable(
             data_.totalExpo, s._balanceVault, data_.balanceLong, data_.pendingActionPrice, s._lastPrice
         ).toUint256();
         data_.usdnTotalShares = s._usdn.totalShares();
-        data_.withdrawalAmount = _calcBurnUsdn(usdnShares, data_.balanceVault, data_.usdnTotalShares);
+        data_.withdrawalAmount = vaultLib._calcBurnUsdn(usdnShares, data_.balanceVault, data_.usdnTotalShares);
 
-        _checkImbalanceLimitWithdrawal(data_.withdrawalAmount, data_.totalExpo);
+        _checkImbalanceLimitWithdrawal(s, data_.withdrawalAmount, data_.totalExpo);
     }
 
     /**
@@ -954,21 +1022,22 @@ library UsdnProtocolActionsLibrary {
      * @return amountToRefund_ Refund The security deposit value of a stale pending action
      */
     function _createWithdrawalPendingAction(
+        Storage storage s,
         address to,
         address validator,
         uint152 usdnShares,
         uint64 securityDepositValue,
         WithdrawalData memory data
     ) internal returns (uint256 amountToRefund_) {
-        PendingAction memory action = _convertWithdrawalPendingAction(
+        PendingAction memory action = coreLib._convertWithdrawalPendingAction(
             WithdrawalPendingAction({
                 action: ProtocolAction.ValidateWithdrawal,
                 timestamp: uint40(block.timestamp),
                 to: to,
                 validator: validator,
                 securityDepositValue: securityDepositValue,
-                sharesLSB: _calcWithdrawalAmountLSB(usdnShares),
-                sharesMSB: _calcWithdrawalAmountMSB(usdnShares),
+                sharesLSB: vaultLib._calcWithdrawalAmountLSB(usdnShares),
+                sharesMSB: vaultLib._calcWithdrawalAmountMSB(usdnShares),
                 assetPrice: data.pendingActionPrice,
                 totalExpo: data.totalExpo,
                 balanceVault: data.balanceVault,
@@ -976,7 +1045,7 @@ library UsdnProtocolActionsLibrary {
                 usdnTotalShares: data.usdnTotalShares
             })
         );
-        amountToRefund_ = _addPendingAction(validator, action);
+        amountToRefund_ = coreLib._addPendingAction(s, validator, action);
     }
 
     /**
@@ -1014,13 +1083,13 @@ library UsdnProtocolActionsLibrary {
             // revert UsdnProtocolZeroAmount();
         }
 
-        WithdrawalData memory data = _prepareWithdrawalData(validator, usdnShares, currentPriceData);
+        WithdrawalData memory data = _prepareWithdrawalData(s, validator, usdnShares, currentPriceData);
 
         if (data.isLiquidationPending) {
             return (securityDepositValue, false);
         }
 
-        amountToRefund_ = _createWithdrawalPendingAction(to, validator, usdnShares, securityDepositValue, data);
+        amountToRefund_ = _createWithdrawalPendingAction(s, to, validator, usdnShares, securityDepositValue, data);
 
         // retrieve the USDN tokens, check that the balance is sufficient
         s._usdn.transferSharesFrom(user, address(this), usdnShares);
@@ -1037,11 +1106,11 @@ library UsdnProtocolActionsLibrary {
      * @return securityDepositValue_ The value of the security deposit
      * @return isValidated_ Whether the action is validated
      */
-    function _validateWithdrawal(address validator, bytes calldata priceData)
+    function _validateWithdrawal(Storage storage s, address validator, bytes calldata priceData)
         internal
         returns (uint256 securityDepositValue_, bool isValidated_)
     {
-        (PendingAction memory pending, uint128 rawIndex) = _getPendingActionOrRevert(validator);
+        (PendingAction memory pending, uint128 rawIndex) = coreLib._getPendingActionOrRevert(s, validator);
 
         // check type of action
         if (pending.action != ProtocolAction.ValidateWithdrawal) {
@@ -1052,10 +1121,10 @@ library UsdnProtocolActionsLibrary {
             // revert UsdnProtocolInvalidPendingAction();
         }
 
-        isValidated_ = _validateWithdrawalWithAction(pending, priceData);
+        isValidated_ = _validateWithdrawalWithAction(s, pending, priceData);
 
         if (isValidated_) {
-            _clearPendingAction(validator, rawIndex);
+            coreLib._clearPendingAction(s, validator, rawIndex);
             return (pending.securityDepositValue, true);
         }
     }
@@ -1070,9 +1139,10 @@ library UsdnProtocolActionsLibrary {
         internal
         returns (bool isValidated_)
     {
-        WithdrawalPendingAction memory withdrawal = _toWithdrawalPendingAction(pending);
+        WithdrawalPendingAction memory withdrawal = coreLib._toWithdrawalPendingAction(pending);
 
         PriceInfo memory currentPrice = _getOraclePrice(
+            s,
             ProtocolAction.ValidateWithdrawal,
             withdrawal.timestamp,
             _calcActionId(withdrawal.validator, withdrawal.timestamp),
@@ -1080,6 +1150,7 @@ library UsdnProtocolActionsLibrary {
         );
 
         (, bool isLiquidationPending) = _applyPnlAndFundingAndLiquidate(
+            s,
             currentPrice.neutralPrice,
             currentPrice.timestamp,
             s._liquidationIteration,
@@ -1101,7 +1172,7 @@ library UsdnProtocolActionsLibrary {
         // initiate action, or the current price provided for validation. We will use the lower of the two amounts to
         // redeem the underlying asset share
         uint256 available1 = withdrawal.balanceVault;
-        uint256 available2 = _vaultAssetAvailable(
+        uint256 available2 = vaultLib._vaultAssetAvailable(
             withdrawal.totalExpo,
             withdrawal.balanceVault,
             withdrawal.balanceLong,
@@ -1115,13 +1186,13 @@ library UsdnProtocolActionsLibrary {
             available = available2;
         }
 
-        uint256 shares = _mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
+        uint256 shares = coreLib._mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
 
         // we can add back the _pendingBalanceVault we subtracted in the initiate action
-        uint256 tempWithdrawal = _calcBurnUsdn(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares);
+        uint256 tempWithdrawal = vaultLib._calcBurnUsdn(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares);
         s._pendingBalanceVault += tempWithdrawal.toInt256();
 
-        uint256 assetToTransfer = _calcBurnUsdn(shares, available, s._usdn.totalShares());
+        uint256 assetToTransfer = vaultLib._calcBurnUsdn(shares, available, s._usdn.totalShares());
 
         s._usdn.burnShares(shares);
 
@@ -1156,6 +1227,7 @@ library UsdnProtocolActionsLibrary {
         bytes calldata currentPriceData
     ) internal returns (InitiateOpenPositionData memory data_) {
         PriceInfo memory currentPrice = _getOraclePrice(
+            s,
             ProtocolAction.InitiateOpenPosition,
             block.timestamp,
             _calcActionId(validator, uint128(block.timestamp)),
@@ -1166,6 +1238,7 @@ library UsdnProtocolActionsLibrary {
         uint128 neutralPrice = currentPrice.neutralPrice.toUint128();
 
         (, data_.isLiquidationPending) = _applyPnlAndFundingAndLiquidate(
+            s,
             neutralPrice,
             currentPrice.timestamp,
             s._liquidationIteration,
@@ -1180,22 +1253,23 @@ library UsdnProtocolActionsLibrary {
         }
 
         // we calculate the closest valid tick down for the desired liq price with liquidation penalty
-        data_.posId.tick = getEffectiveTickForPrice(desiredLiqPrice);
-        data_.liquidationPenalty = getTickLiquidationPenalty(data_.posId.tick);
+        data_.posId.tick = longLib.getEffectiveTickForPrice(s, desiredLiqPrice);
+        data_.liquidationPenalty = longLib.getTickLiquidationPenalty(s, data_.posId.tick);
 
         // calculate effective liquidation price
-        uint128 liqPrice = getEffectivePriceForTick(data_.posId.tick);
+        uint128 liqPrice = longLib.getEffectivePriceForTick(s, data_.posId.tick);
 
         // liquidation price must be at least x% below the current price
-        _checkSafetyMargin(neutralPrice, liqPrice);
+        longLib._checkSafetyMargin(s, neutralPrice, liqPrice);
 
         // remove liquidation penalty for leverage and total expo calculations
-        uint128 liqPriceWithoutPenalty =
-            getEffectivePriceForTick(_calcTickWithoutPenalty(data_.posId.tick, data_.liquidationPenalty));
-        _checkOpenPositionLeverage(data_.adjustedPrice, liqPriceWithoutPenalty);
+        uint128 liqPriceWithoutPenalty = longLib.getEffectivePriceForTick(
+            s, longLib._calcTickWithoutPenalty(s, data_.posId.tick, data_.liquidationPenalty)
+        );
+        _checkOpenPositionLeverage(s, data_.adjustedPrice, liqPriceWithoutPenalty);
 
-        data_.positionTotalExpo = _calcPositionTotalExpo(amount, data_.adjustedPrice, liqPriceWithoutPenalty);
-        _checkImbalanceLimitOpen(data_.positionTotalExpo, amount);
+        data_.positionTotalExpo = longLib._calcPositionTotalExpo(amount, data_.adjustedPrice, liqPriceWithoutPenalty);
+        _checkImbalanceLimitOpen(s, data_.positionTotalExpo, amount);
     }
 
     /**
@@ -1207,6 +1281,7 @@ library UsdnProtocolActionsLibrary {
      * @return amountToRefund_ Refund The security deposit value of a stale pending action
      */
     function _createOpenPendingAction(
+        Storage storage s,
         address to,
         address validator,
         uint64 securityDepositValue,
@@ -1226,7 +1301,7 @@ library UsdnProtocolActionsLibrary {
             closeLiqMultiplier: 0,
             closeBoundedPositionValue: 0
         });
-        amountToRefund_ = _addPendingAction(validator, _convertLongPendingAction(action));
+        amountToRefund_ = coreLib._addPendingAction(s, validator, coreLib._convertLongPendingAction(action));
     }
 
     /**
@@ -1263,8 +1338,9 @@ library UsdnProtocolActionsLibrary {
             // revert UsdnProtocolLongPositionTooSmall();
         }
 
-        InitiateOpenPositionData memory data =
-            _prepareInitiateOpenPositionData(params.validator, params.amount, params.desiredLiqPrice, currentPriceData);
+        InitiateOpenPositionData memory data = _prepareInitiateOpenPositionData(
+            s, params.validator, params.amount, params.desiredLiqPrice, currentPriceData
+        );
 
         if (data.isLiquidationPending) {
             // value to indicate the position was not created
@@ -1280,11 +1356,12 @@ library UsdnProtocolActionsLibrary {
             totalExpo: data.positionTotalExpo,
             timestamp: uint40(block.timestamp)
         });
-        (data.posId.tickVersion, data.posId.index,) = _saveNewPosition(data.posId.tick, long, data.liquidationPenalty);
+        (data.posId.tickVersion, data.posId.index,) =
+            _saveNewPosition(s, data.posId.tick, long, data.liquidationPenalty);
         s._balanceLong += long.amount;
         posId_ = data.posId;
 
-        amountToRefund_ = _createOpenPendingAction(params.to, params.validator, params.securityDepositValue, data);
+        amountToRefund_ = _createOpenPendingAction(s, params.to, params.validator, params.securityDepositValue, data);
 
         if (params.permit2TokenBitfield.useForAsset()) {
             address(s._asset).permit2TransferFrom(params.user, address(this), params.amount);
@@ -1312,24 +1389,24 @@ library UsdnProtocolActionsLibrary {
      * @return isValidated_ Whether the action is validated
      * @return liquidated_ Whether the pending action has been liquidated
      */
-    function _validateOpenPosition(address validator, bytes calldata priceData)
+    function _validateOpenPosition(Storage storage s, address validator, bytes calldata priceData)
         internal
         returns (uint256 securityDepositValue_, bool isValidated_, bool liquidated_)
     {
-        (PendingAction memory pending, uint128 rawIndex) = _getPendingActionOrRevert(validator);
+        (PendingAction memory pending, uint128 rawIndex) = coreLib._getPendingActionOrRevert(s, validator);
 
         // check type of action
         if (pending.action != ProtocolAction.ValidateOpenPosition) {
-            revert UsdnProtocolInvalidPendingAction();
+            // revert UsdnProtocolInvalidPendingAction();
         }
         // sanity check
         if (pending.validator != validator) {
-            revert UsdnProtocolInvalidPendingAction();
+            // revert UsdnProtocolInvalidPendingAction();
         }
-        (isValidated_, liquidated_) = _validateOpenPositionWithAction(pending, priceData);
+        (isValidated_, liquidated_) = _validateOpenPositionWithAction(s, pending, priceData);
 
         if (isValidated_ || liquidated_) {
-            _clearPendingAction(validator, rawIndex);
+            coreLib._clearPendingAction(s, validator, rawIndex);
             return (pending.securityDepositValue, isValidated_, liquidated_);
         }
     }
@@ -1341,12 +1418,13 @@ library UsdnProtocolActionsLibrary {
      * @return data_ The {ValidateOpenPosition} data struct
      * @return liquidated_ Whether the position was liquidated
      */
-    function _prepareValidateOpenPositionData(PendingAction memory pending, bytes calldata priceData)
+    function _prepareValidateOpenPositionData(Storage storage s, PendingAction memory pending, bytes calldata priceData)
         internal
         returns (ValidateOpenPositionData memory data_, bool liquidated_)
     {
-        data_.action = _toLongPendingAction(pending);
+        data_.action = coreLib._toLongPendingAction(pending);
         PriceInfo memory currentPrice = _getOraclePrice(
+            s,
             ProtocolAction.ValidateOpenPosition,
             data_.action.timestamp,
             _calcActionId(data_.action.validator, data_.action.timestamp),
@@ -1356,6 +1434,7 @@ library UsdnProtocolActionsLibrary {
         data_.startPrice = (currentPrice.price + currentPrice.price * s._positionFeeBps / s.BPS_DIVISOR).toUint128();
 
         (, data_.isLiquidationPending) = _applyPnlAndFundingAndLiquidate(
+            s,
             currentPrice.neutralPrice,
             currentPrice.timestamp,
             s._liquidationIteration,
@@ -1365,14 +1444,15 @@ library UsdnProtocolActionsLibrary {
         );
 
         uint256 version;
-        (data_.tickHash, version) = _tickHash(data_.action.tick);
+        (data_.tickHash, version) = vaultLib._tickHash(s, data_.action.tick);
         if (version != data_.action.tickVersion) {
             // the current tick version doesn't match the version from the pending action
             // this means the position has been liquidated in the meantime
-            emit StalePendingActionRemoved(
-                data_.action.validator,
-                PositionId({ tick: data_.action.tick, tickVersion: data_.action.tickVersion, index: data_.action.index })
-            );
+            // emit StalePendingActionRemoved(
+            //     data_.action.validator,
+            //     PositionId({ tick: data_.action.tick, tickVersion: data_.action.tickVersion, index:
+            // data_.action.index })
+            // );
             return (data_, true);
         }
 
@@ -1384,10 +1464,11 @@ library UsdnProtocolActionsLibrary {
         data_.pos = s._longPositions[data_.tickHash][data_.action.index];
         // re-calculate leverage
         data_.liquidationPenalty = s._tickData[data_.tickHash].liquidationPenalty;
-        data_.liqPriceWithoutPenalty =
-            getEffectivePriceForTick(_calcTickWithoutPenalty(data_.action.tick, data_.liquidationPenalty));
+        data_.liqPriceWithoutPenalty = longLib.getEffectivePriceForTick(
+            s, longLib._calcTickWithoutPenalty(s, data_.action.tick, data_.liquidationPenalty)
+        );
         // reverts if liqPriceWithoutPenalty >= startPrice
-        data_.leverage = _getLeverage(data_.startPrice, data_.liqPriceWithoutPenalty);
+        data_.leverage = longLib._getLeverage(s, data_.startPrice, data_.liqPriceWithoutPenalty);
     }
 
     /**
@@ -1401,7 +1482,8 @@ library UsdnProtocolActionsLibrary {
         internal
         returns (bool isValidated_, bool liquidated_)
     {
-        (ValidateOpenPositionData memory data, bool liquidated) = _prepareValidateOpenPositionData(pending, priceData);
+        (ValidateOpenPositionData memory data, bool liquidated) =
+            _prepareValidateOpenPositionData(s, pending, priceData);
 
         if (liquidated) {
             return (!data.isLiquidationPending, true);
@@ -1418,22 +1500,22 @@ library UsdnProtocolActionsLibrary {
         uint128 maxLeverage = uint128(s._maxLeverage);
         if (data.leverage > maxLeverage) {
             // theoretical liquidation price for _maxLeverage
-            data.liqPriceWithoutPenalty = _getLiquidationPrice(data.startPrice, maxLeverage);
+            data.liqPriceWithoutPenalty = longLib._getLiquidationPrice(s, data.startPrice, maxLeverage);
             // adjust to the closest valid tick down
-            int24 tickWithoutPenalty = getEffectiveTickForPrice(data.liqPriceWithoutPenalty);
+            int24 tickWithoutPenalty = longLib.getEffectiveTickForPrice(s, data.liqPriceWithoutPenalty);
 
             // apply liquidation penalty with the current penalty setting
             uint8 currentLiqPenalty = s._liquidationPenalty;
             PositionId memory newPosId;
             newPosId.tick = tickWithoutPenalty + int24(uint24(currentLiqPenalty)) * s._tickSpacing;
             // retrieve the actual penalty for this tick we want to use
-            uint8 liquidationPenalty = getTickLiquidationPenalty(newPosId.tick);
+            uint8 liquidationPenalty = longLib.getTickLiquidationPenalty(s, newPosId.tick);
             // check if the penalty for that tick is different from the current setting
             if (liquidationPenalty == currentLiqPenalty) {
                 // since the tick's penalty is the same as what we assumed, we can use the `tickWithoutPenalty` from
                 // above
                 // retrieve the exact liquidation price without penalty
-                data.liqPriceWithoutPenalty = getEffectivePriceForTick(tickWithoutPenalty);
+                data.liqPriceWithoutPenalty = longLib.getEffectivePriceForTick(s, tickWithoutPenalty);
             } else {
                 // the tick's imposed penalty is different from the current setting, so the `tickWithoutPenalty` we
                 // calculated above can't be used to calculate the leverage
@@ -1444,21 +1526,23 @@ library UsdnProtocolActionsLibrary {
                 // leverage that exceeds the max leverage slightly. We allow this behavior in this rare occurrence
 
                 // retrieve exact liquidation price without penalty
-                data.liqPriceWithoutPenalty =
-                    getEffectivePriceForTick(_calcTickWithoutPenalty(newPosId.tick, liquidationPenalty));
+                data.liqPriceWithoutPenalty = longLib.getEffectivePriceForTick(
+                    s, longLib._calcTickWithoutPenalty(s, newPosId.tick, liquidationPenalty)
+                );
             }
 
             // move the position to its new tick, update its total expo, and return the new tickVersion and index
             // remove position from old tick completely
             _removeAmountFromPosition(
-                data.action.tick, data.action.index, data.pos, data.pos.amount, data.pos.totalExpo
+                s, data.action.tick, data.action.index, data.pos, data.pos.amount, data.pos.totalExpo
             );
             // update position total expo (because of new leverage / liq price)
-            data.pos.totalExpo = _calcPositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenalty);
+            data.pos.totalExpo =
+                longLib._calcPositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenalty);
             // mark the position as validated
             data.pos.validated = true;
             // insert position into new tick
-            (newPosId.tickVersion, newPosId.index,) = _saveNewPosition(newPosId.tick, data.pos, liquidationPenalty);
+            (newPosId.tickVersion, newPosId.index,) = _saveNewPosition(s, newPosId.tick, data.pos, liquidationPenalty);
             // no long balance update is necessary (collateral didn't change)
 
             // emit LiquidationPriceUpdated
@@ -1475,7 +1559,8 @@ library UsdnProtocolActionsLibrary {
         }
         // calculate the new total expo
         uint128 expoBefore = data.pos.totalExpo;
-        uint128 expoAfter = _calcPositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenalty);
+        uint128 expoAfter =
+            longLib._calcPositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenalty);
 
         // update the total expo of the position
         data.pos.totalExpo = expoAfter;
@@ -1583,11 +1668,12 @@ library UsdnProtocolActionsLibrary {
         uint128 amountToClose,
         bytes calldata currentPriceData
     ) internal returns (ClosePositionData memory data_, bool liquidated_) {
-        (data_.pos, data_.liquidationPenalty) = getLongPosition(posId);
+        (data_.pos, data_.liquidationPenalty) = longLib.getLongPosition(s, posId);
 
-        _checkInitiateClosePosition(owner, to, validator, amountToClose, data_.pos);
+        _checkInitiateClosePosition(s, owner, to, validator, amountToClose, data_.pos);
 
         PriceInfo memory currentPrice = _getOraclePrice(
+            s,
             ProtocolAction.InitiateClosePosition,
             block.timestamp,
             _calcActionId(owner, uint128(block.timestamp)),
@@ -1595,6 +1681,7 @@ library UsdnProtocolActionsLibrary {
         );
 
         (, data_.isLiquidationPending) = _applyPnlAndFundingAndLiquidate(
+            s,
             currentPrice.neutralPrice,
             currentPrice.timestamp,
             s._liquidationIteration,
@@ -1626,9 +1713,10 @@ library UsdnProtocolActionsLibrary {
         // to have maximum precision, we do not pre-compute the liquidation multiplier with a fixed
         // precision just now, we will store it in the pending action later, to be used in the validate action
         data_.tempPositionValue = _assetToRemove(
+            s,
             data_.lastPrice,
-            getEffectivePriceForTick(
-                _calcTickWithoutPenalty(posId.tick, data_.liquidationPenalty),
+            longLib.getEffectivePriceForTick(
+                longLib._calcTickWithoutPenalty(s, posId.tick, data_.liquidationPenalty),
                 data_.lastPrice,
                 data_.longTradingExpo,
                 data_.liqMulAcc
@@ -1637,7 +1725,7 @@ library UsdnProtocolActionsLibrary {
         );
 
         // we perform the imbalance check based on the estimated balance change since that's the best we have right now
-        _checkImbalanceLimitClose(data_.totalExpoToClose, data_.tempPositionValue);
+        _checkImbalanceLimitClose(s, data_.totalExpoToClose, data_.tempPositionValue);
     }
 
     /**
@@ -1651,6 +1739,7 @@ library UsdnProtocolActionsLibrary {
      * @return amountToRefund_ Refund The security deposit value of a stale pending action
      */
     function _createClosePendingAction(
+        Storage storage s,
         address validator,
         address to,
         PositionId memory posId,
@@ -1669,10 +1758,12 @@ library UsdnProtocolActionsLibrary {
             closePosTotalExpo: data.totalExpoToClose,
             tickVersion: posId.tickVersion,
             index: posId.index,
-            closeLiqMultiplier: _calcFixedPrecisionMultiplier(data.lastPrice, data.longTradingExpo, data.liqMulAcc),
+            closeLiqMultiplier: longLib._calcFixedPrecisionMultiplier(
+                s, data.lastPrice, data.longTradingExpo, data.liqMulAcc
+            ),
             closeBoundedPositionValue: data.tempPositionValue
         });
-        amountToRefund_ = _addPendingAction(validator, _convertLongPendingAction(action));
+        amountToRefund_ = coreLib._addPendingAction(s, validator, coreLib._convertLongPendingAction(action));
     }
 
     /**
@@ -1709,18 +1800,18 @@ library UsdnProtocolActionsLibrary {
         bytes calldata currentPriceData
     ) internal returns (uint256 amountToRefund_, bool isInitiated_, bool liquidated_) {
         ClosePositionData memory data;
-        (data, liquidated_) = _prepareClosePositionData(owner, to, validator, posId, amountToClose, currentPriceData);
+        (data, liquidated_) = _prepareClosePositionData(s, owner, to, validator, posId, amountToClose, currentPriceData);
 
         if (liquidated_ || data.isLiquidationPending) {
             // position was liquidated in this transaction or liquidations are pending
             return (securityDepositValue, !data.isLiquidationPending, liquidated_);
         }
 
-        amountToRefund_ = _createClosePendingAction(validator, to, posId, amountToClose, securityDepositValue, data);
+        amountToRefund_ = _createClosePendingAction(s, validator, to, posId, amountToClose, securityDepositValue, data);
 
         s._balanceLong -= data.tempPositionValue;
 
-        _removeAmountFromPosition(posId.tick, posId.index, data.pos, amountToClose, data.totalExpoToClose);
+        _removeAmountFromPosition(s, posId.tick, posId.index, data.pos, amountToClose, data.totalExpoToClose);
 
         isInitiated_ = true;
         // emit InitiatedClosePosition(
@@ -1742,11 +1833,11 @@ library UsdnProtocolActionsLibrary {
      * @return isValidated_ Whether the action is validated
      * @return liquidated_ Whether the pending action has been liquidated
      */
-    function _validateClosePosition(address validator, bytes calldata priceData)
+    function _validateClosePosition(Storage storage s, address validator, bytes calldata priceData)
         internal
         returns (uint256 securityDepositValue_, bool isValidated_, bool liquidated_)
     {
-        (PendingAction memory pending, uint128 rawIndex) = _getPendingActionOrRevert(validator);
+        (PendingAction memory pending, uint128 rawIndex) = coreLib._getPendingActionOrRevert(s, validator);
 
         // check type of action
         if (pending.action != ProtocolAction.ValidateClosePosition) {
@@ -1757,10 +1848,10 @@ library UsdnProtocolActionsLibrary {
             // revert UsdnProtocolInvalidPendingAction();
         }
 
-        (isValidated_, liquidated_) = _validateClosePositionWithAction(pending, priceData);
+        (isValidated_, liquidated_) = _validateClosePositionWithAction(s, pending, priceData);
 
         if (isValidated_ || liquidated_) {
-            _clearPendingAction(validator, rawIndex);
+            coreLib._clearPendingAction(s, validator, rawIndex);
             return (pending.securityDepositValue, isValidated_, liquidated_);
         }
     }
@@ -1776,9 +1867,10 @@ library UsdnProtocolActionsLibrary {
         internal
         returns (bool isValidated_, bool liquidated_)
     {
-        LongPendingAction memory long = _toLongPendingAction(pending);
+        LongPendingAction memory long = coreLib._toLongPendingAction(pending);
 
         PriceInfo memory currentPrice = _getOraclePrice(
+            s,
             ProtocolAction.ValidateClosePosition,
             long.timestamp,
             _calcActionId(long.validator, long.timestamp),
@@ -1786,6 +1878,7 @@ library UsdnProtocolActionsLibrary {
         );
 
         (, bool isLiquidationPending) = _applyPnlAndFundingAndLiquidate(
+            s,
             currentPrice.neutralPrice,
             currentPrice.timestamp,
             s._liquidationIteration,
@@ -1799,7 +1892,7 @@ library UsdnProtocolActionsLibrary {
             (currentPrice.price - currentPrice.price * s._positionFeeBps / s.BPS_DIVISOR).toUint128();
 
         // get liquidation price (with liq penalty) to check if the position was valid at `timestamp + validationDelay`
-        uint128 liquidationPrice = _getEffectivePriceForTick(long.tick, long.closeLiqMultiplier);
+        uint128 liquidationPrice = longLib._getEffectivePriceForTick(s, long.tick, long.closeLiqMultiplier);
 
         if (currentPrice.neutralPrice <= liquidationPrice) {
             // position should be liquidated, we don't transfer assets to the user
@@ -1819,10 +1912,12 @@ library UsdnProtocolActionsLibrary {
             return (false, false);
         }
 
-        int256 positionValue = _positionValue(
+        int256 positionValue = longLib._positionValue(
             priceWithFees,
-            _getEffectivePriceForTick(
-                _calcTickWithoutPenalty(long.tick, getTickLiquidationPenalty(long.tick)), long.closeLiqMultiplier
+            longLib._getEffectivePriceForTick(
+                s,
+                longLib._calcTickWithoutPenalty(s, long.tick, longLib.getTickLiquidationPenalty(s, long.tick)),
+                long.closeLiqMultiplier
             ),
             long.closePosTotalExpo
         );
@@ -1899,7 +1994,7 @@ library UsdnProtocolActionsLibrary {
     {
         // calculate position leverage
         // reverts if liquidationPrice >= entryPrice
-        uint128 leverage = _getLeverage(adjustedPrice, liqPriceWithoutPenalty);
+        uint128 leverage = longLib._getLeverage(s, adjustedPrice, liqPriceWithoutPenalty);
         if (leverage < s._minLeverage) {
             // revert UsdnProtocolLeverageTooLow();
         }
@@ -1926,7 +2021,7 @@ library UsdnProtocolActionsLibrary {
         uint256 available = s._balanceLong;
 
         // calculate position value
-        int256 positionValue = _positionValue(priceWithFees, liqPriceWithoutPenalty, posExpo);
+        int256 positionValue = longLib._positionValue(priceWithFees, liqPriceWithoutPenalty, posExpo);
 
         if (positionValue <= 0) {
             // should not happen, unless we did not manage to liquidate all ticks that needed to be liquidated during
@@ -1944,12 +2039,12 @@ library UsdnProtocolActionsLibrary {
      * @param data The price data and raw indices
      * @return securityDepositValue_ The security deposit value of the executed action
      */
-    function _executePendingActionOrRevert(PreviousActionsData calldata data)
+    function _executePendingActionOrRevert(Storage storage s, PreviousActionsData calldata data)
         internal
         returns (uint256 securityDepositValue_)
     {
         bool success;
-        (success,,, securityDepositValue_) = _executePendingAction(data);
+        (success,,, securityDepositValue_) = _executePendingAction(s, data);
         if (!success) {
             // revert UsdnProtocolInvalidPendingActionData();
         }
@@ -1963,11 +2058,11 @@ library UsdnProtocolActionsLibrary {
      * @return liquidated_ Whether the position corresponding to the pending action was liquidated
      * @return securityDepositValue_ The security deposit value of the executed action
      */
-    function _executePendingAction(PreviousActionsData calldata data)
+    function _executePendingAction(Storage storage s, PreviousActionsData calldata data)
         internal
         returns (bool success_, bool executed_, bool liquidated_, uint256 securityDepositValue_)
     {
-        (PendingAction memory pending, uint128 rawIndex) = _getActionablePendingAction();
+        (PendingAction memory pending, uint128 rawIndex) = coreLib._getActionablePendingAction(s);
         if (pending.action == ProtocolAction.None) {
             // no pending action
             return (true, false, false, 0);
@@ -1987,19 +2082,19 @@ library UsdnProtocolActionsLibrary {
         bytes calldata priceData = data.priceData[offset];
         // for safety we consider that no pending action was validated by default
         if (pending.action == ProtocolAction.ValidateDeposit) {
-            executed_ = _validateDepositWithAction(pending, priceData);
+            executed_ = _validateDepositWithAction(s, pending, priceData);
         } else if (pending.action == ProtocolAction.ValidateWithdrawal) {
-            executed_ = _validateWithdrawalWithAction(pending, priceData);
+            executed_ = _validateWithdrawalWithAction(s, pending, priceData);
         } else if (pending.action == ProtocolAction.ValidateOpenPosition) {
-            (executed_, liquidated_) = _validateOpenPositionWithAction(pending, priceData);
+            (executed_, liquidated_) = _validateOpenPositionWithAction(s, pending, priceData);
         } else if (pending.action == ProtocolAction.ValidateClosePosition) {
-            (executed_, liquidated_) = _validateClosePositionWithAction(pending, priceData);
+            (executed_, liquidated_) = _validateClosePositionWithAction(s, pending, priceData);
         }
 
         success_ = true;
 
         if (executed_ || liquidated_) {
-            _clearPendingAction(pending.validator, rawIndex);
+            coreLib._clearPendingAction(s, pending.validator, rawIndex);
             securityDepositValue_ = pending.securityDepositValue;
             // emit SecurityDepositRefunded(pending.validator, msg.sender, securityDepositValue_);
         }
@@ -2030,6 +2125,96 @@ library UsdnProtocolActionsLibrary {
     }
 
     /**
+     * @notice Liquidate positions that have a liquidation price lower than the current price
+     * @param currentPrice The current price of the asset
+     * @param iteration The maximum number of ticks to liquidate (minimum is 1)
+     * @param tempLongBalance The temporary long balance as calculated when applying the PnL and funding
+     * @param tempVaultBalance The temporary vault balance as calculated when applying the PnL and funding
+     * @return effects_ The effects of the liquidations on the protocol
+     */
+    function _liquidatePositions(
+        Storage storage s,
+        uint256 currentPrice,
+        uint16 iteration,
+        int256 tempLongBalance,
+        int256 tempVaultBalance
+    ) internal returns (LiquidationsEffects memory effects_) {
+        int256 longTradingExpo = s._totalExpo.toInt256() - tempLongBalance;
+        if (longTradingExpo <= 0) {
+            // in case the long balance is equal to the total expo (or exceeds it), the trading expo will become zero
+            // in this case, it's not possible to calculate the current tick, so we can't perform any liquidations
+            (effects_.newLongBalance, effects_.newVaultBalance) =
+                longLib._handleNegativeBalances(tempLongBalance, tempVaultBalance);
+            return effects_;
+        }
+
+        LiquidationData memory data;
+        data.tempLongBalance = tempLongBalance;
+        data.tempVaultBalance = tempVaultBalance;
+        data.longTradingExpo = uint256(longTradingExpo);
+        data.currentPrice = currentPrice;
+        data.accumulator = s._liqMultiplierAccumulator;
+
+        // max iteration limit
+        if (iteration > s.MAX_LIQUIDATION_ITERATION) {
+            iteration = s.MAX_LIQUIDATION_ITERATION;
+        }
+
+        uint256 unadjustedPrice =
+            longLib._unadjustPrice(data.currentPrice, data.currentPrice, data.longTradingExpo, data.accumulator);
+        data.currentTick = TickMath.getClosestTickAtPrice(unadjustedPrice);
+        data.iTick = s._highestPopulatedTick;
+
+        do {
+            uint256 index = s._tickBitmap.findLastSet(coreLib._calcBitmapIndexFromTick(s, data.iTick));
+            if (index == LibBitmap.NOT_FOUND) {
+                // no populated ticks left
+                break;
+            }
+
+            data.iTick = longLib._calcTickFromBitmapIndex(s, index);
+            if (data.iTick < data.currentTick) {
+                // all ticks that can be liquidated have been processed
+                break;
+            }
+
+            // we have found a non-empty tick that needs to be liquidated
+            (bytes32 tickHash,) = vaultLib._tickHash(s, data.iTick);
+
+            TickData memory tickData = s._tickData[tickHash];
+            // update transient data
+            data.totalExpoToRemove += tickData.totalExpo;
+            uint256 unadjustedTickPrice =
+                TickMath.getPriceAtTick(data.iTick - int24(uint24(tickData.liquidationPenalty)) * s._tickSpacing);
+            data.accumulatorValueToRemove += unadjustedTickPrice * tickData.totalExpo;
+            // update return values
+            effects_.liquidatedPositions += tickData.totalPos;
+            ++effects_.liquidatedTicks;
+            int256 tickValue =
+                longLib._tickValue(s, data.iTick, data.currentPrice, data.longTradingExpo, data.accumulator, tickData);
+            effects_.remainingCollateral += tickValue;
+
+            // reset tick by incrementing the tick version
+            ++s._tickVersion[data.iTick];
+            // update bitmap to reflect that the tick is empty
+            s._tickBitmap.unset(index);
+
+            // emit LiquidatedTick(
+            //     data.iTick,
+            //     s._tickVersion[data.iTick] - 1,
+            //     data.currentPrice,
+            //     getEffectivePriceForTick(data.iTick, data.currentPrice, data.longTradingExpo, data.accumulator),
+            //     tickValue
+            // );
+        } while (effects_.liquidatedTicks < iteration);
+
+        longLib._updateStateAfterLiquidation(s, data, effects_); // mutates `data`
+        effects_.isLiquidationPending = data.isLiquidationPending;
+        (effects_.newLongBalance, effects_.newVaultBalance) =
+            longLib._handleNegativeBalances(data.tempLongBalance, data.tempVaultBalance);
+    }
+
+    /**
      * @notice Applies PnL, funding, and liquidates positions if necessary
      * @param neutralPrice The neutral price for the asset
      * @param timestamp The timestamp at which the operation is performed
@@ -2052,17 +2237,18 @@ library UsdnProtocolActionsLibrary {
     ) internal returns (uint256 liquidatedPositions_, bool isLiquidationPending_) {
         // adjust balances
         (bool isPriceRecent, int256 tempLongBalance, int256 tempVaultBalance) =
-            _applyPnlAndFunding(neutralPrice.toUint128(), timestamp.toUint128());
+            _applyPnlAndFunding(s, neutralPrice.toUint128(), timestamp.toUint128());
 
         // liquidate if the price was updated or was already the most recent
         if (isPriceRecent) {
             LiquidationsEffects memory liquidationEffects =
-                _liquidatePositions(s._lastPrice, iterations, tempLongBalance, tempVaultBalance);
+                _liquidatePositions(s, s._lastPrice, iterations, tempLongBalance, tempVaultBalance);
 
             isLiquidationPending_ = liquidationEffects.isLiquidationPending;
             if (!isLiquidationPending_ && liquidationEffects.liquidatedTicks > 0) {
                 if (s._closeExpoImbalanceLimitBps > 0) {
                     (liquidationEffects.newLongBalance, liquidationEffects.newVaultBalance) = _triggerRebalancer(
+                        s,
                         s._lastPrice,
                         liquidationEffects.newLongBalance,
                         liquidationEffects.newVaultBalance,
@@ -2074,10 +2260,11 @@ library UsdnProtocolActionsLibrary {
             s._balanceLong = liquidationEffects.newLongBalance;
             s._balanceVault = liquidationEffects.newVaultBalance;
 
-            (bool rebased, bytes memory callbackResult) = _usdnRebase(s._lastPrice, ignoreInterval);
+            (bool rebased, bytes memory callbackResult) = vaultLib._usdnRebase(s, s._lastPrice, ignoreInterval);
 
             if (liquidationEffects.liquidatedTicks > 0) {
                 _sendRewardsToLiquidator(
+                    s,
                     liquidationEffects.liquidatedTicks,
                     liquidationEffects.remainingCollateral,
                     rebased,
@@ -2123,23 +2310,24 @@ library UsdnProtocolActionsLibrary {
         CachedProtocolState memory cache = CachedProtocolState({
             totalExpo: s._totalExpo,
             longBalance: longBalance,
-            vaultBalance: (vaultBalance.toInt256() + _pendingBalanceVault).toUint256(),
+            vaultBalance: (vaultBalance.toInt256() + s._pendingBalanceVault).toUint256(),
             tradingExpo: 0,
             liqMultiplierAccumulator: s._liqMultiplierAccumulator
         });
 
         if (cache.totalExpo < cache.longBalance) {
-            revert UsdnProtocolInvalidLongExpo();
+            // revert UsdnProtocolInvalidLongExpo();
         }
 
         cache.tradingExpo = cache.totalExpo - cache.longBalance;
 
         {
-            int256 currentImbalance =
-                _calcImbalanceCloseBps(cache.vaultBalance.toInt256(), cache.longBalance.toInt256(), cache.totalExpo);
+            int256 currentImbalance = longLib._calcImbalanceCloseBps(
+                s, cache.vaultBalance.toInt256(), cache.longBalance.toInt256(), cache.totalExpo
+            );
 
             // if the imbalance is lower than the threshold, return
-            if (currentImbalance < _closeExpoImbalanceLimitBps) {
+            if (currentImbalance < s._closeExpoImbalanceLimitBps) {
                 return (longBalance_, vaultBalance_);
             }
         }
@@ -2150,9 +2338,9 @@ library UsdnProtocolActionsLibrary {
 
         uint128 positionValue;
         // close the rebalancer position and get its value to open the next one
-        if (rebalancerPosId.tick != NO_POSITION_TICK) {
+        if (rebalancerPosId.tick != s.NO_POSITION_TICK) {
             // cached values will be updated during this call
-            int256 realPositionValue = _flashClosePosition(rebalancerPosId, lastPrice, cache);
+            int256 realPositionValue = _flashClosePosition(s, rebalancerPosId, lastPrice, cache);
 
             // if the position value is less than 0, it should have been liquidated but wasn't
             // interrupt the whole rebalancer process because there are pending liquidations
@@ -2176,29 +2364,251 @@ library UsdnProtocolActionsLibrary {
         // if there is enough collateral remaining after liquidations, calculate the bonus and add it to the
         // new rebalancer position
         if (remainingCollateral > 0) {
-            uint128 bonus = (uint256(remainingCollateral) * _rebalancerBonusBps / s.BPS_DIVISOR).toUint128();
+            uint128 bonus = (uint256(remainingCollateral) * s._rebalancerBonusBps / s.BPS_DIVISOR).toUint128();
             cache.vaultBalance -= bonus;
             vaultBalance_ -= bonus;
             positionAmount += bonus;
         }
 
         int24 tickWithoutLiqPenalty =
-            _calcRebalancerPositionTick(lastPrice, positionAmount, rebalancerMaxLeverage, cache);
+            longLib._calcRebalancerPositionTick(s, lastPrice, positionAmount, rebalancerMaxLeverage, cache);
 
         // make sure that the rebalancer was not triggered without a sufficient imbalance
         // as we check the imbalance above, this should not happen
-        if (tickWithoutLiqPenalty == NO_POSITION_TICK) {
-            revert UsdnProtocolInvalidRebalancerTick();
+        if (tickWithoutLiqPenalty == s.NO_POSITION_TICK) {
+            // revert UsdnProtocolInvalidRebalancerTick();
         }
 
         // open a new position for the rebalancer
         PositionId memory posId =
-            _flashOpenPosition(address(rebalancer), lastPrice, tickWithoutLiqPenalty, positionAmount, cache);
+            _flashOpenPosition(s, address(rebalancer), lastPrice, tickWithoutLiqPenalty, positionAmount, cache);
 
         longBalance_ += positionAmount;
 
         // call the rebalancer to update the internal bookkeeping
         rebalancer.updatePosition(posId, positionValue);
+    }
+
+    /**
+     * @notice Immediately close a position with the given price
+     * @dev Should only be used to close the rebalancer position
+     * @param posId The ID of the position to close
+     * @param lastPrice The last price used to update the protocol
+     * @param cache The cached state of the protocol, will be updated during this call
+     * @return positionValue_ The value of the closed position
+     */
+    function _flashClosePosition(
+        Storage storage s,
+        PositionId memory posId,
+        uint128 lastPrice,
+        CachedProtocolState memory cache
+    ) internal returns (int256 positionValue_) {
+        (bytes32 tickHash, uint256 version) = vaultLib._tickHash(s, posId.tick);
+        // if the tick version is outdated, the position was liquidated and its value is 0
+        if (posId.tickVersion != version) {
+            return positionValue_;
+        }
+
+        uint8 liquidationPenalty = s._tickData[tickHash].liquidationPenalty;
+        Position memory pos = s._longPositions[tickHash][posId.index];
+
+        positionValue_ = longLib._positionValue(
+            lastPrice,
+            longLib.getEffectivePriceForTick(
+                longLib._calcTickWithoutPenalty(s, posId.tick, liquidationPenalty),
+                lastPrice,
+                cache.tradingExpo,
+                cache.liqMultiplierAccumulator
+            ),
+            pos.totalExpo
+        );
+
+        // if positionValue is lower than 0, return
+        if (positionValue_ < 0) {
+            return positionValue_;
+        }
+
+        // fully close the position and update the cache
+        cache.liqMultiplierAccumulator =
+            _removeAmountFromPosition(s, posId.tick, posId.index, pos, pos.amount, pos.totalExpo);
+
+        // update the cache
+        cache.totalExpo -= pos.totalExpo;
+        // cast is safe as positionValue cannot be lower than 0
+        cache.longBalance -= uint256(positionValue_);
+        cache.tradingExpo = cache.totalExpo - cache.longBalance;
+
+        // emit both initiate and validate events
+        // so the position is considered the same as other positions by event indexers
+        // emit InitiatedClosePosition(pos.user, pos.user, pos.user, posId, pos.amount, pos.amount, 0);
+        // emit ValidatedClosePosition(
+        //     pos.user, pos.user, posId, uint256(positionValue_), positionValue_ - _toInt256(pos.amount)
+        // );
+    }
+
+    /**
+     * @notice Remove the provided total amount from its position and update the tick data and position
+     * @dev Note: this method does not update the long balance
+     * If the amount to remove is greater than or equal to the position's total amount, the position is deleted instead
+     * @param tick The tick to remove from
+     * @param index Index of the position in the tick array
+     * @param pos The position to remove the amount from
+     * @param amountToRemove The amount to remove from the position
+     * @param totalExpoToRemove The total expo to remove from the position
+     * @return liqMultiplierAccumulator_ The updated liquidation multiplier accumulator
+     */
+    function _removeAmountFromPosition(
+        Storage storage s,
+        int24 tick,
+        uint256 index,
+        Position memory pos,
+        uint128 amountToRemove,
+        uint128 totalExpoToRemove
+    ) internal returns (HugeUint.Uint512 memory liqMultiplierAccumulator_) {
+        (bytes32 tickHash,) = vaultLib._tickHash(s, tick);
+        TickData storage tickData = s._tickData[tickHash];
+        uint256 unadjustedTickPrice =
+            TickMath.getPriceAtTick(tick - int24(uint24(tickData.liquidationPenalty)) * s._tickSpacing);
+        if (amountToRemove < pos.amount) {
+            Position storage position = s._longPositions[tickHash][index];
+            position.totalExpo = pos.totalExpo - totalExpoToRemove;
+
+            unchecked {
+                position.amount = pos.amount - amountToRemove;
+            }
+        } else {
+            totalExpoToRemove = pos.totalExpo;
+            tickData.totalPos -= 1;
+            --s._totalLongPositions;
+
+            // remove from tick array (set to zero to avoid shifting indices)
+            delete s._longPositions[tickHash][index];
+            if (tickData.totalPos == 0) {
+                // we removed the last position in the tick
+                s._tickBitmap.unset(coreLib._calcBitmapIndexFromTick(s, tick));
+            }
+        }
+
+        s._totalExpo -= totalExpoToRemove;
+        tickData.totalExpo -= totalExpoToRemove;
+        liqMultiplierAccumulator_ =
+            s._liqMultiplierAccumulator.sub(HugeUint.wrap(unadjustedTickPrice * totalExpoToRemove));
+        s._liqMultiplierAccumulator = liqMultiplierAccumulator_;
+    }
+
+    /**
+     * @notice Immediately open a position with the given price
+     * @dev Should only be used to open the rebalancer position
+     * @param user The address of the user
+     * @param lastPrice The last price used to update the protocol
+     * @param tickWithoutPenalty The tick the position should be opened in
+     * @param amount The amount of collateral in the position
+     * @param cache The cached state of the protocol
+     * @return posId_ The ID of the position that was created
+     */
+    function _flashOpenPosition(
+        Storage storage s,
+        address user,
+        uint128 lastPrice,
+        int24 tickWithoutPenalty,
+        uint128 amount,
+        CachedProtocolState memory cache
+    ) internal returns (PositionId memory posId_) {
+        // we calculate the closest valid tick down for the desired liquidation price with the liquidation penalty
+        uint8 currentLiqPenalty = s._liquidationPenalty;
+
+        posId_.tick = tickWithoutPenalty + int24(uint24(currentLiqPenalty)) * s._tickSpacing;
+
+        uint8 liquidationPenalty = longLib.getTickLiquidationPenalty(s, posId_.tick);
+        uint128 liqPriceWithoutPenalty;
+
+        // check if the penalty for that tick is different from the current setting
+        // this can happen if the setting has been changed, but the position is added in a tick that was never empty
+        // after the said change, so the first value is still applied
+        if (liquidationPenalty == currentLiqPenalty) {
+            liqPriceWithoutPenalty = longLib.getEffectivePriceForTick(
+                tickWithoutPenalty, lastPrice, cache.tradingExpo, cache.liqMultiplierAccumulator
+            );
+        } else {
+            liqPriceWithoutPenalty = longLib.getEffectivePriceForTick(
+                longLib._calcTickWithoutPenalty(s, posId_.tick, liquidationPenalty),
+                lastPrice,
+                cache.tradingExpo,
+                cache.liqMultiplierAccumulator
+            );
+        }
+
+        uint128 totalExpo = longLib._calcPositionTotalExpo(amount, lastPrice, liqPriceWithoutPenalty);
+        Position memory long = Position({
+            validated: true,
+            user: user,
+            amount: amount,
+            totalExpo: totalExpo,
+            timestamp: uint40(block.timestamp)
+        });
+
+        // save the position on the provided tick
+        (posId_.tickVersion, posId_.index,) = _saveNewPosition(s, posId_.tick, long, liquidationPenalty);
+
+        // emit both initiate and validate events
+        // so the position is considered the same as other positions by event indexers
+        // emit InitiatedOpenPosition(user, user, uint40(block.timestamp), totalExpo, long.amount, lastPrice, posId_);
+        // emit ValidatedOpenPosition(user, user, totalExpo, lastPrice, posId_);
+    }
+
+    /**
+     * @notice Save a new position in the protocol, adjusting the tick data and global variables
+     * @dev Note: this method does not update the long balance
+     * @param tick The tick to hold the new position
+     * @param long The position to save
+     * @param liquidationPenalty The liquidation penalty for the tick
+     * @return tickVersion_ The version of the tick
+     * @return index_ The index of the position in the tick array
+     * @return liqMultiplierAccumulator_ The updated liquidation multiplier accumulator
+     */
+    function _saveNewPosition(Storage storage s, int24 tick, Position memory long, uint8 liquidationPenalty)
+        internal
+        returns (uint256 tickVersion_, uint256 index_, HugeUint.Uint512 memory liqMultiplierAccumulator_)
+    {
+        bytes32 tickHash;
+        (tickHash, tickVersion_) = vaultLib._tickHash(s, tick);
+
+        // add to tick array
+        Position[] storage tickArray = s._longPositions[tickHash];
+        index_ = tickArray.length;
+        if (tick > s._highestPopulatedTick) {
+            // keep track of the highest populated tick
+            s._highestPopulatedTick = tick;
+        }
+        tickArray.push(long);
+
+        // adjust state
+        s._totalExpo += long.totalExpo;
+        ++s._totalLongPositions;
+
+        // update tick data
+        TickData storage tickData = s._tickData[tickHash];
+        // the unadjusted tick price for the accumulator might be different depending
+        // if we already have positions in the tick or not
+        uint256 unadjustedTickPrice;
+        if (tickData.totalPos == 0) {
+            // first position in this tick, we need to reflect that it is populated
+            s._tickBitmap.set(coreLib._calcBitmapIndexFromTick(s, tick));
+            // we store the data for this tick
+            tickData.totalExpo = long.totalExpo;
+            tickData.totalPos = 1;
+            tickData.liquidationPenalty = liquidationPenalty;
+            unadjustedTickPrice = TickMath.getPriceAtTick(tick - int24(uint24(liquidationPenalty)) * s._tickSpacing);
+        } else {
+            tickData.totalExpo += long.totalExpo;
+            tickData.totalPos += 1;
+            // we do not need to adjust the tick's `liquidationPenalty` since it remains constant
+            unadjustedTickPrice =
+                TickMath.getPriceAtTick(tick - int24(uint24(tickData.liquidationPenalty)) * s._tickSpacing);
+        }
+        // update the accumulator with the correct tick price (depending on the liquidation penalty value)
+        liqMultiplierAccumulator_ = s._liqMultiplierAccumulator.add(HugeUint.wrap(unadjustedTickPrice * long.totalExpo));
+        s._liqMultiplierAccumulator = liqMultiplierAccumulator_;
     }
 
     /**

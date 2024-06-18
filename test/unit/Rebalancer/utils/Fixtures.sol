@@ -15,6 +15,7 @@ import { IRebalancerTypes } from "../../../../src/interfaces/Rebalancer/IRebalan
 import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { UsdnProtocol } from "../../../../src/UsdnProtocol/UsdnProtocolProxy.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
+import { IUsdnProtocol } from "./../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 /**
  * @title RebalancerFixture
@@ -48,7 +49,8 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
             100, // tick spacing 100 = 1%
             ADMIN // Fee collector
         );
-        rebalancer = new RebalancerHandler(usdnProtocol);
+        // TO DO : remove the cast
+        rebalancer = new RebalancerHandler(IUsdnProtocol(address(usdnProtocol)));
 
         usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));

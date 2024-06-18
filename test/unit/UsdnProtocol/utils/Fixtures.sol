@@ -24,6 +24,7 @@ import {
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { Permit2TokenBitfield } from "../../../../src/libraries/Permit2TokenBitfield.sol";
+import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 /**
  * @title UsdnProtocolBaseFixture
@@ -162,7 +163,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
 
         wstETH.approve(address(protocol), type(uint256).max);
 
-        rebalancer = new RebalancerHandler(protocol);
+        // TO DO : remove the cast
+        rebalancer = new RebalancerHandler(IUsdnProtocol(address(protocol)));
         if (testParams.flags.enableRebalancer) {
             protocol.setRebalancer(rebalancer);
         }

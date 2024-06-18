@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.25;
 
-import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
@@ -23,6 +22,7 @@ import { DoubleEndedQueue } from "../libraries/DoubleEndedQueue.sol";
 import { TickMath } from "../libraries/TickMath.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
 import { Storage } from "./UsdnProtocolBaseStorage.sol";
+import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
 
 library UsdnProtocolCoreLibrary {
     using SafeTransferLib for address;
@@ -34,37 +34,12 @@ library UsdnProtocolCoreLibrary {
     using HugeUint for HugeUint.Uint512;
 
     // TO DO : not here
-    /// @inheritdoc IUsdnProtocolCore
-    address public constant DEAD_ADDRESS = address(0xdead);
-
-    /// @inheritdoc IUsdnProtocolCore
+    // / @inheritdoc IUsdnProtocolCore
     uint256 public constant MAX_ACTIONABLE_PENDING_ACTIONS = 20;
 
     /* -------------------------- Public view functions ------------------------- */
 
-    /// @inheritdoc IUsdnProtocolCore
-    function longAssetAvailableWithFunding(Storage storage s, uint128 currentPrice, uint128 timestamp)
-        public
-        view
-        returns (int256 available_)
-    {
-        if (timestamp < s._lastUpdateTimestamp) {
-            // revert UsdnProtocolTimestampTooOld();
-        }
-
-        int256 ema = calcEMA(s._lastFunding, timestamp - s._lastUpdateTimestamp, s._EMAPeriod, s._EMA);
-        (int256 fundAsset,) = _fundingAsset(timestamp, ema);
-
-        if (fundAsset > 0) {
-            available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset);
-        } else {
-            int256 fee = fundAsset * _toInt256(s._protocolFeeBps) / int256(s.BPS_DIVISOR);
-            // fees have the same sign as fundAsset (negative here), so we need to sub them
-            available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset - fee);
-        }
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
+    // / @inheritdoc IUsdnProtocolCore
     function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
         public
         pure
@@ -77,53 +52,23 @@ library UsdnProtocolCoreLibrary {
         return (lastFunding + previousEMA * _toInt256(emaPeriod - secondsElapsed)) / _toInt256(emaPeriod);
     }
 
-    /// @inheritdoc IUsdnProtocolCore
-    function vaultAssetAvailableWithFunding(Storage storage s, uint128 currentPrice, uint128 timestamp)
-        public
-        view
-        returns (int256 available_)
-    {
-        if (timestamp < s._lastUpdateTimestamp) {
-            // revert UsdnProtocolTimestampTooOld();
-        }
-
-        int256 ema = calcEMA(s._lastFunding, timestamp - s._lastUpdateTimestamp, s._EMAPeriod, s._EMA);
-        (int256 fundAsset,) = _fundingAsset(timestamp, ema);
-
-        if (fundAsset < 0) {
-            available_ = _vaultAssetAvailable(currentPrice).safeAdd(fundAsset);
-        } else {
-            int256 fee = fundAsset * _toInt256(s._protocolFeeBps) / int256(s.BPS_DIVISOR);
-            available_ = _vaultAssetAvailable(currentPrice).safeAdd(fundAsset - fee);
-        }
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
-    function longTradingExpoWithFunding(Storage storage s, uint128 currentPrice, uint128 timestamp)
-        public
-        view
-        returns (int256 expo_)
-    {
-        expo_ = s._totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(currentPrice, timestamp));
-    }
-
     /* --------------------------  External functions --------------------------- */
 
-    /// @inheritdoc IUsdnProtocolCore
+    // / @inheritdoc IUsdnProtocolCore
     function funding(Storage storage s, uint128 timestamp) external view returns (int256 fund_, int256 oldLongExpo_) {
-        (fund_, oldLongExpo_) = _funding(timestamp, s._EMA);
+        (fund_, oldLongExpo_) = _funding(s, timestamp, s._EMA);
     }
 
-    /// @inheritdoc IUsdnProtocolCore
-    function vaultTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp)
+    // / @inheritdoc IUsdnProtocolCore
+    function vaultTradingExpoWithFunding(Storage storage s, uint128 currentPrice, uint128 timestamp)
         external
         view
         returns (int256 expo_)
     {
-        expo_ = vaultAssetAvailableWithFunding(currentPrice, timestamp);
+        expo_ = vaultLib.vaultAssetAvailableWithFunding(s, currentPrice, timestamp);
     }
 
-    /// @inheritdoc IUsdnProtocolCore
+    // / @inheritdoc IUsdnProtocolCore
     function getActionablePendingActions(Storage storage s, address currentUser)
         external
         view
@@ -179,14 +124,13 @@ library UsdnProtocolCoreLibrary {
         }
     }
 
-    /// @inheritdoc IUsdnProtocolCore
-    function getUserPendingAction(address user) external view returns (PendingAction memory action_) {
-        (action_,) = _getPendingAction(user);
-    }
-
-    // / @inheritdoc IUsdnProtocolBaseStorage
-    function tickHash(int24 tick, uint256 version) public pure returns (bytes32) {
-        return keccak256(abi.encodePacked(tick, version));
+    // / @inheritdoc IUsdnProtocolCore
+    function getUserPendingAction(Storage storage s, address user)
+        external
+        view
+        returns (PendingAction memory action_)
+    {
+        (action_,) = _getPendingAction(s, user);
     }
 
     /* --------------------------  Internal functions --------------------------- */
@@ -278,7 +222,7 @@ library UsdnProtocolCoreLibrary {
         returns (int256 fundingAsset_, int256 fund_)
     {
         int256 oldLongExpo;
-        (fund_, oldLongExpo) = _funding(timestamp, ema);
+        (fund_, oldLongExpo) = _funding(s, timestamp, ema);
         fundingAsset_ = fund_.safeMul(oldLongExpo) / int256(10) ** s.FUNDING_RATE_DECIMALS;
     }
 
@@ -325,95 +269,6 @@ library UsdnProtocolCoreLibrary {
     }
 
     /**
-     * @notice Available balance in the vault side if the price moves to `currentPrice` (without taking funding into
-     * account)
-     * @param currentPrice Current price
-     * @return available_ The available balance in the vault side
-     */
-    function _vaultAssetAvailable(Storage storage s, uint128 currentPrice) internal view returns (int256 available_) {
-        available_ = _vaultAssetAvailable(s._totalExpo, s._balanceVault, s._balanceLong, currentPrice, s._lastPrice);
-    }
-
-    /**
-     * @notice Available balance in the vault side if the price moves to `currentPrice` (without taking funding into
-     * account)
-     * @param totalExpo The total expo
-     * @param balanceVault The (old) balance of the vault
-     * @param balanceLong The (old) balance of the long side
-     * @param newPrice The new price
-     * @param oldPrice The old price when the old balances were updated
-     * @return available_ The available balance in the vault side
-     */
-    function _vaultAssetAvailable(
-        uint256 totalExpo,
-        uint256 balanceVault,
-        uint256 balanceLong,
-        uint128 newPrice,
-        uint128 oldPrice
-    ) internal pure returns (int256 available_) {
-        int256 totalBalance = balanceLong.toInt256().safeAdd(balanceVault.toInt256());
-        int256 newLongBalance = _longAssetAvailable(totalExpo, balanceLong, newPrice, oldPrice);
-
-        available_ = totalBalance.safeSub(newLongBalance);
-    }
-
-    /**
-     * @notice Calculate the profits and losses of the long side, calculate the funding and apply protocol fees,
-     * calculate the new liquidation multiplier and the temporary new balances for each side
-     * @dev This function updates the state of `_lastPrice`, `_lastUpdateTimestamp`, `_lastFunding`, but does not
-     * update the balances. This is left to the caller
-     * @param currentPrice The current price
-     * @param timestamp The timestamp of the current price
-     * @return isPriceRecent_ Whether the price was updated or was already the most recent price
-     * @return tempLongBalance_ The new balance of the long side, could be negative (temporarily)
-     * @return tempVaultBalance_ The new balance of the vault side, could be negative (temporarily)
-     */
-    function _applyPnlAndFunding(Storage storage s, uint128 currentPrice, uint128 timestamp)
-        internal
-        returns (bool isPriceRecent_, int256 tempLongBalance_, int256 tempVaultBalance_)
-    {
-        // cache variable for optimization
-        uint128 lastUpdateTimestamp = s._lastUpdateTimestamp;
-        // if the price is not fresh, do nothing
-        if (timestamp <= lastUpdateTimestamp) {
-            return (timestamp == lastUpdateTimestamp, s._balanceLong.toInt256(), s._balanceVault.toInt256());
-        }
-
-        // update the funding EMA
-        int256 ema = _updateEMA(timestamp - lastUpdateTimestamp);
-
-        // calculate the funding
-        (int256 fundAsset, int256 fund) = _fundingAsset(timestamp, ema);
-
-        // take protocol fee on the funding value
-        (int256 fee, int256 fundWithFee, int256 fundAssetWithFee) = _calculateFee(fund, fundAsset);
-
-        // we subtract the fee from the total balance
-        int256 totalBalance = s._balanceLong.toInt256().safeAdd(s._balanceVault.toInt256()).safeSub(fee);
-        // calculate new balances (for now, any bad debt has not been repaid, balances could become negative)
-
-        if (fund > 0) {
-            // in case of positive funding, the vault balance must be decremented by the totality of the funding amount
-            // however, since we deducted the fee amount from the total balance, the vault balance will be incremented
-            // only by the funding amount minus the fee amount
-            tempLongBalance_ = _longAssetAvailable(currentPrice).safeSub(fundAsset);
-        } else {
-            // in case of negative funding, the vault balance must be decremented by the totality of the funding amount
-            // however, since we deducted the fee amount from the total balance, the long balance will be incremented
-            // only by the funding amount minus the fee amount
-            tempLongBalance_ = _longAssetAvailable(currentPrice).safeSub(fundAssetWithFee);
-        }
-        tempVaultBalance_ = totalBalance.safeSub(tempLongBalance_);
-
-        // update state variables
-        s._lastPrice = currentPrice;
-        s._lastUpdateTimestamp = timestamp;
-        s._lastFunding = fundWithFee;
-
-        isPriceRecent_ = true;
-    }
-
-    /**
      * @notice Update the Exponential Moving Average (EMA) of the funding
      * @dev This function is called every time the protocol state is updated
      * @dev All required checks are done in the caller function (_applyPnlAndFunding)
@@ -433,17 +288,6 @@ library UsdnProtocolCoreLibrary {
      */
     function _toInt256(uint128 x) internal pure returns (int256) {
         return int256(uint256(x));
-    }
-
-    /**
-     * @notice Function to calculate the hash and version of a given tick
-     * @param tick The tick
-     * @return hash_ The hash of the tick
-     * @return version_ The version of the tick
-     */
-    function _tickHash(Storage storage s, int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
-        version_ = s._tickVersion[tick];
-        hash_ = tickHash(tick, version_);
     }
 
     /**
@@ -661,7 +505,7 @@ library UsdnProtocolCoreLibrary {
         if (s._pendingActions[user] == 0) {
             return 0;
         }
-        (PendingAction memory action, uint128 rawIndex) = _getPendingAction(user);
+        (PendingAction memory action, uint128 rawIndex) = _getPendingAction(s, user);
         // the position is only at risk of being liquidated while pending if it is an open position action
         if (action.action == ProtocolAction.ValidateOpenPosition) {
             LongPendingAction memory openAction = _toLongPendingAction(action);
@@ -692,7 +536,7 @@ library UsdnProtocolCoreLibrary {
         internal
         returns (uint256 amountToRefund_)
     {
-        amountToRefund_ = _removeStalePendingAction(user); // check if there is a pending action that was
+        amountToRefund_ = _removeStalePendingAction(s, user); // check if there is a pending action that was
             // liquidated and remove it
         if (s._pendingActions[user] > 0) {
             // revert UsdnProtocolPendingAction();
@@ -733,12 +577,12 @@ library UsdnProtocolCoreLibrary {
      * @return action_ The pending action struct
      * @return rawIndex_ The raw index of the pending action in the queue
      */
-    function _getPendingActionOrRevert(address user)
+    function _getPendingActionOrRevert(Storage storage s, address user)
         internal
         view
         returns (PendingAction memory action_, uint128 rawIndex_)
     {
-        (action_, rawIndex_) = _getPendingAction(user);
+        (action_, rawIndex_) = _getPendingAction(s, user);
         if (action_.action == ProtocolAction.None) {
             // revert UsdnProtocolNoPendingAction();
         }
@@ -789,7 +633,7 @@ library UsdnProtocolCoreLibrary {
         } else if (pending.action == ProtocolAction.ValidateOpenPosition) {
             // for pending opens, we need to remove the position
             LongPendingAction memory open = _toLongPendingAction(pending);
-            (bytes32 tickHash, uint256 tickVersion) = _tickHash(open.tick);
+            (bytes32 tickHash, uint256 tickVersion) = vaultLib._tickHash(s, open.tick);
             if (tickVersion == open.tickVersion) {
                 // we only need to modify storage if the pos was not liquidated already
 
@@ -805,7 +649,7 @@ library UsdnProtocolCoreLibrary {
                     tickData.totalPos -= 1;
                     if (tickData.totalPos == 0) {
                         // we removed the last position in the tick
-                        s._tickBitmap.unset(_calcBitmapIndexFromTick(open.tick));
+                        s._tickBitmap.unset(_calcBitmapIndexFromTick(s, open.tick));
                     }
                     uint256 unadjustedTickPrice =
                         TickMath.getPriceAtTick(open.tick - int24(uint24(tickData.liquidationPenalty)) * s._tickSpacing);

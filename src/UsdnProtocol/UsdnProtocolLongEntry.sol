@@ -4,14 +4,15 @@ pragma solidity ^0.8.25;
 import { HugeUint } from "../libraries/HugeUint.sol";
 import { UsdnProtocolBaseStorage } from "./UsdnProtocolBaseStorage.sol";
 import { UsdnProtocolLongLibrary as lib } from "./UsdnProtocolLongLibrary.sol";
+import { Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 abstract contract UsdnProtocolLongEntry is UsdnProtocolBaseStorage {
     function minTick() public view returns (int24 tick_) {
-        return lib.minTick();
+        return lib.minTick(s);
     }
 
     function maxTick() external view returns (int24 tick_) {
-        return lib.maxTick();
+        return lib.maxTick(s);
     }
 
     function getLongPosition(PositionId memory posId)
@@ -60,5 +61,22 @@ abstract contract UsdnProtocolLongEntry is UsdnProtocolBaseStorage {
         HugeUint.Uint512 memory accumulator
     ) public pure returns (uint128 price_) {
         return lib.getEffectivePriceForTick(tick, assetPrice, longTradingExpo, accumulator);
+    }
+
+    function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
+        public
+        view
+        returns (int256 available_)
+    {
+        return lib.longAssetAvailableWithFunding(s, currentPrice, timestamp);
+    }
+
+    function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) public view returns (int256 expo_) {
+        return lib.longTradingExpoWithFunding(s, currentPrice, timestamp);
+    }
+
+    // / @inheritdoc IUsdnProtocolLong
+    function getTickLiquidationPenalty(int24 tick) public view returns (uint8 liquidationPenalty_) {
+        return lib.getTickLiquidationPenalty(s, tick);
     }
 }

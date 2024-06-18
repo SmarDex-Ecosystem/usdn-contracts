@@ -3,35 +3,43 @@ pragma solidity ^0.8.25;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { IUsdnProtocolVault } from "../interfaces/UsdnProtocol/IUsdnProtocolVault.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { Storage } from "./UsdnProtocolBaseStorage.sol";
+import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
+import { UsdnProtocolActionsLibrary as actionsLib } from "./UsdnProtocolActionsLibrary.sol";
+import { PositionId, Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { SignedMath } from "../libraries/SignedMath.sol";
 
 library UsdnProtocolVaultLibrary {
     using SafeCast for int256;
     using SafeCast for uint256;
+    using SignedMath for int256;
+    using SafeTransferLib for address;
 
-    /// @inheritdoc IUsdnProtocolVault
+    // / @inheritdoc IUsdnProtocolVault
     function usdnPrice(Storage storage s, uint128 currentPrice, uint128 timestamp)
         public
         view
         returns (uint256 price_)
     {
         price_ = _calcUsdnPrice(
-            vaultAssetAvailableWithFunding(currentPrice, timestamp).toUint256(),
+            s,
+            vaultAssetAvailableWithFunding(s, currentPrice, timestamp).toUint256(),
             currentPrice,
             s._usdn.totalSupply(),
             s._assetDecimals
         );
     }
 
-    /// @inheritdoc IUsdnProtocolVault
-    function usdnPrice(uint128 currentPrice) external view returns (uint256 price_) {
-        price_ = usdnPrice(currentPrice, uint128(block.timestamp));
+    // / @inheritdoc IUsdnProtocolVault
+    function usdnPrice(Storage storage s, uint128 currentPrice) external view returns (uint256 price_) {
+        price_ = usdnPrice(s, currentPrice, uint128(block.timestamp));
     }
 
-    /// @inheritdoc IUsdnProtocolVault
+    // / @inheritdoc IUsdnProtocolVault
     function previewDeposit(Storage storage s, uint256 amount, uint128 price, uint128 timestamp)
         external
         view
@@ -40,15 +48,16 @@ library UsdnProtocolVaultLibrary {
         // apply fees on price
         uint128 depositPriceWithFees = price - price * s._vaultFeeBps / uint128(s.BPS_DIVISOR);
         usdnSharesExpected_ = _calcMintUsdnShares(
+            s,
             amount,
-            vaultAssetAvailableWithFunding(depositPriceWithFees, timestamp).toUint256(),
+            vaultAssetAvailableWithFunding(s, depositPriceWithFees, timestamp).toUint256(),
             s._usdn.totalShares(),
             depositPriceWithFees
         );
-        sdexToBurn_ = _calcSdexToBurn(s._usdn.convertToTokens(usdnSharesExpected_), s._sdexBurnOnDepositRatio);
+        sdexToBurn_ = _calcSdexToBurn(s, s._usdn.convertToTokens(usdnSharesExpected_), s._sdexBurnOnDepositRatio);
     }
 
-    /// @inheritdoc IUsdnProtocolVault
+    // / @inheritdoc IUsdnProtocolVault
     function previewWithdraw(Storage storage s, uint256 usdnShares, uint256 price, uint128 timestamp)
         external
         view
@@ -56,11 +65,202 @@ library UsdnProtocolVaultLibrary {
     {
         // apply fees on price
         uint128 withdrawalPriceWithFees = (price + price * s._vaultFeeBps / s.BPS_DIVISOR).toUint128();
-        int256 available = vaultAssetAvailableWithFunding(withdrawalPriceWithFees, timestamp);
+        int256 available = vaultAssetAvailableWithFunding(s, withdrawalPriceWithFees, timestamp);
         if (available < 0) {
             return 0;
         }
         assetExpected_ = _calcBurnUsdn(usdnShares, uint256(available), s._usdn.totalShares());
+    }
+
+    // / @inheritdoc IUsdnProtocolBaseStorage
+    function tickHash(int24 tick, uint256 version) public pure returns (bytes32) {
+        return keccak256(abi.encodePacked(tick, version));
+    }
+
+    // / @inheritdoc IUsdnProtocolCore
+    function vaultAssetAvailableWithFunding(Storage storage s, uint128 currentPrice, uint128 timestamp)
+        public
+        view
+        returns (int256 available_)
+    {
+        if (timestamp < s._lastUpdateTimestamp) {
+            // revert UsdnProtocolTimestampTooOld();
+        }
+
+        int256 ema = coreLib.calcEMA(s._lastFunding, timestamp - s._lastUpdateTimestamp, s._EMAPeriod, s._EMA);
+        (int256 fundAsset,) = coreLib._fundingAsset(s, timestamp, ema);
+
+        if (fundAsset < 0) {
+            available_ = _vaultAssetAvailable(s, currentPrice).safeAdd(fundAsset);
+        } else {
+            int256 fee = fundAsset * coreLib._toInt256(s._protocolFeeBps) / int256(s.BPS_DIVISOR);
+            available_ = _vaultAssetAvailable(s, currentPrice).safeAdd(fundAsset - fee);
+        }
+    }
+
+    // / @inheritdoc IUsdnProtocol
+    function removeBlockedPendingAction(Storage storage s, address validator, address payable to) external {
+        uint256 pendingActionIndex = s._pendingActions[validator];
+        if (pendingActionIndex == 0) {
+            // no pending action
+            // use the `rawIndex` variant below if for some reason the `_pendingActions` mapping is messed up
+            // revert UsdnProtocolNoPendingAction();
+        }
+        uint128 rawIndex = uint128(pendingActionIndex - 1);
+        coreLib._removeBlockedPendingAction(s, rawIndex, to, true);
+    }
+
+    // / @inheritdoc IUsdnProtocol
+    function removeBlockedPendingActionNoCleanup(Storage storage s, address validator, address payable to) external {
+        uint256 pendingActionIndex = s._pendingActions[validator];
+        if (pendingActionIndex == 0) {
+            // no pending action
+            // use the `rawIndex` variant below if for some reason the `_pendingActions` mapping is messed up
+            // revert UsdnProtocolNoPendingAction();
+        }
+        uint128 rawIndex = uint128(pendingActionIndex - 1);
+        coreLib._removeBlockedPendingAction(s, rawIndex, to, false);
+    }
+
+    /**
+     * @notice Check if the initialize parameters lead to a balanced protocol
+     * @dev This function reverts if the imbalance is exceeded for the deposit or open long action
+     * @param positionTotalExpo The total expo of the deployer's long position
+     * @param longAmount The amount (collateral) of the deployer's long position
+     * @param depositAmount The amount of assets for the deployer's deposit
+     */
+    function _checkInitImbalance(
+        Storage storage s,
+        uint128 positionTotalExpo,
+        uint128 longAmount,
+        uint128 depositAmount
+    ) internal view {
+        // _checkUninitialized(); // prevent using this function after initialization
+
+        int256 longTradingExpo = coreLib._toInt256(positionTotalExpo - longAmount);
+        int256 depositLimit = s._depositExpoImbalanceLimitBps;
+        if (depositLimit != 0) {
+            int256 imbalanceBps =
+                (coreLib._toInt256(depositAmount) - longTradingExpo) * int256(s.BPS_DIVISOR) / longTradingExpo;
+            if (imbalanceBps > depositLimit) {
+                // revert UsdnProtocolImbalanceLimitReached(imbalanceBps);
+            }
+        }
+        int256 openLimit = s._openExpoImbalanceLimitBps;
+        if (openLimit != 0) {
+            int256 imbalanceBps = (longTradingExpo - coreLib._toInt256(depositAmount)) * int256(s.BPS_DIVISOR)
+                / coreLib._toInt256(depositAmount);
+            if (imbalanceBps > openLimit) {
+                // revert UsdnProtocolImbalanceLimitReached(imbalanceBps);
+            }
+        }
+    }
+
+    /**
+     * @notice Create initial deposit
+     * @dev To be called from `initialize`
+     * @param amount The initial deposit amount
+     * @param price The current asset price
+     */
+    function _createInitialDeposit(Storage storage s, uint128 amount, uint128 price) internal {
+        // _checkUninitialized(); // prevent using this function after initialization
+
+        // transfer the wstETH for the deposit
+        address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
+        s._balanceVault += amount;
+        // emit InitiatedDeposit(msg.sender, msg.sender, amount, block.timestamp);
+
+        // calculate the total minted amount of USDN shares (vault balance and total supply are zero for now, we assume
+        // the USDN price to be $1 per token)
+        uint256 usdnSharesToMint = _calcMintUsdnShares(s, amount, 0, 0, price);
+        uint256 minUsdnSharesSupply = s._usdn.convertToShares(s.MIN_USDN_SUPPLY);
+        // mint the minimum amount and send it to the dead address so it can never be removed from the total supply
+        s._usdn.mintShares(s.DEAD_ADDRESS, minUsdnSharesSupply);
+        // mint the user's share
+        uint256 mintSharesToUser = usdnSharesToMint - minUsdnSharesSupply;
+        uint256 mintedTokens = s._usdn.mintShares(msg.sender, mintSharesToUser);
+
+        // emit events
+        // emit ValidatedDeposit(s.DEAD_ADDRESS, s.DEAD_ADDRESS, 0, s.MIN_USDN_SUPPLY, block.timestamp);
+        // emit ValidatedDeposit(msg.sender, msg.sender, amount, mintedTokens, block.timestamp);
+    }
+
+    /**
+     * @notice Create initial long position
+     * @dev To be called from `initialize`
+     * @param amount The initial position amount
+     * @param price The current asset price
+     * @param tick The tick corresponding to the liquidation price (without penalty)
+     * @param totalExpo The total expo of the position
+     */
+    function _createInitialPosition(Storage storage s, uint128 amount, uint128 price, int24 tick, uint128 totalExpo)
+        internal
+    {
+        // _checkUninitialized(); // prevent using this function after initialization
+
+        // transfer the wstETH for the long
+        address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
+
+        // apply liquidation penalty to the deployer's liquidationPriceWithoutPenalty
+        uint8 liquidationPenalty = s._liquidationPenalty;
+        PositionId memory posId;
+        posId.tick = tick + int24(uint24(liquidationPenalty)) * s._tickSpacing;
+        Position memory long = Position({
+            validated: true,
+            user: msg.sender,
+            amount: amount,
+            totalExpo: totalExpo,
+            timestamp: uint40(block.timestamp)
+        });
+        // save the position and update the state
+        (posId.tickVersion, posId.index,) = actionsLib._saveNewPosition(s, posId.tick, long, liquidationPenalty);
+        s._balanceLong += long.amount;
+        // emit InitiatedOpenPosition(msg.sender, msg.sender, long.timestamp, totalExpo, long.amount, price, posId);
+        // emit ValidatedOpenPosition(msg.sender, msg.sender, totalExpo, price, posId);
+    }
+
+    /**
+     * @notice Available balance in the vault side if the price moves to `currentPrice` (without taking funding into
+     * account)
+     * @param currentPrice Current price
+     * @return available_ The available balance in the vault side
+     */
+    function _vaultAssetAvailable(Storage storage s, uint128 currentPrice) internal view returns (int256 available_) {
+        available_ = _vaultAssetAvailable(s._totalExpo, s._balanceVault, s._balanceLong, currentPrice, s._lastPrice);
+    }
+
+    /**
+     * @notice Available balance in the vault side if the price moves to `currentPrice` (without taking funding into
+     * account)
+     * @param totalExpo The total expo
+     * @param balanceVault The (old) balance of the vault
+     * @param balanceLong The (old) balance of the long side
+     * @param newPrice The new price
+     * @param oldPrice The old price when the old balances were updated
+     * @return available_ The available balance in the vault side
+     */
+    function _vaultAssetAvailable(
+        uint256 totalExpo,
+        uint256 balanceVault,
+        uint256 balanceLong,
+        uint128 newPrice,
+        uint128 oldPrice
+    ) internal pure returns (int256 available_) {
+        int256 totalBalance = balanceLong.toInt256().safeAdd(balanceVault.toInt256());
+        int256 newLongBalance = coreLib._longAssetAvailable(totalExpo, balanceLong, newPrice, oldPrice);
+
+        available_ = totalBalance.safeSub(newLongBalance);
+    }
+
+    /**
+     * @notice Function to calculate the hash and version of a given tick
+     * @param tick The tick
+     * @return hash_ The hash of the tick
+     * @return version_ The version of the tick
+     */
+    function _tickHash(Storage storage s, int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
+        version_ = s._tickVersion[tick];
+        hash_ = tickHash(tick, version_);
     }
 
     /**
@@ -95,7 +295,7 @@ library UsdnProtocolVaultLibrary {
         uint128 assetPrice,
         uint256 usdnTotalSupply,
         uint8 assetDecimals
-    ) internal pure returns (uint256 price_) {
+    ) internal view returns (uint256 price_) {
         price_ = FixedPointMathLib.fullMulDiv(
             vaultBalance, uint256(assetPrice) * 10 ** s.TOKENS_DECIMALS, usdnTotalSupply * 10 ** assetDecimals
         );
@@ -109,7 +309,7 @@ library UsdnProtocolVaultLibrary {
      */
     function _calcSdexToBurn(Storage storage s, uint256 usdnAmount, uint32 sdexBurnRatio)
         internal
-        pure
+        view
         returns (uint256 sdexToBurn_)
     {
         sdexToBurn_ = FixedPointMathLib.fullMulDiv(usdnAmount, sdexBurnRatio, s.SDEX_BURN_ON_DEPOSIT_DIVISOR);
@@ -129,7 +329,7 @@ library UsdnProtocolVaultLibrary {
         uint128 assetPrice,
         uint128 targetPrice,
         uint8 assetDecimals
-    ) internal pure returns (uint256 totalSupply_) {
+    ) internal view returns (uint256 totalSupply_) {
         totalSupply_ = FixedPointMathLib.fullMulDiv(
             vaultBalance, uint256(assetPrice) * 10 ** s.TOKENS_DECIMALS, uint256(targetPrice) * 10 ** assetDecimals
         );
@@ -160,11 +360,12 @@ library UsdnProtocolVaultLibrary {
         uint256 balanceVault = s._balanceVault;
         uint8 assetDecimals = s._assetDecimals;
         uint256 usdnTotalSupply = usdn.totalSupply();
-        uint256 uPrice = _calcUsdnPrice(balanceVault, assetPrice, usdnTotalSupply, assetDecimals);
+        uint256 uPrice = _calcUsdnPrice(s, balanceVault, assetPrice, usdnTotalSupply, assetDecimals);
         if (uPrice <= s._usdnRebaseThreshold) {
             return (false, callbackResult_);
         }
-        uint256 targetTotalSupply = _calcRebaseTotalSupply(balanceVault, assetPrice, s._targetUsdnPrice, assetDecimals);
+        uint256 targetTotalSupply =
+            _calcRebaseTotalSupply(s, balanceVault, assetPrice, s._targetUsdnPrice, assetDecimals);
         uint256 newDivisor = FixedPointMathLib.fullMulDiv(usdnTotalSupply, divisor, targetTotalSupply);
         // since the USDN token can call a handler after the rebase, we want to make sure we do not block the user
         // action in case the rebase fails
