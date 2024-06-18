@@ -50,9 +50,9 @@ contract TestUsdnProtocolLongCalcImbalanceOpenBps is UsdnProtocolBaseFixture {
         imbalanceBps = protocol.i_calcImbalanceOpenBps(vaultBalance, longBalance, totalExpo);
         assertEq(imbalanceBps, int256(BPS_DIVISOR / 2), "The imbalance should be 50%");
 
-        vaultBalance = 300 ether;
+        vaultBalance = 400 ether;
         imbalanceBps = protocol.i_calcImbalanceOpenBps(vaultBalance, longBalance, totalExpo);
-        assertEq(imbalanceBps, -int256(BPS_DIVISOR / 3), "The imbalance should be -50%");
+        assertEq(imbalanceBps, -int256(BPS_DIVISOR / 2), "The imbalance should be -50%");
     }
 
     /**
