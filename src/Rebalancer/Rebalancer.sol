@@ -279,7 +279,7 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
         // this unblocks the user
         delete _userDeposit[msg.sender];
 
-        _asset.safeTransferFrom(address(this), msg.sender, depositData.amount);
+        _asset.safeTransfer(msg.sender, depositData.amount);
 
         emit DepositRefunded(msg.sender, depositData.amount);
     }
