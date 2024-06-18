@@ -15,7 +15,7 @@ import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { ILiquidationRewardsManager } from "../interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { IRebalancer } from "../interfaces/Rebalancer/IRebalancer.sol";
+import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 
 contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable2Step {
     using SafeTransferLib for address;
@@ -107,7 +107,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable2Step {
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setRebalancer(IRebalancer newRebalancer) external onlyOwner {
+    function setRebalancer(IBaseRebalancer newRebalancer) external onlyOwner {
         _rebalancer = newRebalancer;
 
         emit RebalancerUpdated(address(newRebalancer));
@@ -352,7 +352,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable2Step {
         _minLongPosition = newMinLongPosition;
         emit MinLongPositionUpdated(newMinLongPosition);
 
-        IRebalancer rebalancer = _rebalancer;
+        IBaseRebalancer rebalancer = _rebalancer;
         if (address(rebalancer) != address(0) && rebalancer.getMinAssetDeposit() < newMinLongPosition) {
             rebalancer.setMinAssetDeposit(newMinLongPosition);
         }

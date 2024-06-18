@@ -9,7 +9,7 @@ import { InitializableReentrancyGuard } from "../utils/InitializableReentrancyGu
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { IBaseLiquidationRewardsManager } from "../interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
-import { IRebalancer } from "../interfaces/Rebalancer/IRebalancer.sol";
+import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { Position } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PendingAction, TickData } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "../libraries/DoubleEndedQueue.sol";
@@ -106,7 +106,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     IBaseLiquidationRewardsManager internal _liquidationRewardsManager;
 
     /// @notice The rebalancer contract
-    IRebalancer internal _rebalancer;
+    IBaseRebalancer internal _rebalancer;
 
     /// @notice The minimum leverage for a position (1.000000001)
     uint256 internal _minLeverage = 10 ** LEVERAGE_DECIMALS + 10 ** 12;
@@ -395,7 +395,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getRebalancer() external view returns (IRebalancer) {
+    function getRebalancer() external view returns (IBaseRebalancer) {
         return _rebalancer;
     }
 

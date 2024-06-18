@@ -9,6 +9,7 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { ERC165, IERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 import { IOwnershipCallback } from "../interfaces/UsdnProtocol/IOwnershipCallback.sol";
+import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IRebalancer } from "../interfaces/Rebalancer/IRebalancer.sol";
 import { IUsdnProtocol } from "../interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { PositionId, PreviousActionsData } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -119,7 +120,7 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
         }
     }
 
-    /// @inheritdoc IRebalancer
+    /// @inheritdoc IBaseRebalancer
     function getCurrentStateData()
         external
         view
@@ -133,7 +134,7 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
         return _lastLiquidatedVersion;
     }
 
-    /// @inheritdoc IRebalancer
+    /// @inheritdoc IBaseRebalancer
     function getMinAssetDeposit() external view returns (uint256) {
         return _minAssetDeposit;
     }
@@ -148,7 +149,7 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
         return _closeImbalanceLimitBps;
     }
 
-    /// @inheritdoc IRebalancer
+    /// @inheritdoc IBaseRebalancer
     function getUserDepositData(address user) external view returns (UserDeposit memory) {
         return _userDeposit[user];
     }
@@ -238,7 +239,7 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
         emit PendingAssetsWithdrawn(msg.sender, amount, to);
     }
 
-    /// @inheritdoc IRebalancer
+    /// @inheritdoc IBaseRebalancer
     function updatePosition(PositionId calldata newPosId, uint128 previousPosValue) external onlyProtocol {
         uint128 positionVersion = _positionVersion;
         PositionData memory previousPositionData = _positionData[positionVersion];
@@ -249,10 +250,6 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
         if (previousPositionData.amount > 0) {
             // if the position has not been liquidated
             if (previousPosValue > 0) {
-                // save the pnl multiplier of the position
-                uint256 pnlMultiplier = _calcPnlMultiplier(previousPositionData.amount, previousPosValue);
-                _positionData[positionVersion].pnlMultiplier = pnlMultiplier;
-
                 // update the multiplier accumulator
                 accMultiplier = FixedPointMathLib.fullMulDiv(
                     previousPosValue, previousPositionData.entryAccMultiplier, previousPositionData.amount
@@ -279,25 +276,18 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
         emit PositionVersionUpdated(positionVersion);
     }
 
-    /**
-     * @notice Calculate the PnL multiplier of a position
-     * @param openAmount The amount of assets used to open the position
-     * @param value The value of the position right now
-     * @return pnlMultiplier_ The PnL multiplier
-     */
-    function _calcPnlMultiplier(uint128 openAmount, uint128 value) internal pure returns (uint256 pnlMultiplier_) {
-        // prevent division by 0
-        if (openAmount == 0) {
-            return 0;
-        }
-
-        pnlMultiplier_ = value * MULTIPLIER_FACTOR / openAmount;
-    }
-
     /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
-        if (interfaceId == type(IOwnershipCallback).interfaceId) return true;
-        if (interfaceId == type(IRebalancer).interfaceId) return true;
+        if (interfaceId == type(IOwnershipCallback).interfaceId) {
+            return true;
+        }
+        if (interfaceId == type(IRebalancer).interfaceId) {
+            return true;
+        }
+        if (interfaceId == type(IBaseRebalancer).interfaceId) {
+            return true;
+        }
+
         return super.supportsInterface(interfaceId);
     }
 
@@ -317,7 +307,7 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
         emit PositionMaxLeverageUpdated(newMaxLeverage);
     }
 
-    /// @inheritdoc IRebalancer
+    /// @inheritdoc IBaseRebalancer
     function setMinAssetDeposit(uint256 minAssetDeposit) external onlyAdmin {
         if (_usdnProtocol.getMinLongPosition() > minAssetDeposit) {
             revert RebalancerInvalidMinAssetDeposit();

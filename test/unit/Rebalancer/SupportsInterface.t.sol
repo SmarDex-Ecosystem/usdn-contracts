@@ -7,6 +7,7 @@ import { RebalancerFixture } from "./utils/Fixtures.sol";
 
 import { IOwnershipCallback } from "../../../src/interfaces/UsdnProtocol/IOwnershipCallback.sol";
 import { IRebalancer } from "../../../src/interfaces/Rebalancer/IRebalancer.sol";
+import { IBaseRebalancer } from "../../../src/interfaces/Rebalancer/IBaseRebalancer.sol";
 
 /**
  * @custom:feature The {supportsInterface} function of the rebalancer contract
@@ -29,6 +30,7 @@ contract TestRebalancerSupportsInterface is RebalancerFixture {
             rebalancer.supportsInterface(type(IOwnershipCallback).interfaceId), true, "IOwnershipCallback_ID supported"
         );
         assertEq(rebalancer.supportsInterface(type(IRebalancer).interfaceId), true, "IRebalancer_ID supported");
+        assertEq(rebalancer.supportsInterface(type(IBaseRebalancer).interfaceId), true, "IBaseRebalancer_ID supported");
         assertEq(rebalancer.supportsInterface(""), false, "unknown interface ID");
     }
 }
