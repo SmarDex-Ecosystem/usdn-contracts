@@ -65,8 +65,8 @@ contract TestUsdnProtocolLongCalcImbalanceOpenBps is UsdnProtocolBaseFixture {
      */
     function testFuzz_calcImbalanceOpenBps(uint256 vaultBalance, uint256 longBalance, uint256 totalExpo) public {
         vaultBalance = bound(vaultBalance, 1, uint256(type(int256).max) / BPS_DIVISOR);
-        longBalance = bound(longBalance, 0, uint256(type(int256).max) / BPS_DIVISOR - 1);
-        totalExpo = bound(totalExpo, longBalance + 1, uint256(type(int256).max) / BPS_DIVISOR);
+        longBalance = bound(longBalance, 0, uint256(type(int256).max) / BPS_DIVISOR);
+        totalExpo = bound(totalExpo, longBalance, uint256(type(int256).max) / BPS_DIVISOR);
 
         int256 expectedImbalance =
             (int256(totalExpo - longBalance) - int256(vaultBalance)) * int256(BPS_DIVISOR) / int256(vaultBalance);
