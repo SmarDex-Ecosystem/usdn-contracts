@@ -16,6 +16,7 @@ import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes
 import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IUsdnProtocolEvents } from "../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { UsdnProtocolBaseStorage } from "./UsdnProtocolBaseStorage.sol";
+import { Storage } from "./UsdnProtocolBaseStorage.sol";
 
 contract UsdnProtocolProxy is
     // UsdnProtocolLongEntry,
@@ -51,6 +52,46 @@ contract UsdnProtocolProxy is
         Ownable(msg.sender)
         UsdnProtocolBaseStorage(usdn, sdex, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector)
     { }
+
+    /// @inheritdoc IUsdnProtocol
+    function initialize(
+        Storage storage s,
+        uint128 depositAmount,
+        uint128 longAmount,
+        uint128 desiredLiqPrice,
+        bytes calldata currentPriceData
+    ) external payable {
+        if (depositAmount < s.MIN_INIT_DEPOSIT) {
+            revert UsdnProtocolMinInitAmount(s.MIN_INIT_DEPOSIT);
+        }
+        if (longAmount < s.MIN_INIT_DEPOSIT) {
+            revert UsdnProtocolMinInitAmount(s.MIN_INIT_DEPOSIT);
+        }
+        // since all USDN must be minted by the protocol, we check that the total supply is 0
+        IUsdn usdn = s._usdn;
+        if (usdn.totalSupply() != 0) {
+            revert UsdnProtocolInvalidUsdn(address(usdn));
+        }
+
+        PriceInfo memory currentPrice =
+            _getOraclePrice(ProtocolAction.Initialize, block.timestamp, "", currentPriceData);
+
+        s._lastUpdateTimestamp = uint128(block.timestamp);
+        s._lastPrice = currentPrice.price.toUint128();
+
+        int24 tick = getEffectiveTickForPrice(desiredLiqPrice); // without penalty
+        uint128 liquidationPriceWithoutPenalty = getEffectivePriceForTick(tick);
+        uint128 positionTotalExpo =
+            _calcPositionTotalExpo(longAmount, currentPrice.price.toUint128(), liquidationPriceWithoutPenalty);
+
+        _checkInitImbalance(positionTotalExpo, longAmount, depositAmount);
+
+        _createInitialDeposit(depositAmount, currentPrice.price.toUint128());
+
+        _createInitialPosition(longAmount, currentPrice.price.toUint128(), tick, positionTotalExpo);
+
+        _refundEther(address(this).balance, payable(msg.sender));
+    }
 
     /// @inheritdoc IUsdnProtocol
     function setOracleMiddleware(IBaseOracleMiddleware newOracleMiddleware) external onlyOwner {

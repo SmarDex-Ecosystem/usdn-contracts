@@ -7,7 +7,6 @@ import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
-import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { IUsdnProtocolCore } from "../interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
 import {
     ProtocolAction,
@@ -23,8 +22,9 @@ import { SignedMath } from "../libraries/SignedMath.sol";
 import { DoubleEndedQueue } from "../libraries/DoubleEndedQueue.sol";
 import { TickMath } from "../libraries/TickMath.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
+import { Storage } from "./UsdnProtocolBaseStorage.sol";
 
-abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
+library UsdnProtocolCoreLibrary {
     using SafeTransferLib for address;
     using SafeCast for uint256;
     using SafeCast for int256;
@@ -33,6 +33,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     using LibBitmap for LibBitmap.Bitmap;
     using HugeUint for HugeUint.Uint512;
 
+    // TO DO : not here
     /// @inheritdoc IUsdnProtocolCore
     address public constant DEAD_ADDRESS = address(0xdead);
 
@@ -42,22 +43,22 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     /* -------------------------- Public view functions ------------------------- */
 
     /// @inheritdoc IUsdnProtocolCore
-    function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
+    function longAssetAvailableWithFunding(Storage storage s, uint128 currentPrice, uint128 timestamp)
         public
         view
         returns (int256 available_)
     {
-        if (timestamp < _lastUpdateTimestamp) {
-            revert UsdnProtocolTimestampTooOld();
+        if (timestamp < s._lastUpdateTimestamp) {
+            // revert UsdnProtocolTimestampTooOld();
         }
 
-        int256 ema = calcEMA(_lastFunding, timestamp - _lastUpdateTimestamp, _EMAPeriod, _EMA);
+        int256 ema = calcEMA(s._lastFunding, timestamp - s._lastUpdateTimestamp, s._EMAPeriod, s._EMA);
         (int256 fundAsset,) = _fundingAsset(timestamp, ema);
 
         if (fundAsset > 0) {
             available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset);
         } else {
-            int256 fee = fundAsset * _toInt256(_protocolFeeBps) / int256(BPS_DIVISOR);
+            int256 fee = fundAsset * _toInt256(s._protocolFeeBps) / int256(s.BPS_DIVISOR);
             // fees have the same sign as fundAsset (negative here), so we need to sub them
             available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset - fee);
         }
@@ -77,36 +78,40 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function vaultAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
+    function vaultAssetAvailableWithFunding(Storage storage s, uint128 currentPrice, uint128 timestamp)
         public
         view
         returns (int256 available_)
     {
-        if (timestamp < _lastUpdateTimestamp) {
-            revert UsdnProtocolTimestampTooOld();
+        if (timestamp < s._lastUpdateTimestamp) {
+            // revert UsdnProtocolTimestampTooOld();
         }
 
-        int256 ema = calcEMA(_lastFunding, timestamp - _lastUpdateTimestamp, _EMAPeriod, _EMA);
+        int256 ema = calcEMA(s._lastFunding, timestamp - s._lastUpdateTimestamp, s._EMAPeriod, s._EMA);
         (int256 fundAsset,) = _fundingAsset(timestamp, ema);
 
         if (fundAsset < 0) {
             available_ = _vaultAssetAvailable(currentPrice).safeAdd(fundAsset);
         } else {
-            int256 fee = fundAsset * _toInt256(_protocolFeeBps) / int256(BPS_DIVISOR);
+            int256 fee = fundAsset * _toInt256(s._protocolFeeBps) / int256(s.BPS_DIVISOR);
             available_ = _vaultAssetAvailable(currentPrice).safeAdd(fundAsset - fee);
         }
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) public view returns (int256 expo_) {
-        expo_ = _totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(currentPrice, timestamp));
+    function longTradingExpoWithFunding(Storage storage s, uint128 currentPrice, uint128 timestamp)
+        public
+        view
+        returns (int256 expo_)
+    {
+        expo_ = s._totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(currentPrice, timestamp));
     }
 
     /* --------------------------  External functions --------------------------- */
 
     /// @inheritdoc IUsdnProtocolCore
-    function funding(uint128 timestamp) external view returns (int256 fund_, int256 oldLongExpo_) {
-        (fund_, oldLongExpo_) = _funding(timestamp, _EMA);
+    function funding(Storage storage s, uint128 timestamp) external view returns (int256 fund_, int256 oldLongExpo_) {
+        (fund_, oldLongExpo_) = _funding(timestamp, s._EMA);
     }
 
     /// @inheritdoc IUsdnProtocolCore
@@ -119,12 +124,12 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function getActionablePendingActions(address currentUser)
+    function getActionablePendingActions(Storage storage s, address currentUser)
         external
         view
         returns (PendingAction[] memory actions_, uint128[] memory rawIndices_)
     {
-        uint256 queueLength = _pendingActionsQueue.length();
+        uint256 queueLength = s._pendingActionsQueue.length();
         if (queueLength == 0) {
             // empty queue, early return
             return (actions_, rawIndices_);
@@ -140,7 +145,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         uint256 arrayLen = 0;
         do {
             // since `i` cannot be greater or equal to `queueLength`, there is no risk of reverting
-            (PendingAction memory candidate, uint128 rawIndex) = _pendingActionsQueue.at(i);
+            (PendingAction memory candidate, uint128 rawIndex) = s._pendingActionsQueue.at(i);
             // if the msg.sender is equal to the validator of the pending action, then the pending action is not
             // actionable by this user (it will get validated automatically by their action)
             // and so we need to return the next item in the queue so that they can validate a third-party pending
@@ -151,7 +156,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
                 unchecked {
                     i++;
                 }
-            } else if (candidate.timestamp + _validationDeadline < block.timestamp) {
+            } else if (candidate.timestamp + s._validationDeadline < block.timestamp) {
                 // we found an actionable pending action
                 actions_[i] = candidate;
                 rawIndices_[i] = rawIndex;
@@ -188,20 +193,24 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @return fund_ The funding rate
      * @return oldLongExpo_ The old long exposure
      */
-    function _funding(uint128 timestamp, int256 ema) internal view returns (int256 fund_, int256 oldLongExpo_) {
-        oldLongExpo_ = _totalExpo.toInt256().safeSub(_balanceLong.toInt256());
+    function _funding(Storage storage s, uint128 timestamp, int256 ema)
+        internal
+        view
+        returns (int256 fund_, int256 oldLongExpo_)
+    {
+        oldLongExpo_ = s._totalExpo.toInt256().safeSub(s._balanceLong.toInt256());
 
-        if (timestamp < _lastUpdateTimestamp) {
-            revert UsdnProtocolTimestampTooOld();
-        } else if (timestamp == _lastUpdateTimestamp) {
+        if (timestamp < s._lastUpdateTimestamp) {
+            // revert UsdnProtocolTimestampTooOld();
+        } else if (timestamp == s._lastUpdateTimestamp) {
             return (0, oldLongExpo_);
         }
 
-        int256 oldVaultExpo = _balanceVault.toInt256();
+        int256 oldVaultExpo = s._balanceVault.toInt256();
 
         // ImbalanceIndex = (longExpo - vaultExpo) / max(longExpo, vaultExpo)
-        // fund = (sign(ImbalanceIndex) * ImbalanceIndex^2 * fundingSF) + _EMA
-        // fund = (sign(ImbalanceIndex) * (longExpo - vaultExpo)^2 * fundingSF / denominator) + _EMA
+        // fund = (sign(ImbalanceIndex) * ImbalanceIndex^2 * fundingSF) +s.
+        // fund = (sign(ImbalanceIndex) * (longExpo - vaultExpo)^2 * fundingSF / denominator) +s.
         // with denominator = vaultExpo^2 if vaultExpo > longExpo, or longExpo^2 if longExpo > vaultExpo
 
         int256 numerator = oldLongExpo_ - oldVaultExpo;
@@ -213,16 +222,16 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         if (oldLongExpo_ <= 0) {
             // if oldLongExpo is negative, then we cap the imbalance index to -1
             // oldVaultExpo is always positive
-            return (-int256(_fundingSF * 10 ** (FUNDING_RATE_DECIMALS - FUNDING_SF_DECIMALS)) + ema, oldLongExpo_);
+            return (-int256(s._fundingSF * 10 ** (s.FUNDING_RATE_DECIMALS - s.FUNDING_SF_DECIMALS)) + ema, oldLongExpo_);
         } else if (oldVaultExpo == 0) {
             // if oldVaultExpo is zero (can't be negative), then we cap the imbalance index to 1
             // oldLongExpo must be positive in this case
-            return (int256(_fundingSF * 10 ** (FUNDING_RATE_DECIMALS - FUNDING_SF_DECIMALS)) + ema, oldLongExpo_);
+            return (int256(s._fundingSF * 10 ** (s.FUNDING_RATE_DECIMALS - s.FUNDING_SF_DECIMALS)) + ema, oldLongExpo_);
         }
 
         // starting here, oldLongExpo and oldVaultExpo are always strictly positive
 
-        uint256 elapsedSeconds = timestamp - _lastUpdateTimestamp;
+        uint256 elapsedSeconds = timestamp - s._lastUpdateTimestamp;
         uint256 numerator_squared = uint256(numerator * numerator);
 
         uint256 denominator;
@@ -232,7 +241,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             fund_ = -int256(
                 FixedPointMathLib.fullMulDiv(
                     numerator_squared * elapsedSeconds,
-                    _fundingSF * 10 ** (FUNDING_RATE_DECIMALS - FUNDING_SF_DECIMALS),
+                    s._fundingSF * 10 ** (s.FUNDING_RATE_DECIMALS - s.FUNDING_SF_DECIMALS),
                     denominator
                 )
             ) + ema;
@@ -242,7 +251,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             fund_ = int256(
                 FixedPointMathLib.fullMulDiv(
                     numerator_squared * elapsedSeconds,
-                    _fundingSF * 10 ** (FUNDING_RATE_DECIMALS - FUNDING_SF_DECIMALS),
+                    s._fundingSF * 10 ** (s.FUNDING_RATE_DECIMALS - s.FUNDING_SF_DECIMALS),
                     denominator
                 )
             ) + ema;
@@ -258,10 +267,14 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @return fundingAsset_ The number of asset tokens of funding (with asset decimals)
      * @return fund_ The magnitude of the funding (with `FUNDING_RATE_DECIMALS` decimals)
      */
-    function _fundingAsset(uint128 timestamp, int256 ema) internal view returns (int256 fundingAsset_, int256 fund_) {
+    function _fundingAsset(Storage storage s, uint128 timestamp, int256 ema)
+        internal
+        view
+        returns (int256 fundingAsset_, int256 fund_)
+    {
         int256 oldLongExpo;
         (fund_, oldLongExpo) = _funding(timestamp, ema);
-        fundingAsset_ = fund_.safeMul(oldLongExpo) / int256(10) ** FUNDING_RATE_DECIMALS;
+        fundingAsset_ = fund_.safeMul(oldLongExpo) / int256(10) ** s.FUNDING_RATE_DECIMALS;
     }
 
     /**
@@ -271,8 +284,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @param currentPrice The current price
      * @return available_ The available balance on the long side
      */
-    function _longAssetAvailable(uint128 currentPrice) internal view returns (int256 available_) {
-        available_ = _longAssetAvailable(_totalExpo, _balanceLong, currentPrice, _lastPrice);
+    function _longAssetAvailable(Storage storage s, uint128 currentPrice) internal view returns (int256 available_) {
+        available_ = _longAssetAvailable(s._totalExpo, s._balanceLong, currentPrice, s._lastPrice);
     }
 
     /**
@@ -312,8 +325,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @param currentPrice Current price
      * @return available_ The available balance in the vault side
      */
-    function _vaultAssetAvailable(uint128 currentPrice) internal view returns (int256 available_) {
-        available_ = _vaultAssetAvailable(_totalExpo, _balanceVault, _balanceLong, currentPrice, _lastPrice);
+    function _vaultAssetAvailable(Storage storage s, uint128 currentPrice) internal view returns (int256 available_) {
+        available_ = _vaultAssetAvailable(s._totalExpo, s._balanceVault, s._balanceLong, currentPrice, s._lastPrice);
     }
 
     /**
@@ -350,15 +363,15 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @return tempLongBalance_ The new balance of the long side, could be negative (temporarily)
      * @return tempVaultBalance_ The new balance of the vault side, could be negative (temporarily)
      */
-    function _applyPnlAndFunding(uint128 currentPrice, uint128 timestamp)
+    function _applyPnlAndFunding(Storage storage s, uint128 currentPrice, uint128 timestamp)
         internal
         returns (bool isPriceRecent_, int256 tempLongBalance_, int256 tempVaultBalance_)
     {
         // cache variable for optimization
-        uint128 lastUpdateTimestamp = _lastUpdateTimestamp;
+        uint128 lastUpdateTimestamp = s._lastUpdateTimestamp;
         // if the price is not fresh, do nothing
         if (timestamp <= lastUpdateTimestamp) {
-            return (timestamp == lastUpdateTimestamp, _balanceLong.toInt256(), _balanceVault.toInt256());
+            return (timestamp == lastUpdateTimestamp, s._balanceLong.toInt256(), s._balanceVault.toInt256());
         }
 
         // update the funding EMA
@@ -371,7 +384,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         (int256 fee, int256 fundWithFee, int256 fundAssetWithFee) = _calculateFee(fund, fundAsset);
 
         // we subtract the fee from the total balance
-        int256 totalBalance = _balanceLong.toInt256().safeAdd(_balanceVault.toInt256()).safeSub(fee);
+        int256 totalBalance = s._balanceLong.toInt256().safeAdd(s._balanceVault.toInt256()).safeSub(fee);
         // calculate new balances (for now, any bad debt has not been repaid, balances could become negative)
 
         if (fund > 0) {
@@ -388,9 +401,9 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         tempVaultBalance_ = totalBalance.safeSub(tempLongBalance_);
 
         // update state variables
-        _lastPrice = currentPrice;
-        _lastUpdateTimestamp = timestamp;
-        _lastFunding = fundWithFee;
+        s._lastPrice = currentPrice;
+        s._lastUpdateTimestamp = timestamp;
+        s._lastFunding = fundWithFee;
 
         isPriceRecent_ = true;
     }
@@ -404,8 +417,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @param secondsElapsed The number of seconds elapsed since the last protocol action
      * @return The new EMA value
      */
-    function _updateEMA(uint128 secondsElapsed) internal returns (int256) {
-        return _EMA = calcEMA(_lastFunding, secondsElapsed, _EMAPeriod, _EMA);
+    function _updateEMA(Storage storage s, uint128 secondsElapsed) internal returns (int256) {
+        return s._EMA = calcEMA(s._lastFunding, secondsElapsed, s._EMAPeriod, s._EMA);
     }
 
     /**
@@ -423,8 +436,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @return hash_ The hash of the tick
      * @return version_ The version of the tick
      */
-    function _tickHash(int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
-        version_ = _tickVersion[tick];
+    function _tickHash(Storage storage s, int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
+        version_ = s._tickVersion[tick];
         hash_ = tickHash(tick, version_);
     }
 
@@ -438,25 +451,25 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @return fundWithFee_ The updated funding factor after applying the fee
      * @return fundAssetWithFee_ The updated funding asset amount after applying the fee
      */
-    function _calculateFee(int256 fund, int256 fundAsset)
+    function _calculateFee(Storage storage s, int256 fund, int256 fundAsset)
         internal
         returns (int256 fee_, int256 fundWithFee_, int256 fundAssetWithFee_)
     {
-        int256 protocolFeeBps = _toInt256(_protocolFeeBps);
+        int256 protocolFeeBps = _toInt256(s._protocolFeeBps);
         fundWithFee_ = fund;
-        fee_ = fundAsset * protocolFeeBps / int256(BPS_DIVISOR);
+        fee_ = fundAsset * protocolFeeBps / int256(s.BPS_DIVISOR);
         // fundAsset and fee_ have the same sign, we can safely subtract them to reduce the absolute amount of asset
         fundAssetWithFee_ = fundAsset - fee_;
 
         if (fee_ < 0) {
             // when funding is negative, the part that is taken as fees does not contribute to the liquidation
             // multiplier adjustment, and so we should deduce it from the funding factor
-            fundWithFee_ -= fund * protocolFeeBps / int256(BPS_DIVISOR);
+            fundWithFee_ -= fund * protocolFeeBps / int256(s.BPS_DIVISOR);
             // we want to return the absolute value of the fee
             fee_ = -fee_;
         }
 
-        _pendingProtocolFee += uint256(fee_);
+        s._pendingProtocolFee += uint256(fee_);
     }
 
     /**
@@ -478,8 +491,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @param tick The tick to convert, a multiple of the tick spacing
      * @return index_ The index into the Bitmap
      */
-    function _calcBitmapIndexFromTick(int24 tick) internal view returns (uint256 index_) {
-        index_ = _calcBitmapIndexFromTick(tick, _tickSpacing);
+    function _calcBitmapIndexFromTick(Storage storage s, int24 tick) internal view returns (uint256 index_) {
+        index_ = _calcBitmapIndexFromTick(tick, s._tickSpacing);
     }
 
     /**
@@ -594,8 +607,11 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * ProtocolAction.None
      * @return rawIndex_ The raw index in the queue for the returned pending action, or zero
      */
-    function _getActionablePendingAction() internal returns (PendingAction memory action_, uint128 rawIndex_) {
-        uint256 queueLength = _pendingActionsQueue.length();
+    function _getActionablePendingAction(Storage storage s)
+        internal
+        returns (PendingAction memory action_, uint128 rawIndex_)
+    {
+        uint256 queueLength = s._pendingActionsQueue.length();
         if (queueLength == 0) {
             // empty queue, early return
             return (action_, rawIndex_);
@@ -608,17 +624,17 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         uint256 i = 0;
         do {
             // since we will never call `front` more than `queueLength` times, there is no risk of reverting
-            (PendingAction memory candidate, uint128 rawIndex) = _pendingActionsQueue.front();
+            (PendingAction memory candidate, uint128 rawIndex) = s._pendingActionsQueue.front();
             // gas optimization
             unchecked {
                 i++;
             }
             if (candidate.timestamp == 0) {
                 // remove the stale pending action
-                _pendingActionsQueue.popFront();
+                s._pendingActionsQueue.popFront();
                 // try the next one
                 continue;
-            } else if (candidate.timestamp + _validationDeadline < block.timestamp) {
+            } else if (candidate.timestamp + s._validationDeadline < block.timestamp) {
                 // we found an actionable pending action
                 return (candidate, rawIndex);
             }
@@ -633,25 +649,29 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @param user The user's address
      * @return securityDepositValue_ The security deposit value of the removed stale pending action
      */
-    function _removeStalePendingAction(address user) internal returns (uint256 securityDepositValue_) {
-        if (_pendingActions[user] == 0) {
+    function _removeStalePendingAction(Storage storage s, address user)
+        internal
+        returns (uint256 securityDepositValue_)
+    {
+        if (s._pendingActions[user] == 0) {
             return 0;
         }
         (PendingAction memory action, uint128 rawIndex) = _getPendingAction(user);
         // the position is only at risk of being liquidated while pending if it is an open position action
         if (action.action == ProtocolAction.ValidateOpenPosition) {
             LongPendingAction memory openAction = _toLongPendingAction(action);
-            uint256 version = _tickVersion[openAction.tick];
+            uint256 version = s._tickVersion[openAction.tick];
             if (version != openAction.tickVersion) {
                 securityDepositValue_ = openAction.securityDepositValue;
                 // the position was liquidated while pending
                 // remove the stale pending action
-                _pendingActionsQueue.clearAt(rawIndex);
-                delete _pendingActions[user];
-                emit StalePendingActionRemoved(
-                    user,
-                    PositionId({ tick: openAction.tick, tickVersion: openAction.tickVersion, index: openAction.index })
-                );
+                s._pendingActionsQueue.clearAt(rawIndex);
+                delete s._pendingActions[user];
+                // emit StalePendingActionRemoved(
+                //     user,
+                //     PositionId({ tick: openAction.tick, tickVersion: openAction.tickVersion, index: openAction.index
+                // })
+                // );
             }
         }
     }
@@ -663,16 +683,19 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @param action The pending action struct
      * @return amountToRefund_ The security deposit value of the stale pending action
      */
-    function _addPendingAction(address user, PendingAction memory action) internal returns (uint256 amountToRefund_) {
+    function _addPendingAction(Storage storage s, address user, PendingAction memory action)
+        internal
+        returns (uint256 amountToRefund_)
+    {
         amountToRefund_ = _removeStalePendingAction(user); // check if there is a pending action that was
             // liquidated and remove it
-        if (_pendingActions[user] > 0) {
-            revert UsdnProtocolPendingAction();
+        if (s._pendingActions[user] > 0) {
+            // revert UsdnProtocolPendingAction();
         }
         // add the action to the queue
-        uint128 rawIndex = _pendingActionsQueue.pushBack(action);
+        uint128 rawIndex = s._pendingActionsQueue.pushBack(action);
         // store the index shifted by one, so that zero means no pending action
-        _pendingActions[user] = uint256(rawIndex) + 1;
+        s._pendingActions[user] = uint256(rawIndex) + 1;
     }
 
     /**
@@ -683,15 +706,19 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @return action_ The pending action struct if any, otherwise a zero-initialized struct
      * @return rawIndex_ The raw index of the pending action in the queue
      */
-    function _getPendingAction(address user) internal view returns (PendingAction memory action_, uint128 rawIndex_) {
-        uint256 pendingActionIndex = _pendingActions[user];
+    function _getPendingAction(Storage storage s, address user)
+        internal
+        view
+        returns (PendingAction memory action_, uint128 rawIndex_)
+    {
+        uint256 pendingActionIndex = s._pendingActions[user];
         if (pendingActionIndex == 0) {
             // no pending action
             return (action_, rawIndex_);
         }
 
         rawIndex_ = uint128(pendingActionIndex - 1);
-        action_ = _pendingActionsQueue.atRaw(rawIndex_);
+        action_ = s._pendingActionsQueue.atRaw(rawIndex_);
     }
 
     /**
@@ -708,7 +735,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     {
         (action_, rawIndex_) = _getPendingAction(user);
         if (action_.action == ProtocolAction.None) {
-            revert UsdnProtocolNoPendingAction();
+            // revert UsdnProtocolNoPendingAction();
         }
     }
 
@@ -717,9 +744,9 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @param user The user's address
      * @param rawIndex The rawIndex of the pending action in the queue
      */
-    function _clearPendingAction(address user, uint128 rawIndex) internal {
-        _pendingActionsQueue.clearAt(rawIndex);
-        delete _pendingActions[user];
+    function _clearPendingAction(Storage storage s, address user, uint128 rawIndex) internal {
+        s._pendingActionsQueue.clearAt(rawIndex);
+        delete s._pendingActions[user];
     }
 
     /**
@@ -732,26 +759,28 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @param to Where the retrieved funds should be sent (security deposit, assets, usdn)
      * @param cleanup If `true`, will attempt to perform more cleanup at the risk of reverting. Always try `true` first
      */
-    function _removeBlockedPendingAction(uint128 rawIndex, address payable to, bool cleanup) internal {
-        PendingAction memory pending = _pendingActionsQueue.atRaw(rawIndex);
-        if (block.timestamp < pending.timestamp + _validationDeadline + 1 hours) {
-            revert UsdnProtocolUnauthorized();
+    function _removeBlockedPendingAction(Storage storage s, uint128 rawIndex, address payable to, bool cleanup)
+        internal
+    {
+        PendingAction memory pending = s._pendingActionsQueue.atRaw(rawIndex);
+        if (block.timestamp < pending.timestamp + s._validationDeadline + 1 hours) {
+            // revert UsdnProtocolUnauthorized();
         }
-        delete _pendingActions[pending.validator];
-        _pendingActionsQueue.clearAt(rawIndex);
+        delete s._pendingActions[pending.validator];
+        s._pendingActionsQueue.clearAt(rawIndex);
         if (pending.action == ProtocolAction.ValidateDeposit && cleanup) {
             // for pending deposits, we send back the locked assets
             DepositPendingAction memory deposit = _toDepositPendingAction(pending);
-            _pendingBalanceVault -= _toInt256(deposit.amount);
-            address(_asset).safeTransfer(to, deposit.amount);
+            s._pendingBalanceVault -= _toInt256(deposit.amount);
+            address(s._asset).safeTransfer(to, deposit.amount);
         } else if (pending.action == ProtocolAction.ValidateWithdrawal && cleanup) {
             // for pending withdrawals, we send the locked USDN
             WithdrawalPendingAction memory withdrawal = _toWithdrawalPendingAction(pending);
             uint256 shares = _mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
             uint256 pendingAmount =
                 FixedPointMathLib.fullMulDiv(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares);
-            _pendingBalanceVault += pendingAmount.toInt256();
-            _usdn.transferShares(to, shares);
+            s._pendingBalanceVault += pendingAmount.toInt256();
+            s._usdn.transferShares(to, shares);
         } else if (pending.action == ProtocolAction.ValidateOpenPosition) {
             // for pending opens, we need to remove the position
             LongPendingAction memory open = _toLongPendingAction(pending);
@@ -760,39 +789,39 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
                 // we only need to modify storage if the pos was not liquidated already
 
                 // safe cleanup operations
-                Position[] storage tickArray = _longPositions[tickHash];
+                Position[] storage tickArray = s._longPositions[tickHash];
                 Position memory pos = tickArray[open.index];
-                delete _longPositions[tickHash][open.index];
+                delete s._longPositions[tickHash][open.index];
 
                 // more cleanup operations
                 if (cleanup) {
-                    TickData storage tickData = _tickData[tickHash];
-                    --_totalLongPositions;
+                    TickData storage tickData = s._tickData[tickHash];
+                    --s._totalLongPositions;
                     tickData.totalPos -= 1;
                     if (tickData.totalPos == 0) {
                         // we removed the last position in the tick
-                        _tickBitmap.unset(_calcBitmapIndexFromTick(open.tick));
+                        s._tickBitmap.unset(_calcBitmapIndexFromTick(open.tick));
                     }
                     uint256 unadjustedTickPrice =
-                        TickMath.getPriceAtTick(open.tick - int24(uint24(tickData.liquidationPenalty)) * _tickSpacing);
-                    _totalExpo -= pos.totalExpo;
+                        TickMath.getPriceAtTick(open.tick - int24(uint24(tickData.liquidationPenalty)) * s._tickSpacing);
+                    s._totalExpo -= pos.totalExpo;
                     tickData.totalExpo -= pos.totalExpo;
-                    _liqMultiplierAccumulator =
-                        _liqMultiplierAccumulator.sub(HugeUint.wrap(unadjustedTickPrice * pos.totalExpo));
+                    s._liqMultiplierAccumulator =
+                        s._liqMultiplierAccumulator.sub(HugeUint.wrap(unadjustedTickPrice * pos.totalExpo));
                 }
             }
         } else if (pending.action == ProtocolAction.ValidateClosePosition && cleanup) {
             // for pending closes, the position is already out of the protocol
             LongPendingAction memory close = _toLongPendingAction(pending);
             // credit the full amount to the vault to preserve the total balance invariant (like a liquidation)
-            _balanceVault += close.closeBoundedPositionValue;
+            s._balanceVault += close.closeBoundedPositionValue;
         }
 
         // we retrieve the security deposit
         if (cleanup) {
             (bool success,) = to.call{ value: pending.securityDepositValue }("");
             if (!success) {
-                revert UsdnProtocolEtherRefundFailed();
+                // revert UsdnProtocolEtherRefundFailed();
             }
         }
     }
