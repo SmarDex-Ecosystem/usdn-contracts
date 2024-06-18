@@ -462,7 +462,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // Change The rewards calculations parameters to not be dependent of the initial values
         vm.prank(DEPLOYER);
-        liquidationRewardsManager.setRewardsParameters(10_000, 30_000, 20_000, 1000 gwei, 20_000);
+        liquidationRewardsManager.setRewardsParameters(10_000, 30_000, 20_000, 20_000, 1000 gwei, 20_000);
 
         uint256 expectedLiquidatorRewards =
             liquidationRewardsManager.getLiquidationRewards(1, 0, false, ProtocolAction.None, "", "");
@@ -530,7 +530,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // Change The rewards calculations parameters to not be dependent of the initial values
         vm.prank(DEPLOYER);
         // Put incredibly high values to empty the vault
-        liquidationRewardsManager.setRewardsParameters(500_000, 1_000_000, 200_000, 8000 gwei, 20_000);
+        liquidationRewardsManager.setRewardsParameters(500_000, 1_000_000, 200_000, 200_000, 8000 gwei, 20_000);
 
         uint256 wstETHBalanceBeforeRewards = wstETH.balanceOf(address(this));
         uint256 vaultBalanceBeforeRewards = protocol.getBalanceVault();
@@ -613,7 +613,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // disable rewards
         vm.prank(DEPLOYER);
-        liquidationRewardsManager.setRewardsParameters(0, 0, 0, 1000 gwei, 0);
+        liquidationRewardsManager.setRewardsParameters(0, 0, 0, 0, 1000 gwei, 0);
 
         // liquidate
         uint256 balanceBefore = address(this).balance;
