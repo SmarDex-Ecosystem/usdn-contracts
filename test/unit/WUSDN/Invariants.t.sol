@@ -42,7 +42,7 @@ contract TestWusdnInvariants is WusdnTokenFixture {
     }
 
     /**
-     * @custom:scenario Check that the contract have the expected number of total assets
+     * @custom:scenario Check that the contract has the expected number of total assets
      */
     function invariant_totalAssetsSum() public {
         assertEq(usdn.balanceOf(address(wusdn)), wusdn.previewUnwrap(wusdn.totalSupply()), "total assets previewUnwrap");
@@ -57,7 +57,7 @@ contract TestWusdnInvariants is WusdnTokenFixture {
     }
 
     /**
-     * @custom:scenario Check that the contract have no USDN shares after unwrapping all WUSDN
+     * @custom:scenario Check that the contract has no USDN shares after unwrapping all WUSDN
      */
     function invariant_noSharesAfterUnwrap() public {
         wusdn.unwrapAll();

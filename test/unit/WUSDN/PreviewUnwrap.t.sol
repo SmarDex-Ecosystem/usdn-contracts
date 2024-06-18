@@ -50,8 +50,8 @@ contract TestWusdnPreviewUnwrap is WusdnTokenFixture {
     }
 
     /**
-     * @dev Helper function to test the previewUnwrap function
-     * @param usdnAmount The amount of USDN to previewUnwrap
+     * @dev Helper function to test the {previewUnwrap} function
+     * @param usdnAmount The amount of USDN to {previewUnwrap}
      */
     function test_previewUnwrap(uint256 usdnAmount) internal {
         uint256 shares = usdn.convertToShares(usdnAmount) * wusdn.SHARES_RATIO();

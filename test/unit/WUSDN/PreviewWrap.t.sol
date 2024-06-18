@@ -7,7 +7,7 @@ import { USER_1 } from "../../utils/Constants.sol";
 import "forge-std/Vm.sol";
 
 /**
- * @custom:feature The `previewWrap` function of `WUSDN`
+ * @custom:feature The {previewWrap} function of WUSDN
  * @custom:background Given this contract has 100 USDN
  * @custom:and The divisor is `MAX_DIVISOR`
  */
@@ -49,8 +49,8 @@ contract TestWusdnPreviewWrap is WusdnTokenFixture {
     }
 
     /**
-     * @dev Helper function to test the previewWrap function
-     * @param usdnAmount The amount of USDN to previewWrap
+     * @dev Helper function to test the {previewWrap} function
+     * @param usdnAmount The amount of USDN to {previewWrap}
      */
     function test_previewWrap(uint256 usdnAmount) internal {
         uint256 shares = usdn.convertToShares(usdnAmount) / wusdn.SHARES_RATIO();
