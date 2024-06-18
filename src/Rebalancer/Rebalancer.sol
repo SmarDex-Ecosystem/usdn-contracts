@@ -6,6 +6,7 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { ERC165, IERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 import { IOwnershipCallback } from "../interfaces/UsdnProtocol/IOwnershipCallback.sol";
@@ -22,6 +23,7 @@ import { PositionId, PreviousActionsData } from "../interfaces/UsdnProtocol/IUsd
  */
 contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
     using SafeERC20 for IERC20Metadata;
+    using SafeCast for uint256;
 
     /// @notice Modifier to check if the caller is the USDN protocol or the owner
     modifier onlyAdmin() {
@@ -351,7 +353,7 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
 
         uint128 remainingAssets = userDepositData.amount - amount;
         if (remainingAssets > 0 && remainingAssets < _minAssetDeposit) {
-            revert RebalancerInvalidMinAssetDeposit();
+            revert RebalancerInvalidAmount();
         }
 
         uint256 amountToClose = FixedPointMathLib.fullMulDiv(
@@ -361,9 +363,10 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
         );
 
         success_ = _usdnProtocol.initiateClosePosition{ value: msg.value }(
-            currentPositionData.id, uint128(amountToClose), to, validator, currentPriceData, previousActionsData
+            currentPositionData.id, amountToClose.toUint128(), to, validator, currentPriceData, previousActionsData
         );
 
+        // slither-disable-next-line reentrancy-no-eth
         if (success_) {
             if (remainingAssets == 0) {
                 delete _userDeposit[msg.sender];

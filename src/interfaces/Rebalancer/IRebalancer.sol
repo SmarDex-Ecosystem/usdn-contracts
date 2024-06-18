@@ -116,13 +116,15 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
     /**
      * @notice Closes a user deposited amount of the current UsdnProtocol rebalancer position
      * @dev The rebalancer allows partially closing its position to withdraw the user's assets + PnL
-     * The remaining amount needs to be above `_minAssetDeposit` as `_minLongPosition` on the USDN protocol side
+     * The remaining amount needs to be above `_minAssetDeposit` and `_minLongPosition` on the USDN protocol side
      * @param amount The amount to close relative to the amount deposited
      * @param to The to address
      * @param validator The validator address
      * @param currentPriceData The current price data
      * @param previousActionsData The previous action price data
      * @return success_ If the UsdnProtocol's `initiateClosePosition` was successful
+     * If false, the action failed because of pending liquidations, check IUsdnProtocolActions:initiateClosePosition for
+     * more details
      */
     function initiateClosePosition(
         uint128 amount,

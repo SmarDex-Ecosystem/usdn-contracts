@@ -25,7 +25,7 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
      * @custom:when The `initiateClosePosition` function is called
      * @custom:then It should revert with `RebalancerInvalidAmount`
      */
-    function test_RevertWhenRebalancerInvalidAmountZero() external {
+    function test_RevertWhen_RebalancerInvalidAmountZero() external {
         vm.expectRevert(IRebalancerErrors.RebalancerInvalidAmount.selector);
         rebalancer.initiateClosePosition(0, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA);
     }
@@ -35,7 +35,7 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
      * @custom:when The `initiateClosePosition` function is called
      * @custom:then It should revert with `RebalancerInvalidAmount`
      */
-    function test_RevertWhenRebalancerInvalidAmount() external {
+    function test_RevertWhen_RebalancerInvalidAmount() external {
         rebalancer.withdrawPendingAssets(uint128(minAsset), address(this));
         vm.expectRevert(IRebalancerErrors.RebalancerInvalidAmount.selector);
         rebalancer.initiateClosePosition(1, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA);
@@ -46,7 +46,7 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
      * @custom:when The `initiateClosePosition` function is called
      * @custom:then It should revert with `RebalancerUserPending`
      */
-    function test_RevertWhenRebalancerUserPending() external {
+    function test_RevertWhen_RebalancerUserPending() external {
         vm.expectRevert(IRebalancerErrors.RebalancerUserPending.selector);
         rebalancer.initiateClosePosition(minAsset, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA);
     }

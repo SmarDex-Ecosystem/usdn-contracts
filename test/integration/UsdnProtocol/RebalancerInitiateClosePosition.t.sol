@@ -26,7 +26,7 @@ contract UsdnProtocolRebalancerInitiateClosePosition is UsdnProtocolBaseIntegrat
     TickData internal tickToLiquidateData;
 
     function setUp() public {
-        (tickSpacing, amountInRebalancer, posToLiquidate, tickToLiquidateData) = _setUpRebalancer();
+        (tickSpacing, amountInRebalancer, posToLiquidate, tickToLiquidateData) = _setUpImbalanced();
         skip(5 minutes);
 
         vm.prank(DEPLOYER);
@@ -57,7 +57,7 @@ contract UsdnProtocolRebalancerInitiateClosePosition is UsdnProtocolBaseIntegrat
      * @custom:when The user calls the rebalancer's `initiateClosePosition` function
      * @custom:then The transaction should revert with a `RebalancerInvalidAmount` error
      */
-    function test_RevertWhenRebalancerInvalidAmount() external {
+    function test_RevertWhen_RebalancerInvalidAmountIn() external {
         vm.expectRevert(IRebalancerErrors.RebalancerInvalidAmount.selector);
         rebalancer.initiateClosePosition(amountInRebalancer + 1, address(this), payable(this), "", EMPTY_PREVIOUS_DATA);
     }
@@ -67,10 +67,10 @@ contract UsdnProtocolRebalancerInitiateClosePosition is UsdnProtocolBaseIntegrat
      * @custom:given A rebalancer long position opened in the USDN Protocol
      * @custom:and A user having deposited assets in the rebalancer before the first trigger
      * @custom:when The user calls the rebalancer's `initiateClosePosition` function
-     * @custom:then The transaction should revert with a `RebalancerInvalidMinAssetDeposit` error
+     * @custom:then The transaction should revert with a `RebalancerInvalidAmount` error
      */
-    function test_RevertWhenRebalancerInvalidMinAssetDeposit() external {
-        vm.expectRevert(IRebalancerErrors.RebalancerInvalidMinAssetDeposit.selector);
+    function test_RevertWhen_RebalancerInvalidAmountIn2() external {
+        vm.expectRevert(IRebalancerErrors.RebalancerInvalidAmount.selector);
         rebalancer.initiateClosePosition(
             amountInRebalancer - minAsset + 1, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA
         );
@@ -119,8 +119,8 @@ contract UsdnProtocolRebalancerInitiateClosePosition is UsdnProtocolBaseIntegrat
      * @custom:scenario The user closes his position fully
      * @custom:given A rebalancer long position opened in the USDN Protocol
      * @custom:and A user having deposited assets in the rebalancer before the first trigger
-     * @custom:when The user calls the rebalancer's `initiateClosePosition`
-     * @custom:then A ClosePositionInitiated is emitted
+     * @custom:when The user calls the rebalancer's `initiateClosePosition` function
+     * @custom:then A ClosePositionInitiated event is emitted
      * @custom:and The user depositData is deleted
      */
     function test_RebalancerInitiateClosePosition() external {

@@ -24,7 +24,7 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
     int24 public tickSpacing;
 
     function setUp() public {
-        (tickSpacing, amountInRebalancer, posToLiquidate, tickToLiquidateData) = _setUpRebalancer();
+        (tickSpacing, amountInRebalancer, posToLiquidate, tickToLiquidateData) = _setUpImbalanced();
     }
 
     /**

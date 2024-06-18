@@ -188,7 +188,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         skip(oracleMiddleware.getValidationDelay() + 1);
     }
 
-    function _setUpRebalancer()
+    function _setUpImbalanced()
         internal
         returns (
             int24 tickSpacing_,
