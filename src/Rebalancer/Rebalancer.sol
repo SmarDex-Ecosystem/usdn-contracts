@@ -362,7 +362,7 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
             _positionData[userDepositData.entryPositionVersion].entryAccMultiplier
         );
 
-        // slither-disable-next-line reentrancy-no-eth
+        // slither-disable-next-line reentrancy-eth
         success_ = _usdnProtocol.initiateClosePosition{ value: msg.value }(
             currentPositionData.id, amountToClose.toUint128(), to, validator, currentPriceData, previousActionsData
         );
