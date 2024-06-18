@@ -200,7 +200,7 @@ contract TestRebalancerAdmin is RebalancerFixture {
      */
     function test_RevertWhen_setTimeLimitsDeadlineTooSmall() public adminPrank {
         vm.expectRevert(RebalancerInvalidTimeLimits.selector);
-        rebalancer.setTimeLimits(0, 59, 48 hours);
+        rebalancer.setTimeLimits(1 minutes, 1 minutes + 59 seconds, 48 hours);
     }
 
     /**

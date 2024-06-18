@@ -417,7 +417,7 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
         if (validationDelay >= validationDeadline) {
             revert RebalancerInvalidTimeLimits();
         }
-        if (validationDeadline < 1 minutes) {
+        if (validationDeadline < validationDelay + 1 minutes) {
             revert RebalancerInvalidTimeLimits();
         }
         if (actionCooldown < validationDeadline) {
