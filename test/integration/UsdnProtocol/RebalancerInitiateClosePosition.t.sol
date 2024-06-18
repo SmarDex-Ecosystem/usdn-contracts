@@ -54,9 +54,10 @@ contract UsdnProtocolRebalancerInitiateClosePosition is
      * @custom:scenario Closes partially a rebalancer amount
      * @custom:when The user calls the rebalancer's `initiateClosePosition` function with a
      * portion of his rebalancer amount
-     * @custom:then A `ClosePositionInitiated` is emitted
+     * @custom:then A `ClosePositionInitiated` event is emitted
      * @custom:and The user depositData is updated
-     * @custom:and The user action is pending in USDN protocol
+     * @custom:and The position data is updated
+     * @custom:and The user action is pending in protocol
      */
     function test_rebalancerInitiateClosePositionPartial() external {
         uint128 amount = amountInRebalancer / 10;
@@ -108,7 +109,8 @@ contract UsdnProtocolRebalancerInitiateClosePosition is
      * @custom:when The user calls the rebalancer's `initiateClosePosition` function with his entire rebalancer amount
      * @custom:then A ClosePositionInitiated event is emitted
      * @custom:and The user depositData is deleted
-     * @custom:and The user initiate close position is pending in USDN protocol
+     * @custom:and The position data is updated
+     * @custom:and The user initiate close position is pending in protocol
      */
     function test_rebalancerInitiateClosePosition() external {
         vm.prank(DEPLOYER);
