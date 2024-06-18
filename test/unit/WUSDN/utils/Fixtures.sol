@@ -7,7 +7,7 @@ import { IWusdnErrors } from "../../../../src/interfaces/Usdn/IWusdnErrors.sol";
 import { IWusdnEvents } from "../../../../src/interfaces/Usdn/IWusdnEvents.sol";
 import { Wusdn } from "../../../../src/Usdn/Wusdn.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
-import { USER_1, ADMIN } from "../../../utils/Constants.sol";
+import { ADMIN } from "../../../utils/Constants.sol";
 
 /**
  * @title WusdnTokenFixture
