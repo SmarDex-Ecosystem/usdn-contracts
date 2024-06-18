@@ -10,6 +10,7 @@ import "forge-std/Vm.sol";
  * @custom:feature The `previewUnwrap` function of `WUSDN`
  * @custom:background Given this contract has 100 WUSDN
  * @custom:and The divisor is `MAX_DIVISOR`
+ * @custom:and `usdnAmount` is minted to the msg.sender
  */
 contract TestWusdnPreviewUnwrap is WusdnTokenFixture {
     function setUp() public override {
@@ -20,7 +21,6 @@ contract TestWusdnPreviewUnwrap is WusdnTokenFixture {
     }
     /**
      * @custom:scenario Preview unwrap USDN to WUSDN
-     * @custom:given `usdnAmount` is minted to the msg.sender
      * @custom:when The half of the balance (`usdnAmount / 2`) is preview unwrapped to WUSDN
      * @custom:then The result of {previewUnwrap} should be equal to the shares of `usdnAmount` / `MAX_DIVISOR`
      */
@@ -31,7 +31,6 @@ contract TestWusdnPreviewUnwrap is WusdnTokenFixture {
 
     /**
      * @custom:scenario Preview unwrap USDN to WUSDN
-     * @custom:given `usdnAmount` is minted to the msg.sender
      * @custom:when The balance (`usdnAmount`) of the user is preview unwrapped to WUSDN
      * @custom:then The result of {previewUnwrap} should be equal to the shares of `usdnAmount` / `MAX_DIVISOR`
      */
@@ -41,7 +40,6 @@ contract TestWusdnPreviewUnwrap is WusdnTokenFixture {
 
     /**
      * @custom:scenario Preview unwrap USDN to WUSDN
-     * @custom:given `usdnAmount` is minted to the msg.sender
      * @custom:when `usdnAmount * 2` is preview unwrapped to WUSDN
      * @custom:then The result of {previewUnwrap} should be equal to the shares of `usdnAmount` / `MAX_DIVISOR`
      */
