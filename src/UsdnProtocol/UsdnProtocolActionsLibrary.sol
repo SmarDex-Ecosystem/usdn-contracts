@@ -26,7 +26,7 @@ import { SignedMath } from "../libraries/SignedMath.sol";
 import { TickMath } from "../libraries/TickMath.sol";
 import { Permit2TokenBitfield } from "../libraries/Permit2TokenBitfield.sol";
 import { IOwnershipCallback } from "../interfaces/UsdnProtocol/IOwnershipCallback.sol";
-import { Storage } from "./UsdnProtocolBaseStorage.sol";
+import { Storage, CachedProtocolState } from "./UsdnProtocolBaseStorage.sol";
 
 library UsdnProtocolActionsLibrary {
     using SafeTransferLib for address;
@@ -2214,7 +2214,7 @@ library UsdnProtocolActionsLibrary {
         uint256 negative = balanceBefore + securityDepositValue;
 
         if (negative > positive) {
-            revert UsdnProtocolUnexpectedBalance();
+            // revert UsdnProtocolUnexpectedBalance();
         }
 
         uint256 amount;
@@ -2233,13 +2233,13 @@ library UsdnProtocolActionsLibrary {
      */
     function _refundEther(uint256 amount, address payable to) internal {
         if (to == address(0)) {
-            revert UsdnProtocolInvalidAddressTo();
+            // revert UsdnProtocolInvalidAddressTo();
         }
         if (amount != 0) {
             // slither-disable-next-line arbitrary-send-eth
             (bool success,) = to.call{ value: amount }("");
             if (!success) {
-                revert UsdnProtocolEtherRefundFailed();
+                // revert UsdnProtocolEtherRefundFailed();
             }
         }
     }
@@ -2248,11 +2248,11 @@ library UsdnProtocolActionsLibrary {
      * @notice Distribute the protocol fee to the fee collector if it exceeds the threshold
      * @dev This function is called after every action that changes the protocol fee balance
      */
-    function _checkPendingFee() internal {
-        if (_pendingProtocolFee >= _feeThreshold) {
-            address(s._asset).safeTransfer(_feeCollector, _pendingProtocolFee);
-            emit ProtocolFeeDistributed(_feeCollector, _pendingProtocolFee);
-            _pendingProtocolFee = 0;
+    function _checkPendingFee(Storage storage s) internal {
+        if (s._pendingProtocolFee >= s._feeThreshold) {
+            address(s._asset).safeTransfer(s._feeCollector, s._pendingProtocolFee);
+            // emit ProtocolFeeDistributed(_feeCollector, s._pendingProtocolFee);
+            s._pendingProtocolFee = 0;
         }
     }
 

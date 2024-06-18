@@ -13,6 +13,7 @@ import { PendingAction, TickData } from "../interfaces/UsdnProtocol/IUsdnProtoco
 import { DoubleEndedQueue } from "../libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
 import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
 
 struct Storage {
     // constants
@@ -435,14 +436,14 @@ contract UsdnProtocolBaseStorage is IUsdnProtocolErrors {
 
     // / @inheritdoc IUsdnProtocolBaseStorage
     function getTickData(int24 tick) external view returns (TickData memory) {
-        bytes32 cachedTickHash = tickHash(tick, s._tickVersion[tick]);
+        bytes32 cachedTickHash = coreLib.tickHash(tick, s._tickVersion[tick]);
         return s._tickData[cachedTickHash];
     }
 
     // / @inheritdoc IUsdnProtocolBaseStorage
     function getCurrentLongPosition(int24 tick, uint256 index) external view returns (Position memory) {
         uint256 version = s._tickVersion[tick];
-        bytes32 cachedTickHash = tickHash(tick, version);
+        bytes32 cachedTickHash = coreLib.tickHash(tick, version);
         return s._longPositions[cachedTickHash][index];
     }
 
@@ -454,11 +455,6 @@ contract UsdnProtocolBaseStorage is IUsdnProtocolErrors {
     // / @inheritdoc IUsdnProtocolBaseStorage
     function getTotalLongPositions() external view returns (uint256) {
         return s._totalLongPositions;
-    }
-
-    // / @inheritdoc IUsdnProtocolBaseStorage
-    function tickHash(int24 tick, uint256 version) public pure returns (bytes32) {
-        return keccak256(abi.encodePacked(tick, version));
     }
 
     // / @inheritdoc IUsdnProtocolBaseStorage

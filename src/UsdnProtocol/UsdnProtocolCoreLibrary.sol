@@ -184,6 +184,11 @@ library UsdnProtocolCoreLibrary {
         (action_,) = _getPendingAction(user);
     }
 
+    // / @inheritdoc IUsdnProtocolBaseStorage
+    function tickHash(int24 tick, uint256 version) public pure returns (bytes32) {
+        return keccak256(abi.encodePacked(tick, version));
+    }
+
     /* --------------------------  Internal functions --------------------------- */
 
     /**

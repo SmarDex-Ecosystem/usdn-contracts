@@ -17,13 +17,15 @@ import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IUsdnProtocolEvents } from "../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { UsdnProtocolBaseStorage } from "./UsdnProtocolBaseStorage.sol";
 import { Storage } from "./UsdnProtocolBaseStorage.sol";
+import { UsdnProtocolActionsEntry } from "./UsdnProtocolActionsEntry.sol";
+import { UsdnProtocolCoreEntry } from "./UsdnProtocolCoreEntry.sol";
+import { UsdnProtocolLongEntry } from "./UsdnProtocolLongEntry.sol";
 
-contract UsdnProtocolProxy is
-    // UsdnProtocolLongEntry,
-    // UsdnProtocolVaultEntry,
-    // UsdnProtocolCommonEntry,
-    // UsdnProtocolActionsEntry,
-    UsdnProtocolBaseStorage,
+contract UsdnProtocol is
+    UsdnProtocolLongEntry,
+    UsdnProtocolVaultEntry,
+    UsdnProtocolCoreEntry,
+    UsdnProtocolActionsEntry,
     IUsdnProtocolEvents,
     Ownable2Step
 {

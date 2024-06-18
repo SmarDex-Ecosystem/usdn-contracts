@@ -17,7 +17,7 @@ import {
     TickData,
     PositionId
 } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { UsdnProtocol, Position } from "../../../../src/UsdnProtocol/UsdnProtocol.sol";
+import { UsdnProtocol } from "../../../../src/UsdnProtocol/UsdnProtocolProxy.sol";
 import { IUsdn } from "../../../../src/interfaces/Usdn/IUsdn.sol";
 import { ILiquidationRewardsManager } from "../../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../../../../src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
