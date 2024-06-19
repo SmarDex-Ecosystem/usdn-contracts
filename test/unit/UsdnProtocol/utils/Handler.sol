@@ -32,6 +32,8 @@ import { UsdnProtocolVaultLibrary as vaultLib } from "../../../../src/UsdnProtoc
 import { UsdnProtocolCoreLibrary as coreLib } from "../../../../src/UsdnProtocol/UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as longLib } from "../../../../src/UsdnProtocol/UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolActionsLibrary as actionsLib } from "../../../../src/UsdnProtocol/UsdnProtocolActionsLibrary.sol";
+import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from
+    "../../../../src/UsdnProtocol/UsdnProtocolActionsVaultLibrary.sol";
 
 /**
  * @title UsdnProtocolHandler
@@ -114,7 +116,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
 
     function updateBalances(uint128 currentPrice) external {
         (bool priceUpdated, int256 tempLongBalance, int256 tempVaultBalance) =
-            actionsLib._applyPnlAndFunding(s, currentPrice, uint128(block.timestamp));
+            coreLib._applyPnlAndFunding(s, currentPrice, uint128(block.timestamp));
         if (!priceUpdated) {
             revert("price was not updated");
         }
@@ -196,7 +198,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         external
         returns (bool priceUpdated_, int256 tempLongBalance_, int256 tempVaultBalance_)
     {
-        return actionsLib._applyPnlAndFunding(s, currentPrice, timestamp);
+        return coreLib._applyPnlAndFunding(s, currentPrice, timestamp);
     }
 
     function i_liquidatePositions(
@@ -205,7 +207,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         int256 tempLongBalance,
         int256 tempVaultBalance
     ) external returns (LiquidationsEffects memory effects_) {
-        return actionsLib._liquidatePositions(s, currentPrice, iteration, tempLongBalance, tempVaultBalance);
+        return longLib._liquidatePositions(s, currentPrice, iteration, tempLongBalance, tempVaultBalance);
     }
 
     function i_toDepositPendingAction(PendingAction memory action)
@@ -321,15 +323,15 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     }
 
     function i_checkImbalanceLimitDeposit(uint256 depositValue) external view {
-        _checkImbalanceLimitDeposit(depositValue);
+        actionsVaultLib._checkImbalanceLimitDeposit(s, depositValue);
     }
 
     function i_checkImbalanceLimitWithdrawal(uint256 withdrawalValue, uint256 totalExpo) external view {
-        actionsLib._checkImbalanceLimitWithdrawal(s, withdrawalValue, totalExpo);
+        actionsVaultLib._checkImbalanceLimitWithdrawal(s, withdrawalValue, totalExpo);
     }
 
     function i_checkImbalanceLimitOpen(uint256 openTotalExpoValue, uint256 openCollatValue) external view {
-        actionsLib._checkImbalanceLimitOpen(s, openTotalExpoValue, openCollatValue);
+        longLib._checkImbalanceLimitOpen(s, openTotalExpoValue, openCollatValue);
     }
 
     function i_checkImbalanceLimitClose(uint256 posTotalExpoToClose, uint256 posValueToClose) external view {
@@ -551,7 +553,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
             liqMultiplierAccumulator: liqMultiplierAccumulator
         });
 
-        return actionsLib._flashClosePosition(s, posId, neutralPrice, cache);
+        return longLib._flashClosePosition(s, posId, neutralPrice, cache);
     }
 
     function i_flashOpenPosition(
@@ -572,7 +574,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
             liqMultiplierAccumulator: liqMultiplierAccumulator
         });
 
-        return actionsLib._flashOpenPosition(s, user, neutralPrice, tickWithoutPenalty, amount, cache);
+        return longLib._flashOpenPosition(s, user, neutralPrice, tickWithoutPenalty, amount, cache);
     }
 
     /**

@@ -3,6 +3,7 @@ pragma solidity ^0.8.25;
 
 import { Permit2TokenBitfield } from "../libraries/Permit2TokenBitfield.sol";
 import { UsdnProtocolActionsLibrary as lib } from "./UsdnProtocolActionsLibrary.sol";
+import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
 import { UsdnProtocolBaseStorage } from "./UsdnProtocolBaseStorage.sol";
 import { PreviousActionsData, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { InitiateOpenPositionParams, InitiateClosePositionParams } from "./UsdnProtocolActionsLibrary.sol";
@@ -16,8 +17,9 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (bool success_) {
-        return
-            lib.initiateDeposit(s, amount, to, validator, permit2TokenBitfield, currentPriceData, previousActionsData);
+        return actionsVaultLib.initiateDeposit(
+            s, amount, to, validator, permit2TokenBitfield, currentPriceData, previousActionsData
+        );
     }
 
     function validateDeposit(
@@ -25,7 +27,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
         bytes calldata depositPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (bool success_) {
-        return lib.validateDeposit(s, validator, depositPriceData, previousActionsData);
+        return actionsVaultLib.validateDeposit(s, validator, depositPriceData, previousActionsData);
     }
 
     function initiateWithdrawal(
@@ -35,7 +37,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (bool success_) {
-        return lib.initiateWithdrawal(s, usdnShares, to, validator, currentPriceData, previousActionsData);
+        return actionsVaultLib.initiateWithdrawal(s, usdnShares, to, validator, currentPriceData, previousActionsData);
     }
 
     function validateWithdrawal(
@@ -43,7 +45,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
         bytes calldata withdrawalPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (bool success_) {
-        return lib.validateWithdrawal(s, validator, withdrawalPriceData, previousActionsData);
+        return actionsVaultLib.validateWithdrawal(s, validator, withdrawalPriceData, previousActionsData);
     }
 
     function initiateOpenPosition(
@@ -121,9 +123,5 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
         initializedAndNonReentrant
     {
         return lib.transferPositionOwnership(s, posId, newOwner);
-    }
-
-    function _checkImbalanceLimitDeposit(uint256 depositValue) internal view {
-        return lib._checkImbalanceLimitDeposit(s, depositValue);
     }
 }

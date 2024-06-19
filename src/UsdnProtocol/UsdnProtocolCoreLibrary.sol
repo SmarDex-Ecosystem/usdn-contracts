@@ -365,6 +365,67 @@ library UsdnProtocolCoreLibrary {
         );
     }
 
+    /**
+     * @notice Calculate the profits and losses of the long side, calculate the funding and apply protocol fees,
+     * calculate the new liquidation multiplier and the temporary new balances for each side
+     * @dev This function updates the state of `_lastPrice`, `_lastUpdateTimestamp`, `_lastFunding`, but does not
+     * update the balances. This is left to the caller
+     * @param currentPrice The current price
+     * @param timestamp The timestamp of the current price
+     * @return isPriceRecent_ Whether the price was updated or was already the most recent price
+     * @return tempLongBalance_ The new balance of the long side, could be negative (temporarily)
+     * @return tempVaultBalance_ The new balance of the vault side, could be negative (temporarily)
+     */
+    function _applyPnlAndFunding(Storage storage s, uint128 currentPrice, uint128 timestamp)
+        internal
+        returns (bool isPriceRecent_, int256 tempLongBalance_, int256 tempVaultBalance_)
+    {
+        int256 fundAsset;
+        int256 fund;
+        {
+            // cache variable for optimization
+            uint128 lastUpdateTimestamp = s._lastUpdateTimestamp;
+            // if the price is not fresh, do nothing
+            if (timestamp <= lastUpdateTimestamp) {
+                return (timestamp == lastUpdateTimestamp, s._balanceLong.toInt256(), s._balanceVault.toInt256());
+            }
+
+            // update the funding EMA
+            int256 ema = _updateEMA(s, timestamp - lastUpdateTimestamp);
+
+            // calculate the funding
+            (fundAsset, fund) = _fundingAsset(s, timestamp, ema);
+        }
+
+        // take protocol fee on the funding value
+        (int256 fee, int256 fundWithFee, int256 fundAssetWithFee) = _calculateFee(s, fund, fundAsset);
+
+        // we subtract the fee from the total balance
+        int256 totalBalance = s._balanceLong.toInt256();
+        totalBalance = totalBalance.safeAdd(s._balanceVault.toInt256()).safeSub(fee);
+        // calculate new balances (for now, any bad debt has not been repaid, balances could become negative)
+
+        if (fund > 0) {
+            // in case of positive funding, the vault balance must be decremented by the totality of the funding amount
+            // however, since we deducted the fee amount from the total balance, the vault balance will be incremented
+            // only by the funding amount minus the fee amount
+            tempLongBalance_ = _longAssetAvailable(s, currentPrice).safeSub(fundAsset);
+        } else {
+            // in case of negative funding, the vault balance must be decremented by the totality of the funding amount
+            // however, since we deducted the fee amount from the total balance, the long balance will be incremented
+            // only by the funding amount minus the fee amount
+            tempLongBalance_ = _longAssetAvailable(s, currentPrice).safeSub(fundAssetWithFee);
+        }
+        tempVaultBalance_ = totalBalance.safeSub(tempLongBalance_);
+
+        // update state variables
+        s._lastPrice = currentPrice;
+        s._lastUpdateTimestamp = timestamp;
+        s._lastFunding = fundWithFee;
+
+        isPriceRecent_ = true;
+    }
+
     /* -------------------------- Pending actions queue ------------------------- */
 
     /**
