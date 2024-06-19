@@ -13,7 +13,7 @@ import { IOwnershipCallback } from "../interfaces/UsdnProtocol/IOwnershipCallbac
 import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IRebalancer } from "../interfaces/Rebalancer/IRebalancer.sol";
 import { IUsdnProtocol } from "../interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import { PositionId, PreviousActionsData } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PositionId, PreviousActionsData, Position } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title Rebalancer
@@ -367,8 +367,15 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
             _positionData[userDepositData.entryPositionVersion].entryAccMultiplier
         );
 
+        IUsdnProtocol protocol = _usdnProtocol;
+
+        (Position memory protocolPosition,) = protocol.getLongPosition(currentPositionData.id);
+        uint256 userBonus =
+            FixedPointMathLib.divWad(amountToClose, protocolPosition.amount - currentPositionData.amount);
+        amountToClose += (userBonus / FixedPointMathLib.WAD).toUint128();
+
         // slither-disable-next-line reentrancy-eth
-        success_ = _usdnProtocol.initiateClosePosition{ value: msg.value }(
+        success_ = protocol.initiateClosePosition{ value: msg.value }(
             currentPositionData.id, amountToClose.toUint128(), to, validator, currentPriceData, previousActionsData
         );
 
@@ -384,8 +391,7 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
             currentPositionData.amount -= uint128(amountToClose);
 
             if (currentPositionData.amount == 0) {
-                currentPositionData.id =
-                    PositionId({ tick: _usdnProtocol.NO_POSITION_TICK(), tickVersion: 0, index: 0 });
+                currentPositionData.id = PositionId({ tick: protocol.NO_POSITION_TICK(), tickVersion: 0, index: 0 });
             }
 
             _positionData[positionVersion] = currentPositionData;
