@@ -11,16 +11,7 @@ import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { UsdnProtocolBaseStorage } from "./UsdnProtocolBaseStorage.sol";
 import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { Storage } from "./UsdnProtocolBaseStorage.sol";
-import {
-    ProtocolAction,
-    PendingAction,
-    DepositPendingAction,
-    WithdrawalPendingAction,
-    LongPendingAction,
-    PositionId,
-    Position,
-    TickData
-} from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PositionId } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @notice Emitted when a position was moved from one tick to another

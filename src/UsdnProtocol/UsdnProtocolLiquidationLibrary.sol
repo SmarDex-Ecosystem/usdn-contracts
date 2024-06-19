@@ -10,16 +10,13 @@ import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes
 import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IUsdnProtocolActions } from "../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 import {
-    DepositPendingAction,
-    LiquidationsEffects,
     LongPendingAction,
     PendingAction,
     Position,
     PositionId,
     PreviousActionsData,
     ProtocolAction,
-    TickData,
-    WithdrawalPendingAction
+    TickData
 } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
 import { SignedMath } from "../libraries/SignedMath.sol";

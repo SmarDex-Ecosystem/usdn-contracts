@@ -8,28 +8,21 @@ import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocolLong } from "../interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
-import { Position, LiquidationsEffects, TickData, PositionId } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { TickMath } from "../libraries/TickMath.sol";
 import { SignedMath } from "../libraries/SignedMath.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
 import { Storage, CachedProtocolState } from "./UsdnProtocolBaseStorage.sol";
 import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import {
-    DepositPendingAction,
     LiquidationsEffects,
-    LongPendingAction,
-    PendingAction,
     Position,
     PositionId,
-    PreviousActionsData,
     ProtocolAction,
-    TickData,
-    WithdrawalPendingAction
+    TickData
 } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
 import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
-import { UsdnProtocolActionsLibrary as actionsLib } from "./UsdnProtocolActionsLibrary.sol";
 import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
 import {
     UsdnProtocolLiquidationLibrary as actionsLiquidationLib,

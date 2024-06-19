@@ -9,7 +9,6 @@ import { IUsdnProtocolVault } from "../interfaces/UsdnProtocol/IUsdnProtocolVaul
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { Storage } from "./UsdnProtocolBaseStorage.sol";
 import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
-import { UsdnProtocolActionsLibrary as actionsLib } from "./UsdnProtocolActionsLibrary.sol";
 import { PositionId, Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { SignedMath } from "../libraries/SignedMath.sol";
 import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";

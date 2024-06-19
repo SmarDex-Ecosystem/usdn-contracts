@@ -2,12 +2,10 @@
 pragma solidity ^0.8.25;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
 import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IUsdnProtocolActions } from "../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 import {
     DepositPendingAction,
@@ -25,9 +23,7 @@ import { HugeUint } from "../libraries/HugeUint.sol";
 import { SignedMath } from "../libraries/SignedMath.sol";
 import { TickMath } from "../libraries/TickMath.sol";
 import { Permit2TokenBitfield } from "../libraries/Permit2TokenBitfield.sol";
-import { IOwnershipCallback } from "../interfaces/UsdnProtocol/IOwnershipCallback.sol";
 import { Storage } from "./UsdnProtocolBaseStorage.sol";
-import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
 import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as longLib } from "./UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
@@ -37,7 +33,6 @@ import {
     ValidateOpenPositionData,
     InitiateOpenPositionData
 } from "./UsdnProtocolLiquidationLibrary.sol";
-
 import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
 struct InitiateClosePositionParams {
