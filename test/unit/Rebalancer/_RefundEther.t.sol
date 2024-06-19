@@ -2,7 +2,6 @@
 pragma solidity ^0.8.25;
 
 import { RebalancerFixture } from "./utils/Fixtures.sol";
-import { USER_1 } from "../../utils/Constants.sol";
 
 /**
  * @custom:feature The {_refundEther} function of the rebalancer contract
@@ -19,15 +18,15 @@ contract TestRebalancerRefundEther is RebalancerFixture {
     }
 
     /**
-     * @custom:scenario Send the ether in the rebalancer to the provided address
-     * @custom:when The {_refundEther} function is called with another user as the to address
+     * @custom:scenario Send the ether in the rebalancer to the caller
+     * @custom:when The {_refundEther} function is called
      * @custom:then The user should have received the rebalancer's balance
      */
     function test_refundEther() external {
-        uint256 balanceBefore = USER_1.balance;
-        rebalancer.i_refundEther(USER_1);
+        uint256 balanceBefore = address(this).balance;
+        rebalancer.i_refundEther();
 
-        assertEq(USER_1.balance, balanceBefore + AMOUNT, "The wrong amount of ether was refunded");
+        assertEq(address(this).balance, balanceBefore + AMOUNT, "The wrong amount of ether was refunded");
     }
 
     /**
@@ -40,17 +39,7 @@ contract TestRebalancerRefundEther is RebalancerFixture {
         revertOnReceive = true;
 
         vm.expectRevert(RebalancerEtherRefundFailed.selector);
-        rebalancer.i_refundEther(payable(this));
-    }
-
-    /**
-     * @custom:scenario Reverts if the `to` address is the zero address
-     * @custom:when The {_refundEther} function is called
-     * @custom:then The call should revert with a {RebalancerInvalidAddressTo} error
-     */
-    function test_RevertWhen_refundEtherToZeroAddress() external {
-        vm.expectRevert(RebalancerInvalidAddressTo.selector);
-        rebalancer.i_refundEther(payable(0));
+        rebalancer.i_refundEther();
     }
 
     receive() external payable {

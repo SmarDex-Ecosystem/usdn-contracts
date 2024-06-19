@@ -26,7 +26,7 @@ contract RebalancerHandler is Rebalancer, Test {
         _lastLiquidatedVersion = version;
     }
 
-    function i_refundEther(address payable to) external {
-        return _refundEther(to);
+    function i_refundEther() external {
+        return _refundEther();
     }
 }
