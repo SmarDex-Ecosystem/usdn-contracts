@@ -120,6 +120,9 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
         _positionData[0].id = PositionId({ tick: usdnProtocol.NO_POSITION_TICK(), tickVersion: 0, index: 0 });
     }
 
+    /// @notice To allow this contract from receiving ether refunded by the USDN protocol
+    receive() external payable onlyProtocol { }
+
     /// @inheritdoc IRebalancer
     function getAsset() external view returns (IERC20Metadata) {
         return _asset;
@@ -538,7 +541,4 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
 
         return super.supportsInterface(interfaceId);
     }
-
-    /// @notice To allow this contract from receiving ether refunded by the USDN protocol
-    receive() external payable { }
 }
