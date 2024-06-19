@@ -13,6 +13,7 @@ import { HugeUint } from "../libraries/HugeUint.sol";
 import { Storage, CachedProtocolState } from "./UsdnProtocolBaseStorage.sol";
 import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
 import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
+import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
 /**
  * @notice Structure to hold the temporary data during liquidation
@@ -66,7 +67,7 @@ library UsdnProtocolLongLibrary {
     {
         (bytes32 tickHash, uint256 version) = vaultLib._tickHash(s, posId.tick);
         if (posId.tickVersion != version) {
-            // revert UsdnProtocolOutdatedTick(version, posId.tickVersion);
+            revert IUsdnProtocolErrors.UsdnProtocolOutdatedTick(version, posId.tickVersion);
         }
         pos_ = s._longPositions[tickHash][posId.index];
         liquidationPenalty_ = s._tickData[tickHash].liquidationPenalty;
@@ -171,7 +172,7 @@ library UsdnProtocolLongLibrary {
         returns (int256 available_)
     {
         if (timestamp < s._lastUpdateTimestamp) {
-            // revert UsdnProtocolTimestampTooOld();
+            revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
         }
 
         int256 ema = coreLib.calcEMA(s._lastFunding, timestamp - s._lastUpdateTimestamp, s._EMAPeriod, s._EMA);
@@ -237,7 +238,7 @@ library UsdnProtocolLongLibrary {
         }
         if (longTradingExpo == 0) {
             // it is not possible to calculate the unadjusted price when the trading expo is zero
-            // revert UsdnProtocolZeroLongTradingExpo();
+            revert IUsdnProtocolErrors.UsdnProtocolZeroLongTradingExpo();
         }
         // M = assetPrice * (totalExpo - balanceLong) / accumulator
         // unadjustedPrice = price / M
@@ -414,7 +415,7 @@ library UsdnProtocolLongLibrary {
         if (startPrice <= liquidationPrice) {
             // this situation is not allowed (newly open position must be solvent)
             // also, the calculation below would underflow
-            // revert UsdnProtocolInvalidLiquidationPrice(liquidationPrice, startPrice);
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationPrice(liquidationPrice, startPrice);
         }
 
         leverage_ = ((10 ** s.LEVERAGE_DECIMALS * uint256(startPrice)) / (startPrice - liquidationPrice)).toUint128();
@@ -434,7 +435,7 @@ library UsdnProtocolLongLibrary {
         returns (uint128 totalExpo_)
     {
         if (startPrice <= liquidationPrice) {
-            // revert UsdnProtocolInvalidLiquidationPrice(liquidationPrice, startPrice);
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationPrice(liquidationPrice, startPrice);
         }
 
         totalExpo_ = FixedPointMathLib.fullMulDiv(amount, startPrice, startPrice - liquidationPrice).toUint128();
@@ -455,7 +456,7 @@ library UsdnProtocolLongLibrary {
     {
         uint256 totalExpo = amount + tradingExpo;
         if (totalExpo == 0) {
-            // revert UsdnProtocolZeroTotalExpo();
+            revert IUsdnProtocolErrors.UsdnProtocolZeroTotalExpo();
         }
 
         liqPrice_ = FixedPointMathLib.fullMulDiv(currentPrice, tradingExpo, totalExpo).toUint128();
@@ -470,7 +471,7 @@ library UsdnProtocolLongLibrary {
     function _checkSafetyMargin(Storage storage s, uint128 currentPrice, uint128 liquidationPrice) internal view {
         uint128 maxLiquidationPrice = (currentPrice * (s.BPS_DIVISOR - s._safetyMarginBps) / s.BPS_DIVISOR).toUint128();
         if (liquidationPrice >= maxLiquidationPrice) {
-            // revert UsdnProtocolLiquidationPriceSafetyMargin(liquidationPrice, maxLiquidationPrice);
+            revert IUsdnProtocolErrors.UsdnProtocolLiquidationPriceSafetyMargin(liquidationPrice, maxLiquidationPrice);
         }
     }
 

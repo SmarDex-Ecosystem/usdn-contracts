@@ -23,6 +23,7 @@ import { TickMath } from "../libraries/TickMath.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
 import { Storage } from "./UsdnProtocolBaseStorage.sol";
 import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
+import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
 library UsdnProtocolCoreLibrary {
     using SafeTransferLib for address;
@@ -150,7 +151,7 @@ library UsdnProtocolCoreLibrary {
         oldLongExpo_ = s._totalExpo.toInt256().safeSub(s._balanceLong.toInt256());
 
         if (timestamp < s._lastUpdateTimestamp) {
-            // revert UsdnProtocolTimestampTooOld();
+            revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
         } else if (timestamp == s._lastUpdateTimestamp) {
             return (0, oldLongExpo_);
         }
@@ -539,7 +540,7 @@ library UsdnProtocolCoreLibrary {
         amountToRefund_ = _removeStalePendingAction(s, user); // check if there is a pending action that was
             // liquidated and remove it
         if (s._pendingActions[user] > 0) {
-            // revert UsdnProtocolPendingAction();
+            revert IUsdnProtocolErrors.UsdnProtocolPendingAction();
         }
         // add the action to the queue
         uint128 rawIndex = s._pendingActionsQueue.pushBack(action);
@@ -584,7 +585,7 @@ library UsdnProtocolCoreLibrary {
     {
         (action_, rawIndex_) = _getPendingAction(s, user);
         if (action_.action == ProtocolAction.None) {
-            // revert UsdnProtocolNoPendingAction();
+            revert IUsdnProtocolErrors.UsdnProtocolNoPendingAction();
         }
     }
 
@@ -613,7 +614,7 @@ library UsdnProtocolCoreLibrary {
     {
         PendingAction memory pending = s._pendingActionsQueue.atRaw(rawIndex);
         if (block.timestamp < pending.timestamp + s._validationDeadline + 1 hours) {
-            // revert UsdnProtocolUnauthorized();
+            revert IUsdnProtocolErrors.UsdnProtocolUnauthorized();
         }
         delete s._pendingActions[pending.validator];
         s._pendingActionsQueue.clearAt(rawIndex);
@@ -670,7 +671,7 @@ library UsdnProtocolCoreLibrary {
         if (cleanup) {
             (bool success,) = to.call{ value: pending.securityDepositValue }("");
             if (!success) {
-                // revert UsdnProtocolEtherRefundFailed();
+                revert IUsdnProtocolErrors.UsdnProtocolEtherRefundFailed();
             }
         }
     }

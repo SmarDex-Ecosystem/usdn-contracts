@@ -97,13 +97,9 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         if (longTradingExpo < 0) {
             longTradingExpo = 0;
         }
+        bytes32 tickHash = vaultLib.tickHash(tick, s._tickVersion[tick]);
         return longLib._tickValue(
-            s,
-            tick,
-            currentPrice,
-            uint256(longTradingExpo),
-            s._liqMultiplierAccumulator,
-            s._tickData[vaultLib.tickHash(tick, s._tickVersion[tick])]
+            s, tick, currentPrice, uint256(longTradingExpo), s._liqMultiplierAccumulator, s._tickData[tickHash]
         );
     }
 

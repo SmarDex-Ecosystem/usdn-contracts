@@ -12,6 +12,7 @@ import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.so
 import { UsdnProtocolActionsLibrary as actionsLib } from "./UsdnProtocolActionsLibrary.sol";
 import { PositionId, Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { SignedMath } from "../libraries/SignedMath.sol";
+import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
 library UsdnProtocolVaultLibrary {
     using SafeCast for int256;
@@ -84,7 +85,7 @@ library UsdnProtocolVaultLibrary {
         returns (int256 available_)
     {
         if (timestamp < s._lastUpdateTimestamp) {
-            // revert UsdnProtocolTimestampTooOld();
+            revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
         }
 
         int256 ema = coreLib.calcEMA(s._lastFunding, timestamp - s._lastUpdateTimestamp, s._EMAPeriod, s._EMA);
@@ -104,7 +105,7 @@ library UsdnProtocolVaultLibrary {
         if (pendingActionIndex == 0) {
             // no pending action
             // use the `rawIndex` variant below if for some reason the `_pendingActions` mapping is messed up
-            // revert UsdnProtocolNoPendingAction();
+            revert IUsdnProtocolErrors.UsdnProtocolNoPendingAction();
         }
         uint128 rawIndex = uint128(pendingActionIndex - 1);
         coreLib._removeBlockedPendingAction(s, rawIndex, to, true);
@@ -116,7 +117,7 @@ library UsdnProtocolVaultLibrary {
         if (pendingActionIndex == 0) {
             // no pending action
             // use the `rawIndex` variant below if for some reason the `_pendingActions` mapping is messed up
-            // revert UsdnProtocolNoPendingAction();
+            revert IUsdnProtocolErrors.UsdnProtocolNoPendingAction();
         }
         uint128 rawIndex = uint128(pendingActionIndex - 1);
         coreLib._removeBlockedPendingAction(s, rawIndex, to, false);
@@ -143,7 +144,7 @@ library UsdnProtocolVaultLibrary {
             int256 imbalanceBps =
                 (coreLib._toInt256(depositAmount) - longTradingExpo) * int256(s.BPS_DIVISOR) / longTradingExpo;
             if (imbalanceBps > depositLimit) {
-                // revert UsdnProtocolImbalanceLimitReached(imbalanceBps);
+                revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
             }
         }
         int256 openLimit = s._openExpoImbalanceLimitBps;
@@ -151,7 +152,7 @@ library UsdnProtocolVaultLibrary {
             int256 imbalanceBps = (longTradingExpo - coreLib._toInt256(depositAmount)) * int256(s.BPS_DIVISOR)
                 / coreLib._toInt256(depositAmount);
             if (imbalanceBps > openLimit) {
-                // revert UsdnProtocolImbalanceLimitReached(imbalanceBps);
+                revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
             }
         }
     }
