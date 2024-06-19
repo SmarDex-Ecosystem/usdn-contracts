@@ -21,8 +21,10 @@ contract TestRebalancer is RebalancerFixture {
      * @custom:then The call reverts with a {RebalancerUnauthorized} error
      */
     function test_RevertWhen_receivingEther() public {
-        vm.expectRevert(RebalancerUnauthorized.selector);
-        address(rebalancer).call{ value: 1 }("");
+        (bool success, bytes memory data) = address(rebalancer).call{ value: 1 }("");
+
+        assertFalse(success, "The call should have failed");
+        assertEq(bytes4(data), RebalancerUnauthorized.selector);
     }
 
     /**
@@ -35,8 +37,9 @@ contract TestRebalancer is RebalancerFixture {
         vm.deal(address(usdnProtocol), 1);
 
         vm.prank(address(usdnProtocol));
-        address(rebalancer).call{ value: 1 }("");
+        (bool success,) = address(rebalancer).call{ value: 1 }("");
 
+        assertTrue(success, "The call should have been a success");
         assertEq(address(rebalancer).balance, 1, "The rebalancer should have received the ether");
     }
 
