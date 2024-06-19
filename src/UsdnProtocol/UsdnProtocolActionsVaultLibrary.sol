@@ -11,12 +11,13 @@ import { HugeUint } from "../libraries/HugeUint.sol";
 import { SignedMath } from "../libraries/SignedMath.sol";
 import { Permit2TokenBitfield } from "../libraries/Permit2TokenBitfield.sol";
 import { Storage } from "./UsdnProtocolBaseStorage.sol";
+import { IUsdnProtocolEvents } from "./../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
 import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as longLib } from "./UsdnProtocolLongLibrary.sol";
-import { UsdnProtocolActionsLibrary as actionsLongLib } from "./UsdnProtocolActionsLibrary.sol";
-import { UsdnProtocolLiquidationLibrary as actionsLiquidationLib } from "./UsdnProtocolLiquidationLibrary.sol";
+import { UsdnProtocolActionsLongLibrary as actionsLongLib } from "./UsdnProtocolActionsLongLibrary.sol";
+import { UsdnProtocolActionsUtilsLibrary as actionsUtilsLib } from "./UsdnProtocolActionsUtilsLibrary.sol";
 import {
     DepositPendingAction,
     LongPendingAction,
@@ -29,63 +30,6 @@ import {
     InitiateDepositData,
     WithdrawalData
 } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
-/**
- * @notice Emitted when a user initiates a deposit
- * @param to The address that will receive the USDN tokens
- * @param validator The address of the validator that will validate the deposit
- * @param amount The amount of assets that were deposited
- * @param timestamp The timestamp of the action
- */
-event InitiatedDeposit(address indexed to, address indexed validator, uint256 amount, uint256 timestamp);
-
-/**
- * @notice Emitted when a user validates a deposit
- * @param to The address that received the USDN tokens
- * @param validator The address of the validator that validated the deposit
- * @param amountDeposited The amount of assets that were deposited
- * @param usdnMinted The amount of USDN that was minted
- * @param timestamp The timestamp of the InitiatedDeposit action
- */
-event ValidatedDeposit(
-    address indexed to, address indexed validator, uint256 amountDeposited, uint256 usdnMinted, uint256 timestamp
-);
-
-/**
- * @notice Emitted when a user initiates a withdrawal
- * @param to The address that will receive the assets
- * @param validator The address of the validator that will validate the withdrawal
- * @param usdnAmount The amount of USDN that will be burned
- * @param timestamp The timestamp of the action
- */
-event InitiatedWithdrawal(address indexed to, address indexed validator, uint256 usdnAmount, uint256 timestamp);
-
-/**
- * @notice Emitted when a user validates a withdrawal
- * @param to The address that received the assets
- * @param validator The address of the validator that validated the withdrawal
- * @param amountWithdrawn The amount of assets that were withdrawn
- * @param usdnBurned The amount of USDN that was burned
- * @param timestamp The timestamp of the InitiatedWithdrawal action
- */
-event ValidatedWithdrawal(
-    address indexed to, address indexed validator, uint256 amountWithdrawn, uint256 usdnBurned, uint256 timestamp
-);
-
-/**
- * @notice Emitted when a security deposit is refunded
- * @param pendingActionValidator Address of the validator
- * @param receivedBy Address of the user who received the security deposit
- * @param amount Amount of security deposit refunded
- */
-event SecurityDepositRefunded(address indexed pendingActionValidator, address indexed receivedBy, uint256 amount);
-
-/**
- * @notice Emitted when the pending protocol fee is distributed
- * @param feeCollector The collector's address
- * @param amount The amount of fee transferred
- */
-event ProtocolFeeDistributed(address feeCollector, uint256 amount);
 
 library UsdnProtocolActionsVaultLibrary {
     using SafeTransferLib for address;
@@ -300,7 +244,7 @@ library UsdnProtocolActionsVaultLibrary {
             s,
             ProtocolAction.InitiateDeposit,
             block.timestamp,
-            actionsLiquidationLib._calcActionId(validator, uint128(block.timestamp)),
+            actionsUtilsLib._calcActionId(validator, uint128(block.timestamp)),
             currentPriceData
         );
 
@@ -447,7 +391,7 @@ library UsdnProtocolActionsVaultLibrary {
 
         isInitiated_ = true;
 
-        emit InitiatedDeposit(to, validator, amount, block.timestamp);
+        emit IUsdnProtocolEvents.InitiatedDeposit(to, validator, amount, block.timestamp);
     }
 
     /**
@@ -496,7 +440,7 @@ library UsdnProtocolActionsVaultLibrary {
             s,
             ProtocolAction.ValidateDeposit,
             deposit.timestamp,
-            actionsLiquidationLib._calcActionId(deposit.validator, deposit.timestamp),
+            actionsUtilsLib._calcActionId(deposit.validator, deposit.timestamp),
             priceData
         );
 
@@ -551,7 +495,9 @@ library UsdnProtocolActionsVaultLibrary {
 
         uint256 mintedTokens = s._usdn.mintShares(deposit.to, usdnSharesToMint);
         isValidated_ = true;
-        emit ValidatedDeposit(deposit.to, deposit.validator, deposit.amount, mintedTokens, deposit.timestamp);
+        emit IUsdnProtocolEvents.ValidatedDeposit(
+            deposit.to, deposit.validator, deposit.amount, mintedTokens, deposit.timestamp
+        );
     }
 
     /**
@@ -572,7 +518,7 @@ library UsdnProtocolActionsVaultLibrary {
             s,
             ProtocolAction.InitiateWithdrawal,
             block.timestamp,
-            actionsLiquidationLib._calcActionId(validator, uint128(block.timestamp)),
+            actionsUtilsLib._calcActionId(validator, uint128(block.timestamp)),
             currentPriceData
         );
 
@@ -714,7 +660,9 @@ library UsdnProtocolActionsVaultLibrary {
         s._pendingBalanceVault -= data.withdrawalAmount.toInt256();
 
         isInitiated_ = true;
-        emit InitiatedWithdrawal(to, validator, s._usdn.convertToTokens(usdnShares), block.timestamp);
+        emit IUsdnProtocolEvents.InitiatedWithdrawal(
+            to, validator, s._usdn.convertToTokens(usdnShares), block.timestamp
+        );
     }
 
     /**
@@ -763,7 +711,7 @@ library UsdnProtocolActionsVaultLibrary {
             s,
             ProtocolAction.ValidateWithdrawal,
             withdrawal.timestamp,
-            actionsLiquidationLib._calcActionId(withdrawal.validator, withdrawal.timestamp),
+            actionsUtilsLib._calcActionId(withdrawal.validator, withdrawal.timestamp),
             priceData
         );
 
@@ -826,7 +774,7 @@ library UsdnProtocolActionsVaultLibrary {
 
         isValidated_ = true;
 
-        emit ValidatedWithdrawal(
+        emit IUsdnProtocolEvents.ValidatedWithdrawal(
             withdrawal.to, withdrawal.validator, assetToTransfer, s._usdn.convertToTokens(shares), withdrawal.timestamp
         );
     }
@@ -893,7 +841,7 @@ library UsdnProtocolActionsVaultLibrary {
         if (executed_ || liquidated_) {
             coreLib._clearPendingAction(s, pending.validator, rawIndex);
             securityDepositValue_ = pending.securityDepositValue;
-            emit SecurityDepositRefunded(pending.validator, msg.sender, securityDepositValue_);
+            emit IUsdnProtocolEvents.SecurityDepositRefunded(pending.validator, msg.sender, securityDepositValue_);
         }
     }
 
@@ -947,7 +895,7 @@ library UsdnProtocolActionsVaultLibrary {
     function _checkPendingFee(Storage storage s) public {
         if (s._pendingProtocolFee >= s._feeThreshold) {
             address(s._asset).safeTransfer(s._feeCollector, s._pendingProtocolFee);
-            emit ProtocolFeeDistributed(s._feeCollector, s._pendingProtocolFee);
+            emit IUsdnProtocolEvents.ProtocolFeeDistributed(s._feeCollector, s._pendingProtocolFee);
             s._pendingProtocolFee = 0;
         }
     }

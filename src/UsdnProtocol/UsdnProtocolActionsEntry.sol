@@ -2,10 +2,10 @@
 pragma solidity ^0.8.25;
 
 import { Permit2TokenBitfield } from "../libraries/Permit2TokenBitfield.sol";
-import { UsdnProtocolActionsLibrary as lib } from "./UsdnProtocolActionsLibrary.sol";
 import { UsdnProtocolBaseStorage } from "./UsdnProtocolBaseStorage.sol";
 import { PreviousActionsData, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { UsdnProtocolLiquidationLibrary as actionsLiquidationLib } from "./UsdnProtocolLiquidationLibrary.sol";
+import { UsdnProtocolActionsUtilsLibrary as actionsUtilsLib } from "./UsdnProtocolActionsUtilsLibrary.sol";
+import { UsdnProtocolActionsLongLibrary as actionsLonglib } from "./UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
 import {
     InitiateClosePositionParams, InitiateOpenPositionParams
@@ -70,7 +70,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
             permit2TokenBitfield: permit2TokenBitfield
         });
 
-        return lib.initiateOpenPosition(s, params, currentPriceData, previousActionsData);
+        return actionsLonglib.initiateOpenPosition(s, params, currentPriceData, previousActionsData);
     }
 
     function validateOpenPosition(
@@ -78,7 +78,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
         bytes calldata openPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (bool success_) {
-        return lib.validateOpenPosition(s, validator, openPriceData, previousActionsData);
+        return actionsLonglib.validateOpenPosition(s, validator, openPriceData, previousActionsData);
     }
 
     function initiateClosePosition(
@@ -92,7 +92,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
         InitiateClosePositionParams memory params =
             InitiateClosePositionParams({ posId: posId, amountToClose: amountToClose, to: to, validator: validator });
 
-        return lib.initiateClosePosition(s, params, currentPriceData, previousActionsData);
+        return actionsLonglib.initiateClosePosition(s, params, currentPriceData, previousActionsData);
     }
 
     function validateClosePosition(
@@ -100,7 +100,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
         bytes calldata closePriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (bool success_) {
-        return lib.validateClosePosition(s, validator, closePriceData, previousActionsData);
+        return actionsLonglib.validateClosePosition(s, validator, closePriceData, previousActionsData);
     }
 
     function liquidate(bytes calldata currentPriceData, uint16 iterations)
@@ -109,7 +109,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
         initializedAndNonReentrant
         returns (uint256 liquidatedPositions_)
     {
-        return actionsLiquidationLib.liquidate(s, currentPriceData, iterations);
+        return actionsUtilsLib.liquidate(s, currentPriceData, iterations);
     }
 
     function validateActionablePendingActions(PreviousActionsData calldata previousActionsData, uint256 maxValidations)
@@ -118,13 +118,13 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
         initializedAndNonReentrant
         returns (uint256 validatedActions_)
     {
-        return actionsLiquidationLib.validateActionablePendingActions(s, previousActionsData, maxValidations);
+        return actionsUtilsLib.validateActionablePendingActions(s, previousActionsData, maxValidations);
     }
 
     function transferPositionOwnership(PositionId calldata posId, address newOwner)
         external
         initializedAndNonReentrant
     {
-        return actionsLiquidationLib.transferPositionOwnership(s, posId, newOwner);
+        return actionsUtilsLib.transferPositionOwnership(s, posId, newOwner);
     }
 }

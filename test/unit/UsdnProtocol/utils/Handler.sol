@@ -15,9 +15,9 @@ import {
     ProtocolAction,
     PreviousActionsData,
     TickData,
-    PositionId
+    PositionId,
+    CachedProtocolState
 } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { CachedProtocolState } from "../../../../src/UsdnProtocol/UsdnProtocolBaseStorage.sol";
 import { UsdnProtocol } from "../../../../src/UsdnProtocol/UsdnProtocol.sol";
 import { IUsdn } from "../../../../src/interfaces/Usdn/IUsdn.sol";
 import { ILiquidationRewardsManager } from "../../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
@@ -31,11 +31,12 @@ import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { UsdnProtocolVaultLibrary as vaultLib } from "../../../../src/UsdnProtocol/UsdnProtocolVaultLibrary.sol";
 import { UsdnProtocolCoreLibrary as coreLib } from "../../../../src/UsdnProtocol/UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as longLib } from "../../../../src/UsdnProtocol/UsdnProtocolLongLibrary.sol";
-import { UsdnProtocolActionsLibrary as actionsLib } from "../../../../src/UsdnProtocol/UsdnProtocolActionsLibrary.sol";
+import { UsdnProtocolActionsLongLibrary as actionsLib } from
+    "../../../../src/UsdnProtocol/UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from
     "../../../../src/UsdnProtocol/UsdnProtocolActionsVaultLibrary.sol";
-import { UsdnProtocolLiquidationLibrary as actionsLiquidationLib } from
-    "../../../../src/UsdnProtocol/UsdnProtocolLiquidationLibrary.sol";
+import { UsdnProtocolActionsUtilsLibrary as actionsUtilsLib } from
+    "../../../../src/UsdnProtocol/UsdnProtocolActionsUtilsLibrary.sol";
 
 /**
  * @title UsdnProtocolHandler
@@ -169,7 +170,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         uint128 totalExpoToRemove
     ) external returns (HugeUint.Uint512 memory liqMultiplierAccumulator_) {
         liqMultiplierAccumulator_ =
-            actionsLiquidationLib._removeAmountFromPosition(s, tick, index, pos, amountToRemove, totalExpoToRemove);
+            actionsUtilsLib._removeAmountFromPosition(s, tick, index, pos, amountToRemove, totalExpoToRemove);
     }
 
     function i_positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)
@@ -257,7 +258,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         view
         returns (uint256)
     {
-        return actionsLiquidationLib._assetToRemove(s, priceWithFees, liqPriceWithoutPenalty, posExpo);
+        return actionsUtilsLib._assetToRemove(s, priceWithFees, liqPriceWithoutPenalty, posExpo);
     }
 
     function i_tickValue(
@@ -337,7 +338,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     }
 
     function i_checkImbalanceLimitClose(uint256 posTotalExpoToClose, uint256 posValueToClose) external view {
-        actionsLiquidationLib._checkImbalanceLimitClose(s, posTotalExpoToClose, posValueToClose);
+        actionsUtilsLib._checkImbalanceLimitClose(s, posTotalExpoToClose, posValueToClose);
     }
 
     function i_getLeverage(uint128 price, uint128 liqPrice) external view returns (uint128) {
@@ -451,7 +452,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         external
         returns (uint256, uint256, HugeUint.Uint512 memory)
     {
-        return actionsLiquidationLib._saveNewPosition(s, tick, long, liquidationPenalty);
+        return actionsUtilsLib._saveNewPosition(s, tick, long, liquidationPenalty);
     }
 
     function i_checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) external view {

@@ -18,100 +18,7 @@ import { HugeUint } from "../libraries/HugeUint.sol";
 import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
 
-struct Storage {
-    // constants
-    uint8 LEVERAGE_DECIMALS;
-    uint8 FUNDING_RATE_DECIMALS;
-    uint8 TOKENS_DECIMALS;
-    uint8 LIQUIDATION_MULTIPLIER_DECIMALS;
-    uint8 FUNDING_SF_DECIMALS;
-    uint256 SDEX_BURN_ON_DEPOSIT_DIVISOR;
-    uint256 BPS_DIVISOR;
-    uint16 MAX_LIQUIDATION_ITERATION;
-    int24 NO_POSITION_TICK;
-    address DEAD_ADDRESS;
-    uint256 MIN_USDN_SUPPLY;
-    uint256 MIN_INIT_DEPOSIT;
-    // immutable
-    int24 _tickSpacing;
-    IERC20Metadata _asset;
-    uint8 _assetDecimals;
-    uint8 _priceFeedDecimals;
-    IUsdn _usdn;
-    IERC20Metadata _sdex;
-    uint256 _usdnMinDivisor;
-    // parameters
-    IBaseOracleMiddleware _oracleMiddleware;
-    IBaseLiquidationRewardsManager _liquidationRewardsManager;
-    IBaseRebalancer _rebalancer;
-    uint256 _minLeverage;
-    uint256 _maxLeverage;
-    uint256 _validationDeadline;
-    uint256 _safetyMarginBps; // 2%
-    uint16 _liquidationIteration;
-    uint16 _protocolFeeBps;
-    uint16 _rebalancerBonusBps; // 80%
-    uint8 _liquidationPenalty; // 200 ticks -> ~2.02%
-    uint128 _EMAPeriod;
-    uint256 _fundingSF;
-    uint256 _feeThreshold;
-    int256 _openExpoImbalanceLimitBps;
-    int256 _withdrawalExpoImbalanceLimitBps;
-    int256 _depositExpoImbalanceLimitBps;
-    int256 _closeExpoImbalanceLimitBps;
-    int256 _longImbalanceTargetBps;
-    uint16 _positionFeeBps; // 0.04%
-    uint16 _vaultFeeBps; // 0.04%
-    uint32 _sdexBurnOnDepositRatio; // 1%
-    address _feeCollector;
-    uint64 _securityDepositValue;
-    uint128 _targetUsdnPrice;
-    uint128 _usdnRebaseThreshold;
-    uint256 _usdnRebaseInterval;
-    uint256 _minLongPosition;
-    // State
-    int256 _lastFunding;
-    uint128 _lastPrice;
-    uint128 _lastUpdateTimestamp;
-    uint256 _pendingProtocolFee;
-    // Pending actions queue
-    mapping(address => uint256) _pendingActions;
-    DoubleEndedQueue.Deque _pendingActionsQueue;
-    // Vault
-    uint256 _balanceVault;
-    int256 _pendingBalanceVault;
-    uint256 _lastRebaseCheck;
-    // Long positions
-    int256 _EMA;
-    uint256 _balanceLong;
-    uint256 _totalExpo;
-    HugeUint.Uint512 _liqMultiplierAccumulator;
-    mapping(int24 => uint256) _tickVersion;
-    mapping(bytes32 => Position[]) _longPositions;
-    mapping(bytes32 => TickData) _tickData;
-    int24 _highestPopulatedTick;
-    uint256 _totalLongPositions;
-    LibBitmap.Bitmap _tickBitmap;
-}
-
-/**
- * @notice Structure to hold the state of the protocol
- * @param totalExpo The long total expo
- * @param tradingExpo The long trading expo
- * @param longBalance The long balance
- * @param vaultBalance The vault balance
- * @param liqMultiplierAccumulator The liquidation multiplier accumulator
- */
-struct CachedProtocolState {
-    uint256 totalExpo;
-    uint256 tradingExpo;
-    uint256 longBalance;
-    uint256 vaultBalance;
-    HugeUint.Uint512 liqMultiplierAccumulator;
-}
-
 contract UsdnProtocolBaseStorage is IUsdnProtocolErrors, InitializableReentrancyGuard, Ownable2Step {
-    using LibBitmap for LibBitmap.Bitmap;
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
     Storage internal s;
@@ -538,4 +445,80 @@ contract UsdnProtocolBaseStorage is IUsdnProtocolErrors, InitializableReentrancy
     function getLongImbalanceTargetBps() external view returns (int256 longImbalanceTargetBps_) {
         longImbalanceTargetBps_ = s._longImbalanceTargetBps;
     }
+}
+
+struct Storage {
+    // constants
+    uint8 LEVERAGE_DECIMALS;
+    uint8 FUNDING_RATE_DECIMALS;
+    uint8 TOKENS_DECIMALS;
+    uint8 LIQUIDATION_MULTIPLIER_DECIMALS;
+    uint8 FUNDING_SF_DECIMALS;
+    uint256 SDEX_BURN_ON_DEPOSIT_DIVISOR;
+    uint256 BPS_DIVISOR;
+    uint16 MAX_LIQUIDATION_ITERATION;
+    int24 NO_POSITION_TICK;
+    address DEAD_ADDRESS;
+    uint256 MIN_USDN_SUPPLY;
+    uint256 MIN_INIT_DEPOSIT;
+    // immutable
+    int24 _tickSpacing;
+    IERC20Metadata _asset;
+    uint8 _assetDecimals;
+    uint8 _priceFeedDecimals;
+    IUsdn _usdn;
+    IERC20Metadata _sdex;
+    uint256 _usdnMinDivisor;
+    // parameters
+    IBaseOracleMiddleware _oracleMiddleware;
+    IBaseLiquidationRewardsManager _liquidationRewardsManager;
+    IBaseRebalancer _rebalancer;
+    uint256 _minLeverage;
+    uint256 _maxLeverage;
+    uint256 _validationDeadline;
+    uint256 _safetyMarginBps; // 2%
+    uint16 _liquidationIteration;
+    uint16 _protocolFeeBps;
+    uint16 _rebalancerBonusBps; // 80%
+    uint8 _liquidationPenalty; // 200 ticks -> ~2.02%
+    uint128 _EMAPeriod;
+    uint256 _fundingSF;
+    uint256 _feeThreshold;
+    int256 _openExpoImbalanceLimitBps;
+    int256 _withdrawalExpoImbalanceLimitBps;
+    int256 _depositExpoImbalanceLimitBps;
+    int256 _closeExpoImbalanceLimitBps;
+    int256 _longImbalanceTargetBps;
+    uint16 _positionFeeBps; // 0.04%
+    uint16 _vaultFeeBps; // 0.04%
+    uint32 _sdexBurnOnDepositRatio; // 1%
+    address _feeCollector;
+    uint64 _securityDepositValue;
+    uint128 _targetUsdnPrice;
+    uint128 _usdnRebaseThreshold;
+    uint256 _usdnRebaseInterval;
+    uint256 _minLongPosition;
+    // State
+    int256 _lastFunding;
+    uint128 _lastPrice;
+    uint128 _lastUpdateTimestamp;
+    uint256 _pendingProtocolFee;
+    // Pending actions queue
+    mapping(address => uint256) _pendingActions;
+    DoubleEndedQueue.Deque _pendingActionsQueue;
+    // Vault
+    uint256 _balanceVault;
+    int256 _pendingBalanceVault;
+    uint256 _lastRebaseCheck;
+    // Long positions
+    int256 _EMA;
+    uint256 _balanceLong;
+    uint256 _totalExpo;
+    HugeUint.Uint512 _liqMultiplierAccumulator;
+    mapping(int24 => uint256) _tickVersion;
+    mapping(bytes32 => Position[]) _longPositions;
+    mapping(bytes32 => TickData) _tickData;
+    int24 _highestPopulatedTick;
+    uint256 _totalLongPositions;
+    LibBitmap.Bitmap _tickBitmap;
 }

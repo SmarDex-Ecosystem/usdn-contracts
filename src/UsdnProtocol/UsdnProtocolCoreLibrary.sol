@@ -14,6 +14,7 @@ import { DoubleEndedQueue } from "../libraries/DoubleEndedQueue.sol";
 import { TickMath } from "../libraries/TickMath.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
 import { Storage } from "./UsdnProtocolBaseStorage.sol";
+import { IUsdnProtocolEvents } from "./../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
 import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
@@ -28,13 +29,6 @@ import {
     Position,
     TickData
 } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
-/**
- * @notice Emitted when a user's position was liquidated while pending validation and we removed the pending action
- * @param validator The validator address
- * @param posId The unique position identifier
- */
-event StalePendingActionRemoved(address indexed validator, PositionId posId);
 
 library UsdnProtocolCoreLibrary {
     using SafeTransferLib for address;
@@ -628,7 +622,7 @@ library UsdnProtocolCoreLibrary {
                 // remove the stale pending action
                 s._pendingActionsQueue.clearAt(rawIndex);
                 delete s._pendingActions[user];
-                emit StalePendingActionRemoved(
+                emit IUsdnProtocolEvents.StalePendingActionRemoved(
                     user,
                     PositionId({ tick: openAction.tick, tickVersion: openAction.tickVersion, index: openAction.index })
                 );

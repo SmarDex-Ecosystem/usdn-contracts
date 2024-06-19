@@ -10,11 +10,12 @@ import { HugeUint } from "../libraries/HugeUint.sol";
 import { TickMath } from "../libraries/TickMath.sol";
 import { Permit2TokenBitfield } from "../libraries/Permit2TokenBitfield.sol";
 import { Storage } from "./UsdnProtocolBaseStorage.sol";
+import { IUsdnProtocolEvents } from "./../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as longLib } from "./UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
-import { UsdnProtocolLiquidationLibrary as actionsLiquidationLib } from "./UsdnProtocolLiquidationLibrary.sol";
+import { UsdnProtocolActionsUtilsLibrary as actionsUtilsLib } from "./UsdnProtocolActionsUtilsLibrary.sol";
 import {
     LongPendingAction,
     PendingAction,
@@ -30,90 +31,7 @@ import {
     ClosePositionData
 } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
-/**
- * @notice Emitted when a position is individually liquidated
- * @param user The validator of the close action, not necessarily the owner of the position
- * @param posId The unique identifier for the position that was liquidated
- * @param liquidationPrice The asset price at the moment of liquidation
- * @param effectiveTickPrice The effective liquidated tick price
- */
-event LiquidatedPosition(address indexed user, PositionId posId, uint256 liquidationPrice, uint256 effectiveTickPrice);
-
-/**
- * @notice Emitted when a user initiates the opening of a long position
- * @param owner The address that owns the position
- * @param validator The address of the validator that will validate the position
- * @param timestamp The timestamp of the action
- * @param totalExpo The initial total expo of the position (pending validation)
- * @param amount The amount of assets that were deposited as collateral
- * @param startPrice The asset price at the moment of the position creation (pending validation)
- * @param posId The unique position identifier
- */
-event InitiatedOpenPosition(
-    address indexed owner,
-    address indexed validator,
-    uint40 timestamp,
-    uint128 totalExpo,
-    uint128 amount,
-    uint128 startPrice,
-    PositionId posId
-);
-
-/**
- * @notice Emitted when a user validates the opening of a long position
- * @param owner The address that owns the position
- * @param validator The address of the validator that validated the position
- * @param totalExpo The total expo of the position
- * @param newStartPrice The asset price at the moment of the position creation (final)
- * @param posId The unique position identifier
- * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceUpdated` will be emitted too
- */
-event ValidatedOpenPosition(
-    address indexed owner, address indexed validator, uint128 totalExpo, uint128 newStartPrice, PositionId posId
-);
-
-/**
- * @notice Emitted when a position was moved from one tick to another
- * @param oldPosId The old position identifier
- * @param newPosId The new position identifier
- */
-event LiquidationPriceUpdated(PositionId indexed oldPosId, PositionId newPosId);
-
-/**
- * @notice Emitted when a user initiates the closing of all or part of a long position
- * @param owner The owner of this position
- * @param validator The validator for the pending action
- * @param to The address that will receive the assets
- * @param posId The unique position identifier
- * @param originalAmount The amount of collateral originally on the position
- * @param amountToClose The amount of collateral to close from the position
- * If the entirety of the position is being closed, this value equals `originalAmount`
- * @param totalExpoRemaining The total expo remaining in the position
- * If the entirety of the position is being closed, this value is zero
- */
-event InitiatedClosePosition(
-    address indexed owner,
-    address indexed validator,
-    address indexed to,
-    PositionId posId,
-    uint128 originalAmount,
-    uint128 amountToClose,
-    uint128 totalExpoRemaining
-);
-
-/**
- * @notice Emitted when a user validates the closing of a long position
- * @param validator The validator of the close action, not necessarily the position owner
- * @param to The address that received the assets
- * @param posId The unique position identifier
- * @param amountReceived The amount of assets that were sent to the user
- * @param profit The profit that the user made
- */
-event ValidatedClosePosition(
-    address indexed validator, address indexed to, PositionId posId, uint256 amountReceived, int256 profit
-);
-
-library UsdnProtocolActionsLibrary {
+library UsdnProtocolActionsLongLibrary {
     using SafeTransferLib for address;
     using SafeCast for uint256;
     using HugeUint for HugeUint.Uint512;
@@ -297,13 +215,12 @@ library UsdnProtocolActionsLibrary {
             timestamp: uint40(block.timestamp)
         });
         (data.posId.tickVersion, data.posId.index,) =
-            actionsLiquidationLib._saveNewPosition(s, data.posId.tick, long, data.liquidationPenalty);
+            actionsUtilsLib._saveNewPosition(s, data.posId.tick, long, data.liquidationPenalty);
         s._balanceLong += long.amount;
         posId_ = data.posId;
 
-        amountToRefund_ = actionsLiquidationLib._createOpenPendingAction(
-            s, params.to, params.validator, params.securityDepositValue, data
-        );
+        amountToRefund_ =
+            actionsUtilsLib._createOpenPendingAction(s, params.to, params.validator, params.securityDepositValue, data);
 
         if (params.permit2TokenBitfield.useForAsset()) {
             address(s._asset).permit2TransferFrom(params.user, address(this), params.amount);
@@ -312,7 +229,7 @@ library UsdnProtocolActionsLibrary {
         }
 
         isInitiated_ = true;
-        emit InitiatedOpenPosition(
+        emit IUsdnProtocolEvents.InitiatedOpenPosition(
             params.to,
             params.validator,
             uint40(block.timestamp),
@@ -372,7 +289,7 @@ library UsdnProtocolActionsLibrary {
         returns (bool isValidated_, bool liquidated_)
     {
         (ValidateOpenPositionData memory data, bool liquidated) =
-            actionsLiquidationLib._prepareValidateOpenPositionData(s, pending, priceData);
+            actionsUtilsLib._prepareValidateOpenPositionData(s, pending, priceData);
 
         if (liquidated) {
             return (!data.isLiquidationPending, true);
@@ -427,7 +344,7 @@ library UsdnProtocolActionsLibrary {
 
             // move the position to its new tick, update its total expo, and return the new tickVersion and index
             // remove position from old tick completely
-            actionsLiquidationLib._removeAmountFromPosition(
+            actionsUtilsLib._removeAmountFromPosition(
                 s, data.action.tick, data.action.index, data.pos, data.pos.amount, data.pos.totalExpo
             );
             // update position total expo (because of new leverage / liq price)
@@ -436,15 +353,16 @@ library UsdnProtocolActionsLibrary {
             // mark the position as validated
             data.pos.validated = true;
             // insert position into new tick
-            (maxLeverageData.newPosId.tickVersion, maxLeverageData.newPosId.index,) = actionsLiquidationLib
-                ._saveNewPosition(s, maxLeverageData.newPosId.tick, data.pos, maxLeverageData.liquidationPenalty);
+            (maxLeverageData.newPosId.tickVersion, maxLeverageData.newPosId.index,) = actionsUtilsLib._saveNewPosition(
+                s, maxLeverageData.newPosId.tick, data.pos, maxLeverageData.liquidationPenalty
+            );
             // no long balance update is necessary (collateral didn't change)
 
-            emit LiquidationPriceUpdated(
+            emit IUsdnProtocolEvents.LiquidationPriceUpdated(
                 PositionId({ tick: data.action.tick, tickVersion: data.action.tickVersion, index: data.action.index }),
                 maxLeverageData.newPosId
             );
-            emit ValidatedOpenPosition(
+            emit IUsdnProtocolEvents.ValidatedOpenPosition(
                 data.action.to, data.action.validator, data.pos.totalExpo, data.startPrice, maxLeverageData.newPosId
             );
 
@@ -477,7 +395,7 @@ library UsdnProtocolActionsLibrary {
         }
 
         isValidated_ = true;
-        emit ValidatedOpenPosition(
+        emit IUsdnProtocolEvents.ValidatedOpenPosition(
             data.action.to,
             data.action.validator,
             expoAfter,
@@ -520,27 +438,26 @@ library UsdnProtocolActionsLibrary {
         bytes calldata currentPriceData
     ) public returns (uint256 amountToRefund_, bool isInitiated_, bool liquidated_) {
         ClosePositionData memory data;
-        (data, liquidated_) = actionsLiquidationLib._prepareClosePositionData(
-            s, owner, to, validator, posId, amountToClose, currentPriceData
-        );
+        (data, liquidated_) =
+            actionsUtilsLib._prepareClosePositionData(s, owner, to, validator, posId, amountToClose, currentPriceData);
 
         if (liquidated_ || data.isLiquidationPending) {
             // position was liquidated in this transaction or liquidations are pending
             return (securityDepositValue, !data.isLiquidationPending, liquidated_);
         }
 
-        amountToRefund_ = actionsLiquidationLib._createClosePendingAction(
+        amountToRefund_ = actionsUtilsLib._createClosePendingAction(
             s, validator, to, posId, amountToClose, securityDepositValue, data
         );
 
         s._balanceLong -= data.tempPositionValue;
 
-        actionsLiquidationLib._removeAmountFromPosition(
+        actionsUtilsLib._removeAmountFromPosition(
             s, posId.tick, posId.index, data.pos, amountToClose, data.totalExpoToClose
         );
 
         isInitiated_ = true;
-        emit InitiatedClosePosition(
+        emit IUsdnProtocolEvents.InitiatedClosePosition(
             data.pos.user,
             validator,
             to,
@@ -607,7 +524,7 @@ library UsdnProtocolActionsLibrary {
             s,
             ProtocolAction.ValidateClosePosition,
             long.timestamp,
-            actionsLiquidationLib._calcActionId(long.validator, long.timestamp),
+            actionsUtilsLib._calcActionId(long.validator, long.timestamp),
             priceData
         );
 
@@ -632,7 +549,7 @@ library UsdnProtocolActionsLibrary {
             // position was already removed from tick so no additional bookkeeping is necessary
             // credit the full amount to the vault to preserve the total balance invariant
             s._balanceVault += long.closeBoundedPositionValue;
-            emit LiquidatedPosition(
+            emit IUsdnProtocolEvents.LiquidatedPosition(
                 long.validator, // not necessarily the position owner
                 PositionId({ tick: long.tick, tickVersion: long.tickVersion, index: long.index }),
                 currentPrice.neutralPrice,
@@ -705,7 +622,7 @@ library UsdnProtocolActionsLibrary {
 
         isValidated_ = true;
 
-        emit ValidatedClosePosition(
+        emit IUsdnProtocolEvents.ValidatedClosePosition(
             long.validator, // not necessarily the position owner
             long.to,
             PositionId({ tick: long.tick, tickVersion: long.tickVersion, index: long.index }),

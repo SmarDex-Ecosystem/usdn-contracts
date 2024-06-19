@@ -9,65 +9,12 @@ import { IUsdnProtocolVault } from "../interfaces/UsdnProtocol/IUsdnProtocolVaul
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { Storage } from "./UsdnProtocolBaseStorage.sol";
 import { SignedMath } from "../libraries/SignedMath.sol";
+import { IUsdnProtocolEvents } from "./../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { InitializableReentrancyGuard } from "../utils/InitializableReentrancyGuard.sol";
-import { UsdnProtocolLiquidationLibrary as actionsLiquidationLib } from "./UsdnProtocolLiquidationLibrary.sol";
+import { UsdnProtocolActionsUtilsLibrary as actionsUtilsLib } from "./UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
 import { PositionId, Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
-/**
- * @notice Emitted when a user initiates the opening of a long position
- * @param owner The address that owns the position
- * @param validator The address of the validator that will validate the position
- * @param timestamp The timestamp of the action
- * @param totalExpo The initial total expo of the position (pending validation)
- * @param amount The amount of assets that were deposited as collateral
- * @param startPrice The asset price at the moment of the position creation (pending validation)
- * @param posId The unique position identifier
- */
-event InitiatedOpenPosition(
-    address indexed owner,
-    address indexed validator,
-    uint40 timestamp,
-    uint128 totalExpo,
-    uint128 amount,
-    uint128 startPrice,
-    PositionId posId
-);
-
-/**
- * @notice Emitted when a user validates the opening of a long position
- * @param owner The address that owns the position
- * @param validator The address of the validator that validated the position
- * @param totalExpo The total expo of the position
- * @param newStartPrice The asset price at the moment of the position creation (final)
- * @param posId The unique position identifier
- * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceUpdated` will be emitted too
- */
-event ValidatedOpenPosition(
-    address indexed owner, address indexed validator, uint128 totalExpo, uint128 newStartPrice, PositionId posId
-);
-
-/**
- * @notice Emitted when a user initiates a deposit
- * @param to The address that will receive the USDN tokens
- * @param validator The address of the validator that will validate the deposit
- * @param amount The amount of assets that were deposited
- * @param timestamp The timestamp of the action
- */
-event InitiatedDeposit(address indexed to, address indexed validator, uint256 amount, uint256 timestamp);
-
-/**
- * @notice Emitted when a user validates a deposit
- * @param to The address that received the USDN tokens
- * @param validator The address of the validator that validated the deposit
- * @param amountDeposited The amount of assets that were deposited
- * @param usdnMinted The amount of USDN that was minted
- * @param timestamp The timestamp of the InitiatedDeposit action
- */
-event ValidatedDeposit(
-    address indexed to, address indexed validator, uint256 amountDeposited, uint256 usdnMinted, uint256 timestamp
-);
 
 library UsdnProtocolVaultLibrary {
     using SafeCast for int256;
@@ -236,7 +183,7 @@ library UsdnProtocolVaultLibrary {
         // transfer the wstETH for the deposit
         address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
         s._balanceVault += amount;
-        emit InitiatedDeposit(msg.sender, msg.sender, amount, block.timestamp);
+        emit IUsdnProtocolEvents.InitiatedDeposit(msg.sender, msg.sender, amount, block.timestamp);
 
         // calculate the total minted amount of USDN shares (vault balance and total supply are zero for now, we assume
         // the USDN price to be $1 per token)
@@ -248,8 +195,8 @@ library UsdnProtocolVaultLibrary {
         uint256 mintSharesToUser = usdnSharesToMint - minUsdnSharesSupply;
         uint256 mintedTokens = s._usdn.mintShares(msg.sender, mintSharesToUser);
 
-        emit ValidatedDeposit(s.DEAD_ADDRESS, s.DEAD_ADDRESS, 0, s.MIN_USDN_SUPPLY, block.timestamp);
-        emit ValidatedDeposit(msg.sender, msg.sender, amount, mintedTokens, block.timestamp);
+        emit IUsdnProtocolEvents.ValidatedDeposit(s.DEAD_ADDRESS, s.DEAD_ADDRESS, 0, s.MIN_USDN_SUPPLY, block.timestamp);
+        emit IUsdnProtocolEvents.ValidatedDeposit(msg.sender, msg.sender, amount, mintedTokens, block.timestamp);
     }
 
     /**
@@ -282,11 +229,12 @@ library UsdnProtocolVaultLibrary {
             timestamp: uint40(block.timestamp)
         });
         // save the position and update the state
-        (posId.tickVersion, posId.index,) =
-            actionsLiquidationLib._saveNewPosition(s, posId.tick, long, liquidationPenalty);
+        (posId.tickVersion, posId.index,) = actionsUtilsLib._saveNewPosition(s, posId.tick, long, liquidationPenalty);
         s._balanceLong += long.amount;
-        emit InitiatedOpenPosition(msg.sender, msg.sender, long.timestamp, totalExpo, long.amount, price, posId);
-        emit ValidatedOpenPosition(msg.sender, msg.sender, totalExpo, price, posId);
+        emit IUsdnProtocolEvents.InitiatedOpenPosition(
+            msg.sender, msg.sender, long.timestamp, totalExpo, long.amount, price, posId
+        );
+        emit IUsdnProtocolEvents.ValidatedOpenPosition(msg.sender, msg.sender, totalExpo, price, posId);
     }
 
     /**

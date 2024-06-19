@@ -385,3 +385,19 @@ struct LiquidationData {
     HugeUint.Uint512 accumulator;
     bool isLiquidationPending;
 }
+
+/**
+ * @notice Structure to hold the state of the protocol
+ * @param totalExpo The long total expo
+ * @param tradingExpo The long trading expo
+ * @param longBalance The long balance
+ * @param vaultBalance The vault balance
+ * @param liqMultiplierAccumulator The liquidation multiplier accumulator
+ */
+struct CachedProtocolState {
+    uint256 totalExpo;
+    uint256 tradingExpo;
+    uint256 longBalance;
+    uint256 vaultBalance;
+    HugeUint.Uint512 liqMultiplierAccumulator;
+}

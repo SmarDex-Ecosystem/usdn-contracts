@@ -11,13 +11,14 @@ import { IUsdnProtocolLong } from "../interfaces/UsdnProtocol/IUsdnProtocolLong.
 import { TickMath } from "../libraries/TickMath.sol";
 import { SignedMath } from "../libraries/SignedMath.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
-import { Storage, CachedProtocolState } from "./UsdnProtocolBaseStorage.sol";
+import { Storage } from "./UsdnProtocolBaseStorage.sol";
+import { IUsdnProtocolEvents } from "./../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
 import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
-import { UsdnProtocolLiquidationLibrary as actionsLiquidationLib } from "./UsdnProtocolLiquidationLibrary.sol";
+import { UsdnProtocolActionsUtilsLibrary as actionsUtilsLib } from "./UsdnProtocolActionsUtilsLibrary.sol";
 import {
     LiquidationsEffects,
     Position,
@@ -25,92 +26,9 @@ import {
     ProtocolAction,
     TickData,
     LiquidationData,
-    InitiateOpenPositionData
+    InitiateOpenPositionData,
+    CachedProtocolState
 } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
-/**
- * @notice Emitted when a tick is liquidated
- * @param tick The liquidated tick
- * @param oldTickVersion The liquidated tick version
- * @param liquidationPrice The asset price at the moment of liquidation
- * @param effectiveTickPrice The effective liquidated tick price
- * @param remainingCollateral The amount of asset that was left in the tick, which was transferred to the vault if
- * positive, or was taken from the vault if negative
- */
-event LiquidatedTick(
-    int24 indexed tick,
-    uint256 indexed oldTickVersion,
-    uint256 liquidationPrice,
-    uint256 effectiveTickPrice,
-    int256 remainingCollateral
-);
-
-/**
- * @notice Emitted when a user initiates the closing of all or part of a long position
- * @param owner The owner of this position
- * @param validator The validator for the pending action
- * @param to The address that will receive the assets
- * @param posId The unique position identifier
- * @param originalAmount The amount of collateral originally on the position
- * @param amountToClose The amount of collateral to close from the position
- * If the entirety of the position is being closed, this value equals `originalAmount`
- * @param totalExpoRemaining The total expo remaining in the position
- * If the entirety of the position is being closed, this value is zero
- */
-event InitiatedClosePosition(
-    address indexed owner,
-    address indexed validator,
-    address indexed to,
-    PositionId posId,
-    uint128 originalAmount,
-    uint128 amountToClose,
-    uint128 totalExpoRemaining
-);
-
-/**
- * @notice Emitted when a user validates the closing of a long position
- * @param validator The validator of the close action, not necessarily the position owner
- * @param to The address that received the assets
- * @param posId The unique position identifier
- * @param amountReceived The amount of assets that were sent to the user
- * @param profit The profit that the user made
- */
-event ValidatedClosePosition(
-    address indexed validator, address indexed to, PositionId posId, uint256 amountReceived, int256 profit
-);
-
-/**
- * @notice Emitted when a user initiates the opening of a long position
- * @param owner The address that owns the position
- * @param validator The address of the validator that will validate the position
- * @param timestamp The timestamp of the action
- * @param totalExpo The initial total expo of the position (pending validation)
- * @param amount The amount of assets that were deposited as collateral
- * @param startPrice The asset price at the moment of the position creation (pending validation)
- * @param posId The unique position identifier
- */
-event InitiatedOpenPosition(
-    address indexed owner,
-    address indexed validator,
-    uint40 timestamp,
-    uint128 totalExpo,
-    uint128 amount,
-    uint128 startPrice,
-    PositionId posId
-);
-
-/**
- * @notice Emitted when a user validates the opening of a long position
- * @param owner The address that owns the position
- * @param validator The address of the validator that validated the position
- * @param totalExpo The total expo of the position
- * @param newStartPrice The asset price at the moment of the position creation (final)
- * @param posId The unique position identifier
- * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceUpdated` will be emitted too
- */
-event ValidatedOpenPosition(
-    address indexed owner, address indexed validator, uint128 totalExpo, uint128 newStartPrice, PositionId posId
-);
 
 library UsdnProtocolLongLibrary {
     using LibBitmap for LibBitmap.Bitmap;
@@ -335,7 +253,7 @@ library UsdnProtocolLongLibrary {
             (data.rebased, data.callbackResult) = vaultLib._usdnRebase(s, s._lastPrice, ignoreInterval);
 
             if (liquidationEffects.liquidatedTicks > 0) {
-                actionsLiquidationLib._sendRewardsToLiquidator(
+                actionsUtilsLib._sendRewardsToLiquidator(
                     s,
                     liquidationEffects.liquidatedTicks,
                     liquidationEffects.remainingCollateral,
@@ -519,13 +437,14 @@ library UsdnProtocolLongLibrary {
         });
 
         // save the position on the provided tick
-        (posId_.tickVersion, posId_.index,) =
-            actionsLiquidationLib._saveNewPosition(s, posId_.tick, long, liquidationPenalty);
+        (posId_.tickVersion, posId_.index,) = actionsUtilsLib._saveNewPosition(s, posId_.tick, long, liquidationPenalty);
 
         // emit both initiate and validate events
         // so the position is considered the same as other positions by event indexers
-        emit InitiatedOpenPosition(user, user, uint40(block.timestamp), totalExpo, long.amount, lastPrice, posId_);
-        emit ValidatedOpenPosition(user, user, totalExpo, lastPrice, posId_);
+        emit IUsdnProtocolEvents.InitiatedOpenPosition(
+            user, user, uint40(block.timestamp), totalExpo, long.amount, lastPrice, posId_
+        );
+        emit IUsdnProtocolEvents.ValidatedOpenPosition(user, user, totalExpo, lastPrice, posId_);
     }
 
     /**
@@ -569,7 +488,7 @@ library UsdnProtocolLongLibrary {
 
         // fully close the position and update the cache
         cache.liqMultiplierAccumulator =
-            actionsLiquidationLib._removeAmountFromPosition(s, posId.tick, posId.index, pos, pos.amount, pos.totalExpo);
+            actionsUtilsLib._removeAmountFromPosition(s, posId.tick, posId.index, pos, pos.amount, pos.totalExpo);
 
         // update the cache
         cache.totalExpo -= pos.totalExpo;
@@ -579,8 +498,8 @@ library UsdnProtocolLongLibrary {
 
         // emit both initiate and validate events
         // so the position is considered the same as other positions by event indexers
-        emit InitiatedClosePosition(pos.user, pos.user, pos.user, posId, pos.amount, pos.amount, 0);
-        emit ValidatedClosePosition(
+        emit IUsdnProtocolEvents.InitiatedClosePosition(pos.user, pos.user, pos.user, posId, pos.amount, pos.amount, 0);
+        emit IUsdnProtocolEvents.ValidatedClosePosition(
             pos.user, pos.user, posId, uint256(positionValue_), positionValue_ - coreLib._toInt256(pos.amount)
         );
     }
@@ -605,7 +524,7 @@ library UsdnProtocolLongLibrary {
             s,
             ProtocolAction.InitiateOpenPosition,
             block.timestamp,
-            actionsLiquidationLib._calcActionId(validator, uint128(block.timestamp)),
+            actionsUtilsLib._calcActionId(validator, uint128(block.timestamp)),
             currentPriceData
         );
         data_.adjustedPrice = (currentPrice.price + currentPrice.price * s._positionFeeBps / s.BPS_DIVISOR).toUint128();
@@ -769,7 +688,7 @@ library UsdnProtocolLongLibrary {
             // update bitmap to reflect that the tick is empty
             s._tickBitmap.unset(index);
 
-            emit LiquidatedTick(
+            emit IUsdnProtocolEvents.LiquidatedTick(
                 data.iTick,
                 s._tickVersion[data.iTick] - 1,
                 data.currentPrice,

@@ -15,6 +15,7 @@ import { TickMath } from "../libraries/TickMath.sol";
 import { Permit2TokenBitfield } from "../libraries/Permit2TokenBitfield.sol";
 import { IOwnershipCallback } from "../interfaces/UsdnProtocol/IOwnershipCallback.sol";
 import { Storage } from "./UsdnProtocolBaseStorage.sol";
+import { IUsdnProtocolEvents } from "./../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
 import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
@@ -33,38 +34,7 @@ import {
     ClosePositionData
 } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
-/**
- * @notice Emitted when a position changes ownership
- * @param posId The unique position ID
- * @param oldOwner The old owner
- * @param newOwner The new owner
- */
-event PositionOwnershipTransferred(PositionId indexed posId, address indexed oldOwner, address indexed newOwner);
-
-/**
- * @notice Emitted when a position is individually liquidated
- * @param user The validator of the close action, not necessarily the owner of the position
- * @param posId The unique identifier for the position that was liquidated
- * @param liquidationPrice The asset price at the moment of liquidation
- * @param effectiveTickPrice The effective liquidated tick price
- */
-event LiquidatedPosition(address indexed user, PositionId posId, uint256 liquidationPrice, uint256 effectiveTickPrice);
-
-/**
- * @notice Emitted when a user (liquidator) successfully liquidated positions
- * @param liquidator The address that initiated the liquidation
- * @param rewards The amount of tokens the liquidator received in rewards
- */
-event LiquidatorRewarded(address indexed liquidator, uint256 rewards);
-
-/**
- * @notice Emitted when a user's position was liquidated while pending validation and we removed the pending action
- * @param validator The validator address
- * @param posId The unique position identifier
- */
-event StalePendingActionRemoved(address indexed validator, PositionId posId);
-
-library UsdnProtocolLiquidationLibrary {
+library UsdnProtocolActionsUtilsLibrary {
     using SafeTransferLib for address;
     using SafeCast for uint256;
     using SafeCast for int256;
@@ -148,7 +118,7 @@ library UsdnProtocolLiquidationLibrary {
             IOwnershipCallback(newOwner).ownershipCallback(msg.sender, posId);
         }
 
-        emit PositionOwnershipTransferred(posId, msg.sender, newOwner);
+        emit IUsdnProtocolEvents.PositionOwnershipTransferred(posId, msg.sender, newOwner);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -222,7 +192,7 @@ library UsdnProtocolLiquidationLibrary {
         // transfer rewards (assets) to the liquidator
         address(s._asset).safeTransfer(msg.sender, liquidationRewards);
 
-        emit LiquidatorRewarded(msg.sender, liquidationRewards);
+        emit IUsdnProtocolEvents.LiquidatorRewarded(msg.sender, liquidationRewards);
     }
 
     /**
@@ -294,7 +264,7 @@ library UsdnProtocolLiquidationLibrary {
         if (version != data_.action.tickVersion) {
             // the current tick version doesn't match the version from the pending action
             // this means the position has been liquidated in the meantime
-            emit StalePendingActionRemoved(
+            emit IUsdnProtocolEvents.StalePendingActionRemoved(
                 data_.action.validator,
                 PositionId({ tick: data_.action.tick, tickVersion: data_.action.tickVersion, index: data_.action.index })
             );
