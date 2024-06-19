@@ -187,7 +187,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         internal
         returns (
             int24 tickSpacing_,
-            uint128 amountInRebalancer_,
+            uint88 amountInRebalancer_,
             PositionId memory posToLiquidate_,
             TickData memory tickToLiquidateData_
         )
@@ -225,10 +225,12 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
         uint256 messageValue = protocol.getSecurityDepositValue();
 
-        uint128 amount = 3 ether;
+        uint88 amount = 3 ether;
 
         // deposit assets in the rebalancer
-        rebalancer.depositAssets(amount, payable(address(this)));
+        rebalancer.initiateDepositAssets(amount, payable(address(this)));
+        skip(rebalancer.getTimeLimits().validationDelay);
+        rebalancer.validateDepositAssets();
         amountInRebalancer_ += amount;
 
         // deposit assets in the protocol to imbalance it

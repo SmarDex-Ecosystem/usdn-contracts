@@ -63,18 +63,16 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
     function getCloseImbalanceLimitBps() external view returns (uint256);
 
     /**
+     * @notice Get the time limits for the action validation process
+     * @return The time limits
+     */
+    function getTimeLimits() external view returns (TimeLimits memory);
+
+    /**
      * @notice Increase the allowance of assets for the USDN protocol spender by `addAllowance`
      * @param addAllowance Amount to add to the allowance of the UsdnProtocol contract
      */
     function increaseAssetAllowance(uint256 addAllowance) external;
-
-    /**
-     * @notice Deposit assets into this contract to be included in the next position
-     * @dev If `to` is already in a position, they need to close it completely before adding more assets
-     * @param amount The amount to deposit (in _assetDecimals)
-     * @param to The address to assign the deposit to
-     */
-    function depositAssets(uint128 amount, address to) external;
 
     /**
      * @notice Returns the version of the last position that got liquidated
@@ -84,13 +82,57 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
     function getLastLiquidatedVersion() external view returns (uint128);
 
     /**
+     * @notice Deposit assets into this contract to be included in the next position after validation
+     * @dev The user must call `validateDepositAssets` between `_timeLimits.validationDelay` and
+     * `_timeLimits.validationDeadline` seconds after this action
+     * @param amount The amount in assets that will be deposited into the Rebalancer
+     * @param to The address which will need to validate and which will own the position
+     */
+    function initiateDepositAssets(uint88 amount, address to) external;
+
+    /**
+     * @notice Validate a deposit to be included in the next position version
+     * @dev The `to` from the `initiateDepositAssets` must call this function between `_timeLimits.validationDelay` and
+     * `_timeLimits.validationDeadline` seconds after the initiate action
+     */
+    function validateDepositAssets() external;
+
+    /**
+     * @notice Retrieve the assets for a failed deposit due to waiting too long before calling `validateDepositAssets`
+     * @dev The user must wait `_timeLimits.actionCooldown` since the `initiateDepositAssets` before calling this
+     * function
+     */
+    function resetDepositAssets() external;
+
+    /**
      * @notice Withdraw assets if the user is not in a position yet
      * @dev If the entry position version of the user is lower than or equal to the current one,
      * the transaction will revert
      * @param amount The amount to withdraw (in _assetDecimals)
      * @param to The address to send the assets to
      */
-    function withdrawPendingAssets(uint128 amount, address to) external;
+    function withdrawPendingAssets(uint88 amount, address to) external;
+
+    /**
+     * @notice Closes a user deposited amount of the current UsdnProtocol rebalancer position
+     * @dev The rebalancer allows partially closing its position to withdraw the user's assets + PnL
+     * The remaining amount needs to be above `_minAssetDeposit` and `_minLongPosition` on the USDN protocol side
+     * @param amount The amount to close relative to the amount deposited
+     * @param to The to address
+     * @param validator The validator address
+     * @param currentPriceData The current price data
+     * @param previousActionsData The previous action price data
+     * @return success_ If the UsdnProtocol's `initiateClosePosition` was successful
+     * If false, the action failed because of pending liquidations, check IUsdnProtocolActions:initiateClosePosition for
+     * more details
+     */
+    function initiateClosePosition(
+        uint88 amount,
+        address to,
+        address payable validator,
+        bytes calldata currentPriceData,
+        PreviousActionsData calldata previousActionsData
+    ) external payable returns (bool success_);
 
     /* -------------------------------------------------------------------------- */
     /*                                    Admin                                   */
@@ -114,23 +156,10 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
     function setCloseImbalanceLimitBps(uint256 closeImbalanceLimitBps) external;
 
     /**
-     * @notice Closes a user deposited amount of the current UsdnProtocol rebalancer position
-     * @dev The rebalancer allows partially closing its position to withdraw the user's assets + PnL
-     * The remaining amount needs to be above `_minAssetDeposit` and `_minLongPosition` on the USDN protocol side
-     * @param amount The amount to close relative to the amount deposited
-     * @param to The to address
-     * @param validator The validator address
-     * @param currentPriceData The current price data
-     * @param previousActionsData The previous action price data
-     * @return success_ If the UsdnProtocol's `initiateClosePosition` was successful
-     * If false, the action failed because of pending liquidations, check IUsdnProtocolActions:initiateClosePosition for
-     * more details
+     * @notice Set the various time limits in seconds
+     * @param validationDelay The validation delay
+     * @param validationDeadline The validation deadline
+     * @param actionCooldown The cooldown period duration
      */
-    function initiateClosePosition(
-        uint128 amount,
-        address to,
-        address payable validator,
-        bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData
-    ) external payable returns (bool success_);
+    function setTimeLimits(uint80 validationDelay, uint80 validationDeadline, uint80 actionCooldown) external;
 }
