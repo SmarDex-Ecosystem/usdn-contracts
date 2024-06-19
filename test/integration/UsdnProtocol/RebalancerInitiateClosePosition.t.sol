@@ -24,7 +24,7 @@ contract TestRebalancerInitiateClosePosition is
     uint256 constant BASE_AMOUNT = 1000 ether;
     uint256 internal securityDepositValue;
     uint128 internal minAsset;
-    uint128 internal amountInRebalancer;
+    uint88 internal amountInRebalancer;
     uint128 internal version;
     PositionData internal previousPositionData;
 
@@ -60,7 +60,7 @@ contract TestRebalancerInitiateClosePosition is
      * @custom:and The user action is pending in protocol
      */
     function test_rebalancerInitiateClosePositionPartial() external {
-        uint128 amount = amountInRebalancer / 10;
+        uint88 amount = amountInRebalancer / 10;
 
         uint256 amountToClose = FixedPointMathLib.fullMulDiv(
             amount,
