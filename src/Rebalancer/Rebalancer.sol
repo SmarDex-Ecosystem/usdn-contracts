@@ -377,6 +377,7 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
         (data.protocolPosition,) = protocol.getLongPosition(data.currentPositionData.id);
 
         data.updatedPositionDataAmount = data.currentPositionData.amount - data.amountToCloseWithoutBonus;
+        // TODO case to be discussed
         if (data.updatedPositionDataAmount < data.minRemainingAssets) {
             // last user in rebalancer position
             data.amountToClose = data.protocolPosition.amount;
