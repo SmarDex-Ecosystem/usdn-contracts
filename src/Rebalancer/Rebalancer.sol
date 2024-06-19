@@ -349,14 +349,13 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
             delete _userDeposit[msg.sender];
         } else {
             // partial withdrawal
-            // the remaining amount must at least be _minAssetDeposit
-            if (depositData.amount < _minAssetDeposit) {
-                revert RebalancerInsufficientAmount();
-            }
-            // we update the deposit amount and timestamp and write to storage
             unchecked {
                 // checked above: amount is strictly smaller than depositData.amount
                 depositData.amount -= amount;
+            }
+            // the remaining amount must at least be _minAssetDeposit
+            if (depositData.amount < _minAssetDeposit) {
+                revert RebalancerInsufficientAmount();
             }
             depositData.initiateTimestamp = 0;
             _userDeposit[msg.sender] = depositData;
