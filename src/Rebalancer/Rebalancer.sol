@@ -360,8 +360,6 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
             revert RebalancerUserPending();
         }
 
-        IUsdnProtocol protocol = _usdnProtocol;
-
         data.currentPositionData = _positionData[data.positionVersion];
 
         data.amountToCloseWithoutBonus = FixedPointMathLib.fullMulDiv(
@@ -370,9 +368,10 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
             _positionData[data.userDepositData.entryPositionVersion].entryAccMultiplier
         );
 
-        protocol = _usdnProtocol;
+        IUsdnProtocol protocol = _usdnProtocol;
         (data.protocolPosition,) = protocol.getLongPosition(data.currentPositionData.id);
-        // add bonus
+
+        // include bonus
         data.amountToClose = data.amountToCloseWithoutBonus
             + data.amountToCloseWithoutBonus * uint256(data.protocolPosition.amount - data.currentPositionData.amount)
                 / data.currentPositionData.amount;
@@ -391,11 +390,10 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
             if (data.remainingAssets == 0) {
                 delete _userDeposit[msg.sender];
             } else {
-                // TODO check remaining bonus in another PR
                 _userDeposit[msg.sender].amount = data.remainingAssets;
             }
 
-            // safe cast is already made on larger or equal amountToClose value
+            // safe cast is already made on amountToClose
             data.currentPositionData.amount -= uint128(data.amountToCloseWithoutBonus);
 
             if (data.currentPositionData.amount == 0) {
