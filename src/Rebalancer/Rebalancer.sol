@@ -371,8 +371,8 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
 
         (Position memory protocolPosition,) = protocol.getLongPosition(currentPositionData.id);
         uint256 userBonus =
-            FixedPointMathLib.divWad(amountToClose, protocolPosition.amount - currentPositionData.amount);
-        amountToClose += (userBonus / FixedPointMathLib.WAD).toUint128();
+            amountToClose * uint256(protocolPosition.amount - currentPositionData.amount) / currentPositionData.amount;
+        amountToClose += userBonus;
 
         // slither-disable-next-line reentrancy-eth
         success_ = protocol.initiateClosePosition{ value: msg.value }(
