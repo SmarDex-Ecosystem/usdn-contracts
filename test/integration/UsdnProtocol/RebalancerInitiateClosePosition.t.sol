@@ -9,7 +9,7 @@ import { DEPLOYER } from "../../utils/Constants.sol";
 
 import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
 import { IRebalancerTypes } from "../../../src/interfaces/Rebalancer/IRebalancerTypes.sol";
-import { ProtocolAction } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction, Position } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The `initiateClosePosition` function of the rebalancer contract
@@ -62,12 +62,18 @@ contract UsdnProtocolRebalancerInitiateClosePosition is
     function test_rebalancerInitiateClosePositionPartial() external {
         uint128 amount = amountInRebalancer / 10;
 
-        uint256 amountToClose = FixedPointMathLib.fullMulDiv(
+        uint256 amountToCloseWithoutBonus = FixedPointMathLib.fullMulDiv(
             amount,
             previousPositionData.entryAccMultiplier,
             rebalancer.getPositionData(rebalancer.getUserDepositData(address(this)).entryPositionVersion)
                 .entryAccMultiplier
         );
+
+        (Position memory protocolPosition,) = protocol.getLongPosition(previousPositionData.id);
+
+        uint256 amountToClose = amountToCloseWithoutBonus
+            + amountToCloseWithoutBonus * uint256(protocolPosition.amount - previousPositionData.amount)
+                / previousPositionData.amount;
 
         vm.expectEmit();
         emit ClosePositionInitiated(address(this), amount, amountToClose, amountInRebalancer - amount);
@@ -92,7 +98,7 @@ contract UsdnProtocolRebalancerInitiateClosePosition is
         );
 
         assertEq(
-            rebalancer.getPositionData(version).amount + amountToClose,
+            rebalancer.getPositionData(version).amount + amountToCloseWithoutBonus,
             previousPositionData.amount,
             "The position data should be decreased"
         );
@@ -116,12 +122,18 @@ contract UsdnProtocolRebalancerInitiateClosePosition is
         vm.prank(DEPLOYER);
         protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
 
-        uint256 amountToClose = FixedPointMathLib.fullMulDiv(
+        uint256 amountToCloseWithoutBonus = FixedPointMathLib.fullMulDiv(
             amountInRebalancer,
             rebalancer.getPositionData(rebalancer.getPositionVersion()).entryAccMultiplier,
             rebalancer.getPositionData(rebalancer.getUserDepositData(address(this)).entryPositionVersion)
                 .entryAccMultiplier
         );
+
+        (Position memory protocolPosition,) = protocol.getLongPosition(previousPositionData.id);
+
+        uint256 amountToClose = amountToCloseWithoutBonus
+            + amountToCloseWithoutBonus * uint256(protocolPosition.amount - previousPositionData.amount)
+                / previousPositionData.amount;
 
         vm.expectEmit();
         emit ClosePositionInitiated(address(this), amountInRebalancer, amountToClose, 0);
@@ -136,7 +148,7 @@ contract UsdnProtocolRebalancerInitiateClosePosition is
         assertEq(depositData.entryPositionVersion, 0, "The user's entry position version should be zero");
 
         assertEq(
-            rebalancer.getPositionData(version).amount + amountToClose,
+            rebalancer.getPositionData(version).amount + amountToCloseWithoutBonus,
             previousPositionData.amount,
             "The position data should be decreased"
         );
