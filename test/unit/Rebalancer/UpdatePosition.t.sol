@@ -14,8 +14,8 @@ import { PositionId } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTy
 contract TestRebalancerUpdatePosition is RebalancerFixture {
     /// @dev The address of this test contract
     address immutable USER_0;
-    uint128 constant USER_0_DEPOSIT_AMOUNT = 2 ether;
-    uint128 constant USER_1_DEPOSIT_AMOUNT = 3 ether;
+    uint88 constant USER_0_DEPOSIT_AMOUNT = 2 ether;
+    uint88 constant USER_1_DEPOSIT_AMOUNT = 3 ether;
 
     constructor() {
         USER_0 = address(this);
@@ -40,8 +40,12 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
             "Amount deposited for USER_1 lower than rebalancer min amount"
         );
 
-        rebalancer.depositAssets(USER_0_DEPOSIT_AMOUNT, address(this));
-        rebalancer.depositAssets(USER_1_DEPOSIT_AMOUNT, USER_1);
+        rebalancer.initiateDepositAssets(USER_0_DEPOSIT_AMOUNT, address(this));
+        rebalancer.initiateDepositAssets(USER_1_DEPOSIT_AMOUNT, USER_1);
+        skip(rebalancer.getTimeLimits().validationDelay);
+        rebalancer.validateDepositAssets();
+        vm.prank(USER_1);
+        rebalancer.validateDepositAssets();
     }
 
     /**
@@ -80,7 +84,6 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
         assertEq(
             positionData.entryAccMultiplier, rebalancer.MULTIPLIER_FACTOR(), "Entry multiplier accumulator should be 1x"
         );
-        assertEq(positionData.pnlMultiplier, 0, "PnL multiplier should be 0");
         assertEq(
             positionData.id.tick, newPosId.tick, "The tick of the position ID should be equal to the provided value"
         );
@@ -120,9 +123,12 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
         vm.prank(address(usdnProtocol));
         rebalancer.updatePosition(posId1, 0);
 
-        uint128 user2DepositedAmount = 5 ether;
-        vm.prank(USER_2);
-        rebalancer.depositAssets(user2DepositedAmount, USER_2);
+        uint88 user2DepositedAmount = 5 ether;
+        vm.startPrank(USER_2);
+        rebalancer.initiateDepositAssets(user2DepositedAmount, USER_2);
+        skip(rebalancer.getTimeLimits().validationDelay);
+        rebalancer.validateDepositAssets();
+        vm.stopPrank();
 
         // simulate a profit of 10% when closing the position
         uint128 posVersion2Value = (USER_0_DEPOSIT_AMOUNT + USER_1_DEPOSIT_AMOUNT) * 11 / 10;
@@ -137,23 +143,14 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
             "The position version should have been incremented twice"
         );
 
-        // check the position data of the first version
-        PositionData memory positionData = rebalancer.getPositionData(positionVersionBefore + 1);
-        assertEq(
-            positionData.pnlMultiplier,
-            rebalancer.MULTIPLIER_FACTOR() * 11 / 10,
-            "PnL multiplier of the first position should be 1.1x"
-        );
-
         // check the position data of the second version
-        positionData = rebalancer.getPositionData(rebalancer.getPositionVersion());
+        PositionData memory positionData = rebalancer.getPositionData(rebalancer.getPositionVersion());
         assertEq(positionData.amount, posVersion2Value + user2DepositedAmount);
         assertEq(
             positionData.entryAccMultiplier,
             rebalancer.MULTIPLIER_FACTOR() + rebalancer.MULTIPLIER_FACTOR() / 10,
             "Entry multiplier accumulator of the position should be 1.1x"
         );
-        assertEq(positionData.pnlMultiplier, 0, "PnL multiplier should be 0");
         assertEq(positionData.id.tick, posId2.tick, "Tick mismatch");
         assertEq(positionData.id.tickVersion, posId2.tickVersion, "Tick version mismatch");
         assertEq(positionData.id.index, posId2.index, "Index mismatch");
@@ -178,9 +175,12 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
         rebalancer.updatePosition(posId1, 0);
 
         // add some pending assets before updating again
-        uint128 user2DepositedAmount = 5 ether;
-        vm.prank(USER_2);
-        rebalancer.depositAssets(user2DepositedAmount, USER_2);
+        uint88 user2DepositedAmount = 5 ether;
+        vm.startPrank(USER_2);
+        rebalancer.initiateDepositAssets(user2DepositedAmount, USER_2);
+        skip(rebalancer.getTimeLimits().validationDelay);
+        rebalancer.validateDepositAssets();
+        vm.stopPrank();
 
         vm.expectEmit();
         emit PositionVersionUpdated(positionVersionBefore + 2);
@@ -194,12 +194,8 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
             "The last liquidated version should be the version that was supposed to be closed"
         );
 
-        // check the first position's data
-        PositionData memory positionData = rebalancer.getPositionData(rebalancer.getPositionVersion() - 1);
-        assertEq(positionData.pnlMultiplier, 0, "PnL multiplier of the first position should be 0");
-
         // check the second position's data
-        positionData = rebalancer.getPositionData(rebalancer.getPositionVersion());
+        PositionData memory positionData = rebalancer.getPositionData(rebalancer.getPositionVersion());
         assertEq(positionData.amount, user2DepositedAmount, "Only the funds of USER_2 should be in the position");
         assertEq(
             positionData.entryAccMultiplier, rebalancer.MULTIPLIER_FACTOR(), "Entry multiplier accumulator should be 1x"
