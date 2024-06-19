@@ -8,6 +8,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { ERC165, IERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 import { IOwnershipCallback } from "../interfaces/UsdnProtocol/IOwnershipCallback.sol";
 import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
@@ -21,7 +22,7 @@ import { PositionId, PreviousActionsData } from "../interfaces/UsdnProtocol/IUsd
  * It will manage only one position with enough trading expo to re-balance the protocol after liquidations
  * and close/open again with new and existing funds when the imbalance reaches a certain threshold
  */
-contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
+contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback, IRebalancer {
     using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
 
@@ -333,7 +334,7 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
         address payable validator,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable returns (bool success_) {
+    ) external payable nonReentrant returns (bool success_) {
         UserDeposit memory userDepositData = _userDeposit[msg.sender];
 
         if (amount == 0) {
