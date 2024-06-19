@@ -126,7 +126,7 @@ contract TestRebalancerInitiateClosePosition is
         vm.expectEmit();
         emit ClosePositionInitiated(address(this), amountInRebalancer, amountToClose, 0);
         (bool success) = rebalancer.initiateClosePosition{ value: protocol.getSecurityDepositValue() }(
-            amountInRebalancer, payable(address(this)), payable(address(this)), "", EMPTY_PREVIOUS_DATA
+            amountInRebalancer, payable(this), payable(this), "", EMPTY_PREVIOUS_DATA
         );
 
         UserDeposit memory depositData = rebalancer.getUserDepositData(address(this));
@@ -150,8 +150,7 @@ contract TestRebalancerInitiateClosePosition is
 
     /**
      * @custom:scenario The user sends too much ether when closing its position
-     * @custom:when The user calls the rebalancer's `initiateClosePosition` function with his deposited amount
-     * @custom:and With too much ether
+     * @custom:when The user calls the rebalancer's {initiateClosePosition} function with too much ether
      * @custom:then The user gets back the excess ether sent
      */
     function test_rebalancerInitiateClosePositionRefundsExcessEther() external {
@@ -164,10 +163,10 @@ contract TestRebalancerInitiateClosePosition is
 
         // send more ether than necessary to trigger the refund
         rebalancer.initiateClosePosition{ value: securityDeposit + excessAmount }(
-            amountInRebalancer, payable(address(this)), payable(address(this)), "", EMPTY_PREVIOUS_DATA
+            amountInRebalancer, payable(this), payable(this), "", EMPTY_PREVIOUS_DATA
         );
 
-        assertEq(payable(address(rebalancer)).balance, 0, "There should be no ether left in the rebalancer");
+        assertEq(payable(rebalancer).balance, 0, "There should be no ether left in the rebalancer");
         assertEq(
             userBalanceBefore - securityDeposit, address(this).balance, "The overpaid amount should have been refunded"
         );
