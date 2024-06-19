@@ -329,7 +329,7 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
     /// @inheritdoc IRebalancer
     function initiateClosePosition(
         uint128 amount,
-        address to,
+        address payable to,
         address payable validator,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
@@ -392,10 +392,36 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
 
             emit ClosePositionInitiated(msg.sender, amount, amountToClose, remainingAssets);
         }
+
+        // sent back any ether left in the contract
+        _refundEther(to);
+    }
+
+    /**
+     * @notice Refunds any ether in this contract to the given address
+     * @dev This contract should not hold any ether so any sent to it belongs to the current caller
+     * @param to The address that should receive the refund
+     */
+    function _refundEther(address payable to) internal {
+        if (to == address(0)) {
+            revert RebalancerInvalidAddressTo();
+        }
+
+        uint256 amount = address(this).balance;
+        if (amount != 0) {
+            // slither-disable-next-line arbitrary-send-eth
+            (bool success,) = to.call{ value: amount }("");
+            if (!success) {
+                revert RebalancerEtherRefundFailed();
+            }
+        }
     }
 
     /// @inheritdoc IOwnershipCallback
     function ownershipCallback(address, PositionId calldata) external pure {
         revert RebalancerUnauthorized(); // first version of the rebalancer contract so we are always reverting
     }
+
+    /// @notice To allow this contract from receiving ether refunded by the USDN protocol
+    receive() external payable { }
 }

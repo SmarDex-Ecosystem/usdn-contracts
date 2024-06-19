@@ -128,7 +128,7 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
      */
     function initiateClosePosition(
         uint128 amount,
-        address to,
+        address payable to,
         address payable validator,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData

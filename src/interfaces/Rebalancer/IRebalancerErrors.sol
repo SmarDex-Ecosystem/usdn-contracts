@@ -28,4 +28,7 @@ interface IRebalancerErrors {
 
     /// @dev Indicates that the caller is not authorized to perform the action
     error RebalancerUnauthorized();
+
+    /// @dev Indicates that the sender could not accept the ether refund
+    error RebalancerEtherRefundFailed();
 }
