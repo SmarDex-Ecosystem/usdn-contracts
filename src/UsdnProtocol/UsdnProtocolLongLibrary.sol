@@ -13,22 +13,20 @@ import { SignedMath } from "../libraries/SignedMath.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
 import { Storage, CachedProtocolState } from "./UsdnProtocolBaseStorage.sol";
 import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
+import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
+import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
+import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
+import { UsdnProtocolLiquidationLibrary as actionsLiquidationLib } from "./UsdnProtocolLiquidationLibrary.sol";
 import {
     LiquidationsEffects,
     Position,
     PositionId,
     ProtocolAction,
     TickData,
-    LiquidationData
-} from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
-import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
-import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
-import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
-import {
-    UsdnProtocolLiquidationLibrary as actionsLiquidationLib,
+    LiquidationData,
     InitiateOpenPositionData
-} from "./UsdnProtocolLiquidationLibrary.sol";
+} from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @notice Emitted when a tick is liquidated
@@ -121,6 +119,10 @@ library UsdnProtocolLongLibrary {
     using SignedMath for int256;
     using HugeUint for HugeUint.Uint512;
     using SafeTransferLib for address;
+
+    /* -------------------------------------------------------------------------- */
+    /*                              Public functions                              */
+    /* -------------------------------------------------------------------------- */
 
     // / @inheritdoc IUsdnProtocolLong
     function minTick(Storage storage s) public view returns (int24 tick_) {
@@ -270,6 +272,10 @@ library UsdnProtocolLongLibrary {
         (bytes32 tickHash,) = vaultLib._tickHash(s, tick);
         liquidationPenalty_ = _getTickLiquidationPenalty(s, tickHash);
     }
+
+    /* -------------------------------------------------------------------------- */
+    /*                             Internal functions                             */
+    /* -------------------------------------------------------------------------- */
 
     struct ApplyPnlAndFundingAndLiquidateData {
         bool isPriceRecent;

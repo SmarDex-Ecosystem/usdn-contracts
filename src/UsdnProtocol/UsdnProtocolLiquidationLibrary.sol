@@ -9,6 +9,17 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IUsdnProtocolActions } from "../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
+import { HugeUint } from "../libraries/HugeUint.sol";
+import { SignedMath } from "../libraries/SignedMath.sol";
+import { TickMath } from "../libraries/TickMath.sol";
+import { Permit2TokenBitfield } from "../libraries/Permit2TokenBitfield.sol";
+import { IOwnershipCallback } from "../interfaces/UsdnProtocol/IOwnershipCallback.sol";
+import { Storage } from "./UsdnProtocolBaseStorage.sol";
+import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
+import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
+import { UsdnProtocolLongLibrary as longLib } from "./UsdnProtocolLongLibrary.sol";
+import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
 import {
     LongPendingAction,
     PendingAction,
@@ -21,17 +32,6 @@ import {
     ValidateOpenPositionData,
     ClosePositionData
 } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { HugeUint } from "../libraries/HugeUint.sol";
-import { SignedMath } from "../libraries/SignedMath.sol";
-import { TickMath } from "../libraries/TickMath.sol";
-import { Permit2TokenBitfield } from "../libraries/Permit2TokenBitfield.sol";
-import { IOwnershipCallback } from "../interfaces/UsdnProtocol/IOwnershipCallback.sol";
-import { Storage } from "./UsdnProtocolBaseStorage.sol";
-import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
-import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
-import { UsdnProtocolLongLibrary as longLib } from "./UsdnProtocolLongLibrary.sol";
-import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
-import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
 /**
  * @notice Emitted when a position changes ownership
@@ -58,159 +58,11 @@ event LiquidatedPosition(address indexed user, PositionId posId, uint256 liquida
 event LiquidatorRewarded(address indexed liquidator, uint256 rewards);
 
 /**
- * @notice Emitted when a user initiates a deposit
- * @param to The address that will receive the USDN tokens
- * @param validator The address of the validator that will validate the deposit
- * @param amount The amount of assets that were deposited
- * @param timestamp The timestamp of the action
- */
-event InitiatedDeposit(address indexed to, address indexed validator, uint256 amount, uint256 timestamp);
-
-/**
- * @notice Emitted when a user validates a deposit
- * @param to The address that received the USDN tokens
- * @param validator The address of the validator that validated the deposit
- * @param amountDeposited The amount of assets that were deposited
- * @param usdnMinted The amount of USDN that was minted
- * @param timestamp The timestamp of the InitiatedDeposit action
- */
-event ValidatedDeposit(
-    address indexed to, address indexed validator, uint256 amountDeposited, uint256 usdnMinted, uint256 timestamp
-);
-
-/**
- * @notice Emitted when a user initiates a withdrawal
- * @param to The address that will receive the assets
- * @param validator The address of the validator that will validate the withdrawal
- * @param usdnAmount The amount of USDN that will be burned
- * @param timestamp The timestamp of the action
- */
-event InitiatedWithdrawal(address indexed to, address indexed validator, uint256 usdnAmount, uint256 timestamp);
-
-/**
- * @notice Emitted when a user validates a withdrawal
- * @param to The address that received the assets
- * @param validator The address of the validator that validated the withdrawal
- * @param amountWithdrawn The amount of assets that were withdrawn
- * @param usdnBurned The amount of USDN that was burned
- * @param timestamp The timestamp of the InitiatedWithdrawal action
- */
-event ValidatedWithdrawal(
-    address indexed to, address indexed validator, uint256 amountWithdrawn, uint256 usdnBurned, uint256 timestamp
-);
-
-/**
- * @notice Emitted when a user initiates the opening of a long position
- * @param owner The address that owns the position
- * @param validator The address of the validator that will validate the position
- * @param timestamp The timestamp of the action
- * @param totalExpo The initial total expo of the position (pending validation)
- * @param amount The amount of assets that were deposited as collateral
- * @param startPrice The asset price at the moment of the position creation (pending validation)
- * @param posId The unique position identifier
- */
-event InitiatedOpenPosition(
-    address indexed owner,
-    address indexed validator,
-    uint40 timestamp,
-    uint128 totalExpo,
-    uint128 amount,
-    uint128 startPrice,
-    PositionId posId
-);
-
-/**
- * @notice Emitted when a user validates the opening of a long position
- * @param owner The address that owns the position
- * @param validator The address of the validator that validated the position
- * @param totalExpo The total expo of the position
- * @param newStartPrice The asset price at the moment of the position creation (final)
- * @param posId The unique position identifier
- * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceUpdated` will be emitted too
- */
-event ValidatedOpenPosition(
-    address indexed owner, address indexed validator, uint128 totalExpo, uint128 newStartPrice, PositionId posId
-);
-
-/**
  * @notice Emitted when a user's position was liquidated while pending validation and we removed the pending action
  * @param validator The validator address
  * @param posId The unique position identifier
  */
 event StalePendingActionRemoved(address indexed validator, PositionId posId);
-
-/**
- * @notice Emitted when a position was moved from one tick to another
- * @param oldPosId The old position identifier
- * @param newPosId The new position identifier
- */
-event LiquidationPriceUpdated(PositionId indexed oldPosId, PositionId newPosId);
-
-/**
- * @notice Emitted when a user initiates the closing of all or part of a long position
- * @param owner The owner of this position
- * @param validator The validator for the pending action
- * @param to The address that will receive the assets
- * @param posId The unique position identifier
- * @param originalAmount The amount of collateral originally on the position
- * @param amountToClose The amount of collateral to close from the position
- * If the entirety of the position is being closed, this value equals `originalAmount`
- * @param totalExpoRemaining The total expo remaining in the position
- * If the entirety of the position is being closed, this value is zero
- */
-event InitiatedClosePosition(
-    address indexed owner,
-    address indexed validator,
-    address indexed to,
-    PositionId posId,
-    uint128 originalAmount,
-    uint128 amountToClose,
-    uint128 totalExpoRemaining
-);
-
-/**
- * @notice Emitted when a user validates the closing of a long position
- * @param validator The validator of the close action, not necessarily the position owner
- * @param to The address that received the assets
- * @param posId The unique position identifier
- * @param amountReceived The amount of assets that were sent to the user
- * @param profit The profit that the user made
- */
-event ValidatedClosePosition(
-    address indexed validator, address indexed to, PositionId posId, uint256 amountReceived, int256 profit
-);
-
-/**
- * @notice Emitted when a security deposit is refunded
- * @param pendingActionValidator Address of the validator
- * @param receivedBy Address of the user who received the security deposit
- * @param amount Amount of security deposit refunded
- */
-event SecurityDepositRefunded(address indexed pendingActionValidator, address indexed receivedBy, uint256 amount);
-
-/**
- * @notice Emitted when the pending protocol fee is distributed
- * @param feeCollector The collector's address
- * @param amount The amount of fee transferred
- */
-event ProtocolFeeDistributed(address feeCollector, uint256 amount);
-
-/**
- * @notice Emitted when a tick is liquidated
- * @param tick The liquidated tick
- * @param oldTickVersion The liquidated tick version
- * @param liquidationPrice The asset price at the moment of liquidation
- * @param effectiveTickPrice The effective liquidated tick price
- * @param remainingCollateral The amount of asset that was left in the tick, which was transferred to the vault if
- * positive, or was taken from the vault if negative
- */
-event LiquidatedTick(
-    int24 indexed tick,
-    uint256 indexed oldTickVersion,
-    uint256 liquidationPrice,
-    uint256 effectiveTickPrice,
-    int256 remainingCollateral
-);
 
 library UsdnProtocolLiquidationLibrary {
     using SafeTransferLib for address;
@@ -220,6 +72,10 @@ library UsdnProtocolLiquidationLibrary {
     using SignedMath for int256;
     using HugeUint for HugeUint.Uint512;
     using Permit2TokenBitfield for Permit2TokenBitfield.Bitfield;
+
+    /* -------------------------------------------------------------------------- */
+    /*                              Public functions                              */
+    /* -------------------------------------------------------------------------- */
 
     // / @inheritdoc IUsdnProtocolActions
     function liquidate(Storage storage s, bytes calldata currentPriceData, uint16 iterations)
@@ -294,6 +150,10 @@ library UsdnProtocolLiquidationLibrary {
 
         emit PositionOwnershipTransferred(posId, msg.sender, newOwner);
     }
+
+    /* -------------------------------------------------------------------------- */
+    /*                             Internal functions                             */
+    /* -------------------------------------------------------------------------- */
 
     /**
      * @notice The close vault imbalance limit state verification

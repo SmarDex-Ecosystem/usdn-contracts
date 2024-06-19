@@ -2,15 +2,12 @@
 pragma solidity ^0.8.25;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { IUsdnProtocol } from "../interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { ILiquidationRewardsManager } from "../interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
-import { IUsdnProtocolEvents } from "../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { UsdnProtocolBaseStorage } from "./UsdnProtocolBaseStorage.sol";
 import { UsdnProtocolActionsEntry } from "./UsdnProtocolActionsEntry.sol";
 import { UsdnProtocolCoreEntry } from "./UsdnProtocolCoreEntry.sol";
@@ -22,12 +19,8 @@ contract UsdnProtocol is
     UsdnProtocolLongEntry,
     UsdnProtocolVaultEntry,
     UsdnProtocolCoreEntry,
-    UsdnProtocolActionsEntry,
-    IUsdnProtocolEvents
+    UsdnProtocolActionsEntry
 {
-    using SafeTransferLib for address;
-    using SafeCast for uint256;
-
     /**
      * @notice Constructor
      * @param usdn The USDN ERC20 contract
@@ -87,13 +80,7 @@ contract UsdnProtocol is
 
     // / @inheritdoc IUsdnProtocol
     function setSafetyMarginBps(uint256 newSafetyMarginBps) external onlyOwner {
-        // safetyMarginBps greater than 20%
-        if (newSafetyMarginBps > 2000) {
-            revert UsdnProtocolInvalidSafetyMarginBps();
-        }
-
-        s._safetyMarginBps = newSafetyMarginBps;
-        emit SafetyMarginBpsUpdated(newSafetyMarginBps);
+        settersLib.setSafetyMarginBps(s, newSafetyMarginBps);
     }
 
     // / @inheritdoc IUsdnProtocol
@@ -118,12 +105,7 @@ contract UsdnProtocol is
 
     // / @inheritdoc IUsdnProtocol
     function setPositionFeeBps(uint16 newPositionFee) external onlyOwner {
-        // `newPositionFee` greater than 20%
-        if (newPositionFee > 2000) {
-            revert UsdnProtocolInvalidPositionFee();
-        }
-        s._positionFeeBps = newPositionFee;
-        emit PositionFeeUpdated(newPositionFee);
+        settersLib.setPositionFeeBps(s, newPositionFee);
     }
 
     // / @inheritdoc IUsdnProtocol

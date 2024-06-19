@@ -3,10 +3,10 @@ pragma solidity ^0.8.25;
 
 import { Permit2TokenBitfield } from "../libraries/Permit2TokenBitfield.sol";
 import { UsdnProtocolActionsLibrary as lib } from "./UsdnProtocolActionsLibrary.sol";
-import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
 import { UsdnProtocolBaseStorage } from "./UsdnProtocolBaseStorage.sol";
 import { PreviousActionsData, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolLiquidationLibrary as actionsLiquidationLib } from "./UsdnProtocolLiquidationLibrary.sol";
+import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
 import {
     InitiateClosePositionParams, InitiateOpenPositionParams
 } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";

@@ -8,12 +8,12 @@ import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 import { IUsdnProtocolVault } from "../interfaces/UsdnProtocol/IUsdnProtocolVault.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { Storage } from "./UsdnProtocolBaseStorage.sol";
-import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
-import { PositionId, Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { SignedMath } from "../libraries/SignedMath.sol";
 import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { InitializableReentrancyGuard } from "../utils/InitializableReentrancyGuard.sol";
 import { UsdnProtocolLiquidationLibrary as actionsLiquidationLib } from "./UsdnProtocolLiquidationLibrary.sol";
+import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
+import { PositionId, Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @notice Emitted when a user initiates the opening of a long position
@@ -74,6 +74,10 @@ library UsdnProtocolVaultLibrary {
     using SafeCast for uint256;
     using SignedMath for int256;
     using SafeTransferLib for address;
+
+    /* -------------------------------------------------------------------------- */
+    /*                              Public functions                              */
+    /* -------------------------------------------------------------------------- */
 
     // / @inheritdoc IUsdnProtocolVault
     function usdnPrice(Storage storage s, uint128 currentPrice, uint128 timestamp)
@@ -177,6 +181,10 @@ library UsdnProtocolVaultLibrary {
         uint128 rawIndex = uint128(pendingActionIndex - 1);
         coreLib._removeBlockedPendingAction(s, rawIndex, to, false);
     }
+
+    /* -------------------------------------------------------------------------- */
+    /*                              Internal function                             */
+    /* -------------------------------------------------------------------------- */
 
     /**
      * @notice Check if the initialize parameters lead to a balanced protocol

@@ -3,8 +3,8 @@ pragma solidity ^0.8.25;
 
 import { HugeUint } from "../libraries/HugeUint.sol";
 import { UsdnProtocolBaseStorage } from "./UsdnProtocolBaseStorage.sol";
-import { UsdnProtocolLongLibrary as lib } from "./UsdnProtocolLongLibrary.sol";
 import { Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { UsdnProtocolLongLibrary as lib } from "./UsdnProtocolLongLibrary.sol";
 
 abstract contract UsdnProtocolLongEntry is UsdnProtocolBaseStorage {
     function minTick() public view returns (int24 tick_) {

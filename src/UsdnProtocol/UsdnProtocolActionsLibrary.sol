@@ -3,10 +3,18 @@ pragma solidity ^0.8.25;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
-import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
 import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocolActions } from "../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
+import { HugeUint } from "../libraries/HugeUint.sol";
+import { TickMath } from "../libraries/TickMath.sol";
+import { Permit2TokenBitfield } from "../libraries/Permit2TokenBitfield.sol";
+import { Storage } from "./UsdnProtocolBaseStorage.sol";
+import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
+import { UsdnProtocolLongLibrary as longLib } from "./UsdnProtocolLongLibrary.sol";
+import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
+import { UsdnProtocolLiquidationLibrary as actionsLiquidationLib } from "./UsdnProtocolLiquidationLibrary.sol";
 import {
     LongPendingAction,
     PendingAction,
@@ -16,31 +24,11 @@ import {
     ProtocolAction,
     TickData,
     InitiateOpenPositionParams,
-    InitiateClosePositionParams
-} from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { HugeUint } from "../libraries/HugeUint.sol";
-import { SignedMath } from "../libraries/SignedMath.sol";
-import { TickMath } from "../libraries/TickMath.sol";
-import { Permit2TokenBitfield } from "../libraries/Permit2TokenBitfield.sol";
-import { Storage } from "./UsdnProtocolBaseStorage.sol";
-import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
-import { UsdnProtocolLongLibrary as longLib } from "./UsdnProtocolLongLibrary.sol";
-import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
-import {
-    UsdnProtocolLiquidationLibrary as actionsLiquidationLib,
-    ClosePositionData,
+    InitiateClosePositionParams,
+    InitiateOpenPositionData,
     ValidateOpenPositionData,
-    InitiateOpenPositionData
-} from "./UsdnProtocolLiquidationLibrary.sol";
-import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-
-/**
- * @notice Emitted when a position changes ownership
- * @param posId The unique position ID
- * @param oldOwner The old owner
- * @param newOwner The new owner
- */
-event PositionOwnershipTransferred(PositionId indexed posId, address indexed oldOwner, address indexed newOwner);
+    ClosePositionData
+} from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @notice Emitted when a position is individually liquidated
@@ -50,55 +38,6 @@ event PositionOwnershipTransferred(PositionId indexed posId, address indexed old
  * @param effectiveTickPrice The effective liquidated tick price
  */
 event LiquidatedPosition(address indexed user, PositionId posId, uint256 liquidationPrice, uint256 effectiveTickPrice);
-
-/**
- * @notice Emitted when a user (liquidator) successfully liquidated positions
- * @param liquidator The address that initiated the liquidation
- * @param rewards The amount of tokens the liquidator received in rewards
- */
-event LiquidatorRewarded(address indexed liquidator, uint256 rewards);
-
-/**
- * @notice Emitted when a user initiates a deposit
- * @param to The address that will receive the USDN tokens
- * @param validator The address of the validator that will validate the deposit
- * @param amount The amount of assets that were deposited
- * @param timestamp The timestamp of the action
- */
-event InitiatedDeposit(address indexed to, address indexed validator, uint256 amount, uint256 timestamp);
-
-/**
- * @notice Emitted when a user validates a deposit
- * @param to The address that received the USDN tokens
- * @param validator The address of the validator that validated the deposit
- * @param amountDeposited The amount of assets that were deposited
- * @param usdnMinted The amount of USDN that was minted
- * @param timestamp The timestamp of the InitiatedDeposit action
- */
-event ValidatedDeposit(
-    address indexed to, address indexed validator, uint256 amountDeposited, uint256 usdnMinted, uint256 timestamp
-);
-
-/**
- * @notice Emitted when a user initiates a withdrawal
- * @param to The address that will receive the assets
- * @param validator The address of the validator that will validate the withdrawal
- * @param usdnAmount The amount of USDN that will be burned
- * @param timestamp The timestamp of the action
- */
-event InitiatedWithdrawal(address indexed to, address indexed validator, uint256 usdnAmount, uint256 timestamp);
-
-/**
- * @notice Emitted when a user validates a withdrawal
- * @param to The address that received the assets
- * @param validator The address of the validator that validated the withdrawal
- * @param amountWithdrawn The amount of assets that were withdrawn
- * @param usdnBurned The amount of USDN that was burned
- * @param timestamp The timestamp of the InitiatedWithdrawal action
- */
-event ValidatedWithdrawal(
-    address indexed to, address indexed validator, uint256 amountWithdrawn, uint256 usdnBurned, uint256 timestamp
-);
 
 /**
  * @notice Emitted when a user initiates the opening of a long position
@@ -132,13 +71,6 @@ event InitiatedOpenPosition(
 event ValidatedOpenPosition(
     address indexed owner, address indexed validator, uint128 totalExpo, uint128 newStartPrice, PositionId posId
 );
-
-/**
- * @notice Emitted when a user's position was liquidated while pending validation and we removed the pending action
- * @param validator The validator address
- * @param posId The unique position identifier
- */
-event StalePendingActionRemoved(address indexed validator, PositionId posId);
 
 /**
  * @notice Emitted when a position was moved from one tick to another
@@ -181,46 +113,15 @@ event ValidatedClosePosition(
     address indexed validator, address indexed to, PositionId posId, uint256 amountReceived, int256 profit
 );
 
-/**
- * @notice Emitted when a security deposit is refunded
- * @param pendingActionValidator Address of the validator
- * @param receivedBy Address of the user who received the security deposit
- * @param amount Amount of security deposit refunded
- */
-event SecurityDepositRefunded(address indexed pendingActionValidator, address indexed receivedBy, uint256 amount);
-
-/**
- * @notice Emitted when the pending protocol fee is distributed
- * @param feeCollector The collector's address
- * @param amount The amount of fee transferred
- */
-event ProtocolFeeDistributed(address feeCollector, uint256 amount);
-
-/**
- * @notice Emitted when a tick is liquidated
- * @param tick The liquidated tick
- * @param oldTickVersion The liquidated tick version
- * @param liquidationPrice The asset price at the moment of liquidation
- * @param effectiveTickPrice The effective liquidated tick price
- * @param remainingCollateral The amount of asset that was left in the tick, which was transferred to the vault if
- * positive, or was taken from the vault if negative
- */
-event LiquidatedTick(
-    int24 indexed tick,
-    uint256 indexed oldTickVersion,
-    uint256 liquidationPrice,
-    uint256 effectiveTickPrice,
-    int256 remainingCollateral
-);
-
 library UsdnProtocolActionsLibrary {
     using SafeTransferLib for address;
     using SafeCast for uint256;
-    using SafeCast for int256;
-    using LibBitmap for LibBitmap.Bitmap;
-    using SignedMath for int256;
     using HugeUint for HugeUint.Uint512;
     using Permit2TokenBitfield for Permit2TokenBitfield.Bitfield;
+
+    /* -------------------------------------------------------------------------- */
+    /*                              Public functions                              */
+    /* -------------------------------------------------------------------------- */
 
     // / @inheritdoc IUsdnProtocolActions
     function initiateOpenPosition(
@@ -338,6 +239,10 @@ library UsdnProtocolActionsLibrary {
         actionsVaultLib._refundExcessEther(0, amountToRefund, balanceBefore);
         actionsVaultLib._checkPendingFee(s);
     }
+
+    /* -------------------------------------------------------------------------- */
+    /*                             Internal functions                             */
+    /* -------------------------------------------------------------------------- */
 
     /**
      * @notice Initiate an open position action

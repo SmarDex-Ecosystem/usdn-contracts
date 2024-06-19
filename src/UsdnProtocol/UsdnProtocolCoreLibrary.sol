@@ -9,6 +9,15 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolCore } from "../interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
+import { SignedMath } from "../libraries/SignedMath.sol";
+import { DoubleEndedQueue } from "../libraries/DoubleEndedQueue.sol";
+import { TickMath } from "../libraries/TickMath.sol";
+import { HugeUint } from "../libraries/HugeUint.sol";
+import { Storage } from "./UsdnProtocolBaseStorage.sol";
+import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
+import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
+import { UsdnProtocolLongLibrary as longLib } from "./UsdnProtocolLongLibrary.sol";
 import {
     ProtocolAction,
     PendingAction,
@@ -19,20 +28,17 @@ import {
     Position,
     TickData
 } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { SignedMath } from "../libraries/SignedMath.sol";
-import { DoubleEndedQueue } from "../libraries/DoubleEndedQueue.sol";
-import { TickMath } from "../libraries/TickMath.sol";
-import { HugeUint } from "../libraries/HugeUint.sol";
-import { Storage } from "./UsdnProtocolBaseStorage.sol";
-import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
-import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
-import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { UsdnProtocolLongLibrary as longLib } from "./UsdnProtocolLongLibrary.sol";
+
+/**
+ * @notice Emitted when a user's position was liquidated while pending validation and we removed the pending action
+ * @param validator The validator address
+ * @param posId The unique position identifier
+ */
+event StalePendingActionRemoved(address indexed validator, PositionId posId);
 
 library UsdnProtocolCoreLibrary {
     using SafeTransferLib for address;
     using SafeCast for uint256;
-    using SafeCast for int256;
     using SignedMath for int256;
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
     using LibBitmap for LibBitmap.Bitmap;
@@ -42,12 +48,9 @@ library UsdnProtocolCoreLibrary {
     // / @inheritdoc IUsdnProtocolCore
     uint256 internal constant MAX_ACTIONABLE_PENDING_ACTIONS = 20;
 
-    /**
-     * @notice Emitted when a user's position was liquidated while pending validation and we removed the pending action
-     * @param validator The validator address
-     * @param posId The unique position identifier
-     */
-    event StalePendingActionRemoved(address indexed validator, PositionId posId);
+    /* -------------------------------------------------------------------------- */
+    /*                              Public functions                              */
+    /* -------------------------------------------------------------------------- */
 
     // / @inheritdoc IUsdnProtocol
     function initialize(
@@ -180,6 +183,10 @@ library UsdnProtocolCoreLibrary {
     function getUserPendingAction(Storage storage s, address user) public view returns (PendingAction memory action_) {
         (action_,) = _getPendingAction(s, user);
     }
+
+    /* -------------------------------------------------------------------------- */
+    /*                             Internal functions                             */
+    /* -------------------------------------------------------------------------- */
 
     /**
      * @notice Calculate the funding rate and the old long exposure
@@ -463,8 +470,6 @@ library UsdnProtocolCoreLibrary {
 
         isPriceRecent_ = true;
     }
-
-    /* -------------------------- Pending actions queue ------------------------- */
 
     /**
      * @notice Convert a `PendingAction` to a `DepositPendingAction`
