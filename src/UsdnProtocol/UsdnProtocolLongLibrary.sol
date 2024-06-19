@@ -18,7 +18,8 @@ import {
     Position,
     PositionId,
     ProtocolAction,
-    TickData
+    TickData,
+    LiquidationData
 } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
@@ -112,33 +113,6 @@ event InitiatedOpenPosition(
 event ValidatedOpenPosition(
     address indexed owner, address indexed validator, uint128 totalExpo, uint128 newStartPrice, PositionId posId
 );
-
-/**
- * @notice Structure to hold the temporary data during liquidation
- * @param tempLongBalance The temporary long balance
- * @param tempVaultBalance The temporary vault balance
- * @param currentTick The current tick (tick corresponding to the current asset price)
- * @param iTick Tick iterator index
- * @param totalExpoToRemove The total expo to remove due to the liquidation of some ticks
- * @param accumulatorValueToRemove The value to remove from the liquidation multiplier accumulator, due to the
- * liquidation of some ticks
- * @param longTradingExpo The long trading expo
- * @param currentPrice The current price of the asset
- * @param accumulator The liquidation multiplier accumulator before the liquidation
- * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
- */
-struct LiquidationData {
-    int256 tempLongBalance;
-    int256 tempVaultBalance;
-    int24 currentTick;
-    int24 iTick;
-    uint256 totalExpoToRemove;
-    uint256 accumulatorValueToRemove;
-    uint256 longTradingExpo;
-    uint256 currentPrice;
-    HugeUint.Uint512 accumulator;
-    bool isLiquidationPending;
-}
 
 library UsdnProtocolLongLibrary {
     using LibBitmap for LibBitmap.Bitmap;

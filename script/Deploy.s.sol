@@ -12,7 +12,7 @@ import { MockLiquidationRewardsManager } from "../src/OracleMiddleware/mock/Mock
 import { MockWstEthOracleMiddleware } from "../src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
 import { LiquidationRewardsManager } from "../src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { WstEthOracleMiddleware } from "../src/OracleMiddleware/WstEthOracleMiddleware.sol";
-import { UsdnProtocol } from "../src/UsdnProtocol/UsdnProtocolProxy.sol";
+import { UsdnProtocol } from "../src/UsdnProtocol/UsdnProtocol.sol";
 import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../src/Usdn/Usdn.sol";
 import { IUsdnProtocol } from "./../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";

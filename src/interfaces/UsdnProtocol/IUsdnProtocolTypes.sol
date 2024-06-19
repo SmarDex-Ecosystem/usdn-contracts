@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
+import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
+import { HugeUint } from "../../libraries/HugeUint.sol";
+
 /**
  * @notice Information about a long user position
  * @param validated Whether the position was validated
@@ -225,4 +228,160 @@ struct PositionId {
     int24 tick;
     uint256 tickVersion;
     uint256 index;
+}
+
+/**
+ * @notice Parameters for the internal `_initiateOpenPosition` function
+ * @param user The address of the user initiating the open position
+ * @param to The address that will be the owner of the position
+ * @param validator The address that will validate the open position
+ * @param amount The amount of wstETH to deposit
+ * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
+ * @param securityDepositValue The value of the security deposit for the newly created pending action
+ * @param permit2TokenBitfield The permit2 bitfield
+ * @param currentPriceData The current price data (used to calculate the temporary leverage and entry price,
+ * pending validation)
+ */
+struct InitiateOpenPositionParams {
+    address user;
+    address to;
+    address validator;
+    uint128 amount;
+    uint128 desiredLiqPrice;
+    uint64 securityDepositValue;
+    Permit2TokenBitfield.Bitfield permit2TokenBitfield;
+}
+
+struct InitiateClosePositionParams {
+    PositionId posId;
+    uint128 amountToClose;
+    address to;
+    address payable validator;
+}
+
+/**
+ * @dev Structure to hold the transient data during `_initiateDeposit`
+ * @param pendingActionPrice The adjusted price with position fees applied
+ * @param isLiquidationPending Whether some liquidations still need to be performed
+ * @param totalExpo The total expo of the long side
+ * @param balanceLong The long side balance
+ * @param balanceVault The vault side balance, calculated according to the pendingActionPrice
+ * @param usdnTotalShares Total minted shares of USDN
+ * @param sdexToBurn The amount of SDEX to burn for the deposit
+ */
+struct InitiateDepositData {
+    uint128 pendingActionPrice;
+    bool isLiquidationPending;
+    uint256 totalExpo;
+    uint256 balanceLong;
+    uint256 balanceVault;
+    uint256 usdnTotalShares;
+    uint256 sdexToBurn;
+}
+
+/**
+ * @dev Structure to hold the transient data during `_initiateWithdrawal`
+ * @param pendingActionPrice The adjusted price with position fees applied
+ * @param usdnTotalShares The total shares supply of USDN
+ * @param totalExpo The current total expo
+ * @param balanceLong The current long balance
+ * @param balanceVault The vault balance, adjusted according to the pendingActionPrice
+ * @param withdrawalAmount The predicted amount of assets that will be withdrawn
+ * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
+ */
+struct WithdrawalData {
+    uint128 pendingActionPrice;
+    uint256 usdnTotalShares;
+    uint256 totalExpo;
+    uint256 balanceLong;
+    uint256 balanceVault;
+    uint256 withdrawalAmount;
+    bool isLiquidationPending;
+}
+
+/**
+ * @dev Structure to hold the transient data during `_initiateClosePosition`
+ * @param pos The position to close
+ * @param liquidationPenalty The liquidation penalty
+ * @param totalExpoToClose The total expo to close
+ * @param lastPrice The price after the last balances update
+ * @param tempPositionValue The bounded value of the position that was removed from the long balance
+ * @param longTradingExpo The long trading expo
+ * @param liqMulAcc The liquidation multiplier accumulator
+ * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
+ */
+struct ClosePositionData {
+    Position pos;
+    uint8 liquidationPenalty;
+    uint128 totalExpoToClose;
+    uint128 lastPrice;
+    uint256 tempPositionValue;
+    uint256 longTradingExpo;
+    HugeUint.Uint512 liqMulAcc;
+    bool isLiquidationPending;
+}
+
+/**
+ * @dev Structure to hold the transient data during `_validateOpenPosition`
+ * @param action The long pending action
+ * @param startPrice The new entry price of the position
+ * @param tickHash The tick hash
+ * @param pos The position object
+ * @param liqPriceWithoutPenalty The new liquidation price without penalty
+ * @param leverage The new leverage
+ * @param liquidationPenalty The liquidation penalty for the position's tick
+ * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
+ */
+struct ValidateOpenPositionData {
+    LongPendingAction action;
+    uint128 startPrice;
+    bytes32 tickHash;
+    Position pos;
+    uint128 liqPriceWithoutPenalty;
+    uint128 leverage;
+    uint8 liquidationPenalty;
+    bool isLiquidationPending;
+}
+
+/**
+ * @dev Structure to hold the transient data during `_initiateOpenPosition`
+ * @param adjustedPrice The adjusted price with position fees applied
+ * @param posId The new position id
+ * @param liquidationPenalty The liquidation penalty
+ * @param positionTotalExpo The total expo of the position
+ * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
+ */
+struct InitiateOpenPositionData {
+    uint128 adjustedPrice;
+    PositionId posId;
+    uint8 liquidationPenalty;
+    uint128 positionTotalExpo;
+    bool isLiquidationPending;
+}
+
+/**
+ * @notice Structure to hold the temporary data during liquidation
+ * @param tempLongBalance The temporary long balance
+ * @param tempVaultBalance The temporary vault balance
+ * @param currentTick The current tick (tick corresponding to the current asset price)
+ * @param iTick Tick iterator index
+ * @param totalExpoToRemove The total expo to remove due to the liquidation of some ticks
+ * @param accumulatorValueToRemove The value to remove from the liquidation multiplier accumulator, due to the
+ * liquidation of some ticks
+ * @param longTradingExpo The long trading expo
+ * @param currentPrice The current price of the asset
+ * @param accumulator The liquidation multiplier accumulator before the liquidation
+ * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
+ */
+struct LiquidationData {
+    int256 tempLongBalance;
+    int256 tempVaultBalance;
+    int24 currentTick;
+    int24 iTick;
+    uint256 totalExpoToRemove;
+    uint256 accumulatorValueToRemove;
+    uint256 longTradingExpo;
+    uint256 currentPrice;
+    HugeUint.Uint512 accumulator;
+    bool isLiquidationPending;
 }

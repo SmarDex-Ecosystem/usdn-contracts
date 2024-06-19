@@ -8,8 +8,6 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocolActions } from "../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 import {
-    DepositPendingAction,
-    LiquidationsEffects,
     LongPendingAction,
     PendingAction,
     Position,
@@ -17,7 +15,8 @@ import {
     PreviousActionsData,
     ProtocolAction,
     TickData,
-    WithdrawalPendingAction
+    InitiateOpenPositionParams,
+    InitiateClosePositionParams
 } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
 import { SignedMath } from "../libraries/SignedMath.sol";
@@ -34,13 +33,6 @@ import {
     InitiateOpenPositionData
 } from "./UsdnProtocolLiquidationLibrary.sol";
 import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-
-struct InitiateClosePositionParams {
-    PositionId posId;
-    uint128 amountToClose;
-    address to;
-    address payable validator;
-}
 
 /**
  * @notice Emitted when a position changes ownership
@@ -221,28 +213,6 @@ event LiquidatedTick(
     int256 remainingCollateral
 );
 
-/**
- * @notice Parameters for the internal `_initiateOpenPosition` function
- * @param user The address of the user initiating the open position
- * @param to The address that will be the owner of the position
- * @param validator The address that will validate the open position
- * @param amount The amount of wstETH to deposit
- * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
- * @param securityDepositValue The value of the security deposit for the newly created pending action
- * @param permit2TokenBitfield The permit2 bitfield
- * @param currentPriceData The current price data (used to calculate the temporary leverage and entry price,
- * pending validation)
- */
-struct InitiateOpenPositionParams {
-    address user;
-    address to;
-    address validator;
-    uint128 amount;
-    uint128 desiredLiqPrice;
-    uint64 securityDepositValue;
-    Permit2TokenBitfield.Bitfield permit2TokenBitfield;
-}
-
 library UsdnProtocolActionsLibrary {
     using SafeTransferLib for address;
     using SafeCast for uint256;
@@ -251,46 +221,6 @@ library UsdnProtocolActionsLibrary {
     using SignedMath for int256;
     using HugeUint for HugeUint.Uint512;
     using Permit2TokenBitfield for Permit2TokenBitfield.Bitfield;
-
-    /**
-     * @dev Structure to hold the transient data during `_initiateDeposit`
-     * @param pendingActionPrice The adjusted price with position fees applied
-     * @param isLiquidationPending Whether some liquidations still need to be performed
-     * @param totalExpo The total expo of the long side
-     * @param balanceLong The long side balance
-     * @param balanceVault The vault side balance, calculated according to the pendingActionPrice
-     * @param usdnTotalShares Total minted shares of USDN
-     * @param sdexToBurn The amount of SDEX to burn for the deposit
-     */
-    struct InitiateDepositData {
-        uint128 pendingActionPrice;
-        bool isLiquidationPending;
-        uint256 totalExpo;
-        uint256 balanceLong;
-        uint256 balanceVault;
-        uint256 usdnTotalShares;
-        uint256 sdexToBurn;
-    }
-
-    /**
-     * @dev Structure to hold the transient data during `_initiateWithdrawal`
-     * @param pendingActionPrice The adjusted price with position fees applied
-     * @param usdnTotalShares The total shares supply of USDN
-     * @param totalExpo The current total expo
-     * @param balanceLong The current long balance
-     * @param balanceVault The vault balance, adjusted according to the pendingActionPrice
-     * @param withdrawalAmount The predicted amount of assets that will be withdrawn
-     * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
-     */
-    struct WithdrawalData {
-        uint128 pendingActionPrice;
-        uint256 usdnTotalShares;
-        uint256 totalExpo;
-        uint256 balanceLong;
-        uint256 balanceVault;
-        uint256 withdrawalAmount;
-        bool isLiquidationPending;
-    }
 
     // / @inheritdoc IUsdnProtocolActions
     function initiateOpenPosition(

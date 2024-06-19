@@ -6,8 +6,10 @@ import { UsdnProtocolActionsLibrary as lib } from "./UsdnProtocolActionsLibrary.
 import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
 import { UsdnProtocolBaseStorage } from "./UsdnProtocolBaseStorage.sol";
 import { PreviousActionsData, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { InitiateOpenPositionParams, InitiateClosePositionParams } from "./UsdnProtocolActionsLibrary.sol";
 import { UsdnProtocolLiquidationLibrary as actionsLiquidationLib } from "./UsdnProtocolLiquidationLibrary.sol";
+import {
+    InitiateClosePositionParams, InitiateOpenPositionParams
+} from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
     function initiateDeposit(

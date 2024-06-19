@@ -3,7 +3,7 @@ pragma solidity ^0.8.25;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import { UsdnProtocol } from "../../../../src/UsdnProtocol/UsdnProtocolProxy.sol";
+import { UsdnProtocol } from "../../../../src/UsdnProtocol/UsdnProtocol.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 
 /**

@@ -13,7 +13,7 @@ import { IRebalancerEvents } from "../../../../src/interfaces/Rebalancer/IRebala
 import { IRebalancerErrors } from "../../../../src/interfaces/Rebalancer/IRebalancerErrors.sol";
 import { IRebalancerTypes } from "../../../../src/interfaces/Rebalancer/IRebalancerTypes.sol";
 import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
-import { UsdnProtocol } from "../../../../src/UsdnProtocol/UsdnProtocolProxy.sol";
+import { UsdnProtocol } from "../../../../src/UsdnProtocol/UsdnProtocol.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { IUsdnProtocol } from "./../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 

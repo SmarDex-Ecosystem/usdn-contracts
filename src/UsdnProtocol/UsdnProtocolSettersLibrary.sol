@@ -21,73 +21,6 @@ import { PositionId } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 event LiquidationPriceUpdated(PositionId indexed oldPosId, PositionId newPosId);
 
 /**
- * @notice Emitted when a user initiates the closing of all or part of a long position
- * @param owner The owner of this position
- * @param validator The validator for the pending action
- * @param to The address that will receive the assets
- * @param posId The unique position identifier
- * @param originalAmount The amount of collateral originally on the position
- * @param amountToClose The amount of collateral to close from the position
- * If the entirety of the position is being closed, this value equals `originalAmount`
- * @param totalExpoRemaining The total expo remaining in the position
- * If the entirety of the position is being closed, this value is zero
- */
-event InitiatedClosePosition(
-    address indexed owner,
-    address indexed validator,
-    address indexed to,
-    PositionId posId,
-    uint128 originalAmount,
-    uint128 amountToClose,
-    uint128 totalExpoRemaining
-);
-
-/**
- * @notice Emitted when a user validates the closing of a long position
- * @param validator The validator of the close action, not necessarily the position owner
- * @param to The address that received the assets
- * @param posId The unique position identifier
- * @param amountReceived The amount of assets that were sent to the user
- * @param profit The profit that the user made
- */
-event ValidatedClosePosition(
-    address indexed validator, address indexed to, PositionId posId, uint256 amountReceived, int256 profit
-);
-
-/**
- * @notice Emitted when a tick is liquidated
- * @param tick The liquidated tick
- * @param oldTickVersion The liquidated tick version
- * @param liquidationPrice The asset price at the moment of liquidation
- * @param effectiveTickPrice The effective liquidated tick price
- * @param remainingCollateral The amount of asset that was left in the tick, which was transferred to the vault if
- * positive, or was taken from the vault if negative
- */
-event LiquidatedTick(
-    int24 indexed tick,
-    uint256 indexed oldTickVersion,
-    uint256 liquidationPrice,
-    uint256 effectiveTickPrice,
-    int256 remainingCollateral
-);
-
-/**
- * @notice Emitted when a position is individually liquidated
- * @param user The validator of the close action, not necessarily the owner of the position
- * @param posId The unique identifier for the position that was liquidated
- * @param liquidationPrice The asset price at the moment of liquidation
- * @param effectiveTickPrice The effective liquidated tick price
- */
-event LiquidatedPosition(address indexed user, PositionId posId, uint256 liquidationPrice, uint256 effectiveTickPrice);
-
-/**
- * @notice Emitted when a user's position was liquidated while pending validation and we removed the pending action
- * @param validator The validator address
- * @param posId The unique position identifier
- */
-event StalePendingActionRemoved(address indexed validator, PositionId posId);
-
-/**
  * @notice Emitted when the position fee is updated
  * @param positionFee The new position fee (in basis points)
  */
@@ -172,13 +105,6 @@ event EMAPeriodUpdated(uint128 newEMAPeriod);
 event FundingSFUpdated(uint256 newFundingSF);
 
 /**
- * @notice Emitted when a user (liquidator) successfully liquidated positions
- * @param liquidator The address that initiated the liquidation
- * @param rewards The amount of tokens the liquidator received in rewards
- */
-event LiquidatorRewarded(address indexed liquidator, uint256 rewards);
-
-/**
  * @notice Emitted when the `LiquidationRewardsManager` contract is updated
  * @param newAddress The address of the new (current) contract
  */
@@ -189,13 +115,6 @@ event LiquidationRewardsManagerUpdated(address newAddress);
  * @param newAddress The address of the new (current) contract
  */
 event RebalancerUpdated(address newAddress);
-
-/**
- * @notice Emitted when the pending protocol fee is distributed
- * @param feeCollector The collector's address
- * @param amount The amount of fee transferred
- */
-event ProtocolFeeDistributed(address feeCollector, uint256 amount);
 
 /**
  * @notice Emitted when the protocol fee is updated
