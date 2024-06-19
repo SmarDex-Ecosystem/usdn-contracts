@@ -52,83 +52,37 @@ contract UsdnProtocol is
 
     // / @inheritdoc IUsdnProtocol
     function setOracleMiddleware(IBaseOracleMiddleware newOracleMiddleware) external onlyOwner {
-        if (address(newOracleMiddleware) == address(0)) {
-            revert UsdnProtocolInvalidMiddlewareAddress();
-        }
-        s._oracleMiddleware = newOracleMiddleware;
-        emit OracleMiddlewareUpdated(address(newOracleMiddleware));
+        settersLib.setOracleMiddleware(s, newOracleMiddleware);
     }
 
     // / @inheritdoc IUsdnProtocol
     function setLiquidationRewardsManager(ILiquidationRewardsManager newLiquidationRewardsManager) external onlyOwner {
-        if (address(newLiquidationRewardsManager) == address(0)) {
-            revert UsdnProtocolInvalidLiquidationRewardsManagerAddress();
-        }
-
-        s._liquidationRewardsManager = newLiquidationRewardsManager;
-
-        emit LiquidationRewardsManagerUpdated(address(newLiquidationRewardsManager));
+        settersLib.setLiquidationRewardsManager(s, newLiquidationRewardsManager);
     }
 
     // / @inheritdoc IUsdnProtocol
     function setRebalancer(IBaseRebalancer newRebalancer) external onlyOwner {
-        s._rebalancer = newRebalancer;
-
-        emit RebalancerUpdated(address(newRebalancer));
+        settersLib.setRebalancer(s, newRebalancer);
     }
 
     // / @inheritdoc IUsdnProtocol
     function setMinLeverage(uint256 newMinLeverage) external onlyOwner {
-        // zero minLeverage
-        if (newMinLeverage <= 10 ** s.LEVERAGE_DECIMALS) {
-            revert UsdnProtocolInvalidMinLeverage();
-        }
-
-        if (newMinLeverage >= s._maxLeverage) {
-            revert UsdnProtocolInvalidMinLeverage();
-        }
-
-        s._minLeverage = newMinLeverage;
-        emit MinLeverageUpdated(newMinLeverage);
+        settersLib.setMinLeverage(s, newMinLeverage);
     }
 
     // / @inheritdoc IUsdnProtocol
     function setMaxLeverage(uint256 newMaxLeverage) external onlyOwner {
-        if (newMaxLeverage <= s._minLeverage) {
-            revert UsdnProtocolInvalidMaxLeverage();
-        }
-
-        // `maxLeverage` greater than 100
-        if (newMaxLeverage > 100 * 10 ** s.LEVERAGE_DECIMALS) {
-            revert UsdnProtocolInvalidMaxLeverage();
-        }
-
-        s._maxLeverage = newMaxLeverage;
-        emit MaxLeverageUpdated(newMaxLeverage);
+        settersLib.setMaxLeverage(s, newMaxLeverage);
     }
 
     // / @inheritdoc IUsdnProtocol
     function setValidationDeadline(uint256 newValidationDeadline) external onlyOwner {
-        if (newValidationDeadline < 60) {
-            revert UsdnProtocolInvalidValidationDeadline();
-        }
-
-        if (newValidationDeadline > 1 days) {
-            revert UsdnProtocolInvalidValidationDeadline();
-        }
-
-        s._validationDeadline = newValidationDeadline;
-        emit ValidationDeadlineUpdated(newValidationDeadline);
+        settersLib.setValidationDeadline(s, newValidationDeadline);
     }
 
     // / @inheritdoc IUsdnProtocol
     function setLiquidationPenalty(uint8 newLiquidationPenalty) external onlyOwner {
-        if (newLiquidationPenalty > 15) {
-            revert UsdnProtocolInvalidLiquidationPenalty();
-        }
-
-        s._liquidationPenalty = newLiquidationPenalty;
-        emit LiquidationPenaltyUpdated(newLiquidationPenalty);
+        settersLib.setLiquidationPenalty(s, newLiquidationPenalty);
     }
 
     // / @inheritdoc IUsdnProtocol
@@ -144,41 +98,22 @@ contract UsdnProtocol is
 
     // / @inheritdoc IUsdnProtocol
     function setLiquidationIteration(uint16 newLiquidationIteration) external onlyOwner {
-        if (newLiquidationIteration > s.MAX_LIQUIDATION_ITERATION) {
-            revert UsdnProtocolInvalidLiquidationIteration();
-        }
-
-        s._liquidationIteration = newLiquidationIteration;
-        emit LiquidationIterationUpdated(newLiquidationIteration);
+        settersLib.setLiquidationIteration(s, newLiquidationIteration);
     }
 
     // / @inheritdoc IUsdnProtocol
     function setEMAPeriod(uint128 newEMAPeriod) external onlyOwner {
-        if (newEMAPeriod > 90 days) {
-            revert UsdnProtocolInvalidEMAPeriod();
-        }
-
-        s._EMAPeriod = newEMAPeriod;
-        emit EMAPeriodUpdated(newEMAPeriod);
+        settersLib.setEMAPeriod(s, newEMAPeriod);
     }
 
     // / @inheritdoc IUsdnProtocol
     function setFundingSF(uint256 newFundingSF) external onlyOwner {
-        if (newFundingSF > 10 ** s.FUNDING_SF_DECIMALS) {
-            revert UsdnProtocolInvalidFundingSF();
-        }
-
-        s._fundingSF = newFundingSF;
-        emit FundingSFUpdated(newFundingSF);
+        settersLib.setFundingSF(s, newFundingSF);
     }
 
     // / @inheritdoc IUsdnProtocol
     function setProtocolFeeBps(uint16 newProtocolFeeBps) external onlyOwner {
-        if (newProtocolFeeBps > s.BPS_DIVISOR) {
-            revert UsdnProtocolInvalidProtocolFeeBps();
-        }
-        s._protocolFeeBps = newProtocolFeeBps;
-        emit FeeBpsUpdated(newProtocolFeeBps);
+        settersLib.setProtocolFeeBps(s, newProtocolFeeBps);
     }
 
     // / @inheritdoc IUsdnProtocol
@@ -193,55 +128,32 @@ contract UsdnProtocol is
 
     // / @inheritdoc IUsdnProtocol
     function setVaultFeeBps(uint16 newVaultFee) external onlyOwner {
-        // `newVaultFee` greater than 20%
-        if (newVaultFee > 2000) {
-            revert UsdnProtocolInvalidVaultFee();
-        }
-        s._vaultFeeBps = newVaultFee;
-        emit VaultFeeUpdated(newVaultFee);
+        settersLib.setVaultFeeBps(s, newVaultFee);
     }
 
     // / @inheritdoc IUsdnProtocol
     function setRebalancerBonusBps(uint16 newBonus) external onlyOwner {
-        // `newBonus` greater than 100%
-        if (newBonus > s.BPS_DIVISOR) {
-            revert UsdnProtocolInvalidRebalancerBonus();
-        }
-        s._rebalancerBonusBps = newBonus;
-        emit RebalancerBonusUpdated(newBonus);
+        settersLib.setRebalancerBonusBps(s, newBonus);
     }
 
     // / @inheritdoc IUsdnProtocol
     function setSdexBurnOnDepositRatio(uint32 newRatio) external onlyOwner {
-        // `newRatio` greater than 5%
-        if (newRatio > s.SDEX_BURN_ON_DEPOSIT_DIVISOR / 20) {
-            revert UsdnProtocolInvalidBurnSdexOnDepositRatio();
-        }
-
-        s._sdexBurnOnDepositRatio = newRatio;
-
-        emit BurnSdexOnDepositRatioUpdated(newRatio);
+        settersLib.setSdexBurnOnDepositRatio(s, newRatio);
     }
 
     // / @inheritdoc IUsdnProtocol
     function setSecurityDepositValue(uint64 securityDepositValue) external onlyOwner {
-        s._securityDepositValue = securityDepositValue;
-        emit SecurityDepositValueUpdated(securityDepositValue);
+        settersLib.setSecurityDepositValue(s, securityDepositValue);
     }
 
     // / @inheritdoc IUsdnProtocol
     function setFeeThreshold(uint256 newFeeThreshold) external onlyOwner {
-        s._feeThreshold = newFeeThreshold;
-        emit FeeThresholdUpdated(newFeeThreshold);
+        settersLib.setFeeThreshold(s, newFeeThreshold);
     }
 
     // / @inheritdoc IUsdnProtocol
     function setFeeCollector(address newFeeCollector) external onlyOwner {
-        if (newFeeCollector == address(0)) {
-            revert UsdnProtocolInvalidFeeCollector();
-        }
-        s._feeCollector = newFeeCollector;
-        emit FeeCollectorUpdated(newFeeCollector);
+        settersLib.setFeeCollector(s, newFeeCollector);
     }
 
     // / @inheritdoc IUsdnProtocol
@@ -252,73 +164,28 @@ contract UsdnProtocol is
         uint256 newCloseLimitBps,
         int256 newLongImbalanceTargetBps
     ) external onlyOwner {
-        s._openExpoImbalanceLimitBps = newOpenLimitBps.toInt256();
-        s._depositExpoImbalanceLimitBps = newDepositLimitBps.toInt256();
-
-        if (newWithdrawalLimitBps != 0 && newWithdrawalLimitBps < newOpenLimitBps) {
-            // withdrawal limit lower than open not permitted
-            revert UsdnProtocolInvalidExpoImbalanceLimit();
-        }
-        s._withdrawalExpoImbalanceLimitBps = newWithdrawalLimitBps.toInt256();
-
-        if (newCloseLimitBps != 0 && newCloseLimitBps < newDepositLimitBps) {
-            // close limit lower than deposit not permitted
-            revert UsdnProtocolInvalidExpoImbalanceLimit();
-        }
-        s._closeExpoImbalanceLimitBps = newCloseLimitBps.toInt256();
-
-        // casts are safe here as values are safely casted earlier
-        if (
-            newLongImbalanceTargetBps > int256(newCloseLimitBps)
-                || newLongImbalanceTargetBps < -int256(newWithdrawalLimitBps)
-                || newLongImbalanceTargetBps < -int256(s.BPS_DIVISOR / 2) // The target cannot be lower than -50%
-        ) {
-            revert UsdnProtocolInvalidLongImbalanceTarget();
-        }
-
-        s._longImbalanceTargetBps = newLongImbalanceTargetBps;
-
-        emit ImbalanceLimitsUpdated(
-            newOpenLimitBps, newDepositLimitBps, newWithdrawalLimitBps, newCloseLimitBps, newLongImbalanceTargetBps
+        settersLib.setExpoImbalanceLimits(
+            s, newOpenLimitBps, newDepositLimitBps, newWithdrawalLimitBps, newCloseLimitBps, newLongImbalanceTargetBps
         );
     }
 
     // / @inheritdoc IUsdnProtocol
     function setTargetUsdnPrice(uint128 newPrice) external onlyOwner {
-        if (newPrice > s._usdnRebaseThreshold) {
-            revert UsdnProtocolInvalidTargetUsdnPrice();
-        }
-        if (newPrice < uint128(10 ** s._priceFeedDecimals)) {
-            // values smaller than $1 are not allowed
-            revert UsdnProtocolInvalidTargetUsdnPrice();
-        }
-        s._targetUsdnPrice = newPrice;
-        emit TargetUsdnPriceUpdated(newPrice);
+        settersLib.setTargetUsdnPrice(s, newPrice);
     }
 
     // / @inheritdoc IUsdnProtocol
     function setUsdnRebaseThreshold(uint128 newThreshold) external onlyOwner {
-        if (newThreshold < s._targetUsdnPrice) {
-            revert UsdnProtocolInvalidUsdnRebaseThreshold();
-        }
-        s._usdnRebaseThreshold = newThreshold;
-        emit UsdnRebaseThresholdUpdated(newThreshold);
+        settersLib.setUsdnRebaseThreshold(s, newThreshold);
     }
 
     // / @inheritdoc IUsdnProtocol
     function setUsdnRebaseInterval(uint256 newInterval) external onlyOwner {
-        s._usdnRebaseInterval = newInterval;
-        emit UsdnRebaseIntervalUpdated(newInterval);
+        settersLib.setUsdnRebaseInterval(s, newInterval);
     }
 
     // / @inheritdoc IUsdnProtocol
     function setMinLongPosition(uint256 newMinLongPosition) external onlyOwner {
-        s._minLongPosition = newMinLongPosition;
-        emit MinLongPositionUpdated(newMinLongPosition);
-
-        IBaseRebalancer rebalancer = s._rebalancer;
-        if (address(rebalancer) != address(0) && rebalancer.getMinAssetDeposit() < newMinLongPosition) {
-            rebalancer.setMinAssetDeposit(newMinLongPosition);
-        }
+        settersLib.setMinLongPosition(s, newMinLongPosition);
     }
 }
