@@ -49,10 +49,10 @@ contract TestRebalancerResetDepositAssets is RebalancerFixture {
      * @custom:scenario The user tries to reset his deposit without having initiated one
      * @custom:given No deposit has been initiated
      * @custom:when The user tries to reset his deposit
-     * @custom:then The call reverts with `RebalancerActionWasValidated`
+     * @custom:then The call reverts with `RebalancerNoPendingAction`
      */
-    function test_RevertWhen_resetDepositNoUnvalidatedAction() public {
-        vm.expectRevert(RebalancerActionWasValidated.selector);
+    function test_RevertWhen_resetDepositNoPendingAction() public {
+        vm.expectRevert(RebalancerNoPendingAction.selector);
         vm.prank(USER_1);
         rebalancer.resetDepositAssets();
     }

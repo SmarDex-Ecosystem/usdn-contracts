@@ -238,21 +238,14 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
 
         if (depositData.initiateTimestamp == 0) {
             // user has no action that must be validated
-            revert RebalancerActionWasValidated();
+            revert RebalancerNoPendingAction();
         }
         if (depositData.entryPositionVersion > 0) {
             // user has a withdrawal that must be validated
             revert RebalancerActionNotValidated();
         }
-        TimeLimits memory timeLimits = _timeLimits;
-        if (uint40(block.timestamp) < depositData.initiateTimestamp + timeLimits.validationDelay) {
-            // user must wait until the delay has elapsed
-            revert RebalancerValidateTooEarly();
-        }
-        if (uint40(block.timestamp) > depositData.initiateTimestamp + timeLimits.validationDeadline) {
-            // user must wait until the cooldown has elapsed, then call `resetDepositAssets` to withdraw the funds
-            revert RebalancerActionCooldown();
-        }
+
+        _checkValidationTime(depositData.initiateTimestamp);
 
         depositData.entryPositionVersion = positionVersion + 1;
         depositData.initiateTimestamp = 0;
@@ -267,7 +260,7 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
         UserDeposit memory depositData = _userDeposit[msg.sender];
         if (depositData.initiateTimestamp == 0) {
             // user has no action that must be validated
-            revert RebalancerActionWasValidated();
+            revert RebalancerNoPendingAction();
         }
         if (depositData.entryPositionVersion > 0) {
             // user has a withdrawal that must be validated
@@ -287,8 +280,48 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
     }
 
     /// @inheritdoc IRebalancer
-    function withdrawPendingAssets(uint88 amount, address to) external {
-        // TODO: refactor in two steps
+    function initiateWithdrawAssets() external {
+        /* authorized previous states:
+        - unincluded (pending inclusion)
+            - amount > 0
+            - entryPositionVersion > _positionVersion
+            - initiateTimestamp == 0
+        - withdrawal cooldown
+            - entryPositionVersion > _positionVersion
+            - initiateTimestamp > 0
+            - cooldown elapsed
+
+        amount is always > 0 if entryPositionVersion > 0 */
+
+        UserDeposit memory depositData = _userDeposit[msg.sender];
+
+        if (depositData.entryPositionVersion <= _positionVersion) {
+            revert RebalancerWithdrawalUnauthorized();
+        }
+        // entryPositionVersion > _positionVersion
+
+        if (
+            depositData.initiateTimestamp > 0
+                && uint40(block.timestamp) < depositData.initiateTimestamp + _timeLimits.actionCooldown
+        ) {
+            // user must wait until the cooldown has elapsed, then call this function to restart the withdrawal process
+            revert RebalancerActionCooldown();
+        }
+        // initiateTimestamp == 0 or cooldown elapsed
+
+        _userDeposit[msg.sender].initiateTimestamp = uint40(block.timestamp);
+
+        emit InitiatedAssetsWithdrawal(msg.sender);
+    }
+
+    /// @inheritdoc IRebalancer
+    function validateWithdrawAssets(uint88 amount, address to) external {
+        /* authorized previous states:
+        - initiated withdrawal
+            - initiateTimestamp > 0
+            - entryPositionVersion > _positionVersion
+            - timestamp is between initiateTimestamp + delay and initiateTimestamp + deadline
+        */
         if (to == address(0)) {
             revert RebalancerInvalidAddressTo();
         }
@@ -298,37 +331,43 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
 
         UserDeposit memory depositData = _userDeposit[msg.sender];
 
-        if (depositData.amount == 0) {
-            revert RebalancerUserNotPending();
-        }
-
         if (depositData.entryPositionVersion <= _positionVersion) {
-            revert RebalancerUserNotPending();
+            revert RebalancerWithdrawalUnauthorized();
+        }
+        if (depositData.initiateTimestamp == 0) {
+            revert RebalancerNoPendingAction();
+        }
+        _checkValidationTime(depositData.initiateTimestamp);
+
+        if (amount > depositData.amount) {
+            revert RebalancerInvalidAmount();
         }
 
-        if (depositData.amount < amount) {
-            revert RebalancerWithdrawAmountTooLarge();
-        }
-
-        uint88 newAmount = depositData.amount;
-        unchecked {
-            newAmount -= amount;
-            _pendingAssetsAmount -= amount;
-        }
-        if (newAmount == 0) {
-            // If the new amount after the withdraw is equal to 0, delete the mapping entry
+        // update deposit data
+        if (depositData.amount == amount) {
+            // we withdraw the full amount, delete the mapping entry
             delete _userDeposit[msg.sender];
         } else {
-            if (newAmount < _minAssetDeposit) {
+            // partial withdrawal
+            // the remaining amount must at least be _minAssetDeposit
+            if (depositData.amount < _minAssetDeposit) {
                 revert RebalancerInsufficientAmount();
             }
-            // If not, the amount is updated
-            _userDeposit[msg.sender].amount = newAmount;
+            // we update the deposit amount and timestamp and write to storage
+            unchecked {
+                // checked above: amount is strictly smaller than depositData.amount
+                depositData.amount -= amount;
+            }
+            depositData.initiateTimestamp = 0;
+            _userDeposit[msg.sender] = depositData;
         }
+
+        // update global state
+        _pendingAssetsAmount -= amount;
 
         _asset.safeTransfer(to, amount);
 
-        emit PendingAssetsWithdrawn(msg.sender, amount, to);
+        emit AssetsWithdrawn(msg.sender, to, amount);
     }
 
     /// @inheritdoc IRebalancer
@@ -514,5 +553,27 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
         }
 
         return super.supportsInterface(interfaceId);
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                             Internal functions                             */
+    /* -------------------------------------------------------------------------- */
+
+    /**
+     * @notice Check if the validate action happens between the validation delay and the validation deadline
+     * @dev If the block timestamp is before initiateTimestamp + validationDelay, the function will revert
+     * If the block timestamp is after initiateTimestamp + validationDeadline, the function will revert
+     * @param initiateTimestamp The timestamp of the initiate action
+     */
+    function _checkValidationTime(uint40 initiateTimestamp) internal view {
+        TimeLimits memory timeLimits = _timeLimits;
+        if (uint40(block.timestamp) < initiateTimestamp + timeLimits.validationDelay) {
+            // user must wait until the delay has elapsed
+            revert RebalancerValidateTooEarly();
+        }
+        if (uint40(block.timestamp) > initiateTimestamp + timeLimits.validationDeadline) {
+            // user must wait until the cooldown has elapsed, then call `resetDepositAssets` to withdraw the funds
+            revert RebalancerActionCooldown();
+        }
     }
 }

@@ -47,28 +47,28 @@ contract TestRebalancerValidateDepositAssets is RebalancerFixture {
     /**
      * @custom:scenario The user tries to validate a deposit that has already been validated
      * @custom:when The user tries to validate the deposit again
-     * @custom:then The call reverts with a RebalancerActionWasValidated error
+     * @custom:then The call reverts with a {RebalancerNoPendingAction} error
      */
     function test_RevertWhen_validateDepositAlreadyValidated() public {
         skip(rebalancer.getTimeLimits().validationDelay);
         rebalancer.validateDepositAssets();
 
-        vm.expectRevert(RebalancerActionWasValidated.selector);
+        vm.expectRevert(RebalancerNoPendingAction.selector);
         rebalancer.validateDepositAssets();
     }
 
     /**
      * @custom:scenario The user tries to validate a deposit that has not been initiated
      * @custom:when The user tries to validate a deposit that has not been initiated
-     * @custom:then The call reverts with a RebalancerActionWasValidated error
+     * @custom:then The call reverts with a {RebalancerNoPendingAction} error
      */
     function test_RevertWhen_validateDepositNotInitiated() public {
-        vm.expectRevert(RebalancerActionWasValidated.selector);
+        vm.expectRevert(RebalancerNoPendingAction.selector);
         vm.prank(USER_1);
         rebalancer.validateDepositAssets();
     }
 
-    function test_RevertWhen_validateDepositUnvalidatedWithdrawal() public {
+    function test_RevertWhen_validateDepositPendingWithdrawal() public {
         // TODO
     }
 

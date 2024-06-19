@@ -27,12 +27,18 @@ interface IRebalancerEvents {
     event DepositRefunded(address indexed user, uint256 amount);
 
     /**
+     * @notice Emitted when a user initiates the withdrawal of their pending assets
+     * @param user The address of the user
+     */
+    event InitiatedAssetsWithdrawal(address indexed user);
+
+    /**
      * @notice Emitted when pending assets are withdrawn from the contract
      * @param user The original owner of the position
-     * @param amount The amount of assets withdrawn
      * @param to The address the assets will be sent to
+     * @param amount The amount of assets withdrawn
      */
-    event PendingAssetsWithdrawn(address user, uint256 amount, address to);
+    event AssetsWithdrawn(address indexed user, address indexed to, uint256 amount);
 
     /**
      * @notice Emitted when the user initiates a close position action
