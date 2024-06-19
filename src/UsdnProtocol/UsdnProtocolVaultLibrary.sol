@@ -91,13 +91,13 @@ library UsdnProtocolVaultLibrary {
     }
 
     // / @inheritdoc IUsdnProtocolVault
-    function usdnPrice(Storage storage s, uint128 currentPrice) external view returns (uint256 price_) {
+    function usdnPrice(Storage storage s, uint128 currentPrice) public view returns (uint256 price_) {
         price_ = usdnPrice(s, currentPrice, uint128(block.timestamp));
     }
 
     // / @inheritdoc IUsdnProtocolVault
     function previewDeposit(Storage storage s, uint256 amount, uint128 price, uint128 timestamp)
-        external
+        public
         view
         returns (uint256 usdnSharesExpected_, uint256 sdexToBurn_)
     {
@@ -115,7 +115,7 @@ library UsdnProtocolVaultLibrary {
 
     // / @inheritdoc IUsdnProtocolVault
     function previewWithdraw(Storage storage s, uint256 usdnShares, uint256 price, uint128 timestamp)
-        external
+        public
         view
         returns (uint256 assetExpected_)
     {
@@ -155,7 +155,7 @@ library UsdnProtocolVaultLibrary {
     }
 
     // / @inheritdoc IUsdnProtocol
-    function removeBlockedPendingAction(Storage storage s, address validator, address payable to) external {
+    function removeBlockedPendingAction(Storage storage s, address validator, address payable to) public {
         uint256 pendingActionIndex = s._pendingActions[validator];
         if (pendingActionIndex == 0) {
             // no pending action
@@ -167,7 +167,7 @@ library UsdnProtocolVaultLibrary {
     }
 
     // / @inheritdoc IUsdnProtocol
-    function removeBlockedPendingActionNoCleanup(Storage storage s, address validator, address payable to) external {
+    function removeBlockedPendingActionNoCleanup(Storage storage s, address validator, address payable to) public {
         uint256 pendingActionIndex = s._pendingActions[validator];
         if (pendingActionIndex == 0) {
             // no pending action
@@ -190,7 +190,7 @@ library UsdnProtocolVaultLibrary {
         uint128 positionTotalExpo,
         uint128 longAmount,
         uint128 depositAmount
-    ) internal view {
+    ) public view {
         // _checkUninitialized(); // prevent using this function after initialization
         // TODO : check this solution
         InitializableReentrancyGuard(address(this))._checkUninitialized();
@@ -220,7 +220,7 @@ library UsdnProtocolVaultLibrary {
      * @param amount The initial deposit amount
      * @param price The current asset price
      */
-    function _createInitialDeposit(Storage storage s, uint128 amount, uint128 price) internal {
+    function _createInitialDeposit(Storage storage s, uint128 amount, uint128 price) public {
         // _checkUninitialized(); // prevent using this function after initialization
         // TODO : check this solution
         InitializableReentrancyGuard(address(this))._checkUninitialized();
@@ -253,7 +253,7 @@ library UsdnProtocolVaultLibrary {
      * @param totalExpo The total expo of the position
      */
     function _createInitialPosition(Storage storage s, uint128 amount, uint128 price, int24 tick, uint128 totalExpo)
-        internal
+        public
     {
         // _checkUninitialized(); // prevent using this function after initialization
         // TODO : check this solution
@@ -286,7 +286,7 @@ library UsdnProtocolVaultLibrary {
      * @param currentPrice Current price
      * @return available_ The available balance in the vault side
      */
-    function _vaultAssetAvailable(Storage storage s, uint128 currentPrice) internal view returns (int256 available_) {
+    function _vaultAssetAvailable(Storage storage s, uint128 currentPrice) public view returns (int256 available_) {
         available_ = _vaultAssetAvailable(s._totalExpo, s._balanceVault, s._balanceLong, currentPrice, s._lastPrice);
     }
 
@@ -306,7 +306,7 @@ library UsdnProtocolVaultLibrary {
         uint256 balanceLong,
         uint128 newPrice,
         uint128 oldPrice
-    ) internal pure returns (int256 available_) {
+    ) public pure returns (int256 available_) {
         int256 totalBalance = balanceLong.toInt256().safeAdd(balanceVault.toInt256());
         int256 newLongBalance = coreLib._longAssetAvailable(totalExpo, balanceLong, newPrice, oldPrice);
 
@@ -319,7 +319,7 @@ library UsdnProtocolVaultLibrary {
      * @return hash_ The hash of the tick
      * @return version_ The version of the tick
      */
-    function _tickHash(Storage storage s, int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
+    function _tickHash(Storage storage s, int24 tick) public view returns (bytes32 hash_, uint256 version_) {
         version_ = s._tickVersion[tick];
         hash_ = tickHash(tick, version_);
     }
@@ -332,7 +332,7 @@ library UsdnProtocolVaultLibrary {
      * @return assetExpected_ The expected amount of assets to be received
      */
     function _calcBurnUsdn(uint256 usdnShares, uint256 available, uint256 usdnTotalShares)
-        internal
+        public
         pure
         returns (uint256 assetExpected_)
     {
@@ -356,7 +356,7 @@ library UsdnProtocolVaultLibrary {
         uint128 assetPrice,
         uint256 usdnTotalSupply,
         uint8 assetDecimals
-    ) internal view returns (uint256 price_) {
+    ) public view returns (uint256 price_) {
         price_ = FixedPointMathLib.fullMulDiv(
             vaultBalance, uint256(assetPrice) * 10 ** s.TOKENS_DECIMALS, usdnTotalSupply * 10 ** assetDecimals
         );
@@ -369,7 +369,7 @@ library UsdnProtocolVaultLibrary {
      * @return sdexToBurn_ The amount of SDEX to burn for the given USDN amount
      */
     function _calcSdexToBurn(Storage storage s, uint256 usdnAmount, uint32 sdexBurnRatio)
-        internal
+        public
         view
         returns (uint256 sdexToBurn_)
     {
@@ -390,7 +390,7 @@ library UsdnProtocolVaultLibrary {
         uint128 assetPrice,
         uint128 targetPrice,
         uint8 assetDecimals
-    ) internal view returns (uint256 totalSupply_) {
+    ) public view returns (uint256 totalSupply_) {
         totalSupply_ = FixedPointMathLib.fullMulDiv(
             vaultBalance, uint256(assetPrice) * 10 ** s.TOKENS_DECIMALS, uint256(targetPrice) * 10 ** assetDecimals
         );
@@ -405,7 +405,7 @@ library UsdnProtocolVaultLibrary {
      * @return callbackResult_ The rebase callback result, if any
      */
     function _usdnRebase(Storage storage s, uint128 assetPrice, bool ignoreInterval)
-        internal
+        public
         returns (bool rebased_, bytes memory callbackResult_)
     {
         if (!ignoreInterval && block.timestamp - s._lastRebaseCheck < s._usdnRebaseInterval) {
@@ -455,7 +455,7 @@ library UsdnProtocolVaultLibrary {
         uint256 vaultBalance,
         uint256 usdnTotalShares,
         uint256 price
-    ) internal view returns (uint256 toMint_) {
+    ) public view returns (uint256 toMint_) {
         if (vaultBalance == 0) {
             // initialization, we consider the USDN price to be 1 USD
             // the conversion here is necessary since we calculate an amount in tokens and we want the corresponding
@@ -476,7 +476,7 @@ library UsdnProtocolVaultLibrary {
      * @param usdnShares The amount of USDN shares
      * @return sharesLSB_ The 24 least significant bits of the USDN shares
      */
-    function _calcWithdrawalAmountLSB(uint152 usdnShares) internal pure returns (uint24 sharesLSB_) {
+    function _calcWithdrawalAmountLSB(uint152 usdnShares) public pure returns (uint24 sharesLSB_) {
         sharesLSB_ = uint24(usdnShares);
     }
 
@@ -485,7 +485,7 @@ library UsdnProtocolVaultLibrary {
      * @param usdnShares The amount of USDN shares
      * @return sharesMSB_ The 128 most significant bits of the USDN shares
      */
-    function _calcWithdrawalAmountMSB(uint152 usdnShares) internal pure returns (uint128 sharesMSB_) {
+    function _calcWithdrawalAmountMSB(uint152 usdnShares) public pure returns (uint128 sharesMSB_) {
         sharesMSB_ = uint128(usdnShares >> 24);
     }
 }

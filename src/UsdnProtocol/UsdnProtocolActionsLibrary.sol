@@ -356,7 +356,7 @@ library UsdnProtocolActionsLibrary {
         InitiateOpenPositionParams memory params,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external returns (bool success_, PositionId memory posId_) {
+    ) public returns (bool success_, PositionId memory posId_) {
         uint64 securityDepositValue = s._securityDepositValue;
         if (msg.value < securityDepositValue) {
             revert IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow();
@@ -382,7 +382,7 @@ library UsdnProtocolActionsLibrary {
         address payable validator,
         bytes calldata openPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external returns (bool success_) {
+    ) public returns (bool success_) {
         uint256 balanceBefore = address(this).balance;
 
         uint256 amountToRefund;
@@ -409,7 +409,7 @@ library UsdnProtocolActionsLibrary {
         InitiateClosePositionParams memory params,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external returns (bool success_) {
+    ) public returns (bool success_) {
         uint64 securityDepositValue = s._securityDepositValue;
         if (msg.value < securityDepositValue) {
             revert IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow();
@@ -446,7 +446,7 @@ library UsdnProtocolActionsLibrary {
         address payable validator,
         bytes calldata closePriceData,
         PreviousActionsData calldata previousActionsData
-    ) external returns (bool success_) {
+    ) public returns (bool success_) {
         uint256 balanceBefore = address(this).balance;
 
         uint256 amountToRefund;
@@ -469,7 +469,7 @@ library UsdnProtocolActionsLibrary {
 
     // / @inheritdoc IUsdnProtocolActions
     function liquidate(Storage storage s, bytes calldata currentPriceData, uint16 iterations)
-        external
+        public
         returns (uint256 liquidatedPositions_)
     {
         uint256 balanceBefore = address(this).balance;
@@ -494,7 +494,7 @@ library UsdnProtocolActionsLibrary {
         Storage storage s,
         PreviousActionsData calldata previousActionsData,
         uint256 maxValidations
-    ) external returns (uint256 validatedActions_) {
+    ) public returns (uint256 validatedActions_) {
         uint256 balanceBefore = address(this).balance;
         uint256 amountToRefund;
 
@@ -516,7 +516,7 @@ library UsdnProtocolActionsLibrary {
     }
 
     // / @inheritdoc IUsdnProtocolActions
-    function transferPositionOwnership(Storage storage s, PositionId calldata posId, address newOwner) external {
+    function transferPositionOwnership(Storage storage s, PositionId calldata posId, address newOwner) public {
         (bytes32 tickHash, uint256 version) = vaultLib._tickHash(s, posId.tick);
         if (posId.tickVersion != version) {
             revert IUsdnProtocolErrors.UsdnProtocolOutdatedTick(version, posId.tickVersion);
@@ -547,7 +547,7 @@ library UsdnProtocolActionsLibrary {
      * @param posValueToClose The value to remove from the position
      */
     function _checkImbalanceLimitClose(Storage storage s, uint256 posTotalExpoToClose, uint256 posValueToClose)
-        internal
+        public
         view
     {
         int256 closeExpoImbalanceLimitBps = s._closeExpoImbalanceLimitBps;
@@ -587,7 +587,7 @@ library UsdnProtocolActionsLibrary {
         ProtocolAction action,
         bytes memory rebaseCallbackResult,
         bytes memory priceData
-    ) internal {
+    ) public {
         // get how much we should give to the liquidator as rewards
         uint256 liquidationRewards = s._liquidationRewardsManager.getLiquidationRewards(
             liquidatedTicks, remainingCollateral, rebased, action, rebaseCallbackResult, priceData
@@ -623,7 +623,7 @@ library UsdnProtocolActionsLibrary {
         address validator,
         uint64 securityDepositValue,
         InitiateOpenPositionData memory data
-    ) internal returns (uint256 amountToRefund_) {
+    ) public returns (uint256 amountToRefund_) {
         LongPendingAction memory action = LongPendingAction({
             action: ProtocolAction.ValidateOpenPosition,
             timestamp: uint40(block.timestamp),
@@ -661,7 +661,7 @@ library UsdnProtocolActionsLibrary {
         Storage storage s,
         InitiateOpenPositionParams memory params,
         bytes calldata currentPriceData
-    ) internal returns (PositionId memory posId_, uint256 amountToRefund_, bool isInitiated_) {
+    ) public returns (PositionId memory posId_, uint256 amountToRefund_, bool isInitiated_) {
         if (params.to == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo();
         }
@@ -727,7 +727,7 @@ library UsdnProtocolActionsLibrary {
      * @return liquidated_ Whether the pending action has been liquidated
      */
     function _validateOpenPosition(Storage storage s, address validator, bytes calldata priceData)
-        internal
+        public
         returns (uint256 securityDepositValue_, bool isValidated_, bool liquidated_)
     {
         (PendingAction memory pending, uint128 rawIndex) = coreLib._getPendingActionOrRevert(s, validator);
@@ -756,7 +756,7 @@ library UsdnProtocolActionsLibrary {
      * @return liquidated_ Whether the position was liquidated
      */
     function _prepareValidateOpenPositionData(Storage storage s, PendingAction memory pending, bytes calldata priceData)
-        internal
+        public
         returns (ValidateOpenPositionData memory data_, bool liquidated_)
     {
         data_.action = coreLib._toLongPendingAction(pending);
@@ -822,7 +822,7 @@ library UsdnProtocolActionsLibrary {
      * @return liquidated_ Whether the pending action has been liquidated
      */
     function _validateOpenPositionWithAction(Storage storage s, PendingAction memory pending, bytes calldata priceData)
-        internal
+        public
         returns (bool isValidated_, bool liquidated_)
     {
         (ValidateOpenPositionData memory data, bool liquidated) =
@@ -957,7 +957,7 @@ library UsdnProtocolActionsLibrary {
         address validator,
         uint128 amountToClose,
         Position memory pos
-    ) internal view {
+    ) public view {
         if (to == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo();
         }
@@ -1014,7 +1014,7 @@ library UsdnProtocolActionsLibrary {
         PositionId memory posId,
         uint128 amountToClose,
         bytes calldata currentPriceData
-    ) internal returns (ClosePositionData memory data_, bool liquidated_) {
+    ) public returns (ClosePositionData memory data_, bool liquidated_) {
         (data_.pos, data_.liquidationPenalty) = longLib.getLongPosition(s, posId);
 
         _checkInitiateClosePosition(s, owner, to, validator, amountToClose, data_.pos);
@@ -1089,7 +1089,7 @@ library UsdnProtocolActionsLibrary {
         uint128 amountToClose,
         uint64 securityDepositValue,
         ClosePositionData memory data
-    ) internal returns (uint256 amountToRefund_) {
+    ) public returns (uint256 amountToRefund_) {
         LongPendingAction memory action = LongPendingAction({
             action: ProtocolAction.ValidateClosePosition,
             timestamp: uint40(block.timestamp),
@@ -1141,7 +1141,7 @@ library UsdnProtocolActionsLibrary {
         uint128 amountToClose,
         uint64 securityDepositValue,
         bytes calldata currentPriceData
-    ) internal returns (uint256 amountToRefund_, bool isInitiated_, bool liquidated_) {
+    ) public returns (uint256 amountToRefund_, bool isInitiated_, bool liquidated_) {
         ClosePositionData memory data;
         (data, liquidated_) = _prepareClosePositionData(s, owner, to, validator, posId, amountToClose, currentPriceData);
 
@@ -1177,7 +1177,7 @@ library UsdnProtocolActionsLibrary {
      * @return liquidated_ Whether the pending action has been liquidated
      */
     function _validateClosePosition(Storage storage s, address validator, bytes calldata priceData)
-        internal
+        public
         returns (uint256 securityDepositValue_, bool isValidated_, bool liquidated_)
     {
         (PendingAction memory pending, uint128 rawIndex) = coreLib._getPendingActionOrRevert(s, validator);
@@ -1214,7 +1214,7 @@ library UsdnProtocolActionsLibrary {
      * @return liquidated_ Whether the pending action has been liquidated
      */
     function _validateClosePositionWithAction(Storage storage s, PendingAction memory pending, bytes calldata priceData)
-        internal
+        public
         returns (bool isValidated_, bool liquidated_)
     {
         ValidateClosePositionWithActionData memory data;
@@ -1341,7 +1341,7 @@ library UsdnProtocolActionsLibrary {
      * long balance
      */
     function _assetToRemove(Storage storage s, uint128 priceWithFees, uint128 liqPriceWithoutPenalty, uint128 posExpo)
-        internal
+        public
         view
         returns (uint256 boundedPosValue_)
     {
@@ -1368,7 +1368,7 @@ library UsdnProtocolActionsLibrary {
      * @return securityDepositValue_ The security deposit value of the executed action
      */
     function _executePendingActionOrRevert(Storage storage s, PreviousActionsData calldata data)
-        internal
+        public
         returns (uint256 securityDepositValue_)
     {
         bool success;
@@ -1387,7 +1387,7 @@ library UsdnProtocolActionsLibrary {
      * @return securityDepositValue_ The security deposit value of the executed action
      */
     function _executePendingAction(Storage storage s, PreviousActionsData calldata data)
-        internal
+        public
         returns (bool success_, bool executed_, bool liquidated_, uint256 securityDepositValue_)
     {
         (PendingAction memory pending, uint128 rawIndex) = coreLib._getActionablePendingAction(s);
@@ -1442,7 +1442,7 @@ library UsdnProtocolActionsLibrary {
         uint256 timestamp,
         bytes32 actionId,
         bytes calldata priceData
-    ) internal returns (PriceInfo memory price_) {
+    ) public returns (PriceInfo memory price_) {
         uint256 validationCost = s._oracleMiddleware.validationCost(priceData, action);
         if (address(this).balance < validationCost) {
             revert IUsdnProtocolErrors.UsdnProtocolInsufficientOracleFee();
@@ -1470,7 +1470,7 @@ library UsdnProtocolActionsLibrary {
         Position memory pos,
         uint128 amountToRemove,
         uint128 totalExpoToRemove
-    ) internal returns (HugeUint.Uint512 memory liqMultiplierAccumulator_) {
+    ) public returns (HugeUint.Uint512 memory liqMultiplierAccumulator_) {
         (bytes32 tickHash,) = vaultLib._tickHash(s, tick);
         TickData storage tickData = s._tickData[tickHash];
         uint256 unadjustedTickPrice =
@@ -1513,7 +1513,7 @@ library UsdnProtocolActionsLibrary {
      * @return liqMultiplierAccumulator_ The updated liquidation multiplier accumulator
      */
     function _saveNewPosition(Storage storage s, int24 tick, Position memory long, uint8 liquidationPenalty)
-        internal
+        public
         returns (uint256 tickVersion_, uint256 index_, HugeUint.Uint512 memory liqMultiplierAccumulator_)
     {
         bytes32 tickHash;
@@ -1565,7 +1565,7 @@ library UsdnProtocolActionsLibrary {
      *      - the initialization security deposit in case of a validation action
      * @param balanceBefore The balance of the contract before the action
      */
-    function _refundExcessEther(uint256 securityDepositValue, uint256 amountToRefund, uint256 balanceBefore) internal {
+    function _refundExcessEther(uint256 securityDepositValue, uint256 amountToRefund, uint256 balanceBefore) public {
         uint256 positive = amountToRefund + address(this).balance + msg.value;
         uint256 negative = balanceBefore + securityDepositValue;
 
@@ -1587,7 +1587,7 @@ library UsdnProtocolActionsLibrary {
      * @param amount The amount of ether to refund
      * @param to The address that should receive the refund
      */
-    function _refundEther(uint256 amount, address payable to) internal {
+    function _refundEther(uint256 amount, address payable to) public {
         if (to == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo();
         }
@@ -1604,7 +1604,7 @@ library UsdnProtocolActionsLibrary {
      * @notice Distribute the protocol fee to the fee collector if it exceeds the threshold
      * @dev This function is called after every action that changes the protocol fee balance
      */
-    function _checkPendingFee(Storage storage s) internal {
+    function _checkPendingFee(Storage storage s) public {
         if (s._pendingProtocolFee >= s._feeThreshold) {
             address(s._asset).safeTransfer(s._feeCollector, s._pendingProtocolFee);
             emit ProtocolFeeDistributed(s._feeCollector, s._pendingProtocolFee);
@@ -1619,7 +1619,7 @@ library UsdnProtocolActionsLibrary {
      * @param initiateTimestamp The timestamp of the initiate action
      * @return actionId_ The unique action ID
      */
-    function _calcActionId(address validator, uint128 initiateTimestamp) internal pure returns (bytes32 actionId_) {
+    function _calcActionId(address validator, uint128 initiateTimestamp) public pure returns (bytes32 actionId_) {
         actionId_ = keccak256(abi.encodePacked(validator, initiateTimestamp));
     }
 }
