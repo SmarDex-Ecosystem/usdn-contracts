@@ -10,14 +10,16 @@ import { RebalancerFixture } from "../../../test/unit/Rebalancer/utils/Fixtures.
  * @custom:background Given a rebalancer contract with an initial user deposit
  */
 contract TestRebalancerInitiateClosePosition is RebalancerFixture {
-    uint128 internal minAsset;
+    uint88 internal minAsset;
 
     function setUp() public {
         super._setUp();
 
         wstETH.mintAndApprove(address(this), 1000 ether, address(rebalancer), type(uint256).max);
-        minAsset = uint128(rebalancer.getMinAssetDeposit());
-        rebalancer.depositAssets(minAsset, address(this));
+        minAsset = uint88(rebalancer.getMinAssetDeposit());
+        rebalancer.initiateDepositAssets(minAsset, address(this));
+        skip(rebalancer.getTimeLimits().validationDelay);
+        rebalancer.validateDepositAssets();
     }
 
     /**
@@ -37,9 +39,7 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
      */
     function test_RevertWhen_rebalancerInvalidAmountTooLarge() external {
         vm.expectRevert(IRebalancerErrors.RebalancerInvalidAmount.selector);
-        rebalancer.initiateClosePosition(
-            uint128(minAsset) + 1, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA
-        );
+        rebalancer.initiateClosePosition(minAsset + 1, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA);
     }
 
     /**
