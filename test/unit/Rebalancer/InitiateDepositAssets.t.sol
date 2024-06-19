@@ -38,7 +38,7 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
         uint256 pendingBefore = rebalancer.getPendingAssetsAmount();
 
         vm.expectEmit();
-        emit InitiatedAssetsDeposit(address(this), INITIAL_DEPOSIT, block.timestamp);
+        emit InitiatedAssetsDeposit(address(this), address(this), INITIAL_DEPOSIT, block.timestamp);
         rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));
 
         assertEq(
@@ -74,7 +74,7 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
         uint88 newDepositAmount = 2 * INITIAL_DEPOSIT;
 
         vm.expectEmit();
-        emit InitiatedAssetsDeposit(address(this), newDepositAmount, block.timestamp);
+        emit InitiatedAssetsDeposit(address(this), address(this), newDepositAmount, block.timestamp);
         rebalancer.initiateDepositAssets(newDepositAmount, address(this));
 
         UserDeposit memory userDeposit = rebalancer.getUserDepositData(address(this));

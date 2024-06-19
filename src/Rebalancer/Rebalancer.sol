@@ -228,7 +228,7 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
 
         _asset.safeTransferFrom(msg.sender, address(this), amount);
 
-        emit InitiatedAssetsDeposit(to, amount, block.timestamp);
+        emit InitiatedAssetsDeposit(msg.sender, to, amount, block.timestamp);
     }
 
     /// @inheritdoc IRebalancer
