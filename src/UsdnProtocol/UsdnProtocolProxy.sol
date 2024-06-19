@@ -5,12 +5,10 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
-import { ProtocolAction } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IUsdnProtocol } from "../interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { ILiquidationRewardsManager } from "../interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
-import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IUsdnProtocolEvents } from "../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { UsdnProtocolBaseStorage } from "./UsdnProtocolBaseStorage.sol";
@@ -18,9 +16,7 @@ import { UsdnProtocolActionsEntry } from "./UsdnProtocolActionsEntry.sol";
 import { UsdnProtocolCoreEntry } from "./UsdnProtocolCoreEntry.sol";
 import { UsdnProtocolLongEntry } from "./UsdnProtocolLongEntry.sol";
 import { UsdnProtocolVaultEntry } from "./UsdnProtocolVaultEntry.sol";
-import { UsdnProtocolActionsLibrary as actionsLib } from "./UsdnProtocolActionsLibrary.sol";
-import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
-import { UsdnProtocolLongLibrary as longLib } from "./UsdnProtocolLongLibrary.sol";
+import { UsdnProtocolSettersLibrary as settersLib } from "./UsdnProtocolSettersLibrary.sol";
 
 contract UsdnProtocol is
     UsdnProtocolLongEntry,
@@ -53,45 +49,6 @@ contract UsdnProtocol is
     )
         UsdnProtocolBaseStorage(usdn, sdex, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector)
     { }
-
-    // / @inheritdoc IUsdnProtocol
-    function initialize(
-        uint128 depositAmount,
-        uint128 longAmount,
-        uint128 desiredLiqPrice,
-        bytes calldata currentPriceData
-    ) external payable initializer {
-        if (depositAmount < s.MIN_INIT_DEPOSIT) {
-            revert UsdnProtocolMinInitAmount(s.MIN_INIT_DEPOSIT);
-        }
-        if (longAmount < s.MIN_INIT_DEPOSIT) {
-            revert UsdnProtocolMinInitAmount(s.MIN_INIT_DEPOSIT);
-        }
-        // since all USDN must be minted by the protocol, we check that the total supply is 0
-        IUsdn usdn = s._usdn;
-        if (usdn.totalSupply() != 0) {
-            revert UsdnProtocolInvalidUsdn(address(usdn));
-        }
-
-        PriceInfo memory currentPrice =
-            actionsLib._getOraclePrice(s, ProtocolAction.Initialize, block.timestamp, "", currentPriceData);
-
-        s._lastUpdateTimestamp = uint128(block.timestamp);
-        s._lastPrice = currentPrice.price.toUint128();
-
-        int24 tick = getEffectiveTickForPrice(desiredLiqPrice); // without penalty
-        uint128 liquidationPriceWithoutPenalty = getEffectivePriceForTick(tick);
-        uint128 positionTotalExpo =
-            longLib._calcPositionTotalExpo(longAmount, currentPrice.price.toUint128(), liquidationPriceWithoutPenalty);
-
-        vaultLib._checkInitImbalance(s, positionTotalExpo, longAmount, depositAmount);
-
-        vaultLib._createInitialDeposit(s, depositAmount, currentPrice.price.toUint128());
-
-        vaultLib._createInitialPosition(s, longAmount, currentPrice.price.toUint128(), tick, positionTotalExpo);
-
-        actionsLib._refundEther(address(this).balance, payable(msg.sender));
-    }
 
     // / @inheritdoc IUsdnProtocol
     function setOracleMiddleware(IBaseOracleMiddleware newOracleMiddleware) external onlyOwner {

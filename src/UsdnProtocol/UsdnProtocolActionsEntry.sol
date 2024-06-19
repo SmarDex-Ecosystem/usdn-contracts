@@ -7,6 +7,7 @@ import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtoc
 import { UsdnProtocolBaseStorage } from "./UsdnProtocolBaseStorage.sol";
 import { PreviousActionsData, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { InitiateOpenPositionParams, InitiateClosePositionParams } from "./UsdnProtocolActionsLibrary.sol";
+import { UsdnProtocolLiquidationLibrary as actionsLiquidationLib } from "./UsdnProtocolLiquidationLibrary.sol";
 
 abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
     function initiateDeposit(
@@ -106,7 +107,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
         initializedAndNonReentrant
         returns (uint256 liquidatedPositions_)
     {
-        return lib.liquidate(s, currentPriceData, iterations);
+        return actionsLiquidationLib.liquidate(s, currentPriceData, iterations);
     }
 
     function validateActionablePendingActions(PreviousActionsData calldata previousActionsData, uint256 maxValidations)
@@ -115,13 +116,13 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
         initializedAndNonReentrant
         returns (uint256 validatedActions_)
     {
-        return lib.validateActionablePendingActions(s, previousActionsData, maxValidations);
+        return actionsLiquidationLib.validateActionablePendingActions(s, previousActionsData, maxValidations);
     }
 
     function transferPositionOwnership(PositionId calldata posId, address newOwner)
         external
         initializedAndNonReentrant
     {
-        return lib.transferPositionOwnership(s, posId, newOwner);
+        return actionsLiquidationLib.transferPositionOwnership(s, posId, newOwner);
     }
 }

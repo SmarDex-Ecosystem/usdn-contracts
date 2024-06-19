@@ -6,6 +6,16 @@ import { PendingAction } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol
 import { UsdnProtocolCoreLibrary as lib } from "./UsdnProtocolCoreLibrary.sol";
 
 abstract contract UsdnProtocolCoreEntry is UsdnProtocolBaseStorage {
+    // / @inheritdoc IUsdnProtocol
+    function initialize(
+        uint128 depositAmount,
+        uint128 longAmount,
+        uint128 desiredLiqPrice,
+        bytes calldata currentPriceData
+    ) public payable initializer {
+        return lib.initialize(s, depositAmount, longAmount, desiredLiqPrice, currentPriceData);
+    }
+
     function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
         public
         pure

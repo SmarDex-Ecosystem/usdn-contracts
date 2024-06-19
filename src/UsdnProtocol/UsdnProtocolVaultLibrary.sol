@@ -14,6 +14,7 @@ import { PositionId, Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolT
 import { SignedMath } from "../libraries/SignedMath.sol";
 import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { InitializableReentrancyGuard } from "../utils/InitializableReentrancyGuard.sol";
+import { UsdnProtocolLiquidationLibrary as actionsLiquidationLib } from "./UsdnProtocolLiquidationLibrary.sol";
 
 /**
  * @notice Emitted when a user initiates the opening of a long position
@@ -274,7 +275,8 @@ library UsdnProtocolVaultLibrary {
             timestamp: uint40(block.timestamp)
         });
         // save the position and update the state
-        (posId.tickVersion, posId.index,) = actionsLib._saveNewPosition(s, posId.tick, long, liquidationPenalty);
+        (posId.tickVersion, posId.index,) =
+            actionsLiquidationLib._saveNewPosition(s, posId.tick, long, liquidationPenalty);
         s._balanceLong += long.amount;
         emit InitiatedOpenPosition(msg.sender, msg.sender, long.timestamp, totalExpo, long.amount, price, posId);
         emit ValidatedOpenPosition(msg.sender, msg.sender, totalExpo, price, posId);

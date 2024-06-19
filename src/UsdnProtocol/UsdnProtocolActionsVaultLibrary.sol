@@ -31,6 +31,8 @@ import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary
 import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as longLib } from "./UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolActionsLibrary as actionsLongLib } from "./UsdnProtocolActionsLibrary.sol";
+import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
+import { UsdnProtocolLiquidationLibrary as actionsLiquidationLib } from "./UsdnProtocolLiquidationLibrary.sol";
 import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
 struct InitiateClosePositionParams {
@@ -373,12 +375,12 @@ library UsdnProtocolActionsVaultLibrary {
 
         if (success_) {
             unchecked {
-                amountToRefund += actionsLongLib._executePendingActionOrRevert(s, previousActionsData);
+                amountToRefund += _executePendingActionOrRevert(s, previousActionsData);
             }
         }
 
-        actionsLongLib._refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
-        actionsLongLib._checkPendingFee(s);
+        _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
+        _checkPendingFee(s);
     }
 
     // / @inheritdoc IUsdnProtocolActions
@@ -393,18 +395,18 @@ library UsdnProtocolActionsVaultLibrary {
         uint256 amountToRefund;
         (amountToRefund, success_) = _validateDeposit(s, validator, depositPriceData);
         if (msg.sender != validator) {
-            actionsLongLib._refundEther(amountToRefund, validator);
+            _refundEther(amountToRefund, validator);
             balanceBefore -= amountToRefund;
             amountToRefund = 0;
         }
         if (success_) {
             unchecked {
-                amountToRefund += actionsLongLib._executePendingActionOrRevert(s, previousActionsData);
+                amountToRefund += _executePendingActionOrRevert(s, previousActionsData);
             }
         }
 
-        actionsLongLib._refundExcessEther(0, amountToRefund, balanceBefore);
-        actionsLongLib._checkPendingFee(s);
+        _refundExcessEther(0, amountToRefund, balanceBefore);
+        _checkPendingFee(s);
     }
 
     // / @inheritdoc IUsdnProtocolActions
@@ -429,12 +431,12 @@ library UsdnProtocolActionsVaultLibrary {
 
         if (success_) {
             unchecked {
-                amountToRefund += actionsLongLib._executePendingActionOrRevert(s, previousActionsData);
+                amountToRefund += _executePendingActionOrRevert(s, previousActionsData);
             }
         }
 
-        actionsLongLib._refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
-        actionsLongLib._checkPendingFee(s);
+        _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
+        _checkPendingFee(s);
     }
 
     // / @inheritdoc IUsdnProtocolActions
@@ -449,18 +451,18 @@ library UsdnProtocolActionsVaultLibrary {
         uint256 amountToRefund;
         (amountToRefund, success_) = _validateWithdrawal(s, validator, withdrawalPriceData);
         if (msg.sender != validator) {
-            actionsLongLib._refundEther(amountToRefund, validator);
+            _refundEther(amountToRefund, validator);
             balanceBefore -= amountToRefund;
             amountToRefund = 0;
         }
         if (success_) {
             unchecked {
-                amountToRefund += actionsLongLib._executePendingActionOrRevert(s, previousActionsData);
+                amountToRefund += _executePendingActionOrRevert(s, previousActionsData);
             }
         }
 
-        actionsLongLib._refundExcessEther(0, amountToRefund, balanceBefore);
-        actionsLongLib._checkPendingFee(s);
+        _refundExcessEther(0, amountToRefund, balanceBefore);
+        _checkPendingFee(s);
     }
 
     /**
@@ -542,11 +544,11 @@ library UsdnProtocolActionsVaultLibrary {
         uint128 amount,
         bytes calldata currentPriceData
     ) public returns (InitiateDepositData memory data_) {
-        PriceInfo memory currentPrice = actionsLongLib._getOraclePrice(
+        PriceInfo memory currentPrice = _getOraclePrice(
             s,
             ProtocolAction.InitiateDeposit,
             block.timestamp,
-            actionsLongLib._calcActionId(validator, uint128(block.timestamp)),
+            actionsLiquidationLib._calcActionId(validator, uint128(block.timestamp)),
             currentPriceData
         );
 
@@ -738,11 +740,11 @@ library UsdnProtocolActionsVaultLibrary {
     {
         DepositPendingAction memory deposit = coreLib._toDepositPendingAction(pending);
 
-        PriceInfo memory currentPrice = actionsLongLib._getOraclePrice(
+        PriceInfo memory currentPrice = _getOraclePrice(
             s,
             ProtocolAction.ValidateDeposit,
             deposit.timestamp,
-            actionsLongLib._calcActionId(deposit.validator, deposit.timestamp),
+            actionsLiquidationLib._calcActionId(deposit.validator, deposit.timestamp),
             priceData
         );
 
@@ -814,11 +816,11 @@ library UsdnProtocolActionsVaultLibrary {
         uint152 usdnShares,
         bytes calldata currentPriceData
     ) public returns (WithdrawalData memory data_) {
-        PriceInfo memory currentPrice = actionsLongLib._getOraclePrice(
+        PriceInfo memory currentPrice = _getOraclePrice(
             s,
             ProtocolAction.InitiateWithdrawal,
             block.timestamp,
-            actionsLongLib._calcActionId(validator, uint128(block.timestamp)),
+            actionsLiquidationLib._calcActionId(validator, uint128(block.timestamp)),
             currentPriceData
         );
 
@@ -886,6 +888,30 @@ library UsdnProtocolActionsVaultLibrary {
             })
         );
         amountToRefund_ = coreLib._addPendingAction(s, validator, action);
+    }
+
+    /**
+     * @notice Get the oracle price for the given action and timestamp then validate it
+     * @param action The type of action that is being performed by the user
+     * @param timestamp The timestamp at which the wanted price was recorded
+     * @param actionId The unique identifier of the action
+     * @param priceData The price oracle data
+     * @return price_ The validated price
+     */
+    function _getOraclePrice(
+        Storage storage s,
+        ProtocolAction action,
+        uint256 timestamp,
+        bytes32 actionId,
+        bytes calldata priceData
+    ) public returns (PriceInfo memory price_) {
+        uint256 validationCost = s._oracleMiddleware.validationCost(priceData, action);
+        if (address(this).balance < validationCost) {
+            revert IUsdnProtocolErrors.UsdnProtocolInsufficientOracleFee();
+        }
+        price_ = s._oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
+            actionId, uint128(timestamp), action, priceData
+        );
     }
 
     /**
@@ -981,11 +1007,11 @@ library UsdnProtocolActionsVaultLibrary {
     {
         WithdrawalPendingAction memory withdrawal = coreLib._toWithdrawalPendingAction(pending);
 
-        PriceInfo memory currentPrice = actionsLongLib._getOraclePrice(
+        PriceInfo memory currentPrice = _getOraclePrice(
             s,
             ProtocolAction.ValidateWithdrawal,
             withdrawal.timestamp,
-            actionsLongLib._calcActionId(withdrawal.validator, withdrawal.timestamp),
+            actionsLiquidationLib._calcActionId(withdrawal.validator, withdrawal.timestamp),
             priceData
         );
 
@@ -1051,5 +1077,126 @@ library UsdnProtocolActionsVaultLibrary {
         emit ValidatedWithdrawal(
             withdrawal.to, withdrawal.validator, assetToTransfer, s._usdn.convertToTokens(shares), withdrawal.timestamp
         );
+    }
+
+    /**
+     * @notice Execute the first actionable pending action or revert if the price data was not provided
+     * @param data The price data and raw indices
+     * @return securityDepositValue_ The security deposit value of the executed action
+     */
+    function _executePendingActionOrRevert(Storage storage s, PreviousActionsData calldata data)
+        public
+        returns (uint256 securityDepositValue_)
+    {
+        bool success;
+        (success,,, securityDepositValue_) = _executePendingAction(s, data);
+        if (!success) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidPendingActionData();
+        }
+    }
+
+    /**
+     * @notice Execute the first actionable pending action and report the success
+     * @param data The price data and raw indices
+     * @return success_ Whether the price data is valid
+     * @return executed_ Whether the pending action was executed (false if the queue has no actionable item)
+     * @return liquidated_ Whether the position corresponding to the pending action was liquidated
+     * @return securityDepositValue_ The security deposit value of the executed action
+     */
+    function _executePendingAction(Storage storage s, PreviousActionsData calldata data)
+        public
+        returns (bool success_, bool executed_, bool liquidated_, uint256 securityDepositValue_)
+    {
+        (PendingAction memory pending, uint128 rawIndex) = coreLib._getActionablePendingAction(s);
+        if (pending.action == ProtocolAction.None) {
+            // no pending action
+            return (true, false, false, 0);
+        }
+        uint256 length = data.priceData.length;
+        if (data.rawIndices.length != length || length < 1) {
+            return (false, false, false, 0);
+        }
+        uint128 offset;
+        unchecked {
+            // underflow is desired here (wrap-around)
+            offset = rawIndex - data.rawIndices[0];
+        }
+        if (offset >= length || data.rawIndices[offset] != rawIndex) {
+            return (false, false, false, 0);
+        }
+        bytes calldata priceData = data.priceData[offset];
+        // for safety we consider that no pending action was validated by default
+        if (pending.action == ProtocolAction.ValidateDeposit) {
+            executed_ = _validateDepositWithAction(s, pending, priceData);
+        } else if (pending.action == ProtocolAction.ValidateWithdrawal) {
+            executed_ = _validateWithdrawalWithAction(s, pending, priceData);
+        } else if (pending.action == ProtocolAction.ValidateOpenPosition) {
+            (executed_, liquidated_) = actionsLongLib._validateOpenPositionWithAction(s, pending, priceData);
+        } else if (pending.action == ProtocolAction.ValidateClosePosition) {
+            (executed_, liquidated_) = actionsLongLib._validateClosePositionWithAction(s, pending, priceData);
+        }
+
+        success_ = true;
+
+        if (executed_ || liquidated_) {
+            coreLib._clearPendingAction(s, pending.validator, rawIndex);
+            securityDepositValue_ = pending.securityDepositValue;
+            emit SecurityDepositRefunded(pending.validator, msg.sender, securityDepositValue_);
+        }
+    }
+
+    /**
+     * @notice Refunds any excess ether to the user to prevent locking ETH in the contract
+     * @param securityDepositValue The security deposit value of the action (zero for a validation action)
+     * @param amountToRefund The amount to refund to the user:
+     *      - the security deposit if executing an action for another user,
+     *      - the initialization security deposit in case of a validation action
+     * @param balanceBefore The balance of the contract before the action
+     */
+    function _refundExcessEther(uint256 securityDepositValue, uint256 amountToRefund, uint256 balanceBefore) public {
+        uint256 positive = amountToRefund + address(this).balance + msg.value;
+        uint256 negative = balanceBefore + securityDepositValue;
+
+        if (negative > positive) {
+            revert IUsdnProtocolErrors.UsdnProtocolUnexpectedBalance();
+        }
+
+        uint256 amount;
+        unchecked {
+            // we know that positive >= negative, so this subtraction is safe
+            amount = positive - negative;
+        }
+
+        _refundEther(amount, payable(msg.sender));
+    }
+
+    /**
+     * @notice Refunds an amount of ether to the given address
+     * @param amount The amount of ether to refund
+     * @param to The address that should receive the refund
+     */
+    function _refundEther(uint256 amount, address payable to) public {
+        if (to == address(0)) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo();
+        }
+        if (amount != 0) {
+            // slither-disable-next-line arbitrary-send-eth
+            (bool success,) = to.call{ value: amount }("");
+            if (!success) {
+                revert IUsdnProtocolErrors.UsdnProtocolEtherRefundFailed();
+            }
+        }
+    }
+
+    /**
+     * @notice Distribute the protocol fee to the fee collector if it exceeds the threshold
+     * @dev This function is called after every action that changes the protocol fee balance
+     */
+    function _checkPendingFee(Storage storage s) public {
+        if (s._pendingProtocolFee >= s._feeThreshold) {
+            address(s._asset).safeTransfer(s._feeCollector, s._pendingProtocolFee);
+            emit ProtocolFeeDistributed(s._feeCollector, s._pendingProtocolFee);
+            s._pendingProtocolFee = 0;
+        }
     }
 }

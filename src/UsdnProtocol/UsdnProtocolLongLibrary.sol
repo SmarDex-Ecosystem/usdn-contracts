@@ -29,7 +29,12 @@ import {
 import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
 import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
-import { UsdnProtocolActionsLibrary as actionsLib, InitiateOpenPositionData } from "./UsdnProtocolActionsLibrary.sol";
+import { UsdnProtocolActionsLibrary as actionsLib } from "./UsdnProtocolActionsLibrary.sol";
+import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
+import {
+    UsdnProtocolLiquidationLibrary as actionsLiquidationLib,
+    InitiateOpenPositionData
+} from "./UsdnProtocolLiquidationLibrary.sol";
 
 /**
  * @notice Emitted when a tick is liquidated
@@ -357,7 +362,7 @@ library UsdnProtocolLongLibrary {
             (data.rebased, data.callbackResult) = vaultLib._usdnRebase(s, s._lastPrice, ignoreInterval);
 
             if (liquidationEffects.liquidatedTicks > 0) {
-                actionsLib._sendRewardsToLiquidator(
+                actionsLiquidationLib._sendRewardsToLiquidator(
                     s,
                     liquidationEffects.liquidatedTicks,
                     liquidationEffects.remainingCollateral,
@@ -541,7 +546,8 @@ library UsdnProtocolLongLibrary {
         });
 
         // save the position on the provided tick
-        (posId_.tickVersion, posId_.index,) = actionsLib._saveNewPosition(s, posId_.tick, long, liquidationPenalty);
+        (posId_.tickVersion, posId_.index,) =
+            actionsLiquidationLib._saveNewPosition(s, posId_.tick, long, liquidationPenalty);
 
         // emit both initiate and validate events
         // so the position is considered the same as other positions by event indexers
@@ -590,7 +596,7 @@ library UsdnProtocolLongLibrary {
 
         // fully close the position and update the cache
         cache.liqMultiplierAccumulator =
-            actionsLib._removeAmountFromPosition(s, posId.tick, posId.index, pos, pos.amount, pos.totalExpo);
+            actionsLiquidationLib._removeAmountFromPosition(s, posId.tick, posId.index, pos, pos.amount, pos.totalExpo);
 
         // update the cache
         cache.totalExpo -= pos.totalExpo;
@@ -622,11 +628,11 @@ library UsdnProtocolLongLibrary {
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData
     ) public returns (InitiateOpenPositionData memory data_) {
-        PriceInfo memory currentPrice = actionsLib._getOraclePrice(
+        PriceInfo memory currentPrice = actionsVaultLib._getOraclePrice(
             s,
             ProtocolAction.InitiateOpenPosition,
             block.timestamp,
-            actionsLib._calcActionId(validator, uint128(block.timestamp)),
+            actionsLiquidationLib._calcActionId(validator, uint128(block.timestamp)),
             currentPriceData
         );
         data_.adjustedPrice = (currentPrice.price + currentPrice.price * s._positionFeeBps / s.BPS_DIVISOR).toUint128();
