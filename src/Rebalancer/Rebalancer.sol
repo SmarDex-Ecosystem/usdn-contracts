@@ -6,13 +6,14 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { ERC165, IERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 import { IOwnershipCallback } from "../interfaces/UsdnProtocol/IOwnershipCallback.sol";
 import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IRebalancer } from "../interfaces/Rebalancer/IRebalancer.sol";
 import { IUsdnProtocol } from "../interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import { PositionId } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PositionId, PreviousActionsData } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title Rebalancer
@@ -22,6 +23,7 @@ import { PositionId } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
  */
 contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
     using SafeERC20 for IERC20Metadata;
+    using SafeCast for uint256;
 
     /// @notice Modifier to check if the caller is the USDN protocol or the owner
     modifier onlyAdmin() {
@@ -296,9 +298,14 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
 
         UserDeposit memory depositData = _userDeposit[msg.sender];
 
-        if (depositData.amount == 0 || depositData.entryPositionVersion <= _positionVersion) {
-            revert RebalancerUserInPosition();
+        if (depositData.amount == 0) {
+            revert RebalancerUserNotPending();
         }
+
+        if (depositData.entryPositionVersion <= _positionVersion) {
+            revert RebalancerUserNotPending();
+        }
+
         if (depositData.amount < amount) {
             revert RebalancerWithdrawAmountTooLarge();
         }
@@ -322,6 +329,74 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
         _asset.safeTransfer(to, amount);
 
         emit PendingAssetsWithdrawn(msg.sender, amount, to);
+    }
+
+    /// @inheritdoc IRebalancer
+    function initiateClosePosition(
+        uint88 amount,
+        address to,
+        address payable validator,
+        bytes calldata currentPriceData,
+        PreviousActionsData calldata previousActionsData
+    ) external payable returns (bool success_) {
+        UserDeposit memory userDepositData = _userDeposit[msg.sender];
+
+        if (amount == 0) {
+            revert RebalancerInvalidAmount();
+        }
+
+        if (amount > userDepositData.amount) {
+            revert RebalancerInvalidAmount();
+        }
+
+        uint88 remainingAssets = userDepositData.amount - amount;
+        if (remainingAssets > 0 && remainingAssets < _minAssetDeposit) {
+            revert RebalancerInvalidAmount();
+        }
+
+        if (userDepositData.entryPositionVersion == 0) {
+            revert RebalancerUserPending();
+        }
+
+        uint256 positionVersion = _positionVersion;
+
+        if (userDepositData.entryPositionVersion > positionVersion) {
+            revert RebalancerUserPending();
+        }
+
+        PositionData memory currentPositionData = _positionData[positionVersion];
+
+        uint256 amountToClose = FixedPointMathLib.fullMulDiv(
+            amount,
+            currentPositionData.entryAccMultiplier,
+            _positionData[userDepositData.entryPositionVersion].entryAccMultiplier
+        );
+
+        // slither-disable-next-line reentrancy-eth
+        success_ = _usdnProtocol.initiateClosePosition{ value: msg.value }(
+            currentPositionData.id, amountToClose.toUint128(), to, validator, currentPriceData, previousActionsData
+        );
+
+        if (success_) {
+            if (remainingAssets == 0) {
+                delete _userDeposit[msg.sender];
+            } else {
+                // TODO check remaining bonus in another PR
+                _userDeposit[msg.sender].amount = remainingAssets;
+            }
+
+            // the safe cast is already made before
+            currentPositionData.amount -= uint128(amountToClose);
+
+            if (currentPositionData.amount == 0) {
+                currentPositionData.id =
+                    PositionId({ tick: _usdnProtocol.NO_POSITION_TICK(), tickVersion: 0, index: 0 });
+            }
+
+            _positionData[positionVersion] = currentPositionData;
+
+            emit ClosePositionInitiated(msg.sender, amount, amountToClose, remainingAssets);
+        }
     }
 
     /// @inheritdoc IBaseRebalancer
@@ -359,21 +434,6 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
         _pendingAssetsAmount = 0;
 
         emit PositionVersionUpdated(positionVersion);
-    }
-
-    /// @inheritdoc IERC165
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
-        if (interfaceId == type(IOwnershipCallback).interfaceId) {
-            return true;
-        }
-        if (interfaceId == type(IRebalancer).interfaceId) {
-            return true;
-        }
-        if (interfaceId == type(IBaseRebalancer).interfaceId) {
-            return true;
-        }
-
-        return super.supportsInterface(interfaceId);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -439,5 +499,20 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
     /// @inheritdoc IOwnershipCallback
     function ownershipCallback(address, PositionId calldata) external pure {
         revert RebalancerUnauthorized(); // first version of the rebalancer contract so we are always reverting
+    }
+
+    /// @inheritdoc IERC165
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
+        if (interfaceId == type(IOwnershipCallback).interfaceId) {
+            return true;
+        }
+        if (interfaceId == type(IRebalancer).interfaceId) {
+            return true;
+        }
+        if (interfaceId == type(IBaseRebalancer).interfaceId) {
+            return true;
+        }
+
+        return super.supportsInterface(interfaceId);
     }
 }

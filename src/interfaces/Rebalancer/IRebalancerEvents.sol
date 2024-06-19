@@ -34,6 +34,18 @@ interface IRebalancerEvents {
     event PendingAssetsWithdrawn(address user, uint256 amount, address to);
 
     /**
+     * @notice Emitted when the user initiates a close position action
+     * through the rebalancer
+     * @param user The rebalancer user
+     * @param rebalancerAmountToClose The rebalancer amount to close
+     * @param amountToClose The amount to close taking into account the previous versions' PnL
+     * @param rebalancerAmountRemaining The remaining rebalancer assets of the user
+     */
+    event ClosePositionInitiated(
+        address indexed user, uint256 rebalancerAmountToClose, uint256 amountToClose, uint256 rebalancerAmountRemaining
+    );
+
+    /**
      * @notice Emitted when the max leverage is updated
      * @param newMaxLeverage The new value for the max leverage
      */
