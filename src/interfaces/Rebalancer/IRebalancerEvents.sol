@@ -3,12 +3,28 @@ pragma solidity >=0.8.0;
 
 interface IRebalancerEvents {
     /**
-     * @notice Emitted when assets are deposited in the contract
-     * @param amount The amount of assets deposited
+     * @notice Emitted when a user initiates a deposit into the Rebalancer
+     * @param payer The address of the user initiating the deposit
      * @param to The address the assets will be assigned to
+     * @param amount The amount of assets deposited
+     * @param timestamp The timestamp of the action
+     */
+    event InitiatedAssetsDeposit(address indexed payer, address indexed to, uint256 amount, uint256 timestamp);
+
+    /**
+     * @notice Emitted when assets are deposited in the contract
+     * @param user The address of the user
+     * @param amount The amount of assets deposited
      * @param positionVersion The version of the position those assets will be used in
      */
-    event AssetsDeposited(uint256 amount, address to, uint256 positionVersion);
+    event AssetsDeposited(address indexed user, uint256 amount, uint256 positionVersion);
+
+    /**
+     * @notice Emitted when a deposit failed due to the validation deadline elapsing and the user retrieves their funds
+     * @param user The address of the user
+     * @param amount The amount of assets that was refunded
+     */
+    event DepositRefunded(address indexed user, uint256 amount);
 
     /**
      * @notice Emitted when pending assets are withdrawn from the contract
@@ -17,6 +33,18 @@ interface IRebalancerEvents {
      * @param to The address the assets will be sent to
      */
     event PendingAssetsWithdrawn(address user, uint256 amount, address to);
+
+    /**
+     * @notice Emitted when the user initiates a close position action
+     * through the rebalancer
+     * @param user The rebalancer user
+     * @param rebalancerAmountToClose The rebalancer amount to close
+     * @param amountToClose The amount to close taking into account the previous versions' PnL
+     * @param rebalancerAmountRemaining The remaining rebalancer assets of the user
+     */
+    event ClosePositionInitiated(
+        address indexed user, uint256 rebalancerAmountToClose, uint256 amountToClose, uint256 rebalancerAmountRemaining
+    );
 
     /**
      * @notice Emitted when the max leverage is updated
@@ -41,4 +69,12 @@ interface IRebalancerEvents {
      * @param closeImbalanceLimitBps The new close imbalance limit in bps
      */
     event CloseImbalanceLimitBpsUpdated(uint256 closeImbalanceLimitBps);
+
+    /**
+     * @notice Emitted when the time limits have been updated
+     * @param validationDelay The new validation delay
+     * @param validationDeadline The new validation deadline
+     * @param actionCooldown The new action cooldown
+     */
+    event TimeLimitsUpdated(uint256 validationDelay, uint256 validationDeadline, uint256 actionCooldown);
 }

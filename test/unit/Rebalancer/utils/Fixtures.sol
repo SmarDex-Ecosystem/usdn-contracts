@@ -12,6 +12,7 @@ import { WstETH } from "../../../utils/WstEth.sol";
 import { IRebalancerEvents } from "../../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
 import { IRebalancerErrors } from "../../../../src/interfaces/Rebalancer/IRebalancerErrors.sol";
 import { IRebalancerTypes } from "../../../../src/interfaces/Rebalancer/IRebalancerTypes.sol";
+import { PreviousActionsData } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { UsdnProtocol } from "../../../../src/UsdnProtocol/UsdnProtocol.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
@@ -30,6 +31,9 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
     LiquidationRewardsManager public liquidationRewardsManager;
     RebalancerHandler public rebalancer;
     UsdnProtocol public usdnProtocol;
+
+    PreviousActionsData internal EMPTY_PREVIOUS_DATA =
+        PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
 
     function _setUp() public virtual {
         vm.startPrank(DEPLOYER);
