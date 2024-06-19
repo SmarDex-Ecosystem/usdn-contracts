@@ -18,7 +18,7 @@ contract TestRebalancer is RebalancerFixture {
      * @custom:scenario An address that is not the USDN protocol sends ether to the rebalancer
      * @custom:given The sender is not the USDN protocol
      * @custom:when Ether is sent to the rebalancer contract
-     * @custom:then The call reverts with a {RebalancerUnauthorized} error
+     * @custom:then The call returns false and the bytes of the {RebalancerUnauthorized} error
      */
     function test_RevertWhen_receivingEther() public {
         (bool success, bytes memory data) = address(rebalancer).call{ value: 1 }("");
@@ -32,6 +32,7 @@ contract TestRebalancer is RebalancerFixture {
      * @custom:given The sender is the USDN protocol
      * @custom:when Ether is sent to the rebalancer contract
      * @custom:then The rebalancer's balance is equal to the value sent
+     * @custom:and True is returned as the `success` variable
      */
     function test_canReceiveEtherFromUsdnProtocol() public {
         vm.deal(address(usdnProtocol), 1);
