@@ -530,7 +530,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @param userDeposit Amount to deposit for a single user
      * @return rebalancerPos_ The position ID of the rebalancer position
      */
-    function _setUpMockRebalancerPosition(uint128 userDeposit) internal returns (PositionId memory rebalancerPos_) {
+    function _setUpMockRebalancerPosition(uint88 userDeposit) internal returns (PositionId memory rebalancerPos_) {
         vm.startPrank(ADMIN);
         rebalancer.setMinAssetDeposit(userDeposit);
         protocol.setRebalancer(rebalancer);
@@ -539,9 +539,14 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         wstETH.mintAndApprove(USER_1, userDeposit, address(rebalancer), type(uint256).max);
         wstETH.mintAndApprove(USER_2, userDeposit, address(rebalancer), type(uint256).max);
         vm.prank(USER_1);
-        rebalancer.depositAssets(userDeposit, USER_1);
+        rebalancer.initiateDepositAssets(userDeposit, USER_1);
         vm.prank(USER_2);
-        rebalancer.depositAssets(userDeposit, USER_2);
+        rebalancer.initiateDepositAssets(userDeposit, USER_2);
+        skip(rebalancer.getTimeLimits().validationDelay);
+        vm.prank(USER_1);
+        rebalancer.validateDepositAssets();
+        vm.prank(USER_2);
+        rebalancer.validateDepositAssets();
 
         vm.startPrank(address(rebalancer));
         wstETH.approve(address(protocol), type(uint256).max);
@@ -570,7 +575,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:then The partial close is authorized and successful
      */
     function test_closePartialFromRebalancerPositionTooSmall() public {
-        uint128 minAssetDeposit = 2 ether;
+        uint88 minAssetDeposit = 2 ether;
 
         PositionId memory rebalancerPos = _setUpMockRebalancerPosition(minAssetDeposit);
 
@@ -592,7 +597,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:then The partial close is unauthorized and reverts with `UsdnProtocolLongPositionTooSmall`
      */
     function test_RevertWhen_closePartialFromRebalancerPartialUserClose() public {
-        uint128 minAssetDeposit = 2 ether;
+        uint88 minAssetDeposit = 2 ether;
 
         PositionId memory rebalancerPos = _setUpMockRebalancerPosition(minAssetDeposit);
 

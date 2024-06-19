@@ -4,7 +4,7 @@ pragma solidity >=0.8.0;
 import { IUsdnProtocolActions } from "./IUsdnProtocolActions.sol";
 import { IBaseOracleMiddleware } from "../OracleMiddleware/IBaseOracleMiddleware.sol";
 import { ILiquidationRewardsManager } from "../OracleMiddleware/ILiquidationRewardsManager.sol";
-import { IRebalancer } from "../Rebalancer/IRebalancer.sol";
+import { IBaseRebalancer } from "../Rebalancer/IBaseRebalancer.sol";
 
 /**
  * @title IUsdnProtocol
@@ -54,7 +54,7 @@ interface IUsdnProtocol is IUsdnProtocolActions {
      * @notice Replace the Rebalancer contract with a new implementation
      * @param newRebalancer The address of the new contract
      */
-    function setRebalancer(IRebalancer newRebalancer) external;
+    function setRebalancer(IBaseRebalancer newRebalancer) external;
 
     /**
      * @notice Set the new minimum leverage for a position

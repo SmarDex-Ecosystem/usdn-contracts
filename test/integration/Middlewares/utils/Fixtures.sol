@@ -79,6 +79,7 @@ contract CommonBaseIntegrationFixture is BaseFixture {
         internal
         returns (uint256 price_, uint256 conf_, uint256 decimals_, uint256 publishTime_, bytes memory vaa_)
     {
+        require(timestamp <= block.timestamp, "Timestamp cannot be in the future");
         return _getHermesApiSignature(feed, timestamp);
     }
 

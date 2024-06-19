@@ -747,7 +747,6 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /**
-     * TODO add tests
      * @notice Calculates the current imbalance for the open action checks
      * @dev If the value is positive, the long trading expo is larger than the vault trading expo
      * In case of zero vault balance, the function returns `int256.max` since the resulting imbalance would be infinity
@@ -771,17 +770,16 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /**
-     * TODO add tests
      * @notice Immediately close a position with the given price
      * @dev Should only be used to close the rebalancer position
      * @param posId The ID of the position to close
-     * @param neutralPrice The current neutral price
+     * @param lastPrice The last price used to update the protocol
      * @param cache The cached state of the protocol, will be updated during this call
-     * @return positionValue_ The value of the closed position. If 0, the position was/will be liquidated
+     * @return positionValue_ The value of the closed position
      */
-    function _flashClosePosition(PositionId memory posId, uint128 neutralPrice, CachedProtocolState memory cache)
+    function _flashClosePosition(PositionId memory posId, uint128 lastPrice, CachedProtocolState memory cache)
         internal
-        returns (uint256 positionValue_)
+        returns (int256 positionValue_)
     {
         (bytes32 tickHash, uint256 version) = _tickHash(posId.tick);
         // if the tick version is outdated, the position was liquidated and its value is 0
@@ -792,46 +790,45 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         uint8 liquidationPenalty = _tickData[tickHash].liquidationPenalty;
         Position memory pos = _longPositions[tickHash][posId.index];
 
-        // fully close the position and update the cache
-        cache.liqMultiplierAccumulator =
-            _removeAmountFromPosition(posId.tick, posId.index, pos, pos.amount, pos.totalExpo);
-
-        int256 positionValue = _positionValue(
-            neutralPrice,
+        positionValue_ = _positionValue(
+            lastPrice,
             getEffectivePriceForTick(
                 _calcTickWithoutPenalty(posId.tick, liquidationPenalty),
-                neutralPrice,
+                lastPrice,
                 cache.tradingExpo,
                 cache.liqMultiplierAccumulator
             ),
             pos.totalExpo
         );
 
-        // if positionValue is lower than 0, return 0
-        if (positionValue < 0) {
+        // if positionValue is lower than 0, return
+        if (positionValue_ < 0) {
             return positionValue_;
         }
 
-        // cast is safe as positionValue cannot be lower than 0
-        positionValue_ = uint256(positionValue);
+        // fully close the position and update the cache
+        cache.liqMultiplierAccumulator =
+            _removeAmountFromPosition(posId.tick, posId.index, pos, pos.amount, pos.totalExpo);
 
         // update the cache
         cache.totalExpo -= pos.totalExpo;
-        cache.longBalance -= positionValue_;
+        // cast is safe as positionValue cannot be lower than 0
+        cache.longBalance -= uint256(positionValue_);
         cache.tradingExpo = cache.totalExpo - cache.longBalance;
 
         // emit both initiate and validate events
         // so the position is considered the same as other positions by event indexers
         emit InitiatedClosePosition(pos.user, pos.user, pos.user, posId, pos.amount, pos.amount, 0);
-        emit ValidatedClosePosition(pos.user, pos.user, posId, positionValue_, positionValue - _toInt256(pos.amount));
+        emit ValidatedClosePosition(
+            pos.user, pos.user, posId, uint256(positionValue_), positionValue_ - _toInt256(pos.amount)
+        );
     }
 
     /**
-     * TODO add tests
      * @notice Immediately open a position with the given price
      * @dev Should only be used to open the rebalancer position
      * @param user The address of the user
-     * @param neutralPrice The current neutral price
+     * @param lastPrice The last price used to update the protocol
      * @param tickWithoutPenalty The tick the position should be opened in
      * @param amount The amount of collateral in the position
      * @param cache The cached state of the protocol
@@ -839,7 +836,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      */
     function _flashOpenPosition(
         address user,
-        uint128 neutralPrice,
+        uint128 lastPrice,
         int24 tickWithoutPenalty,
         uint128 amount,
         CachedProtocolState memory cache
@@ -857,18 +854,18 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         // after the said change, so the first value is still applied
         if (liquidationPenalty == currentLiqPenalty) {
             liqPriceWithoutPenalty = getEffectivePriceForTick(
-                tickWithoutPenalty, neutralPrice, cache.tradingExpo, cache.liqMultiplierAccumulator
+                tickWithoutPenalty, lastPrice, cache.tradingExpo, cache.liqMultiplierAccumulator
             );
         } else {
             liqPriceWithoutPenalty = getEffectivePriceForTick(
                 _calcTickWithoutPenalty(posId_.tick, liquidationPenalty),
-                neutralPrice,
+                lastPrice,
                 cache.tradingExpo,
                 cache.liqMultiplierAccumulator
             );
         }
 
-        uint128 totalExpo = _calcPositionTotalExpo(amount, neutralPrice, liqPriceWithoutPenalty);
+        uint128 totalExpo = _calcPositionTotalExpo(amount, lastPrice, liqPriceWithoutPenalty);
         Position memory long = Position({
             validated: true,
             user: user,
@@ -882,22 +879,22 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
         // emit both initiate and validate events
         // so the position is considered the same as other positions by event indexers
-        emit InitiatedOpenPosition(user, user, uint40(block.timestamp), totalExpo, long.amount, neutralPrice, posId_);
-        emit ValidatedOpenPosition(user, user, totalExpo, neutralPrice, posId_);
+        emit InitiatedOpenPosition(user, user, uint40(block.timestamp), totalExpo, long.amount, lastPrice, posId_);
+        emit ValidatedOpenPosition(user, user, totalExpo, lastPrice, posId_);
     }
 
     /**
      * @notice Calculates the tick of the rebalancer position to open
      * @dev The returned tick must be higher than or equal to the minimum leverage of the protocol
      * and lower than or equal to the rebalancer and USDN protocol leverages (lower of the 2)
-     * @param neutralPrice The neutral asset price
+     * @param lastPrice The last price used to update the protocol
      * @param positionAmount The amount of assets in the position
      * @param rebalancerMaxLeverage The max leverage supported by the rebalancer
      * @param cache The cached protocol state values
      * @return tickWithoutLiqPenalty_ The tick where the position will be saved
      */
     function _calcRebalancerPositionTick(
-        uint128 neutralPrice,
+        uint128 lastPrice,
         uint128 positionAmount,
         uint256 rebalancerMaxLeverage,
         CachedProtocolState memory cache
@@ -943,8 +940,8 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         }
 
         tickWithoutLiqPenalty_ = getEffectiveTickForPrice(
-            _calcLiqPriceFromTradingExpo(neutralPrice, positionAmount, tradingExpoToFill),
-            neutralPrice,
+            _calcLiqPriceFromTradingExpo(lastPrice, positionAmount, tradingExpoToFill),
+            lastPrice,
             cache.tradingExpo,
             cache.liqMultiplierAccumulator,
             _tickSpacing
@@ -953,9 +950,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         // calculate the total expo of the position that will be created with the tick
         uint256 positionTotalExpo = _calcPositionTotalExpo(
             positionAmount,
-            neutralPrice,
+            lastPrice,
             getEffectivePriceForTick(
-                tickWithoutLiqPenalty_, neutralPrice, cache.tradingExpo, cache.liqMultiplierAccumulator
+                tickWithoutLiqPenalty_, lastPrice, cache.tradingExpo, cache.liqMultiplierAccumulator
             )
         );
 
