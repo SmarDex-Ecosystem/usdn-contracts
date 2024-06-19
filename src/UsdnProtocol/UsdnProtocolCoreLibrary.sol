@@ -38,6 +38,13 @@ library UsdnProtocolCoreLibrary {
     // / @inheritdoc IUsdnProtocolCore
     uint256 public constant MAX_ACTIONABLE_PENDING_ACTIONS = 20;
 
+    /**
+     * @notice Emitted when a user's position was liquidated while pending validation and we removed the pending action
+     * @param validator The validator address
+     * @param posId The unique position identifier
+     */
+    event StalePendingActionRemoved(address indexed validator, PositionId posId);
+
     /* -------------------------- Public view functions ------------------------- */
 
     // / @inheritdoc IUsdnProtocolCore
@@ -517,11 +524,10 @@ library UsdnProtocolCoreLibrary {
                 // remove the stale pending action
                 s._pendingActionsQueue.clearAt(rawIndex);
                 delete s._pendingActions[user];
-                // emit StalePendingActionRemoved(
-                //     user,
-                //     PositionId({ tick: openAction.tick, tickVersion: openAction.tickVersion, index: openAction.index
-                // })
-                // );
+                emit StalePendingActionRemoved(
+                    user,
+                    PositionId({ tick: openAction.tick, tickVersion: openAction.tickVersion, index: openAction.index })
+                );
             }
         }
     }

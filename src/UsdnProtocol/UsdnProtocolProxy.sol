@@ -60,7 +60,7 @@ contract UsdnProtocol is
         uint128 longAmount,
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData
-    ) external payable {
+    ) external payable initializer {
         if (depositAmount < s.MIN_INIT_DEPOSIT) {
             revert UsdnProtocolMinInitAmount(s.MIN_INIT_DEPOSIT);
         }
