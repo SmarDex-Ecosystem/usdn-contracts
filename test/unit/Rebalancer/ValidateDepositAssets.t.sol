@@ -68,8 +68,18 @@ contract TestRebalancerValidateDepositAssets is RebalancerFixture {
         rebalancer.validateDepositAssets();
     }
 
+    /**
+     * @custom:scenario The user tries to validate a deposit but has a pending withdrawal
+     * @custom:when The user tries to validate the deposit after initiating a withdrawal
+     * @custom:then The call reverts with a {RebalancerActionNotValidated} error
+     */
     function test_RevertWhen_validateDepositPendingWithdrawal() public {
-        // TODO
+        skip(rebalancer.getTimeLimits().validationDelay);
+        rebalancer.validateDepositAssets();
+        rebalancer.initiateWithdrawAssets();
+
+        vm.expectRevert(RebalancerActionNotValidated.selector);
+        rebalancer.validateDepositAssets();
     }
 
     /**

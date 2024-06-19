@@ -15,6 +15,8 @@ contract TestRebalancerResetDepositAssets is RebalancerFixture {
         super._setUp();
 
         wstETH.mintAndApprove(address(this), 10_000 ether, address(rebalancer), type(uint256).max);
+        wstETH.mintAndApprove(USER_1, 10_000 ether, address(rebalancer), type(uint256).max);
+
         rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));
         skip(rebalancer.getTimeLimits().validationDeadline + 1);
     }
@@ -57,8 +59,22 @@ contract TestRebalancerResetDepositAssets is RebalancerFixture {
         rebalancer.resetDepositAssets();
     }
 
+    /**
+     * @custom:scenario The user tries to reset his deposit but has a pending withdrawal
+     * @custom:given The user initiated and validated a deposit, then initiated a withdrawal
+     * @custom:when The user tries to reset their deposit
+     * @custom:then The call reverts with `RebalancerActionNotValidated`
+     */
     function test_RevertWhen_resetDepositWithPendingWithdrawal() public {
-        // TODO
+        vm.startPrank(USER_1);
+        rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, USER_1);
+        skip(rebalancer.getTimeLimits().validationDelay);
+        rebalancer.validateDepositAssets();
+        rebalancer.initiateWithdrawAssets();
+
+        vm.expectRevert(RebalancerActionNotValidated.selector);
+        rebalancer.resetDepositAssets();
+        vm.stopPrank();
     }
 
     /**
