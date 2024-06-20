@@ -12,19 +12,18 @@ import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { IBaseLiquidationRewardsManager } from "../interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
-import { Position } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PendingAction, TickData } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "../libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
 import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { UsdnProtocolActionsUtilsLibrary as actionsUtilsLib } from "./UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolActionsLongLibrary as actionsLongLib } from "./UsdnProtocolActionsLongLibrary.sol";
+import { Position } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 contract UsdnProtocolBaseStorage is
     IUsdnProtocolErrors,
+    IUsdnProtocolStorage,
     InitializableReentrancyGuard,
-    Ownable2Step,
-    IUsdnProtocolStorage
+    Ownable2Step
 {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
 

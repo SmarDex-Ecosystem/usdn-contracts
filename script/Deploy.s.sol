@@ -222,8 +222,7 @@ contract Deploy is Script {
         if (rebalancerAddress != address(0)) {
             rebalancer_ = Rebalancer(rebalancerAddress);
         } else {
-            // TO DO : remove the cast
-            rebalancer_ = new Rebalancer(IUsdnProtocol(address(usdnProtocol)));
+            rebalancer_ = new Rebalancer(usdnProtocol);
         }
     }
 

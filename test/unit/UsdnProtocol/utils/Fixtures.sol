@@ -163,8 +163,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
 
         wstETH.approve(address(protocol), type(uint256).max);
 
-        // TO DO : remove the cast
-        rebalancer = new RebalancerHandler(IUsdnProtocol(address(protocol)));
+        rebalancer = new RebalancerHandler(protocol);
         if (testParams.flags.enableRebalancer) {
             protocol.setRebalancer(rebalancer);
         }

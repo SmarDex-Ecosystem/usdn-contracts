@@ -53,8 +53,7 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
             100, // tick spacing 100 = 1%
             ADMIN // Fee collector
         );
-        // TO DO : remove the cast
-        rebalancer = new RebalancerHandler(IUsdnProtocol(address(usdnProtocol)));
+        rebalancer = new RebalancerHandler(usdnProtocol);
 
         usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));

@@ -142,10 +142,6 @@ library UsdnProtocolVaultLibrary {
         uint128 longAmount,
         uint128 depositAmount
     ) public view {
-        // _checkUninitialized(); // prevent using this function after initialization
-        // TODO : check this solution
-        InitializableReentrancyGuard(address(this))._checkUninitialized();
-
         int256 longTradingExpo = coreLib._toInt256(positionTotalExpo - longAmount);
         int256 depositLimit = s._depositExpoImbalanceLimitBps;
         if (depositLimit != 0) {
@@ -172,10 +168,6 @@ library UsdnProtocolVaultLibrary {
      * @param price The current asset price
      */
     function _createInitialDeposit(Storage storage s, uint128 amount, uint128 price) public {
-        // _checkUninitialized(); // prevent using this function after initialization
-        // TODO : check this solution
-        InitializableReentrancyGuard(address(this))._checkUninitialized();
-
         // transfer the wstETH for the deposit
         address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
         s._balanceVault += amount;
@@ -206,10 +198,6 @@ library UsdnProtocolVaultLibrary {
     function _createInitialPosition(Storage storage s, uint128 amount, uint128 price, int24 tick, uint128 totalExpo)
         public
     {
-        // _checkUninitialized(); // prevent using this function after initialization
-        // TODO : check this solution
-        InitializableReentrancyGuard(address(this))._checkUninitialized();
-
         // transfer the wstETH for the long
         address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
 

@@ -152,8 +152,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             ADMIN
         );
 
-        // TO DO : remove the cast
-        rebalancer = new Rebalancer(IUsdnProtocol(address(protocol)));
+        rebalancer = new Rebalancer(protocol);
         protocol.setRebalancer(rebalancer);
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));

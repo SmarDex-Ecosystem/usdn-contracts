@@ -63,7 +63,7 @@ abstract contract InitializableReentrancyGuard {
     }
 
     /// @notice Reverts if the contract is initialized
-    function _checkUninitialized() public view {
+    function _checkUninitialized() internal view {
         if (_status != UNINITIALIZED) {
             revert InitializableReentrancyGuardInvalidInitialization();
         }
