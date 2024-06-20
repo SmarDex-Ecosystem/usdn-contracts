@@ -54,7 +54,7 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
      * @custom:when {updatePosition} is called
      * @custom:then The call reverts with a {RebalancerUnauthorized} error
      */
-    function test_RevertWhen_callerIsNotTheProtocol() external {
+    function test_RevertWhen_callerIsNotTheProtocol() public {
         vm.expectRevert(RebalancerUnauthorized.selector);
         rebalancer.updatePosition(PositionId(0, 0, 0), 0);
     }
@@ -68,7 +68,7 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
      * @custom:and The position version is incremented
      * @custom:and A {PositionVersionUpdated} event is emitted
      */
-    function test_updatePositionForTheFirstTime() external {
+    function test_updatePositionForTheFirstTime() public {
         PositionId memory newPosId = PositionId({ tick: 200, tickVersion: 1, index: 3 });
         uint128 pendingAssetsBefore = rebalancer.getPendingAssetsAmount();
         uint128 positionVersionBefore = rebalancer.getPositionVersion();
@@ -115,7 +115,7 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
      * @custom:and The position version is incremented
      * @custom:and A {PositionVersionUpdated} event is emitted
      */
-    function test_updatePositionWithAnExistingPosition() external {
+    function test_updatePositionWithAnExistingPosition() public {
         PositionId memory posId1 = PositionId({ tick: 200, tickVersion: 1, index: 3 });
         PositionId memory posId2 = PositionId({ tick: 400, tickVersion: 8, index: 27 });
         uint128 positionVersionBefore = rebalancer.getPositionVersion();
@@ -166,7 +166,7 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
      * @custom:then The data is saved in the new position version
      * @custom:and The last liquidated version is set to the previous version
      */
-    function test_updatePositionWithALiquidatedPosition() external {
+    function test_updatePositionWithALiquidatedPosition() public {
         PositionId memory posId1 = PositionId({ tick: 200, tickVersion: 1, index: 3 });
         PositionId memory posId2 = PositionId({ tick: 400, tickVersion: 8, index: 27 });
         uint128 positionVersionBefore = rebalancer.getPositionVersion();
@@ -210,7 +210,7 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
      * @custom:then The data is saved in the new position version
      * @custom:and The last liquidated version is set to the previous version
      */
-    function test_updatePositionWithNoNewPosition() external {
+    function test_updatePositionWithNoNewPosition() public {
         int24 noPositionTick = usdnProtocol.NO_POSITION_TICK();
         PositionId memory posId1 = PositionId({ tick: 200, tickVersion: 1, index: 3 });
 
@@ -230,7 +230,6 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
             "The last liquidated version should be the version that was supposed to be closed"
         );
 
-        // check the second position's data
         PositionData memory positionData = rebalancer.getPositionData(rebalancer.getPositionVersion());
         assertEq(positionData.amount, 0, "No funds should be in the position");
         assertEq(positionData.entryAccMultiplier, 0, "Entry multiplier accumulator should be 0");
