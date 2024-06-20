@@ -1,22 +1,22 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 import {
     DEPLOYER,
-    USER_1,
-    USER_2,
-    USER_3,
     PYTH_ETH_USD,
     PYTH_WSTETH_USD,
-    REDSTONE_ETH_USD
+    REDSTONE_ETH_USD,
+    USER_1,
+    USER_2,
+    USER_3
 } from "../../utils/Constants.sol";
+import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 
+import { MockWstEthOracleMiddleware } from "../../../src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
 import { ILiquidationRewardsManagerErrorsEventsTypes } from
     "../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManagerErrorsEventsTypes.sol";
-import { ProtocolAction } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IUsdnEvents } from "../../../src/interfaces/Usdn/IUsdnEvents.sol";
-import { MockWstEthOracleMiddleware } from "../../../src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
+import { ProtocolAction } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature Checking the gas usage of a liquidation

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.25;
 
+import { PendingAction } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IUsdnProtocolCore } from "./../interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
 import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
-import { PendingAction } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolCoreLibrary as lib } from "./libraries/UsdnProtocolCoreLibrary.sol";
 
 abstract contract UsdnProtocolCoreEntry is UsdnProtocolStorage, IUsdnProtocolCore {

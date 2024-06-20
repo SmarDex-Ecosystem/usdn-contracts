@@ -5,9 +5,9 @@ import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import {
     Position,
+    PositionId,
     ProtocolAction,
-    TickData,
-    PositionId
+    TickData
 } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { TickMath } from "../../../../src/libraries/TickMath.sol";

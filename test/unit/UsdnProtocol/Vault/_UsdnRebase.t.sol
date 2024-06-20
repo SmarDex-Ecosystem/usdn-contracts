@@ -3,9 +3,10 @@ pragma solidity ^0.8.25;
 
 import { Vm } from "forge-std/Vm.sol";
 
-import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
-import { DEPLOYER, ADMIN } from "../../../utils/Constants.sol";
+import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
 import { RebaseHandler } from "../../USDN/utils/RebaseHandler.sol";
+import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
+
 import { IUsdnEvents } from "../../../../src/interfaces/Usdn/IUsdnEvents.sol";
 
 /**
