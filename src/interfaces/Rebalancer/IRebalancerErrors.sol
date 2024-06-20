@@ -2,14 +2,8 @@
 pragma solidity >=0.8.0;
 
 interface IRebalancerErrors {
-    /// @dev Indicates that the user assets are used in a position
-    error RebalancerUserInPosition();
-
     /// @dev Indicates that the user assets are not used in a position
     error RebalancerUserPending();
-
-    /// @dev Indicates that the user assets are used in a position
-    error RebalancerUserNotPending();
 
     /// @dev Indicates that the `to` address is invalid
     error RebalancerInvalidAddressTo();
