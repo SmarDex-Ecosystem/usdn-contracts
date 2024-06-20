@@ -384,7 +384,7 @@ library UsdnProtocolLongLibrary {
         PositionId memory posId =
             _flashOpenPosition(s, address(rebalancer), lastPrice, tickWithoutLiqPenalty, data.positionAmount, cache);
 
-        longBalance_ += data.positionAmount - data.positionValue;
+        longBalance_ += data.positionAmount;
 
         // call the rebalancer to update the public bookkeeping
         rebalancer.updatePosition(posId, data.positionValue);
