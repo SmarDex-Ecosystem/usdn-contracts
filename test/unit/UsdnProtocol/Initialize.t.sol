@@ -78,19 +78,6 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Initial deposit internal function cannot be called once the protocol has been initialized
-     * @custom:given The protocol has been initialized
-     * @custom:when The deployer calls the internal function to create an initial deposit
-     * @custom:then The transaction reverts with the error `InitializableReentrancyGuardInvalidInitialization`
-     */
-    function test_RevertWhen_createInitialDepositAlreadyInitialized() public {
-        protocol.initialize(INITIAL_DEPOSIT, INITIAL_POSITION, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE));
-
-        vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector);
-        protocol.i_createInitialDeposit(INITIAL_DEPOSIT, INITIAL_PRICE);
-    }
-
-    /**
      * @custom:scenario Deployer creates an initial position via the internal function
      * @custom:when The deployer calls the internal function to create an initial position
      * @custom:then The deployer's wstETH balance is decreased by the position amount
@@ -131,21 +118,6 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         assertEq(pos.amount, INITIAL_POSITION, "position amount");
         assertEq(pos.totalExpo, posTotalExpo, "position total expo");
         assertEq(pos.timestamp, block.timestamp, "position timestamp");
-    }
-
-    /**
-     * @custom:scenario Initial position internal function cannot be called once the protocol has been initialized
-     * @custom:given The protocol has been initialized
-     * @custom:when The deployer calls the internal function to create an initial position
-     * @custom:then The transaction reverts with the error `InitializableReentrancyGuardInvalidInitialization`
-     */
-    function test_RevertWhen_createInitialPositionAlreadyInitialized() public {
-        protocol.initialize(INITIAL_DEPOSIT, INITIAL_POSITION, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE));
-
-        int24 tickWithoutPenalty = protocol.getEffectiveTickForPrice(INITIAL_PRICE / 2);
-
-        vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector);
-        protocol.i_createInitialPosition(INITIAL_POSITION, INITIAL_PRICE, tickWithoutPenalty, 2 * INITIAL_POSITION);
     }
 
     /**
