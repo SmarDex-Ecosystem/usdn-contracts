@@ -17,6 +17,7 @@ import { DoubleEndedQueue } from "../libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
 import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { UsdnProtocolActionsLongLibrary as actionsLongLib } from "./libraries/UsdnProtocolActionsLongLibrary.sol";
+import { UsdnProtocolConstantsLibrary as constantsLib } from "./libraries/UsdnProtocolConstantsLibrary.sol";
 import { Position } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 contract UsdnProtocolStorage is
@@ -49,23 +50,23 @@ contract UsdnProtocolStorage is
         int24 tickSpacing,
         address feeCollector
     ) Ownable(msg.sender) {
-        // constants
-        s.LEVERAGE_DECIMALS = 21;
-        s.FUNDING_RATE_DECIMALS = 18;
-        s.TOKENS_DECIMALS = 18;
-        s.LIQUIDATION_MULTIPLIER_DECIMALS = 38;
-        s.FUNDING_SF_DECIMALS = 3;
-        s.SDEX_BURN_ON_DEPOSIT_DIVISOR = 1e8;
-        s.BPS_DIVISOR = 10_000;
-        s.MAX_LIQUIDATION_ITERATION = 10;
-        s.NO_POSITION_TICK = type(int24).min;
-        s.DEAD_ADDRESS = address(0xdead);
-        s.MIN_USDN_SUPPLY = 1000;
-        s.MIN_INIT_DEPOSIT = 1 ether;
+        // // constants
+        // constantsLib.LEVERAGE_DECIMALS = 21;
+        // constantsLib.FUNDING_RATE_DECIMALS = 18;
+        // constantsLib.TOKENS_DECIMALS = 18;
+        // constantsLib.LIQUIDATION_MULTIPLIER_DECIMALS = 38;
+        // constantsLib.FUNDING_SF_DECIMALS = 3;
+        // constantsLib.SDEX_BURN_ON_DEPOSIT_DIVISOR = 1e8;
+        // constantsLib.BPS_DIVISOR = 10_000;
+        // constantsLib.MAX_LIQUIDATION_ITERATION = 10;
+        // constantsLib.NO_POSITION_TICK = type(int24).min;
+        // constantsLib.DEAD_ADDRESS = address(0xdead);
+        // constantsLib.MIN_USDN_SUPPLY = 1000;
+        // constantsLib.MIN_INIT_DEPOSIT = 1 ether;
 
         // parameters
-        s._minLeverage = 10 ** s.LEVERAGE_DECIMALS + 10 ** 12;
-        s._maxLeverage = 10 * 10 ** s.LEVERAGE_DECIMALS;
+        s._minLeverage = 10 ** constantsLib.LEVERAGE_DECIMALS + 10 ** 12;
+        s._maxLeverage = 10 * 10 ** constantsLib.LEVERAGE_DECIMALS;
         s._validationDeadline = 90 minutes;
         s._safetyMarginBps = 200; // 2%
         s._liquidationIteration = 1;
@@ -73,7 +74,7 @@ contract UsdnProtocolStorage is
         s._rebalancerBonusBps = 8000; // 80%
         s._liquidationPenalty = 2; // 200 ticks -> ~2.02%
         s._EMAPeriod = 5 days;
-        s._fundingSF = 12 * 10 ** (s.FUNDING_SF_DECIMALS - 2);
+        s._fundingSF = 12 * 10 ** (constantsLib.FUNDING_SF_DECIMALS - 2);
         s._feeThreshold = 1 ether;
         s._openExpoImbalanceLimitBps = 500;
         s._withdrawalExpoImbalanceLimitBps = 600;
@@ -86,7 +87,7 @@ contract UsdnProtocolStorage is
         s._securityDepositValue = 0.5 ether;
 
         // Long positions
-        s._EMA = int256(3 * 10 ** (s.FUNDING_RATE_DECIMALS - 4));
+        s._EMA = int256(3 * 10 ** (constantsLib.FUNDING_RATE_DECIMALS - 4));
 
         // since all USDN must be minted by the protocol, we check that the total supply is 0
         if (usdn.totalSupply() != 0) {
@@ -99,14 +100,14 @@ contract UsdnProtocolStorage is
         s._usdn = usdn;
         s._sdex = sdex;
         // those tokens should have 18 decimals
-        if (usdn.decimals() != s.TOKENS_DECIMALS || sdex.decimals() != s.TOKENS_DECIMALS) {
+        if (usdn.decimals() != constantsLib.TOKENS_DECIMALS || sdex.decimals() != constantsLib.TOKENS_DECIMALS) {
             revert UsdnProtocolInvalidTokenDecimals();
         }
 
         s._usdnMinDivisor = usdn.MIN_DIVISOR();
         s._asset = asset;
         s._assetDecimals = asset.decimals();
-        if (s._assetDecimals < s.FUNDING_SF_DECIMALS) {
+        if (s._assetDecimals < constantsLib.FUNDING_SF_DECIMALS) {
             revert UsdnProtocolInvalidAssetDecimals(s._assetDecimals);
         }
         s._oracleMiddleware = oracleMiddleware;
@@ -121,63 +122,63 @@ contract UsdnProtocolStorage is
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function LEVERAGE_DECIMALS() external view returns (uint8) {
-        return s.LEVERAGE_DECIMALS;
+    function LEVERAGE_DECIMALS() external pure returns (uint8) {
+        return constantsLib.LEVERAGE_DECIMALS;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function FUNDING_RATE_DECIMALS() external view returns (uint8) {
-        return s.FUNDING_RATE_DECIMALS;
+    function FUNDING_RATE_DECIMALS() external pure returns (uint8) {
+        return constantsLib.FUNDING_RATE_DECIMALS;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function TOKENS_DECIMALS() external view returns (uint8) {
-        return s.TOKENS_DECIMALS;
+    function TOKENS_DECIMALS() external pure returns (uint8) {
+        return constantsLib.TOKENS_DECIMALS;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function LIQUIDATION_MULTIPLIER_DECIMALS() external view returns (uint8) {
-        return s.LIQUIDATION_MULTIPLIER_DECIMALS;
+    function LIQUIDATION_MULTIPLIER_DECIMALS() external pure returns (uint8) {
+        return constantsLib.LIQUIDATION_MULTIPLIER_DECIMALS;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function FUNDING_SF_DECIMALS() external view returns (uint8) {
-        return s.FUNDING_SF_DECIMALS;
+    function FUNDING_SF_DECIMALS() external pure returns (uint8) {
+        return constantsLib.FUNDING_SF_DECIMALS;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function SDEX_BURN_ON_DEPOSIT_DIVISOR() external view returns (uint256) {
-        return s.SDEX_BURN_ON_DEPOSIT_DIVISOR;
+    function SDEX_BURN_ON_DEPOSIT_DIVISOR() external pure returns (uint256) {
+        return constantsLib.SDEX_BURN_ON_DEPOSIT_DIVISOR;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function BPS_DIVISOR() external view returns (uint256) {
-        return s.BPS_DIVISOR;
+    function BPS_DIVISOR() external pure returns (uint256) {
+        return constantsLib.BPS_DIVISOR;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function MAX_LIQUIDATION_ITERATION() external view returns (uint16) {
-        return s.MAX_LIQUIDATION_ITERATION;
+    function MAX_LIQUIDATION_ITERATION() external pure returns (uint16) {
+        return constantsLib.MAX_LIQUIDATION_ITERATION;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function NO_POSITION_TICK() external view returns (int24) {
-        return s.NO_POSITION_TICK;
+    function NO_POSITION_TICK() external pure returns (int24) {
+        return constantsLib.NO_POSITION_TICK;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function DEAD_ADDRESS() external view returns (address) {
-        return s.DEAD_ADDRESS;
+    function DEAD_ADDRESS() external pure returns (address) {
+        return constantsLib.DEAD_ADDRESS;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function MIN_USDN_SUPPLY() external view returns (uint256) {
-        return s.MIN_USDN_SUPPLY;
+    function MIN_USDN_SUPPLY() external pure returns (uint256) {
+        return constantsLib.MIN_USDN_SUPPLY;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function MIN_INIT_DEPOSIT() external view returns (uint256) {
-        return s.MIN_INIT_DEPOSIT;
+    function MIN_INIT_DEPOSIT() external pure returns (uint256) {
+        return constantsLib.MIN_INIT_DEPOSIT;
     }
 
     /* -------------------------------------------------------------------------- */
@@ -467,19 +468,19 @@ contract UsdnProtocolStorage is
 }
 
 struct Storage {
-    // constants
-    uint8 LEVERAGE_DECIMALS;
-    uint8 FUNDING_RATE_DECIMALS;
-    uint8 TOKENS_DECIMALS;
-    uint8 LIQUIDATION_MULTIPLIER_DECIMALS;
-    uint8 FUNDING_SF_DECIMALS;
-    uint256 SDEX_BURN_ON_DEPOSIT_DIVISOR;
-    uint256 BPS_DIVISOR;
-    uint16 MAX_LIQUIDATION_ITERATION;
-    int24 NO_POSITION_TICK;
-    address DEAD_ADDRESS;
-    uint256 MIN_USDN_SUPPLY;
-    uint256 MIN_INIT_DEPOSIT;
+    // // constants
+    // uint8 LEVERAGE_DECIMALS;
+    // uint8 FUNDING_RATE_DECIMALS;
+    // uint8 TOKENS_DECIMALS;
+    // uint8 LIQUIDATION_MULTIPLIER_DECIMALS;
+    // uint8 FUNDING_SF_DECIMALS;
+    // uint256 SDEX_BURN_ON_DEPOSIT_DIVISOR;
+    // uint256 BPS_DIVISOR;
+    // uint16 MAX_LIQUIDATION_ITERATION;
+    // int24 NO_POSITION_TICK;
+    // address DEAD_ADDRESS;
+    // uint256 MIN_USDN_SUPPLY;
+    // uint256 MIN_INIT_DEPOSIT;
     // immutable
     int24 _tickSpacing;
     IERC20Metadata _asset;

@@ -21,6 +21,7 @@ import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary
 import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as longLib } from "./UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
+import { UsdnProtocolConstantsLibrary as constantsLib } from "./UsdnProtocolConstantsLibrary.sol";
 import {
     LongPendingAction,
     PendingAction,
@@ -148,7 +149,7 @@ library UsdnProtocolActionsUtilsLibrary {
         uint256 newTotalExpo = s._totalExpo - posTotalExpoToClose;
         int256 currentVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault);
 
-        int256 imbalanceBps = longLib._calcImbalanceCloseBps(s, currentVaultExpo, newLongBalance, newTotalExpo);
+        int256 imbalanceBps = longLib._calcImbalanceCloseBps(currentVaultExpo, newLongBalance, newTotalExpo);
 
         if (imbalanceBps >= closeExpoImbalanceLimitBps) {
             revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
@@ -251,7 +252,8 @@ library UsdnProtocolActionsUtilsLibrary {
             priceData
         );
         // apply fees on price
-        data_.startPrice = (currentPrice.price + currentPrice.price * s._positionFeeBps / s.BPS_DIVISOR).toUint128();
+        data_.startPrice =
+            (currentPrice.price + currentPrice.price * s._positionFeeBps / constantsLib.BPS_DIVISOR).toUint128();
 
         (, data_.isLiquidationPending) = longLib._applyPnlAndFundingAndLiquidate(
             s,
@@ -287,7 +289,7 @@ library UsdnProtocolActionsUtilsLibrary {
             s, longLib._calcTickWithoutPenalty(s, data_.action.tick, data_.liquidationPenalty)
         );
         // reverts if liqPriceWithoutPenalty >= startPrice
-        data_.leverage = longLib._getLeverage(s, data_.startPrice, data_.liqPriceWithoutPenalty);
+        data_.leverage = longLib._getLeverage(data_.startPrice, data_.liqPriceWithoutPenalty);
     }
 
     /**
@@ -454,9 +456,7 @@ library UsdnProtocolActionsUtilsLibrary {
             closePosTotalExpo: data.totalExpoToClose,
             tickVersion: posId.tickVersion,
             index: posId.index,
-            closeLiqMultiplier: longLib._calcFixedPrecisionMultiplier(
-                s, data.lastPrice, data.longTradingExpo, data.liqMulAcc
-            ),
+            closeLiqMultiplier: longLib._calcFixedPrecisionMultiplier(data.lastPrice, data.longTradingExpo, data.liqMulAcc),
             closeBoundedPositionValue: data.tempPositionValue
         });
         amountToRefund_ = coreLib._addPendingAction(s, validator, coreLib._convertLongPendingAction(action));

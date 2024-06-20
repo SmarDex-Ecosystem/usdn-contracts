@@ -18,6 +18,7 @@ import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.so
 import { UsdnProtocolLongLibrary as longLib } from "./UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolActionsLongLibrary as actionsLongLib } from "./UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsUtilsLibrary as actionsUtilsLib } from "./UsdnProtocolActionsUtilsLibrary.sol";
+import { UsdnProtocolConstantsLibrary as constantsLib } from "./UsdnProtocolConstantsLibrary.sol";
 import {
     DepositPendingAction,
     LongPendingAction,
@@ -186,7 +187,7 @@ library UsdnProtocolActionsVaultLibrary {
         int256 newVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault).safeAdd(int256(depositValue));
 
         int256 imbalanceBps =
-            newVaultExpo.safeSub(currentLongExpo).safeMul(int256(s.BPS_DIVISOR)).safeDiv(currentLongExpo);
+            newVaultExpo.safeSub(currentLongExpo).safeMul(int256(constantsLib.BPS_DIVISOR)).safeDiv(currentLongExpo);
 
         if (imbalanceBps >= depositExpoImbalanceLimitBps) {
             revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
@@ -221,7 +222,7 @@ library UsdnProtocolActionsVaultLibrary {
         }
 
         int256 imbalanceBps = (totalExpo - s._balanceLong).toInt256().safeSub(newVaultExpo).safeMul(
-            int256(s.BPS_DIVISOR)
+            int256(constantsLib.BPS_DIVISOR)
         ).safeDiv(newVaultExpo);
 
         if (imbalanceBps >= withdrawalExpoImbalanceLimitBps) {
@@ -269,7 +270,7 @@ library UsdnProtocolActionsVaultLibrary {
 
         // apply fees on price
         data_.pendingActionPrice =
-            (currentPrice.price - currentPrice.price * s._vaultFeeBps / s.BPS_DIVISOR).toUint128();
+            (currentPrice.price - currentPrice.price * s._vaultFeeBps / constantsLib.BPS_DIVISOR).toUint128();
 
         data_.totalExpo = s._totalExpo;
         data_.balanceLong = s._balanceLong;
@@ -287,7 +288,7 @@ library UsdnProtocolActionsVaultLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolDepositTooSmall();
         }
         uint32 burnRatio = s._sdexBurnOnDepositRatio;
-        data_.sdexToBurn = vaultLib._calcSdexToBurn(s, usdnToMintEstimated, burnRatio);
+        data_.sdexToBurn = vaultLib._calcSdexToBurn(usdnToMintEstimated, burnRatio);
         // we want to at least burn 1 wei of SDEX if SDEX burning is enabled
         if (burnRatio != 0 && data_.sdexToBurn == 0) {
             revert IUsdnProtocolErrors.UsdnProtocolDepositTooSmall();
@@ -380,9 +381,9 @@ library UsdnProtocolActionsVaultLibrary {
         if (data.sdexToBurn > 0) {
             // send SDEX to the dead address
             if (permit2TokenBitfield.useForSdex()) {
-                address(s._sdex).permit2TransferFrom(user, s.DEAD_ADDRESS, data.sdexToBurn);
+                address(s._sdex).permit2TransferFrom(user, constantsLib.DEAD_ADDRESS, data.sdexToBurn);
             } else {
-                address(s._sdex).safeTransferFrom(user, s.DEAD_ADDRESS, data.sdexToBurn);
+                address(s._sdex).safeTransferFrom(user, constantsLib.DEAD_ADDRESS, data.sdexToBurn);
             }
         }
 
@@ -472,7 +473,8 @@ library UsdnProtocolActionsVaultLibrary {
         // we calculate the amount of USDN to mint, either considering the asset price at the time of the initiate
         // action, or the current price provided for validation. We will use the lower of the two amounts to mint
         // apply fees on price
-        uint128 priceWithFees = (currentPrice.price - currentPrice.price * s._vaultFeeBps / s.BPS_DIVISOR).toUint128();
+        uint128 priceWithFees =
+            (currentPrice.price - currentPrice.price * s._vaultFeeBps / constantsLib.BPS_DIVISOR).toUint128();
 
         uint256 usdnSharesToMint1 = vaultLib._calcMintUsdnShares(
             s, deposit.amount, deposit.balanceVault, deposit.usdnTotalShares, deposit.assetPrice
@@ -547,7 +549,7 @@ library UsdnProtocolActionsVaultLibrary {
 
         // apply fees on price
         data_.pendingActionPrice =
-            (currentPrice.price + currentPrice.price * s._vaultFeeBps / s.BPS_DIVISOR).toUint128();
+            (currentPrice.price + currentPrice.price * s._vaultFeeBps / constantsLib.BPS_DIVISOR).toUint128();
 
         data_.totalExpo = s._totalExpo;
         data_.balanceLong = s._balanceLong;
@@ -747,7 +749,7 @@ library UsdnProtocolActionsVaultLibrary {
         {
             // apply fees on price
             uint128 withdrawalPriceWithFees =
-                (currentPrice.price + currentPrice.price * s._vaultFeeBps / s.BPS_DIVISOR).toUint128();
+                (currentPrice.price + currentPrice.price * s._vaultFeeBps / constantsLib.BPS_DIVISOR).toUint128();
 
             // we calculate the available balance of the vault side, either considering the asset price at the time of
             // the
