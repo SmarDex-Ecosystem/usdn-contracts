@@ -432,11 +432,12 @@ library UsdnProtocolCoreLibrary {
             uint128 lastUpdateTimestamp = s._lastUpdateTimestamp;
             // if the price is not fresh, do nothing
             if (timestamp <= lastUpdateTimestamp) {
-                data_.isPriceRecent = timestamp == lastUpdateTimestamp;
-                data_.tempLongBalance = s._balanceLong.toInt256();
-                data_.tempVaultBalance = s._balanceVault.toInt256();
-                data_.lastPrice = s._lastPrice;
-                return data_;
+                return ApplyPnlAndFundingAndLiquidateParams({
+                    isPriceRecent: timestamp == lastUpdateTimestamp,
+                    tempLongBalance: s._balanceLong.toInt256(),
+                    tempVaultBalance: s._balanceVault.toInt256(),
+                    lastPrice: s._lastPrice
+                });
             }
 
             // update the funding EMA
