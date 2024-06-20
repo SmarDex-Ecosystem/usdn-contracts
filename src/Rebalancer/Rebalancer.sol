@@ -441,7 +441,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         ++positionVersion;
         _positionVersion = positionVersion;
 
-        // save the data of the new position's version
+        // create the data of the new position's version
         PositionData memory newPositionData = PositionData({
             entryAccMultiplier: accMultiplier,
             tickVersion: newPosId.tickVersion,
