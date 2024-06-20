@@ -279,7 +279,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         } else if (depositData.entryPositionVersion > 0) {
             // user has a withdrawal that must be validated
             revert RebalancerActionNotValidated();
-        } else if (uint40(block.timestamp) < depositData.initiateTimestamp + _timeLimits.actionCooldown) {
+        } else if (block.timestamp < depositData.initiateTimestamp + _timeLimits.actionCooldown) {
             // user must wait until the cooldown has elapsed, then call this function to withdraw the funds
             revert RebalancerActionCooldown();
         }
@@ -315,7 +315,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
         if (
             depositData.initiateTimestamp > 0
-                && uint40(block.timestamp) < depositData.initiateTimestamp + _timeLimits.actionCooldown
+                && block.timestamp < depositData.initiateTimestamp + _timeLimits.actionCooldown
         ) {
             // user must wait until the cooldown has elapsed, then call this function to restart the withdrawal process
             revert RebalancerActionCooldown();
@@ -579,11 +579,11 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
      */
     function _checkValidationTime(uint40 initiateTimestamp) internal view {
         TimeLimits memory timeLimits = _timeLimits;
-        if (uint40(block.timestamp) < initiateTimestamp + timeLimits.validationDelay) {
+        if (block.timestamp < initiateTimestamp + timeLimits.validationDelay) {
             // user must wait until the delay has elapsed
             revert RebalancerValidateTooEarly();
         }
-        if (uint40(block.timestamp) > initiateTimestamp + timeLimits.validationDeadline) {
+        if (block.timestamp > initiateTimestamp + timeLimits.validationDeadline) {
             // user must wait until the cooldown has elapsed, then call `resetDepositAssets` to withdraw the funds
             revert RebalancerActionCooldown();
         }
