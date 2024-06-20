@@ -27,6 +27,7 @@ contract UsdnProtocolBaseStorage is
 {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
+    /// @notice The storage structure of the Usdn protocol
     Storage internal s;
 
     /**
@@ -119,50 +120,62 @@ contract UsdnProtocolBaseStorage is
         s._minLongPosition = 2 * 10 ** s._assetDecimals;
     }
 
+    /// @inheritdoc IUsdnProtocolStorage
     function LEVERAGE_DECIMALS() external view returns (uint8) {
         return s.LEVERAGE_DECIMALS;
     }
 
+    /// @inheritdoc IUsdnProtocolStorage
     function FUNDING_RATE_DECIMALS() external view returns (uint8) {
         return s.FUNDING_RATE_DECIMALS;
     }
 
+    /// @inheritdoc IUsdnProtocolStorage
     function TOKENS_DECIMALS() external view returns (uint8) {
         return s.TOKENS_DECIMALS;
     }
 
+    /// @inheritdoc IUsdnProtocolStorage
     function LIQUIDATION_MULTIPLIER_DECIMALS() external view returns (uint8) {
         return s.LIQUIDATION_MULTIPLIER_DECIMALS;
     }
 
+    /// @inheritdoc IUsdnProtocolStorage
     function FUNDING_SF_DECIMALS() external view returns (uint8) {
         return s.FUNDING_SF_DECIMALS;
     }
 
+    /// @inheritdoc IUsdnProtocolStorage
     function SDEX_BURN_ON_DEPOSIT_DIVISOR() external view returns (uint256) {
         return s.SDEX_BURN_ON_DEPOSIT_DIVISOR;
     }
 
+    /// @inheritdoc IUsdnProtocolStorage
     function BPS_DIVISOR() external view returns (uint256) {
         return s.BPS_DIVISOR;
     }
 
+    /// @inheritdoc IUsdnProtocolStorage
     function MAX_LIQUIDATION_ITERATION() external view returns (uint16) {
         return s.MAX_LIQUIDATION_ITERATION;
     }
 
+    /// @inheritdoc IUsdnProtocolStorage
     function NO_POSITION_TICK() external view returns (int24) {
         return s.NO_POSITION_TICK;
     }
 
+    /// @inheritdoc IUsdnProtocolStorage
     function DEAD_ADDRESS() external view returns (address) {
         return s.DEAD_ADDRESS;
     }
 
+    /// @inheritdoc IUsdnProtocolStorage
     function MIN_USDN_SUPPLY() external view returns (uint256) {
         return s.MIN_USDN_SUPPLY;
     }
 
+    /// @inheritdoc IUsdnProtocolStorage
     function MIN_INIT_DEPOSIT() external view returns (uint256) {
         return s.MIN_INIT_DEPOSIT;
     }
@@ -171,37 +184,37 @@ contract UsdnProtocolBaseStorage is
     /*                                 Immutables getters                         */
     /* -------------------------------------------------------------------------- */
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getTickSpacing() external view returns (int24) {
         return s._tickSpacing;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getAsset() external view returns (IERC20Metadata) {
         return s._asset;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getSdex() external view returns (IERC20Metadata) {
         return s._sdex;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getPriceFeedDecimals() external view returns (uint8) {
         return s._priceFeedDecimals;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getAssetDecimals() external view returns (uint8) {
         return s._assetDecimals;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getUsdn() external view returns (IUsdn) {
         return s._usdn;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getUsdnMinDivisor() external view returns (uint256) {
         return s._usdnMinDivisor;
     }
@@ -210,122 +223,122 @@ contract UsdnProtocolBaseStorage is
     /*                                 Parameters getters                         */
     /* -------------------------------------------------------------------------- */
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getOracleMiddleware() external view returns (IBaseOracleMiddleware) {
         return s._oracleMiddleware;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getLiquidationRewardsManager() external view returns (IBaseLiquidationRewardsManager) {
         return s._liquidationRewardsManager;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getRebalancer() external view returns (IBaseRebalancer) {
         return s._rebalancer;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getMinLeverage() external view returns (uint256) {
         return s._minLeverage;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getMaxLeverage() external view returns (uint256) {
         return s._maxLeverage;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getValidationDeadline() external view returns (uint256) {
         return s._validationDeadline;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getLiquidationPenalty() external view returns (uint8) {
         return s._liquidationPenalty;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getSafetyMarginBps() external view returns (uint256) {
         return s._safetyMarginBps;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getLiquidationIteration() external view returns (uint16) {
         return s._liquidationIteration;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getEMAPeriod() external view returns (uint128) {
         return s._EMAPeriod;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getFundingSF() external view returns (uint256) {
         return s._fundingSF;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getProtocolFeeBps() external view returns (uint16) {
         return s._protocolFeeBps;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getPositionFeeBps() external view returns (uint16) {
         return s._positionFeeBps;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getVaultFeeBps() external view returns (uint16) {
         return s._vaultFeeBps;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getRebalancerBonusBps() external view returns (uint16) {
         return s._rebalancerBonusBps;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getSdexBurnOnDepositRatio() external view returns (uint32) {
         return s._sdexBurnOnDepositRatio;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getSecurityDepositValue() external view returns (uint64) {
         return s._securityDepositValue;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getFeeThreshold() external view returns (uint256) {
         return s._feeThreshold;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getFeeCollector() external view returns (address) {
         return s._feeCollector;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getMiddlewareValidationDelay() external view returns (uint256) {
         return s._oracleMiddleware.getValidationDelay();
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getTargetUsdnPrice() external view returns (uint128) {
         return s._targetUsdnPrice;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getUsdnRebaseThreshold() external view returns (uint128) {
         return s._usdnRebaseThreshold;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getUsdnRebaseInterval() external view returns (uint256) {
         return s._usdnRebaseInterval;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getMinLongPosition() external view returns (uint256) {
         return s._minLongPosition;
     }
@@ -334,120 +347,120 @@ contract UsdnProtocolBaseStorage is
     /*                                    State getters                           */
     /* -------------------------------------------------------------------------- */
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getLastFunding() external view returns (int256) {
         return s._lastFunding;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getLastPrice() external view returns (uint128) {
         return s._lastPrice;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getLastUpdateTimestamp() external view returns (uint128) {
         return s._lastUpdateTimestamp;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getPendingProtocolFee() external view returns (uint256) {
         return s._pendingProtocolFee;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getPendingAction(address user) external view returns (uint256) {
         return s._pendingActions[user];
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getPendingActionAt(uint256 index) external view returns (PendingAction memory action_) {
         (action_,) = s._pendingActionsQueue.at(index);
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getBalanceVault() external view returns (uint256) {
         return s._balanceVault;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getPendingBalanceVault() external view returns (int256) {
         return s._pendingBalanceVault;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getLastRebaseCheck() external view returns (uint256) {
         return s._lastRebaseCheck;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getEMA() external view returns (int256) {
         return s._EMA;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getBalanceLong() external view returns (uint256) {
         return s._balanceLong;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getTotalExpo() external view returns (uint256) {
         return s._totalExpo;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getLiqMultiplierAccumulator() external view returns (HugeUint.Uint512 memory) {
         return s._liqMultiplierAccumulator;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getTickVersion(int24 tick) external view returns (uint256) {
         return s._tickVersion[tick];
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getTickData(int24 tick) external view returns (TickData memory) {
         bytes32 cachedTickHash = actionsLongLib.tickHash(tick, s._tickVersion[tick]);
         return s._tickData[cachedTickHash];
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getCurrentLongPosition(int24 tick, uint256 index) external view returns (Position memory) {
         uint256 version = s._tickVersion[tick];
         bytes32 cachedTickHash = actionsLongLib.tickHash(tick, version);
         return s._longPositions[cachedTickHash][index];
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getHighestPopulatedTick() external view returns (int24) {
         return s._highestPopulatedTick;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getTotalLongPositions() external view returns (uint256) {
         return s._totalLongPositions;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getDepositExpoImbalanceLimitBps() external view returns (int256 depositExpoImbalanceLimitBps_) {
         depositExpoImbalanceLimitBps_ = s._depositExpoImbalanceLimitBps;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getWithdrawalExpoImbalanceLimitBps() external view returns (int256 withdrawalExpoImbalanceLimitBps_) {
         withdrawalExpoImbalanceLimitBps_ = s._withdrawalExpoImbalanceLimitBps;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getOpenExpoImbalanceLimitBps() external view returns (int256 openExpoImbalanceLimitBps_) {
         openExpoImbalanceLimitBps_ = s._openExpoImbalanceLimitBps;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getCloseExpoImbalanceLimitBps() external view returns (int256 closeExpoImbalanceLimitBps_) {
         closeExpoImbalanceLimitBps_ = s._closeExpoImbalanceLimitBps;
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
+    /// @inheritdoc IUsdnProtocolStorage
     function getLongImbalanceTargetBps() external view returns (int256 longImbalanceTargetBps_) {
         longImbalanceTargetBps_ = s._longImbalanceTargetBps;
     }

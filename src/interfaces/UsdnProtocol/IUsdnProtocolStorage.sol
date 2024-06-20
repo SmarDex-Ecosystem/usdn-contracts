@@ -76,6 +76,25 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      */
     function NO_POSITION_TICK() external view returns (int24);
 
+    /**
+     * @notice Get the minimum amount of wstETH for the initialization deposit and long
+     * @return The minimum amount of wstETH
+     */
+    function MIN_INIT_DEPOSIT() external view returns (uint256);
+
+    /**
+     * @notice The minimum total supply of USDN that we allow
+     * @dev Upon the first deposit, this amount is sent to the dead address and cannot be later recovered
+     * @return The minimum total supply of USDN
+     */
+    function MIN_USDN_SUPPLY() external view returns (uint256);
+
+    /**
+     * @notice The address that holds the minimum supply of USDN and the first minimum long position
+     * @return The address
+     */
+    function DEAD_ADDRESS() external view returns (address);
+
     /* -------------------------------------------------------------------------- */
     /*                                 Immutables getters                         */
     /* -------------------------------------------------------------------------- */

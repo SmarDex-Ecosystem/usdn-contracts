@@ -15,7 +15,6 @@ import { WstEthOracleMiddleware } from "../src/OracleMiddleware/WstEthOracleMidd
 import { UsdnProtocol } from "../src/UsdnProtocol/UsdnProtocol.sol";
 import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../src/Usdn/Usdn.sol";
-import { IUsdnProtocol } from "./../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 contract Deploy is Script {
     /**

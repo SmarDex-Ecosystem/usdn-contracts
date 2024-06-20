@@ -131,6 +131,7 @@ library UsdnProtocolVaultLibrary {
 
     /**
      * @notice Check if the initialize parameters lead to a balanced protocol
+     * @param s The storage of the protocol
      * @dev This function reverts if the imbalance is exceeded for the deposit or open long action
      * @param positionTotalExpo The total expo of the deployer's long position
      * @param longAmount The amount (collateral) of the deployer's long position
@@ -164,6 +165,7 @@ library UsdnProtocolVaultLibrary {
     /**
      * @notice Create initial deposit
      * @dev To be called from `initialize`
+     * @param s The storage of the protocol
      * @param amount The initial deposit amount
      * @param price The current asset price
      */
@@ -190,6 +192,7 @@ library UsdnProtocolVaultLibrary {
     /**
      * @notice Create initial long position
      * @dev To be called from `initialize`
+     * @param s The storage of the protocol
      * @param amount The initial position amount
      * @param price The current asset price
      * @param tick The tick corresponding to the liquidation price (without penalty)
@@ -224,6 +227,7 @@ library UsdnProtocolVaultLibrary {
     /**
      * @notice Available balance in the vault side if the price moves to `currentPrice` (without taking funding into
      * account)
+     * @param s The storage of the protocol
      * @param currentPrice Current price
      * @return available_ The available balance in the vault side
      */
@@ -256,6 +260,7 @@ library UsdnProtocolVaultLibrary {
 
     /**
      * @notice Function to calculate the hash and version of a given tick
+     * @param s The storage of the protocol
      * @param tick The tick
      * @return hash_ The hash of the tick
      * @return version_ The version of the tick
@@ -285,6 +290,7 @@ library UsdnProtocolVaultLibrary {
     /**
      * @notice Calculate the price of the USDN token as a function of its total supply, the vault balance and the
      * underlying asset price
+     * @param s The storage of the protocol
      * @param vaultBalance The vault balance
      * @param assetPrice The price of the asset
      * @param usdnTotalSupply The total supply of the USDN token
@@ -305,6 +311,7 @@ library UsdnProtocolVaultLibrary {
 
     /**
      * @notice Calculate the amount of SDEX to burn when minting USDN tokens
+     * @param s The storage of the protocol
      * @param usdnAmount The amount of USDN to be minted
      * @param sdexBurnRatio The ratio of SDEX to burn for each minted USDN
      * @return sdexToBurn_ The amount of SDEX to burn for the given USDN amount
@@ -319,6 +326,7 @@ library UsdnProtocolVaultLibrary {
 
     /**
      * @notice Calculate the required USDN total supply to reach `targetPrice`
+     * @param s The storage of the protocol
      * @param vaultBalance The balance of the vault
      * @param assetPrice The price of the underlying asset
      * @param targetPrice The target USDN price to reach
@@ -340,6 +348,7 @@ library UsdnProtocolVaultLibrary {
     /**
      * @notice Check if a USDN rebase is required and adjust the divisor if needed
      * @dev Note: only call this function after `_applyPnlAndFunding` has been called to update the balances
+     * @param s The storage of the protocol
      * @param assetPrice The current price of the underlying asset
      * @param ignoreInterval If true, then the price check will be performed regardless of when the last check happened
      * @return rebased_ Whether a rebase was performed
@@ -379,6 +388,7 @@ library UsdnProtocolVaultLibrary {
 
     /**
      * @notice Calculates the amount of USDN shares to mint for a given amount of asset
+     * @param s The storage of the protocol
      * @param amount The amount of asset to be converted into USDN
      * @param vaultBalance The balance of the vault (not used for initialization)
      * @param usdnTotalShares The total supply of USDN (not used for initialization)

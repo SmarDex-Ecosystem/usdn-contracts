@@ -21,12 +21,6 @@ interface IUsdnProtocol is
     IUsdnProtocolLong,
     IUsdnProtocolCore
 {
-    // /**
-    //  * @notice Get the minimum amount of wstETH for the initialization deposit and long
-    //  * @return The minimum amount of wstETH
-    //  */
-    // function MIN_INIT_DEPOSIT() external pure returns (uint256);
-
     /**
      * @notice Replace the OracleMiddleware contract with a new implementation
      * @dev Cannot be the 0 address
