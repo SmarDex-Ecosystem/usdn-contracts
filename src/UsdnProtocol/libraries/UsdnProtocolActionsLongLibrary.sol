@@ -9,7 +9,7 @@ import { IUsdnProtocolActions } from "../../interfaces/UsdnProtocol/IUsdnProtoco
 import { HugeUint } from "../../libraries/HugeUint.sol";
 import { TickMath } from "../../libraries/TickMath.sol";
 import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
-import { Storage } from "../UsdnProtocolBaseStorage.sol";
+import { Storage } from "../UsdnProtocolStorage.sol";
 import { IUsdnProtocolEvents } from "./../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "./../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";

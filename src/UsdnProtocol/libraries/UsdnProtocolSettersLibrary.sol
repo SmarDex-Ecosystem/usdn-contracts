@@ -8,10 +8,10 @@ import { IUsdnProtocol } from "../../interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { ILiquidationRewardsManager } from "../../interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IBaseRebalancer } from "../../interfaces/Rebalancer/IBaseRebalancer.sol";
-import { UsdnProtocolBaseStorage } from "../UsdnProtocolBaseStorage.sol";
+import { UsdnProtocolStorage } from "../UsdnProtocolStorage.sol";
 import { IUsdnProtocolEvents } from "./../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "./../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { Storage } from "./../UsdnProtocolBaseStorage.sol";
+import { Storage } from "./../UsdnProtocolStorage.sol";
 
 library UsdnProtocolSettersLibrary {
     using SafeTransferLib for address;

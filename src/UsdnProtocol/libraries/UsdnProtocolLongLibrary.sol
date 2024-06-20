@@ -11,7 +11,7 @@ import { IUsdnProtocolLong } from "../../interfaces/UsdnProtocol/IUsdnProtocolLo
 import { TickMath } from "../../libraries/TickMath.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
 import { HugeUint } from "../../libraries/HugeUint.sol";
-import { Storage } from "../UsdnProtocolBaseStorage.sol";
+import { Storage } from "../UsdnProtocolStorage.sol";
 import { IUsdnProtocolEvents } from "./../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "./../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IBaseRebalancer } from "../../interfaces/Rebalancer/IBaseRebalancer.sol";

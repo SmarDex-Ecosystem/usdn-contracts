@@ -8,7 +8,7 @@ import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { ILiquidationRewardsManager } from "../interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
-import { UsdnProtocolBaseStorage } from "./UsdnProtocolBaseStorage.sol";
+import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { UsdnProtocolActionsEntry } from "./UsdnProtocolActionsEntry.sol";
 import { UsdnProtocolCoreEntry } from "./UsdnProtocolCoreEntry.sol";
 import { UsdnProtocolLongEntry } from "./UsdnProtocolLongEntry.sol";
@@ -40,9 +40,7 @@ contract UsdnProtocol is
         ILiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector
-    )
-        UsdnProtocolBaseStorage(usdn, sdex, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector)
-    { }
+    ) UsdnProtocolStorage(usdn, sdex, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector) { }
 
     /// @inheritdoc IUsdnProtocol
     function setOracleMiddleware(IBaseOracleMiddleware newOracleMiddleware) external onlyOwner {

@@ -19,7 +19,7 @@ import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolE
 import { UsdnProtocolActionsLongLibrary as actionsLongLib } from "./libraries/UsdnProtocolActionsLongLibrary.sol";
 import { Position } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
-contract UsdnProtocolBaseStorage is
+contract UsdnProtocolStorage is
     IUsdnProtocolErrors,
     IUsdnProtocolStorage,
     InitializableReentrancyGuard,

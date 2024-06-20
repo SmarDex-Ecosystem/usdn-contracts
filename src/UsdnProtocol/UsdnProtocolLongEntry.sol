@@ -3,11 +3,11 @@ pragma solidity ^0.8.25;
 
 import { IUsdnProtocolLong } from "../interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
-import { UsdnProtocolBaseStorage } from "./UsdnProtocolBaseStorage.sol";
+import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolLongLibrary as longLib } from "./libraries/UsdnProtocolLongLibrary.sol";
 
-abstract contract UsdnProtocolLongEntry is UsdnProtocolBaseStorage, IUsdnProtocolLong {
+abstract contract UsdnProtocolLongEntry is UsdnProtocolStorage, IUsdnProtocolLong {
     /// @inheritdoc IUsdnProtocolLong
     function minTick() public view returns (int24 tick_) {
         return longLib.minTick(s);

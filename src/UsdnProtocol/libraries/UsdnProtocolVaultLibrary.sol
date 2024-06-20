@@ -7,7 +7,7 @@ import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { IUsdnProtocolVault } from "../../interfaces/UsdnProtocol/IUsdnProtocolVault.sol";
 import { IUsdn } from "../../interfaces/Usdn/IUsdn.sol";
-import { Storage } from "./../UsdnProtocolBaseStorage.sol";
+import { Storage } from "./../UsdnProtocolStorage.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
 import { IUsdnProtocolEvents } from "./../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "./../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";

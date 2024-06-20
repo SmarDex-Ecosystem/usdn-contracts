@@ -2,11 +2,11 @@
 pragma solidity ^0.8.25;
 
 import { IUsdnProtocolCore } from "./../interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
-import { UsdnProtocolBaseStorage } from "./UsdnProtocolBaseStorage.sol";
+import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { PendingAction } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolCoreLibrary as lib } from "./libraries/UsdnProtocolCoreLibrary.sol";
 
-abstract contract UsdnProtocolCoreEntry is UsdnProtocolBaseStorage, IUsdnProtocolCore {
+abstract contract UsdnProtocolCoreEntry is UsdnProtocolStorage, IUsdnProtocolCore {
     /// @inheritdoc IUsdnProtocolCore
     function initialize(
         uint128 depositAmount,

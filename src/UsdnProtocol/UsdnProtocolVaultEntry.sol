@@ -2,10 +2,10 @@
 pragma solidity ^0.8.25;
 
 import { IUsdnProtocolVault } from "../interfaces/UsdnProtocol/IUsdnProtocolVault.sol";
-import { UsdnProtocolBaseStorage } from "./UsdnProtocolBaseStorage.sol";
+import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { UsdnProtocolVaultLibrary as lib } from "./libraries/UsdnProtocolVaultLibrary.sol";
 
-abstract contract UsdnProtocolVaultEntry is UsdnProtocolBaseStorage, IUsdnProtocolVault {
+abstract contract UsdnProtocolVaultEntry is UsdnProtocolStorage, IUsdnProtocolVault {
     /// @inheritdoc IUsdnProtocolVault
     function usdnPrice(uint128 currentPrice, uint128 timestamp) public view returns (uint256 price_) {
         return lib.usdnPrice(s, currentPrice, timestamp);

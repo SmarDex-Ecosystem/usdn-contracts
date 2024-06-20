@@ -3,7 +3,7 @@ pragma solidity ^0.8.25;
 
 import { IUsdnProtocolActions } from "./../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 import { Permit2TokenBitfield } from "../libraries/Permit2TokenBitfield.sol";
-import { UsdnProtocolBaseStorage } from "./UsdnProtocolBaseStorage.sol";
+import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { PreviousActionsData, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolActionsUtilsLibrary as actionsUtilsLib } from "./libraries/UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolActionsLongLibrary as actionsLongLib } from "./libraries/UsdnProtocolActionsLongLibrary.sol";
@@ -12,7 +12,7 @@ import {
     InitiateClosePositionParams, InitiateOpenPositionParams
 } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
-abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage, IUsdnProtocolActions {
+abstract contract UsdnProtocolActionsEntry is UsdnProtocolStorage, IUsdnProtocolActions {
     /// @inheritdoc IUsdnProtocolActions
     function initiateDeposit(
         uint128 amount,
