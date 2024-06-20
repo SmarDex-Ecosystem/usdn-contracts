@@ -156,11 +156,14 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         view
         returns (uint128 pendingAssets_, uint256 maxLeverage_, PositionId memory currentPosId_)
     {
-        PositionData memory positionData = _positionData[_positionVersion];
         return (
             _pendingAssetsAmount,
             _maxLeverage,
-            PositionId({ tick: positionData.tick, tickVersion: positionData.tickVersion, index: positionData.index })
+            PositionId({
+                tick: _positionData[_positionVersion].tick,
+                tickVersion: _positionData[_positionVersion].tickVersion,
+                index: _positionData[_positionVersion].index
+            })
         );
     }
 
