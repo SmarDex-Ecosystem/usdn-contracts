@@ -121,6 +121,9 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         _positionData[0].id = PositionId({ tick: usdnProtocol.NO_POSITION_TICK(), tickVersion: 0, index: 0 });
     }
 
+    /// @notice To allow this contract to receive ether refunded by the USDN protocol
+    receive() external payable onlyProtocol { }
+
     /// @inheritdoc IRebalancer
     function getAsset() external view returns (IERC20Metadata) {
         return _asset;
@@ -397,6 +400,24 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
             _positionData[positionVersion] = currentPositionData;
 
             emit ClosePositionInitiated(msg.sender, amount, amountToClose, remainingAssets);
+        }
+
+        // sent back any ether left in the contract
+        _refundEther();
+    }
+
+    /**
+     * @notice Refunds any ether in this contract to the caller
+     * @dev This contract should not hold any ether so any sent to it belongs to the current caller
+     */
+    function _refundEther() internal {
+        uint256 amount = address(this).balance;
+        if (amount > 0) {
+            // slither-disable-next-line arbitrary-send-eth
+            (bool success,) = msg.sender.call{ value: amount }("");
+            if (!success) {
+                revert RebalancerEtherRefundFailed();
+            }
         }
     }
 

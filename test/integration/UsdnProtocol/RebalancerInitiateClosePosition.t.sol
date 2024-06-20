@@ -16,7 +16,7 @@ import { ProtocolAction } from "../../../src/interfaces/UsdnProtocol/IUsdnProtoc
  * @custom:background A rebalancer is set and the USDN protocol is initialized with the default params
  * The rebalancer was already triggered once and has an active position
  */
-contract UsdnProtocolRebalancerInitiateClosePosition is
+contract TestRebalancerInitiateClosePosition is
     UsdnProtocolBaseIntegrationFixture,
     IRebalancerEvents,
     IRebalancerTypes
@@ -126,7 +126,7 @@ contract UsdnProtocolRebalancerInitiateClosePosition is
         vm.expectEmit();
         emit ClosePositionInitiated(address(this), amountInRebalancer, amountToClose, 0);
         (bool success) = rebalancer.initiateClosePosition{ value: protocol.getSecurityDepositValue() }(
-            amountInRebalancer, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA
+            amountInRebalancer, address(this), payable(this), "", EMPTY_PREVIOUS_DATA
         );
 
         UserDeposit memory depositData = rebalancer.getUserDepositData(address(this));
@@ -145,6 +145,30 @@ contract UsdnProtocolRebalancerInitiateClosePosition is
             uint8(protocol.getUserPendingAction(address(this)).action),
             uint8(ProtocolAction.ValidateClosePosition),
             "The user protocol action should pending"
+        );
+    }
+
+    /**
+     * @custom:scenario The user sends too much ether when closing its position
+     * @custom:when The user calls the rebalancer's {initiateClosePosition} function with too much ether
+     * @custom:then The user gets back the excess ether sent
+     */
+    function test_rebalancerInitiateClosePositionRefundsExcessEther() external {
+        vm.prank(DEPLOYER);
+        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
+
+        uint256 securityDeposit = protocol.getSecurityDepositValue();
+        uint256 userBalanceBefore = address(this).balance;
+        uint256 excessAmount = 1 ether;
+
+        // send more ether than necessary to trigger the refund
+        rebalancer.initiateClosePosition{ value: securityDeposit + excessAmount }(
+            amountInRebalancer, address(this), payable(this), "", EMPTY_PREVIOUS_DATA
+        );
+
+        assertEq(payable(rebalancer).balance, 0, "There should be no ether left in the rebalancer");
+        assertEq(
+            userBalanceBefore - securityDeposit, address(this).balance, "The overpaid amount should have been refunded"
         );
     }
 
