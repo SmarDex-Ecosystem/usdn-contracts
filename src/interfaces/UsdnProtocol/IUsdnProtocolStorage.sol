@@ -95,6 +95,12 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      */
     function DEAD_ADDRESS() external view returns (address);
 
+    /**
+     * @notice The maximum number of actionable pending action items returned by `getActionablePendingActions`
+     * @return The maximum value
+     */
+    function MAX_ACTIONABLE_PENDING_ACTIONS() external pure returns (uint256);
+
     /* -------------------------------------------------------------------------- */
     /*                                 Immutables getters                         */
     /* -------------------------------------------------------------------------- */

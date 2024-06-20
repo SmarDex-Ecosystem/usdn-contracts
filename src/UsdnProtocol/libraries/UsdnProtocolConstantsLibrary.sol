@@ -14,4 +14,5 @@ library UsdnProtocolConstantsLibrary {
     address constant DEAD_ADDRESS = address(0xdead);
     uint256 constant MIN_USDN_SUPPLY = 1000;
     uint256 constant MIN_INIT_DEPOSIT = 1 ether;
+    uint256 internal constant MAX_ACTIONABLE_PENDING_ACTIONS = 20;
 }

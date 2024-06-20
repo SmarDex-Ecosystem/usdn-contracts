@@ -50,20 +50,6 @@ contract UsdnProtocolStorage is
         int24 tickSpacing,
         address feeCollector
     ) Ownable(msg.sender) {
-        // // constants
-        // constantsLib.LEVERAGE_DECIMALS = 21;
-        // constantsLib.FUNDING_RATE_DECIMALS = 18;
-        // constantsLib.TOKENS_DECIMALS = 18;
-        // constantsLib.LIQUIDATION_MULTIPLIER_DECIMALS = 38;
-        // constantsLib.FUNDING_SF_DECIMALS = 3;
-        // constantsLib.SDEX_BURN_ON_DEPOSIT_DIVISOR = 1e8;
-        // constantsLib.BPS_DIVISOR = 10_000;
-        // constantsLib.MAX_LIQUIDATION_ITERATION = 10;
-        // constantsLib.NO_POSITION_TICK = type(int24).min;
-        // constantsLib.DEAD_ADDRESS = address(0xdead);
-        // constantsLib.MIN_USDN_SUPPLY = 1000;
-        // constantsLib.MIN_INIT_DEPOSIT = 1 ether;
-
         // parameters
         s._minLeverage = 10 ** constantsLib.LEVERAGE_DECIMALS + 10 ** 12;
         s._maxLeverage = 10 * 10 ** constantsLib.LEVERAGE_DECIMALS;
@@ -179,6 +165,11 @@ contract UsdnProtocolStorage is
     /// @inheritdoc IUsdnProtocolStorage
     function MIN_INIT_DEPOSIT() external pure returns (uint256) {
         return constantsLib.MIN_INIT_DEPOSIT;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function MAX_ACTIONABLE_PENDING_ACTIONS() external pure returns (uint256) {
+        return constantsLib.MAX_ACTIONABLE_PENDING_ACTIONS;
     }
 
     /* -------------------------------------------------------------------------- */
@@ -468,19 +459,6 @@ contract UsdnProtocolStorage is
 }
 
 struct Storage {
-    // // constants
-    // uint8 LEVERAGE_DECIMALS;
-    // uint8 FUNDING_RATE_DECIMALS;
-    // uint8 TOKENS_DECIMALS;
-    // uint8 LIQUIDATION_MULTIPLIER_DECIMALS;
-    // uint8 FUNDING_SF_DECIMALS;
-    // uint256 SDEX_BURN_ON_DEPOSIT_DIVISOR;
-    // uint256 BPS_DIVISOR;
-    // uint16 MAX_LIQUIDATION_ITERATION;
-    // int24 NO_POSITION_TICK;
-    // address DEAD_ADDRESS;
-    // uint256 MIN_USDN_SUPPLY;
-    // uint256 MIN_INIT_DEPOSIT;
     // immutable
     int24 _tickSpacing;
     IERC20Metadata _asset;

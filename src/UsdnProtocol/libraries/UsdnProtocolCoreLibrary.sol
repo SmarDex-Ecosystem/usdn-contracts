@@ -39,10 +39,6 @@ library UsdnProtocolCoreLibrary {
     using LibBitmap for LibBitmap.Bitmap;
     using HugeUint for HugeUint.Uint512;
 
-    // TO DO : not here
-    // / @inheritdoc IUsdnProtocolCore
-    uint256 internal constant MAX_ACTIONABLE_PENDING_ACTIONS = 20;
-
     /* -------------------------------------------------------------------------- */
     /*                              Public functions                              */
     /* -------------------------------------------------------------------------- */
@@ -129,9 +125,9 @@ library UsdnProtocolCoreLibrary {
             // empty queue, early return
             return (actions_, rawIndices_);
         }
-        actions_ = new PendingAction[](MAX_ACTIONABLE_PENDING_ACTIONS);
-        rawIndices_ = new uint128[](MAX_ACTIONABLE_PENDING_ACTIONS);
-        uint256 maxIter = MAX_ACTIONABLE_PENDING_ACTIONS;
+        actions_ = new PendingAction[](constantsLib.MAX_ACTIONABLE_PENDING_ACTIONS);
+        rawIndices_ = new uint128[](constantsLib.MAX_ACTIONABLE_PENDING_ACTIONS);
+        uint256 maxIter = constantsLib.MAX_ACTIONABLE_PENDING_ACTIONS;
         if (queueLength < maxIter) {
             maxIter = queueLength;
         }
@@ -587,7 +583,7 @@ library UsdnProtocolCoreLibrary {
             // empty queue, early return
             return (action_, rawIndex_);
         }
-        uint256 maxIter = MAX_ACTIONABLE_PENDING_ACTIONS;
+        uint256 maxIter = constantsLib.MAX_ACTIONABLE_PENDING_ACTIONS;
         if (queueLength < maxIter) {
             maxIter = queueLength;
         }
