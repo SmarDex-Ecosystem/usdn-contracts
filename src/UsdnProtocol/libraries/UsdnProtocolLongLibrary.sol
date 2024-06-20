@@ -341,7 +341,7 @@ library UsdnProtocolLongLibrary {
             // if the position value is less than 0, it should have been liquidated but wasn't
             // interrupt the whole rebalancer process because there are pending liquidations
             if (realPositionValue < 0) {
-                return (longBalance_, vaultBalance_);
+                return (cache.longBalance, vaultBalance_);
             }
 
             // cast is safe as realPositionValue cannot be lower than 0
@@ -350,14 +350,13 @@ library UsdnProtocolLongLibrary {
         }
 
         // if the amount in the position we wanted to open is below a fraction of the _minLongPosition setting,
-        // we are dealing with dust. So we should stop the process, gift the remaining value to the vault,
-        // make the rebalancer believe that the previous position was liquidated,
-        // and inform it that no new position was open so it can start anew
-        if (data.positionAmount <= s._minLongPosition / (s._assetDecimals / 3)) {
-            // call the rebalancer to update the public bookkeeping
+        // we are dealing with dust. So we should stop the process and gift the remaining value to the vault
+        if (data.positionAmount <= s._minLongPosition / 10_000) {
+            // make the rebalancer believe that the previous position was liquidated,
+            // and inform it that no new position was open so it can start anew
             rebalancer.updatePosition(PositionId(s.NO_POSITION_TICK, 0, 0), 0);
             vaultBalance_ += data.positionAmount;
-            return (longBalance_, vaultBalance_);
+            return (cache.longBalance, vaultBalance_);
         }
 
         // transfer the pending assets from the rebalancer to this contract
@@ -385,7 +384,7 @@ library UsdnProtocolLongLibrary {
         PositionId memory posId =
             _flashOpenPosition(s, address(rebalancer), lastPrice, tickWithoutLiqPenalty, data.positionAmount, cache);
 
-        longBalance_ += data.positionAmount;
+        longBalance_ += data.positionAmount - data.positionValue;
 
         // call the rebalancer to update the public bookkeeping
         rebalancer.updatePosition(posId, data.positionValue);
