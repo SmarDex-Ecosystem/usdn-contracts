@@ -339,19 +339,19 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_) {
+        InitiateCloseData memory data;
+        data.userDepositData = _userDeposit[msg.sender];
+
         if (amount == 0) {
             revert RebalancerInvalidAmount();
         }
 
-        InitiateCloseData memory data;
-        data.userDepositData = _userDeposit[msg.sender];
         if (amount > data.userDepositData.amount) {
             revert RebalancerInvalidAmount();
         }
 
         data.remainingAssets = data.userDepositData.amount - amount;
-        data.minRemainingAssets = _minAssetDeposit;
-        if (data.remainingAssets > 0 && data.remainingAssets < data.minRemainingAssets) {
+        if (data.remainingAssets > 0 && data.remainingAssets < _minAssetDeposit) {
             revert RebalancerInvalidAmount();
         }
 
@@ -376,20 +376,10 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
         IUsdnProtocol protocol = _usdnProtocol;
         (data.protocolPosition,) = protocol.getLongPosition(data.currentPositionData.id);
 
-        data.updatedPositionDataAmount = data.currentPositionData.amount - data.amountToCloseWithoutBonus;
-        // TODO case to be discussed
-        if (data.updatedPositionDataAmount < data.minRemainingAssets) {
-            // last user in rebalancer position
-            data.amountToClose = data.protocolPosition.amount;
-            if (data.updatedPositionDataAmount > 0) {
-                data.updatedPositionDataAmount = 0;
-            }
-        } else {
-            // include bonus
-            data.amountToClose = data.amountToCloseWithoutBonus
-                + data.amountToCloseWithoutBonus * uint256(data.protocolPosition.amount - data.currentPositionData.amount)
-                    / data.currentPositionData.amount;
-        }
+        // include bonus
+        data.amountToClose = data.amountToCloseWithoutBonus
+            + data.amountToCloseWithoutBonus * uint256(data.protocolPosition.amount - data.currentPositionData.amount)
+                / data.currentPositionData.amount;
 
         // slither-disable-next-line reentrancy-eth
         success_ = protocol.initiateClosePosition{ value: msg.value }(
@@ -409,7 +399,7 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
             }
 
             // safe cast is already made on amountToClose
-            data.currentPositionData.amount = uint128(data.updatedPositionDataAmount);
+            data.currentPositionData.amount -= uint128(data.amountToCloseWithoutBonus);
 
             if (data.currentPositionData.amount == 0) {
                 data.currentPositionData.id =

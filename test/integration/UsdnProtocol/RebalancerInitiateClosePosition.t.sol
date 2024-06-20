@@ -27,7 +27,6 @@ contract UsdnProtocolRebalancerInitiateClosePosition is
     uint88 internal amountInRebalancer;
     uint128 internal version;
     PositionData internal previousPositionData;
-    uint128 internal currentTotalBonus;
 
     function setUp() public {
         (, amountInRebalancer,,) = _setUpImbalanced();
@@ -45,14 +44,10 @@ contract UsdnProtocolRebalancerInitiateClosePosition is
 
         version = rebalancer.getPositionVersion();
         previousPositionData = rebalancer.getPositionData(version);
-
-        (Position memory protocolPosition,) = protocol.getLongPosition(previousPositionData.id);
-        currentTotalBonus = protocolPosition.amount - previousPositionData.amount;
     }
 
     function test_setUp() external {
         assertGt(rebalancer.getPositionVersion(), 0, "The rebalancer version should be updated");
-        assertGt(currentTotalBonus, 0, "The current total bonus amount should be positive");
     }
 
     /**
@@ -74,8 +69,11 @@ contract UsdnProtocolRebalancerInitiateClosePosition is
                 .entryAccMultiplier
         );
 
-        uint256 amountToClose =
-            amountToCloseWithoutBonus + amountToCloseWithoutBonus * currentTotalBonus / previousPositionData.amount;
+        (Position memory protocolPosition,) = protocol.getLongPosition(previousPositionData.id);
+
+        uint256 amountToClose = amountToCloseWithoutBonus
+            + amountToCloseWithoutBonus * uint256(protocolPosition.amount - previousPositionData.amount)
+                / previousPositionData.amount;
 
         vm.expectEmit();
         emit ClosePositionInitiated(address(this), amount, amountToClose, amountInRebalancer - amount);
@@ -131,8 +129,11 @@ contract UsdnProtocolRebalancerInitiateClosePosition is
                 .entryAccMultiplier
         );
 
-        uint256 amountToClose =
-            amountToCloseWithoutBonus + amountToCloseWithoutBonus * currentTotalBonus / previousPositionData.amount;
+        (Position memory protocolPosition,) = protocol.getLongPosition(previousPositionData.id);
+
+        uint256 amountToClose = amountToCloseWithoutBonus
+            + amountToCloseWithoutBonus * uint256(protocolPosition.amount - previousPositionData.amount)
+                / previousPositionData.amount;
 
         vm.expectEmit();
         emit ClosePositionInitiated(address(this), amountInRebalancer, amountToClose, 0);

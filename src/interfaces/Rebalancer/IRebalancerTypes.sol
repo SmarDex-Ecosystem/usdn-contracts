@@ -57,8 +57,6 @@ interface IRebalancerTypes {
      * @param currentPositionData The current rebalancer position data
      * @param amountToCloseWithoutBonus The user amount to close without bonus
      * @param amountToClose The user amount to close including bonus
-     * @param minRemainingAssets The minimum remaining rebalancer assets
-     * @param updatedPositionDataAmount The updated position data amount
      * @param protocolPosition The protocol rebalancer position
      */
     struct InitiateCloseData {
@@ -68,8 +66,6 @@ interface IRebalancerTypes {
         PositionData currentPositionData;
         uint256 amountToCloseWithoutBonus;
         uint256 amountToClose;
-        uint256 minRemainingAssets;
-        uint256 updatedPositionDataAmount;
         Position protocolPosition;
     }
 }
