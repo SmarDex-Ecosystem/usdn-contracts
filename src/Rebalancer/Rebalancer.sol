@@ -118,7 +118,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         asset.forceApprove(address(usdnProtocol), type(uint256).max);
 
         // indicate that there are no position for version 0
-        _positionData[0].id = PositionId({ tick: usdnProtocol.NO_POSITION_TICK(), tickVersion: 0, index: 0 });
+        _positionData[0].tick = usdnProtocol.NO_POSITION_TICK();
     }
 
     /// @inheritdoc IRebalancer
@@ -156,7 +156,12 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         view
         returns (uint128 pendingAssets_, uint256 maxLeverage_, PositionId memory currentPosId_)
     {
-        return (_pendingAssetsAmount, _maxLeverage, _positionData[_positionVersion].id);
+        PositionData memory positionData = _positionData[_positionVersion];
+        return (
+            _pendingAssetsAmount,
+            _maxLeverage,
+            PositionId({ tick: positionData.tick, tickVersion: positionData.tickVersion, index: positionData.index })
+        );
     }
 
     /// @inheritdoc IRebalancer
@@ -375,7 +380,16 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
         // slither-disable-next-line reentrancy-eth
         success_ = _usdnProtocol.initiateClosePosition{ value: msg.value }(
-            currentPositionData.id, amountToClose.toUint128(), to, validator, currentPriceData, previousActionsData
+            PositionId({
+                tick: currentPositionData.tick,
+                tickVersion: currentPositionData.tickVersion,
+                index: currentPositionData.index
+            }),
+            amountToClose.toUint128(),
+            to,
+            validator,
+            currentPriceData,
+            previousActionsData
         );
 
         if (success_) {
@@ -390,8 +404,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
             currentPositionData.amount -= uint128(amountToClose);
 
             if (currentPositionData.amount == 0) {
-                currentPositionData.id =
-                    PositionId({ tick: _usdnProtocol.NO_POSITION_TICK(), tickVersion: 0, index: 0 });
+                currentPositionData.tick = _usdnProtocol.NO_POSITION_TICK();
             }
 
             _positionData[positionVersion] = currentPositionData;
@@ -428,8 +441,10 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         // save the data of the new position's version
         PositionData storage newPositionData = _positionData[positionVersion];
         newPositionData.entryAccMultiplier = accMultiplier;
+        newPositionData.tickVersion = newPosId.tickVersion;
+        newPositionData.index = newPosId.index;
         newPositionData.amount = _pendingAssetsAmount + previousPosValue;
-        newPositionData.id = newPosId;
+        newPositionData.tick = newPosId.tick;
 
         // Reset the pending assets amount as they are all used in the new position
         _pendingAssetsAmount = 0;

@@ -25,9 +25,11 @@ interface IRebalancerTypes {
      * @param id The ID of the position in the USDN protocol
      */
     struct PositionData {
-        uint128 amount;
         uint256 entryAccMultiplier;
-        PositionId id;
+        uint256 tickVersion;
+        uint256 index;
+        uint128 amount;
+        int24 tick;
     }
 
     /**
