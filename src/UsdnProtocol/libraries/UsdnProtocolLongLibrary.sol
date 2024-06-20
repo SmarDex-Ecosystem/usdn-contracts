@@ -19,6 +19,8 @@ import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary
 import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
 import { UsdnProtocolActionsUtilsLibrary as actionsUtilsLib } from "./UsdnProtocolActionsUtilsLibrary.sol";
+import { ApplyPnlAndFundingAndLiquidateParams } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+
 import {
     LiquidationsEffects,
     Position,
@@ -225,22 +227,21 @@ library UsdnProtocolLongLibrary {
         ProtocolAction action,
         bytes calldata priceData
     ) public returns (uint256 liquidatedPositions_, bool isLiquidationPending_) {
-        ApplyPnlAndFundingAndLiquidateData memory data;
         // adjust balances
-        (data.isPriceRecent, data.tempLongBalance, data.tempVaultBalance) =
+        ApplyPnlAndFundingAndLiquidateParams memory params =
             coreLib._applyPnlAndFunding(s, neutralPrice.toUint128(), timestamp.toUint128());
 
         // liquidate if the price was updated or was already the most recent
-        if (data.isPriceRecent) {
+        if (params.isPriceRecent) {
             LiquidationsEffects memory liquidationEffects =
-                _liquidatePositions(s, s._lastPrice, iterations, data.tempLongBalance, data.tempVaultBalance);
+                _liquidatePositions(s, params.lastPrice, iterations, params.tempLongBalance, params.tempVaultBalance);
 
             isLiquidationPending_ = liquidationEffects.isLiquidationPending;
             if (!isLiquidationPending_ && liquidationEffects.liquidatedTicks > 0) {
                 if (s._closeExpoImbalanceLimitBps > 0) {
                     (liquidationEffects.newLongBalance, liquidationEffects.newVaultBalance) = _triggerRebalancer(
                         s,
-                        s._lastPrice,
+                        params.lastPrice,
                         liquidationEffects.newLongBalance,
                         liquidationEffects.newVaultBalance,
                         liquidationEffects.remainingCollateral
@@ -251,16 +252,16 @@ library UsdnProtocolLongLibrary {
             s._balanceLong = liquidationEffects.newLongBalance;
             s._balanceVault = liquidationEffects.newVaultBalance;
 
-            (data.rebased, data.callbackResult) = vaultLib._usdnRebase(s, s._lastPrice, ignoreInterval);
+            (bool rebased, bytes memory callbackResult) = vaultLib._usdnRebase(s, params.lastPrice, ignoreInterval);
 
             if (liquidationEffects.liquidatedTicks > 0) {
                 actionsUtilsLib._sendRewardsToLiquidator(
                     s,
                     liquidationEffects.liquidatedTicks,
                     liquidationEffects.remainingCollateral,
-                    data.rebased,
+                    rebased,
                     action,
-                    data.callbackResult,
+                    callbackResult,
                     priceData
                 );
             }

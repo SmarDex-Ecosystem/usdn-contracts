@@ -401,3 +401,17 @@ struct CachedProtocolState {
     uint256 vaultBalance;
     HugeUint.Uint512 liqMultiplierAccumulator;
 }
+
+/**
+ * @dev Structure to hold the transient data during `_applyPnlAndFundingAndLiquidate`
+ * @param isPriceRecent Whether the price is recent
+ * @param tempLongBalance The temporary long balance
+ * @param tempVaultBalance The temporary vault balance
+ * @param lastPrice The last price
+ */
+struct ApplyPnlAndFundingAndLiquidateParams {
+    bool isPriceRecent;
+    int256 tempLongBalance;
+    int256 tempVaultBalance;
+    uint128 lastPrice;
+}
