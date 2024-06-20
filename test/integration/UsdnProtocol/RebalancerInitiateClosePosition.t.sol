@@ -72,7 +72,7 @@ contract UsdnProtocolRebalancerInitiateClosePosition is
         (Position memory protocolPosition,) = protocol.getLongPosition(previousPositionData.id);
 
         uint256 amountToClose = amountToCloseWithoutBonus
-            + amountToCloseWithoutBonus * uint256(protocolPosition.amount - previousPositionData.amount)
+            + amountToCloseWithoutBonus * (protocolPosition.amount - previousPositionData.amount)
                 / previousPositionData.amount;
 
         vm.expectEmit();
@@ -132,7 +132,7 @@ contract UsdnProtocolRebalancerInitiateClosePosition is
         (Position memory protocolPosition,) = protocol.getLongPosition(previousPositionData.id);
 
         uint256 amountToClose = amountToCloseWithoutBonus
-            + amountToCloseWithoutBonus * uint256(protocolPosition.amount - previousPositionData.amount)
+            + amountToCloseWithoutBonus * (protocolPosition.amount - previousPositionData.amount)
                 / previousPositionData.amount;
 
         vm.expectEmit();

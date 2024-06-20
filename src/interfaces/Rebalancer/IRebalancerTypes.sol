@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.0;
 
-import { PositionId, Position } from "../UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PositionId } from "../UsdnProtocol/IUsdnProtocolTypes.sol";
 
 interface IRebalancerTypes {
     /**
@@ -47,25 +47,5 @@ interface IRebalancerTypes {
         uint80 validationDelay;
         uint80 validationDeadline;
         uint80 actionCooldown;
-    }
-
-    /**
-     * @dev Structure to hold the transient data during `initiateClosePosition`
-     * @param userDepositData The user deposit data
-     * @param remainingAssets The remaining rebalancer assets
-     * @param positionVersion The current rebalancer position version
-     * @param currentPositionData The current rebalancer position data
-     * @param amountToCloseWithoutBonus The user amount to close without bonus
-     * @param amountToClose The user amount to close including bonus
-     * @param protocolPosition The protocol rebalancer position
-     */
-    struct InitiateCloseData {
-        UserDeposit userDepositData;
-        uint88 remainingAssets;
-        uint256 positionVersion;
-        PositionData currentPositionData;
-        uint256 amountToCloseWithoutBonus;
-        uint256 amountToClose;
-        Position protocolPosition;
     }
 }
