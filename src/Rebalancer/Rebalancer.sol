@@ -234,26 +234,31 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
 
     /// @inheritdoc IRebalancer
     function validateDepositAssets() external {
-        uint128 positionVersion = _positionVersion;
+        /* authorized previous states:
+        - initiated deposit (pending)
+            - amount > 0
+            - entryPositionVersion == 0
+            - initiateTimestamp > 0
+
+        amount is always > 0 if initiateTimestamp > 0
+        */
         UserDeposit memory depositData = _userDeposit[msg.sender];
 
         if (depositData.initiateTimestamp == 0) {
             // user has no action that must be validated
             revert RebalancerNoPendingAction();
-        }
-        if (depositData.entryPositionVersion > 0) {
-            // user has a withdrawal that must be validated
-            revert RebalancerActionNotValidated();
+        } else if (depositData.entryPositionVersion > 0) {
+            revert RebalancerDepositUnauthorized();
         }
 
         _checkValidationTime(depositData.initiateTimestamp);
 
-        depositData.entryPositionVersion = positionVersion + 1;
+        depositData.entryPositionVersion = _positionVersion + 1;
         depositData.initiateTimestamp = 0;
         _userDeposit[msg.sender] = depositData;
         _pendingAssetsAmount += depositData.amount;
 
-        emit AssetsDeposited(msg.sender, depositData.amount, positionVersion + 1);
+        emit AssetsDeposited(msg.sender, depositData.amount, depositData.entryPositionVersion);
     }
 
     /// @inheritdoc IRebalancer

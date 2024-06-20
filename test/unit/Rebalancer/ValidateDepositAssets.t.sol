@@ -58,27 +58,13 @@ contract TestRebalancerValidateDepositAssets is RebalancerFixture {
     }
 
     /**
-     * @custom:scenario The user tries to validate a deposit that has not been initiated
-     * @custom:when The user tries to validate a deposit that has not been initiated
+     * @custom:scenario The user tries to validate when not in Rebalancer
+     * @custom:when The user tries to validate a deposit but they are not in the Rebalancer
      * @custom:then The call reverts with a {RebalancerNoPendingAction} error
      */
-    function test_RevertWhen_validateDepositNotInitiated() public {
+    function test_RevertWhen_validateDepositNotInRebalancer() public {
         vm.expectRevert(RebalancerNoPendingAction.selector);
         vm.prank(USER_1);
-        rebalancer.validateDepositAssets();
-    }
-
-    /**
-     * @custom:scenario The user tries to validate a deposit but has a pending withdrawal
-     * @custom:when The user tries to validate the deposit after initiating a withdrawal
-     * @custom:then The call reverts with a {RebalancerActionNotValidated} error
-     */
-    function test_RevertWhen_validateDepositPendingWithdrawal() public {
-        skip(rebalancer.getTimeLimits().validationDelay);
-        rebalancer.validateDepositAssets();
-        rebalancer.initiateWithdrawAssets();
-
-        vm.expectRevert(RebalancerActionNotValidated.selector);
         rebalancer.validateDepositAssets();
     }
 
@@ -101,6 +87,61 @@ contract TestRebalancerValidateDepositAssets is RebalancerFixture {
     function test_RevertWhen_validateDepositTooLate() public {
         skip(rebalancer.getTimeLimits().validationDeadline + 1);
         vm.expectRevert(RebalancerActionCooldown.selector);
+        rebalancer.validateDepositAssets();
+    }
+
+    /**
+     * @custom:scenario The user tries to validate a deposit when included in a position
+     * @custom:when The user tries to validate the deposit after being included in a position
+     * @custom:then The call reverts with a {RebalancerNoPendingAction} error
+     */
+    function test_RevertWhen_validateDepositWhenIncludedInPosition() public {
+        skip(rebalancer.getTimeLimits().validationDelay);
+        rebalancer.validateDepositAssets();
+        rebalancer.incrementPositionVersion();
+
+        vm.expectRevert(RebalancerNoPendingAction.selector);
+        rebalancer.validateDepositAssets();
+    }
+
+    /**
+     * @custom:scenario The user tries to validate a deposit but is in a position that got liquidated
+     * @custom:when The user tries to validate the deposit after being liquidated
+     * @custom:then The call reverts with a {RebalancerNoPendingAction} error
+     */
+    function test_RevertWhen_validateDepositWhenInLiquidatedPosition() public {
+        skip(rebalancer.getTimeLimits().validationDelay);
+        rebalancer.validateDepositAssets();
+        rebalancer.incrementPositionVersion();
+        rebalancer.setLastLiquidatedVersion(rebalancer.getPositionVersion());
+
+        vm.expectRevert(RebalancerNoPendingAction.selector);
+        rebalancer.validateDepositAssets();
+    }
+
+    /**
+     * @custom:scenario The user tries to validate a deposit but has a pending withdrawal
+     * @custom:when The user tries to validate the deposit after initiating a withdrawal
+     * @custom:or The user tries to validate the deposit after the validation delay
+     * @custom:or The user tries to validate the deposit after the action cooldown
+     * @custom:then The call reverts with a {RebalancerDepositUnauthorized} error
+     */
+    function test_RevertWhen_validateDepositPendingWithdrawal() public {
+        skip(rebalancer.getTimeLimits().validationDelay);
+        rebalancer.validateDepositAssets();
+        rebalancer.initiateWithdrawAssets();
+
+        vm.expectRevert(RebalancerDepositUnauthorized.selector);
+        rebalancer.validateDepositAssets();
+
+        skip(rebalancer.getTimeLimits().validationDelay);
+
+        vm.expectRevert(RebalancerDepositUnauthorized.selector);
+        rebalancer.validateDepositAssets();
+
+        skip(rebalancer.getTimeLimits().actionCooldown);
+
+        vm.expectRevert(RebalancerDepositUnauthorized.selector);
         rebalancer.validateDepositAssets();
     }
 }
