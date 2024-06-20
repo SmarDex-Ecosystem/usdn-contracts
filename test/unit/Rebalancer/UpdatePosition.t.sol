@@ -201,4 +201,43 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
             positionData.entryAccMultiplier, rebalancer.MULTIPLIER_FACTOR(), "Entry multiplier accumulator should be 1x"
         );
     }
+
+    /**
+     * @custom:scenario The position is updated with a `NO_POSITION_TICK` in the new position ID
+     * @custom:given A new position was created for the rebalancer for the first time
+     * @custom:when The usdn protocol calls {updatePosition} with `NO_POSITION_TICK` as the new position ID
+     * @custom:and The value of the previous version is 0
+     * @custom:then The data is saved in the new position version
+     * @custom:and The last liquidated version is set to the previous version
+     */
+    function test_updatePositionWithNoNewPosition() external {
+        int24 noPositionTick = usdnProtocol.NO_POSITION_TICK();
+        PositionId memory posId1 = PositionId({ tick: 200, tickVersion: 1, index: 3 });
+
+        vm.startPrank(address(usdnProtocol));
+        rebalancer.updatePosition(posId1, 0);
+
+        uint128 positionVersionBefore = rebalancer.getPositionVersion();
+
+        vm.expectEmit();
+        emit PositionVersionUpdated(positionVersionBefore + 1);
+        rebalancer.updatePosition(PositionId(noPositionTick, 0, 0), 0);
+        vm.stopPrank();
+
+        assertEq(
+            rebalancer.getLastLiquidatedVersion(),
+            positionVersionBefore,
+            "The last liquidated version should be the version that was supposed to be closed"
+        );
+
+        // check the second position's data
+        PositionData memory positionData = rebalancer.getPositionData(rebalancer.getPositionVersion());
+        assertEq(positionData.amount, 0, "No funds should be in the position");
+        assertEq(positionData.entryAccMultiplier, 0, "Entry multiplier accumulator should be 0");
+        assertEq(
+            abi.encode(positionData.id),
+            abi.encode(PositionId(noPositionTick, 0, 0)),
+            "The position ID's tick should be set to NO_POSITION_TICK and the rest to 0"
+        );
+    }
 }

@@ -59,6 +59,9 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     /// @notice The number of decimals of the asset used by the USDN protocol
     uint256 internal immutable _assetDecimals;
 
+    /// @notice The tick used to indicate that there is no position
+    int24 internal immutable _noPositionTick;
+
     /// @notice The address of the USDN protocol
     IUsdnProtocol internal immutable _usdnProtocol;
 
@@ -118,7 +121,9 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         asset.forceApprove(address(usdnProtocol), type(uint256).max);
 
         // indicate that there are no position for version 0
-        _positionData[0].id = PositionId({ tick: usdnProtocol.NO_POSITION_TICK(), tickVersion: 0, index: 0 });
+        int24 noPositionTick = usdnProtocol.NO_POSITION_TICK();
+        _noPositionTick = noPositionTick;
+        _positionData[0].id = PositionId({ tick: noPositionTick, tickVersion: 0, index: 0 });
     }
 
     /// @notice To allow this contract to receive ether refunded by the USDN protocol
@@ -448,12 +453,15 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
         // save the data of the new position's version
         PositionData storage newPositionData = _positionData[positionVersion];
-        newPositionData.entryAccMultiplier = accMultiplier;
-        newPositionData.amount = _pendingAssetsAmount + previousPosValue;
         newPositionData.id = newPosId;
 
-        // Reset the pending assets amount as they are all used in the new position
-        _pendingAssetsAmount = 0;
+        if (newPosId.tick != _noPositionTick) {
+            newPositionData.entryAccMultiplier = accMultiplier;
+            newPositionData.amount = _pendingAssetsAmount + previousPosValue;
+
+            // Reset the pending assets amount as they are all used in the new position
+            _pendingAssetsAmount = 0;
+        }
 
         emit PositionVersionUpdated(positionVersion);
     }
