@@ -277,7 +277,6 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * TODO add tests
      * @notice Trigger the rebalancer if the imbalance on the long side is too high
      * It will close the rebalancer position (if there is one) and open a new one with
      * the pending assets, the value of the previous position and the liquidation bonus (if available)
@@ -334,7 +333,6 @@ library UsdnProtocolLongLibrary {
         // the default value of `positionAmount` is the amount of pendingAssets in the rebalancer
         (data.positionAmount, data.rebalancerMaxLeverage, data.rebalancerPosId) = rebalancer.getCurrentStateData();
 
-        data.positionValue;
         // close the rebalancer position and get its value to open the next one
         if (data.rebalancerPosId.tick != s.NO_POSITION_TICK) {
             // cached values will be updated during this call
@@ -351,8 +349,14 @@ library UsdnProtocolLongLibrary {
             data.positionAmount += data.positionValue;
         }
 
-        // If there are no pending assets and the previous position was either liquidated or doesn't exist, return
-        if (data.positionAmount + data.positionValue == 0) {
+        // if the amount in the position we wanted to open is below a fraction of the _minLongPosition setting,
+        // we are dealing with dust. So we should stop the process, gift the remaining value to the vault,
+        // make the rebalancer believe that the previous position was liquidated,
+        // and inform it that no new position was open so it can start anew
+        if (data.positionAmount <= s._minLongPosition / (s._assetDecimals / 3)) {
+            // call the rebalancer to update the public bookkeeping
+            rebalancer.updatePosition(PositionId(s.NO_POSITION_TICK, 0, 0), 0);
+            vaultBalance_ += data.positionAmount;
             return (longBalance_, vaultBalance_);
         }
 
