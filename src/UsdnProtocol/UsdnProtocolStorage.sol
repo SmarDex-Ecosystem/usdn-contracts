@@ -474,11 +474,11 @@ struct Storage {
     uint256 _minLeverage;
     uint256 _maxLeverage;
     uint256 _validationDeadline;
-    uint256 _safetyMarginBps; // 2%
+    uint256 _safetyMarginBps;
     uint16 _liquidationIteration;
     uint16 _protocolFeeBps;
-    uint16 _rebalancerBonusBps; // 80%
-    uint8 _liquidationPenalty; // 200 ticks -> ~2.02%
+    uint16 _rebalancerBonusBps;
+    uint8 _liquidationPenalty;
     uint128 _EMAPeriod;
     uint256 _fundingSF;
     uint256 _feeThreshold;
@@ -487,9 +487,9 @@ struct Storage {
     int256 _depositExpoImbalanceLimitBps;
     int256 _closeExpoImbalanceLimitBps;
     int256 _longImbalanceTargetBps;
-    uint16 _positionFeeBps; // 0.04%
-    uint16 _vaultFeeBps; // 0.04%
-    uint32 _sdexBurnOnDepositRatio; // 1%
+    uint16 _positionFeeBps;
+    uint16 _vaultFeeBps;
+    uint32 _sdexBurnOnDepositRatio;
     address _feeCollector;
     uint64 _securityDepositValue;
     uint128 _targetUsdnPrice;
