@@ -404,9 +404,11 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
             if (data.currentPositionData.amount == 0) {
                 data.currentPositionData.id =
                     PositionId({ tick: protocol.NO_POSITION_TICK(), tickVersion: 0, index: 0 });
+                _positionData[data.positionVersion].amount = data.currentPositionData.amount;
+                _positionData[data.positionVersion].id = data.currentPositionData.id;
+            } else {
+                _positionData[data.positionVersion].amount = data.currentPositionData.amount;
             }
-
-            _positionData[data.positionVersion] = data.currentPositionData;
 
             emit ClosePositionInitiated(msg.sender, amount, data.amountToClose, data.remainingAssets);
         }
