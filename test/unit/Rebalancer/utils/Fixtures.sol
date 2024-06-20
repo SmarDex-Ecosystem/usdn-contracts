@@ -16,6 +16,7 @@ import { PreviousActionsData } from "../../../../src/interfaces/UsdnProtocol/IUs
 import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { UsdnProtocol } from "../../../../src/UsdnProtocol/UsdnProtocol.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
+import { IUsdnProtocol } from "./../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 /**
  * @title RebalancerFixture
