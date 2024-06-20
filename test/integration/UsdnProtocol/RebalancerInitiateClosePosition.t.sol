@@ -47,7 +47,7 @@ contract TestRebalancerInitiateClosePosition is
 
     function test_setUp() external {
         assertGt(rebalancer.getPositionVersion(), 0, "The rebalancer version should be updated");
-        assertGt(posAmount - previousPositionData.amount, 0, "The rebalancer version should be updated");
+        assertGt(posAmount - previousPositionData.amount, 0, "The protocol bonus should be positive");
     }
 
     /**
