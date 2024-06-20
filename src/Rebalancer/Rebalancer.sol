@@ -267,7 +267,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
             // user has a withdrawal that must be validated
             revert RebalancerActionNotValidated();
         }
-        if (uint40(block.timestamp) < depositData.initiateTimestamp + _timeLimits.actionCooldown) {
+        if (block.timestamp < depositData.initiateTimestamp + _timeLimits.actionCooldown) {
             // user must wait until the cooldown has elapsed, then call this function to withdraw the funds
             revert RebalancerActionCooldown();
         }
