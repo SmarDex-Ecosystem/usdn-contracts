@@ -32,11 +32,11 @@ interface IRebalancerErrors {
     /// @dev Indicates that the caller is not authorized to perform the action
     error RebalancerUnauthorized();
 
+    /// @dev Indicates that the user can't initiate or validate a deposit at the moment
+    error RebalancerDepositUnauthorized();
+
     /// @dev Indicates that the user still needs to validate their deposit or withdrawal
     error RebalancerActionNotValidated();
-
-    /// @dev Indicates that the user already has a position that is pending inclusion into the protocol
-    error RebalancerUserAlreadyPending();
 
     /// @dev Indicates that the user has no deposit or withdrawal that is pending validation
     error RebalancerNoPendingAction();
