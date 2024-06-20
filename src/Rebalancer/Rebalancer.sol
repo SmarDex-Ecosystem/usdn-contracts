@@ -239,6 +239,7 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
             - amount > 0
             - entryPositionVersion == 0
             - initiateTimestamp > 0
+            - timestamp is between initiateTimestamp + delay and initiateTimestamp + deadline
 
         amount is always > 0 if initiateTimestamp > 0
         */
@@ -263,16 +264,21 @@ contract Rebalancer is Ownable2Step, ERC165, IOwnershipCallback, IRebalancer {
 
     /// @inheritdoc IRebalancer
     function resetDepositAssets() external {
+        /* authorized previous states:
+        - deposit cooldown elapsed
+            - entryPositionVersion == 0
+            - initiateTimestamp > 0
+            - cooldown elapsed
+        */
         UserDeposit memory depositData = _userDeposit[msg.sender];
+
         if (depositData.initiateTimestamp == 0) {
-            // user has no action that must be validated
+            // user has not initiated a deposit
             revert RebalancerNoPendingAction();
-        }
-        if (depositData.entryPositionVersion > 0) {
+        } else if (depositData.entryPositionVersion > 0) {
             // user has a withdrawal that must be validated
             revert RebalancerActionNotValidated();
-        }
-        if (uint40(block.timestamp) < depositData.initiateTimestamp + _timeLimits.actionCooldown) {
+        } else if (uint40(block.timestamp) < depositData.initiateTimestamp + _timeLimits.actionCooldown) {
             // user must wait until the cooldown has elapsed, then call this function to withdraw the funds
             revert RebalancerActionCooldown();
         }
