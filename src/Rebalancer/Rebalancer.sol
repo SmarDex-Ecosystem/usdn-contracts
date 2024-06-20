@@ -441,15 +441,14 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         ++positionVersion;
         _positionVersion = positionVersion;
 
-        // create the data of the new position's version
-        PositionData memory newPositionData = PositionData({
+        // store the data of the new position's version
+        _positionData[positionVersion] = PositionData({
             entryAccMultiplier: accMultiplier,
             tickVersion: newPosId.tickVersion,
             index: newPosId.index,
             amount: _pendingAssetsAmount + previousPosValue,
             tick: newPosId.tick
         });
-        _positionData[positionVersion] = newPositionData;
 
         // Reset the pending assets amount as they are all used in the new position
         _pendingAssetsAmount = 0;
