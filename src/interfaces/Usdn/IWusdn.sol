@@ -2,6 +2,7 @@
 pragma solidity >=0.8.0;
 
 import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
+import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import { IWusdnEvents } from "./IWusdnEvents.sol";
 import { IWusdnErrors } from "./IWusdnErrors.sol";
@@ -11,7 +12,7 @@ import { IUsdn } from "./IUsdn.sol";
  * @title Wusdn Interface
  * @notice Interface for the Wrapped Ultimate Synthetic Delta Neutral (WUSDN) token
  */
-interface IWusdn is IERC20Permit, IWusdnEvents, IWusdnErrors {
+interface IWusdn is IERC20Metadata, IERC20Permit, IWusdnEvents, IWusdnErrors {
     /**
      * @notice Returns the USDN token address
      * @return The address of the USDN token
@@ -27,6 +28,8 @@ interface IWusdn is IERC20Permit, IWusdnEvents, IWusdnErrors {
 
     /**
      * @notice Wraps USDN into WUSDN
+     * @dev This function can use less than `usdnAmount` to account for rounding errors
+     * For a more precise amount, use {wrapShares}
      * @param usdnAmount The amount of USDN to wrap
      * @return wrappedAmount_ The amount of WUSDN received
      */
@@ -34,11 +37,21 @@ interface IWusdn is IERC20Permit, IWusdnEvents, IWusdnErrors {
 
     /**
      * @notice Wraps USDN into WUSDN to a specified address
+     * @dev This function can use less than `usdnAmount` to account for rounding errors
+     * For a more precise amount, use {wrapShares}
      * @param usdnAmount The amount of USDN to wrap
      * @param to The address to receive the WUSDN
      * @return wrappedAmount_ The amount of WUSDN received
      */
     function wrap(uint256 usdnAmount, address to) external returns (uint256 wrappedAmount_);
+
+    /**
+     * @notice Wraps USDN shares into WUSDN to a specified address
+     * @param usdnShares The amount of USDN shares to wrap
+     * @param to The address to receive the WUSDN
+     * @return wrappedAmount_ The amount of WUSDN received
+     */
+    function wrapShares(uint256 usdnShares, address to) external returns (uint256 wrappedAmount_);
 
     /**
      * @notice Unwraps WUSDN into USDN
@@ -57,20 +70,39 @@ interface IWusdn is IERC20Permit, IWusdnEvents, IWusdnErrors {
 
     /**
      * @notice Previews the amount of WUSDN that would be received for a given amount of USDN
-     * @dev This function can return a slightly different value (1wei) from the actual amount
-     * received due to rounding errors
-     * Do not rely on this function to calculate the exact amount of WUSDN that would be received
+     * @dev This function can return a slightly different value from the actual amount
+     * received due to rounding
+     * Do not rely on this function to calculate the exact amount of WUSDN that would be received, use
+     * {previewWrapShares} instead
      * @param usdnAmount The amount of USDN to preview
      * @return wrappedAmount_ The amount of WUSDN that would be received
      */
     function previewWrap(uint256 usdnAmount) external view returns (uint256 wrappedAmount_);
 
     /**
+     * @notice Previews the amount of WUSDN that would be received for a given amount of USDN shares
+     * @param usdnShares The amount of USDN shares to wrap
+     * @return wrappedAmount_ The amount of WUSDN that would be received
+     */
+    function previewWrapShares(uint256 usdnShares) external view returns (uint256 wrappedAmount_);
+
+    /**
      * @notice Previews the amount of USDN that would be received for a given amount of WUSDN
+     * @dev This function can return a slightly different value (1wei) from the actual amount
+     * received due to rounding
+     * Do not rely on this function to calculate the exact amount of USDN that would be received, use
+     * {previewUnwrapShares} instead
      * @param wusdnAmount The amount of WUSDN to preview
      * @return usdnAmount_ The amount of USDN that would be received
      */
     function previewUnwrap(uint256 wusdnAmount) external view returns (uint256 usdnAmount_);
+
+    /**
+     * @notice Previews the amount of USDN shares that would be received for a given amount of WUSDN
+     * @param wusdnAmount The amount of WUSDN to unwrap
+     * @return usdnSharesAmount_ The amount of USDN shares that would be received
+     */
+    function previewUnwrapShares(uint256 wusdnAmount) external view returns (uint256 usdnSharesAmount_);
 
     /**
      * @notice Returns the total amount of USDN held by the contract
