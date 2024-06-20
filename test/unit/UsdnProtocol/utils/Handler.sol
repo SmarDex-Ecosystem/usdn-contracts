@@ -35,6 +35,8 @@ import { UsdnProtocolActionsLongLibrary as actionsLib } from
     "../../../../src/UsdnProtocol/UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from
     "../../../../src/UsdnProtocol/UsdnProtocolActionsVaultLibrary.sol";
+import { UsdnProtocolActionsLongLibrary as actionsLongLib } from
+    "../../../../src/UsdnProtocol/UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsUtilsLibrary as actionsUtilsLib } from
     "../../../../src/UsdnProtocol/UsdnProtocolActionsUtilsLibrary.sol";
 
@@ -102,7 +104,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         if (longTradingExpo < 0) {
             longTradingExpo = 0;
         }
-        bytes32 tickHash = vaultLib.tickHash(tick, s._tickVersion[tick]);
+        bytes32 tickHash = actionsLongLib.tickHash(tick, s._tickVersion[tick]);
         return longLib._tickValue(
             s, tick, currentPrice, uint256(longTradingExpo), s._liqMultiplierAccumulator, s._tickData[tickHash]
         );

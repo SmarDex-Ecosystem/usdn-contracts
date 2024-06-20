@@ -263,4 +263,12 @@ interface IUsdnProtocolActions {
      * @param newOwner The new position owner
      */
     function transferPositionOwnership(PositionId calldata posId, address newOwner) external;
+
+    /**
+     * @notice Get the hash generated from the tick and a version
+     * @param tick The tick number
+     * @param version The tick version
+     * @return The hash of the tick and version
+     */
+    function tickHash(int24 tick, uint256 version) external pure returns (bytes32);
 }

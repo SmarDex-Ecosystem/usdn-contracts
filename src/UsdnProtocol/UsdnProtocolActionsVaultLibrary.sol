@@ -44,7 +44,7 @@ library UsdnProtocolActionsVaultLibrary {
     /*                              Public functions                              */
     /* -------------------------------------------------------------------------- */
 
-    /// @inheritdoc IUsdnProtocolActions
+    /// @notice See {IUsdnProtocolActions}
     function initiateDeposit(
         Storage storage s,
         uint128 amount,
@@ -75,7 +75,7 @@ library UsdnProtocolActionsVaultLibrary {
         _checkPendingFee(s);
     }
 
-    /// @inheritdoc IUsdnProtocolActions
+    /// @notice See {IUsdnProtocolActions}
     function validateDeposit(
         Storage storage s,
         address payable validator,
@@ -101,7 +101,7 @@ library UsdnProtocolActionsVaultLibrary {
         _checkPendingFee(s);
     }
 
-    /// @inheritdoc IUsdnProtocolActions
+    /// @notice See {IUsdnProtocolActions}
     function initiateWithdrawal(
         Storage storage s,
         uint152 usdnShares,
@@ -131,7 +131,7 @@ library UsdnProtocolActionsVaultLibrary {
         _checkPendingFee(s);
     }
 
-    /// @inheritdoc IUsdnProtocolActions
+    /// @notice See {IUsdnProtocolActions}
     function validateWithdrawal(
         Storage storage s,
         address payable validator,

@@ -6,7 +6,7 @@ import { Permit2TokenBitfield } from "../libraries/Permit2TokenBitfield.sol";
 import { UsdnProtocolBaseStorage } from "./UsdnProtocolBaseStorage.sol";
 import { PreviousActionsData, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolActionsUtilsLibrary as actionsUtilsLib } from "./UsdnProtocolActionsUtilsLibrary.sol";
-import { UsdnProtocolActionsLongLibrary as actionsLonglib } from "./UsdnProtocolActionsLongLibrary.sol";
+import { UsdnProtocolActionsLongLibrary as actionsLongLib } from "./UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
 import {
     InitiateClosePositionParams, InitiateOpenPositionParams
@@ -76,7 +76,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage, IUsdnProt
             permit2TokenBitfield: permit2TokenBitfield
         });
 
-        return actionsLonglib.initiateOpenPosition(s, params, currentPriceData, previousActionsData);
+        return actionsLongLib.initiateOpenPosition(s, params, currentPriceData, previousActionsData);
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -85,7 +85,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage, IUsdnProt
         bytes calldata openPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (bool success_) {
-        return actionsLonglib.validateOpenPosition(s, validator, openPriceData, previousActionsData);
+        return actionsLongLib.validateOpenPosition(s, validator, openPriceData, previousActionsData);
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -100,7 +100,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage, IUsdnProt
         InitiateClosePositionParams memory params =
             InitiateClosePositionParams({ posId: posId, amountToClose: amountToClose, to: to, validator: validator });
 
-        return actionsLonglib.initiateClosePosition(s, params, currentPriceData, previousActionsData);
+        return actionsLongLib.initiateClosePosition(s, params, currentPriceData, previousActionsData);
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -109,7 +109,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage, IUsdnProt
         bytes calldata closePriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (bool success_) {
-        return actionsLonglib.validateClosePosition(s, validator, closePriceData, previousActionsData);
+        return actionsLongLib.validateClosePosition(s, validator, closePriceData, previousActionsData);
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -138,5 +138,10 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage, IUsdnProt
         initializedAndNonReentrant
     {
         return actionsUtilsLib.transferPositionOwnership(s, posId, newOwner);
+    }
+
+    /// @inheritdoc IUsdnProtocolActions
+    function tickHash(int24 tick, uint256 version) public pure returns (bytes32) {
+        return actionsLongLib.tickHash(tick, version);
     }
 }

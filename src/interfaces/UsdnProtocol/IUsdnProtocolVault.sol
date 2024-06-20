@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { IUsdnProtocolCore } from "./IUsdnProtocolCore.sol";
-
 /**
  * @title IUsdnProtocolVault
  * @notice Interface for the vault layer of the USDN protocol
  */
-interface IUsdnProtocolVault is IUsdnProtocolCore {
+interface IUsdnProtocolVault {
     /**
      * @notice Get the predicted value of the USDN token price for the given asset price and timestamp
      * @dev The effect of the funding rates and any profit or loss of the long positions since the last contract state
@@ -62,4 +60,23 @@ interface IUsdnProtocolVault is IUsdnProtocolCore {
      * @return The vault balance
      */
     function vaultAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256);
+
+    /**
+     * @notice Remove a stuck pending action and perform the minimal amount of cleanup necessary
+     * @dev This function can only be called by the owner of the protocol, it serves as an escape hatch if a
+     * pending action ever gets stuck due to something internal reverting unexpectedly
+     * @param validator The address of the validator
+     * @param to Where the retrieved funds should be sent (security deposit, assets, usdn)
+     */
+    function removeBlockedPendingAction(address validator, address payable to) external;
+
+    /**
+     * @notice Remove a stuck pending action with no cleanup
+     * @dev This function can only be called by the owner of the protocol, it serves as an escape hatch if a
+     * pending action ever gets stuck due to something internal reverting unexpectedly
+     * Always try to use `removeBlockedPendingAction` first, and only call this function if the other one fails
+     * @param validator The address of the validator
+     * @param to Where the retrieved funds should be sent (security deposit, assets, usdn)
+     */
+    function removeBlockedPendingActionNoCleanup(address validator, address payable to) external;
 }

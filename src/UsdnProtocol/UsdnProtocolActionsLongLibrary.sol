@@ -41,7 +41,12 @@ library UsdnProtocolActionsLongLibrary {
     /*                              Public functions                              */
     /* -------------------------------------------------------------------------- */
 
-    /// @inheritdoc IUsdnProtocolActions
+    /// @notice See {IUsdnProtocolActions}
+    function tickHash(int24 tick, uint256 version) public pure returns (bytes32) {
+        return keccak256(abi.encodePacked(tick, version));
+    }
+
+    /// @notice See {IUsdnProtocolActions}
     function initiateOpenPosition(
         Storage storage s,
         InitiateOpenPositionParams memory params,
@@ -67,7 +72,7 @@ library UsdnProtocolActionsLongLibrary {
         actionsVaultLib._checkPendingFee(s);
     }
 
-    /// @inheritdoc IUsdnProtocolActions
+    /// @notice See {IUsdnProtocolActions}
     function validateOpenPosition(
         Storage storage s,
         address payable validator,
@@ -94,7 +99,7 @@ library UsdnProtocolActionsLongLibrary {
         actionsVaultLib._checkPendingFee(s);
     }
 
-    /// @inheritdoc IUsdnProtocolActions
+    /// @notice See {IUsdnProtocolActions}
     function initiateClosePosition(
         Storage storage s,
         InitiateClosePositionParams memory params,
@@ -131,7 +136,7 @@ library UsdnProtocolActionsLongLibrary {
         actionsVaultLib._checkPendingFee(s);
     }
 
-    /// @inheritdoc IUsdnProtocolActions
+    /// @notice See {IUsdnProtocolActions}
     function validateClosePosition(
         Storage storage s,
         address payable validator,

@@ -13,6 +13,7 @@ import { IUsdnProtocolEvents } from "./../interfaces/UsdnProtocol/IUsdnProtocolE
 import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { InitializableReentrancyGuard } from "../utils/InitializableReentrancyGuard.sol";
 import { UsdnProtocolActionsUtilsLibrary as actionsUtilsLib } from "./UsdnProtocolActionsUtilsLibrary.sol";
+import { UsdnProtocolActionsLongLibrary as actionsLongLib } from "./UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
 import { PositionId, Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
@@ -26,7 +27,7 @@ library UsdnProtocolVaultLibrary {
     /*                              Public functions                              */
     /* -------------------------------------------------------------------------- */
 
-    // / @inheritdoc IUsdnProtocolVault
+    /// @notice See {IUsdnProtocolVault}
     function usdnPrice(Storage storage s, uint128 currentPrice, uint128 timestamp)
         public
         view
@@ -41,12 +42,12 @@ library UsdnProtocolVaultLibrary {
         );
     }
 
-    // / @inheritdoc IUsdnProtocolVault
+    /// @notice See {IUsdnProtocolVault}
     function usdnPrice(Storage storage s, uint128 currentPrice) public view returns (uint256 price_) {
         price_ = usdnPrice(s, currentPrice, uint128(block.timestamp));
     }
 
-    // / @inheritdoc IUsdnProtocolVault
+    /// @notice See {IUsdnProtocolVault}
     function previewDeposit(Storage storage s, uint256 amount, uint128 price, uint128 timestamp)
         public
         view
@@ -64,7 +65,7 @@ library UsdnProtocolVaultLibrary {
         sdexToBurn_ = _calcSdexToBurn(s, s._usdn.convertToTokens(usdnSharesExpected_), s._sdexBurnOnDepositRatio);
     }
 
-    // / @inheritdoc IUsdnProtocolVault
+    /// @notice See {IUsdnProtocolVault}
     function previewWithdraw(Storage storage s, uint256 usdnShares, uint256 price, uint128 timestamp)
         public
         view
@@ -79,12 +80,7 @@ library UsdnProtocolVaultLibrary {
         assetExpected_ = _calcBurnUsdn(usdnShares, uint256(available), s._usdn.totalShares());
     }
 
-    // / @inheritdoc IUsdnProtocolBaseStorage
-    function tickHash(int24 tick, uint256 version) public pure returns (bytes32) {
-        return keccak256(abi.encodePacked(tick, version));
-    }
-
-    // / @inheritdoc IUsdnProtocolCore
+    /// @notice See {IUsdnProtocolVault}
     function vaultAssetAvailableWithFunding(Storage storage s, uint128 currentPrice, uint128 timestamp)
         public
         view
@@ -105,7 +101,7 @@ library UsdnProtocolVaultLibrary {
         }
     }
 
-    // / @inheritdoc IUsdnProtocol
+    /// @notice See {IUsdnProtocolVault}
     function removeBlockedPendingAction(Storage storage s, address validator, address payable to) public {
         uint256 pendingActionIndex = s._pendingActions[validator];
         if (pendingActionIndex == 0) {
@@ -117,7 +113,7 @@ library UsdnProtocolVaultLibrary {
         coreLib._removeBlockedPendingAction(s, rawIndex, to, true);
     }
 
-    // / @inheritdoc IUsdnProtocol
+    /// @notice See {IUsdnProtocolVault}
     function removeBlockedPendingActionNoCleanup(Storage storage s, address validator, address payable to) public {
         uint256 pendingActionIndex = s._pendingActions[validator];
         if (pendingActionIndex == 0) {
@@ -278,7 +274,7 @@ library UsdnProtocolVaultLibrary {
      */
     function _tickHash(Storage storage s, int24 tick) public view returns (bytes32 hash_, uint256 version_) {
         version_ = s._tickVersion[tick];
-        hash_ = tickHash(tick, version_);
+        hash_ = actionsLongLib.tickHash(tick, version_);
     }
 
     /**

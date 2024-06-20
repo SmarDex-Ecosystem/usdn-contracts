@@ -25,56 +25,56 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * @notice Get the number of decimals of a position's leverage
      * @return The leverage's number of decimals
      */
-    function LEVERAGE_DECIMALS() external pure returns (uint8);
+    function LEVERAGE_DECIMALS() external view returns (uint8);
 
     /**
      * @notice Get the number of decimals of the funding rate
      * @return The funding rate's number of decimals
      */
-    function FUNDING_RATE_DECIMALS() external pure returns (uint8);
+    function FUNDING_RATE_DECIMALS() external view returns (uint8);
 
     /**
      * @notice Get the number of decimals of tokens used in the protocol (except the asset)
      * @return The tokens' number of decimals
      */
-    function TOKENS_DECIMALS() external pure returns (uint8);
+    function TOKENS_DECIMALS() external view returns (uint8);
 
     /**
      * @notice Get the number of decimals used for the fixed representation of the liquidation multiplier
      * @return The liquidation multiplier's number of decimals
      */
-    function LIQUIDATION_MULTIPLIER_DECIMALS() external pure returns (uint8);
+    function LIQUIDATION_MULTIPLIER_DECIMALS() external view returns (uint8);
 
     /**
      * @notice Get the number of decimals in the scaling factor of the funding rate
      * @return The scaling factor's number of decimals
      */
-    function FUNDING_SF_DECIMALS() external pure returns (uint8);
+    function FUNDING_SF_DECIMALS() external view returns (uint8);
 
     /**
      * @notice Get the divisor for the ratio of USDN to SDEX to burn on deposit
      * @return The USDN to SDEX burn ratio divisor
      */
-    function SDEX_BURN_ON_DEPOSIT_DIVISOR() external pure returns (uint256);
+    function SDEX_BURN_ON_DEPOSIT_DIVISOR() external view returns (uint256);
 
     /**
      * @notice Get the divisor for basis point values
      * @dev Example: 200 -> 2%
      * @return The basis points divisor
      */
-    function BPS_DIVISOR() external pure returns (uint256);
+    function BPS_DIVISOR() external view returns (uint256);
 
     /**
      * @notice Get the maximum number of tick liquidations that can be done per call
      * @return The maximum number of iterations
      */
-    function MAX_LIQUIDATION_ITERATION() external pure returns (uint16);
+    function MAX_LIQUIDATION_ITERATION() external view returns (uint16);
 
     /**
      * @notice Get the sentinel value indicating that a `PositionId` represents no position
      * @return The tick value for a `PositionId` that represents no position
      */
-    function NO_POSITION_TICK() external pure returns (int24);
+    function NO_POSITION_TICK() external view returns (int24);
 
     /* -------------------------------------------------------------------------- */
     /*                                 Immutables getters                         */
@@ -430,12 +430,4 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * @return The number of long positions
      */
     function getTotalLongPositions() external view returns (uint256);
-
-    /**
-     * @notice Get the hash generated from the tick and a version
-     * @param tick The tick number
-     * @param version The tick version
-     * @return The hash of the tick and version
-     */
-    function tickHash(int24 tick, uint256 version) external pure returns (bytes32);
 }

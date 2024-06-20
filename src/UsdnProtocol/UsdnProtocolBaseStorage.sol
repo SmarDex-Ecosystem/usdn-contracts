@@ -6,6 +6,7 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
+import { IUsdnProtocolStorage } from "../interfaces/UsdnProtocol/IUsdnProtocolStorage.sol";
 import { InitializableReentrancyGuard } from "../utils/InitializableReentrancyGuard.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { IBaseLiquidationRewardsManager } from "../interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
@@ -16,9 +17,15 @@ import { PendingAction, TickData } from "../interfaces/UsdnProtocol/IUsdnProtoco
 import { DoubleEndedQueue } from "../libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
 import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
+import { UsdnProtocolActionsUtilsLibrary as actionsUtilsLib } from "./UsdnProtocolActionsUtilsLibrary.sol";
+import { UsdnProtocolActionsLongLibrary as actionsLongLib } from "./UsdnProtocolActionsLongLibrary.sol";
 
-contract UsdnProtocolBaseStorage is IUsdnProtocolErrors, InitializableReentrancyGuard, Ownable2Step {
+contract UsdnProtocolBaseStorage is
+    IUsdnProtocolErrors,
+    InitializableReentrancyGuard,
+    Ownable2Step,
+    IUsdnProtocolStorage
+{
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
     Storage internal s;
@@ -400,14 +407,14 @@ contract UsdnProtocolBaseStorage is IUsdnProtocolErrors, InitializableReentrancy
 
     // / @inheritdoc IUsdnProtocolBaseStorage
     function getTickData(int24 tick) external view returns (TickData memory) {
-        bytes32 cachedTickHash = vaultLib.tickHash(tick, s._tickVersion[tick]);
+        bytes32 cachedTickHash = actionsLongLib.tickHash(tick, s._tickVersion[tick]);
         return s._tickData[cachedTickHash];
     }
 
     // / @inheritdoc IUsdnProtocolBaseStorage
     function getCurrentLongPosition(int24 tick, uint256 index) external view returns (Position memory) {
         uint256 version = s._tickVersion[tick];
-        bytes32 cachedTickHash = vaultLib.tickHash(tick, version);
+        bytes32 cachedTickHash = actionsLongLib.tickHash(tick, version);
         return s._longPositions[cachedTickHash][index];
     }
 

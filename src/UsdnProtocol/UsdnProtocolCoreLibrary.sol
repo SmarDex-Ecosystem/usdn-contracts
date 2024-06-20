@@ -46,7 +46,7 @@ library UsdnProtocolCoreLibrary {
     /*                              Public functions                              */
     /* -------------------------------------------------------------------------- */
 
-    /// @inheritdoc IUsdnProtocolCore
+    /// @notice See {IUsdnProtocolCore}
     function initialize(
         Storage storage s,
         uint128 depositAmount,
@@ -88,7 +88,7 @@ library UsdnProtocolCoreLibrary {
 
     /* -------------------------- public view functions ------------------------- */
 
-    /// @inheritdoc IUsdnProtocolCore
+    /// @notice See {IUsdnProtocolCore}
     function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
         public
         pure
@@ -103,12 +103,12 @@ library UsdnProtocolCoreLibrary {
 
     /* --------------------------  public functions --------------------------- */
 
-    /// @inheritdoc IUsdnProtocolCore
+    /// @notice See {IUsdnProtocolCore}
     function funding(Storage storage s, uint128 timestamp) public view returns (int256 fund_, int256 oldLongExpo_) {
         (fund_, oldLongExpo_) = _funding(s, timestamp, s._EMA);
     }
 
-    /// @inheritdoc IUsdnProtocolCore
+    /// @notice See {IUsdnProtocolCore}
     function vaultTradingExpoWithFunding(Storage storage s, uint128 currentPrice, uint128 timestamp)
         public
         view
@@ -117,7 +117,7 @@ library UsdnProtocolCoreLibrary {
         expo_ = vaultLib.vaultAssetAvailableWithFunding(s, currentPrice, timestamp);
     }
 
-    /// @inheritdoc IUsdnProtocolCore
+    /// @notice See {IUsdnProtocolCore}
     function getActionablePendingActions(Storage storage s, address currentUser)
         public
         view
@@ -173,7 +173,7 @@ library UsdnProtocolCoreLibrary {
         }
     }
 
-    /// @inheritdoc IUsdnProtocolCore
+    /// @notice See {IUsdnProtocolCore}
     function getUserPendingAction(Storage storage s, address user) public view returns (PendingAction memory action_) {
         (action_,) = _getPendingAction(s, user);
     }

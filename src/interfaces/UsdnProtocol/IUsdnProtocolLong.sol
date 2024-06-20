@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { IUsdnProtocolVault } from "./IUsdnProtocolVault.sol";
 import { Position, PositionId } from "./IUsdnProtocolTypes.sol";
 import { HugeUint } from "../../libraries/HugeUint.sol";
 
@@ -9,7 +8,7 @@ import { HugeUint } from "../../libraries/HugeUint.sol";
  * @title IUsdnProtocolLong
  * @notice Interface for the long side layer of the USDN protocol
  */
-interface IUsdnProtocolLong is IUsdnProtocolVault {
+interface IUsdnProtocolLong {
     /**
      * @notice Get the value of the lowest usable tick, taking into account the tick spacing
      * @dev Note that the effective minimum tick of a newly open long position also depends on the minimum allowed

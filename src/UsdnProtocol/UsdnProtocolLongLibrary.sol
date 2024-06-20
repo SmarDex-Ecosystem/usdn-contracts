@@ -42,17 +42,17 @@ library UsdnProtocolLongLibrary {
     /*                              Public functions                              */
     /* -------------------------------------------------------------------------- */
 
-    // / @inheritdoc IUsdnProtocolLong
+    /// @notice See {IUsdnProtocolLong}
     function minTick(Storage storage s) public view returns (int24 tick_) {
         tick_ = TickMath.minUsableTick(s._tickSpacing);
     }
 
-    // / @inheritdoc IUsdnProtocolLong
+    /// @notice See {IUsdnProtocolLong}
     function maxTick(Storage storage s) public view returns (int24 tick_) {
         tick_ = TickMath.maxUsableTick(s._tickSpacing);
     }
 
-    // / @inheritdoc IUsdnProtocolLong
+    /// @notice See {IUsdnProtocolLong}
     function getLongPosition(Storage storage s, PositionId memory posId)
         public
         view
@@ -66,7 +66,7 @@ library UsdnProtocolLongLibrary {
         liquidationPenalty_ = s._tickData[tickHash].liquidationPenalty;
     }
 
-    // / @inheritdoc IUsdnProtocolLong
+    /// @notice See {IUsdnProtocolLong}
     // slither-disable-next-line write-after-write
     function getMinLiquidationPrice(Storage storage s, uint128 price) public view returns (uint128 liquidationPrice_) {
         liquidationPrice_ = _getLiquidationPrice(s, price, uint128(s._minLeverage));
@@ -74,7 +74,7 @@ library UsdnProtocolLongLibrary {
         liquidationPrice_ = getEffectivePriceForTick(s, tick + s._tickSpacing);
     }
 
-    // / @inheritdoc IUsdnProtocolLong
+    /// @notice See {IUsdnProtocolLong}
     function getPositionValue(Storage storage s, PositionId calldata posId, uint128 price, uint128 timestamp)
         public
         view
@@ -97,14 +97,14 @@ library UsdnProtocolLongLibrary {
         value_ = _positionValue(price, liqPrice, pos.totalExpo);
     }
 
-    // / @inheritdoc IUsdnProtocolLong
+    /// @notice See {IUsdnProtocolLong}
     function getEffectiveTickForPrice(Storage storage s, uint128 price) public view returns (int24 tick_) {
         tick_ = getEffectiveTickForPrice(
             price, s._lastPrice, s._totalExpo - s._balanceLong, s._liqMultiplierAccumulator, s._tickSpacing
         );
     }
 
-    // / @inheritdoc IUsdnProtocolLong
+    /// @notice See {IUsdnProtocolLong}
     function getEffectiveTickForPrice(
         uint128 price,
         uint256 assetPrice,
@@ -138,13 +138,13 @@ library UsdnProtocolLongLibrary {
         }
     }
 
-    // / @inheritdoc IUsdnProtocolLong
+    /// @notice See {IUsdnProtocolLong}
     function getEffectivePriceForTick(Storage storage s, int24 tick) public view returns (uint128 price_) {
         price_ =
             getEffectivePriceForTick(tick, s._lastPrice, s._totalExpo - s._balanceLong, s._liqMultiplierAccumulator);
     }
 
-    // / @inheritdoc IUsdnProtocolLong
+    /// @notice See {IUsdnProtocolLong}
     function getEffectivePriceForTick(
         int24 tick,
         uint256 assetPrice,
@@ -154,7 +154,7 @@ library UsdnProtocolLongLibrary {
         price_ = _adjustPrice(TickMath.getPriceAtTick(tick), assetPrice, longTradingExpo, accumulator);
     }
 
-    // / @inheritdoc IUsdnProtocolCore
+    /// @notice See {IUsdnProtocolLong}
     function longAssetAvailableWithFunding(Storage storage s, uint128 currentPrice, uint128 timestamp)
         public
         view
@@ -176,7 +176,7 @@ library UsdnProtocolLongLibrary {
         }
     }
 
-    // / @inheritdoc IUsdnProtocolCore
+    /// @notice See {IUsdnProtocolLong}
     function longTradingExpoWithFunding(Storage storage s, uint128 currentPrice, uint128 timestamp)
         public
         view
@@ -185,7 +185,7 @@ library UsdnProtocolLongLibrary {
         expo_ = s._totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(s, currentPrice, timestamp));
     }
 
-    // / @inheritdoc IUsdnProtocolLong
+    /// @notice See {IUsdnProtocolLong}
     function getTickLiquidationPenalty(Storage storage s, int24 tick) public view returns (uint8 liquidationPenalty_) {
         (bytes32 tickHash,) = vaultLib._tickHash(s, tick);
         liquidationPenalty_ = _getTickLiquidationPenalty(s, tickHash);

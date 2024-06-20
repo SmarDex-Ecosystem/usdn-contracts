@@ -47,7 +47,7 @@ library UsdnProtocolActionsUtilsLibrary {
     /*                              Public functions                              */
     /* -------------------------------------------------------------------------- */
 
-    /// @inheritdoc IUsdnProtocolActions
+    /// @notice See {IUsdnProtocolActions}
     function liquidate(Storage storage s, bytes calldata currentPriceData, uint16 iterations)
         public
         returns (uint256 liquidatedPositions_)
@@ -70,7 +70,7 @@ library UsdnProtocolActionsUtilsLibrary {
         actionsVaultLib._checkPendingFee(s);
     }
 
-    /// @inheritdoc IUsdnProtocolActions
+    /// @notice See {IUsdnProtocolActions}
     function validateActionablePendingActions(
         Storage storage s,
         PreviousActionsData calldata previousActionsData,
@@ -97,7 +97,7 @@ library UsdnProtocolActionsUtilsLibrary {
         actionsVaultLib._checkPendingFee(s);
     }
 
-    /// @inheritdoc IUsdnProtocolActions
+    /// @notice See {IUsdnProtocolActions}
     function transferPositionOwnership(Storage storage s, PositionId calldata posId, address newOwner) public {
         (bytes32 tickHash, uint256 version) = vaultLib._tickHash(s, posId.tick);
         if (posId.tickVersion != version) {
