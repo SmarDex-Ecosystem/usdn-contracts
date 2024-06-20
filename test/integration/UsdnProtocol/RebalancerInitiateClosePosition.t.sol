@@ -22,10 +22,9 @@ contract TestRebalancerInitiateClosePosition is
     IRebalancerTypes
 {
     uint256 constant BASE_AMOUNT = 1000 ether;
-    uint256 internal securityDepositValue;
-    uint128 internal minAsset;
     uint88 internal amountInRebalancer;
     uint128 internal version;
+    uint256 internal posAmount;
     PositionData internal previousPositionData;
 
     function setUp() public {
@@ -33,8 +32,6 @@ contract TestRebalancerInitiateClosePosition is
         skip(5 minutes);
 
         vm.prank(DEPLOYER);
-
-        minAsset = uint128(rebalancer.getMinAssetDeposit());
 
         mockPyth.setPrice(1280 ether / 1e10);
         mockPyth.setLastPublishTime(block.timestamp);
@@ -44,10 +41,13 @@ contract TestRebalancerInitiateClosePosition is
 
         version = rebalancer.getPositionVersion();
         previousPositionData = rebalancer.getPositionData(version);
+        (Position memory protocolPosition,) = protocol.getLongPosition(previousPositionData.id);
+        posAmount = protocolPosition.amount;
     }
 
     function test_setUp() external {
         assertGt(rebalancer.getPositionVersion(), 0, "The rebalancer version should be updated");
+        assertGt(posAmount - previousPositionData.amount, 0, "The rebalancer version should be updated");
     }
 
     /**
@@ -69,11 +69,8 @@ contract TestRebalancerInitiateClosePosition is
                 .entryAccMultiplier
         );
 
-        (Position memory protocolPosition,) = protocol.getLongPosition(previousPositionData.id);
-
         uint256 amountToClose = amountToCloseWithoutBonus
-            + amountToCloseWithoutBonus * (protocolPosition.amount - previousPositionData.amount)
-                / previousPositionData.amount;
+            + amountToCloseWithoutBonus * (posAmount - previousPositionData.amount) / previousPositionData.amount;
 
         vm.expectEmit();
         emit ClosePositionInitiated(address(this), amount, amountToClose, amountInRebalancer - amount);
@@ -129,11 +126,8 @@ contract TestRebalancerInitiateClosePosition is
                 .entryAccMultiplier
         );
 
-        (Position memory protocolPosition,) = protocol.getLongPosition(previousPositionData.id);
-
         uint256 amountToClose = amountToCloseWithoutBonus
-            + amountToCloseWithoutBonus * (protocolPosition.amount - previousPositionData.amount)
-                / previousPositionData.amount;
+            + amountToCloseWithoutBonus * (posAmount - previousPositionData.amount) / previousPositionData.amount;
 
         vm.expectEmit();
         emit ClosePositionInitiated(address(this), amountInRebalancer, amountToClose, 0);
