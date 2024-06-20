@@ -13,13 +13,13 @@ abstract contract UsdnProtocolCoreEntry is UsdnProtocolStorage, IUsdnProtocolCor
         uint128 longAmount,
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData
-    ) public payable initializer {
+    ) external payable initializer {
         return lib.initialize(s, depositAmount, longAmount, desiredLiqPrice, currentPriceData);
     }
 
     /// @inheritdoc IUsdnProtocolCore
     function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
-        public
+        external
         pure
         returns (int256)
     {

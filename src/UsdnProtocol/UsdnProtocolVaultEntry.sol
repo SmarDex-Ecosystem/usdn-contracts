@@ -7,7 +7,7 @@ import { UsdnProtocolVaultLibrary as lib } from "./libraries/UsdnProtocolVaultLi
 
 abstract contract UsdnProtocolVaultEntry is UsdnProtocolStorage, IUsdnProtocolVault {
     /// @inheritdoc IUsdnProtocolVault
-    function usdnPrice(uint128 currentPrice, uint128 timestamp) public view returns (uint256 price_) {
+    function usdnPrice(uint128 currentPrice, uint128 timestamp) external view returns (uint256 price_) {
         return lib.usdnPrice(s, currentPrice, timestamp);
     }
 
@@ -36,7 +36,7 @@ abstract contract UsdnProtocolVaultEntry is UsdnProtocolStorage, IUsdnProtocolVa
 
     /// @inheritdoc IUsdnProtocolVault
     function vaultAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
-        public
+        external
         view
         returns (int256 available_)
     {

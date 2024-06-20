@@ -141,7 +141,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolStorage, IUsdnProtocol
     }
 
     /// @inheritdoc IUsdnProtocolActions
-    function tickHash(int24 tick, uint256 version) public pure returns (bytes32) {
+    function tickHash(int24 tick, uint256 version) external pure returns (bytes32) {
         return actionsLongLib.tickHash(tick, version);
     }
 }
