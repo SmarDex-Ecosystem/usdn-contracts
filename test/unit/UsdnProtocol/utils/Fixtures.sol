@@ -24,7 +24,6 @@ import {
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { Permit2TokenBitfield } from "../../../../src/libraries/Permit2TokenBitfield.sol";
-import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 /**
  * @title UsdnProtocolBaseFixture

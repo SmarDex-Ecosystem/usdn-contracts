@@ -549,6 +549,15 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return coreLib._removeStalePendingAction(s, user);
     }
 
+    function i_triggerRebalancer(
+        uint128 lastPrice,
+        uint256 longBalance,
+        uint256 vaultBalance,
+        int256 remainingCollateral
+    ) public returns (uint256 longBalance_, uint256 vaultBalance_) {
+        return longLib._triggerRebalancer(s, lastPrice, longBalance, vaultBalance, remainingCollateral);
+    }
+
     function i_flashClosePosition(
         PositionId memory posId,
         uint128 neutralPrice,
