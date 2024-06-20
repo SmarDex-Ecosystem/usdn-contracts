@@ -553,7 +553,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         external
         returns (int256 fee_, int256 fundWithFee_, int256 fundAssetWithFee_)
     {
-        return _calculateFee(fund, fundAsset);
+        return coreLib._calculateFee(s, fund, fundAsset);
     }
 
     function i_flashClosePosition(
