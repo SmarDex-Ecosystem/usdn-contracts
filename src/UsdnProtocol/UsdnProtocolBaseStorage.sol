@@ -16,7 +16,7 @@ import { PendingAction, TickData } from "../interfaces/UsdnProtocol/IUsdnProtoco
 import { DoubleEndedQueue } from "../libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
 import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { UsdnProtocolActionsLongLibrary as actionsLongLib } from "./UsdnProtocolActionsLongLibrary.sol";
+import { UsdnProtocolActionsLongLibrary as actionsLongLib } from "./libraries/UsdnProtocolActionsLongLibrary.sol";
 import { Position } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 contract UsdnProtocolBaseStorage is

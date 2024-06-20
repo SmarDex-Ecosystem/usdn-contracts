@@ -6,17 +6,17 @@ import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC16
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
-import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
-import { IUsdnProtocolActions } from "../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
-import { HugeUint } from "../libraries/HugeUint.sol";
-import { SignedMath } from "../libraries/SignedMath.sol";
-import { TickMath } from "../libraries/TickMath.sol";
-import { Permit2TokenBitfield } from "../libraries/Permit2TokenBitfield.sol";
-import { IOwnershipCallback } from "../interfaces/UsdnProtocol/IOwnershipCallback.sol";
-import { Storage } from "./UsdnProtocolBaseStorage.sol";
-import { IUsdnProtocolEvents } from "./../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IBaseRebalancer } from "../../interfaces/Rebalancer/IBaseRebalancer.sol";
+import { IUsdnProtocolActions } from "../../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
+import { HugeUint } from "../../libraries/HugeUint.sol";
+import { SignedMath } from "../../libraries/SignedMath.sol";
+import { TickMath } from "../../libraries/TickMath.sol";
+import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
+import { IOwnershipCallback } from "../../interfaces/UsdnProtocol/IOwnershipCallback.sol";
+import { Storage } from "../UsdnProtocolBaseStorage.sol";
+import { IUsdnProtocolEvents } from "./../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
+import { IUsdnProtocolErrors } from "./../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
 import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as longLib } from "./UsdnProtocolLongLibrary.sol";
@@ -32,7 +32,7 @@ import {
     InitiateOpenPositionData,
     ValidateOpenPositionData,
     ClosePositionData
-} from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+} from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 library UsdnProtocolActionsUtilsLibrary {
     using SafeTransferLib for address;

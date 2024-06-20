@@ -28,17 +28,16 @@ import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { Position, LiquidationsEffects } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { SignedMath } from "../../../../src/libraries/SignedMath.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
-import { UsdnProtocolVaultLibrary as vaultLib } from "../../../../src/UsdnProtocol/UsdnProtocolVaultLibrary.sol";
-import { UsdnProtocolCoreLibrary as coreLib } from "../../../../src/UsdnProtocol/UsdnProtocolCoreLibrary.sol";
-import { UsdnProtocolLongLibrary as longLib } from "../../../../src/UsdnProtocol/UsdnProtocolLongLibrary.sol";
-import { UsdnProtocolActionsLongLibrary as actionsLib } from
-    "../../../../src/UsdnProtocol/UsdnProtocolActionsLongLibrary.sol";
+import { UsdnProtocolCoreLibrary as coreLib } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolCoreLibrary.sol";
+import { UsdnProtocolLongLibrary as longLib } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolLongLibrary.sol";
+import { UsdnProtocolVaultLibrary as vaultLib } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from
-    "../../../../src/UsdnProtocol/UsdnProtocolActionsVaultLibrary.sol";
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsVaultLibrary.sol";
 import { UsdnProtocolActionsLongLibrary as actionsLongLib } from
-    "../../../../src/UsdnProtocol/UsdnProtocolActionsLongLibrary.sol";
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsUtilsLibrary as actionsUtilsLib } from
-    "../../../../src/UsdnProtocol/UsdnProtocolActionsUtilsLibrary.sol";
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsUtilsLibrary.sol";
 
 /**
  * @title UsdnProtocolHandler
@@ -155,13 +154,13 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         uint64 securityDepositValue,
         bytes calldata currentPriceData
     ) external returns (uint256 securityDepositValue_, bool isLiquidationPending_, bool liq_) {
-        return actionsLib._initiateClosePosition(
+        return actionsLongLib._initiateClosePosition(
             s, owner, to, validator, posId, amountToClose, securityDepositValue, currentPriceData
         );
     }
 
     function i_validateClosePosition(address user, bytes calldata priceData) external {
-        actionsLib._validateClosePosition(s, user, priceData);
+        actionsLongLib._validateClosePosition(s, user, priceData);
     }
 
     function i_removeAmountFromPosition(

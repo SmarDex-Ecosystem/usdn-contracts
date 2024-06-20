@@ -6,15 +6,15 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
-import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { IUsdnProtocolLong } from "../interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
-import { TickMath } from "../libraries/TickMath.sol";
-import { SignedMath } from "../libraries/SignedMath.sol";
-import { HugeUint } from "../libraries/HugeUint.sol";
-import { Storage } from "./UsdnProtocolBaseStorage.sol";
-import { IUsdnProtocolEvents } from "./../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
+import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IUsdnProtocolLong } from "../../interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
+import { TickMath } from "../../libraries/TickMath.sol";
+import { SignedMath } from "../../libraries/SignedMath.sol";
+import { HugeUint } from "../../libraries/HugeUint.sol";
+import { Storage } from "../UsdnProtocolBaseStorage.sol";
+import { IUsdnProtocolEvents } from "./../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
+import { IUsdnProtocolErrors } from "./../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { IBaseRebalancer } from "../../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
 import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
@@ -28,7 +28,7 @@ import {
     LiquidationData,
     InitiateOpenPositionData,
     CachedProtocolState
-} from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+} from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 library UsdnProtocolLongLibrary {
     using LibBitmap for LibBitmap.Bitmap;

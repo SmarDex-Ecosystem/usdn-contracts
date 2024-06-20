@@ -5,7 +5,7 @@ import { IUsdnProtocolLong } from "../interfaces/UsdnProtocol/IUsdnProtocolLong.
 import { HugeUint } from "../libraries/HugeUint.sol";
 import { UsdnProtocolBaseStorage } from "./UsdnProtocolBaseStorage.sol";
 import { Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { UsdnProtocolLongLibrary as longLib } from "./UsdnProtocolLongLibrary.sol";
+import { UsdnProtocolLongLibrary as longLib } from "./libraries/UsdnProtocolLongLibrary.sol";
 
 abstract contract UsdnProtocolLongEntry is UsdnProtocolBaseStorage, IUsdnProtocolLong {
     /// @inheritdoc IUsdnProtocolLong

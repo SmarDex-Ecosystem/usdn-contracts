@@ -4,14 +4,14 @@ pragma solidity ^0.8.25;
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
-import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { IUsdnProtocolActions } from "../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
-import { HugeUint } from "../libraries/HugeUint.sol";
-import { TickMath } from "../libraries/TickMath.sol";
-import { Permit2TokenBitfield } from "../libraries/Permit2TokenBitfield.sol";
-import { Storage } from "./UsdnProtocolBaseStorage.sol";
-import { IUsdnProtocolEvents } from "./../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IUsdnProtocolActions } from "../../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
+import { HugeUint } from "../../libraries/HugeUint.sol";
+import { TickMath } from "../../libraries/TickMath.sol";
+import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
+import { Storage } from "../UsdnProtocolBaseStorage.sol";
+import { IUsdnProtocolEvents } from "./../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
+import { IUsdnProtocolErrors } from "./../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as longLib } from "./UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
@@ -29,7 +29,7 @@ import {
     InitiateOpenPositionData,
     ValidateOpenPositionData,
     ClosePositionData
-} from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+} from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 library UsdnProtocolActionsLongLibrary {
     using SafeTransferLib for address;

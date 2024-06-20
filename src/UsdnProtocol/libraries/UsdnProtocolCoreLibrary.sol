@@ -6,16 +6,16 @@ import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
-import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
-import { IUsdnProtocolCore } from "../interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
-import { SignedMath } from "../libraries/SignedMath.sol";
-import { DoubleEndedQueue } from "../libraries/DoubleEndedQueue.sol";
-import { TickMath } from "../libraries/TickMath.sol";
-import { HugeUint } from "../libraries/HugeUint.sol";
-import { Storage } from "./UsdnProtocolBaseStorage.sol";
-import { IUsdnProtocolEvents } from "./../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { IUsdnProtocolErrors } from "./../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IUsdn } from "../../interfaces/Usdn/IUsdn.sol";
+import { IUsdnProtocolCore } from "../../interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
+import { SignedMath } from "../../libraries/SignedMath.sol";
+import { DoubleEndedQueue } from "../../libraries/DoubleEndedQueue.sol";
+import { TickMath } from "../../libraries/TickMath.sol";
+import { HugeUint } from "../../libraries/HugeUint.sol";
+import { Storage } from "../UsdnProtocolBaseStorage.sol";
+import { IUsdnProtocolEvents } from "./../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
+import { IUsdnProtocolErrors } from "./../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
 import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
 import { UsdnProtocolLongLibrary as longLib } from "./UsdnProtocolLongLibrary.sol";
@@ -28,7 +28,7 @@ import {
     PositionId,
     Position,
     TickData
-} from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+} from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 library UsdnProtocolCoreLibrary {
     using SafeTransferLib for address;

@@ -5,9 +5,9 @@ import { IUsdnProtocolActions } from "./../interfaces/UsdnProtocol/IUsdnProtocol
 import { Permit2TokenBitfield } from "../libraries/Permit2TokenBitfield.sol";
 import { UsdnProtocolBaseStorage } from "./UsdnProtocolBaseStorage.sol";
 import { PreviousActionsData, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { UsdnProtocolActionsUtilsLibrary as actionsUtilsLib } from "./UsdnProtocolActionsUtilsLibrary.sol";
-import { UsdnProtocolActionsLongLibrary as actionsLongLib } from "./UsdnProtocolActionsLongLibrary.sol";
-import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
+import { UsdnProtocolActionsUtilsLibrary as actionsUtilsLib } from "./libraries/UsdnProtocolActionsUtilsLibrary.sol";
+import { UsdnProtocolActionsLongLibrary as actionsLongLib } from "./libraries/UsdnProtocolActionsLongLibrary.sol";
+import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./libraries/UsdnProtocolActionsVaultLibrary.sol";
 import {
     InitiateClosePositionParams, InitiateOpenPositionParams
 } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";

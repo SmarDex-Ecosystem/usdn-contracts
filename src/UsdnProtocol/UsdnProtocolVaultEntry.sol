@@ -3,7 +3,7 @@ pragma solidity ^0.8.25;
 
 import { IUsdnProtocolVault } from "../interfaces/UsdnProtocol/IUsdnProtocolVault.sol";
 import { UsdnProtocolBaseStorage } from "./UsdnProtocolBaseStorage.sol";
-import { UsdnProtocolVaultLibrary as lib } from "./UsdnProtocolVaultLibrary.sol";
+import { UsdnProtocolVaultLibrary as lib } from "./libraries/UsdnProtocolVaultLibrary.sol";
 
 abstract contract UsdnProtocolVaultEntry is UsdnProtocolBaseStorage, IUsdnProtocolVault {
     /// @inheritdoc IUsdnProtocolVault

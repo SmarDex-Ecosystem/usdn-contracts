@@ -4,7 +4,7 @@ pragma solidity ^0.8.25;
 import { IUsdnProtocolCore } from "./../interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
 import { UsdnProtocolBaseStorage } from "./UsdnProtocolBaseStorage.sol";
 import { PendingAction } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { UsdnProtocolCoreLibrary as lib } from "./UsdnProtocolCoreLibrary.sol";
+import { UsdnProtocolCoreLibrary as lib } from "./libraries/UsdnProtocolCoreLibrary.sol";
 
 abstract contract UsdnProtocolCoreEntry is UsdnProtocolBaseStorage, IUsdnProtocolCore {
     /// @inheritdoc IUsdnProtocolCore

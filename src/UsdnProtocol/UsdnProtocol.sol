@@ -13,7 +13,7 @@ import { UsdnProtocolActionsEntry } from "./UsdnProtocolActionsEntry.sol";
 import { UsdnProtocolCoreEntry } from "./UsdnProtocolCoreEntry.sol";
 import { UsdnProtocolLongEntry } from "./UsdnProtocolLongEntry.sol";
 import { UsdnProtocolVaultEntry } from "./UsdnProtocolVaultEntry.sol";
-import { UsdnProtocolSettersLibrary as settersLib } from "./UsdnProtocolSettersLibrary.sol";
+import { UsdnProtocolSettersLibrary as settersLib } from "./libraries/UsdnProtocolSettersLibrary.sol";
 
 contract UsdnProtocol is
     IUsdnProtocol,
