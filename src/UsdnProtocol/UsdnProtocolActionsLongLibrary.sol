@@ -41,7 +41,7 @@ library UsdnProtocolActionsLongLibrary {
     /*                              Public functions                              */
     /* -------------------------------------------------------------------------- */
 
-    // / @inheritdoc IUsdnProtocolActions
+    /// @inheritdoc IUsdnProtocolActions
     function initiateOpenPosition(
         Storage storage s,
         InitiateOpenPositionParams memory params,
@@ -67,7 +67,7 @@ library UsdnProtocolActionsLongLibrary {
         actionsVaultLib._checkPendingFee(s);
     }
 
-    // / @inheritdoc IUsdnProtocolActions
+    /// @inheritdoc IUsdnProtocolActions
     function validateOpenPosition(
         Storage storage s,
         address payable validator,
@@ -94,7 +94,7 @@ library UsdnProtocolActionsLongLibrary {
         actionsVaultLib._checkPendingFee(s);
     }
 
-    // / @inheritdoc IUsdnProtocolActions
+    /// @inheritdoc IUsdnProtocolActions
     function initiateClosePosition(
         Storage storage s,
         InitiateClosePositionParams memory params,
@@ -131,7 +131,7 @@ library UsdnProtocolActionsLongLibrary {
         actionsVaultLib._checkPendingFee(s);
     }
 
-    // / @inheritdoc IUsdnProtocolActions
+    /// @inheritdoc IUsdnProtocolActions
     function validateClosePosition(
         Storage storage s,
         address payable validator,

@@ -1,18 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { IUsdnProtocolLong } from "./IUsdnProtocolLong.sol";
 import { PreviousActionsData, PositionId } from "./IUsdnProtocolTypes.sol";
 import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 
-interface IUsdnProtocolActions is IUsdnProtocolLong {
-    /**
-     * @notice The minimum total supply of USDN that we allow
-     * @dev Upon the first deposit, this amount is sent to the dead address and cannot be later recovered
-     * @return The minimum total supply of USDN
-     */
-    function MIN_USDN_SUPPLY() external pure returns (uint256);
-
+interface IUsdnProtocolActions {
     /**
      * @notice Initiate a deposit of assets into the vault to mint USDN
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using

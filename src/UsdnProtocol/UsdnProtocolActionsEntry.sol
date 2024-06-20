@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.25;
 
+import { IUsdnProtocolActions } from "./../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 import { Permit2TokenBitfield } from "../libraries/Permit2TokenBitfield.sol";
 import { UsdnProtocolBaseStorage } from "./UsdnProtocolBaseStorage.sol";
 import { PreviousActionsData, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -11,7 +12,8 @@ import {
     InitiateClosePositionParams, InitiateOpenPositionParams
 } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
-abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
+abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage, IUsdnProtocolActions {
+    /// @inheritdoc IUsdnProtocolActions
     function initiateDeposit(
         uint128 amount,
         address to,
@@ -25,6 +27,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
         );
     }
 
+    /// @inheritdoc IUsdnProtocolActions
     function validateDeposit(
         address payable validator,
         bytes calldata depositPriceData,
@@ -33,6 +36,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
         return actionsVaultLib.validateDeposit(s, validator, depositPriceData, previousActionsData);
     }
 
+    /// @inheritdoc IUsdnProtocolActions
     function initiateWithdrawal(
         uint152 usdnShares,
         address to,
@@ -43,6 +47,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
         return actionsVaultLib.initiateWithdrawal(s, usdnShares, to, validator, currentPriceData, previousActionsData);
     }
 
+    /// @inheritdoc IUsdnProtocolActions
     function validateWithdrawal(
         address payable validator,
         bytes calldata withdrawalPriceData,
@@ -51,6 +56,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
         return actionsVaultLib.validateWithdrawal(s, validator, withdrawalPriceData, previousActionsData);
     }
 
+    /// @inheritdoc IUsdnProtocolActions
     function initiateOpenPosition(
         uint128 amount,
         uint128 desiredLiqPrice,
@@ -73,6 +79,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
         return actionsLonglib.initiateOpenPosition(s, params, currentPriceData, previousActionsData);
     }
 
+    /// @inheritdoc IUsdnProtocolActions
     function validateOpenPosition(
         address payable validator,
         bytes calldata openPriceData,
@@ -81,6 +88,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
         return actionsLonglib.validateOpenPosition(s, validator, openPriceData, previousActionsData);
     }
 
+    /// @inheritdoc IUsdnProtocolActions
     function initiateClosePosition(
         PositionId calldata posId,
         uint128 amountToClose,
@@ -95,6 +103,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
         return actionsLonglib.initiateClosePosition(s, params, currentPriceData, previousActionsData);
     }
 
+    /// @inheritdoc IUsdnProtocolActions
     function validateClosePosition(
         address payable validator,
         bytes calldata closePriceData,
@@ -103,6 +112,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
         return actionsLonglib.validateClosePosition(s, validator, closePriceData, previousActionsData);
     }
 
+    /// @inheritdoc IUsdnProtocolActions
     function liquidate(bytes calldata currentPriceData, uint16 iterations)
         external
         payable
@@ -112,6 +122,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
         return actionsUtilsLib.liquidate(s, currentPriceData, iterations);
     }
 
+    /// @inheritdoc IUsdnProtocolActions
     function validateActionablePendingActions(PreviousActionsData calldata previousActionsData, uint256 maxValidations)
         external
         payable
@@ -121,6 +132,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
         return actionsUtilsLib.validateActionablePendingActions(s, previousActionsData, maxValidations);
     }
 
+    /// @inheritdoc IUsdnProtocolActions
     function transferPositionOwnership(PositionId calldata posId, address newOwner)
         external
         initializedAndNonReentrant
