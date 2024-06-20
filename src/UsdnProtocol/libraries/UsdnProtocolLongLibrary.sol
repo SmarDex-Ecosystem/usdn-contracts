@@ -358,6 +358,7 @@ library UsdnProtocolLongLibrary {
         }
 
         // transfer the pending assets from the rebalancer to this contract
+        // slither-disable-next-line arbitrary-send-erc20
         address(s._asset).safeTransferFrom(address(rebalancer), address(this), data.positionAmount - data.positionValue);
 
         // if there is enough collateral remaining after liquidations, calculate the bonus and add it to the

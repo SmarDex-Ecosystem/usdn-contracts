@@ -619,6 +619,7 @@ library UsdnProtocolActionsVaultLibrary {
         if (address(this).balance < validationCost) {
             revert IUsdnProtocolErrors.UsdnProtocolInsufficientOracleFee();
         }
+        // slither-disable-next-line arbitrary-send-eth
         price_ = s._oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
             actionId, uint128(timestamp), action, priceData
         );

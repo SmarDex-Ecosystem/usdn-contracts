@@ -232,6 +232,7 @@ library UsdnProtocolActionsLongLibrary {
         if (params.permit2TokenBitfield.useForAsset()) {
             address(s._asset).permit2TransferFrom(params.user, address(this), params.amount);
         } else {
+            // slither-disable-next-line arbitrary-send-erc20
             address(s._asset).safeTransferFrom(params.user, address(this), params.amount);
         }
 
