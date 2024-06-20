@@ -217,7 +217,7 @@ contract Deploy is Script {
      * @return rebalancer_ The deployed contract
      */
     function _deployRebalancer(UsdnProtocol usdnProtocol) internal returns (Rebalancer rebalancer_) {
-        address rebalancerAddress = vm.envOr("REBALANCER_ADDRESS", address(0));
+        address payable rebalancerAddress = payable(vm.envOr("REBALANCER_ADDRESS", address(0)));
         if (rebalancerAddress != address(0)) {
             rebalancer_ = Rebalancer(rebalancerAddress);
         } else {

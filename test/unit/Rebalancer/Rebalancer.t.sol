@@ -15,6 +15,36 @@ contract TestRebalancer is RebalancerFixture {
     }
 
     /**
+     * @custom:scenario An address that is not the USDN protocol sends ether to the rebalancer
+     * @custom:given The sender is not the USDN protocol
+     * @custom:when Ether is sent to the rebalancer contract
+     * @custom:then The call returns false and the bytes of the {RebalancerUnauthorized} error
+     */
+    function test_RevertWhen_receivingEther() public {
+        (bool success, bytes memory data) = address(rebalancer).call{ value: 1 }("");
+
+        assertFalse(success, "The call should have failed");
+        assertEq(bytes4(data), RebalancerUnauthorized.selector);
+    }
+
+    /**
+     * @custom:scenario The USDN protocol sends ether to the rebalancer contract
+     * @custom:given The sender is the USDN protocol
+     * @custom:when Ether is sent to the rebalancer contract
+     * @custom:then The rebalancer's balance is equal to the value sent
+     * @custom:and True is returned as the `success` variable
+     */
+    function test_canReceiveEtherFromUsdnProtocol() public {
+        vm.deal(address(usdnProtocol), 1);
+
+        vm.prank(address(usdnProtocol));
+        (bool success,) = address(rebalancer).call{ value: 1 }("");
+
+        assertTrue(success, "The call should have been a success");
+        assertEq(address(rebalancer).balance, 1, "The rebalancer should have received the ether");
+    }
+
+    /**
      * @custom:scenario Check the _asset value of the rebalancer contract
      * @custom:given A deployed rebalancer contract
      * @custom:when The getAsset function is called

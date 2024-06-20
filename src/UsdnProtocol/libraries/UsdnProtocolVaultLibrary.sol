@@ -14,7 +14,7 @@ import { IUsdnProtocolErrors } from "./../../interfaces/UsdnProtocol/IUsdnProtoc
 import { UsdnProtocolActionsUtilsLibrary as actionsUtilsLib } from "./UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolActionsLongLibrary as actionsLongLib } from "./UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
-import { PositionId, Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PositionId, Position } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 library UsdnProtocolVaultLibrary {
     using SafeCast for int256;
