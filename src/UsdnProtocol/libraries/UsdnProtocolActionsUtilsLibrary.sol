@@ -129,6 +129,7 @@ library UsdnProtocolActionsUtilsLibrary {
      * @notice The close vault imbalance limit state verification
      * @dev To ensure that the protocol does not imbalance more than
      * the close limit on the vault side, otherwise revert
+     * @param s The storage of the protocol
      * @param posTotalExpoToClose The total expo to remove position
      * @param posValueToClose The value to remove from the position
      */
@@ -158,6 +159,7 @@ library UsdnProtocolActionsUtilsLibrary {
      * @notice Send rewards to the liquidator
      * @dev Should still emit an event if liquidationRewards = 0 to better keep track of those anomalies as rewards for
      * those will be managed off-chain
+     * @param s The storage of the protocol
      * @param liquidatedTicks The number of ticks that were liquidated
      * @param remainingCollateral The amount of collateral remaining after liquidations
      * @param rebased Whether a USDN rebase was performed
@@ -197,6 +199,7 @@ library UsdnProtocolActionsUtilsLibrary {
 
     /**
      * @notice Prepare the pending action struct for an open position and add it to the queue
+     * @param s The storage of the protocol
      * @param to The address that will be the owner of the position
      * @param validator The address that will validate the open position
      * @param securityDepositValue The value of the security deposit for the newly created pending action
@@ -229,6 +232,7 @@ library UsdnProtocolActionsUtilsLibrary {
 
     /**
      * @notice Update protocol balances, liquidate positions if necessary, then validate the open position action
+     * @param s The storage of the protocol
      * @param pending The pending action data
      * @param priceData The current price data
      * @return data_ The {ValidateOpenPosition} data struct
@@ -290,6 +294,7 @@ library UsdnProtocolActionsUtilsLibrary {
      * @notice Perform checks for the initiate close position action
      * @dev Reverts if the to address is zero, the position was not validated yet, the position is not owned by the
      * user, the amount to close is higher than the position amount, or the amount to close is zero
+     * @param s The storage of the protocol
      * @param owner The owner of the position
      * @param to The address that will receive the assets
      * @param validator The address of the validator
@@ -343,6 +348,7 @@ library UsdnProtocolActionsUtilsLibrary {
      * @notice Update protocol balances, then prepare the data for the initiate close position action
      * @dev Reverts if the imbalance limit is reached, or if any of the checks in `_checkInitiateClosePosition` fail
      * Returns without creating a pending action if the position gets liquidated in this transaction
+     * @param s The storage of the protocol
      * @param owner The owner of the position
      * @param to The address that will receive the assets
      * @param validator The address of the pending action validator
@@ -419,6 +425,7 @@ library UsdnProtocolActionsUtilsLibrary {
 
     /**
      * @notice Prepare the pending action struct for the close position action and add it to the queue
+     * @param s The storage of the protocol
      * @param validator The validator for the pending action
      * @param to The address that will receive the assets
      * @param posId The unique identifier of the position
@@ -458,6 +465,7 @@ library UsdnProtocolActionsUtilsLibrary {
     /**
      * @notice Calculate how much wstETH must be removed from the long balance due to a position closing
      * @dev The amount is bound by the amount of wstETH available on the long side
+     * @param s The storage of the protocol
      * @param priceWithFees The current price of the asset, adjusted with fees
      * @param liqPriceWithoutPenalty The liquidation price without penalty
      * @param posExpo The total expo of the position
@@ -490,6 +498,7 @@ library UsdnProtocolActionsUtilsLibrary {
      * @notice Remove the provided total amount from its position and update the tick data and position
      * @dev Note: this method does not update the long balance
      * If the amount to remove is greater than or equal to the position's total amount, the position is deleted instead
+     * @param s The storage of the protocol
      * @param tick The tick to remove from
      * @param index Index of the position in the tick array
      * @param pos The position to remove the amount from
@@ -539,6 +548,7 @@ library UsdnProtocolActionsUtilsLibrary {
     /**
      * @notice Save a new position in the protocol, adjusting the tick data and global variables
      * @dev Note: this method does not update the long balance
+     * @param s The storage of the protocol
      * @param tick The tick to hold the new position
      * @param long The position to save
      * @param liquidationPenalty The liquidation penalty for the tick

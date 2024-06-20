@@ -165,6 +165,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @notice The deposit vault imbalance limit state verification
      * @dev To ensure that the protocol does not imbalance more than
      * the deposit limit on the vault side, otherwise revert
+     * @param s The storage of the protocol
      * @param depositValue The deposit value in asset
      */
     function _checkImbalanceLimitDeposit(Storage storage s, uint256 depositValue) public view {
@@ -196,6 +197,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @notice The withdrawal imbalance limit state verification
      * @dev To ensure that the protocol does not imbalance more than
      * the withdrawal limit on the long side, otherwise revert
+     * @param s The storage of the protocol
      * @param withdrawalValue The withdrawal value in asset
      * @param totalExpo The current total expo
      */
@@ -229,6 +231,7 @@ library UsdnProtocolActionsVaultLibrary {
 
     /**
      * @notice Prepare the data for the `initiateDeposit` function
+     * @param s The storage of the protocol
      * @param validator The validator address
      * @param amount The amount of asset to deposit
      * @param currentPriceData The price data for the initiate action
@@ -293,6 +296,7 @@ library UsdnProtocolActionsVaultLibrary {
 
     /**
      * @notice Prepare the pending action struct for a deposit and add it to the queue
+     * @param s The storage of the protocol
      * @param to The address that will receive the minted USDN
      * @param validator The address that will validate the deposit
      * @param securityDepositValue The value of the security deposit for the newly created pending action
@@ -332,6 +336,7 @@ library UsdnProtocolActionsVaultLibrary {
      * the `ProtocolAction.InitiateDeposit` action
      * The price validation might require payment according to the return value of the `getValidationCost` function
      * of the middleware
+     * @param s The storage of the protocol
      * @param user The address of the user initiating the deposit
      * @param to The address to receive the USDN tokens
      * @param validator The address that will validate the deposit
@@ -396,6 +401,7 @@ library UsdnProtocolActionsVaultLibrary {
 
     /**
      * @notice Get the pending action data of the owner, try to validate it and clear it if successful
+     * @param s The storage of the protocol
      * @param validator The address of the validator
      * @param priceData The current price data
      * @return securityDepositValue_ The value of the security deposit
@@ -426,6 +432,7 @@ library UsdnProtocolActionsVaultLibrary {
 
     /**
      * @notice Update protocol balances, liquidate positions if necessary, then validate the `deposit` action
+     * @param s The storage of the protocol
      * @param pending The pending action data
      * @param priceData The current price data
      * @return isValidated_ Whether the action is validated
@@ -503,6 +510,7 @@ library UsdnProtocolActionsVaultLibrary {
     /**
      * @notice Update protocol balances, then prepare the data for the withdrawal action
      * @dev Reverts if the imbalance limit is reached
+     * @param s The storage of the protocol
      * @param validator The validator address
      * @param usdnShares The amount of USDN shares to burn
      * @param currentPriceData The current price data
@@ -554,6 +562,7 @@ library UsdnProtocolActionsVaultLibrary {
 
     /**
      * @notice Prepare the pending action struct for a withdrawal and add it to the queue
+     * @param s The storage of the protocol
      * @param to The address that will receive the assets
      * @param validator The address that will validate the withdrawal
      * @param usdnShares The amount of USDN shares to burn
@@ -590,6 +599,7 @@ library UsdnProtocolActionsVaultLibrary {
 
     /**
      * @notice Get the oracle price for the given action and timestamp then validate it
+     * @param s The storage of the protocol
      * @param action The type of action that is being performed by the user
      * @param timestamp The timestamp at which the wanted price was recorded
      * @param actionId The unique identifier of the action
@@ -618,6 +628,7 @@ library UsdnProtocolActionsVaultLibrary {
      * the `ProtocolAction.InitiateWithdrawal` action
      * The price validation might require payment according to the return value of the `getValidationCost` function
      * of the middleware
+     * @param s The storage of the protocol
      * @param user The address of the user initiating the withdrawal
      * @param to The address that will receive the assets
      * @param validator The address that will validate the withdrawal
@@ -667,6 +678,7 @@ library UsdnProtocolActionsVaultLibrary {
 
     /**
      * @notice Get the pending action data of the owner, try to validate it and clear it if successful
+     * @param s The storage of the protocol
      * @param validator The address of the validator
      * @param priceData The current price data
      * @return securityDepositValue_ The value of the security deposit
@@ -697,6 +709,7 @@ library UsdnProtocolActionsVaultLibrary {
 
     /**
      * @notice Update protocol balances, liquidate positions if necessary, then validate the `withdrawal` action
+     * @param s The storage of the protocol
      * @param pending The pending action data
      * @param priceData The current price data
      * @return isValidated_ Whether the action is validated
@@ -781,6 +794,7 @@ library UsdnProtocolActionsVaultLibrary {
 
     /**
      * @notice Execute the first actionable pending action or revert if the price data was not provided
+     * @param s The storage of the protocol
      * @param data The price data and raw indices
      * @return securityDepositValue_ The security deposit value of the executed action
      */
@@ -797,6 +811,7 @@ library UsdnProtocolActionsVaultLibrary {
 
     /**
      * @notice Execute the first actionable pending action and report the success
+     * @param s The storage of the protocol
      * @param data The price data and raw indices
      * @return success_ Whether the price data is valid
      * @return executed_ Whether the pending action was executed (false if the queue has no actionable item)

@@ -205,6 +205,7 @@ library UsdnProtocolLongLibrary {
 
     /**
      * @notice Applies PnL, funding, and liquidates positions if necessary
+     * @param s The storage of the protocol
      * @param neutralPrice The neutral price for the asset
      * @param timestamp The timestamp at which the operation is performed
      * @param iterations The number of iterations for the liquidation process
@@ -282,6 +283,7 @@ library UsdnProtocolLongLibrary {
      * the pending assets, the value of the previous position and the liquidation bonus (if available)
      * and a leverage to fill enough trading expo to reach the desired imbalance, up to the max leverages
      * @dev Will return the provided long balance if no rebalancer is set or if the imbalance is not high enough
+     * @param s The storage of the protocol
      * @param lastPrice The last price used to update the protocol
      * @param longBalance The balance of the long side
      * @param vaultBalance The balance of the vault side
@@ -388,6 +390,7 @@ library UsdnProtocolLongLibrary {
     /**
      * @notice Immediately open a position with the given price
      * @dev Should only be used to open the rebalancer position
+     * @param s The storage of the protocol
      * @param user The address of the user
      * @param lastPrice The last price used to update the protocol
      * @param tickWithoutPenalty The tick the position should be opened in
@@ -450,6 +453,7 @@ library UsdnProtocolLongLibrary {
     /**
      * @notice Immediately close a position with the given price
      * @dev Should only be used to close the rebalancer position
+     * @param s The storage of the protocol
      * @param posId The ID of the position to close
      * @param lastPrice The last price used to update the protocol
      * @param cache The cached state of the protocol, will be updated during this call
@@ -507,6 +511,7 @@ library UsdnProtocolLongLibrary {
     /**
      * @notice Update protocol balances, then prepare the data for the initiate open position action
      * @dev Reverts if the imbalance limit is reached, or if the safety margin is not respected
+     * @param s The storage of the protocol
      * @param validator The address of the validator
      * @param amount The amount of wstETH to deposit
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
@@ -567,6 +572,7 @@ library UsdnProtocolLongLibrary {
 
     /**
      * @notice Reverts if the position's leverage is higher than max or lower than min
+     * @param s The storage of the protocol
      * @param adjustedPrice The adjusted price of the asset
      * @param liqPriceWithoutPenalty The liquidation price of the position without the liquidation penalty
      */
@@ -589,6 +595,7 @@ library UsdnProtocolLongLibrary {
      * @notice The open long imbalance limit state verification. Revert
      * @dev To ensure that the protocol does not imbalance more than
      * the open limit on the long side, otherwise revert
+     * @param s The storage of the protocol
      * @param openTotalExpoValue The open position expo value
      * @param openCollatValue The open position collateral value
      */
@@ -615,6 +622,7 @@ library UsdnProtocolLongLibrary {
 
     /**
      * @notice Liquidate positions that have a liquidation price lower than the current price
+     * @param s The storage of the protocol
      * @param currentPrice The current price of the asset
      * @param iteration The maximum number of ticks to liquidate (minimum is 1)
      * @param tempLongBalance The temporary long balance as calculated when applying the PnL and funding
@@ -706,6 +714,7 @@ library UsdnProtocolLongLibrary {
     /**
      * @notice Variant of `getEffectivePriceForTick` when a fixed precision representation of the liquidation multiplier
      * is known
+     * @param s The storage of the protocol
      * @param tick The tick number
      * @param liqMultiplier The liquidation price multiplier, with LIQUIDATION_MULTIPLIER_DECIMALS decimals
      * @return price_ The adjusted price for the tick
@@ -777,6 +786,7 @@ library UsdnProtocolLongLibrary {
 
     /**
      * @notice Variant of _adjustPrice when a fixed precision representation of the liquidation multiplier is known
+     * @param s The storage of the protocol
      * @param unadjustedPrice The unadjusted price for the tick
      * @param liqMultiplier The liquidation price multiplier, with LIQUIDATION_MULTIPLIER_DECIMALS decimals
      * @return price_ The adjusted price for the tick
@@ -793,6 +803,7 @@ library UsdnProtocolLongLibrary {
 
     /**
      * @notice Calculate a fixed-precision representation of the liquidation price multiplier
+     * @param s The storage of the protocol
      * @param assetPrice The current price of the asset
      * @param longTradingExpo The trading expo of the long side (total expo - balance long)
      * @param accumulator The liquidation multiplier accumulator
@@ -817,6 +828,7 @@ library UsdnProtocolLongLibrary {
     /**
      * @notice Find the highest tick that contains at least one position
      * @dev If there are no ticks with a position left, returns minTick()
+     * @param s The storage of the protocol
      * @param searchStart The tick from which to start searching
      * @return tick_ The next highest tick below `searchStart`
      */
@@ -831,6 +843,7 @@ library UsdnProtocolLongLibrary {
 
     /**
      * @notice Calculate the theoretical liquidation price of a position knowing its start price and leverage
+     * @param s The storage of the protocol
      * @param startPrice Entry price of the position
      * @param leverage Leverage of the position
      * @return price_ The liquidation price of the position
@@ -868,6 +881,7 @@ library UsdnProtocolLongLibrary {
 
     /**
      * @notice Calculate the value of a tick, knowing its contained total expo and the current asset price
+     * @param s The storage of the protocol
      * @param tick The tick number
      * @param currentPrice The current price of the asset
      * @param longTradingExpo The trading expo of the long side
@@ -904,6 +918,7 @@ library UsdnProtocolLongLibrary {
     /**
      * @notice Calculate the leverage of a position, knowing its start price and liquidation price
      * @dev This does not take into account the liquidation penalty
+     * @param s The storage of the protocol
      * @param startPrice Entry price of the position
      * @param liquidationPrice Liquidation price of the position
      * @return leverage_ The leverage of the position
@@ -966,6 +981,7 @@ library UsdnProtocolLongLibrary {
     /**
      * @notice Check if the safety margin is respected
      * @dev Reverts if not respected
+     * @param s The storage of the protocol
      * @param currentPrice The current price of the asset
      * @param liquidationPrice The liquidation price of the position
      */
@@ -980,6 +996,7 @@ library UsdnProtocolLongLibrary {
      * @notice Retrieve the liquidation penalty assigned to the tick and version corresponding to `tickHash`, if there
      * are positions in it, otherwise retrieve the current setting value from storage
      * @dev This method allows to reuse a pre-computed tickHash if available
+     * @param s The storage of the protocol
      * @param tickHash The tick hash
      * @return liquidationPenalty_ The liquidation penalty, in tick spacing units
      */
@@ -994,6 +1011,7 @@ library UsdnProtocolLongLibrary {
 
     /**
      * @dev Convert a Bitmap index to a signed tick using the tick spacing in storage
+     * @param s The storage of the protocol
      * @param index The index into the Bitmap
      * @return tick_ The tick corresponding to the index, a multiple of the tick spacing
      */
@@ -1019,6 +1037,7 @@ library UsdnProtocolLongLibrary {
 
     /**
      * @notice Calculate the tick without the liquidation penalty
+     * @param s The storage of the protocol
      * @param tick The tick that holds the position
      * @param liquidationPenalty The liquidation penalty of the tick
      * @return tick_ The tick corresponding to the liquidation price without penalty
@@ -1033,6 +1052,7 @@ library UsdnProtocolLongLibrary {
 
     /**
      * @notice Update the state of the contract according to the liquidation effects
+     * @param s The storage of the protocol
      * @param data The liquidation data, which gets mutated by the function
      * @param effects The effects of the liquidations
      */
@@ -1104,6 +1124,7 @@ library UsdnProtocolLongLibrary {
      * @notice Calculates the current imbalance between the vault and long sides
      * @dev If the value is positive, the long trading expo is smaller than the vault trading expo
      * If the trading expo is equal to 0, the imbalance is infinite and int256.max is returned
+     * @param s The storage of the protocol
      * @param vaultBalance The balance of the vault
      * @param longBalance The balance of the long side
      * @param totalExpo The total expo of the long side
@@ -1127,6 +1148,7 @@ library UsdnProtocolLongLibrary {
      * @notice Calculates the current imbalance for the open action checks
      * @dev If the value is positive, the long trading expo is larger than the vault trading expo
      * In case of zero vault balance, the function returns `int256.max` since the resulting imbalance would be infinity
+     * @param s The storage of the protocol
      * @param vaultBalance The balance of the vault
      * @param longBalance The balance of the long side (including the long position to open)
      * @param totalExpo The total expo of the long side (including the long position to open)
@@ -1150,6 +1172,7 @@ library UsdnProtocolLongLibrary {
      * @notice Calculates the tick of the rebalancer position to open
      * @dev The returned tick must be higher than or equal to the minimum leverage of the protocol
      * and lower than or equal to the rebalancer and USDN protocol leverages (lower of the 2)
+     * @param s The storage of the protocol
      * @param lastPrice The last price used to update the protocol
      * @param positionAmount The amount of assets in the position
      * @param rebalancerMaxLeverage The max leverage supported by the rebalancer

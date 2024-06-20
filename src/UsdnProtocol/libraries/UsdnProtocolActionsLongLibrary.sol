@@ -175,6 +175,7 @@ library UsdnProtocolActionsLongLibrary {
      * of the middleware
      * The position is immediately included in the protocol calculations with a temporary entry price (and thus
      * leverage). The validation operation then updates the entry price and leverage with fresher data
+     * @param s The storage of the protocol
      * @param params The parameters for the open position initiation
      * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
      * pending validation)
@@ -247,6 +248,7 @@ library UsdnProtocolActionsLongLibrary {
 
     /**
      * @notice Get the pending action data of the owner, try to validate it and clear it if successful
+     * @param s The storage of the protocol
      * @param validator The address of the validator
      * @param priceData The current price data
      * @return securityDepositValue_ The value of the security deposit
@@ -284,6 +286,7 @@ library UsdnProtocolActionsLongLibrary {
 
     /**
      * @notice Validate an open position action
+     * @param s The storage of the protocol
      * @param pending The pending action data
      * @param priceData The current price data
      * @return isValidated_ Whether the action is validated
@@ -420,6 +423,7 @@ library UsdnProtocolActionsLongLibrary {
      * The position is taken out of the tick and put in a pending state during this operation. Thus, calculations don't
      * consider this position anymore. The exit price (and thus profit) is not yet set definitively and will be done
      * during the `validate` action
+     * @param s The storage of the protocol
      * @param owner The owner of the position
      * @param to The address that will receive the assets
      * @param validator The address that will validate the close action
@@ -475,6 +479,7 @@ library UsdnProtocolActionsLongLibrary {
 
     /**
      * @notice Get the pending action data of the validator, try to validate it and clear it if successful
+     * @param s The storage of the protocol
      * @param validator The validator of the pending action
      * @param priceData The current price data
      * @return securityDepositValue_ The value of the security deposit of the pending action
@@ -513,6 +518,7 @@ library UsdnProtocolActionsLongLibrary {
 
     /**
      * @notice Update protocol balances, liquidate positions if necessary, then validate the close position action
+     * @param s The storage of the protocol
      * @param pending The pending action data
      * @param priceData The current price data
      * @return isValidated_ Whether the action is validated

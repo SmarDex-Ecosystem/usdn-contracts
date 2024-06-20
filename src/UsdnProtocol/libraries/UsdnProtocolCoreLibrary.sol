@@ -184,6 +184,7 @@ library UsdnProtocolCoreLibrary {
 
     /**
      * @notice Calculate the funding rate and the old long exposure
+     * @param s The storage of the protocol
      * @param timestamp The current timestamp
      * @param ema The EMA of the funding rate
      * @return fund_ The funding rate
@@ -258,6 +259,7 @@ library UsdnProtocolCoreLibrary {
      * @notice Get the predicted value of the funding (in asset units) since the last state update for the given
      * timestamp
      * @dev If the provided timestamp is older than the last state update, the result will be zero
+     * @param s The storage of the protocol
      * @param timestamp The current timestamp
      * @param ema The EMA of the funding rate
      * @return fundingAsset_ The number of asset tokens of funding (with asset decimals)
@@ -277,6 +279,7 @@ library UsdnProtocolCoreLibrary {
      * @notice Calculate the long balance taking into account unreflected PnL (but not funding)
      * @dev This function uses the latest total expo, balance and stored price as the reference values, and adds the PnL
      * due to the price change to `currentPrice`
+     * @param s The storage of the protocol
      * @param currentPrice The current price
      * @return available_ The available balance on the long side
      */
@@ -321,6 +324,7 @@ library UsdnProtocolCoreLibrary {
      * @dev All required checks are done in the caller function (_applyPnlAndFunding)
      * @dev If the number of seconds elapsed is greater than or equal to the EMA period, the EMA is updated to the last
      * funding value
+     * @param s The storage of the protocol
      * @param secondsElapsed The number of seconds elapsed since the last protocol action
      * @return The new EMA value
      */
@@ -341,6 +345,7 @@ library UsdnProtocolCoreLibrary {
      * @notice Calculate the protocol fee and apply it to the funding asset amount
      * @dev The funding factor is only adjusted by the fee rate when the funding is negative (vault pays to the long
      * side)
+     * @param s The storage of the protocol
      * @param fund The funding factor
      * @param fundAsset The funding asset amount to be used for the fee calculation
      * @return fee_ The absolute value of the calculated fee
@@ -384,6 +389,7 @@ library UsdnProtocolCoreLibrary {
 
     /**
      * @dev Convert a signed tick to an unsigned index into the Bitmap using the tick spacing in storage
+     * @param s The storage of the protocol
      * @param tick The tick to convert, a multiple of the tick spacing
      * @return index_ The index into the Bitmap
      */
@@ -409,6 +415,7 @@ library UsdnProtocolCoreLibrary {
      * calculate the new liquidation multiplier and the temporary new balances for each side
      * @dev This function updates the state of `_lastPrice`, `_lastUpdateTimestamp`, `_lastFunding`, but does not
      * update the balances. This is left to the caller
+     * @param s The storage of the protocol
      * @param currentPrice The current price
      * @param timestamp The timestamp of the current price
      * @return isPriceRecent_ Whether the price was updated or was already the most recent price
@@ -601,6 +608,7 @@ library UsdnProtocolCoreLibrary {
     /**
      * @notice Remove the pending action from the queue if its tick version doesn't match the current tick version
      * @dev This is only applicable to `ValidateOpenPosition` pending actions
+     * @param s The storage of the protocol
      * @param user The user's address
      * @return securityDepositValue_ The security deposit value of the removed stale pending action
      */
@@ -633,6 +641,7 @@ library UsdnProtocolCoreLibrary {
     /**
      * @notice Add a pending action to the queue
      * @dev This reverts if there is already a pending action for this user
+     * @param s The storage of the protocol
      * @param user The user's address
      * @param action The pending action struct
      * @return amountToRefund_ The security deposit value of the stale pending action
@@ -656,6 +665,7 @@ library UsdnProtocolCoreLibrary {
      * @notice Get the pending action for a user
      * @dev To check for the presence of a pending action, compare `action_.action` to `ProtocolAction.None`. There is
      * a pending action only if the action is different from `ProtocolAction.None`
+     * @param s The storage of the protocol
      * @param user The user's address
      * @return action_ The pending action struct if any, otherwise a zero-initialized struct
      * @return rawIndex_ The raw index of the pending action in the queue
@@ -678,6 +688,7 @@ library UsdnProtocolCoreLibrary {
     /**
      * @notice Get the pending action for a user
      * @dev This function reverts if there is no pending action for the user
+     * @param s The storage of the protocol
      * @param user The user's address
      * @return action_ The pending action struct
      * @return rawIndex_ The raw index of the pending action in the queue
@@ -695,6 +706,7 @@ library UsdnProtocolCoreLibrary {
 
     /**
      * @notice Clear the pending action for a user
+     * @param s The storage of the protocol
      * @param user The user's address
      * @param rawIndex The rawIndex of the pending action in the queue
      */
@@ -709,6 +721,7 @@ library UsdnProtocolCoreLibrary {
      * pending action ever gets stuck due to somethingpublic reverting unexpectedly
      * The caller must wait at least 1 hour after the validation deadline to call this function. This is to give the
      * chance to normal users to validate the action if possible
+     * @param s The storage of the protocol
      * @param rawIndex The raw index of the pending action in the queue
      * @param to Where the retrieved funds should be sent (security deposit, assets, usdn)
      * @param cleanup If `true`, will attempt to perform more cleanup at the risk of reverting. Always try `true` first

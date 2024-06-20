@@ -1,5 +1,5 @@
 {
   "include": "src/**/*.sol",
-  "exclude": ["**/mock/**/*.sol", "src/vendored/**/*.sol", "src/**/*Library.sol"],
+  "exclude": ["**/mock/**/*.sol", "src/vendored/**/*.sol"],
   "constructorNatspec": true
 }
