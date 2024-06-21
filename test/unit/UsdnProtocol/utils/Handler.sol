@@ -549,6 +549,13 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return coreLib._removeStalePendingAction(s, user);
     }
 
+    function i_calculateFee(int256 fund, int256 fundAsset)
+        external
+        returns (int256 fee_, int256 fundWithFee_, int256 fundAssetWithFee_)
+    {
+        return coreLib._calculateFee(s, fund, fundAsset);
+    }
+
     function i_flashClosePosition(
         PositionId memory posId,
         uint128 neutralPrice,
