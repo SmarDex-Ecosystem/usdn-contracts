@@ -5,17 +5,17 @@ import { IUsdnProtocolLong } from "../interfaces/UsdnProtocol/IUsdnProtocolLong.
 import { Position, PositionId } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
 import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
-import { UsdnProtocolLongLibrary as longLib } from "./libraries/UsdnProtocolLongLibrary.sol";
+import { UsdnProtocolLongLibrary as Long } from "./libraries/UsdnProtocolLongLibrary.sol";
 
 abstract contract UsdnProtocolLongEntry is UsdnProtocolStorage, IUsdnProtocolLong {
     /// @inheritdoc IUsdnProtocolLong
     function minTick() external view returns (int24 tick_) {
-        return longLib.minTick(s);
+        return Long.minTick(s);
     }
 
     /// @inheritdoc IUsdnProtocolLong
     function maxTick() external view returns (int24 tick_) {
-        return longLib.maxTick(s);
+        return Long.maxTick(s);
     }
 
     /// @inheritdoc IUsdnProtocolLong
@@ -24,12 +24,12 @@ abstract contract UsdnProtocolLongEntry is UsdnProtocolStorage, IUsdnProtocolLon
         view
         returns (Position memory pos_, uint8 liquidationPenalty_)
     {
-        return longLib.getLongPosition(s, posId);
+        return Long.getLongPosition(s, posId);
     }
 
     /// @inheritdoc IUsdnProtocolLong
     function getMinLiquidationPrice(uint128 price) external view returns (uint128 liquidationPrice_) {
-        return longLib.getMinLiquidationPrice(s, price);
+        return Long.getMinLiquidationPrice(s, price);
     }
 
     /// @inheritdoc IUsdnProtocolLong
@@ -38,12 +38,12 @@ abstract contract UsdnProtocolLongEntry is UsdnProtocolStorage, IUsdnProtocolLon
         view
         returns (int256 value_)
     {
-        return longLib.getPositionValue(s, posId, price, timestamp);
+        return Long.getPositionValue(s, posId, price, timestamp);
     }
 
     /// @inheritdoc IUsdnProtocolLong
     function getEffectiveTickForPrice(uint128 price) external view returns (int24 tick_) {
-        return longLib.getEffectiveTickForPrice(s, price);
+        return Long.getEffectiveTickForPrice(s, price);
     }
 
     /// @inheritdoc IUsdnProtocolLong
@@ -54,12 +54,12 @@ abstract contract UsdnProtocolLongEntry is UsdnProtocolStorage, IUsdnProtocolLon
         HugeUint.Uint512 memory accumulator,
         int24 tickSpacing
     ) external pure returns (int24 tick_) {
-        return longLib.getEffectiveTickForPrice(price, assetPrice, longTradingExpo, accumulator, tickSpacing);
+        return Long.getEffectiveTickForPrice(price, assetPrice, longTradingExpo, accumulator, tickSpacing);
     }
 
     /// @inheritdoc IUsdnProtocolLong
     function getEffectivePriceForTick(int24 tick) external view returns (uint128 price_) {
-        return longLib.getEffectivePriceForTick(s, tick);
+        return Long.getEffectivePriceForTick(s, tick);
     }
 
     /// @inheritdoc IUsdnProtocolLong
@@ -69,7 +69,7 @@ abstract contract UsdnProtocolLongEntry is UsdnProtocolStorage, IUsdnProtocolLon
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator
     ) external pure returns (uint128 price_) {
-        return longLib.getEffectivePriceForTick(tick, assetPrice, longTradingExpo, accumulator);
+        return Long.getEffectivePriceForTick(tick, assetPrice, longTradingExpo, accumulator);
     }
 
     /// @inheritdoc IUsdnProtocolLong
@@ -78,16 +78,16 @@ abstract contract UsdnProtocolLongEntry is UsdnProtocolStorage, IUsdnProtocolLon
         view
         returns (int256 available_)
     {
-        return longLib.longAssetAvailableWithFunding(s, currentPrice, timestamp);
+        return Long.longAssetAvailableWithFunding(s, currentPrice, timestamp);
     }
 
     /// @inheritdoc IUsdnProtocolLong
     function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256 expo_) {
-        return longLib.longTradingExpoWithFunding(s, currentPrice, timestamp);
+        return Long.longTradingExpoWithFunding(s, currentPrice, timestamp);
     }
 
     /// @inheritdoc IUsdnProtocolLong
     function getTickLiquidationPenalty(int24 tick) external view returns (uint8 liquidationPenalty_) {
-        return longLib.getTickLiquidationPenalty(s, tick);
+        return Long.getTickLiquidationPenalty(s, tick);
     }
 }

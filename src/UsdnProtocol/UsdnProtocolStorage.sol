@@ -14,12 +14,11 @@ import { IUsdnProtocolErrors } from "../interfaces/UsdnProtocol/IUsdnProtocolErr
 import { IUsdnProtocolStorage } from "../interfaces/UsdnProtocol/IUsdnProtocolStorage.sol";
 import { PendingAction, TickData } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Position } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
 import { DoubleEndedQueue } from "../libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
 import { InitializableReentrancyGuard } from "../utils/InitializableReentrancyGuard.sol";
-import { UsdnProtocolActionsLongLibrary as actionsLongLib } from "./libraries/UsdnProtocolActionsLongLibrary.sol";
-import { UsdnProtocolConstantsLibrary as constantsLib } from "./libraries/UsdnProtocolConstantsLibrary.sol";
+import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./libraries/UsdnProtocolActionsLongLibrary.sol";
+import { UsdnProtocolConstantsLibrary as Constants } from "./libraries/UsdnProtocolConstantsLibrary.sol";
 
 contract UsdnProtocolStorage is
     IUsdnProtocolErrors,
@@ -52,8 +51,8 @@ contract UsdnProtocolStorage is
         address feeCollector
     ) Ownable(msg.sender) {
         // parameters
-        s._minLeverage = 10 ** constantsLib.LEVERAGE_DECIMALS + 10 ** 12;
-        s._maxLeverage = 10 * 10 ** constantsLib.LEVERAGE_DECIMALS;
+        s._minLeverage = 10 ** Constants.LEVERAGE_DECIMALS + 10 ** 12;
+        s._maxLeverage = 10 * 10 ** Constants.LEVERAGE_DECIMALS;
         s._validationDeadline = 90 minutes;
         s._safetyMarginBps = 200; // 2%
         s._liquidationIteration = 1;
@@ -61,7 +60,7 @@ contract UsdnProtocolStorage is
         s._rebalancerBonusBps = 8000; // 80%
         s._liquidationPenalty = 2; // 200 ticks -> ~2.02%
         s._EMAPeriod = 5 days;
-        s._fundingSF = 12 * 10 ** (constantsLib.FUNDING_SF_DECIMALS - 2);
+        s._fundingSF = 12 * 10 ** (Constants.FUNDING_SF_DECIMALS - 2);
         s._feeThreshold = 1 ether;
         s._openExpoImbalanceLimitBps = 500;
         s._withdrawalExpoImbalanceLimitBps = 600;
@@ -74,7 +73,7 @@ contract UsdnProtocolStorage is
         s._securityDepositValue = 0.5 ether;
 
         // Long positions
-        s._EMA = int256(3 * 10 ** (constantsLib.FUNDING_RATE_DECIMALS - 4));
+        s._EMA = int256(3 * 10 ** (Constants.FUNDING_RATE_DECIMALS - 4));
 
         // since all USDN must be minted by the protocol, we check that the total supply is 0
         if (usdn.totalSupply() != 0) {
@@ -87,14 +86,14 @@ contract UsdnProtocolStorage is
         s._usdn = usdn;
         s._sdex = sdex;
         // those tokens should have 18 decimals
-        if (usdn.decimals() != constantsLib.TOKENS_DECIMALS || sdex.decimals() != constantsLib.TOKENS_DECIMALS) {
+        if (usdn.decimals() != Constants.TOKENS_DECIMALS || sdex.decimals() != Constants.TOKENS_DECIMALS) {
             revert UsdnProtocolInvalidTokenDecimals();
         }
 
         s._usdnMinDivisor = usdn.MIN_DIVISOR();
         s._asset = asset;
         s._assetDecimals = asset.decimals();
-        if (s._assetDecimals < constantsLib.FUNDING_SF_DECIMALS) {
+        if (s._assetDecimals < Constants.FUNDING_SF_DECIMALS) {
             revert UsdnProtocolInvalidAssetDecimals(s._assetDecimals);
         }
         s._oracleMiddleware = oracleMiddleware;
@@ -110,67 +109,67 @@ contract UsdnProtocolStorage is
 
     /// @inheritdoc IUsdnProtocolStorage
     function LEVERAGE_DECIMALS() external pure returns (uint8) {
-        return constantsLib.LEVERAGE_DECIMALS;
+        return Constants.LEVERAGE_DECIMALS;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
     function FUNDING_RATE_DECIMALS() external pure returns (uint8) {
-        return constantsLib.FUNDING_RATE_DECIMALS;
+        return Constants.FUNDING_RATE_DECIMALS;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
     function TOKENS_DECIMALS() external pure returns (uint8) {
-        return constantsLib.TOKENS_DECIMALS;
+        return Constants.TOKENS_DECIMALS;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
     function LIQUIDATION_MULTIPLIER_DECIMALS() external pure returns (uint8) {
-        return constantsLib.LIQUIDATION_MULTIPLIER_DECIMALS;
+        return Constants.LIQUIDATION_MULTIPLIER_DECIMALS;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
     function FUNDING_SF_DECIMALS() external pure returns (uint8) {
-        return constantsLib.FUNDING_SF_DECIMALS;
+        return Constants.FUNDING_SF_DECIMALS;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
     function SDEX_BURN_ON_DEPOSIT_DIVISOR() external pure returns (uint256) {
-        return constantsLib.SDEX_BURN_ON_DEPOSIT_DIVISOR;
+        return Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
     function BPS_DIVISOR() external pure returns (uint256) {
-        return constantsLib.BPS_DIVISOR;
+        return Constants.BPS_DIVISOR;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
     function MAX_LIQUIDATION_ITERATION() external pure returns (uint16) {
-        return constantsLib.MAX_LIQUIDATION_ITERATION;
+        return Constants.MAX_LIQUIDATION_ITERATION;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
     function NO_POSITION_TICK() external pure returns (int24) {
-        return constantsLib.NO_POSITION_TICK;
+        return Constants.NO_POSITION_TICK;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
     function DEAD_ADDRESS() external pure returns (address) {
-        return constantsLib.DEAD_ADDRESS;
+        return Constants.DEAD_ADDRESS;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
     function MIN_USDN_SUPPLY() external pure returns (uint256) {
-        return constantsLib.MIN_USDN_SUPPLY;
+        return Constants.MIN_USDN_SUPPLY;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
     function MIN_INIT_DEPOSIT() external pure returns (uint256) {
-        return constantsLib.MIN_INIT_DEPOSIT;
+        return Constants.MIN_INIT_DEPOSIT;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
     function MAX_ACTIONABLE_PENDING_ACTIONS() external pure returns (uint256) {
-        return constantsLib.MAX_ACTIONABLE_PENDING_ACTIONS;
+        return Constants.MAX_ACTIONABLE_PENDING_ACTIONS;
     }
 
     /* -------------------------------------------------------------------------- */
@@ -412,14 +411,14 @@ contract UsdnProtocolStorage is
 
     /// @inheritdoc IUsdnProtocolStorage
     function getTickData(int24 tick) external view returns (TickData memory) {
-        bytes32 cachedTickHash = actionsLongLib.tickHash(tick, s._tickVersion[tick]);
+        bytes32 cachedTickHash = ActionsLong.tickHash(tick, s._tickVersion[tick]);
         return s._tickData[cachedTickHash];
     }
 
     /// @inheritdoc IUsdnProtocolStorage
     function getCurrentLongPosition(int24 tick, uint256 index) external view returns (Position memory) {
         uint256 version = s._tickVersion[tick];
-        bytes32 cachedTickHash = actionsLongLib.tickHash(tick, version);
+        bytes32 cachedTickHash = ActionsLong.tickHash(tick, version);
         return s._longPositions[cachedTickHash][index];
     }
 

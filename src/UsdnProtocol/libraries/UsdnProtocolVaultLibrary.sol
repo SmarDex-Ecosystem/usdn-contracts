@@ -12,10 +12,10 @@ import { Position, PositionId } from "../../interfaces/UsdnProtocol/IUsdnProtoco
 import { IUsdnProtocolVault } from "../../interfaces/UsdnProtocol/IUsdnProtocolVault.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
 import { Storage } from "../UsdnProtocolStorage.sol";
-import { UsdnProtocolActionsLongLibrary as actionsLongLib } from "./UsdnProtocolActionsLongLibrary.sol";
-import { UsdnProtocolActionsUtilsLibrary as actionsUtilsLib } from "./UsdnProtocolActionsUtilsLibrary.sol";
-import { UsdnProtocolConstantsLibrary as constantsLib } from "./UsdnProtocolConstantsLibrary.sol";
-import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
+import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./UsdnProtocolActionsLongLibrary.sol";
+import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./UsdnProtocolActionsUtilsLibrary.sol";
+import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
+import { UsdnProtocolCoreLibrary as Core } from "./UsdnProtocolCoreLibrary.sol";
 
 library UsdnProtocolVaultLibrary {
     using SafeCast for int256;
@@ -53,7 +53,7 @@ library UsdnProtocolVaultLibrary {
         returns (uint256 usdnSharesExpected_, uint256 sdexToBurn_)
     {
         // apply fees on price
-        uint128 depositPriceWithFees = price - price * s._vaultFeeBps / uint128(constantsLib.BPS_DIVISOR);
+        uint128 depositPriceWithFees = price - price * s._vaultFeeBps / uint128(Constants.BPS_DIVISOR);
         usdnSharesExpected_ = _calcMintUsdnShares(
             s,
             amount,
@@ -71,7 +71,7 @@ library UsdnProtocolVaultLibrary {
         returns (uint256 assetExpected_)
     {
         // apply fees on price
-        uint128 withdrawalPriceWithFees = (price + price * s._vaultFeeBps / constantsLib.BPS_DIVISOR).toUint128();
+        uint128 withdrawalPriceWithFees = (price + price * s._vaultFeeBps / Constants.BPS_DIVISOR).toUint128();
         int256 available = vaultAssetAvailableWithFunding(s, withdrawalPriceWithFees, timestamp);
         if (available < 0) {
             return 0;
@@ -89,13 +89,13 @@ library UsdnProtocolVaultLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
         }
 
-        int256 ema = coreLib.calcEMA(s._lastFunding, timestamp - s._lastUpdateTimestamp, s._EMAPeriod, s._EMA);
-        (int256 fundAsset,) = coreLib._fundingAsset(s, timestamp, ema);
+        int256 ema = Core.calcEMA(s._lastFunding, timestamp - s._lastUpdateTimestamp, s._EMAPeriod, s._EMA);
+        (int256 fundAsset,) = Core._fundingAsset(s, timestamp, ema);
 
         if (fundAsset < 0) {
             available_ = _vaultAssetAvailable(s, currentPrice).safeAdd(fundAsset);
         } else {
-            int256 fee = fundAsset * coreLib._toInt256(s._protocolFeeBps) / int256(constantsLib.BPS_DIVISOR);
+            int256 fee = fundAsset * Core._toInt256(s._protocolFeeBps) / int256(Constants.BPS_DIVISOR);
             available_ = _vaultAssetAvailable(s, currentPrice).safeAdd(fundAsset - fee);
         }
     }
@@ -109,7 +109,7 @@ library UsdnProtocolVaultLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolNoPendingAction();
         }
         uint128 rawIndex = uint128(pendingActionIndex - 1);
-        coreLib._removeBlockedPendingAction(s, rawIndex, to, true);
+        Core._removeBlockedPendingAction(s, rawIndex, to, true);
     }
 
     /// @notice See {IUsdnProtocolVault}
@@ -121,7 +121,7 @@ library UsdnProtocolVaultLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolNoPendingAction();
         }
         uint128 rawIndex = uint128(pendingActionIndex - 1);
-        coreLib._removeBlockedPendingAction(s, rawIndex, to, false);
+        Core._removeBlockedPendingAction(s, rawIndex, to, false);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -142,19 +142,19 @@ library UsdnProtocolVaultLibrary {
         uint128 longAmount,
         uint128 depositAmount
     ) public view {
-        int256 longTradingExpo = coreLib._toInt256(positionTotalExpo - longAmount);
+        int256 longTradingExpo = Core._toInt256(positionTotalExpo - longAmount);
         int256 depositLimit = s._depositExpoImbalanceLimitBps;
         if (depositLimit != 0) {
-            int256 imbalanceBps = (coreLib._toInt256(depositAmount) - longTradingExpo)
-                * int256(constantsLib.BPS_DIVISOR) / longTradingExpo;
+            int256 imbalanceBps =
+                (Core._toInt256(depositAmount) - longTradingExpo) * int256(Constants.BPS_DIVISOR) / longTradingExpo;
             if (imbalanceBps > depositLimit) {
                 revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
             }
         }
         int256 openLimit = s._openExpoImbalanceLimitBps;
         if (openLimit != 0) {
-            int256 imbalanceBps = (longTradingExpo - coreLib._toInt256(depositAmount))
-                * int256(constantsLib.BPS_DIVISOR) / coreLib._toInt256(depositAmount);
+            int256 imbalanceBps = (longTradingExpo - Core._toInt256(depositAmount)) * int256(Constants.BPS_DIVISOR)
+                / Core._toInt256(depositAmount);
             if (imbalanceBps > openLimit) {
                 revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
             }
@@ -177,15 +177,15 @@ library UsdnProtocolVaultLibrary {
         // calculate the total minted amount of USDN shares (vault balance and total supply are zero for now, we assume
         // the USDN price to be $1 per token)
         uint256 usdnSharesToMint = _calcMintUsdnShares(s, amount, 0, 0, price);
-        uint256 minUsdnSharesSupply = s._usdn.convertToShares(constantsLib.MIN_USDN_SUPPLY);
+        uint256 minUsdnSharesSupply = s._usdn.convertToShares(Constants.MIN_USDN_SUPPLY);
         // mint the minimum amount and send it to the dead address so it can never be removed from the total supply
-        s._usdn.mintShares(constantsLib.DEAD_ADDRESS, minUsdnSharesSupply);
+        s._usdn.mintShares(Constants.DEAD_ADDRESS, minUsdnSharesSupply);
         // mint the user's share
         uint256 mintSharesToUser = usdnSharesToMint - minUsdnSharesSupply;
         uint256 mintedTokens = s._usdn.mintShares(msg.sender, mintSharesToUser);
 
         emit IUsdnProtocolEvents.ValidatedDeposit(
-            constantsLib.DEAD_ADDRESS, constantsLib.DEAD_ADDRESS, 0, constantsLib.MIN_USDN_SUPPLY, block.timestamp
+            Constants.DEAD_ADDRESS, Constants.DEAD_ADDRESS, 0, Constants.MIN_USDN_SUPPLY, block.timestamp
         );
         emit IUsdnProtocolEvents.ValidatedDeposit(msg.sender, msg.sender, amount, mintedTokens, block.timestamp);
     }
@@ -217,7 +217,7 @@ library UsdnProtocolVaultLibrary {
             timestamp: uint40(block.timestamp)
         });
         // save the position and update the state
-        (posId.tickVersion, posId.index,) = actionsUtilsLib._saveNewPosition(s, posId.tick, long, liquidationPenalty);
+        (posId.tickVersion, posId.index,) = ActionsUtils._saveNewPosition(s, posId.tick, long, liquidationPenalty);
         s._balanceLong += long.amount;
         emit IUsdnProtocolEvents.InitiatedOpenPosition(
             msg.sender, msg.sender, long.timestamp, totalExpo, long.amount, price, posId
@@ -254,7 +254,7 @@ library UsdnProtocolVaultLibrary {
         uint128 oldPrice
     ) public pure returns (int256 available_) {
         int256 totalBalance = balanceLong.toInt256().safeAdd(balanceVault.toInt256());
-        int256 newLongBalance = coreLib._longAssetAvailable(totalExpo, balanceLong, newPrice, oldPrice);
+        int256 newLongBalance = Core._longAssetAvailable(totalExpo, balanceLong, newPrice, oldPrice);
 
         available_ = totalBalance.safeSub(newLongBalance);
     }
@@ -268,7 +268,7 @@ library UsdnProtocolVaultLibrary {
      */
     function _tickHash(Storage storage s, int24 tick) public view returns (bytes32 hash_, uint256 version_) {
         version_ = s._tickVersion[tick];
-        hash_ = actionsLongLib.tickHash(tick, version_);
+        hash_ = ActionsLong.tickHash(tick, version_);
     }
 
     /**
@@ -303,9 +303,7 @@ library UsdnProtocolVaultLibrary {
         returns (uint256 price_)
     {
         price_ = FixedPointMathLib.fullMulDiv(
-            vaultBalance,
-            uint256(assetPrice) * 10 ** constantsLib.TOKENS_DECIMALS,
-            usdnTotalSupply * 10 ** assetDecimals
+            vaultBalance, uint256(assetPrice) * 10 ** Constants.TOKENS_DECIMALS, usdnTotalSupply * 10 ** assetDecimals
         );
     }
 
@@ -316,7 +314,7 @@ library UsdnProtocolVaultLibrary {
      * @return sdexToBurn_ The amount of SDEX to burn for the given USDN amount
      */
     function _calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) public pure returns (uint256 sdexToBurn_) {
-        sdexToBurn_ = FixedPointMathLib.fullMulDiv(usdnAmount, sdexBurnRatio, constantsLib.SDEX_BURN_ON_DEPOSIT_DIVISOR);
+        sdexToBurn_ = FixedPointMathLib.fullMulDiv(usdnAmount, sdexBurnRatio, Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR);
     }
 
     /**
@@ -334,7 +332,7 @@ library UsdnProtocolVaultLibrary {
     {
         totalSupply_ = FixedPointMathLib.fullMulDiv(
             vaultBalance,
-            uint256(assetPrice) * 10 ** constantsLib.TOKENS_DECIMALS,
+            uint256(assetPrice) * 10 ** Constants.TOKENS_DECIMALS,
             uint256(targetPrice) * 10 ** assetDecimals
         );
     }
@@ -406,7 +404,7 @@ library UsdnProtocolVaultLibrary {
             // amount of shares
             return s._usdn.convertToShares(
                 FixedPointMathLib.fullMulDiv(
-                    amount, price, 10 ** (s._assetDecimals + s._priceFeedDecimals - constantsLib.TOKENS_DECIMALS)
+                    amount, price, 10 ** (s._assetDecimals + s._priceFeedDecimals - Constants.TOKENS_DECIMALS)
                 )
             );
         }

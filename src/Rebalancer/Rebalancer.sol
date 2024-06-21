@@ -10,8 +10,7 @@ import { ERC165, IERC165 } from "@openzeppelin/contracts/utils/introspection/ERC
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { UsdnProtocolConstantsLibrary as constantsLib } from
-    "../UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
+import { UsdnProtocolConstantsLibrary as Constants } from "../UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IRebalancer } from "../interfaces/Rebalancer/IRebalancer.sol";
 import { IOwnershipCallback } from "../interfaces/UsdnProtocol/IOwnershipCallback.sol";
@@ -140,7 +139,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         asset.forceApprove(address(usdnProtocol), type(uint256).max);
 
         // indicate that there are no position for version 0
-        _positionData[0].tick = constantsLib.NO_POSITION_TICK;
+        _positionData[0].tick = Constants.NO_POSITION_TICK;
     }
 
     /// @notice To allow this contract to receive ether refunded by the USDN protocol
@@ -496,7 +495,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
             if (data.currentPositionData.amount == 0) {
                 PositionData memory newPositionData;
-                newPositionData.tick = constantsLib.NO_POSITION_TICK;
+                newPositionData.tick = Constants.NO_POSITION_TICK;
                 _positionData[data.positionVersion] = newPositionData;
             } else {
                 _positionData[data.positionVersion].amount = data.currentPositionData.amount;
@@ -549,7 +548,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         ++positionVersion;
         _positionVersion = positionVersion;
 
-        if (newPosId.tick != constantsLib.NO_POSITION_TICK) {
+        if (newPosId.tick != Constants.NO_POSITION_TICK) {
             _positionData[positionVersion] = PositionData({
                 entryAccMultiplier: accMultiplier,
                 tickVersion: newPosId.tickVersion,
@@ -561,7 +560,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
             // Reset the pending assets amount as they are all used in the new position
             _pendingAssetsAmount = 0;
         } else {
-            _positionData[positionVersion].tick = constantsLib.NO_POSITION_TICK;
+            _positionData[positionVersion].tick = Constants.NO_POSITION_TICK;
         }
 
         emit PositionVersionUpdated(positionVersion);

@@ -252,51 +252,18 @@ struct InitiateOpenPositionParams {
     Permit2TokenBitfield.Bitfield permit2TokenBitfield;
 }
 
+/**
+ * @notice Parameters for the internal `_initiateClosePosition` function
+ * @param posId The position id
+ * @param amountToClose The amount to close
+ * @param to The address that will receive the closed amount
+ * @param validator The address that will validate the close position
+ */
 struct InitiateClosePositionParams {
     PositionId posId;
     uint128 amountToClose;
     address to;
     address payable validator;
-}
-
-/**
- * @dev Structure to hold the transient data during `_initiateDeposit`
- * @param pendingActionPrice The adjusted price with position fees applied
- * @param isLiquidationPending Whether some liquidations still need to be performed
- * @param totalExpo The total expo of the long side
- * @param balanceLong The long side balance
- * @param balanceVault The vault side balance, calculated according to the pendingActionPrice
- * @param usdnTotalShares Total minted shares of USDN
- * @param sdexToBurn The amount of SDEX to burn for the deposit
- */
-struct InitiateDepositData {
-    uint128 pendingActionPrice;
-    bool isLiquidationPending;
-    uint256 totalExpo;
-    uint256 balanceLong;
-    uint256 balanceVault;
-    uint256 usdnTotalShares;
-    uint256 sdexToBurn;
-}
-
-/**
- * @dev Structure to hold the transient data during `_initiateWithdrawal`
- * @param pendingActionPrice The adjusted price with position fees applied
- * @param usdnTotalShares The total shares supply of USDN
- * @param totalExpo The current total expo
- * @param balanceLong The current long balance
- * @param balanceVault The vault balance, adjusted according to the pendingActionPrice
- * @param withdrawalAmount The predicted amount of assets that will be withdrawn
- * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
- */
-struct WithdrawalData {
-    uint128 pendingActionPrice;
-    uint256 usdnTotalShares;
-    uint256 totalExpo;
-    uint256 balanceLong;
-    uint256 balanceVault;
-    uint256 withdrawalAmount;
-    bool isLiquidationPending;
 }
 
 /**
@@ -356,33 +323,6 @@ struct InitiateOpenPositionData {
     PositionId posId;
     uint8 liquidationPenalty;
     uint128 positionTotalExpo;
-    bool isLiquidationPending;
-}
-
-/**
- * @notice Structure to hold the temporary data during liquidation
- * @param tempLongBalance The temporary long balance
- * @param tempVaultBalance The temporary vault balance
- * @param currentTick The current tick (tick corresponding to the current asset price)
- * @param iTick Tick iterator index
- * @param totalExpoToRemove The total expo to remove due to the liquidation of some ticks
- * @param accumulatorValueToRemove The value to remove from the liquidation multiplier accumulator, due to the
- * liquidation of some ticks
- * @param longTradingExpo The long trading expo
- * @param currentPrice The current price of the asset
- * @param accumulator The liquidation multiplier accumulator before the liquidation
- * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
- */
-struct LiquidationData {
-    int256 tempLongBalance;
-    int256 tempVaultBalance;
-    int24 currentTick;
-    int24 iTick;
-    uint256 totalExpoToRemove;
-    uint256 accumulatorValueToRemove;
-    uint256 longTradingExpo;
-    uint256 currentPrice;
-    HugeUint.Uint512 accumulator;
     bool isLiquidationPending;
 }
 

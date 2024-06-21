@@ -11,26 +11,24 @@ import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocol
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import {
     DepositPendingAction,
-    InitiateDepositData,
     LongPendingAction,
     PendingAction,
     Position,
     PositionId,
     PreviousActionsData,
     ProtocolAction,
-    WithdrawalData,
     WithdrawalPendingAction
 } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { HugeUint } from "../../libraries/HugeUint.sol";
 import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
 import { Storage } from "../UsdnProtocolStorage.sol";
-import { UsdnProtocolActionsLongLibrary as actionsLongLib } from "./UsdnProtocolActionsLongLibrary.sol";
-import { UsdnProtocolActionsUtilsLibrary as actionsUtilsLib } from "./UsdnProtocolActionsUtilsLibrary.sol";
-import { UsdnProtocolConstantsLibrary as constantsLib } from "./UsdnProtocolConstantsLibrary.sol";
-import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
-import { UsdnProtocolLongLibrary as longLib } from "./UsdnProtocolLongLibrary.sol";
-import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
+import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./UsdnProtocolActionsLongLibrary.sol";
+import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./UsdnProtocolActionsUtilsLibrary.sol";
+import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
+import { UsdnProtocolCoreLibrary as Core } from "./UsdnProtocolCoreLibrary.sol";
+import { UsdnProtocolLongLibrary as Long } from "./UsdnProtocolLongLibrary.sol";
+import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.sol";
 
 library UsdnProtocolActionsVaultLibrary {
     using SafeTransferLib for address;
@@ -40,6 +38,46 @@ library UsdnProtocolActionsVaultLibrary {
     using SignedMath for int256;
     using HugeUint for HugeUint.Uint512;
     using Permit2TokenBitfield for Permit2TokenBitfield.Bitfield;
+
+    /**
+     * @dev Structure to hold the transient data during `_initiateDeposit`
+     * @param pendingActionPrice The adjusted price with position fees applied
+     * @param isLiquidationPending Whether some liquidations still need to be performed
+     * @param totalExpo The total expo of the long side
+     * @param balanceLong The long side balance
+     * @param balanceVault The vault side balance, calculated according to the pendingActionPrice
+     * @param usdnTotalShares Total minted shares of USDN
+     * @param sdexToBurn The amount of SDEX to burn for the deposit
+     */
+    struct InitiateDepositData {
+        uint128 pendingActionPrice;
+        bool isLiquidationPending;
+        uint256 totalExpo;
+        uint256 balanceLong;
+        uint256 balanceVault;
+        uint256 usdnTotalShares;
+        uint256 sdexToBurn;
+    }
+
+    /**
+     * @dev Structure to hold the transient data during `_initiateWithdrawal`
+     * @param pendingActionPrice The adjusted price with position fees applied
+     * @param usdnTotalShares The total shares supply of USDN
+     * @param totalExpo The current total expo
+     * @param balanceLong The current long balance
+     * @param balanceVault The vault balance, adjusted according to the pendingActionPrice
+     * @param withdrawalAmount The predicted amount of assets that will be withdrawn
+     * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
+     */
+    struct WithdrawalData {
+        uint128 pendingActionPrice;
+        uint256 usdnTotalShares;
+        uint256 totalExpo;
+        uint256 balanceLong;
+        uint256 balanceVault;
+        uint256 withdrawalAmount;
+        bool isLiquidationPending;
+    }
 
     /* -------------------------------------------------------------------------- */
     /*                              Public functions                              */
@@ -187,7 +225,7 @@ library UsdnProtocolActionsVaultLibrary {
         int256 newVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault).safeAdd(int256(depositValue));
 
         int256 imbalanceBps =
-            newVaultExpo.safeSub(currentLongExpo).safeMul(int256(constantsLib.BPS_DIVISOR)).safeDiv(currentLongExpo);
+            newVaultExpo.safeSub(currentLongExpo).safeMul(int256(Constants.BPS_DIVISOR)).safeDiv(currentLongExpo);
 
         if (imbalanceBps >= depositExpoImbalanceLimitBps) {
             revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
@@ -222,7 +260,7 @@ library UsdnProtocolActionsVaultLibrary {
         }
 
         int256 imbalanceBps = (totalExpo - s._balanceLong).toInt256().safeSub(newVaultExpo).safeMul(
-            int256(constantsLib.BPS_DIVISOR)
+            int256(Constants.BPS_DIVISOR)
         ).safeDiv(newVaultExpo);
 
         if (imbalanceBps >= withdrawalExpoImbalanceLimitBps) {
@@ -248,11 +286,11 @@ library UsdnProtocolActionsVaultLibrary {
             s,
             ProtocolAction.InitiateDeposit,
             block.timestamp,
-            actionsUtilsLib._calcActionId(validator, uint128(block.timestamp)),
+            ActionsUtils._calcActionId(validator, uint128(block.timestamp)),
             currentPriceData
         );
 
-        (, data_.isLiquidationPending) = longLib._applyPnlAndFundingAndLiquidate(
+        (, data_.isLiquidationPending) = Long._applyPnlAndFundingAndLiquidate(
             s,
             currentPrice.neutralPrice,
             currentPrice.timestamp,
@@ -270,25 +308,25 @@ library UsdnProtocolActionsVaultLibrary {
 
         // apply fees on price
         data_.pendingActionPrice =
-            (currentPrice.price - currentPrice.price * s._vaultFeeBps / constantsLib.BPS_DIVISOR).toUint128();
+            (currentPrice.price - currentPrice.price * s._vaultFeeBps / Constants.BPS_DIVISOR).toUint128();
 
         data_.totalExpo = s._totalExpo;
         data_.balanceLong = s._balanceLong;
-        data_.balanceVault = vaultLib._vaultAssetAvailable(
+        data_.balanceVault = Vault._vaultAssetAvailable(
             data_.totalExpo, s._balanceVault, data_.balanceLong, data_.pendingActionPrice, s._lastPrice
         ).toUint256();
         data_.usdnTotalShares = s._usdn.totalShares();
 
         // calculate the amount of SDEX tokens to burn
         uint256 usdnSharesToMintEstimated =
-            vaultLib._calcMintUsdnShares(s, amount, data_.balanceVault, data_.usdnTotalShares, data_.pendingActionPrice);
+            Vault._calcMintUsdnShares(s, amount, data_.balanceVault, data_.usdnTotalShares, data_.pendingActionPrice);
         uint256 usdnToMintEstimated = s._usdn.convertToTokens(usdnSharesToMintEstimated);
         // we want to at least mint 1 wei of USDN
         if (usdnToMintEstimated == 0) {
             revert IUsdnProtocolErrors.UsdnProtocolDepositTooSmall();
         }
         uint32 burnRatio = s._sdexBurnOnDepositRatio;
-        data_.sdexToBurn = vaultLib._calcSdexToBurn(usdnToMintEstimated, burnRatio);
+        data_.sdexToBurn = Vault._calcSdexToBurn(usdnToMintEstimated, burnRatio);
         // we want to at least burn 1 wei of SDEX if SDEX burning is enabled
         if (burnRatio != 0 && data_.sdexToBurn == 0) {
             revert IUsdnProtocolErrors.UsdnProtocolDepositTooSmall();
@@ -328,7 +366,7 @@ library UsdnProtocolActionsVaultLibrary {
             usdnTotalShares: data.usdnTotalShares
         });
 
-        amountToRefund_ = coreLib._addPendingAction(s, validator, coreLib._convertDepositPendingAction(pendingAction));
+        amountToRefund_ = Core._addPendingAction(s, validator, Core._convertDepositPendingAction(pendingAction));
     }
 
     /**
@@ -381,9 +419,9 @@ library UsdnProtocolActionsVaultLibrary {
         if (data.sdexToBurn > 0) {
             // send SDEX to the dead address
             if (permit2TokenBitfield.useForSdex()) {
-                address(s._sdex).permit2TransferFrom(user, constantsLib.DEAD_ADDRESS, data.sdexToBurn);
+                address(s._sdex).permit2TransferFrom(user, Constants.DEAD_ADDRESS, data.sdexToBurn);
             } else {
-                address(s._sdex).safeTransferFrom(user, constantsLib.DEAD_ADDRESS, data.sdexToBurn);
+                address(s._sdex).safeTransferFrom(user, Constants.DEAD_ADDRESS, data.sdexToBurn);
             }
         }
 
@@ -393,7 +431,7 @@ library UsdnProtocolActionsVaultLibrary {
         } else {
             address(s._asset).safeTransferFrom(user, address(this), amount);
         }
-        s._pendingBalanceVault += coreLib._toInt256(amount);
+        s._pendingBalanceVault += Core._toInt256(amount);
 
         isInitiated_ = true;
 
@@ -412,7 +450,7 @@ library UsdnProtocolActionsVaultLibrary {
         public
         returns (uint256 securityDepositValue_, bool isValidated_)
     {
-        (PendingAction memory pending, uint128 rawIndex) = coreLib._getPendingActionOrRevert(s, validator);
+        (PendingAction memory pending, uint128 rawIndex) = Core._getPendingActionOrRevert(s, validator);
 
         // check type of action
         if (pending.action != ProtocolAction.ValidateDeposit) {
@@ -426,7 +464,7 @@ library UsdnProtocolActionsVaultLibrary {
         isValidated_ = _validateDepositWithAction(s, pending, priceData);
 
         if (isValidated_) {
-            coreLib._clearPendingAction(s, validator, rawIndex);
+            Core._clearPendingAction(s, validator, rawIndex);
             return (pending.securityDepositValue, true);
         }
     }
@@ -442,19 +480,19 @@ library UsdnProtocolActionsVaultLibrary {
         public
         returns (bool isValidated_)
     {
-        DepositPendingAction memory deposit = coreLib._toDepositPendingAction(pending);
+        DepositPendingAction memory deposit = Core._toDepositPendingAction(pending);
 
         PriceInfo memory currentPrice = _getOraclePrice(
             s,
             ProtocolAction.ValidateDeposit,
             deposit.timestamp,
-            actionsUtilsLib._calcActionId(deposit.validator, deposit.timestamp),
+            ActionsUtils._calcActionId(deposit.validator, deposit.timestamp),
             priceData
         );
 
         {
             // adjust balances
-            (, bool isLiquidationPending) = longLib._applyPnlAndFundingAndLiquidate(
+            (, bool isLiquidationPending) = Long._applyPnlAndFundingAndLiquidate(
                 s,
                 currentPrice.neutralPrice,
                 currentPrice.timestamp,
@@ -474,17 +512,17 @@ library UsdnProtocolActionsVaultLibrary {
         // action, or the current price provided for validation. We will use the lower of the two amounts to mint
         // apply fees on price
         uint128 priceWithFees =
-            (currentPrice.price - currentPrice.price * s._vaultFeeBps / constantsLib.BPS_DIVISOR).toUint128();
+            (currentPrice.price - currentPrice.price * s._vaultFeeBps / Constants.BPS_DIVISOR).toUint128();
 
-        uint256 usdnSharesToMint1 = vaultLib._calcMintUsdnShares(
+        uint256 usdnSharesToMint1 = Vault._calcMintUsdnShares(
             s, deposit.amount, deposit.balanceVault, deposit.usdnTotalShares, deposit.assetPrice
         );
 
-        uint256 usdnSharesToMint2 = vaultLib._calcMintUsdnShares(
+        uint256 usdnSharesToMint2 = Vault._calcMintUsdnShares(
             s,
             deposit.amount,
             // calculate the available balance in the vault side if the price moves to `priceWithFees`
-            vaultLib._vaultAssetAvailable(
+            Vault._vaultAssetAvailable(
                 deposit.totalExpo, deposit.balanceVault, deposit.balanceLong, priceWithFees, deposit.assetPrice
             ).toUint256(),
             deposit.usdnTotalShares,
@@ -500,7 +538,7 @@ library UsdnProtocolActionsVaultLibrary {
         }
 
         s._balanceVault += deposit.amount;
-        s._pendingBalanceVault -= coreLib._toInt256(deposit.amount);
+        s._pendingBalanceVault -= Core._toInt256(deposit.amount);
 
         uint256 mintedTokens = s._usdn.mintShares(deposit.to, usdnSharesToMint);
         isValidated_ = true;
@@ -528,11 +566,11 @@ library UsdnProtocolActionsVaultLibrary {
             s,
             ProtocolAction.InitiateWithdrawal,
             block.timestamp,
-            actionsUtilsLib._calcActionId(validator, uint128(block.timestamp)),
+            ActionsUtils._calcActionId(validator, uint128(block.timestamp)),
             currentPriceData
         );
 
-        (, data_.isLiquidationPending) = longLib._applyPnlAndFundingAndLiquidate(
+        (, data_.isLiquidationPending) = Long._applyPnlAndFundingAndLiquidate(
             s,
             currentPrice.neutralPrice,
             currentPrice.timestamp,
@@ -549,15 +587,15 @@ library UsdnProtocolActionsVaultLibrary {
 
         // apply fees on price
         data_.pendingActionPrice =
-            (currentPrice.price + currentPrice.price * s._vaultFeeBps / constantsLib.BPS_DIVISOR).toUint128();
+            (currentPrice.price + currentPrice.price * s._vaultFeeBps / Constants.BPS_DIVISOR).toUint128();
 
         data_.totalExpo = s._totalExpo;
         data_.balanceLong = s._balanceLong;
-        data_.balanceVault = vaultLib._vaultAssetAvailable(
+        data_.balanceVault = Vault._vaultAssetAvailable(
             data_.totalExpo, s._balanceVault, data_.balanceLong, data_.pendingActionPrice, s._lastPrice
         ).toUint256();
         data_.usdnTotalShares = s._usdn.totalShares();
-        data_.withdrawalAmount = vaultLib._calcBurnUsdn(usdnShares, data_.balanceVault, data_.usdnTotalShares);
+        data_.withdrawalAmount = Vault._calcBurnUsdn(usdnShares, data_.balanceVault, data_.usdnTotalShares);
 
         _checkImbalanceLimitWithdrawal(s, data_.withdrawalAmount, data_.totalExpo);
     }
@@ -580,15 +618,15 @@ library UsdnProtocolActionsVaultLibrary {
         uint64 securityDepositValue,
         WithdrawalData memory data
     ) public returns (uint256 amountToRefund_) {
-        PendingAction memory action = coreLib._convertWithdrawalPendingAction(
+        PendingAction memory action = Core._convertWithdrawalPendingAction(
             WithdrawalPendingAction({
                 action: ProtocolAction.ValidateWithdrawal,
                 timestamp: uint40(block.timestamp),
                 to: to,
                 validator: validator,
                 securityDepositValue: securityDepositValue,
-                sharesLSB: vaultLib._calcWithdrawalAmountLSB(usdnShares),
-                sharesMSB: vaultLib._calcWithdrawalAmountMSB(usdnShares),
+                sharesLSB: Vault._calcWithdrawalAmountLSB(usdnShares),
+                sharesMSB: Vault._calcWithdrawalAmountMSB(usdnShares),
                 assetPrice: data.pendingActionPrice,
                 totalExpo: data.totalExpo,
                 balanceVault: data.balanceVault,
@@ -596,7 +634,7 @@ library UsdnProtocolActionsVaultLibrary {
                 usdnTotalShares: data.usdnTotalShares
             })
         );
-        amountToRefund_ = coreLib._addPendingAction(s, validator, action);
+        amountToRefund_ = Core._addPendingAction(s, validator, action);
     }
 
     /**
@@ -691,7 +729,7 @@ library UsdnProtocolActionsVaultLibrary {
         public
         returns (uint256 securityDepositValue_, bool isValidated_)
     {
-        (PendingAction memory pending, uint128 rawIndex) = coreLib._getPendingActionOrRevert(s, validator);
+        (PendingAction memory pending, uint128 rawIndex) = Core._getPendingActionOrRevert(s, validator);
 
         // check type of action
         if (pending.action != ProtocolAction.ValidateWithdrawal) {
@@ -705,7 +743,7 @@ library UsdnProtocolActionsVaultLibrary {
         isValidated_ = _validateWithdrawalWithAction(s, pending, priceData);
 
         if (isValidated_) {
-            coreLib._clearPendingAction(s, validator, rawIndex);
+            Core._clearPendingAction(s, validator, rawIndex);
             return (pending.securityDepositValue, true);
         }
     }
@@ -721,17 +759,17 @@ library UsdnProtocolActionsVaultLibrary {
         public
         returns (bool isValidated_)
     {
-        WithdrawalPendingAction memory withdrawal = coreLib._toWithdrawalPendingAction(pending);
+        WithdrawalPendingAction memory withdrawal = Core._toWithdrawalPendingAction(pending);
 
         PriceInfo memory currentPrice = _getOraclePrice(
             s,
             ProtocolAction.ValidateWithdrawal,
             withdrawal.timestamp,
-            actionsUtilsLib._calcActionId(withdrawal.validator, withdrawal.timestamp),
+            ActionsUtils._calcActionId(withdrawal.validator, withdrawal.timestamp),
             priceData
         );
 
-        (, bool isLiquidationPending) = longLib._applyPnlAndFundingAndLiquidate(
+        (, bool isLiquidationPending) = Long._applyPnlAndFundingAndLiquidate(
             s,
             currentPrice.neutralPrice,
             currentPrice.timestamp,
@@ -750,7 +788,7 @@ library UsdnProtocolActionsVaultLibrary {
         {
             // apply fees on price
             uint128 withdrawalPriceWithFees =
-                (currentPrice.price + currentPrice.price * s._vaultFeeBps / constantsLib.BPS_DIVISOR).toUint128();
+                (currentPrice.price + currentPrice.price * s._vaultFeeBps / Constants.BPS_DIVISOR).toUint128();
 
             // we calculate the available balance of the vault side, either considering the asset price at the time of
             // the
@@ -758,7 +796,7 @@ library UsdnProtocolActionsVaultLibrary {
             // to
             // redeem the underlying asset share
             uint256 available1 = withdrawal.balanceVault;
-            uint256 available2 = vaultLib._vaultAssetAvailable(
+            uint256 available2 = Vault._vaultAssetAvailable(
                 withdrawal.totalExpo,
                 withdrawal.balanceVault,
                 withdrawal.balanceLong,
@@ -772,13 +810,13 @@ library UsdnProtocolActionsVaultLibrary {
             }
         }
 
-        uint256 shares = coreLib._mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
+        uint256 shares = Core._mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
 
         // we can add back the _pendingBalanceVault we subtracted in the initiate action
-        uint256 tempWithdrawal = vaultLib._calcBurnUsdn(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares);
+        uint256 tempWithdrawal = Vault._calcBurnUsdn(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares);
         s._pendingBalanceVault += tempWithdrawal.toInt256();
 
-        uint256 assetToTransfer = vaultLib._calcBurnUsdn(shares, available, s._usdn.totalShares());
+        uint256 assetToTransfer = Vault._calcBurnUsdn(shares, available, s._usdn.totalShares());
 
         s._usdn.burnShares(shares);
 
@@ -825,7 +863,7 @@ library UsdnProtocolActionsVaultLibrary {
         public
         returns (bool success_, bool executed_, bool liquidated_, uint256 securityDepositValue_)
     {
-        (PendingAction memory pending, uint128 rawIndex) = coreLib._getActionablePendingAction(s);
+        (PendingAction memory pending, uint128 rawIndex) = Core._getActionablePendingAction(s);
         if (pending.action == ProtocolAction.None) {
             // no pending action
             return (true, false, false, 0);
@@ -849,15 +887,15 @@ library UsdnProtocolActionsVaultLibrary {
         } else if (pending.action == ProtocolAction.ValidateWithdrawal) {
             executed_ = _validateWithdrawalWithAction(s, pending, priceData);
         } else if (pending.action == ProtocolAction.ValidateOpenPosition) {
-            (executed_, liquidated_) = actionsLongLib._validateOpenPositionWithAction(s, pending, priceData);
+            (executed_, liquidated_) = ActionsLong._validateOpenPositionWithAction(s, pending, priceData);
         } else if (pending.action == ProtocolAction.ValidateClosePosition) {
-            (executed_, liquidated_) = actionsLongLib._validateClosePositionWithAction(s, pending, priceData);
+            (executed_, liquidated_) = ActionsLong._validateClosePositionWithAction(s, pending, priceData);
         }
 
         success_ = true;
 
         if (executed_ || liquidated_) {
-            coreLib._clearPendingAction(s, pending.validator, rawIndex);
+            Core._clearPendingAction(s, pending.validator, rawIndex);
             securityDepositValue_ = pending.securityDepositValue;
             emit IUsdnProtocolEvents.SecurityDepositRefunded(pending.validator, msg.sender, securityDepositValue_);
         }
