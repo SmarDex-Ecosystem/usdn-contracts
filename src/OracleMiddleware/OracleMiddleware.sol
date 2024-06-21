@@ -165,7 +165,8 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, RedstoneOracle, Chai
      * @param actionTimestamp The timestamp of the action corresponding to the price. If zero, then we must accept all
      * recent prices according to `_pythRecentPriceDelay` or `_redstoneRecentPriceDelay`
      * @param dir The direction for the confidence interval adjusted price
-     * @param targetLimit The maximum timestamp when a low-latency price should be used
+     * @param targetLimit The maximum timestamp when a low-latency price should be used (can be zero if
+     * `actionTimestamp` is zero)
      * @return price_ The price from the low-latency oracle, adjusted according to the confidence interval direction
      */
     function _getLowLatencyPrice(
