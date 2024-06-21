@@ -2,7 +2,6 @@
 pragma solidity ^0.8.25;
 
 import { IUsdnProtocolActions } from "../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
-import { IUsdnProtocolTypes } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Permit2TokenBitfield } from "../libraries/Permit2TokenBitfield.sol";
 import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { UsdnProtocolActionsLongLibrary as actionsLongLib } from "./libraries/UsdnProtocolActionsLongLibrary.sol";
@@ -17,7 +16,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolStorage, IUsdnProtocol
         address payable validator,
         Permit2TokenBitfield.Bitfield permit2TokenBitfield,
         bytes calldata currentPriceData,
-        IUsdnProtocolTypes.PreviousActionsData calldata previousActionsData
+        PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (bool success_) {
         return actionsVaultLib.initiateDeposit(
             s, amount, to, validator, permit2TokenBitfield, currentPriceData, previousActionsData
@@ -28,7 +27,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolStorage, IUsdnProtocol
     function validateDeposit(
         address payable validator,
         bytes calldata depositPriceData,
-        IUsdnProtocolTypes.PreviousActionsData calldata previousActionsData
+        PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (bool success_) {
         return actionsVaultLib.validateDeposit(s, validator, depositPriceData, previousActionsData);
     }
@@ -39,7 +38,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolStorage, IUsdnProtocol
         address to,
         address payable validator,
         bytes calldata currentPriceData,
-        IUsdnProtocolTypes.PreviousActionsData calldata previousActionsData
+        PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (bool success_) {
         return actionsVaultLib.initiateWithdrawal(s, usdnShares, to, validator, currentPriceData, previousActionsData);
     }
@@ -48,7 +47,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolStorage, IUsdnProtocol
     function validateWithdrawal(
         address payable validator,
         bytes calldata withdrawalPriceData,
-        IUsdnProtocolTypes.PreviousActionsData calldata previousActionsData
+        PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (bool success_) {
         return actionsVaultLib.validateWithdrawal(s, validator, withdrawalPriceData, previousActionsData);
     }
@@ -61,14 +60,9 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolStorage, IUsdnProtocol
         address payable validator,
         Permit2TokenBitfield.Bitfield permit2TokenBitfield,
         bytes calldata currentPriceData,
-        IUsdnProtocolTypes.PreviousActionsData calldata previousActionsData
-    )
-        external
-        payable
-        initializedAndNonReentrant
-        returns (bool success_, IUsdnProtocolTypes.PositionId memory posId_)
-    {
-        IUsdnProtocolTypes.InitiateOpenPositionParams memory params = IUsdnProtocolTypes.InitiateOpenPositionParams({
+        PreviousActionsData calldata previousActionsData
+    ) external payable initializedAndNonReentrant returns (bool success_, PositionId memory posId_) {
+        InitiateOpenPositionParams memory params = InitiateOpenPositionParams({
             user: msg.sender,
             to: to,
             validator: validator,
@@ -85,26 +79,22 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolStorage, IUsdnProtocol
     function validateOpenPosition(
         address payable validator,
         bytes calldata openPriceData,
-        IUsdnProtocolTypes.PreviousActionsData calldata previousActionsData
+        PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (bool success_) {
         return actionsLongLib.validateOpenPosition(s, validator, openPriceData, previousActionsData);
     }
 
     /// @inheritdoc IUsdnProtocolActions
     function initiateClosePosition(
-        IUsdnProtocolTypes.PositionId calldata posId,
+        PositionId calldata posId,
         uint128 amountToClose,
         address to,
         address payable validator,
         bytes calldata currentPriceData,
-        IUsdnProtocolTypes.PreviousActionsData calldata previousActionsData
+        PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (bool success_) {
-        IUsdnProtocolTypes.InitiateClosePositionParams memory params = IUsdnProtocolTypes.InitiateClosePositionParams({
-            posId: posId,
-            amountToClose: amountToClose,
-            to: to,
-            validator: validator
-        });
+        InitiateClosePositionParams memory params =
+            InitiateClosePositionParams({ posId: posId, amountToClose: amountToClose, to: to, validator: validator });
 
         return actionsLongLib.initiateClosePosition(s, params, currentPriceData, previousActionsData);
     }
@@ -113,7 +103,7 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolStorage, IUsdnProtocol
     function validateClosePosition(
         address payable validator,
         bytes calldata closePriceData,
-        IUsdnProtocolTypes.PreviousActionsData calldata previousActionsData
+        PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (bool success_) {
         return actionsLongLib.validateClosePosition(s, validator, closePriceData, previousActionsData);
     }
@@ -129,15 +119,17 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolStorage, IUsdnProtocol
     }
 
     /// @inheritdoc IUsdnProtocolActions
-    function validateActionablePendingActions(
-        IUsdnProtocolTypes.PreviousActionsData calldata previousActionsData,
-        uint256 maxValidations
-    ) external payable initializedAndNonReentrant returns (uint256 validatedActions_) {
+    function validateActionablePendingActions(PreviousActionsData calldata previousActionsData, uint256 maxValidations)
+        external
+        payable
+        initializedAndNonReentrant
+        returns (uint256 validatedActions_)
+    {
         return actionsUtilsLib.validateActionablePendingActions(s, previousActionsData, maxValidations);
     }
 
     /// @inheritdoc IUsdnProtocolActions
-    function transferPositionOwnership(IUsdnProtocolTypes.PositionId calldata posId, address newOwner)
+    function transferPositionOwnership(PositionId calldata posId, address newOwner)
         external
         initializedAndNonReentrant
     {

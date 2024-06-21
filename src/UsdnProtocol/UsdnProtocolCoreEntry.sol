@@ -2,7 +2,6 @@
 pragma solidity ^0.8.25;
 
 import { IUsdnProtocolCore } from "../interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
-import { IUsdnProtocolTypes } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { UsdnProtocolCoreLibrary as lib } from "./libraries/UsdnProtocolCoreLibrary.sol";
 
@@ -44,17 +43,13 @@ abstract contract UsdnProtocolCoreEntry is UsdnProtocolStorage, IUsdnProtocolCor
     function getActionablePendingActions(address currentUser)
         external
         view
-        returns (IUsdnProtocolTypes.PendingAction[] memory actions_, uint128[] memory rawIndices_)
+        returns (PendingAction[] memory actions_, uint128[] memory rawIndices_)
     {
         return lib.getActionablePendingActions(s, currentUser);
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function getUserPendingAction(address user)
-        external
-        view
-        returns (IUsdnProtocolTypes.PendingAction memory action_)
-    {
+    function getUserPendingAction(address user) external view returns (PendingAction memory action_) {
         return lib.getUserPendingAction(s, user);
     }
 

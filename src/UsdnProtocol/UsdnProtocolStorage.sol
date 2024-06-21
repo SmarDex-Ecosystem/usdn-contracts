@@ -20,6 +20,7 @@ import { UsdnProtocolActionsLongLibrary as actionsLongLib } from "./libraries/Us
 import { UsdnProtocolConstantsLibrary as constantsLib } from "./libraries/UsdnProtocolConstantsLibrary.sol";
 
 contract UsdnProtocolStorage is
+    IUsdnProtocolTypes,
     IUsdnProtocolErrors,
     IUsdnProtocolStorage,
     InitializableReentrancyGuard,
