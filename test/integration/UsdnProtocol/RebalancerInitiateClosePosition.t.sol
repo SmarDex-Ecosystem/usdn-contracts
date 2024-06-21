@@ -9,7 +9,7 @@ import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 
 import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
 import { IRebalancerTypes } from "../../../src/interfaces/Rebalancer/IRebalancerTypes.sol";
-import { Position, ProtocolAction } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, PositionId, ProtocolAction } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The `initiateClosePosition` function of the rebalancer contract
@@ -41,7 +41,13 @@ contract TestRebalancerInitiateClosePosition is
 
         version = rebalancer.getPositionVersion();
         previousPositionData = rebalancer.getPositionData(version);
-        (Position memory protocolPosition,) = protocol.getLongPosition(previousPositionData.id);
+        (Position memory protocolPosition,) = protocol.getLongPosition(
+            PositionId({
+                tick: previousPositionData.tick,
+                tickVersion: previousPositionData.tickVersion,
+                index: previousPositionData.index
+            })
+        );
         posAmount = protocolPosition.amount;
     }
 

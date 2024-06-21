@@ -443,7 +443,13 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
             _positionData[data.userDepositData.entryPositionVersion].entryAccMultiplier
         );
 
-        (data.protocolPosition,) = _usdnProtocol.getLongPosition(data.currentPositionData.id);
+        (data.protocolPosition,) = _usdnProtocol.getLongPosition(
+            PositionId({
+                tick: data.currentPositionData.tick,
+                tickVersion: data.currentPositionData.tickVersion,
+                index: data.currentPositionData.index
+            })
+        );
 
         // include bonus
         data.amountToClose = data.amountToCloseWithoutBonus
@@ -475,9 +481,12 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
             data.currentPositionData.amount -= uint128(data.amountToCloseWithoutBonus);
 
             if (data.currentPositionData.amount == 0) {
-                _positionData[data.positionVersion].id =
-                    PositionId({ tick: _usdnProtocol.NO_POSITION_TICK(), tickVersion: 0, index: 0 });
-                _positionData[data.positionVersion].amount = data.currentPositionData.amount;
+                PositionData memory newPositionData = _positionData[data.positionVersion];
+                newPositionData.tick = _usdnProtocol.NO_POSITION_TICK();
+                newPositionData.tickVersion = 0;
+                newPositionData.index = 0;
+                newPositionData.amount = data.currentPositionData.amount;
+                _positionData[data.positionVersion] = newPositionData;
             } else {
                 _positionData[data.positionVersion].amount = data.currentPositionData.amount;
             }
