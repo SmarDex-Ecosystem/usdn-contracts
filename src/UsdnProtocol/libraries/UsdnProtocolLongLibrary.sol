@@ -27,6 +27,7 @@ import { TickMath } from "../../libraries/TickMath.sol";
 import { Storage } from "../UsdnProtocolStorage.sol";
 import { UsdnProtocolActionsUtilsLibrary as actionsUtilsLib } from "./UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
+import { UsdnProtocolConstantsLibrary as constantsLib } from "./UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
 
@@ -69,7 +70,7 @@ library UsdnProtocolLongLibrary {
     /// @notice See {IUsdnProtocolLong}
     // slither-disable-next-line write-after-write
     function getMinLiquidationPrice(Storage storage s, uint128 price) public view returns (uint128 liquidationPrice_) {
-        liquidationPrice_ = _getLiquidationPrice(s, price, uint128(s._minLeverage));
+        liquidationPrice_ = _getLiquidationPrice(price, uint128(s._minLeverage));
         int24 tick = getEffectiveTickForPrice(s, liquidationPrice_);
         liquidationPrice_ = getEffectivePriceForTick(s, tick + s._tickSpacing);
     }
@@ -170,7 +171,7 @@ library UsdnProtocolLongLibrary {
         if (fundAsset > 0) {
             available_ = coreLib._longAssetAvailable(s, currentPrice).safeSub(fundAsset);
         } else {
-            int256 fee = fundAsset * coreLib._toInt256(s._protocolFeeBps) / int256(s.BPS_DIVISOR);
+            int256 fee = fundAsset * coreLib._toInt256(s._protocolFeeBps) / int256(constantsLib.BPS_DIVISOR);
             // fees have the same sign as fundAsset (negative here), so we need to sub them
             available_ = coreLib._longAssetAvailable(s, currentPrice).safeSub(fundAsset - fee);
         }
@@ -322,7 +323,7 @@ library UsdnProtocolLongLibrary {
 
         {
             int256 currentImbalance =
-                _calcImbalanceCloseBps(s, cache.vaultBalance.toInt256(), cache.longBalance.toInt256(), cache.totalExpo);
+                _calcImbalanceCloseBps(cache.vaultBalance.toInt256(), cache.longBalance.toInt256(), cache.totalExpo);
 
             // if the imbalance is lower than the threshold, return
             if (currentImbalance < s._closeExpoImbalanceLimitBps) {
@@ -336,7 +337,7 @@ library UsdnProtocolLongLibrary {
 
         data.positionValue;
         // close the rebalancer position and get its value to open the next one
-        if (data.rebalancerPosId.tick != s.NO_POSITION_TICK) {
+        if (data.rebalancerPosId.tick != constantsLib.NO_POSITION_TICK) {
             // cached values will be updated during this call
             int256 realPositionValue = _flashClosePosition(s, data.rebalancerPosId, lastPrice, cache);
 
@@ -357,12 +358,14 @@ library UsdnProtocolLongLibrary {
         }
 
         // transfer the pending assets from the rebalancer to this contract
+        // slither-disable-next-line arbitrary-send-erc20
         address(s._asset).safeTransferFrom(address(rebalancer), address(this), data.positionAmount - data.positionValue);
 
         // if there is enough collateral remaining after liquidations, calculate the bonus and add it to the
         // new rebalancer position
         if (remainingCollateral > 0) {
-            uint128 bonus = (uint256(remainingCollateral) * s._rebalancerBonusBps / s.BPS_DIVISOR).toUint128();
+            uint128 bonus =
+                (uint256(remainingCollateral) * s._rebalancerBonusBps / constantsLib.BPS_DIVISOR).toUint128();
             cache.vaultBalance -= bonus;
             vaultBalance_ -= bonus;
             data.positionAmount += bonus;
@@ -373,7 +376,7 @@ library UsdnProtocolLongLibrary {
 
         // make sure that the rebalancer was not triggered without a sufficient imbalance
         // as we check the imbalance above, this should not happen
-        if (tickWithoutLiqPenalty == s.NO_POSITION_TICK) {
+        if (tickWithoutLiqPenalty == constantsLib.NO_POSITION_TICK) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidRebalancerTick();
         }
 
@@ -532,7 +535,8 @@ library UsdnProtocolLongLibrary {
             actionsUtilsLib._calcActionId(validator, uint128(block.timestamp)),
             currentPriceData
         );
-        data_.adjustedPrice = (currentPrice.price + currentPrice.price * s._positionFeeBps / s.BPS_DIVISOR).toUint128();
+        data_.adjustedPrice =
+            (currentPrice.price + currentPrice.price * s._positionFeeBps / constantsLib.BPS_DIVISOR).toUint128();
 
         uint128 neutralPrice = currentPrice.neutralPrice.toUint128();
 
@@ -582,7 +586,7 @@ library UsdnProtocolLongLibrary {
     {
         // calculate position leverage
         // reverts if liquidationPrice >= entryPrice
-        uint128 leverage = _getLeverage(s, adjustedPrice, liqPriceWithoutPenalty);
+        uint128 leverage = _getLeverage(adjustedPrice, liqPriceWithoutPenalty);
         if (leverage < s._minLeverage) {
             revert IUsdnProtocolErrors.UsdnProtocolLeverageTooLow();
         }
@@ -612,7 +616,7 @@ library UsdnProtocolLongLibrary {
 
         int256 currentVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault);
         int256 imbalanceBps = _calcImbalanceOpenBps(
-            s, currentVaultExpo, (s._balanceLong + openCollatValue).toInt256(), s._totalExpo + openTotalExpoValue
+            currentVaultExpo, (s._balanceLong + openCollatValue).toInt256(), s._totalExpo + openTotalExpoValue
         );
 
         if (imbalanceBps >= openExpoImbalanceLimitBps) {
@@ -653,8 +657,8 @@ library UsdnProtocolLongLibrary {
         data.accumulator = s._liqMultiplierAccumulator;
 
         // max iteration limit
-        if (iteration > s.MAX_LIQUIDATION_ITERATION) {
-            iteration = s.MAX_LIQUIDATION_ITERATION;
+        if (iteration > constantsLib.MAX_LIQUIDATION_ITERATION) {
+            iteration = constantsLib.MAX_LIQUIDATION_ITERATION;
         }
 
         uint256 unadjustedPrice =
@@ -714,17 +718,12 @@ library UsdnProtocolLongLibrary {
     /**
      * @notice Variant of `getEffectivePriceForTick` when a fixed precision representation of the liquidation multiplier
      * is known
-     * @param s The storage of the protocol
      * @param tick The tick number
      * @param liqMultiplier The liquidation price multiplier, with LIQUIDATION_MULTIPLIER_DECIMALS decimals
      * @return price_ The adjusted price for the tick
      */
-    function _getEffectivePriceForTick(Storage storage s, int24 tick, uint256 liqMultiplier)
-        public
-        view
-        returns (uint128 price_)
-    {
-        price_ = _adjustPrice(s, TickMath.getPriceAtTick(tick), liqMultiplier);
+    function _getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) public pure returns (uint128 price_) {
+        price_ = _adjustPrice(TickMath.getPriceAtTick(tick), liqMultiplier);
     }
 
     /**
@@ -786,42 +785,36 @@ library UsdnProtocolLongLibrary {
 
     /**
      * @notice Variant of _adjustPrice when a fixed precision representation of the liquidation multiplier is known
-     * @param s The storage of the protocol
      * @param unadjustedPrice The unadjusted price for the tick
      * @param liqMultiplier The liquidation price multiplier, with LIQUIDATION_MULTIPLIER_DECIMALS decimals
      * @return price_ The adjusted price for the tick
      */
-    function _adjustPrice(Storage storage s, uint256 unadjustedPrice, uint256 liqMultiplier)
-        public
-        view
-        returns (uint128 price_)
-    {
+    function _adjustPrice(uint256 unadjustedPrice, uint256 liqMultiplier) public pure returns (uint128 price_) {
         // price = unadjustedPrice * M
-        price_ = FixedPointMathLib.fullMulDiv(unadjustedPrice, liqMultiplier, 10 ** s.LIQUIDATION_MULTIPLIER_DECIMALS)
-            .toUint128();
+        price_ = FixedPointMathLib.fullMulDiv(
+            unadjustedPrice, liqMultiplier, 10 ** constantsLib.LIQUIDATION_MULTIPLIER_DECIMALS
+        ).toUint128();
     }
 
     /**
      * @notice Calculate a fixed-precision representation of the liquidation price multiplier
-     * @param s The storage of the protocol
      * @param assetPrice The current price of the asset
      * @param longTradingExpo The trading expo of the long side (total expo - balance long)
      * @param accumulator The liquidation multiplier accumulator
      * @return multiplier_ The liquidation price multiplier, with LIQUIDATION_MULTIPLIER_DECIMALS decimals
      */
     function _calcFixedPrecisionMultiplier(
-        Storage storage s,
         uint256 assetPrice,
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator
-    ) public view returns (uint256 multiplier_) {
+    ) public pure returns (uint256 multiplier_) {
         if (accumulator.hi == 0 && accumulator.lo == 0) {
             // no position in long, we assume a liquidation multiplier of 1.0
-            return 10 ** s.LIQUIDATION_MULTIPLIER_DECIMALS;
+            return 10 ** constantsLib.LIQUIDATION_MULTIPLIER_DECIMALS;
         }
         // M = assetPrice * (totalExpo - balanceLong) / accumulator
         HugeUint.Uint512 memory numerator =
-            HugeUint.mul(10 ** s.LIQUIDATION_MULTIPLIER_DECIMALS, assetPrice * longTradingExpo);
+            HugeUint.mul(10 ** constantsLib.LIQUIDATION_MULTIPLIER_DECIMALS, assetPrice * longTradingExpo);
         multiplier_ = numerator.div(accumulator);
     }
 
@@ -843,17 +836,12 @@ library UsdnProtocolLongLibrary {
 
     /**
      * @notice Calculate the theoretical liquidation price of a position knowing its start price and leverage
-     * @param s The storage of the protocol
      * @param startPrice Entry price of the position
      * @param leverage Leverage of the position
      * @return price_ The liquidation price of the position
      */
-    function _getLiquidationPrice(Storage storage s, uint128 startPrice, uint128 leverage)
-        public
-        view
-        returns (uint128 price_)
-    {
-        price_ = (startPrice - ((uint256(10) ** s.LEVERAGE_DECIMALS * startPrice) / leverage)).toUint128();
+    function _getLiquidationPrice(uint128 startPrice, uint128 leverage) public pure returns (uint128 price_) {
+        price_ = (startPrice - ((uint256(10) ** constantsLib.LEVERAGE_DECIMALS * startPrice) / leverage)).toUint128();
     }
 
     /**
@@ -918,23 +906,19 @@ library UsdnProtocolLongLibrary {
     /**
      * @notice Calculate the leverage of a position, knowing its start price and liquidation price
      * @dev This does not take into account the liquidation penalty
-     * @param s The storage of the protocol
      * @param startPrice Entry price of the position
      * @param liquidationPrice Liquidation price of the position
      * @return leverage_ The leverage of the position
      */
-    function _getLeverage(Storage storage s, uint128 startPrice, uint128 liquidationPrice)
-        public
-        view
-        returns (uint128 leverage_)
-    {
+    function _getLeverage(uint128 startPrice, uint128 liquidationPrice) public pure returns (uint128 leverage_) {
         if (startPrice <= liquidationPrice) {
             // this situation is not allowed (newly open position must be solvent)
             // also, the calculation below would underflow
             revert IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationPrice(liquidationPrice, startPrice);
         }
 
-        leverage_ = ((10 ** s.LEVERAGE_DECIMALS * uint256(startPrice)) / (startPrice - liquidationPrice)).toUint128();
+        leverage_ =
+            ((10 ** constantsLib.LEVERAGE_DECIMALS * uint256(startPrice)) / (startPrice - liquidationPrice)).toUint128();
     }
 
     /**
@@ -986,7 +970,8 @@ library UsdnProtocolLongLibrary {
      * @param liquidationPrice The liquidation price of the position
      */
     function _checkSafetyMargin(Storage storage s, uint128 currentPrice, uint128 liquidationPrice) public view {
-        uint128 maxLiquidationPrice = (currentPrice * (s.BPS_DIVISOR - s._safetyMarginBps) / s.BPS_DIVISOR).toUint128();
+        uint128 maxLiquidationPrice =
+            (currentPrice * (constantsLib.BPS_DIVISOR - s._safetyMarginBps) / constantsLib.BPS_DIVISOR).toUint128();
         if (liquidationPrice >= maxLiquidationPrice) {
             revert IUsdnProtocolErrors.UsdnProtocolLiquidationPriceSafetyMargin(liquidationPrice, maxLiquidationPrice);
         }
@@ -1124,15 +1109,14 @@ library UsdnProtocolLongLibrary {
      * @notice Calculates the current imbalance between the vault and long sides
      * @dev If the value is positive, the long trading expo is smaller than the vault trading expo
      * If the trading expo is equal to 0, the imbalance is infinite and int256.max is returned
-     * @param s The storage of the protocol
      * @param vaultBalance The balance of the vault
      * @param longBalance The balance of the long side
      * @param totalExpo The total expo of the long side
      * @return imbalanceBps_ The imbalance in basis points
      */
-    function _calcImbalanceCloseBps(Storage storage s, int256 vaultBalance, int256 longBalance, uint256 totalExpo)
+    function _calcImbalanceCloseBps(int256 vaultBalance, int256 longBalance, uint256 totalExpo)
         public
-        view
+        pure
         returns (int256 imbalanceBps_)
     {
         int256 tradingExpo = totalExpo.toInt256().safeSub(longBalance);
@@ -1141,22 +1125,22 @@ library UsdnProtocolLongLibrary {
         }
 
         // imbalanceBps_ = (vaultBalance - (totalExpo - longBalance)) *s. (totalExpo - longBalance);
-        imbalanceBps_ = (vaultBalance.safeSub(tradingExpo)).safeMul(int256(s.BPS_DIVISOR)).safeDiv(tradingExpo);
+        imbalanceBps_ =
+            (vaultBalance.safeSub(tradingExpo)).safeMul(int256(constantsLib.BPS_DIVISOR)).safeDiv(tradingExpo);
     }
 
     /**
      * @notice Calculates the current imbalance for the open action checks
      * @dev If the value is positive, the long trading expo is larger than the vault trading expo
      * In case of zero vault balance, the function returns `int256.max` since the resulting imbalance would be infinity
-     * @param s The storage of the protocol
      * @param vaultBalance The balance of the vault
      * @param longBalance The balance of the long side (including the long position to open)
      * @param totalExpo The total expo of the long side (including the long position to open)
      * @return imbalanceBps_ The imbalance in basis points
      */
-    function _calcImbalanceOpenBps(Storage storage s, int256 vaultBalance, int256 longBalance, uint256 totalExpo)
+    function _calcImbalanceOpenBps(int256 vaultBalance, int256 longBalance, uint256 totalExpo)
         public
-        view
+        pure
         returns (int256 imbalanceBps_)
     {
         // avoid division by zero
@@ -1165,7 +1149,8 @@ library UsdnProtocolLongLibrary {
         }
         // imbalanceBps_ = ((totalExpo - longBalance) - vaultBalance) *s. vaultBalance;
         int256 longTradingExpo = totalExpo.toInt256() - longBalance;
-        imbalanceBps_ = longTradingExpo.safeSub(vaultBalance).safeMul(int256(s.BPS_DIVISOR)).safeDiv(vaultBalance);
+        imbalanceBps_ =
+            longTradingExpo.safeSub(vaultBalance).safeMul(int256(constantsLib.BPS_DIVISOR)).safeDiv(vaultBalance);
     }
 
     /**
@@ -1200,19 +1185,21 @@ library UsdnProtocolLongLibrary {
 
         int256 longImbalanceTargetBps = s._longImbalanceTargetBps;
         // calculate the trading expo missing to reach the imbalance target
-        uint256 targetTradingExpo =
-            (cache.vaultBalance * s.BPS_DIVISOR / (int256(s.BPS_DIVISOR) + longImbalanceTargetBps).toUint256());
+        uint256 targetTradingExpo = (
+            cache.vaultBalance * constantsLib.BPS_DIVISOR
+                / (int256(constantsLib.BPS_DIVISOR) + longImbalanceTargetBps).toUint256()
+        );
 
         // check that the target is not already exceeded
         if (cache.tradingExpo >= targetTradingExpo) {
-            return s.NO_POSITION_TICK;
+            return constantsLib.NO_POSITION_TICK;
         }
 
         uint256 tradingExpoToFill = targetTradingExpo - cache.tradingExpo;
 
         // check that the trading expo filled by the position would not exceed the max leverage
         uint256 highestUsableTradingExpo =
-            positionAmount * rebalancerMaxLeverage / 10 ** s.LEVERAGE_DECIMALS - positionAmount;
+            positionAmount * rebalancerMaxLeverage / 10 ** constantsLib.LEVERAGE_DECIMALS - positionAmount;
         if (highestUsableTradingExpo < tradingExpoToFill) {
             tradingExpoToFill = highestUsableTradingExpo;
         }
@@ -1220,7 +1207,7 @@ library UsdnProtocolLongLibrary {
         {
             // check that the trading expo filled by the position would not be below the min leverage
             uint256 lowestUsableTradingExpo =
-                positionAmount * protocolMinLeverage / 10 ** s.LEVERAGE_DECIMALS - positionAmount;
+                positionAmount * protocolMinLeverage / 10 ** constantsLib.LEVERAGE_DECIMALS - positionAmount;
             if (lowestUsableTradingExpo > tradingExpoToFill) {
                 tradingExpoToFill = lowestUsableTradingExpo;
             }
@@ -1248,7 +1235,6 @@ library UsdnProtocolLongLibrary {
         if (
             highestUsableTradingExpo != tradingExpoToFill
                 && _calcImbalanceCloseBps(
-                    s,
                     cache.vaultBalance.toInt256(),
                     (cache.longBalance + positionAmount).toInt256(),
                     cache.totalExpo + positionTotalExpo
