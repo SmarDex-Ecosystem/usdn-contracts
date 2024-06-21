@@ -48,10 +48,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             })
         );
 
-        // TODO remove when the MockOracleMiddleware is fixed
+        // next deposit will only update the _lastPrice if it's more recent, and the on-chain price is 30 minutes old
         skip(31 minutes);
 
-        // When funding is positive, calculations will increase the liquidation price so this is enough
         uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(posId.tick);
 
         wstETH.mintAndApprove(address(this), 1 ether, address(protocol), 1 ether);
@@ -130,10 +129,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // Initiate and validate the deposit for the other user
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, price);
 
-        // TODO remove when the MockOracleMiddleware is fixed
+        // next deposit will only update the _lastPrice if it's more recent, and the on-chain price is 30 minutes old
         skip(31 minutes);
 
-        // When funding is positive, calculations will increase the liquidation price so this is enough
         uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(posId.tick);
 
         // Check that tick has been liquidated
@@ -212,10 +210,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             })
         );
 
-        // TODO remove when the MockOracleMiddleware is fixed
+        // next deposit will only update the _lastPrice if it's more recent, and the on-chain price is 30 minutes old
         skip(31 minutes);
 
-        // When funding is positive, calculations will increase the liquidation price so this is enough
         uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(posId.tick);
 
         wstETH.mintAndApprove(address(this), 1 ether, address(protocol), 1 ether);
@@ -270,7 +267,6 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             })
         );
 
-        // When funding is positive, calculations will increase the liquidation price so this is enough
         uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(posId.tick);
 
         // Check that tick has been liquidated
@@ -315,10 +311,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             })
         );
 
-        // TODO remove when the MockOracleMiddleware is fixed
+        // next deposit will only update the _lastPrice if it's more recent, and the on-chain price is 30 minutes old
         skip(31 minutes);
 
-        // When funding is positive, calculations will increase the liquidation price so this is enough
         uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(posIdToLiquidate.tick);
 
         // Check that tick has been liquidated
