@@ -16,9 +16,6 @@ jobs:
 
       - name: Rust cache
         uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: |
-            test_utils -> target
 
       - uses: actions/checkout@v4
         with:
@@ -39,7 +36,6 @@ jobs:
 
       - name: Build test_utils
         run: cargo build --release
-        working-directory: test_utils
 
       # skip for now
       #- name: Check gas snapshots

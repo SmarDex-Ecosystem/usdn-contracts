@@ -15,8 +15,7 @@ cache/
 # Dependencies
 node_modules/
 
-# devenv
-.devenv
+# direnv
 .direnv
 
 # coverage
@@ -34,3 +33,6 @@ natspec-smells.txt
 
 # Removed for now, might enable after v1.0
 .gas-snapshot
+
+# Rust
+target/
