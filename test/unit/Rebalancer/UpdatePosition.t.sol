@@ -54,7 +54,7 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
      * @custom:when {updatePosition} is called
      * @custom:then The call reverts with a {RebalancerUnauthorized} error
      */
-    function test_RevertWhen_callerIsNotTheProtocol() external {
+    function test_RevertWhen_callerIsNotTheProtocol() public {
         vm.expectRevert(RebalancerUnauthorized.selector);
         rebalancer.updatePosition(IUsdnProtocolTypes.PositionId(0, 0, 0), 0);
     }
@@ -68,7 +68,7 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
      * @custom:and The position version is incremented
      * @custom:and A {PositionVersionUpdated} event is emitted
      */
-    function test_updatePositionForTheFirstTime() external {
+    function test_updatePositionForTheFirstTime() public {
         IUsdnProtocolTypes.PositionId memory newPosId =
             IUsdnProtocolTypes.PositionId({ tick: 200, tickVersion: 1, index: 3 });
         uint128 pendingAssetsBefore = rebalancer.getPendingAssetsAmount();
@@ -85,16 +85,14 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
         assertEq(
             positionData.entryAccMultiplier, rebalancer.MULTIPLIER_FACTOR(), "Entry multiplier accumulator should be 1x"
         );
+        assertEq(positionData.tick, newPosId.tick, "The tick of the position ID should be equal to the provided value");
         assertEq(
-            positionData.id.tick, newPosId.tick, "The tick of the position ID should be equal to the provided value"
-        );
-        assertEq(
-            positionData.id.tickVersion,
+            positionData.tickVersion,
             newPosId.tickVersion,
             "The tick version of the position ID should be equal to the provided value"
         );
         assertEq(
-            positionData.id.index, newPosId.index, "The index of the position ID should be equal to the provided value"
+            positionData.index, newPosId.index, "The index of the position ID should be equal to the provided value"
         );
 
         // check the rebalancer state
@@ -116,7 +114,7 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
      * @custom:and The position version is incremented
      * @custom:and A {PositionVersionUpdated} event is emitted
      */
-    function test_updatePositionWithAnExistingPosition() external {
+    function test_updatePositionWithAnExistingPosition() public {
         IUsdnProtocolTypes.PositionId memory posId1 =
             IUsdnProtocolTypes.PositionId({ tick: 200, tickVersion: 1, index: 3 });
         IUsdnProtocolTypes.PositionId memory posId2 =
@@ -154,9 +152,9 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
             rebalancer.MULTIPLIER_FACTOR() + rebalancer.MULTIPLIER_FACTOR() / 10,
             "Entry multiplier accumulator of the position should be 1.1x"
         );
-        assertEq(positionData.id.tick, posId2.tick, "Tick mismatch");
-        assertEq(positionData.id.tickVersion, posId2.tickVersion, "Tick version mismatch");
-        assertEq(positionData.id.index, posId2.index, "Index mismatch");
+        assertEq(positionData.tick, posId2.tick, "Tick mismatch");
+        assertEq(positionData.tickVersion, posId2.tickVersion, "Tick version mismatch");
+        assertEq(positionData.index, posId2.index, "Index mismatch");
     }
 
     /**
@@ -169,7 +167,7 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
      * @custom:then The data is saved in the new position version
      * @custom:and The last liquidated version is set to the previous version
      */
-    function test_updatePositionWithALiquidatedPosition() external {
+    function test_updatePositionWithALiquidatedPosition() public {
         IUsdnProtocolTypes.PositionId memory posId1 =
             IUsdnProtocolTypes.PositionId({ tick: 200, tickVersion: 1, index: 3 });
         IUsdnProtocolTypes.PositionId memory posId2 =
@@ -205,5 +203,40 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
         assertEq(
             positionData.entryAccMultiplier, rebalancer.MULTIPLIER_FACTOR(), "Entry multiplier accumulator should be 1x"
         );
+    }
+
+    /**
+     * @custom:scenario The position is updated with a `NO_POSITION_TICK` in the new position ID
+     * @custom:given A new position was created for the rebalancer for the first time
+     * @custom:when The usdn protocol calls {updatePosition} with `NO_POSITION_TICK` as the new position ID
+     * @custom:and The value of the previous version is 0
+     * @custom:then The data is saved in the new position version
+     * @custom:and The last liquidated version is set to the previous version
+     */
+    function test_updatePositionWithNoNewPosition() public {
+        int24 noPositionTick = usdnProtocol.NO_POSITION_TICK();
+        IUsdnProtocolTypes.PositionId memory posId1 =
+            IUsdnProtocolTypes.PositionId({ tick: 200, tickVersion: 1, index: 3 });
+
+        vm.startPrank(address(usdnProtocol));
+        rebalancer.updatePosition(posId1, 0);
+
+        uint128 positionVersionBefore = rebalancer.getPositionVersion();
+
+        vm.expectEmit();
+        emit PositionVersionUpdated(positionVersionBefore + 1);
+        rebalancer.updatePosition(IUsdnProtocolTypes.PositionId(noPositionTick, 0, 0), 0);
+        vm.stopPrank();
+
+        assertEq(
+            rebalancer.getLastLiquidatedVersion(),
+            positionVersionBefore,
+            "The last liquidated version should be the version that was supposed to be closed"
+        );
+
+        PositionData memory positionData = rebalancer.getPositionData(rebalancer.getPositionVersion());
+        assertEq(positionData.tick, noPositionTick, "The tick should be set to NO_POSITION_TICK");
+        assertEq(positionData.amount, 0, "No funds should be in the position");
+        assertEq(positionData.entryAccMultiplier, 0, "Entry multiplier accumulator should be 0");
     }
 }

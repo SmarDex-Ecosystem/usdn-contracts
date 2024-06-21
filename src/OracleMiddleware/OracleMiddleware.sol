@@ -84,7 +84,8 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, RedstoneOracle, Chai
         bytes calldata data
     ) public payable virtual returns (PriceInfo memory price_) {
         if (action == IUsdnProtocolTypes.ProtocolAction.None) {
-            return _getLowLatencyPrice(data, targetTimestamp, ConfidenceInterval.None);
+            return
+                _getLowLatencyPrice(data, targetTimestamp, ConfidenceInterval.None, targetTimestamp + _lowLatencyDelay);
         } else if (action == IUsdnProtocolTypes.ProtocolAction.Initialize) {
             return _getInitiateActionPrice(data, ConfidenceInterval.None);
         } else if (action == IUsdnProtocolTypes.ProtocolAction.ValidateDeposit) {
@@ -106,7 +107,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, RedstoneOracle, Chai
         } else if (action == IUsdnProtocolTypes.ProtocolAction.Liquidation) {
             // special case, if we pass a timestamp of zero, then we accept all prices newer than
             // `_pythRecentPriceDelay`
-            return _getLowLatencyPrice(data, 0, ConfidenceInterval.None);
+            return _getLowLatencyPrice(data, 0, ConfidenceInterval.None, 0);
         } else if (action == IUsdnProtocolTypes.ProtocolAction.InitiateDeposit) {
             // If the user chooses to initiate with a pyth price, we apply the relevant confidence interval adjustment
             return _getInitiateActionPrice(data, ConfidenceInterval.Down);
@@ -169,12 +170,16 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, RedstoneOracle, Chai
      * @param actionTimestamp The timestamp of the action corresponding to the price. If zero, then we must accept all
      * recent prices according to `_pythRecentPriceDelay` or `_redstoneRecentPriceDelay`
      * @param dir The direction for the confidence interval adjusted price
+     * @param targetLimit The maximum timestamp when a low-latency price should be used (can be zero if
+     * `actionTimestamp` is zero)
      * @return price_ The price from the low-latency oracle, adjusted according to the confidence interval direction
      */
-    function _getLowLatencyPrice(bytes calldata data, uint128 actionTimestamp, ConfidenceInterval dir)
-        internal
-        returns (PriceInfo memory price_)
-    {
+    function _getLowLatencyPrice(
+        bytes calldata data,
+        uint128 actionTimestamp,
+        ConfidenceInterval dir,
+        uint128 targetLimit
+    ) internal returns (PriceInfo memory price_) {
         // if actionTimestamp is 0 we're performing a liquidation and we don't add the validation delay
         if (actionTimestamp > 0) {
             // add the validation delay to the action timestamp to get the timestamp of the price data used to
@@ -183,7 +188,8 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, RedstoneOracle, Chai
         }
 
         if (_isPythData(data)) {
-            FormattedPythPrice memory pythPrice = _getFormattedPythPrice(data, actionTimestamp, MIDDLEWARE_DECIMALS);
+            FormattedPythPrice memory pythPrice =
+                _getFormattedPythPrice(data, actionTimestamp, MIDDLEWARE_DECIMALS, targetLimit);
             price_ = _adjustPythPrice(pythPrice, dir);
         } else {
             // note: redstone automatically retrieves data from the end of the calldata, no need to pass the pointer
@@ -223,7 +229,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, RedstoneOracle, Chai
         if (data.length > 0) {
             // since we use this function for `initiate` type actions which pass `targetTimestamp = block.timestamp`,
             // we should pass `0` to the function below to signal that we accept any recent price
-            return _getLowLatencyPrice(data, 0, dir);
+            return _getLowLatencyPrice(data, 0, dir, 0);
         }
 
         // chainlink calls do not require a fee
@@ -330,7 +336,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, RedstoneOracle, Chai
     {
         uint128 targetLimit = targetTimestamp + _lowLatencyDelay;
         if (block.timestamp <= targetLimit) {
-            return _getLowLatencyPrice(data, targetTimestamp, dir);
+            return _getLowLatencyPrice(data, targetTimestamp, dir, targetLimit);
         }
 
         // chainlink calls do not require a fee

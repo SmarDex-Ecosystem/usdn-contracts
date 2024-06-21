@@ -42,7 +42,13 @@ contract TestRebalancerInitiateClosePosition is
 
         version = rebalancer.getPositionVersion();
         previousPositionData = rebalancer.getPositionData(version);
-        (IUsdnProtocolTypes.Position memory protocolPosition,) = protocol.getLongPosition(previousPositionData.id);
+        (IUsdnProtocolTypes.Position memory protocolPosition,) = protocol.getLongPosition(
+            IUsdnProtocolTypes.PositionId({
+                tick: previousPositionData.tick,
+                tickVersion: previousPositionData.tickVersion,
+                index: previousPositionData.index
+            })
+        );
         posAmount = protocolPosition.amount;
     }
 

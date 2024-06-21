@@ -645,4 +645,73 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.None, "action should be None");
         assertEq(rawIndex, 0, "rawIndex should be 0");
     }
+
+    /**
+     * @custom:scenario The `calculateFee` function call with fundAsset greater than 0
+     * @custom:when calculateFee is called with a fund and fundAsset greater than 0
+     * @custom:then The function should return the expected fee, fundWithFee and fundAssetWithFee
+     */
+    function test_calculateFeeMoreThanZero() public {
+        int256 fund = 2000 ether;
+        int256 fundAsset = 1000 ether;
+
+        uint16 protocolFeeBps = protocol.getProtocolFeeBps();
+        uint256 bpsDivisor = protocol.BPS_DIVISOR();
+        uint256 expectedFee = (uint256(fundAsset) * protocolFeeBps) / bpsDivisor;
+
+        (int256 fee, int256 fundWithFee, int256 fundAssetWithFee) = protocol.i_calculateFee(fund, fundAsset);
+
+        assertEq(uint256(fee), expectedFee, "fee should be equal to fundAsset * protocolFeeBps / bpsDivisor");
+        assertEq(fundWithFee, fund, "fundWithFee should be equal to fund");
+        assertEq(
+            uint256(fundAssetWithFee),
+            uint256(fundAsset) - expectedFee,
+            "fundAssetWithFee should be equal to fundAsset - fee"
+        );
+    }
+
+    /**
+     * @custom:scenario The `calculateFee` function call with fundAsset equal to 0
+     * @custom:when calculateFee is called with a fund greater than 0 and fundAsset equal to 0
+     * @custom:then The function should return 0 for the fee and fundAssetWithFee
+     * and fundWithFee should be equal to fund
+     */
+    function test_calculateFeeEqualZero() public {
+        int256 fund = 2000 ether;
+
+        (int256 fee, int256 fundWithFee, int256 fundAssetWithFee) = protocol.i_calculateFee(fund, 0);
+
+        assertEq(fee, 0, "fee should be 0");
+        assertEq(fundWithFee, fund, "fundWithFee should be equal to fund");
+        assertEq(fundAssetWithFee, 0, "fundAssetWithFee should be equal to fund");
+    }
+
+    /**
+     * @custom:scenario The `calculateFee` function call with fundAsset less than 0
+     * @custom:when calculateFee is called with a fund greater than 0 and fundAsset less than 0
+     * @custom:then The function should return the expected fee, fundWithFee and fundAssetWithFee
+     */
+    function test_calculateFeeLessThanZero() public {
+        int256 fund = -2000;
+        int256 fundAsset = -1;
+
+        uint16 protocolFeeBps = protocol.getProtocolFeeBps();
+        uint256 bpsDivisor = protocol.BPS_DIVISOR();
+        uint256 expectedFee = (uint256(-fundAsset) * protocolFeeBps) / bpsDivisor;
+        int256 expectedFundWithFee = fund - (fund * int256(uint256(protocolFeeBps)) / int256(bpsDivisor));
+
+        (int256 fee, int256 fundWithFee, int256 fundAssetWithFee) = protocol.i_calculateFee(fund, fundAsset);
+
+        assertEq(uint256(fee), expectedFee, "fee should be equal to fundAsset * protocolFeeBps / bpsDivisor");
+        assertEq(
+            fundWithFee,
+            expectedFundWithFee,
+            "fundWithFee should be equal to fund - (fund * protocolFeeBps / bpsDivisor)"
+        );
+        assertEq(
+            uint256(fundAssetWithFee),
+            uint256(fundAsset) - expectedFee,
+            "fundAssetWithFee should be equal to fundAsset - fee"
+        );
+    }
 }

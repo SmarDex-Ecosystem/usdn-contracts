@@ -92,7 +92,7 @@ contract BaseFixture is Test {
 
     /**
      * @notice Call the test_utils rust command via vm.ffi
-     * @dev You need to use `cargo build --release` in the `test_utils` directory before executing your test
+     * @dev You need to run `cargo build --release` at the root of the repo before executing your test
      * @param commandName The name of the command to call
      * @param parameter The parameter for the command
      */
@@ -102,7 +102,7 @@ contract BaseFixture is Test {
 
     /**
      * @notice Call the test_utils rust command via vm.ffi
-     * @dev You need to use `cargo build --release` in the `test_utils` directory before executing your test
+     * @dev You need to run `cargo build --release` at the root of the repo before executing your test
      * @param commandName The name of the command to call
      * @param parameter1 The first parameter for the command
      * @param parameter2 The second parameter for the command
@@ -116,7 +116,7 @@ contract BaseFixture is Test {
 
     /**
      * @notice Call the test_utils rust command via vm.ffi
-     * @dev You need to use `cargo build --release` in the `test_utils` directory before executing your test
+     * @dev You need to run `cargo build --release` at the root of the repo before executing your test
      * @param commandName The name of the command to call
      * @param parameter1 The first parameter for the command
      * @param parameter2 The second parameter for the command
@@ -133,7 +133,7 @@ contract BaseFixture is Test {
 
     /**
      * @notice Call the test_utils rust command via vm.ffi
-     * @dev You need to use `cargo build --release` in the `test_utils` directory before executing your test
+     * @dev You need to run `cargo build --release` at the root of the repo before executing your test
      * @param commandName The name of the command to call
      * @param parameter1 The first parameter for the command
      * @param parameter2 The second parameter for the command
@@ -149,7 +149,7 @@ contract BaseFixture is Test {
     ) internal returns (bytes memory result_) {
         string[] memory cmds = new string[](6);
 
-        cmds[0] = "./test_utils/target/release/test_utils";
+        cmds[0] = "./target/release/test_utils";
         cmds[1] = commandName;
         cmds[2] = parameter1;
         cmds[3] = parameter2;

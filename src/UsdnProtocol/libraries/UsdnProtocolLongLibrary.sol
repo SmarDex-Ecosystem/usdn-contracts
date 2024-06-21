@@ -255,7 +255,6 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * TODO add tests
      * @notice Trigger the rebalancer if the imbalance on the long side is too high
      * It will close the rebalancer position (if there is one) and open a new one with
      * the pending assets, the value of the previous position and the liquidation bonus (if available)
@@ -312,7 +311,6 @@ library UsdnProtocolLongLibrary {
         // the default value of `positionAmount` is the amount of pendingAssets in the rebalancer
         (data.positionAmount, data.rebalancerMaxLeverage, data.rebalancerPosId) = rebalancer.getCurrentStateData();
 
-        data.positionValue;
         // close the rebalancer position and get its value to open the next one
         if (data.rebalancerPosId.tick != constantsLib.NO_POSITION_TICK) {
             // cached values will be updated during this call
@@ -321,7 +319,7 @@ library UsdnProtocolLongLibrary {
             // if the position value is less than 0, it should have been liquidated but wasn't
             // interrupt the whole rebalancer process because there are pending liquidations
             if (realPositionValue < 0) {
-                return (longBalance_, vaultBalance_);
+                return (cache.longBalance, vaultBalance_);
             }
 
             // cast is safe as realPositionValue cannot be lower than 0
@@ -329,9 +327,14 @@ library UsdnProtocolLongLibrary {
             data.positionAmount += data.positionValue;
         }
 
-        // If there are no pending assets and the previous position was either liquidated or doesn't exist, return
-        if (data.positionAmount + data.positionValue == 0) {
-            return (longBalance_, vaultBalance_);
+        // if the amount in the position we wanted to open is below a fraction of the _minLongPosition setting,
+        // we are dealing with dust. So we should stop the process and gift the remaining value to the vault
+        if (data.positionAmount <= s._minLongPosition / 10_000) {
+            // make the rebalancer believe that the previous position was liquidated,
+            // and inform it that no new position was open so it can start anew
+            rebalancer.updatePosition(IUsdnProtocolTypes.PositionId(constantsLib.NO_POSITION_TICK, 0, 0), 0);
+            vaultBalance_ += data.positionAmount;
+            return (cache.longBalance, vaultBalance_);
         }
 
         // transfer the pending assets from the rebalancer to this contract

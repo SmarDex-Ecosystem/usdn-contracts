@@ -11,9 +11,9 @@ import { TickMath } from "../../../src/libraries/TickMath.sol";
  * @custom:feature Solady math library fuzzing (diff testing)
  * @dev Test the Solady math library against a reference implementation in Rust using decimal-rs.
  *
- * The Rust implementation is in the test_utils folder/crate and should be compiled beforehand.
+ * The Rust implementation should be compiled beforehand.
  *
- * Run the following command in the test_utils folder:
+ * Run the following command at the root of the repo:
  *
  * ```bash
  * cargo build --release

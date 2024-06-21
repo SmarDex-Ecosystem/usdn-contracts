@@ -51,9 +51,11 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
      * @notice Get the price of the asset from pyth
      * @param priceUpdateData The data required to update the price feed
      * @param targetTimestamp The target timestamp to validate the price. If zero, then we accept all recent prices
+     * @param targetLimit The maximum timestamp when a low-latency price should be used (can be zero if
+     * `targetTimestamp` is zero)
      * @return price_ The price of the asset
      */
-    function _getPythPrice(bytes calldata priceUpdateData, uint128 targetTimestamp)
+    function _getPythPrice(bytes calldata priceUpdateData, uint128 targetTimestamp, uint128 targetLimit)
         internal
         returns (PythStructs.Price memory)
     {
@@ -85,8 +87,10 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
             // we want to validate that the price is exactly at `targetTimestamp` (first in the second) or the next
             // available price in the future, as identified by the prevPublishTime being strictly less than
             // targetTimestamp
+            // we add a sanity check that this price update cannot be too late (more than `_lowLatencyDelay` seconds
+            // late) compared to the desired targetTimestamp
             priceFeeds = _pyth.parsePriceFeedUpdatesUnique{ value: pythFee }(
-                pricesUpdateData, feedIds, uint64(targetTimestamp), type(uint64).max
+                pricesUpdateData, feedIds, uint64(targetTimestamp), uint64(targetLimit)
             );
         }
 
@@ -102,14 +106,17 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
      * @param priceUpdateData The data required to update the price feed
      * @param targetTimestamp The target timestamp to validate the price. If zero, then we accept all recent prices
      * @param middlewareDecimals The number of decimals to format the price to
+     * @param targetLimit The maximum timestamp when a low-latency price should be used
      * @return price_ The Pyth price formatted with `middlewareDecimals`
      */
-    function _getFormattedPythPrice(bytes calldata priceUpdateData, uint128 targetTimestamp, uint256 middlewareDecimals)
-        internal
-        returns (FormattedPythPrice memory price_)
-    {
+    function _getFormattedPythPrice(
+        bytes calldata priceUpdateData,
+        uint128 targetTimestamp,
+        uint256 middlewareDecimals,
+        uint128 targetLimit
+    ) internal returns (FormattedPythPrice memory price_) {
         // this call checks that the price is strictly positive
-        PythStructs.Price memory pythPrice = _getPythPrice(priceUpdateData, targetTimestamp);
+        PythStructs.Price memory pythPrice = _getPythPrice(priceUpdateData, targetTimestamp, targetLimit);
 
         if (pythPrice.expo > 0) {
             revert OracleMiddlewarePythPositiveExponent(pythPrice.expo);

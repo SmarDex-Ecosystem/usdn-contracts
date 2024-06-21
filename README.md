@@ -55,13 +55,16 @@ The environment provides the following tools:
 - foundry
 - solc v0.8.26
 - slither
-- Node 18
+- lcov
+- Node 20 + Typescript
+- Rust toolchain
+- `test_utils` dependencies
 
 ## Usage
 
 ### Tests
 
-Compile the test utils by running the following inside the `test_utils` folder:
+Compile the test utils by running the following command at the root of the repo:
 
 ```bash
 cargo build --release

@@ -21,13 +21,17 @@ interface IRebalancerTypes {
      * @notice The data for a version of the position
      * @dev The difference between the amount here and the amount saved in the USDN protocol is the liquidation bonus
      * @param amount The amount of assets used as collateral to open the position
+     * @param tick The tick of the position
+     * @param tickVersion The version of the tick
+     * @param index The index of the position in the tick list
      * @param entryAccMultiplier The accumulated PnL multiplier of all the positions up to this one
-     * @param id The ID of the position in the USDN protocol
      */
     struct PositionData {
         uint128 amount;
+        int24 tick;
+        uint256 tickVersion;
+        uint256 index;
         uint256 entryAccMultiplier;
-        IUsdnProtocolTypes.PositionId id;
     }
 
     /**
