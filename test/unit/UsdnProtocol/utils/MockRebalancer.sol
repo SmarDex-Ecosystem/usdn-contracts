@@ -13,6 +13,8 @@ contract MockRebalancer is IBaseRebalancer, IRebalancerTypes {
     using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
 
+    uint256 public constant MULTIPLIER_FACTOR = 1e38;
+
     uint256 internal _minAssetDeposit;
     uint128 internal _pendingAssets;
     uint256 internal _maxLeverage;
@@ -40,9 +42,13 @@ contract MockRebalancer is IBaseRebalancer, IRebalancerTypes {
         return _userDeposit[user];
     }
 
-    function updatePosition(PositionId calldata newPosId, uint128) external {
+    function updatePosition(PositionId calldata newPosId, uint128 previousPositionValue) external {
         ++_positionVersion;
         _positionData[_positionVersion].id = newPosId;
+        _positionData[_positionVersion].amount = _pendingAssets + previousPositionValue;
+        _positionData[_positionVersion].entryAccMultiplier = MULTIPLIER_FACTOR;
+
+        _pendingAssets = 0;
     }
 
     function getMinAssetDeposit() external view returns (uint256) {
