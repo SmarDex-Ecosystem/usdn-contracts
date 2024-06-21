@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
+import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
+
+import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
 /**
  * @custom:feature Test of the protocol expo limit for `_checkImbalanceLimitWithdrawal` function in balanced state

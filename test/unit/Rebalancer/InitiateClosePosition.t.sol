@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { IRebalancerErrors } from "../../../src/interfaces/Rebalancer/IRebalancerErrors.sol";
-
 import { RebalancerFixture } from "../../../test/unit/Rebalancer/utils/Fixtures.sol";
+
+import { IRebalancerErrors } from "../../../src/interfaces/Rebalancer/IRebalancerErrors.sol";
 
 /**
  * @custom:feature The `initiateClosePosition` function of the rebalancer contract

@@ -4,8 +4,8 @@ pragma solidity ^0.8.25;
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
 import { IChainlinkOracle } from "../../interfaces/OracleMiddleware/IChainlinkOracle.sol";
-import { ChainlinkPriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IOracleMiddlewareErrors } from "../../interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
+import { ChainlinkPriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
 /**
  * @title ChainlinkOracle contract
@@ -20,6 +20,7 @@ abstract contract ChainlinkOracle is IChainlinkOracle, IOracleMiddlewareErrors {
     AggregatorV3Interface internal immutable _priceFeed;
 
     /// @notice Tolerated elapsed time until we consider the data too old
+    // slither-disable-next-line immutable-states
     uint256 internal _timeElapsedLimit;
 
     /**

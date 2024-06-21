@@ -1,27 +1,20 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.25;
 
-import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
-import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
+import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IBaseRebalancer } from "../../interfaces/Rebalancer/IBaseRebalancer.sol";
-import { IUsdnProtocolActions } from "../../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
-import { HugeUint } from "../../libraries/HugeUint.sol";
-import { SignedMath } from "../../libraries/SignedMath.sol";
-import { TickMath } from "../../libraries/TickMath.sol";
-import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 import { IOwnershipCallback } from "../../interfaces/UsdnProtocol/IOwnershipCallback.sol";
-import { Storage } from "../UsdnProtocolStorage.sol";
-import { IUsdnProtocolEvents } from "./../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { IUsdnProtocolErrors } from "./../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
-import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
-import { UsdnProtocolLongLibrary as longLib } from "./UsdnProtocolLongLibrary.sol";
-import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
+import { IUsdnProtocolActions } from "../../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
+import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import {
+    ClosePositionData,
+    InitiateOpenPositionData,
     LongPendingAction,
     PendingAction,
     Position,
@@ -29,10 +22,18 @@ import {
     PreviousActionsData,
     ProtocolAction,
     TickData,
-    InitiateOpenPositionData,
-    ValidateOpenPositionData,
-    ClosePositionData
+    ValidateOpenPositionData
 } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { HugeUint } from "../../libraries/HugeUint.sol";
+import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
+import { SignedMath } from "../../libraries/SignedMath.sol";
+import { TickMath } from "../../libraries/TickMath.sol";
+import { Storage } from "../UsdnProtocolStorage.sol";
+import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
+import { UsdnProtocolConstantsLibrary as constantsLib } from "./UsdnProtocolConstantsLibrary.sol";
+import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
+import { UsdnProtocolLongLibrary as longLib } from "./UsdnProtocolLongLibrary.sol";
+import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
 
 library UsdnProtocolActionsUtilsLibrary {
     using SafeTransferLib for address;
@@ -148,7 +149,7 @@ library UsdnProtocolActionsUtilsLibrary {
         uint256 newTotalExpo = s._totalExpo - posTotalExpoToClose;
         int256 currentVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault);
 
-        int256 imbalanceBps = longLib._calcImbalanceCloseBps(s, currentVaultExpo, newLongBalance, newTotalExpo);
+        int256 imbalanceBps = longLib._calcImbalanceCloseBps(currentVaultExpo, newLongBalance, newTotalExpo);
 
         if (imbalanceBps >= closeExpoImbalanceLimitBps) {
             revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
@@ -251,7 +252,8 @@ library UsdnProtocolActionsUtilsLibrary {
             priceData
         );
         // apply fees on price
-        data_.startPrice = (currentPrice.price + currentPrice.price * s._positionFeeBps / s.BPS_DIVISOR).toUint128();
+        data_.startPrice =
+            (currentPrice.price + currentPrice.price * s._positionFeeBps / constantsLib.BPS_DIVISOR).toUint128();
 
         (, data_.isLiquidationPending) = longLib._applyPnlAndFundingAndLiquidate(
             s,
@@ -287,7 +289,7 @@ library UsdnProtocolActionsUtilsLibrary {
             s, longLib._calcTickWithoutPenalty(s, data_.action.tick, data_.liquidationPenalty)
         );
         // reverts if liqPriceWithoutPenalty >= startPrice
-        data_.leverage = longLib._getLeverage(s, data_.startPrice, data_.liqPriceWithoutPenalty);
+        data_.leverage = longLib._getLeverage(data_.startPrice, data_.liqPriceWithoutPenalty);
     }
 
     /**
@@ -454,9 +456,7 @@ library UsdnProtocolActionsUtilsLibrary {
             closePosTotalExpo: data.totalExpoToClose,
             tickVersion: posId.tickVersion,
             index: posId.index,
-            closeLiqMultiplier: longLib._calcFixedPrecisionMultiplier(
-                s, data.lastPrice, data.longTradingExpo, data.liqMulAcc
-            ),
+            closeLiqMultiplier: longLib._calcFixedPrecisionMultiplier(data.lastPrice, data.longTradingExpo, data.liqMulAcc),
             closeBoundedPositionValue: data.tempPositionValue
         });
         amountToRefund_ = coreLib._addPendingAction(s, validator, coreLib._convertLongPendingAction(action));

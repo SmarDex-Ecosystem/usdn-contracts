@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.25;
 
-import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 
 import { IBaseOracleMiddleware } from "../../../../src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import {
     IOracleMiddleware,
     IOracleMiddlewareErrors
 } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
-import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 contract MockOracleMiddleware is IOracleMiddleware, Ownable2Step {
     uint16 public constant BPS_DIVISOR = 10_000;

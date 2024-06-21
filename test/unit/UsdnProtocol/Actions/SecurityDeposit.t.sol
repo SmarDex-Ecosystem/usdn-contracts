@@ -1,19 +1,18 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { USER_1, USER_2, ADMIN } from "../../../utils/Constants.sol";
-
+import { ADMIN, USER_1, USER_2 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import {
-    ProtocolAction,
-    LongPendingAction,
-    Position,
-    PendingAction,
-    PreviousActionsData,
-    PositionId
-} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import {
+    LongPendingAction,
+    PendingAction,
+    Position,
+    PositionId,
+    PreviousActionsData,
+    ProtocolAction
+} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The security deposit of the USDN Protocol

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { RebalancerFixture } from "./utils/Fixtures.sol";
 import { USER_1 } from "../../utils/Constants.sol";
+import { RebalancerFixture } from "./utils/Fixtures.sol";
 
 /**
  * @custom:feature The `validateDepositAssets` function of the rebalancer contract
@@ -47,29 +47,39 @@ contract TestRebalancerValidateDepositAssets is RebalancerFixture {
     /**
      * @custom:scenario The user tries to validate a deposit that has already been validated
      * @custom:when The user tries to validate the deposit again
-     * @custom:then The call reverts with a RebalancerActionWasValidated error
+     * @custom:then The call reverts with a {RebalancerNoPendingAction} error
      */
     function test_RevertWhen_validateDepositAlreadyValidated() public {
         skip(rebalancer.getTimeLimits().validationDelay);
         rebalancer.validateDepositAssets();
 
-        vm.expectRevert(RebalancerActionWasValidated.selector);
+        vm.expectRevert(RebalancerNoPendingAction.selector);
         rebalancer.validateDepositAssets();
     }
 
     /**
      * @custom:scenario The user tries to validate a deposit that has not been initiated
      * @custom:when The user tries to validate a deposit that has not been initiated
-     * @custom:then The call reverts with a RebalancerActionWasValidated error
+     * @custom:then The call reverts with a {RebalancerNoPendingAction} error
      */
     function test_RevertWhen_validateDepositNotInitiated() public {
-        vm.expectRevert(RebalancerActionWasValidated.selector);
+        vm.expectRevert(RebalancerNoPendingAction.selector);
         vm.prank(USER_1);
         rebalancer.validateDepositAssets();
     }
 
-    function test_RevertWhen_validateDepositUnvalidatedWithdrawal() public {
-        // TODO
+    /**
+     * @custom:scenario The user tries to validate a deposit but has a pending withdrawal
+     * @custom:when The user tries to validate the deposit after initiating a withdrawal
+     * @custom:then The call reverts with a {RebalancerActionNotValidated} error
+     */
+    function test_RevertWhen_validateDepositPendingWithdrawal() public {
+        skip(rebalancer.getTimeLimits().validationDelay);
+        rebalancer.validateDepositAssets();
+        rebalancer.initiateWithdrawAssets();
+
+        vm.expectRevert(RebalancerActionNotValidated.selector);
+        rebalancer.validateDepositAssets();
     }
 
     /**

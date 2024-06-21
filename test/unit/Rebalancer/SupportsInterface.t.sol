@@ -5,9 +5,9 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol"
 
 import { RebalancerFixture } from "./utils/Fixtures.sol";
 
-import { IOwnershipCallback } from "../../../src/interfaces/UsdnProtocol/IOwnershipCallback.sol";
-import { IRebalancer } from "../../../src/interfaces/Rebalancer/IRebalancer.sol";
 import { IBaseRebalancer } from "../../../src/interfaces/Rebalancer/IBaseRebalancer.sol";
+import { IRebalancer } from "../../../src/interfaces/Rebalancer/IRebalancer.sol";
+import { IOwnershipCallback } from "../../../src/interfaces/UsdnProtocol/IOwnershipCallback.sol";
 
 /**
  * @custom:feature The {supportsInterface} function of the rebalancer contract

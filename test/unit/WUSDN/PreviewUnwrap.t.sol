@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { WusdnTokenFixture } from "./utils/Fixtures.sol";
-import { USER_1 } from "../../utils/Constants.sol";
-
 import "forge-std/Vm.sol";
+
+import { USER_1 } from "../../utils/Constants.sol";
+import { WusdnTokenFixture } from "./utils/Fixtures.sol";
 
 /**
  * @custom:feature The `previewUnwrap` function of `WUSDN`

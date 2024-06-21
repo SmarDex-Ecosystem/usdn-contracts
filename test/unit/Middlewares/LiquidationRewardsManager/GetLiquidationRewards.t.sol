@@ -2,6 +2,7 @@
 pragma solidity ^0.8.25;
 
 import { LiquidationRewardsManagerBaseFixture } from "../utils/Fixtures.sol";
+
 import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
@@ -13,7 +14,7 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
         mockChainlinkOnChain.setLastPublishTime(block.timestamp);
 
         // Change The rewards calculations parameters to not be dependent of the initial values
-        liquidationRewardsManager.setRewardsParameters(10_000, 30_000, 20_000, 1000 gwei, 30_000);
+        liquidationRewardsManager.setRewardsParameters(10_000, 30_000, 20_000, 20_000, 1000 gwei, 30_000);
 
         // Puts the gas at 30 gwei
         mockChainlinkOnChain.setLatestRoundData(1, 30 gwei, block.timestamp, 1);

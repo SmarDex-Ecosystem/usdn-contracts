@@ -4,9 +4,9 @@ pragma solidity ^0.8.25;
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import {
-    ProtocolAction,
     LiquidationsEffects,
-    PositionId
+    PositionId,
+    ProtocolAction
 } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { TickMath } from "../../../../src/libraries/TickMath.sol";
 

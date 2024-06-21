@@ -2,34 +2,45 @@
 pragma solidity ^0.8.25;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
+import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolCore } from "../../interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
-import { SignedMath } from "../../libraries/SignedMath.sol";
-import { DoubleEndedQueue } from "../../libraries/DoubleEndedQueue.sol";
-import { TickMath } from "../../libraries/TickMath.sol";
-import { HugeUint } from "../../libraries/HugeUint.sol";
-import { Storage } from "../UsdnProtocolStorage.sol";
-import { IUsdnProtocolEvents } from "./../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { IUsdnProtocolErrors } from "./../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
-import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
-import { UsdnProtocolLongLibrary as longLib } from "./UsdnProtocolLongLibrary.sol";
+import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import {
-    ProtocolAction,
-    PendingAction,
     DepositPendingAction,
-    WithdrawalPendingAction,
     LongPendingAction,
-    PositionId,
+    PendingAction,
     Position,
-    TickData
+    PositionId,
+    ProtocolAction,
+    TickData,
+    WithdrawalPendingAction
+} from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { DoubleEndedQueue } from "../../libraries/DoubleEndedQueue.sol";
+import { HugeUint } from "../../libraries/HugeUint.sol";
+import { SignedMath } from "../../libraries/SignedMath.sol";
+import { TickMath } from "../../libraries/TickMath.sol";
+import { Storage } from "../UsdnProtocolStorage.sol";
+import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
+
+import {
+    DepositPendingAction,
+    LongPendingAction,
+    PendingAction,
+    Position,
+    PositionId,
+    ProtocolAction,
+    TickData,
+    WithdrawalPendingAction
 } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { ApplyPnlAndFundingAndLiquidateParams } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { UsdnProtocolConstantsLibrary as constantsLib } from "./UsdnProtocolConstantsLibrary.sol";
+import { UsdnProtocolLongLibrary as longLib } from "./UsdnProtocolLongLibrary.sol";
 
 library UsdnProtocolCoreLibrary {
     using SafeTransferLib for address;
@@ -38,10 +49,6 @@ library UsdnProtocolCoreLibrary {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
     using LibBitmap for LibBitmap.Bitmap;
     using HugeUint for HugeUint.Uint512;
-
-    // TO DO : not here
-    // / @inheritdoc IUsdnProtocolCore
-    uint256 internal constant MAX_ACTIONABLE_PENDING_ACTIONS = 20;
 
     /* -------------------------------------------------------------------------- */
     /*                              Public functions                              */
@@ -55,11 +62,11 @@ library UsdnProtocolCoreLibrary {
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData
     ) public {
-        if (depositAmount < s.MIN_INIT_DEPOSIT) {
-            revert IUsdnProtocolErrors.UsdnProtocolMinInitAmount(s.MIN_INIT_DEPOSIT);
+        if (depositAmount < constantsLib.MIN_INIT_DEPOSIT) {
+            revert IUsdnProtocolErrors.UsdnProtocolMinInitAmount(constantsLib.MIN_INIT_DEPOSIT);
         }
-        if (longAmount < s.MIN_INIT_DEPOSIT) {
-            revert IUsdnProtocolErrors.UsdnProtocolMinInitAmount(s.MIN_INIT_DEPOSIT);
+        if (longAmount < constantsLib.MIN_INIT_DEPOSIT) {
+            revert IUsdnProtocolErrors.UsdnProtocolMinInitAmount(constantsLib.MIN_INIT_DEPOSIT);
         }
         // since all USDN must be minted by the protocol, we check that the total supply is 0
         IUsdn usdn = s._usdn;
@@ -129,9 +136,9 @@ library UsdnProtocolCoreLibrary {
             // empty queue, early return
             return (actions_, rawIndices_);
         }
-        actions_ = new PendingAction[](MAX_ACTIONABLE_PENDING_ACTIONS);
-        rawIndices_ = new uint128[](MAX_ACTIONABLE_PENDING_ACTIONS);
-        uint256 maxIter = MAX_ACTIONABLE_PENDING_ACTIONS;
+        actions_ = new PendingAction[](constantsLib.MAX_ACTIONABLE_PENDING_ACTIONS);
+        rawIndices_ = new uint128[](constantsLib.MAX_ACTIONABLE_PENDING_ACTIONS);
+        uint256 maxIter = constantsLib.MAX_ACTIONABLE_PENDING_ACTIONS;
         if (queueLength < maxIter) {
             maxIter = queueLength;
         }
@@ -220,11 +227,19 @@ library UsdnProtocolCoreLibrary {
         if (oldLongExpo_ <= 0) {
             // if oldLongExpo is negative, then we cap the imbalance index to -1
             // oldVaultExpo is always positive
-            return (-int256(s._fundingSF * 10 ** (s.FUNDING_RATE_DECIMALS - s.FUNDING_SF_DECIMALS)) + ema, oldLongExpo_);
+            return (
+                -int256(s._fundingSF * 10 ** (constantsLib.FUNDING_RATE_DECIMALS - constantsLib.FUNDING_SF_DECIMALS))
+                    + ema,
+                oldLongExpo_
+            );
         } else if (oldVaultExpo == 0) {
             // if oldVaultExpo is zero (can't be negative), then we cap the imbalance index to 1
             // oldLongExpo must be positive in this case
-            return (int256(s._fundingSF * 10 ** (s.FUNDING_RATE_DECIMALS - s.FUNDING_SF_DECIMALS)) + ema, oldLongExpo_);
+            return (
+                int256(s._fundingSF * 10 ** (constantsLib.FUNDING_RATE_DECIMALS - constantsLib.FUNDING_SF_DECIMALS))
+                    + ema,
+                oldLongExpo_
+            );
         }
 
         // starting here, oldLongExpo and oldVaultExpo are always strictly positive
@@ -239,7 +254,7 @@ library UsdnProtocolCoreLibrary {
             fund_ = -int256(
                 FixedPointMathLib.fullMulDiv(
                     numerator_squared * elapsedSeconds,
-                    s._fundingSF * 10 ** (s.FUNDING_RATE_DECIMALS - s.FUNDING_SF_DECIMALS),
+                    s._fundingSF * 10 ** (constantsLib.FUNDING_RATE_DECIMALS - constantsLib.FUNDING_SF_DECIMALS),
                     denominator
                 )
             ) + ema;
@@ -249,7 +264,7 @@ library UsdnProtocolCoreLibrary {
             fund_ = int256(
                 FixedPointMathLib.fullMulDiv(
                     numerator_squared * elapsedSeconds,
-                    s._fundingSF * 10 ** (s.FUNDING_RATE_DECIMALS - s.FUNDING_SF_DECIMALS),
+                    s._fundingSF * 10 ** (constantsLib.FUNDING_RATE_DECIMALS - constantsLib.FUNDING_SF_DECIMALS),
                     denominator
                 )
             ) + ema;
@@ -273,7 +288,7 @@ library UsdnProtocolCoreLibrary {
     {
         int256 oldLongExpo;
         (fund_, oldLongExpo) = _funding(s, timestamp, ema);
-        fundingAsset_ = fund_.safeMul(oldLongExpo) / int256(10) ** s.FUNDING_RATE_DECIMALS;
+        fundingAsset_ = fund_.safeMul(oldLongExpo) / int256(10) ** constantsLib.FUNDING_RATE_DECIMALS;
     }
 
     /**
@@ -359,14 +374,14 @@ library UsdnProtocolCoreLibrary {
     {
         int256 protocolFeeBps = _toInt256(s._protocolFeeBps);
         fundWithFee_ = fund;
-        fee_ = fundAsset * protocolFeeBps / int256(s.BPS_DIVISOR);
+        fee_ = fundAsset * protocolFeeBps / int256(constantsLib.BPS_DIVISOR);
         // fundAsset and fee_ have the same sign, we can safely subtract them to reduce the absolute amount of asset
         fundAssetWithFee_ = fundAsset - fee_;
 
         if (fee_ < 0) {
             // when funding is negative, the part that is taken as fees does not contribute to the liquidation
             // multiplier adjustment, and so we should deduce it from the funding factor
-            fundWithFee_ -= fund * protocolFeeBps / int256(s.BPS_DIVISOR);
+            fundWithFee_ -= fund * protocolFeeBps / int256(constantsLib.BPS_DIVISOR);
             // we want to return the absolute value of the fee
             fee_ = -fee_;
         }
@@ -582,7 +597,7 @@ library UsdnProtocolCoreLibrary {
             // empty queue, early return
             return (action_, rawIndex_);
         }
-        uint256 maxIter = MAX_ACTIONABLE_PENDING_ACTIONS;
+        uint256 maxIter = constantsLib.MAX_ACTIONABLE_PENDING_ACTIONS;
         if (queueLength < maxIter) {
             maxIter = queueLength;
         }
@@ -722,7 +737,7 @@ library UsdnProtocolCoreLibrary {
     /**
      * @notice Remove a stuck pending action and perform the minimal amount of cleanup necessary
      * @dev This function should only be called by the owner of the protocol, it serves as an escape hatch if a
-     * pending action ever gets stuck due to somethingpublic reverting unexpectedly
+     * pending action ever gets stuck due to something reverting unexpectedly
      * The caller must wait at least 1 hour after the validation deadline to call this function. This is to give the
      * chance to normal users to validate the action if possible
      * @param s The storage of the protocol
@@ -790,6 +805,7 @@ library UsdnProtocolCoreLibrary {
 
         // we retrieve the security deposit
         if (cleanup) {
+            // slither-disable-next-line arbitrary-send-eth
             (bool success,) = to.call{ value: pending.securityDepositValue }("");
             if (!success) {
                 revert IUsdnProtocolErrors.UsdnProtocolEtherRefundFailed();

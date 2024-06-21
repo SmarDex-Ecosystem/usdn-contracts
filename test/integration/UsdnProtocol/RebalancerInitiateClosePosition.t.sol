@@ -3,13 +3,13 @@ pragma solidity ^0.8.25;
 
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 import { MOCK_PYTH_DATA } from "../../unit/Middlewares/utils/Constants.sol";
 import { DEPLOYER } from "../../utils/Constants.sol";
+import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 
 import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
 import { IRebalancerTypes } from "../../../src/interfaces/Rebalancer/IRebalancerTypes.sol";
-import { ProtocolAction } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, PositionId, ProtocolAction } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The `initiateClosePosition` function of the rebalancer contract
@@ -22,10 +22,9 @@ contract TestRebalancerInitiateClosePosition is
     IRebalancerTypes
 {
     uint256 constant BASE_AMOUNT = 1000 ether;
-    uint256 internal securityDepositValue;
-    uint128 internal minAsset;
     uint88 internal amountInRebalancer;
     uint128 internal version;
+    uint256 internal posAmount;
     PositionData internal previousPositionData;
 
     function setUp() public {
@@ -33,8 +32,6 @@ contract TestRebalancerInitiateClosePosition is
         skip(5 minutes);
 
         vm.prank(DEPLOYER);
-
-        minAsset = uint128(rebalancer.getMinAssetDeposit());
 
         mockPyth.setPrice(1280 ether / 1e10);
         mockPyth.setLastPublishTime(block.timestamp);
@@ -44,10 +41,19 @@ contract TestRebalancerInitiateClosePosition is
 
         version = rebalancer.getPositionVersion();
         previousPositionData = rebalancer.getPositionData(version);
+        (Position memory protocolPosition,) = protocol.getLongPosition(
+            PositionId({
+                tick: previousPositionData.tick,
+                tickVersion: previousPositionData.tickVersion,
+                index: previousPositionData.index
+            })
+        );
+        posAmount = protocolPosition.amount;
     }
 
     function test_setUp() external {
         assertGt(rebalancer.getPositionVersion(), 0, "The rebalancer version should be updated");
+        assertGt(posAmount - previousPositionData.amount, 0, "The protocol bonus should be positive");
     }
 
     /**
@@ -62,12 +68,15 @@ contract TestRebalancerInitiateClosePosition is
     function test_rebalancerInitiateClosePositionPartial() external {
         uint88 amount = amountInRebalancer / 10;
 
-        uint256 amountToClose = FixedPointMathLib.fullMulDiv(
+        uint256 amountToCloseWithoutBonus = FixedPointMathLib.fullMulDiv(
             amount,
             previousPositionData.entryAccMultiplier,
             rebalancer.getPositionData(rebalancer.getUserDepositData(address(this)).entryPositionVersion)
                 .entryAccMultiplier
         );
+
+        uint256 amountToClose = amountToCloseWithoutBonus
+            + amountToCloseWithoutBonus * (posAmount - previousPositionData.amount) / previousPositionData.amount;
 
         vm.expectEmit();
         emit ClosePositionInitiated(address(this), amount, amountToClose, amountInRebalancer - amount);
@@ -92,7 +101,7 @@ contract TestRebalancerInitiateClosePosition is
         );
 
         assertEq(
-            rebalancer.getPositionData(version).amount + amountToClose,
+            rebalancer.getPositionData(version).amount + amountToCloseWithoutBonus,
             previousPositionData.amount,
             "The position data should be decreased"
         );
@@ -116,12 +125,15 @@ contract TestRebalancerInitiateClosePosition is
         vm.prank(DEPLOYER);
         protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
 
-        uint256 amountToClose = FixedPointMathLib.fullMulDiv(
+        uint256 amountToCloseWithoutBonus = FixedPointMathLib.fullMulDiv(
             amountInRebalancer,
             rebalancer.getPositionData(rebalancer.getPositionVersion()).entryAccMultiplier,
             rebalancer.getPositionData(rebalancer.getUserDepositData(address(this)).entryPositionVersion)
                 .entryAccMultiplier
         );
+
+        uint256 amountToClose = amountToCloseWithoutBonus
+            + amountToCloseWithoutBonus * (posAmount - previousPositionData.amount) / previousPositionData.amount;
 
         vm.expectEmit();
         emit ClosePositionInitiated(address(this), amountInRebalancer, amountToClose, 0);
@@ -136,7 +148,7 @@ contract TestRebalancerInitiateClosePosition is
         assertEq(depositData.entryPositionVersion, 0, "The user's entry position version should be zero");
 
         assertEq(
-            rebalancer.getPositionData(version).amount + amountToClose,
+            rebalancer.getPositionData(version).amount + amountToCloseWithoutBonus,
             previousPositionData.amount,
             "The position data should be decreased"
         );

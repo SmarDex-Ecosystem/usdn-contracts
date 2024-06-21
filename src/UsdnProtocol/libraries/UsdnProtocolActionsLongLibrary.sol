@@ -6,17 +6,13 @@ import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocolActions } from "../../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
-import { HugeUint } from "../../libraries/HugeUint.sol";
-import { TickMath } from "../../libraries/TickMath.sol";
-import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
-import { Storage } from "../UsdnProtocolStorage.sol";
-import { IUsdnProtocolEvents } from "./../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { IUsdnProtocolErrors } from "./../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
-import { UsdnProtocolLongLibrary as longLib } from "./UsdnProtocolLongLibrary.sol";
-import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
-import { UsdnProtocolActionsUtilsLibrary as actionsUtilsLib } from "./UsdnProtocolActionsUtilsLibrary.sol";
+import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import {
+    ClosePositionData,
+    InitiateClosePositionParams,
+    InitiateOpenPositionData,
+    InitiateOpenPositionParams,
     LongPendingAction,
     PendingAction,
     Position,
@@ -24,12 +20,17 @@ import {
     PreviousActionsData,
     ProtocolAction,
     TickData,
-    InitiateOpenPositionParams,
-    InitiateClosePositionParams,
-    InitiateOpenPositionData,
-    ValidateOpenPositionData,
-    ClosePositionData
+    ValidateOpenPositionData
 } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { HugeUint } from "../../libraries/HugeUint.sol";
+import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
+import { TickMath } from "../../libraries/TickMath.sol";
+import { Storage } from "../UsdnProtocolStorage.sol";
+import { UsdnProtocolActionsUtilsLibrary as actionsUtilsLib } from "./UsdnProtocolActionsUtilsLibrary.sol";
+import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
+import { UsdnProtocolConstantsLibrary as constantsLib } from "./UsdnProtocolConstantsLibrary.sol";
+import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
+import { UsdnProtocolLongLibrary as longLib } from "./UsdnProtocolLongLibrary.sol";
 
 library UsdnProtocolActionsLongLibrary {
     using SafeTransferLib for address;
@@ -208,7 +209,7 @@ library UsdnProtocolActionsLongLibrary {
 
         if (data.isLiquidationPending) {
             // value to indicate the position was not created
-            posId_.tick = s.NO_POSITION_TICK;
+            posId_.tick = constantsLib.NO_POSITION_TICK;
             return (posId_, params.securityDepositValue, false);
         }
 
@@ -231,6 +232,7 @@ library UsdnProtocolActionsLongLibrary {
         if (params.permit2TokenBitfield.useForAsset()) {
             address(s._asset).permit2TransferFrom(params.user, address(this), params.amount);
         } else {
+            // slither-disable-next-line arbitrary-send-erc20
             address(s._asset).safeTransferFrom(params.user, address(this), params.amount);
         }
 
@@ -315,7 +317,7 @@ library UsdnProtocolActionsLongLibrary {
         if (data.leverage > maxLeverage) {
             MaxLeverageData memory maxLeverageData;
             // theoretical liquidation price for _maxLeverage
-            data.liqPriceWithoutPenalty = longLib._getLiquidationPrice(s, data.startPrice, maxLeverage);
+            data.liqPriceWithoutPenalty = longLib._getLiquidationPrice(data.startPrice, maxLeverage);
             // adjust to the closest valid tick down
             maxLeverageData.tickWithoutPenalty = longLib.getEffectiveTickForPrice(s, data.liqPriceWithoutPenalty);
 
@@ -550,10 +552,11 @@ library UsdnProtocolActionsLongLibrary {
         );
 
         // apply fees on price
-        data.priceWithFees = (currentPrice.price - currentPrice.price * s._positionFeeBps / s.BPS_DIVISOR).toUint128();
+        data.priceWithFees =
+            (currentPrice.price - currentPrice.price * s._positionFeeBps / constantsLib.BPS_DIVISOR).toUint128();
 
         // get liquidation price (with liq penalty) to check if the position was valid at `timestamp + validationDelay`
-        data.liquidationPrice = longLib._getEffectivePriceForTick(s, long.tick, long.closeLiqMultiplier);
+        data.liquidationPrice = longLib._getEffectivePriceForTick(long.tick, long.closeLiqMultiplier);
 
         if (currentPrice.neutralPrice <= data.liquidationPrice) {
             // position should be liquidated, we don't transfer assets to the user
@@ -575,9 +578,7 @@ library UsdnProtocolActionsLongLibrary {
 
         int24 tick = longLib._calcTickWithoutPenalty(s, long.tick, longLib.getTickLiquidationPenalty(s, long.tick));
         data.positionValue = longLib._positionValue(
-            data.priceWithFees,
-            longLib._getEffectivePriceForTick(s, tick, long.closeLiqMultiplier),
-            long.closePosTotalExpo
+            data.priceWithFees, longLib._getEffectivePriceForTick(tick, long.closeLiqMultiplier), long.closePosTotalExpo
         );
 
         uint256 assetToTransfer;
