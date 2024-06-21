@@ -25,11 +25,11 @@ import { HugeUint } from "../../libraries/HugeUint.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
 import { TickMath } from "../../libraries/TickMath.sol";
 import { Storage } from "../UsdnProtocolStorage.sol";
-import { UsdnProtocolActionsUtilsLibrary as actionsUtilsLib } from "./UsdnProtocolActionsUtilsLibrary.sol";
-import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
-import { UsdnProtocolConstantsLibrary as constantsLib } from "./UsdnProtocolConstantsLibrary.sol";
-import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
-import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
+import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./UsdnProtocolActionsUtilsLibrary.sol";
+import { UsdnProtocolActionsVaultLibrary as ActionsVault } from "./UsdnProtocolActionsVaultLibrary.sol";
+import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
+import { UsdnProtocolCoreLibrary as Core } from "./UsdnProtocolCoreLibrary.sol";
+import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.sol";
 
 library UsdnProtocolLongLibrary {
     using LibBitmap for LibBitmap.Bitmap;
@@ -59,7 +59,7 @@ library UsdnProtocolLongLibrary {
         view
         returns (Position memory pos_, uint8 liquidationPenalty_)
     {
-        (bytes32 tickHash, uint256 version) = vaultLib._tickHash(s, posId.tick);
+        (bytes32 tickHash, uint256 version) = Vault._tickHash(s, posId.tick);
         if (posId.tickVersion != version) {
             revert IUsdnProtocolErrors.UsdnProtocolOutdatedTick(version, posId.tickVersion);
         }
@@ -165,15 +165,15 @@ library UsdnProtocolLongLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
         }
 
-        int256 ema = coreLib.calcEMA(s._lastFunding, timestamp - s._lastUpdateTimestamp, s._EMAPeriod, s._EMA);
-        (int256 fundAsset,) = coreLib._fundingAsset(s, timestamp, ema);
+        int256 ema = Core.calcEMA(s._lastFunding, timestamp - s._lastUpdateTimestamp, s._EMAPeriod, s._EMA);
+        (int256 fundAsset,) = Core._fundingAsset(s, timestamp, ema);
 
         if (fundAsset > 0) {
-            available_ = coreLib._longAssetAvailable(s, currentPrice).safeSub(fundAsset);
+            available_ = Core._longAssetAvailable(s, currentPrice).safeSub(fundAsset);
         } else {
-            int256 fee = fundAsset * coreLib._toInt256(s._protocolFeeBps) / int256(constantsLib.BPS_DIVISOR);
+            int256 fee = fundAsset * Core._toInt256(s._protocolFeeBps) / int256(Constants.BPS_DIVISOR);
             // fees have the same sign as fundAsset (negative here), so we need to sub them
-            available_ = coreLib._longAssetAvailable(s, currentPrice).safeSub(fundAsset - fee);
+            available_ = Core._longAssetAvailable(s, currentPrice).safeSub(fundAsset - fee);
         }
     }
 
@@ -188,7 +188,7 @@ library UsdnProtocolLongLibrary {
 
     /// @notice See {IUsdnProtocolLong}
     function getTickLiquidationPenalty(Storage storage s, int24 tick) public view returns (uint8 liquidationPenalty_) {
-        (bytes32 tickHash,) = vaultLib._tickHash(s, tick);
+        (bytes32 tickHash,) = Vault._tickHash(s, tick);
         liquidationPenalty_ = _getTickLiquidationPenalty(s, tickHash);
     }
 
@@ -230,7 +230,7 @@ library UsdnProtocolLongLibrary {
         ApplyPnlAndFundingAndLiquidateData memory data;
         // adjust balances
         (data.isPriceRecent, data.tempLongBalance, data.tempVaultBalance) =
-            coreLib._applyPnlAndFunding(s, neutralPrice.toUint128(), timestamp.toUint128());
+            Core._applyPnlAndFunding(s, neutralPrice.toUint128(), timestamp.toUint128());
 
         // liquidate if the price was updated or was already the most recent
         if (data.isPriceRecent) {
@@ -254,10 +254,10 @@ library UsdnProtocolLongLibrary {
             s._balanceLong = liquidationEffects.newLongBalance;
             s._balanceVault = liquidationEffects.newVaultBalance;
 
-            (data.rebased, data.callbackResult) = vaultLib._usdnRebase(s, s._lastPrice, ignoreInterval);
+            (data.rebased, data.callbackResult) = Vault._usdnRebase(s, s._lastPrice, ignoreInterval);
 
             if (liquidationEffects.liquidatedTicks > 0) {
-                actionsUtilsLib._sendRewardsToLiquidator(
+                ActionsUtils._sendRewardsToLiquidator(
                     s,
                     liquidationEffects.liquidatedTicks,
                     liquidationEffects.remainingCollateral,
@@ -338,7 +338,7 @@ library UsdnProtocolLongLibrary {
         (data.positionAmount, data.rebalancerMaxLeverage, data.rebalancerPosId) = rebalancer.getCurrentStateData();
 
         // close the rebalancer position and get its value to open the next one
-        if (data.rebalancerPosId.tick != constantsLib.NO_POSITION_TICK) {
+        if (data.rebalancerPosId.tick != Constants.NO_POSITION_TICK) {
             // cached values will be updated during this call
             int256 realPositionValue = _flashClosePosition(s, data.rebalancerPosId, lastPrice, cache);
 
@@ -358,7 +358,7 @@ library UsdnProtocolLongLibrary {
         if (data.positionAmount <= s._minLongPosition / 10_000) {
             // make the rebalancer believe that the previous position was liquidated,
             // and inform it that no new position was open so it can start anew
-            rebalancer.updatePosition(PositionId(constantsLib.NO_POSITION_TICK, 0, 0), 0);
+            rebalancer.updatePosition(PositionId(Constants.NO_POSITION_TICK, 0, 0), 0);
             vaultBalance_ += data.positionAmount;
             return (cache.longBalance, vaultBalance_);
         }
@@ -370,8 +370,7 @@ library UsdnProtocolLongLibrary {
         // if there is enough collateral remaining after liquidations, calculate the bonus and add it to the
         // new rebalancer position
         if (remainingCollateral > 0) {
-            uint128 bonus =
-                (uint256(remainingCollateral) * s._rebalancerBonusBps / constantsLib.BPS_DIVISOR).toUint128();
+            uint128 bonus = (uint256(remainingCollateral) * s._rebalancerBonusBps / Constants.BPS_DIVISOR).toUint128();
             cache.vaultBalance -= bonus;
             vaultBalance_ -= bonus;
             data.positionAmount += bonus;
@@ -382,7 +381,7 @@ library UsdnProtocolLongLibrary {
 
         // make sure that the rebalancer was not triggered without a sufficient imbalance
         // as we check the imbalance above, this should not happen
-        if (tickWithoutLiqPenalty == constantsLib.NO_POSITION_TICK) {
+        if (tickWithoutLiqPenalty == Constants.NO_POSITION_TICK) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidRebalancerTick();
         }
 
@@ -449,7 +448,7 @@ library UsdnProtocolLongLibrary {
         });
 
         // save the position on the provided tick
-        (posId_.tickVersion, posId_.index,) = actionsUtilsLib._saveNewPosition(s, posId_.tick, long, liquidationPenalty);
+        (posId_.tickVersion, posId_.index,) = ActionsUtils._saveNewPosition(s, posId_.tick, long, liquidationPenalty);
 
         // emit both initiate and validate events
         // so the position is considered the same as other positions by event indexers
@@ -474,7 +473,7 @@ library UsdnProtocolLongLibrary {
         uint128 lastPrice,
         CachedProtocolState memory cache
     ) public returns (int256 positionValue_) {
-        (bytes32 tickHash, uint256 version) = vaultLib._tickHash(s, posId.tick);
+        (bytes32 tickHash, uint256 version) = Vault._tickHash(s, posId.tick);
         // if the tick version is outdated, the position was liquidated and its value is 0
         if (posId.tickVersion != version) {
             return positionValue_;
@@ -501,7 +500,7 @@ library UsdnProtocolLongLibrary {
 
         // fully close the position and update the cache
         cache.liqMultiplierAccumulator =
-            actionsUtilsLib._removeAmountFromPosition(s, posId.tick, posId.index, pos, pos.amount, pos.totalExpo);
+            ActionsUtils._removeAmountFromPosition(s, posId.tick, posId.index, pos, pos.amount, pos.totalExpo);
 
         // update the cache
         cache.totalExpo -= pos.totalExpo;
@@ -513,7 +512,7 @@ library UsdnProtocolLongLibrary {
         // so the position is considered the same as other positions by event indexers
         emit IUsdnProtocolEvents.InitiatedClosePosition(pos.user, pos.user, pos.user, posId, pos.amount, pos.amount, 0);
         emit IUsdnProtocolEvents.ValidatedClosePosition(
-            pos.user, pos.user, posId, uint256(positionValue_), positionValue_ - coreLib._toInt256(pos.amount)
+            pos.user, pos.user, posId, uint256(positionValue_), positionValue_ - Core._toInt256(pos.amount)
         );
     }
 
@@ -534,15 +533,15 @@ library UsdnProtocolLongLibrary {
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData
     ) public returns (InitiateOpenPositionData memory data_) {
-        PriceInfo memory currentPrice = actionsVaultLib._getOraclePrice(
+        PriceInfo memory currentPrice = ActionsVault._getOraclePrice(
             s,
             ProtocolAction.InitiateOpenPosition,
             block.timestamp,
-            actionsUtilsLib._calcActionId(validator, uint128(block.timestamp)),
+            ActionsUtils._calcActionId(validator, uint128(block.timestamp)),
             currentPriceData
         );
         data_.adjustedPrice =
-            (currentPrice.price + currentPrice.price * s._positionFeeBps / constantsLib.BPS_DIVISOR).toUint128();
+            (currentPrice.price + currentPrice.price * s._positionFeeBps / Constants.BPS_DIVISOR).toUint128();
 
         uint128 neutralPrice = currentPrice.neutralPrice.toUint128();
 
@@ -663,8 +662,8 @@ library UsdnProtocolLongLibrary {
         data.accumulator = s._liqMultiplierAccumulator;
 
         // max iteration limit
-        if (iteration > constantsLib.MAX_LIQUIDATION_ITERATION) {
-            iteration = constantsLib.MAX_LIQUIDATION_ITERATION;
+        if (iteration > Constants.MAX_LIQUIDATION_ITERATION) {
+            iteration = Constants.MAX_LIQUIDATION_ITERATION;
         }
 
         uint256 unadjustedPrice =
@@ -673,7 +672,7 @@ library UsdnProtocolLongLibrary {
         data.iTick = s._highestPopulatedTick;
 
         do {
-            uint256 index = s._tickBitmap.findLastSet(coreLib._calcBitmapIndexFromTick(s, data.iTick));
+            uint256 index = s._tickBitmap.findLastSet(Core._calcBitmapIndexFromTick(s, data.iTick));
             if (index == LibBitmap.NOT_FOUND) {
                 // no populated ticks left
                 break;
@@ -686,7 +685,7 @@ library UsdnProtocolLongLibrary {
             }
 
             // we have found a non-empty tick that needs to be liquidated
-            (bytes32 tickHash,) = vaultLib._tickHash(s, data.iTick);
+            (bytes32 tickHash,) = Vault._tickHash(s, data.iTick);
 
             TickData memory tickData = s._tickData[tickHash];
             // update transient data
@@ -798,7 +797,7 @@ library UsdnProtocolLongLibrary {
     function _adjustPrice(uint256 unadjustedPrice, uint256 liqMultiplier) public pure returns (uint128 price_) {
         // price = unadjustedPrice * M
         price_ = FixedPointMathLib.fullMulDiv(
-            unadjustedPrice, liqMultiplier, 10 ** constantsLib.LIQUIDATION_MULTIPLIER_DECIMALS
+            unadjustedPrice, liqMultiplier, 10 ** Constants.LIQUIDATION_MULTIPLIER_DECIMALS
         ).toUint128();
     }
 
@@ -816,11 +815,11 @@ library UsdnProtocolLongLibrary {
     ) public pure returns (uint256 multiplier_) {
         if (accumulator.hi == 0 && accumulator.lo == 0) {
             // no position in long, we assume a liquidation multiplier of 1.0
-            return 10 ** constantsLib.LIQUIDATION_MULTIPLIER_DECIMALS;
+            return 10 ** Constants.LIQUIDATION_MULTIPLIER_DECIMALS;
         }
         // M = assetPrice * (totalExpo - balanceLong) / accumulator
         HugeUint.Uint512 memory numerator =
-            HugeUint.mul(10 ** constantsLib.LIQUIDATION_MULTIPLIER_DECIMALS, assetPrice * longTradingExpo);
+            HugeUint.mul(10 ** Constants.LIQUIDATION_MULTIPLIER_DECIMALS, assetPrice * longTradingExpo);
         multiplier_ = numerator.div(accumulator);
     }
 
@@ -832,7 +831,7 @@ library UsdnProtocolLongLibrary {
      * @return tick_ The next highest tick below `searchStart`
      */
     function _findHighestPopulatedTick(Storage storage s, int24 searchStart) public view returns (int24 tick_) {
-        uint256 index = s._tickBitmap.findLastSet(coreLib._calcBitmapIndexFromTick(s, searchStart));
+        uint256 index = s._tickBitmap.findLastSet(Core._calcBitmapIndexFromTick(s, searchStart));
         if (index == LibBitmap.NOT_FOUND) {
             tick_ = minTick(s);
         } else {
@@ -847,7 +846,7 @@ library UsdnProtocolLongLibrary {
      * @return price_ The liquidation price of the position
      */
     function _getLiquidationPrice(uint128 startPrice, uint128 leverage) public pure returns (uint128 price_) {
-        price_ = (startPrice - ((uint256(10) ** constantsLib.LEVERAGE_DECIMALS * startPrice) / leverage)).toUint128();
+        price_ = (startPrice - ((uint256(10) ** Constants.LEVERAGE_DECIMALS * startPrice) / leverage)).toUint128();
     }
 
     /**
@@ -924,7 +923,7 @@ library UsdnProtocolLongLibrary {
         }
 
         leverage_ =
-            ((10 ** constantsLib.LEVERAGE_DECIMALS * uint256(startPrice)) / (startPrice - liquidationPrice)).toUint128();
+            ((10 ** Constants.LEVERAGE_DECIMALS * uint256(startPrice)) / (startPrice - liquidationPrice)).toUint128();
     }
 
     /**
@@ -977,7 +976,7 @@ library UsdnProtocolLongLibrary {
      */
     function _checkSafetyMargin(Storage storage s, uint128 currentPrice, uint128 liquidationPrice) public view {
         uint128 maxLiquidationPrice =
-            (currentPrice * (constantsLib.BPS_DIVISOR - s._safetyMarginBps) / constantsLib.BPS_DIVISOR).toUint128();
+            (currentPrice * (Constants.BPS_DIVISOR - s._safetyMarginBps) / Constants.BPS_DIVISOR).toUint128();
         if (liquidationPrice >= maxLiquidationPrice) {
             revert IUsdnProtocolErrors.UsdnProtocolLiquidationPriceSafetyMargin(liquidationPrice, maxLiquidationPrice);
         }
@@ -1131,8 +1130,7 @@ library UsdnProtocolLongLibrary {
         }
 
         // imbalanceBps_ = (vaultBalance - (totalExpo - longBalance)) *s. (totalExpo - longBalance);
-        imbalanceBps_ =
-            (vaultBalance.safeSub(tradingExpo)).safeMul(int256(constantsLib.BPS_DIVISOR)).safeDiv(tradingExpo);
+        imbalanceBps_ = (vaultBalance.safeSub(tradingExpo)).safeMul(int256(Constants.BPS_DIVISOR)).safeDiv(tradingExpo);
     }
 
     /**
@@ -1156,7 +1154,7 @@ library UsdnProtocolLongLibrary {
         // imbalanceBps_ = ((totalExpo - longBalance) - vaultBalance) *s. vaultBalance;
         int256 longTradingExpo = totalExpo.toInt256() - longBalance;
         imbalanceBps_ =
-            longTradingExpo.safeSub(vaultBalance).safeMul(int256(constantsLib.BPS_DIVISOR)).safeDiv(vaultBalance);
+            longTradingExpo.safeSub(vaultBalance).safeMul(int256(Constants.BPS_DIVISOR)).safeDiv(vaultBalance);
     }
 
     /**
@@ -1192,20 +1190,20 @@ library UsdnProtocolLongLibrary {
         int256 longImbalanceTargetBps = s._longImbalanceTargetBps;
         // calculate the trading expo missing to reach the imbalance target
         uint256 targetTradingExpo = (
-            cache.vaultBalance * constantsLib.BPS_DIVISOR
-                / (int256(constantsLib.BPS_DIVISOR) + longImbalanceTargetBps).toUint256()
+            cache.vaultBalance * Constants.BPS_DIVISOR
+                / (int256(Constants.BPS_DIVISOR) + longImbalanceTargetBps).toUint256()
         );
 
         // check that the target is not already exceeded
         if (cache.tradingExpo >= targetTradingExpo) {
-            return constantsLib.NO_POSITION_TICK;
+            return Constants.NO_POSITION_TICK;
         }
 
         uint256 tradingExpoToFill = targetTradingExpo - cache.tradingExpo;
 
         // check that the trading expo filled by the position would not exceed the max leverage
         uint256 highestUsableTradingExpo =
-            positionAmount * rebalancerMaxLeverage / 10 ** constantsLib.LEVERAGE_DECIMALS - positionAmount;
+            positionAmount * rebalancerMaxLeverage / 10 ** Constants.LEVERAGE_DECIMALS - positionAmount;
         if (highestUsableTradingExpo < tradingExpoToFill) {
             tradingExpoToFill = highestUsableTradingExpo;
         }
@@ -1213,7 +1211,7 @@ library UsdnProtocolLongLibrary {
         {
             // check that the trading expo filled by the position would not be below the min leverage
             uint256 lowestUsableTradingExpo =
-                positionAmount * protocolMinLeverage / 10 ** constantsLib.LEVERAGE_DECIMALS - positionAmount;
+                positionAmount * protocolMinLeverage / 10 ** Constants.LEVERAGE_DECIMALS - positionAmount;
             if (lowestUsableTradingExpo > tradingExpoToFill) {
                 tradingExpoToFill = lowestUsableTradingExpo;
             }

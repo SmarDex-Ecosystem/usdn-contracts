@@ -12,7 +12,7 @@ import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocol
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { UsdnProtocolStorage } from "../UsdnProtocolStorage.sol";
 import { Storage } from "../UsdnProtocolStorage.sol";
-import { UsdnProtocolConstantsLibrary as constantsLib } from "./UsdnProtocolConstantsLibrary.sol";
+import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 
 library UsdnProtocolSettersLibrary {
     using SafeTransferLib for address;
@@ -50,7 +50,7 @@ library UsdnProtocolSettersLibrary {
     /// @notice See {IUsdnProtocol}
     function setMinLeverage(Storage storage s, uint256 newMinLeverage) external {
         // zero minLeverage
-        if (newMinLeverage <= 10 ** constantsLib.LEVERAGE_DECIMALS) {
+        if (newMinLeverage <= 10 ** Constants.LEVERAGE_DECIMALS) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidMinLeverage();
         }
 
@@ -69,7 +69,7 @@ library UsdnProtocolSettersLibrary {
         }
 
         // `maxLeverage` greater than 100
-        if (newMaxLeverage > 100 * 10 ** constantsLib.LEVERAGE_DECIMALS) {
+        if (newMaxLeverage > 100 * 10 ** Constants.LEVERAGE_DECIMALS) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidMaxLeverage();
         }
 
@@ -114,7 +114,7 @@ library UsdnProtocolSettersLibrary {
 
     /// @notice See {IUsdnProtocol}
     function setLiquidationIteration(Storage storage s, uint16 newLiquidationIteration) external {
-        if (newLiquidationIteration > constantsLib.MAX_LIQUIDATION_ITERATION) {
+        if (newLiquidationIteration > Constants.MAX_LIQUIDATION_ITERATION) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationIteration();
         }
 
@@ -134,7 +134,7 @@ library UsdnProtocolSettersLibrary {
 
     /// @notice See {IUsdnProtocol}
     function setFundingSF(Storage storage s, uint256 newFundingSF) external {
-        if (newFundingSF > 10 ** constantsLib.FUNDING_SF_DECIMALS) {
+        if (newFundingSF > 10 ** Constants.FUNDING_SF_DECIMALS) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidFundingSF();
         }
 
@@ -144,7 +144,7 @@ library UsdnProtocolSettersLibrary {
 
     /// @notice See {IUsdnProtocol}
     function setProtocolFeeBps(Storage storage s, uint16 newProtocolFeeBps) external {
-        if (newProtocolFeeBps > constantsLib.BPS_DIVISOR) {
+        if (newProtocolFeeBps > Constants.BPS_DIVISOR) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidProtocolFeeBps();
         }
         s._protocolFeeBps = newProtocolFeeBps;
@@ -174,7 +174,7 @@ library UsdnProtocolSettersLibrary {
     /// @notice See {IUsdnProtocol}
     function setRebalancerBonusBps(Storage storage s, uint16 newBonus) external {
         // `newBonus` greater than 100%
-        if (newBonus > constantsLib.BPS_DIVISOR) {
+        if (newBonus > Constants.BPS_DIVISOR) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidRebalancerBonus();
         }
         s._rebalancerBonusBps = newBonus;
@@ -184,7 +184,7 @@ library UsdnProtocolSettersLibrary {
     /// @notice See {IUsdnProtocol}
     function setSdexBurnOnDepositRatio(Storage storage s, uint32 newRatio) external {
         // `newRatio` greater than 5%
-        if (newRatio > constantsLib.SDEX_BURN_ON_DEPOSIT_DIVISOR / 20) {
+        if (newRatio > Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR / 20) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidBurnSdexOnDepositRatio();
         }
 
@@ -242,7 +242,7 @@ library UsdnProtocolSettersLibrary {
         if (
             newLongImbalanceTargetBps > int256(newCloseLimitBps)
                 || newLongImbalanceTargetBps < -int256(newWithdrawalLimitBps)
-                || newLongImbalanceTargetBps < -int256(constantsLib.BPS_DIVISOR / 2) // The target cannot be lower than -50%
+                || newLongImbalanceTargetBps < -int256(Constants.BPS_DIVISOR / 2) // The target cannot be lower than -50%
         ) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidLongImbalanceTarget();
         }
