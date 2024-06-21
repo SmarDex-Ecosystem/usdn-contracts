@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { USER_1, USER_2, PYTH_ETH_USD } from "../../utils/Constants.sol";
+import { PYTH_ETH_USD, USER_1, USER_2 } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 
 import {
     PendingAction,
-    ProtocolAction,
-    PreviousActionsData
+    PreviousActionsData,
+    ProtocolAction
 } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**

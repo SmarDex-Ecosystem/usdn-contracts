@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { OracleMiddlewareBaseFixture } from "../utils/Fixtures.sol";
 import { MOCK_PYTH_DATA } from "../utils/Constants.sol";
+import { OracleMiddlewareBaseFixture } from "../utils/Fixtures.sol";
 
 import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 

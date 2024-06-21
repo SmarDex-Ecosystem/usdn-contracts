@@ -3,16 +3,16 @@ pragma solidity ^0.8.25;
 
 import { Vm } from "forge-std/Vm.sol";
 
-import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
 import { ADMIN } from "../../utils/Constants.sol";
+import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
 
 import {
-    PendingAction,
     DepositPendingAction,
-    WithdrawalPendingAction,
     LongPendingAction,
+    PendingAction,
+    PositionId,
     ProtocolAction,
-    PositionId
+    WithdrawalPendingAction
 } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**

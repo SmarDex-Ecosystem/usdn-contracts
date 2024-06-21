@@ -2,6 +2,7 @@
 pragma solidity ^0.8.25;
 
 import { LiquidationRewardsManagerBaseFixture } from "../utils/Fixtures.sol";
+
 import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**

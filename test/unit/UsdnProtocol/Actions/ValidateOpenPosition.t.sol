@@ -5,11 +5,11 @@ import { ADMIN, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import {
-    ProtocolAction,
+    PendingAction,
     Position,
     PositionId,
-    TickData,
-    PendingAction
+    ProtocolAction,
+    TickData
 } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 

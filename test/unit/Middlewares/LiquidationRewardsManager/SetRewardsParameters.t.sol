@@ -5,6 +5,7 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import { USER_1 } from "../../../utils/Constants.sol";
 import { LiquidationRewardsManagerBaseFixture } from "../utils/Fixtures.sol";
+
 import { ILiquidationRewardsManagerErrorsEventsTypes } from
     "../../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManagerErrorsEventsTypes.sol";
 

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 import { HugeUint } from "../../libraries/HugeUint.sol";
+import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 
 /**
  * @notice Information about a long user position
