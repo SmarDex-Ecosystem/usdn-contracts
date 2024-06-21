@@ -145,7 +145,7 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
      * @custom:when The user initiates a second deposit with the same address
      * @custom:then The contract reverts with `RebalancerActionNotValidated`
      */
-    function test_RevertWhen_depositWithUnvalidatedDeposit() public {
+    function test_RevertWhen_depositWithPendingDeposit() public {
         rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));
 
         vm.expectRevert(RebalancerActionNotValidated.selector);

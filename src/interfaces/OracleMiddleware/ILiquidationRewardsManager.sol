@@ -37,6 +37,7 @@ interface ILiquidationRewardsManager is IBaseLiquidationRewardsManager, ILiquida
      * @param gasUsedPerTick Gas used per tick liquidated
      * @param otherGasUsed Gas used for the rest of the computation
      * @param rebaseGasUsed Gas used for the optional USDN rebase
+     * @param rebalancerGasUsed Gas used for the optional rebalancer trigger
      * @param gasPriceLimit Upper limit for the gas price
      * @param multiplierBps Multiplier for the rewards (will be divided by BPS_DIVISOR)
      */
@@ -44,6 +45,7 @@ interface ILiquidationRewardsManager is IBaseLiquidationRewardsManager, ILiquida
         uint32 gasUsedPerTick,
         uint32 otherGasUsed,
         uint32 rebaseGasUsed,
+        uint32 rebalancerGasUsed,
         uint64 gasPriceLimit,
         uint32 multiplierBps
     ) external;
