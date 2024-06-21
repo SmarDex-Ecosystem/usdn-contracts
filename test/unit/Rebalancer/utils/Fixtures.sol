@@ -15,8 +15,8 @@ import { UsdnProtocol } from "../../../../src/UsdnProtocol/UsdnProtocol.sol";
 import { IRebalancerErrors } from "../../../../src/interfaces/Rebalancer/IRebalancerErrors.sol";
 import { IRebalancerEvents } from "../../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
 import { IRebalancerTypes } from "../../../../src/interfaces/Rebalancer/IRebalancerTypes.sol";
+import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { PreviousActionsData } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { IUsdnProtocol } from "./../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 /**
  * @title RebalancerFixture
