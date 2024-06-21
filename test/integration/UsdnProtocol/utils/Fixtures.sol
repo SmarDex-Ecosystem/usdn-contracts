@@ -1,50 +1,50 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
+import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 
-import { BaseFixture } from "../../../utils/Fixtures.sol";
-import {
-    DEPLOYER,
-    ADMIN,
-    SDEX,
-    WSTETH,
-    PYTH_ETH_USD,
-    PYTH_ORACLE,
-    REDSTONE_ETH_USD,
-    CHAINLINK_ORACLE_ETH,
-    CHAINLINK_ORACLE_GAS
-} from "../../../utils/Constants.sol";
-import {
-    PYTH_DATA_ETH_PRICE,
-    PYTH_DATA_ETH_CONF,
-    PYTH_DATA_TIMESTAMP,
-    PYTH_DATA_ETH
-} from "../../Middlewares/utils/Constants.sol";
-import { WstETH } from "../../../utils/WstEth.sol";
-import { Sdex } from "../../../utils/Sdex.sol";
-import { MockPyth } from "../../../unit/Middlewares/utils/MockPyth.sol";
 import { MOCK_PYTH_DATA } from "../../../unit/Middlewares/utils/Constants.sol";
 
 import { MockChainlinkOnChain } from "../../../unit/Middlewares/utils/MockChainlinkOnChain.sol";
+import { MockPyth } from "../../../unit/Middlewares/utils/MockPyth.sol";
 import { UsdnProtocolHandler } from "../../../unit/UsdnProtocol/utils/Handler.sol";
+import {
+    ADMIN,
+    CHAINLINK_ORACLE_ETH,
+    CHAINLINK_ORACLE_GAS,
+    DEPLOYER,
+    PYTH_ETH_USD,
+    PYTH_ORACLE,
+    REDSTONE_ETH_USD,
+    SDEX,
+    WSTETH
+} from "../../../utils/Constants.sol";
+import { BaseFixture } from "../../../utils/Fixtures.sol";
+import { Sdex } from "../../../utils/Sdex.sol";
+import { WstETH } from "../../../utils/WstEth.sol";
+import {
+    PYTH_DATA_ETH,
+    PYTH_DATA_ETH_CONF,
+    PYTH_DATA_ETH_PRICE,
+    PYTH_DATA_TIMESTAMP
+} from "../../Middlewares/utils/Constants.sol";
 
 import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
+import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { Rebalancer } from "../../../../src/Rebalancer/Rebalancer.sol";
-import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
+import { Usdn } from "../../../../src/Usdn/Usdn.sol";
+import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import {
-    ProtocolAction,
-    PreviousActionsData,
     PositionId,
+    PreviousActionsData,
+    ProtocolAction,
     TickData
 } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { Usdn } from "../../../../src/Usdn/Usdn.sol";
-import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
-import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { Permit2TokenBitfield } from "../../../../src/libraries/Permit2TokenBitfield.sol";
-import { IUsdnProtocol } from "./../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProtocolEvents {
     struct SetUpParams {

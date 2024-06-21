@@ -3,8 +3,8 @@ pragma solidity ^0.8.25;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { Position, PositionId, ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 
 /**
  * @custom:feature The `_flashClosePosition` internal function of the UsdnProtocolLong contract

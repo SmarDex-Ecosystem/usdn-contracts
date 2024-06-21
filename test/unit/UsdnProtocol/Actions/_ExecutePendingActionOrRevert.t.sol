@@ -6,8 +6,8 @@ import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import {
     PendingAction,
-    ProtocolAction,
-    PreviousActionsData
+    PreviousActionsData,
+    ProtocolAction
 } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**

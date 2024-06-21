@@ -3,8 +3,8 @@ pragma solidity ^0.8.25;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-import { OracleMiddlewareBaseFixture } from "../utils/Fixtures.sol";
 import { USER_1 } from "../../../utils/Constants.sol";
+import { OracleMiddlewareBaseFixture } from "../utils/Fixtures.sol";
 
 /**
  * @custom:feature The `withdrawEther` function of the `OracleMiddleware` contract

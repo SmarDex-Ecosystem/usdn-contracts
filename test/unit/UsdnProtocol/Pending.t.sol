@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
 import { USER_1, USER_2, USER_3, USER_4 } from "../../utils/Constants.sol";
+import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
 
 import {
-    PendingAction,
     DepositPendingAction,
-    WithdrawalPendingAction,
     LongPendingAction,
+    PendingAction,
+    PreviousActionsData,
     ProtocolAction,
-    PreviousActionsData
+    WithdrawalPendingAction
 } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**

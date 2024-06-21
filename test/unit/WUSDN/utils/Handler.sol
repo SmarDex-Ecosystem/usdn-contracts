@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { console2, Test } from "forge-std/Test.sol";
+import { Test, console2 } from "forge-std/Test.sol";
 
 import { EnumerableMap } from "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 
-import { USER_1, USER_2, USER_3, USER_4, ADMIN } from "../../../utils/Constants.sol";
+import { ADMIN, USER_1, USER_2, USER_3, USER_4 } from "../../../utils/Constants.sol";
+
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { Wusdn } from "../../../../src/Usdn/Wusdn.sol";
 

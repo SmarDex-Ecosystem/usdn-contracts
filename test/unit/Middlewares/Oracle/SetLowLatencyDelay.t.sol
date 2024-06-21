@@ -3,11 +3,11 @@ pragma solidity ^0.8.25;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
+import { USER_1 } from "../../../utils/Constants.sol";
+import { OracleMiddlewareBaseFixture } from "../utils/Fixtures.sol";
+
 import { IOracleMiddlewareErrors } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
 import { IOracleMiddlewareEvents } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareEvents.sol";
-
-import { OracleMiddlewareBaseFixture } from "../utils/Fixtures.sol";
-import { USER_1 } from "../../../utils/Constants.sol";
 
 /// @custom:feature The `setLowLatencyDelay` function of `OracleMiddleware`
 contract TestOracleMiddlewareSetLowLatencyDelay is OracleMiddlewareBaseFixture {

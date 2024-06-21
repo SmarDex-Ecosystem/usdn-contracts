@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { PreviousActionsData, PositionId } from "./IUsdnProtocolTypes.sol";
 import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
+import { PositionId, PreviousActionsData } from "./IUsdnProtocolTypes.sol";
 
 interface IUsdnProtocolActions {
     /**

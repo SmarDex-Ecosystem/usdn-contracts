@@ -2,8 +2,8 @@
 pragma solidity ^0.8.25;
 
 import { MOCK_PYTH_DATA } from "../../unit/Middlewares/utils/Constants.sol";
-import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 import { DEPLOYER } from "../../utils/Constants.sol";
+import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 
 import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
 import { ProtocolAction, TickData } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";

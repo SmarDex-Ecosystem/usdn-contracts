@@ -6,10 +6,10 @@ import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 import { OwnershipCallbackHandler } from "../utils/OwnershipCallbackHandler.sol";
 
 import {
-    ProtocolAction,
-    PositionId,
+    PendingAction,
     Position,
-    PendingAction
+    PositionId,
+    ProtocolAction
 } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /// @custom:feature The `transferPositionOwnership` function of the USDN protocol

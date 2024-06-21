@@ -6,9 +6,9 @@ import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import {
     PendingAction,
-    ProtocolAction,
+    PositionId,
     PreviousActionsData,
-    PositionId
+    ProtocolAction
 } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
