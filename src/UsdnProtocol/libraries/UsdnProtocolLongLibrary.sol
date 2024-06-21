@@ -14,7 +14,6 @@ import { IUsdnProtocolLong } from "../../interfaces/UsdnProtocol/IUsdnProtocolLo
 import {
     CachedProtocolState,
     InitiateOpenPositionData,
-    LiquidationData,
     LiquidationsEffects,
     Position,
     PositionId,
@@ -38,6 +37,65 @@ library UsdnProtocolLongLibrary {
     using SignedMath for int256;
     using HugeUint for HugeUint.Uint512;
     using SafeTransferLib for address;
+
+    /**
+     * @notice Structure to hold the temporary data during liquidation
+     * @param tempLongBalance The temporary long balance
+     * @param tempVaultBalance The temporary vault balance
+     * @param currentTick The current tick (tick corresponding to the current asset price)
+     * @param iTick Tick iterator index
+     * @param totalExpoToRemove The total expo to remove due to the liquidation of some ticks
+     * @param accumulatorValueToRemove The value to remove from the liquidation multiplier accumulator, due to the
+     * liquidation of some ticks
+     * @param longTradingExpo The long trading expo
+     * @param currentPrice The current price of the asset
+     * @param accumulator The liquidation multiplier accumulator before the liquidation
+     * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
+     */
+    struct LiquidationData {
+        int256 tempLongBalance;
+        int256 tempVaultBalance;
+        int24 currentTick;
+        int24 iTick;
+        uint256 totalExpoToRemove;
+        uint256 accumulatorValueToRemove;
+        uint256 longTradingExpo;
+        uint256 currentPrice;
+        HugeUint.Uint512 accumulator;
+        bool isLiquidationPending;
+    }
+
+    /**
+     * @notice Data structure for the `_applyPnlAndFundingAndLiquidate` function
+     * @param isPriceRecent A boolean indicating if the price is recent
+     * @param tempLongBalance The temporary long balance
+     * @param tempVaultBalance The temporary vault balance
+     * @param rebased A boolean indicating if the USDN token was rebased
+     * @param rebalancerTriggered A boolean indicating if the rebalancer was triggered
+     * @param callbackResult The result of the callback
+     */
+    struct ApplyPnlAndFundingAndLiquidateData {
+        bool isPriceRecent;
+        int256 tempLongBalance;
+        int256 tempVaultBalance;
+        bool rebased;
+        bool rebalancerTriggered;
+        bytes callbackResult;
+    }
+
+    /**
+     * @notice Data structure for the `_triggerRebalancer` function
+     * @param positionAmount The amount of assets in the rebalancer
+     * @param rebalancerMaxLeverage The maximum leverage of the rebalancer
+     * @param rebalancerPosId The ID of the rebalancer position
+     * @param positionValue The value of the rebalancer position
+     */
+    struct TriggerRebalancerData {
+        uint128 positionAmount;
+        uint256 rebalancerMaxLeverage;
+        PositionId rebalancerPosId;
+        uint128 positionValue;
+    }
 
     /* -------------------------------------------------------------------------- */
     /*                              Public functions                              */
@@ -196,15 +254,6 @@ library UsdnProtocolLongLibrary {
     /*                             Internal functions                             */
     /* -------------------------------------------------------------------------- */
 
-    struct ApplyPnlAndFundingAndLiquidateData {
-        bool isPriceRecent;
-        int256 tempLongBalance;
-        int256 tempVaultBalance;
-        bool rebased;
-        bool rebalancerTriggered;
-        bytes callbackResult;
-    }
-
     /**
      * @notice Applies PnL, funding, and liquidates positions if necessary
      * @param s The storage of the protocol
@@ -271,13 +320,6 @@ library UsdnProtocolLongLibrary {
 
             liquidatedPositions_ = liquidationEffects.liquidatedPositions;
         }
-    }
-
-    struct TriggerRebalancerData {
-        uint128 positionAmount;
-        uint256 rebalancerMaxLeverage;
-        PositionId rebalancerPosId;
-        uint128 positionValue;
     }
 
     /**

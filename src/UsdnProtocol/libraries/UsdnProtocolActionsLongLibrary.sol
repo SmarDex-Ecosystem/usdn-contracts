@@ -38,6 +38,34 @@ library UsdnProtocolActionsLongLibrary {
     using HugeUint for HugeUint.Uint512;
     using Permit2TokenBitfield for Permit2TokenBitfield.Bitfield;
 
+    /**
+     * @notice Data structure for the `_validateClosePositionWithAction` function
+     * @param isLiquidationPending Whether a liquidation is pending
+     * @param priceWithFees The price of the position with fees
+     * @param liquidationPrice The liquidation price of the position
+     * @param positionValue The value of the position
+     */
+    struct ValidateClosePositionWithActionData {
+        bool isLiquidationPending;
+        uint128 priceWithFees;
+        uint128 liquidationPrice;
+        int256 positionValue;
+    }
+
+    /**
+     * @notice Data structure for the `_validateOpenPositionWithAction` function
+     * @param tickWithoutPenalty The tick without penalty
+     * @param currentLiqPenalty The current liquidation penalty
+     * @param newPosId The new position id
+     * @param liquidationPenalty The liquidation penalty
+     */
+    struct MaxLeverageData {
+        int24 tickWithoutPenalty;
+        uint8 currentLiqPenalty;
+        PositionId newPosId;
+        uint8 liquidationPenalty;
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                              Public functions                              */
     /* -------------------------------------------------------------------------- */
@@ -279,13 +307,6 @@ library UsdnProtocolActionsLongLibrary {
         }
     }
 
-    struct MaxLeverageData {
-        int24 tickWithoutPenalty;
-        uint8 currentLiqPenalty;
-        PositionId newPosId;
-        uint8 liquidationPenalty;
-    }
-
     /**
      * @notice Validate an open position action
      * @param s The storage of the protocol
@@ -505,13 +526,6 @@ library UsdnProtocolActionsLongLibrary {
             Core._clearPendingAction(s, validator, rawIndex);
             return (pending.securityDepositValue, isValidated_, liquidated_);
         }
-    }
-
-    struct ValidateClosePositionWithActionData {
-        bool isLiquidationPending;
-        uint128 priceWithFees;
-        uint128 liquidationPrice;
-        int256 positionValue;
     }
 
     /**

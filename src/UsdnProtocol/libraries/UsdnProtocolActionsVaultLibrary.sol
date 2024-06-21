@@ -11,14 +11,12 @@ import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocol
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import {
     DepositPendingAction,
-    InitiateDepositData,
     LongPendingAction,
     PendingAction,
     Position,
     PositionId,
     PreviousActionsData,
     ProtocolAction,
-    WithdrawalData,
     WithdrawalPendingAction
 } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { HugeUint } from "../../libraries/HugeUint.sol";
@@ -40,6 +38,46 @@ library UsdnProtocolActionsVaultLibrary {
     using SignedMath for int256;
     using HugeUint for HugeUint.Uint512;
     using Permit2TokenBitfield for Permit2TokenBitfield.Bitfield;
+
+    /**
+     * @dev Structure to hold the transient data during `_initiateDeposit`
+     * @param pendingActionPrice The adjusted price with position fees applied
+     * @param isLiquidationPending Whether some liquidations still need to be performed
+     * @param totalExpo The total expo of the long side
+     * @param balanceLong The long side balance
+     * @param balanceVault The vault side balance, calculated according to the pendingActionPrice
+     * @param usdnTotalShares Total minted shares of USDN
+     * @param sdexToBurn The amount of SDEX to burn for the deposit
+     */
+    struct InitiateDepositData {
+        uint128 pendingActionPrice;
+        bool isLiquidationPending;
+        uint256 totalExpo;
+        uint256 balanceLong;
+        uint256 balanceVault;
+        uint256 usdnTotalShares;
+        uint256 sdexToBurn;
+    }
+
+    /**
+     * @dev Structure to hold the transient data during `_initiateWithdrawal`
+     * @param pendingActionPrice The adjusted price with position fees applied
+     * @param usdnTotalShares The total shares supply of USDN
+     * @param totalExpo The current total expo
+     * @param balanceLong The current long balance
+     * @param balanceVault The vault balance, adjusted according to the pendingActionPrice
+     * @param withdrawalAmount The predicted amount of assets that will be withdrawn
+     * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
+     */
+    struct WithdrawalData {
+        uint128 pendingActionPrice;
+        uint256 usdnTotalShares;
+        uint256 totalExpo;
+        uint256 balanceLong;
+        uint256 balanceVault;
+        uint256 withdrawalAmount;
+        bool isLiquidationPending;
+    }
 
     /* -------------------------------------------------------------------------- */
     /*                              Public functions                              */
