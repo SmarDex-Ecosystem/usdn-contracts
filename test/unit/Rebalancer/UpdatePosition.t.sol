@@ -84,16 +84,14 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
         assertEq(
             positionData.entryAccMultiplier, rebalancer.MULTIPLIER_FACTOR(), "Entry multiplier accumulator should be 1x"
         );
+        assertEq(positionData.tick, newPosId.tick, "The tick of the position ID should be equal to the provided value");
         assertEq(
-            positionData.id.tick, newPosId.tick, "The tick of the position ID should be equal to the provided value"
-        );
-        assertEq(
-            positionData.id.tickVersion,
+            positionData.tickVersion,
             newPosId.tickVersion,
             "The tick version of the position ID should be equal to the provided value"
         );
         assertEq(
-            positionData.id.index, newPosId.index, "The index of the position ID should be equal to the provided value"
+            positionData.index, newPosId.index, "The index of the position ID should be equal to the provided value"
         );
 
         // check the rebalancer state
@@ -151,9 +149,9 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
             rebalancer.MULTIPLIER_FACTOR() + rebalancer.MULTIPLIER_FACTOR() / 10,
             "Entry multiplier accumulator of the position should be 1.1x"
         );
-        assertEq(positionData.id.tick, posId2.tick, "Tick mismatch");
-        assertEq(positionData.id.tickVersion, posId2.tickVersion, "Tick version mismatch");
-        assertEq(positionData.id.index, posId2.index, "Index mismatch");
+        assertEq(positionData.tick, posId2.tick, "Tick mismatch");
+        assertEq(positionData.tickVersion, posId2.tickVersion, "Tick version mismatch");
+        assertEq(positionData.index, posId2.index, "Index mismatch");
     }
 
     /**

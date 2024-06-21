@@ -138,7 +138,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         asset.forceApprove(address(usdnProtocol), type(uint256).max);
 
         // indicate that there are no position for version 0
-        _positionData[0].id = PositionId({ tick: usdnProtocol.NO_POSITION_TICK(), tickVersion: 0, index: 0 });
+        _positionData[0].tick = usdnProtocol.NO_POSITION_TICK();
     }
 
     /// @notice To allow this contract to receive ether refunded by the USDN protocol
@@ -179,7 +179,15 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         view
         returns (uint128 pendingAssets_, uint256 maxLeverage_, PositionId memory currentPosId_)
     {
-        return (_pendingAssetsAmount, _maxLeverage, _positionData[_positionVersion].id);
+        return (
+            _pendingAssetsAmount,
+            _maxLeverage,
+            PositionId({
+                tick: _positionData[_positionVersion].tick,
+                tickVersion: _positionData[_positionVersion].tickVersion,
+                index: _positionData[_positionVersion].index
+            })
+        );
     }
 
     /// @inheritdoc IRebalancer
@@ -435,7 +443,13 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
             _positionData[data.userDepositData.entryPositionVersion].entryAccMultiplier
         );
 
-        (data.protocolPosition,) = _usdnProtocol.getLongPosition(data.currentPositionData.id);
+        (data.protocolPosition,) = _usdnProtocol.getLongPosition(
+            PositionId({
+                tick: data.currentPositionData.tick,
+                tickVersion: data.currentPositionData.tickVersion,
+                index: data.currentPositionData.index
+            })
+        );
 
         // include bonus
         data.amountToClose = data.amountToCloseWithoutBonus
@@ -444,7 +458,11 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
         // slither-disable-next-line reentrancy-eth
         success_ = _usdnProtocol.initiateClosePosition{ value: msg.value }(
-            data.currentPositionData.id,
+            PositionId({
+                tick: data.currentPositionData.tick,
+                tickVersion: data.currentPositionData.tickVersion,
+                index: data.currentPositionData.index
+            }),
             data.amountToClose.toUint128(),
             to,
             validator,
@@ -463,9 +481,9 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
             data.currentPositionData.amount -= uint128(data.amountToCloseWithoutBonus);
 
             if (data.currentPositionData.amount == 0) {
-                _positionData[data.positionVersion].id =
-                    PositionId({ tick: _usdnProtocol.NO_POSITION_TICK(), tickVersion: 0, index: 0 });
-                _positionData[data.positionVersion].amount = data.currentPositionData.amount;
+                PositionData memory newPositionData;
+                newPositionData.tick = _usdnProtocol.NO_POSITION_TICK();
+                _positionData[data.positionVersion] = newPositionData;
             } else {
                 _positionData[data.positionVersion].amount = data.currentPositionData.amount;
             }
@@ -517,11 +535,14 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         ++positionVersion;
         _positionVersion = positionVersion;
 
-        // save the data of the new position's version
-        PositionData storage newPositionData = _positionData[positionVersion];
-        newPositionData.entryAccMultiplier = accMultiplier;
-        newPositionData.amount = _pendingAssetsAmount + previousPosValue;
-        newPositionData.id = newPosId;
+        // store the data of the new position's version
+        _positionData[positionVersion] = PositionData({
+            entryAccMultiplier: accMultiplier,
+            tickVersion: newPosId.tickVersion,
+            index: newPosId.index,
+            amount: _pendingAssetsAmount + previousPosValue,
+            tick: newPosId.tick
+        });
 
         // Reset the pending assets amount as they are all used in the new position
         _pendingAssetsAmount = 0;
