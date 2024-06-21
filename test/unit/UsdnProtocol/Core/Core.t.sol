@@ -689,7 +689,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:then The function should return the expected fee, fundWithFee and fundAssetWithFee
      */
     function test_calculateFeeLessThanZero() public {
-        int256 fund = 2000 ether;
+        int256 fund = -2000;
         int256 fundAsset = -1;
 
         uint16 protocolFeeBps = protocol.getProtocolFeeBps();
