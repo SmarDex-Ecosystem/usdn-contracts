@@ -3,12 +3,12 @@ pragma solidity >=0.8.0;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
+import { IUsdnProtocol } from "../UsdnProtocol/IUsdnProtocol.sol";
+import { PreviousActionsData } from "../UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IBaseRebalancer } from "./IBaseRebalancer.sol";
 import { IRebalancerErrors } from "./IRebalancerErrors.sol";
 import { IRebalancerEvents } from "./IRebalancerEvents.sol";
 import { IRebalancerTypes } from "./IRebalancerTypes.sol";
-import { PreviousActionsData } from "../UsdnProtocol/IUsdnProtocolTypes.sol";
-import { IUsdnProtocol } from "../UsdnProtocol/IUsdnProtocol.sol";
 
 interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, IRebalancerTypes {
     /**
@@ -93,7 +93,8 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
     /**
      * @notice Validate a deposit to be included in the next position version
      * @dev The `to` from the `initiateDepositAssets` must call this function between `_timeLimits.validationDelay` and
-     * `_timeLimits.validationDeadline` seconds after the initiate action
+     * `_timeLimits.validationDeadline` seconds after the initiate action. After that, the user must wait until the
+     * cooldown has elapsed, and then can call `resetDepositAssets` to retrieve their assets
      */
     function validateDepositAssets() external;
 
@@ -105,13 +106,21 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
     function resetDepositAssets() external;
 
     /**
-     * @notice Withdraw assets if the user is not in a position yet
-     * @dev If the entry position version of the user is lower than or equal to the current one,
-     * the transaction will revert
-     * @param amount The amount to withdraw (in _assetDecimals)
+     * @notice Withdraw assets that were not yet included in a position
+     * @dev The user must call `validateWithdrawAssets` between `_timeLimits.validationDelay` and
+     * `_timeLimits.validationDeadline` seconds after this action
+     */
+    function initiateWithdrawAssets() external;
+
+    /**
+     * @notice Validate a withdrawal of assets that were not yet included in a position
+     * @dev The user must call this function between `_timeLimits.validationDelay` and `_timeLimits.validationDeadline`
+     * seconds after `initiateWithdrawAssets`. After that, the user must wait until the cooldown has elapsed, and then
+     * can call `initiateWithdrawAssets` again or wait to be included in the next position
+     * @param amount The amount of assets to withdraw
      * @param to The address to send the assets to
      */
-    function withdrawPendingAssets(uint88 amount, address to) external;
+    function validateWithdrawAssets(uint88 amount, address to) external;
 
     /**
      * @notice Closes a user deposited amount of the current UsdnProtocol rebalancer position

@@ -2,33 +2,33 @@
 pragma solidity ^0.8.25;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
+import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolCore } from "../../interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
-import { SignedMath } from "../../libraries/SignedMath.sol";
+import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
+import {
+    DepositPendingAction,
+    LongPendingAction,
+    PendingAction,
+    Position,
+    PositionId,
+    ProtocolAction,
+    TickData,
+    WithdrawalPendingAction
+} from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "../../libraries/DoubleEndedQueue.sol";
-import { TickMath } from "../../libraries/TickMath.sol";
 import { HugeUint } from "../../libraries/HugeUint.sol";
+import { SignedMath } from "../../libraries/SignedMath.sol";
+import { TickMath } from "../../libraries/TickMath.sol";
 import { Storage } from "../UsdnProtocolStorage.sol";
-import { IUsdnProtocolEvents } from "./../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { IUsdnProtocolErrors } from "./../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
 import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
 import { UsdnProtocolLongLibrary as longLib } from "./UsdnProtocolLongLibrary.sol";
-import {
-    ProtocolAction,
-    PendingAction,
-    DepositPendingAction,
-    WithdrawalPendingAction,
-    LongPendingAction,
-    PositionId,
-    Position,
-    TickData
-} from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
 
 library UsdnProtocolCoreLibrary {
     using SafeTransferLib for address;
@@ -718,7 +718,7 @@ library UsdnProtocolCoreLibrary {
     /**
      * @notice Remove a stuck pending action and perform the minimal amount of cleanup necessary
      * @dev This function should only be called by the owner of the protocol, it serves as an escape hatch if a
-     * pending action ever gets stuck due to somethingpublic reverting unexpectedly
+     * pending action ever gets stuck due to something reverting unexpectedly
      * The caller must wait at least 1 hour after the validation deadline to call this function. This is to give the
      * chance to normal users to validate the action if possible
      * @param s The storage of the protocol

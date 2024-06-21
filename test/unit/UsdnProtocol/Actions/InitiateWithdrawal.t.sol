@@ -3,14 +3,14 @@ pragma solidity ^0.8.25;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 import { USER_1 } from "../../../utils/Constants.sol";
+import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import {
     PendingAction,
+    PositionId,
     ProtocolAction,
-    WithdrawalPendingAction,
-    PositionId
+    WithdrawalPendingAction
 } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 

@@ -1,27 +1,20 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.25;
 
-import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
-import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
+import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IBaseRebalancer } from "../../interfaces/Rebalancer/IBaseRebalancer.sol";
-import { IUsdnProtocolActions } from "../../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
-import { HugeUint } from "../../libraries/HugeUint.sol";
-import { SignedMath } from "../../libraries/SignedMath.sol";
-import { TickMath } from "../../libraries/TickMath.sol";
-import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 import { IOwnershipCallback } from "../../interfaces/UsdnProtocol/IOwnershipCallback.sol";
-import { Storage } from "../UsdnProtocolStorage.sol";
-import { IUsdnProtocolEvents } from "./../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { IUsdnProtocolErrors } from "./../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
-import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
-import { UsdnProtocolLongLibrary as longLib } from "./UsdnProtocolLongLibrary.sol";
-import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
+import { IUsdnProtocolActions } from "../../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
+import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import {
+    ClosePositionData,
+    InitiateOpenPositionData,
     LongPendingAction,
     PendingAction,
     Position,
@@ -29,10 +22,17 @@ import {
     PreviousActionsData,
     ProtocolAction,
     TickData,
-    InitiateOpenPositionData,
-    ValidateOpenPositionData,
-    ClosePositionData
+    ValidateOpenPositionData
 } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { HugeUint } from "../../libraries/HugeUint.sol";
+import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
+import { SignedMath } from "../../libraries/SignedMath.sol";
+import { TickMath } from "../../libraries/TickMath.sol";
+import { Storage } from "../UsdnProtocolStorage.sol";
+import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
+import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
+import { UsdnProtocolLongLibrary as longLib } from "./UsdnProtocolLongLibrary.sol";
+import { UsdnProtocolVaultLibrary as vaultLib } from "./UsdnProtocolVaultLibrary.sol";
 
 library UsdnProtocolActionsUtilsLibrary {
     using SafeTransferLib for address;

@@ -6,12 +6,12 @@ import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import {
-    ProtocolAction,
     LongPendingAction,
-    Position,
     PendingAction,
+    Position,
+    PositionId,
     PreviousActionsData,
-    PositionId
+    ProtocolAction
 } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
