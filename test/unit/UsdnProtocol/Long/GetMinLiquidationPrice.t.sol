@@ -50,14 +50,16 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
         setUpUserPositionInLong(
             OpenParams(
                 address(this),
-                ProtocolAction.ValidateOpenPosition,
+                IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 500 ether,
                 params.initialPrice / 2,
                 params.initialPrice
             )
         );
         skip(1 days);
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1, params.initialPrice);
+        setUpUserPositionInVault(
+            address(this), IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, 1, params.initialPrice
+        );
 
         assertGt(
             protocol.i_calcFixedPrecisionMultiplier(
@@ -77,9 +79,13 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
      * @custom:and The multiplier is < 1.
      */
     function test_getMinLiquidationPrice_multiplierLtOne() public {
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 5000 ether, params.initialPrice);
+        setUpUserPositionInVault(
+            address(this), IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, 5000 ether, params.initialPrice
+        );
         skip(6 days);
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1, params.initialPrice);
+        setUpUserPositionInVault(
+            address(this), IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, 1, params.initialPrice
+        );
 
         assertLt(
             protocol.i_calcFixedPrecisionMultiplier(

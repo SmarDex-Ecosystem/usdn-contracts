@@ -17,7 +17,7 @@ contract TestUsdnProtocolLongFlashClosePosition is UsdnProtocolBaseFixture {
     uint256 totalExpo;
     HugeUint.Uint512 liqMultiplierAccumulator;
     uint128 constant AMOUNT = 1 ether;
-    PositionId posId;
+    IUsdnProtocolTypes.PositionId posId;
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
@@ -25,7 +25,7 @@ contract TestUsdnProtocolLongFlashClosePosition is UsdnProtocolBaseFixture {
         posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: AMOUNT,
                 desiredLiqPrice: DEFAULT_PARAMS.initialPrice * 8 / 10,
                 price: DEFAULT_PARAMS.initialPrice
@@ -44,7 +44,7 @@ contract TestUsdnProtocolLongFlashClosePosition is UsdnProtocolBaseFixture {
      * @custom:and InitiatedClosePosition and ValidatedClosePosition events are emitted
      */
     function test_flashClosePosition() external {
-        (Position memory pos,) = protocol.getLongPosition(posId);
+        (IUsdnProtocolTypes.Position memory pos,) = protocol.getLongPosition(posId);
 
         uint256 longPositionsCountBefore = protocol.getTotalLongPositions();
         // 10% price increase
@@ -81,7 +81,7 @@ contract TestUsdnProtocolLongFlashClosePosition is UsdnProtocolBaseFixture {
         assertEq(positionValue, expectedPositionValue, "The returned position value should be the expected one");
 
         (pos,) = protocol.getLongPosition(posId);
-        Position memory deletedPos;
+        IUsdnProtocolTypes.Position memory deletedPos;
         assertEq(abi.encode(pos), abi.encode(deletedPos), "The position should have been deleted");
 
         assertEq(

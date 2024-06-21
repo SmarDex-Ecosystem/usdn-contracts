@@ -21,12 +21,12 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
     struct TestData {
         bytes priceData;
-        Position pos;
+        IUsdnProtocolTypes.Position pos;
         uint8 liquidationPenalty;
         uint256 assetBalanceBefore;
         uint256 longBalanceStart;
         uint128 amountToClose;
-        LongPendingAction action;
+        IUsdnProtocolTypes.LongPendingAction action;
         uint128 liquidationPrice;
         uint256 vaultBalanceBefore;
         uint256 longBalanceBefore;
@@ -37,7 +37,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
     }
 
     uint128 private constant POSITION_AMOUNT = 1 ether;
-    PositionId private posId;
+    IUsdnProtocolTypes.PositionId private posId;
     /// @notice Trigger a reentrancy after receiving ether
     bool internal _reenter;
 
@@ -47,7 +47,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: POSITION_AMOUNT,
                 desiredLiqPrice: params.initialPrice - (params.initialPrice / 5),
                 price: params.initialPrice
@@ -70,7 +70,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.InitiateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition,
                 positionSize: POSITION_AMOUNT,
                 desiredLiqPrice: params.initialPrice - (params.initialPrice / 5),
                 price: params.initialPrice
@@ -125,7 +125,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
-                untilAction: ProtocolAction.InitiateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition,
                 positionSize: POSITION_AMOUNT,
                 desiredLiqPrice: params.initialPrice - (params.initialPrice / 5),
                 price: params.initialPrice
@@ -144,8 +144,10 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         rawIndices[0] = 1;
 
         vm.expectEmit(true, true, false, false);
-        emit ValidatedOpenPosition(USER_1, USER_1, 0, 0, PositionId(0, 0, 0));
-        protocol.validateClosePosition(payable(address(this)), priceData, PreviousActionsData(previousData, rawIndices));
+        emit ValidatedOpenPosition(USER_1, USER_1, 0, 0, IUsdnProtocolTypes.PositionId(0, 0, 0));
+        protocol.validateClosePosition(
+            payable(address(this)), priceData, IUsdnProtocolTypes.PreviousActionsData(previousData, rawIndices)
+        );
     }
 
     /**
@@ -228,13 +230,14 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         bytes memory priceData = abi.encode(price);
 
         /* ------------------------- Initiate Close Position ------------------------ */
-        (Position memory pos, uint8 liquidationPenalty) = protocol.getLongPosition(posId);
+        (IUsdnProtocolTypes.Position memory pos, uint8 liquidationPenalty) = protocol.getLongPosition(posId);
         uint256 assetBalanceBefore = protocol.getAsset().balanceOf(to);
         protocol.initiateClosePosition(posId, POSITION_AMOUNT, to, payable(validator), priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
 
         /* ------------------------- Validate Close Position ------------------------ */
-        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(validator));
+        IUsdnProtocolTypes.LongPendingAction memory action =
+            protocol.i_toLongPendingAction(protocol.getUserPendingAction(validator));
         uint128 totalExpoToClose = FixedPointMathLib.fullMulDiv(pos.totalExpo, POSITION_AMOUNT, pos.amount).toUint128();
 
         uint256 expectedAmountReceived = protocol.i_assetToRemove(
@@ -261,16 +264,16 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
     /// @dev struct to hold the test data to avoid "stack too deep"
     struct InternalValidatePartialClosePosition {
         bytes priceData;
-        Position pos;
+        IUsdnProtocolTypes.Position pos;
         uint256 assetBalanceBefore;
         uint128 amountToClose;
-        Position posBefore;
+        IUsdnProtocolTypes.Position posBefore;
         uint8 liquidationPenalty;
-        LongPendingAction action;
+        IUsdnProtocolTypes.LongPendingAction action;
         uint128 totalExpoToClose;
         uint256 expectedAmountReceived;
         int256 expectedProfit;
-        Position posAfter;
+        IUsdnProtocolTypes.Position posAfter;
     }
 
     /**
@@ -393,7 +396,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         bytes memory priceData = abi.encode(params.initialPrice);
 
         /* ------------------------- Initiate Close Position ------------------------ */
-        (Position memory pos, uint8 liquidationPenalty) = protocol.getLongPosition(posId);
+        (IUsdnProtocolTypes.Position memory pos, uint8 liquidationPenalty) = protocol.getLongPosition(posId);
         uint256 assetBalanceBefore = protocol.getAsset().balanceOf(address(this));
 
         uint128 amountToClose = pos.amount / 2;
@@ -403,7 +406,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         _waitDelay();
 
         /* ------------------------- Validate Close Position ------------------------ */
-        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
+        IUsdnProtocolTypes.LongPendingAction memory action =
+            protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
         uint128 priceAfterInit = params.initialPrice - 50 ether;
         uint256 vaultBalanceBefore =
             uint256(protocol.vaultAssetAvailableWithFunding(priceAfterInit, uint128(block.timestamp)));
@@ -455,7 +459,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         bytes memory priceData = abi.encode(params.initialPrice);
 
         /* ------------------------- Initiate Close Position ------------------------ */
-        (Position memory pos, uint8 liquidationPenalty) = protocol.getLongPosition(posId);
+        (IUsdnProtocolTypes.Position memory pos, uint8 liquidationPenalty) = protocol.getLongPosition(posId);
         uint256 assetBalanceBefore = protocol.getAsset().balanceOf(address(this));
 
         uint128 amountToClose = pos.amount / 2;
@@ -465,7 +469,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         _waitDelay();
 
         /* ------------------------- Validate Close Position ------------------------ */
-        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
+        IUsdnProtocolTypes.LongPendingAction memory action =
+            protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
         uint128 price = params.initialPrice + 200 ether;
         uint256 vaultBalanceBefore = uint256(protocol.vaultAssetAvailableWithFunding(price, uint128(block.timestamp)));
         uint256 longBalanceBefore = uint256(protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp)));
@@ -560,7 +565,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         vm.expectEmit(true, true, false, false);
         emit LiquidatedTick(posId.tick, posId.tickVersion, 0, 0, 0);
         vm.expectEmit(true, false, false, false);
-        emit LiquidatedPosition(address(this), PositionId(0, 0, 0), 0, 0);
+        emit LiquidatedPosition(address(this), IUsdnProtocolTypes.PositionId(0, 0, 0), 0, 0);
         protocol.i_validateClosePosition(address(this), data.priceData);
 
         assertEq(
@@ -610,7 +615,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
         posId.tickVersion = 0;
         posId.index = 0;
-        (Position memory pos,) = protocol.getLongPosition(PositionId(posId.tick, 0, 0));
+        (IUsdnProtocolTypes.Position memory pos,) =
+            protocol.getLongPosition(IUsdnProtocolTypes.PositionId(posId.tick, 0, 0));
         vm.prank(DEPLOYER);
         protocol.initiateClosePosition(posId, pos.amount, DEPLOYER, DEPLOYER, priceData, EMPTY_PREVIOUS_DATA);
 
@@ -619,7 +625,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         priceData = abi.encode(800 ether);
         skip(1 hours);
 
-        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(DEPLOYER));
+        IUsdnProtocolTypes.LongPendingAction memory action =
+            protocol.i_toLongPendingAction(protocol.getUserPendingAction(DEPLOYER));
         assertEq(
             protocol.getBalanceLong(), longBalanceBefore - action.closeBoundedPositionValue, "long balance decreased"
         );
@@ -628,7 +635,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         // Make sure we liquidate the position
         vm.expectEmit(true, false, false, false);
-        emit LiquidatedPosition(DEPLOYER, PositionId(0, 0, 0), 0, 0);
+        emit LiquidatedPosition(DEPLOYER, IUsdnProtocolTypes.PositionId(0, 0, 0), 0, 0);
         protocol.i_validateClosePosition(DEPLOYER, priceData);
 
         assertEq(
@@ -650,7 +657,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
-                untilAction: ProtocolAction.InitiateClosePosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.InitiateClosePosition,
                 positionSize: POSITION_AMOUNT,
                 desiredLiqPrice: params.initialPrice / 4,
                 price: params.initialPrice
@@ -663,10 +670,10 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         bool success = protocol.validateClosePosition(USER_1, abi.encode(params.initialPrice / 3), EMPTY_PREVIOUS_DATA);
         assertFalse(success, "success");
 
-        PendingAction memory pending = protocol.getUserPendingAction(USER_1);
+        IUsdnProtocolTypes.PendingAction memory pending = protocol.getUserPendingAction(USER_1);
         assertEq(
             uint256(pending.action),
-            uint256(ProtocolAction.ValidateClosePosition),
+            uint256(IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition),
             "user 1 pending action should not be cleared"
         );
 
@@ -693,7 +700,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.InitiateClosePosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.InitiateClosePosition,
                 positionSize: POSITION_AMOUNT,
                 desiredLiqPrice: params.initialPrice - (params.initialPrice / 5),
                 price: params.initialPrice

@@ -43,8 +43,8 @@ contract TestUsdnProtocolLongFlashOpenPosition is UsdnProtocolBaseFixture {
         uint128 positionTotalExpo = protocol.i_calcPositionTotalExpo(AMOUNT, CURRENT_PRICE, tickPriceWithoutPenalty);
         uint256 longPositionsCountBefore = protocol.getTotalLongPositions();
 
-        _expectEmit(positionTotalExpo, PositionId(tick, 0, 0));
-        (PositionId memory posId) = protocol.i_flashOpenPosition(
+        _expectEmit(positionTotalExpo, IUsdnProtocolTypes.PositionId(tick, 0, 0));
+        (IUsdnProtocolTypes.PositionId memory posId) = protocol.i_flashOpenPosition(
             address(this),
             CURRENT_PRICE,
             tickWithoutPenalty,
@@ -56,7 +56,7 @@ contract TestUsdnProtocolLongFlashOpenPosition is UsdnProtocolBaseFixture {
         );
 
         assertEq(posId.tick, tick, "The tick should be the expected tick");
-        (Position memory pos,) = protocol.getLongPosition(posId);
+        (IUsdnProtocolTypes.Position memory pos,) = protocol.getLongPosition(posId);
         assertEq(pos.timestamp, block.timestamp, "the timestamp should be equal to now");
         assertEq(pos.user, address(this), "The user should be the provided address");
         assertEq(pos.totalExpo, positionTotalExpo, "The total expo should be equal to the expected one");
@@ -88,8 +88,8 @@ contract TestUsdnProtocolLongFlashOpenPosition is UsdnProtocolBaseFixture {
         vm.prank(ADMIN);
         protocol.setLiquidationPenalty(1);
 
-        _expectEmit(positionTotalExpo, PositionId(initialPosition.tick, 0, 1));
-        (PositionId memory posId) = protocol.i_flashOpenPosition(
+        _expectEmit(positionTotalExpo, IUsdnProtocolTypes.PositionId(initialPosition.tick, 0, 1));
+        (IUsdnProtocolTypes.PositionId memory posId) = protocol.i_flashOpenPosition(
             address(this),
             CURRENT_PRICE,
             tickWithoutNewPenalty,
@@ -108,14 +108,14 @@ contract TestUsdnProtocolLongFlashOpenPosition is UsdnProtocolBaseFixture {
             posId.index, initialPosition.index + 1, "The position should be in the same tick as the initial position"
         );
 
-        (Position memory pos,) = protocol.getLongPosition(posId);
+        (IUsdnProtocolTypes.Position memory pos,) = protocol.getLongPosition(posId);
         assertEq(pos.timestamp, block.timestamp, "the timestamp should be equal to now");
         assertEq(pos.user, address(this), "The user should be the provided address");
         assertEq(pos.totalExpo, positionTotalExpo, "The total expo should be equal to the expected one");
         assertEq(pos.amount, AMOUNT, "The amount should be equal to the provided one");
     }
 
-    function _expectEmit(uint128 positionTotalExpo, PositionId memory posId) internal {
+    function _expectEmit(uint128 positionTotalExpo, IUsdnProtocolTypes.PositionId memory posId) internal {
         vm.expectEmit();
         emit InitiatedOpenPosition(
             address(this), address(this), uint40(block.timestamp), positionTotalExpo, AMOUNT, CURRENT_PRICE, posId

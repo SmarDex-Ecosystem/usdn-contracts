@@ -21,7 +21,7 @@ contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
     function test_getTickLiquidationPenaltyEmpty() public {
         uint8 startPenalty = protocol.getLiquidationPenalty();
         int24 tick = 69_420;
-        TickData memory tickData = protocol.getTickData(tick);
+        IUsdnProtocolTypes.TickData memory tickData = protocol.getTickData(tick);
         assertEq(tickData.totalPos, 0, "empty tick");
 
         // check initial value
@@ -43,10 +43,10 @@ contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
      */
     function test_getTickLiquidationPenaltyPopulated() public {
         uint8 startPenalty = protocol.getLiquidationPenalty();
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 10 ether,
                 desiredLiqPrice: params.initialPrice / 2,
                 price: params.initialPrice
@@ -70,10 +70,10 @@ contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
      */
     function test_getTickLiquidationPenaltyLiquidated() public {
         uint8 startPenalty = protocol.getLiquidationPenalty();
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 10 ether,
                 desiredLiqPrice: params.initialPrice / 2,
                 price: params.initialPrice
@@ -102,10 +102,10 @@ contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
      */
     function test_getTickLiquidationPenaltyWasPopulatedNowEmpty() public {
         uint8 startPenalty = protocol.getLiquidationPenalty();
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateClosePosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition,
                 positionSize: 10 ether,
                 desiredLiqPrice: params.initialPrice / 2,
                 price: params.initialPrice

@@ -64,7 +64,9 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      */
     function test_withdrawal() public {
         // we create a position to be able to withdraw
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
+        setUpUserPositionInVault(
+            address(this), IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice
+        );
         (balanceUser0Before, balanceProtocolBefore,,) = _getBalances();
 
         // we initiate a 1 wei withdrawal
@@ -88,10 +90,10 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:and The protocol returns the security deposit to the user at the validation of the close position
      */
     function test_closePosition() public {
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: params.initialPrice / 2,
                 price: params.initialPrice
@@ -151,11 +153,13 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
         uint256 balanceUser2Before = USER_2.balance;
 
-        setUpUserPositionInVault(USER_1, ProtocolAction.InitiateDeposit, 1 ether, params.initialPrice);
+        setUpUserPositionInVault(
+            USER_1, IUsdnProtocolTypes.ProtocolAction.InitiateDeposit, 1 ether, params.initialPrice
+        );
         setUpUserPositionInLong(
             OpenParams({
                 user: USER_2,
-                untilAction: ProtocolAction.InitiateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: params.initialPrice / 2,
                 price: params.initialPrice
@@ -183,8 +187,8 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         bytes[] memory previousPriceData = new bytes[](rawIndices.length);
         previousPriceData[0] = priceData;
         previousPriceData[1] = priceData;
-        PreviousActionsData memory previousActionsData =
-            PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
+        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData =
+            IUsdnProtocolTypes.PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
 
         vm.expectEmit();
         emit SecurityDepositRefunded(USER_1, address(this), SECURITY_DEPOSIT_VALUE);
@@ -236,7 +240,9 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:then The protocol reverts with {UsdnProtocolSecurityDepositTooLow}
      */
     function test_RevertWhen_securityDeposit_lt_withdrawal() public {
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
+        setUpUserPositionInVault(
+            address(this), IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice
+        );
 
         vm.expectRevert(UsdnProtocolSecurityDepositTooLow.selector);
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE - 1 }(
@@ -268,10 +274,10 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:then The protocol reverts with {UsdnProtocolSecurityDepositTooLow}
      */
     function test_RevertWhen_securityDeposit_lt_closePosition() public {
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: params.initialPrice / 2,
                 price: params.initialPrice
@@ -310,7 +316,9 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:then The protocol refunds the excess to the user
      */
     function test_gt_withdrawal() public {
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
+        setUpUserPositionInVault(
+            address(this), IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice
+        );
         (balanceUser0Before, balanceProtocolBefore,,) = _getBalances();
 
         usdn.approve(address(protocol), 1);
@@ -349,10 +357,10 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:then The protocol refunds the excess to the user
      */
     function test_gt_closePosition() public {
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: params.initialPrice / 2,
                 price: params.initialPrice
@@ -392,7 +400,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         assertSecurityDepositPaid();
 
-        PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
+        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
 
         vm.expectEmit();
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
@@ -441,7 +449,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         assertSecurityDepositPaidTwoUsers();
 
-        PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
+        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
 
         vm.expectEmit();
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
@@ -467,8 +475,12 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
 
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
-        setUpUserPositionInVault(USER_1, ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
+        setUpUserPositionInVault(
+            address(this), IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice
+        );
+        setUpUserPositionInVault(
+            USER_1, IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice
+        );
         uint256 usdnBalanceUser0Before = usdn.balanceOf(address(this));
         uint256 usdnBalanceUser1Before = usdn.balanceOf(USER_1);
 
@@ -481,7 +493,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         assertSecurityDepositPaid();
 
-        PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
+        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
 
         vm.startPrank(USER_1);
         usdn.approve(address(protocol), 2);
@@ -518,8 +530,12 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
 
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
-        setUpUserPositionInVault(USER_1, ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
+        setUpUserPositionInVault(
+            address(this), IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice
+        );
+        setUpUserPositionInVault(
+            USER_1, IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice
+        );
         uint256 usdnBalanceUser0Before = usdn.balanceOf(address(this));
         uint256 usdnBalanceUser1Before = usdn.balanceOf(USER_1);
 
@@ -541,7 +557,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         assertSecurityDepositPaidTwoUsers();
 
-        PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
+        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
 
         vm.expectEmit();
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
@@ -580,7 +596,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         assertSecurityDepositPaid();
 
-        PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
+        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
 
         vm.expectEmit();
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
@@ -630,7 +646,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         assertSecurityDepositPaidTwoUsers();
 
-        PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
+        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
 
         vm.expectEmit();
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
@@ -651,19 +667,19 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
 
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: params.initialPrice / 2,
                 price: params.initialPrice
             })
         );
-        PositionId memory posId1 = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId1 = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: params.initialPrice / 2,
                 price: params.initialPrice
@@ -677,7 +693,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         assertSecurityDepositPaid();
 
-        PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
+        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
 
         vm.expectEmit();
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
@@ -706,19 +722,19 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
 
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: params.initialPrice / 2,
                 price: params.initialPrice
             })
         );
-        PositionId memory posId1 = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId1 = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: params.initialPrice / 2,
                 price: params.initialPrice
@@ -740,7 +756,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         assertSecurityDepositPaidTwoUsers();
 
-        PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
+        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
 
         vm.expectEmit();
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
@@ -856,7 +872,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             "the security deposit value should have changed"
         );
 
-        PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
+        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
 
         vm.expectEmit();
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
@@ -905,7 +921,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     function test_refundStaleTransaction() public {
         (balanceUser0Before, balanceProtocolBefore,,) = _getBalances();
 
-        PositionId memory posId = _createStalePendingActionHelper();
+        IUsdnProtocolTypes.PositionId memory posId = _createStalePendingActionHelper();
 
         assertSecurityDepositPaid();
 
@@ -982,7 +998,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         _waitBeforeActionablePendingAction();
 
-        PreviousActionsData memory prevActionsData = _createPrevActionDataStruct(address(this), true);
+        IUsdnProtocolTypes.PreviousActionsData memory prevActionsData = _createPrevActionDataStruct(address(this), true);
 
         // we validate the pending action with the user when the validation deadline has passed
         vm.prank(USER_1);
@@ -1004,7 +1020,9 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     function test_withdraw_refundSmartContract_noReceive() public {
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before, balanceReceiverContractBefore) = _getBalances();
 
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
+        setUpUserPositionInVault(
+            address(this), IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice
+        );
 
         usdn.approve(address(protocol), 1);
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(
@@ -1020,7 +1038,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         _waitBeforeActionablePendingAction();
 
-        PreviousActionsData memory prevActionsData = _createPrevActionDataStruct(address(this), true);
+        IUsdnProtocolTypes.PreviousActionsData memory prevActionsData = _createPrevActionDataStruct(address(this), true);
 
         // we validate the pending action with the user when the validation deadline has passed
         vm.prank(USER_1);
@@ -1061,7 +1079,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         _waitBeforeActionablePendingAction();
 
-        PreviousActionsData memory prevActionsData = _createPrevActionDataStruct(address(this), true);
+        IUsdnProtocolTypes.PreviousActionsData memory prevActionsData = _createPrevActionDataStruct(address(this), true);
 
         // we validate the pending action with the user when the validation deadline has passed
         vm.prank(USER_1);
@@ -1081,10 +1099,10 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:then The security deposit is refunded to the user and not to the receiver contract
      */
     function test_closePosition_refundSmartContract_noReceive() public {
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: params.initialPrice / 2,
                 price: params.initialPrice
@@ -1093,7 +1111,9 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before, balanceReceiverContractBefore) = _getBalances();
 
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
+        setUpUserPositionInVault(
+            address(this), IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice
+        );
 
         protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(
             posId, 1 ether, USER_1, payable(address(receiverContract)), priceData, EMPTY_PREVIOUS_DATA
@@ -1109,7 +1129,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         _waitBeforeActionablePendingAction();
 
-        PreviousActionsData memory prevActionsData = _createPrevActionDataStruct(address(this), true);
+        IUsdnProtocolTypes.PreviousActionsData memory prevActionsData = _createPrevActionDataStruct(address(this), true);
 
         // we validate the pending action with the user when the validation deadline has passed
         vm.prank(USER_1);
@@ -1264,9 +1284,10 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
     function _createPrevActionDataStruct(address user, bool assertValidatorContract)
         internal
-        returns (PreviousActionsData memory prevActionsData_)
+        returns (IUsdnProtocolTypes.PreviousActionsData memory prevActionsData_)
     {
-        (PendingAction[] memory pendingAction, uint128[] memory rawIndices) = protocol.getActionablePendingActions(user);
+        (IUsdnProtocolTypes.PendingAction[] memory pendingAction, uint128[] memory rawIndices) =
+            protocol.getActionablePendingActions(user);
         bytes[] memory prevPriceData = new bytes[](rawIndices.length);
         prevPriceData[0] = priceData;
 
@@ -1276,7 +1297,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             assertEq(pendingAction[0].validator, address(receiverContract), "action `validator`");
         }
 
-        prevActionsData_ = PreviousActionsData({ priceData: prevPriceData, rawIndices: rawIndices });
+        prevActionsData_ = IUsdnProtocolTypes.PreviousActionsData({ priceData: prevPriceData, rawIndices: rawIndices });
     }
 
     receive() external payable { }
@@ -1290,7 +1311,7 @@ contract DummyContract {
     function validateDeposit(
         address usdnProtocolAddr,
         bytes calldata priceData,
-        PreviousActionsData calldata previousData
+        IUsdnProtocolTypes.PreviousActionsData calldata previousData
     ) external {
         IUsdnProtocol(usdnProtocolAddr).validateDeposit(payable(address(this)), priceData, previousData);
     }
@@ -1298,7 +1319,7 @@ contract DummyContract {
     function validateWithdrawal(
         address usdnProtocolAddr,
         bytes calldata priceData,
-        PreviousActionsData calldata previousData
+        IUsdnProtocolTypes.PreviousActionsData calldata previousData
     ) external {
         IUsdnProtocol(usdnProtocolAddr).validateWithdrawal(payable(address(this)), priceData, previousData);
     }
@@ -1306,7 +1327,7 @@ contract DummyContract {
     function validateOpenPosition(
         address usdnProtocolAddr,
         bytes calldata priceData,
-        PreviousActionsData calldata previousData
+        IUsdnProtocolTypes.PreviousActionsData calldata previousData
     ) external {
         IUsdnProtocol(usdnProtocolAddr).validateOpenPosition(payable(address(this)), priceData, previousData);
     }
@@ -1314,7 +1335,7 @@ contract DummyContract {
     function validateClosePosition(
         address usdnProtocolAddr,
         bytes calldata priceData,
-        PreviousActionsData calldata previousData
+        IUsdnProtocolTypes.PreviousActionsData calldata previousData
     ) external {
         IUsdnProtocol(usdnProtocolAddr).validateClosePosition(payable(address(this)), priceData, previousData);
     }

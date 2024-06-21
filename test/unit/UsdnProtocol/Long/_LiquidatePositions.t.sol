@@ -21,7 +21,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
      */
     function test_nothingHappensWhenThereIsNothingToLiquidate() external {
         vm.recordLogs();
-        LiquidationsEffects memory liquidationsEffects =
+        IUsdnProtocolTypes.LiquidationsEffects memory liquidationsEffects =
             protocol.i_liquidatePositions(2000 ether, 1, 100 ether, 100 ether);
         uint256 logsAmount = vm.getRecordedLogs().length;
 
@@ -48,10 +48,10 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = price - 200 ether;
 
         // Create a long position to liquidate
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: desiredLiqPrice,
                 price: price
@@ -73,7 +73,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         emit LiquidatedTick(posId.tick, 0, liqPrice, effectiveTickPrice, tickValue);
 
         vm.recordLogs();
-        LiquidationsEffects memory liquidationsEffects =
+        IUsdnProtocolTypes.LiquidationsEffects memory liquidationsEffects =
             protocol.i_liquidatePositions(uint256(liqPrice), 1, balanceLong, balanceVault);
         uint256 logsAmount = vm.getRecordedLogs().length;
 
@@ -124,7 +124,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: liqPrice,
                 price: price
@@ -147,7 +147,8 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit LiquidatedTick(desiredLiqTick, 0, price, liqPriceAfterFundings, tickValue);
-        LiquidationsEffects memory liquidationsEffects = protocol.i_liquidatePositions(price, 1, 100 ether, 100 ether);
+        IUsdnProtocolTypes.LiquidationsEffects memory liquidationsEffects =
+            protocol.i_liquidatePositions(price, 1, 100 ether, 100 ether);
 
         assertEq(liquidationsEffects.liquidatedPositions, 1, "Only one position should have been liquidated");
         assertEq(liquidationsEffects.liquidatedTicks, 1, "Only one tick should have been liquidated");
@@ -189,7 +190,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
 
         vm.recordLogs();
         // 2 Iterations to make sure we break the loop when there are no ticks to be found
-        LiquidationsEffects memory liquidationsEffects =
+        IUsdnProtocolTypes.LiquidationsEffects memory liquidationsEffects =
             protocol.i_liquidatePositions(uint256(liqPrice), 2, balanceLong, balanceVault);
         uint256 logsAmount = vm.getRecordedLogs().length;
 
@@ -224,10 +225,10 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
             desiredLiqPrice /= 100;
 
             // Create a long position to liquidate
-            PositionId memory posId = setUpUserPositionInLong(
+            IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
                 OpenParams({
                     user: address(this),
-                    untilAction: ProtocolAction.ValidateOpenPosition,
+                    untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                     positionSize: 1 ether,
                     desiredLiqPrice: desiredLiqPrice,
                     price: price
@@ -253,7 +254,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
 
         // Make sure no more than MAX_LIQUIDATION_ITERATION events have been emitted
         vm.recordLogs();
-        LiquidationsEffects memory liquidationsEffects =
+        IUsdnProtocolTypes.LiquidationsEffects memory liquidationsEffects =
             protocol.i_liquidatePositions(uint256(liqPrice), maxIterations + 1, balanceLong, balanceVault);
         uint256 logsAmount = vm.getRecordedLogs().length;
 
@@ -294,7 +295,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: liqPrice,
                 price: price
@@ -310,7 +311,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         emit LiquidatedTick(desiredLiqTick, 0, liqPrice, liqPriceAfterFundings, tickValue);
 
         // Set the tempVaultBalance parameter to less than tickValue to make sure it sends what it can
-        LiquidationsEffects memory liquidationsEffects =
+        IUsdnProtocolTypes.LiquidationsEffects memory liquidationsEffects =
             protocol.i_liquidatePositions(uint256(liqPrice), 1, tickValue - 1, 100 ether);
 
         assertEq(liquidationsEffects.liquidatedPositions, 1, "Only one position should have been liquidated");
@@ -345,10 +346,10 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         uint128 liqPrice = protocol.getEffectivePriceForTick(desiredLiqTick);
 
         // Create a long position to liquidate
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: liqPrice,
                 price: price
@@ -368,7 +369,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         emit LiquidatedTick(posId.tick, 0, price, liqPriceAfterFundings, tickValue);
 
         // Set the tempVaultBalance parameter to less than tickValue to make sure it sends what it can
-        LiquidationsEffects memory liquidationsEffects =
+        IUsdnProtocolTypes.LiquidationsEffects memory liquidationsEffects =
             protocol.i_liquidatePositions(uint256(price), 1, 100 ether, tickValue);
 
         assertEq(liquidationsEffects.liquidatedPositions, 1, "Only one position should have been liquidated");

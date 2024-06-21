@@ -43,7 +43,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
     struct TestData2 {
         bytes currentPrice;
         bytes32 actionId;
-        WithdrawalPendingAction withdrawal;
+        IUsdnProtocolTypes.WithdrawalPendingAction withdrawal;
         uint256 vaultBalance;
     }
 
@@ -52,7 +52,9 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         withdrawShares = USDN_AMOUNT * uint152(usdn.MAX_DIVISOR());
         usdn.approve(address(protocol), type(uint256).max);
         // user deposits wstETH at price $2000
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, DEPOSIT_AMOUNT, 2000 ether);
+        setUpUserPositionInVault(
+            address(this), IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, DEPOSIT_AMOUNT, 2000 ether
+        );
         initialUsdnBalance = usdn.balanceOf(address(this));
         initialUsdnShares = usdn.sharesOf(address(this));
         initialWstETHBalance = wstETH.balanceOf(address(this));
@@ -82,10 +84,10 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
      * @custom:and The user's wsteth balance doesn't not change
      */
     function test_validateWithdrawalIsPendingLiquidation() public {
-        PositionId memory userPosId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory userPosId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: params.initialPrice - params.initialPrice / 5,
                 price: params.initialPrice
@@ -111,10 +113,10 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         );
         assertFalse(success, "success");
 
-        PendingAction memory pending = protocol.getUserPendingAction(address(this));
+        IUsdnProtocolTypes.PendingAction memory pending = protocol.getUserPendingAction(address(this));
         assertEq(
             uint256(pending.action),
-            uint256(ProtocolAction.ValidateWithdrawal),
+            uint256(IUsdnProtocolTypes.ProtocolAction.ValidateWithdrawal),
             "user 0 pending action should not have been cleared"
         );
 
@@ -180,14 +182,16 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         oracleMiddleware.setRequireValidationCost(true); // require 1 wei per validation
         // initiate
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
-        uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateWithdrawal);
+        uint256 validationCost =
+            oracleMiddleware.validationCost(currentPrice, IUsdnProtocolTypes.ProtocolAction.InitiateWithdrawal);
         protocol.initiateWithdrawal{ value: validationCost }(
             USDN_AMOUNT, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
         // validate
-        validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.ValidateWithdrawal);
+        validationCost =
+            oracleMiddleware.validationCost(currentPrice, IUsdnProtocolTypes.ProtocolAction.ValidateWithdrawal);
         uint256 balanceBefore = address(this).balance;
         protocol.validateWithdrawal{ value: 0.5 ether }(payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
@@ -215,7 +219,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         protocol.initiateWithdrawal(withdrawShares, to, payable(address(this)), data.currentPrice, EMPTY_PREVIOUS_DATA);
 
         data.actionId = oracleMiddleware.lastActionId();
-        PendingAction memory pending = protocol.getUserPendingAction(address(this));
+        IUsdnProtocolTypes.PendingAction memory pending = protocol.getUserPendingAction(address(this));
         data.withdrawal = protocol.i_toWithdrawalPendingAction(pending);
 
         data.vaultBalance = protocol.getBalanceVault(); // save for withdrawn amount calculation in case price
@@ -232,7 +236,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         }
 
         PriceInfo memory withdrawalPrice = protocol.i_getOraclePrice(
-            ProtocolAction.ValidateWithdrawal, data.withdrawal.timestamp, "", abi.encode(assetPrice)
+            IUsdnProtocolTypes.ProtocolAction.ValidateWithdrawal, data.withdrawal.timestamp, "", abi.encode(assetPrice)
         );
 
         // Apply fees on price
@@ -295,7 +299,9 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
             return;
         }
 
-        setUpUserPositionInVault(address(this), ProtocolAction.InitiateWithdrawal, DEPOSIT_AMOUNT, 2000 ether);
+        setUpUserPositionInVault(
+            address(this), IUsdnProtocolTypes.ProtocolAction.InitiateWithdrawal, DEPOSIT_AMOUNT, 2000 ether
+        );
 
         _reenter = true;
         // If a reentrancy occurred, the function should have been called 2 times

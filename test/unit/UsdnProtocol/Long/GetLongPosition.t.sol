@@ -43,17 +43,17 @@ contract TestGetLongPosition is UsdnProtocolBaseFixture {
         uint128 totalExpo =
             uint128(FixedPointMathLib.fullMulDiv(OPEN_AMOUNT, adjustedPrice, adjustedPrice - liqPriceWithoutPenalty));
 
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
-                untilAction: ProtocolAction.InitiateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition,
                 positionSize: OPEN_AMOUNT,
                 desiredLiqPrice: params.initialPrice / 2,
                 price: params.initialPrice
             })
         );
 
-        (Position memory position, uint8 liquidationPenalty) = protocol.getLongPosition(posId);
+        (IUsdnProtocolTypes.Position memory position, uint8 liquidationPenalty) = protocol.getLongPosition(posId);
 
         uint256 expectedTimestamp = block.timestamp - oracleMiddleware.getValidationDelay() - 1;
         assertEq(position.timestamp, expectedTimestamp, "initiate position timestamp");
@@ -90,10 +90,10 @@ contract TestGetLongPosition is UsdnProtocolBaseFixture {
      * @custom:then The transaction should revert
      */
     function test_RevertWhen_getLongPositionOutdatedTick() public {
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: OPEN_AMOUNT,
                 desiredLiqPrice: params.initialPrice / 2,
                 price: params.initialPrice

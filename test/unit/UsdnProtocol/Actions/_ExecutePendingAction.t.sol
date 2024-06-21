@@ -22,21 +22,21 @@ contract TestUsdnProtocolActionsExecutePendingAction is UsdnProtocolBaseFixture 
      * @custom:then The action is executed and the pending action is removed from the queue
      */
     function test_executePendingAction() public {
-        PreviousActionsData memory previousActionsData = _setUpPendingAction();
+        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData = _setUpPendingAction();
 
         vm.expectEmit(true, true, false, false);
-        emit ValidatedOpenPosition(USER_1, USER_1, 0, 0, PositionId(0, 0, 0));
+        emit ValidatedOpenPosition(USER_1, USER_1, 0, 0, IUsdnProtocolTypes.PositionId(0, 0, 0));
         (bool success, bool executed, bool liq,) = protocol.i_executePendingAction(previousActionsData);
 
         assertTrue(success, "success");
         assertTrue(executed, "executed");
         assertFalse(liq, "liq");
 
-        (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(this));
+        (IUsdnProtocolTypes.PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(this));
         assertEq(actions.length, 0, "remaining pending actions");
 
-        PendingAction memory action = protocol.getUserPendingAction(USER_1);
-        assertTrue(action.action == ProtocolAction.None, "no user pending action");
+        IUsdnProtocolTypes.PendingAction memory action = protocol.getUserPendingAction(USER_1);
+        assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.None, "no user pending action");
     }
 
     /**
@@ -60,7 +60,7 @@ contract TestUsdnProtocolActionsExecutePendingAction is UsdnProtocolBaseFixture 
      * @custom:then The function returns false for `success`, `executed` and `liq`
      */
     function test_executePendingActionLengthMismatch() public {
-        PreviousActionsData memory previousActionsData = _setUpPendingAction();
+        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData = _setUpPendingAction();
         previousActionsData.rawIndices = new uint128[](0);
 
         (bool success, bool executed, bool liq,) = protocol.i_executePendingAction(previousActionsData);
@@ -91,7 +91,7 @@ contract TestUsdnProtocolActionsExecutePendingAction is UsdnProtocolBaseFixture 
      * @custom:then The function returns false for `success`, `executed` and `liq`
      */
     function test_executePendingActionBadData() public {
-        PreviousActionsData memory previousActionsData = _setUpPendingAction();
+        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData = _setUpPendingAction();
         previousActionsData.rawIndices[0] = 69;
 
         (bool success, bool executed, bool liq,) = protocol.i_executePendingAction(previousActionsData);
@@ -104,11 +104,14 @@ contract TestUsdnProtocolActionsExecutePendingAction is UsdnProtocolBaseFixture 
      * @dev Set up a pending action and return the previous actions data
      * @return previousActionsData_ The previous actions data, with the same price as the initial price
      */
-    function _setUpPendingAction() internal returns (PreviousActionsData memory previousActionsData_) {
+    function _setUpPendingAction()
+        internal
+        returns (IUsdnProtocolTypes.PreviousActionsData memory previousActionsData_)
+    {
         setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
-                untilAction: ProtocolAction.InitiateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: params.initialPrice / 2,
                 price: params.initialPrice
@@ -117,13 +120,13 @@ contract TestUsdnProtocolActionsExecutePendingAction is UsdnProtocolBaseFixture 
         // make actionable
         skip(protocol.getValidationDeadline() + 1);
 
-        (PendingAction[] memory actions, uint128[] memory rawIndices) =
+        (IUsdnProtocolTypes.PendingAction[] memory actions, uint128[] memory rawIndices) =
             protocol.getActionablePendingActions(address(this));
 
         assertEq(actions.length, 1, "actions length");
 
         bytes[] memory priceData = new bytes[](1);
         priceData[0] = abi.encode(params.initialPrice);
-        previousActionsData_ = PreviousActionsData({ priceData: priceData, rawIndices: rawIndices });
+        previousActionsData_ = IUsdnProtocolTypes.PreviousActionsData({ priceData: priceData, rawIndices: rawIndices });
     }
 }

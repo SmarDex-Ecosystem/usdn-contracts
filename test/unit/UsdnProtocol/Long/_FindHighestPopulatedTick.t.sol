@@ -31,10 +31,10 @@ contract TestUsdnProtocolLongFindHighestPopulatedTick is UsdnProtocolBaseFixture
         int24 highestPopulatedTick = protocol.i_findHighestPopulatedTick(type(int24).max);
         assertEq(highestPopulatedTick, _initialTick, "The tick of protocol initialization should have been found");
 
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: DEFAULT_PARAMS.initialPrice - 400 ether,
                 price: DEFAULT_PARAMS.initialPrice

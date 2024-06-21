@@ -28,12 +28,12 @@ contract TestUsdnProtocolValidateActionablePendingActions is UsdnProtocolBaseFix
      * @custom:and the pending actions are removed
      */
     function test_validateActionablePendingActions() public {
-        PreviousActionsData memory previousActionsData = _setUpFourPendingActions();
+        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData = _setUpFourPendingActions();
 
         vm.expectEmit(true, true, false, false);
-        emit ValidatedOpenPosition(USER_1, USER_1, 0, 0, PositionId(0, 0, 0));
+        emit ValidatedOpenPosition(USER_1, USER_1, 0, 0, IUsdnProtocolTypes.PositionId(0, 0, 0));
         vm.expectEmit(true, true, false, false);
-        emit ValidatedClosePosition(USER_2, USER_2, PositionId(0, 0, 0), 0, 0);
+        emit ValidatedClosePosition(USER_2, USER_2, IUsdnProtocolTypes.PositionId(0, 0, 0), 0, 0);
         vm.expectEmit(true, true, false, false);
         emit ValidatedDeposit(USER_3, USER_3, 0, 0, 0);
         vm.expectEmit(true, true, false, false);
@@ -42,7 +42,7 @@ contract TestUsdnProtocolValidateActionablePendingActions is UsdnProtocolBaseFix
 
         assertEq(validated, 4, "validated actions");
 
-        (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(this));
+        (IUsdnProtocolTypes.PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(this));
         assertEq(actions.length, 0, "remaining pending actions");
     }
 
@@ -55,13 +55,13 @@ contract TestUsdnProtocolValidateActionablePendingActions is UsdnProtocolBaseFix
      * @custom:and the validated pending actions are removed but two are remaining
      */
     function test_validateActionablePendingActionsLimit() public {
-        PreviousActionsData memory previousActionsData = _setUpFourPendingActions();
+        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData = _setUpFourPendingActions();
 
         uint256 validated = protocol.validateActionablePendingActions(previousActionsData, 2);
 
         assertEq(validated, 2, "validated actions");
 
-        (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(this));
+        (IUsdnProtocolTypes.PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(this));
         assertEq(actions.length, 2, "remaining pending actions");
     }
 
@@ -85,14 +85,14 @@ contract TestUsdnProtocolValidateActionablePendingActions is UsdnProtocolBaseFix
      * @custom:and the validated pending actions are removed but one is remaining
      */
     function test_validateActionablePendingActionsBadIndex() public {
-        PreviousActionsData memory previousActionsData = _setUpFourPendingActions();
+        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData = _setUpFourPendingActions();
         previousActionsData.rawIndices[3] = 42; // simulate bad data for last pending action
 
         uint256 validated = protocol.validateActionablePendingActions(previousActionsData, 10);
 
         assertEq(validated, 3, "validated actions");
 
-        (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(this));
+        (IUsdnProtocolTypes.PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(this));
         assertEq(actions.length, 1, "remaining pending actions");
     }
 
@@ -103,7 +103,7 @@ contract TestUsdnProtocolValidateActionablePendingActions is UsdnProtocolBaseFix
      * @custom:then No pending action is validated and the returned count is 0
      */
     function test_validateActionablePendingActionsBadDataLength() public {
-        PreviousActionsData memory previousActionsData = _setUpFourPendingActions();
+        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData = _setUpFourPendingActions();
         previousActionsData.priceData = new bytes[](2); // simulate bad data
         previousActionsData.priceData[0] = abi.encode(params.initialPrice);
         previousActionsData.priceData[1] = previousActionsData.priceData[0];
@@ -120,7 +120,7 @@ contract TestUsdnProtocolValidateActionablePendingActions is UsdnProtocolBaseFix
      * @custom:then The first three actions are validated and the returned count is 3
      */
     function test_validateActionablePendingActionsSkipFirst() public {
-        PreviousActionsData memory previousActionsData = _setUpFourPendingActions();
+        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData = _setUpFourPendingActions();
         // add empty item at the beginning of the calldata
         bytes[] memory priceData = new bytes[](4);
         priceData[0] = "";
@@ -150,16 +150,20 @@ contract TestUsdnProtocolValidateActionablePendingActions is UsdnProtocolBaseFix
      * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost * 4)
      */
     function test_validateActionablePendingActionsEtherRefund() public {
-        PreviousActionsData memory previousActionsData = _setUpFourPendingActions();
+        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData = _setUpFourPendingActions();
         oracleMiddleware.setRequireValidationCost(true); // require 1 wei per validation
-        uint256 validationCost =
-            oracleMiddleware.validationCost(previousActionsData.priceData[0], ProtocolAction.ValidateOpenPosition);
-        validationCost +=
-            oracleMiddleware.validationCost(previousActionsData.priceData[1], ProtocolAction.ValidateClosePosition);
-        validationCost +=
-            oracleMiddleware.validationCost(previousActionsData.priceData[2], ProtocolAction.ValidateDeposit);
-        validationCost +=
-            oracleMiddleware.validationCost(previousActionsData.priceData[3], ProtocolAction.ValidateWithdrawal);
+        uint256 validationCost = oracleMiddleware.validationCost(
+            previousActionsData.priceData[0], IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition
+        );
+        validationCost += oracleMiddleware.validationCost(
+            previousActionsData.priceData[1], IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition
+        );
+        validationCost += oracleMiddleware.validationCost(
+            previousActionsData.priceData[2], IUsdnProtocolTypes.ProtocolAction.ValidateDeposit
+        );
+        validationCost += oracleMiddleware.validationCost(
+            previousActionsData.priceData[3], IUsdnProtocolTypes.ProtocolAction.ValidateWithdrawal
+        );
         assertEq(validationCost, 4, "validation cost");
         uint256 balanceBefore = address(this).balance;
         protocol.validateActionablePendingActions{ value: 0.5 ether }(previousActionsData, 10);
@@ -170,11 +174,14 @@ contract TestUsdnProtocolValidateActionablePendingActions is UsdnProtocolBaseFix
      * @dev Set up four pending actions (one of each type, all different users) and return the previous actions data
      * @return previousActionsData_ The previous actions data, all with the same price as the initial price
      */
-    function _setUpFourPendingActions() internal returns (PreviousActionsData memory previousActionsData_) {
+    function _setUpFourPendingActions()
+        internal
+        returns (IUsdnProtocolTypes.PreviousActionsData memory previousActionsData_)
+    {
         setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
-                untilAction: ProtocolAction.InitiateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: params.initialPrice / 2,
                 price: params.initialPrice
@@ -183,18 +190,22 @@ contract TestUsdnProtocolValidateActionablePendingActions is UsdnProtocolBaseFix
         setUpUserPositionInLong(
             OpenParams({
                 user: USER_2,
-                untilAction: ProtocolAction.InitiateClosePosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.InitiateClosePosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: params.initialPrice / 2,
                 price: params.initialPrice
             })
         );
-        setUpUserPositionInVault(USER_3, ProtocolAction.InitiateDeposit, 1 ether, params.initialPrice);
-        setUpUserPositionInVault(USER_4, ProtocolAction.InitiateWithdrawal, 1 ether, params.initialPrice);
+        setUpUserPositionInVault(
+            USER_3, IUsdnProtocolTypes.ProtocolAction.InitiateDeposit, 1 ether, params.initialPrice
+        );
+        setUpUserPositionInVault(
+            USER_4, IUsdnProtocolTypes.ProtocolAction.InitiateWithdrawal, 1 ether, params.initialPrice
+        );
         // make actionable
         skip(protocol.getValidationDeadline() + 1);
 
-        (PendingAction[] memory actions, uint128[] memory rawIndices) =
+        (IUsdnProtocolTypes.PendingAction[] memory actions, uint128[] memory rawIndices) =
             protocol.getActionablePendingActions(address(this));
 
         assertEq(actions.length, 4, "actions length");
@@ -204,7 +215,7 @@ contract TestUsdnProtocolValidateActionablePendingActions is UsdnProtocolBaseFix
         priceData[1] = priceData[0];
         priceData[2] = priceData[0];
         priceData[3] = priceData[0];
-        previousActionsData_ = PreviousActionsData({ priceData: priceData, rawIndices: rawIndices });
+        previousActionsData_ = IUsdnProtocolTypes.PreviousActionsData({ priceData: priceData, rawIndices: rawIndices });
     }
 
     /**
@@ -216,9 +227,10 @@ contract TestUsdnProtocolValidateActionablePendingActions is UsdnProtocolBaseFix
      */
     function test_RevertWhen_validateActionablePendingActionsCalledWithReentrancy() public {
         // If we are currently in a reentrancy
-        PreviousActionsData memory previousActionsData;
+        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData;
         if (_reenter) {
-            previousActionsData = PreviousActionsData({ priceData: new bytes[](1), rawIndices: new uint128[](1) });
+            previousActionsData =
+                IUsdnProtocolTypes.PreviousActionsData({ priceData: new bytes[](1), rawIndices: new uint128[](1) });
             vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
             protocol.validateActionablePendingActions(previousActionsData, 2);
             return;

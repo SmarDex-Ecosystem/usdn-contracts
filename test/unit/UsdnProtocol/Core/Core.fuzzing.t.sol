@@ -13,7 +13,7 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
     struct TestData {
         uint256 currentPrice;
         int24 firstPosTick;
-        Position firstPos;
+        IUsdnProtocolTypes.Position firstPos;
         uint256 longPosValue;
     }
 
@@ -41,9 +41,9 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
         data.currentPrice = 2000 ether;
 
         data.firstPosTick = protocol.getHighestPopulatedTick();
-        (data.firstPos,) = protocol.getLongPosition(PositionId(data.firstPosTick, 0, 0));
+        (data.firstPos,) = protocol.getLongPosition(IUsdnProtocolTypes.PositionId(data.firstPosTick, 0, 0));
 
-        Position[] memory pos = new Position[](10);
+        IUsdnProtocolTypes.Position[] memory pos = new IUsdnProtocolTypes.Position[](10);
         int24[] memory ticks = new int24[](10);
         uint256[] memory indices = new uint256[](10);
 
@@ -67,7 +67,7 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
                 (bool success,) = address(wstETH).call{ value: 10_000 ether }("");
                 require(success, "wstETH mint failed");
             }
-            PositionId memory posId = setUpUserPositionInLong(
+            IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
                 OpenParams({
                     user: user,
                     untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
@@ -102,7 +102,9 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
         uint256 longPosValue;
         for (uint256 i = 0; i < 10; i++) {
             longPosValue += uint256(
-                protocol.getPositionValue(PositionId(ticks[i], 0, indices[i]), finalPrice, uint128(block.timestamp))
+                protocol.getPositionValue(
+                    IUsdnProtocolTypes.PositionId(ticks[i], 0, indices[i]), finalPrice, uint128(block.timestamp)
+                )
             );
         }
 

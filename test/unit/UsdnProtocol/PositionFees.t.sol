@@ -72,10 +72,10 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = 2000 ether / 2;
         bytes memory priceData = abi.encode(2000 ether);
 
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.InitiateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: desiredLiqPrice,
                 price: 2000 ether
@@ -121,10 +121,10 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = 2000 ether / 2;
 
         bytes memory priceData = abi.encode(2000 ether);
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: desiredLiqPrice,
                 price: 2000 ether
@@ -138,7 +138,8 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
             posId, 1 ether, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
 
-        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
+        IUsdnProtocolTypes.LongPendingAction memory action =
+            protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
 
         uint256 expectedTransfer = uint256(
             protocol.i_positionValue(
@@ -175,9 +176,11 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
     function test_initiateDepositPositionFees() public {
         skip(1 hours);
         uint128 depositAmount = 1 ether;
-        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, depositAmount, 2000 ether);
+        setUpUserPositionInVault(
+            address(this), IUsdnProtocolTypes.ProtocolAction.InitiateDeposit, depositAmount, 2000 ether
+        );
 
-        DepositPendingAction memory action =
+        IUsdnProtocolTypes.DepositPendingAction memory action =
             protocol.i_toDepositPendingAction(protocol.getUserPendingAction(address(this)));
 
         uint256 priceWithoutFees = 2000 ether - 2000 ether * uint256(protocol.getVaultFeeBps()) / protocol.BPS_DIVISOR();
@@ -196,7 +199,9 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint128 depositAmount = 1 ether;
         bytes memory currentPrice = abi.encode(uint128(2000 ether)); // only used to apply funding
 
-        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, depositAmount, 2000 ether);
+        setUpUserPositionInVault(
+            address(this), IUsdnProtocolTypes.ProtocolAction.InitiateDeposit, depositAmount, 2000 ether
+        );
 
         uint256 expectedSharesBalanceA = protocol.i_calcMintUsdnShares(
             depositAmount,
@@ -207,8 +212,8 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         _waitDelay();
 
-        PendingAction memory action = protocol.getUserPendingAction(address(this));
-        DepositPendingAction memory deposit = protocol.i_toDepositPendingAction(action);
+        IUsdnProtocolTypes.PendingAction memory action = protocol.getUserPendingAction(address(this));
+        IUsdnProtocolTypes.DepositPendingAction memory deposit = protocol.i_toDepositPendingAction(action);
 
         // Check stored position asset price
         uint256 expectedSharesBalanceB = protocol.i_calcMintUsdnShares(
@@ -256,7 +261,9 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint128 depositAmount = 1 ether;
         bytes memory currentPrice = abi.encode(uint128(2000 ether)); // only used to apply PnL + funding
 
-        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, depositAmount, 2000 ether);
+        setUpUserPositionInVault(
+            address(this), IUsdnProtocolTypes.ProtocolAction.InitiateDeposit, depositAmount, 2000 ether
+        );
 
         _waitDelay();
 
@@ -270,8 +277,8 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
             uint128(mintedUsdn), address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
-        PendingAction memory action = protocol.getUserPendingAction(address(this));
-        WithdrawalPendingAction memory withdraw = protocol.i_toWithdrawalPendingAction(action);
+        IUsdnProtocolTypes.PendingAction memory action = protocol.getUserPendingAction(address(this));
+        IUsdnProtocolTypes.WithdrawalPendingAction memory withdraw = protocol.i_toWithdrawalPendingAction(action);
 
         // Check stored position asset price
         uint256 expectedPrice = 2000 ether + 2000 ether * uint256(protocol.getVaultFeeBps()) / protocol.BPS_DIVISOR();
@@ -291,7 +298,9 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(uint128(2000 ether)); // only used to apply funding
         uint256 initialAssetBalance = wstETH.balanceOf(address(this));
 
-        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, depositAmount, 2000 ether);
+        setUpUserPositionInVault(
+            address(this), IUsdnProtocolTypes.ProtocolAction.InitiateDeposit, depositAmount, 2000 ether
+        );
 
         uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
         protocol.validateDeposit(payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
@@ -336,7 +345,9 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         /* ----------------------- Validate with position fees ---------------------- */
         vm.prank(ADMIN);
         protocol.setVaultFeeBps(0); // 0% fees
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, depositAmount, 2000 ether);
+        setUpUserPositionInVault(
+            address(this), IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, depositAmount, 2000 ether
+        );
         uint256 usdnBalanceAfterWithoutFees = usdn.balanceOf(address(this));
 
         uint256 mintedUsdnWithoutFees = usdnBalanceAfterWithoutFees - usdnBalanceBefore;
@@ -346,7 +357,9 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         vm.prank(ADMIN);
         protocol.setVaultFeeBps(100); // 1% fees
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, depositAmount, 2000 ether);
+        setUpUserPositionInVault(
+            address(this), IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, depositAmount, 2000 ether
+        );
         uint256 usdnBalanceAfterWithFees = usdn.balanceOf(address(this));
 
         uint256 mintedUsdnWithFees = usdnBalanceAfterWithFees - usdnBalanceBefore;
@@ -373,7 +386,9 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint128 depositAmount = 1 ether;
         bytes memory currentPrice = abi.encode(uint128(2000 ether)); // only used to apply PnL + funding
 
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, depositAmount, 2000 ether);
+        setUpUserPositionInVault(
+            address(this), IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, depositAmount, 2000 ether
+        );
 
         // Store the snapshot id to revert to this point after the next test
         uint256 snapshotId = vm.snapshot();
@@ -440,7 +455,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.InitiateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: desiredLiqPrice,
                 price: 2000 ether
@@ -466,7 +481,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.InitiateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: desiredLiqPrice,
                 price: 2000 ether
@@ -504,10 +519,10 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         vm.prank(ADMIN);
         protocol.setPositionFeeBps(0); // 0% fees
 
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: desiredLiqPrice,
                 price: 2000 ether
@@ -520,7 +535,8 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
             posId, 1 ether, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
 
-        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
+        IUsdnProtocolTypes.LongPendingAction memory action =
+            protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
 
         _waitDelay();
 
@@ -543,7 +559,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: desiredLiqPrice,
                 price: 2000 ether

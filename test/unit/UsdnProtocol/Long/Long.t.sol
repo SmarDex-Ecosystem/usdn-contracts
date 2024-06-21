@@ -29,15 +29,16 @@ contract TestUsdnProtocolLongLong is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = 1700 ether;
 
         uint256 initialTotalExpo = protocol.getTotalExpo();
-        TickData memory tickData = protocol.getTickData(protocol.getEffectiveTickForPrice(desiredLiqPrice));
+        IUsdnProtocolTypes.TickData memory tickData =
+            protocol.getTickData(protocol.getEffectiveTickForPrice(desiredLiqPrice));
 
         assertEq(tickData.totalExpo, 0, "Total expo for future tick of position should be empty");
 
         // Initiate a long position
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.InitiateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: desiredLiqPrice,
                 price: 2000 ether
@@ -45,7 +46,7 @@ contract TestUsdnProtocolLongLong is UsdnProtocolBaseFixture {
         );
 
         tickData = protocol.getTickData(posId.tick);
-        (Position memory position,) = protocol.getLongPosition(posId);
+        (IUsdnProtocolTypes.Position memory position,) = protocol.getLongPosition(posId);
 
         // Calculate the total expo of the position after the initialization
         assertEq(
@@ -118,15 +119,16 @@ contract TestUsdnProtocolLongLong is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = 1000 ether;
 
         uint256 initialTotalExpo = protocol.getTotalExpo();
-        TickData memory tickData = protocol.getTickData(protocol.getEffectiveTickForPrice(desiredLiqPrice));
+        IUsdnProtocolTypes.TickData memory tickData =
+            protocol.getTickData(protocol.getEffectiveTickForPrice(desiredLiqPrice));
 
         assertEq(tickData.totalExpo, 0, "Total expo for future tick of position should be empty");
 
         // Initiate a long position
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.InitiateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: desiredLiqPrice,
                 price: 2000 ether
@@ -134,7 +136,7 @@ contract TestUsdnProtocolLongLong is UsdnProtocolBaseFixture {
         );
 
         tickData = protocol.getTickData(posId.tick);
-        (Position memory position,) = protocol.getLongPosition(posId);
+        (IUsdnProtocolTypes.Position memory position,) = protocol.getLongPosition(posId);
 
         // Calculate the total expo of the position after the initialization
         assertEq(

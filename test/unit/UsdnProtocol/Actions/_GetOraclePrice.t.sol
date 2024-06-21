@@ -26,8 +26,8 @@ contract TestUsdnProtocolActionsGetOraclePrice is UsdnProtocolBaseFixture {
      * @custom:then The price is returned and the validation cost is equal to 1 wei
      */
     function test_getOraclePrice() public {
-        for (uint8 i = 0; i <= uint8(type(ProtocolAction).max); i++) {
-            IUsdnProtocolTypes.ProtocolAction action = ProtocolAction(i);
+        for (uint8 i = 0; i <= uint8(type(IUsdnProtocolTypes.ProtocolAction).max); i++) {
+            IUsdnProtocolTypes.ProtocolAction action = IUsdnProtocolTypes.ProtocolAction(i);
             uint128 currentPrice = 2000 ether;
             bytes memory priceData = abi.encode(currentPrice);
             uint256 fee = oracleMiddleware.validationCost(priceData, action);
@@ -49,8 +49,8 @@ contract TestUsdnProtocolActionsGetOraclePrice is UsdnProtocolBaseFixture {
      * @custom:then The function reverts with the `UsdnProtocolInsufficientOracleFee` error
      */
     function test_RevertWhen_getOraclePriceInsufficientFee() public {
-        for (uint8 i = 0; i <= uint8(type(ProtocolAction).max); i++) {
-            IUsdnProtocolTypes.ProtocolAction action = ProtocolAction(i);
+        for (uint8 i = 0; i <= uint8(type(IUsdnProtocolTypes.ProtocolAction).max); i++) {
+            IUsdnProtocolTypes.ProtocolAction action = IUsdnProtocolTypes.ProtocolAction(i);
             uint128 currentPrice = 2000 ether;
             bytes memory priceData = abi.encode(currentPrice);
             vm.expectRevert(UsdnProtocolInsufficientOracleFee.selector);

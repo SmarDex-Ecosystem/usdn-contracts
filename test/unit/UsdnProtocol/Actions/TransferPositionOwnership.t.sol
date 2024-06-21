@@ -27,10 +27,10 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
      * @custom:and The position can be validated by validator
      */
     function test_transferOwnershipAfterInitiateOpen() public {
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.InitiateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: params.initialPrice / 2,
                 price: params.initialPrice
@@ -41,11 +41,11 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
         emit PositionOwnershipTransferred(posId, address(this), USER_1);
         protocol.transferPositionOwnership(posId, USER_1);
 
-        (Position memory pos,) = protocol.getLongPosition(posId);
+        (IUsdnProtocolTypes.Position memory pos,) = protocol.getLongPosition(posId);
         assertEq(pos.user, USER_1, "position user");
 
         // changing ownership does not change the validator address
-        PendingAction memory action = protocol.getUserPendingAction(address(this));
+        IUsdnProtocolTypes.PendingAction memory action = protocol.getUserPendingAction(address(this));
         assertEq(action.validator, address(this), "pending action validator");
 
         protocol.validateOpenPosition(payable(address(this)), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA);
@@ -60,10 +60,10 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
      * @custom:and The position can be closed by the new owner
      */
     function test_transferOwnershipAfterValidateOpen() public {
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: params.initialPrice / 2,
                 price: params.initialPrice
@@ -74,7 +74,7 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
         emit PositionOwnershipTransferred(posId, address(this), USER_1);
         protocol.transferPositionOwnership(posId, USER_1);
 
-        (Position memory pos,) = protocol.getLongPosition(posId);
+        (IUsdnProtocolTypes.Position memory pos,) = protocol.getLongPosition(posId);
         assertEq(pos.user, USER_1, "position user");
 
         vm.prank(USER_1);
@@ -83,7 +83,7 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
         );
 
         // the close action should have USER_1 as the validator
-        PendingAction memory action = protocol.getUserPendingAction(USER_1);
+        IUsdnProtocolTypes.PendingAction memory action = protocol.getUserPendingAction(USER_1);
         assertEq(action.validator, USER_1, "pending action validator");
     }
 
@@ -95,10 +95,10 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
      * @custom:and The callback function is called on the new owner
      */
     function test_transferOwnershipCallback() public {
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: params.initialPrice / 2,
                 price: params.initialPrice
@@ -118,10 +118,10 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
      * @custom:then The transaction reverts
      */
     function test_RevertWhen_transferOwnershipCallbackFails() public {
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: params.initialPrice / 2,
                 price: params.initialPrice
@@ -140,10 +140,10 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
      * @custom:then The transaction reverts with `UsdnProtocolUnauthorized`
      */
     function test_RevertWhen_transferOwnershipAfterInitiateClose() public {
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.InitiateClosePosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.InitiateClosePosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: params.initialPrice / 2,
                 price: params.initialPrice
@@ -161,10 +161,10 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
      * @custom:then The transaction reverts with `UsdnProtocolUnauthorized`
      */
     function test_RevertWhen_transferOwnershipNotOwner() public {
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: params.initialPrice / 2,
                 price: params.initialPrice
@@ -183,10 +183,10 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
      * @custom:then The transaction reverts with `UsdnProtocolInvalidAddressTo`
      */
     function test_RevertWhen_transferOwnershipToZero() public {
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: params.initialPrice / 2,
                 price: params.initialPrice
@@ -204,10 +204,10 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
      * @custom:then The transaction reverts with `UsdnProtocolOutdatedTick`
      */
     function test_RevertWhen_transferOwnershipAfterLiq() public {
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: params.initialPrice / 2,
                 price: params.initialPrice

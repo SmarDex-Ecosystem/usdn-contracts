@@ -37,7 +37,7 @@ contract TestUsdnProtocolPreviewWithdraw is UsdnProtocolBaseFixture {
         setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 1000 ether,
                 desiredLiqPrice: price * 90 / 100,
                 price: price
@@ -64,7 +64,9 @@ contract TestUsdnProtocolPreviewWithdraw is UsdnProtocolBaseFixture {
      */
     function testFuzz_comparePreviewWithdrawAndWithdraw(uint152 shares) public {
         // user deposits wstETH at a price of $2000
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, DEPOSIT_AMOUNT, 2000 ether);
+        setUpUserPositionInVault(
+            address(this), IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, DEPOSIT_AMOUNT, 2000 ether
+        );
         skip(1 hours);
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         shares = uint152(bound(shares, 1, usdn.sharesOf(address(this))));

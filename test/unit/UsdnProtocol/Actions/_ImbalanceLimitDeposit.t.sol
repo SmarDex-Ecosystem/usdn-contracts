@@ -52,11 +52,17 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
         bytes[] memory priceData = new bytes[](1);
         priceData[0] = abi.encode(params.initialPrice);
 
-        PreviousActionsData memory data = PreviousActionsData({ priceData: priceData, rawIndices: new uint128[](1) });
+        IUsdnProtocolTypes.PreviousActionsData memory data =
+            IUsdnProtocolTypes.PreviousActionsData({ priceData: priceData, rawIndices: new uint128[](1) });
 
         // initiate close
         protocol.initiateClosePosition(
-            PositionId(tick, 0, 0), params.initialLong, DEPLOYER, DEPLOYER, abi.encode(params.initialPrice), data
+            IUsdnProtocolTypes.PositionId(tick, 0, 0),
+            params.initialLong,
+            DEPLOYER,
+            DEPLOYER,
+            abi.encode(params.initialPrice),
+            data
         );
 
         // wait more than 2 blocks
@@ -119,7 +125,9 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
         vm.prank(ADMIN);
         protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
         // this action will affect the vault trading expo once it's validated
-        setUpUserPositionInVault(USER_1, ProtocolAction.InitiateDeposit, params.initialDeposit, params.initialPrice);
+        setUpUserPositionInVault(
+            USER_1, IUsdnProtocolTypes.ProtocolAction.InitiateDeposit, params.initialDeposit, params.initialPrice
+        );
         // restore limits
         vm.prank(ADMIN);
         protocol.setExpoImbalanceLimits(0, 200, 0, 0, 0);

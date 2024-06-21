@@ -22,7 +22,9 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
      * @param amount The amount to deposit
      * @param cleanup Whether to remove the action with more cleanup
      */
-    function _removeBlockedVaultScenario(ProtocolAction untilAction, uint128 amount, bool cleanup) internal {
+    function _removeBlockedVaultScenario(IUsdnProtocolTypes.ProtocolAction untilAction, uint128 amount, bool cleanup)
+        internal
+    {
         setUpUserPositionInVault(USER_1, untilAction, amount, params.initialPrice);
         _wait();
 
@@ -31,7 +33,9 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         vm.prank(ADMIN);
         protocol.i_removeBlockedPendingAction(rawIndex, payable(address(this)), cleanup);
 
-        assertTrue(protocol.getUserPendingAction(USER_1).action == ProtocolAction.None, "pending action");
+        assertTrue(
+            protocol.getUserPendingAction(USER_1).action == IUsdnProtocolTypes.ProtocolAction.None, "pending action"
+        );
         vm.expectRevert(DoubleEndedQueue.QueueOutOfBounds.selector);
         protocol.getQueueItem(rawIndex);
     }
@@ -47,7 +51,7 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
     function test_removeBlockedDepositCleanup() public {
         uint256 balanceBefore = address(this).balance;
         uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
-        _removeBlockedVaultScenario(ProtocolAction.InitiateDeposit, 10 ether, true);
+        _removeBlockedVaultScenario(IUsdnProtocolTypes.ProtocolAction.InitiateDeposit, 10 ether, true);
         assertEq(wstETH.balanceOf(address(this)), assetBalanceBefore + 10 ether, "asset balance after");
         assertEq(address(this).balance, balanceBefore + protocol.getSecurityDepositValue(), "balance after");
         assertEq(protocol.getPendingBalanceVault(), 0, "pending vault balance");
@@ -64,7 +68,7 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
     function test_removeBlockedDepositNoCleanup() public {
         uint256 balanceBefore = address(this).balance;
         uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
-        _removeBlockedVaultScenario(ProtocolAction.InitiateDeposit, 10 ether, false);
+        _removeBlockedVaultScenario(IUsdnProtocolTypes.ProtocolAction.InitiateDeposit, 10 ether, false);
         assertEq(wstETH.balanceOf(address(this)), assetBalanceBefore, "asset balance after");
         assertEq(address(this).balance, balanceBefore, "balance after");
         assertEq(protocol.getPendingBalanceVault(), 10 ether, "pending vault balance");
@@ -81,7 +85,7 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
     function test_removeBlockedWithdrawalCleanup() public {
         uint256 balanceBefore = address(this).balance;
         uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
-        _removeBlockedVaultScenario(ProtocolAction.InitiateWithdrawal, 10 ether, true);
+        _removeBlockedVaultScenario(IUsdnProtocolTypes.ProtocolAction.InitiateWithdrawal, 10 ether, true);
         assertEq(usdn.balanceOf(address(this)), usdnBalanceBefore + 20_000 ether, "usdn balance after");
         assertEq(address(this).balance, balanceBefore + protocol.getSecurityDepositValue(), "balance after");
         assertEq(protocol.getPendingBalanceVault(), 0, "pending vault balance");
@@ -98,7 +102,7 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
     function test_removeBlockedWithdrawalNoCleanup() public {
         uint256 balanceBefore = address(this).balance;
         uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
-        _removeBlockedVaultScenario(ProtocolAction.InitiateWithdrawal, 10 ether, false);
+        _removeBlockedVaultScenario(IUsdnProtocolTypes.ProtocolAction.InitiateWithdrawal, 10 ether, false);
         assertEq(usdn.balanceOf(address(this)), usdnBalanceBefore, "usdn balance after");
         assertEq(address(this).balance, balanceBefore, "balance after");
         assertEq(protocol.getPendingBalanceVault(), -10 ether, "pending vault balance");
@@ -110,9 +114,9 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
      * @param amount The amount of collateral
      * @param cleanup Whether to remove the action with more cleanup
      */
-    function _removeBlockedLongScenario(ProtocolAction untilAction, uint128 amount, bool cleanup)
+    function _removeBlockedLongScenario(IUsdnProtocolTypes.ProtocolAction untilAction, uint128 amount, bool cleanup)
         internal
-        returns (PositionId memory posId_)
+        returns (IUsdnProtocolTypes.PositionId memory posId_)
     {
         posId_ = setUpUserPositionInLong(
             OpenParams({
@@ -130,11 +134,13 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         vm.prank(ADMIN);
         protocol.i_removeBlockedPendingAction(rawIndex, payable(address(this)), cleanup);
 
-        assertTrue(protocol.getUserPendingAction(USER_1).action == ProtocolAction.None, "pending action");
+        assertTrue(
+            protocol.getUserPendingAction(USER_1).action == IUsdnProtocolTypes.ProtocolAction.None, "pending action"
+        );
         vm.expectRevert(DoubleEndedQueue.QueueOutOfBounds.selector);
         protocol.getQueueItem(rawIndex);
 
-        (Position memory pos,) = protocol.getLongPosition(posId_);
+        (IUsdnProtocolTypes.Position memory pos,) = protocol.getLongPosition(posId_);
         assertEq(pos.user, address(0), "pos user");
     }
 
@@ -148,15 +154,16 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
     function test_removeBlockedOpenPositionCleanup() public {
         uint256 balanceBefore = address(this).balance;
         int24 expectedTick = protocol.getEffectiveTickForPrice(params.initialPrice / 2);
-        TickData memory tickDataBefore = protocol.getTickData(expectedTick);
+        IUsdnProtocolTypes.TickData memory tickDataBefore = protocol.getTickData(expectedTick);
         uint256 totalPosBefore = protocol.getTotalLongPositions();
         HugeUint.Uint512 memory accBefore = protocol.getLiqMultiplierAccumulator();
         uint256 totalExpoBefore = protocol.getTotalExpo();
 
-        PositionId memory posId = _removeBlockedLongScenario(ProtocolAction.InitiateOpenPosition, 10 ether, true);
+        IUsdnProtocolTypes.PositionId memory posId =
+            _removeBlockedLongScenario(IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition, 10 ether, true);
         assertEq(posId.tick, expectedTick, "expected tick");
 
-        TickData memory tickDataAfter = protocol.getTickData(posId.tick);
+        IUsdnProtocolTypes.TickData memory tickDataAfter = protocol.getTickData(posId.tick);
         assertEq(tickDataAfter.totalExpo, tickDataBefore.totalExpo, "tick total expo");
         assertEq(tickDataAfter.totalPos, tickDataBefore.totalPos, "tick total pos");
         assertEq(tickDataAfter.totalPos, 0, "no more pos in tick");
@@ -185,7 +192,7 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         uint256 totalPosBefore = protocol.getTotalLongPositions();
         uint256 totalExpoBefore = protocol.getTotalExpo();
 
-        _removeBlockedLongScenario(ProtocolAction.InitiateOpenPosition, 10 ether, false);
+        _removeBlockedLongScenario(IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition, 10 ether, false);
 
         assertEq(protocol.getTotalLongPositions(), totalPosBefore + 1, "total pos");
         assertGt(protocol.getTotalExpo(), totalExpoBefore, "total expo");
@@ -206,7 +213,7 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         uint256 balanceLongBefore = protocol.getBalanceLong();
         uint256 balanceVaultBefore = protocol.getBalanceVault();
 
-        _removeBlockedLongScenario(ProtocolAction.InitiateClosePosition, 10 ether, true);
+        _removeBlockedLongScenario(IUsdnProtocolTypes.ProtocolAction.InitiateClosePosition, 10 ether, true);
 
         assertApproxEqAbs(protocol.getBalanceLong(), balanceLongBefore, 1, "balance long");
         assertApproxEqAbs(protocol.getBalanceVault(), balanceVaultBefore + 10 ether, 1, "balance vault");
@@ -232,7 +239,7 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         uint256 balanceLongBefore = protocol.getBalanceLong();
         uint256 balanceVaultBefore = protocol.getBalanceVault();
 
-        _removeBlockedLongScenario(ProtocolAction.InitiateClosePosition, 10 ether, false);
+        _removeBlockedLongScenario(IUsdnProtocolTypes.ProtocolAction.InitiateClosePosition, 10 ether, false);
 
         // during the initiateClosePosition, we optimistically decrease the long balance by the position value
         // (10 ether +- 1 wei) which we do not add back to any balances since we are doing the safe fix

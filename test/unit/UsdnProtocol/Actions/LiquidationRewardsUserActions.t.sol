@@ -35,10 +35,10 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
 
         initialPrice = params.initialPrice;
         uint128 desiredLiqPrice = uint128(initialPrice) * 9 / 10;
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 0.1 ether,
                 desiredLiqPrice: desiredLiqPrice,
                 price: initialPrice
@@ -52,7 +52,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         liquidationPriceData = abi.encode(liquidationPrice);
         initialPriceData = abi.encode(initialPrice);
         expectedLiquidatorRewards =
-            liquidationRewardsManager.getLiquidationRewards(1, 0, false, ProtocolAction.None, "", "");
+            liquidationRewardsManager.getLiquidationRewards(1, 0, false, IUsdnProtocolTypes.ProtocolAction.None, "", "");
 
         assertGt(expectedLiquidatorRewards, 0, "The expected liquidation rewards should be greater than 0");
     }
@@ -117,7 +117,9 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
      * @custom:then The sender should receive the liquidation rewards
      */
     function test_liquidationRewards_initiateWithdrawal() public {
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, depositAmount, initialPrice);
+        setUpUserPositionInVault(
+            address(this), IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, depositAmount, initialPrice
+        );
 
         skip(1 hours);
 
@@ -153,7 +155,9 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
      * @custom:then The sender should receive the liquidation rewards
      */
     function test_liquidationRewards_validateWithdrawal() public {
-        setUpUserPositionInVault(address(this), ProtocolAction.InitiateWithdrawal, depositAmount, initialPrice);
+        setUpUserPositionInVault(
+            address(this), IUsdnProtocolTypes.ProtocolAction.InitiateWithdrawal, depositAmount, initialPrice
+        );
 
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
@@ -247,10 +251,10 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
      * @custom:then The sender should receive the liquidation rewards
      */
     function test_liquidationRewards_initiateClosePosition() public {
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: depositAmount,
                 desiredLiqPrice: initialPrice / 2,
                 price: initialPrice
@@ -288,10 +292,10 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
      * @custom:then The sender should receive the liquidation rewards
      */
     function test_liquidationRewards_validateClosePosition() public {
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.InitiateClosePosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.InitiateClosePosition,
                 positionSize: depositAmount,
                 desiredLiqPrice: initialPrice / 2,
                 price: initialPrice
@@ -300,8 +304,8 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
 
         skip(1 hours);
 
-        (PendingAction memory action,) = protocol.i_getPendingAction(address(this));
-        LongPendingAction memory longAction = protocol.i_toLongPendingAction(action);
+        (IUsdnProtocolTypes.PendingAction memory action,) = protocol.i_getPendingAction(address(this));
+        IUsdnProtocolTypes.LongPendingAction memory longAction = protocol.i_toLongPendingAction(action);
         uint256 priceWithFees =
             liquidationPrice - (liquidationPrice * protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
 

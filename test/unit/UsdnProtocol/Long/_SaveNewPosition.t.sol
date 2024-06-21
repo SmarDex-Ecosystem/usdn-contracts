@@ -19,7 +19,7 @@ contract TestUsdnProtocolLongSaveNewPosition is UsdnProtocolBaseFixture {
     uint128 internal constant LONG_AMOUNT = 1 ether;
     uint128 internal constant CURRENT_PRICE = 2000 ether;
 
-    Position long = Position({
+    IUsdnProtocolTypes.Position long = IUsdnProtocolTypes.Position({
         validated: false,
         user: USER_1,
         amount: LONG_AMOUNT,
@@ -72,18 +72,18 @@ contract TestUsdnProtocolLongSaveNewPosition is UsdnProtocolBaseFixture {
         // state before opening the position
         uint256 balanceLongBefore = uint256(protocol.i_longAssetAvailable(CURRENT_PRICE));
         uint256 totalExpoBefore = protocol.getTotalExpo();
-        TickData memory tickDataBefore = protocol.getTickData(expectedTick);
+        IUsdnProtocolTypes.TickData memory tickDataBefore = protocol.getTickData(expectedTick);
         uint256 totalPositionsBefore = protocol.getTotalLongPositions();
 
         protocol.i_saveNewPosition(expectedTick, long, protocol.getTickLiquidationPenalty(expectedTick));
 
-        (Position memory positionInTick,) =
-            protocol.getLongPosition(PositionId(expectedTick, 0, tickDataBefore.totalPos));
+        (IUsdnProtocolTypes.Position memory positionInTick,) =
+            protocol.getLongPosition(IUsdnProtocolTypes.PositionId(expectedTick, 0, tickDataBefore.totalPos));
 
         // state after opening the position
         assertEq(balanceLongBefore, protocol.getBalanceLong(), "balance of long side");
         assertEq(totalExpoBefore + LONG_AMOUNT * 3, protocol.getTotalExpo(), "total expo");
-        TickData memory tickDataAfter = protocol.getTickData(expectedTick);
+        IUsdnProtocolTypes.TickData memory tickDataAfter = protocol.getTickData(expectedTick);
         assertEq(tickDataBefore.totalExpo + LONG_AMOUNT * 3, tickDataAfter.totalExpo, "total expo in tick");
         assertEq(tickDataBefore.totalPos + 1, tickDataAfter.totalPos, "positions in tick");
         assertEq(totalPositionsBefore + 1, protocol.getTotalLongPositions(), "total long positions");

@@ -25,8 +25,8 @@ contract TestUsdnProtocolActionsExecutePendingActionOrRevert is UsdnProtocolBase
         _addDummyPendingAction();
 
         // construct bad previous actions data
-        PreviousActionsData memory data =
-            PreviousActionsData({ priceData: new bytes[](2), rawIndices: new uint128[](1) });
+        IUsdnProtocolTypes.PreviousActionsData memory data =
+            IUsdnProtocolTypes.PreviousActionsData({ priceData: new bytes[](2), rawIndices: new uint128[](1) });
 
         vm.expectRevert(UsdnProtocolInvalidPendingActionData.selector);
         protocol.i_executePendingActionOrRevert(data);
@@ -44,7 +44,8 @@ contract TestUsdnProtocolActionsExecutePendingActionOrRevert is UsdnProtocolBase
         // construct bad previous actions data
         bytes[] memory priceData = new bytes[](0);
         uint128[] memory rawIndices = new uint128[](0);
-        PreviousActionsData memory data = PreviousActionsData({ priceData: priceData, rawIndices: rawIndices });
+        IUsdnProtocolTypes.PreviousActionsData memory data =
+            IUsdnProtocolTypes.PreviousActionsData({ priceData: priceData, rawIndices: rawIndices });
 
         vm.expectRevert(UsdnProtocolInvalidPendingActionData.selector);
         protocol.i_executePendingActionOrRevert(data);
@@ -65,7 +66,8 @@ contract TestUsdnProtocolActionsExecutePendingActionOrRevert is UsdnProtocolBase
         uint128[] memory rawIndices = new uint128[](2);
         rawIndices[0] = rawIndex + 1;
         rawIndices[1] = rawIndex;
-        PreviousActionsData memory data = PreviousActionsData({ priceData: priceData, rawIndices: rawIndices });
+        IUsdnProtocolTypes.PreviousActionsData memory data =
+            IUsdnProtocolTypes.PreviousActionsData({ priceData: priceData, rawIndices: rawIndices });
 
         vm.expectRevert(UsdnProtocolInvalidPendingActionData.selector);
         protocol.i_executePendingActionOrRevert(data);
@@ -82,8 +84,8 @@ contract TestUsdnProtocolActionsExecutePendingActionOrRevert is UsdnProtocolBase
         uint128 rawIndex2 = _addDummyPendingAction();
         assertEq(rawIndex2, 0, "raw index 2");
 
-        PendingAction memory pending;
-        pending.action = ProtocolAction.ValidateDeposit;
+        IUsdnProtocolTypes.PendingAction memory pending;
+        pending.action = IUsdnProtocolTypes.ProtocolAction.ValidateDeposit;
         pending.to = USER_1;
         pending.validator = USER_1;
         pending.timestamp = uint40(block.timestamp - protocol.getValidationDeadline() - 1);
@@ -98,11 +100,12 @@ contract TestUsdnProtocolActionsExecutePendingActionOrRevert is UsdnProtocolBase
         uint128[] memory rawIndices = new uint128[](2);
         rawIndices[0] = rawIndex1;
         rawIndices[1] = rawIndex2;
-        PreviousActionsData memory data = PreviousActionsData({ priceData: priceData, rawIndices: rawIndices });
+        IUsdnProtocolTypes.PreviousActionsData memory data =
+            IUsdnProtocolTypes.PreviousActionsData({ priceData: priceData, rawIndices: rawIndices });
 
         protocol.i_executePendingActionOrRevert(data); // should validate `pending` for USER_1
 
-        (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0));
+        (IUsdnProtocolTypes.PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 1, "one pending action left");
         assertEq(actions[0].to, address(this), "pending action to");
         assertEq(actions[0].validator, address(this), "pending action validator");
@@ -113,8 +116,8 @@ contract TestUsdnProtocolActionsExecutePendingActionOrRevert is UsdnProtocolBase
      * @return rawIndex_ The raw index of the added pending action.
      */
     function _addDummyPendingAction() internal returns (uint128 rawIndex_) {
-        PendingAction memory pending;
-        pending.action = ProtocolAction.ValidateDeposit;
+        IUsdnProtocolTypes.PendingAction memory pending;
+        pending.action = IUsdnProtocolTypes.ProtocolAction.ValidateDeposit;
         pending.to = address(this);
         pending.validator = address(this);
         pending.timestamp = uint40(block.timestamp - protocol.getValidationDeadline() - 1);

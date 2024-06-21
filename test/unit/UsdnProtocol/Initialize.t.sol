@@ -251,7 +251,8 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         assertEq(usdn.balanceOf(address(this)), expectedUsdnMinted, "deployer USDN balance");
         assertEq(usdn.balanceOf(protocol.DEAD_ADDRESS()), protocol.MIN_USDN_SUPPLY(), "dead address USDN balance");
 
-        (Position memory pos,) = protocol.getLongPosition(IUsdnProtocolTypes.PositionId(expectedTick, 0, 0));
+        (IUsdnProtocolTypes.Position memory pos,) =
+            protocol.getLongPosition(IUsdnProtocolTypes.PositionId(expectedTick, 0, 0));
         assertEq(pos.user, address(this), "position user");
         assertEq(pos.amount, INITIAL_POSITION, "position amount");
         assertEq(pos.totalExpo, expectedPosTotalExpo, "position total expo");

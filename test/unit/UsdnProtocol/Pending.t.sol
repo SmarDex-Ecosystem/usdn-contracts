@@ -24,10 +24,11 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      */
     function test_getActionablePendingActions() public {
         // there should be no pending action at this stage
-        (PendingAction[] memory actions, uint128[] memory rawIndices) = protocol.getActionablePendingActions(address(0));
+        (IUsdnProtocolTypes.PendingAction[] memory actions, uint128[] memory rawIndices) =
+            protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 0, "pending action before initiate");
         // initiate deposit
-        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 1 ether, 2000 ether);
+        setUpUserPositionInVault(address(this), IUsdnProtocolTypes.ProtocolAction.InitiateDeposit, 1 ether, 2000 ether);
         // the pending action is not yet actionable
         (actions, rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 0, "pending action after initiate");
@@ -49,13 +50,13 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      */
     function test_internalGetActionablePendingAction() public {
         // there should be no pending action at this stage
-        (PendingAction memory action, uint128 rawIndex) = protocol.i_getActionablePendingAction();
-        assertTrue(action.action == ProtocolAction.None, "pending action before initiate");
+        (IUsdnProtocolTypes.PendingAction memory action, uint128 rawIndex) = protocol.i_getActionablePendingAction();
+        assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.None, "pending action before initiate");
         // initiate long
-        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 1 ether, 2000 ether);
+        setUpUserPositionInVault(address(this), IUsdnProtocolTypes.ProtocolAction.InitiateDeposit, 1 ether, 2000 ether);
         // the pending action is not yet actionable
         (action, rawIndex) = protocol.i_getActionablePendingAction();
-        assertTrue(action.action == ProtocolAction.None, "pending action after initiate");
+        assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.None, "pending action after initiate");
         // the pending action is actionable after the validation deadline
         skip(protocol.getValidationDeadline() + 1);
         (action, rawIndex) = protocol.i_getActionablePendingAction();
@@ -73,7 +74,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
-                untilAction: ProtocolAction.InitiateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: 1000 ether,
                 price: 2000 ether
@@ -82,7 +83,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         setUpUserPositionInLong(
             OpenParams({
                 user: USER_2,
-                untilAction: ProtocolAction.InitiateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: 1000 ether,
                 price: 2000 ether
@@ -91,7 +92,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         setUpUserPositionInLong(
             OpenParams({
                 user: USER_3,
-                untilAction: ProtocolAction.InitiateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: 1000 ether,
                 price: 2000 ether
@@ -117,7 +118,8 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         // Wait
         skip(protocol.getValidationDeadline() + 1);
 
-        (PendingAction[] memory actions, uint128[] memory rawIndices) = protocol.getActionablePendingActions(address(0));
+        (IUsdnProtocolTypes.PendingAction[] memory actions, uint128[] memory rawIndices) =
+            protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 2, "actions length");
         assertEq(actions[1].to, USER_3, "to");
         assertEq(actions[1].validator, USER_3, "validator");
@@ -137,7 +139,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         // Wait
         skip(protocol.getValidationDeadline() + 1);
 
-        (PendingAction memory action, uint128 rawIndex) = protocol.i_getActionablePendingAction();
+        (IUsdnProtocolTypes.PendingAction memory action, uint128 rawIndex) = protocol.i_getActionablePendingAction();
         assertTrue(action.to == USER_3, "to");
         assertTrue(action.validator == USER_3, "validator");
         assertEq(rawIndex, 2, "raw index");
@@ -150,7 +152,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      * @custom:then No actionable pending action is returned
      */
     function test_getActionablePendingActionEmpty() public {
-        (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0));
+        (IUsdnProtocolTypes.PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 0, "empty list");
     }
 
@@ -161,7 +163,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      * @custom:then No actionable pending action is returned
      */
     function test_internalGetActionablePendingActionEmpty() public {
-        (PendingAction memory action, uint128 rawIndex) = protocol.i_getActionablePendingAction();
+        (IUsdnProtocolTypes.PendingAction memory action, uint128 rawIndex) = protocol.i_getActionablePendingAction();
         assertEq(action.to, address(0), "action to");
         assertEq(action.validator, address(0), "action validator");
         assertEq(rawIndex, 0, "raw index");
@@ -183,7 +185,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.InitiateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: 1000 ether,
                 price: 2000 ether
@@ -191,7 +193,8 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         );
         // the pending action is actionable after the validation deadline
         skip(protocol.getValidationDeadline() + 1);
-        (PendingAction[] memory actions, uint128[] memory rawIndices) = protocol.getActionablePendingActions(address(0));
+        (IUsdnProtocolTypes.PendingAction[] memory actions, uint128[] memory rawIndices) =
+            protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 1, "actions length");
         assertEq(actions[0].to, address(this), "action to");
         assertEq(actions[0].validator, address(this), "action validator");
@@ -216,7 +219,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
-                untilAction: ProtocolAction.InitiateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: 1000 ether,
                 price: price1
@@ -225,7 +228,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         setUpUserPositionInLong(
             OpenParams({
                 user: USER_2,
-                untilAction: ProtocolAction.InitiateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: 1000 ether,
                 price: price2
@@ -241,12 +244,14 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         previousData[0] = abi.encode(price1);
         uint128[] memory rawIndices = new uint128[](1);
         rawIndices[0] = 0;
-        protocol.validateOpenPosition(USER_2, abi.encode(price2), PreviousActionsData(previousData, rawIndices));
+        protocol.validateOpenPosition(
+            USER_2, abi.encode(price2), IUsdnProtocolTypes.PreviousActionsData(previousData, rawIndices)
+        );
         // No more pending action
-        (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0));
+        (IUsdnProtocolTypes.PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 0, "no action");
-        (PendingAction memory action,) = protocol.i_getActionablePendingAction();
-        assertTrue(action.action == ProtocolAction.None, "no action (internal)");
+        (IUsdnProtocolTypes.PendingAction memory action,) = protocol.i_getActionablePendingAction();
+        assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.None, "no action (internal)");
     }
 
     /**
@@ -263,8 +268,8 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         uint256 user2BalanceBefore = usdn.balanceOf(USER_2);
 
         // Setup 2 pending actions
-        setUpUserPositionInVault(USER_1, ProtocolAction.InitiateDeposit, 1 ether, price1);
-        setUpUserPositionInVault(USER_2, ProtocolAction.InitiateDeposit, 1 ether, price2);
+        setUpUserPositionInVault(USER_1, IUsdnProtocolTypes.ProtocolAction.InitiateDeposit, 1 ether, price1);
+        setUpUserPositionInVault(USER_2, IUsdnProtocolTypes.ProtocolAction.InitiateDeposit, 1 ether, price2);
 
         // Wait
         skip(protocol.getValidationDeadline() + 1);
@@ -274,13 +279,14 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         wstETH.mintAndApprove(USER_4, 100_000 ether, address(protocol), type(uint256).max);
         sdex.mintAndApprove(USER_3, 100_000 ether, address(protocol), type(uint256).max);
         sdex.mintAndApprove(USER_4, 100_000 ether, address(protocol), type(uint256).max);
-        (PendingAction[] memory actions, uint128[] memory rawIndices) = protocol.getActionablePendingActions(address(0));
+        (IUsdnProtocolTypes.PendingAction[] memory actions, uint128[] memory rawIndices) =
+            protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 2, "actions length");
         bytes[] memory previousPriceData = new bytes[](actions.length);
         previousPriceData[0] = abi.encode(price1);
         previousPriceData[1] = abi.encode(price2);
-        PreviousActionsData memory previousActionsData =
-            PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
+        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData =
+            IUsdnProtocolTypes.PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
         vm.prank(USER_3);
         protocol.initiateDeposit(1 ether, USER_3, USER_3, NO_PERMIT2, abi.encode(2200 ether), previousActionsData);
         vm.prank(USER_4);
@@ -304,8 +310,8 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      * @custom:then The original and the converted `PendingAction` are equal
      */
     function test_internalConvertDepositPendingAction() public {
-        PendingAction memory action = PendingAction({
-            action: ProtocolAction.ValidateDeposit,
+        IUsdnProtocolTypes.PendingAction memory action = IUsdnProtocolTypes.PendingAction({
+            action: IUsdnProtocolTypes.ProtocolAction.ValidateDeposit,
             timestamp: uint40(block.timestamp),
             to: address(this),
             validator: address(this),
@@ -318,7 +324,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
             var6: 9000,
             var7: 23
         });
-        DepositPendingAction memory depositAction = protocol.i_toDepositPendingAction(action);
+        IUsdnProtocolTypes.DepositPendingAction memory depositAction = protocol.i_toDepositPendingAction(action);
         assertTrue(depositAction.action == action.action, "action action");
         assertEq(depositAction.timestamp, action.timestamp, "action timestamp");
         assertEq(depositAction.to, action.to, "action to");
@@ -331,7 +337,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         assertEq(depositAction.balanceVault, action.var5, "action balance vault");
         assertEq(depositAction.balanceLong, action.var6, "action balance long");
         assertEq(depositAction.usdnTotalShares, action.var7, "action total shares");
-        PendingAction memory result = protocol.i_convertDepositPendingAction(depositAction);
+        IUsdnProtocolTypes.PendingAction memory result = protocol.i_convertDepositPendingAction(depositAction);
         _assertActionsEqual(action, result, "deposit pending action conversion");
     }
 
@@ -342,8 +348,8 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      * @custom:then The original and the converted `PendingAction` are equal
      */
     function test_internalConvertWithdrawalPendingAction() public {
-        PendingAction memory action = PendingAction({
-            action: ProtocolAction.ValidateWithdrawal,
+        IUsdnProtocolTypes.PendingAction memory action = IUsdnProtocolTypes.PendingAction({
+            action: IUsdnProtocolTypes.ProtocolAction.ValidateWithdrawal,
             timestamp: uint40(block.timestamp),
             to: address(this),
             validator: address(this),
@@ -356,7 +362,8 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
             var6: 9000,
             var7: 23
         });
-        WithdrawalPendingAction memory withdrawalAction = protocol.i_toWithdrawalPendingAction(action);
+        IUsdnProtocolTypes.WithdrawalPendingAction memory withdrawalAction =
+            protocol.i_toWithdrawalPendingAction(action);
         assertTrue(withdrawalAction.action == action.action, "action action");
         assertEq(withdrawalAction.timestamp, action.timestamp, "action timestamp");
         assertEq(withdrawalAction.to, action.to, "action to");
@@ -369,7 +376,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         assertEq(withdrawalAction.balanceVault, action.var5, "action balance vault");
         assertEq(withdrawalAction.balanceLong, action.var6, "action balance long");
         assertEq(withdrawalAction.usdnTotalShares, action.var7, "action total supply");
-        PendingAction memory result = protocol.i_convertWithdrawalPendingAction(withdrawalAction);
+        IUsdnProtocolTypes.PendingAction memory result = protocol.i_convertWithdrawalPendingAction(withdrawalAction);
         _assertActionsEqual(action, result, "withdrawal pending action conversion");
     }
 
@@ -380,8 +387,8 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      * @custom:then The original and the converted `PendingAction` are equal
      */
     function test_internalConvertLongPendingAction() public {
-        PendingAction memory action = PendingAction({
-            action: ProtocolAction.ValidateOpenPosition,
+        IUsdnProtocolTypes.PendingAction memory action = IUsdnProtocolTypes.PendingAction({
+            action: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
             timestamp: uint40(block.timestamp),
             to: address(this),
             validator: address(this),
@@ -394,7 +401,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
             var6: 9000,
             var7: 23
         });
-        LongPendingAction memory longAction = protocol.i_toLongPendingAction(action);
+        IUsdnProtocolTypes.LongPendingAction memory longAction = protocol.i_toLongPendingAction(action);
         assertTrue(longAction.action == action.action, "action action");
         assertEq(longAction.timestamp, action.timestamp, "action timestamp");
         assertEq(longAction.to, action.to, "action to");
@@ -407,7 +414,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         assertEq(longAction.index, action.var5, "action index");
         assertEq(longAction.closeLiqMultiplier, action.var6, "action liq multiplier");
         assertEq(longAction.closeBoundedPositionValue, action.var7, "action pos value");
-        PendingAction memory result = protocol.i_convertLongPendingAction(longAction);
+        IUsdnProtocolTypes.PendingAction memory result = protocol.i_convertLongPendingAction(longAction);
         _assertActionsEqual(action, result, "long pending action conversion");
     }
 }

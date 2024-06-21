@@ -54,8 +54,8 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         uint128 longLiqPrice =
             protocol.getEffectivePriceForTick(protocol.getEffectiveTickForPrice(params.initialPrice / 2));
 
-        (Position memory firstPos,) = protocol.getLongPosition(
-            PositionId(
+        (IUsdnProtocolTypes.Position memory firstPos,) = protocol.getLongPosition(
+            IUsdnProtocolTypes.PositionId(
                 protocol.getEffectiveTickForPrice(longLiqPrice)
                     + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing(),
                 0,
@@ -79,7 +79,9 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     function test_updateEma_negFunding() public {
         // we create a deposit and skip 1 day and call liquidate() to have a negative funding
         bytes memory priceData = abi.encode(params.initialPrice);
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 10 ether, params.initialPrice);
+        setUpUserPositionInVault(
+            address(this), IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, 10 ether, params.initialPrice
+        );
         skip(1 days);
         protocol.testLiquidate(priceData, 1);
 
@@ -101,7 +103,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 200 ether,
                 desiredLiqPrice: params.initialPrice / 2,
                 price: params.initialPrice
@@ -173,7 +175,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 1000 ether,
                 desiredLiqPrice: price * 90 / 100,
                 price: price
@@ -208,7 +210,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 1000 ether,
                 desiredLiqPrice: price * 90 / 100,
                 price: price
@@ -243,7 +245,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: price * 90 / 100,
                 price: price
@@ -268,7 +270,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      */
     function test_longAssetAvailableWithFunding_negFund() public {
         uint128 price = DEFAULT_PARAMS.initialPrice;
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 10 ether, price);
+        setUpUserPositionInVault(address(this), IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, 10 ether, price);
         skip(1 hours);
 
         (int256 fund,) = protocol.funding(uint128(block.timestamp));
@@ -300,7 +302,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      */
     function test_vaultAssetAvailableWithFunding_negFund() public {
         uint128 price = DEFAULT_PARAMS.initialPrice;
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 10 ether, price);
+        setUpUserPositionInVault(address(this), IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, 10 ether, price);
         skip(1 hours);
 
         (int256 fund,) = protocol.funding(uint128(block.timestamp));
@@ -326,7 +328,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: price * 90 / 100,
                 price: price
@@ -362,8 +364,8 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:then it returns an empty action and 0 as the rawIndex
      */
     function test_getPendingActionWithoutPendingAction() public {
-        (PendingAction memory action, uint128 rawIndex) = protocol.i_getPendingAction(address(this));
-        assertTrue(action.action == ProtocolAction.None, "action should be None");
+        (IUsdnProtocolTypes.PendingAction memory action, uint128 rawIndex) = protocol.i_getPendingAction(address(this));
+        assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.None, "action should be None");
         assertEq(action.validator, address(0), "user should be empty");
         assertEq(action.to, address(0), "to should be empty");
         assertEq(rawIndex, 0, "rawIndex should be 0");
@@ -379,14 +381,17 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.InitiateClosePosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.InitiateClosePosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: 2000 ether / 2,
                 price: 2000 ether
             })
         );
-        (PendingAction memory action, uint128 rawIndex) = protocol.i_getPendingAction(address(this));
-        assertTrue(action.action == ProtocolAction.ValidateClosePosition, "action should be ValidateClosePosition");
+        (IUsdnProtocolTypes.PendingAction memory action, uint128 rawIndex) = protocol.i_getPendingAction(address(this));
+        assertTrue(
+            action.action == IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition,
+            "action should be ValidateClosePosition"
+        );
         assertEq(action.to, address(this), "to should be this contract");
         assertEq(action.validator, address(this), "validator should be this contract");
         assertEq(rawIndex, 1, "rawIndex should be 1");
@@ -402,14 +407,18 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.InitiateClosePosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.InitiateClosePosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: 2000 ether / 2,
                 price: 2000 ether
             })
         );
-        (PendingAction memory action, uint128 rawIndex) = protocol.i_getPendingActionOrRevert(address(this));
-        assertTrue(action.action == ProtocolAction.ValidateClosePosition, "action should be ValidateClosePosition");
+        (IUsdnProtocolTypes.PendingAction memory action, uint128 rawIndex) =
+            protocol.i_getPendingActionOrRevert(address(this));
+        assertTrue(
+            action.action == IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition,
+            "action should be ValidateClosePosition"
+        );
         assertEq(action.to, address(this), "to should be this contract");
         assertEq(action.validator, address(this), "validator should be this contract");
         assertEq(rawIndex, 1, "rawIndex should be 1");
@@ -433,8 +442,8 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:then The protocol reverts with `UsdnProtocolPendingAction`
      */
     function test_RevertWhen_addPendingActionAlreadyHavePendingAction() public {
-        PendingAction memory pendingAction = PendingAction({
-            action: ProtocolAction.ValidateDeposit,
+        IUsdnProtocolTypes.PendingAction memory pendingAction = IUsdnProtocolTypes.PendingAction({
+            action: IUsdnProtocolTypes.ProtocolAction.ValidateDeposit,
             timestamp: uint40(block.timestamp),
             to: address(this),
             validator: address(this),
@@ -460,8 +469,8 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:then Return the security deposit value and save the expected action
      */
     function test_addPendingAction() public {
-        PendingAction memory pendingAction = PendingAction({
-            action: ProtocolAction.ValidateOpenPosition,
+        IUsdnProtocolTypes.PendingAction memory pendingAction = IUsdnProtocolTypes.PendingAction({
+            action: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
             timestamp: uint40(block.timestamp),
             to: address(this),
             validator: address(this),
@@ -482,7 +491,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         uint256 securityDepositValue = protocol.i_addPendingAction(address(this), pendingAction);
 
         (, uint128 rawIndexAfter) = protocol.i_getPendingAction(address(this));
-        PendingAction memory actionSaved = protocol.getPendingActionAt(rawIndexAfter - 1);
+        IUsdnProtocolTypes.PendingAction memory actionSaved = protocol.getPendingActionAt(rawIndexAfter - 1);
 
         assertEq(securityDepositValue, 0.01 ether, "securityDepositValue should be 0.01 ether");
         assertEq(rawIndexBefore + 1, rawIndexAfter, "rawIndex should be incremented by 1");
@@ -520,8 +529,8 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:then The pending action should be deleted
      */
     function test_clearPendingAction() public {
-        PendingAction memory pendingAction = PendingAction({
-            action: ProtocolAction.ValidateOpenPosition,
+        IUsdnProtocolTypes.PendingAction memory pendingAction = IUsdnProtocolTypes.PendingAction({
+            action: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
             timestamp: uint40(block.timestamp),
             to: address(this),
             validator: address(this),
@@ -538,9 +547,9 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         (, uint128 previousRawIndex) = protocol.i_getPendingAction(address(this));
         protocol.i_clearPendingAction(address(this), previousRawIndex);
 
-        (PendingAction memory action, uint128 rawIndex) = protocol.i_getPendingAction(address(this));
+        (IUsdnProtocolTypes.PendingAction memory action, uint128 rawIndex) = protocol.i_getPendingAction(address(this));
 
-        assertTrue(action.action == ProtocolAction.None, "action should be None");
+        assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.None, "action should be None");
         assertEq(rawIndex, 0, "rawIndex should be 0");
         assertTrue(protocol.queueEmpty(), "queue should be empty");
     }
@@ -557,8 +566,8 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     function test_removeStalePendingActionReturnZero() public {
         assertEq(protocol.i_removeStalePendingAction(address(this)), 0, "should return 0, no pending action");
 
-        PendingAction memory pendingAction = PendingAction({
-            action: ProtocolAction.InitiateWithdrawal,
+        IUsdnProtocolTypes.PendingAction memory pendingAction = IUsdnProtocolTypes.PendingAction({
+            action: IUsdnProtocolTypes.ProtocolAction.InitiateWithdrawal,
             timestamp: uint40(block.timestamp - 1 days),
             to: address(this),
             validator: address(this),
@@ -578,8 +587,8 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
             "should return 0, action is different than ValidateOpenPosition"
         );
 
-        LongPendingAction memory longPendingAction = LongPendingAction({
-            action: ProtocolAction.ValidateOpenPosition,
+        IUsdnProtocolTypes.LongPendingAction memory longPendingAction = IUsdnProtocolTypes.LongPendingAction({
+            action: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
             timestamp: uint40(block.timestamp - 1 days),
             to: address(this),
             validator: USER_1,
@@ -606,8 +615,8 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      */
     function test_removeStalePendingAction() public {
         protocol.setTickVersion(1, 5);
-        LongPendingAction memory longPendingAction = LongPendingAction({
-            action: ProtocolAction.ValidateOpenPosition,
+        IUsdnProtocolTypes.LongPendingAction memory longPendingAction = IUsdnProtocolTypes.LongPendingAction({
+            action: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
             timestamp: uint40(block.timestamp - 1 days),
             to: address(this),
             validator: USER_1,
@@ -624,7 +633,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit StalePendingActionRemoved(
             USER_1,
-            PositionId({
+            IUsdnProtocolTypes.PositionId({
                 tick: longPendingAction.tick,
                 tickVersion: longPendingAction.tickVersion,
                 index: longPendingAction.index
@@ -632,8 +641,8 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         );
         uint256 securityDeposit = protocol.i_removeStalePendingAction(USER_1);
         assertEq(securityDeposit, 0.01 ether, "should return the security deposit value");
-        (PendingAction memory action, uint128 rawIndex) = protocol.i_getPendingAction(USER_1);
-        assertTrue(action.action == ProtocolAction.None, "action should be None");
+        (IUsdnProtocolTypes.PendingAction memory action, uint128 rawIndex) = protocol.i_getPendingAction(USER_1);
+        assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.None, "action should be None");
         assertEq(rawIndex, 0, "rawIndex should be 0");
     }
 }

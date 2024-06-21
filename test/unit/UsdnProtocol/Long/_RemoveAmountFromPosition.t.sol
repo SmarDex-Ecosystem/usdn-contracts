@@ -16,7 +16,7 @@ import { TickMath } from "../../../../src/libraries/TickMath.sol";
 contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture {
     using HugeUint for HugeUint.Uint512;
 
-    PositionId private _posId;
+    IUsdnProtocolTypes.PositionId private _posId;
     uint128 private _positionAmount = 1 ether;
 
     function setUp() external {
@@ -26,7 +26,7 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
         _posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: _positionAmount,
                 desiredLiqPrice: params.initialPrice - (params.initialPrice / 5),
                 price: params.initialPrice
@@ -42,11 +42,11 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
      * @custom:and the protocol's state should be updated
      */
     function test_removeAmountFromPosition_removingEverythingDeletesThePosition() external {
-        (Position memory posBefore,) = protocol.getLongPosition(_posId);
+        (IUsdnProtocolTypes.Position memory posBefore,) = protocol.getLongPosition(_posId);
         uint256 bitmapIndexBefore = protocol.findLastSetInTickBitmap(_posId.tick);
         uint256 totalExpoBefore = protocol.getTotalExpo();
         HugeUint.Uint512 memory liqMultiplierAccBefore = protocol.getLiqMultiplierAccumulator();
-        TickData memory tickData = protocol.getTickData(_posId.tick);
+        IUsdnProtocolTypes.TickData memory tickData = protocol.getTickData(_posId.tick);
         (HugeUint.Uint512 memory liqMultiplierAcc) = protocol.i_removeAmountFromPosition(
             _posId.tick, _posId.tickVersion, posBefore, posBefore.amount, posBefore.totalExpo
         );
@@ -69,8 +69,8 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
         );
 
         /* ----------------------------- Position State ----------------------------- */
-        TickData memory newTickData = protocol.getTickData(_posId.tick);
-        (Position memory posAfter,) = protocol.getLongPosition(_posId);
+        IUsdnProtocolTypes.TickData memory newTickData = protocol.getTickData(_posId.tick);
+        (IUsdnProtocolTypes.Position memory posAfter,) = protocol.getLongPosition(_posId);
         assertEq(posAfter.user, address(0), "Address of the position should have been reset");
         assertEq(posAfter.timestamp, 0, "Timestamp of the position should have been reset");
         assertEq(posAfter.totalExpo, 0, "Total expo of the position should have been reset");
@@ -103,11 +103,11 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
      * @custom:and the protocol's state should be updated
      */
     function test_removeAmountFromPosition_removingSomeAmountUpdatesThePosition() external {
-        (Position memory posBefore,) = protocol.getLongPosition(_posId);
+        (IUsdnProtocolTypes.Position memory posBefore,) = protocol.getLongPosition(_posId);
         uint256 bitmapIndexBefore = protocol.findLastSetInTickBitmap(_posId.tick);
         uint256 totalExpoBefore = protocol.getTotalExpo();
         HugeUint.Uint512 memory liqMultiplierAccBefore = protocol.getLiqMultiplierAccumulator();
-        TickData memory tickData = protocol.getTickData(_posId.tick);
+        IUsdnProtocolTypes.TickData memory tickData = protocol.getTickData(_posId.tick);
         uint128 amountToRemove = posBefore.amount / 2;
         uint128 totalExpoToRemove = protocol.i_calcPositionTotalExpo(
             amountToRemove, params.initialPrice, params.initialPrice - (params.initialPrice / 5)
@@ -135,8 +135,8 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
         );
 
         /* ----------------------------- Position State ----------------------------- */
-        TickData memory newTickData = protocol.getTickData(_posId.tick);
-        (Position memory posAfter,) = protocol.getLongPosition(_posId);
+        IUsdnProtocolTypes.TickData memory newTickData = protocol.getTickData(_posId.tick);
+        (IUsdnProtocolTypes.Position memory posAfter,) = protocol.getLongPosition(_posId);
         assertEq(posAfter.user, posBefore.user, "Address of the position should not have changed");
         assertEq(posAfter.timestamp, posBefore.timestamp, "Timestamp of the position should not have changed");
         assertEq(

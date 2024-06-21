@@ -82,7 +82,8 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         oracleMiddleware.setRequireValidationCost(true); // require 1 wei per validation
         // initiate
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
-        uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateDeposit);
+        uint256 validationCost =
+            oracleMiddleware.validationCost(currentPrice, IUsdnProtocolTypes.ProtocolAction.InitiateDeposit);
         assertEq(validationCost, 1);
         protocol.initiateDeposit{ value: validationCost }(
             DEPOSIT_AMOUNT, address(this), payable(address(this)), NO_PERMIT2, currentPrice, EMPTY_PREVIOUS_DATA
@@ -90,7 +91,8 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
 
         _waitDelay();
         // validate
-        validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.ValidateDeposit);
+        validationCost =
+            oracleMiddleware.validationCost(currentPrice, IUsdnProtocolTypes.ProtocolAction.ValidateDeposit);
         assertEq(validationCost, 1);
         uint256 balanceBefore = address(this).balance;
         protocol.validateDeposit{ value: 0.5 ether }(payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
@@ -108,10 +110,10 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
      * @custom:and The user's usdn balance should not change
      */
     function test_validateDepositIsPendingLiquidation() public {
-        PositionId memory userPosId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory userPosId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: params.initialPrice - params.initialPrice / 5,
                 price: params.initialPrice
@@ -137,10 +139,10 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
             protocol.validateDeposit(payable(address(this)), abi.encode(params.initialPrice / 3), EMPTY_PREVIOUS_DATA);
         assertFalse(success, "success");
 
-        PendingAction memory pending = protocol.getUserPendingAction(address(this));
+        IUsdnProtocolTypes.PendingAction memory pending = protocol.getUserPendingAction(address(this));
         assertEq(
             uint256(pending.action),
-            uint256(ProtocolAction.ValidateDeposit),
+            uint256(IUsdnProtocolTypes.ProtocolAction.ValidateDeposit),
             "user 0 pending action should not have been cleared"
         );
 
@@ -226,7 +228,9 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
             return;
         }
 
-        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, DEPOSIT_AMOUNT, 2000 ether);
+        setUpUserPositionInVault(
+            address(this), IUsdnProtocolTypes.ProtocolAction.InitiateDeposit, DEPOSIT_AMOUNT, 2000 ether
+        );
 
         _reenter = true;
         // If a reentrancy occurred, the function should have been called 2 times
