@@ -4,7 +4,7 @@ pragma solidity ^0.8.25;
 import { IUsdnProtocolLong } from "../interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
 import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
-import { Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, PositionId } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolLongLibrary as longLib } from "./libraries/UsdnProtocolLongLibrary.sol";
 
 abstract contract UsdnProtocolLongEntry is UsdnProtocolStorage, IUsdnProtocolLong {

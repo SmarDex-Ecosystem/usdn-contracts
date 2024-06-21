@@ -14,7 +14,7 @@ import { IOwnershipCallback } from "../interfaces/UsdnProtocol/IOwnershipCallbac
 import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IRebalancer } from "../interfaces/Rebalancer/IRebalancer.sol";
 import { IUsdnProtocol } from "../interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import { PositionId, PreviousActionsData } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PositionId, PreviousActionsData, Position } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title Rebalancer
@@ -25,6 +25,26 @@ import { PositionId, PreviousActionsData } from "../interfaces/UsdnProtocol/IUsd
 contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback, IRebalancer {
     using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
+
+    /**
+     * @dev Structure to hold the transient data during `initiateClosePosition`
+     * @param userDepositData The user deposit data
+     * @param remainingAssets The remaining rebalancer assets
+     * @param positionVersion The current rebalancer position version
+     * @param currentPositionData The current rebalancer position data
+     * @param amountToCloseWithoutBonus The user amount to close without bonus
+     * @param amountToClose The user amount to close including bonus
+     * @param protocolPosition The protocol rebalancer position
+     */
+    struct InitiateCloseData {
+        UserDeposit userDepositData;
+        uint88 remainingAssets;
+        uint256 positionVersion;
+        PositionData currentPositionData;
+        uint256 amountToCloseWithoutBonus;
+        uint256 amountToClose;
+        Position protocolPosition;
+    }
 
     /// @notice Modifier to check if the caller is the USDN protocol or the owner
     modifier onlyAdmin() {
@@ -120,6 +140,9 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         // indicate that there are no position for version 0
         _positionData[0].id = PositionId({ tick: usdnProtocol.NO_POSITION_TICK(), tickVersion: 0, index: 0 });
     }
+
+    /// @notice To allow this contract to receive ether refunded by the USDN protocol
+    receive() external payable onlyProtocol { }
 
     /// @inheritdoc IRebalancer
     function getAsset() external view returns (IERC20Metadata) {
@@ -390,63 +413,94 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable nonReentrant returns (bool success_) {
-        UserDeposit memory userDepositData = _userDeposit[msg.sender];
-
         if (amount == 0) {
             revert RebalancerInvalidAmount();
         }
 
-        if (amount > userDepositData.amount) {
+        InitiateCloseData memory data;
+        data.userDepositData = _userDeposit[msg.sender];
+
+        if (amount > data.userDepositData.amount) {
             revert RebalancerInvalidAmount();
         }
 
-        uint88 remainingAssets = userDepositData.amount - amount;
-        if (remainingAssets > 0 && remainingAssets < _minAssetDeposit) {
+        data.remainingAssets = data.userDepositData.amount - amount;
+        if (data.remainingAssets > 0 && data.remainingAssets < _minAssetDeposit) {
             revert RebalancerInvalidAmount();
         }
 
-        if (userDepositData.entryPositionVersion == 0) {
+        if (data.userDepositData.entryPositionVersion == 0) {
             revert RebalancerUserPending();
         }
 
-        uint256 positionVersion = _positionVersion;
+        data.positionVersion = _positionVersion;
 
-        if (userDepositData.entryPositionVersion > positionVersion) {
+        if (data.userDepositData.entryPositionVersion > data.positionVersion) {
             revert RebalancerUserPending();
         }
 
-        PositionData memory currentPositionData = _positionData[positionVersion];
+        data.currentPositionData = _positionData[data.positionVersion];
 
-        uint256 amountToClose = FixedPointMathLib.fullMulDiv(
+        data.amountToCloseWithoutBonus = FixedPointMathLib.fullMulDiv(
             amount,
-            currentPositionData.entryAccMultiplier,
-            _positionData[userDepositData.entryPositionVersion].entryAccMultiplier
+            data.currentPositionData.entryAccMultiplier,
+            _positionData[data.userDepositData.entryPositionVersion].entryAccMultiplier
         );
+
+        (data.protocolPosition,) = _usdnProtocol.getLongPosition(data.currentPositionData.id);
+
+        // include bonus
+        data.amountToClose = data.amountToCloseWithoutBonus
+            + data.amountToCloseWithoutBonus * (data.protocolPosition.amount - data.currentPositionData.amount)
+                / data.currentPositionData.amount;
 
         // slither-disable-next-line reentrancy-eth
         success_ = _usdnProtocol.initiateClosePosition{ value: msg.value }(
-            currentPositionData.id, amountToClose.toUint128(), to, validator, currentPriceData, previousActionsData
+            data.currentPositionData.id,
+            data.amountToClose.toUint128(),
+            to,
+            validator,
+            currentPriceData,
+            previousActionsData
         );
 
         if (success_) {
-            if (remainingAssets == 0) {
+            if (data.remainingAssets == 0) {
                 delete _userDeposit[msg.sender];
             } else {
-                // TODO check remaining bonus in another PR
-                _userDeposit[msg.sender].amount = remainingAssets;
+                _userDeposit[msg.sender].amount = data.remainingAssets;
             }
 
-            // the safe cast is already made before
-            currentPositionData.amount -= uint128(amountToClose);
+            // safe cast is already made on amountToClose
+            data.currentPositionData.amount -= uint128(data.amountToCloseWithoutBonus);
 
-            if (currentPositionData.amount == 0) {
-                currentPositionData.id =
+            if (data.currentPositionData.amount == 0) {
+                _positionData[data.positionVersion].id =
                     PositionId({ tick: _usdnProtocol.NO_POSITION_TICK(), tickVersion: 0, index: 0 });
+                _positionData[data.positionVersion].amount = data.currentPositionData.amount;
+            } else {
+                _positionData[data.positionVersion].amount = data.currentPositionData.amount;
             }
 
-            _positionData[positionVersion] = currentPositionData;
+            emit ClosePositionInitiated(msg.sender, amount, data.amountToClose, data.remainingAssets);
+        }
 
-            emit ClosePositionInitiated(msg.sender, amount, amountToClose, remainingAssets);
+        // sent back any ether left in the contract
+        _refundEther();
+    }
+
+    /**
+     * @notice Refunds any ether in this contract to the caller
+     * @dev This contract should not hold any ether so any sent to it belongs to the current caller
+     */
+    function _refundEther() internal {
+        uint256 amount = address(this).balance;
+        if (amount > 0) {
+            // slither-disable-next-line arbitrary-send-eth
+            (bool success,) = msg.sender.call{ value: amount }("");
+            if (!success) {
+                revert RebalancerEtherRefundFailed();
+            }
         }
     }
 
@@ -493,8 +547,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
     /// @inheritdoc IRebalancer
     function setPositionMaxLeverage(uint256 newMaxLeverage) external onlyOwner {
-        IUsdnProtocol protocol = _usdnProtocol;
-        if (newMaxLeverage < protocol.getMinLeverage() || newMaxLeverage > protocol.getMaxLeverage()) {
+        if (newMaxLeverage < _usdnProtocol.getMinLeverage() || newMaxLeverage > _usdnProtocol.getMaxLeverage()) {
             revert RebalancerInvalidMaxLeverage();
         }
 

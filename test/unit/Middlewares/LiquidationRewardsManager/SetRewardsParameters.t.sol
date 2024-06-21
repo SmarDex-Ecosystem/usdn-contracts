@@ -30,13 +30,16 @@ contract TestLiquidationRewardsManagerSetRewardsParameters is
         uint32 gasUsedPerTick = 500_000;
         uint32 otherGasUsed = 1_000_000;
         uint32 rebaseGasUsed = 200_000;
+        uint32 rebalancerGasUsed = 300_000;
         uint64 gasPriceLimit = 8000 gwei;
         uint32 multiplierBps = 10 * liquidationRewardsManager.BPS_DIVISOR();
 
         vm.expectEmit();
-        emit RewardsParametersUpdated(gasUsedPerTick, otherGasUsed, rebaseGasUsed, gasPriceLimit, multiplierBps);
+        emit RewardsParametersUpdated(
+            gasUsedPerTick, otherGasUsed, rebaseGasUsed, rebalancerGasUsed, gasPriceLimit, multiplierBps
+        );
         liquidationRewardsManager.setRewardsParameters(
-            gasUsedPerTick, otherGasUsed, rebaseGasUsed, gasPriceLimit, multiplierBps
+            gasUsedPerTick, otherGasUsed, rebaseGasUsed, rebalancerGasUsed, gasPriceLimit, multiplierBps
         );
 
         RewardsParameters memory rewardsParameters = liquidationRewardsManager.getRewardsParameters();
@@ -57,6 +60,7 @@ contract TestLiquidationRewardsManagerSetRewardsParameters is
         uint32 gasUsedPerTick = 500_000;
         uint32 otherGasUsed = 1_000_000;
         uint32 rebaseGasUsed = 200_000;
+        uint32 rebalancerGasUsed = 300_000;
         uint64 gasPriceLimit = 8000 gwei;
         uint32 multiplierBps = 10 * liquidationRewardsManager.BPS_DIVISOR();
 
@@ -65,7 +69,7 @@ contract TestLiquidationRewardsManagerSetRewardsParameters is
         // Revert as USER_1 is not the owner
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, USER_1));
         liquidationRewardsManager.setRewardsParameters(
-            gasUsedPerTick, otherGasUsed, rebaseGasUsed, gasPriceLimit, multiplierBps
+            gasUsedPerTick, otherGasUsed, rebaseGasUsed, rebalancerGasUsed, gasPriceLimit, multiplierBps
         );
     }
 
@@ -79,13 +83,14 @@ contract TestLiquidationRewardsManagerSetRewardsParameters is
         uint32 gasUsedPerTick = 500_001;
         uint32 otherGasUsed = 1_000_000;
         uint32 rebaseGasUsed = 200_000;
+        uint32 rebalancerGasUsed = 300_000;
         uint64 gasPriceLimit = 8000 gwei;
         uint32 multiplierBps = 10 * liquidationRewardsManager.BPS_DIVISOR();
 
         // Expect revert when the gas used per tick parameter is too high
         vm.expectRevert(abi.encodeWithSelector(LiquidationRewardsManagerGasUsedPerTickTooHigh.selector, gasUsedPerTick));
         liquidationRewardsManager.setRewardsParameters(
-            gasUsedPerTick, otherGasUsed, rebaseGasUsed, gasPriceLimit, multiplierBps
+            gasUsedPerTick, otherGasUsed, rebaseGasUsed, rebalancerGasUsed, gasPriceLimit, multiplierBps
         );
     }
 
@@ -99,13 +104,14 @@ contract TestLiquidationRewardsManagerSetRewardsParameters is
         uint32 gasUsedPerTick = 500_000;
         uint32 otherGasUsed = 1_000_001;
         uint32 rebaseGasUsed = 200_000;
+        uint32 rebalancerGasUsed = 300_000;
         uint64 gasPriceLimit = 8000 gwei;
         uint32 multiplierBps = 10 * liquidationRewardsManager.BPS_DIVISOR();
 
         // Expect revert when the other gas used parameter is too high
         vm.expectRevert(abi.encodeWithSelector(LiquidationRewardsManagerOtherGasUsedTooHigh.selector, otherGasUsed));
         liquidationRewardsManager.setRewardsParameters(
-            gasUsedPerTick, otherGasUsed, rebaseGasUsed, gasPriceLimit, multiplierBps
+            gasUsedPerTick, otherGasUsed, rebaseGasUsed, rebalancerGasUsed, gasPriceLimit, multiplierBps
         );
     }
 
@@ -119,13 +125,37 @@ contract TestLiquidationRewardsManagerSetRewardsParameters is
         uint32 gasUsedPerTick = 500_000;
         uint32 otherGasUsed = 1_000_000;
         uint32 rebaseGasUsed = 200_001;
+        uint32 rebalancerGasUsed = 300_000;
         uint64 gasPriceLimit = 8000 gwei;
         uint32 multiplierBps = 10 * liquidationRewardsManager.BPS_DIVISOR();
 
         // Expect revert when the other gas used parameter is too high
         vm.expectRevert(abi.encodeWithSelector(LiquidationRewardsManagerRebaseGasUsedTooHigh.selector, rebaseGasUsed));
         liquidationRewardsManager.setRewardsParameters(
-            gasUsedPerTick, otherGasUsed, rebaseGasUsed, gasPriceLimit, multiplierBps
+            gasUsedPerTick, otherGasUsed, rebaseGasUsed, rebalancerGasUsed, gasPriceLimit, multiplierBps
+        );
+    }
+
+    /**
+     * @custom:scenario Call `setRewardsParameters` reverts when the rebalancerGasUsed is too high
+     * @custom:when The value of rebalancerGasUsed is bigger than the limit
+     * @custom:and The other parameters are within the limits
+     * @custom:then It reverts with a LiquidationRewardsManagerRebalancerGasUsedTooHigh error
+     */
+    function test_RevertWhen_setRewardsParametersWithRebalancerGasUsedTooHigh() public {
+        uint32 gasUsedPerTick = 500_000;
+        uint32 otherGasUsed = 1_000_000;
+        uint32 rebaseGasUsed = 200_000;
+        uint32 rebalancerGasUsed = 300_001;
+        uint64 gasPriceLimit = 8000 gwei;
+        uint32 multiplierBps = 10 * liquidationRewardsManager.BPS_DIVISOR();
+
+        // Expect revert when the other gas used parameter is too high
+        vm.expectRevert(
+            abi.encodeWithSelector(LiquidationRewardsManagerRebalancerGasUsedTooHigh.selector, rebalancerGasUsed)
+        );
+        liquidationRewardsManager.setRewardsParameters(
+            gasUsedPerTick, otherGasUsed, rebaseGasUsed, rebalancerGasUsed, gasPriceLimit, multiplierBps
         );
     }
 
@@ -139,13 +169,14 @@ contract TestLiquidationRewardsManagerSetRewardsParameters is
         uint32 gasUsedPerTick = 500_000;
         uint32 otherGasUsed = 1_000_000;
         uint32 rebaseGasUsed = 200_000;
+        uint32 rebalancerGasUsed = 300_000;
         uint64 gasPriceLimit = 8000 gwei + 1;
         uint32 multiplierBps = 10 * liquidationRewardsManager.BPS_DIVISOR();
 
         // Expect revert when the gas price limit parameter is too high
         vm.expectRevert(abi.encodeWithSelector(LiquidationRewardsManagerGasPriceLimitTooHigh.selector, gasPriceLimit));
         liquidationRewardsManager.setRewardsParameters(
-            gasUsedPerTick, otherGasUsed, rebaseGasUsed, gasPriceLimit, multiplierBps
+            gasUsedPerTick, otherGasUsed, rebaseGasUsed, rebalancerGasUsed, gasPriceLimit, multiplierBps
         );
     }
 
@@ -159,13 +190,14 @@ contract TestLiquidationRewardsManagerSetRewardsParameters is
         uint32 gasUsedPerTick = 500_000;
         uint32 otherGasUsed = 1_000_000;
         uint32 rebaseGasUsed = 200_000;
+        uint32 rebalancerGasUsed = 300_000;
         uint64 gasPriceLimit = 8000 gwei;
         uint32 multiplierBps = 10 * liquidationRewardsManager.BPS_DIVISOR() + 1;
 
         // Expect revert when the value of multiplierBps is too high
         vm.expectRevert(abi.encodeWithSelector(LiquidationRewardsManagerMultiplierBpsTooHigh.selector, multiplierBps));
         liquidationRewardsManager.setRewardsParameters(
-            gasUsedPerTick, otherGasUsed, rebaseGasUsed, gasPriceLimit, multiplierBps
+            gasUsedPerTick, otherGasUsed, rebaseGasUsed, rebalancerGasUsed, gasPriceLimit, multiplierBps
         );
     }
 }

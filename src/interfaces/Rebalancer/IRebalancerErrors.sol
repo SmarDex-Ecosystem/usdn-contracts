@@ -43,4 +43,7 @@ interface IRebalancerErrors {
 
     /// @dev Indicates that the user can't initiate or validate a withdrawal at the moment
     error RebalancerWithdrawalUnauthorized();
+
+    /// @dev Indicates that the address could not accept the ether refund
+    error RebalancerEtherRefundFailed();
 }
