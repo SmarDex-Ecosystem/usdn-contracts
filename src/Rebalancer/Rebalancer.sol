@@ -481,11 +481,8 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
             data.currentPositionData.amount -= uint128(data.amountToCloseWithoutBonus);
 
             if (data.currentPositionData.amount == 0) {
-                PositionData memory newPositionData = _positionData[data.positionVersion];
+                PositionData memory newPositionData;
                 newPositionData.tick = _usdnProtocol.NO_POSITION_TICK();
-                newPositionData.tickVersion = 0;
-                newPositionData.index = 0;
-                newPositionData.amount = data.currentPositionData.amount;
                 _positionData[data.positionVersion] = newPositionData;
             } else {
                 _positionData[data.positionVersion].amount = data.currentPositionData.amount;
