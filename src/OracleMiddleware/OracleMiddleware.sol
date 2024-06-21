@@ -183,7 +183,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, RedstoneOracle, Chai
 
         if (_isPythData(data)) {
             FormattedPythPrice memory pythPrice =
-                _getFormattedPythPrice(data, actionTimestamp, MIDDLEWARE_DECIMALS, _lowLatencyDelay);
+                _getFormattedPythPrice(data, actionTimestamp, MIDDLEWARE_DECIMALS, actionTimestamp + _lowLatencyDelay);
             price_ = _adjustPythPrice(pythPrice, dir);
         } else {
             // note: redstone automatically retrieves data from the end of the calldata, no need to pass the pointer

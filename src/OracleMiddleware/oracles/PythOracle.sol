@@ -51,7 +51,8 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
      * @notice Get the price of the asset from pyth
      * @param priceUpdateData The data required to update the price feed
      * @param targetTimestamp The target timestamp to validate the price. If zero, then we accept all recent prices
-     * @param targetLimit The maximum timestamp when a low-latency price should be used
+     * @param targetLimit The maximum timestamp when a low-latency price should be used (can be zero if
+     * `targetTimestamp` is zero)
      * @return price_ The price of the asset
      */
     function _getPythPrice(bytes calldata priceUpdateData, uint128 targetTimestamp, uint128 targetLimit)
