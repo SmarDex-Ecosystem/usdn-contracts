@@ -3,14 +3,14 @@ pragma solidity >=0.8.0;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import { IBaseOracleMiddleware } from "../OracleMiddleware/IBaseOracleMiddleware.sol";
-import { IUsdnProtocolEvents } from "./IUsdnProtocolEvents.sol";
-import { IUsdnProtocolErrors } from "./IUsdnProtocolErrors.sol";
-import { IUsdn } from "../Usdn/IUsdn.sol";
-import { Position, PendingAction, TickData } from "./IUsdnProtocolTypes.sol";
-import { IBaseLiquidationRewardsManager } from "../OracleMiddleware/IBaseLiquidationRewardsManager.sol";
-import { IBaseRebalancer } from "../Rebalancer/IBaseRebalancer.sol";
 import { HugeUint } from "../../libraries/HugeUint.sol";
+import { IBaseLiquidationRewardsManager } from "../OracleMiddleware/IBaseLiquidationRewardsManager.sol";
+import { IBaseOracleMiddleware } from "../OracleMiddleware/IBaseOracleMiddleware.sol";
+import { IBaseRebalancer } from "../Rebalancer/IBaseRebalancer.sol";
+import { IUsdn } from "../Usdn/IUsdn.sol";
+import { IUsdnProtocolErrors } from "./IUsdnProtocolErrors.sol";
+import { IUsdnProtocolEvents } from "./IUsdnProtocolEvents.sol";
+import { PendingAction, Position, TickData } from "./IUsdnProtocolTypes.sol";
 
 /**
  * @title IUsdnProtocolStorage
@@ -94,6 +94,12 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * @return The address
      */
     function DEAD_ADDRESS() external view returns (address);
+
+    /**
+     * @notice The maximum number of actionable pending action items returned by `getActionablePendingActions`
+     * @return The maximum value
+     */
+    function MAX_ACTIONABLE_PENDING_ACTIONS() external pure returns (uint256);
 
     /* -------------------------------------------------------------------------- */
     /*                                 Immutables getters                         */

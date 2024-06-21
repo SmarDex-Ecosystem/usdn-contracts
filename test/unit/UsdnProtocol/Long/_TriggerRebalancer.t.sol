@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
+import { ADMIN } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 import { MockRebalancer } from "../utils/MockRebalancer.sol";
-import { ADMIN } from "../../../utils/Constants.sol";
 
-import { ProtocolAction, PositionId } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PositionId, ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /// @custom:feature the _triggerRebalancer internal function of the UsdnProtocolLong contract
 contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
@@ -27,10 +27,14 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario
-     * @custom:given
-     * @custom:when
-     * @custom:then
+     * @custom:scenario The rebalancer is triggered but with no new position and 0 value in the previous position
+     * @custom:given A rebalancer that was already triggered and has a position
+     * @custom:when The rebalancer is triggered again
+     * @custom:and There is no pending assets
+     * @custom:and The value of the existing position is 10_000 wei
+     * @custom:then The position value is gifted to the vault
+     * @custom:and The position is closed
+     * @custom:and no new position is opened
      */
     function test_triggerRebalancerWithNoPendingAssetsAndLowPosValue() public {
         int256 remainingCollateral = 1 ether;

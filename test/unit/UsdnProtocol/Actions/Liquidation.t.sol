@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { USER_1, DEPLOYER } from "../../../utils/Constants.sol";
+import { DEPLOYER, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { ProtocolAction, PositionId } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PositionId, ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
 /// @custom:feature The scenarios in `UsdnProtocolActions` which call `_liquidatePositions`
@@ -48,10 +48,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             })
         );
 
-        // TODO remove when the MockOracleMiddleware is fixed
+        // next deposit will only update the _lastPrice if it's more recent, and the on-chain price is 30 minutes old
         skip(31 minutes);
 
-        // When funding is positive, calculations will increase the liquidation price so this is enough
         uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(posId.tick);
 
         wstETH.mintAndApprove(address(this), 1 ether, address(protocol), 1 ether);
@@ -130,10 +129,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // Initiate and validate the deposit for the other user
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, price);
 
-        // TODO remove when the MockOracleMiddleware is fixed
+        // next deposit will only update the _lastPrice if it's more recent, and the on-chain price is 30 minutes old
         skip(31 minutes);
 
-        // When funding is positive, calculations will increase the liquidation price so this is enough
         uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(posId.tick);
 
         // Check that tick has been liquidated
@@ -212,10 +210,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             })
         );
 
-        // TODO remove when the MockOracleMiddleware is fixed
+        // next deposit will only update the _lastPrice if it's more recent, and the on-chain price is 30 minutes old
         skip(31 minutes);
 
-        // When funding is positive, calculations will increase the liquidation price so this is enough
         uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(posId.tick);
 
         wstETH.mintAndApprove(address(this), 1 ether, address(protocol), 1 ether);
@@ -270,7 +267,6 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             })
         );
 
-        // When funding is positive, calculations will increase the liquidation price so this is enough
         uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(posId.tick);
 
         // Check that tick has been liquidated
@@ -315,10 +311,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             })
         );
 
-        // TODO remove when the MockOracleMiddleware is fixed
+        // next deposit will only update the _lastPrice if it's more recent, and the on-chain price is 30 minutes old
         skip(31 minutes);
 
-        // When funding is positive, calculations will increase the liquidation price so this is enough
         uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(posIdToLiquidate.tick);
 
         // Check that tick has been liquidated
@@ -462,7 +457,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // Change The rewards calculations parameters to not be dependent of the initial values
         vm.prank(DEPLOYER);
-        liquidationRewardsManager.setRewardsParameters(10_000, 30_000, 20_000, 1000 gwei, 20_000);
+        liquidationRewardsManager.setRewardsParameters(10_000, 30_000, 20_000, 20_000, 1000 gwei, 20_000);
 
         uint256 expectedLiquidatorRewards =
             liquidationRewardsManager.getLiquidationRewards(1, 0, false, ProtocolAction.None, "", "");
@@ -530,7 +525,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // Change The rewards calculations parameters to not be dependent of the initial values
         vm.prank(DEPLOYER);
         // Put incredibly high values to empty the vault
-        liquidationRewardsManager.setRewardsParameters(500_000, 1_000_000, 200_000, 8000 gwei, 20_000);
+        liquidationRewardsManager.setRewardsParameters(500_000, 1_000_000, 200_000, 200_000, 8000 gwei, 20_000);
 
         uint256 wstETHBalanceBeforeRewards = wstETH.balanceOf(address(this));
         uint256 vaultBalanceBeforeRewards = protocol.getBalanceVault();
@@ -613,7 +608,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // disable rewards
         vm.prank(DEPLOYER);
-        liquidationRewardsManager.setRewardsParameters(0, 0, 0, 1000 gwei, 0);
+        liquidationRewardsManager.setRewardsParameters(0, 0, 0, 0, 1000 gwei, 0);
 
         // liquidate
         uint256 balanceBefore = address(this).balance;

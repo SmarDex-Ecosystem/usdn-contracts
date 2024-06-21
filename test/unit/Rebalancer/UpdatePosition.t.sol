@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { RebalancerFixture } from "./utils/Fixtures.sol";
 import { USER_1, USER_2 } from "../../utils/Constants.sol";
+import { RebalancerFixture } from "./utils/Fixtures.sol";
 
 import { PositionId } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
@@ -84,16 +84,14 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
         assertEq(
             positionData.entryAccMultiplier, rebalancer.MULTIPLIER_FACTOR(), "Entry multiplier accumulator should be 1x"
         );
+        assertEq(positionData.tick, newPosId.tick, "The tick of the position ID should be equal to the provided value");
         assertEq(
-            positionData.id.tick, newPosId.tick, "The tick of the position ID should be equal to the provided value"
-        );
-        assertEq(
-            positionData.id.tickVersion,
+            positionData.tickVersion,
             newPosId.tickVersion,
             "The tick version of the position ID should be equal to the provided value"
         );
         assertEq(
-            positionData.id.index, newPosId.index, "The index of the position ID should be equal to the provided value"
+            positionData.index, newPosId.index, "The index of the position ID should be equal to the provided value"
         );
 
         // check the rebalancer state
@@ -151,9 +149,9 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
             rebalancer.MULTIPLIER_FACTOR() + rebalancer.MULTIPLIER_FACTOR() / 10,
             "Entry multiplier accumulator of the position should be 1.1x"
         );
-        assertEq(positionData.id.tick, posId2.tick, "Tick mismatch");
-        assertEq(positionData.id.tickVersion, posId2.tickVersion, "Tick version mismatch");
-        assertEq(positionData.id.index, posId2.index, "Index mismatch");
+        assertEq(positionData.tick, posId2.tick, "Tick mismatch");
+        assertEq(positionData.tickVersion, posId2.tickVersion, "Tick version mismatch");
+        assertEq(positionData.index, posId2.index, "Index mismatch");
     }
 
     /**
@@ -231,12 +229,8 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
         );
 
         PositionData memory positionData = rebalancer.getPositionData(rebalancer.getPositionVersion());
+        assertEq(positionData.tick, noPositionTick, "The tick should be set to NO_POSITION_TICK");
         assertEq(positionData.amount, 0, "No funds should be in the position");
         assertEq(positionData.entryAccMultiplier, 0, "Entry multiplier accumulator should be 0");
-        assertEq(
-            abi.encode(positionData.id),
-            abi.encode(PositionId(noPositionTick, 0, 0)),
-            "The position ID's tick should be set to NO_POSITION_TICK and the rest to 0"
-        );
     }
 }

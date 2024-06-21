@@ -2,11 +2,11 @@
 
 pragma solidity ^0.8.4;
 
-import "./RedstoneConstants.sol";
-import "./RedstoneDefaultsLib.sol";
-import "./CalldataExtractor.sol";
 import "../libs/BitmapLib.sol";
 import "../libs/SignatureLib.sol";
+import "./CalldataExtractor.sol";
+import "./RedstoneConstants.sol";
+import "./RedstoneDefaultsLib.sol";
 
 /**
  * @title The base contract with the main Redstone logic

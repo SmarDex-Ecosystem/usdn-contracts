@@ -1,20 +1,22 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.25;
 
-import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
-import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import { ERC165, IERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { ERC165, IERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { IOwnershipCallback } from "../interfaces/UsdnProtocol/IOwnershipCallback.sol";
+import { UsdnProtocolConstantsLibrary as constantsLib } from
+    "../UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IRebalancer } from "../interfaces/Rebalancer/IRebalancer.sol";
+import { IOwnershipCallback } from "../interfaces/UsdnProtocol/IOwnershipCallback.sol";
 import { IUsdnProtocol } from "../interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import { PositionId, PreviousActionsData } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, PositionId, PreviousActionsData } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title Rebalancer
@@ -25,6 +27,26 @@ import { PositionId, PreviousActionsData } from "../interfaces/UsdnProtocol/IUsd
 contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback, IRebalancer {
     using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
+
+    /**
+     * @dev Structure to hold the transient data during `initiateClosePosition`
+     * @param userDepositData The user deposit data
+     * @param remainingAssets The remaining rebalancer assets
+     * @param positionVersion The current rebalancer position version
+     * @param currentPositionData The current rebalancer position data
+     * @param amountToCloseWithoutBonus The user amount to close without bonus
+     * @param amountToClose The user amount to close including bonus
+     * @param protocolPosition The protocol rebalancer position
+     */
+    struct InitiateCloseData {
+        UserDeposit userDepositData;
+        uint88 remainingAssets;
+        uint256 positionVersion;
+        PositionData currentPositionData;
+        uint256 amountToCloseWithoutBonus;
+        uint256 amountToClose;
+        Position protocolPosition;
+    }
 
     /// @notice Modifier to check if the caller is the USDN protocol or the owner
     modifier onlyAdmin() {
@@ -58,9 +80,6 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
     /// @notice The number of decimals of the asset used by the USDN protocol
     uint256 internal immutable _assetDecimals;
-
-    /// @notice The tick used to indicate that there is no position
-    int24 internal immutable _noPositionTick;
 
     /// @notice The address of the USDN protocol
     IUsdnProtocol internal immutable _usdnProtocol;
@@ -121,9 +140,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         asset.forceApprove(address(usdnProtocol), type(uint256).max);
 
         // indicate that there are no position for version 0
-        int24 noPositionTick = usdnProtocol.NO_POSITION_TICK();
-        _noPositionTick = noPositionTick;
-        _positionData[0].id = PositionId({ tick: noPositionTick, tickVersion: 0, index: 0 });
+        _positionData[0].tick = constantsLib.NO_POSITION_TICK;
     }
 
     /// @notice To allow this contract to receive ether refunded by the USDN protocol
@@ -164,7 +181,15 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         view
         returns (uint128 pendingAssets_, uint256 maxLeverage_, PositionId memory currentPosId_)
     {
-        return (_pendingAssetsAmount, _maxLeverage, _positionData[_positionVersion].id);
+        return (
+            _pendingAssetsAmount,
+            _maxLeverage,
+            PositionId({
+                tick: _positionData[_positionVersion].tick,
+                tickVersion: _positionData[_positionVersion].tickVersion,
+                index: _positionData[_positionVersion].index
+            })
+        );
     }
 
     /// @inheritdoc IRebalancer
@@ -247,21 +272,14 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
         if (depositData.initiateTimestamp == 0) {
             // user has no action that must be validated
-            revert RebalancerActionWasValidated();
+            revert RebalancerNoPendingAction();
         }
         if (depositData.entryPositionVersion > 0) {
             // user has a withdrawal that must be validated
             revert RebalancerActionNotValidated();
         }
-        TimeLimits memory timeLimits = _timeLimits;
-        if (uint40(block.timestamp) < depositData.initiateTimestamp + timeLimits.validationDelay) {
-            // user must wait until the delay has elapsed
-            revert RebalancerValidateTooEarly();
-        }
-        if (uint40(block.timestamp) > depositData.initiateTimestamp + timeLimits.validationDeadline) {
-            // user must wait until the cooldown has elapsed, then call `resetDepositAssets` to withdraw the funds
-            revert RebalancerActionCooldown();
-        }
+
+        _checkValidationTime(depositData.initiateTimestamp);
 
         depositData.entryPositionVersion = positionVersion + 1;
         depositData.initiateTimestamp = 0;
@@ -276,13 +294,13 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         UserDeposit memory depositData = _userDeposit[msg.sender];
         if (depositData.initiateTimestamp == 0) {
             // user has no action that must be validated
-            revert RebalancerActionWasValidated();
+            revert RebalancerNoPendingAction();
         }
         if (depositData.entryPositionVersion > 0) {
             // user has a withdrawal that must be validated
             revert RebalancerActionNotValidated();
         }
-        if (uint40(block.timestamp) < depositData.initiateTimestamp + _timeLimits.actionCooldown) {
+        if (block.timestamp < depositData.initiateTimestamp + _timeLimits.actionCooldown) {
             // user must wait until the cooldown has elapsed, then call this function to withdraw the funds
             revert RebalancerActionCooldown();
         }
@@ -296,8 +314,48 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     }
 
     /// @inheritdoc IRebalancer
-    function withdrawPendingAssets(uint88 amount, address to) external {
-        // TODO: refactor in two steps
+    function initiateWithdrawAssets() external {
+        /* authorized previous states:
+        - unincluded (pending inclusion)
+            - amount > 0
+            - entryPositionVersion > _positionVersion
+            - initiateTimestamp == 0
+        - withdrawal cooldown
+            - entryPositionVersion > _positionVersion
+            - initiateTimestamp > 0
+            - cooldown elapsed
+
+        amount is always > 0 if entryPositionVersion > 0 */
+
+        UserDeposit memory depositData = _userDeposit[msg.sender];
+
+        if (depositData.entryPositionVersion <= _positionVersion) {
+            revert RebalancerWithdrawalUnauthorized();
+        }
+        // entryPositionVersion > _positionVersion
+
+        if (
+            depositData.initiateTimestamp > 0
+                && block.timestamp < depositData.initiateTimestamp + _timeLimits.actionCooldown
+        ) {
+            // user must wait until the cooldown has elapsed, then call this function to restart the withdrawal process
+            revert RebalancerActionCooldown();
+        }
+        // initiateTimestamp == 0 or cooldown elapsed
+
+        _userDeposit[msg.sender].initiateTimestamp = uint40(block.timestamp);
+
+        emit InitiatedAssetsWithdrawal(msg.sender);
+    }
+
+    /// @inheritdoc IRebalancer
+    function validateWithdrawAssets(uint88 amount, address to) external {
+        /* authorized previous states:
+        - initiated withdrawal
+            - initiateTimestamp > 0
+            - entryPositionVersion > _positionVersion
+            - timestamp is between initiateTimestamp + delay and initiateTimestamp + deadline
+        */
         if (to == address(0)) {
             revert RebalancerInvalidAddressTo();
         }
@@ -307,37 +365,42 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
         UserDeposit memory depositData = _userDeposit[msg.sender];
 
-        if (depositData.amount == 0) {
-            revert RebalancerUserNotPending();
-        }
-
         if (depositData.entryPositionVersion <= _positionVersion) {
-            revert RebalancerUserNotPending();
+            revert RebalancerWithdrawalUnauthorized();
+        }
+        if (depositData.initiateTimestamp == 0) {
+            revert RebalancerNoPendingAction();
+        }
+        _checkValidationTime(depositData.initiateTimestamp);
+
+        if (amount > depositData.amount) {
+            revert RebalancerInvalidAmount();
         }
 
-        if (depositData.amount < amount) {
-            revert RebalancerWithdrawAmountTooLarge();
-        }
-
-        uint88 newAmount = depositData.amount;
-        unchecked {
-            newAmount -= amount;
-            _pendingAssetsAmount -= amount;
-        }
-        if (newAmount == 0) {
-            // If the new amount after the withdraw is equal to 0, delete the mapping entry
+        // update deposit data
+        if (depositData.amount == amount) {
+            // we withdraw the full amount, delete the mapping entry
             delete _userDeposit[msg.sender];
         } else {
-            if (newAmount < _minAssetDeposit) {
+            // partial withdrawal
+            unchecked {
+                // checked above: amount is strictly smaller than depositData.amount
+                depositData.amount -= amount;
+            }
+            // the remaining amount must at least be _minAssetDeposit
+            if (depositData.amount < _minAssetDeposit) {
                 revert RebalancerInsufficientAmount();
             }
-            // If not, the amount is updated
-            _userDeposit[msg.sender].amount = newAmount;
+            depositData.initiateTimestamp = 0;
+            _userDeposit[msg.sender] = depositData;
         }
+
+        // update global state
+        _pendingAssetsAmount -= amount;
 
         _asset.safeTransfer(to, amount);
 
-        emit PendingAssetsWithdrawn(msg.sender, amount, to);
+        emit AssetsWithdrawn(msg.sender, to, amount);
     }
 
     /// @inheritdoc IRebalancer
@@ -348,63 +411,86 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable nonReentrant returns (bool success_) {
-        UserDeposit memory userDepositData = _userDeposit[msg.sender];
-
         if (amount == 0) {
             revert RebalancerInvalidAmount();
         }
 
-        if (amount > userDepositData.amount) {
+        InitiateCloseData memory data;
+        data.userDepositData = _userDeposit[msg.sender];
+
+        if (amount > data.userDepositData.amount) {
             revert RebalancerInvalidAmount();
         }
 
-        uint88 remainingAssets = userDepositData.amount - amount;
-        if (remainingAssets > 0 && remainingAssets < _minAssetDeposit) {
+        data.remainingAssets = data.userDepositData.amount - amount;
+        if (data.remainingAssets > 0 && data.remainingAssets < _minAssetDeposit) {
             revert RebalancerInvalidAmount();
         }
 
-        if (userDepositData.entryPositionVersion == 0) {
+        if (data.userDepositData.entryPositionVersion == 0) {
             revert RebalancerUserPending();
         }
 
-        uint256 positionVersion = _positionVersion;
+        data.positionVersion = _positionVersion;
 
-        if (userDepositData.entryPositionVersion > positionVersion) {
+        if (data.userDepositData.entryPositionVersion > data.positionVersion) {
             revert RebalancerUserPending();
         }
 
-        PositionData memory currentPositionData = _positionData[positionVersion];
+        data.currentPositionData = _positionData[data.positionVersion];
 
-        uint256 amountToClose = FixedPointMathLib.fullMulDiv(
+        data.amountToCloseWithoutBonus = FixedPointMathLib.fullMulDiv(
             amount,
-            currentPositionData.entryAccMultiplier,
-            _positionData[userDepositData.entryPositionVersion].entryAccMultiplier
+            data.currentPositionData.entryAccMultiplier,
+            _positionData[data.userDepositData.entryPositionVersion].entryAccMultiplier
         );
+
+        (data.protocolPosition,) = _usdnProtocol.getLongPosition(
+            PositionId({
+                tick: data.currentPositionData.tick,
+                tickVersion: data.currentPositionData.tickVersion,
+                index: data.currentPositionData.index
+            })
+        );
+
+        // include bonus
+        data.amountToClose = data.amountToCloseWithoutBonus
+            + data.amountToCloseWithoutBonus * (data.protocolPosition.amount - data.currentPositionData.amount)
+                / data.currentPositionData.amount;
 
         // slither-disable-next-line reentrancy-eth
         success_ = _usdnProtocol.initiateClosePosition{ value: msg.value }(
-            currentPositionData.id, amountToClose.toUint128(), to, validator, currentPriceData, previousActionsData
+            PositionId({
+                tick: data.currentPositionData.tick,
+                tickVersion: data.currentPositionData.tickVersion,
+                index: data.currentPositionData.index
+            }),
+            data.amountToClose.toUint128(),
+            to,
+            validator,
+            currentPriceData,
+            previousActionsData
         );
 
         if (success_) {
-            if (remainingAssets == 0) {
+            if (data.remainingAssets == 0) {
                 delete _userDeposit[msg.sender];
             } else {
-                // TODO check remaining bonus in another PR
-                _userDeposit[msg.sender].amount = remainingAssets;
+                _userDeposit[msg.sender].amount = data.remainingAssets;
             }
 
-            // the safe cast is already made before
-            currentPositionData.amount -= uint128(amountToClose);
+            // safe cast is already made on amountToClose
+            data.currentPositionData.amount -= uint128(data.amountToCloseWithoutBonus);
 
-            if (currentPositionData.amount == 0) {
-                currentPositionData.id =
-                    PositionId({ tick: _usdnProtocol.NO_POSITION_TICK(), tickVersion: 0, index: 0 });
+            if (data.currentPositionData.amount == 0) {
+                PositionData memory newPositionData;
+                newPositionData.tick = constantsLib.NO_POSITION_TICK;
+                _positionData[data.positionVersion] = newPositionData;
+            } else {
+                _positionData[data.positionVersion].amount = data.currentPositionData.amount;
             }
 
-            _positionData[positionVersion] = currentPositionData;
-
-            emit ClosePositionInitiated(msg.sender, amount, amountToClose, remainingAssets);
+            emit ClosePositionInitiated(msg.sender, amount, data.amountToClose, data.remainingAssets);
         }
 
         // sent back any ether left in the contract
@@ -451,16 +537,19 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         ++positionVersion;
         _positionVersion = positionVersion;
 
-        // save the data of the new position's version
-        PositionData storage newPositionData = _positionData[positionVersion];
-        newPositionData.id = newPosId;
-
-        if (newPosId.tick != _noPositionTick) {
-            newPositionData.entryAccMultiplier = accMultiplier;
-            newPositionData.amount = _pendingAssetsAmount + previousPosValue;
+        if (newPosId.tick != constantsLib.NO_POSITION_TICK) {
+            _positionData[positionVersion] = PositionData({
+                entryAccMultiplier: accMultiplier,
+                tickVersion: newPosId.tickVersion,
+                index: newPosId.index,
+                amount: _pendingAssetsAmount + previousPosValue,
+                tick: newPosId.tick
+            });
 
             // Reset the pending assets amount as they are all used in the new position
             _pendingAssetsAmount = 0;
+        } else {
+            _positionData[positionVersion].tick = constantsLib.NO_POSITION_TICK;
         }
 
         emit PositionVersionUpdated(positionVersion);
@@ -472,8 +561,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
     /// @inheritdoc IRebalancer
     function setPositionMaxLeverage(uint256 newMaxLeverage) external onlyOwner {
-        IUsdnProtocol protocol = _usdnProtocol;
-        if (newMaxLeverage < protocol.getMinLeverage() || newMaxLeverage > protocol.getMaxLeverage()) {
+        if (newMaxLeverage < _usdnProtocol.getMinLeverage() || newMaxLeverage > _usdnProtocol.getMaxLeverage()) {
             revert RebalancerInvalidMaxLeverage();
         }
 
@@ -544,5 +632,27 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         }
 
         return super.supportsInterface(interfaceId);
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                             Internal functions                             */
+    /* -------------------------------------------------------------------------- */
+
+    /**
+     * @notice Check if the validate action happens between the validation delay and the validation deadline
+     * @dev If the block timestamp is before initiateTimestamp + validationDelay, the function will revert
+     * If the block timestamp is after initiateTimestamp + validationDeadline, the function will revert
+     * @param initiateTimestamp The timestamp of the initiate action
+     */
+    function _checkValidationTime(uint40 initiateTimestamp) internal view {
+        TimeLimits memory timeLimits = _timeLimits;
+        if (block.timestamp < initiateTimestamp + timeLimits.validationDelay) {
+            // user must wait until the delay has elapsed
+            revert RebalancerValidateTooEarly();
+        }
+        if (block.timestamp > initiateTimestamp + timeLimits.validationDeadline) {
+            // user must wait until the cooldown has elapsed, then call `resetDepositAssets` to withdraw the funds
+            revert RebalancerActionCooldown();
+        }
     }
 }

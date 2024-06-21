@@ -4,40 +4,40 @@ pragma solidity ^0.8.25;
 import { Test } from "forge-std/Test.sol";
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
-import {
-    PendingAction,
-    DepositPendingAction,
-    WithdrawalPendingAction,
-    LongPendingAction,
-    ProtocolAction,
-    PreviousActionsData,
-    TickData,
-    PositionId,
-    CachedProtocolState
-} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocol } from "../../../../src/UsdnProtocol/UsdnProtocol.sol";
-import { IUsdn } from "../../../../src/interfaces/Usdn/IUsdn.sol";
-import { ILiquidationRewardsManager } from "../../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
-import { IBaseOracleMiddleware } from "../../../../src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
-import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { DoubleEndedQueue } from "../../../../src/libraries/DoubleEndedQueue.sol";
-import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
-import { Position, LiquidationsEffects } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { SignedMath } from "../../../../src/libraries/SignedMath.sol";
-import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
-import { UsdnProtocolCoreLibrary as coreLib } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolCoreLibrary.sol";
-import { UsdnProtocolLongLibrary as longLib } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolLongLibrary.sol";
-import { UsdnProtocolVaultLibrary as vaultLib } from
-    "../../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
-import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from
-    "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsVaultLibrary.sol";
 import { UsdnProtocolActionsLongLibrary as actionsLongLib } from
     "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsUtilsLibrary as actionsUtilsLib } from
     "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsUtilsLibrary.sol";
+import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsVaultLibrary.sol";
+import { UsdnProtocolCoreLibrary as coreLib } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolCoreLibrary.sol";
+import { UsdnProtocolLongLibrary as longLib } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolLongLibrary.sol";
+import { UsdnProtocolVaultLibrary as vaultLib } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
+import { IBaseOracleMiddleware } from "../../../../src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
+import { ILiquidationRewardsManager } from "../../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
+import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IUsdn } from "../../../../src/interfaces/Usdn/IUsdn.sol";
+import {
+    CachedProtocolState,
+    DepositPendingAction,
+    LongPendingAction,
+    PendingAction,
+    PositionId,
+    PreviousActionsData,
+    ProtocolAction,
+    TickData,
+    WithdrawalPendingAction
+} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { LiquidationsEffects, Position } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { DoubleEndedQueue } from "../../../../src/libraries/DoubleEndedQueue.sol";
+import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
+import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
+import { SignedMath } from "../../../../src/libraries/SignedMath.sol";
 
 /**
  * @title UsdnProtocolHandler
@@ -288,8 +288,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return vaultLib._calcMintUsdnShares(s, amount, vaultBalance, usdnTotalShares, price);
     }
 
-    function i_calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) external view returns (uint256) {
-        return vaultLib._calcSdexToBurn(s, usdnAmount, sdexBurnRatio);
+    function i_calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) external pure returns (uint256) {
+        return vaultLib._calcSdexToBurn(usdnAmount, sdexBurnRatio);
     }
 
     function i_vaultAssetAvailable(
@@ -322,8 +322,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return coreLib._longAssetAvailable(s, currentPrice);
     }
 
-    function i_getLiquidationPrice(uint128 startPrice, uint128 leverage) external view returns (uint128) {
-        return longLib._getLiquidationPrice(s, startPrice, leverage);
+    function i_getLiquidationPrice(uint128 startPrice, uint128 leverage) external pure returns (uint128) {
+        return longLib._getLiquidationPrice(startPrice, leverage);
     }
 
     function i_checkImbalanceLimitDeposit(uint256 depositValue) external view {
@@ -342,8 +342,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         actionsUtilsLib._checkImbalanceLimitClose(s, posTotalExpoToClose, posValueToClose);
     }
 
-    function i_getLeverage(uint128 price, uint128 liqPrice) external view returns (uint128) {
-        return longLib._getLeverage(s, price, liqPrice);
+    function i_getLeverage(uint128 price, uint128 liqPrice) external pure returns (uint128) {
+        return longLib._getLeverage(price, liqPrice);
     }
 
     function i_calcTickFromBitmapIndex(uint256 index) external view returns (int24) {
@@ -384,18 +384,18 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
 
     function i_calcUsdnPrice(uint256 vaultBalance, uint128 assetPrice, uint256 usdnTotalSupply, uint8 assetDecimals)
         external
-        view
+        pure
         returns (uint256)
     {
-        return vaultLib._calcUsdnPrice(s, vaultBalance, assetPrice, usdnTotalSupply, assetDecimals);
+        return vaultLib._calcUsdnPrice(vaultBalance, assetPrice, usdnTotalSupply, assetDecimals);
     }
 
     function i_calcRebaseTotalSupply(uint256 vaultBalance, uint128 assetPrice, uint128 targetPrice, uint8 assetDecimals)
         external
-        view
+        pure
         returns (uint256)
     {
-        return vaultLib._calcRebaseTotalSupply(s, vaultBalance, assetPrice, targetPrice, assetDecimals);
+        return vaultLib._calcRebaseTotalSupply(vaultBalance, assetPrice, targetPrice, assetDecimals);
     }
 
     function i_addPendingAction(address user, PendingAction memory action) external returns (uint256) {
@@ -460,16 +460,16 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         longLib._checkSafetyMargin(s, currentPrice, liquidationPrice);
     }
 
-    function i_getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) external view returns (uint128) {
-        return longLib._getEffectivePriceForTick(s, tick, liqMultiplier);
+    function i_getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) external pure returns (uint128) {
+        return longLib._getEffectivePriceForTick(tick, liqMultiplier);
     }
 
     function i_calcFixedPrecisionMultiplier(
         uint256 assetPrice,
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator
-    ) external view returns (uint256) {
-        return longLib._calcFixedPrecisionMultiplier(s, assetPrice, longTradingExpo, accumulator);
+    ) external pure returns (uint256) {
+        return longLib._calcFixedPrecisionMultiplier(assetPrice, longTradingExpo, accumulator);
     }
 
     function i_calcBurnUsdn(uint256 usdnShares, uint256 available, uint256 usdnTotalShares)
@@ -523,18 +523,18 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
 
     function i_calcImbalanceCloseBps(int256 vaultBalance, int256 longBalance, uint256 longTotalExpo)
         external
-        view
+        pure
         returns (int256 imbalanceBps_)
     {
-        return longLib._calcImbalanceCloseBps(s, vaultBalance, longBalance, longTotalExpo);
+        return longLib._calcImbalanceCloseBps(vaultBalance, longBalance, longTotalExpo);
     }
 
     function i_calcImbalanceOpenBps(int256 vaultBalance, int256 longBalance, uint256 longTotalExpo)
         external
-        view
+        pure
         returns (int256 imbalanceBps_)
     {
-        return longLib._calcImbalanceOpenBps(s, vaultBalance, longBalance, longTotalExpo);
+        return longLib._calcImbalanceOpenBps(vaultBalance, longBalance, longTotalExpo);
     }
 
     function i_removeBlockedPendingAction(uint128 rawIndex, address payable to, bool cleanup) external {

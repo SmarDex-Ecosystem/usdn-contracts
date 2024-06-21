@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { RebalancerFixture } from "./utils/Fixtures.sol";
 import { USER_1 } from "../../utils/Constants.sol";
+import { RebalancerFixture } from "./utils/Fixtures.sol";
 
 /**
  * @custom:feature The `resetDepositAssets` function of the rebalancer contract
@@ -15,6 +15,8 @@ contract TestRebalancerResetDepositAssets is RebalancerFixture {
         super._setUp();
 
         wstETH.mintAndApprove(address(this), 10_000 ether, address(rebalancer), type(uint256).max);
+        wstETH.mintAndApprove(USER_1, 10_000 ether, address(rebalancer), type(uint256).max);
+
         rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));
         skip(rebalancer.getTimeLimits().validationDeadline + 1);
     }
@@ -49,16 +51,30 @@ contract TestRebalancerResetDepositAssets is RebalancerFixture {
      * @custom:scenario The user tries to reset his deposit without having initiated one
      * @custom:given No deposit has been initiated
      * @custom:when The user tries to reset his deposit
-     * @custom:then The call reverts with `RebalancerActionWasValidated`
+     * @custom:then The call reverts with `RebalancerNoPendingAction`
      */
-    function test_RevertWhen_resetDepositNoUnvalidatedAction() public {
-        vm.expectRevert(RebalancerActionWasValidated.selector);
+    function test_RevertWhen_resetDepositNoPendingAction() public {
+        vm.expectRevert(RebalancerNoPendingAction.selector);
         vm.prank(USER_1);
         rebalancer.resetDepositAssets();
     }
 
+    /**
+     * @custom:scenario The user tries to reset his deposit but has a pending withdrawal
+     * @custom:given The user initiated and validated a deposit, then initiated a withdrawal
+     * @custom:when The user tries to reset their deposit
+     * @custom:then The call reverts with `RebalancerActionNotValidated`
+     */
     function test_RevertWhen_resetDepositWithPendingWithdrawal() public {
-        // TODO
+        vm.startPrank(USER_1);
+        rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, USER_1);
+        skip(rebalancer.getTimeLimits().validationDelay);
+        rebalancer.validateDepositAssets();
+        rebalancer.initiateWithdrawAssets();
+
+        vm.expectRevert(RebalancerActionNotValidated.selector);
+        rebalancer.resetDepositAssets();
+        vm.stopPrank();
     }
 
     /**

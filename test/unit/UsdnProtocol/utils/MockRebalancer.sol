@@ -5,9 +5,9 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import { PositionId } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IBaseRebalancer } from "../../../../src/interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IRebalancerTypes } from "../../../../src/interfaces/Rebalancer/IRebalancerTypes.sol";
+import { PositionId } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 contract MockRebalancer is IBaseRebalancer, IRebalancerTypes {
     using SafeERC20 for IERC20Metadata;
@@ -27,11 +27,21 @@ contract MockRebalancer is IBaseRebalancer, IRebalancerTypes {
     function setCurrentStateData(uint128 pendingAssets, uint256 maxLeverage, PositionId memory currentPosId) external {
         _pendingAssets = pendingAssets;
         _maxLeverage = maxLeverage;
-        _positionData[_positionVersion].id = currentPosId;
+        _positionData[_positionVersion].tick = currentPosId.tick;
+        _positionData[_positionVersion].tickVersion = currentPosId.tickVersion;
+        _positionData[_positionVersion].index = currentPosId.index;
     }
 
     function getCurrentStateData() external view returns (uint128, uint256, PositionId memory) {
-        return (_pendingAssets, _maxLeverage, _positionData[_positionVersion].id);
+        return (
+            _pendingAssets,
+            _maxLeverage,
+            PositionId(
+                _positionData[_positionVersion].tick,
+                _positionData[_positionVersion].tickVersion,
+                _positionData[_positionVersion].index
+            )
+        );
     }
 
     function setUserDepositData(address user, UserDeposit memory userDeposit) external {
@@ -44,7 +54,9 @@ contract MockRebalancer is IBaseRebalancer, IRebalancerTypes {
 
     function updatePosition(PositionId calldata newPosId, uint128 previousPositionValue) external {
         ++_positionVersion;
-        _positionData[_positionVersion].id = newPosId;
+        _positionData[_positionVersion].tick = newPosId.tick;
+        _positionData[_positionVersion].tickVersion = newPosId.tickVersion;
+        _positionData[_positionVersion].index = newPosId.index;
         _positionData[_positionVersion].amount = _pendingAssets + previousPositionValue;
         _positionData[_positionVersion].entryAccMultiplier = MULTIPLIER_FACTOR;
 

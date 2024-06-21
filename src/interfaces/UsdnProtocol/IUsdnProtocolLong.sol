@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { Position, PositionId } from "./IUsdnProtocolTypes.sol";
 import { HugeUint } from "../../libraries/HugeUint.sol";
+import { Position, PositionId } from "./IUsdnProtocolTypes.sol";
 
 /**
  * @title IUsdnProtocolLong

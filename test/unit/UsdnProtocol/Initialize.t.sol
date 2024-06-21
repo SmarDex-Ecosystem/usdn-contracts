@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
+import { ADMIN, DEPLOYER } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
-import { DEPLOYER, ADMIN } from "../../utils/Constants.sol";
 import { UsdnProtocolHandler } from "./utils/Handler.sol";
 
 import { Usdn } from "../../../src/Usdn/Usdn.sol";
-import { InitializableReentrancyGuard } from "../../../src/utils/InitializableReentrancyGuard.sol";
 import { Position, PositionId } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { InitializableReentrancyGuard } from "../../../src/utils/InitializableReentrancyGuard.sol";
 
 /**
  * @custom:feature Test the functions linked to initialization of the protocol

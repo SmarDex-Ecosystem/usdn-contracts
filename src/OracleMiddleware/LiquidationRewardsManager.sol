@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.25;
 
-import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 
 import { IWstETH } from "../interfaces/IWstETH.sol";
-import { ChainlinkPriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { ChainlinkOracle } from "./oracles/ChainlinkOracle.sol";
 import { IBaseLiquidationRewardsManager } from "../interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
 import { ILiquidationRewardsManager } from "../interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
+import { ChainlinkPriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { ProtocolAction } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ChainlinkOracle } from "./oracles/ChainlinkOracle.sol";
 
 /**
  * @title LiquidationRewardsManager contract
@@ -55,6 +55,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
             gasUsedPerTick: 36_884,
             otherGasUsed: 306_685,
             rebaseGasUsed: 12_014,
+            rebalancerGasUsed: 0,
             gasPriceLimit: 1000 gwei,
             multiplierBps: 30_000
         });
@@ -101,6 +102,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         uint32 gasUsedPerTick,
         uint32 otherGasUsed,
         uint32 rebaseGasUsed,
+        uint32 rebalancerGasUsed,
         uint64 gasPriceLimit,
         uint32 multiplierBps
     ) external onlyOwner {
@@ -110,6 +112,8 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
             revert LiquidationRewardsManagerOtherGasUsedTooHigh(otherGasUsed);
         } else if (rebaseGasUsed > 200_000) {
             revert LiquidationRewardsManagerRebaseGasUsedTooHigh(rebaseGasUsed);
+        } else if (rebalancerGasUsed > 300_000) {
+            revert LiquidationRewardsManagerRebalancerGasUsedTooHigh(rebalancerGasUsed);
         } else if (gasPriceLimit > 8000 gwei) {
             revert LiquidationRewardsManagerGasPriceLimitTooHigh(gasPriceLimit);
         } else if (multiplierBps > 10 * BPS_DIVISOR) {
@@ -120,11 +124,14 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
             gasUsedPerTick: gasUsedPerTick,
             otherGasUsed: otherGasUsed,
             rebaseGasUsed: rebaseGasUsed,
+            rebalancerGasUsed: rebalancerGasUsed,
             gasPriceLimit: gasPriceLimit,
             multiplierBps: multiplierBps
         });
 
-        emit RewardsParametersUpdated(gasUsedPerTick, otherGasUsed, rebaseGasUsed, gasPriceLimit, multiplierBps);
+        emit RewardsParametersUpdated(
+            gasUsedPerTick, otherGasUsed, rebaseGasUsed, rebalancerGasUsed, gasPriceLimit, multiplierBps
+        );
     }
 
     /**
