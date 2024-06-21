@@ -4,7 +4,7 @@ pragma solidity ^0.8.25;
 import { ADMIN } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
 
-import { ProtocolAction } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature All fees functionality of the USDN Protocol
@@ -97,7 +97,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
     function test_pendingProtocolFee() public {
         assertEq(protocol.getPendingProtocolFee(), 0, "initial pending protocol fee");
         setUpUserPositionInVault(
-            address(this), ProtocolAction.ValidateDeposit, 10_000 ether, DEFAULT_PARAMS.initialPrice
+            address(this), IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, 10_000 ether, DEFAULT_PARAMS.initialPrice
         );
         assertGt(protocol.getPendingProtocolFee(), 0, "pending protocol fee after deposit");
     }
@@ -111,14 +111,14 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
      */
     function test_feeHitThreshold() public {
         setUpUserPositionInVault(
-            address(this), ProtocolAction.ValidateDeposit, 10_000 ether, DEFAULT_PARAMS.initialPrice
+            address(this), IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, 10_000 ether, DEFAULT_PARAMS.initialPrice
         );
         skip(4 days);
 
         setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 5000 ether,
                 desiredLiqPrice: DEFAULT_PARAMS.initialPrice / 2,
                 price: DEFAULT_PARAMS.initialPrice
@@ -127,7 +127,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         skip(8 days);
         assertEq(wstETH.balanceOf(ADMIN), 0, "fee collector balance before collect");
         setUpUserPositionInVault(
-            address(this), ProtocolAction.InitiateDeposit, 10_000 ether, DEFAULT_PARAMS.initialPrice
+            address(this), IUsdnProtocolTypes.ProtocolAction.InitiateDeposit, 10_000 ether, DEFAULT_PARAMS.initialPrice
         );
         assertGe(wstETH.balanceOf(ADMIN), protocol.getFeeThreshold(), "fee collector balance after collect");
     }

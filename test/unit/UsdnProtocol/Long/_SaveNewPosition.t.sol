@@ -4,7 +4,7 @@ pragma solidity ^0.8.25;
 import { USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import { Position, PositionId, TickData } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { TickMath } from "../../../../src/libraries/TickMath.sol";
 

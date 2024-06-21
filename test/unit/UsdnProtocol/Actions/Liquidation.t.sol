@@ -5,7 +5,7 @@ import { DEPLOYER, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { PositionId, ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
 /// @custom:feature The scenarios in `UsdnProtocolActions` which call `_liquidatePositions`
@@ -38,10 +38,10 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
         // Create a long position to liquidate
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 5 ether,
                 desiredLiqPrice: desiredLiqPrice,
                 price: price
@@ -80,10 +80,10 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
         // Create a long position to liquidate
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 5 ether,
                 desiredLiqPrice: desiredLiqPrice,
                 price: price
@@ -91,7 +91,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         );
 
         // Initiates the deposit for the other user
-        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 1 ether, price);
+        setUpUserPositionInVault(address(this), IUsdnProtocolTypes.ProtocolAction.InitiateDeposit, 1 ether, price);
 
         // When funding is positive, calculations will increase the liquidation price so this is enough
         uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(posId.tick);
@@ -116,10 +116,10 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
         // Create a long position to liquidate
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 5 ether,
                 desiredLiqPrice: desiredLiqPrice,
                 price: price
@@ -127,7 +127,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         );
 
         // Initiate and validate the deposit for the other user
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, price);
+        setUpUserPositionInVault(address(this), IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, 1 ether, price);
 
         // next deposit will only update the _lastPrice if it's more recent, and the on-chain price is 30 minutes old
         skip(31 minutes);
@@ -160,10 +160,10 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
         // Create a long position to liquidate
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 5 ether,
                 desiredLiqPrice: desiredLiqPrice,
                 price: price
@@ -171,7 +171,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         );
 
         // Initiate and validate the deposit, then initiate the withdrawal for the other user
-        setUpUserPositionInVault(address(this), ProtocolAction.InitiateWithdrawal, 1 ether, price);
+        setUpUserPositionInVault(address(this), IUsdnProtocolTypes.ProtocolAction.InitiateWithdrawal, 1 ether, price);
 
         // When funding is positive, calculations will increase the liquidation price so this is enough
         uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(posId.tick);
@@ -200,10 +200,10 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
         // Create a long position to liquidate
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 5 ether,
                 desiredLiqPrice: desiredLiqPrice,
                 price: price
@@ -244,10 +244,10 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
         // Create a long position to liquidate
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 5 ether,
                 desiredLiqPrice: desiredLiqPrice,
                 price: price
@@ -260,7 +260,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.InitiateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: desiredLiqPrice,
                 price: price
@@ -289,10 +289,10 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
         // Create a long position to liquidate
-        PositionId memory posIdToLiquidate = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posIdToLiquidate = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 5 ether,
                 desiredLiqPrice: desiredLiqPrice,
                 price: price
@@ -301,10 +301,10 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // Initiates and validates the position for the other user
         desiredLiqPrice -= 200 ether;
-        PositionId memory posIdToClose = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posIdToClose = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: desiredLiqPrice,
                 price: price
@@ -345,10 +345,10 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
         // Create a long position to liquidate
-        PositionId memory posIdToLiquidate = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posIdToLiquidate = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 5 ether,
                 desiredLiqPrice: desiredLiqPrice,
                 price: price
@@ -360,7 +360,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.InitiateClosePosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.InitiateClosePosition,
                 positionSize: 1 ether,
                 desiredLiqPrice: desiredLiqPrice,
                 price: price
@@ -393,7 +393,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 5 ether,
                 desiredLiqPrice: 1700 ether,
                 price: 2000 ether
@@ -445,10 +445,10 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 price = 2000 ether;
 
         // Setup a long position from another user
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 5 ether,
                 desiredLiqPrice: 1700 ether,
                 price: price
@@ -460,7 +460,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         liquidationRewardsManager.setRewardsParameters(10_000, 30_000, 20_000, 20_000, 1000 gwei, 20_000);
 
         uint256 expectedLiquidatorRewards =
-            liquidationRewardsManager.getLiquidationRewards(1, 0, false, ProtocolAction.None, "", "");
+            liquidationRewardsManager.getLiquidationRewards(1, 0, false, IUsdnProtocolTypes.ProtocolAction.None, "", "");
         // Sanity check
         assertGt(expectedLiquidatorRewards, 0, "The expected liquidation rewards should be greater than 0");
 
@@ -512,10 +512,10 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 endPrice = 1700 ether;
 
         // Setup a long position from another user
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 5 ether,
                 desiredLiqPrice: endPrice,
                 price: initialPrice
@@ -535,7 +535,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.txGasPrice(8000 gwei);
 
         uint256 expectedLiquidatorRewards =
-            liquidationRewardsManager.getLiquidationRewards(1, 0, false, ProtocolAction.None, "", "");
+            liquidationRewardsManager.getLiquidationRewards(1, 0, false, IUsdnProtocolTypes.ProtocolAction.None, "", "");
         // Sanity check
         assertGt(
             expectedLiquidatorRewards,
@@ -586,7 +586,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // create high risk position
         protocol.initiateOpenPosition{
-            value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
+            value: oracleMiddleware.validationCost(priceData, IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition)
         }(
             5 ether,
             9 * currentPrice / 10,
@@ -598,7 +598,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         );
         _waitDelay();
         protocol.validateOpenPosition{
-            value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
+            value: oracleMiddleware.validationCost(priceData, IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition)
         }(payable(address(this)), priceData, EMPTY_PREVIOUS_DATA);
         assertEq(protocol.getTotalLongPositions(), initialTotalPos + 1, "total positions after create");
 
@@ -612,7 +612,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // liquidate
         uint256 balanceBefore = address(this).balance;
-        uint256 validationCost = oracleMiddleware.validationCost(priceData, ProtocolAction.Liquidation);
+        uint256 validationCost =
+            oracleMiddleware.validationCost(priceData, IUsdnProtocolTypes.ProtocolAction.Liquidation);
         // we use `liquidate` instead of `testLiquidate` to avoid testing the "hack" in the handler
         protocol.liquidate{ value: 0.5 ether }(priceData, 1);
         assertEq(protocol.getTotalLongPositions(), initialTotalPos, "total positions after liquidate");
@@ -638,7 +639,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: 5 ether,
                 desiredLiqPrice: 1700 ether,
                 price: price

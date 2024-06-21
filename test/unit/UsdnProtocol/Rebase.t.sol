@@ -5,7 +5,7 @@ import { ADMIN } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
 
 import { IUsdnEvents } from "../../../src/interfaces/Usdn/IUsdnEvents.sol";
-import { PositionId, ProtocolAction } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature Test the rebasing of the USDN token depending on its price

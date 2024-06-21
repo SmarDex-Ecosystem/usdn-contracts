@@ -9,7 +9,7 @@ import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 
 import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
 import { IRebalancerTypes } from "../../../src/interfaces/Rebalancer/IRebalancerTypes.sol";
-import { Position, ProtocolAction } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The `initiateClosePosition` function of the rebalancer contract
@@ -36,12 +36,13 @@ contract TestRebalancerInitiateClosePosition is
         mockPyth.setPrice(1280 ether / 1e10);
         mockPyth.setLastPublishTime(block.timestamp);
 
-        uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
+        uint256 oracleFee =
+            oracleMiddleware.validationCost(MOCK_PYTH_DATA, IUsdnProtocolTypes.ProtocolAction.Liquidation);
         protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA, 1);
 
         version = rebalancer.getPositionVersion();
         previousPositionData = rebalancer.getPositionData(version);
-        (Position memory protocolPosition,) = protocol.getLongPosition(previousPositionData.id);
+        (IUsdnProtocolTypes.Position memory protocolPosition,) = protocol.getLongPosition(previousPositionData.id);
         posAmount = protocolPosition.amount;
     }
 
@@ -102,7 +103,7 @@ contract TestRebalancerInitiateClosePosition is
 
         assertEq(
             uint8(protocol.getUserPendingAction(address(this)).action),
-            uint8(ProtocolAction.ValidateClosePosition),
+            uint8(IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition),
             "The user protocol action should pending"
         );
     }
@@ -149,7 +150,7 @@ contract TestRebalancerInitiateClosePosition is
 
         assertEq(
             uint8(protocol.getUserPendingAction(address(this)).action),
-            uint8(ProtocolAction.ValidateClosePosition),
+            uint8(IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition),
             "The user protocol action should pending"
         );
     }

@@ -4,11 +4,7 @@ pragma solidity ^0.8.25;
 import { PYTH_ETH_USD, USER_1, USER_2 } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 
-import {
-    PendingAction,
-    PreviousActionsData,
-    ProtocolAction
-} from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature Validating two positions with Pyth prices at the same time
@@ -35,7 +31,7 @@ contract TestForkUsdnProtocolValidateTwoPos is UsdnProtocolBaseIntegrationFixtur
         (bool success,) = address(wstETH).call{ value: 10 ether }("");
         require(success, "USER_1 wstETH mint failed");
         wstETH.approve(address(protocol), type(uint256).max);
-        uint256 ethValue = oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition)
+        uint256 ethValue = oracleMiddleware.validationCost("", IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition)
             + protocol.getSecurityDepositValue();
 
         protocol.initiateOpenPosition{ value: ethValue }(
@@ -59,10 +55,12 @@ contract TestForkUsdnProtocolValidateTwoPos is UsdnProtocolBaseIntegrationFixtur
         // user1's position must be validated with chainlink
         // first round ID after the `forkWarp` timestamp + 20 minutes
         bytes memory data1 = abi.encode(uint80(110_680_464_442_257_327_600));
-        uint256 data1Fee = oracleMiddleware.validationCost(data1, ProtocolAction.ValidateOpenPosition);
+        uint256 data1Fee =
+            oracleMiddleware.validationCost(data1, IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition);
         // user2's position must be validated with a low-latency oracle
         (,,,, bytes memory data2) = getHermesApiSignature(PYTH_ETH_USD, ts2 + oracleMiddleware.getValidationDelay());
-        uint256 data2Fee = oracleMiddleware.validationCost(data2, ProtocolAction.ValidateOpenPosition);
+        uint256 data2Fee =
+            oracleMiddleware.validationCost(data2, IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition);
         bytes[] memory previousData = new bytes[](1);
         previousData[0] = data1;
         uint128[] memory rawIndices = new uint128[](1);
@@ -71,10 +69,10 @@ contract TestForkUsdnProtocolValidateTwoPos is UsdnProtocolBaseIntegrationFixtur
         // second user tries to validate their action
         vm.prank(USER_2);
         protocol.validateOpenPosition{ value: data1Fee + data2Fee }(
-            USER_2, data2, PreviousActionsData(previousData, rawIndices)
+            USER_2, data2, IUsdnProtocolTypes.PreviousActionsData(previousData, rawIndices)
         );
         // no more pending action
-        (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0));
+        (IUsdnProtocolTypes.PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 0, "pending actions length");
         vm.stopPrank();
     }

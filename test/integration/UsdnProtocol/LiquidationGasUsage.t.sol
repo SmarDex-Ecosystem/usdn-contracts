@@ -16,7 +16,7 @@ import { MockWstEthOracleMiddleware } from "../../../src/OracleMiddleware/mock/M
 import { ILiquidationRewardsManagerErrorsEventsTypes } from
     "../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManagerErrorsEventsTypes.sol";
 import { IUsdnEvents } from "../../../src/interfaces/Usdn/IUsdnEvents.sol";
-import { ProtocolAction } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature Checking the gas usage of a liquidation
@@ -137,7 +137,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is UsdnProtocolBaseIntegrationF
 
         skip(1 minutes);
         (,,,, bytes memory data) = getHermesApiSignature(PYTH_ETH_USD, block.timestamp);
-        uint256 oracleFee = oracleMiddleware.validationCost(data, ProtocolAction.Liquidation);
+        uint256 oracleFee = oracleMiddleware.validationCost(data, IUsdnProtocolTypes.ProtocolAction.Liquidation);
 
         // if required, enable rebase
         if (withRebase) {

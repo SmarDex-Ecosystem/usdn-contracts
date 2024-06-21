@@ -3,7 +3,7 @@ pragma solidity ^0.8.25;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The `getMinLiquidationPrice` function of the USDN Protocol

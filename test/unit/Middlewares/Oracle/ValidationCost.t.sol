@@ -4,7 +4,7 @@ pragma solidity ^0.8.25;
 import { MOCK_PYTH_DATA } from "../utils/Constants.sol";
 import { OracleMiddlewareBaseFixture } from "../utils/Fixtures.sol";
 
-import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The `getValidationCost` function of `OracleMiddleware`
@@ -38,7 +38,7 @@ contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
      * @custom:then The validation cost is the same as pythOracle
      */
     function test_parseAndValidatePriceWithData() public {
-        uint256 fee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.None);
+        uint256 fee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, IUsdnProtocolTypes.ProtocolAction.None);
 
         assertEq(fee, mockPyth.getUpdateFee(data), "Wrong fee cost when data is a Pyth message");
     }
@@ -49,7 +49,7 @@ contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
      * @custom:then The validation cost is the same as pythOracle
      */
     function test_parseAndValidatePriceWithoutData() public {
-        uint256 fee = oracleMiddleware.validationCost("", ProtocolAction.None);
+        uint256 fee = oracleMiddleware.validationCost("", IUsdnProtocolTypes.ProtocolAction.None);
 
         assertEq(fee, 0, "Fee should be 0 when there's no data");
     }
@@ -60,7 +60,7 @@ contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
      * @custom:then The validation cost is 0
      */
     function test_parseAndValidatePriceLowerThanLimit() public {
-        uint256 fee = oracleMiddleware.validationCost(new bytes(48), ProtocolAction.ValidateDeposit);
+        uint256 fee = oracleMiddleware.validationCost(new bytes(48), IUsdnProtocolTypes.ProtocolAction.ValidateDeposit);
         assertEq(fee, 0, "Validation should be 0 when data does not contain magic");
     }
 }

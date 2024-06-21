@@ -4,14 +4,7 @@ pragma solidity ^0.8.25;
 import { ADMIN, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import {
-    LongPendingAction,
-    PendingAction,
-    Position,
-    PositionId,
-    ProtocolAction,
-    TickData
-} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
 /**
@@ -39,7 +32,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         uint128 validatePrice;
         int24 validateTick;
         uint8 originalLiqPenalty;
-        PositionId tempPosId;
+        IUsdnProtocolTypes.PositionId tempPosId;
         uint256 validateTickVersion;
         uint256 validateIndex;
         uint128 expectedLeverage;
@@ -112,9 +105,9 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             expectedPosTotalExpo,
             uint128(LONG_AMOUNT),
             CURRENT_PRICE,
-            PositionId(expectedTick, 0, 0)
+            IUsdnProtocolTypes.PositionId(expectedTick, 0, 0)
         );
-        (bool success, PositionId memory posId) = protocol.initiateOpenPosition(
+        (bool success, IUsdnProtocolTypes.PositionId memory posId) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
             desiredLiqPrice,
             to,
@@ -134,17 +127,18 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         assertEq(wstETH.balanceOf(address(protocol)), before.protocolBalance + LONG_AMOUNT, "protocol wstETH balance");
         assertEq(protocol.getTotalLongPositions(), before.totalPositions + 1, "total long positions");
         assertEq(protocol.getTotalExpo(), before.totalExpo + expectedPosTotalExpo, "protocol total expo");
-        TickData memory tickData = protocol.getTickData(expectedTick);
+        IUsdnProtocolTypes.TickData memory tickData = protocol.getTickData(expectedTick);
         assertEq(tickData.totalExpo, expectedPosTotalExpo, "total expo in tick");
         assertEq(tickData.totalPos, 1, "positions in tick");
         assertEq(protocol.getBalanceLong(), before.balanceLong + LONG_AMOUNT, "balance of long side");
 
         // the pending action should not yet be actionable by a third party
-        (PendingAction[] memory pendingActions,) = protocol.getActionablePendingActions(address(0));
+        (IUsdnProtocolTypes.PendingAction[] memory pendingActions,) = protocol.getActionablePendingActions(address(0));
         assertEq(pendingActions.length, 0, "no pending action");
 
-        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(validator));
-        assertTrue(action.action == ProtocolAction.ValidateOpenPosition, "action type");
+        IUsdnProtocolTypes.LongPendingAction memory action =
+            protocol.i_toLongPendingAction(protocol.getUserPendingAction(validator));
+        assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition, "action type");
         assertEq(action.timestamp, block.timestamp, "action timestamp");
         assertEq(action.to, to, "action to");
         assertEq(action.validator, validator, "action validator");
@@ -159,7 +153,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         assertEq(action.to, to, "pending action to");
         assertEq(action.validator, validator, "pending action validator");
 
-        Position memory position;
+        IUsdnProtocolTypes.Position memory position;
         (position,) = protocol.getLongPosition(posId);
         assertFalse(position.validated, "pos validated");
         assertEq(position.user, to, "user position");
@@ -185,10 +179,10 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         vm.prank(ADMIN);
         protocol.setLiquidationPenalty(storedLiqPenalty); // set a different liquidation penalty
         // this position is opened to set the liquidation penalty of the tick
-        PositionId memory posId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: uint128(LONG_AMOUNT),
                 desiredLiqPrice: desiredLiqPrice,
                 price: CURRENT_PRICE
@@ -209,7 +203,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             protocol.i_calcPositionTotalExpo(uint128(LONG_AMOUNT), CURRENT_PRICE, expectedLiqPrice);
 
         // create position which ends up in the same tick
-        (, PositionId memory posId2) = protocol.initiateOpenPosition(
+        (, IUsdnProtocolTypes.PositionId memory posId2) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
             desiredLiqPrice,
             address(this),
@@ -219,7 +213,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             EMPTY_PREVIOUS_DATA
         );
         assertEq(posId.tick, posId2.tick, "tick is the same");
-        (Position memory pos, uint8 liqPenalty) = protocol.getLongPosition(posId);
+        (IUsdnProtocolTypes.Position memory pos, uint8 liqPenalty) = protocol.getLongPosition(posId);
         assertEq(pos.totalExpo, expectedTotalExpo, "pos total expo indicates that the stored penalty was used");
         assertEq(liqPenalty, storedLiqPenalty, "pos liquidation penalty");
     }
@@ -234,10 +228,10 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
      * @custom:and The user wsteth balance does not change
      */
     function test_initiateOpenPositionIsPendingLiquidation() public {
-        PositionId memory userPosId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory userPosId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: uint128(LONG_AMOUNT),
                 desiredLiqPrice: params.initialPrice - params.initialPrice / 5,
                 price: params.initialPrice
@@ -248,7 +242,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
 
         uint256 wstethBalanceBefore = wstETH.balanceOf(address(this));
 
-        (bool success, PositionId memory posId) = protocol.initiateOpenPosition(
+        (bool success, IUsdnProtocolTypes.PositionId memory posId) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
             params.initialPrice / 10,
             address(this),
@@ -260,8 +254,12 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         assertFalse(success, "success");
         assertEq(posId.tick, protocol.NO_POSITION_TICK(), "pos tick");
 
-        PendingAction memory pending = protocol.getUserPendingAction(address(this));
-        assertEq(uint256(pending.action), uint256(ProtocolAction.None), "user 0 should not have a pending action");
+        IUsdnProtocolTypes.PendingAction memory pending = protocol.getUserPendingAction(address(this));
+        assertEq(
+            uint256(pending.action),
+            uint256(IUsdnProtocolTypes.ProtocolAction.None),
+            "user 0 should not have a pending action"
+        );
 
         assertEq(
             userPosId.tickVersion + 1,
@@ -415,7 +413,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
      * @custom:and The transaction does not revert
      */
     function test_initiateOpenPositionWithStalePendingAction() public {
-        PositionId memory posId = _createStalePendingActionHelper();
+        IUsdnProtocolTypes.PositionId memory posId = _createStalePendingActionHelper();
 
         wstETH.approve(address(protocol), 1 ether);
         bytes memory priceData = abi.encode(uint128(1500 ether));
@@ -437,7 +435,8 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         oracleMiddleware.setRequireValidationCost(true); // require 1 wei per validation
         uint256 balanceBefore = address(this).balance;
         bytes memory priceData = abi.encode(uint128(2000 ether));
-        uint256 validationCost = oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition);
+        uint256 validationCost =
+            oracleMiddleware.validationCost(priceData, IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition);
         protocol.initiateOpenPosition{ value: 0.5 ether }(
             uint128(LONG_AMOUNT),
             1000 ether,

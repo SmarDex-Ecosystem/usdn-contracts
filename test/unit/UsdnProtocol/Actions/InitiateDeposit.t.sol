@@ -4,13 +4,7 @@ pragma solidity ^0.8.25;
 import { USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import {
-    DepositPendingAction,
-    PendingAction,
-    Position,
-    PositionId,
-    ProtocolAction
-} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
 /**
@@ -116,11 +110,11 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         // no USDN should be minted yet
         assertEq(usdn.totalSupply(), usdnInitialTotalSupply, "usdn total supply");
         // the pending action should not yet be actionable by a third party
-        (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0));
+        (IUsdnProtocolTypes.PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 0, "no pending action");
 
-        PendingAction memory action = protocol.getUserPendingAction(validator);
-        assertTrue(action.action == ProtocolAction.ValidateDeposit, "action type");
+        IUsdnProtocolTypes.PendingAction memory action = protocol.getUserPendingAction(validator);
+        assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, "action type");
         assertEq(action.timestamp, block.timestamp, "action timestamp");
         assertEq(action.to, to, "action to");
         assertEq(action.validator, validator, "action validator");
@@ -293,7 +287,8 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         oracleMiddleware.setRequireValidationCost(true); // require 1 wei per validation
         uint256 balanceBefore = address(this).balance;
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
-        uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateDeposit);
+        uint256 validationCost =
+            oracleMiddleware.validationCost(currentPrice, IUsdnProtocolTypes.ProtocolAction.InitiateDeposit);
         protocol.initiateDeposit{ value: 0.5 ether }(
             1 ether, address(this), payable(address(this)), NO_PERMIT2, currentPrice, EMPTY_PREVIOUS_DATA
         );
@@ -337,10 +332,10 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
      * @custom:and The user wsteth balance should not change
      */
     function test_initiateDepositIsPendingLiquidation() public {
-        PositionId memory userPosId = setUpUserPositionInLong(
+        IUsdnProtocolTypes.PositionId memory userPosId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: POSITION_AMOUNT,
                 desiredLiqPrice: params.initialPrice - params.initialPrice / 5,
                 price: params.initialPrice
@@ -361,8 +356,12 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         );
         assertFalse(success, "success");
 
-        PendingAction memory pending = protocol.getUserPendingAction(address(this));
-        assertEq(uint256(pending.action), uint256(ProtocolAction.None), "user 0 deposit should not be initiated");
+        IUsdnProtocolTypes.PendingAction memory pending = protocol.getUserPendingAction(address(this));
+        assertEq(
+            uint256(pending.action),
+            uint256(IUsdnProtocolTypes.ProtocolAction.None),
+            "user 0 deposit should not be initiated"
+        );
 
         assertEq(
             userPosId.tickVersion + 1, protocol.getTickVersion(userPosId.tick), "user 1 position should be liquidated"

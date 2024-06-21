@@ -5,7 +5,7 @@ import { MOCK_PYTH_DATA } from "../utils/Constants.sol";
 import { OracleMiddlewareBaseFixture } from "../utils/Fixtures.sol";
 
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /// @custom:feature The `PythOracle` specific functions
 contract TestOracleMiddlewarePythOracle is OracleMiddlewareBaseFixture {
@@ -26,8 +26,8 @@ contract TestOracleMiddlewarePythOracle is OracleMiddlewareBaseFixture {
 
         // ValidateDeposit adjusts down with conf
         PriceInfo memory price = oracleMiddleware.parseAndValidatePrice{
-            value: oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.ValidateDeposit)
-        }("", uint128(block.timestamp), ProtocolAction.ValidateDeposit, MOCK_PYTH_DATA);
+            value: oracleMiddleware.validationCost(MOCK_PYTH_DATA, IUsdnProtocolTypes.ProtocolAction.ValidateDeposit)
+        }("", uint128(block.timestamp), IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, MOCK_PYTH_DATA);
         assertEq(price.price, 1, "price should be 1");
     }
 
@@ -39,10 +39,11 @@ contract TestOracleMiddlewarePythOracle is OracleMiddlewareBaseFixture {
      */
     function test_pythInvalidExponent() public {
         mockPyth.setExpo(1);
-        uint256 validationCost = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
+        uint256 validationCost =
+            oracleMiddleware.validationCost(MOCK_PYTH_DATA, IUsdnProtocolTypes.ProtocolAction.Liquidation);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePythPositiveExponent.selector, 1));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            "", uint128(block.timestamp), ProtocolAction.Liquidation, MOCK_PYTH_DATA
+            "", uint128(block.timestamp), IUsdnProtocolTypes.ProtocolAction.Liquidation, MOCK_PYTH_DATA
         );
     }
 }

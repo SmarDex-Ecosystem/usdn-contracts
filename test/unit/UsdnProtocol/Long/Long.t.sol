@@ -4,8 +4,7 @@ pragma solidity ^0.8.25;
 import { ADMIN } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import { Position } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { PositionId, ProtocolAction, TickData } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The getter functions of the USDN Protocol

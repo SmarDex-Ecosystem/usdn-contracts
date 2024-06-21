@@ -3,8 +3,7 @@ pragma solidity ^0.8.25;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import { Position } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { PositionId, ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature Fuzzing tests for the core of the protocol
@@ -71,7 +70,7 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
             PositionId memory posId = setUpUserPositionInLong(
                 OpenParams({
                     user: user,
-                    untilAction: ProtocolAction.ValidateOpenPosition,
+                    untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                     positionSize: uint128(longAmount),
                     desiredLiqPrice: uint128(longLiqPrice),
                     price: data.currentPrice
@@ -85,7 +84,9 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
 
             // create a random deposit position
             uint256 depositAmount = (random % 9 ether) + 1 ether;
-            setUpUserPositionInVault(user, ProtocolAction.ValidateDeposit, uint128(depositAmount), data.currentPrice);
+            setUpUserPositionInVault(
+                user, IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, uint128(depositAmount), data.currentPrice
+            );
             vm.stopPrank();
 
             // increase the current price, each time by 100 dollars or less, the max price is 3000 dollars

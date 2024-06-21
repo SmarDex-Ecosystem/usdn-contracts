@@ -7,7 +7,7 @@ import { PYTH_ETH_USD, PYTH_WSTETH_USD } from "../../../utils/Constants.sol";
 import { WstethIntegrationFixture } from "../utils/Fixtures.sol";
 
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The `parseAndValidatePrice` function of `WstethMiddleware`
@@ -53,9 +53,12 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
             PriceInfo memory middlewarePrice;
             uint256 validationCost = wstethMiddleware.validationCost(data, action);
             if (
-                action == ProtocolAction.Initialize || action == ProtocolAction.Liquidation
-                    || action == ProtocolAction.InitiateDeposit || action == ProtocolAction.InitiateWithdrawal
-                    || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.InitiateClosePosition
+                action == IUsdnProtocolTypes.ProtocolAction.Initialize
+                    || action == IUsdnProtocolTypes.ProtocolAction.Liquidation
+                    || action == IUsdnProtocolTypes.ProtocolAction.InitiateDeposit
+                    || action == IUsdnProtocolTypes.ProtocolAction.InitiateWithdrawal
+                    || action == IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition
+                    || action == IUsdnProtocolTypes.ProtocolAction.InitiateClosePosition
             ) {
                 // since we force the usage of Pyth for initiate actions, Pyth requires
                 // that the price data timestamp is recent compared to block.timestamp
@@ -80,16 +83,20 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
 
             // price + conf
             if (
-                action == ProtocolAction.InitiateWithdrawal || action == ProtocolAction.ValidateWithdrawal
-                    || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.ValidateOpenPosition
+                action == IUsdnProtocolTypes.ProtocolAction.InitiateWithdrawal
+                    || action == IUsdnProtocolTypes.ProtocolAction.ValidateWithdrawal
+                    || action == IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition
+                    || action == IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition
             ) {
                 // check price
                 assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice + formattedPythConf), priceError);
 
                 // price - conf
             } else if (
-                action == ProtocolAction.InitiateDeposit || action == ProtocolAction.ValidateDeposit
-                    || action == ProtocolAction.InitiateClosePosition || action == ProtocolAction.ValidateClosePosition
+                action == IUsdnProtocolTypes.ProtocolAction.InitiateDeposit
+                    || action == IUsdnProtocolTypes.ProtocolAction.ValidateDeposit
+                    || action == IUsdnProtocolTypes.ProtocolAction.InitiateClosePosition
+                    || action == IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition
             ) {
                 // check price
                 assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice - formattedPythConf), priceError);
@@ -117,9 +124,12 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
 
             // if the action is only available for pyth, skip it
             if (
-                action == ProtocolAction.None || action == ProtocolAction.ValidateDeposit
-                    || action == ProtocolAction.ValidateWithdrawal || action == ProtocolAction.ValidateOpenPosition
-                    || action == ProtocolAction.ValidateClosePosition || action == ProtocolAction.Liquidation
+                action == IUsdnProtocolTypes.ProtocolAction.None
+                    || action == IUsdnProtocolTypes.ProtocolAction.ValidateDeposit
+                    || action == IUsdnProtocolTypes.ProtocolAction.ValidateWithdrawal
+                    || action == IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition
+                    || action == IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition
+                    || action == IUsdnProtocolTypes.ProtocolAction.Liquidation
             ) {
                 continue;
             }
@@ -182,9 +192,12 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
             {
                 uint256 validationCost = wstethMiddleware.validationCost(data, action);
                 if (
-                    action == ProtocolAction.Initialize || action == ProtocolAction.Liquidation
-                        || action == ProtocolAction.InitiateDeposit || action == ProtocolAction.InitiateWithdrawal
-                        || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.InitiateClosePosition
+                    action == IUsdnProtocolTypes.ProtocolAction.Initialize
+                        || action == IUsdnProtocolTypes.ProtocolAction.Liquidation
+                        || action == IUsdnProtocolTypes.ProtocolAction.InitiateDeposit
+                        || action == IUsdnProtocolTypes.ProtocolAction.InitiateWithdrawal
+                        || action == IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition
+                        || action == IUsdnProtocolTypes.ProtocolAction.InitiateClosePosition
                 ) {
                     // since we force the usage of Pyth for initiate actions,
                     // Pyth requires that the price data timestamp is recent compared to block.timestamp
@@ -211,15 +224,19 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
 
             // price + conf
             if (
-                action == ProtocolAction.InitiateWithdrawal || action == ProtocolAction.ValidateWithdrawal
-                    || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.ValidateOpenPosition
+                action == IUsdnProtocolTypes.ProtocolAction.InitiateWithdrawal
+                    || action == IUsdnProtocolTypes.ProtocolAction.ValidateWithdrawal
+                    || action == IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition
+                    || action == IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition
             ) {
                 assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice + formattedPythConf), priceError);
             }
             // price - conf
             else if (
-                action == ProtocolAction.InitiateDeposit || action == ProtocolAction.ValidateDeposit
-                    || action == ProtocolAction.InitiateClosePosition || action == ProtocolAction.ValidateClosePosition
+                action == IUsdnProtocolTypes.ProtocolAction.InitiateDeposit
+                    || action == IUsdnProtocolTypes.ProtocolAction.ValidateDeposit
+                    || action == IUsdnProtocolTypes.ProtocolAction.InitiateClosePosition
+                    || action == IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition
             ) {
                 assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice - formattedPythConf), priceError);
             }
@@ -266,9 +283,12 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
 
             // if the action is only available for pyth, skip it
             if (
-                action == ProtocolAction.None || action == ProtocolAction.ValidateDeposit
-                    || action == ProtocolAction.ValidateWithdrawal || action == ProtocolAction.ValidateOpenPosition
-                    || action == ProtocolAction.ValidateClosePosition || action == ProtocolAction.Liquidation
+                action == IUsdnProtocolTypes.ProtocolAction.None
+                    || action == IUsdnProtocolTypes.ProtocolAction.ValidateDeposit
+                    || action == IUsdnProtocolTypes.ProtocolAction.ValidateWithdrawal
+                    || action == IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition
+                    || action == IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition
+                    || action == IUsdnProtocolTypes.ProtocolAction.Liquidation
             ) {
                 continue;
             }

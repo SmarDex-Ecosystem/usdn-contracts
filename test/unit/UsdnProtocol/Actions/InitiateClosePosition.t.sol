@@ -7,15 +7,7 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { ADMIN, DEPLOYER, USER_1, USER_2 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import {
-    LongPendingAction,
-    PendingAction,
-    Position,
-    PositionId,
-    PreviousActionsData,
-    ProtocolAction,
-    TickData
-} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
 /**
@@ -28,7 +20,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     using SafeCast for uint256;
 
     uint128 private constant POSITION_AMOUNT = 1 ether;
-    PositionId private posId;
+    IUsdnProtocolTypes.PositionId private posId;
     /// @notice Trigger a reentrancy after receiving ether
     bool internal _reenter;
 
@@ -38,7 +30,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: POSITION_AMOUNT,
                 desiredLiqPrice: params.initialPrice - (params.initialPrice / 5),
                 price: params.initialPrice
@@ -200,7 +192,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
-                untilAction: ProtocolAction.InitiateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition,
                 positionSize: POSITION_AMOUNT,
                 desiredLiqPrice: params.initialPrice - (params.initialPrice / 5),
                 price: params.initialPrice
@@ -215,14 +207,14 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         rawIndices[0] = 1;
 
         vm.expectEmit(true, true, false, false);
-        emit ValidatedOpenPosition(USER_1, USER_1, 0, 0, PositionId(0, 0, 0));
+        emit ValidatedOpenPosition(USER_1, USER_1, 0, 0, IUsdnProtocolTypes.PositionId(0, 0, 0));
         protocol.initiateClosePosition(
             posId,
             POSITION_AMOUNT,
             address(this),
             payable(address(this)),
             priceData,
-            PreviousActionsData(previousData, rawIndices)
+            IUsdnProtocolTypes.PreviousActionsData(previousData, rawIndices)
         );
     }
 
@@ -324,18 +316,18 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
 
     function _internalInitiateClosePositionScenario(address to, address validator) internal {
         uint256 totalLongPositionBefore = protocol.getTotalLongPositions();
-        TickData memory tickData = protocol.getTickData(posId.tick);
+        IUsdnProtocolTypes.TickData memory tickData = protocol.getTickData(posId.tick);
         _initiateCloseAPositionHelper(POSITION_AMOUNT, to, validator);
 
         /* ---------------------------- Position's state ---------------------------- */
-        (Position memory posAfter,) = protocol.getLongPosition(posId);
+        (IUsdnProtocolTypes.Position memory posAfter,) = protocol.getLongPosition(posId);
         assertEq(posAfter.user, address(0), "The user of the position should have been reset");
         assertEq(posAfter.timestamp, 0, "Timestamp of the position should have been reset");
         assertEq(posAfter.totalExpo, 0, "The total expo of the position should be 0");
         assertEq(posAfter.amount, 0, "The amount of the position should be 0");
 
         /* ---------------------------- Protocol's State ---------------------------- */
-        TickData memory newTickData = protocol.getTickData(posId.tick);
+        IUsdnProtocolTypes.TickData memory newTickData = protocol.getTickData(posId.tick);
         assertEq(
             totalLongPositionBefore - 1,
             protocol.getTotalLongPositions(),
@@ -359,14 +351,14 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     function test_internalInitiateClosePositionPartially() external {
         uint128 amountToClose = POSITION_AMOUNT / 2;
         uint256 totalLongPositionBefore = protocol.getTotalLongPositions();
-        TickData memory tickData = protocol.getTickData(posId.tick);
-        (Position memory posBefore,) = protocol.getLongPosition(posId);
+        IUsdnProtocolTypes.TickData memory tickData = protocol.getTickData(posId.tick);
+        (IUsdnProtocolTypes.Position memory posBefore,) = protocol.getLongPosition(posId);
         uint128 totalExpoToClose =
             FixedPointMathLib.fullMulDiv(posBefore.totalExpo, amountToClose, posBefore.amount).toUint128();
         _initiateCloseAPositionHelper(amountToClose, address(this), address(this));
 
         /* ---------------------------- Position's state ---------------------------- */
-        (Position memory posAfter,) = protocol.getLongPosition(posId);
+        (IUsdnProtocolTypes.Position memory posAfter,) = protocol.getLongPosition(posId);
         assertEq(posBefore.user, posAfter.user, "The user of the position should not have changed");
         assertEq(posBefore.timestamp, posAfter.timestamp, "Timestamp of the position should have stayed the same");
         assertEq(
@@ -381,7 +373,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         );
 
         /* ---------------------------- Protocol's State ---------------------------- */
-        TickData memory newTickData = protocol.getTickData(posId.tick);
+        IUsdnProtocolTypes.TickData memory newTickData = protocol.getTickData(posId.tick);
         assertEq(
             totalLongPositionBefore,
             protocol.getTotalLongPositions(),
@@ -411,8 +403,10 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             EMPTY_PREVIOUS_DATA
         );
 
-        PendingAction memory pending = protocol.getUserPendingAction(address(this));
-        assertEq(uint256(pending.action), uint256(ProtocolAction.None), "action should not be initiated");
+        IUsdnProtocolTypes.PendingAction memory pending = protocol.getUserPendingAction(address(this));
+        assertEq(
+            uint256(pending.action), uint256(IUsdnProtocolTypes.ProtocolAction.None), "action should not be initiated"
+        );
 
         assertEq(
             posId.tickVersion + 1, protocol.getTickVersion(posId.tick), "user position should have been liquidated"
@@ -441,8 +435,10 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         );
         assertFalse(success, "success");
 
-        PendingAction memory pending = protocol.getUserPendingAction(DEPLOYER);
-        assertEq(uint256(pending.action), uint256(ProtocolAction.None), "pending action should not exist");
+        IUsdnProtocolTypes.PendingAction memory pending = protocol.getUserPendingAction(DEPLOYER);
+        assertEq(
+            uint256(pending.action), uint256(IUsdnProtocolTypes.ProtocolAction.None), "pending action should not exist"
+        );
 
         assertEq(
             posId.tickVersion + 1, protocol.getTickVersion(posId.tick), "setup position should have been liquidated"
@@ -454,7 +450,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @param amountToClose Amount of the position to close
      */
     function _initiateCloseAPositionHelper(uint128 amountToClose, address to, address validator) internal {
-        (Position memory posBefore,) = protocol.getLongPosition(posId);
+        (IUsdnProtocolTypes.Position memory posBefore,) = protocol.getLongPosition(posId);
         uint128 totalExpoToClose =
             FixedPointMathLib.fullMulDiv(posBefore.totalExpo, amountToClose, posBefore.amount).toUint128();
         uint256 totalExpoBefore = protocol.getTotalExpo();
@@ -470,7 +466,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             totalExpoToClose
         );
 
-        TickData memory tickData = protocol.getTickData(posId.tick);
+        IUsdnProtocolTypes.TickData memory tickData = protocol.getTickData(posId.tick);
 
         /* ------------------------ Initiate the close action ----------------------- */
         vm.expectEmit();
@@ -488,8 +484,9 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         );
 
         /* ------------------------- Pending action's state ------------------------- */
-        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(validator));
-        assertTrue(action.action == ProtocolAction.ValidateClosePosition, "The action type is wrong");
+        IUsdnProtocolTypes.LongPendingAction memory action =
+            protocol.i_toLongPendingAction(protocol.getUserPendingAction(validator));
+        assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition, "The action type is wrong");
         assertEq(action.timestamp, block.timestamp, "The block timestamp should be now");
         assertEq(action.to, to, "To is wrong");
         assertEq(action.validator, validator, "Validator is wrong");
@@ -507,7 +504,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         assertEq(action.closeBoundedPositionValue, assetToTransfer, "The pos value should not have changed");
 
         /* ----------------------------- Protocol State ----------------------------- */
-        TickData memory newTickData = protocol.getTickData(posId.tick);
+        IUsdnProtocolTypes.TickData memory newTickData = protocol.getTickData(posId.tick);
         assertEq(
             totalExpoBefore - totalExpoToClose,
             protocol.getTotalExpo(),
@@ -530,7 +527,10 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @param userDeposit Amount to deposit for a single user
      * @return rebalancerPos_ The position ID of the rebalancer position
      */
-    function _setUpMockRebalancerPosition(uint88 userDeposit) internal returns (PositionId memory rebalancerPos_) {
+    function _setUpMockRebalancerPosition(uint88 userDeposit)
+        internal
+        returns (IUsdnProtocolTypes.PositionId memory rebalancerPos_)
+    {
         vm.startPrank(ADMIN);
         rebalancer.setMinAssetDeposit(userDeposit);
         protocol.setRebalancer(rebalancer);
@@ -577,7 +577,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     function test_closePartialFromRebalancerPositionTooSmall() public {
         uint88 minAssetDeposit = 2 ether;
 
-        PositionId memory rebalancerPos = _setUpMockRebalancerPosition(minAssetDeposit);
+        IUsdnProtocolTypes.PositionId memory rebalancerPos = _setUpMockRebalancerPosition(minAssetDeposit);
 
         vm.prank(ADMIN);
         protocol.setMinLongPosition(3 * minAssetDeposit);
@@ -599,7 +599,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     function test_RevertWhen_closePartialFromRebalancerPartialUserClose() public {
         uint88 minAssetDeposit = 2 ether;
 
-        PositionId memory rebalancerPos = _setUpMockRebalancerPosition(minAssetDeposit);
+        IUsdnProtocolTypes.PositionId memory rebalancerPos = _setUpMockRebalancerPosition(minAssetDeposit);
 
         vm.prank(ADMIN);
         protocol.setMinLongPosition(3 * minAssetDeposit);
@@ -636,7 +636,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
                 positionSize: POSITION_AMOUNT,
                 desiredLiqPrice: params.initialPrice - (params.initialPrice / 5),
                 price: params.initialPrice

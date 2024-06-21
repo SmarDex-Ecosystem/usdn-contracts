@@ -6,8 +6,7 @@ import { DEPLOYER } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 
 import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
-import { ProtocolAction, TickData } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { Position, PositionId } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { HugeUint } from "../../../src/libraries/HugeUint.sol";
 import { TickMath } from "../../../src/libraries/TickMath.sol";
 
@@ -18,8 +17,8 @@ import { TickMath } from "../../../src/libraries/TickMath.sol";
 contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture, IRebalancerEvents {
     using HugeUint for HugeUint.Uint512;
 
-    PositionId public posToLiquidate;
-    TickData public tickToLiquidateData;
+    IUsdnProtocolTypes.PositionId public posToLiquidate;
+    IUsdnProtocolTypes.TickData public tickToLiquidateData;
     uint128 public amountInRebalancer;
     int24 public tickSpacing;
 
@@ -84,7 +83,8 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
 
         int24 expectedTick =
             expectedTickWithoutPenalty + (int24(uint24(tickToLiquidateData.liquidationPenalty)) * tickSpacing);
-        uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
+        uint256 oracleFee =
+            oracleMiddleware.validationCost(MOCK_PYTH_DATA, IUsdnProtocolTypes.ProtocolAction.Liquidation);
         _expectEmits(wstEthPrice, amountInRebalancer + bonus, liqPriceWithoutPenalty, expectedTick, 1);
         protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA, 1);
 
@@ -97,7 +97,8 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
         );
 
         // get the position that has been created
-        (Position memory pos,) = protocol.getLongPosition(PositionId(expectedTick, 0, 0));
+        (IUsdnProtocolTypes.Position memory pos,) =
+            protocol.getLongPosition(IUsdnProtocolTypes.PositionId(expectedTick, 0, 0));
 
         // update the expected liquidation accumulator
         uint256 unadjustedTickPrice = TickMath.getPriceAtTick(expectedTickWithoutPenalty);
@@ -141,7 +142,8 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
         // Sanity check
         assertEq(0, protocol.getCloseExpoImbalanceLimitBps(), "The close limit should be zero");
 
-        uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
+        uint256 oracleFee =
+            oracleMiddleware.validationCost(MOCK_PYTH_DATA, IUsdnProtocolTypes.ProtocolAction.Liquidation);
 
         vm.expectEmit(false, false, false, false);
         emit LiquidatedTick(0, 0, 0, 0, 0);
@@ -171,11 +173,15 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
             positionTotalExpo,
             amount,
             price,
-            PositionId(tick, 0, 0)
+            IUsdnProtocolTypes.PositionId(tick, 0, 0)
         );
         vm.expectEmit(address(protocol));
         emit ValidatedOpenPosition(
-            address(rebalancer), address(rebalancer), positionTotalExpo, price, PositionId(tick, 0, 0)
+            address(rebalancer),
+            address(rebalancer),
+            positionTotalExpo,
+            price,
+            IUsdnProtocolTypes.PositionId(tick, 0, 0)
         );
         vm.expectEmit(address(rebalancer));
         emit PositionVersionUpdated(newPositionVersion);

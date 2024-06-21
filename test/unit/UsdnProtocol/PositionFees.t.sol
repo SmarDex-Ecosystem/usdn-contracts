@@ -6,14 +6,7 @@ import { Vm } from "forge-std/Vm.sol";
 import { ADMIN } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
 
-import {
-    DepositPendingAction,
-    LongPendingAction,
-    PendingAction,
-    PositionId,
-    ProtocolAction,
-    WithdrawalPendingAction
-} from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The entry/exit position fees mechanism of the protocol

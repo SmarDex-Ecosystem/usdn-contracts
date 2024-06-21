@@ -5,14 +5,7 @@ import { ADMIN, USER_1, USER_2 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import {
-    LongPendingAction,
-    PendingAction,
-    Position,
-    PositionId,
-    PreviousActionsData,
-    ProtocolAction
-} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The security deposit of the USDN Protocol

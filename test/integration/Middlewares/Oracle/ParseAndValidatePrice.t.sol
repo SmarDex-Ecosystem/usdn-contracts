@@ -7,7 +7,7 @@ import { PYTH_ETH_USD } from "../../../utils/Constants.sol";
 import { OracleMiddlewareBaseIntegrationFixture } from "../utils/Fixtures.sol";
 
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The `parseAndValidatePrice` function of `OracleMiddleware`
@@ -56,9 +56,12 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             uint256 validationCost = oracleMiddleware.validationCost(data, action);
 
             if (
-                action == ProtocolAction.Initialize || action == ProtocolAction.Liquidation
-                    || action == ProtocolAction.InitiateDeposit || action == ProtocolAction.InitiateWithdrawal
-                    || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.InitiateClosePosition
+                action == IUsdnProtocolTypes.ProtocolAction.Initialize
+                    || action == IUsdnProtocolTypes.ProtocolAction.Liquidation
+                    || action == IUsdnProtocolTypes.ProtocolAction.InitiateDeposit
+                    || action == IUsdnProtocolTypes.ProtocolAction.InitiateWithdrawal
+                    || action == IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition
+                    || action == IUsdnProtocolTypes.ProtocolAction.InitiateClosePosition
             ) {
                 // since we force the usage of Pyth for initiate actions, Pyth requires
                 // that the price data timestamp is recent compared to block.timestamp
@@ -77,15 +80,19 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
             // price + conf
             if (
-                action == ProtocolAction.InitiateWithdrawal || action == ProtocolAction.ValidateWithdrawal
-                    || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.ValidateOpenPosition
+                action == IUsdnProtocolTypes.ProtocolAction.InitiateWithdrawal
+                    || action == IUsdnProtocolTypes.ProtocolAction.ValidateWithdrawal
+                    || action == IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition
+                    || action == IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition
             ) {
                 assertEq(middlewarePrice.price, formattedPythPrice + pythConf, priceError);
             }
             // price - conf
             else if (
-                action == ProtocolAction.InitiateDeposit || action == ProtocolAction.ValidateDeposit
-                    || action == ProtocolAction.InitiateClosePosition || action == ProtocolAction.ValidateClosePosition
+                action == IUsdnProtocolTypes.ProtocolAction.InitiateDeposit
+                    || action == IUsdnProtocolTypes.ProtocolAction.ValidateDeposit
+                    || action == IUsdnProtocolTypes.ProtocolAction.InitiateClosePosition
+                    || action == IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition
             ) {
                 assertEq(middlewarePrice.price, formattedPythPrice - pythConf, priceError);
             }
@@ -111,9 +118,12 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
             // if the action is only available for pyth, skip it
             if (
-                action == ProtocolAction.None || action == ProtocolAction.ValidateDeposit
-                    || action == ProtocolAction.ValidateWithdrawal || action == ProtocolAction.ValidateOpenPosition
-                    || action == ProtocolAction.ValidateClosePosition || action == ProtocolAction.Liquidation
+                action == IUsdnProtocolTypes.ProtocolAction.None
+                    || action == IUsdnProtocolTypes.ProtocolAction.ValidateDeposit
+                    || action == IUsdnProtocolTypes.ProtocolAction.ValidateWithdrawal
+                    || action == IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition
+                    || action == IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition
+                    || action == IUsdnProtocolTypes.ProtocolAction.Liquidation
             ) {
                 continue;
             }
@@ -174,9 +184,12 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             PriceInfo memory middlewarePrice;
             uint256 validationCost = oracleMiddleware.validationCost(data, action);
             if (
-                action == ProtocolAction.Initialize || action == ProtocolAction.Liquidation
-                    || action == ProtocolAction.InitiateDeposit || action == ProtocolAction.InitiateWithdrawal
-                    || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.InitiateClosePosition
+                action == IUsdnProtocolTypes.ProtocolAction.Initialize
+                    || action == IUsdnProtocolTypes.ProtocolAction.Liquidation
+                    || action == IUsdnProtocolTypes.ProtocolAction.InitiateDeposit
+                    || action == IUsdnProtocolTypes.ProtocolAction.InitiateWithdrawal
+                    || action == IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition
+                    || action == IUsdnProtocolTypes.ProtocolAction.InitiateClosePosition
             ) {
                 // since we force the usage of Pyth for initiate actions, Pyth requires
                 // that the price data timestamp is recent compared to block.timestamp
@@ -194,15 +207,19 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             assertEq(middlewarePrice.timestamp, pythTimestamp);
             // price + conf
             if (
-                action == ProtocolAction.InitiateWithdrawal || action == ProtocolAction.ValidateWithdrawal
-                    || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.ValidateOpenPosition
+                action == IUsdnProtocolTypes.ProtocolAction.InitiateWithdrawal
+                    || action == IUsdnProtocolTypes.ProtocolAction.ValidateWithdrawal
+                    || action == IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition
+                    || action == IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition
             ) {
                 assertEq(middlewarePrice.price, formattedPythPrice + pythConf, priceError);
             }
             // price - conf
             else if (
-                action == ProtocolAction.InitiateDeposit || action == ProtocolAction.ValidateDeposit
-                    || action == ProtocolAction.InitiateClosePosition || action == ProtocolAction.ValidateClosePosition
+                action == IUsdnProtocolTypes.ProtocolAction.InitiateDeposit
+                    || action == IUsdnProtocolTypes.ProtocolAction.ValidateDeposit
+                    || action == IUsdnProtocolTypes.ProtocolAction.InitiateClosePosition
+                    || action == IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition
             ) {
                 assertEq(middlewarePrice.price, formattedPythPrice - pythConf, priceError);
             }
@@ -229,9 +246,12 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
             // if the action is only available for pyth, skip it
             if (
-                action == ProtocolAction.None || action == ProtocolAction.ValidateDeposit
-                    || action == ProtocolAction.ValidateWithdrawal || action == ProtocolAction.ValidateOpenPosition
-                    || action == ProtocolAction.ValidateClosePosition || action == ProtocolAction.Liquidation
+                action == IUsdnProtocolTypes.ProtocolAction.None
+                    || action == IUsdnProtocolTypes.ProtocolAction.ValidateDeposit
+                    || action == IUsdnProtocolTypes.ProtocolAction.ValidateWithdrawal
+                    || action == IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition
+                    || action == IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition
+                    || action == IUsdnProtocolTypes.ProtocolAction.Liquidation
             ) {
                 continue;
             }
@@ -271,20 +291,22 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
         // get pyth price that must be more recent than chainlink data
         (,,,, bytes memory data) = getHermesApiSignature(PYTH_ETH_USD, chainlinkTimestamp + 1);
-        uint256 validationCost = oracleMiddleware.validationCost(data, ProtocolAction.ValidateDeposit);
+        uint256 validationCost =
+            oracleMiddleware.validationCost(data, IUsdnProtocolTypes.ProtocolAction.ValidateDeposit);
 
         // submit to oracle middleware so it gets cached by Pyth
         vm.warp(chainlinkTimestamp + 2);
         PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
             "",
             uint128(chainlinkTimestamp + 1 - oracleMiddleware.getValidationDelay()),
-            ProtocolAction.ValidateDeposit,
+            IUsdnProtocolTypes.ProtocolAction.ValidateDeposit,
             data
         );
 
         // get oracle middleware price without providing data
-        PriceInfo memory cachedMiddlewarePrice =
-            oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.InitiateDeposit, "");
+        PriceInfo memory cachedMiddlewarePrice = oracleMiddleware.parseAndValidatePrice(
+            "", uint128(block.timestamp), IUsdnProtocolTypes.ProtocolAction.InitiateDeposit, ""
+        );
 
         // timestamp check
         assertEq(cachedMiddlewarePrice.timestamp, middlewarePrice.timestamp, "timestamp equal to pyth timestamp");
@@ -308,14 +330,15 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
         // get pyth price that must be more recent than chainlink data
         (,,,, bytes memory data) = getHermesApiSignature(PYTH_ETH_USD, chainlinkTimestamp + 1);
-        uint256 validationCost = oracleMiddleware.validationCost(data, ProtocolAction.ValidateDeposit);
+        uint256 validationCost =
+            oracleMiddleware.validationCost(data, IUsdnProtocolTypes.ProtocolAction.ValidateDeposit);
 
         // submit to oracle middleware so it gets cached by Pyth
         vm.warp(chainlinkTimestamp + 2);
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
             "",
             uint128(chainlinkTimestamp + 1 - oracleMiddleware.getValidationDelay()),
-            ProtocolAction.ValidateDeposit,
+            IUsdnProtocolTypes.ProtocolAction.ValidateDeposit,
             data
         );
 
@@ -324,7 +347,9 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
         // get oracle middleware price without providing data
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePriceTooOld.selector, chainlinkTimestamp + 1));
-        oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.InitiateDeposit, "");
+        oracleMiddleware.parseAndValidatePrice(
+            "", uint128(block.timestamp), IUsdnProtocolTypes.ProtocolAction.InitiateDeposit, ""
+        );
     }
 
     // receive ether refunds

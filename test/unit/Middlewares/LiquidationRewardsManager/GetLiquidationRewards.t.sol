@@ -3,7 +3,7 @@ pragma solidity ^0.8.25;
 
 import { LiquidationRewardsManagerBaseFixture } from "../utils/Fixtures.sol";
 
-import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The `getLiquidationRewards` function of `LiquidationRewardsManager`
@@ -31,11 +31,15 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
      * UsdnProtocolActions.liquidate(bytes,uint16)
      */
     function test_getLiquidationRewardsFor1Tick() public {
-        uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, false, ProtocolAction.None, "", "");
+        uint256 rewards =
+            liquidationRewardsManager.getLiquidationRewards(1, 0, false, IUsdnProtocolTypes.ProtocolAction.None, "", "");
         assertEq(rewards, 2_794_500_000_000_000, "without rebase");
-        rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, true, ProtocolAction.None, "", "");
+        rewards =
+            liquidationRewardsManager.getLiquidationRewards(1, 0, true, IUsdnProtocolTypes.ProtocolAction.None, "", "");
         assertEq(rewards, 3_484_500_000_000_000, "with rebase");
-        rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, true, ProtocolAction.None, "", hex"beef");
+        rewards = liquidationRewardsManager.getLiquidationRewards(
+            1, 0, true, IUsdnProtocolTypes.ProtocolAction.None, "", hex"beef"
+        );
         assertEq(rewards, 3_484_500_000_000_000, "with rebase and price data");
     }
 
@@ -45,9 +49,11 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
      * @custom:then It should return 0 as we only give rewards on successful liquidations
      */
     function test_getLiquidationRewardsFor0Tick() public {
-        uint256 rewards = liquidationRewardsManager.getLiquidationRewards(0, 0, false, ProtocolAction.None, "", "");
+        uint256 rewards =
+            liquidationRewardsManager.getLiquidationRewards(0, 0, false, IUsdnProtocolTypes.ProtocolAction.None, "", "");
         assertEq(rewards, 0, "without rebase");
-        rewards = liquidationRewardsManager.getLiquidationRewards(0, 0, true, ProtocolAction.None, "", "");
+        rewards =
+            liquidationRewardsManager.getLiquidationRewards(0, 0, true, IUsdnProtocolTypes.ProtocolAction.None, "", "");
         assertEq(rewards, 0, "with rebase");
     }
 
@@ -61,18 +67,20 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
      * UsdnProtocolActions.liquidate(bytes,uint16)
      */
     function test_getLiquidationRewardsFor3Ticks() public {
-        uint256 rewards = liquidationRewardsManager.getLiquidationRewards(3, 0, false, ProtocolAction.None, "", "");
+        uint256 rewards =
+            liquidationRewardsManager.getLiquidationRewards(3, 0, false, IUsdnProtocolTypes.ProtocolAction.None, "", "");
         assertEq(rewards, 4_864_500_000_000_000, "The wrong amount of rewards was given");
         assertGt(
             rewards,
-            liquidationRewardsManager.getLiquidationRewards(1, 0, false, ProtocolAction.None, "", ""),
+            liquidationRewardsManager.getLiquidationRewards(1, 0, false, IUsdnProtocolTypes.ProtocolAction.None, "", ""),
             "More rewards should be given if more ticks are liquidated"
         );
-        rewards = liquidationRewardsManager.getLiquidationRewards(3, 0, true, ProtocolAction.None, "", "");
+        rewards =
+            liquidationRewardsManager.getLiquidationRewards(3, 0, true, IUsdnProtocolTypes.ProtocolAction.None, "", "");
         assertEq(rewards, 5_554_500_000_000_000, "with rebase - expected rewards");
         assertGt(
             rewards,
-            liquidationRewardsManager.getLiquidationRewards(1, 0, true, ProtocolAction.None, "", ""),
+            liquidationRewardsManager.getLiquidationRewards(1, 0, true, IUsdnProtocolTypes.ProtocolAction.None, "", ""),
             "with rebase - greater than fewer ticks"
         );
     }
@@ -89,10 +97,12 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
     function test_getLiquidationRewardsWithOracleGasPrice() public {
         mockChainlinkOnChain.setLatestRoundData(1, 15 gwei, block.timestamp, 1);
 
-        uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, false, ProtocolAction.None, "", "");
+        uint256 rewards =
+            liquidationRewardsManager.getLiquidationRewards(1, 0, false, IUsdnProtocolTypes.ProtocolAction.None, "", "");
         assertEq(rewards, 1_397_250_000_000_000, "without rebase");
 
-        rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, true, ProtocolAction.None, "", "");
+        rewards =
+            liquidationRewardsManager.getLiquidationRewards(1, 0, true, IUsdnProtocolTypes.ProtocolAction.None, "", "");
         assertEq(rewards, 1_742_250_000_000_000, "with rebase");
     }
 
@@ -108,10 +118,12 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
     function test_getLiquidationRewardsWithTxGasPrice() public {
         vm.txGasPrice(20 gwei);
 
-        uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, false, ProtocolAction.None, "", "");
+        uint256 rewards =
+            liquidationRewardsManager.getLiquidationRewards(1, 0, false, IUsdnProtocolTypes.ProtocolAction.None, "", "");
         assertEq(rewards, 1_863_000_000_000_000, "without rebase");
 
-        rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, true, ProtocolAction.None, "", "");
+        rewards =
+            liquidationRewardsManager.getLiquidationRewards(1, 0, true, IUsdnProtocolTypes.ProtocolAction.None, "", "");
         assertEq(rewards, 2_323_000_000_000_000, "with rebase");
     }
 
@@ -128,10 +140,12 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
         vm.txGasPrice(1001 gwei);
         mockChainlinkOnChain.setLatestRoundData(1, 2000 gwei, block.timestamp, 1);
 
-        uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, false, ProtocolAction.None, "", "");
+        uint256 rewards =
+            liquidationRewardsManager.getLiquidationRewards(1, 0, false, IUsdnProtocolTypes.ProtocolAction.None, "", "");
         assertEq(rewards, 93_150_000_000_000_000, "without rebase");
 
-        rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, true, ProtocolAction.None, "", "");
+        rewards =
+            liquidationRewardsManager.getLiquidationRewards(1, 0, true, IUsdnProtocolTypes.ProtocolAction.None, "", "");
         assertEq(rewards, 116_150_000_000_000_000, "with rebase");
     }
 
@@ -148,10 +162,12 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
         vm.txGasPrice(2000 gwei);
         mockChainlinkOnChain.setLatestRoundData(1, 1001 gwei, block.timestamp, 1);
 
-        uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, false, ProtocolAction.None, "", "");
+        uint256 rewards =
+            liquidationRewardsManager.getLiquidationRewards(1, 0, false, IUsdnProtocolTypes.ProtocolAction.None, "", "");
         assertEq(rewards, 93_150_000_000_000_000, "without rebase");
 
-        rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, true, ProtocolAction.None, "", "");
+        rewards =
+            liquidationRewardsManager.getLiquidationRewards(1, 0, true, IUsdnProtocolTypes.ProtocolAction.None, "", "");
         assertEq(rewards, 116_150_000_000_000_000, "with rebase");
     }
 
@@ -163,10 +179,12 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
     function test_getLiquidationRewardsWithOracleGasPriceFeedBroken() public {
         mockChainlinkOnChain.toggleRevert();
 
-        uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, false, ProtocolAction.None, "", "");
+        uint256 rewards =
+            liquidationRewardsManager.getLiquidationRewards(1, 0, false, IUsdnProtocolTypes.ProtocolAction.None, "", "");
         assertEq(rewards, 0, "The function should return 0");
 
-        rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, true, ProtocolAction.None, "", "");
+        rewards =
+            liquidationRewardsManager.getLiquidationRewards(1, 0, true, IUsdnProtocolTypes.ProtocolAction.None, "", "");
         assertEq(rewards, 0, "with rebase");
     }
 
@@ -178,10 +196,12 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
     function test_getLiquidationRewardsWithOracleGasPriceTooOld() public {
         mockChainlinkOnChain.setLastPublishTime(0);
 
-        uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, false, ProtocolAction.None, "", "");
+        uint256 rewards =
+            liquidationRewardsManager.getLiquidationRewards(1, 0, false, IUsdnProtocolTypes.ProtocolAction.None, "", "");
         assertEq(rewards, 0, "The function should return 0");
 
-        rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, true, ProtocolAction.None, "", "");
+        rewards =
+            liquidationRewardsManager.getLiquidationRewards(1, 0, true, IUsdnProtocolTypes.ProtocolAction.None, "", "");
         assertEq(rewards, 0, "with rebase");
     }
 }
