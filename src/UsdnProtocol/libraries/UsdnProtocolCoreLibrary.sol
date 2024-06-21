@@ -718,7 +718,7 @@ library UsdnProtocolCoreLibrary {
     /**
      * @notice Remove a stuck pending action and perform the minimal amount of cleanup necessary
      * @dev This function should only be called by the owner of the protocol, it serves as an escape hatch if a
-     * pending action ever gets stuck due to somethingpublic reverting unexpectedly
+     * pending action ever gets stuck due to something reverting unexpectedly
      * The caller must wait at least 1 hour after the validation deadline to call this function. This is to give the
      * chance to normal users to validate the action if possible
      * @param s The storage of the protocol
