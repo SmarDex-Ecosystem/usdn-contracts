@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.0;
 
-import { PositionId } from "../UsdnProtocol/IUsdnProtocolTypes.sol";
-
 interface IRebalancerTypes {
     /**
      * @notice The deposit data of a user

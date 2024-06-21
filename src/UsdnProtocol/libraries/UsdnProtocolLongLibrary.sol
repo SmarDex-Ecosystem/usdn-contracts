@@ -201,6 +201,7 @@ library UsdnProtocolLongLibrary {
         int256 tempLongBalance;
         int256 tempVaultBalance;
         bool rebased;
+        bool rebalancerTriggered;
         bytes callbackResult;
     }
 
@@ -246,6 +247,7 @@ library UsdnProtocolLongLibrary {
                         liquidationEffects.newVaultBalance,
                         liquidationEffects.remainingCollateral
                     );
+                    data.rebalancerTriggered = true;
                 }
             }
 
@@ -260,6 +262,7 @@ library UsdnProtocolLongLibrary {
                     liquidationEffects.liquidatedTicks,
                     liquidationEffects.remainingCollateral,
                     data.rebased,
+                    data.rebalancerTriggered,
                     action,
                     data.callbackResult,
                     priceData
