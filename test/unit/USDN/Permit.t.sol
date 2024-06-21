@@ -2,8 +2,8 @@
 pragma solidity ^0.8.25;
 
 import { USER_1 } from "../../utils/Constants.sol";
-import { UsdnTokenFixture } from "./utils/Fixtures.sol";
 import { SigUtils } from "../../utils/SigUtils.sol";
+import { UsdnTokenFixture } from "./utils/Fixtures.sol";
 
 /**
  * @custom:feature The `permit` function of `USDN`

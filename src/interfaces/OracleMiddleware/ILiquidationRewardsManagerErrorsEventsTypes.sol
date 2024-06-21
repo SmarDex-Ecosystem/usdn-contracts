@@ -11,11 +11,17 @@ interface ILiquidationRewardsManagerErrorsEventsTypes {
      * @param gasUsedPerTick Gas used per tick to liquidate
      * @param otherGasUsed Gas used for the rest of the computation
      * @param rebaseGasUsed Gas used for the optional USDN rebase
+     * @param rebalancerGasUsed Gas used for the optional rebalancer trigger
      * @param gasPriceLimit Upper limit for the gas price
      * @param multiplierBps Multiplier for the liquidators
      */
     event RewardsParametersUpdated(
-        uint32 gasUsedPerTick, uint32 otherGasUsed, uint32 rebaseGasUsed, uint64 gasPriceLimit, uint32 multiplierBps
+        uint32 gasUsedPerTick,
+        uint32 otherGasUsed,
+        uint32 rebaseGasUsed,
+        uint32 rebalancerGasUsed,
+        uint64 gasPriceLimit,
+        uint32 multiplierBps
     );
 
     /* -------------------------------------------------------------------------- */
@@ -27,6 +33,7 @@ interface ILiquidationRewardsManagerErrorsEventsTypes {
      * @param gasUsedPerTick Gas used per tick to liquidate
      * @param otherGasUsed Gas used for the rest of the computation
      * @param rebaseGasUsed Gas used for the optional USDN rebase
+     * @param rebalancerGasUsed Gas used for the optional rebalancer trigger
      * @param gasPriceLimit Upper limit for the gas price
      * @param multiplierBps Multiplier basis points for the liquidator rewards
      */
@@ -34,6 +41,7 @@ interface ILiquidationRewardsManagerErrorsEventsTypes {
         uint32 gasUsedPerTick;
         uint32 otherGasUsed;
         uint32 rebaseGasUsed;
+        uint32 rebalancerGasUsed;
         uint64 gasPriceLimit;
         uint32 multiplierBps;
     }
@@ -59,6 +67,12 @@ interface ILiquidationRewardsManagerErrorsEventsTypes {
      * @param value The wanted value
      */
     error LiquidationRewardsManagerRebaseGasUsedTooHigh(uint256 value);
+
+    /**
+     * @notice Indicates that the rebalancerGasUsed parameter has been set to a value we consider too high
+     * @param value The wanted value
+     */
+    error LiquidationRewardsManagerRebalancerGasUsedTooHigh(uint256 value);
 
     /**
      * @notice Indicates that the gasPriceLimit parameter has been set to a value we consider too high

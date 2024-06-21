@@ -6,18 +6,13 @@ import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocolActions } from "../../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
-import { HugeUint } from "../../libraries/HugeUint.sol";
-import { TickMath } from "../../libraries/TickMath.sol";
-import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
-import { Storage } from "../UsdnProtocolStorage.sol";
-import { IUsdnProtocolEvents } from "./../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { IUsdnProtocolErrors } from "./../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
-import { UsdnProtocolLongLibrary as longLib } from "./UsdnProtocolLongLibrary.sol";
-import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
-import { UsdnProtocolActionsUtilsLibrary as actionsUtilsLib } from "./UsdnProtocolActionsUtilsLibrary.sol";
-import { UsdnProtocolConstantsLibrary as constantsLib } from "./UsdnProtocolConstantsLibrary.sol";
+import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import {
+    ClosePositionData,
+    InitiateClosePositionParams,
+    InitiateOpenPositionData,
+    InitiateOpenPositionParams,
     LongPendingAction,
     PendingAction,
     Position,
@@ -25,12 +20,17 @@ import {
     PreviousActionsData,
     ProtocolAction,
     TickData,
-    InitiateOpenPositionParams,
-    InitiateClosePositionParams,
-    InitiateOpenPositionData,
-    ValidateOpenPositionData,
-    ClosePositionData
+    ValidateOpenPositionData
 } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { HugeUint } from "../../libraries/HugeUint.sol";
+import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
+import { TickMath } from "../../libraries/TickMath.sol";
+import { Storage } from "../UsdnProtocolStorage.sol";
+import { UsdnProtocolActionsUtilsLibrary as actionsUtilsLib } from "./UsdnProtocolActionsUtilsLibrary.sol";
+import { UsdnProtocolActionsVaultLibrary as actionsVaultLib } from "./UsdnProtocolActionsVaultLibrary.sol";
+import { UsdnProtocolConstantsLibrary as constantsLib } from "./UsdnProtocolConstantsLibrary.sol";
+import { UsdnProtocolCoreLibrary as coreLib } from "./UsdnProtocolCoreLibrary.sol";
+import { UsdnProtocolLongLibrary as longLib } from "./UsdnProtocolLongLibrary.sol";
 
 library UsdnProtocolActionsLongLibrary {
     using SafeTransferLib for address;

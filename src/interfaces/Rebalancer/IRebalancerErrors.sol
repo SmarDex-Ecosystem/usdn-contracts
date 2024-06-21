@@ -20,9 +20,6 @@ interface IRebalancerErrors {
     /// @dev Indicates that the amount to deposit is insufficient
     error RebalancerInsufficientAmount();
 
-    /// @dev Indicates that the amount to withdraw is greater than the amount deposited
-    error RebalancerWithdrawAmountTooLarge();
-
     /// @dev Indicates that the provided max leverage is invalid
     error RebalancerInvalidMaxLeverage();
 
@@ -35,6 +32,9 @@ interface IRebalancerErrors {
     /// @dev Indicates that the caller is not authorized to perform the action
     error RebalancerUnauthorized();
 
+    /// @dev Indicates that the address could not accept the ether refund
+    error RebalancerEtherRefundFailed();
+
     /// @dev Indicates that the user still needs to validate their deposit or withdrawal
     error RebalancerActionNotValidated();
 
@@ -42,11 +42,14 @@ interface IRebalancerErrors {
     error RebalancerUserAlreadyPending();
 
     /// @dev Indicates that the user has no deposit or withdrawal that is pending validation
-    error RebalancerActionWasValidated();
+    error RebalancerNoPendingAction();
 
     /// @dev Indicates that the validation happened too early, user must wait `_timeLimits.validationDelay`
     error RebalancerValidateTooEarly();
 
     /// @dev Indicates that the validation happened too late, user must wait `_timeLimits.actionCooldown`
     error RebalancerActionCooldown();
+
+    /// @dev Indicates that the user can't initiate or validate a withdrawal at the moment
+    error RebalancerWithdrawalUnauthorized();
 }

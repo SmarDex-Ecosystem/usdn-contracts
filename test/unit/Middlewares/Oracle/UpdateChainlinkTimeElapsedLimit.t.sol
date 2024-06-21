@@ -3,10 +3,10 @@ pragma solidity ^0.8.25;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-import { IOracleMiddlewareEvents } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareEvents.sol";
-
-import { OracleMiddlewareBaseFixture } from "../utils/Fixtures.sol";
 import { USER_1 } from "../../../utils/Constants.sol";
+import { OracleMiddlewareBaseFixture } from "../utils/Fixtures.sol";
+
+import { IOracleMiddlewareEvents } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareEvents.sol";
 
 /**
  * @custom:feature The `getChainlinkTimeElapsedLimit` and `updateChainlinkTimeElapsedLimit` functions of

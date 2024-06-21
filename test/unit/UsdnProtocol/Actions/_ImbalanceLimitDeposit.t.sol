@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
+import { ADMIN, DEPLOYER, USER_1 } from "../../../utils/Constants.sol";
+import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
+
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import {
-    PreviousActionsData,
     PositionId,
+    PreviousActionsData,
     ProtocolAction
 } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
-import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
-import { ADMIN, DEPLOYER, USER_1 } from "../../../utils/Constants.sol";
 
 /**
  * @custom:feature Test of the protocol expo limit for `_checkImbalanceLimitDeposit` function in balanced state

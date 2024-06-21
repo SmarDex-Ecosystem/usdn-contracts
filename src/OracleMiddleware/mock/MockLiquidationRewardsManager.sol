@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.25;
 
-import { ChainlinkPriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IWstETH } from "../../interfaces/IWstETH.sol";
+import { ChainlinkPriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { LiquidationRewardsManager } from "../LiquidationRewardsManager.sol";
 import { ChainlinkOracle } from "../oracles/ChainlinkOracle.sol";
 

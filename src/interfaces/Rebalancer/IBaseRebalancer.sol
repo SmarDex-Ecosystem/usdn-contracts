@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.0;
 
-import { IRebalancerTypes } from "./IRebalancerTypes.sol";
 import { PositionId } from "../UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IRebalancerTypes } from "./IRebalancerTypes.sol";
 
 interface IBaseRebalancer {
     /**
      * @notice Returns the necessary data for the USDN protocol to update the position
-     * @return pendingAssets_ The amount of assets pending
+     * @return pendingAssets_ The amount of assets that are pending inclusion in the protocol
      * @return maxLeverage_ The max leverage of the rebalancer
      * @return currentPosId_ The ID of the current position (tick == NO_POSITION_TICK if no position)
      */
