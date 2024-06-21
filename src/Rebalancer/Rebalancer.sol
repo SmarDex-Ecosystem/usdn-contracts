@@ -229,6 +229,15 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
     /// @inheritdoc IRebalancer
     function initiateDepositAssets(uint88 amount, address to) external {
+        /* authorized previous states:
+        - not in rebalancer
+            - amount = 0
+            - initiateTimestamp = 0
+            - entryPositionVersion = 0
+        - included in a liquidated position
+            - amount > 0
+            - 0 < entryPositionVersion <= _lastLiquidatedVersion
+        */
         if (to == address(0)) {
             revert RebalancerInvalidAddressTo();
         }
@@ -236,24 +245,16 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
             revert RebalancerInsufficientAmount();
         }
 
-        uint128 positionVersion = _positionVersion;
         UserDeposit memory depositData = _userDeposit[to];
-        if (depositData.entryPositionVersion > 0) {
-            // The user already performed a deposit previously
-            if (depositData.entryPositionVersion <= _lastLiquidatedVersion) {
-                // if the user was in a position that got liquidated, we should reset its data
-                delete depositData;
-            } else if (depositData.entryPositionVersion <= positionVersion) {
-                // if the user already deposited assets that are in a position, revert
-                revert RebalancerUserInPosition();
-            } else {
-                // in this case, we know that the user already has a pending deposit
-                revert RebalancerUserAlreadyPending();
-            }
-        }
-        if (depositData.initiateTimestamp > 0) {
-            // user needs to validate their deposit or withdrawal
-            revert RebalancerActionNotValidated();
+
+        if (depositData.entryPositionVersion > _lastLiquidatedVersion) {
+            revert RebalancerDepositUnauthorized();
+        } else if (depositData.entryPositionVersion > 0) {
+            // if the user was in a position that got liquidated, we should reset the deposit data
+            delete depositData;
+        } else if (depositData.initiateTimestamp > 0 || depositData.amount > 0) {
+            // user is already in the rebalancer
+            revert RebalancerDepositUnauthorized();
         }
 
         depositData.amount = amount;
@@ -267,40 +268,51 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
     /// @inheritdoc IRebalancer
     function validateDepositAssets() external {
-        uint128 positionVersion = _positionVersion;
+        /* authorized previous states:
+        - initiated deposit (pending)
+            - amount > 0
+            - entryPositionVersion == 0
+            - initiateTimestamp > 0
+            - timestamp is between initiateTimestamp + delay and initiateTimestamp + deadline
+
+        amount is always > 0 if initiateTimestamp > 0
+        */
         UserDeposit memory depositData = _userDeposit[msg.sender];
 
         if (depositData.initiateTimestamp == 0) {
             // user has no action that must be validated
             revert RebalancerNoPendingAction();
-        }
-        if (depositData.entryPositionVersion > 0) {
-            // user has a withdrawal that must be validated
-            revert RebalancerActionNotValidated();
+        } else if (depositData.entryPositionVersion > 0) {
+            revert RebalancerDepositUnauthorized();
         }
 
         _checkValidationTime(depositData.initiateTimestamp);
 
-        depositData.entryPositionVersion = positionVersion + 1;
+        depositData.entryPositionVersion = _positionVersion + 1;
         depositData.initiateTimestamp = 0;
         _userDeposit[msg.sender] = depositData;
         _pendingAssetsAmount += depositData.amount;
 
-        emit AssetsDeposited(msg.sender, depositData.amount, positionVersion + 1);
+        emit AssetsDeposited(msg.sender, depositData.amount, depositData.entryPositionVersion);
     }
 
     /// @inheritdoc IRebalancer
     function resetDepositAssets() external {
+        /* authorized previous states:
+        - deposit cooldown elapsed
+            - entryPositionVersion == 0
+            - initiateTimestamp > 0
+            - cooldown elapsed
+        */
         UserDeposit memory depositData = _userDeposit[msg.sender];
+
         if (depositData.initiateTimestamp == 0) {
-            // user has no action that must be validated
+            // user has not initiated a deposit
             revert RebalancerNoPendingAction();
-        }
-        if (depositData.entryPositionVersion > 0) {
+        } else if (depositData.entryPositionVersion > 0) {
             // user has a withdrawal that must be validated
             revert RebalancerActionNotValidated();
-        }
-        if (block.timestamp < depositData.initiateTimestamp + _timeLimits.actionCooldown) {
+        } else if (block.timestamp < depositData.initiateTimestamp + _timeLimits.actionCooldown) {
             // user must wait until the cooldown has elapsed, then call this function to withdraw the funds
             revert RebalancerActionCooldown();
         }

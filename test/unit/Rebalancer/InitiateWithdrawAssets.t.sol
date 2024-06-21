@@ -70,6 +70,24 @@ contract TestRebalancerInitiateWithdrawAssets is RebalancerFixture {
     }
 
     /**
+     * @custom:scenario The user initiates a withdrawal before the cooldown has elapsed
+     * @custom:given The user waited more than the deadline but less than the cooldown
+     * @custom:when The user initiates a withdrawal of their unincluded assets
+     * @custom:then The call reverts with {RebalancerActionCooldown}
+     */
+    function test_RevertWhen_initiateWithdrawalTooSoon() public {
+        rebalancer.initiateWithdrawAssets();
+        skip(rebalancer.getTimeLimits().actionCooldown);
+
+        rebalancer.initiateWithdrawAssets();
+
+        skip(rebalancer.getTimeLimits().validationDeadline);
+
+        vm.expectRevert(RebalancerActionCooldown.selector);
+        rebalancer.initiateWithdrawAssets();
+    }
+
+    /**
      * @custom:scenario The user initiates a withdrawal but they don't have any funds in the rebalancer
      * @custom:given The user has no active or liquidated position or unincluded assets in the rebalancer
      * @custom:when The user initiates a withdrawal of their unincluded assets
