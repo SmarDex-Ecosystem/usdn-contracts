@@ -7,7 +7,7 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol
 import { IEventsErrors } from "../../../utils/IEventsErrors.sol";
 
 import { IOwnershipCallback } from "../../../../src/interfaces/UsdnProtocol/IOwnershipCallback.sol";
-import { PositionId } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /// @dev Mock handler for ownership transfer
 contract OwnershipCallbackHandler is ERC165, IOwnershipCallback, IEventsErrors {
@@ -17,7 +17,7 @@ contract OwnershipCallbackHandler is ERC165, IOwnershipCallback, IEventsErrors {
         return interfaceId == type(IOwnershipCallback).interfaceId || super.supportsInterface(interfaceId);
     }
 
-    function ownershipCallback(address oldOwner, PositionId calldata posId) external {
+    function ownershipCallback(address oldOwner, IUsdnProtocolTypes.PositionId calldata posId) external {
         if (shouldFail) {
             revert OwnershipCallbackFailure();
         }

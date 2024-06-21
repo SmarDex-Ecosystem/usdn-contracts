@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { ProtocolAction } from "../UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @notice This interface exposes the only function used by the UsdnProtocol
@@ -24,7 +24,7 @@ interface IBaseLiquidationRewardsManager {
         uint16 tickAmount,
         int256 remainingCollateral,
         bool rebased,
-        ProtocolAction action,
+        IUsdnProtocolTypes.ProtocolAction action,
         bytes calldata rebaseCallbackResult,
         bytes calldata priceData
     ) external view returns (uint256 assetRewards_);

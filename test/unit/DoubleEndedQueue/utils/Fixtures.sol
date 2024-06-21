@@ -4,7 +4,7 @@ pragma solidity ^0.8.25;
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { DequeHandler } from "./Handler.sol";
 
-import { PendingAction } from "../../../../src/libraries/DoubleEndedQueue.sol";
+import { IUsdnProtocolTypes } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title DequeFixture
@@ -24,7 +24,11 @@ contract DequeFixture is BaseFixture {
      * @param b Second `PendingAction`
      * @param err Assert message prefix
      */
-    function _assertActionsEqual(PendingAction memory a, PendingAction memory b, string memory err) internal {
+    function _assertActionsEqual(
+        IUsdnProtocolTypes.PendingAction memory a,
+        IUsdnProtocolTypes.PendingAction memory b,
+        string memory err
+    ) internal {
         assertTrue(a.action == b.action, string.concat(err, " - action type"));
         assertEq(a.timestamp, b.timestamp, string.concat(err, " - action timestamp"));
         assertEq(a.to, b.to, string.concat(err, " - action to"));

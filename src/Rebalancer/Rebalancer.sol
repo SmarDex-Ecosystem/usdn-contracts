@@ -14,7 +14,7 @@ import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IRebalancer } from "../interfaces/Rebalancer/IRebalancer.sol";
 import { IOwnershipCallback } from "../interfaces/UsdnProtocol/IOwnershipCallback.sol";
 import { IUsdnProtocol } from "../interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import { Position, PositionId, PreviousActionsData } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title Rebalancer
@@ -43,7 +43,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         PositionData currentPositionData;
         uint256 amountToCloseWithoutBonus;
         uint256 amountToClose;
-        Position protocolPosition;
+        IUsdnProtocolTypes.Position protocolPosition;
     }
 
     /// @notice Modifier to check if the caller is the USDN protocol or the owner
@@ -138,7 +138,8 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         asset.forceApprove(address(usdnProtocol), type(uint256).max);
 
         // indicate that there are no position for version 0
-        _positionData[0].id = PositionId({ tick: usdnProtocol.NO_POSITION_TICK(), tickVersion: 0, index: 0 });
+        _positionData[0].id =
+            IUsdnProtocolTypes.PositionId({ tick: usdnProtocol.NO_POSITION_TICK(), tickVersion: 0, index: 0 });
     }
 
     /// @notice To allow this contract to receive ether refunded by the USDN protocol
@@ -177,7 +178,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     function getCurrentStateData()
         external
         view
-        returns (uint128 pendingAssets_, uint256 maxLeverage_, PositionId memory currentPosId_)
+        returns (uint128 pendingAssets_, uint256 maxLeverage_, IUsdnProtocolTypes.PositionId memory currentPosId_)
     {
         return (_pendingAssetsAmount, _maxLeverage, _positionData[_positionVersion].id);
     }
@@ -399,7 +400,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         address to,
         address payable validator,
         bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData
+        IUsdnProtocolTypes.PreviousActionsData calldata previousActionsData
     ) external payable nonReentrant returns (bool success_) {
         if (amount == 0) {
             revert RebalancerInvalidAmount();
@@ -464,7 +465,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
             if (data.currentPositionData.amount == 0) {
                 _positionData[data.positionVersion].id =
-                    PositionId({ tick: _usdnProtocol.NO_POSITION_TICK(), tickVersion: 0, index: 0 });
+                    IUsdnProtocolTypes.PositionId({ tick: _usdnProtocol.NO_POSITION_TICK(), tickVersion: 0, index: 0 });
                 _positionData[data.positionVersion].amount = data.currentPositionData.amount;
             } else {
                 _positionData[data.positionVersion].amount = data.currentPositionData.amount;
@@ -493,7 +494,10 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     }
 
     /// @inheritdoc IBaseRebalancer
-    function updatePosition(PositionId calldata newPosId, uint128 previousPosValue) external onlyProtocol {
+    function updatePosition(IUsdnProtocolTypes.PositionId calldata newPosId, uint128 previousPosValue)
+        external
+        onlyProtocol
+    {
         uint128 positionVersion = _positionVersion;
         PositionData memory previousPositionData = _positionData[positionVersion];
         // set the multiplier accumulator to 1 by default
@@ -589,7 +593,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     }
 
     /// @inheritdoc IOwnershipCallback
-    function ownershipCallback(address, PositionId calldata) external pure {
+    function ownershipCallback(address, IUsdnProtocolTypes.PositionId calldata) external pure {
         revert RebalancerUnauthorized(); // first version of the rebalancer contract so we are always reverting
     }
 

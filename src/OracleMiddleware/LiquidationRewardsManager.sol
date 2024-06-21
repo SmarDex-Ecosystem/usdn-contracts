@@ -8,7 +8,7 @@ import { IWstETH } from "../interfaces/IWstETH.sol";
 import { IBaseLiquidationRewardsManager } from "../interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
 import { ILiquidationRewardsManager } from "../interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { ChainlinkPriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { ProtocolAction } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { ChainlinkOracle } from "./oracles/ChainlinkOracle.sol";
 
 /**
@@ -63,14 +63,14 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
 
     /**
      * @inheritdoc IBaseLiquidationRewardsManager
-     * @dev In the current implementation, the `int256 remainingCollateral`, `ProtocolAction action`,
+     * @dev In the current implementation, the `int256 remainingCollateral`, `IUsdnProtocolTypes.ProtocolAction action`,
      * `bytes calldata rebaseCallbackResult` and `bytes calldata priceData` parameters are not used
      */
     function getLiquidationRewards(
         uint16 tickAmount,
         int256,
         bool rebased,
-        ProtocolAction,
+        IUsdnProtocolTypes.ProtocolAction,
         bytes calldata,
         bytes calldata
     ) external view returns (uint256 wstETHRewards_) {

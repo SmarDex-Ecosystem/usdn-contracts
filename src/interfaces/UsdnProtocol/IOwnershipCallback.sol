@@ -3,7 +3,7 @@ pragma solidity >=0.8.0;
 
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
-import { PositionId } from "./IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "./IUsdnProtocolTypes.sol";
 
 /**
  * @notice This interface can be implemented by contracts that wish to be notified when they become owner of a USDN
@@ -16,5 +16,5 @@ interface IOwnershipCallback is IERC165 {
      * @param oldOwner The previous owner of the position
      * @param posId The unique position identifier
      */
-    function ownershipCallback(address oldOwner, PositionId calldata posId) external;
+    function ownershipCallback(address oldOwner, IUsdnProtocolTypes.PositionId calldata posId) external;
 }

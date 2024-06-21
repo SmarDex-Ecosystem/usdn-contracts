@@ -10,7 +10,7 @@ import { IBaseRebalancer } from "../Rebalancer/IBaseRebalancer.sol";
 import { IUsdn } from "../Usdn/IUsdn.sol";
 import { IUsdnProtocolErrors } from "./IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "./IUsdnProtocolEvents.sol";
-import { PendingAction, Position, TickData } from "./IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "./IUsdnProtocolTypes.sol";
 
 /**
  * @title IUsdnProtocolStorage
@@ -378,7 +378,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * @param index The index in the queue
      * @return The pending action
      */
-    function getPendingActionAt(uint256 index) external view returns (PendingAction memory);
+    function getPendingActionAt(uint256 index) external view returns (IUsdnProtocolTypes.PendingAction memory);
 
     /**
      * @notice Get the amount of assets backing the USDN token
@@ -434,7 +434,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * @param tick The tick number
      * @return The tick data
      */
-    function getTickData(int24 tick) external view returns (TickData memory);
+    function getTickData(int24 tick) external view returns (IUsdnProtocolTypes.TickData memory);
 
     /**
      * @notice Get the long position at the provided tick, in the provided index
@@ -442,7 +442,10 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * @param index The position index
      * @return The long position
      */
-    function getCurrentLongPosition(int24 tick, uint256 index) external view returns (Position memory);
+    function getCurrentLongPosition(int24 tick, uint256 index)
+        external
+        view
+        returns (IUsdnProtocolTypes.Position memory);
 
     /**
      * @notice Get the highest tick that has an open position

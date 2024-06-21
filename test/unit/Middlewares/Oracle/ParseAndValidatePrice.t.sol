@@ -87,7 +87,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
         mockChainlinkOnChain.setLatestRoundData(1, mockedChainlinkPrice, TARGET_TIMESTAMP, 1);
 
         for (uint256 i; i < actions.length; i++) {
-            ProtocolAction action = actions[i];
+            IUsdnProtocolTypes.ProtocolAction action = actions[i];
             string memory errorMessage =
                 string.concat("Wrong oracle middleware price for action: ", uint256(action).toString());
 
@@ -123,7 +123,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
      */
     function test_parseAndValidatePriceWithRedstoneForAllActions() public {
         for (uint256 i; i < actions.length; i++) {
-            ProtocolAction action = actions[i];
+            IUsdnProtocolTypes.ProtocolAction action = actions[i];
             string memory errorMessage =
                 string.concat("Wrong oracle middleware price for action: ", uint256(action).toString());
 
@@ -685,7 +685,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
         uint256 validationDelay = oracleMiddleware.getValidationDelay();
 
         for (uint256 i; i < actions.length; i++) {
-            ProtocolAction action = actions[i];
+            IUsdnProtocolTypes.ProtocolAction action = actions[i];
             uint256 validationCost = oracleMiddleware.validationCost(REDSTONE_ETH_DATA, action);
 
             vm.expectRevert(OracleMiddlewareRedstoneSafeguard.selector);
@@ -709,7 +709,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
         uint256 validationDelay = oracleMiddleware.getValidationDelay();
 
         for (uint256 i; i < actions.length; i++) {
-            ProtocolAction action = actions[i];
+            IUsdnProtocolTypes.ProtocolAction action = actions[i];
             uint256 validationCost = oracleMiddleware.validationCost(REDSTONE_ETH_DATA, action);
 
             vm.expectRevert(OracleMiddlewareRedstoneSafeguard.selector);
@@ -730,7 +730,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
         uint256 validationDelay = oracleMiddleware.getValidationDelay();
 
         for (uint256 i; i < actions.length; i++) {
-            ProtocolAction action = actions[i];
+            IUsdnProtocolTypes.ProtocolAction action = actions[i];
             uint256 validationCost = oracleMiddleware.validationCost(REDSTONE_ETH_DATA, action);
 
             vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, 0));

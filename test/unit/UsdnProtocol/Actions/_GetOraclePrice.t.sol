@@ -27,7 +27,7 @@ contract TestUsdnProtocolActionsGetOraclePrice is UsdnProtocolBaseFixture {
      */
     function test_getOraclePrice() public {
         for (uint8 i = 0; i <= uint8(type(ProtocolAction).max); i++) {
-            ProtocolAction action = ProtocolAction(i);
+            IUsdnProtocolTypes.ProtocolAction action = ProtocolAction(i);
             uint128 currentPrice = 2000 ether;
             bytes memory priceData = abi.encode(currentPrice);
             uint256 fee = oracleMiddleware.validationCost(priceData, action);
@@ -50,7 +50,7 @@ contract TestUsdnProtocolActionsGetOraclePrice is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_getOraclePriceInsufficientFee() public {
         for (uint8 i = 0; i <= uint8(type(ProtocolAction).max); i++) {
-            ProtocolAction action = ProtocolAction(i);
+            IUsdnProtocolTypes.ProtocolAction action = ProtocolAction(i);
             uint128 currentPrice = 2000 ether;
             bytes memory priceData = abi.encode(currentPrice);
             vm.expectRevert(UsdnProtocolInsufficientOracleFee.selector);

@@ -9,18 +9,7 @@ import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTy
 import { IUsdnProtocolActions } from "../../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import {
-    DepositPendingAction,
-    InitiateDepositData,
-    LongPendingAction,
-    PendingAction,
-    Position,
-    PositionId,
-    PreviousActionsData,
-    ProtocolAction,
-    WithdrawalData,
-    WithdrawalPendingAction
-} from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { HugeUint } from "../../libraries/HugeUint.sol";
 import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
@@ -53,7 +42,7 @@ library UsdnProtocolActionsVaultLibrary {
         address payable validator,
         Permit2TokenBitfield.Bitfield permit2TokenBitfield,
         bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData
+        IUsdnProtocolTypes.PreviousActionsData calldata previousActionsData
     ) public returns (bool success_) {
         uint64 securityDepositValue = s._securityDepositValue;
         if (msg.value < securityDepositValue) {
@@ -81,7 +70,7 @@ library UsdnProtocolActionsVaultLibrary {
         Storage storage s,
         address payable validator,
         bytes calldata depositPriceData,
-        PreviousActionsData calldata previousActionsData
+        IUsdnProtocolTypes.PreviousActionsData calldata previousActionsData
     ) public returns (bool success_) {
         uint256 balanceBefore = address(this).balance;
 
@@ -109,7 +98,7 @@ library UsdnProtocolActionsVaultLibrary {
         address to,
         address payable validator,
         bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData
+        IUsdnProtocolTypes.PreviousActionsData calldata previousActionsData
     ) public returns (bool success_) {
         uint64 securityDepositValue = s._securityDepositValue;
         if (msg.value < securityDepositValue) {
@@ -137,7 +126,7 @@ library UsdnProtocolActionsVaultLibrary {
         Storage storage s,
         address payable validator,
         bytes calldata withdrawalPriceData,
-        PreviousActionsData calldata previousActionsData
+        IUsdnProtocolTypes.PreviousActionsData calldata previousActionsData
     ) public returns (bool success_) {
         uint256 balanceBefore = address(this).balance;
 
@@ -243,10 +232,10 @@ library UsdnProtocolActionsVaultLibrary {
         address validator,
         uint128 amount,
         bytes calldata currentPriceData
-    ) public returns (InitiateDepositData memory data_) {
+    ) public returns (IUsdnProtocolTypes.InitiateDepositData memory data_) {
         PriceInfo memory currentPrice = _getOraclePrice(
             s,
-            ProtocolAction.InitiateDeposit,
+            IUsdnProtocolTypes.ProtocolAction.InitiateDeposit,
             block.timestamp,
             actionsUtilsLib._calcActionId(validator, uint128(block.timestamp)),
             currentPriceData
@@ -258,7 +247,7 @@ library UsdnProtocolActionsVaultLibrary {
             currentPrice.timestamp,
             s._liquidationIteration,
             false,
-            ProtocolAction.InitiateDeposit,
+            IUsdnProtocolTypes.ProtocolAction.InitiateDeposit,
             currentPriceData
         );
 
@@ -311,10 +300,10 @@ library UsdnProtocolActionsVaultLibrary {
         address validator,
         uint64 securityDepositValue,
         uint128 amount,
-        InitiateDepositData memory data
+        IUsdnProtocolTypes.InitiateDepositData memory data
     ) public returns (uint256 amountToRefund_) {
-        DepositPendingAction memory pendingAction = DepositPendingAction({
-            action: ProtocolAction.ValidateDeposit,
+        IUsdnProtocolTypes.DepositPendingAction memory pendingAction = IUsdnProtocolTypes.DepositPendingAction({
+            action: IUsdnProtocolTypes.ProtocolAction.ValidateDeposit,
             timestamp: uint40(block.timestamp),
             to: to,
             validator: validator,
@@ -369,7 +358,8 @@ library UsdnProtocolActionsVaultLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolZeroAmount();
         }
 
-        InitiateDepositData memory data = _prepareInitiateDepositData(s, validator, amount, currentPriceData);
+        IUsdnProtocolTypes.InitiateDepositData memory data =
+            _prepareInitiateDepositData(s, validator, amount, currentPriceData);
 
         // early return in case there are still pending liquidations
         if (data.isLiquidationPending) {
@@ -412,10 +402,11 @@ library UsdnProtocolActionsVaultLibrary {
         public
         returns (uint256 securityDepositValue_, bool isValidated_)
     {
-        (PendingAction memory pending, uint128 rawIndex) = coreLib._getPendingActionOrRevert(s, validator);
+        (IUsdnProtocolTypes.PendingAction memory pending, uint128 rawIndex) =
+            coreLib._getPendingActionOrRevert(s, validator);
 
         // check type of action
-        if (pending.action != ProtocolAction.ValidateDeposit) {
+        if (pending.action != IUsdnProtocolTypes.ProtocolAction.ValidateDeposit) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction();
         }
         // sanity check
@@ -438,15 +429,16 @@ library UsdnProtocolActionsVaultLibrary {
      * @param priceData The current price data
      * @return isValidated_ Whether the action is validated
      */
-    function _validateDepositWithAction(Storage storage s, PendingAction memory pending, bytes calldata priceData)
-        public
-        returns (bool isValidated_)
-    {
-        DepositPendingAction memory deposit = coreLib._toDepositPendingAction(pending);
+    function _validateDepositWithAction(
+        Storage storage s,
+        IUsdnProtocolTypes.PendingAction memory pending,
+        bytes calldata priceData
+    ) public returns (bool isValidated_) {
+        IUsdnProtocolTypes.DepositPendingAction memory deposit = coreLib._toDepositPendingAction(pending);
 
         PriceInfo memory currentPrice = _getOraclePrice(
             s,
-            ProtocolAction.ValidateDeposit,
+            IUsdnProtocolTypes.ProtocolAction.ValidateDeposit,
             deposit.timestamp,
             actionsUtilsLib._calcActionId(deposit.validator, deposit.timestamp),
             priceData
@@ -460,7 +452,7 @@ library UsdnProtocolActionsVaultLibrary {
                 currentPrice.timestamp,
                 s._liquidationIteration,
                 false,
-                ProtocolAction.ValidateDeposit,
+                IUsdnProtocolTypes.ProtocolAction.ValidateDeposit,
                 priceData
             );
 
@@ -523,10 +515,10 @@ library UsdnProtocolActionsVaultLibrary {
         address validator,
         uint152 usdnShares,
         bytes calldata currentPriceData
-    ) public returns (WithdrawalData memory data_) {
+    ) public returns (IUsdnProtocolTypes.WithdrawalData memory data_) {
         PriceInfo memory currentPrice = _getOraclePrice(
             s,
-            ProtocolAction.InitiateWithdrawal,
+            IUsdnProtocolTypes.ProtocolAction.InitiateWithdrawal,
             block.timestamp,
             actionsUtilsLib._calcActionId(validator, uint128(block.timestamp)),
             currentPriceData
@@ -538,7 +530,7 @@ library UsdnProtocolActionsVaultLibrary {
             currentPrice.timestamp,
             s._liquidationIteration,
             false,
-            ProtocolAction.InitiateWithdrawal,
+            IUsdnProtocolTypes.ProtocolAction.InitiateWithdrawal,
             currentPriceData
         );
 
@@ -578,11 +570,11 @@ library UsdnProtocolActionsVaultLibrary {
         address validator,
         uint152 usdnShares,
         uint64 securityDepositValue,
-        WithdrawalData memory data
+        IUsdnProtocolTypes.WithdrawalData memory data
     ) public returns (uint256 amountToRefund_) {
-        PendingAction memory action = coreLib._convertWithdrawalPendingAction(
-            WithdrawalPendingAction({
-                action: ProtocolAction.ValidateWithdrawal,
+        IUsdnProtocolTypes.PendingAction memory action = coreLib._convertWithdrawalPendingAction(
+            IUsdnProtocolTypes.WithdrawalPendingAction({
+                action: IUsdnProtocolTypes.ProtocolAction.ValidateWithdrawal,
                 timestamp: uint40(block.timestamp),
                 to: to,
                 validator: validator,
@@ -610,7 +602,7 @@ library UsdnProtocolActionsVaultLibrary {
      */
     function _getOraclePrice(
         Storage storage s,
-        ProtocolAction action,
+        IUsdnProtocolTypes.ProtocolAction action,
         uint256 timestamp,
         bytes32 actionId,
         bytes calldata priceData
@@ -661,7 +653,8 @@ library UsdnProtocolActionsVaultLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolZeroAmount();
         }
 
-        WithdrawalData memory data = _prepareWithdrawalData(s, validator, usdnShares, currentPriceData);
+        IUsdnProtocolTypes.WithdrawalData memory data =
+            _prepareWithdrawalData(s, validator, usdnShares, currentPriceData);
 
         if (data.isLiquidationPending) {
             return (securityDepositValue, false);
@@ -691,10 +684,11 @@ library UsdnProtocolActionsVaultLibrary {
         public
         returns (uint256 securityDepositValue_, bool isValidated_)
     {
-        (PendingAction memory pending, uint128 rawIndex) = coreLib._getPendingActionOrRevert(s, validator);
+        (IUsdnProtocolTypes.PendingAction memory pending, uint128 rawIndex) =
+            coreLib._getPendingActionOrRevert(s, validator);
 
         // check type of action
-        if (pending.action != ProtocolAction.ValidateWithdrawal) {
+        if (pending.action != IUsdnProtocolTypes.ProtocolAction.ValidateWithdrawal) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction();
         }
         // sanity check
@@ -717,15 +711,16 @@ library UsdnProtocolActionsVaultLibrary {
      * @param priceData The current price data
      * @return isValidated_ Whether the action is validated
      */
-    function _validateWithdrawalWithAction(Storage storage s, PendingAction memory pending, bytes calldata priceData)
-        public
-        returns (bool isValidated_)
-    {
-        WithdrawalPendingAction memory withdrawal = coreLib._toWithdrawalPendingAction(pending);
+    function _validateWithdrawalWithAction(
+        Storage storage s,
+        IUsdnProtocolTypes.PendingAction memory pending,
+        bytes calldata priceData
+    ) public returns (bool isValidated_) {
+        IUsdnProtocolTypes.WithdrawalPendingAction memory withdrawal = coreLib._toWithdrawalPendingAction(pending);
 
         PriceInfo memory currentPrice = _getOraclePrice(
             s,
-            ProtocolAction.ValidateWithdrawal,
+            IUsdnProtocolTypes.ProtocolAction.ValidateWithdrawal,
             withdrawal.timestamp,
             actionsUtilsLib._calcActionId(withdrawal.validator, withdrawal.timestamp),
             priceData
@@ -737,7 +732,7 @@ library UsdnProtocolActionsVaultLibrary {
             currentPrice.timestamp,
             s._liquidationIteration,
             false,
-            ProtocolAction.ValidateWithdrawal,
+            IUsdnProtocolTypes.ProtocolAction.ValidateWithdrawal,
             priceData
         );
 
@@ -801,7 +796,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @param data The price data and raw indices
      * @return securityDepositValue_ The security deposit value of the executed action
      */
-    function _executePendingActionOrRevert(Storage storage s, PreviousActionsData calldata data)
+    function _executePendingActionOrRevert(Storage storage s, IUsdnProtocolTypes.PreviousActionsData calldata data)
         public
         returns (uint256 securityDepositValue_)
     {
@@ -821,12 +816,12 @@ library UsdnProtocolActionsVaultLibrary {
      * @return liquidated_ Whether the position corresponding to the pending action was liquidated
      * @return securityDepositValue_ The security deposit value of the executed action
      */
-    function _executePendingAction(Storage storage s, PreviousActionsData calldata data)
+    function _executePendingAction(Storage storage s, IUsdnProtocolTypes.PreviousActionsData calldata data)
         public
         returns (bool success_, bool executed_, bool liquidated_, uint256 securityDepositValue_)
     {
-        (PendingAction memory pending, uint128 rawIndex) = coreLib._getActionablePendingAction(s);
-        if (pending.action == ProtocolAction.None) {
+        (IUsdnProtocolTypes.PendingAction memory pending, uint128 rawIndex) = coreLib._getActionablePendingAction(s);
+        if (pending.action == IUsdnProtocolTypes.ProtocolAction.None) {
             // no pending action
             return (true, false, false, 0);
         }
@@ -844,13 +839,13 @@ library UsdnProtocolActionsVaultLibrary {
         }
         bytes calldata priceData = data.priceData[offset];
         // for safety we consider that no pending action was validated by default
-        if (pending.action == ProtocolAction.ValidateDeposit) {
+        if (pending.action == IUsdnProtocolTypes.ProtocolAction.ValidateDeposit) {
             executed_ = _validateDepositWithAction(s, pending, priceData);
-        } else if (pending.action == ProtocolAction.ValidateWithdrawal) {
+        } else if (pending.action == IUsdnProtocolTypes.ProtocolAction.ValidateWithdrawal) {
             executed_ = _validateWithdrawalWithAction(s, pending, priceData);
-        } else if (pending.action == ProtocolAction.ValidateOpenPosition) {
+        } else if (pending.action == IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition) {
             (executed_, liquidated_) = actionsLongLib._validateOpenPositionWithAction(s, pending, priceData);
-        } else if (pending.action == ProtocolAction.ValidateClosePosition) {
+        } else if (pending.action == IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition) {
             (executed_, liquidated_) = actionsLongLib._validateClosePositionWithAction(s, pending, priceData);
         }
 

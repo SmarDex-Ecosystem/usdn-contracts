@@ -15,8 +15,7 @@ import { UsdnProtocol } from "../../../../src/UsdnProtocol/UsdnProtocol.sol";
 import { IRebalancerErrors } from "../../../../src/interfaces/Rebalancer/IRebalancerErrors.sol";
 import { IRebalancerEvents } from "../../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
 import { IRebalancerTypes } from "../../../../src/interfaces/Rebalancer/IRebalancerTypes.sol";
-import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import { PreviousActionsData } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title RebalancerFixture
@@ -32,8 +31,8 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
     RebalancerHandler public rebalancer;
     UsdnProtocol public usdnProtocol;
 
-    PreviousActionsData internal EMPTY_PREVIOUS_DATA =
-        PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
+    IUsdnProtocolTypes.PreviousActionsData internal EMPTY_PREVIOUS_DATA =
+        IUsdnProtocolTypes.PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
 
     function _setUp() public virtual {
         vm.startPrank(DEPLOYER);

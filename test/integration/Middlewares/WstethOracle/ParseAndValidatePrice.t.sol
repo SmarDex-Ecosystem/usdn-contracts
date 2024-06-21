@@ -39,7 +39,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
         // all targeted actions loop
         for (uint256 i; i < actions.length; i++) {
             // action type
-            ProtocolAction action = actions[i];
+            IUsdnProtocolTypes.ProtocolAction action = actions[i];
 
             // price error message
             string memory priceError =
@@ -113,7 +113,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
         // all targeted actions loop
         for (uint256 i; i < actions.length; i++) {
             // action type
-            ProtocolAction action = actions[i];
+            IUsdnProtocolTypes.ProtocolAction action = actions[i];
 
             // if the action is only available for pyth, skip it
             if (
@@ -167,7 +167,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
         // all targeted actions loop
         for (uint256 i; i < actions.length; i++) {
             // action type
-            ProtocolAction action = actions[i];
+            IUsdnProtocolTypes.ProtocolAction action = actions[i];
 
             // price error message
             string memory priceError =
@@ -262,7 +262,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
         // all targeted actions loop
         for (uint256 i; i < actions.length; i++) {
             // action type
-            ProtocolAction action = actions[i];
+            IUsdnProtocolTypes.ProtocolAction action = actions[i];
 
             // if the action is only available for pyth, skip it
             if (

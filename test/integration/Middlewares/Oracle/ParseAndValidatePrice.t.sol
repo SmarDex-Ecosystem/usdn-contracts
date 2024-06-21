@@ -38,7 +38,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
         // all targeted actions loop
         for (uint256 i; i < actions.length; i++) {
             // action type
-            ProtocolAction action = actions[i];
+            IUsdnProtocolTypes.ProtocolAction action = actions[i];
 
             // price error message
             string memory priceError = string.concat("Wrong oracle middleware price for ", actionNames[i]);
@@ -107,7 +107,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
         // all targeted actions loop
         for (uint256 i; i < actions.length; i++) {
             // action type
-            ProtocolAction action = actions[i];
+            IUsdnProtocolTypes.ProtocolAction action = actions[i];
 
             // if the action is only available for pyth, skip it
             if (
@@ -157,7 +157,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
         // all targeted actions loop
         for (uint256 i; i < actions.length; i++) {
             // action type
-            ProtocolAction action = actions[i];
+            IUsdnProtocolTypes.ProtocolAction action = actions[i];
 
             // price error message
             string memory priceError = string.concat("Wrong oracle middleware price for ", actionNames[i]);
@@ -225,7 +225,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
         // all targeted actions loop
         for (uint256 i; i < actions.length; i++) {
             // action type
-            ProtocolAction action = actions[i];
+            IUsdnProtocolTypes.ProtocolAction action = actions[i];
 
             // if the action is only available for pyth, skip it
             if (

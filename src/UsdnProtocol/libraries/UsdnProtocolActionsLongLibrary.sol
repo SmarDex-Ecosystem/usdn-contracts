@@ -8,20 +8,7 @@ import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTy
 import { IUsdnProtocolActions } from "../../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import {
-    ClosePositionData,
-    InitiateClosePositionParams,
-    InitiateOpenPositionData,
-    InitiateOpenPositionParams,
-    LongPendingAction,
-    PendingAction,
-    Position,
-    PositionId,
-    PreviousActionsData,
-    ProtocolAction,
-    TickData,
-    ValidateOpenPositionData
-} from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { HugeUint } from "../../libraries/HugeUint.sol";
 import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 import { TickMath } from "../../libraries/TickMath.sol";
@@ -50,10 +37,10 @@ library UsdnProtocolActionsLongLibrary {
     /// @notice See {IUsdnProtocolActions}
     function initiateOpenPosition(
         Storage storage s,
-        InitiateOpenPositionParams memory params,
+        IUsdnProtocolTypes.InitiateOpenPositionParams memory params,
         bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData
-    ) public returns (bool success_, PositionId memory posId_) {
+        IUsdnProtocolTypes.PreviousActionsData calldata previousActionsData
+    ) public returns (bool success_, IUsdnProtocolTypes.PositionId memory posId_) {
         uint64 securityDepositValue = s._securityDepositValue;
         if (msg.value < securityDepositValue) {
             revert IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow();
@@ -78,7 +65,7 @@ library UsdnProtocolActionsLongLibrary {
         Storage storage s,
         address payable validator,
         bytes calldata openPriceData,
-        PreviousActionsData calldata previousActionsData
+        IUsdnProtocolTypes.PreviousActionsData calldata previousActionsData
     ) public returns (bool success_) {
         uint256 balanceBefore = address(this).balance;
 
@@ -103,9 +90,9 @@ library UsdnProtocolActionsLongLibrary {
     /// @notice See {IUsdnProtocolActions}
     function initiateClosePosition(
         Storage storage s,
-        InitiateClosePositionParams memory params,
+        IUsdnProtocolTypes.InitiateClosePositionParams memory params,
         bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData
+        IUsdnProtocolTypes.PreviousActionsData calldata previousActionsData
     ) public returns (bool success_) {
         uint64 securityDepositValue = s._securityDepositValue;
         if (msg.value < securityDepositValue) {
@@ -142,7 +129,7 @@ library UsdnProtocolActionsLongLibrary {
         Storage storage s,
         address payable validator,
         bytes calldata closePriceData,
-        PreviousActionsData calldata previousActionsData
+        IUsdnProtocolTypes.PreviousActionsData calldata previousActionsData
     ) public returns (bool success_) {
         uint256 balanceBefore = address(this).balance;
 
@@ -187,9 +174,9 @@ library UsdnProtocolActionsLongLibrary {
      */
     function _initiateOpenPosition(
         Storage storage s,
-        InitiateOpenPositionParams memory params,
+        IUsdnProtocolTypes.InitiateOpenPositionParams memory params,
         bytes calldata currentPriceData
-    ) public returns (PositionId memory posId_, uint256 amountToRefund_, bool isInitiated_) {
+    ) public returns (IUsdnProtocolTypes.PositionId memory posId_, uint256 amountToRefund_, bool isInitiated_) {
         if (params.to == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo();
         }
@@ -203,7 +190,7 @@ library UsdnProtocolActionsLongLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolLongPositionTooSmall();
         }
 
-        InitiateOpenPositionData memory data = longLib._prepareInitiateOpenPositionData(
+        IUsdnProtocolTypes.InitiateOpenPositionData memory data = longLib._prepareInitiateOpenPositionData(
             s, params.validator, params.amount, params.desiredLiqPrice, currentPriceData
         );
 
@@ -214,7 +201,7 @@ library UsdnProtocolActionsLongLibrary {
         }
 
         // register position and adjust contract state
-        Position memory long = Position({
+        IUsdnProtocolTypes.Position memory long = IUsdnProtocolTypes.Position({
             validated: false,
             user: params.to,
             amount: params.amount,
@@ -261,10 +248,11 @@ library UsdnProtocolActionsLongLibrary {
         public
         returns (uint256 securityDepositValue_, bool isValidated_, bool liquidated_)
     {
-        (PendingAction memory pending, uint128 rawIndex) = coreLib._getPendingActionOrRevert(s, validator);
+        (IUsdnProtocolTypes.PendingAction memory pending, uint128 rawIndex) =
+            coreLib._getPendingActionOrRevert(s, validator);
 
         // check type of action
-        if (pending.action != ProtocolAction.ValidateOpenPosition) {
+        if (pending.action != IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction();
         }
         // sanity check
@@ -282,7 +270,7 @@ library UsdnProtocolActionsLongLibrary {
     struct MaxLeverageData {
         int24 tickWithoutPenalty;
         uint8 currentLiqPenalty;
-        PositionId newPosId;
+        IUsdnProtocolTypes.PositionId newPosId;
         uint8 liquidationPenalty;
     }
 
@@ -294,11 +282,12 @@ library UsdnProtocolActionsLongLibrary {
      * @return isValidated_ Whether the action is validated
      * @return liquidated_ Whether the pending action has been liquidated
      */
-    function _validateOpenPositionWithAction(Storage storage s, PendingAction memory pending, bytes calldata priceData)
-        public
-        returns (bool isValidated_, bool liquidated_)
-    {
-        (ValidateOpenPositionData memory data, bool liquidated) =
+    function _validateOpenPositionWithAction(
+        Storage storage s,
+        IUsdnProtocolTypes.PendingAction memory pending,
+        bytes calldata priceData
+    ) public returns (bool isValidated_, bool liquidated_) {
+        (IUsdnProtocolTypes.ValidateOpenPositionData memory data, bool liquidated) =
             actionsUtilsLib._prepareValidateOpenPositionData(s, pending, priceData);
 
         if (liquidated) {
@@ -369,7 +358,11 @@ library UsdnProtocolActionsLongLibrary {
             // no long balance update is necessary (collateral didn't change)
 
             emit IUsdnProtocolEvents.LiquidationPriceUpdated(
-                PositionId({ tick: data.action.tick, tickVersion: data.action.tickVersion, index: data.action.index }),
+                IUsdnProtocolTypes.PositionId({
+                    tick: data.action.tick,
+                    tickVersion: data.action.tickVersion,
+                    index: data.action.index
+                }),
                 maxLeverageData.newPosId
             );
             emit IUsdnProtocolEvents.ValidatedOpenPosition(
@@ -395,7 +388,7 @@ library UsdnProtocolActionsLongLibrary {
 
         // update the tick data and the liqMultiplierAccumulator
         {
-            TickData storage tickData = s._tickData[data.tickHash];
+            IUsdnProtocolTypes.TickData storage tickData = s._tickData[data.tickHash];
             uint256 unadjustedTickPrice =
                 TickMath.getPriceAtTick(data.action.tick - int24(uint24(data.liquidationPenalty)) * s._tickSpacing);
             tickData.totalExpo = tickData.totalExpo + expoAfter - expoBefore;
@@ -410,7 +403,11 @@ library UsdnProtocolActionsLongLibrary {
             data.action.validator,
             expoAfter,
             data.startPrice,
-            PositionId({ tick: data.action.tick, tickVersion: data.action.tickVersion, index: data.action.index })
+            IUsdnProtocolTypes.PositionId({
+                tick: data.action.tick,
+                tickVersion: data.action.tickVersion,
+                index: data.action.index
+            })
         );
     }
 
@@ -443,12 +440,12 @@ library UsdnProtocolActionsLongLibrary {
         address owner,
         address to,
         address validator,
-        PositionId memory posId,
+        IUsdnProtocolTypes.PositionId memory posId,
         uint128 amountToClose,
         uint64 securityDepositValue,
         bytes calldata currentPriceData
     ) public returns (uint256 amountToRefund_, bool isInitiated_, bool liquidated_) {
-        ClosePositionData memory data;
+        IUsdnProtocolTypes.ClosePositionData memory data;
         (data, liquidated_) =
             actionsUtilsLib._prepareClosePositionData(s, owner, to, validator, posId, amountToClose, currentPriceData);
 
@@ -492,10 +489,11 @@ library UsdnProtocolActionsLongLibrary {
         public
         returns (uint256 securityDepositValue_, bool isValidated_, bool liquidated_)
     {
-        (PendingAction memory pending, uint128 rawIndex) = coreLib._getPendingActionOrRevert(s, validator);
+        (IUsdnProtocolTypes.PendingAction memory pending, uint128 rawIndex) =
+            coreLib._getPendingActionOrRevert(s, validator);
 
         // check type of action
-        if (pending.action != ProtocolAction.ValidateClosePosition) {
+        if (pending.action != IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction();
         }
         // sanity check
@@ -526,16 +524,17 @@ library UsdnProtocolActionsLongLibrary {
      * @return isValidated_ Whether the action is validated
      * @return liquidated_ Whether the pending action has been liquidated
      */
-    function _validateClosePositionWithAction(Storage storage s, PendingAction memory pending, bytes calldata priceData)
-        public
-        returns (bool isValidated_, bool liquidated_)
-    {
+    function _validateClosePositionWithAction(
+        Storage storage s,
+        IUsdnProtocolTypes.PendingAction memory pending,
+        bytes calldata priceData
+    ) public returns (bool isValidated_, bool liquidated_) {
         ValidateClosePositionWithActionData memory data;
-        LongPendingAction memory long = coreLib._toLongPendingAction(pending);
+        IUsdnProtocolTypes.LongPendingAction memory long = coreLib._toLongPendingAction(pending);
 
         PriceInfo memory currentPrice = actionsVaultLib._getOraclePrice(
             s,
-            ProtocolAction.ValidateClosePosition,
+            IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition,
             long.timestamp,
             actionsUtilsLib._calcActionId(long.validator, long.timestamp),
             priceData
@@ -547,7 +546,7 @@ library UsdnProtocolActionsLongLibrary {
             currentPrice.timestamp,
             s._liquidationIteration,
             false,
-            ProtocolAction.ValidateClosePosition,
+            IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition,
             priceData
         );
 
@@ -565,7 +564,7 @@ library UsdnProtocolActionsLongLibrary {
             s._balanceVault += long.closeBoundedPositionValue;
             emit IUsdnProtocolEvents.LiquidatedPosition(
                 long.validator, // not necessarily the position owner
-                PositionId({ tick: long.tick, tickVersion: long.tickVersion, index: long.index }),
+                IUsdnProtocolTypes.PositionId({ tick: long.tick, tickVersion: long.tickVersion, index: long.index }),
                 currentPrice.neutralPrice,
                 data.liquidationPrice
             );
@@ -637,7 +636,7 @@ library UsdnProtocolActionsLongLibrary {
         emit IUsdnProtocolEvents.ValidatedClosePosition(
             long.validator, // not necessarily the position owner
             long.to,
-            PositionId({ tick: long.tick, tickVersion: long.tickVersion, index: long.index }),
+            IUsdnProtocolTypes.PositionId({ tick: long.tick, tickVersion: long.tickVersion, index: long.index }),
             assetToTransfer,
             assetToTransfer.toInt256() - coreLib._toInt256(long.closeAmount)
         );

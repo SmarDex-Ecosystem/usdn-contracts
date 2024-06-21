@@ -13,7 +13,7 @@ import {
     PriceInfo,
     RedstonePriceInfo
 } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { ProtocolAction } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { ChainlinkOracle } from "./oracles/ChainlinkOracle.sol";
 import { PythOracle } from "./oracles/PythOracle.sol";
 import { RedstoneOracle } from "./oracles/RedstoneOracle.sol";
@@ -77,46 +77,46 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, RedstoneOracle, Chai
      * @inheritdoc IBaseOracleMiddleware
      * @dev In the current implementation, the `actionId` value is not used
      */
-    function parseAndValidatePrice(bytes32, uint128 targetTimestamp, ProtocolAction action, bytes calldata data)
-        public
-        payable
-        virtual
-        returns (PriceInfo memory price_)
-    {
-        if (action == ProtocolAction.None) {
+    function parseAndValidatePrice(
+        bytes32,
+        uint128 targetTimestamp,
+        IUsdnProtocolTypes.ProtocolAction action,
+        bytes calldata data
+    ) public payable virtual returns (PriceInfo memory price_) {
+        if (action == IUsdnProtocolTypes.ProtocolAction.None) {
             return _getLowLatencyPrice(data, targetTimestamp, ConfidenceInterval.None);
-        } else if (action == ProtocolAction.Initialize) {
+        } else if (action == IUsdnProtocolTypes.ProtocolAction.Initialize) {
             return _getInitiateActionPrice(data, ConfidenceInterval.None);
-        } else if (action == ProtocolAction.ValidateDeposit) {
+        } else if (action == IUsdnProtocolTypes.ProtocolAction.ValidateDeposit) {
             // use the lowest price in the confidence interval to ensure a minimum benefit for the user in case
             // of price inaccuracies until low latency delay is exceeded then use chainlink specified roundId
             return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Down);
-        } else if (action == ProtocolAction.ValidateWithdrawal) {
+        } else if (action == IUsdnProtocolTypes.ProtocolAction.ValidateWithdrawal) {
             // use the highest price in the confidence interval to ensure a minimum benefit for the user in case
             // of price inaccuracies until low latency delay is exceeded then use chainlink specified roundId
             return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Up);
-        } else if (action == ProtocolAction.ValidateOpenPosition) {
+        } else if (action == IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition) {
             // use the highest price in the confidence interval to ensure a minimum benefit for the user in case
             // of price inaccuracies until low latency delay is exceeded then use chainlink specified roundId
             return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Up);
-        } else if (action == ProtocolAction.ValidateClosePosition) {
+        } else if (action == IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition) {
             // use the lowest price in the confidence interval to ensure a minimum benefit for the user in case
             // of price inaccuracies until low latency delay is exceeded then use chainlink specified roundId
             return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Down);
-        } else if (action == ProtocolAction.Liquidation) {
+        } else if (action == IUsdnProtocolTypes.ProtocolAction.Liquidation) {
             // special case, if we pass a timestamp of zero, then we accept all prices newer than
             // `_pythRecentPriceDelay`
             return _getLowLatencyPrice(data, 0, ConfidenceInterval.None);
-        } else if (action == ProtocolAction.InitiateDeposit) {
+        } else if (action == IUsdnProtocolTypes.ProtocolAction.InitiateDeposit) {
             // If the user chooses to initiate with a pyth price, we apply the relevant confidence interval adjustment
             return _getInitiateActionPrice(data, ConfidenceInterval.Down);
-        } else if (action == ProtocolAction.InitiateWithdrawal) {
+        } else if (action == IUsdnProtocolTypes.ProtocolAction.InitiateWithdrawal) {
             // If the user chooses to initiate with a pyth price, we apply the relevant confidence interval adjustment
             return _getInitiateActionPrice(data, ConfidenceInterval.Up);
-        } else if (action == ProtocolAction.InitiateOpenPosition) {
+        } else if (action == IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition) {
             // If the user chooses to initiate with a pyth price, we apply the relevant confidence interval adjustment
             return _getInitiateActionPrice(data, ConfidenceInterval.Up);
-        } else if (action == ProtocolAction.InitiateClosePosition) {
+        } else if (action == IUsdnProtocolTypes.ProtocolAction.InitiateClosePosition) {
             // If the user chooses to initiate with a pyth price, we apply the relevant confidence interval adjustment
             return _getInitiateActionPrice(data, ConfidenceInterval.Down);
         }
@@ -148,7 +148,12 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, RedstoneOracle, Chai
     }
 
     /// @inheritdoc IBaseOracleMiddleware
-    function validationCost(bytes calldata data, ProtocolAction) public view virtual returns (uint256 result_) {
+    function validationCost(bytes calldata data, IUsdnProtocolTypes.ProtocolAction)
+        public
+        view
+        virtual
+        returns (uint256 result_)
+    {
         if (_isPythData(data)) {
             result_ = _getPythUpdateFee(data);
         }

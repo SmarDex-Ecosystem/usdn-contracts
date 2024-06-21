@@ -35,15 +35,9 @@ import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthO
 import { Rebalancer } from "../../../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import {
-    PositionId,
-    PreviousActionsData,
-    ProtocolAction,
-    TickData
-} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Permit2TokenBitfield } from "../../../../src/libraries/Permit2TokenBitfield.sol";
 
 contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProtocolEvents {
@@ -88,8 +82,8 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
     LiquidationRewardsManager public liquidationRewardsManager;
     Rebalancer public rebalancer;
 
-    PreviousActionsData internal EMPTY_PREVIOUS_DATA =
-        PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
+    IUsdnProtocolTypes.PreviousActionsData internal EMPTY_PREVIOUS_DATA =
+        IUsdnProtocolTypes.PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
 
     ExpoImbalanceLimitsBps internal defaultLimits;
 
@@ -110,8 +104,9 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             oracleMiddleware = new WstEthOracleMiddleware(
                 address(pyth), PYTH_ETH_USD, REDSTONE_ETH_USD, address(chainlinkOnChain), address(wstETH), 1 hours
             );
-            PriceInfo memory currentPrice =
-                oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.Initialize, "");
+            PriceInfo memory currentPrice = oracleMiddleware.parseAndValidatePrice(
+                "", uint128(block.timestamp), IUsdnProtocolTypes.ProtocolAction.Initialize, ""
+            );
             testParams.initialLiqPrice = uint128(currentPrice.neutralPrice) / 2;
             AggregatorV3Interface chainlinkGasPriceFeed = AggregatorV3Interface(CHAINLINK_ORACLE_GAS);
             liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
@@ -158,7 +153,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
         // leverage approx 2x
-        protocol.initialize{ value: oracleMiddleware.validationCost("", ProtocolAction.Initialize) }(
+        protocol.initialize{ value: oracleMiddleware.validationCost("", IUsdnProtocolTypes.ProtocolAction.Initialize) }(
             testParams.initialDeposit, testParams.initialLong, testParams.initialLiqPrice, ""
         );
         vm.stopPrank();
@@ -189,8 +184,8 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         returns (
             int24 tickSpacing_,
             uint88 amountInRebalancer_,
-            PositionId memory posToLiquidate_,
-            TickData memory tickToLiquidateData_
+            IUsdnProtocolTypes.PositionId memory posToLiquidate_,
+            IUsdnProtocolTypes.TickData memory tickToLiquidateData_
         )
     {
         params = DEFAULT_PARAMS;
@@ -244,7 +239,8 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         mockPyth.setPrice(2000e8);
         mockPyth.setLastPublishTime(block.timestamp);
 
-        uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.ValidateDeposit);
+        uint256 oracleFee =
+            oracleMiddleware.validationCost(MOCK_PYTH_DATA, IUsdnProtocolTypes.ProtocolAction.ValidateDeposit);
 
         protocol.validateDeposit{ value: oracleFee }(payable(address(this)), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
 
@@ -258,7 +254,8 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         mockPyth.setPrice(2000e8);
         mockPyth.setLastPublishTime(block.timestamp);
 
-        oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.ValidateOpenPosition);
+        oracleFee =
+            oracleMiddleware.validationCost(MOCK_PYTH_DATA, IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition);
         protocol.validateOpenPosition{ value: oracleFee }(payable(address(this)), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
 
         tickToLiquidateData_ = protocol.getTickData(posToLiquidate_.tick);

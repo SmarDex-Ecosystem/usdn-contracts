@@ -48,7 +48,7 @@ contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture {
      */
     function test_parseAndValidatePriceForAllActions() public {
         for (uint256 i; i < actions.length; i++) {
-            ProtocolAction action = actions[i];
+            IUsdnProtocolTypes.ProtocolAction action = actions[i];
             string memory errorMessage =
                 string.concat("Wrong wsteth oracle middleware price for action: ", uint256(action).toString());
 

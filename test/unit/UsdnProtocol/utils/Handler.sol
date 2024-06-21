@@ -22,18 +22,7 @@ import { IBaseOracleMiddleware } from "../../../../src/interfaces/OracleMiddlewa
 import { ILiquidationRewardsManager } from "../../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../../../../src/interfaces/Usdn/IUsdn.sol";
-import {
-    CachedProtocolState,
-    DepositPendingAction,
-    LongPendingAction,
-    PendingAction,
-    PositionId,
-    PreviousActionsData,
-    ProtocolAction,
-    TickData,
-    WithdrawalPendingAction
-} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { LiquidationsEffects, Position } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "../../../../src/libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
@@ -66,7 +55,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     }
 
     /// @dev Push a pending item to the front of the pending actions queue
-    function queuePushFront(PendingAction memory action) external returns (uint128 rawIndex_) {
+    function queuePushFront(IUsdnProtocolTypes.PendingAction memory action) external returns (uint128 rawIndex_) {
         rawIndex_ = s._pendingActionsQueue.pushFront(action);
         s._pendingActions[action.validator] = uint256(rawIndex_) + 1;
     }
@@ -76,7 +65,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return s._pendingActionsQueue.empty();
     }
 
-    function getQueueItem(uint128 rawIndex) external view returns (PendingAction memory) {
+    function getQueueItem(uint128 rawIndex) external view returns (IUsdnProtocolTypes.PendingAction memory) {
         return s._pendingActionsQueue.atRaw(rawIndex);
     }
 
@@ -149,7 +138,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         address owner,
         address to,
         address validator,
-        PositionId memory posId,
+        IUsdnProtocolTypes.PositionId memory posId,
         uint128 amountToClose,
         uint64 securityDepositValue,
         bytes calldata currentPriceData
@@ -166,7 +155,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     function i_removeAmountFromPosition(
         int24 tick,
         uint256 index,
-        Position memory pos,
+        IUsdnProtocolTypes.Position memory pos,
         uint128 amountToRemove,
         uint128 totalExpoToRemove
     ) external returns (HugeUint.Uint512 memory liqMultiplierAccumulator_) {
@@ -190,7 +179,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return longLib._calcPositionTotalExpo(amount, startPrice, liquidationPrice);
     }
 
-    function i_getActionablePendingAction() external returns (PendingAction memory, uint128) {
+    function i_getActionablePendingAction() external returns (IUsdnProtocolTypes.PendingAction memory, uint128) {
         return coreLib._getActionablePendingAction(s);
     }
 
@@ -210,47 +199,55 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         uint16 iteration,
         int256 tempLongBalance,
         int256 tempVaultBalance
-    ) external returns (LiquidationsEffects memory effects_) {
+    ) external returns (IUsdnProtocolTypes.LiquidationsEffects memory effects_) {
         return longLib._liquidatePositions(s, currentPrice, iteration, tempLongBalance, tempVaultBalance);
     }
 
-    function i_toDepositPendingAction(PendingAction memory action)
+    function i_toDepositPendingAction(IUsdnProtocolTypes.PendingAction memory action)
         external
         pure
-        returns (DepositPendingAction memory)
+        returns (IUsdnProtocolTypes.DepositPendingAction memory)
     {
         return coreLib._toDepositPendingAction(action);
     }
 
-    function i_toWithdrawalPendingAction(PendingAction memory action)
+    function i_toWithdrawalPendingAction(IUsdnProtocolTypes.PendingAction memory action)
         external
         pure
-        returns (WithdrawalPendingAction memory)
+        returns (IUsdnProtocolTypes.WithdrawalPendingAction memory)
     {
         return coreLib._toWithdrawalPendingAction(action);
     }
 
-    function i_toLongPendingAction(PendingAction memory action) external pure returns (LongPendingAction memory) {
+    function i_toLongPendingAction(IUsdnProtocolTypes.PendingAction memory action)
+        external
+        pure
+        returns (IUsdnProtocolTypes.LongPendingAction memory)
+    {
         return coreLib._toLongPendingAction(action);
     }
 
-    function i_convertDepositPendingAction(DepositPendingAction memory action)
+    function i_convertDepositPendingAction(IUsdnProtocolTypes.DepositPendingAction memory action)
         external
         pure
-        returns (PendingAction memory)
+        returns (IUsdnProtocolTypes.PendingAction memory)
     {
         return coreLib._convertDepositPendingAction(action);
     }
 
-    function i_convertWithdrawalPendingAction(WithdrawalPendingAction memory action)
+    function i_convertWithdrawalPendingAction(IUsdnProtocolTypes.WithdrawalPendingAction memory action)
         external
         pure
-        returns (PendingAction memory)
+        returns (IUsdnProtocolTypes.PendingAction memory)
     {
         return coreLib._convertWithdrawalPendingAction(action);
     }
 
-    function i_convertLongPendingAction(LongPendingAction memory action) external pure returns (PendingAction memory) {
+    function i_convertLongPendingAction(IUsdnProtocolTypes.LongPendingAction memory action)
+        external
+        pure
+        returns (IUsdnProtocolTypes.PendingAction memory)
+    {
         return coreLib._convertLongPendingAction(action);
     }
 
@@ -267,16 +264,17 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         uint256 currentPrice,
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator,
-        TickData memory tickData
+        IUsdnProtocolTypes.TickData memory tickData
     ) external view returns (int256) {
         return longLib._tickValue(s, tick, currentPrice, longTradingExpo, accumulator, tickData);
     }
 
-    function i_getOraclePrice(ProtocolAction action, uint256 timestamp, bytes32 actionId, bytes calldata priceData)
-        external
-        payable
-        returns (PriceInfo memory)
-    {
+    function i_getOraclePrice(
+        IUsdnProtocolTypes.ProtocolAction action,
+        uint256 timestamp,
+        bytes32 actionId,
+        bytes calldata priceData
+    ) external payable returns (PriceInfo memory) {
         return actionsVaultLib._getOraclePrice(s, action, timestamp, actionId, priceData);
     }
 
@@ -398,23 +396,37 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return vaultLib._calcRebaseTotalSupply(vaultBalance, assetPrice, targetPrice, assetDecimals);
     }
 
-    function i_addPendingAction(address user, PendingAction memory action) external returns (uint256) {
+    function i_addPendingAction(address user, IUsdnProtocolTypes.PendingAction memory action)
+        external
+        returns (uint256)
+    {
         return coreLib._addPendingAction(s, user, action);
     }
 
-    function i_getPendingAction(address user) external view returns (PendingAction memory, uint128) {
+    function i_getPendingAction(address user)
+        external
+        view
+        returns (IUsdnProtocolTypes.PendingAction memory, uint128)
+    {
         return coreLib._getPendingAction(s, user);
     }
 
-    function i_getPendingActionOrRevert(address user) external view returns (PendingAction memory, uint128) {
+    function i_getPendingActionOrRevert(address user)
+        external
+        view
+        returns (IUsdnProtocolTypes.PendingAction memory, uint128)
+    {
         return coreLib._getPendingActionOrRevert(s, user);
     }
 
-    function i_executePendingAction(PreviousActionsData calldata data) external returns (bool, bool, bool, uint256) {
+    function i_executePendingAction(IUsdnProtocolTypes.PreviousActionsData calldata data)
+        external
+        returns (bool, bool, bool, uint256)
+    {
         return actionsVaultLib._executePendingAction(s, data);
     }
 
-    function i_executePendingActionOrRevert(PreviousActionsData calldata data) external {
+    function i_executePendingActionOrRevert(IUsdnProtocolTypes.PreviousActionsData calldata data) external {
         actionsVaultLib._executePendingActionOrRevert(s, data);
     }
 
@@ -449,7 +461,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         vaultLib._createInitialPosition(s, amount, price, tick, positionTotalExpo);
     }
 
-    function i_saveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty)
+    function i_saveNewPosition(int24 tick, IUsdnProtocolTypes.Position memory long, uint8 liquidationPenalty)
         external
         returns (uint256, uint256, HugeUint.Uint512 memory)
     {
@@ -510,7 +522,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         uint256 balanceVault,
         HugeUint.Uint512 memory liqMultiplierAccumulator
     ) external view returns (int24 tickWithoutLiqPenalty_) {
-        CachedProtocolState memory cache = CachedProtocolState({
+        IUsdnProtocolTypes.CachedProtocolState memory cache = IUsdnProtocolTypes.CachedProtocolState({
             totalExpo: totalExpo,
             longBalance: balanceLong,
             vaultBalance: balanceVault,
@@ -550,14 +562,14 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     }
 
     function i_flashClosePosition(
-        PositionId memory posId,
+        IUsdnProtocolTypes.PositionId memory posId,
         uint128 neutralPrice,
         uint256 totalExpo,
         uint256 balanceLong,
         uint256 balanceVault,
         HugeUint.Uint512 memory liqMultiplierAccumulator
     ) external returns (int256 positionValue_) {
-        CachedProtocolState memory cache = CachedProtocolState({
+        IUsdnProtocolTypes.CachedProtocolState memory cache = IUsdnProtocolTypes.CachedProtocolState({
             totalExpo: totalExpo,
             longBalance: balanceLong,
             vaultBalance: balanceVault,
@@ -577,8 +589,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         uint256 balanceLong,
         uint256 balanceVault,
         HugeUint.Uint512 memory liqMultiplierAccumulator
-    ) external returns (PositionId memory posId_) {
-        CachedProtocolState memory cache = CachedProtocolState({
+    ) external returns (IUsdnProtocolTypes.PositionId memory posId_) {
+        IUsdnProtocolTypes.CachedProtocolState memory cache = IUsdnProtocolTypes.CachedProtocolState({
             totalExpo: totalExpo,
             longBalance: balanceLong,
             vaultBalance: balanceVault,

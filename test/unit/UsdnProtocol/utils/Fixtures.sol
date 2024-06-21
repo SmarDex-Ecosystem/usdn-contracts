@@ -13,16 +13,9 @@ import { MockOracleMiddleware } from "./MockOracleMiddleware.sol";
 
 import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
-import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import {
-    PendingAction,
-    Position,
-    PositionId,
-    PreviousActionsData,
-    ProtocolAction
-} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { Permit2TokenBitfield } from "../../../../src/libraries/Permit2TokenBitfield.sol";
 
@@ -76,7 +69,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
 
     struct OpenParams {
         address user;
-        ProtocolAction untilAction;
+        IUsdnProtocolTypes.ProtocolAction untilAction;
         uint128 positionSize;
         uint128 desiredLiqPrice;
         uint256 price;
@@ -90,13 +83,13 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
     LiquidationRewardsManager public liquidationRewardsManager;
     RebalancerHandler public rebalancer;
     UsdnProtocolHandler public protocol;
-    PositionId public initialPosition;
+    IUsdnProtocolTypes.PositionId public initialPosition;
     uint256 public usdnInitialTotalSupply;
     address[] public users;
 
     int24 internal _tickSpacing = 100; // tick spacing 100 = 1%
-    PreviousActionsData internal EMPTY_PREVIOUS_DATA =
-        PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
+    IUsdnProtocolTypes.PreviousActionsData internal EMPTY_PREVIOUS_DATA =
+        IUsdnProtocolTypes.PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
 
     modifier prankUser(address user) {
         vm.startPrank(user);
@@ -204,7 +197,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         assertEq(usdnTotalSupply, usdnInitialTotalSupply, "usdn total supply");
         assertEq(usdn.balanceOf(DEPLOYER), usdnTotalSupply - protocol.MIN_USDN_SUPPLY(), "usdn deployer balance");
         int24 firstPosTick = protocol.getHighestPopulatedTick();
-        (Position memory firstPos,) = protocol.getLongPosition(PositionId(firstPosTick, 0, 0));
+        (IUsdnProtocolTypes.Position memory firstPos,) =
+            protocol.getLongPosition(IUsdnProtocolTypes.PositionId(firstPosTick, 0, 0));
 
         assertEq(firstPos.totalExpo, 9_919_970_269_703_463_156, "first position total expo");
         assertEq(firstPos.timestamp, block.timestamp, "first pos timestamp");
@@ -224,10 +218,12 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
      * @param positionSize Amount of wstEth to deposit
      * @param price Current price
      */
-    function setUpUserPositionInVault(address user, ProtocolAction untilAction, uint128 positionSize, uint256 price)
-        public
-        prankUser(user)
-    {
+    function setUpUserPositionInVault(
+        address user,
+        IUsdnProtocolTypes.ProtocolAction untilAction,
+        uint128 positionSize,
+        uint256 price
+    ) public prankUser(user) {
         sdex.mintAndApprove(
             user,
             usdn.convertToTokens(
@@ -247,11 +243,11 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             positionSize, user, payable(user), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
-        if (untilAction == ProtocolAction.InitiateDeposit) return;
+        if (untilAction == IUsdnProtocolTypes.ProtocolAction.InitiateDeposit) return;
 
         protocol.validateDeposit(payable(user), priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
-        if (untilAction == ProtocolAction.ValidateDeposit) return;
+        if (untilAction == IUsdnProtocolTypes.ProtocolAction.ValidateDeposit) return;
 
         uint256 sharesOf = usdn.sharesOf(user);
         usdn.approve(address(protocol), usdn.convertToTokensRoundUp(sharesOf));
@@ -260,7 +256,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         );
         _waitDelay();
 
-        if (untilAction == ProtocolAction.InitiateWithdrawal) return;
+        if (untilAction == IUsdnProtocolTypes.ProtocolAction.InitiateWithdrawal) return;
 
         protocol.validateWithdrawal(payable(user), priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
@@ -276,7 +272,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
     function setUpUserPositionInLong(OpenParams memory openParams)
         public
         prankUser(openParams.user)
-        returns (PositionId memory posId_)
+        returns (IUsdnProtocolTypes.PositionId memory posId_)
     {
         uint256 securityDepositValue = protocol.getSecurityDepositValue();
         wstETH.mintAndApprove(openParams.user, openParams.positionSize, address(protocol), openParams.positionSize);
@@ -294,17 +290,17 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         );
         assertTrue(success, "initiate open position success");
         _waitDelay();
-        if (openParams.untilAction == ProtocolAction.InitiateOpenPosition) return (posId_);
+        if (openParams.untilAction == IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition) return (posId_);
 
         protocol.validateOpenPosition(payable(openParams.user), priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
-        if (openParams.untilAction == ProtocolAction.ValidateOpenPosition) return (posId_);
+        if (openParams.untilAction == IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition) return (posId_);
 
         protocol.initiateClosePosition{ value: securityDepositValue }(
             posId_, openParams.positionSize, openParams.user, payable(openParams.user), priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
-        if (openParams.untilAction == ProtocolAction.InitiateClosePosition) return (posId_);
+        if (openParams.untilAction == IUsdnProtocolTypes.ProtocolAction.InitiateClosePosition) return (posId_);
 
         protocol.validateClosePosition(payable(openParams.user), priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
@@ -314,10 +310,12 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
      * @dev Helper function to initiate a new position and liquidate it before it gets validated
      * @return posId_ The unique position identifier
      */
-    function _createStalePendingActionHelper() internal returns (PositionId memory posId_) {
+    function _createStalePendingActionHelper() internal returns (IUsdnProtocolTypes.PositionId memory posId_) {
         // create a pending action with a liquidation price around $1700
         posId_ = setUpUserPositionInLong(
-            OpenParams(address(this), ProtocolAction.InitiateOpenPosition, 1 ether, 1700 ether, 2000 ether)
+            OpenParams(
+                address(this), IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition, 1 ether, 1700 ether, 2000 ether
+            )
         );
 
         // the price drops to $1500 and the position gets liquidated
@@ -326,7 +324,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
 
         // the pending action is stale
         uint256 currentTickVersion = protocol.getTickVersion(posId_.tick);
-        PendingAction memory action = protocol.getUserPendingAction(address(this));
+        IUsdnProtocolTypes.PendingAction memory action = protocol.getUserPendingAction(address(this));
         assertEq(action.var3, posId_.tickVersion, "tick version");
         assertTrue(action.var3 != currentTickVersion, "current tick version");
     }
@@ -338,7 +336,11 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
      * @param b Second `PendingAction`
      * @param err Assert message prefix
      */
-    function _assertActionsEqual(PendingAction memory a, PendingAction memory b, string memory err) internal {
+    function _assertActionsEqual(
+        IUsdnProtocolTypes.PendingAction memory a,
+        IUsdnProtocolTypes.PendingAction memory b,
+        string memory err
+    ) internal {
         assertTrue(a.action == b.action, string.concat(err, " - action type"));
         assertEq(a.timestamp, b.timestamp, string.concat(err, " - action timestamp"));
         assertEq(a.to, b.to, string.concat(err, " - action to"));

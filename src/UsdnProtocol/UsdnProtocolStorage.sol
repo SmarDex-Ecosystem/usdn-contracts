@@ -12,9 +12,7 @@ import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolErrors } from "../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolStorage } from "../interfaces/UsdnProtocol/IUsdnProtocolStorage.sol";
-import { PendingAction, TickData } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { Position } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
+import { IUsdnProtocolTypes } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "../libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
 import { InitializableReentrancyGuard } from "../utils/InitializableReentrancyGuard.sol";
@@ -366,7 +364,11 @@ contract UsdnProtocolStorage is
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getPendingActionAt(uint256 index) external view returns (PendingAction memory action_) {
+    function getPendingActionAt(uint256 index)
+        external
+        view
+        returns (IUsdnProtocolTypes.PendingAction memory action_)
+    {
         (action_,) = s._pendingActionsQueue.at(index);
     }
 
@@ -411,13 +413,17 @@ contract UsdnProtocolStorage is
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getTickData(int24 tick) external view returns (TickData memory) {
+    function getTickData(int24 tick) external view returns (IUsdnProtocolTypes.TickData memory) {
         bytes32 cachedTickHash = actionsLongLib.tickHash(tick, s._tickVersion[tick]);
         return s._tickData[cachedTickHash];
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getCurrentLongPosition(int24 tick, uint256 index) external view returns (Position memory) {
+    function getCurrentLongPosition(int24 tick, uint256 index)
+        external
+        view
+        returns (IUsdnProtocolTypes.Position memory)
+    {
         uint256 version = s._tickVersion[tick];
         bytes32 cachedTickHash = actionsLongLib.tickHash(tick, version);
         return s._longPositions[cachedTickHash][index];
@@ -515,8 +521,8 @@ struct Storage {
     uint256 _totalExpo;
     HugeUint.Uint512 _liqMultiplierAccumulator;
     mapping(int24 => uint256) _tickVersion;
-    mapping(bytes32 => Position[]) _longPositions;
-    mapping(bytes32 => TickData) _tickData;
+    mapping(bytes32 => IUsdnProtocolTypes.Position[]) _longPositions;
+    mapping(bytes32 => IUsdnProtocolTypes.TickData) _tickData;
     int24 _highestPopulatedTick;
     uint256 _totalLongPositions;
     LibBitmap.Bitmap _tickBitmap;

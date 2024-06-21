@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.0;
 
-import { PositionId } from "../UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../UsdnProtocol/IUsdnProtocolTypes.sol";
 
 interface IRebalancerTypes {
     /**
@@ -27,7 +27,7 @@ interface IRebalancerTypes {
     struct PositionData {
         uint128 amount;
         uint256 entryAccMultiplier;
-        PositionId id;
+        IUsdnProtocolTypes.PositionId id;
     }
 
     /**

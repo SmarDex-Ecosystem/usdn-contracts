@@ -11,16 +11,7 @@ import { IUsdn } from "../../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolCore } from "../../interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import {
-    DepositPendingAction,
-    LongPendingAction,
-    PendingAction,
-    Position,
-    PositionId,
-    ProtocolAction,
-    TickData,
-    WithdrawalPendingAction
-} from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "../../libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../../libraries/HugeUint.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
@@ -64,8 +55,9 @@ library UsdnProtocolCoreLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidUsdn(address(usdn));
         }
 
-        PriceInfo memory currentPrice =
-            actionsVaultLib._getOraclePrice(s, ProtocolAction.Initialize, block.timestamp, "", currentPriceData);
+        PriceInfo memory currentPrice = actionsVaultLib._getOraclePrice(
+            s, IUsdnProtocolTypes.ProtocolAction.Initialize, block.timestamp, "", currentPriceData
+        );
 
         s._lastUpdateTimestamp = uint128(block.timestamp);
         s._lastPrice = currentPrice.price.toUint128();
@@ -119,14 +111,14 @@ library UsdnProtocolCoreLibrary {
     function getActionablePendingActions(Storage storage s, address currentUser)
         public
         view
-        returns (PendingAction[] memory actions_, uint128[] memory rawIndices_)
+        returns (IUsdnProtocolTypes.PendingAction[] memory actions_, uint128[] memory rawIndices_)
     {
         uint256 queueLength = s._pendingActionsQueue.length();
         if (queueLength == 0) {
             // empty queue, early return
             return (actions_, rawIndices_);
         }
-        actions_ = new PendingAction[](constantsLib.MAX_ACTIONABLE_PENDING_ACTIONS);
+        actions_ = new IUsdnProtocolTypes.PendingAction[](constantsLib.MAX_ACTIONABLE_PENDING_ACTIONS);
         rawIndices_ = new uint128[](constantsLib.MAX_ACTIONABLE_PENDING_ACTIONS);
         uint256 maxIter = constantsLib.MAX_ACTIONABLE_PENDING_ACTIONS;
         if (queueLength < maxIter) {
@@ -137,7 +129,7 @@ library UsdnProtocolCoreLibrary {
         uint256 arrayLen = 0;
         do {
             // since `i` cannot be greater or equal to `queueLength`, there is no risk of reverting
-            (PendingAction memory candidate, uint128 rawIndex) = s._pendingActionsQueue.at(i);
+            (IUsdnProtocolTypes.PendingAction memory candidate, uint128 rawIndex) = s._pendingActionsQueue.at(i);
             // if the msg.sender is equal to the validator of the pending action, then the pending action is not
             // actionable by this user (it will get validated automatically by their action)
             // and so we need to return the next item in the queue so that they can validate a third-party pending
@@ -172,7 +164,11 @@ library UsdnProtocolCoreLibrary {
     }
 
     /// @notice See {IUsdnProtocolCore}
-    function getUserPendingAction(Storage storage s, address user) public view returns (PendingAction memory action_) {
+    function getUserPendingAction(Storage storage s, address user)
+        public
+        view
+        returns (IUsdnProtocolTypes.PendingAction memory action_)
+    {
         (action_,) = _getPendingAction(s, user);
     }
 
@@ -483,10 +479,10 @@ library UsdnProtocolCoreLibrary {
      * @param action An untyped pending action
      * @return vaultAction_ The converted deposit pending action
      */
-    function _toDepositPendingAction(PendingAction memory action)
+    function _toDepositPendingAction(IUsdnProtocolTypes.PendingAction memory action)
         public
         pure
-        returns (DepositPendingAction memory vaultAction_)
+        returns (IUsdnProtocolTypes.DepositPendingAction memory vaultAction_)
     {
         assembly {
             vaultAction_ := action
@@ -498,10 +494,10 @@ library UsdnProtocolCoreLibrary {
      * @param action An untyped pending action
      * @return vaultAction_ The converted withdrawal pending action
      */
-    function _toWithdrawalPendingAction(PendingAction memory action)
+    function _toWithdrawalPendingAction(IUsdnProtocolTypes.PendingAction memory action)
         public
         pure
-        returns (WithdrawalPendingAction memory vaultAction_)
+        returns (IUsdnProtocolTypes.WithdrawalPendingAction memory vaultAction_)
     {
         assembly {
             vaultAction_ := action
@@ -513,10 +509,10 @@ library UsdnProtocolCoreLibrary {
      * @param action An untyped pending action
      * @return longAction_ The converted long pending action
      */
-    function _toLongPendingAction(PendingAction memory action)
+    function _toLongPendingAction(IUsdnProtocolTypes.PendingAction memory action)
         public
         pure
-        returns (LongPendingAction memory longAction_)
+        returns (IUsdnProtocolTypes.LongPendingAction memory longAction_)
     {
         assembly {
             longAction_ := action
@@ -528,10 +524,10 @@ library UsdnProtocolCoreLibrary {
      * @param action A deposit pending action
      * @return pendingAction_ The converted untyped pending action
      */
-    function _convertDepositPendingAction(DepositPendingAction memory action)
+    function _convertDepositPendingAction(IUsdnProtocolTypes.DepositPendingAction memory action)
         public
         pure
-        returns (PendingAction memory pendingAction_)
+        returns (IUsdnProtocolTypes.PendingAction memory pendingAction_)
     {
         assembly {
             pendingAction_ := action
@@ -543,10 +539,10 @@ library UsdnProtocolCoreLibrary {
      * @param action A withdrawal pending action
      * @return pendingAction_ The converted untyped pending action
      */
-    function _convertWithdrawalPendingAction(WithdrawalPendingAction memory action)
+    function _convertWithdrawalPendingAction(IUsdnProtocolTypes.WithdrawalPendingAction memory action)
         public
         pure
-        returns (PendingAction memory pendingAction_)
+        returns (IUsdnProtocolTypes.PendingAction memory pendingAction_)
     {
         assembly {
             pendingAction_ := action
@@ -558,10 +554,10 @@ library UsdnProtocolCoreLibrary {
      * @param action A long pending action
      * @return pendingAction_ The converted untyped pending action
      */
-    function _convertLongPendingAction(LongPendingAction memory action)
+    function _convertLongPendingAction(IUsdnProtocolTypes.LongPendingAction memory action)
         public
         pure
-        returns (PendingAction memory pendingAction_)
+        returns (IUsdnProtocolTypes.PendingAction memory pendingAction_)
     {
         assembly {
             pendingAction_ := action
@@ -577,7 +573,7 @@ library UsdnProtocolCoreLibrary {
      */
     function _getActionablePendingAction(Storage storage s)
         public
-        returns (PendingAction memory action_, uint128 rawIndex_)
+        returns (IUsdnProtocolTypes.PendingAction memory action_, uint128 rawIndex_)
     {
         uint256 queueLength = s._pendingActionsQueue.length();
         if (queueLength == 0) {
@@ -592,7 +588,7 @@ library UsdnProtocolCoreLibrary {
         uint256 i = 0;
         do {
             // since we will never call `front` more than `queueLength` times, there is no risk of reverting
-            (PendingAction memory candidate, uint128 rawIndex) = s._pendingActionsQueue.front();
+            (IUsdnProtocolTypes.PendingAction memory candidate, uint128 rawIndex) = s._pendingActionsQueue.front();
             // gas optimization
             unchecked {
                 i++;
@@ -625,10 +621,10 @@ library UsdnProtocolCoreLibrary {
         if (s._pendingActions[user] == 0) {
             return 0;
         }
-        (PendingAction memory action, uint128 rawIndex) = _getPendingAction(s, user);
+        (IUsdnProtocolTypes.PendingAction memory action, uint128 rawIndex) = _getPendingAction(s, user);
         // the position is only at risk of being liquidated while pending if it is an open position action
-        if (action.action == ProtocolAction.ValidateOpenPosition) {
-            LongPendingAction memory openAction = _toLongPendingAction(action);
+        if (action.action == IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition) {
+            IUsdnProtocolTypes.LongPendingAction memory openAction = _toLongPendingAction(action);
             uint256 version = s._tickVersion[openAction.tick];
             if (version != openAction.tickVersion) {
                 securityDepositValue_ = openAction.securityDepositValue;
@@ -638,7 +634,11 @@ library UsdnProtocolCoreLibrary {
                 delete s._pendingActions[user];
                 emit IUsdnProtocolEvents.StalePendingActionRemoved(
                     user,
-                    PositionId({ tick: openAction.tick, tickVersion: openAction.tickVersion, index: openAction.index })
+                    IUsdnProtocolTypes.PositionId({
+                        tick: openAction.tick,
+                        tickVersion: openAction.tickVersion,
+                        index: openAction.index
+                    })
                 );
             }
         }
@@ -652,7 +652,7 @@ library UsdnProtocolCoreLibrary {
      * @param action The pending action struct
      * @return amountToRefund_ The security deposit value of the stale pending action
      */
-    function _addPendingAction(Storage storage s, address user, PendingAction memory action)
+    function _addPendingAction(Storage storage s, address user, IUsdnProtocolTypes.PendingAction memory action)
         public
         returns (uint256 amountToRefund_)
     {
@@ -679,7 +679,7 @@ library UsdnProtocolCoreLibrary {
     function _getPendingAction(Storage storage s, address user)
         public
         view
-        returns (PendingAction memory action_, uint128 rawIndex_)
+        returns (IUsdnProtocolTypes.PendingAction memory action_, uint128 rawIndex_)
     {
         uint256 pendingActionIndex = s._pendingActions[user];
         if (pendingActionIndex == 0) {
@@ -702,10 +702,10 @@ library UsdnProtocolCoreLibrary {
     function _getPendingActionOrRevert(Storage storage s, address user)
         public
         view
-        returns (PendingAction memory action_, uint128 rawIndex_)
+        returns (IUsdnProtocolTypes.PendingAction memory action_, uint128 rawIndex_)
     {
         (action_, rawIndex_) = _getPendingAction(s, user);
-        if (action_.action == ProtocolAction.None) {
+        if (action_.action == IUsdnProtocolTypes.ProtocolAction.None) {
             revert IUsdnProtocolErrors.UsdnProtocolNoPendingAction();
         }
     }
@@ -735,40 +735,40 @@ library UsdnProtocolCoreLibrary {
     function _removeBlockedPendingAction(Storage storage s, uint128 rawIndex, address payable to, bool cleanup)
         public
     {
-        PendingAction memory pending = s._pendingActionsQueue.atRaw(rawIndex);
+        IUsdnProtocolTypes.PendingAction memory pending = s._pendingActionsQueue.atRaw(rawIndex);
         if (block.timestamp < pending.timestamp + s._validationDeadline + 1 hours) {
             revert IUsdnProtocolErrors.UsdnProtocolUnauthorized();
         }
         delete s._pendingActions[pending.validator];
         s._pendingActionsQueue.clearAt(rawIndex);
-        if (pending.action == ProtocolAction.ValidateDeposit && cleanup) {
+        if (pending.action == IUsdnProtocolTypes.ProtocolAction.ValidateDeposit && cleanup) {
             // for pending deposits, we send back the locked assets
-            DepositPendingAction memory deposit = _toDepositPendingAction(pending);
+            IUsdnProtocolTypes.DepositPendingAction memory deposit = _toDepositPendingAction(pending);
             s._pendingBalanceVault -= _toInt256(deposit.amount);
             address(s._asset).safeTransfer(to, deposit.amount);
-        } else if (pending.action == ProtocolAction.ValidateWithdrawal && cleanup) {
+        } else if (pending.action == IUsdnProtocolTypes.ProtocolAction.ValidateWithdrawal && cleanup) {
             // for pending withdrawals, we send the locked USDN
-            WithdrawalPendingAction memory withdrawal = _toWithdrawalPendingAction(pending);
+            IUsdnProtocolTypes.WithdrawalPendingAction memory withdrawal = _toWithdrawalPendingAction(pending);
             uint256 shares = _mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
             uint256 pendingAmount =
                 FixedPointMathLib.fullMulDiv(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares);
             s._pendingBalanceVault += pendingAmount.toInt256();
             s._usdn.transferShares(to, shares);
-        } else if (pending.action == ProtocolAction.ValidateOpenPosition) {
+        } else if (pending.action == IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition) {
             // for pending opens, we need to remove the position
-            LongPendingAction memory open = _toLongPendingAction(pending);
+            IUsdnProtocolTypes.LongPendingAction memory open = _toLongPendingAction(pending);
             (bytes32 tickHash, uint256 tickVersion) = vaultLib._tickHash(s, open.tick);
             if (tickVersion == open.tickVersion) {
                 // we only need to modify storage if the pos was not liquidated already
 
                 // safe cleanup operations
-                Position[] storage tickArray = s._longPositions[tickHash];
-                Position memory pos = tickArray[open.index];
+                IUsdnProtocolTypes.Position[] storage tickArray = s._longPositions[tickHash];
+                IUsdnProtocolTypes.Position memory pos = tickArray[open.index];
                 delete s._longPositions[tickHash][open.index];
 
                 // more cleanup operations
                 if (cleanup) {
-                    TickData storage tickData = s._tickData[tickHash];
+                    IUsdnProtocolTypes.TickData storage tickData = s._tickData[tickHash];
                     --s._totalLongPositions;
                     tickData.totalPos -= 1;
                     if (tickData.totalPos == 0) {
@@ -783,9 +783,9 @@ library UsdnProtocolCoreLibrary {
                         s._liqMultiplierAccumulator.sub(HugeUint.wrap(unadjustedTickPrice * pos.totalExpo));
                 }
             }
-        } else if (pending.action == ProtocolAction.ValidateClosePosition && cleanup) {
+        } else if (pending.action == IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition && cleanup) {
             // for pending closes, the position is already out of the protocol
-            LongPendingAction memory close = _toLongPendingAction(pending);
+            IUsdnProtocolTypes.LongPendingAction memory close = _toLongPendingAction(pending);
             // credit the full amount to the vault to preserve the total balance invariant (like a liquidation)
             s._balanceVault += close.closeBoundedPositionValue;
         }

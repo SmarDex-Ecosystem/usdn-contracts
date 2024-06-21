@@ -2,7 +2,7 @@
 pragma solidity ^0.8.25;
 
 import { IUsdnProtocolLong } from "../interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
-import { Position, PositionId } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
 import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { UsdnProtocolLongLibrary as longLib } from "./libraries/UsdnProtocolLongLibrary.sol";
@@ -19,10 +19,10 @@ abstract contract UsdnProtocolLongEntry is UsdnProtocolStorage, IUsdnProtocolLon
     }
 
     /// @inheritdoc IUsdnProtocolLong
-    function getLongPosition(PositionId memory posId)
+    function getLongPosition(IUsdnProtocolTypes.PositionId memory posId)
         external
         view
-        returns (Position memory pos_, uint8 liquidationPenalty_)
+        returns (IUsdnProtocolTypes.Position memory pos_, uint8 liquidationPenalty_)
     {
         return longLib.getLongPosition(s, posId);
     }
@@ -33,7 +33,7 @@ abstract contract UsdnProtocolLongEntry is UsdnProtocolStorage, IUsdnProtocolLon
     }
 
     /// @inheritdoc IUsdnProtocolLong
-    function getPositionValue(PositionId calldata posId, uint128 price, uint128 timestamp)
+    function getPositionValue(IUsdnProtocolTypes.PositionId calldata posId, uint128 price, uint128 timestamp)
         external
         view
         returns (int256 value_)

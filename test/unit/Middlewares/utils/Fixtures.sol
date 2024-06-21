@@ -15,7 +15,7 @@ import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthO
 import { IWstETH } from "../../../../src/interfaces/IWstETH.sol";
 import { IOracleMiddlewareErrors } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
 import { IOracleMiddlewareEvents } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareEvents.sol";
-import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title ActionsFixture
@@ -23,18 +23,18 @@ import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnPro
  */
 contract ActionsFixture is IOracleMiddlewareErrors, IOracleMiddlewareEvents {
     // all action types
-    ProtocolAction[] public actions = [
-        ProtocolAction.None,
-        ProtocolAction.Initialize,
-        ProtocolAction.InitiateDeposit,
-        ProtocolAction.ValidateDeposit,
-        ProtocolAction.InitiateWithdrawal,
-        ProtocolAction.ValidateWithdrawal,
-        ProtocolAction.InitiateOpenPosition,
-        ProtocolAction.ValidateOpenPosition,
-        ProtocolAction.InitiateClosePosition,
-        ProtocolAction.ValidateClosePosition,
-        ProtocolAction.Liquidation
+    IUsdnProtocolTypes.ProtocolAction[] public actions = [
+        IUsdnProtocolTypes.ProtocolAction.None,
+        IUsdnProtocolTypes.ProtocolAction.Initialize,
+        IUsdnProtocolTypes.ProtocolAction.InitiateDeposit,
+        IUsdnProtocolTypes.ProtocolAction.ValidateDeposit,
+        IUsdnProtocolTypes.ProtocolAction.InitiateWithdrawal,
+        IUsdnProtocolTypes.ProtocolAction.ValidateWithdrawal,
+        IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition,
+        IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition,
+        IUsdnProtocolTypes.ProtocolAction.InitiateClosePosition,
+        IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition,
+        IUsdnProtocolTypes.ProtocolAction.Liquidation
     ];
 }
 
