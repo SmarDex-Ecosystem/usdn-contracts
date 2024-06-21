@@ -15,6 +15,7 @@ import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 import { MockWstEthOracleMiddleware } from "../../../src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
 import { ILiquidationRewardsManagerErrorsEventsTypes } from
     "../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManagerErrorsEventsTypes.sol";
+import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
 import { IUsdnEvents } from "../../../src/interfaces/Usdn/IUsdnEvents.sol";
 import { ProtocolAction } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
@@ -22,7 +23,11 @@ import { ProtocolAction } from "../../../src/interfaces/UsdnProtocol/IUsdnProtoc
  * @custom:feature Checking the gas usage of a liquidation
  * @custom:background Given a forked ethereum mainnet chain
  */
-contract TestForkUsdnProtocolLiquidationGasUsage is UsdnProtocolBaseIntegrationFixture, IUsdnEvents {
+contract TestForkUsdnProtocolLiquidationGasUsage is
+    UsdnProtocolBaseIntegrationFixture,
+    IUsdnEvents,
+    IRebalancerEvents
+{
     uint256 securityDepositValue;
 
     function setUp() public {
@@ -54,6 +59,67 @@ contract TestForkUsdnProtocolLiquidationGasUsage is UsdnProtocolBaseIntegrationF
         // reduce minimum size to avoid creating a large imbalance in the tests below
         vm.prank(DEPLOYER);
         protocol.setMinLongPosition(0.01 ether);
+
+        // deposit assets in the rebalancer for when we need to trigger it
+        wstETH.approve(address(rebalancer), type(uint256).max);
+        (success,) = address(wstETH).call{ value: 100 ether }("");
+        require(success, "Could not mint wstETH to address(this)");
+        rebalancer.initiateDepositAssets(2 ether, address(this));
+        skip(rebalancer.getTimeLimits().validationDelay);
+        rebalancer.validateDepositAssets();
+
+        // make sure we update _lastPrice when opening positions below
+        skip(1 hours);
+
+        /* ------- replace the oracle to setup positions at the desired price ------- */
+
+        (uint256 pythPriceWstETH,,,,) =
+            getHermesApiSignature(PYTH_WSTETH_USD, block.timestamp + oracleMiddleware.getValidationDelay());
+        uint128 pythPriceNormalized = uint128(pythPriceWstETH * 10 ** 10);
+
+        // use the mock oracle to open positions to avoid hermes calls
+        MockWstEthOracleMiddleware mockOracle = new MockWstEthOracleMiddleware(
+            address(mockPyth), PYTH_ETH_USD, REDSTONE_ETH_USD, address(mockChainlinkOnChain), address(wstETH), 1 hours
+        );
+        vm.prank(DEPLOYER);
+        protocol.setOracleMiddleware(mockOracle);
+        mockOracle.setWstethMockedPrice(pythPriceNormalized + 1000 ether);
+        // turn off pyth signature verification to avoid updating the price feed
+        // this allows us to be in the worst-case scenario gas-wise later
+        mockOracle.setVerifySignature(false);
+
+        // disable rebase for setup
+        vm.startPrank(DEPLOYER);
+        protocol.setUsdnRebaseThreshold(1000 ether);
+        protocol.setTargetUsdnPrice(1000 ether);
+        vm.stopPrank();
+
+        /* ---------------------------- set up positions ---------------------------- */
+
+        uint128 minLongPosition = uint128(protocol.getMinLongPosition());
+        vm.prank(USER_1);
+        protocol.initiateOpenPosition{ value: securityDepositValue }(
+            minLongPosition, pythPriceNormalized + 200 ether, USER_1, USER_1, NO_PERMIT2, hex"beef", EMPTY_PREVIOUS_DATA
+        );
+        vm.prank(USER_2);
+        protocol.initiateOpenPosition{ value: securityDepositValue }(
+            minLongPosition, pythPriceNormalized + 150 ether, USER_2, USER_2, NO_PERMIT2, hex"beef", EMPTY_PREVIOUS_DATA
+        );
+        vm.prank(USER_3);
+        protocol.initiateOpenPosition{ value: securityDepositValue }(
+            minLongPosition, pythPriceNormalized + 100 ether, USER_3, USER_3, NO_PERMIT2, hex"beef", EMPTY_PREVIOUS_DATA
+        );
+        _waitDelay();
+        vm.prank(USER_1);
+        protocol.validateOpenPosition(USER_1, hex"beef", EMPTY_PREVIOUS_DATA);
+        vm.prank(USER_2);
+        protocol.validateOpenPosition(USER_2, hex"beef", EMPTY_PREVIOUS_DATA);
+        vm.prank(USER_3);
+        protocol.validateOpenPosition(USER_3, hex"beef", EMPTY_PREVIOUS_DATA);
+
+        // put the original oracle back
+        vm.prank(DEPLOYER);
+        protocol.setOracleMiddleware(oracleMiddleware);
     }
 
     /**
@@ -81,56 +147,6 @@ contract TestForkUsdnProtocolLiquidationGasUsage is UsdnProtocolBaseIntegrationF
     }
 
     function _forkGasUsageHelper(bool withRebase) public {
-        skip(1 hours); // make sure we update _lastPrice when opening positions below
-        (uint256 pythPriceWstETH,,,,) =
-            getHermesApiSignature(PYTH_WSTETH_USD, block.timestamp + oracleMiddleware.getValidationDelay());
-        uint128 pythPriceNormalized = uint128(pythPriceWstETH * 10 ** 10);
-
-        // use the mock oracle to open positions to avoid hermes calls
-        MockWstEthOracleMiddleware mockOracle = new MockWstEthOracleMiddleware(
-            address(mockPyth), PYTH_ETH_USD, REDSTONE_ETH_USD, address(mockChainlinkOnChain), address(wstETH), 1 hours
-        );
-        vm.prank(DEPLOYER);
-        protocol.setOracleMiddleware(mockOracle);
-        mockOracle.setWstethMockedPrice(pythPriceNormalized + 1000 ether);
-        // turn off pyth signature verification to avoid updating the price feed
-        // this allows us to be in the worst-case scenario gas-wise later
-        mockOracle.setVerifySignature(false);
-
-        // disable rebase for setup
-        vm.startPrank(DEPLOYER);
-        protocol.setUsdnRebaseThreshold(1000 ether);
-        protocol.setTargetUsdnPrice(1000 ether);
-        vm.stopPrank();
-
-        /* ---------------------------- Set up positions ---------------------------- */
-
-        uint128 minLongPosition = uint128(protocol.getMinLongPosition());
-        vm.prank(USER_1);
-        protocol.initiateOpenPosition{ value: securityDepositValue }(
-            minLongPosition, pythPriceNormalized + 200 ether, USER_1, USER_1, NO_PERMIT2, hex"beef", EMPTY_PREVIOUS_DATA
-        );
-        vm.prank(USER_2);
-        protocol.initiateOpenPosition{ value: securityDepositValue }(
-            minLongPosition, pythPriceNormalized + 150 ether, USER_2, USER_2, NO_PERMIT2, hex"beef", EMPTY_PREVIOUS_DATA
-        );
-        vm.prank(USER_3);
-        protocol.initiateOpenPosition{ value: securityDepositValue }(
-            minLongPosition, pythPriceNormalized + 100 ether, USER_3, USER_3, NO_PERMIT2, hex"beef", EMPTY_PREVIOUS_DATA
-        );
-        _waitDelay();
-        vm.prank(USER_1);
-        protocol.validateOpenPosition(USER_1, hex"beef", EMPTY_PREVIOUS_DATA);
-        vm.prank(USER_2);
-        protocol.validateOpenPosition(USER_2, hex"beef", EMPTY_PREVIOUS_DATA);
-        vm.prank(USER_3);
-        protocol.validateOpenPosition(USER_3, hex"beef", EMPTY_PREVIOUS_DATA);
-
-        /* ---------------------------- Start the checks ---------------------------- */
-        // put the original oracle back
-        vm.prank(DEPLOYER);
-        protocol.setOracleMiddleware(oracleMiddleware);
-
         uint256[] memory gasUsedArray = new uint256[](3);
         ILiquidationRewardsManagerErrorsEventsTypes.RewardsParameters memory rewardsParameters =
             liquidationRewardsManager.getRewardsParameters();
@@ -156,7 +172,6 @@ contract TestForkUsdnProtocolLiquidationGasUsage is UsdnProtocolBaseIntegrationF
                 emit Rebase(0, 0);
             }
 
-            // get a price that liquidates `ticksToLiquidate` ticks
             uint256 startGas = gasleft();
             uint256 positionsLiquidated = protocol.liquidate{ value: oracleFee }(data, ticksToLiquidate);
             uint256 gasUsed = startGas - gasleft();
@@ -194,6 +209,63 @@ contract TestForkUsdnProtocolLiquidationGasUsage is UsdnProtocolBaseIntegrationF
             averageOtherGasUsed,
             otherGasUsed,
             "The result should match the otherGasUsed(+rebaseGasUsed) parameter set in LiquidationRewardsManager's constructor"
+        );
+    }
+
+    /**
+     * @custom:scenario The gas usage of UsdnProtocolActions.liquidate(bytes,uint16) matches the values set in
+     * LiquidationRewardsManager.getRewardsParameters
+     * @custom:given There are 3 ticks that can be liquidated
+     * @custom:and A rebalancer trigger occurs
+     * @custom:when A liquidator calls the function `liquidate`
+     * @custom:then The gas usage matches the LiquidationRewardsManager parameters
+     */
+    function test_ForkGasUsageOfLiquidateFunctionWithRebalancer() public {
+        uint256[] memory gasUsedArray = new uint256[](2);
+        ILiquidationRewardsManagerErrorsEventsTypes.RewardsParameters memory rewardsParameters =
+            liquidationRewardsManager.getRewardsParameters();
+
+        skip(1 minutes);
+        (,,,, bytes memory data) = getHermesApiSignature(PYTH_ETH_USD, block.timestamp);
+        uint256 oracleFee = oracleMiddleware.validationCost(data, ProtocolAction.Liquidation);
+
+        // take a snapshot to re-do liquidations with different iterations
+        uint256 snapshotId = vm.snapshot();
+        for (uint256 i = 0; i < 2; ++i) {
+            uint16 ticksToLiquidate = 3;
+
+            // on the second iteration, enable the rebalancer
+            if (i == 1) {
+                // enable rebalancer
+                vm.startPrank(DEPLOYER);
+                protocol.setExpoImbalanceLimits(5000, 0, 10_000, 1, -4000);
+                vm.stopPrank();
+
+                // sanity check, make sure the rebalancer was triggered
+                vm.expectEmit(false, false, false, false);
+                emit PositionVersionUpdated(0);
+            }
+
+            uint256 startGas = gasleft();
+            uint256 positionsLiquidated = protocol.liquidate{ value: oracleFee }(data, ticksToLiquidate);
+            uint256 gasUsed = startGas - gasleft();
+            gasUsedArray[i] = gasUsed;
+
+            // make sure the expected amount of computation was executed
+            assertEq(positionsLiquidated, ticksToLiquidate, "We expect 3 positions liquidated");
+
+            // cancel the liquidation so it's available again
+            vm.revertTo(snapshotId);
+        }
+
+        // calculate the gas used by the rebalancer trigger
+        uint256 gasUsedByRebalancer = gasUsedArray[1] - gasUsedArray[0];
+
+        // check that the gas usage per tick matches the gasUsedPerTick parameter in the LiquidationRewardsManager
+        assertEq(
+            gasUsedByRebalancer,
+            rewardsParameters.rebalancerGasUsed,
+            "The result should match the rebalancerGasUsed parameter set in LiquidationRewardsManager's constructor"
         );
     }
 }

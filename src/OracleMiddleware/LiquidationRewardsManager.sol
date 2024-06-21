@@ -52,10 +52,10 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     {
         _wstEth = wstETH;
         _rewardsParameters = RewardsParameters({
-            gasUsedPerTick: 36_884,
-            otherGasUsed: 306_685,
-            rebaseGasUsed: 12_014,
-            rebalancerGasUsed: 0,
+            gasUsedPerTick: 55_890,
+            otherGasUsed: 432_806,
+            rebaseGasUsed: 3447,
+            rebalancerGasUsed: 251_476,
             gasPriceLimit: 1000 gwei,
             multiplierBps: 30_000
         });
@@ -70,6 +70,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         uint16 tickAmount,
         int256,
         bool rebased,
+        bool rebalancerTriggered,
         ProtocolAction,
         bytes calldata,
         bytes calldata
@@ -86,6 +87,9 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
 
         if (rebased) {
             gasUsed += rewardsParameters.rebaseGasUsed;
+        }
+        if (rebalancerTriggered) {
+            gasUsed += rewardsParameters.rebalancerGasUsed;
         }
 
         // multiply by the gas price and the rewards multiplier
