@@ -267,13 +267,6 @@ library UsdnProtocolActionsLongLibrary {
         }
     }
 
-    struct MaxLeverageData {
-        int24 tickWithoutPenalty;
-        uint8 currentLiqPenalty;
-        IUsdnProtocolTypes.PositionId newPosId;
-        uint8 liquidationPenalty;
-    }
-
     /**
      * @notice Validate an open position action
      * @param s The storage of the protocol
@@ -304,7 +297,7 @@ library UsdnProtocolActionsLongLibrary {
         // of _maxLeverage
         uint128 maxLeverage = uint128(s._maxLeverage);
         if (data.leverage > maxLeverage) {
-            MaxLeverageData memory maxLeverageData;
+            IUsdnProtocolTypes.MaxLeverageData memory maxLeverageData;
             // theoretical liquidation price for _maxLeverage
             data.liqPriceWithoutPenalty = longLib._getLiquidationPrice(data.startPrice, maxLeverage);
             // adjust to the closest valid tick down
@@ -509,13 +502,6 @@ library UsdnProtocolActionsLongLibrary {
         }
     }
 
-    struct ValidateClosePositionWithActionData {
-        bool isLiquidationPending;
-        uint128 priceWithFees;
-        uint128 liquidationPrice;
-        int256 positionValue;
-    }
-
     /**
      * @notice Update protocol balances, liquidate positions if necessary, then validate the close position action
      * @param s The storage of the protocol
@@ -529,7 +515,7 @@ library UsdnProtocolActionsLongLibrary {
         IUsdnProtocolTypes.PendingAction memory pending,
         bytes calldata priceData
     ) public returns (bool isValidated_, bool liquidated_) {
-        ValidateClosePositionWithActionData memory data;
+        IUsdnProtocolTypes.ValidateClosePositionWithActionData memory data;
         IUsdnProtocolTypes.LongPendingAction memory long = coreLib._toLongPendingAction(pending);
 
         PriceInfo memory currentPrice = actionsVaultLib._getOraclePrice(

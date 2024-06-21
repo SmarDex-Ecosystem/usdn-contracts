@@ -188,14 +188,6 @@ library UsdnProtocolLongLibrary {
     /*                             Internal functions                             */
     /* -------------------------------------------------------------------------- */
 
-    struct ApplyPnlAndFundingAndLiquidateData {
-        bool isPriceRecent;
-        int256 tempLongBalance;
-        int256 tempVaultBalance;
-        bool rebased;
-        bytes callbackResult;
-    }
-
     /**
      * @notice Applies PnL, funding, and liquidates positions if necessary
      * @param s The storage of the protocol
@@ -218,7 +210,7 @@ library UsdnProtocolLongLibrary {
         IUsdnProtocolTypes.ProtocolAction action,
         bytes calldata priceData
     ) public returns (uint256 liquidatedPositions_, bool isLiquidationPending_) {
-        ApplyPnlAndFundingAndLiquidateData memory data;
+        IUsdnProtocolTypes.ApplyPnlAndFundingAndLiquidateData memory data;
         // adjust balances
         (data.isPriceRecent, data.tempLongBalance, data.tempVaultBalance) =
             coreLib._applyPnlAndFunding(s, neutralPrice.toUint128(), timestamp.toUint128());
@@ -260,13 +252,6 @@ library UsdnProtocolLongLibrary {
 
             liquidatedPositions_ = liquidationEffects.liquidatedPositions;
         }
-    }
-
-    struct TriggerRebalancerData {
-        uint128 positionAmount;
-        uint256 rebalancerMaxLeverage;
-        IUsdnProtocolTypes.PositionId rebalancerPosId;
-        uint128 positionValue;
     }
 
     /**
@@ -323,7 +308,7 @@ library UsdnProtocolLongLibrary {
             }
         }
 
-        TriggerRebalancerData memory data;
+        IUsdnProtocolTypes.TriggerRebalancerData memory data;
         // the default value of `positionAmount` is the amount of pendingAssets in the rebalancer
         (data.positionAmount, data.rebalancerMaxLeverage, data.rebalancerPosId) = rebalancer.getCurrentStateData();
 

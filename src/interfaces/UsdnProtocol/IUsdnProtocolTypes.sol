@@ -4,7 +4,7 @@ pragma solidity >=0.8.0;
 import { HugeUint } from "../../libraries/HugeUint.sol";
 import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 
-contract IUsdnProtocolTypes {
+interface IUsdnProtocolTypes {
     /**
      * @notice Information about a long user position
      * @param validated Whether the position was validated
@@ -257,13 +257,6 @@ contract IUsdnProtocolTypes {
         Permit2TokenBitfield.Bitfield permit2TokenBitfield;
     }
 
-    struct InitiateClosePositionParams {
-        PositionId posId;
-        uint128 amountToClose;
-        address to;
-        address payable validator;
-    }
-
     /**
      * @dev Structure to hold the transient data during `_initiateDeposit`
      * @param pendingActionPrice The adjusted price with position fees applied
@@ -405,5 +398,41 @@ contract IUsdnProtocolTypes {
         uint256 longBalance;
         uint256 vaultBalance;
         HugeUint.Uint512 liqMultiplierAccumulator;
+    }
+
+    struct InitiateClosePositionParams {
+        PositionId posId;
+        uint128 amountToClose;
+        address to;
+        address payable validator;
+    }
+
+    struct TriggerRebalancerData {
+        uint128 positionAmount;
+        uint256 rebalancerMaxLeverage;
+        IUsdnProtocolTypes.PositionId rebalancerPosId;
+        uint128 positionValue;
+    }
+
+    struct ApplyPnlAndFundingAndLiquidateData {
+        bool isPriceRecent;
+        int256 tempLongBalance;
+        int256 tempVaultBalance;
+        bool rebased;
+        bytes callbackResult;
+    }
+
+    struct ValidateClosePositionWithActionData {
+        bool isLiquidationPending;
+        uint128 priceWithFees;
+        uint128 liquidationPrice;
+        int256 positionValue;
+    }
+
+    struct MaxLeverageData {
+        int24 tickWithoutPenalty;
+        uint8 currentLiqPenalty;
+        IUsdnProtocolTypes.PositionId newPosId;
+        uint8 liquidationPenalty;
     }
 }
