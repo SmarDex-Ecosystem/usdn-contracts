@@ -8,14 +8,14 @@ import { IBaseLiquidationRewardsManager } from "../OracleMiddleware/IBaseLiquida
 import { IBaseOracleMiddleware } from "../OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IBaseRebalancer } from "../Rebalancer/IBaseRebalancer.sol";
 import { IUsdn } from "../Usdn/IUsdn.sol";
+import { IUsdnProtocolErrors } from "./IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "./IUsdnProtocolEvents.sol";
-import { PendingAction, Position, TickData } from "./IUsdnProtocolTypes.sol";
 
 /**
  * @title IUsdnProtocolStorage
  * @notice Interface for the storage layer of the USDN protocol
  */
-interface IUsdnProtocolStorage is IUsdnProtocolEvents {
+interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /* -------------------------------------------------------------------------- */
     /*                                  Constants                                 */
     /* -------------------------------------------------------------------------- */

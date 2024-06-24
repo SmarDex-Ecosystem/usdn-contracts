@@ -8,20 +8,14 @@ import { ILiquidationRewardsManager } from "../interfaces/OracleMiddleware/ILiqu
 import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocol } from "../interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import { UsdnProtocolActionsEntry } from "./UsdnProtocolActionsEntry.sol";
-import { UsdnProtocolCoreEntry } from "./UsdnProtocolCoreEntry.sol";
-import { UsdnProtocolLongEntry } from "./UsdnProtocolLongEntry.sol";
+import { UsdnProtocolActions } from "./UsdnProtocolActions.sol";
+import { UsdnProtocolCore } from "./UsdnProtocolCore.sol";
+import { UsdnProtocolLong } from "./UsdnProtocolLong.sol";
 import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
-import { UsdnProtocolVaultEntry } from "./UsdnProtocolVaultEntry.sol";
-import { UsdnProtocolSettersLibrary as settersLib } from "./libraries/UsdnProtocolSettersLibrary.sol";
+import { UsdnProtocolVault } from "./UsdnProtocolVault.sol";
+import { UsdnProtocolSettersLibrary as Setters } from "./libraries/UsdnProtocolSettersLibrary.sol";
 
-contract UsdnProtocol is
-    IUsdnProtocol,
-    UsdnProtocolLongEntry,
-    UsdnProtocolVaultEntry,
-    UsdnProtocolCoreEntry,
-    UsdnProtocolActionsEntry
-{
+contract UsdnProtocol is IUsdnProtocol, UsdnProtocolLong, UsdnProtocolVault, UsdnProtocolCore, UsdnProtocolActions {
     /**
      * @notice Constructor
      * @param usdn The USDN ERC20 contract
@@ -44,97 +38,97 @@ contract UsdnProtocol is
 
     /// @inheritdoc IUsdnProtocol
     function setOracleMiddleware(IBaseOracleMiddleware newOracleMiddleware) external onlyOwner {
-        settersLib.setOracleMiddleware(s, newOracleMiddleware);
+        Setters.setOracleMiddleware(s, newOracleMiddleware);
     }
 
     /// @inheritdoc IUsdnProtocol
     function setLiquidationRewardsManager(ILiquidationRewardsManager newLiquidationRewardsManager) external onlyOwner {
-        settersLib.setLiquidationRewardsManager(s, newLiquidationRewardsManager);
+        Setters.setLiquidationRewardsManager(s, newLiquidationRewardsManager);
     }
 
     /// @inheritdoc IUsdnProtocol
     function setRebalancer(IBaseRebalancer newRebalancer) external onlyOwner {
-        settersLib.setRebalancer(s, newRebalancer);
+        Setters.setRebalancer(s, newRebalancer);
     }
 
     /// @inheritdoc IUsdnProtocol
     function setMinLeverage(uint256 newMinLeverage) external onlyOwner {
-        settersLib.setMinLeverage(s, newMinLeverage);
+        Setters.setMinLeverage(s, newMinLeverage);
     }
 
     /// @inheritdoc IUsdnProtocol
     function setMaxLeverage(uint256 newMaxLeverage) external onlyOwner {
-        settersLib.setMaxLeverage(s, newMaxLeverage);
+        Setters.setMaxLeverage(s, newMaxLeverage);
     }
 
     /// @inheritdoc IUsdnProtocol
     function setValidationDeadline(uint256 newValidationDeadline) external onlyOwner {
-        settersLib.setValidationDeadline(s, newValidationDeadline);
+        Setters.setValidationDeadline(s, newValidationDeadline);
     }
 
     /// @inheritdoc IUsdnProtocol
     function setLiquidationPenalty(uint8 newLiquidationPenalty) external onlyOwner {
-        settersLib.setLiquidationPenalty(s, newLiquidationPenalty);
+        Setters.setLiquidationPenalty(s, newLiquidationPenalty);
     }
 
     /// @inheritdoc IUsdnProtocol
     function setSafetyMarginBps(uint256 newSafetyMarginBps) external onlyOwner {
-        settersLib.setSafetyMarginBps(s, newSafetyMarginBps);
+        Setters.setSafetyMarginBps(s, newSafetyMarginBps);
     }
 
     /// @inheritdoc IUsdnProtocol
     function setLiquidationIteration(uint16 newLiquidationIteration) external onlyOwner {
-        settersLib.setLiquidationIteration(s, newLiquidationIteration);
+        Setters.setLiquidationIteration(s, newLiquidationIteration);
     }
 
     /// @inheritdoc IUsdnProtocol
     function setEMAPeriod(uint128 newEMAPeriod) external onlyOwner {
-        settersLib.setEMAPeriod(s, newEMAPeriod);
+        Setters.setEMAPeriod(s, newEMAPeriod);
     }
 
     /// @inheritdoc IUsdnProtocol
     function setFundingSF(uint256 newFundingSF) external onlyOwner {
-        settersLib.setFundingSF(s, newFundingSF);
+        Setters.setFundingSF(s, newFundingSF);
     }
 
     /// @inheritdoc IUsdnProtocol
     function setProtocolFeeBps(uint16 newProtocolFeeBps) external onlyOwner {
-        settersLib.setProtocolFeeBps(s, newProtocolFeeBps);
+        Setters.setProtocolFeeBps(s, newProtocolFeeBps);
     }
 
     /// @inheritdoc IUsdnProtocol
     function setPositionFeeBps(uint16 newPositionFee) external onlyOwner {
-        settersLib.setPositionFeeBps(s, newPositionFee);
+        Setters.setPositionFeeBps(s, newPositionFee);
     }
 
     /// @inheritdoc IUsdnProtocol
     function setVaultFeeBps(uint16 newVaultFee) external onlyOwner {
-        settersLib.setVaultFeeBps(s, newVaultFee);
+        Setters.setVaultFeeBps(s, newVaultFee);
     }
 
     /// @inheritdoc IUsdnProtocol
     function setRebalancerBonusBps(uint16 newBonus) external onlyOwner {
-        settersLib.setRebalancerBonusBps(s, newBonus);
+        Setters.setRebalancerBonusBps(s, newBonus);
     }
 
     /// @inheritdoc IUsdnProtocol
     function setSdexBurnOnDepositRatio(uint32 newRatio) external onlyOwner {
-        settersLib.setSdexBurnOnDepositRatio(s, newRatio);
+        Setters.setSdexBurnOnDepositRatio(s, newRatio);
     }
 
     /// @inheritdoc IUsdnProtocol
     function setSecurityDepositValue(uint64 securityDepositValue) external onlyOwner {
-        settersLib.setSecurityDepositValue(s, securityDepositValue);
+        Setters.setSecurityDepositValue(s, securityDepositValue);
     }
 
     /// @inheritdoc IUsdnProtocol
     function setFeeThreshold(uint256 newFeeThreshold) external onlyOwner {
-        settersLib.setFeeThreshold(s, newFeeThreshold);
+        Setters.setFeeThreshold(s, newFeeThreshold);
     }
 
     /// @inheritdoc IUsdnProtocol
     function setFeeCollector(address newFeeCollector) external onlyOwner {
-        settersLib.setFeeCollector(s, newFeeCollector);
+        Setters.setFeeCollector(s, newFeeCollector);
     }
 
     /// @inheritdoc IUsdnProtocol
@@ -145,28 +139,28 @@ contract UsdnProtocol is
         uint256 newCloseLimitBps,
         int256 newLongImbalanceTargetBps
     ) external onlyOwner {
-        settersLib.setExpoImbalanceLimits(
+        Setters.setExpoImbalanceLimits(
             s, newOpenLimitBps, newDepositLimitBps, newWithdrawalLimitBps, newCloseLimitBps, newLongImbalanceTargetBps
         );
     }
 
     /// @inheritdoc IUsdnProtocol
     function setTargetUsdnPrice(uint128 newPrice) external onlyOwner {
-        settersLib.setTargetUsdnPrice(s, newPrice);
+        Setters.setTargetUsdnPrice(s, newPrice);
     }
 
     /// @inheritdoc IUsdnProtocol
     function setUsdnRebaseThreshold(uint128 newThreshold) external onlyOwner {
-        settersLib.setUsdnRebaseThreshold(s, newThreshold);
+        Setters.setUsdnRebaseThreshold(s, newThreshold);
     }
 
     /// @inheritdoc IUsdnProtocol
     function setUsdnRebaseInterval(uint256 newInterval) external onlyOwner {
-        settersLib.setUsdnRebaseInterval(s, newInterval);
+        Setters.setUsdnRebaseInterval(s, newInterval);
     }
 
     /// @inheritdoc IUsdnProtocol
     function setMinLongPosition(uint256 newMinLongPosition) external onlyOwner {
-        settersLib.setMinLongPosition(s, newMinLongPosition);
+        Setters.setMinLongPosition(s, newMinLongPosition);
     }
 }
