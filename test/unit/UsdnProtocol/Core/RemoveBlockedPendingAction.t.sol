@@ -13,7 +13,7 @@ import {
 import { DoubleEndedQueue } from "../../../../src/libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 
-/// @custom:feature The `_removeBlockedPendingAction` admin function of the protocol
+/// @custom:feature The `removeBlockedPendingAction` and `_removeBlockedPendingAction` admin functions of the protocol
 contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
     function setUp() public {
         params = DEFAULT_PARAMS;
@@ -26,15 +26,22 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
      * @param untilAction Whether to initiate a deposit or a withdrawal
      * @param amount The amount to deposit
      * @param cleanup Whether to remove the action with more cleanup
+     * @param ext Whether to call the external function (false for the internal one)
      */
-    function _removeBlockedVaultScenario(ProtocolAction untilAction, uint128 amount, bool cleanup) internal {
+    function _removeBlockedVaultScenario(ProtocolAction untilAction, uint128 amount, bool cleanup, bool ext) internal {
         setUpUserPositionInVault(USER_1, untilAction, amount, params.initialPrice);
         _wait();
 
         (, uint128 rawIndex) = protocol.i_getPendingAction(USER_1);
 
         vm.prank(ADMIN);
-        protocol.i_removeBlockedPendingAction(rawIndex, payable(address(this)), cleanup);
+        if (ext && cleanup) {
+            protocol.removeBlockedPendingAction(rawIndex, payable(address(this)));
+        } else if (ext && !cleanup) {
+            protocol.removeBlockedPendingActionNoCleanup(rawIndex, payable(address(this)));
+        } else {
+            protocol.i_removeBlockedPendingAction(rawIndex, payable(address(this)), cleanup);
+        }
 
         assertTrue(protocol.getUserPendingAction(USER_1).action == ProtocolAction.None, "pending action");
         vm.expectRevert(DoubleEndedQueue.QueueOutOfBounds.selector);
@@ -52,7 +59,24 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
     function test_removeBlockedDepositCleanup() public {
         uint256 balanceBefore = address(this).balance;
         uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
-        _removeBlockedVaultScenario(ProtocolAction.InitiateDeposit, 10 ether, true);
+        _removeBlockedVaultScenario(ProtocolAction.InitiateDeposit, 10 ether, true, true);
+        assertEq(wstETH.balanceOf(address(this)), assetBalanceBefore + 10 ether, "asset balance after");
+        assertEq(address(this).balance, balanceBefore + protocol.getSecurityDepositValue(), "balance after");
+        assertEq(protocol.getPendingBalanceVault(), 0, "pending vault balance");
+    }
+
+    /**
+     * @custom:scenario Remove a stuck deposit with cleanup
+     * @custom:given A user has initiated a deposit which gets stuck for any reason
+     * @custom:when We remove the pending action with cleanup with the internal function
+     * @custom:then The pending action is removed
+     * @custom:and The `to` address receives the deposited assets and the security deposit
+     * @custom:and The pending vault balance is decremented
+     */
+    function test_removeBlockedDepositCleanupInternal() public {
+        uint256 balanceBefore = address(this).balance;
+        uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
+        _removeBlockedVaultScenario(ProtocolAction.InitiateDeposit, 10 ether, true, false);
         assertEq(wstETH.balanceOf(address(this)), assetBalanceBefore + 10 ether, "asset balance after");
         assertEq(address(this).balance, balanceBefore + protocol.getSecurityDepositValue(), "balance after");
         assertEq(protocol.getPendingBalanceVault(), 0, "pending vault balance");
@@ -69,7 +93,24 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
     function test_removeBlockedDepositNoCleanup() public {
         uint256 balanceBefore = address(this).balance;
         uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
-        _removeBlockedVaultScenario(ProtocolAction.InitiateDeposit, 10 ether, false);
+        _removeBlockedVaultScenario(ProtocolAction.InitiateDeposit, 10 ether, false, true);
+        assertEq(wstETH.balanceOf(address(this)), assetBalanceBefore, "asset balance after");
+        assertEq(address(this).balance, balanceBefore, "balance after");
+        assertEq(protocol.getPendingBalanceVault(), 10 ether, "pending vault balance");
+    }
+
+    /**
+     * @custom:scenario Remove a stuck deposit without cleanup
+     * @custom:given A user has initiated a deposit which gets stuck for any reason
+     * @custom:when We remove the pending action without cleanup with the internal function
+     * @custom:then The pending action is removed
+     * @custom:and The `to` address does not receive any assets or security deposit
+     * @custom:and The pending vault balance remains unchanged
+     */
+    function test_removeBlockedDepositNoCleanupInternal() public {
+        uint256 balanceBefore = address(this).balance;
+        uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
+        _removeBlockedVaultScenario(ProtocolAction.InitiateDeposit, 10 ether, false, false);
         assertEq(wstETH.balanceOf(address(this)), assetBalanceBefore, "asset balance after");
         assertEq(address(this).balance, balanceBefore, "balance after");
         assertEq(protocol.getPendingBalanceVault(), 10 ether, "pending vault balance");
@@ -86,7 +127,7 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
     function test_removeBlockedWithdrawalCleanup() public {
         uint256 balanceBefore = address(this).balance;
         uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
-        _removeBlockedVaultScenario(ProtocolAction.InitiateWithdrawal, 10 ether, true);
+        _removeBlockedVaultScenario(ProtocolAction.InitiateWithdrawal, 10 ether, true, false);
         assertEq(usdn.balanceOf(address(this)), usdnBalanceBefore + 20_000 ether, "usdn balance after");
         assertEq(address(this).balance, balanceBefore + protocol.getSecurityDepositValue(), "balance after");
         assertEq(protocol.getPendingBalanceVault(), 0, "pending vault balance");
@@ -103,7 +144,7 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
     function test_removeBlockedWithdrawalNoCleanup() public {
         uint256 balanceBefore = address(this).balance;
         uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
-        _removeBlockedVaultScenario(ProtocolAction.InitiateWithdrawal, 10 ether, false);
+        _removeBlockedVaultScenario(ProtocolAction.InitiateWithdrawal, 10 ether, false, false);
         assertEq(usdn.balanceOf(address(this)), usdnBalanceBefore, "usdn balance after");
         assertEq(address(this).balance, balanceBefore, "balance after");
         assertEq(protocol.getPendingBalanceVault(), -10 ether, "pending vault balance");
