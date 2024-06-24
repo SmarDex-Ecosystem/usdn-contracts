@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { PositionId } from "./IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "./IUsdnProtocolTypes.sol";
 
 /**
  * @title IUsdnProtocolEvents
  * @notice Events for the USDN Protocol
  */
-interface IUsdnProtocolEvents {
+interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     /**
      * @notice Emitted when a user initiates a deposit
      * @param to The address that will receive the USDN tokens

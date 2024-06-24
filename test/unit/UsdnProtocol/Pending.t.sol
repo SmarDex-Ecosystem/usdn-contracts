@@ -4,15 +4,6 @@ pragma solidity ^0.8.25;
 import { USER_1, USER_2, USER_3, USER_4 } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
 
-import {
-    DepositPendingAction,
-    LongPendingAction,
-    PendingAction,
-    PreviousActionsData,
-    ProtocolAction,
-    WithdrawalPendingAction
-} from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
 /**
  * @custom:feature The functions handling the pending actions queue
  * @custom:background Given a protocol instance that was initialized with default params

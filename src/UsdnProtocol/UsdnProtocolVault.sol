@@ -5,7 +5,7 @@ import { IUsdnProtocolVault } from "../interfaces/UsdnProtocol/IUsdnProtocolVaul
 import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { UsdnProtocolVaultLibrary as lib } from "./libraries/UsdnProtocolVaultLibrary.sol";
 
-abstract contract UsdnProtocolVaultEntry is UsdnProtocolStorage, IUsdnProtocolVault {
+abstract contract UsdnProtocolVault is UsdnProtocolStorage, IUsdnProtocolVault {
     /// @inheritdoc IUsdnProtocolVault
     function usdnPrice(uint128 currentPrice, uint128 timestamp) external view returns (uint256 price_) {
         return lib.usdnPrice(s, currentPrice, timestamp);

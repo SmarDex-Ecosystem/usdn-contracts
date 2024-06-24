@@ -15,7 +15,7 @@ import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../src/Usdn/Usdn.sol";
 import { UsdnProtocol } from "../src/UsdnProtocol/UsdnProtocol.sol";
 import { IWstETH } from "../src/interfaces/IWstETH.sol";
-import { ProtocolAction } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 contract Deploy is Script {
     /**
@@ -248,7 +248,7 @@ contract Deploy is Script {
             // for forks, we want a leverage of ~2x so we get the current
             // price from the middleware and divide it by two
             desiredLiqPrice = WstEthOracleMiddleware_.parseAndValidatePrice(
-                "", uint128(block.timestamp), ProtocolAction.Initialize, ""
+                "", uint128(block.timestamp), Types.ProtocolAction.Initialize, ""
             ).price / 2;
         }
 
