@@ -2,13 +2,13 @@
 pragma solidity >=0.8.0;
 
 import { HugeUint } from "../../libraries/HugeUint.sol";
-import { IUsdnProtocolTypes as Types } from "./IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "./IUsdnProtocolTypes.sol";
 
 /**
  * @title IUsdnProtocolLong
  * @notice Interface for the long side layer of the USDN protocol
  */
-interface IUsdnProtocolLong {
+interface IUsdnProtocolLong is IUsdnProtocolTypes {
     /**
      * @notice Get the value of the lowest usable tick, taking into account the tick spacing
      * @dev Note that the effective minimum tick of a newly open long position also depends on the minimum allowed
@@ -52,10 +52,10 @@ interface IUsdnProtocolLong {
      * @return pos_ The position data
      * @return liquidationPenalty_ The liquidation penalty for that position (and associated tick)
      */
-    function getLongPosition(Types.PositionId calldata posId)
+    function getLongPosition(PositionId calldata posId)
         external
         view
-        returns (Types.Position memory pos_, uint8 liquidationPenalty_);
+        returns (Position memory pos_, uint8 liquidationPenalty_);
 
     /**
      * @notice Get the minimum acceptable desired liquidation price for a new long position
@@ -74,7 +74,7 @@ interface IUsdnProtocolLong {
      * @param timestamp The timestamp of the price
      * @return The position value in assets
      */
-    function getPositionValue(Types.PositionId calldata posId, uint128 price, uint128 timestamp)
+    function getPositionValue(PositionId calldata posId, uint128 price, uint128 timestamp)
         external
         view
         returns (int256);

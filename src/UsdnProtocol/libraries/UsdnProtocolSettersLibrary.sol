@@ -10,7 +10,7 @@ import { IBaseRebalancer } from "../../interfaces/Rebalancer/IBaseRebalancer.sol
 import { IUsdnProtocol } from "../../interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { IUsdnProtocolTypes as Types } from "./../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 
 library UsdnProtocolSettersLibrary {

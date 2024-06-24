@@ -2,9 +2,10 @@
 pragma solidity ^0.8.25;
 
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+
+import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { OracleMiddleware } from "../OracleMiddleware.sol";
 import { WstEthOracleMiddleware } from "../WstEthOracleMiddleware.sol";
-import { IUsdnProtocolTypes as Types } from "./../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title Contract to apply and return a mocked wstETH price

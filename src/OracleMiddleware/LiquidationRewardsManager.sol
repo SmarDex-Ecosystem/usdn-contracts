@@ -8,6 +8,7 @@ import { IWstETH } from "../interfaces/IWstETH.sol";
 import { IBaseLiquidationRewardsManager } from "../interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
 import { ILiquidationRewardsManager } from "../interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { ChainlinkPriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { ChainlinkOracle } from "./oracles/ChainlinkOracle.sol";
 
 /**
@@ -70,7 +71,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         int256,
         bool rebased,
         bool rebalancerTriggered,
-        ProtocolAction,
+        Types.ProtocolAction,
         bytes calldata,
         bytes calldata
     ) external view returns (uint256 wstETHRewards_) {

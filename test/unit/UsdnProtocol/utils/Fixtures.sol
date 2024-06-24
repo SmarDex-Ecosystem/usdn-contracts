@@ -17,19 +17,12 @@ import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUs
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { Permit2TokenBitfield } from "../../../../src/libraries/Permit2TokenBitfield.sol";
-import { IUsdnProtocolTypes } from "./../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title UsdnProtocolBaseFixture
  * @dev Utils for testing the USDN Protocol
  */
-contract UsdnProtocolBaseFixture is
-    BaseFixture,
-    IUsdnProtocolErrors,
-    IEventsErrors,
-    IUsdnProtocolEvents,
-    IUsdnProtocolTypes
-{
+contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErrors, IUsdnProtocolEvents {
     struct Flags {
         bool enablePositionFees;
         bool enableProtocolFees;

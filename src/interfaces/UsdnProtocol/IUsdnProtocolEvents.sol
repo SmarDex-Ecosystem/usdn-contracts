@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { IUsdnProtocolTypes as Types } from "./IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "./IUsdnProtocolTypes.sol";
 
 /**
  * @title IUsdnProtocolEvents
  * @notice Events for the USDN Protocol
  */
-interface IUsdnProtocolEvents {
+interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     /**
      * @notice Emitted when a user initiates a deposit
      * @param to The address that will receive the USDN tokens
@@ -67,7 +67,7 @@ interface IUsdnProtocolEvents {
         uint128 totalExpo,
         uint128 amount,
         uint128 startPrice,
-        Types.PositionId posId
+        PositionId posId
     );
 
     /**
@@ -80,11 +80,7 @@ interface IUsdnProtocolEvents {
      * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceUpdated` will be emitted too
      */
     event ValidatedOpenPosition(
-        address indexed owner,
-        address indexed validator,
-        uint128 totalExpo,
-        uint128 newStartPrice,
-        Types.PositionId posId
+        address indexed owner, address indexed validator, uint128 totalExpo, uint128 newStartPrice, PositionId posId
     );
 
     /**
@@ -92,7 +88,7 @@ interface IUsdnProtocolEvents {
      * @param oldPosId The old position identifier
      * @param newPosId The new position identifier
      */
-    event LiquidationPriceUpdated(Types.PositionId indexed oldPosId, Types.PositionId newPosId);
+    event LiquidationPriceUpdated(PositionId indexed oldPosId, PositionId newPosId);
 
     /**
      * @notice Emitted when a user initiates the closing of all or part of a long position
@@ -110,7 +106,7 @@ interface IUsdnProtocolEvents {
         address indexed owner,
         address indexed validator,
         address indexed to,
-        Types.PositionId posId,
+        PositionId posId,
         uint128 originalAmount,
         uint128 amountToClose,
         uint128 totalExpoRemaining
@@ -125,7 +121,7 @@ interface IUsdnProtocolEvents {
      * @param profit The profit that the user made
      */
     event ValidatedClosePosition(
-        address indexed validator, address indexed to, Types.PositionId posId, uint256 amountReceived, int256 profit
+        address indexed validator, address indexed to, PositionId posId, uint256 amountReceived, int256 profit
     );
 
     /**
@@ -153,7 +149,7 @@ interface IUsdnProtocolEvents {
      * @param effectiveTickPrice The effective liquidated tick price
      */
     event LiquidatedPosition(
-        address indexed user, Types.PositionId posId, uint256 liquidationPrice, uint256 effectiveTickPrice
+        address indexed user, PositionId posId, uint256 liquidationPrice, uint256 effectiveTickPrice
     );
 
     /**
@@ -161,7 +157,7 @@ interface IUsdnProtocolEvents {
      * @param validator The validator address
      * @param posId The unique position identifier
      */
-    event StalePendingActionRemoved(address indexed validator, Types.PositionId posId);
+    event StalePendingActionRemoved(address indexed validator, PositionId posId);
 
     /**
      * @notice Emitted when the position fee is updated
@@ -344,7 +340,5 @@ interface IUsdnProtocolEvents {
      * @param oldOwner The old owner
      * @param newOwner The new owner
      */
-    event PositionOwnershipTransferred(
-        Types.PositionId indexed posId, address indexed oldOwner, address indexed newOwner
-    );
+    event PositionOwnershipTransferred(PositionId indexed posId, address indexed oldOwner, address indexed newOwner);
 }

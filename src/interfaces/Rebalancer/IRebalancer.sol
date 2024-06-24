@@ -3,8 +3,8 @@ pragma solidity >=0.8.0;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
+import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IUsdnProtocol } from "../UsdnProtocol/IUsdnProtocol.sol";
-import { IUsdnProtocolTypes as Types } from "./../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IBaseRebalancer } from "./IBaseRebalancer.sol";
 import { IRebalancerErrors } from "./IRebalancerErrors.sol";
 import { IRebalancerEvents } from "./IRebalancerEvents.sol";

@@ -15,7 +15,7 @@ import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IRebalancer } from "../interfaces/Rebalancer/IRebalancer.sol";
 import { IOwnershipCallback } from "../interfaces/UsdnProtocol/IOwnershipCallback.sol";
 import { IUsdnProtocol } from "../interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import { IUsdnProtocolTypes as Types } from "./../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title Rebalancer

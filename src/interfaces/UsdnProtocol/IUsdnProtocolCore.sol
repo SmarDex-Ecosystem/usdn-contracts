@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { IUsdnProtocolTypes as Types } from "./IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "./IUsdnProtocolTypes.sol";
 
 /**
  * @title IUsdnProtocolCore
  * @notice Interface for the core layer of the USDN protocol
  */
-interface IUsdnProtocolCore {
+interface IUsdnProtocolCore is IUsdnProtocolTypes {
     /**
      * @notice Calculation of the EMA of the funding rate
      * @param lastFunding The last funding rate
@@ -57,7 +57,7 @@ interface IUsdnProtocolCore {
     function getActionablePendingActions(address currentUser)
         external
         view
-        returns (Types.PendingAction[] memory actions_, uint128[] memory rawIndices_);
+        returns (PendingAction[] memory actions_, uint128[] memory rawIndices_);
 
     /**
      * @notice Retrieve a user pending action
@@ -65,7 +65,7 @@ interface IUsdnProtocolCore {
      * @return action_ The pending action if any, otherwise a struct with all fields set to zero and
      * `ProtocolAction.None`
      */
-    function getUserPendingAction(address user) external view returns (Types.PendingAction memory action_);
+    function getUserPendingAction(address user) external view returns (PendingAction memory action_);
 
     /**
      * @notice Remove a stuck pending action and perform the minimal amount of cleanup necessary

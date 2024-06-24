@@ -2,9 +2,9 @@
 pragma solidity >=0.8.0;
 
 import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
-import { IUsdnProtocolTypes as Types } from "./IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "./IUsdnProtocolTypes.sol";
 
-interface IUsdnProtocolActions {
+interface IUsdnProtocolActions is IUsdnProtocolTypes {
     /**
      * @notice Initiate a deposit of assets into the vault to mint USDN
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
@@ -27,7 +27,7 @@ interface IUsdnProtocolActions {
         address payable validator,
         Permit2TokenBitfield.Bitfield permit2TokenBitfield,
         bytes calldata currentPriceData,
-        Types.PreviousActionsData calldata previousActionsData
+        PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_);
 
     /**
@@ -51,7 +51,7 @@ interface IUsdnProtocolActions {
     function validateDeposit(
         address payable validator,
         bytes calldata depositPriceData,
-        Types.PreviousActionsData calldata previousActionsData
+        PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_);
 
     /**
@@ -75,7 +75,7 @@ interface IUsdnProtocolActions {
         address to,
         address payable validator,
         bytes calldata currentPriceData,
-        Types.PreviousActionsData calldata previousActionsData
+        PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_);
 
     /**
@@ -99,7 +99,7 @@ interface IUsdnProtocolActions {
     function validateWithdrawal(
         address payable validator,
         bytes calldata withdrawalPriceData,
-        Types.PreviousActionsData calldata previousActionsData
+        PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_);
 
     /**
@@ -131,8 +131,8 @@ interface IUsdnProtocolActions {
         address payable validator,
         Permit2TokenBitfield.Bitfield permit2TokenBitfield,
         bytes calldata currentPriceData,
-        Types.PreviousActionsData calldata previousActionsData
-    ) external payable returns (bool success_, Types.PositionId memory posId_);
+        PreviousActionsData calldata previousActionsData
+    ) external payable returns (bool success_, PositionId memory posId_);
 
     /**
      * @notice Validate a pending open position action
@@ -159,7 +159,7 @@ interface IUsdnProtocolActions {
     function validateOpenPosition(
         address payable validator,
         bytes calldata openPriceData,
-        Types.PreviousActionsData calldata previousActionsData
+        PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_);
 
     /**
@@ -186,12 +186,12 @@ interface IUsdnProtocolActions {
      * @return success_ Whether the closing was initiated
      */
     function initiateClosePosition(
-        Types.PositionId calldata posId,
+        PositionId calldata posId,
         uint128 amountToClose,
         address to,
         address payable validator,
         bytes calldata currentPriceData,
-        Types.PreviousActionsData calldata previousActionsData
+        PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_);
 
     /**
@@ -217,7 +217,7 @@ interface IUsdnProtocolActions {
     function validateClosePosition(
         address payable validator,
         bytes calldata closePriceData,
-        Types.PreviousActionsData calldata previousActionsData
+        PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_);
 
     /**
@@ -248,10 +248,10 @@ interface IUsdnProtocolActions {
      * validation will be performed
      * @return validatedActions_ The number of validated actionable pending actions
      */
-    function validateActionablePendingActions(
-        Types.PreviousActionsData calldata previousActionsData,
-        uint256 maxValidations
-    ) external payable returns (uint256 validatedActions_);
+    function validateActionablePendingActions(PreviousActionsData calldata previousActionsData, uint256 maxValidations)
+        external
+        payable
+        returns (uint256 validatedActions_);
 
     /**
      * @notice Transfer the ownership of a position to another address
@@ -262,7 +262,7 @@ interface IUsdnProtocolActions {
      * @param posId The unique position ID
      * @param newOwner The new position owner
      */
-    function transferPositionOwnership(Types.PositionId calldata posId, address newOwner) external;
+    function transferPositionOwnership(PositionId calldata posId, address newOwner) external;
 
     /**
      * @notice Get the hash generated from the tick and a version

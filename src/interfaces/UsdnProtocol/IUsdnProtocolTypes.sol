@@ -4,13 +4,13 @@ pragma solidity >=0.8.0;
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
+import { DoubleEndedQueue } from "../../libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../../libraries/HugeUint.sol";
 import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
+import { IBaseLiquidationRewardsManager } from "../OracleMiddleware/IBaseLiquidationRewardsManager.sol";
+import { IBaseOracleMiddleware } from "../OracleMiddleware/IBaseOracleMiddleware.sol";
+import { IBaseRebalancer } from "../Rebalancer/IBaseRebalancer.sol";
 import { IUsdn } from "../Usdn/IUsdn.sol";
-import { DoubleEndedQueue } from "./../../libraries/DoubleEndedQueue.sol";
-import { IBaseLiquidationRewardsManager } from "./../OracleMiddleware/IBaseLiquidationRewardsManager.sol";
-import { IBaseOracleMiddleware } from "./../OracleMiddleware/IBaseOracleMiddleware.sol";
-import { IBaseRebalancer } from "./../Rebalancer/IBaseRebalancer.sol";
 
 interface IUsdnProtocolTypes {
     /**

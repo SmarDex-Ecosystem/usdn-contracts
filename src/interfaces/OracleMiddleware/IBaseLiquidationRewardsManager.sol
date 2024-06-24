@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { IUsdnProtocolTypes } from "../UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes as Types } from "../UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @notice This interface exposes the only function used by the UsdnProtocol
  * @dev Any future implementation of the rewards manager must implement this interface without modification
  */
-interface IBaseLiquidationRewardsManager is IUsdnProtocolTypes {
+interface IBaseLiquidationRewardsManager {
     /**
      * @notice Returns the amount of asset that needs to be sent to the liquidator
      * @param tickAmount How many ticks were liquidated
@@ -26,7 +26,7 @@ interface IBaseLiquidationRewardsManager is IUsdnProtocolTypes {
         int256 remainingCollateral,
         bool rebased,
         bool rebalancerTriggered,
-        ProtocolAction action,
+        Types.ProtocolAction action,
         bytes calldata rebaseCallbackResult,
         bytes calldata priceData
     ) external view returns (uint256 assetRewards_);

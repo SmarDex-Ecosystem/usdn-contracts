@@ -38,14 +38,8 @@ import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMi
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { Permit2TokenBitfield } from "../../../../src/libraries/Permit2TokenBitfield.sol";
-import { IUsdnProtocolTypes } from "./../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
-contract UsdnProtocolBaseIntegrationFixture is
-    BaseFixture,
-    IUsdnProtocolErrors,
-    IUsdnProtocolEvents,
-    IUsdnProtocolTypes
-{
+contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProtocolEvents {
     struct SetUpParams {
         uint128 initialDeposit;
         uint128 initialLong;
