@@ -175,6 +175,30 @@ library UsdnProtocolCoreLibrary {
         (action_,) = _getPendingAction(s, user);
     }
 
+    /// @notice See {IUsdnProtocolCore}
+    function removeBlockedPendingAction(Storage storage s, address validator, address payable to) public {
+        uint256 pendingActionIndex = s._pendingActions[validator];
+        if (pendingActionIndex == 0) {
+            // no pending action
+            // use the `rawIndex` variant below if for some reason the `_pendingActions` mapping is messed up
+            revert IUsdnProtocolErrors.UsdnProtocolNoPendingAction();
+        }
+        uint128 rawIndex = uint128(pendingActionIndex - 1);
+        _removeBlockedPendingAction(s, rawIndex, to, true);
+    }
+
+    /// @notice See {IUsdnProtocolCore}
+    function removeBlockedPendingActionNoCleanup(Storage storage s, address validator, address payable to) public {
+        uint256 pendingActionIndex = s._pendingActions[validator];
+        if (pendingActionIndex == 0) {
+            // no pending action
+            // use the `rawIndex` variant below if for some reason the `_pendingActions` mapping is messed up
+            revert IUsdnProtocolErrors.UsdnProtocolNoPendingAction();
+        }
+        uint128 rawIndex = uint128(pendingActionIndex - 1);
+        _removeBlockedPendingAction(s, rawIndex, to, false);
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                             Internal functions                             */
     /* -------------------------------------------------------------------------- */

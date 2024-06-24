@@ -55,6 +55,16 @@ abstract contract UsdnProtocolCoreEntry is UsdnProtocolStorage, IUsdnProtocolCor
     }
 
     /// @inheritdoc IUsdnProtocolCore
+    function removeBlockedPendingAction(address validator, address payable to) external onlyOwner {
+        lib.removeBlockedPendingAction(s, validator, to);
+    }
+
+    /// @inheritdoc IUsdnProtocolCore
+    function removeBlockedPendingActionNoCleanup(address validator, address payable to) external onlyOwner {
+        lib.removeBlockedPendingActionNoCleanup(s, validator, to);
+    }
+
+    /// @inheritdoc IUsdnProtocolCore
     function removeBlockedPendingAction(uint128 rawIndex, address payable to) external onlyOwner {
         lib._removeBlockedPendingAction(s, rawIndex, to, true);
     }

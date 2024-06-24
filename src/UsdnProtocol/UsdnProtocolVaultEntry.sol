@@ -42,14 +42,4 @@ abstract contract UsdnProtocolVaultEntry is UsdnProtocolStorage, IUsdnProtocolVa
     {
         return lib.vaultAssetAvailableWithFunding(s, currentPrice, timestamp);
     }
-
-    /// @inheritdoc IUsdnProtocolVault
-    function removeBlockedPendingAction(address validator, address payable to) external onlyOwner {
-        lib.removeBlockedPendingAction(s, validator, to);
-    }
-
-    /// @inheritdoc IUsdnProtocolVault
-    function removeBlockedPendingActionNoCleanup(address validator, address payable to) external onlyOwner {
-        lib.removeBlockedPendingActionNoCleanup(s, validator, to);
-    }
 }
