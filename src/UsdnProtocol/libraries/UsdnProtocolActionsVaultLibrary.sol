@@ -28,6 +28,7 @@ import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./UsdnProtocolA
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "./UsdnProtocolLongLibrary.sol";
+import { UsdnProtocolUtils as Utils } from "./UsdnProtocolUtils.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.sol";
 
 library UsdnProtocolActionsVaultLibrary {
@@ -431,7 +432,7 @@ library UsdnProtocolActionsVaultLibrary {
         } else {
             address(s._asset).safeTransferFrom(user, address(this), amount);
         }
-        s._pendingBalanceVault += Core._toInt256(amount);
+        s._pendingBalanceVault += Utils.toInt256(amount);
 
         isInitiated_ = true;
 
@@ -538,7 +539,7 @@ library UsdnProtocolActionsVaultLibrary {
         }
 
         s._balanceVault += deposit.amount;
-        s._pendingBalanceVault -= Core._toInt256(deposit.amount);
+        s._pendingBalanceVault -= Utils.toInt256(deposit.amount);
 
         uint256 mintedTokens = s._usdn.mintShares(deposit.to, usdnSharesToMint);
         isValidated_ = true;

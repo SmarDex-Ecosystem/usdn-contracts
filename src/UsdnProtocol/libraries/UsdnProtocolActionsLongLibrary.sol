@@ -31,6 +31,7 @@ import { UsdnProtocolActionsVaultLibrary as ActionsVault } from "./UsdnProtocolA
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "./UsdnProtocolLongLibrary.sol";
+import { UsdnProtocolUtils as Utils } from "./UsdnProtocolUtils.sol";
 
 library UsdnProtocolActionsLongLibrary {
     using SafeTransferLib for address;
@@ -649,7 +650,7 @@ library UsdnProtocolActionsLongLibrary {
             long.to,
             PositionId({ tick: long.tick, tickVersion: long.tickVersion, index: long.index }),
             assetToTransfer,
-            assetToTransfer.toInt256() - Core._toInt256(long.closeAmount)
+            assetToTransfer.toInt256() - Utils.toInt256(long.closeAmount)
         );
     }
 }

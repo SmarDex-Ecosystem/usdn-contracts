@@ -16,6 +16,7 @@ import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./UsdnProtocolAct
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./UsdnProtocolCoreLibrary.sol";
+import { UsdnProtocolUtils as Utils } from "./UsdnProtocolUtils.sol";
 
 library UsdnProtocolVaultLibrary {
     using SafeCast for int256;
@@ -95,7 +96,7 @@ library UsdnProtocolVaultLibrary {
         if (fundAsset < 0) {
             available_ = _vaultAssetAvailable(s, currentPrice).safeAdd(fundAsset);
         } else {
-            int256 fee = fundAsset * Core._toInt256(s._protocolFeeBps) / int256(Constants.BPS_DIVISOR);
+            int256 fee = fundAsset * Utils.toInt256(s._protocolFeeBps) / int256(Constants.BPS_DIVISOR);
             available_ = _vaultAssetAvailable(s, currentPrice).safeAdd(fundAsset - fee);
         }
     }
@@ -142,19 +143,19 @@ library UsdnProtocolVaultLibrary {
         uint128 longAmount,
         uint128 depositAmount
     ) public view {
-        int256 longTradingExpo = Core._toInt256(positionTotalExpo - longAmount);
+        int256 longTradingExpo = Utils.toInt256(positionTotalExpo - longAmount);
         int256 depositLimit = s._depositExpoImbalanceLimitBps;
         if (depositLimit != 0) {
             int256 imbalanceBps =
-                (Core._toInt256(depositAmount) - longTradingExpo) * int256(Constants.BPS_DIVISOR) / longTradingExpo;
+                (Utils.toInt256(depositAmount) - longTradingExpo) * int256(Constants.BPS_DIVISOR) / longTradingExpo;
             if (imbalanceBps > depositLimit) {
                 revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
             }
         }
         int256 openLimit = s._openExpoImbalanceLimitBps;
         if (openLimit != 0) {
-            int256 imbalanceBps = (longTradingExpo - Core._toInt256(depositAmount)) * int256(Constants.BPS_DIVISOR)
-                / Core._toInt256(depositAmount);
+            int256 imbalanceBps = (longTradingExpo - Utils.toInt256(depositAmount)) * int256(Constants.BPS_DIVISOR)
+                / Utils.toInt256(depositAmount);
             if (imbalanceBps > openLimit) {
                 revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
             }
