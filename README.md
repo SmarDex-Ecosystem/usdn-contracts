@@ -1,7 +1,7 @@
 # <h1 align="center">Ultimate Synthetic Delta Neutral - USDN</h1>
 
-[![Main workflow](https://github.com/Blockchain-RA2-Tech/usdn-contracts/actions/workflows/ci.yml/badge.svg)](https://github.com/Blockchain-RA2-Tech/usdn-contracts/actions/workflows/ci.yml)
-[![Release Workflow](https://github.com/Blockchain-RA2-Tech/usdn-contracts/actions/workflows/release.yml/badge.svg)](https://github.com/Blockchain-RA2-Tech/usdn-contracts/actions/workflows/release.yml)
+[![Main workflow](https://github.com/SmarDex-Ecosystem/usdn-contracts/actions/workflows/ci.yml/badge.svg)](https://github.com/SmarDex-Ecosystem/usdn-contracts/actions/workflows/ci.yml)
+[![Release Workflow](https://github.com/SmarDex-Ecosystem/usdn-contracts/actions/workflows/release.yml/badge.svg)](https://github.com/SmarDex-Ecosystem/usdn-contracts/actions/workflows/release.yml)
 
 ## Installation
 
@@ -90,7 +90,7 @@ Common arguments to `forge script` are described in
 [the documentation](https://book.getfoundry.sh/reference/forge/forge-script#forge-script).
 
 Notably, the `--rpc-url` argument allows to choose which RPC will receive the transactions. The available shorthand
-names are defined in [`foundry.toml`](https://github.com/petra-foundation/foundry-template/blob/master/foundry.toml),
+names are defined in [`foundry.toml`](https://github.com/SmarDex-Ecosystem/usdn-contracts/blob/main/foundry.toml),
 (e.g. `mainnet`, `goerli`) and use URLs defined as environment variables (see `.env.example`).
 
 ## Foundry Documentation
