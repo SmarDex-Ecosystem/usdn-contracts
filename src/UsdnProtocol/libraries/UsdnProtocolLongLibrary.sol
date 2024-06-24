@@ -117,7 +117,7 @@ library UsdnProtocolLongLibrary {
         view
         returns (Position memory pos_, uint8 liquidationPenalty_)
     {
-        (bytes32 tickHash, uint256 version) = Vault._tickHash(s, posId.tick);
+        (bytes32 tickHash, uint256 version) = Core._tickHash(s, posId.tick);
         if (posId.tickVersion != version) {
             revert IUsdnProtocolErrors.UsdnProtocolOutdatedTick(version, posId.tickVersion);
         }
@@ -246,7 +246,7 @@ library UsdnProtocolLongLibrary {
 
     /// @notice See {IUsdnProtocolLong}
     function getTickLiquidationPenalty(Storage storage s, int24 tick) public view returns (uint8 liquidationPenalty_) {
-        (bytes32 tickHash,) = Vault._tickHash(s, tick);
+        (bytes32 tickHash,) = Core._tickHash(s, tick);
         liquidationPenalty_ = _getTickLiquidationPenalty(s, tickHash);
     }
 
@@ -515,7 +515,7 @@ library UsdnProtocolLongLibrary {
         uint128 lastPrice,
         CachedProtocolState memory cache
     ) public returns (int256 positionValue_) {
-        (bytes32 tickHash, uint256 version) = Vault._tickHash(s, posId.tick);
+        (bytes32 tickHash, uint256 version) = Core._tickHash(s, posId.tick);
         // if the tick version is outdated, the position was liquidated and its value is 0
         if (posId.tickVersion != version) {
             return positionValue_;
@@ -727,7 +727,7 @@ library UsdnProtocolLongLibrary {
             }
 
             // we have found a non-empty tick that needs to be liquidated
-            (bytes32 tickHash,) = Vault._tickHash(s, data.iTick);
+            (bytes32 tickHash,) = Core._tickHash(s, data.iTick);
 
             TickData memory tickData = s._tickData[tickHash];
             // update transient data

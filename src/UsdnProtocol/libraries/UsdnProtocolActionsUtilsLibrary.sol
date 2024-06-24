@@ -100,7 +100,7 @@ library UsdnProtocolActionsUtilsLibrary {
 
     /// @notice See {IUsdnProtocolActions}
     function transferPositionOwnership(Storage storage s, PositionId calldata posId, address newOwner) public {
-        (bytes32 tickHash, uint256 version) = Vault._tickHash(s, posId.tick);
+        (bytes32 tickHash, uint256 version) = Core._tickHash(s, posId.tick);
         if (posId.tickVersion != version) {
             revert IUsdnProtocolErrors.UsdnProtocolOutdatedTick(version, posId.tickVersion);
         }
@@ -267,7 +267,7 @@ library UsdnProtocolActionsUtilsLibrary {
         );
 
         uint256 version;
-        (data_.tickHash, version) = Vault._tickHash(s, data_.action.tick);
+        (data_.tickHash, version) = Core._tickHash(s, data_.action.tick);
         if (version != data_.action.tickVersion) {
             // the current tick version doesn't match the version from the pending action
             // this means the position has been liquidated in the meantime
@@ -515,7 +515,7 @@ library UsdnProtocolActionsUtilsLibrary {
         uint128 amountToRemove,
         uint128 totalExpoToRemove
     ) public returns (HugeUint.Uint512 memory liqMultiplierAccumulator_) {
-        (bytes32 tickHash,) = Vault._tickHash(s, tick);
+        (bytes32 tickHash,) = Core._tickHash(s, tick);
         TickData storage tickData = s._tickData[tickHash];
         uint256 unadjustedTickPrice =
             TickMath.getPriceAtTick(tick - int24(uint24(tickData.liquidationPenalty)) * s._tickSpacing);
@@ -562,7 +562,7 @@ library UsdnProtocolActionsUtilsLibrary {
         returns (uint256 tickVersion_, uint256 index_, HugeUint.Uint512 memory liqMultiplierAccumulator_)
     {
         bytes32 tickHash;
-        (tickHash, tickVersion_) = Vault._tickHash(s, tick);
+        (tickHash, tickVersion_) = Core._tickHash(s, tick);
 
         // add to tick array
         Position[] storage tickArray = s._longPositions[tickHash];

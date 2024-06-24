@@ -175,6 +175,11 @@ library UsdnProtocolCoreLibrary {
         (action_,) = _getPendingAction(s, user);
     }
 
+    /// @notice See {IUsdnProtocolActions}
+    function tickHash(int24 tick, uint256 version) public pure returns (bytes32) {
+        return keccak256(abi.encodePacked(tick, version));
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                             Internal functions                             */
     /* -------------------------------------------------------------------------- */
@@ -754,18 +759,18 @@ library UsdnProtocolCoreLibrary {
         } else if (pending.action == ProtocolAction.ValidateOpenPosition) {
             // for pending opens, we need to remove the position
             LongPendingAction memory open = _toLongPendingAction(pending);
-            (bytes32 tickHash, uint256 tickVersion) = Vault._tickHash(s, open.tick);
+            (bytes32 tHash, uint256 tickVersion) = _tickHash(s, open.tick);
             if (tickVersion == open.tickVersion) {
                 // we only need to modify storage if the pos was not liquidated already
 
                 // safe cleanup operations
-                Position[] storage tickArray = s._longPositions[tickHash];
+                Position[] storage tickArray = s._longPositions[tHash];
                 Position memory pos = tickArray[open.index];
-                delete s._longPositions[tickHash][open.index];
+                delete s._longPositions[tHash][open.index];
 
                 // more cleanup operations
                 if (cleanup) {
-                    TickData storage tickData = s._tickData[tickHash];
+                    TickData storage tickData = s._tickData[tHash];
                     --s._totalLongPositions;
                     tickData.totalPos -= 1;
                     if (tickData.totalPos == 0) {
@@ -795,5 +800,17 @@ library UsdnProtocolCoreLibrary {
                 revert IUsdnProtocolErrors.UsdnProtocolEtherRefundFailed();
             }
         }
+    }
+
+    /**
+     * @notice Function to calculate the hash and version of a given tick
+     * @param s The storage of the protocol
+     * @param tick The tick
+     * @return hash_ The hash of the tick
+     * @return version_ The version of the tick
+     */
+    function _tickHash(Storage storage s, int24 tick) public view returns (bytes32 hash_, uint256 version_) {
+        version_ = s._tickVersion[tick];
+        hash_ = tickHash(tick, version_);
     }
 }

@@ -71,11 +71,6 @@ library UsdnProtocolActionsLongLibrary {
     /* -------------------------------------------------------------------------- */
 
     /// @notice See {IUsdnProtocolActions}
-    function tickHash(int24 tick, uint256 version) public pure returns (bytes32) {
-        return keccak256(abi.encodePacked(tick, version));
-    }
-
-    /// @notice See {IUsdnProtocolActions}
     function initiateOpenPosition(
         Storage storage s,
         InitiateOpenPositionParams memory params,
