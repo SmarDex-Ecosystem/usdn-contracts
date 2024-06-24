@@ -3,12 +3,6 @@ pragma solidity ^0.8.25;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import {
-    Position,
-    PositionId,
-    ProtocolAction,
-    TickData
-} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { TickMath } from "../../../../src/libraries/TickMath.sol";
 

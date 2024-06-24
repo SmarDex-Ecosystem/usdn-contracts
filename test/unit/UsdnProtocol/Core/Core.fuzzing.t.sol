@@ -3,9 +3,6 @@ pragma solidity ^0.8.25;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import { Position } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { PositionId, ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
 /**
  * @custom:feature Fuzzing tests for the core of the protocol
  * @custom:background Given a protocol instance that was initialized with default params

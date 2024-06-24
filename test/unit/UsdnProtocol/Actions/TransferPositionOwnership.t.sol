@@ -5,13 +5,6 @@ import { USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 import { OwnershipCallbackHandler } from "../utils/OwnershipCallbackHandler.sol";
 
-import {
-    PendingAction,
-    Position,
-    PositionId,
-    ProtocolAction
-} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
 /// @custom:feature The `transferPositionOwnership` function of the USDN protocol
 contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
     OwnershipCallbackHandler callbackHandler;

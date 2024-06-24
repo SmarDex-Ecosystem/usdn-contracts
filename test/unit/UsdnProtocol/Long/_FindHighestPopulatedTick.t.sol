@@ -3,8 +3,6 @@ pragma solidity ^0.8.25;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import { PositionId, ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
 /**
  * @custom:feature Test the _findHighestPopulatedTick internal function of the UsdnProtocolLong contract
  * @custom:background Given an initialized USDN Protocol with default parameters

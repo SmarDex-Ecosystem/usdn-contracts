@@ -6,7 +6,7 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { ADMIN } from "../../utils/Constants.sol";
 import { RebalancerFixture } from "./utils/Fixtures.sol";
 
-import { PositionId } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes as Types } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The admin functions of the rebalancer contract
@@ -39,7 +39,7 @@ contract TestRebalancerAdmin is RebalancerFixture {
         rebalancer.setMinAssetDeposit(1);
 
         vm.expectRevert(RebalancerUnauthorized.selector);
-        rebalancer.ownershipCallback(address(this), PositionId(0, 0, 0));
+        rebalancer.ownershipCallback(address(this), Types.PositionId(0, 0, 0));
 
         vm.expectRevert(customError);
         rebalancer.setCloseImbalanceLimitBps(0);
@@ -237,6 +237,6 @@ contract TestRebalancerAdmin is RebalancerFixture {
      */
     function test_RevertWhen_ownershipCallbackOnFirstIteration() public adminPrank {
         vm.expectRevert(RebalancerUnauthorized.selector);
-        rebalancer.ownershipCallback(address(this), PositionId(0, 0, 0));
+        rebalancer.ownershipCallback(address(this), Types.PositionId(0, 0, 0));
     }
 }

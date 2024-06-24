@@ -17,7 +17,6 @@ import { ILiquidationRewardsManagerErrorsEventsTypes } from
     "../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManagerErrorsEventsTypes.sol";
 import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
 import { IUsdnEvents } from "../../../src/interfaces/Usdn/IUsdnEvents.sol";
-import { ProtocolAction } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature Checking the gas usage of a liquidation

@@ -5,8 +5,6 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import { Position, PositionId, ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
 /**
  * @custom:feature Fuzzing tests for the "close position" part of the protocol
  * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a

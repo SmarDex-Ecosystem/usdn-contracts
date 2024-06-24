@@ -4,16 +4,16 @@ pragma solidity ^0.8.25;
 import { USER_1, USER_2 } from "../../utils/Constants.sol";
 import { DequeFixture } from "./utils/Fixtures.sol";
 
-import { ProtocolAction } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { DoubleEndedQueue, PendingAction } from "../../../src/libraries/DoubleEndedQueue.sol";
+import { IUsdnProtocolTypes as Types } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { DoubleEndedQueue } from "../../../src/libraries/DoubleEndedQueue.sol";
 
 /**
  * @custom:feature Test functions in `DoubleEndedQueue`
  * @custom:background Given the deque has 3 elements
  */
 contract TestDequePopulated is DequeFixture {
-    PendingAction public action1 = PendingAction(
-        ProtocolAction.ValidateWithdrawal,
+    Types.PendingAction public action1 = Types.PendingAction(
+        Types.ProtocolAction.ValidateWithdrawal,
         69,
         USER_1,
         USER_2,
@@ -26,8 +26,8 @@ contract TestDequePopulated is DequeFixture {
         4 ether,
         42_000 ether
     );
-    PendingAction public action2 = PendingAction(
-        ProtocolAction.ValidateDeposit,
+    Types.PendingAction public action2 = Types.PendingAction(
+        Types.ProtocolAction.ValidateDeposit,
         420,
         USER_1,
         USER_2,
@@ -40,8 +40,8 @@ contract TestDequePopulated is DequeFixture {
         40 ether,
         420_000 ether
     );
-    PendingAction public action3 =
-        PendingAction(ProtocolAction.ValidateOpenPosition, 42, USER_1, USER_2, 0, 1, 10, 0, 0, 0, 0, 0);
+    Types.PendingAction public action3 =
+        Types.PendingAction(Types.ProtocolAction.ValidateOpenPosition, 42, USER_1, USER_2, 0, 1, 10, 0, 0, 0, 0, 0);
     uint128 public rawIndex1;
     uint128 public rawIndex2;
     uint128 public rawIndex3;
@@ -70,7 +70,7 @@ contract TestDequePopulated is DequeFixture {
      * @custom:then Returns the front item
      */
     function test_accessFront() public {
-        (PendingAction memory front, uint128 rawIndex) = handler.front();
+        (Types.PendingAction memory front, uint128 rawIndex) = handler.front();
         _assertActionsEqual(front, action1, "front");
         assertEq(rawIndex, rawIndex1, "raw index");
     }
@@ -81,7 +81,7 @@ contract TestDequePopulated is DequeFixture {
      * @custom:then Returns the back item
      */
     function test_accessBack() public {
-        (PendingAction memory back, uint128 rawIndex) = handler.back();
+        (Types.PendingAction memory back, uint128 rawIndex) = handler.back();
         _assertActionsEqual(back, action3, "back");
         assertEq(rawIndex, rawIndex3, "raw index");
     }
@@ -92,7 +92,7 @@ contract TestDequePopulated is DequeFixture {
      * @custom:then Returns the item at the given index
      */
     function test_accessAt() public {
-        (PendingAction memory at, uint128 rawIndex) = handler.at(0);
+        (Types.PendingAction memory at, uint128 rawIndex) = handler.at(0);
         _assertActionsEqual(at, action1, "action 1");
         assertEq(rawIndex, rawIndex1, "raw index 1");
         (at, rawIndex) = handler.at(1);
@@ -136,8 +136,8 @@ contract TestDequePopulated is DequeFixture {
      * @custom:and The raw indices of the other items should not change
      */
     function test_pushFront() public {
-        PendingAction memory action =
-            PendingAction(ProtocolAction.ValidateClosePosition, 1, USER_1, USER_2, 1, 1, 1, 1, 1, 1, 1, 1);
+        Types.PendingAction memory action =
+            Types.PendingAction(Types.ProtocolAction.ValidateClosePosition, 1, USER_1, USER_2, 1, 1, 1, 1, 1, 1, 1, 1);
         uint128 rawIndex = handler.pushFront(action);
         uint128 expectedRawIndex;
         unchecked {
@@ -145,9 +145,9 @@ contract TestDequePopulated is DequeFixture {
         }
         assertEq(rawIndex, expectedRawIndex);
         assertEq(handler.length(), 4);
-        (PendingAction memory front,) = handler.front();
+        (Types.PendingAction memory front,) = handler.front();
         _assertActionsEqual(front, action, "front");
-        (PendingAction memory at,) = handler.at(0);
+        (Types.PendingAction memory at,) = handler.at(0);
         _assertActionsEqual(at, action, "at 0");
         _assertActionsEqual(handler.atRaw(rawIndex), action, "at raw index");
         (at,) = handler.at(1);
@@ -170,8 +170,8 @@ contract TestDequePopulated is DequeFixture {
      * @custom:and The raw indices of the other items should not change
      */
     function test_pushBack() public {
-        PendingAction memory action =
-            PendingAction(ProtocolAction.ValidateClosePosition, 1, USER_1, USER_2, 1, 1, 1, 1, 1, 1, 1, 1);
+        Types.PendingAction memory action =
+            Types.PendingAction(Types.ProtocolAction.ValidateClosePosition, 1, USER_1, USER_2, 1, 1, 1, 1, 1, 1, 1, 1);
         uint128 rawIndex = handler.pushBack(action);
         uint128 expectedRawIndex;
         unchecked {
@@ -179,9 +179,9 @@ contract TestDequePopulated is DequeFixture {
         }
         assertEq(rawIndex, expectedRawIndex);
         assertEq(handler.length(), 4);
-        (PendingAction memory back,) = handler.back();
+        (Types.PendingAction memory back,) = handler.back();
         _assertActionsEqual(back, action, "back");
-        (PendingAction memory at,) = handler.at(3);
+        (Types.PendingAction memory at,) = handler.at(3);
         _assertActionsEqual(at, action, "at 3");
         _assertActionsEqual(handler.atRaw(rawIndex), action, "at raw index");
         (at,) = handler.at(0);
@@ -204,10 +204,10 @@ contract TestDequePopulated is DequeFixture {
      * @custom:and The raw indices of the other items should not change
      */
     function test_popFront() public {
-        PendingAction memory action = handler.popFront();
+        Types.PendingAction memory action = handler.popFront();
         assertEq(handler.length(), 2);
         _assertActionsEqual(action, action1, "action 1");
-        (PendingAction memory at,) = handler.at(0);
+        (Types.PendingAction memory at,) = handler.at(0);
         _assertActionsEqual(at, action2, "at 0");
         _assertActionsEqual(handler.atRaw(rawIndex2), action2, "at raw index 2");
         (at,) = handler.at(1);
@@ -224,10 +224,10 @@ contract TestDequePopulated is DequeFixture {
      * @custom:and The raw indices of the other items should not change
      */
     function test_popBack() public {
-        PendingAction memory action = handler.popBack();
+        Types.PendingAction memory action = handler.popBack();
         assertEq(handler.length(), 2);
         _assertActionsEqual(action, action3, "action 3");
-        (PendingAction memory at,) = handler.at(0);
+        (Types.PendingAction memory at,) = handler.at(0);
         _assertActionsEqual(at, action1, "at 0");
         _assertActionsEqual(handler.atRaw(rawIndex1), action1, "at raw index 1");
         (at,) = handler.at(1);
@@ -245,7 +245,7 @@ contract TestDequePopulated is DequeFixture {
     function test_clearAtFront() public {
         handler.clearAt(rawIndex1); // does a popFront
         assertEq(handler.length(), 2);
-        (PendingAction memory at,) = handler.at(0);
+        (Types.PendingAction memory at,) = handler.at(0);
         _assertActionsEqual(at, action2, "at 0");
         _assertActionsEqual(handler.atRaw(rawIndex2), action2, "at raw index 2");
         (at,) = handler.at(1);
@@ -263,7 +263,7 @@ contract TestDequePopulated is DequeFixture {
     function test_clearAtBack() public {
         handler.clearAt(rawIndex3); // does a popBack
         assertEq(handler.length(), 2);
-        (PendingAction memory at,) = handler.at(0);
+        (Types.PendingAction memory at,) = handler.at(0);
         _assertActionsEqual(at, action1, "at 0");
         _assertActionsEqual(handler.atRaw(rawIndex1), action1, "at raw index 1");
         (at,) = handler.at(1);
@@ -282,14 +282,14 @@ contract TestDequePopulated is DequeFixture {
     function test_clearAtMiddle() public {
         handler.clearAt(rawIndex2);
         assertEq(handler.length(), 3);
-        (PendingAction memory at,) = handler.at(0);
+        (Types.PendingAction memory at,) = handler.at(0);
         _assertActionsEqual(at, action1, "at 0");
         _assertActionsEqual(handler.atRaw(rawIndex1), action1, "at raw index 1");
         (at,) = handler.at(2);
         _assertActionsEqual(at, action3, "at 2");
         _assertActionsEqual(handler.atRaw(rawIndex3), action3, "at raw index 3");
-        (PendingAction memory clearedAction,) = handler.at(1);
-        assertTrue(clearedAction.action == ProtocolAction.None);
+        (Types.PendingAction memory clearedAction,) = handler.at(1);
+        assertTrue(clearedAction.action == Types.ProtocolAction.None);
         assertEq(clearedAction.timestamp, 0);
         assertEq(clearedAction.to, address(0));
         assertEq(clearedAction.validator, address(0));

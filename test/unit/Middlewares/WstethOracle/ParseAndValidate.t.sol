@@ -7,7 +7,7 @@ import { ETH_CONF, ETH_DECIMALS, ETH_PRICE, MOCK_PYTH_DATA } from "../utils/Cons
 import { WstethBaseFixture } from "../utils/Fixtures.sol";
 
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The `parseAndValidatePrice` function of `WstethOracle`
@@ -48,12 +48,12 @@ contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture {
      */
     function test_parseAndValidatePriceForAllActions() public {
         for (uint256 i; i < actions.length; i++) {
-            ProtocolAction action = actions[i];
+            Types.ProtocolAction action = actions[i];
             string memory errorMessage =
                 string.concat("Wrong wsteth oracle middleware price for action: ", uint256(action).toString());
 
             uint128 timestamp = uint128(block.timestamp);
-            if (action != ProtocolAction.Liquidation) {
+            if (action != Types.ProtocolAction.Liquidation) {
                 timestamp -= uint128(wstethOracle.getValidationDelay());
             }
 
@@ -63,15 +63,17 @@ contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture {
 
             // Price + conf
             if (
-                action == ProtocolAction.InitiateWithdrawal || action == ProtocolAction.ValidateWithdrawal
-                    || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.ValidateOpenPosition
+                action == Types.ProtocolAction.InitiateWithdrawal || action == Types.ProtocolAction.ValidateWithdrawal
+                    || action == Types.ProtocolAction.InitiateOpenPosition
+                    || action == Types.ProtocolAction.ValidateOpenPosition
             ) {
                 assertEq(price.price, stethToWsteth(FORMATTED_ETH_PRICE + ETH_CONF_RATIO, ETH_PER_TOKEN), errorMessage);
             }
             // Price - conf
             else if (
-                action == ProtocolAction.InitiateDeposit || action == ProtocolAction.ValidateDeposit
-                    || action == ProtocolAction.InitiateClosePosition || action == ProtocolAction.ValidateClosePosition
+                action == Types.ProtocolAction.InitiateDeposit || action == Types.ProtocolAction.ValidateDeposit
+                    || action == Types.ProtocolAction.InitiateClosePosition
+                    || action == Types.ProtocolAction.ValidateClosePosition
             ) {
                 assertEq(price.price, stethToWsteth(FORMATTED_ETH_PRICE - ETH_CONF_RATIO, ETH_PER_TOKEN), errorMessage);
             } else {
