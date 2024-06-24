@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { ProtocolAction } from "../UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PriceInfo } from "./IOracleMiddlewareTypes.sol";
 
 /**
@@ -9,7 +9,7 @@ import { PriceInfo } from "./IOracleMiddlewareTypes.sol";
  * @notice This interface exposes the only functions used or required by the UsdnProtocol
  * @dev Any future implementation of the oracle middleware must implement this interface without modification
  */
-interface IBaseOracleMiddleware {
+interface IBaseOracleMiddleware is IUsdnProtocolTypes {
     /**
      * @notice Parse and validate some price data
      * @dev The data format is specific to the middleware and is simply forwarded from the user transaction's calldata

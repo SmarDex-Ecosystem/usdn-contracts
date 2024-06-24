@@ -2,7 +2,7 @@
 pragma solidity >=0.8.0;
 
 import { HugeUint } from "../../libraries/HugeUint.sol";
-import { Position, PositionId } from "./IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes as Types } from "./IUsdnProtocolTypes.sol";
 
 /**
  * @title IUsdnProtocolLong
@@ -52,10 +52,10 @@ interface IUsdnProtocolLong {
      * @return pos_ The position data
      * @return liquidationPenalty_ The liquidation penalty for that position (and associated tick)
      */
-    function getLongPosition(PositionId calldata posId)
+    function getLongPosition(Types.PositionId calldata posId)
         external
         view
-        returns (Position memory pos_, uint8 liquidationPenalty_);
+        returns (Types.Position memory pos_, uint8 liquidationPenalty_);
 
     /**
      * @notice Get the minimum acceptable desired liquidation price for a new long position
@@ -74,7 +74,7 @@ interface IUsdnProtocolLong {
      * @param timestamp The timestamp of the price
      * @return The position value in assets
      */
-    function getPositionValue(PositionId calldata posId, uint128 price, uint128 timestamp)
+    function getPositionValue(Types.PositionId calldata posId, uint128 price, uint128 timestamp)
         external
         view
         returns (int256);

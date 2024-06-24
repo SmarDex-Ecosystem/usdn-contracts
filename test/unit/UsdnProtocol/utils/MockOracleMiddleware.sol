@@ -10,7 +10,6 @@ import {
     IOracleMiddlewareErrors
 } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 contract MockOracleMiddleware is IOracleMiddleware, Ownable2Step {
     uint16 public constant BPS_DIVISOR = 10_000;

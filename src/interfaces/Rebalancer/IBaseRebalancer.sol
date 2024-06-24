@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.0;
 
-import { PositionId } from "../UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IRebalancerTypes } from "./IRebalancerTypes.sol";
 
-interface IBaseRebalancer {
+interface IBaseRebalancer is IUsdnProtocolTypes {
     /**
      * @notice Returns the necessary data for the USDN protocol to update the position
      * @return pendingAssets_ The amount of assets that are pending inclusion in the protocol

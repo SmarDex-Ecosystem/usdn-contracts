@@ -8,7 +8,7 @@ import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 import { IUsdn } from "../../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { Position, PositionId } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IUsdnProtocolVault } from "../../interfaces/UsdnProtocol/IUsdnProtocolVault.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
 import { Storage } from "../UsdnProtocolStorage.sol";
@@ -207,9 +207,9 @@ library UsdnProtocolVaultLibrary {
 
         // apply liquidation penalty to the deployer's liquidationPriceWithoutPenalty
         uint8 liquidationPenalty = s._liquidationPenalty;
-        PositionId memory posId;
+        Types.PositionId memory posId;
         posId.tick = tick + int24(uint24(liquidationPenalty)) * s._tickSpacing;
-        Position memory long = Position({
+        Types.Position memory long = Types.Position({
             validated: true,
             user: msg.sender,
             amount: amount,

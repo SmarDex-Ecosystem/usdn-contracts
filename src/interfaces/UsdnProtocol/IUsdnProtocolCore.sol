@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { PendingAction } from "./IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes as Types } from "./IUsdnProtocolTypes.sol";
 
 /**
  * @title IUsdnProtocolCore
@@ -57,7 +57,7 @@ interface IUsdnProtocolCore {
     function getActionablePendingActions(address currentUser)
         external
         view
-        returns (PendingAction[] memory actions_, uint128[] memory rawIndices_);
+        returns (Types.PendingAction[] memory actions_, uint128[] memory rawIndices_);
 
     /**
      * @notice Retrieve a user pending action
@@ -65,7 +65,7 @@ interface IUsdnProtocolCore {
      * @return action_ The pending action if any, otherwise a struct with all fields set to zero and
      * `ProtocolAction.None`
      */
-    function getUserPendingAction(address user) external view returns (PendingAction memory action_);
+    function getUserPendingAction(address user) external view returns (Types.PendingAction memory action_);
 
     /**
      * @notice Remove a stuck pending action and perform the minimal amount of cleanup necessary

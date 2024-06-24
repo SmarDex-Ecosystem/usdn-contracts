@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { ProtocolAction } from "../UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @notice This interface exposes the only function used by the UsdnProtocol
  * @dev Any future implementation of the rewards manager must implement this interface without modification
  */
-interface IBaseLiquidationRewardsManager {
+interface IBaseLiquidationRewardsManager is IUsdnProtocolTypes {
     /**
      * @notice Returns the amount of asset that needs to be sent to the liquidator
      * @param tickAmount How many ticks were liquidated

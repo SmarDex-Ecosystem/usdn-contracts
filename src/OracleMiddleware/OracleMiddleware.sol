@@ -13,7 +13,6 @@ import {
     PriceInfo,
     RedstonePriceInfo
 } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { ProtocolAction } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { ChainlinkOracle } from "./oracles/ChainlinkOracle.sol";
 import { PythOracle } from "./oracles/PythOracle.sol";
 import { RedstoneOracle } from "./oracles/RedstoneOracle.sol";

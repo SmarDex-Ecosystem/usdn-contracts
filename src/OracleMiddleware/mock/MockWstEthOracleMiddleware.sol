@@ -2,7 +2,6 @@
 pragma solidity ^0.8.25;
 
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { ProtocolAction } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { OracleMiddleware } from "../OracleMiddleware.sol";
 import { WstEthOracleMiddleware } from "../WstEthOracleMiddleware.sol";
 
