@@ -31,6 +31,12 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
         protocol.setRebalancer(mockedRebalancer);
     }
 
+    /**
+     * @custom:scenario Trigger with an invalid trading expo
+     * @custom:given An USDN protocol with a total expo below its long balance
+     * @custom:when _triggerRebalancer is called
+     * @custom:then The call reverts with an UsdnProtocolInvalidLongExpo error
+     */
     function test_RevertWhen_triggerRebalancerWithTotalExpoBelowLongBalance() public {
         longBalance = protocol.getTotalExpo() + 1;
 
@@ -38,6 +44,13 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
         protocol.i_triggerRebalancer(lastPrice, longBalance, vaultBalance, remainingCollateral);
     }
 
+    /**
+     * @custom:scenario Trigger with no rebalancer set
+     * @custom:given The rebalancer being the zero address
+     * @custom:when _triggerRebalancer is called
+     * @custom:then nothing happens
+     * @custom:and The long and vault balances should not change
+     */
     function test_triggerRebalancerWithRebalancerNotSet() public {
         vm.prank(ADMIN);
         protocol.setRebalancer(IBaseRebalancer(address(0)));
@@ -49,6 +62,13 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
         assertEq(newVaultBalance, vaultBalance, "The long balance should not have changed");
     }
 
+    /**
+     * @custom:scenario Trigger with not enough imbalance
+     * @custom:given The USDN protocol's imbalance being below the threshold
+     * @custom:when _triggerRebalancer is called
+     * @custom:then The trigger should have been aborted
+     * @custom:and The long and vault balances should not have changed
+     */
     function test_triggerRebalancerWithNotEnoughImbalance() public {
         int256 imbalanceLimit = protocol.getCloseExpoImbalanceLimitBps();
         uint256 totalExpo = protocol.getTotalExpo();
@@ -117,6 +137,13 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
         );
     }
 
+    /**
+     * @custom:scenario Trigger with a previous position with a liquidation price above the current price
+     * @custom:given A rebalancer with an existing position
+     * @custom:when The rebalancer is triggered with `lastPrice` above the position's liquidation price
+     * @custom:then The trigger should be aborted
+     * @custom:and The long and vault balances should not have changed
+     */
     function test_triggerRebalancerWithExistingPositionThatShouldHaveBeenLiquidated() public {
         uint128 amount = 1 ether;
 
@@ -149,6 +176,8 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
      * @custom:and enough remaining collateral to trigger a bonus
      * @custom:when The rebalancer is triggered
      * @custom:then A new position is opened
+     * @custom:and The new long balance should equal the previous one + pending assets + bonus
+     * @custom:and The new vault balance should equal the previous one - bonus
      */
     function test_triggerRebalancerWithNoPreviousPosition() public {
         uint128 bonus = uint128(uint256(remainingCollateral) * protocol.getRebalancerBonusBps() / Constants.BPS_DIVISOR);
@@ -180,10 +209,12 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario The rebalancer is triggered with no existing position
      * @custom:given A rebalancer with an existing position
-     * @custom:and enough remaining collateral to trigger a bonus
+     * @custom:and Enough remaining collateral to trigger a bonus
      * @custom:when The rebalancer is triggered
-     * @custom:then A new position is opened
-     * @custom:and the new long and vault balances are returned
+     * @custom:then The previous position is closed
+     * @custom:and A new position is opened
+     * @custom:and The new long balance should equal the previous one + pending assets + bonus
+     * @custom:and The new vault balance should equal the previous one - bonus
      */
     function test_triggerRebalancer() public {
         uint128 bonus = uint128(uint256(remainingCollateral) * protocol.getRebalancerBonusBps() / Constants.BPS_DIVISOR);
