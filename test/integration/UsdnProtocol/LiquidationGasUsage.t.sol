@@ -237,9 +237,8 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
             // on the second iteration, enable the rebalancer
             if (i == 1) {
                 // enable rebalancer
-                vm.startPrank(DEPLOYER);
-                protocol.setExpoImbalanceLimits(5000, 0, 10_000, 1, -4000);
-                vm.stopPrank();
+                vm.prank(DEPLOYER);
+                protocol.setExpoImbalanceLimits(5000, 0, 10_000, 1, -4900);
 
                 // sanity check, make sure the rebalancer was triggered
                 vm.expectEmit(false, false, false, false);
