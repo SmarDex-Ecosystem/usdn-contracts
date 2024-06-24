@@ -355,6 +355,87 @@ interface IUsdnProtocolTypes {
         HugeUint.Uint512 liqMultiplierAccumulator;
     }
 
+    /**
+     * @notice Structure to hold the state of the protocol
+     * @param _tickSpacing The liquidation tick spacing for storing long positions
+     * A tick spacing of 1 is equivalent to a 0.1% increase in liquidation price between ticks. A tick spacing of
+     * 10 is equivalent to a 1% increase in liquidation price between ticks
+     * @param _asset The asset ERC20 contract (wstETH)
+     * @param _assetDecimals The asset decimals (wstETH => 18)
+     * @param _priceFeedDecimals The price feed decimals (wstETH => 18)
+     * @param _usdn The USDN ERC20 contract
+     * @param _sdex The SDEX ERC20 contract
+     * @param _usdnMinDivisor The minimum divisor for USDN
+     * @param _oracleMiddleware The oracle middleware contract
+     * @param _liquidationRewardsManager The liquidation rewards manager contract
+     * @param _rebalancer The rebalancer contract
+     * @param _minLeverage The minimum leverage for a position (1.000000001)
+     * @param _maxLeverage The maximum leverage for a position
+     * @param _validationDeadline The deadline for a user to confirm their action
+     * @param _safetyMarginBps Safety margin for the liquidation price of newly open positions, in basis points
+     * @param _liquidationIteration The number of iterations to perform during user's action (in tick)
+     * @param _protocolFeeBps The protocol fee in basis points
+     * @param _rebalancerBonusBps Part of the remaining collateral that is given as a bonus to the Rebalancer upon
+     * liquidation of a tick, in basis points. The rest is sent to the Vault balance
+     * @param _liquidationPenalty The liquidation penalty (in tick spacing units)
+     * @param _EMAPeriod The moving average period of the funding rate
+     * @param _fundingSF The scaling factor (SF) of the funding rate
+     * @param _feeThreshold The fee threshold above which fee will be sent
+     * @param _openExpoImbalanceLimitBps The imbalance limit of the long expo for open actions (in basis points)
+     * As soon as the difference between the vault expo and the long expo exceeds this basis point limit in favor
+     * of long the open rebalancing mechanism is triggered, preventing the opening of a new long position
+     * @param _withdrawalExpoImbalanceLimitBps The imbalance limit of the long expo for withdrawal actions (in basis
+     * points)
+     * As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of long,
+     * the withdrawal rebalancing mechanism is triggered, preventing the withdrawal of the existing vault position
+     * @param _depositExpoImbalanceLimitBps The imbalance limit of the vault expo for deposit actions (in basis points)
+     * As soon as the difference between the vault expo and the long expo exceeds this basis point limit in favor
+     * of the vault, the deposit vault rebalancing mechanism is triggered, preventing the opening of a new vault
+     * position
+     * @param _closeExpoImbalanceLimitBps The imbalance limit of the vault expo for close actions (in basis points)
+     * As soon as the difference between the vault expo and the long expo exceeds this basis point limit in favor
+     * of the vault, the withdrawal vault rebalancing mechanism is triggered, preventing the close of an existing long
+     * position
+     * @param _longImbalanceTargetBps The target imbalance on the long side (in basis points)
+     * This value will be used to calculate how much of the missing trading expo the rebalancer position will try to
+     * compensate
+     * A negative value means the rebalancer will compensate enough to go above the equilibrium
+     * A positive value means the rebalancer will compensate but stay below the equilibrium
+     * @param _positionFeeBps The position fee in basis points
+     * @param _vaultFeeBps The fee for vault deposits and withdrawals, in basis points
+     * @param _sdexBurnOnDepositRatio The ratio of USDN to SDEX tokens to burn on deposit
+     * @param _feeCollector The fee collector's address
+     * @param _securityDepositValue The deposit required for a new position
+     * @param _targetUsdnPrice The nominal (target) price of USDN (with _priceFeedDecimals)
+     * @param _usdnRebaseThreshold The USDN price threshold to trigger a rebase (with _priceFeedDecimals)
+     * @param _usdnRebaseInterval The interval between two automatic rebase checks. Disabled by default
+     * A rebase can be forced (if the `_usdnRebaseThreshold` is exceeded) by calling the `liquidate` function
+     * @param _minLongPosition The minimum long position size (with `_assetDecimals`)
+     * @param _lastFunding The funding corresponding to the last update timestamp
+     * @param _lastPrice The price of the asset during the last balances update (with price feed decimals)
+     * @param _lastUpdateTimestamp The timestamp of the last balances update
+     * @param _pendingProtocolFee The pending protocol fee accumulator
+     * @param _pendingActions The pending actions by the user (1 per user max)
+     * The value stored is an index into the `pendingActionsQueue` deque, shifted by one. A value of 0 means no
+     * pending action. Since the deque uses uint128 indices, the highest index will not overflow when adding one
+     * @param _pendingActionsQueue The queue of pending actions
+     * @param _balanceVault  The balance of deposits (with asset decimals)
+     * @param _pendingBalanceVault The unreflected balance change due to pending vault actions (with asset decimals)
+     * @param _lastRebaseCheck The timestamp when the last USDN rebase check was performed
+     * @param _EMA The exponential moving average of the funding (0.0003 at initialization)
+     * @param _balanceLong The balance of long positions (with asset decimals)
+     * @param _totalExpo The total exposure of the long positions (with asset decimals)
+     * @param _liqMultiplierAccumulator The accumulator used to calculate the liquidation multiplier
+     * This is the sum, for all ticks, of the total expo of positions inside the tick, multiplied by the
+     * unadjusted price of the tick which is `_tickData[tickHash].liquidationPenalty * _tickSpacing` below
+     * The unadjusted price is obtained with `TickMath.getPriceAtTick
+     * @param _tickVersion The liquidation tick version
+     * @param _longPositions The long positions per versioned tick (liquidation price)
+     * @param _tickData Accumulated data for a given tick and tick version
+     * @param _highestPopulatedTick The highest tick with a position
+     * @param _totalLongPositions Cache of the total long positions count
+     * @param _tickBitmap The bitmap used to quickly find populated ticks
+     */
     struct Storage {
         // immutable
         int24 _tickSpacing;
