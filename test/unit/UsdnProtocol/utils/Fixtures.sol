@@ -9,7 +9,6 @@ import { WstETH } from "../../../utils/WstEth.sol";
 import { MockChainlinkOnChain } from "../../Middlewares/utils/MockChainlinkOnChain.sol";
 import { RebalancerHandler } from "../../Rebalancer/utils/Handler.sol";
 import { UsdnProtocolHandler } from "./Handler.sol";
-import { MockOracleMiddleware } from "./MockOracleMiddleware.sol";
 
 import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
@@ -17,6 +16,7 @@ import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUs
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { Permit2TokenBitfield } from "../../../../src/libraries/Permit2TokenBitfield.sol";
+import { MockOracleMiddleware } from "./MockOracleMiddleware.sol";
 
 /**
  * @title UsdnProtocolBaseFixture

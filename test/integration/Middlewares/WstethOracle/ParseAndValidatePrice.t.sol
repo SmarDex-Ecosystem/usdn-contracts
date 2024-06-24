@@ -7,7 +7,6 @@ import { PYTH_ETH_USD, PYTH_WSTETH_USD } from "../../../utils/Constants.sol";
 import { WstethIntegrationFixture } from "../utils/Fixtures.sol";
 
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { IUsdnProtocolTypes } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The `parseAndValidatePrice` function of `WstethMiddleware`

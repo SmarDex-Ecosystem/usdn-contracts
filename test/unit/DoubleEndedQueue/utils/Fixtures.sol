@@ -4,7 +4,7 @@ pragma solidity ^0.8.25;
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { DequeHandler } from "./Handler.sol";
 
-import { IUsdnProtocolTypes as Types } from "./../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title DequeFixture

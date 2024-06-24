@@ -10,7 +10,6 @@ import { IBaseRebalancer } from "../Rebalancer/IBaseRebalancer.sol";
 import { IUsdn } from "../Usdn/IUsdn.sol";
 import { IUsdnProtocolErrors } from "./IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "./IUsdnProtocolEvents.sol";
-import { IUsdnProtocolTypes } from "./IUsdnProtocolTypes.sol";
 
 /**
  * @title IUsdnProtocolStorage

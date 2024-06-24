@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
+import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "../../../../src/libraries/DoubleEndedQueue.sol";
-import { IUsdnProtocolTypes as Types } from "./../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title DequeHandler
