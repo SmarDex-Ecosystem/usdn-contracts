@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { PendingAction } from "./IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "./IUsdnProtocolTypes.sol";
 
 /**
  * @title IUsdnProtocolCore
  * @notice Interface for the core layer of the USDN protocol
  */
-interface IUsdnProtocolCore {
+interface IUsdnProtocolCore is IUsdnProtocolTypes {
     /**
      * @notice Calculation of the EMA of the funding rate
      * @param lastFunding The last funding rate

@@ -2,13 +2,13 @@
 pragma solidity >=0.8.0;
 
 import { HugeUint } from "../../libraries/HugeUint.sol";
-import { Position, PositionId } from "./IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "./IUsdnProtocolTypes.sol";
 
 /**
  * @title IUsdnProtocolLong
  * @notice Interface for the long side layer of the USDN protocol
  */
-interface IUsdnProtocolLong {
+interface IUsdnProtocolLong is IUsdnProtocolTypes {
     /**
      * @notice Get the value of the lowest usable tick, taking into account the tick spacing
      * @dev Note that the effective minimum tick of a newly open long position also depends on the minimum allowed

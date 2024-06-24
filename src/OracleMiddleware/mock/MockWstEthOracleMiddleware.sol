@@ -2,7 +2,8 @@
 pragma solidity ^0.8.25;
 
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { ProtocolAction } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+
+import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { OracleMiddleware } from "../OracleMiddleware.sol";
 import { WstEthOracleMiddleware } from "../WstEthOracleMiddleware.sol";
 
@@ -48,7 +49,7 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
     function parseAndValidatePrice(
         bytes32 actionId,
         uint128 targetTimestamp,
-        ProtocolAction action,
+        Types.ProtocolAction action,
         bytes calldata data
     ) public payable override returns (PriceInfo memory price_) {
         // parse and validate from parent wsteth middleware
@@ -69,15 +70,15 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
 
         // `ConfidenceInterval` down cases
         if (
-            action == ProtocolAction.ValidateDeposit || action == ProtocolAction.ValidateClosePosition
-                || action == ProtocolAction.InitiateDeposit || action == ProtocolAction.InitiateClosePosition
+            action == Types.ProtocolAction.ValidateDeposit || action == Types.ProtocolAction.ValidateClosePosition
+                || action == Types.ProtocolAction.InitiateDeposit || action == Types.ProtocolAction.InitiateClosePosition
         ) {
             price_.price -= price_.price * _wstethMockedConfBps / BPS_DIVISOR;
 
             // `ConfidenceInterval` up case
         } else if (
-            action == ProtocolAction.ValidateWithdrawal || action == ProtocolAction.ValidateOpenPosition
-                || action == ProtocolAction.InitiateWithdrawal || action == ProtocolAction.InitiateOpenPosition
+            action == Types.ProtocolAction.ValidateWithdrawal || action == Types.ProtocolAction.ValidateOpenPosition
+                || action == Types.ProtocolAction.InitiateWithdrawal || action == Types.ProtocolAction.InitiateOpenPosition
         ) {
             price_.price += price_.price * _wstethMockedConfBps / BPS_DIVISOR;
         }
@@ -119,7 +120,7 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
     }
 
     /// @inheritdoc OracleMiddleware
-    function validationCost(bytes calldata data, ProtocolAction action)
+    function validationCost(bytes calldata data, Types.ProtocolAction action)
         public
         view
         override

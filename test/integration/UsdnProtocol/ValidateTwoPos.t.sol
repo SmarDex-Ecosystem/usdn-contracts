@@ -4,12 +4,6 @@ pragma solidity ^0.8.25;
 import { PYTH_ETH_USD, USER_1, USER_2 } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 
-import {
-    PendingAction,
-    PreviousActionsData,
-    ProtocolAction
-} from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
 /**
  * @custom:feature Validating two positions with Pyth prices at the same time
  * @custom:background Given a forked ethereum mainnet chain

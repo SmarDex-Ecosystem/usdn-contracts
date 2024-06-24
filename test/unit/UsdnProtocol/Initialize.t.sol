@@ -6,8 +6,6 @@ import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
 import { UsdnProtocolHandler } from "./utils/Handler.sol";
 
 import { Usdn } from "../../../src/Usdn/Usdn.sol";
-import { Position, PositionId } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { InitializableReentrancyGuard } from "../../../src/utils/InitializableReentrancyGuard.sol";
 
 /**
  * @custom:feature Test the functions linked to initialization of the protocol
