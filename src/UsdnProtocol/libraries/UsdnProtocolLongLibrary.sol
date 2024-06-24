@@ -117,7 +117,6 @@ library UsdnProtocolLongLibrary {
     }
 
     /// @notice See {IUsdnProtocolLong}
-    // slither-disable-next-line write-after-write
     function getMinLiquidationPrice(Types.Storage storage s, uint128 price)
         public
         view
@@ -125,6 +124,7 @@ library UsdnProtocolLongLibrary {
     {
         liquidationPrice_ = _getLiquidationPrice(price, uint128(s._minLeverage));
         int24 tick = getEffectiveTickForPrice(s, liquidationPrice_);
+        // slither-disable-next-line write-after-write
         liquidationPrice_ = getEffectivePriceForTick(s, tick + s._tickSpacing);
     }
 
