@@ -8,7 +8,7 @@ import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./libraries/UsdnP
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./libraries/UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolActionsVaultLibrary as ActionsVault } from "./libraries/UsdnProtocolActionsVaultLibrary.sol";
 
-abstract contract UsdnProtocolActionsEntry is UsdnProtocolStorage, IUsdnProtocolActions {
+abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActions {
     /// @inheritdoc IUsdnProtocolActions
     function initiateDeposit(
         uint128 amount,

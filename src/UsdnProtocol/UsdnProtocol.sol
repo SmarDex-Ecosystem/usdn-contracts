@@ -8,20 +8,14 @@ import { ILiquidationRewardsManager } from "../interfaces/OracleMiddleware/ILiqu
 import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocol } from "../interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import { UsdnProtocolActionsEntry } from "./UsdnProtocolActionsEntry.sol";
-import { UsdnProtocolCoreEntry } from "./UsdnProtocolCoreEntry.sol";
-import { UsdnProtocolLongEntry } from "./UsdnProtocolLongEntry.sol";
+import { UsdnProtocolActions } from "./UsdnProtocolActions.sol";
+import { UsdnProtocolCore } from "./UsdnProtocolCore.sol";
+import { UsdnProtocolLong } from "./UsdnProtocolLong.sol";
 import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
-import { UsdnProtocolVaultEntry } from "./UsdnProtocolVaultEntry.sol";
+import { UsdnProtocolVault } from "./UsdnProtocolVault.sol";
 import { UsdnProtocolSettersLibrary as Setters } from "./libraries/UsdnProtocolSettersLibrary.sol";
 
-contract UsdnProtocol is
-    IUsdnProtocol,
-    UsdnProtocolLongEntry,
-    UsdnProtocolVaultEntry,
-    UsdnProtocolCoreEntry,
-    UsdnProtocolActionsEntry
-{
+contract UsdnProtocol is IUsdnProtocol, UsdnProtocolLong, UsdnProtocolVault, UsdnProtocolCore, UsdnProtocolActions {
     /**
      * @notice Constructor
      * @param usdn The USDN ERC20 contract

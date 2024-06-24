@@ -6,7 +6,7 @@ import { HugeUint } from "../libraries/HugeUint.sol";
 import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { UsdnProtocolLongLibrary as Long } from "./libraries/UsdnProtocolLongLibrary.sol";
 
-abstract contract UsdnProtocolLongEntry is UsdnProtocolStorage, IUsdnProtocolLong {
+abstract contract UsdnProtocolLong is UsdnProtocolStorage, IUsdnProtocolLong {
     /// @inheritdoc IUsdnProtocolLong
     function minTick() external view returns (int24 tick_) {
         return Long.minTick(s);

@@ -5,7 +5,7 @@ import { IUsdnProtocolCore } from "../interfaces/UsdnProtocol/IUsdnProtocolCore.
 import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./libraries/UsdnProtocolCoreLibrary.sol";
 
-abstract contract UsdnProtocolCoreEntry is UsdnProtocolStorage, IUsdnProtocolCore {
+abstract contract UsdnProtocolCore is UsdnProtocolStorage, IUsdnProtocolCore {
     /// @inheritdoc IUsdnProtocolCore
     function initialize(
         uint128 depositAmount,
