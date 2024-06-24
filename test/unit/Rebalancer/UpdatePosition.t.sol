@@ -4,7 +4,7 @@ pragma solidity ^0.8.25;
 import { USER_1, USER_2 } from "../../utils/Constants.sol";
 import { RebalancerFixture } from "./utils/Fixtures.sol";
 
-import { PositionId } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes as Types } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The updatePosition function of the rebalancer contract
@@ -56,7 +56,7 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
      */
     function test_RevertWhen_callerIsNotTheProtocol() public {
         vm.expectRevert(RebalancerUnauthorized.selector);
-        rebalancer.updatePosition(PositionId(0, 0, 0), 0);
+        rebalancer.updatePosition(Types.PositionId(0, 0, 0), 0);
     }
 
     /**
@@ -69,7 +69,7 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
      * @custom:and A {PositionVersionUpdated} event is emitted
      */
     function test_updatePositionForTheFirstTime() public {
-        PositionId memory newPosId = PositionId({ tick: 200, tickVersion: 1, index: 3 });
+        Types.PositionId memory newPosId = Types.PositionId({ tick: 200, tickVersion: 1, index: 3 });
         uint128 pendingAssetsBefore = rebalancer.getPendingAssetsAmount();
         uint128 positionVersionBefore = rebalancer.getPositionVersion();
 
@@ -114,8 +114,8 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
      * @custom:and A {PositionVersionUpdated} event is emitted
      */
     function test_updatePositionWithAnExistingPosition() public {
-        PositionId memory posId1 = PositionId({ tick: 200, tickVersion: 1, index: 3 });
-        PositionId memory posId2 = PositionId({ tick: 400, tickVersion: 8, index: 27 });
+        Types.PositionId memory posId1 = Types.PositionId({ tick: 200, tickVersion: 1, index: 3 });
+        Types.PositionId memory posId2 = Types.PositionId({ tick: 400, tickVersion: 8, index: 27 });
         uint128 positionVersionBefore = rebalancer.getPositionVersion();
 
         vm.prank(address(usdnProtocol));
@@ -165,8 +165,8 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
      * @custom:and The last liquidated version is set to the previous version
      */
     function test_updatePositionWithALiquidatedPosition() public {
-        PositionId memory posId1 = PositionId({ tick: 200, tickVersion: 1, index: 3 });
-        PositionId memory posId2 = PositionId({ tick: 400, tickVersion: 8, index: 27 });
+        Types.PositionId memory posId1 = Types.PositionId({ tick: 200, tickVersion: 1, index: 3 });
+        Types.PositionId memory posId2 = Types.PositionId({ tick: 400, tickVersion: 8, index: 27 });
         uint128 positionVersionBefore = rebalancer.getPositionVersion();
 
         vm.prank(address(usdnProtocol));
@@ -210,7 +210,7 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
      */
     function test_updatePositionWithNoNewPosition() public {
         int24 noPositionTick = usdnProtocol.NO_POSITION_TICK();
-        PositionId memory posId1 = PositionId({ tick: 200, tickVersion: 1, index: 3 });
+        Types.PositionId memory posId1 = Types.PositionId({ tick: 200, tickVersion: 1, index: 3 });
 
         vm.startPrank(address(usdnProtocol));
         rebalancer.updatePosition(posId1, 0);
@@ -219,7 +219,7 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
 
         vm.expectEmit();
         emit PositionVersionUpdated(positionVersionBefore + 1);
-        rebalancer.updatePosition(PositionId(noPositionTick, 0, 0), 0);
+        rebalancer.updatePosition(Types.PositionId(noPositionTick, 0, 0), 0);
         vm.stopPrank();
 
         assertEq(

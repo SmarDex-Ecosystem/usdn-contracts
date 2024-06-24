@@ -8,7 +8,6 @@ import { MockRebalancer } from "../utils/MockRebalancer.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IBaseRebalancer } from "../../../../src/interfaces/Rebalancer/IBaseRebalancer.sol";
-import { PositionId, ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /// @custom:feature the _triggerRebalancer internal function of the UsdnProtocolLong contract
 /// @custom:background a deployed USDN protocol initialized at equilibrium

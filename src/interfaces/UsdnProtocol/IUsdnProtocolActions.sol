@@ -2,9 +2,9 @@
 pragma solidity >=0.8.0;
 
 import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
-import { PositionId, PreviousActionsData } from "./IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "./IUsdnProtocolTypes.sol";
 
-interface IUsdnProtocolActions {
+interface IUsdnProtocolActions is IUsdnProtocolTypes {
     /**
      * @notice Initiate a deposit of assets into the vault to mint USDN
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using

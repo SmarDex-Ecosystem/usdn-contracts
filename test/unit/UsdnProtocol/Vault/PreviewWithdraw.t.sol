@@ -5,8 +5,6 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
 /**
  * @custom:feature The previewWithdraw function of the UsdnProtocolVault contract
  * @custom:background Given a protocol initialized with default params

@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { DoubleEndedQueue, PendingAction } from "../../../../src/libraries/DoubleEndedQueue.sol";
+import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { DoubleEndedQueue } from "../../../../src/libraries/DoubleEndedQueue.sol";
 
 /**
  * @title DequeHandler
@@ -12,35 +13,35 @@ import { DoubleEndedQueue, PendingAction } from "../../../../src/libraries/Doubl
 contract DequeHandler {
     DoubleEndedQueue.Deque public queue;
 
-    function pushBack(PendingAction memory value) public returns (uint128) {
+    function pushBack(Types.PendingAction memory value) public returns (uint128) {
         return DoubleEndedQueue.pushBack(queue, value);
     }
 
-    function popBack() public returns (PendingAction memory) {
+    function popBack() public returns (Types.PendingAction memory) {
         return DoubleEndedQueue.popBack(queue);
     }
 
-    function pushFront(PendingAction memory value) public returns (uint128) {
+    function pushFront(Types.PendingAction memory value) public returns (uint128) {
         return DoubleEndedQueue.pushFront(queue, value);
     }
 
-    function popFront() public returns (PendingAction memory) {
+    function popFront() public returns (Types.PendingAction memory) {
         return DoubleEndedQueue.popFront(queue);
     }
 
-    function front() public view returns (PendingAction memory, uint128) {
+    function front() public view returns (Types.PendingAction memory, uint128) {
         return DoubleEndedQueue.front(queue);
     }
 
-    function back() public view returns (PendingAction memory, uint128) {
+    function back() public view returns (Types.PendingAction memory, uint128) {
         return DoubleEndedQueue.back(queue);
     }
 
-    function at(uint256 index) public view returns (PendingAction memory, uint128) {
+    function at(uint256 index) public view returns (Types.PendingAction memory, uint128) {
         return DoubleEndedQueue.at(queue, index);
     }
 
-    function atRaw(uint128 rawIndex) public view returns (PendingAction memory) {
+    function atRaw(uint128 rawIndex) public view returns (Types.PendingAction memory) {
         return DoubleEndedQueue.atRaw(queue, rawIndex);
     }
 
