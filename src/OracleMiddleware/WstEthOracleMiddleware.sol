@@ -3,6 +3,7 @@ pragma solidity ^0.8.25;
 
 import { IWstETH } from "../interfaces/IWstETH.sol";
 import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IUsdnProtocolTypes as Types } from "./../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { OracleMiddleware } from "./OracleMiddleware.sol";
 
 /**
@@ -41,7 +42,7 @@ contract WstEthOracleMiddleware is OracleMiddleware {
     function parseAndValidatePrice(
         bytes32 actionId,
         uint128 targetTimestamp,
-        ProtocolAction action,
+        Types.ProtocolAction action,
         bytes calldata data
     ) public payable virtual override returns (PriceInfo memory) {
         // fetched eth price

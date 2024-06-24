@@ -13,7 +13,6 @@ import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdn
 import { HugeUint } from "../../libraries/HugeUint.sol";
 import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
-import { Storage } from "../UsdnProtocolStorage.sol";
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
@@ -76,7 +75,7 @@ library UsdnProtocolActionsVaultLibrary {
 
     /// @notice See {IUsdnProtocolActions}
     function initiateDeposit(
-        Storage storage s,
+        Types.Storage storage s,
         uint128 amount,
         address to,
         address payable validator,
@@ -107,7 +106,7 @@ library UsdnProtocolActionsVaultLibrary {
 
     /// @notice See {IUsdnProtocolActions}
     function validateDeposit(
-        Storage storage s,
+        Types.Storage storage s,
         address payable validator,
         bytes calldata depositPriceData,
         Types.PreviousActionsData calldata previousActionsData
@@ -133,7 +132,7 @@ library UsdnProtocolActionsVaultLibrary {
 
     /// @notice See {IUsdnProtocolActions}
     function initiateWithdrawal(
-        Storage storage s,
+        Types.Storage storage s,
         uint152 usdnShares,
         address to,
         address payable validator,
@@ -163,7 +162,7 @@ library UsdnProtocolActionsVaultLibrary {
 
     /// @notice See {IUsdnProtocolActions}
     function validateWithdrawal(
-        Storage storage s,
+        Types.Storage storage s,
         address payable validator,
         bytes calldata withdrawalPriceData,
         Types.PreviousActionsData calldata previousActionsData
@@ -198,7 +197,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @param s The storage of the protocol
      * @param depositValue The deposit value in asset
      */
-    function _checkImbalanceLimitDeposit(Storage storage s, uint256 depositValue) public view {
+    function _checkImbalanceLimitDeposit(Types.Storage storage s, uint256 depositValue) public view {
         int256 depositExpoImbalanceLimitBps = s._depositExpoImbalanceLimitBps;
 
         // early return in case limit is disabled
@@ -231,7 +230,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @param withdrawalValue The withdrawal value in asset
      * @param totalExpo The current total expo
      */
-    function _checkImbalanceLimitWithdrawal(Storage storage s, uint256 withdrawalValue, uint256 totalExpo)
+    function _checkImbalanceLimitWithdrawal(Types.Storage storage s, uint256 withdrawalValue, uint256 totalExpo)
         public
         view
     {
@@ -268,7 +267,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @return data_ The transient data for the `deposit` action
      */
     function _prepareInitiateDepositData(
-        Storage storage s,
+        Types.Storage storage s,
         address validator,
         uint128 amount,
         bytes calldata currentPriceData
@@ -335,7 +334,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @return amountToRefund_ Refund The security deposit value of a stale pending action
      */
     function _createDepositPendingAction(
-        Storage storage s,
+        Types.Storage storage s,
         address to,
         address validator,
         uint64 securityDepositValue,
@@ -379,7 +378,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @return isInitiated_ Whether the action is initiated
      */
     function _initiateDeposit(
-        Storage storage s,
+        Types.Storage storage s,
         address user,
         address to,
         address validator,
@@ -437,7 +436,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @return securityDepositValue_ The value of the security deposit
      * @return isValidated_ Whether the action is validated
      */
-    function _validateDeposit(Storage storage s, address validator, bytes calldata priceData)
+    function _validateDeposit(Types.Storage storage s, address validator, bytes calldata priceData)
         public
         returns (uint256 securityDepositValue_, bool isValidated_)
     {
@@ -467,10 +466,11 @@ library UsdnProtocolActionsVaultLibrary {
      * @param priceData The current price data
      * @return isValidated_ Whether the action is validated
      */
-    function _validateDepositWithAction(Storage storage s, Types.PendingAction memory pending, bytes calldata priceData)
-        public
-        returns (bool isValidated_)
-    {
+    function _validateDepositWithAction(
+        Types.Storage storage s,
+        Types.PendingAction memory pending,
+        bytes calldata priceData
+    ) public returns (bool isValidated_) {
         Types.DepositPendingAction memory deposit = Core._toDepositPendingAction(pending);
 
         PriceInfo memory currentPrice = _getOraclePrice(
@@ -548,7 +548,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @return data_ The withdrawal data struct
      */
     function _prepareWithdrawalData(
-        Storage storage s,
+        Types.Storage storage s,
         address validator,
         uint152 usdnShares,
         bytes calldata currentPriceData
@@ -602,7 +602,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @return amountToRefund_ Refund The security deposit value of a stale pending action
      */
     function _createWithdrawalPendingAction(
-        Storage storage s,
+        Types.Storage storage s,
         address to,
         address validator,
         uint152 usdnShares,
@@ -638,7 +638,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @return price_ The validated price
      */
     function _getOraclePrice(
-        Storage storage s,
+        Types.Storage storage s,
         Types.ProtocolAction action,
         uint256 timestamp,
         bytes32 actionId,
@@ -672,7 +672,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @return isInitiated_ Whether the action is initiated
      */
     function _initiateWithdrawal(
-        Storage storage s,
+        Types.Storage storage s,
         address user,
         address to,
         address validator,
@@ -716,7 +716,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @return securityDepositValue_ The value of the security deposit
      * @return isValidated_ Whether the action is validated
      */
-    function _validateWithdrawal(Storage storage s, address validator, bytes calldata priceData)
+    function _validateWithdrawal(Types.Storage storage s, address validator, bytes calldata priceData)
         public
         returns (uint256 securityDepositValue_, bool isValidated_)
     {
@@ -747,7 +747,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @return isValidated_ Whether the action is validated
      */
     function _validateWithdrawalWithAction(
-        Storage storage s,
+        Types.Storage storage s,
         Types.PendingAction memory pending,
         bytes calldata priceData
     ) public returns (bool isValidated_) {
@@ -831,7 +831,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @param data The price data and raw indices
      * @return securityDepositValue_ The security deposit value of the executed action
      */
-    function _executePendingActionOrRevert(Storage storage s, Types.PreviousActionsData calldata data)
+    function _executePendingActionOrRevert(Types.Storage storage s, Types.PreviousActionsData calldata data)
         public
         returns (uint256 securityDepositValue_)
     {
@@ -851,7 +851,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @return liquidated_ Whether the position corresponding to the pending action was liquidated
      * @return securityDepositValue_ The security deposit value of the executed action
      */
-    function _executePendingAction(Storage storage s, Types.PreviousActionsData calldata data)
+    function _executePendingAction(Types.Storage storage s, Types.PreviousActionsData calldata data)
         public
         returns (bool success_, bool executed_, bool liquidated_, uint256 securityDepositValue_)
     {
@@ -940,7 +940,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @notice Distribute the protocol fee to the fee collector if it exceeds the threshold
      * @dev This function is called after every action that changes the protocol fee balance
      */
-    function _checkPendingFee(Storage storage s) public {
+    function _checkPendingFee(Types.Storage storage s) public {
         if (s._pendingProtocolFee >= s._feeThreshold) {
             address(s._asset).safeTransfer(s._feeCollector, s._pendingProtocolFee);
             emit IUsdnProtocolEvents.ProtocolFeeDistributed(s._feeCollector, s._pendingProtocolFee);

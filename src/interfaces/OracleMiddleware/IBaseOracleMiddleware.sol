@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { IUsdnProtocolTypes } from "../UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes as Types } from "../UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PriceInfo } from "./IOracleMiddlewareTypes.sol";
 
 /**
@@ -9,7 +9,7 @@ import { PriceInfo } from "./IOracleMiddlewareTypes.sol";
  * @notice This interface exposes the only functions used or required by the UsdnProtocol
  * @dev Any future implementation of the oracle middleware must implement this interface without modification
  */
-interface IBaseOracleMiddleware is IUsdnProtocolTypes {
+interface IBaseOracleMiddleware {
     /**
      * @notice Parse and validate some price data
      * @dev The data format is specific to the middleware and is simply forwarded from the user transaction's calldata
@@ -27,7 +27,7 @@ interface IBaseOracleMiddleware is IUsdnProtocolTypes {
     function parseAndValidatePrice(
         bytes32 actionId,
         uint128 targetTimestamp,
-        ProtocolAction action,
+        Types.ProtocolAction action,
         bytes calldata data
     ) external payable returns (PriceInfo memory result_);
 
@@ -50,5 +50,5 @@ interface IBaseOracleMiddleware is IUsdnProtocolTypes {
      * @param action Type of action for which the price is requested
      * @return The ETH cost of one price validation
      */
-    function validationCost(bytes calldata data, ProtocolAction action) external view returns (uint256);
+    function validationCost(bytes calldata data, Types.ProtocolAction action) external view returns (uint256);
 }

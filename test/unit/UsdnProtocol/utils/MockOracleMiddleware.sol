@@ -10,6 +10,7 @@ import {
     IOracleMiddlewareErrors
 } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IUsdnProtocolTypes as Types } from "./../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 contract MockOracleMiddleware is IOracleMiddleware, Ownable2Step {
     uint16 public constant BPS_DIVISOR = 10_000;
@@ -31,20 +32,20 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable2Step {
     function parseAndValidatePrice(
         bytes32 actionId,
         uint128 targetTimestamp,
-        ProtocolAction action,
+        Types.ProtocolAction action,
         bytes calldata data
     ) external payable returns (PriceInfo memory) {
         require(block.timestamp >= 30 minutes, "MockOracleMiddleware: set block timestamp before calling");
         uint256 priceValue = abi.decode(data, (uint128));
         uint256 ts;
         if (
-            action == ProtocolAction.InitiateDeposit || action == ProtocolAction.InitiateWithdrawal
-                || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.InitiateClosePosition
-                || action == ProtocolAction.Initialize
+            action == Types.ProtocolAction.InitiateDeposit || action == Types.ProtocolAction.InitiateWithdrawal
+                || action == Types.ProtocolAction.InitiateOpenPosition
+                || action == Types.ProtocolAction.InitiateClosePosition || action == Types.ProtocolAction.Initialize
         ) {
             // simulate that we got the price 30 minutes ago
             ts = block.timestamp - 30 minutes;
-        } else if (action == ProtocolAction.Liquidation) {
+        } else if (action == Types.ProtocolAction.Liquidation) {
             // for liquidation, simulate we got a recent timestamp
             ts = block.timestamp - 30 seconds;
         } else {
@@ -71,7 +72,7 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable2Step {
     }
 
     /// @inheritdoc IBaseOracleMiddleware
-    function validationCost(bytes calldata, ProtocolAction) external view returns (uint256) {
+    function validationCost(bytes calldata, Types.ProtocolAction) external view returns (uint256) {
         return _requireValidationCost ? 1 : 0;
     }
 

@@ -17,7 +17,6 @@ import { HugeUint } from "../../libraries/HugeUint.sol";
 import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
 import { TickMath } from "../../libraries/TickMath.sol";
-import { Storage } from "../UsdnProtocolStorage.sol";
 import { UsdnProtocolActionsVaultLibrary as ActionsVault } from "./UsdnProtocolActionsVaultLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./UsdnProtocolCoreLibrary.sol";
@@ -38,7 +37,7 @@ library UsdnProtocolActionsUtilsLibrary {
     /* -------------------------------------------------------------------------- */
 
     /// @notice See {IUsdnProtocolActions}
-    function liquidate(Storage storage s, bytes calldata currentPriceData, uint16 iterations)
+    function liquidate(Types.Storage storage s, bytes calldata currentPriceData, uint16 iterations)
         public
         returns (uint256 liquidatedPositions_)
     {
@@ -62,7 +61,7 @@ library UsdnProtocolActionsUtilsLibrary {
 
     /// @notice See {IUsdnProtocolActions}
     function validateActionablePendingActions(
-        Storage storage s,
+        Types.Storage storage s,
         Types.PreviousActionsData calldata previousActionsData,
         uint256 maxValidations
     ) public returns (uint256 validatedActions_) {
@@ -88,7 +87,9 @@ library UsdnProtocolActionsUtilsLibrary {
     }
 
     /// @notice See {IUsdnProtocolActions}
-    function transferPositionOwnership(Storage storage s, Types.PositionId calldata posId, address newOwner) public {
+    function transferPositionOwnership(Types.Storage storage s, Types.PositionId calldata posId, address newOwner)
+        public
+    {
         (bytes32 tickHash, uint256 version) = Vault._tickHash(s, posId.tick);
         if (posId.tickVersion != version) {
             revert IUsdnProtocolErrors.UsdnProtocolOutdatedTick(version, posId.tickVersion);
@@ -123,7 +124,7 @@ library UsdnProtocolActionsUtilsLibrary {
      * @param posTotalExpoToClose The total expo to remove position
      * @param posValueToClose The value to remove from the position
      */
-    function _checkImbalanceLimitClose(Storage storage s, uint256 posTotalExpoToClose, uint256 posValueToClose)
+    function _checkImbalanceLimitClose(Types.Storage storage s, uint256 posTotalExpoToClose, uint256 posValueToClose)
         public
         view
     {
@@ -158,7 +159,7 @@ library UsdnProtocolActionsUtilsLibrary {
      * @param priceData The price oracle update data
      */
     function _sendRewardsToLiquidator(
-        Storage storage s,
+        Types.Storage storage s,
         uint16 liquidatedTicks,
         int256 remainingCollateral,
         bool rebased,
@@ -198,7 +199,7 @@ library UsdnProtocolActionsUtilsLibrary {
      * @return amountToRefund_ Refund The security deposit value of a stale pending action
      */
     function _createOpenPendingAction(
-        Storage storage s,
+        Types.Storage storage s,
         address to,
         address validator,
         uint64 securityDepositValue,
@@ -230,7 +231,7 @@ library UsdnProtocolActionsUtilsLibrary {
      * @return liquidated_ Whether the position was liquidated
      */
     function _prepareValidateOpenPositionData(
-        Storage storage s,
+        Types.Storage storage s,
         Types.PendingAction memory pending,
         bytes calldata priceData
     ) public returns (Types.ValidateOpenPositionData memory data_, bool liquidated_) {
@@ -299,7 +300,7 @@ library UsdnProtocolActionsUtilsLibrary {
      * @param pos The position to close
      */
     function _checkInitiateClosePosition(
-        Storage storage s,
+        Types.Storage storage s,
         address owner,
         address to,
         address validator,
@@ -356,7 +357,7 @@ library UsdnProtocolActionsUtilsLibrary {
      * @return liquidated_ Whether the position was liquidated and the caller should return early
      */
     function _prepareClosePositionData(
-        Storage storage s,
+        Types.Storage storage s,
         address owner,
         address to,
         address validator,
@@ -432,7 +433,7 @@ library UsdnProtocolActionsUtilsLibrary {
      * @return amountToRefund_ Refund The security deposit value of a stale pending action
      */
     function _createClosePendingAction(
-        Storage storage s,
+        Types.Storage storage s,
         address validator,
         address to,
         Types.PositionId memory posId,
@@ -467,11 +468,12 @@ library UsdnProtocolActionsUtilsLibrary {
      * @return boundedPosValue_ The amount of assets to remove from the long balance, bound by zero and the available
      * long balance
      */
-    function _assetToRemove(Storage storage s, uint128 priceWithFees, uint128 liqPriceWithoutPenalty, uint128 posExpo)
-        public
-        view
-        returns (uint256 boundedPosValue_)
-    {
+    function _assetToRemove(
+        Types.Storage storage s,
+        uint128 priceWithFees,
+        uint128 liqPriceWithoutPenalty,
+        uint128 posExpo
+    ) public view returns (uint256 boundedPosValue_) {
         // the available amount of assets on the long side (with the current balance)
         uint256 available = s._balanceLong;
 
@@ -502,7 +504,7 @@ library UsdnProtocolActionsUtilsLibrary {
      * @return liqMultiplierAccumulator_ The updated liquidation multiplier accumulator
      */
     function _removeAmountFromPosition(
-        Storage storage s,
+        Types.Storage storage s,
         int24 tick,
         uint256 index,
         Types.Position memory pos,
@@ -551,7 +553,7 @@ library UsdnProtocolActionsUtilsLibrary {
      * @return index_ The index of the position in the tick array
      * @return liqMultiplierAccumulator_ The updated liquidation multiplier accumulator
      */
-    function _saveNewPosition(Storage storage s, int24 tick, Types.Position memory long, uint8 liquidationPenalty)
+    function _saveNewPosition(Types.Storage storage s, int24 tick, Types.Position memory long, uint8 liquidationPenalty)
         public
         returns (uint256 tickVersion_, uint256 index_, HugeUint.Uint512 memory liqMultiplierAccumulator_)
     {

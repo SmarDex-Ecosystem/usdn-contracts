@@ -12,7 +12,6 @@ import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdn
 import { HugeUint } from "../../libraries/HugeUint.sol";
 import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 import { TickMath } from "../../libraries/TickMath.sol";
-import { Storage } from "../UsdnProtocolStorage.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolActionsVaultLibrary as ActionsVault } from "./UsdnProtocolActionsVaultLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
@@ -64,7 +63,7 @@ library UsdnProtocolActionsLongLibrary {
 
     /// @notice See {IUsdnProtocolActions}
     function initiateOpenPosition(
-        Storage storage s,
+        Types.Storage storage s,
         Types.InitiateOpenPositionParams memory params,
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData
@@ -90,7 +89,7 @@ library UsdnProtocolActionsLongLibrary {
 
     /// @notice See {IUsdnProtocolActions}
     function validateOpenPosition(
-        Storage storage s,
+        Types.Storage storage s,
         address payable validator,
         bytes calldata openPriceData,
         Types.PreviousActionsData calldata previousActionsData
@@ -117,7 +116,7 @@ library UsdnProtocolActionsLongLibrary {
 
     /// @notice See {IUsdnProtocolActions}
     function initiateClosePosition(
-        Storage storage s,
+        Types.Storage storage s,
         Types.InitiateClosePositionParams memory params,
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData
@@ -154,7 +153,7 @@ library UsdnProtocolActionsLongLibrary {
 
     /// @notice See {IUsdnProtocolActions}
     function validateClosePosition(
-        Storage storage s,
+        Types.Storage storage s,
         address payable validator,
         bytes calldata closePriceData,
         Types.PreviousActionsData calldata previousActionsData
@@ -201,7 +200,7 @@ library UsdnProtocolActionsLongLibrary {
      * @return isInitiated_ Whether the action is initiated
      */
     function _initiateOpenPosition(
-        Storage storage s,
+        Types.Storage storage s,
         Types.InitiateOpenPositionParams memory params,
         bytes calldata currentPriceData
     ) public returns (Types.PositionId memory posId_, uint256 amountToRefund_, bool isInitiated_) {
@@ -272,7 +271,7 @@ library UsdnProtocolActionsLongLibrary {
      * @return isValidated_ Whether the action is validated
      * @return liquidated_ Whether the pending action has been liquidated
      */
-    function _validateOpenPosition(Storage storage s, address validator, bytes calldata priceData)
+    function _validateOpenPosition(Types.Storage storage s, address validator, bytes calldata priceData)
         public
         returns (uint256 securityDepositValue_, bool isValidated_, bool liquidated_)
     {
@@ -303,7 +302,7 @@ library UsdnProtocolActionsLongLibrary {
      * @return liquidated_ Whether the pending action has been liquidated
      */
     function _validateOpenPositionWithAction(
-        Storage storage s,
+        Types.Storage storage s,
         Types.PendingAction memory pending,
         bytes calldata priceData
     ) public returns (bool isValidated_, bool liquidated_) {
@@ -449,7 +448,7 @@ library UsdnProtocolActionsLongLibrary {
      * @return liquidated_ Whether the position was liquidated
      */
     function _initiateClosePosition(
-        Storage storage s,
+        Types.Storage storage s,
         address owner,
         address to,
         address validator,
@@ -497,7 +496,7 @@ library UsdnProtocolActionsLongLibrary {
      * @return isValidated_ Whether the action is validated
      * @return liquidated_ Whether the pending action has been liquidated
      */
-    function _validateClosePosition(Storage storage s, address validator, bytes calldata priceData)
+    function _validateClosePosition(Types.Storage storage s, address validator, bytes calldata priceData)
         public
         returns (uint256 securityDepositValue_, bool isValidated_, bool liquidated_)
     {
@@ -529,7 +528,7 @@ library UsdnProtocolActionsLongLibrary {
      * @return liquidated_ Whether the pending action has been liquidated
      */
     function _validateClosePositionWithAction(
-        Storage storage s,
+        Types.Storage storage s,
         Types.PendingAction memory pending,
         bytes calldata priceData
     ) public returns (bool isValidated_, bool liquidated_) {

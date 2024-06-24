@@ -7,6 +7,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { IBaseRebalancer } from "../../../../src/interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IRebalancerTypes } from "../../../../src/interfaces/Rebalancer/IRebalancerTypes.sol";
+import { IUsdnProtocolTypes as Types } from "./../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 contract MockRebalancer is IBaseRebalancer, IRebalancerTypes {
     using SafeERC20 for IERC20Metadata;
@@ -23,7 +24,9 @@ contract MockRebalancer is IBaseRebalancer, IRebalancerTypes {
     mapping(address => UserDeposit) internal _userDeposit;
     mapping(uint256 => PositionData) internal _positionData;
 
-    function setCurrentStateData(uint128 pendingAssets, uint256 maxLeverage, PositionId memory currentPosId) external {
+    function setCurrentStateData(uint128 pendingAssets, uint256 maxLeverage, Types.PositionId memory currentPosId)
+        external
+    {
         _pendingAssets = pendingAssets;
         _maxLeverage = maxLeverage;
         _positionData[_positionVersion].tick = currentPosId.tick;
@@ -31,11 +34,11 @@ contract MockRebalancer is IBaseRebalancer, IRebalancerTypes {
         _positionData[_positionVersion].index = currentPosId.index;
     }
 
-    function getCurrentStateData() external view returns (uint128, uint256, PositionId memory) {
+    function getCurrentStateData() external view returns (uint128, uint256, Types.PositionId memory) {
         return (
             _pendingAssets,
             _maxLeverage,
-            PositionId(
+            Types.PositionId(
                 _positionData[_positionVersion].tick,
                 _positionData[_positionVersion].tickVersion,
                 _positionData[_positionVersion].index
@@ -51,7 +54,7 @@ contract MockRebalancer is IBaseRebalancer, IRebalancerTypes {
         return _userDeposit[user];
     }
 
-    function updatePosition(PositionId calldata newPosId, uint128 previousPositionValue) external {
+    function updatePosition(Types.PositionId calldata newPosId, uint128 previousPositionValue) external {
         ++_positionVersion;
         _positionData[_positionVersion].tick = newPosId.tick;
         _positionData[_positionVersion].tickVersion = newPosId.tickVersion;

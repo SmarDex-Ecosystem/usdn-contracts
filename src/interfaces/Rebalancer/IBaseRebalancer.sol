@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.0;
 
-import { IUsdnProtocolTypes } from "../UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes as Types } from "../UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IRebalancerTypes } from "./IRebalancerTypes.sol";
 
-interface IBaseRebalancer is IUsdnProtocolTypes {
+interface IBaseRebalancer {
     /**
      * @notice Returns the necessary data for the USDN protocol to update the position
      * @return pendingAssets_ The amount of assets that are pending inclusion in the protocol
@@ -14,7 +14,7 @@ interface IBaseRebalancer is IUsdnProtocolTypes {
     function getCurrentStateData()
         external
         view
-        returns (uint128 pendingAssets_, uint256 maxLeverage_, PositionId memory currentPosId_);
+        returns (uint128 pendingAssets_, uint256 maxLeverage_, Types.PositionId memory currentPosId_);
 
     /**
      * @notice Returns the minimum amount of assets to be deposited by a user
@@ -35,7 +35,7 @@ interface IBaseRebalancer is IUsdnProtocolTypes {
      * @param newPosId The position ID of the new position
      * @param previousPosValue The amount of assets left in the previous position
      */
-    function updatePosition(PositionId calldata newPosId, uint128 previousPosValue) external;
+    function updatePosition(Types.PositionId calldata newPosId, uint128 previousPosValue) external;
 
     /* -------------------------------------------------------------------------- */
     /*                                    Admin                                   */

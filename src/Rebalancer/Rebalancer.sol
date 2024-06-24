@@ -15,6 +15,7 @@ import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IRebalancer } from "../interfaces/Rebalancer/IRebalancer.sol";
 import { IOwnershipCallback } from "../interfaces/UsdnProtocol/IOwnershipCallback.sol";
 import { IUsdnProtocol } from "../interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IUsdnProtocolTypes as Types } from "./../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title Rebalancer
@@ -43,7 +44,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         PositionData currentPositionData;
         uint256 amountToCloseWithoutBonus;
         uint256 amountToClose;
-        Position protocolPosition;
+        Types.Position protocolPosition;
     }
 
     /// @notice Modifier to check if the caller is the USDN protocol or the owner
@@ -177,12 +178,12 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     function getCurrentStateData()
         external
         view
-        returns (uint128 pendingAssets_, uint256 maxLeverage_, PositionId memory currentPosId_)
+        returns (uint128 pendingAssets_, uint256 maxLeverage_, Types.PositionId memory currentPosId_)
     {
         return (
             _pendingAssetsAmount,
             _maxLeverage,
-            PositionId({
+            Types.PositionId({
                 tick: _positionData[_positionVersion].tick,
                 tickVersion: _positionData[_positionVersion].tickVersion,
                 index: _positionData[_positionVersion].index
@@ -419,7 +420,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         address to,
         address payable validator,
         bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData
+        Types.PreviousActionsData calldata previousActionsData
     ) external payable nonReentrant returns (bool success_) {
         if (amount == 0) {
             revert RebalancerInvalidAmount();
@@ -456,7 +457,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         );
 
         (data.protocolPosition,) = _usdnProtocol.getLongPosition(
-            PositionId({
+            Types.PositionId({
                 tick: data.currentPositionData.tick,
                 tickVersion: data.currentPositionData.tickVersion,
                 index: data.currentPositionData.index
@@ -470,7 +471,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
         // slither-disable-next-line reentrancy-eth
         success_ = _usdnProtocol.initiateClosePosition{ value: msg.value }(
-            PositionId({
+            Types.PositionId({
                 tick: data.currentPositionData.tick,
                 tickVersion: data.currentPositionData.tickVersion,
                 index: data.currentPositionData.index
@@ -523,7 +524,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     }
 
     /// @inheritdoc IBaseRebalancer
-    function updatePosition(PositionId calldata newPosId, uint128 previousPosValue) external onlyProtocol {
+    function updatePosition(Types.PositionId calldata newPosId, uint128 previousPosValue) external onlyProtocol {
         uint128 positionVersion = _positionVersion;
         PositionData memory previousPositionData = _positionData[positionVersion];
         // set the multiplier accumulator to 1 by default
@@ -625,7 +626,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     }
 
     /// @inheritdoc IOwnershipCallback
-    function ownershipCallback(address, PositionId calldata) external pure {
+    function ownershipCallback(address, Types.PositionId calldata) external pure {
         revert RebalancerUnauthorized(); // first version of the rebalancer contract so we are always reverting
     }
 
