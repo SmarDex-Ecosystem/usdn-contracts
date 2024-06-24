@@ -19,6 +19,7 @@ import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./UsdnProtocolA
 import { UsdnProtocolActionsVaultLibrary as ActionsVault } from "./UsdnProtocolActionsVaultLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./UsdnProtocolCoreLibrary.sol";
+import { UsdnProtocolUtils as Utils } from "./UsdnProtocolUtils.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.sol";
 
 library UsdnProtocolLongLibrary {
@@ -225,7 +226,7 @@ library UsdnProtocolLongLibrary {
         if (fundAsset > 0) {
             available_ = Core._longAssetAvailable(s, currentPrice).safeSub(fundAsset);
         } else {
-            int256 fee = fundAsset * Core._toInt256(s._protocolFeeBps) / int256(Constants.BPS_DIVISOR);
+            int256 fee = fundAsset * Utils.toInt256(s._protocolFeeBps) / int256(Constants.BPS_DIVISOR);
             // fees have the same sign as fundAsset (negative here), so we need to sub them
             available_ = Core._longAssetAvailable(s, currentPrice).safeSub(fundAsset - fee);
         }
@@ -554,7 +555,7 @@ library UsdnProtocolLongLibrary {
         // so the position is considered the same as other positions by event indexers
         emit IUsdnProtocolEvents.InitiatedClosePosition(pos.user, pos.user, pos.user, posId, pos.amount, pos.amount, 0);
         emit IUsdnProtocolEvents.ValidatedClosePosition(
-            pos.user, pos.user, posId, uint256(positionValue_), positionValue_ - Core._toInt256(pos.amount)
+            pos.user, pos.user, posId, uint256(positionValue_), positionValue_ - Utils.toInt256(pos.amount)
         );
     }
 
