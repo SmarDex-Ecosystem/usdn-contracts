@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.16.1](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v0.16.0...v0.16.1) (2024-06-24)
+
+
+### Bug Fixes
+
+* **gas-usage:** fix the gas usage tests ([#375](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/375)) ([a737d1e](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/a737d1e9ce343f5af4a35024c4fe89a46aa108a9))
+
 ## [0.16.0](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.15.0...v0.16.0) (2024-06-21)
 
 
