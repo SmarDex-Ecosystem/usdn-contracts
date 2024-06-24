@@ -4,7 +4,6 @@ pragma solidity ^0.8.25;
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
 import { IBaseLiquidationRewardsManager } from "../interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
@@ -12,8 +11,6 @@ import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolErrors } from "../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolStorage } from "../interfaces/UsdnProtocol/IUsdnProtocolStorage.sol";
-import { PendingAction, TickData } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { Position } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "../libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
 import { InitializableReentrancyGuard } from "../utils/InitializableReentrancyGuard.sol";
@@ -456,67 +453,4 @@ contract UsdnProtocolStorage is
     function getLongImbalanceTargetBps() external view returns (int256 longImbalanceTargetBps_) {
         longImbalanceTargetBps_ = s._longImbalanceTargetBps;
     }
-}
-
-struct Storage {
-    // immutable
-    int24 _tickSpacing;
-    IERC20Metadata _asset;
-    uint8 _assetDecimals;
-    uint8 _priceFeedDecimals;
-    IUsdn _usdn;
-    IERC20Metadata _sdex;
-    uint256 _usdnMinDivisor;
-    // parameters
-    IBaseOracleMiddleware _oracleMiddleware;
-    IBaseLiquidationRewardsManager _liquidationRewardsManager;
-    IBaseRebalancer _rebalancer;
-    uint256 _minLeverage;
-    uint256 _maxLeverage;
-    uint256 _validationDeadline;
-    uint256 _safetyMarginBps;
-    uint16 _liquidationIteration;
-    uint16 _protocolFeeBps;
-    uint16 _rebalancerBonusBps;
-    uint8 _liquidationPenalty;
-    uint128 _EMAPeriod;
-    uint256 _fundingSF;
-    uint256 _feeThreshold;
-    int256 _openExpoImbalanceLimitBps;
-    int256 _withdrawalExpoImbalanceLimitBps;
-    int256 _depositExpoImbalanceLimitBps;
-    int256 _closeExpoImbalanceLimitBps;
-    int256 _longImbalanceTargetBps;
-    uint16 _positionFeeBps;
-    uint16 _vaultFeeBps;
-    uint32 _sdexBurnOnDepositRatio;
-    address _feeCollector;
-    uint64 _securityDepositValue;
-    uint128 _targetUsdnPrice;
-    uint128 _usdnRebaseThreshold;
-    uint256 _usdnRebaseInterval;
-    uint256 _minLongPosition;
-    // State
-    int256 _lastFunding;
-    uint128 _lastPrice;
-    uint128 _lastUpdateTimestamp;
-    uint256 _pendingProtocolFee;
-    // Pending actions queue
-    mapping(address => uint256) _pendingActions;
-    DoubleEndedQueue.Deque _pendingActionsQueue;
-    // Vault
-    uint256 _balanceVault;
-    int256 _pendingBalanceVault;
-    uint256 _lastRebaseCheck;
-    // Long positions
-    int256 _EMA;
-    uint256 _balanceLong;
-    uint256 _totalExpo;
-    HugeUint.Uint512 _liqMultiplierAccumulator;
-    mapping(int24 => uint256) _tickVersion;
-    mapping(bytes32 => Position[]) _longPositions;
-    mapping(bytes32 => TickData) _tickData;
-    int24 _highestPopulatedTick;
-    uint256 _totalLongPositions;
-    LibBitmap.Bitmap _tickBitmap;
 }

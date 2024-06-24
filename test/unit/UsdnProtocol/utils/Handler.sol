@@ -21,18 +21,6 @@ import { IBaseOracleMiddleware } from "../../../../src/interfaces/OracleMiddlewa
 import { ILiquidationRewardsManager } from "../../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../../../../src/interfaces/Usdn/IUsdn.sol";
-import {
-    CachedProtocolState,
-    DepositPendingAction,
-    LongPendingAction,
-    PendingAction,
-    PositionId,
-    PreviousActionsData,
-    ProtocolAction,
-    TickData,
-    WithdrawalPendingAction
-} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { LiquidationsEffects, Position } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "../../../../src/libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
