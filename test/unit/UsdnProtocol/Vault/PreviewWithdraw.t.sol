@@ -29,7 +29,7 @@ contract TestUsdnProtocolPreviewWithdraw is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Check calculations of `previewWithdraw`
      * @custom:given The available vault balance (with vault fee applied) is greater than zero
-     * @custom:when The user simulate the withdrawal of half of the total shares of USDN
+     * @custom:when The user simulates the withdrawal of half of the total shares of USDN
      * @custom:then The amount of asset should be equal to half of the available balance
      */
     function test_previewWithdraw() public {
