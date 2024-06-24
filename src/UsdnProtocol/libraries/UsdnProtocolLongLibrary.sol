@@ -365,6 +365,14 @@ library UsdnProtocolLongLibrary {
 
         cache.tradingExpo = cache.totalExpo - cache.longBalance;
 
+        // calculate the bonus now and update the cache to make sure removing it from the vault doesn't push the
+        // imbalance above the threshold
+        uint128 bonus;
+        if (remainingCollateral > 0) {
+            bonus = (uint256(remainingCollateral) * s._rebalancerBonusBps / Constants.BPS_DIVISOR).toUint128();
+            cache.vaultBalance -= bonus;
+        }
+
         {
             int256 currentImbalance =
                 _calcImbalanceCloseBps(cache.vaultBalance.toInt256(), cache.longBalance.toInt256(), cache.totalExpo);
@@ -409,11 +417,8 @@ library UsdnProtocolLongLibrary {
         // slither-disable-next-line arbitrary-send-erc20
         address(s._asset).safeTransferFrom(address(rebalancer), address(this), data.positionAmount - data.positionValue);
 
-        // if there is enough collateral remaining after liquidations, calculate the bonus and add it to the
-        // new rebalancer position
-        if (remainingCollateral > 0) {
-            uint128 bonus = (uint256(remainingCollateral) * s._rebalancerBonusBps / Constants.BPS_DIVISOR).toUint128();
-            cache.vaultBalance -= bonus;
+        // add the bonus to the new rebalancer position and remove it from the vault
+        if (bonus > 0) {
             vaultBalance_ -= bonus;
             data.positionAmount += bonus;
         }
