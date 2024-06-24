@@ -401,6 +401,7 @@ library UsdnProtocolLongLibrary {
             // cast is safe as realPositionValue cannot be lower than 0
             data.positionValue = uint256(realPositionValue).toUint128();
             data.positionAmount += data.positionValue;
+            longBalance_ -= data.positionValue;
         }
 
         // if the amount in the position we wanted to open is below a fraction of the _minLongPosition setting,
