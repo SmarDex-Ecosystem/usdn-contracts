@@ -4,6 +4,7 @@ pragma solidity ^0.8.25;
 /**
  * @title USDN Protocol Utils
  * @notice This library contains utility functions for the USDN protocol, and will not be deployed as an external lib
+ * @dev All functions should be marked as "internal"
  */
 library UsdnProtocolUtils {
     /**
