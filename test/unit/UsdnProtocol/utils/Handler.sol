@@ -611,4 +611,25 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     function getLongTradingExpo(uint128 currentPrice) external view returns (int256 expo_) {
         expo_ = s._totalExpo.toInt256().safeSub(Core._longAssetAvailable(s, currentPrice));
     }
+
+    function i_sendRewardsToLiquidator(
+        uint16 liquidatedTicks,
+        int256 remainingCollateral,
+        bool rebased,
+        bool rebalancerTriggered,
+        ProtocolAction action,
+        bytes memory rebaseCallbackResult,
+        bytes memory priceData
+    ) external {
+        ActionsUtils._sendRewardsToLiquidator(
+            s,
+            liquidatedTicks,
+            remainingCollateral,
+            rebased,
+            rebalancerTriggered,
+            action,
+            rebaseCallbackResult,
+            priceData
+        );
+    }
 }
