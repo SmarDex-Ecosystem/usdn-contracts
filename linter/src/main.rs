@@ -163,16 +163,14 @@ fn parse_and_lint(lang: &Language, path: impl AsRef<Path>) -> Result<()> {
             if parent_cursor.go_to_parent()
                 && parent_cursor
                     .node()
-                    .as_nonterminal_with_kind(NonterminalKind::MemberAccess)
-                    .is_some()
+                    .is_nonterminal_with_kind(NonterminalKind::MemberAccess)
             {
                 continue;
             }
             if parent_cursor.go_to_parent()
                 && parent_cursor
                     .node()
-                    .as_nonterminal_with_kind(NonterminalKind::FunctionCallExpression)
-                    .is_some()
+                    .is_nonterminal_with_kind(NonterminalKind::FunctionCallExpression)
             {
                 continue;
             }
@@ -183,10 +181,10 @@ fn parse_and_lint(lang: &Language, path: impl AsRef<Path>) -> Result<()> {
 
         let mut function_cursor = cursor.clone();
         while function_cursor.go_to_parent() {
-            let Some(_) = function_cursor
+            if !function_cursor
                 .node()
-                .as_nonterminal_with_kind(NonterminalKind::FunctionDefinition)
-            else {
+                .is_nonterminal_with_kind(NonterminalKind::FunctionDefinition)
+            {
                 continue;
             };
             if function_cursor.go_to_next_terminal_with_kind(TerminalKind::Identifier) {
