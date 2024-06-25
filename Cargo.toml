@@ -1,4 +1,3 @@
 [workspace]
-members = ["test_utils"]
+members = ["linter", "test_utils"]
 resolver = "2"
-
