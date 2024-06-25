@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
-
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 /**
@@ -10,8 +8,6 @@ import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
  * @custom:background Given a protocol initialized with slightly more trading expo in the vault side.
  */
 contract TestUsdnProtocolActionsAssetToRemove is UsdnProtocolBaseFixture {
-    using Strings for uint256;
-
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
     }

@@ -942,9 +942,11 @@ library UsdnProtocolActionsVaultLibrary {
      * @dev This function is called after every action that changes the protocol fee balance
      */
     function _checkPendingFee(Types.Storage storage s) public {
-        if (s._pendingProtocolFee >= s._feeThreshold) {
-            address(s._asset).safeTransfer(s._feeCollector, s._pendingProtocolFee);
-            emit IUsdnProtocolEvents.ProtocolFeeDistributed(s._feeCollector, s._pendingProtocolFee);
+        uint256 pendingFee = s._pendingProtocolFee;
+        if (pendingFee >= s._feeThreshold) {
+            address feeCollector = s._feeCollector;
+            address(s._asset).safeTransfer(feeCollector, pendingFee);
+            emit IUsdnProtocolEvents.ProtocolFeeDistributed(feeCollector, pendingFee);
             s._pendingProtocolFee = 0;
         }
     }
