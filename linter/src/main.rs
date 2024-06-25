@@ -66,7 +66,7 @@ async fn main() -> Result<()> {
         })
         .collect();
 
-    for entry in WalkDir::new("src/UsdnProtocol/libraries") {
+    for entry in WalkDir::new("src") {
         let entry = match entry {
             Err(e) => {
                 eprintln!("walkdir error: {e:?}");
