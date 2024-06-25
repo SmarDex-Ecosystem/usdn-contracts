@@ -54,14 +54,15 @@ library UsdnProtocolVaultLibrary {
     {
         // apply fees on price
         uint128 depositPriceWithFees = price - price * s._vaultFeeBps / uint128(Constants.BPS_DIVISOR);
+        IUsdn usdn = s._usdn;
         usdnSharesExpected_ = _calcMintUsdnShares(
             s,
             amount,
             vaultAssetAvailableWithFunding(s, depositPriceWithFees, timestamp).toUint256(),
-            s._usdn.totalShares(),
+            usdn.totalShares(),
             depositPriceWithFees
         );
-        sdexToBurn_ = _calcSdexToBurn(s._usdn.convertToTokens(usdnSharesExpected_), s._sdexBurnOnDepositRatio);
+        sdexToBurn_ = _calcSdexToBurn(usdn.convertToTokens(usdnSharesExpected_), s._sdexBurnOnDepositRatio);
     }
 
     /// @notice See {IUsdnProtocolVault}
@@ -153,12 +154,13 @@ library UsdnProtocolVaultLibrary {
         // calculate the total minted amount of USDN shares (vault balance and total supply are zero for now, we assume
         // the USDN price to be $1 per token)
         uint256 usdnSharesToMint = _calcMintUsdnShares(s, amount, 0, 0, price);
-        uint256 minUsdnSharesSupply = s._usdn.convertToShares(Constants.MIN_USDN_SUPPLY);
+        IUsdn usdn = s._usdn;
+        uint256 minUsdnSharesSupply = usdn.convertToShares(Constants.MIN_USDN_SUPPLY);
         // mint the minimum amount and send it to the dead address so it can never be removed from the total supply
-        s._usdn.mintShares(Constants.DEAD_ADDRESS, minUsdnSharesSupply);
+        usdn.mintShares(Constants.DEAD_ADDRESS, minUsdnSharesSupply);
         // mint the user's share
         uint256 mintSharesToUser = usdnSharesToMint - minUsdnSharesSupply;
-        uint256 mintedTokens = s._usdn.mintShares(msg.sender, mintSharesToUser);
+        uint256 mintedTokens = usdn.mintShares(msg.sender, mintSharesToUser);
 
         emit IUsdnProtocolEvents.ValidatedDeposit(
             Constants.DEAD_ADDRESS, Constants.DEAD_ADDRESS, 0, Constants.MIN_USDN_SUPPLY, block.timestamp

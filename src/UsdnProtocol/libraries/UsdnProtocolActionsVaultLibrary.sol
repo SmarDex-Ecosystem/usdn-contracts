@@ -6,6 +6,7 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IUsdn } from "../../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolActions } from "../../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
@@ -306,12 +307,13 @@ library UsdnProtocolActionsVaultLibrary {
         data_.balanceVault = Vault._vaultAssetAvailable(
             data_.totalExpo, s._balanceVault, data_.balanceLong, data_.pendingActionPrice, s._lastPrice
         ).toUint256();
-        data_.usdnTotalShares = s._usdn.totalShares();
+        IUsdn usdn = s._usdn;
+        data_.usdnTotalShares = usdn.totalShares();
 
         // calculate the amount of SDEX tokens to burn
         uint256 usdnSharesToMintEstimated =
             Vault._calcMintUsdnShares(s, amount, data_.balanceVault, data_.usdnTotalShares, data_.pendingActionPrice);
-        uint256 usdnToMintEstimated = s._usdn.convertToTokens(usdnSharesToMintEstimated);
+        uint256 usdnToMintEstimated = usdn.convertToTokens(usdnSharesToMintEstimated);
         // we want to at least mint 1 wei of USDN
         if (usdnToMintEstimated == 0) {
             revert IUsdnProtocolErrors.UsdnProtocolDepositTooSmall();
@@ -700,13 +702,12 @@ library UsdnProtocolActionsVaultLibrary {
         amountToRefund_ = _createWithdrawalPendingAction(s, to, validator, usdnShares, securityDepositValue, data);
 
         // retrieve the USDN tokens, check that the balance is sufficient
-        s._usdn.transferSharesFrom(user, address(this), usdnShares);
+        IUsdn usdn = s._usdn;
+        usdn.transferSharesFrom(user, address(this), usdnShares);
         s._pendingBalanceVault -= data.withdrawalAmount.toInt256();
 
         isInitiated_ = true;
-        emit IUsdnProtocolEvents.InitiatedWithdrawal(
-            to, validator, s._usdn.convertToTokens(usdnShares), block.timestamp
-        );
+        emit IUsdnProtocolEvents.InitiatedWithdrawal(to, validator, usdn.convertToTokens(usdnShares), block.timestamp);
     }
 
     /**
@@ -809,9 +810,10 @@ library UsdnProtocolActionsVaultLibrary {
         uint256 tempWithdrawal = Vault._calcBurnUsdn(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares);
         s._pendingBalanceVault += tempWithdrawal.toInt256();
 
-        uint256 assetToTransfer = Vault._calcBurnUsdn(shares, available, s._usdn.totalShares());
+        IUsdn usdn = s._usdn;
+        uint256 assetToTransfer = Vault._calcBurnUsdn(shares, available, usdn.totalShares());
 
-        s._usdn.burnShares(shares);
+        usdn.burnShares(shares);
 
         // send the asset to the user
         if (assetToTransfer > 0) {
@@ -822,7 +824,7 @@ library UsdnProtocolActionsVaultLibrary {
         isValidated_ = true;
 
         emit IUsdnProtocolEvents.ValidatedWithdrawal(
-            withdrawal.to, withdrawal.validator, assetToTransfer, s._usdn.convertToTokens(shares), withdrawal.timestamp
+            withdrawal.to, withdrawal.validator, assetToTransfer, usdn.convertToTokens(shares), withdrawal.timestamp
         );
     }
 

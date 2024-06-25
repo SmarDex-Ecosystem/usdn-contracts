@@ -89,19 +89,21 @@ contract UsdnProtocolStorage is
 
         s._usdnMinDivisor = usdn.MIN_DIVISOR();
         s._asset = asset;
-        s._assetDecimals = asset.decimals();
-        if (s._assetDecimals < Constants.FUNDING_SF_DECIMALS) {
-            revert UsdnProtocolInvalidAssetDecimals(s._assetDecimals);
+        uint8 assetDecimals = asset.decimals();
+        s._assetDecimals = assetDecimals;
+        if (assetDecimals < Constants.FUNDING_SF_DECIMALS) {
+            revert UsdnProtocolInvalidAssetDecimals(assetDecimals);
         }
         s._oracleMiddleware = oracleMiddleware;
-        s._priceFeedDecimals = oracleMiddleware.getDecimals();
+        uint8 priceFeedDecimals = oracleMiddleware.getDecimals();
+        s._priceFeedDecimals = priceFeedDecimals;
         s._liquidationRewardsManager = liquidationRewardsManager;
         s._tickSpacing = tickSpacing;
         s._feeCollector = feeCollector;
 
-        s._targetUsdnPrice = uint128(10_087 * 10 ** (s._priceFeedDecimals - 4)); // $1.0087
-        s._usdnRebaseThreshold = uint128(1009 * 10 ** (s._priceFeedDecimals - 3)); // $1.009
-        s._minLongPosition = 2 * 10 ** s._assetDecimals;
+        s._targetUsdnPrice = uint128(10_087 * 10 ** (priceFeedDecimals - 4)); // $1.0087
+        s._usdnRebaseThreshold = uint128(1009 * 10 ** (priceFeedDecimals - 3)); // $1.009
+        s._minLongPosition = 2 * 10 ** assetDecimals;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
