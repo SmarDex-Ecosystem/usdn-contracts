@@ -86,7 +86,8 @@ library UsdnProtocolCoreLibrary {
             return lastFunding;
         }
 
-        return (lastFunding + previousEMA * Utils.toInt256(emaPeriod - secondsElapsed)) / Utils.toInt256(emaPeriod);
+        return (lastFunding * Utils.toInt256(secondsElapsed) + previousEMA * Utils.toInt256(emaPeriod - secondsElapsed))
+            / Utils.toInt256(emaPeriod);
     }
 
     /* --------------------------  public functions --------------------------- */
