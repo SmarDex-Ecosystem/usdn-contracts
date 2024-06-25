@@ -132,6 +132,18 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         s._tickVersion[tick] = version;
     }
 
+    function setPendingProtocolFee(uint256 value) external {
+        s._pendingProtocolFee = value;
+    }
+
+    /**
+     * @notice Helper to calculate the trading exposure of the long side at the time of the last balance update and
+     * currentPrice
+     */
+    function getLongTradingExpo(uint128 currentPrice) external view returns (int256 expo_) {
+        expo_ = s._totalExpo.toInt256().safeSub(Core._longAssetAvailable(s, currentPrice));
+    }
+
     function i_initiateClosePosition(
         address owner,
         address to,
@@ -592,11 +604,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return Long._flashOpenPosition(s, user, neutralPrice, tickWithoutPenalty, amount, cache);
     }
 
-    /**
-     * @notice Helper to calculate the trading exposure of the long side at the time of the last balance update and
-     * currentPrice
-     */
-    function getLongTradingExpo(uint128 currentPrice) external view returns (int256 expo_) {
-        expo_ = s._totalExpo.toInt256().safeSub(Core._longAssetAvailable(s, currentPrice));
+    function i_checkPendingFee() external {
+        ActionsVault._checkPendingFee(s);
     }
 }
