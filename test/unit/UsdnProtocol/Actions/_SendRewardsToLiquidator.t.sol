@@ -4,8 +4,6 @@ pragma solidity ^0.8.25;
 import { DEPLOYER } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
 /**
  * @custom:feature Test the _sendRewardsToLiquidator internal function of the actions utils library
  * @custom:given A protocol with increased rewards and gas price
