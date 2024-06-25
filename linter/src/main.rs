@@ -1,7 +1,6 @@
 use std::{
     collections::HashMap,
-    fs::{self, File},
-    io::Write as _,
+    fs,
     path::{Path, PathBuf},
     thread::available_parallelism,
 };
@@ -13,6 +12,7 @@ use slang_solidity::{
     kinds::{NonterminalKind, TerminalKind},
     language::Language,
     query::Query,
+    text_index::TextRangeExtensions as _,
 };
 use walkdir::WalkDir;
 
@@ -113,7 +113,6 @@ async fn worker(rx: Receiver<PathBuf>, solidity_version: String) -> Result<()> {
             }
         };
     }
-    println!("worker exited");
     Ok(())
 }
 
@@ -160,14 +159,16 @@ fn parse_and_lint(lang: &Language, path: impl AsRef<Path>) -> Result<()> {
                 continue;
             };
             if function_cursor.go_to_next_terminal_with_kind(TerminalKind::Identifier) {
-                let offset = function_cursor.text_range().start.utf8;
-                let function_accesses = accesses.entry(offset).or_default();
+                let range = function_cursor.text_range();
+                let function_accesses = accesses.entry(range.start.utf8).or_default();
                 let function_name = function_cursor.node().unparse();
                 if function_accesses.contains(&member_name) {
-                    bail!(
-                        "Function {function_name} in {:?} uses `s.{member_name}` more than once",
-                        path
+                    eprintln!(
+                        "Function {function_name} in {}:{} uses `s.{member_name}` more than once",
+                        path.to_string_lossy(),
+                        range.line().start
                     );
+                    break;
                 }
                 function_accesses.push(member_name);
             }
