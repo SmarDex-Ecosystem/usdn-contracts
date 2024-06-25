@@ -4,8 +4,6 @@ pragma solidity ^0.8.25;
 import { ADMIN } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import { PositionId, ProtocolAction, TickData } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
 /// @custom:feature The `GetTickLiquidationPenalty` function of the long layer
 contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
     function setUp() external {

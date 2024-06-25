@@ -21,18 +21,6 @@ import { IBaseOracleMiddleware } from "../../../../src/interfaces/OracleMiddlewa
 import { ILiquidationRewardsManager } from "../../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../../../../src/interfaces/Usdn/IUsdn.sol";
-import {
-    CachedProtocolState,
-    DepositPendingAction,
-    LongPendingAction,
-    PendingAction,
-    PositionId,
-    PreviousActionsData,
-    ProtocolAction,
-    TickData,
-    WithdrawalPendingAction
-} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { LiquidationsEffects, Position } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "../../../../src/libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
@@ -102,7 +90,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         if (longTradingExpo < 0) {
             longTradingExpo = 0;
         }
-        bytes32 tickHash = ActionsLong.tickHash(tick, s._tickVersion[tick]);
+        bytes32 tickHash = Core.tickHash(tick, s._tickVersion[tick]);
         return Long._tickValue(
             s, tick, currentPrice, uint256(longTradingExpo), s._liqMultiplierAccumulator, s._tickData[tickHash]
         );
@@ -142,6 +130,18 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
 
     function setTickVersion(int24 tick, uint256 version) external {
         s._tickVersion[tick] = version;
+    }
+
+    function setPendingProtocolFee(uint256 value) external {
+        s._pendingProtocolFee = value;
+    }
+
+    /**
+     * @notice Helper to calculate the trading exposure of the long side at the time of the last balance update and
+     * currentPrice
+     */
+    function getLongTradingExpo(uint128 currentPrice) external view returns (int256 expo_) {
+        expo_ = s._totalExpo.toInt256().safeSub(Core._longAssetAvailable(s, currentPrice));
     }
 
     function i_initiateClosePosition(
@@ -306,7 +306,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     }
 
     function i_tickHash(int24 tick) external view returns (bytes32, uint256) {
-        return Vault._tickHash(s, tick);
+        return Core._tickHash(s, tick);
     }
 
     function i_longAssetAvailable(uint256 totalExpo, uint256 balanceLong, uint128 newPrice, uint128 oldPrice)
@@ -604,12 +604,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return Long._flashOpenPosition(s, user, neutralPrice, tickWithoutPenalty, amount, cache);
     }
 
-    /**
-     * @notice Helper to calculate the trading exposure of the long side at the time of the last balance update and
-     * currentPrice
-     */
-    function getLongTradingExpo(uint128 currentPrice) external view returns (int256 expo_) {
-        expo_ = s._totalExpo.toInt256().safeSub(Core._longAssetAvailable(s, currentPrice));
+    function i_checkPendingFee() external {
+        ActionsVault._checkPendingFee(s);
     }
 
     function i_sendRewardsToLiquidator(

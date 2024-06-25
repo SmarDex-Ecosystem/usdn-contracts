@@ -241,7 +241,36 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
             usdn.rebase(usdn.MIN_DIVISOR());
         }
 
-        assertEq(usdn.balanceOf(address(this)) + usdn.balanceOf(USER_1), usdn.totalSupply(), "total supply");
+        assertApproxEqAbs(usdn.balanceOf(address(this)) + usdn.balanceOf(USER_1), usdn.totalSupply(), 1, "total supply");
         assertEq(usdn.sharesOf(address(this)) + usdn.sharesOf(USER_1), sharesBefore, "sum of the share balances after");
+    }
+
+    /**
+     * @custom:scenario Case of `testFuzz_partialTransfer` where the total supply vs token balances invariant fails
+     * @custom:given MAX_TOKENS USDN are minted at MAX_DIVISOR
+     * @custom:and The divisor is adjusted to a small value above MIN_DIVISOR
+     * @custom:when A small amount of tokens is transferred
+     * @custom:and The divisor is adjusted to MIN_DIVISOR
+     * @custom:then The total supply is equal to the sum of the balances of all holders with 1 wei of imprecision
+     * @custom:and The sum of the shares of all holders is equal to the total supply of shares
+     */
+    function test_partialTransferCounterExample() public {
+        uint256 divisor = 1_472_780_595;
+        uint256 tokens = 100_000_000;
+
+        usdn.mint(address(this), usdn.maxTokens());
+        uint256 sharesBefore = usdn.sharesOf(address(this));
+
+        usdn.rebase(divisor);
+
+        usdn.transfer(USER_1, tokens);
+
+        usdn.rebase(usdn.MIN_DIVISOR());
+
+        assertApproxEqAbs(
+            usdn.balanceOf(address(this)) + usdn.balanceOf(USER_1), usdn.totalSupply(), 1, "total supply vs balances"
+        );
+        assertEq(usdn.sharesOf(address(this)) + usdn.sharesOf(USER_1), sharesBefore, "sum of the share balances");
+        assertEq(usdn.totalShares(), sharesBefore, "total shares");
     }
 }

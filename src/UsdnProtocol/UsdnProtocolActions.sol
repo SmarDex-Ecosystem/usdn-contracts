@@ -2,17 +2,14 @@
 pragma solidity ^0.8.25;
 
 import { IUsdnProtocolActions } from "../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
-import { PositionId, PreviousActionsData } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import {
-    InitiateClosePositionParams, InitiateOpenPositionParams
-} from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Permit2TokenBitfield } from "../libraries/Permit2TokenBitfield.sol";
 import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./libraries/UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./libraries/UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolActionsVaultLibrary as ActionsVault } from "./libraries/UsdnProtocolActionsVaultLibrary.sol";
+import { UsdnProtocolCoreLibrary as Core } from "./libraries/UsdnProtocolCoreLibrary.sol";
 
-abstract contract UsdnProtocolActionsEntry is UsdnProtocolStorage, IUsdnProtocolActions {
+abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActions {
     /// @inheritdoc IUsdnProtocolActions
     function initiateDeposit(
         uint128 amount,
@@ -142,6 +139,6 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolStorage, IUsdnProtocol
 
     /// @inheritdoc IUsdnProtocolActions
     function tickHash(int24 tick, uint256 version) external pure returns (bytes32) {
-        return ActionsLong.tickHash(tick, version);
+        return Core.tickHash(tick, version);
     }
 }

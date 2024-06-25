@@ -18,14 +18,13 @@ import { OracleMiddleware } from "../../../../src/OracleMiddleware/OracleMiddlew
 import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { IWstETH } from "../../../../src/interfaces/IWstETH.sol";
 import { IOracleMiddlewareErrors } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
-
-import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title ActionsIntegrationFixture
  * @dev Required integration actions tests
  */
-contract ActionsIntegrationFixture is IOracleMiddlewareErrors {
+contract ActionsIntegrationFixture is IOracleMiddlewareErrors, IUsdnProtocolTypes {
     // all action types
     ProtocolAction[] public actions = [
         ProtocolAction.None,
