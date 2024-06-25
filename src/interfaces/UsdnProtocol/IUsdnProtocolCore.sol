@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { PendingAction } from "./IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "./IUsdnProtocolTypes.sol";
 
 /**
  * @title IUsdnProtocolCore
  * @notice Interface for the core layer of the USDN protocol
  */
-interface IUsdnProtocolCore {
+interface IUsdnProtocolCore is IUsdnProtocolTypes {
     /**
      * @notice Calculation of the EMA of the funding rate
      * @param lastFunding The last funding rate
@@ -66,6 +66,25 @@ interface IUsdnProtocolCore {
      * `ProtocolAction.None`
      */
     function getUserPendingAction(address user) external view returns (PendingAction memory action_);
+
+    /**
+     * @notice Remove a stuck pending action and perform the minimal amount of cleanup necessary
+     * @dev This function can only be called by the owner of the protocol, it serves as an escape hatch if a
+     * pending action ever gets stuck due to something internal reverting unexpectedly
+     * @param validator The address of the validator
+     * @param to Where the retrieved funds should be sent (security deposit, assets, usdn)
+     */
+    function removeBlockedPendingAction(address validator, address payable to) external;
+
+    /**
+     * @notice Remove a stuck pending action with no cleanup
+     * @dev This function can only be called by the owner of the protocol, it serves as an escape hatch if a
+     * pending action ever gets stuck due to something internal reverting unexpectedly
+     * Always try to use `removeBlockedPendingAction` first, and only call this function if the other one fails
+     * @param validator The address of the validator
+     * @param to Where the retrieved funds should be sent (security deposit, assets, usdn)
+     */
+    function removeBlockedPendingActionNoCleanup(address validator, address payable to) external;
 
     /**
      * @notice Remove a stuck pending action and perform the minimal amount of cleanup necessary

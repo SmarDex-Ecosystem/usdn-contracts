@@ -2,7 +2,7 @@
 // based on the OpenZeppelin implementation
 pragma solidity ^0.8.20;
 
-import { PendingAction } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @notice A sequence of items with the ability to efficiently push and pop items (i.e. insert and remove) on both ends
@@ -37,7 +37,7 @@ library DoubleEndedQueue {
     struct Deque {
         uint128 _begin;
         uint128 _end;
-        mapping(uint128 index => PendingAction) _data;
+        mapping(uint128 index => Types.PendingAction) _data;
     }
 
     /**
@@ -47,7 +47,7 @@ library DoubleEndedQueue {
      * @param value The item to insert
      * @return backIndex_ The raw index of the inserted item
      */
-    function pushBack(Deque storage deque, PendingAction memory value) external returns (uint128 backIndex_) {
+    function pushBack(Deque storage deque, Types.PendingAction memory value) external returns (uint128 backIndex_) {
         unchecked {
             backIndex_ = deque._end;
             if (backIndex_ + 1 == deque._begin) {
@@ -64,7 +64,7 @@ library DoubleEndedQueue {
      * @param deque The queue
      * @return value_ The removed item
      */
-    function popBack(Deque storage deque) public returns (PendingAction memory value_) {
+    function popBack(Deque storage deque) public returns (Types.PendingAction memory value_) {
         unchecked {
             uint128 backIndex = deque._end;
             if (backIndex == deque._begin) {
@@ -84,7 +84,7 @@ library DoubleEndedQueue {
      * @param value The item to insert
      * @return frontIndex_ The raw index of the inserted item
      */
-    function pushFront(Deque storage deque, PendingAction memory value) external returns (uint128 frontIndex_) {
+    function pushFront(Deque storage deque, Types.PendingAction memory value) external returns (uint128 frontIndex_) {
         unchecked {
             frontIndex_ = deque._begin - 1;
             if (frontIndex_ == deque._end) {
@@ -101,7 +101,7 @@ library DoubleEndedQueue {
      * @param deque The queue
      * @return value_ The removed item
      */
-    function popFront(Deque storage deque) public returns (PendingAction memory value_) {
+    function popFront(Deque storage deque) public returns (Types.PendingAction memory value_) {
         unchecked {
             uint128 frontIndex = deque._begin;
             if (frontIndex == deque._end) {
@@ -120,7 +120,7 @@ library DoubleEndedQueue {
      * @return value_ The item at the front of the queue
      * @return rawIndex_ The raw index of the returned item
      */
-    function front(Deque storage deque) external view returns (PendingAction memory value_, uint128 rawIndex_) {
+    function front(Deque storage deque) external view returns (Types.PendingAction memory value_, uint128 rawIndex_) {
         if (empty(deque)) {
             revert QueueEmpty();
         }
@@ -135,7 +135,7 @@ library DoubleEndedQueue {
      * @return value_ The item at the back of the queue
      * @return rawIndex_ The raw index of the returned item
      */
-    function back(Deque storage deque) external view returns (PendingAction memory value_, uint128 rawIndex_) {
+    function back(Deque storage deque) external view returns (Types.PendingAction memory value_, uint128 rawIndex_) {
         if (empty(deque)) {
             revert QueueEmpty();
         }
@@ -157,7 +157,7 @@ library DoubleEndedQueue {
     function at(Deque storage deque, uint256 index)
         external
         view
-        returns (PendingAction memory value_, uint128 rawIndex_)
+        returns (Types.PendingAction memory value_, uint128 rawIndex_)
     {
         if (index >= length(deque)) {
             revert QueueOutOfBounds();
@@ -178,7 +178,7 @@ library DoubleEndedQueue {
      * @param rawIndex The index of the item to return
      * @return value_ The item at the given index
      */
-    function atRaw(Deque storage deque, uint128 rawIndex) external view returns (PendingAction memory value_) {
+    function atRaw(Deque storage deque, uint128 rawIndex) external view returns (Types.PendingAction memory value_) {
         if (deque._begin > deque._end) {
             // here the values are split at the beginning and end of the range, so invalid indices are in the middle
             if (rawIndex < deque._begin && rawIndex >= deque._end) revert QueueOutOfBounds();

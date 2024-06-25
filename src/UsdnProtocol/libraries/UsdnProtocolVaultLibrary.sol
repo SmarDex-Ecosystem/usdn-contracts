@@ -8,14 +8,14 @@ import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 import { IUsdn } from "../../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { Position, PositionId } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IUsdnProtocolVault } from "../../interfaces/UsdnProtocol/IUsdnProtocolVault.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
-import { Storage } from "../UsdnProtocolStorage.sol";
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./UsdnProtocolCoreLibrary.sol";
+import { UsdnProtocolUtils as Utils } from "./UsdnProtocolUtils.sol";
 
 library UsdnProtocolVaultLibrary {
     using SafeCast for int256;
@@ -28,7 +28,7 @@ library UsdnProtocolVaultLibrary {
     /* -------------------------------------------------------------------------- */
 
     /// @notice See {IUsdnProtocolVault}
-    function usdnPrice(Storage storage s, uint128 currentPrice, uint128 timestamp)
+    function usdnPrice(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
         public
         view
         returns (uint256 price_)
@@ -42,12 +42,12 @@ library UsdnProtocolVaultLibrary {
     }
 
     /// @notice See {IUsdnProtocolVault}
-    function usdnPrice(Storage storage s, uint128 currentPrice) public view returns (uint256 price_) {
+    function usdnPrice(Types.Storage storage s, uint128 currentPrice) public view returns (uint256 price_) {
         price_ = usdnPrice(s, currentPrice, uint128(block.timestamp));
     }
 
     /// @notice See {IUsdnProtocolVault}
-    function previewDeposit(Storage storage s, uint256 amount, uint128 price, uint128 timestamp)
+    function previewDeposit(Types.Storage storage s, uint256 amount, uint128 price, uint128 timestamp)
         public
         view
         returns (uint256 usdnSharesExpected_, uint256 sdexToBurn_)
@@ -65,7 +65,7 @@ library UsdnProtocolVaultLibrary {
     }
 
     /// @notice See {IUsdnProtocolVault}
-    function previewWithdraw(Storage storage s, uint256 usdnShares, uint256 price, uint128 timestamp)
+    function previewWithdraw(Types.Storage storage s, uint256 usdnShares, uint256 price, uint128 timestamp)
         public
         view
         returns (uint256 assetExpected_)
@@ -80,7 +80,7 @@ library UsdnProtocolVaultLibrary {
     }
 
     /// @notice See {IUsdnProtocolVault}
-    function vaultAssetAvailableWithFunding(Storage storage s, uint128 currentPrice, uint128 timestamp)
+    function vaultAssetAvailableWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
         public
         view
         returns (int256 available_)
@@ -95,33 +95,9 @@ library UsdnProtocolVaultLibrary {
         if (fundAsset < 0) {
             available_ = _vaultAssetAvailable(s, currentPrice).safeAdd(fundAsset);
         } else {
-            int256 fee = fundAsset * Core._toInt256(s._protocolFeeBps) / int256(Constants.BPS_DIVISOR);
+            int256 fee = fundAsset * Utils.toInt256(s._protocolFeeBps) / int256(Constants.BPS_DIVISOR);
             available_ = _vaultAssetAvailable(s, currentPrice).safeAdd(fundAsset - fee);
         }
-    }
-
-    /// @notice See {IUsdnProtocolVault}
-    function removeBlockedPendingAction(Storage storage s, address validator, address payable to) public {
-        uint256 pendingActionIndex = s._pendingActions[validator];
-        if (pendingActionIndex == 0) {
-            // no pending action
-            // use the `rawIndex` variant below if for some reason the `_pendingActions` mapping is messed up
-            revert IUsdnProtocolErrors.UsdnProtocolNoPendingAction();
-        }
-        uint128 rawIndex = uint128(pendingActionIndex - 1);
-        Core._removeBlockedPendingAction(s, rawIndex, to, true);
-    }
-
-    /// @notice See {IUsdnProtocolVault}
-    function removeBlockedPendingActionNoCleanup(Storage storage s, address validator, address payable to) public {
-        uint256 pendingActionIndex = s._pendingActions[validator];
-        if (pendingActionIndex == 0) {
-            // no pending action
-            // use the `rawIndex` variant below if for some reason the `_pendingActions` mapping is messed up
-            revert IUsdnProtocolErrors.UsdnProtocolNoPendingAction();
-        }
-        uint128 rawIndex = uint128(pendingActionIndex - 1);
-        Core._removeBlockedPendingAction(s, rawIndex, to, false);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -137,24 +113,24 @@ library UsdnProtocolVaultLibrary {
      * @param depositAmount The amount of assets for the deployer's deposit
      */
     function _checkInitImbalance(
-        Storage storage s,
+        Types.Storage storage s,
         uint128 positionTotalExpo,
         uint128 longAmount,
         uint128 depositAmount
     ) public view {
-        int256 longTradingExpo = Core._toInt256(positionTotalExpo - longAmount);
+        int256 longTradingExpo = Utils.toInt256(positionTotalExpo - longAmount);
         int256 depositLimit = s._depositExpoImbalanceLimitBps;
         if (depositLimit != 0) {
             int256 imbalanceBps =
-                (Core._toInt256(depositAmount) - longTradingExpo) * int256(Constants.BPS_DIVISOR) / longTradingExpo;
+                (Utils.toInt256(depositAmount) - longTradingExpo) * int256(Constants.BPS_DIVISOR) / longTradingExpo;
             if (imbalanceBps > depositLimit) {
                 revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
             }
         }
         int256 openLimit = s._openExpoImbalanceLimitBps;
         if (openLimit != 0) {
-            int256 imbalanceBps = (longTradingExpo - Core._toInt256(depositAmount)) * int256(Constants.BPS_DIVISOR)
-                / Core._toInt256(depositAmount);
+            int256 imbalanceBps = (longTradingExpo - Utils.toInt256(depositAmount)) * int256(Constants.BPS_DIVISOR)
+                / Utils.toInt256(depositAmount);
             if (imbalanceBps > openLimit) {
                 revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
             }
@@ -168,7 +144,7 @@ library UsdnProtocolVaultLibrary {
      * @param amount The initial deposit amount
      * @param price The current asset price
      */
-    function _createInitialDeposit(Storage storage s, uint128 amount, uint128 price) public {
+    function _createInitialDeposit(Types.Storage storage s, uint128 amount, uint128 price) public {
         // transfer the wstETH for the deposit
         address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
         s._balanceVault += amount;
@@ -199,17 +175,21 @@ library UsdnProtocolVaultLibrary {
      * @param tick The tick corresponding to the liquidation price (without penalty)
      * @param totalExpo The total expo of the position
      */
-    function _createInitialPosition(Storage storage s, uint128 amount, uint128 price, int24 tick, uint128 totalExpo)
-        public
-    {
+    function _createInitialPosition(
+        Types.Storage storage s,
+        uint128 amount,
+        uint128 price,
+        int24 tick,
+        uint128 totalExpo
+    ) public {
         // transfer the wstETH for the long
         address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
 
         // apply liquidation penalty to the deployer's liquidationPriceWithoutPenalty
         uint8 liquidationPenalty = s._liquidationPenalty;
-        PositionId memory posId;
+        Types.PositionId memory posId;
         posId.tick = tick + int24(uint24(liquidationPenalty)) * s._tickSpacing;
-        Position memory long = Position({
+        Types.Position memory long = Types.Position({
             validated: true,
             user: msg.sender,
             amount: amount,
@@ -232,7 +212,11 @@ library UsdnProtocolVaultLibrary {
      * @param currentPrice Current price
      * @return available_ The available balance in the vault side
      */
-    function _vaultAssetAvailable(Storage storage s, uint128 currentPrice) public view returns (int256 available_) {
+    function _vaultAssetAvailable(Types.Storage storage s, uint128 currentPrice)
+        public
+        view
+        returns (int256 available_)
+    {
         available_ = _vaultAssetAvailable(s._totalExpo, s._balanceVault, s._balanceLong, currentPrice, s._lastPrice);
     }
 
@@ -266,7 +250,7 @@ library UsdnProtocolVaultLibrary {
      * @return hash_ The hash of the tick
      * @return version_ The version of the tick
      */
-    function _tickHash(Storage storage s, int24 tick) public view returns (bytes32 hash_, uint256 version_) {
+    function _tickHash(Types.Storage storage s, int24 tick) public view returns (bytes32 hash_, uint256 version_) {
         version_ = s._tickVersion[tick];
         hash_ = ActionsLong.tickHash(tick, version_);
     }
@@ -346,7 +330,7 @@ library UsdnProtocolVaultLibrary {
      * @return rebased_ Whether a rebase was performed
      * @return callbackResult_ The rebase callback result, if any
      */
-    function _usdnRebase(Storage storage s, uint128 assetPrice, bool ignoreInterval)
+    function _usdnRebase(Types.Storage storage s, uint128 assetPrice, bool ignoreInterval)
         public
         returns (bool rebased_, bytes memory callbackResult_)
     {
@@ -392,7 +376,7 @@ library UsdnProtocolVaultLibrary {
      * sharesUsdn = amountAsset * totalShares / vaultBalance
      */
     function _calcMintUsdnShares(
-        Storage storage s,
+        Types.Storage storage s,
         uint256 amount,
         uint256 vaultBalance,
         uint256 usdnTotalShares,

@@ -15,7 +15,7 @@ import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthO
 import { IWstETH } from "../../../../src/interfaces/IWstETH.sol";
 import { IOracleMiddlewareErrors } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
 import { IOracleMiddlewareEvents } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareEvents.sol";
-import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title ActionsFixture
@@ -23,18 +23,18 @@ import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnPro
  */
 contract ActionsFixture is IOracleMiddlewareErrors, IOracleMiddlewareEvents {
     // all action types
-    ProtocolAction[] public actions = [
-        ProtocolAction.None,
-        ProtocolAction.Initialize,
-        ProtocolAction.InitiateDeposit,
-        ProtocolAction.ValidateDeposit,
-        ProtocolAction.InitiateWithdrawal,
-        ProtocolAction.ValidateWithdrawal,
-        ProtocolAction.InitiateOpenPosition,
-        ProtocolAction.ValidateOpenPosition,
-        ProtocolAction.InitiateClosePosition,
-        ProtocolAction.ValidateClosePosition,
-        ProtocolAction.Liquidation
+    Types.ProtocolAction[] public actions = [
+        Types.ProtocolAction.None,
+        Types.ProtocolAction.Initialize,
+        Types.ProtocolAction.InitiateDeposit,
+        Types.ProtocolAction.ValidateDeposit,
+        Types.ProtocolAction.InitiateWithdrawal,
+        Types.ProtocolAction.ValidateWithdrawal,
+        Types.ProtocolAction.InitiateOpenPosition,
+        Types.ProtocolAction.ValidateOpenPosition,
+        Types.ProtocolAction.InitiateClosePosition,
+        Types.ProtocolAction.ValidateClosePosition,
+        Types.ProtocolAction.Liquidation
     ];
 }
 

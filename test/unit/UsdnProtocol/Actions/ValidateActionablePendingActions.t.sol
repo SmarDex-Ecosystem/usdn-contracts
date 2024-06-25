@@ -4,12 +4,6 @@ pragma solidity ^0.8.25;
 import { USER_1, USER_2, USER_3, USER_4 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import {
-    PendingAction,
-    PositionId,
-    PreviousActionsData,
-    ProtocolAction
-} from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
 /**

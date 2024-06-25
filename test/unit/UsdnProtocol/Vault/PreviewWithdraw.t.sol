@@ -5,8 +5,6 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import { ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
 /**
  * @custom:feature The previewWithdraw function of the UsdnProtocolVault contract
  * @custom:background Given a protocol initialized with default params
@@ -24,6 +22,24 @@ contract TestUsdnProtocolPreviewWithdraw is UsdnProtocolBaseFixture {
         params.flags.enablePositionFees = true;
         super._setUp(params);
         usdn.approve(address(protocol), type(uint256).max);
+    }
+
+    /**
+     * @custom:scenario Check calculations of `previewWithdraw`
+     * @custom:given The available vault balance (with vault fee applied) is greater than zero
+     * @custom:when The user simulates the withdrawal of half of the total shares of USDN
+     * @custom:then The amount of asset should be equal to half of the available balance
+     */
+    function test_previewWithdraw() public {
+        uint128 price = 2000 ether;
+        uint128 priceWithFees = uint128(price + price * protocol.getVaultFeeBps() / protocol.BPS_DIVISOR());
+        uint256 shares = usdn.totalShares() / 2;
+        int256 available = protocol.vaultAssetAvailableWithFunding(priceWithFees, protocol.getLastUpdateTimestamp());
+        assertEq(
+            protocol.previewWithdraw(shares, price, protocol.getLastUpdateTimestamp()),
+            uint256(available) / 2,
+            "asset is equal to expected"
+        );
     }
 
     /**

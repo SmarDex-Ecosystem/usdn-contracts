@@ -5,8 +5,6 @@ import { ADMIN } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 import { MockRebalancer } from "../utils/MockRebalancer.sol";
 
-import { PositionId, ProtocolAction } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
 /// @custom:feature the _triggerRebalancer internal function of the UsdnProtocolLong contract
 contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
     MockRebalancer mockedRebalancer;
