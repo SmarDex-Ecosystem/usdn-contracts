@@ -33,11 +33,11 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
 
         vm.prank(ADMIN);
         if (ext && cleanup) {
-            protocol.removeBlockedPendingAction(rawIndex, payable(address(this)));
+            protocol.removeBlockedPendingAction(rawIndex, payable(this));
         } else if (ext && !cleanup) {
-            protocol.removeBlockedPendingActionNoCleanup(rawIndex, payable(address(this)));
+            protocol.removeBlockedPendingActionNoCleanup(rawIndex, payable(this));
         } else {
-            protocol.i_removeBlockedPendingAction(rawIndex, payable(address(this)), cleanup);
+            protocol.i_removeBlockedPendingAction(rawIndex, payable(this), cleanup);
         }
 
         assertTrue(protocol.getUserPendingAction(USER_1).action == ProtocolAction.None, "pending action");
@@ -171,7 +171,7 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         (, uint128 rawIndex) = protocol.i_getPendingAction(USER_1);
 
         vm.prank(ADMIN);
-        protocol.i_removeBlockedPendingAction(rawIndex, payable(address(this)), cleanup);
+        protocol.i_removeBlockedPendingAction(rawIndex, payable(this), cleanup);
 
         assertTrue(protocol.getUserPendingAction(USER_1).action == ProtocolAction.None, "pending action");
         vm.expectRevert(DoubleEndedQueue.QueueOutOfBounds.selector);
@@ -308,17 +308,17 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         _waitDelay();
 
         vm.expectRevert(UsdnProtocolUnauthorized.selector);
-        protocol.i_removeBlockedPendingAction(rawIndex, payable(address(this)), true);
+        protocol.i_removeBlockedPendingAction(rawIndex, payable(this), true);
 
         _waitBeforeActionablePendingAction();
 
         vm.expectRevert(UsdnProtocolUnauthorized.selector);
-        protocol.i_removeBlockedPendingAction(rawIndex, payable(address(this)), true);
+        protocol.i_removeBlockedPendingAction(rawIndex, payable(this), true);
 
         vm.warp(action.timestamp + protocol.getValidationDeadline() + 3599 seconds);
 
         vm.expectRevert(UsdnProtocolUnauthorized.selector);
-        protocol.i_removeBlockedPendingAction(rawIndex, payable(address(this)), true);
+        protocol.i_removeBlockedPendingAction(rawIndex, payable(this), true);
         vm.stopPrank();
     }
 
@@ -338,7 +338,7 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
 
         vm.expectRevert(UsdnProtocolEtherRefundFailed.selector);
         vm.prank(ADMIN);
-        protocol.i_removeBlockedPendingAction(rawIndex, payable(address(this)), true);
+        protocol.i_removeBlockedPendingAction(rawIndex, payable(this), true);
     }
 
     function _wait() internal {
