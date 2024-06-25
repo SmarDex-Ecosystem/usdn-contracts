@@ -244,18 +244,6 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
-     * @notice Function to calculate the hash and version of a given tick
-     * @param s The storage of the protocol
-     * @param tick The tick
-     * @return hash_ The hash of the tick
-     * @return version_ The version of the tick
-     */
-    function _tickHash(Types.Storage storage s, int24 tick) public view returns (bytes32 hash_, uint256 version_) {
-        version_ = s._tickVersion[tick];
-        hash_ = ActionsLong.tickHash(tick, version_);
-    }
-
-    /**
      * @notice Calculate the amount of assets received when burning USDN shares
      * @param usdnShares The amount of USDN shares
      * @param available The available asset in the vault

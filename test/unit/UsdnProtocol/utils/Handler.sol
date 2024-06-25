@@ -90,7 +90,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         if (longTradingExpo < 0) {
             longTradingExpo = 0;
         }
-        bytes32 tickHash = ActionsLong.tickHash(tick, s._tickVersion[tick]);
+        bytes32 tickHash = Core.tickHash(tick, s._tickVersion[tick]);
         return Long._tickValue(
             s, tick, currentPrice, uint256(longTradingExpo), s._liqMultiplierAccumulator, s._tickData[tickHash]
         );
@@ -294,7 +294,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     }
 
     function i_tickHash(int24 tick) external view returns (bytes32, uint256) {
-        return Vault._tickHash(s, tick);
+        return Core._tickHash(s, tick);
     }
 
     function i_longAssetAvailable(uint256 totalExpo, uint256 balanceLong, uint128 newPrice, uint128 oldPrice)

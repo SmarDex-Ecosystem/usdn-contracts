@@ -7,6 +7,7 @@ import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./libraries/UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./libraries/UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolActionsVaultLibrary as ActionsVault } from "./libraries/UsdnProtocolActionsVaultLibrary.sol";
+import { UsdnProtocolCoreLibrary as Core } from "./libraries/UsdnProtocolCoreLibrary.sol";
 
 abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActions {
     /// @inheritdoc IUsdnProtocolActions
@@ -138,6 +139,6 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
 
     /// @inheritdoc IUsdnProtocolActions
     function tickHash(int24 tick, uint256 version) external pure returns (bytes32) {
-        return ActionsLong.tickHash(tick, version);
+        return Core.tickHash(tick, version);
     }
 }

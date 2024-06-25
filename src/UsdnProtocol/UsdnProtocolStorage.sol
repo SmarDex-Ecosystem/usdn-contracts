@@ -14,8 +14,8 @@ import { IUsdnProtocolStorage } from "../interfaces/UsdnProtocol/IUsdnProtocolSt
 import { DoubleEndedQueue } from "../libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
 import { InitializableReentrancyGuard } from "../utils/InitializableReentrancyGuard.sol";
-import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./libraries/UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./libraries/UsdnProtocolConstantsLibrary.sol";
+import { UsdnProtocolCoreLibrary as Core } from "./libraries/UsdnProtocolCoreLibrary.sol";
 
 contract UsdnProtocolStorage is
     IUsdnProtocolErrors,
@@ -408,14 +408,14 @@ contract UsdnProtocolStorage is
 
     /// @inheritdoc IUsdnProtocolStorage
     function getTickData(int24 tick) external view returns (TickData memory) {
-        bytes32 cachedTickHash = ActionsLong.tickHash(tick, s._tickVersion[tick]);
+        bytes32 cachedTickHash = Core.tickHash(tick, s._tickVersion[tick]);
         return s._tickData[cachedTickHash];
     }
 
     /// @inheritdoc IUsdnProtocolStorage
     function getCurrentLongPosition(int24 tick, uint256 index) external view returns (Position memory) {
         uint256 version = s._tickVersion[tick];
-        bytes32 cachedTickHash = ActionsLong.tickHash(tick, version);
+        bytes32 cachedTickHash = Core.tickHash(tick, version);
         return s._longPositions[cachedTickHash][index];
     }
 
