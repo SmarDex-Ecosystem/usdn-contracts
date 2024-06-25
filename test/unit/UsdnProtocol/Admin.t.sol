@@ -913,4 +913,40 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         vm.expectRevert(UsdnProtocolInvalidRebalancerBonus.selector);
         protocol.setRebalancerBonusBps(10_001);
     }
+
+    /**
+     * @custom:scenario Call "setTargetUsdnPrice" from admin
+     * @custom:given The initial usdnProtocol state from admin wallet
+     * @custom:when Admin wallet triggers admin contract function
+     * @custom:then Revert because higher than `_usdnRebaseThreshold`
+     */
+    function test_RevertWhen_setTargetUsdnPriceWithMax() external adminPrank {
+        uint128 maxThreshold = protocol.getUsdnRebaseThreshold();
+        vm.expectRevert(UsdnProtocolInvalidTargetUsdnPrice.selector);
+        protocol.setTargetUsdnPrice(maxThreshold + 1);
+    }
+
+    /**
+     * @custom:scenario Call "setTargetUsdnPrice" from admin
+     * @custom:given The initial usdnProtocol state from admin wallet
+     * @custom:when Admin wallet triggers admin contract function
+     * @custom:then Revert because lower than 10 ** _priceFeedDecimals
+     */
+    function test_RevertWhen_setTargetUsdnPriceWithMin() external adminPrank {
+        uint128 minThreshold = uint128(10 ** protocol.getPriceFeedDecimals());
+        vm.expectRevert(UsdnProtocolInvalidTargetUsdnPrice.selector);
+        protocol.setTargetUsdnPrice(minThreshold - 1);
+    }
+
+    /**
+     * @custom:scenario Call "setUsdnRebaseThreshold" from admin
+     * @custom:given The initial usdnProtocol state from admin wallet
+     * @custom:when Admin wallet triggers admin contract function
+     * @custom:then Revert because lower than `_targetUsdnPrice`
+     */
+    function test_RevertWhen_setUsdnRebaseThresholdWithMin() external adminPrank {
+        uint128 minThreshold = protocol.getTargetUsdnPrice();
+        vm.expectRevert(UsdnProtocolInvalidUsdnRebaseThreshold.selector);
+        protocol.setUsdnRebaseThreshold(minThreshold - 1);
+    }
 }
