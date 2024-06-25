@@ -7,7 +7,7 @@ use std::{
 use anyhow::{bail, Result};
 use async_channel::Receiver;
 use serde::Deserialize;
-use slang_solidity::{kinds::NonterminalKind, language::Language};
+use slang_solidity::{kinds::NonterminalKind, language::Language, query::Query};
 use walkdir::WalkDir;
 
 #[derive(Debug, Deserialize)]
@@ -115,7 +115,14 @@ fn parse_and_lint(lang: &Language, path: impl AsRef<Path>) -> Result<()> {
     if !parse_output.is_valid() {
         bail!("Parse error(s) found in {path:?}")
     }
-    //let tree = parse_output.tree();
+
+    let cursor = parse_output.create_tree_cursor();
+    let query = Query::parse(
+        r#"
+        [ContractDefinition]
+        "#,
+    )?;
+    for m in cursor.query(vec![query]) {}
 
     Ok(())
 }
