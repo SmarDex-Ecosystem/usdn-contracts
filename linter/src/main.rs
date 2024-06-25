@@ -104,7 +104,6 @@ async fn main() -> Result<()> {
 async fn worker(rx: Receiver<PathBuf>, solidity_version: String) -> Result<()> {
     let language = Language::new(solidity_version.parse()?)?;
     while let Ok(path) = rx.recv().await {
-        println!("processing {path:?}");
         match parse_and_lint(&language, &path) {
             Ok(()) => {}
             Err(e) => {
