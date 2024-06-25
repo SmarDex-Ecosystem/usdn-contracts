@@ -1,5 +1,6 @@
 use std::{
-    fs,
+    fs::{self, File},
+    io::Write as _,
     path::{Path, PathBuf},
     thread::available_parallelism,
 };
@@ -47,18 +48,20 @@ async fn main() -> Result<()> {
 
     let (tx, rx) = async_channel::unbounded();
 
-    for _ in 0..n_threads {
-        tokio::spawn({
-            let rx = rx.clone();
-            let solidity_version = solidity_version.clone();
-            async move {
-                worker(rx, solidity_version).await?;
-                Ok::<(), anyhow::Error>(())
-            }
-        });
-    }
+    let handles: Vec<_> = (0..n_threads)
+        .map(|_| {
+            tokio::spawn({
+                let rx = rx.clone();
+                let solidity_version = solidity_version.clone();
+                async move {
+                    worker(rx, solidity_version).await?;
+                    Ok::<(), anyhow::Error>(())
+                }
+            })
+        })
+        .collect();
 
-    for entry in WalkDir::new("src") {
+    for entry in WalkDir::new("src/Usdn") {
         let entry = match entry {
             Err(e) => {
                 eprintln!("walkdir error: {e:?}");
@@ -82,7 +85,15 @@ async fn main() -> Result<()> {
             _ => continue,
         }
         tx.send(PathBuf::from(path)).await?;
+        break;
     }
+    tx.close();
+
+    let mut results = Vec::with_capacity(handles.len());
+    for handle in handles {
+        results.push(handle.await??);
+    }
+
     Ok(())
 }
 
@@ -98,7 +109,8 @@ async fn worker(rx: Receiver<PathBuf>, solidity_version: String) -> Result<()> {
             }
         };
     }
-    bail!("worker exited");
+    println!("worker exited");
+    Ok(())
 }
 
 fn parse_and_lint(lang: &Language, path: impl AsRef<Path>) -> Result<()> {
@@ -115,14 +127,35 @@ fn parse_and_lint(lang: &Language, path: impl AsRef<Path>) -> Result<()> {
     if !parse_output.is_valid() {
         bail!("Parse error(s) found in {path:?}")
     }
-
+    /* let tree = parse_output.tree();
+    let filename = path.file_name().unwrap().to_string_lossy();
+    let mut file = File::create(filename.replace(".sol", ".tree"))?;
+    write!(&mut file, "{tree:#?}")?; */
     let cursor = parse_output.create_tree_cursor();
     let query = Query::parse(
         r#"
-        [ContractDefinition]
+        [FunctionBody
+            ...
+            [Block
+                ...
+                [Statements
+                    ...
+                    @statement [Statement]
+                    ...
+                ]
+                ...
+            ]
+            ...
+        ]
         "#,
     )?;
-    for m in cursor.query(vec![query]) {}
+    for m in cursor.query(vec![query]) {
+        println!("-------------");
+        let captures = m.captures;
+        let cursors = captures.get("statement").unwrap();
+        let cursor = cursors.first().unwrap();
+        println!("{}", cursor.node().unparse().trim());
+    }
 
     Ok(())
 }
