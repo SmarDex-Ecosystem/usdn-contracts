@@ -19,6 +19,7 @@ import { TickMath } from "../../libraries/TickMath.sol";
 import { UsdnProtocolActionsVaultLibrary as ActionsVault } from "./UsdnProtocolActionsVaultLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "./UsdnProtocolLongLibrary.sol";
+import { UsdnProtocolUtils as Utils } from "./UsdnProtocolUtils.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.sol";
 
 library UsdnProtocolCoreLibrary {
@@ -85,7 +86,7 @@ library UsdnProtocolCoreLibrary {
             return lastFunding;
         }
 
-        return (lastFunding + previousEMA * _toInt256(emaPeriod - secondsElapsed)) / _toInt256(emaPeriod);
+        return (lastFunding + previousEMA * Utils.toInt256(emaPeriod - secondsElapsed)) / Utils.toInt256(emaPeriod);
     }
 
     /* --------------------------  public functions --------------------------- */
@@ -176,6 +177,32 @@ library UsdnProtocolCoreLibrary {
     /// @notice See {IUsdnProtocolActions}
     function tickHash(int24 tick, uint256 version) public pure returns (bytes32) {
         return keccak256(abi.encodePacked(tick, version));
+    }
+
+    /// @notice See {IUsdnProtocolCore}
+    function removeBlockedPendingAction(Types.Storage storage s, address validator, address payable to) public {
+        uint256 pendingActionIndex = s._pendingActions[validator];
+        if (pendingActionIndex == 0) {
+            // no pending action
+            // use the `rawIndex` variant below if for some reason the `_pendingActions` mapping is messed up
+            revert IUsdnProtocolErrors.UsdnProtocolNoPendingAction();
+        }
+        uint128 rawIndex = uint128(pendingActionIndex - 1);
+        _removeBlockedPendingAction(s, rawIndex, to, true);
+    }
+
+    /// @notice See {IUsdnProtocolCore}
+    function removeBlockedPendingActionNoCleanup(Types.Storage storage s, address validator, address payable to)
+        public
+    {
+        uint256 pendingActionIndex = s._pendingActions[validator];
+        if (pendingActionIndex == 0) {
+            // no pending action
+            // use the `rawIndex` variant below if for some reason the `_pendingActions` mapping is messed up
+            revert IUsdnProtocolErrors.UsdnProtocolNoPendingAction();
+        }
+        uint128 rawIndex = uint128(pendingActionIndex - 1);
+        _removeBlockedPendingAction(s, rawIndex, to, false);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -317,13 +344,13 @@ library UsdnProtocolCoreLibrary {
         if (balanceLong >= totalExpo) {
             return balanceLong.toInt256();
         }
-        int256 priceDiff = _toInt256(newPrice) - _toInt256(oldPrice);
+        int256 priceDiff = Utils.toInt256(newPrice) - Utils.toInt256(oldPrice);
         uint256 tradingExpo;
         // `balanceLong` is strictly inferior to `totalExpo`
         unchecked {
             tradingExpo = totalExpo - balanceLong;
         }
-        int256 pnl = tradingExpo.toInt256().safeMul(priceDiff).safeDiv(_toInt256(newPrice));
+        int256 pnl = tradingExpo.toInt256().safeMul(priceDiff).safeDiv(Utils.toInt256(newPrice));
 
         available_ = balanceLong.toInt256().safeAdd(pnl);
     }
@@ -343,15 +370,6 @@ library UsdnProtocolCoreLibrary {
     }
 
     /**
-     * @notice Convert a uint128 to an int256
-     * @param x The value to convert
-     * @return The converted value
-     */
-    function _toInt256(uint128 x) public pure returns (int256) {
-        return int256(uint256(x));
-    }
-
-    /**
      * @notice Calculate the protocol fee and apply it to the funding asset amount
      * @dev The funding factor is only adjusted by the fee rate when the funding is negative (vault pays to the long
      * side)
@@ -366,7 +384,7 @@ library UsdnProtocolCoreLibrary {
         public
         returns (int256 fee_, int256 fundWithFee_, int256 fundAssetWithFee_)
     {
-        int256 protocolFeeBps = _toInt256(s._protocolFeeBps);
+        int256 protocolFeeBps = Utils.toInt256(s._protocolFeeBps);
         fundWithFee_ = fund;
         fee_ = fundAsset * protocolFeeBps / int256(Constants.BPS_DIVISOR);
         // fundAsset and fee_ have the same sign, we can safely subtract them to reduce the absolute amount of asset
@@ -753,7 +771,7 @@ library UsdnProtocolCoreLibrary {
         if (pending.action == Types.ProtocolAction.ValidateDeposit && cleanup) {
             // for pending deposits, we send back the locked assets
             Types.DepositPendingAction memory deposit = _toDepositPendingAction(pending);
-            s._pendingBalanceVault -= _toInt256(deposit.amount);
+            s._pendingBalanceVault -= Utils.toInt256(deposit.amount);
             address(s._asset).safeTransfer(to, deposit.amount);
         } else if (pending.action == Types.ProtocolAction.ValidateWithdrawal && cleanup) {
             // for pending withdrawals, we send the locked USDN

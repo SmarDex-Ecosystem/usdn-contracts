@@ -60,23 +60,4 @@ interface IUsdnProtocolVault {
      * @return The vault balance
      */
     function vaultAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256);
-
-    /**
-     * @notice Remove a stuck pending action and perform the minimal amount of cleanup necessary
-     * @dev This function can only be called by the owner of the protocol, it serves as an escape hatch if a
-     * pending action ever gets stuck due to something internal reverting unexpectedly
-     * @param validator The address of the validator
-     * @param to Where the retrieved funds should be sent (security deposit, assets, usdn)
-     */
-    function removeBlockedPendingAction(address validator, address payable to) external;
-
-    /**
-     * @notice Remove a stuck pending action with no cleanup
-     * @dev This function can only be called by the owner of the protocol, it serves as an escape hatch if a
-     * pending action ever gets stuck due to something internal reverting unexpectedly
-     * Always try to use `removeBlockedPendingAction` first, and only call this function if the other one fails
-     * @param validator The address of the validator
-     * @param to Where the retrieved funds should be sent (security deposit, assets, usdn)
-     */
-    function removeBlockedPendingActionNoCleanup(address validator, address payable to) external;
 }
