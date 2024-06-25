@@ -9,6 +9,9 @@ import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 
 /// @custom:feature The `removeBlockedPendingAction` and `_removeBlockedPendingAction` admin functions of the protocol
 contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
+    /// @dev Whether to revert inside the receive function of this contract
+    bool revertOnReceive = false;
+
     function setUp() public {
         params = DEFAULT_PARAMS;
         params.flags.enableSecurityDeposit = true;
@@ -289,10 +292,63 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         assertEq(address(this).balance, balanceBefore, "balance after");
     }
 
+    /**
+     * @custom:scenario The admin tries to remove a blocked pending action too soon
+     * @custom:given A user has initiated a deposit which gets stuck for any reason
+     * @custom:when The admin tries to remove the pending action after the validation delay
+     * @custom:or The admin tries to remove the pending action after the validation deadline
+     * @custom:or The admin tries to remove the pending action after the validation deadline + 1 hour - 1 second
+     * @custom:then The transaction reverts with the `UsdnProtocolUnauthorized` error
+     */
+    function test_RevertWhen_removeBlockedTooSoon() public {
+        setUpUserPositionInVault(USER_1, ProtocolAction.InitiateDeposit, 1 ether, params.initialPrice);
+        vm.startPrank(ADMIN);
+        (PendingAction memory action, uint128 rawIndex) = protocol.i_getPendingAction(USER_1);
+
+        _waitDelay();
+
+        vm.expectRevert(UsdnProtocolUnauthorized.selector);
+        protocol.i_removeBlockedPendingAction(rawIndex, payable(address(this)), true);
+
+        _waitBeforeActionablePendingAction();
+
+        vm.expectRevert(UsdnProtocolUnauthorized.selector);
+        protocol.i_removeBlockedPendingAction(rawIndex, payable(address(this)), true);
+
+        vm.warp(action.timestamp + protocol.getValidationDeadline() + 3599 seconds);
+
+        vm.expectRevert(UsdnProtocolUnauthorized.selector);
+        protocol.i_removeBlockedPendingAction(rawIndex, payable(address(this)), true);
+        vm.stopPrank();
+    }
+
+    /**
+     * @custom:scenario The admin tries to remove a blocked pending action with cleanup but refund fails
+     * @custom:given The "to" address reverts when receiving the assets
+     * @custom:when The admin tries to remove the pending action with cleanup
+     * @custom:then The transaction reverts with the `UsdnProtocolEtherRefundFailed` error
+     */
+    function test_RevertWhen_removeBlockedRefundFailed() public {
+        setUpUserPositionInVault(USER_1, ProtocolAction.InitiateDeposit, 1 ether, params.initialPrice);
+        revertOnReceive = true;
+
+        _wait();
+
+        (, uint128 rawIndex) = protocol.i_getPendingAction(USER_1);
+
+        vm.expectRevert(UsdnProtocolEtherRefundFailed.selector);
+        vm.prank(ADMIN);
+        protocol.i_removeBlockedPendingAction(rawIndex, payable(address(this)), true);
+    }
+
     function _wait() internal {
         _waitBeforeActionablePendingAction();
         skip(1 hours);
     }
 
-    receive() external payable { }
+    receive() external payable {
+        if (revertOnReceive) {
+            revert();
+        }
+    }
 }
