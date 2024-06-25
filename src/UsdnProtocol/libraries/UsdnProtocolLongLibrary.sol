@@ -395,7 +395,7 @@ library UsdnProtocolLongLibrary {
             // if the position value is less than 0, it should have been liquidated but wasn't
             // interrupt the whole rebalancer process because there are pending liquidations
             if (realPositionValue < 0) {
-                return (cache.longBalance, vaultBalance_);
+                return (longBalance_, vaultBalance_);
             }
 
             // cast is safe as realPositionValue cannot be lower than 0
@@ -411,7 +411,7 @@ library UsdnProtocolLongLibrary {
             // and inform it that no new position was open so it can start anew
             rebalancer.updatePosition(Types.PositionId(Constants.NO_POSITION_TICK, 0, 0), 0);
             vaultBalance_ += data.positionAmount;
-            return (cache.longBalance, vaultBalance_);
+            return (longBalance_, vaultBalance_);
         }
 
         // transfer the pending assets from the rebalancer to this contract
