@@ -1,0 +1,19 @@
+corpusDir: echidna_assert_corpus
+testMode: assertion
+testLimit: 10000
+deployer: "0x10000"
+sender: ["0x10000"]
+codeSize: 0xffffffff
+#balanceContract: 0x487A9A304539440000 #1337 eth
+#balanceAddr: 0x487A9A304539440000 #1337 eth
+#cryticArgs: ["--solc-args=--optimize", "--compile-force-framework", "hardhat"]
+stopOnFail: true
+# URL to fetch contracts over RPC -> change to private url (alchemy, infura...)
+rpcUrl: https://eth-mainnet.g.alchemy.com/v2/s7Sgrfkbvl045kIIUEOdKJLya2nbUElJ
+#filterBlacklist: true
+#filterFunctions: [""]
+workers: 8
+#maxTimeDelay: 3628800
+maxTimeDelay: 604800
+shrinkLimit: 5000
+seqLen: 30
