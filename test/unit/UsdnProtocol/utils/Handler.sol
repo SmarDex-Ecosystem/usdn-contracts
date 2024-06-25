@@ -607,4 +607,11 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     function i_checkPendingFee() external {
         ActionsVault._checkPendingFee(s);
     }
+
+    function i_prepareInitiateDepositData(address validator, uint128 amount, bytes calldata currentPriceData)
+        public
+        returns (ActionsVault.InitiateDepositData memory data_)
+    {
+        return ActionsVault._prepareInitiateDepositData(s, validator, amount, currentPriceData);
+    }
 }
