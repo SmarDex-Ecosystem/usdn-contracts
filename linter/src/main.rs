@@ -1,4 +1,5 @@
 use std::{
+    collections::{HashMap, HashSet},
     fs::{self, File},
     io::Write as _,
     path::{Path, PathBuf},
@@ -61,7 +62,7 @@ async fn main() -> Result<()> {
         })
         .collect();
 
-    for entry in WalkDir::new("src/Usdn") {
+    for entry in WalkDir::new("src/UsdnProtocol/libraries") {
         let entry = match entry {
             Err(e) => {
                 eprintln!("walkdir error: {e:?}");
@@ -134,25 +135,22 @@ fn parse_and_lint(lang: &Language, path: impl AsRef<Path>) -> Result<()> {
     let cursor = parse_output.create_tree_cursor();
     let query = Query::parse(
         r#"
-        [FunctionBody
-            ...
-            [Block
-                ...
-                [Statements
-                    ...
-                    @statement [Statement]
-                    ...
-                ]
-                ...
+        [MemberAccessExpression
+            [Expression ["s"]]
+            [Period]
+            [MemberAccess
+                @member_name [Identifier]
             ]
             ...
         ]
         "#,
     )?;
+    // mapping of function name/id to a list of accessed members
+    //let mut accesses = HashMap::<String, Vec<String>>::new();
     for m in cursor.query(vec![query]) {
         println!("-------------");
         let captures = m.captures;
-        let cursors = captures.get("statement").unwrap();
+        let cursors = captures.get("member_name").unwrap();
         let cursor = cursors.first().unwrap();
         println!("{}", cursor.node().unparse().trim());
     }
