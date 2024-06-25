@@ -131,25 +131,56 @@ fn parse_and_lint(lang: &Language, path: impl AsRef<Path>) -> Result<()> {
         bail!("Parse error(s) found in {path:?}")
     }
     let cursor = parse_output.create_tree_cursor();
-    let query = Query::parse(
+    let storage_struct_query = Query::parse(
         r#"
         [MemberAccessExpression
             [Expression ["s"]]
             [Period]
             [MemberAccess
-                @member_name [Identifier]
+                @var_name [Identifier]
             ]
             ...
         ]
         "#,
     )?;
+    let normal_storage_query = Query::parse(
+        r#"
+        @var_name [Identifier]
+        "#,
+    )?;
     // mapping of function identifier offset to a list of accessed members
     let mut accesses = HashMap::<usize, Vec<String>>::new();
-    for m in cursor.query(vec![query]) {
+    for m in cursor.query(vec![storage_struct_query, normal_storage_query]) {
+        let index = m.query_number;
         let captures = m.captures;
-        let cursors = captures.get("member_name").unwrap();
+        let cursors = captures.get("var_name").unwrap();
         let cursor = cursors.first().unwrap();
-        let member_name = cursor.node().unparse();
+        let mut member_name = cursor.node().unparse();
+        if index == 0 {
+            member_name = format!("s.{member_name}");
+        } else {
+            let mut parent_cursor = cursor.clone();
+            if parent_cursor.go_to_parent()
+                && parent_cursor
+                    .node()
+                    .as_nonterminal_with_kind(NonterminalKind::MemberAccess)
+                    .is_some()
+            {
+                continue;
+            }
+            if parent_cursor.go_to_parent()
+                && parent_cursor
+                    .node()
+                    .as_nonterminal_with_kind(NonterminalKind::FunctionCallExpression)
+                    .is_some()
+            {
+                continue;
+            }
+            if !member_name.starts_with('_') {
+                continue;
+            }
+        }
+
         let mut function_cursor = cursor.clone();
         while function_cursor.go_to_parent() {
             let Some(_) = function_cursor
@@ -164,9 +195,9 @@ fn parse_and_lint(lang: &Language, path: impl AsRef<Path>) -> Result<()> {
                 let function_name = function_cursor.node().unparse();
                 if function_accesses.contains(&member_name) {
                     eprintln!(
-                        "Function {function_name} in {}:{} uses `s.{member_name}` more than once",
+                        "Function `{function_name}` in {}:{} uses `{member_name}` more than once",
                         path.to_string_lossy(),
-                        range.line().start
+                        range.line().start,
                     );
                     break;
                 }
