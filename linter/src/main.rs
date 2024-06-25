@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::HashMap,
     fs::{self, File},
     io::Write as _,
     path::{Path, PathBuf},
@@ -9,7 +9,11 @@ use std::{
 use anyhow::{bail, Result};
 use async_channel::Receiver;
 use serde::Deserialize;
-use slang_solidity::{kinds::NonterminalKind, language::Language, query::Query};
+use slang_solidity::{
+    kinds::{NonterminalKind, TerminalKind},
+    language::Language,
+    query::Query,
+};
 use walkdir::WalkDir;
 
 #[derive(Debug, Deserialize)]
@@ -86,7 +90,6 @@ async fn main() -> Result<()> {
             _ => continue,
         }
         tx.send(PathBuf::from(path)).await?;
-        break;
     }
     tx.close();
 
@@ -128,10 +131,6 @@ fn parse_and_lint(lang: &Language, path: impl AsRef<Path>) -> Result<()> {
     if !parse_output.is_valid() {
         bail!("Parse error(s) found in {path:?}")
     }
-    /* let tree = parse_output.tree();
-    let filename = path.file_name().unwrap().to_string_lossy();
-    let mut file = File::create(filename.replace(".sol", ".tree"))?;
-    write!(&mut file, "{tree:#?}")?; */
     let cursor = parse_output.create_tree_cursor();
     let query = Query::parse(
         r#"
@@ -145,14 +144,35 @@ fn parse_and_lint(lang: &Language, path: impl AsRef<Path>) -> Result<()> {
         ]
         "#,
     )?;
-    // mapping of function name/id to a list of accessed members
-    //let mut accesses = HashMap::<String, Vec<String>>::new();
+    // mapping of function identifier offset to a list of accessed members
+    let mut accesses = HashMap::<usize, Vec<String>>::new();
     for m in cursor.query(vec![query]) {
-        println!("-------------");
         let captures = m.captures;
         let cursors = captures.get("member_name").unwrap();
         let cursor = cursors.first().unwrap();
-        println!("{}", cursor.node().unparse().trim());
+        let member_name = cursor.node().unparse();
+        let mut function_cursor = cursor.clone();
+        while function_cursor.go_to_parent() {
+            let Some(_) = function_cursor
+                .node()
+                .as_nonterminal_with_kind(NonterminalKind::FunctionDefinition)
+            else {
+                continue;
+            };
+            if function_cursor.go_to_next_terminal_with_kind(TerminalKind::Identifier) {
+                let offset = function_cursor.text_range().start.utf8;
+                let function_accesses = accesses.entry(offset).or_default();
+                let function_name = function_cursor.node().unparse();
+                if function_accesses.contains(&member_name) {
+                    bail!(
+                        "Function {function_name} in {:?} uses `s.{member_name}` more than once",
+                        path
+                    );
+                }
+                function_accesses.push(member_name);
+            }
+            break;
+        }
     }
 
     Ok(())
