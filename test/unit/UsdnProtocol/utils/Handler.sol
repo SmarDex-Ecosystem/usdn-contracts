@@ -599,4 +599,15 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     function getLongTradingExpo(uint128 currentPrice) external view returns (int256 expo_) {
         expo_ = s._totalExpo.toInt256().safeSub(Core._longAssetAvailable(s, currentPrice));
     }
+
+    function i_prepareClosePositionData(
+        address owner,
+        address to,
+        address validator,
+        PositionId memory posId,
+        uint128 amountToClose,
+        bytes calldata currentPriceData
+    ) external returns (ClosePositionData memory data_, bool liquidated_) {
+        return ActionsUtils._prepareClosePositionData(s, owner, to, validator, posId, amountToClose, currentPriceData);
+    }
 }
