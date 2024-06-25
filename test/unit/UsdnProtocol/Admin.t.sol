@@ -920,10 +920,15 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      * @custom:when Admin wallet triggers admin contract function
      * @custom:then Revert because higher than `_usdnRebaseThreshold`
      */
-    function test_RevertWhen_setTargetUsdnPriceWithMax() external adminPrank {
-        uint128 maxThreshold = protocol.getUsdnRebaseThreshold();
+    function test_RevertWhen_setTargetUsdnPriceWithMax() external {
+        SetUpParams memory params = DEFAULT_PARAMS;
+        params.flags.enableUsdnRebase = true;
+        super._setUp(params);
+
+        uint128 maxThreshold = protocol.getUsdnRebaseThreshold() + 1;
+        vm.prank(ADMIN);
         vm.expectRevert(UsdnProtocolInvalidTargetUsdnPrice.selector);
-        protocol.setTargetUsdnPrice(maxThreshold + 1);
+        protocol.setTargetUsdnPrice(maxThreshold);
     }
 
     /**
