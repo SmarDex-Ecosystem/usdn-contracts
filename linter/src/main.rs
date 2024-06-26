@@ -158,22 +158,22 @@ fn parse_and_lint(lang: &Language, path: impl AsRef<Path>) -> Result<()> {
         if index == 0 {
             member_name = format!("s.{member_name}");
         } else {
-            let mut parent_cursor = cursor.clone();
-            if parent_cursor.go_to_parent()
-                && parent_cursor
-                    .node()
-                    .is_nonterminal_with_kind(NonterminalKind::MemberAccess)
-            {
-                continue;
-            }
-            if parent_cursor.go_to_parent()
-                && parent_cursor
-                    .node()
-                    .is_nonterminal_with_kind(NonterminalKind::FunctionCallExpression)
-            {
-                continue;
-            }
+            // our convention dictates that storage variables should start with an underscore
             if !member_name.starts_with('_') {
+                continue;
+            }
+            // if first parent is `MemberAccess` or second parent is `FunctionCallExpression` we can ignore this match
+            let parent_cursor = cursor.clone();
+            if matches!(
+                parent_cursor.ancestors().next().map(|node| node.kind),
+                Some(NonterminalKind::MemberAccess)
+            ) {
+                continue;
+            }
+            if matches!(
+                parent_cursor.ancestors().next().map(|node| node.kind),
+                Some(NonterminalKind::FunctionCallExpression)
+            ) {
                 continue;
             }
         }
@@ -186,7 +186,9 @@ fn parse_and_lint(lang: &Language, path: impl AsRef<Path>) -> Result<()> {
             {
                 continue;
             };
+            // we have found the parent function definition
             if function_cursor.go_to_next_terminal_with_kind(TerminalKind::Identifier) {
+                // we have found the function's identifier
                 let range = function_cursor.text_range();
                 let function_accesses = accesses.entry(range.start.utf8).or_default();
                 let function_name = function_cursor.node().unparse();
