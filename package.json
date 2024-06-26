@@ -22,7 +22,8 @@
     "slither": "slither .",
     "natspec": "npx natspec-smells > natspec-smells.txt 2>&1",
     "exportAbi": "forge build --ast && ts-node ./script/exportAbi.ts -g '{Rebalancer/Rebalancer.sol,Usdn/Usdn.sol,Usdn/Wusdn.sol,UsdnProtocol/UsdnProtocol.sol,OracleMiddleware/LiquidationRewardsManager.sol,OracleMiddleware/OracleMiddleware.sol}' && tsup ./dist/abi/index.ts --format cjs --format esm --dts --sourcemap",
-    "clean": "rm -rf dist && rm -rf node_modules && rm -rf .coverage && rm -rf out && rm -rf lib && forge clean && npm i && forge install"
+    "clean": "rm -rf dist && rm -rf node_modules && rm -rf .coverage && rm -rf out && rm -rf lib && forge clean && npm i && forge install",
+    "echidna": "echidna . --contract EchidnaAssert --config echidna/echidnaConfig.yaml"
   },
   "main": "dist/index.js",
   "files": ["dist", "broadcast", "docs"],
