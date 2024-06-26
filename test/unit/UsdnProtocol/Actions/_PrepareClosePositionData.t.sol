@@ -34,9 +34,7 @@ contract TestUsdnProtocolActionsPrepareClosePositionData is UsdnProtocolBaseFixt
         // skip to update the last price during the next call
         skip(30 minutes);
 
-        liqPrice = protocol.getEffectivePriceForTick(
-            posId.tick - (int24(uint24(protocol.getLiquidationPenalty())) * _tickSpacing)
-        );
+        liqPrice = protocol.getEffectivePriceForTick(posId.tick);
     }
 
     /**
@@ -44,7 +42,7 @@ contract TestUsdnProtocolActionsPrepareClosePositionData is UsdnProtocolBaseFixt
      * @custom:given The price did not change between the open and the call
      * @custom:when _prepareClosePositionData is called
      * @custom:then The matching data is returned
-     * @custom:and The position should not have ben liquidated
+     * @custom:and The position should not have been liquidated
      */
     function test_prepareClosePositionData() public {
         (ClosePositionData memory data, bool liquidated) = protocol.i_prepareClosePositionData(
@@ -76,8 +74,9 @@ contract TestUsdnProtocolActionsPrepareClosePositionData is UsdnProtocolBaseFixt
     }
 
     /**
-     * @custom:scenario _prepareClosePositionData is called but there's another position that can be liquidated higher
+     * @custom:scenario _prepareClosePositionData is called with 2 ticks that can be liquidated
      * @custom:given A current price below the position's liquidation price
+     * @custom:and A high risk position that will be liquidated first
      * @custom:and A liquidation iterations setting at 1
      * @custom:when _prepareClosePositionData is called
      * @custom:then The matching data is returned
