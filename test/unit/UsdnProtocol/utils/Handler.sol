@@ -629,14 +629,11 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         );
     }
 
-    function i_checkInitiateClosePosition(
-        address owner,
-        address to,
-        address validator,
-        uint128 amountToClose,
-        Position memory pos
-    ) external view {
-        ActionsUtils._checkInitiateClosePosition(s, owner, to, validator, amountToClose, pos);
+    function i_prepareInitiateDepositData(address validator, uint128 amount, bytes calldata currentPriceData)
+        public
+        returns (ActionsVault.InitiateDepositData memory data_)
+    {
+        return ActionsVault._prepareInitiateDepositData(s, validator, amount, currentPriceData);
     }
 
     function i_prepareClosePositionData(
@@ -648,5 +645,15 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         bytes calldata currentPriceData
     ) external returns (ClosePositionData memory data_, bool liquidated_) {
         return ActionsUtils._prepareClosePositionData(s, owner, to, validator, posId, amountToClose, currentPriceData);
+    }
+
+    function i_checkInitiateClosePosition(
+        address owner,
+        address to,
+        address validator,
+        uint128 amountToClose,
+        Position memory pos
+    ) external view {
+        ActionsUtils._checkInitiateClosePosition(s, owner, to, validator, amountToClose, pos);
     }
 }
