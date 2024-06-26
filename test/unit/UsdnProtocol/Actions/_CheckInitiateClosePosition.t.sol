@@ -137,45 +137,45 @@ contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture, 
      * @custom:scenario Check an initiate close of a position from the rebalancer with a remaining amount that is too
      * low
      * @custom:given USER_1 has a position in the rebalancer with an amount that leaves the position below the min
-     * @custom:and The "to" address is the rebalancer user
+     * @custom:and The "validator" address is the rebalancer user
      * @custom:when The rebalancer initiates a close position with the full amount of USER_1
      * @custom:then The function should not revert
      */
     function test_checkInitiateClosePositionFromRebalancerBelowMin() public {
         uint128 amountToClose = AMOUNT - uint128(protocol.getMinLongPosition()) + 1;
         _setUpRebalancerPosition(uint88(amountToClose));
-        // note: the "to" below must be the rebalancer user (USER_1)
-        protocol.i_checkInitiateClosePosition(address(mockedRebalancer), USER_1, USER_2, amountToClose, pos);
+        // note: the rebalancer always sets the rebalancer user as "validator" (USER_1)
+        protocol.i_checkInitiateClosePosition(address(mockedRebalancer), USER_2, USER_1, amountToClose, pos);
     }
 
     /**
      * @custom:scenario Check an initiate close of a position from the rebalancer (partial)
      * @custom:given USER_1 has a position in the rebalancer with an amount that leaves the position above the min
-     * @custom:and The "to" address is not the rebalancer user
+     * @custom:and The "validator" address is the rebalancer user
      * @custom:when The rebalancer initiates a partial close position with a remaining amount that is above the min
      * @custom:then The function should not revert
      */
     function test_checkInitiateClosePositionFromRebalancer() public {
         uint128 amountToClose = AMOUNT - uint128(protocol.getMinLongPosition());
         _setUpRebalancerPosition(uint88(amountToClose + 1));
-        // if the rebalancer position remains above the position limit, then the "to" can be anyone
-        protocol.i_checkInitiateClosePosition(address(mockedRebalancer), address(this), USER_2, amountToClose, pos);
+        // note: the rebalancer always sets the rebalancer user as "validator" (USER_1)
+        protocol.i_checkInitiateClosePosition(address(mockedRebalancer), USER_2, USER_1, amountToClose, pos);
     }
 
     /**
      * @custom:scenario Check an initiate close of a position from the rebalancer with a remaining amount that is too
      * low
      * @custom:given USER_1 has a position in the rebalancer with an amount that would leave the position below the min
-     * @custom:and The "to" address is the rebalancer user
+     * @custom:and The "validator" address is the rebalancer user
      * @custom:when The rebalancer initiates a partial close position with an amount below their position amount
      * @custom:then The function should revert with `UsdnProtocolLongPositionTooSmall`
      */
     function test_RevertWhen_checkInitiateClosePositionFromRebalancerTooSmall() public {
         uint128 amountToClose = AMOUNT - uint128(protocol.getMinLongPosition()) + 1;
         _setUpRebalancerPosition(uint88(amountToClose + 1));
-        // note: the "to" below must be the rebalancer user (USER_1)
+        // note: the rebalancer always sets the rebalancer user as "validator" (USER_1)
         vm.expectRevert(UsdnProtocolLongPositionTooSmall.selector);
-        protocol.i_checkInitiateClosePosition(address(mockedRebalancer), USER_1, USER_2, amountToClose, pos);
+        protocol.i_checkInitiateClosePosition(address(mockedRebalancer), USER_2, USER_1, amountToClose, pos);
     }
 
     /**

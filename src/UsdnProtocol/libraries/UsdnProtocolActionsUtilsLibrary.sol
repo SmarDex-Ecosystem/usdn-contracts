@@ -329,7 +329,8 @@ library UsdnProtocolActionsUtilsLibrary {
         if (remainingAmount > 0 && remainingAmount < s._minLongPosition) {
             IBaseRebalancer rebalancer = s._rebalancer;
             if (owner == address(rebalancer)) {
-                uint128 userPosAmount = rebalancer.getUserDepositData(to).amount;
+                // note: the rebalancer always indicates the rebalancer user's address as validator
+                uint128 userPosAmount = rebalancer.getUserDepositData(validator).amount;
                 if (amountToClose != userPosAmount) {
                     revert IUsdnProtocolErrors.UsdnProtocolLongPositionTooSmall();
                 }
