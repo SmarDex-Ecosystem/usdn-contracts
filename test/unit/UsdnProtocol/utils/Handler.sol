@@ -607,4 +607,25 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     function i_checkPendingFee() external {
         ActionsVault._checkPendingFee(s);
     }
+
+    function i_sendRewardsToLiquidator(
+        uint16 liquidatedTicks,
+        int256 remainingCollateral,
+        bool rebased,
+        bool rebalancerTriggered,
+        ProtocolAction action,
+        bytes memory rebaseCallbackResult,
+        bytes memory priceData
+    ) external {
+        ActionsUtils._sendRewardsToLiquidator(
+            s,
+            liquidatedTicks,
+            remainingCollateral,
+            rebased,
+            rebalancerTriggered,
+            action,
+            rebaseCallbackResult,
+            priceData
+        );
+    }
 }
