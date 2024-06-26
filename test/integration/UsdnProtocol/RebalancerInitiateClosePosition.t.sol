@@ -80,7 +80,7 @@ contract TestRebalancerInitiateClosePosition is
         vm.expectEmit();
         emit ClosePositionInitiated(address(this), amount, amountToClose, amountInRebalancer - amount);
         (bool success) = rebalancer.initiateClosePosition{ value: protocol.getSecurityDepositValue() }(
-            amount, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA
+            amount, address(this), "", EMPTY_PREVIOUS_DATA
         );
 
         assertTrue(success, "The rebalancer close should be successful");
@@ -137,7 +137,7 @@ contract TestRebalancerInitiateClosePosition is
         vm.expectEmit();
         emit ClosePositionInitiated(address(this), amountInRebalancer, amountToClose, 0);
         (bool success) = rebalancer.initiateClosePosition{ value: protocol.getSecurityDepositValue() }(
-            amountInRebalancer, address(this), payable(this), "", EMPTY_PREVIOUS_DATA
+            amountInRebalancer, address(this), "", EMPTY_PREVIOUS_DATA
         );
 
         UserDeposit memory depositData = rebalancer.getUserDepositData(address(this));
@@ -174,7 +174,7 @@ contract TestRebalancerInitiateClosePosition is
 
         // send more ether than necessary to trigger the refund
         rebalancer.initiateClosePosition{ value: securityDeposit + excessAmount }(
-            amountInRebalancer, address(this), payable(this), "", EMPTY_PREVIOUS_DATA
+            amountInRebalancer, address(this), "", EMPTY_PREVIOUS_DATA
         );
 
         assertEq(payable(rebalancer).balance, 0, "There should be no ether left in the rebalancer");
