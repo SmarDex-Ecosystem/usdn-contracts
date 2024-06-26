@@ -20,7 +20,7 @@ contract TestUsdnProtocolActionsPrepareInitiateDepositData is UsdnProtocolBaseFi
         params.flags.enableSdexBurnOnDeposit = true;
         super._setUp(params);
 
-        currentPriceData = abi.encode(DEFAULT_PARAMS.initialPrice);
+        currentPriceData = abi.encode(params.initialPrice);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -60,7 +60,7 @@ contract TestUsdnProtocolActionsPrepareInitiateDepositData is UsdnProtocolBaseFi
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @custom:scenario _prepareClosePositionData is called withPOSITION_AMOUNT of assets to be deposited
+     * @custom:scenario _prepareClosePositionData is called with POSITION_AMOUNT of assets to be deposited
      * @custom:when _prepareInitiateDepositData is called
      * @custom:then The matching data is returned
      * @custom:and There should be no pending liquidations
@@ -74,11 +74,13 @@ contract TestUsdnProtocolActionsPrepareInitiateDepositData is UsdnProtocolBaseFi
     }
 
     /**
-     * @custom:scenario There are pending liquidations after the call to _prepareInitiateDepositData
+     * @custom:scenario _prepareInitiateDepositData is called with 2 ticks that can be liquidated
      * @custom:given A current price below the position's liquidation price
+     * @custom:and A high risk position that will be liquidated first
      * @custom:and A liquidation iterations setting at 1
      * @custom:when _prepareInitiateDepositData is called
      * @custom:then The matching data is returned
+     * @custom:and The high risk position should have been liquidated
      * @custom:and The function should have returned early
      * @custom:and There should be pending liquidations
      */
