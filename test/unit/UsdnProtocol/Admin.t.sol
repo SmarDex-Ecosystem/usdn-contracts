@@ -915,6 +915,20 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
     }
 
     /**
+     * @custom:scenario Call `setTargetUsdnPrice` as admin
+     * @custom:when The admin sets the target price at `newPrice`
+     * @custom:then The target price should be updated
+     * @custom:and An event should be emitted with the corresponding new value
+     */
+    function test_setTargetUsdnPrice() external adminPrank {
+        uint128 newPrice = 2 ether;
+        vm.expectEmit();
+        emit TargetUsdnPriceUpdated(newPrice);
+        protocol.setTargetUsdnPrice(newPrice);
+        assertEq(protocol.getTargetUsdnPrice(), newPrice);
+    }
+
+    /**
      * @custom:scenario Call "setTargetUsdnPrice" from admin
      * @custom:given The initial usdnProtocol state from admin wallet
      * @custom:when Admin wallet triggers admin contract function
@@ -941,6 +955,26 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         uint128 minThreshold = uint128(10 ** protocol.getPriceFeedDecimals());
         vm.expectRevert(UsdnProtocolInvalidTargetUsdnPrice.selector);
         protocol.setTargetUsdnPrice(minThreshold - 1);
+    }
+
+    /**
+     * @custom:scenario Call `setUsdnRebaseThreshold` as admin
+     * @custom:when The admin sets the threshold at `newThreshold`
+     * @custom:then The threshold should be updated
+     * @custom:and An event should be emitted with the corresponding new value
+     */
+    function test_setUsdnRebaseThreshold() external {
+        SetUpParams memory params = DEFAULT_PARAMS;
+        params.flags.enableUsdnRebase = true;
+        super._setUp(params);
+
+        uint128 newThreshold = protocol.getTargetUsdnPrice() + 1;
+
+        vm.expectEmit();
+        emit UsdnRebaseThresholdUpdated(newThreshold);
+        vm.prank(ADMIN);
+        protocol.setUsdnRebaseThreshold(newThreshold);
+        assertEq(protocol.getUsdnRebaseThreshold(), newThreshold);
     }
 
     /**
