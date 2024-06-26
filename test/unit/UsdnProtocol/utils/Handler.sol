@@ -629,6 +629,13 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         );
     }
 
+    function i_prepareInitiateDepositData(address validator, uint128 amount, bytes calldata currentPriceData)
+        public
+        returns (ActionsVault.InitiateDepositData memory data_)
+    {
+        return ActionsVault._prepareInitiateDepositData(s, validator, amount, currentPriceData);
+    }
+
     function i_prepareClosePositionData(
         address owner,
         address to,
