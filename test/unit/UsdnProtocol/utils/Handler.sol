@@ -638,4 +638,15 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     ) external view {
         ActionsUtils._checkInitiateClosePosition(s, owner, to, validator, amountToClose, pos);
     }
+
+    function i_prepareClosePositionData(
+        address owner,
+        address to,
+        address validator,
+        PositionId memory posId,
+        uint128 amountToClose,
+        bytes calldata currentPriceData
+    ) external returns (ClosePositionData memory data_, bool liquidated_) {
+        return ActionsUtils._prepareClosePositionData(s, owner, to, validator, posId, amountToClose, currentPriceData);
+    }
 }
