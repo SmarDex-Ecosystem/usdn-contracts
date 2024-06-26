@@ -30,6 +30,18 @@ library UsdnProtocolCoreLibrary {
     using LibBitmap for LibBitmap.Bitmap;
     using HugeUint for HugeUint.Uint512;
 
+    /**
+     * @notice Data structure for the `_applyPnlAndFunding` function
+     * @param fee The absolute value of the calculated fee
+     * @param fundWithFee The updated funding factor after applying the fee
+     * @param fundAssetWithFee The updated funding asset amount after applying the fee
+     */
+    struct CalculateFeeData {
+        int256 fee;
+        int256 fundWithFee;
+        int256 fundAssetWithFee;
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                              Public functions                              */
     /* -------------------------------------------------------------------------- */
@@ -453,7 +465,7 @@ library UsdnProtocolCoreLibrary {
      */
     function _applyPnlAndFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
         public
-        returns (bool isPriceRecent_, int256 tempLongBalance_, int256 tempVaultBalance_)
+        returns (bool isPriceRecent_, int256 tempLongBalance_, int256 tempVaultBalance_, uint128 lastPrice_)
     {
         int256 fundAsset;
         int256 fund;
@@ -462,7 +474,12 @@ library UsdnProtocolCoreLibrary {
             uint128 lastUpdateTimestamp = s._lastUpdateTimestamp;
             // if the price is not fresh, do nothing
             if (timestamp <= lastUpdateTimestamp) {
-                return (timestamp == lastUpdateTimestamp, s._balanceLong.toInt256(), s._balanceVault.toInt256());
+                return (
+                    timestamp == lastUpdateTimestamp,
+                    s._balanceLong.toInt256(),
+                    s._balanceVault.toInt256(),
+                    s._lastPrice
+                );
             }
 
             // update the funding EMA
@@ -472,12 +489,13 @@ library UsdnProtocolCoreLibrary {
             (fundAsset, fund) = _fundingAsset(s, timestamp, ema);
         }
 
+        CalculateFeeData memory data;
         // take protocol fee on the funding value
-        (int256 fee, int256 fundWithFee, int256 fundAssetWithFee) = _calculateFee(s, fund, fundAsset);
+        (data.fee, data.fundWithFee, data.fundAssetWithFee) = _calculateFee(s, fund, fundAsset);
 
         // we subtract the fee from the total balance
         int256 totalBalance = s._balanceLong.toInt256();
-        totalBalance = totalBalance.safeAdd(s._balanceVault.toInt256()).safeSub(fee);
+        totalBalance = totalBalance.safeAdd(s._balanceVault.toInt256()).safeSub(data.fee);
         // calculate new balances (for now, any bad debt has not been repaid, balances could become negative)
 
         if (fund > 0) {
@@ -489,14 +507,15 @@ library UsdnProtocolCoreLibrary {
             // in case of negative funding, the vault balance must be decremented by the totality of the funding amount
             // however, since we deducted the fee amount from the total balance, the long balance will be incremented
             // only by the funding amount minus the fee amount
-            tempLongBalance_ = _longAssetAvailable(s, currentPrice).safeSub(fundAssetWithFee);
+            tempLongBalance_ = _longAssetAvailable(s, currentPrice).safeSub(data.fundAssetWithFee);
         }
         tempVaultBalance_ = totalBalance.safeSub(tempLongBalance_);
 
         // update state variables
         s._lastPrice = currentPrice;
+        lastPrice_ = currentPrice;
         s._lastUpdateTimestamp = timestamp;
-        s._lastFunding = fundWithFee;
+        s._lastFunding = data.fundWithFee;
 
         isPriceRecent_ = true;
     }

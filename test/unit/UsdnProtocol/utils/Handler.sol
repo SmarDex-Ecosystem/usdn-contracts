@@ -106,7 +106,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     }
 
     function updateBalances(uint128 currentPrice) external {
-        (bool priceUpdated, int256 tempLongBalance, int256 tempVaultBalance) =
+        (bool priceUpdated, int256 tempLongBalance, int256 tempVaultBalance,) =
             Core._applyPnlAndFunding(s, currentPrice, uint128(block.timestamp));
         if (!priceUpdated) {
             revert("price was not updated");
@@ -199,7 +199,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
 
     function i_applyPnlAndFunding(uint128 currentPrice, uint128 timestamp)
         external
-        returns (bool priceUpdated_, int256 tempLongBalance_, int256 tempVaultBalance_)
+        returns (bool priceUpdated_, int256 tempLongBalance_, int256 tempVaultBalance_, uint128 lastPrice_)
     {
         return Core._applyPnlAndFunding(s, currentPrice, timestamp);
     }
