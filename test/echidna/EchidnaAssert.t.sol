@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import { EchidnaAssert } from "../src/echidna/EchidnaAssert.sol";
+import { EchidnaAssert } from "../../src/echidna/EchidnaAssert.sol";
 
 import "forge-std/Test.sol";
 
