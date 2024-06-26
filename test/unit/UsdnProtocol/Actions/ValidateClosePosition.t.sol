@@ -64,7 +64,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:when The owner of the position calls _validateClosePosition
      * @custom:then The call reverts because the pending action is not ValidateClosePosition
      */
-    function test_RevertsWhen_validateClosePositionWithTheWrongPendingAction() external {
+    function test_RevertsWhen_validateClosePositionWithTheWrongPendingAction() public {
         // Setup an initiate action to have a pending validate action for this user
         setUpUserPositionInLong(
             OpenParams({
@@ -94,7 +94,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:when User calls validateClosePosition with an amount of ether greater than the validation cost
      * @custom:then The protocol refunds the amount sent
      */
-    function test_validateClosePositionRefundExcessEther() external {
+    function test_validateClosePositionRefundExcessEther() public {
         bytes memory priceData = abi.encode(params.initialPrice);
         uint256 etherBalanceBefore = address(this).balance;
 
@@ -118,7 +118,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:when User calls validateClosePosition with valid price data for the pending action
      * @custom:then The user validates the pending action
      */
-    function test_validateClosePositionValidatePendingAction() external {
+    function test_validateClosePositionValidatePendingAction() public {
         bytes memory priceData = abi.encode(params.initialPrice);
         // Initiate an open position action for another user
         setUpUserPositionInLong(
@@ -153,7 +153,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:when User calls validateClosePosition
      * @custom:then The user validate his initiated close position action
      */
-    function test_validateClosePosition() external {
+    function test_validateClosePosition() public {
         bytes memory priceData = abi.encode(params.initialPrice);
         protocol.initiateClosePosition(
             posId, POSITION_AMOUNT, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
@@ -181,7 +181,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and a ValidatedClosePosition event is emitted
      * @custom:and the user receives the position amount
      */
-    function test_internalValidateClosePosition() external {
+    function test_internalValidateClosePosition() public {
         _internalValidateClosePositionScenario(address(this), address(this));
     }
 
@@ -193,7 +193,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and a ValidatedClosePosition event is emitted
      * @custom:and the recipient receives the position amount
      */
-    function test_internalValidateClosePositionForAnotherUser() external {
+    function test_internalValidateClosePositionForAnotherUser() public {
         _internalValidateClosePositionScenario(USER_1, address(this));
     }
 
@@ -205,7 +205,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and a ValidatedClosePosition event is emitted
      * @custom:and the recipient receives the position amount
      */
-    function test_internalValidateClosePositionDifferentValidator() external {
+    function test_internalValidateClosePositionDifferentValidator() public {
         _internalValidateClosePositionScenario(address(this), USER_1);
     }
 
@@ -218,7 +218,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and a ValidatedClosePosition event is emitted
      * @custom:and the recipient receives the position amount
      */
-    function test_internalValidateClosePositionForAnotherUserDifferentValidator() external {
+    function test_internalValidateClosePositionForAnotherUserDifferentValidator() public {
         _internalValidateClosePositionScenario(USER_1, USER_2);
     }
 
@@ -281,7 +281,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and a ValidatedClosePosition event is emitted
      * @custom:and the user receives half of the position amount
      */
-    function test_internalValidatePartialClosePosition() external {
+    function test_internalValidatePartialClosePosition() public {
         InternalValidatePartialClosePosition memory data;
 
         data.priceData = abi.encode(params.initialPrice);
@@ -388,7 +388,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and a ValidatedClosePosition event is emitted
      * @custom:and the user receive parts of his funds back
      */
-    function test_internalValidatePartialCloseUnderwaterPosition() external {
+    function test_internalValidatePartialCloseUnderwaterPosition() public {
         bytes memory priceData = abi.encode(params.initialPrice);
 
         /* ------------------------- Initiate Close Position ------------------------ */
@@ -450,7 +450,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and a ValidatedClosePosition event is emitted
      * @custom:and the user receives his funds back + some profits
      */
-    function test_internalValidatePartialClosePositionInProfit() external {
+    function test_internalValidatePartialClosePositionInProfit() public {
         bytes memory priceData = abi.encode(params.initialPrice);
 
         /* ------------------------- Initiate Close Position ------------------------ */
@@ -510,7 +510,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and a LiquidatedTick event is emitted
      * @custom:and the user doesn't receive his funds back
      */
-    function test_internalValidatePartialCloseLiquidatePosition() external {
+    function test_internalValidatePartialCloseLiquidatePosition() public {
         TestData memory data;
         data.priceData = abi.encode(params.initialPrice);
 
