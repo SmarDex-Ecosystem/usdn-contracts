@@ -10,9 +10,7 @@ import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
  */
 contract TestUsdnProtocolActionsSendRewardsToLiquidator is UsdnProtocolBaseFixture {
     function setUp() public {
-        params = DEFAULT_PARAMS;
-        params.initialDeposit = 1 ether;
-        _setUp(params);
+        _setUp(DEFAULT_PARAMS);
 
         // increase the rewards
         vm.prank(DEPLOYER);
@@ -22,7 +20,7 @@ contract TestUsdnProtocolActionsSendRewardsToLiquidator is UsdnProtocolBaseFixtu
     }
 
     /**
-     * @custom:scenario The protocol send reward to the user
+     * @custom:scenario The protocol sends rewards to the user
      * @custom:given The rewards are lower than the vault balance
      * @custom:when The protocol sends the rewards to the liquidator
      * @custom:then The user receives the rewards calculated by the liquidation rewards manager
@@ -39,7 +37,7 @@ contract TestUsdnProtocolActionsSendRewardsToLiquidator is UsdnProtocolBaseFixtu
     }
 
     /**
-     * @custom:scenario The protocol send the entire vault balance to the user
+     * @custom:scenario The protocol sends the entire vault balance to the user
      * @custom:given The rewards are higher than the vault balance
      * @custom:when The protocol sends the rewards to the liquidator
      * @custom:then The user receives the entire vault balance
@@ -48,7 +46,7 @@ contract TestUsdnProtocolActionsSendRewardsToLiquidator is UsdnProtocolBaseFixtu
         vm.startPrank(DEPLOYER);
         usdn.approve(address(protocol), type(uint256).max);
         protocol.initiateWithdrawal(
-            uint128(usdn.sharesOf(DEPLOYER)),
+            uint152(usdn.sharesOf(DEPLOYER)),
             DEPLOYER,
             payable(DEPLOYER),
             abi.encode(params.initialPrice),
