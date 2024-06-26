@@ -286,7 +286,7 @@ library UsdnProtocolLongLibrary {
         // liquidate if the price was updated or was already the most recent
         if (data.isPriceRecent) {
             Types.LiquidationsEffects memory liquidationEffects =
-                _liquidatePositions(s, s._lastPrice, iterations, data.tempLongBalance, data.tempVaultBalance);
+                _liquidatePositions(s, data.lastPrice, iterations, data.tempLongBalance, data.tempVaultBalance);
 
             isLiquidationPending_ = liquidationEffects.isLiquidationPending;
             if (!isLiquidationPending_ && liquidationEffects.liquidatedTicks > 0) {
