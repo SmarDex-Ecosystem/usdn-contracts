@@ -608,10 +608,42 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         ActionsVault._checkPendingFee(s);
     }
 
+    function i_sendRewardsToLiquidator(
+        uint16 liquidatedTicks,
+        int256 remainingCollateral,
+        bool rebased,
+        bool rebalancerTriggered,
+        ProtocolAction action,
+        bytes memory rebaseCallbackResult,
+        bytes memory priceData
+    ) external {
+        ActionsUtils._sendRewardsToLiquidator(
+            s,
+            liquidatedTicks,
+            remainingCollateral,
+            rebased,
+            rebalancerTriggered,
+            action,
+            rebaseCallbackResult,
+            priceData
+        );
+    }
+
     function i_prepareInitiateDepositData(address validator, uint128 amount, bytes calldata currentPriceData)
         public
         returns (ActionsVault.InitiateDepositData memory data_)
     {
         return ActionsVault._prepareInitiateDepositData(s, validator, amount, currentPriceData);
+    }
+
+    function i_prepareClosePositionData(
+        address owner,
+        address to,
+        address validator,
+        PositionId memory posId,
+        uint128 amountToClose,
+        bytes calldata currentPriceData
+    ) external returns (ClosePositionData memory data_, bool liquidated_) {
+        return ActionsUtils._prepareClosePositionData(s, owner, to, validator, posId, amountToClose, currentPriceData);
     }
 }

@@ -111,7 +111,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         setUpUserPositionInVault(
             address(this), ProtocolAction.ValidateDeposit, 10_000 ether, DEFAULT_PARAMS.initialPrice
         );
-        skip(4 days);
+        skip(2 days);
 
         setUpUserPositionInLong(
             OpenParams({

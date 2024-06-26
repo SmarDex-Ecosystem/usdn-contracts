@@ -366,6 +366,14 @@ library UsdnProtocolLongLibrary {
 
         cache.tradingExpo = cache.totalExpo - cache.longBalance;
 
+        // calculate the bonus now and update the cache to make sure removing it from the vault doesn't push the
+        // imbalance above the threshold
+        uint128 bonus;
+        if (remainingCollateral > 0) {
+            bonus = (uint256(remainingCollateral) * s._rebalancerBonusBps / Constants.BPS_DIVISOR).toUint128();
+            cache.vaultBalance -= bonus;
+        }
+
         {
             int256 currentImbalance =
                 _calcImbalanceCloseBps(cache.vaultBalance.toInt256(), cache.longBalance.toInt256(), cache.totalExpo);
@@ -388,12 +396,13 @@ library UsdnProtocolLongLibrary {
             // if the position value is less than 0, it should have been liquidated but wasn't
             // interrupt the whole rebalancer process because there are pending liquidations
             if (realPositionValue < 0) {
-                return (cache.longBalance, vaultBalance_);
+                return (longBalance_, vaultBalance_);
             }
 
             // cast is safe as realPositionValue cannot be lower than 0
             data.positionValue = uint256(realPositionValue).toUint128();
             data.positionAmount += data.positionValue;
+            longBalance_ -= data.positionValue;
         }
 
         // if the amount in the position we wanted to open is below a fraction of the _minLongPosition setting,
@@ -403,18 +412,15 @@ library UsdnProtocolLongLibrary {
             // and inform it that no new position was open so it can start anew
             rebalancer.updatePosition(Types.PositionId(Constants.NO_POSITION_TICK, 0, 0), 0);
             vaultBalance_ += data.positionAmount;
-            return (cache.longBalance, vaultBalance_);
+            return (longBalance_, vaultBalance_);
         }
 
         // transfer the pending assets from the rebalancer to this contract
         // slither-disable-next-line arbitrary-send-erc20
         address(s._asset).safeTransferFrom(address(rebalancer), address(this), data.positionAmount - data.positionValue);
 
-        // if there is enough collateral remaining after liquidations, calculate the bonus and add it to the
-        // new rebalancer position
-        if (remainingCollateral > 0) {
-            uint128 bonus = (uint256(remainingCollateral) * s._rebalancerBonusBps / Constants.BPS_DIVISOR).toUint128();
-            cache.vaultBalance -= bonus;
+        // add the bonus to the new rebalancer position and remove it from the vault
+        if (bonus > 0) {
             vaultBalance_ -= bonus;
             data.positionAmount += bonus;
         }
