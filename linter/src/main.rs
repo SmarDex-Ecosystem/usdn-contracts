@@ -66,7 +66,33 @@ async fn main() -> Result<()> {
         })
         .collect();
 
-    for entry in WalkDir::new("src") {
+    // for entry in WalkDir::new("src") {
+    //     let entry = match entry {
+    //         Err(e) => {
+    //             eprintln!("walkdir error: {e:?}");
+    //             continue;
+    //         }
+    //         Ok(entry) => entry,
+    //     };
+    //     let metadata = match entry.metadata() {
+    //         Err(e) => {
+    //             eprintln!("file metadata error: {e:?}");
+    //             continue;
+    //         }
+    //         Ok(metadata) => metadata,
+    //     };
+    //     if metadata.is_dir() {
+    //         continue;
+    //     }
+    //     let path = entry.path();
+    //     match path.extension() {
+    //         Some(ext) if ext == "sol" => {}
+    //         _ => continue,
+    //     }
+    //     tx.send(PathBuf::from(path)).await?;
+    // }
+
+    for entry in WalkDir::new("test") {
         let entry = match entry {
             Err(e) => {
                 eprintln!("walkdir error: {e:?}");
@@ -85,9 +111,13 @@ async fn main() -> Result<()> {
             continue;
         }
         let path = entry.path();
-        match path.extension() {
-            Some(ext) if ext == "sol" => {}
-            _ => continue,
+        if !path
+            .file_name()
+            .unwrap()
+            .to_string_lossy()
+            .ends_with(".t.sol")
+        {
+            continue;
         }
         tx.send(PathBuf::from(path)).await?;
     }
@@ -104,13 +134,82 @@ async fn main() -> Result<()> {
 async fn worker(rx: Receiver<PathBuf>, solidity_version: String) -> Result<()> {
     let language = Language::new(solidity_version.parse()?)?;
     while let Ok(path) = rx.recv().await {
-        match parse_and_lint(&language, &path) {
-            Ok(()) => {}
-            Err(e) => {
-                eprintln!("Error parsing {path:?}: {e:?}");
-                continue;
-            }
+        if path.starts_with("test") {
+            match parse_and_lint_tests(&language, &path) {
+                Ok(()) => {}
+                Err(e) => {
+                    eprintln!("Error parsing {path:?}: {e:?}");
+                    continue;
+                }
+            };
+        } else {
+            match parse_and_lint(&language, &path) {
+                Ok(()) => {}
+                Err(e) => {
+                    eprintln!("Error parsing {path:?}: {e:?}");
+                    continue;
+                }
+            };
+        }
+    }
+    Ok(())
+}
+
+fn parse_and_lint_tests(lang: &Language, path: impl AsRef<Path>) -> Result<()> {
+    let path = path.as_ref();
+    let contents = fs::read_to_string(path)?;
+    let parse_output = lang.parse(NonterminalKind::SourceUnit, &contents);
+    for error in parse_output.errors() {
+        eprintln!(
+            "Error at byte offset {offset}: {message}",
+            offset = error.text_range().start.utf8,
+            message = error.message()
+        );
+    }
+    if !parse_output.is_valid() {
+        bail!("Parse error(s) found in {path:?}")
+    }
+    let cursor = parse_output.create_tree_cursor();
+    let query = Query::parse(
+        r#"
+        @test_function [FunctionDefinition
+            ...
+            [FunctionName
+                ...
+                @function_name [Identifier]
+                ...
+            ]
+            ...
+            @function_attributes [FunctionAttributes
+                ...
+                [FunctionAttribute
+                    ...
+                    @external ["external"]
+                    ...
+                ]
+                ...
+            ]
+            ...
+        ]
+        "#,
+    )?;
+    for m in cursor.query(vec![query]) {
+        let captures = m.captures;
+        let cursors = captures.get("function_name").unwrap();
+        let cursor = cursors.first().unwrap();
+        let function_name = cursor.node().unparse();
+        if !function_name.starts_with("test") {
+            continue;
         };
+
+        let cursors = captures.get("external").unwrap();
+        let cursor = cursors.first().unwrap();
+        let range = cursor.text_range();
+        println!(
+            "{}:{} {function_name} is `external`",
+            path.to_string_lossy(),
+            range.line().start
+        );
     }
     Ok(())
 }
