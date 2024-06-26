@@ -1,15 +1,20 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { USER_1, USER_2 } from "../../../utils/Constants.sol";
+import { ADMIN, USER_1, USER_2 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
+import { MockRebalancer } from "../utils/MockRebalancer.sol";
+
+import { IRebalancerTypes } from "../../../../src/interfaces/Rebalancer/IRebalancerTypes.sol";
 
 /**
  * @custom:feature The `_checkInitiateClosePosition` function
  * @custom:background Given a user position that can be closed and a non-zero minimum amount on long positions
  */
-contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture {
+contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture, IRebalancerTypes {
     uint128 constant AMOUNT = 5 ether;
+
+    MockRebalancer mockedRebalancer;
     PositionId posId;
     Position pos;
 
@@ -17,6 +22,10 @@ contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture {
         params = DEFAULT_PARAMS;
         params.flags.enableLongLimit = true;
         super._setUp(params);
+
+        mockedRebalancer = new MockRebalancer();
+        vm.prank(ADMIN);
+        protocol.setRebalancer(mockedRebalancer);
 
         posId = setUpUserPositionInLong(
             OpenParams(
@@ -81,5 +90,45 @@ contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture {
         uint128 amountToClose = AMOUNT - uint128(protocol.getMinLongPosition()) + 1;
         vm.expectRevert(UsdnProtocolLongPositionTooSmall.selector);
         protocol.i_checkInitiateClosePosition(address(this), USER_1, USER_2, amountToClose, pos);
+    }
+
+    function test_checkInitiateClosePositionFromRebalancer() public {
+        uint128 amountToClose = AMOUNT - uint128(protocol.getMinLongPosition()) + 1;
+        _setUpRebalancerPosition(uint88(amountToClose));
+        // note: the "to" below must be the rebalancer user (USER_1)
+        protocol.i_checkInitiateClosePosition(address(mockedRebalancer), USER_1, USER_2, amountToClose, pos);
+
+        amountToClose -= 1;
+        // if the rebalancer position remains above the position limit, then the "to" can be anyone
+        protocol.i_checkInitiateClosePosition(address(mockedRebalancer), address(this), USER_2, amountToClose, pos);
+    }
+
+    function test_RevertWhen_checkInitiateClosePositionFromRebalancerTooSmall() public {
+        uint128 amountToClose = AMOUNT - uint128(protocol.getMinLongPosition()) + 1;
+        _setUpRebalancerPosition(uint88(amountToClose + 1));
+        // note: the "to" below must be the rebalancer user (USER_1)
+        vm.expectRevert(UsdnProtocolLongPositionTooSmall.selector);
+        protocol.i_checkInitiateClosePosition(address(mockedRebalancer), USER_1, USER_2, amountToClose, pos);
+    }
+
+    function _setUpRebalancerPosition(uint88 userAmount) internal {
+        assertLe(userAmount, AMOUNT, "rebalancer user amount");
+        posId = setUpUserPositionInLong(
+            OpenParams(
+                address(mockedRebalancer),
+                ProtocolAction.ValidateOpenPosition,
+                AMOUNT,
+                params.initialPrice / 2,
+                params.initialPrice
+            )
+        );
+        (pos,) = protocol.getLongPosition(posId);
+        mockedRebalancer.setCurrentStateData(0, protocol.getMaxLeverage(), posId);
+        UserDeposit memory userDeposit = UserDeposit({
+            initiateTimestamp: uint40(block.timestamp),
+            amount: userAmount,
+            entryPositionVersion: mockedRebalancer.getPositionVersion()
+        });
+        mockedRebalancer.setUserDepositData(USER_1, userDeposit);
     }
 }
