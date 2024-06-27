@@ -656,4 +656,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     ) external view {
         ActionsUtils._checkInitiateClosePosition(s, owner, to, validator, amountToClose, pos);
     }
+
+    function i_funding(uint128 timestamp, int256 ema) external view returns (int256 fund_, int256 oldLongExpo_) {
+        return Core._funding(s, timestamp, ema);
+    }
 }
