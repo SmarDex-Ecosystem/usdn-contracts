@@ -7,6 +7,8 @@ methods
     function sharesOf(address) external returns (uint) envfree;
     function balanceOf(address) external returns (uint) envfree;
     function totalSupply() external returns (uint) envfree;
+    function divisor() external returns (uint) envfree;
+    function rebaseHandler() external returns (address) envfree;
 }
 
 rule partialTransferSpec(address recipient, uint divisor, uint tokens) {
@@ -63,6 +65,12 @@ rule partialTransferSpec2(address recipient, uint divisor, uint tokens) {
 
 rule partialTransferSpecKnownBad(address recipient) {
     env e;
+
+    require balanceOf(e.msg.sender) == 0;
+    require balanceOf(recipient) == 0;
+    require totalSupply() == 0;
+    require divisor() == MAX_DIVISOR();
+    require rebaseHandler() == 0;
 
     grantRole(e, MINTER_ROLE(), e.msg.sender);
 
