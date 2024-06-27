@@ -6,7 +6,7 @@ import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 /// @custom:feature The `GetTickLiquidationPenalty` function of the long layer
 contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
-    function setUp() external {
+    function setUp() public {
         _setUp(DEFAULT_PARAMS);
     }
 

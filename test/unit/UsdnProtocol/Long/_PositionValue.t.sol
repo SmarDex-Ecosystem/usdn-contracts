@@ -9,7 +9,7 @@ import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
  * leverage of ~2x
  */
 contract TestUsdnProtocolLongPositionValue is UsdnProtocolBaseFixture {
-    function setUp() external {
+    function setUp() public {
         _setUp(DEFAULT_PARAMS);
     }
 
