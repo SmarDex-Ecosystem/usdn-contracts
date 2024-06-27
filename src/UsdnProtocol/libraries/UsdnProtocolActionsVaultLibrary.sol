@@ -952,9 +952,9 @@ library UsdnProtocolActionsVaultLibrary {
         uint256 pendingFee = s._pendingProtocolFee;
         if (pendingFee >= s._feeThreshold) {
             address feeCollector = s._feeCollector;
+
             emit IUsdnProtocolEvents.ProtocolFeeDistributed(feeCollector, pendingFee);
             s._pendingProtocolFee = 0;
-
             address(s._asset).safeTransfer(feeCollector, pendingFee);
 
             if (ERC165Checker.supportsInterface(feeCollector, type(IFeeCollectorCallback).interfaceId)) {
