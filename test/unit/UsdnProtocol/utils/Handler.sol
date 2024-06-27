@@ -341,7 +341,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         ActionsUtils._checkImbalanceLimitClose(s, posTotalExpoToClose, posValueToClose);
     }
 
-    function i_getLeverage(uint128 price, uint128 liqPrice) external pure returns (uint128) {
+    function i_getLeverage(uint128 price, uint128 liqPrice) external pure returns (uint256) {
         return Long._getLeverage(price, liqPrice);
     }
 
@@ -645,5 +645,12 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         bytes calldata currentPriceData
     ) external returns (ClosePositionData memory data_, bool liquidated_) {
         return ActionsUtils._prepareClosePositionData(s, owner, to, validator, posId, amountToClose, currentPriceData);
+    }
+
+    function i_prepareValidateOpenPositionData(PendingAction memory pending, bytes calldata priceData)
+        external
+        returns (ValidateOpenPositionData memory data_, bool liquidated_)
+    {
+        return ActionsUtils._prepareValidateOpenPositionData(s, pending, priceData);
     }
 }
