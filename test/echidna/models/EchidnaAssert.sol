@@ -1,68 +1,60 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { SDEX, WSTETH } from "test/utils/Constants.sol";
+import { Test } from "forge-std/Test.sol";
 
-import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import "../../test/utils/Sdex.sol";
-import "../OracleMiddleware/mock/MockLiquidationRewardsManager.sol";
-import "../OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
-import "../Rebalancer/Rebalancer.sol";
-import "../Usdn/Usdn.sol";
-import "../UsdnProtocol/UsdnProtocol.sol";
-import "../interfaces/IWstETH.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "forge-std/Test.sol";
-import "forge-std/console2.sol";
+import { MockLiquidationRewardsManager } from "../../../src/OracleMiddleware/mock/MockLiquidationRewardsManager.sol";
+import { MockWstEthOracleMiddleware } from "../../../src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
+import { Rebalancer } from "../../../src/Rebalancer/Rebalancer.sol";
+import { Usdn } from "../../../src/Usdn/Usdn.sol";
+import { UsdnProtocol } from "../../../src/UsdnProtocol/UsdnProtocol.sol";
+import { IWstETH } from "../../../src/interfaces/IWstETH.sol";
+import { IUsdnProtocolTypes } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+
+import { SDEX, WSTETH } from "../../utils/Constants.sol";
+import { Sdex } from "../../utils/Sdex.sol";
 
 interface IHevm {
     function warp(uint256 newTimestamp) external;
-
     function deal(address usr, uint256 amt) external;
-
     function roll(uint256 newNumber) external;
-
     function load(address where, bytes32 slot) external returns (bytes32);
-
     function store(address where, bytes32 slot, bytes32 value) external;
-
     function sign(uint256 privateKey, bytes32 digest) external returns (uint8 r, bytes32 v, bytes32 s);
-
     function addr(uint256 privateKey) external returns (address add);
-
     function ffi(string[] calldata inputs) external returns (bytes memory result);
-
     function prank(address newSender) external;
 }
 
 interface IWETH is IERC20 {
     function deposit() external payable;
-
     function withdraw(uint256) external;
 }
 
-contract Setup is Test {
-    address public WETH_ADDRESS = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    IHevm public hevm = IHevm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
-    Sdex public sdex = Sdex(SDEX);
+contract SetUp is Test {
+    address internal WETH_ADDRESS = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    IHevm internal hevm = IHevm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
+    Sdex internal sdex = Sdex(SDEX);
 
     IWETH public weth = IWETH(WETH_ADDRESS);
-    IWstETH public wstEth = IWstETH(WSTETH);
+    IWstETH internal wstEth = IWstETH(WSTETH);
 
-    MockWstEthOracleMiddleware public wstEthOracleMiddleware;
-    MockLiquidationRewardsManager public liquidationRewardsManager;
-    Usdn public usdn;
-    UsdnProtocol public usdnProtocol;
-    Rebalancer public rebalancer;
+    MockWstEthOracleMiddleware internal wstEthOracleMiddleware;
+    MockLiquidationRewardsManager internal liquidationRewardsManager;
+    Usdn internal usdn;
+    UsdnProtocol internal usdnProtocol;
+    Rebalancer internal rebalancer;
 
-    address public DEPLOYER = address(0x10000);
+    address internal DEPLOYER = address(0x10000);
     address public ATTACKER = address(0x20000);
     address public FEE_COLLECTOR = address(0x00fee);
 
-    uint256 public ACCOUNT_ETH_AMOUNT = 100 ether;
+    uint256 internal ACCOUNT_ETH_AMOUNT = 100 ether;
 
     constructor() payable {
+        vm.createSelectFork(vm.rpcUrl("mainnet"));
         uint256 INIT_DEPOSIT_AMOUNT = 10 ether;
         uint256 INIT_LONG_AMOUNT = 10 ether;
 
@@ -107,7 +99,7 @@ contract Setup is Test {
     }
 }
 
-contract EchidnaAssert is Setup {
+contract EchidnaAssert is SetUp {
 /* -------------------------------------------------------------------------- */
 /*                             Utils                                          */
 /* -------------------------------------------------------------------------- */

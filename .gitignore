@@ -36,3 +36,6 @@ natspec-smells.txt
 
 # Rust
 target/
+
+# Corpus
+echidna_assert_corpus/
