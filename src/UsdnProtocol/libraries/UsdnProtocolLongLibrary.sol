@@ -70,10 +70,10 @@ library UsdnProtocolLongLibrary {
         bool isPriceRecent;
         int256 tempLongBalance;
         int256 tempVaultBalance;
+        uint128 lastPrice;
         bool rebased;
         bool rebalancerTriggered;
         bytes callbackResult;
-        uint128 lastPrice;
     }
 
     /**
@@ -279,9 +279,13 @@ library UsdnProtocolLongLibrary {
         bytes calldata priceData
     ) public returns (uint256 liquidatedPositions_, bool isLiquidationPending_) {
         ApplyPnlAndFundingAndLiquidateData memory data;
-        // adjust balances
-        (data.isPriceRecent, data.tempLongBalance, data.tempVaultBalance, data.lastPrice) =
-            Core._applyPnlAndFunding(s, neutralPrice.toUint128(), timestamp.toUint128());
+        {
+            Types.ApplyPnlAndFundingData memory temporaryData =
+                Core._applyPnlAndFunding(s, neutralPrice.toUint128(), timestamp.toUint128());
+            assembly {
+                mcopy(data, temporaryData, 128)
+            }
+        }
 
         // liquidate if the price was updated or was already the most recent
         if (data.isPriceRecent) {

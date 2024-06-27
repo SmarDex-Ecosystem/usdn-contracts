@@ -30,18 +30,6 @@ library UsdnProtocolCoreLibrary {
     using LibBitmap for LibBitmap.Bitmap;
     using HugeUint for HugeUint.Uint512;
 
-    /**
-     * @notice Data structure for the `_applyPnlAndFunding` function
-     * @param fee The absolute value of the calculated fee
-     * @param fundWithFee The updated funding factor after applying the fee
-     * @param fundAssetWithFee The updated funding asset amount after applying the fee
-     */
-    struct CalculateFeeData {
-        int256 fee;
-        int256 fundWithFee;
-        int256 fundAssetWithFee;
-    }
-
     /* -------------------------------------------------------------------------- */
     /*                              Public functions                              */
     /* -------------------------------------------------------------------------- */
@@ -459,13 +447,11 @@ library UsdnProtocolCoreLibrary {
      * @param s The storage of the protocol
      * @param currentPrice The current price
      * @param timestamp The timestamp of the current price
-     * @return isPriceRecent_ Whether the price was updated or was already the most recent price
-     * @return tempLongBalance_ The new balance of the long side, could be negative (temporarily)
-     * @return tempVaultBalance_ The new balance of the vault side, could be negative (temporarily)
+     * @return data_ The data returned by the function
      */
     function _applyPnlAndFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
         public
-        returns (bool isPriceRecent_, int256 tempLongBalance_, int256 tempVaultBalance_, uint128 lastPrice_)
+        returns (Types.ApplyPnlAndFundingData memory data_)
     {
         int256 fundAsset;
         int256 fund;
@@ -474,12 +460,12 @@ library UsdnProtocolCoreLibrary {
             uint128 lastUpdateTimestamp = s._lastUpdateTimestamp;
             // if the price is not fresh, do nothing
             if (timestamp <= lastUpdateTimestamp) {
-                return (
-                    timestamp == lastUpdateTimestamp,
-                    s._balanceLong.toInt256(),
-                    s._balanceVault.toInt256(),
-                    s._lastPrice
-                );
+                return Types.ApplyPnlAndFundingData({
+                    isPriceRecent: timestamp == lastUpdateTimestamp,
+                    tempLongBalance: s._balanceLong.toInt256(),
+                    tempVaultBalance: s._balanceVault.toInt256(),
+                    lastPrice: s._lastPrice
+                });
             }
 
             // update the funding EMA
@@ -489,35 +475,34 @@ library UsdnProtocolCoreLibrary {
             (fundAsset, fund) = _fundingAsset(s, timestamp, ema);
         }
 
-        CalculateFeeData memory data;
         // take protocol fee on the funding value
-        (data.fee, data.fundWithFee, data.fundAssetWithFee) = _calculateFee(s, fund, fundAsset);
+        (int256 fee, int256 fundWithFee, int256 fundAssetWithFee) = _calculateFee(s, fund, fundAsset);
 
         // we subtract the fee from the total balance
         int256 totalBalance = s._balanceLong.toInt256();
-        totalBalance = totalBalance.safeAdd(s._balanceVault.toInt256()).safeSub(data.fee);
+        totalBalance = totalBalance.safeAdd(s._balanceVault.toInt256()).safeSub(fee);
         // calculate new balances (for now, any bad debt has not been repaid, balances could become negative)
 
         if (fund > 0) {
             // in case of positive funding, the vault balance must be decremented by the totality of the funding amount
             // however, since we deducted the fee amount from the total balance, the vault balance will be incremented
             // only by the funding amount minus the fee amount
-            tempLongBalance_ = _longAssetAvailable(s, currentPrice).safeSub(fundAsset);
+            data_.tempLongBalance = _longAssetAvailable(s, currentPrice).safeSub(fundAsset);
         } else {
             // in case of negative funding, the vault balance must be decremented by the totality of the funding amount
             // however, since we deducted the fee amount from the total balance, the long balance will be incremented
             // only by the funding amount minus the fee amount
-            tempLongBalance_ = _longAssetAvailable(s, currentPrice).safeSub(data.fundAssetWithFee);
+            data_.tempLongBalance = _longAssetAvailable(s, currentPrice).safeSub(fundAssetWithFee);
         }
-        tempVaultBalance_ = totalBalance.safeSub(tempLongBalance_);
+        data_.tempVaultBalance = totalBalance.safeSub(data_.tempLongBalance);
 
         // update state variables
         s._lastPrice = currentPrice;
-        lastPrice_ = currentPrice;
+        data_.lastPrice = currentPrice;
         s._lastUpdateTimestamp = timestamp;
-        s._lastFunding = data.fundWithFee;
+        s._lastFunding = fundWithFee;
 
-        isPriceRecent_ = true;
+        data_.isPriceRecent = true;
     }
 
     /**

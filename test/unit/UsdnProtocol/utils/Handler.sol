@@ -21,6 +21,7 @@ import { IBaseOracleMiddleware } from "../../../../src/interfaces/OracleMiddlewa
 import { ILiquidationRewardsManager } from "../../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../../../../src/interfaces/Usdn/IUsdn.sol";
+import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "../../../../src/libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
@@ -106,13 +107,12 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     }
 
     function updateBalances(uint128 currentPrice) external {
-        (bool priceUpdated, int256 tempLongBalance, int256 tempVaultBalance,) =
-            Core._applyPnlAndFunding(s, currentPrice, uint128(block.timestamp));
-        if (!priceUpdated) {
+        Types.ApplyPnlAndFundingData memory data = Core._applyPnlAndFunding(s, currentPrice, uint128(block.timestamp));
+        if (!data.isPriceRecent) {
             revert("price was not updated");
         }
-        s._balanceLong = tempLongBalance.toUint256();
-        s._balanceVault = tempVaultBalance.toUint256();
+        s._balanceLong = data.tempLongBalance.toUint256();
+        s._balanceVault = data.tempVaultBalance.toUint256();
     }
 
     function removePendingAction(uint128 rawIndex, address user) external {
@@ -199,7 +199,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
 
     function i_applyPnlAndFunding(uint128 currentPrice, uint128 timestamp)
         external
-        returns (bool priceUpdated_, int256 tempLongBalance_, int256 tempVaultBalance_, uint128 lastPrice_)
+        returns (Types.ApplyPnlAndFundingData memory data_)
     {
         return Core._applyPnlAndFunding(s, currentPrice, timestamp);
     }
