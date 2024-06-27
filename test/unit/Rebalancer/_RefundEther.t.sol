@@ -22,7 +22,7 @@ contract TestRebalancerRefundEther is RebalancerFixture {
      * @custom:when The {_refundEther} function is called
      * @custom:then The user should have received the rebalancer's balance
      */
-    function test_refundEther() external {
+    function test_refundEther() public {
         uint256 balanceBefore = address(this).balance;
         rebalancer.i_refundEther();
 
@@ -35,7 +35,7 @@ contract TestRebalancerRefundEther is RebalancerFixture {
      * @custom:when The {_refundEther} function is called
      * @custom:then The call should revert with a {RebalancerEtherRefundFailed} error
      */
-    function test_RevertWhen_refundEtherFails() external {
+    function test_RevertWhen_refundEtherFails() public {
         revertOnReceive = true;
 
         vm.expectRevert(RebalancerEtherRefundFailed.selector);

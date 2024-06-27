@@ -31,7 +31,7 @@ contract TestUsdnProtocolLongFlashOpenPosition is UsdnProtocolBaseFixture {
      * @custom:then A new position is opened
      * @custom:and InitiatedOpenPosition and ValidatedOpenPosition events are emitted
      */
-    function test_flashOpenPosition() external {
+    function test_flashOpenPosition() public {
         int24 tickWithoutPenalty = protocol.getEffectiveTickForPrice(
             1500 ether, CURRENT_PRICE, longTradingExpo, liqMultiplierAccumulator, _tickSpacing
         );
@@ -74,7 +74,7 @@ contract TestUsdnProtocolLongFlashOpenPosition is UsdnProtocolBaseFixture {
      * @custom:and InitiatedOpenPosition and ValidatedOpenPosition events are emitted
      * @custom:and The created position has the same penalty as the positions in the tick
      */
-    function test_flashOpenPositionOnTickWithDifferentPenalty() external {
+    function test_flashOpenPositionOnTickWithDifferentPenalty() public {
         int24 tickWithoutOldPenalty =
             initialPosition.tick - int24(uint24(protocol.getLiquidationPenalty())) * _tickSpacing;
         int24 tickWithoutNewPenalty = initialPosition.tick - _tickSpacing;

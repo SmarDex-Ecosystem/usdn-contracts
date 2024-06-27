@@ -15,7 +15,7 @@ import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUs
 contract TestGetLongPosition is UsdnProtocolBaseFixture {
     uint128 constant OPEN_AMOUNT = 10 ether;
 
-    function setUp() external {
+    function setUp() public {
         params = DEFAULT_PARAMS;
         params.flags.enableFunding = false;
         params.flags.enableProtocolFees = false;

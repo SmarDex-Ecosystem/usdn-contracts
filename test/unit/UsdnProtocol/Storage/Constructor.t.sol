@@ -21,7 +21,7 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
      * @custom:when The protocol is instantiated with the USDN token already having some supply created
      * @custom:then The instantiation should revert.
      */
-    function test_RevertWhen_constructorUSDNNonZeroTotalSupply() external {
+    function test_RevertWhen_constructorUSDNNonZeroTotalSupply() public {
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidUsdn.selector, address(usdn)));
         new UsdnProtocol(usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(1));
     }
@@ -32,7 +32,7 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
      * @custom:when The protocol is instantiated with the fee collector being the zero address
      * @custom:then The instantiation should revert.
      */
-    function test_RevertWhen_constructorFeeCollectorIsZeroAddress() external {
+    function test_RevertWhen_constructorFeeCollectorIsZeroAddress() public {
         usdn = new Usdn(address(0), address(0));
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidFeeCollector.selector));
@@ -45,7 +45,7 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
      * @custom:when The protocol is instantiated with the fee collector being the zero address
      * @custom:then The instantiation should revert.
      */
-    function test_RevertWhen_constructorAssetDecimalsToLow() external {
+    function test_RevertWhen_constructorAssetDecimalsToLow() public {
         uint8 wrongDecimals = protocol.FUNDING_SF_DECIMALS() - 1;
         usdn = new Usdn(address(0), address(0));
         // Lower the asset's decimals
@@ -62,7 +62,7 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
      * TOKENS_DECIMALS.
      * @custom:then The instantiation should revert.
      */
-    function test_RevertWhen_constructorTokenDecimalsMismatch() external {
+    function test_RevertWhen_constructorTokenDecimalsMismatch() public {
         usdn = new Usdn(address(0), address(0));
         sdex.setDecimals(protocol.TOKENS_DECIMALS() - 1);
 
