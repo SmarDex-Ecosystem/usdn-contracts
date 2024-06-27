@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.25;
 
+import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../../interfaces/Usdn/IUsdn.sol";
+import { IFeeCollectorCallback } from "../../interfaces/UsdnProtocol/IFeeCollectorCallback.sol";
 import { IUsdnProtocolActions } from "../../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
@@ -942,14 +944,23 @@ library UsdnProtocolActionsVaultLibrary {
     /**
      * @notice Distribute the protocol fee to the fee collector if it exceeds the threshold
      * @dev This function is called after every action that changes the protocol fee balance
+     * Try to call the function `feeCollectorCallback` on the fee collector if it supports the interface (non reverting
+     * if it fails)
+     * @param s The storage of the protocol
      */
     function _checkPendingFee(Types.Storage storage s) public {
         uint256 pendingFee = s._pendingProtocolFee;
         if (pendingFee >= s._feeThreshold) {
             address feeCollector = s._feeCollector;
-            address(s._asset).safeTransfer(feeCollector, pendingFee);
             emit IUsdnProtocolEvents.ProtocolFeeDistributed(feeCollector, pendingFee);
             s._pendingProtocolFee = 0;
+
+            address(s._asset).safeTransfer(feeCollector, pendingFee);
+
+            if (ERC165Checker.supportsInterface(feeCollector, type(IFeeCollectorCallback).interfaceId)) {
+                // try/catch to avoid reverting the whole action if the callback fails
+                try IFeeCollectorCallback(feeCollector).feeCollectorCallback(pendingFee) { } catch { }
+            }
         }
     }
 }
