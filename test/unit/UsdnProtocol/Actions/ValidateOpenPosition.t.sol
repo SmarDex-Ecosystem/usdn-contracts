@@ -26,7 +26,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         PositionId tempPosId;
         uint256 validateTickVersion;
         uint256 validateIndex;
-        uint128 expectedLeverage;
+        uint256 expectedLeverage;
     }
 
     function setUp() public {
@@ -362,7 +362,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
 
         {
             // Sanity check
-            uint128 expectedLeverage = protocol.i_getLeverage(data.validatePrice, expectedLiqPrice);
+            uint256 expectedLeverage = protocol.i_getLeverage(data.validatePrice, expectedLiqPrice);
             // final leverage should be above 10x because of the stored liquidation penalty of the target tick
             assertGt(expectedLeverage, uint128(10 * 10 ** protocol.LEVERAGE_DECIMALS()), "final leverage");
         }
