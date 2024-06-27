@@ -18,7 +18,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
      * @custom:then Nothing should happen
      * @custom:and 0s should be returned
      */
-    function test_nothingHappensWhenThereIsNothingToLiquidate() external {
+    function test_nothingHappensWhenThereIsNothingToLiquidate() public {
         vm.recordLogs();
         LiquidationsEffects memory liquidationsEffects =
             protocol.i_liquidatePositions(2000 ether, 1, 100 ether, 100 ether);
@@ -108,7 +108,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
      * @custom:then It should liquidate the position.
      */
     function test_canLiquidateAPositionWithFundings() public {
-        vm.skip(true); // TODO: rewrite this test to use the external function, as now `i_applyPnlAndFunding` does not
+        vm.skip(true); // TODO: rewrite this test to use the public function, as now `i_applyPnlAndFunding` does not
         // mutate the balances and the test doesn't pass anymore. The fundings now only have effect through their effect
         // on the long balance.
         params = DEFAULT_PARAMS;
@@ -283,7 +283,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
      * @custom:and The long balance should be at 0
      * @custom:and The vault should have absorbed the long side's debt
      */
-    function test_canLiquidateEvenWithBadDebtInLongs() external {
+    function test_canLiquidateEvenWithBadDebtInLongs() public {
         vm.skip(true); // this case is not possible anymore with the new liquidation multiplier accumulator
         uint128 price = 2000 ether;
         int24 desiredLiqTick = protocol.getEffectiveTickForPrice(price - 200 ether);
@@ -337,7 +337,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
      * @custom:and The vault balance should be at 0
      * @custom:and The long side should have absorbed the vault's debt
      */
-    function test_canLiquidateEvenWithBadDebtInVault() external {
+    function test_canLiquidateEvenWithBadDebtInVault() public {
         vm.skip(true); // this case is not possible anymore with the new liquidation multiplier accumulator
         uint128 price = 3000 ether;
         int24 desiredLiqTick = protocol.getEffectiveTickForPrice(price - 200 ether);

@@ -64,7 +64,7 @@ contract TestInitializableReentrancyGuardInitializedAndNonReentrant is
      * @custom:when The user calls a function with the modifier
      * @custom:then The call does not revert and there is no reentrancy
      */
-    function test_initializedAndNonReentrant() external {
+    function test_initializedAndNonReentrant() public {
         handler.initialize();
 
         // Make sure no reentrancy happened
