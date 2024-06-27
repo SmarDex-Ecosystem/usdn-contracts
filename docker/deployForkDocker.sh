@@ -1,7 +1,4 @@
-#!/usr/bin/env bash
-# Path of the script folder (so that the script can be invoked from somewhere else than the project's root)
-SCRIPT_DIR=$(dirname -- "$(readlink -f -- "$BASH_SOURCE")")
-
+#!/bin/sh
 # Anvil RPC URL
 RPC_URL=http://localhost:8545
 # Anvil first test private key
@@ -26,9 +23,9 @@ export CHAINLINK_GAS_PRICE_ADDRESS=0x169E633A2D1E6c10dD91238Ba11c4A708dfEF37C
 export CHAINLINK_GAS_PRICE_VALIDITY=7500
 export GET_WSTETH=true
 
-# Execute in the context of the project's root
-pushd $SCRIPT_DIR/..
-
+# cd /opt/contracts/
 forge script --non-interactive --private-key $DEPLOYER_PRIVATE_KEY -f $RPC_URL script/Deploy.s.sol:Deploy --broadcast
 
-popd
+# Prevent Dockerfile build from crashing due to Transaction dropped error
+# https://github.com/foundry-rs/foundry/issues/3880
+cd .

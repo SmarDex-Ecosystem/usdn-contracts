@@ -36,3 +36,7 @@ natspec-smells.txt
 
 # Rust
 target/
+
+# Fork docker build
+/**/state.json
+pnpm-lock.yaml
