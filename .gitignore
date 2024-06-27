@@ -36,3 +36,6 @@ natspec-smells.txt
 
 # Rust
 target/
+
+# Certora prover
+.certora_internal
