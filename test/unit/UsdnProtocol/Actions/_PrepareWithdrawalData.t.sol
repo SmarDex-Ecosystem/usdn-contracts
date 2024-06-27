@@ -7,16 +7,17 @@ import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 import { UsdnProtocolActionsVaultLibrary as ActionsVault } from
     "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsVaultLibrary.sol";
 
-/// @custom:feature Test of the protocol `_prepareWithdrawalData` internal function
+/**
+ * @custom:feature Test of the protocol `_prepareWithdrawalData` internal function
+ * @custom:background A user deposited assets in the protocol and minted USDN tokens
+ */
 contract TestUsdnProtocolActionsPrepareWithdrawalData is UsdnProtocolBaseFixture {
     uint128 private constant DEPOSITED_AMOUNT = 1 ether;
     uint152 private usdnSharesAmount;
     bytes private currentPriceData;
 
     function setUp() public {
-        params = DEFAULT_PARAMS;
-        params.flags.enableSdexBurnOnDeposit = true;
-        super._setUp(params);
+        super._setUp(DEFAULT_PARAMS);
 
         currentPriceData = abi.encode(params.initialPrice);
 
