@@ -42,7 +42,7 @@ contract MockRebalancer is IBaseRebalancer, IRebalancerTypes {
                 _positionData[_positionVersion].tick,
                 _positionData[_positionVersion].tickVersion,
                 _positionData[_positionVersion].index
-            )
+                )
         );
     }
 
