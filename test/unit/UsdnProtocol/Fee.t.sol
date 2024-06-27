@@ -22,12 +22,10 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
      * @custom:given The fee value is > BPS_DIVISOR
      * @custom:then The protocol reverts with `UsdnProtocolInvalidProtocolFeeBps`
      */
-    function test_RevertWhen_setFeeBps_tooBig() public {
+    function test_RevertWhen_setFeeBps_tooBig() public adminPrank {
         uint16 bpsDivisor = uint16(protocol.BPS_DIVISOR());
-        vm.startPrank(ADMIN);
         vm.expectRevert(UsdnProtocolInvalidProtocolFeeBps.selector);
         protocol.setProtocolFeeBps(bpsDivisor + 1);
-        vm.stopPrank();
     }
 
     /**
@@ -123,10 +121,12 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
             })
         );
         skip(8 days);
-        assertEq(wstETH.balanceOf(ADMIN), 0, "fee collector balance before collect");
+        assertEq(wstETH.balanceOf(address(feeCollector)), 0, "fee collector balance before collect");
         setUpUserPositionInVault(
             address(this), ProtocolAction.InitiateDeposit, 10_000 ether, DEFAULT_PARAMS.initialPrice
         );
-        assertGe(wstETH.balanceOf(ADMIN), protocol.getFeeThreshold(), "fee collector balance after collect");
+        assertGe(
+            wstETH.balanceOf(address(feeCollector)), protocol.getFeeThreshold(), "fee collector balance after collect"
+        );
     }
 }
