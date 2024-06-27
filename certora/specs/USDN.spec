@@ -18,6 +18,7 @@ rule partialTransferSpec(address recipient, uint divisor, uint tokens) {
     require divisor < MAX_DIVISOR();
     require tokens >= 0;
     require tokens <= maxTokens();
+    require rebaseHandler() == 0;
 
     grantRole(e, MINTER_ROLE(), e.msg.sender);
 
@@ -45,6 +46,7 @@ rule partialTransferSpec2(address recipient, uint divisor, uint tokens) {
     require divisor < MAX_DIVISOR();
     require tokens >= 0;
     require tokens <= maxTokens();
+    require rebaseHandler() == 0;
 
     grantRole(e, MINTER_ROLE(), e.msg.sender);
 
