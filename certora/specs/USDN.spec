@@ -11,7 +11,7 @@ methods
     function rebaseHandler() external returns (address) envfree;
 }
 
-rule partialTransferSpec(address recipient, uint divisor, uint tokens) {
+rule partialTransferShouldBeOKSpec(address recipient, uint divisor, uint tokens) {
     env e;
 
     require divisor > MIN_DIVISOR();
@@ -39,7 +39,7 @@ rule partialTransferSpec(address recipient, uint divisor, uint tokens) {
 }
 
 
-rule partialTransferSpec2(address recipient, uint divisor, uint tokens) {
+rule partialTransferShouldFailSpec(address recipient, uint divisor, uint tokens) {
     env e;
 
     require divisor > MIN_DIVISOR();
@@ -65,7 +65,7 @@ rule partialTransferSpec2(address recipient, uint divisor, uint tokens) {
     assert total_supply == sender_balance_after + recipient_balance_after, "balances sum invariant";
 }
 
-rule partialTransferSpecKnownBad(address recipient) {
+rule partialTransferKnownBadValuesSpec(address recipient) {
     env e;
 
     require balanceOf(e.msg.sender) == 0;
