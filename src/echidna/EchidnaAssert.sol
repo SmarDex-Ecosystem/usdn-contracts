@@ -67,6 +67,7 @@ contract Setup is Test {
         uint256 INIT_LONG_AMOUNT = 10 ether;
 
         uint256 _ethAmount = (INIT_DEPOSIT_AMOUNT + INIT_LONG_AMOUNT + 10_000) * wstEth.stEthPerToken() / 1 ether;
+        vm.deal(address(this), _ethAmount);
         (bool result,) = WSTETH.call{ value: _ethAmount }("");
         require(result, "WstETH mint failed");
 
