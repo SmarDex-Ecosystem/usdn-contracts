@@ -37,6 +37,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     using SafeCast for uint256;
     using SignedMath for int256;
 
+    Storage _tempStorage;
+
     constructor(
         IUsdn usdn,
         IERC20Metadata sdex,
@@ -657,7 +659,32 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         ActionsUtils._checkInitiateClosePosition(s, owner, to, validator, amountToClose, pos);
     }
 
-    function i_funding(uint128 timestamp, int256 ema) external view returns (int256 fund_, int256 oldLongExpo_) {
-        return Core._funding(s, timestamp, ema);
+    /**
+     * @notice These are the storage fields that are used by the `_funding` function
+     * @dev We can pass these to `i_funding` to effectively make the function "pure", by controlling all variables
+     * manually
+     */
+    struct FundingStorage {
+        uint256 totalExpo;
+        uint256 balanceLong;
+        uint256 balanceVault;
+        uint128 lastUpdateTimestamp;
+        uint256 fundingSF;
+    }
+
+    /**
+     * @dev The first argument contains all the storage variables accessed by `_funding`, so that they can be
+     * controlled manually in the tests
+     */
+    function i_funding(FundingStorage memory fundingStorage, uint128 timestamp, int256 ema)
+        external
+        returns (int256 fund_, int256 oldLongExpo_)
+    {
+        _tempStorage._totalExpo = fundingStorage.totalExpo;
+        _tempStorage._balanceVault = fundingStorage.balanceVault;
+        _tempStorage._balanceLong = fundingStorage.balanceLong;
+        _tempStorage._lastUpdateTimestamp = fundingStorage.lastUpdateTimestamp;
+        _tempStorage._fundingSF = fundingStorage.fundingSF;
+        return Core._funding(_tempStorage, timestamp, ema);
     }
 }
