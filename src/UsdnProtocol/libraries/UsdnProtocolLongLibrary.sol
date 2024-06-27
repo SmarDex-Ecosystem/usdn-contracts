@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.25;
 
-import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
@@ -28,7 +27,6 @@ library UsdnProtocolLongLibrary {
     using SafeCast for uint256;
     using SafeCast for int256;
     using SignedMath for int256;
-    using Math for uint256;
     using HugeUint for HugeUint.Uint512;
     using SafeTransferLib for address;
 

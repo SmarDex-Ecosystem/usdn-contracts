@@ -60,7 +60,7 @@ contract TestUsdnProtocolLongGetLeverage is UsdnProtocolBaseFixture {
         assertEq(
             leverage,
             340_282_366_920_938_463_463_374_607_431_768_211_455_000_000_000_000_000_000_000,
-            "leverage should be 2e21"
+            "leverage should be 340_282..."
         );
     }
 }
