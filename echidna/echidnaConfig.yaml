@@ -6,7 +6,26 @@ sender: ["0x10000"]
 codeSize: 0xffffffff
 #balanceContract: 0x487A9A304539440000 #1337 eth
 #balanceAddr: 0x487A9A304539440000 #1337 eth
-#cryticArgs: ["--solc-args=--optimize", "--compile-force-framework", "hardhat"]
+cryticArgs: ["--solc-args=--optimize", "--compile-force-framework", "foundry", "--compile-libraries=(DoubleEndedQueue,0x00),
+    (HugeUint,0x01),
+    (TickMath,0x02),
+    (UsdnProtocolActionsLongLibrary,0x03),
+    (UsdnProtocolActionsUtilsLibrary,0x04),
+    (UsdnProtocolActionsVaultLibrary,0x05),
+    (UsdnProtocolCoreLibrary,0x06),
+    (UsdnProtocolLongLibrary,0x07),
+    (UsdnProtocolSettersLibrary,0x08),
+    (UsdnProtocolVaultLibrary,0x09)"]
+deployContracts: [["0x00", "DoubleEndedQueue"],
+                   ["0x01", "HugeUint"],
+                   ["0x02", "TickMath"],
+                   ["0x03", "UsdnProtocolActionsLongLibrary"],
+                   ["0x04", "UsdnProtocolActionsUtilsLibrary"],
+                   ["0x05", "UsdnProtocolActionsVaultLibrary"],
+                   ["0x06", "UsdnProtocolCoreLibrary"],
+                   ["0x07", "UsdnProtocolLongLibrary"],
+                   ["0x08", "UsdnProtocolSettersLibrary"],
+                   ["0x09", "UsdnProtocolVaultLibrary"]]
 stopOnFail: true
 # URL to fetch contracts over RPC -> change to private url (alchemy, infura...)
 rpcUrl: https://eth-mainnet.g.alchemy.com/v2/s7Sgrfkbvl045kIIUEOdKJLya2nbUElJ
