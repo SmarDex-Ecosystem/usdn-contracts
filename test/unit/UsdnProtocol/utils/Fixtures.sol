@@ -129,12 +129,12 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             protocol.setFundingSF(0);
             protocol.resetEMA();
         }
-        if (!params.flags.enableUsdnRebase) {
+        if (!testParams.flags.enableUsdnRebase) {
             // set a high target price to effectively disable rebases
             protocol.setUsdnRebaseThreshold(type(uint128).max);
             protocol.setTargetUsdnPrice(type(uint128).max);
         }
-        if (!params.flags.enableSecurityDeposit) {
+        if (!testParams.flags.enableSecurityDeposit) {
             protocol.setSecurityDepositValue(0);
         }
 
