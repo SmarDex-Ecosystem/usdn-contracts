@@ -12,6 +12,7 @@ contract TestEchidna is Test {
     address internal ATTACKER = address(0x20000);
 
     function setUp() public {
+        vm.createSelectFork(vm.rpcUrl("mainnet"));
         echidna = new EchidnaAssert();
     }
 

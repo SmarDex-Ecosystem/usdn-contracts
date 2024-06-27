@@ -54,7 +54,6 @@ contract SetUp is Test {
     uint256 internal ACCOUNT_ETH_AMOUNT = 100 ether;
 
     constructor() payable {
-        vm.createSelectFork(vm.rpcUrl("mainnet"));
         uint256 INIT_DEPOSIT_AMOUNT = 10 ether;
         uint256 INIT_LONG_AMOUNT = 10 ether;
 
