@@ -5,7 +5,7 @@ import { Test } from "forge-std/Test.sol";
 
 import { EchidnaAssert } from "./models/EchidnaAssert.sol";
 
-contract TestEchidna is Test {
+contract TestForkEchidna is Test {
     EchidnaAssert public echidna;
 
     address internal DEPLOYER = address(0x10000);
@@ -16,5 +16,5 @@ contract TestEchidna is Test {
         echidna = new EchidnaAssert();
     }
 
-    function test_canRun() public { }
+    function test_ForkCanRun() public { }
 }
