@@ -109,24 +109,71 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         setUpUserPositionInVault(
             address(this), ProtocolAction.ValidateDeposit, 10_000 ether, DEFAULT_PARAMS.initialPrice
         );
-        skip(2 days);
+        skip(30 days);
 
-        setUpUserPositionInLong(
-            OpenParams({
-                user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
-                positionSize: 5000 ether,
-                desiredLiqPrice: DEFAULT_PARAMS.initialPrice / 2,
-                price: DEFAULT_PARAMS.initialPrice
-            })
-        );
-        skip(8 days);
         assertEq(wstETH.balanceOf(address(feeCollector)), 0, "fee collector balance before collect");
-        setUpUserPositionInVault(
-            address(this), ProtocolAction.InitiateDeposit, 10_000 ether, DEFAULT_PARAMS.initialPrice
-        );
+        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 1 ether, DEFAULT_PARAMS.initialPrice);
+
         assertGe(
             wstETH.balanceOf(address(feeCollector)), protocol.getFeeThreshold(), "fee collector balance after collect"
         );
+    }
+
+    function test_noRevert_when_noCallback() public {
+        address feeCollectorNoCallback = address(new FeeCollectorNoCallback());
+        vm.prank(ADMIN);
+        protocol.setFeeCollector(feeCollectorNoCallback);
+        assertEq(protocol.getFeeCollector(), feeCollectorNoCallback);
+
+        setUpUserPositionInVault(
+            address(this), ProtocolAction.ValidateDeposit, 10_000 ether, DEFAULT_PARAMS.initialPrice
+        );
+        skip(30 days);
+
+        assertEq(wstETH.balanceOf(address(feeCollectorNoCallback)), 0, "fee collector balance before collect");
+        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 1 ether, DEFAULT_PARAMS.initialPrice);
+
+        assertGe(
+            wstETH.balanceOf(address(feeCollectorNoCallback)),
+            protocol.getFeeThreshold(),
+            "fee collector balance after collect"
+        );
+    }
+
+    function test_noRevert_when_revertCallback() public {
+        address feeCollectorRevertCallback = address(new FeeCollectorRevertCallback());
+        vm.prank(ADMIN);
+        protocol.setFeeCollector(feeCollectorRevertCallback);
+        assertEq(protocol.getFeeCollector(), feeCollectorRevertCallback);
+
+        setUpUserPositionInVault(
+            address(this), ProtocolAction.ValidateDeposit, 10_000 ether, DEFAULT_PARAMS.initialPrice
+        );
+        skip(30 days);
+
+        assertEq(wstETH.balanceOf(address(feeCollectorRevertCallback)), 0, "fee collector balance before collect");
+        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 1 ether, DEFAULT_PARAMS.initialPrice);
+
+        assertEq(
+            FeeCollectorRevertCallback(feeCollectorRevertCallback).totFeeAmount(),
+            0,
+            "fee collector variable after collect"
+        );
+        assertGe(
+            wstETH.balanceOf(address(feeCollectorRevertCallback)),
+            protocol.getFeeThreshold(),
+            "fee collector balance after collect"
+        );
+    }
+}
+
+contract FeeCollectorNoCallback { }
+
+contract FeeCollectorRevertCallback {
+    uint256 public totFeeAmount;
+
+    function feeCollectorCallback(uint256 feeAmount) external {
+        totFeeAmount += feeAmount;
+        revert("FeeCollectorRevertCallback");
     }
 }

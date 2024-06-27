@@ -9,4 +9,6 @@ import { IFeeCollectorCallback } from "../UsdnProtocol/IFeeCollectorCallback.sol
  */
 interface IFeeCollector is IFeeCollectorCallback {
     function supportsInterface(bytes4 interfaceId) external view override returns (bool);
+
+    function feeCollectorCallback(uint256 feeAmount) external;
 }
