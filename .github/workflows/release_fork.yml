@@ -1,0 +1,19 @@
+name: Deploy fork workflow
+
+on:
+  push:
+    tags:        
+      - '*'
+
+jobs:
+  publish:
+    name: Release all packages
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - name: Release all packages
+        uses: Backend-RA2-Tech/composite-workflows/fork-deploy@main
+        with:
+          repository: ${{ github.event.repository.name }}

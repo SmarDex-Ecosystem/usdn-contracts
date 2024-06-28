@@ -31,7 +31,7 @@ COPY ./Cargo.toml ./Cargo.toml
 COPY ./foundry.toml ./foundry.toml
 # Copy source files and scripts
 COPY ./script/Deploy.s.sol ./script/Deploy.s.sol
-COPY ./docker/deployForkDocker.sh ./script/deployFork.sh
+COPY ./script/deployForkDocker.sh ./script/deployFork.sh
 COPY ./src ./src
 COPY ./test ./test
 COPY ./lib ./lib
