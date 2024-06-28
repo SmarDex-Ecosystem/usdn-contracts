@@ -33,25 +33,25 @@ interface IWETH is IERC20 {
     function withdraw(uint256) external;
 }
 
-contract SetUp is Test {
-    address internal WETH_ADDRESS = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    IHevm internal hevm = IHevm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
-    Sdex internal sdex = Sdex(SDEX);
+contract Setup is Test {
+    address public WETH_ADDRESS = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    IHevm public hevm = IHevm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
+    Sdex public sdex = Sdex(SDEX);
 
     IWETH public weth = IWETH(WETH_ADDRESS);
-    IWstETH internal wstEth = IWstETH(WSTETH);
+    IWstETH public wstEth = IWstETH(WSTETH);
 
-    MockWstEthOracleMiddleware internal wstEthOracleMiddleware;
-    MockLiquidationRewardsManager internal liquidationRewardsManager;
-    Usdn internal usdn;
-    UsdnProtocol internal usdnProtocol;
-    Rebalancer internal rebalancer;
+    MockWstEthOracleMiddleware public wstEthOracleMiddleware;
+    MockLiquidationRewardsManager public liquidationRewardsManager;
+    Usdn public usdn;
+    UsdnProtocol public usdnProtocol;
+    Rebalancer public rebalancer;
 
-    address internal DEPLOYER = address(0x10000);
+    address public DEPLOYER = address(0x10000);
     address public ATTACKER = address(0x20000);
     address public FEE_COLLECTOR = address(0x00fee);
 
-    uint256 internal ACCOUNT_ETH_AMOUNT = 100 ether;
+    uint256 public ACCOUNT_ETH_AMOUNT = 100 ether;
 
     constructor() payable {
         uint256 INIT_DEPOSIT_AMOUNT = 10 ether;
@@ -98,7 +98,7 @@ contract SetUp is Test {
     }
 }
 
-contract EchidnaAssert is SetUp {
+contract EchidnaAssert is Setup {
 /* -------------------------------------------------------------------------- */
 /*                             Utils                                          */
 /* -------------------------------------------------------------------------- */
