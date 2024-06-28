@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { IFeeCollectorCallback } from "../UsdnProtocol/IFeeCollectorCallback.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
+import { IFeeCollectorCallback } from "../UsdnProtocol/IFeeCollectorCallback.sol";
 
 /**
  * @title IFeeCollector
