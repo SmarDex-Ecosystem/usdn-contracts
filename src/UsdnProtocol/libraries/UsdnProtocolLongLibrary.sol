@@ -1107,15 +1107,18 @@ library UsdnProtocolLongLibrary {
 
         // keep track of the highest populated tick
         if (effects.liquidatedPositions != 0) {
+            int24 highestPopulatedTick;
             if (data.iTick < data.currentTick) {
                 // all ticks above the current tick were liquidated
-                s._highestPopulatedTick = _findHighestPopulatedTick(s, data.currentTick);
+                highestPopulatedTick = _findHighestPopulatedTick(s, data.currentTick);
             } else {
                 // unsure if all ticks above the current tick were liquidated, but some were
-                int24 highestPopulatedTick = _findHighestPopulatedTick(s, data.iTick);
-                s._highestPopulatedTick = highestPopulatedTick;
+                highestPopulatedTick = _findHighestPopulatedTick(s, data.iTick);
                 data.isLiquidationPending = data.currentTick <= highestPopulatedTick;
             }
+
+            s._highestPopulatedTick = highestPopulatedTick;
+            emit IUsdnProtocolEvents.HighestPopulatedTickUpdated(highestPopulatedTick);
         }
 
         // transfer remaining collateral to vault or pay bad debt

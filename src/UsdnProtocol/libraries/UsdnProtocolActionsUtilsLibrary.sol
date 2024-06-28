@@ -567,6 +567,8 @@ library UsdnProtocolActionsUtilsLibrary {
         if (tick > s._highestPopulatedTick) {
             // keep track of the highest populated tick
             s._highestPopulatedTick = tick;
+
+            emit IUsdnProtocolEvents.HighestPopulatedTickUpdated(tick);
         }
         tickArray.push(long);
 
