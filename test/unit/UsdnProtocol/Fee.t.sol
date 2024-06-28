@@ -4,6 +4,8 @@ pragma solidity ^0.8.25;
 import { ADMIN } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
 
+import { FeeCollector } from "../../../src/utils/FeeCollector.sol";
+
 /**
  * @custom:feature All fees functionality of the USDN Protocol
  * @custom:background Given a protocol initialized with default params
@@ -125,7 +127,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
      * @custom:and Multiple actions are performed to reach the fee threshold
      * @custom:then The fees are collected by the fee collector and the transaction does not revert
      */
-    function test_noRevert_when_noCallback() public {
+    function test_noRevertWhen_noErc165() public {
         address feeCollectorNoCallback = address(new FeeCollectorNoCallback());
         vm.prank(ADMIN);
         protocol.setFeeCollector(feeCollectorNoCallback);
@@ -152,7 +154,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
      * @custom:and Multiple actions are performed to reach the fee threshold
      * @custom:then The fees are collected by the fee collector and the transaction does not revert
      */
-    function test_noRevert_when_revertCallback() public {
+    function test_RevertWhen_callbackReverts() public {
         address feeCollectorRevertCallback = address(new FeeCollectorRevertCallback());
         vm.prank(ADMIN);
         protocol.setFeeCollector(feeCollectorRevertCallback);
@@ -164,27 +166,27 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         skip(30 days);
 
         assertEq(wstETH.balanceOf(address(feeCollectorRevertCallback)), 0, "fee collector balance before collect");
-        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 1 ether, DEFAULT_PARAMS.initialPrice);
+        usdn.approve(address(protocol), 1);
+        vm.expectRevert("FeeCollectorRevertCallback");
+        protocol.initiateWithdrawal(
+            1, address(this), payable(address(this)), abi.encode(DEFAULT_PARAMS.initialPrice), EMPTY_PREVIOUS_DATA
+        );
 
         assertEq(
             FeeCollectorRevertCallback(feeCollectorRevertCallback).totFeeAmount(),
             0,
             "fee collector variable after collect"
         );
-        assertGe(
-            wstETH.balanceOf(address(feeCollectorRevertCallback)),
-            protocol.getFeeThreshold(),
-            "fee collector balance after collect"
-        );
+        assertGe(wstETH.balanceOf(address(feeCollectorRevertCallback)), 0, "fee collector balance after collect");
     }
 }
 
 contract FeeCollectorNoCallback { }
 
-contract FeeCollectorRevertCallback {
+contract FeeCollectorRevertCallback is FeeCollector {
     uint256 public totFeeAmount;
 
-    function feeCollectorCallback(uint256 feeAmount) external {
+    function feeCollectorCallback(uint256 feeAmount) external override {
         totFeeAmount += feeAmount;
         revert("FeeCollectorRevertCallback");
     }

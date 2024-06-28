@@ -958,8 +958,7 @@ library UsdnProtocolActionsVaultLibrary {
             address(s._asset).safeTransfer(feeCollector, pendingFee);
 
             if (ERC165Checker.supportsInterface(feeCollector, type(IFeeCollectorCallback).interfaceId)) {
-                // try/catch to avoid reverting the whole action if the callback fails
-                try IFeeCollectorCallback(feeCollector).feeCollectorCallback(pendingFee) { } catch { }
+                IFeeCollectorCallback(feeCollector).feeCollectorCallback(pendingFee);
             }
         }
     }
