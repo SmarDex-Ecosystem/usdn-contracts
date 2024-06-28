@@ -18,8 +18,6 @@ deployContracts: [["0xf0", "DoubleEndedQueue"],
                    ["0xf8", "UsdnProtocolSettersLibrary"],
                    ["0xf9", "UsdnProtocolVaultLibrary"]]
 stopOnFail: true
-# URL to fetch contracts over RPC -> change to private url (alchemy, infura...)
-rpcUrl: https://eth-mainnet.g.alchemy.com/v2/s7Sgrfkbvl045kIIUEOdKJLya2nbUElJ
 #filterBlacklist: true
 #filterFunctions: [""]
 workers: 8
