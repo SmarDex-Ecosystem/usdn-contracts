@@ -22,12 +22,10 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
      * @custom:given The fee value is > BPS_DIVISOR
      * @custom:then The protocol reverts with `UsdnProtocolInvalidProtocolFeeBps`
      */
-    function test_RevertWhen_setFeeBps_tooBig() public {
+    function test_RevertWhen_setFeeBps_tooBig() public adminPrank {
         uint16 bpsDivisor = uint16(protocol.BPS_DIVISOR());
-        vm.startPrank(ADMIN);
         vm.expectRevert(UsdnProtocolInvalidProtocolFeeBps.selector);
         protocol.setProtocolFeeBps(bpsDivisor + 1);
-        vm.stopPrank();
     }
 
     /**
