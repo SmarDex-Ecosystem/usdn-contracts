@@ -566,7 +566,9 @@ library UsdnProtocolActionsUtilsLibrary {
         index_ = tickArray.length;
         if (tick > s._highestPopulatedTick) {
             // keep track of the highest populated tick
-            _updateHighestPopulatedTick(s, tick);
+            s._highestPopulatedTick = tick;
+
+            emit IUsdnProtocolEvents.HighestPopulatedTickUpdated(tick);
         }
         tickArray.push(long);
 
@@ -608,16 +610,5 @@ library UsdnProtocolActionsUtilsLibrary {
      */
     function _calcActionId(address validator, uint128 initiateTimestamp) public pure returns (bytes32 actionId_) {
         actionId_ = keccak256(abi.encodePacked(validator, initiateTimestamp));
-    }
-
-    /**
-     * @notice Update the highest populated tick with the provided tick
-     * @param s The storage of the protocol
-     * @param tick The new highest populated tick
-     */
-    function _updateHighestPopulatedTick(Types.Storage storage s, int24 tick) internal {
-        s._highestPopulatedTick = tick;
-
-        emit IUsdnProtocolEvents.HighestPopulatedTickUpdated(tick);
     }
 }
