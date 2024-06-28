@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import { ERC165, IERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 import { IFeeCollector } from "./../interfaces/UsdnProtocol/IFeeCollector.sol";
 import { IFeeCollectorCallback } from "./../interfaces/UsdnProtocol/IFeeCollectorCallback.sol";
@@ -11,7 +11,7 @@ import { IFeeCollectorCallback } from "./../interfaces/UsdnProtocol/IFeeCollecto
  * @dev Minimum implementation of the fee collector contract
  */
 contract FeeCollector is IFeeCollector, ERC165 {
-    /// @inheritdoc IERC165
+    /// @inheritdoc ERC165
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IFeeCollector) returns (bool) {
         if (interfaceId == type(IFeeCollector).interfaceId) {
             return true;
@@ -23,5 +23,6 @@ contract FeeCollector is IFeeCollector, ERC165 {
         return super.supportsInterface(interfaceId);
     }
 
+    /// @inheritdoc IFeeCollector
     function feeCollectorCallback(uint256 feeAmount) external virtual { }
 }
