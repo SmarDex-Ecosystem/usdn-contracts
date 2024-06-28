@@ -53,10 +53,9 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
      * @custom:when The `_checkImbalanceLimitClose` function is called with values above the close limit
      * @custom:then The transaction should not revert
      */
-    function test_checkImbalanceLimitCloseDisabled() public {
+    function test_checkImbalanceLimitCloseDisabled() public adminPrank {
         (, uint256 longAmount, uint256 totalExpoValueToLimit) = _getCloseLimitValues();
 
-        vm.prank(ADMIN);
         // disable close limit
         protocol.setExpoImbalanceLimits(200, 200, 600, 0, 0);
 

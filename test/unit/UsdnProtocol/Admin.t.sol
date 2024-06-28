@@ -815,8 +815,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      * @custom:when Admin wallet triggers the function
      * @custom:then The values should be updated
      */
-    function test_setMinLongPosition_rebalancerUpdate() public {
-        vm.prank(ADMIN);
+    function test_setMinLongPosition_rebalancerUpdate() public adminPrank {
         protocol.setRebalancer(rebalancer);
 
         uint256 newValue = 1 ether;
@@ -829,7 +828,6 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         emit MinAssetDepositUpdated(newValue);
 
         // set minimum long position
-        vm.prank(ADMIN);
         protocol.setMinLongPosition(newValue);
         // assert that the new values are equal to the expected values
         assertEq(protocol.getMinLongPosition(), newValue, "protocol value isn't updated");
