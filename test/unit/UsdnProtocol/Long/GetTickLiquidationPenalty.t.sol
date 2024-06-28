@@ -16,7 +16,7 @@ contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
      * @custom:when We call the function
      * @custom:then The function should return the current value of the liquidation penalty setting
      */
-    function test_getTickLiquidationPenaltyEmpty() public {
+    function test_getTickLiquidationPenaltyEmpty() public adminPrank {
         uint8 startPenalty = protocol.getLiquidationPenalty();
         int24 tick = 69_420;
         TickData memory tickData = protocol.getTickData(tick);
@@ -26,7 +26,6 @@ contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
         assertEq(protocol.getTickLiquidationPenalty(tick), startPenalty, "initial value");
 
         // change the penalty setting
-        vm.prank(ADMIN);
         protocol.setLiquidationPenalty(startPenalty + 1);
 
         // check new value

@@ -89,7 +89,7 @@ contract TestRebalancer is RebalancerFixture {
      * @custom:when The getPositionMaxLeverage function is called
      * @custom:then The returned value should be equal to the USDN protocol's max leverage
      */
-    function test_getPositionMaxLeverageWhenHigherThanProtocol() public {
+    function test_getPositionMaxLeverageWhenHigherThanProtocol() public adminPrank {
         // Sanity check
         assertEq(
             rebalancer.getPositionMaxLeverage(),
@@ -98,7 +98,6 @@ contract TestRebalancer is RebalancerFixture {
         );
 
         uint256 protocolMaxLeverage = usdnProtocol.getMaxLeverage() - 1;
-        vm.prank(ADMIN);
         usdnProtocol.setMaxLeverage(protocolMaxLeverage);
 
         assertEq(

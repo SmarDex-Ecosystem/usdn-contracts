@@ -24,12 +24,11 @@ contract TestUsdnAdmin is UsdnTokenFixture {
      * @custom:then The value of the rebase handler address is updated to the new value
      * @custom:and The `RebaseHandlerUpdated` event is emitted with the correct parameter
      */
-    function test_setRebaseHandler() public {
+    function test_setRebaseHandler() public adminPrank {
         address newValue = address(1);
         IRebaseCallback handler = IRebaseCallback(newValue);
         vm.expectEmit();
         emit RebaseHandlerUpdated(handler);
-        vm.prank(ADMIN);
         usdn.setRebaseHandler(handler);
         assertEq(address(usdn.rebaseHandler()), newValue);
     }
