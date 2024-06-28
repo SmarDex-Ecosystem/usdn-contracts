@@ -613,7 +613,7 @@ library UsdnProtocolActionsUtilsLibrary {
     /**
      * @notice Update the highest populated tick with the provided tick
      * @param s The storage of the protocol
-     * @param tick The supposedly new highest populated tick
+     * @param tick The new highest populated tick
      */
     function _updateHighestPopulatedTick(Types.Storage storage s, int24 tick) public {
         s._highestPopulatedTick = tick;
