@@ -126,6 +126,11 @@ contract EchidnaAssert is Setup {
 
         bytes memory priceData = abi.encode(2 ether);
 
-        usdnProtocol.initiateDeposit(amount, dest, validator, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA);
+        uint64 securityDeposit = usdnProtocol.getSecurityDepositValue();
+
+        vm.prank(msg.sender);
+        usdnProtocol.initiateDeposit{ value: securityDeposit }(
+            amount, dest, validator, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
+        );
     }
 }

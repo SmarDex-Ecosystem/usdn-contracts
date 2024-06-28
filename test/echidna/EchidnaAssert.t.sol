@@ -18,5 +18,8 @@ contract TestForkEchidna is Test {
         ATTACKER = echidna.ATTACKER();
     }
 
-    function test_ForkCanRun() public { }
+    function test_canInitiateDeposit() public {
+        vm.prank(DEPLOYER);
+        echidna.initiateDeposit(1 ether, 0, 0);
+    }
 }
