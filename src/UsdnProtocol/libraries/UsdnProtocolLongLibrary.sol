@@ -1109,11 +1109,11 @@ library UsdnProtocolLongLibrary {
         if (effects.liquidatedPositions != 0) {
             if (data.iTick < data.currentTick) {
                 // all ticks above the current tick were liquidated
-                s._highestPopulatedTick = _findHighestPopulatedTick(s, data.currentTick);
+                ActionsUtils._updateHighestPopulatedTick(s, _findHighestPopulatedTick(s, data.currentTick));
             } else {
                 // unsure if all ticks above the current tick were liquidated, but some were
                 int24 highestPopulatedTick = _findHighestPopulatedTick(s, data.iTick);
-                s._highestPopulatedTick = highestPopulatedTick;
+                ActionsUtils._updateHighestPopulatedTick(s, highestPopulatedTick);
                 data.isLiquidationPending = data.currentTick <= highestPopulatedTick;
             }
         }
