@@ -319,6 +319,9 @@ library UsdnProtocolActionsUtilsLibrary {
         if (!pos.validated) {
             revert IUsdnProtocolErrors.UsdnProtocolPositionNotValidated();
         }
+        if (amountToClose == 0) {
+            revert IUsdnProtocolErrors.UsdnProtocolZeroAmount();
+        }
         if (amountToClose > pos.amount) {
             revert IUsdnProtocolErrors.UsdnProtocolAmountToCloseHigherThanPositionAmount(amountToClose, pos.amount);
         }
@@ -337,9 +340,6 @@ library UsdnProtocolActionsUtilsLibrary {
             } else {
                 revert IUsdnProtocolErrors.UsdnProtocolLongPositionTooSmall();
             }
-        }
-        if (amountToClose == 0) {
-            revert IUsdnProtocolErrors.UsdnProtocolAmountToCloseIsZero();
         }
     }
 

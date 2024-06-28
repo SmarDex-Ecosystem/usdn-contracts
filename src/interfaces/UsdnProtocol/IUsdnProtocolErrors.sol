@@ -187,9 +187,6 @@ interface IUsdnProtocolErrors {
      */
     error UsdnProtocolAmountToCloseHigherThanPositionAmount(uint128 amountToClose, uint128 positionAmount);
 
-    /// @dev Indicates that the amount to close in a position is zero
-    error UsdnProtocolAmountToCloseIsZero();
-
     /// @dev Indicates that the deposit amount is too small, leading to no USDN minted or no SDEX burned
     error UsdnProtocolDepositTooSmall();
 
