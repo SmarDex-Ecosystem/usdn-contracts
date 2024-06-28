@@ -119,6 +119,12 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         );
     }
 
+    /**
+     * @custom:scenario Check that the transaction does not revert when the fee collector does not have a callback
+     * @custom:given The pending protocol fee is 0
+     * @custom:and Multiple actions are performed to reach the fee threshold
+     * @custom:then The fees are collected by the fee collector and the transaction does not revert
+     */
     function test_noRevert_when_noCallback() public {
         address feeCollectorNoCallback = address(new FeeCollectorNoCallback());
         vm.prank(ADMIN);
@@ -140,6 +146,12 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         );
     }
 
+    /**
+     * @custom:scenario Check that the transaction does not revert when the fee collector callback reverts
+     * @custom:given The pending protocol fee is 0
+     * @custom:and Multiple actions are performed to reach the fee threshold
+     * @custom:then The fees are collected by the fee collector and the transaction does not revert
+     */
     function test_noRevert_when_revertCallback() public {
         address feeCollectorRevertCallback = address(new FeeCollectorRevertCallback());
         vm.prank(ADMIN);
