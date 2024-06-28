@@ -615,7 +615,7 @@ library UsdnProtocolActionsUtilsLibrary {
      * @param s The storage of the protocol
      * @param tick The new highest populated tick
      */
-    function _updateHighestPopulatedTick(Types.Storage storage s, int24 tick) public {
+    function _updateHighestPopulatedTick(Types.Storage storage s, int24 tick) internal {
         s._highestPopulatedTick = tick;
 
         emit IUsdnProtocolEvents.HighestPopulatedTickUpdated(tick);
