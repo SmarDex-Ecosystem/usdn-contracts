@@ -34,24 +34,22 @@ interface IWETH is IERC20 {
 }
 
 contract Setup is Test {
-    address public WETH_ADDRESS = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    IHevm public hevm = IHevm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
-    Sdex public sdex = Sdex(SDEX);
+    address public constant DEPLOYER = address(0x10000);
+    address public constant ATTACKER = address(0x20000);
+    address public constant FEE_COLLECTOR = address(0x00fee);
+    address public constant WETH_ADDRESS = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    uint256 public constant ACCOUNT_ETH_AMOUNT = 100 ether;
+    IHevm public constant hevm = IHevm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
 
-    IWETH public weth = IWETH(WETH_ADDRESS);
-    IWstETH public wstEth = IWstETH(WSTETH);
+    Sdex public constant sdex = Sdex(SDEX);
+    IWETH public constant weth = IWETH(WETH_ADDRESS);
+    IWstETH public constant wstEth = IWstETH(WSTETH);
 
     MockWstEthOracleMiddleware public wstEthOracleMiddleware;
     MockLiquidationRewardsManager public liquidationRewardsManager;
     Usdn public usdn;
     UsdnProtocol public usdnProtocol;
     Rebalancer public rebalancer;
-
-    address public DEPLOYER = address(0x10000);
-    address public ATTACKER = address(0x20000);
-    address public FEE_COLLECTOR = address(0x00fee);
-
-    uint256 public ACCOUNT_ETH_AMOUNT = 100 ether;
 
     constructor() payable {
         uint256 INIT_DEPOSIT_AMOUNT = 10 ether;

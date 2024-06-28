@@ -8,12 +8,14 @@ import { EchidnaAssert } from "./models/EchidnaAssert.sol";
 contract TestForkEchidna is Test {
     EchidnaAssert public echidna;
 
-    address internal DEPLOYER = address(0x10000);
-    address internal ATTACKER = address(0x20000);
+    address internal DEPLOYER;
+    address internal ATTACKER;
 
     function setUp() public {
         vm.createSelectFork(vm.rpcUrl("mainnet"));
         echidna = new EchidnaAssert();
+        DEPLOYER = echidna.DEPLOYER();
+        ATTACKER = echidna.ATTACKER();
     }
 
     function test_ForkCanRun() public { }
