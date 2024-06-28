@@ -23,5 +23,5 @@ contract FeeCollector is IFeeCollector, ERC165 {
         return super.supportsInterface(interfaceId);
     }
 
-    function feeCollectorCallback(uint256 feeAmount) external { }
+    function feeCollectorCallback(uint256 feeAmount) external virtual { }
 }
