@@ -17,7 +17,8 @@ contract TestUsdnProtocolActionsCreateClosePendingAction is UsdnProtocolBaseFixt
         params.flags.enableSecurityDeposit = true;
         _setUp(params);
 
-        data.longTradingExpo = uint256(protocol.getLongTradingExpo(DEFAULT_PARAMS.initialPrice));
+        data.lastPrice = DEFAULT_PARAMS.initialPrice * 11 / 10; // 10% price increase
+        data.longTradingExpo = uint256(protocol.getLongTradingExpo(data.lastPrice));
         data.liqMulAcc = protocol.getLiqMultiplierAccumulator();
     }
 
@@ -32,8 +33,7 @@ contract TestUsdnProtocolActionsCreateClosePendingAction is UsdnProtocolBaseFixt
     function test_createClosePendingAction() public {
         uint128 amountToClose = DEFAULT_PARAMS.initialLong / 2;
         data.totalExpoToClose = amountToClose * 2;
-        data.lastPrice = DEFAULT_PARAMS.initialPrice * 11 / 10; // 10% price increase
-        data.tempPositionValue = amountToClose * 11 / 10;
+        data.tempPositionValue = uint256(amountToClose) * data.lastPrice / DEFAULT_PARAMS.initialPrice;
         uint64 securityDeposit = 0.5 ether;
 
         uint256 amountToRefund =
@@ -67,7 +67,7 @@ contract TestUsdnProtocolActionsCreateClosePendingAction is UsdnProtocolBaseFixt
     }
 
     /**
-     * @custom:scenario A stale pending action is removed and there should be an amount to refund
+     * @custom:scenario A stale pending action is removed so an amount to refund is returned
      * @custom:given A stale pending action exists for the user
      * @custom:when _createClosePendingAction is called
      * @custom:then the amount to refund should be the security deposit value
