@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { USER_1 } from "../../../utils/Constants.sol";
+import { USER_1, USER_2 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 /**
@@ -24,7 +24,8 @@ contract TestUsdnProtocolActionsCreateOpenPendingAction is UsdnProtocolBaseFixtu
 
     /**
      * @custom:scenario An open pending action is created
-     * @custom:given USER_1 being the `to` and `validator` address
+     * @custom:given USER_1 being the `validator` address
+     * @custom:and USER_2 being the `to` address
      * @custom:when _createOpenPendingAction is called
      * @custom:then the amount to refund should be 0
      * @custom:and the create pending action's data should match the inputs
@@ -32,7 +33,7 @@ contract TestUsdnProtocolActionsCreateOpenPendingAction is UsdnProtocolBaseFixtu
     function test_createOpenPendingAction() public {
         uint64 securityDeposit = 0.5 ether;
 
-        uint256 amountToRefund = protocol.i_createOpenPendingAction(USER_1, USER_1, securityDeposit, data);
+        uint256 amountToRefund = protocol.i_createOpenPendingAction(USER_1, USER_2, securityDeposit, data);
 
         assertEq(amountToRefund, 0, "Amount to refund should be 0");
 
@@ -44,7 +45,7 @@ contract TestUsdnProtocolActionsCreateOpenPendingAction is UsdnProtocolBaseFixtu
         );
         assertEq(pendingAction.timestamp, uint40(block.timestamp), "timestamp should be now");
         assertEq(pendingAction.validator, USER_1, "USER_1 should be the validator address");
-        assertEq(pendingAction.to, USER_1, "USER_1 should be the to address");
+        assertEq(pendingAction.to, USER_2, "USER_2 should be the to address");
         assertEq(
             pendingAction.securityDepositValue, securityDeposit, "securityDepositValue should be the provided amount"
         );
