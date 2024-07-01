@@ -447,13 +447,12 @@ library UsdnProtocolCoreLibrary {
      * @param s The storage of the protocol
      * @param currentPrice The current price
      * @param timestamp The timestamp of the current price
-     * @return isPriceRecent_ Whether the price was updated or was already the most recent price
-     * @return tempLongBalance_ The new balance of the long side, could be negative (temporarily)
-     * @return tempVaultBalance_ The new balance of the vault side, could be negative (temporarily)
+     * @return data_ The data containing the temporary long balance, the temporary vault
+     * balance, the last price and a flag indicating if the price is recent
      */
     function _applyPnlAndFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
         public
-        returns (bool isPriceRecent_, int256 tempLongBalance_, int256 tempVaultBalance_)
+        returns (Types.ApplyPnlAndFundingData memory data_)
     {
         int256 fundAsset;
         int256 fund;
@@ -462,7 +461,12 @@ library UsdnProtocolCoreLibrary {
             uint128 lastUpdateTimestamp = s._lastUpdateTimestamp;
             // if the price is not fresh, do nothing
             if (timestamp <= lastUpdateTimestamp) {
-                return (timestamp == lastUpdateTimestamp, s._balanceLong.toInt256(), s._balanceVault.toInt256());
+                return Types.ApplyPnlAndFundingData({
+                    isPriceRecent: timestamp == lastUpdateTimestamp,
+                    tempLongBalance: s._balanceLong.toInt256(),
+                    tempVaultBalance: s._balanceVault.toInt256(),
+                    lastPrice: s._lastPrice
+                });
             }
 
             // update the funding EMA
@@ -484,21 +488,22 @@ library UsdnProtocolCoreLibrary {
             // in case of positive funding, the vault balance must be decremented by the totality of the funding amount
             // however, since we deducted the fee amount from the total balance, the vault balance will be incremented
             // only by the funding amount minus the fee amount
-            tempLongBalance_ = _longAssetAvailable(s, currentPrice).safeSub(fundAsset);
+            data_.tempLongBalance = _longAssetAvailable(s, currentPrice).safeSub(fundAsset);
         } else {
             // in case of negative funding, the vault balance must be decremented by the totality of the funding amount
             // however, since we deducted the fee amount from the total balance, the long balance will be incremented
             // only by the funding amount minus the fee amount
-            tempLongBalance_ = _longAssetAvailable(s, currentPrice).safeSub(fundAssetWithFee);
+            data_.tempLongBalance = _longAssetAvailable(s, currentPrice).safeSub(fundAssetWithFee);
         }
-        tempVaultBalance_ = totalBalance.safeSub(tempLongBalance_);
+        data_.tempVaultBalance = totalBalance.safeSub(data_.tempLongBalance);
 
         // update state variables
         s._lastPrice = currentPrice;
+        data_.lastPrice = currentPrice;
         s._lastUpdateTimestamp = timestamp;
         s._lastFunding = fundWithFee;
 
-        isPriceRecent_ = true;
+        data_.isPriceRecent = true;
     }
 
     /**
