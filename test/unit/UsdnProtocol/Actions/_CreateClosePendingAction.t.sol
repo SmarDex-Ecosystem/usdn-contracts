@@ -24,8 +24,8 @@ contract TestUsdnProtocolActionsCreateClosePendingAction is UsdnProtocolBaseFixt
 
     /**
      * @custom:scenario A close position pending action is created
-     * @custom:given USER_1 being the `to` address
-     * @custom:and USER_2 being the `validator` address
+     * @custom:given USER_1 being the `validator` address
+     * @custom:and USER_2 being the `to` address
      * @custom:and the price has increased by 10%
      * @custom:when _createClosePendingAction is called
      * @custom:then the amount to refund should be 0
