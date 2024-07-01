@@ -5,7 +5,6 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol"
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import { IFeeCollector } from "../../../../src/interfaces/UsdnProtocol/IFeeCollector.sol";
 import { IFeeCollectorCallback } from "../../../../src/interfaces/UsdnProtocol/IFeeCollectorCallback.sol";
 
 /**
@@ -31,7 +30,6 @@ contract TestFeeCollectorSupportsInterface is UsdnProtocolBaseFixture {
             true,
             "IFeeCollectorCallback_ID supported"
         );
-        assertEq(feeCollector.supportsInterface(type(IFeeCollector).interfaceId), true, "IRebalancer_ID supported");
         assertEq(feeCollector.supportsInterface(""), false, "unknown interface ID");
     }
 }
