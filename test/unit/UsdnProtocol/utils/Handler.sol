@@ -21,7 +21,6 @@ import { IBaseOracleMiddleware } from "../../../../src/interfaces/OracleMiddlewa
 import { ILiquidationRewardsManager } from "../../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../../../../src/interfaces/Usdn/IUsdn.sol";
-import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "../../../../src/libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
@@ -107,7 +106,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     }
 
     function updateBalances(uint128 currentPrice) external {
-        Types.ApplyPnlAndFundingData memory data = Core._applyPnlAndFunding(s, currentPrice, uint128(block.timestamp));
+        ApplyPnlAndFundingData memory data = Core._applyPnlAndFunding(s, currentPrice, uint128(block.timestamp));
         if (!data.isPriceRecent) {
             revert("price was not updated");
         }
@@ -199,7 +198,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
 
     function i_applyPnlAndFunding(uint128 currentPrice, uint128 timestamp)
         external
-        returns (Types.ApplyPnlAndFundingData memory data_)
+        returns (ApplyPnlAndFundingData memory data_)
     {
         return Core._applyPnlAndFunding(s, currentPrice, timestamp);
     }
