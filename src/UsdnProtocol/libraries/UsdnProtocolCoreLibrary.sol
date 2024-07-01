@@ -447,7 +447,8 @@ library UsdnProtocolCoreLibrary {
      * @param s The storage of the protocol
      * @param currentPrice The current price
      * @param timestamp The timestamp of the current price
-     * @return data_ The data returned by the function
+     * @return data_ The data containing the temporary long balance, the temporary vault
+     * balance, the last price and a flag indicating if the price is recent
      */
     function _applyPnlAndFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
         public
