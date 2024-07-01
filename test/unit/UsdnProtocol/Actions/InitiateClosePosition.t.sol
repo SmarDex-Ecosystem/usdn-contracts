@@ -121,7 +121,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     function test_RevertWhen_closePartialPositionWithZeroAmount() public {
         bytes memory priceData = abi.encode(params.initialPrice);
 
-        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolAmountToCloseIsZero.selector));
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolZeroAmount.selector));
         protocol.i_initiateClosePosition(address(this), address(this), address(this), posId, 0, 0, priceData);
     }
 

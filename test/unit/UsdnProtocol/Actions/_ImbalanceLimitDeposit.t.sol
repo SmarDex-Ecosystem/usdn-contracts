@@ -80,11 +80,10 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
      * @custom:when The `_checkImbalanceLimitDeposit` function is called with a value above the deposit limit
      * @custom:then The transaction should not revert
      */
-    function test_checkImbalanceLimitDepositDisabled() public {
+    function test_checkImbalanceLimitDepositDisabled() public adminPrank {
         (, uint256 vaultExpoValueToLimit) = _getDepositLimitValues();
 
         // disable deposit limit
-        vm.prank(ADMIN);
         protocol.setExpoImbalanceLimits(200, 0, 600, 600, 300);
 
         protocol.i_checkImbalanceLimitDeposit(vaultExpoValueToLimit + 1);

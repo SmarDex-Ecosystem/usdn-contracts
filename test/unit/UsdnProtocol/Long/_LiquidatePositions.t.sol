@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
+import { Vm } from "forge-std/Vm.sol";
+
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { TickMath } from "../../../../src/libraries/TickMath.sol";
@@ -72,11 +74,24 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         emit LiquidatedTick(posId.tick, 0, liqPrice, effectiveTickPrice, tickValue);
 
         vm.recordLogs();
+        vm.expectEmit();
+        emit HighestPopulatedTickUpdated(initialPosition.tick);
         LiquidationsEffects memory liquidationsEffects =
             protocol.i_liquidatePositions(uint256(liqPrice), 1, balanceLong, balanceVault);
-        uint256 logsAmount = vm.getRecordedLogs().length;
+        Vm.Log[] memory logs = vm.getRecordedLogs();
 
-        assertEq(logsAmount, 1, "Only one log should have been emitted");
+        uint256 logsAmount = logs.length;
+        uint256 liquidationLogsCount;
+
+        // filter logs
+        for (uint256 i = 0; i < logsAmount; i++) {
+            bytes32 topic = logs[i].topics[0];
+            if (topic == LiquidatedTick.selector) {
+                liquidationLogsCount++;
+            }
+        }
+
+        assertEq(liquidationLogsCount, 1, "Only one liquidation log should have been emitted");
         assertEq(liquidationsEffects.liquidatedPositions, 1, "Only one position should have been liquidated");
         assertEq(liquidationsEffects.liquidatedTicks, 1, "Only one tick should have been liquidated");
         assertEq(
@@ -182,22 +197,36 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
 
         // Calculate the collateral this position gives on liquidation
         int256 tickValue = protocol.tickValue(tick, liqPrice);
+        int24 minUsableTick = TickMath.minUsableTick(protocol.getTickSpacing());
 
         vm.expectEmit();
         emit LiquidatedTick(tick, 0, liqPrice, effectiveTickPrice, tickValue);
+        vm.expectEmit();
+        emit HighestPopulatedTickUpdated(minUsableTick);
 
         vm.recordLogs();
         // 2 Iterations to make sure we break the loop when there are no ticks to be found
         LiquidationsEffects memory liquidationsEffects =
             protocol.i_liquidatePositions(uint256(liqPrice), 2, balanceLong, balanceVault);
-        uint256 logsAmount = vm.getRecordedLogs().length;
 
-        assertEq(logsAmount, 1, "Only one log should have been emitted");
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        uint256 logsAmount = logs.length;
+
+        uint256 liquidationLogsCount;
+        // filter logs
+        for (uint256 i = 0; i < logsAmount; i++) {
+            bytes32 topic = logs[i].topics[0];
+            if (topic == LiquidatedTick.selector) {
+                liquidationLogsCount++;
+            }
+        }
+
+        assertEq(liquidationLogsCount, 1, "Only one log should have been emitted");
         assertEq(liquidationsEffects.liquidatedPositions, 1, "Only one position should have been liquidated");
         assertEq(
             protocol.getHighestPopulatedTick(),
-            TickMath.minUsableTick(protocol.getTickSpacing()),
-            "The max Initialized tick should be equal to the very last tick"
+            minUsableTick,
+            "The highest populated tick should be equal to the lowest usable tick"
         );
     }
 
@@ -239,25 +268,40 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
             ticksToLiquidate[i] = posId.tick;
         }
 
+        // Set a price below all others
+        liqPrice = desiredLiqPrice - 100 ether;
+        int256 balanceLong = protocol.longAssetAvailableWithFunding(liqPrice, uint128(block.timestamp));
+        int256 balanceVault = protocol.vaultAssetAvailableWithFunding(liqPrice, uint128(block.timestamp));
+
         // Expect MAX_LIQUIDATION_ITERATION events
         for (uint256 i = 0; i < maxIterations; ++i) {
             vm.expectEmit(true, true, false, false);
             emit LiquidatedTick(ticksToLiquidate[i], 0, 0, 0, 0);
         }
 
-        // Set a price below all others
-        liqPrice = desiredLiqPrice - 100 ether;
-        int256 balanceLong = protocol.longAssetAvailableWithFunding(liqPrice, uint128(block.timestamp));
-        int256 balanceVault = protocol.vaultAssetAvailableWithFunding(liqPrice, uint128(block.timestamp));
-
+        vm.expectEmit();
+        emit HighestPopulatedTickUpdated(ticksToLiquidate[ticksToLiquidate.length - 1]);
         // Make sure no more than MAX_LIQUIDATION_ITERATION events have been emitted
         vm.recordLogs();
         LiquidationsEffects memory liquidationsEffects =
             protocol.i_liquidatePositions(uint256(liqPrice), maxIterations + 1, balanceLong, balanceVault);
-        uint256 logsAmount = vm.getRecordedLogs().length;
+
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        uint256 logsAmount = logs.length;
+
+        uint256 liquidationLogsCount;
+        // filter logs
+        for (uint256 i = 0; i < logsAmount; i++) {
+            bytes32 topic = logs[i].topics[0];
+            if (topic == LiquidatedTick.selector) {
+                liquidationLogsCount++;
+            }
+        }
 
         assertEq(
-            logsAmount, maxIterations, "An amount of events equal to MAX_LIQUIDATION_ITERATION should have been emitted"
+            liquidationLogsCount,
+            maxIterations,
+            "An amount of events equal to MAX_LIQUIDATION_ITERATION should have been emitted"
         );
 
         assertEq(

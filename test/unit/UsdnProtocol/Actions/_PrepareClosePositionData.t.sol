@@ -75,11 +75,12 @@ contract TestUsdnProtocolActionsPrepareClosePositionData is UsdnProtocolBaseFixt
 
     /**
      * @custom:scenario _prepareClosePositionData is called with 2 ticks that can be liquidated
-     * @custom:given A current price below the position's liquidation price
+     * @custom:given A current price below the position to close's liquidation price
      * @custom:and A high risk position that will be liquidated first
      * @custom:and A liquidation iterations setting at 1
      * @custom:when _prepareClosePositionData is called
      * @custom:then The matching data is returned
+     * @custom:and The high risk position should have been liquidated
      * @custom:and The provided position was not liquidated
      * @custom:and The function should have returned early
      * @custom:and There should be pending liquidations
