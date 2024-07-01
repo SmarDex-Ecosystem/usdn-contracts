@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { USER_1 } from "../../../utils/Constants.sol";
+import { USER_1, USER_2 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 /**
@@ -24,7 +24,8 @@ contract TestUsdnProtocolActionsCreateClosePendingAction is UsdnProtocolBaseFixt
 
     /**
      * @custom:scenario A close position pending action is created
-     * @custom:given USER_1 being the `to` and `validator` address
+     * @custom:given USER_1 being the `to` address
+     * @custom:and USER_2 being the `validator` address
      * @custom:and the price has increased by 10%
      * @custom:when _createClosePendingAction is called
      * @custom:then the amount to refund should be 0
@@ -37,7 +38,7 @@ contract TestUsdnProtocolActionsCreateClosePendingAction is UsdnProtocolBaseFixt
         uint64 securityDeposit = 0.5 ether;
 
         uint256 amountToRefund =
-            protocol.i_createClosePendingAction(USER_1, USER_1, initialPosition, amountToClose, securityDeposit, data);
+            protocol.i_createClosePendingAction(USER_1, USER_2, initialPosition, amountToClose, securityDeposit, data);
 
         uint256 multiplier =
             protocol.i_calcFixedPrecisionMultiplier(data.lastPrice, data.longTradingExpo, data.liqMulAcc);
@@ -51,7 +52,7 @@ contract TestUsdnProtocolActionsCreateClosePendingAction is UsdnProtocolBaseFixt
         );
         assertEq(pendingAction.timestamp, uint40(block.timestamp), "timestamp should be now");
         assertEq(pendingAction.validator, USER_1, "USER_1 should be the validator address");
-        assertEq(pendingAction.to, USER_1, "USER_1 should be the to address");
+        assertEq(pendingAction.to, USER_2, "USER_2 should be the to address");
         assertEq(
             pendingAction.securityDepositValue, securityDeposit, "securityDepositValue should be the provided amount"
         );
