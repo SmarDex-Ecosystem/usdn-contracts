@@ -87,4 +87,40 @@ contract TestUsdnProtocolCoreFunding is UsdnProtocolBaseFixture {
         assertEq(fund, EMA, "funding");
         assertEq(longExpo, longTradingExpo, "longExpo");
     }
+
+    function test_fundingPositiveZeroVault() public {
+        s.totalExpo = 2000 ether;
+        s.balanceLong = 1000 ether;
+        s.balanceVault = 0;
+        uint128 timeElapsed = 100;
+
+        int256 longTradingExpo = int256(s.totalExpo - s.balanceLong);
+        int256 expectedFunding =
+            int256(s.fundingSF * 10 ** (Constants.FUNDING_RATE_DECIMALS - Constants.FUNDING_SF_DECIMALS)) + EMA;
+
+        (int256 fund, int256 longExpo) = protocol.i_funding(s, s.lastUpdateTimestamp + timeElapsed, EMA);
+        assertEq(fund, expectedFunding, "funding");
+        assertEq(longExpo, longTradingExpo, "longExpo");
+    }
+
+    function test_fundingNegativeZeroLong() public {
+        s.totalExpo = 2000 ether;
+        s.balanceLong = 2000 ether;
+        s.balanceVault = 1000 ether;
+        uint128 timeElapsed = 100;
+
+        int256 longTradingExpo = int256(s.totalExpo - s.balanceLong);
+        assertEq(longTradingExpo, 0, "longTradingExpo");
+        int256 expectedFunding =
+            -int256(s.fundingSF * 10 ** (Constants.FUNDING_RATE_DECIMALS - Constants.FUNDING_SF_DECIMALS)) + EMA;
+
+        (int256 fund, int256 longExpo) = protocol.i_funding(s, s.lastUpdateTimestamp + timeElapsed, EMA);
+        assertEq(fund, expectedFunding, "funding");
+        assertEq(longExpo, longTradingExpo, "longExpo");
+    }
+
+    function test_RevertWhen_fundingWithPastTimestamp() public {
+        vm.expectRevert(UsdnProtocolTimestampTooOld.selector);
+        protocol.i_funding(s, s.lastUpdateTimestamp - 1, EMA);
+    }
 }
