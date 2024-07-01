@@ -124,7 +124,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Check that the transaction does not revert when the fee collector does not have a callback
      * @custom:given The pending protocol fee is 0
-     * @custom:and Multiple actions are performed to reach the fee threshold
+     * @custom:when Multiple actions are performed to reach the fee threshold
      * @custom:then The fees are collected by the fee collector and the transaction does not revert
      */
     function test_noRevertWhen_noErc165() public {
@@ -151,7 +151,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Check that the transaction reverts when the fee collector callback reverts
      * @custom:given The pending protocol fee is 0
-     * @custom:and Multiple actions are performed to reach the fee threshold
+     * @custom:when Multiple actions are performed to reach the fee threshold
      * @custom:then The fees are collected by the fee collector and the transaction does revert
      */
     function test_RevertWhen_callbackReverts() public {
