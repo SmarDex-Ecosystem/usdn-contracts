@@ -4,6 +4,7 @@ pragma solidity ^0.8.25;
 import { Test } from "forge-std/Test.sol";
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 import { MockLiquidationRewardsManager } from "../../../src/OracleMiddleware/mock/MockLiquidationRewardsManager.sol";
 import { MockWstEthOracleMiddleware } from "../../../src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
@@ -11,6 +12,8 @@ import { Rebalancer } from "../../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../../src/Usdn/Usdn.sol";
 import { UsdnProtocol } from "../../../src/UsdnProtocol/UsdnProtocol.sol";
 import { IWstETH } from "../../../src/interfaces/IWstETH.sol";
+
+import { IOwnershipCallback } from "../../../src/interfaces/UsdnProtocol/IOwnershipCallback.sol";
 import { IUsdnProtocolTypes } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 import { SDEX, WSTETH } from "../../utils/Constants.sol";
@@ -97,7 +100,20 @@ contract Setup is Test {
 }
 
 contract EchidnaAssert is Setup {
-/* -------------------------------------------------------------------------- */
-/*                             Utils                                          */
-/* -------------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------------- */
+    /*                             Utils                                          */
+    /* -------------------------------------------------------------------------- */
+
+    /* -------------------------------------------------------------------------- */
+    /*                             Tests                                          */
+    /* -------------------------------------------------------------------------- */
+    function assertRebalancerSupportInterface(bytes4 interfaceId) public view {
+        bool shouldBeSupported =
+            interfaceId == type(IOwnershipCallback).interfaceId || interfaceId == type(IERC165).interfaceId;
+        if (shouldBeSupported) {
+            assert(rebalancer.supportsInterface(interfaceId));
+        } else {
+            assert(!rebalancer.supportsInterface(interfaceId));
+        }
+    }
 }
