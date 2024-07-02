@@ -21,15 +21,15 @@ contract Setup is Test {
     address constant FEE_COLLECTOR = address(0x00fee);
     uint256 constant ACCOUNT_ETH_AMOUNT = 100 ether;
 
-    Sdex public immutable sdex = new Sdex();
-    Weth public immutable weth = new Weth();
-    WstETH public immutable wsteth = new WstETH();
+    Sdex immutable sdex = new Sdex();
+    Weth immutable weth = new Weth();
+    WstETH immutable wsteth = new WstETH();
 
-    MockWstEthOracleMiddleware public wstEthOracleMiddleware;
-    MockLiquidationRewardsManager public liquidationRewardsManager;
-    Usdn public usdn;
-    UsdnProtocol public usdnProtocol;
-    Rebalancer public rebalancer;
+    MockWstEthOracleMiddleware wstEthOracleMiddleware;
+    MockLiquidationRewardsManager liquidationRewardsManager;
+    Usdn usdn;
+    UsdnProtocol usdnProtocol;
+    Rebalancer rebalancer;
 
     constructor() payable {
         uint256 INIT_DEPOSIT_AMOUNT = 10 ether;
