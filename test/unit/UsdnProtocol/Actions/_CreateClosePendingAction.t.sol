@@ -10,6 +10,7 @@ import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
  * @custom:and The security deposit setting enabled
  */
 contract TestUsdnProtocolActionsCreateClosePendingAction is UsdnProtocolBaseFixture {
+    /// @dev Instance of ClosePositionData to store data for closing positions
     ClosePositionData data;
 
     function setUp() public {
@@ -29,7 +30,7 @@ contract TestUsdnProtocolActionsCreateClosePendingAction is UsdnProtocolBaseFixt
      * @custom:and the price has increased by 10%
      * @custom:when _createClosePendingAction is called
      * @custom:then the amount to refund should be 0
-     * @custom:and the create pending action's data should match the inputs
+     * @custom:and the created pending action's data should match the inputs
      */
     function test_createClosePendingAction() public {
         uint128 amountToClose = DEFAULT_PARAMS.initialLong / 2;
