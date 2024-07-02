@@ -10,11 +10,14 @@ import { IWstETH } from "../../src/interfaces/IWstETH.sol";
 
 contract WstETH is ERC20, ERC20Permit, IWstETH {
     uint8 private testDecimals;
+    /// @dev Returns the amount of ETH per stETH (mock value)
+    uint256 public stEthPerToken;
 
     constructor() ERC20("Wrapped liquid staked Ether 2.0", "wstETH") ERC20Permit("Wrapped liquid staked Ether 2.0") {
         uint8 tokenDecimals = super.decimals();
         _mint(msg.sender, 4_000_000 * 10 ** tokenDecimals);
         testDecimals = tokenDecimals;
+        stEthPerToken = 1.15 ether;
     }
 
     /// @dev Mint wstETH to the specified address
@@ -28,28 +31,28 @@ contract WstETH is ERC20, ERC20Permit, IWstETH {
         _approve(to, spender, value);
     }
 
-    /// @dev Returns the amount of ETH per stETH (mock value)
-    function stEthPerToken() public pure returns (uint256) {
-        return 1.15 ether;
+    function tokensPerStEth() public view returns (uint256) {
+        return 1 ether / stEthPerToken;
     }
 
-    function tokensPerStEth() public pure returns (uint256) {
-        return 1 ether / stEthPerToken();
+    function setStEthPerToken(uint256 newTokensPerStEth) external {
+        require(newTokensPerStEth > 0, "WstETH: invalid tokens per stETH");
+        stEthPerToken = newTokensPerStEth;
     }
 
     /// @dev Returns the amount of wstETH per stETH (mock value)
-    function getWstETHByStETH(uint256 _stETHAmount) external pure returns (uint256) {
-        return _stETHAmount * stEthPerToken() / 1 ether;
+    function getWstETHByStETH(uint256 _stETHAmount) external view returns (uint256) {
+        return _stETHAmount * stEthPerToken / 1 ether;
     }
 
     /// @dev Returns the amount of stETH per wstETH (mock value)
-    function getStETHByWstETH(uint256 _wstETHAmount) external pure returns (uint256) {
-        return _wstETHAmount * 1 ether / stEthPerToken();
+    function getStETHByWstETH(uint256 _wstETHAmount) external view returns (uint256) {
+        return _wstETHAmount * 1 ether / stEthPerToken;
     }
 
     /// @dev Receive ETH and mint wstETH
     receive() external payable {
-        _mint(msg.sender, msg.value * 1 ether / stEthPerToken());
+        _mint(msg.sender, msg.value * 1 ether / stEthPerToken);
     }
 
     /// @dev Needed for interface compatibility
