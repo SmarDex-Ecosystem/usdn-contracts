@@ -16,10 +16,10 @@ import { Weth } from "../../utils/WETH.sol";
 import { WstETH } from "../../utils/WstEth.sol";
 
 contract Setup is Test {
-    address public constant DEPLOYER = address(0x10000);
-    address public constant ATTACKER = address(0x20000);
-    address public constant FEE_COLLECTOR = address(0x00fee);
-    uint256 public constant ACCOUNT_ETH_AMOUNT = 100 ether;
+    address constant DEPLOYER = address(0x10000);
+    address constant ATTACKER = address(0x20000);
+    address constant FEE_COLLECTOR = address(0x00fee);
+    uint256 constant ACCOUNT_ETH_AMOUNT = 100 ether;
 
     Sdex public immutable sdex = new Sdex();
     Weth public immutable weth = new Weth();
