@@ -169,7 +169,7 @@ contract Deploy is Script {
      */
     function _deployUsdn(bool isProdEnv) internal returns (Usdn usdn_) {
         if (isProdEnv) {
-            // In production environment, we want to deploy the USDN token separately via DeployUsdn.s.sol
+            // nn production environment, we want to deploy the USDN token separately via `01_DeployUsdn.s.sol`
             address usdnAddress = vm.envAddress("USDN_ADDRESS");
             require(usdnAddress != address(0), "USDN_ADDRESS is required in prod mode");
             usdn_ = Usdn(usdnAddress);

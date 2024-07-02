@@ -28,6 +28,6 @@ export GET_WSTETH=true
 # Execute in the context of the project's root
 pushd $SCRIPT_DIR/..
 
-forge script --non-interactive --private-key $DEPLOYER_PRIVATE_KEY -f $RPC_URL script/Deploy.s.sol:Deploy --broadcast
+forge script --non-interactive --private-key $DEPLOYER_PRIVATE_KEY -f $RPC_URL script/02_Deploy.s.sol:Deploy --broadcast
 
 popd
