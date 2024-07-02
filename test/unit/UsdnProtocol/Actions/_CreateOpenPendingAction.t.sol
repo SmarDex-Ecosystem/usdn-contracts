@@ -44,8 +44,8 @@ contract TestUsdnProtocolActionsCreateOpenPendingAction is UsdnProtocolBaseFixtu
             "action type should be ValidateOpenPosition"
         );
         assertEq(pendingAction.timestamp, uint40(block.timestamp), "timestamp should be now");
-        assertEq(pendingAction.validator, USER_1, "USER_1 should be the validator address");
-        assertEq(pendingAction.to, USER_2, "USER_2 should be the to address");
+        assertEq(pendingAction.validator, USER_1, "USER_1 should be the `validator` address");
+        assertEq(pendingAction.to, USER_2, "USER_2 should be the `to` address");
         assertEq(
             pendingAction.securityDepositValue, securityDeposit, "securityDepositValue should be the provided amount"
         );
