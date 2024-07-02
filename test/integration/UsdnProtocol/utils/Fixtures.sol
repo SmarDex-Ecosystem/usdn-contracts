@@ -10,9 +10,12 @@ import { MockChainlinkOnChain } from "../../../unit/Middlewares/utils/MockChainl
 import { MockPyth } from "../../../unit/Middlewares/utils/MockPyth.sol";
 import { UsdnProtocolHandler } from "../../../unit/UsdnProtocol/utils/Handler.sol";
 import {
+    ACTION_ROLE,
     ADMIN,
+    ADMIN_ROLE,
     CHAINLINK_ORACLE_ETH,
     CHAINLINK_ORACLE_GAS,
+    CONFIG_ROLE,
     DEPLOYER,
     PYTH_ETH_USD,
     PYTH_ORACLE,
@@ -48,6 +51,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         uint256 initialTimestamp; // ignored if `fork` is true
         bool fork;
         uint256 forkWarp; // warp to this timestamp after forking, before deploying protocol. Zero to disable
+        bool enableRoles;
     }
 
     struct ExpoImbalanceLimitsBps {
@@ -68,8 +72,11 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         initialPrice: 2000 ether, // 2000 USD per wstETH, ignored if forking
         initialTimestamp: 1_704_092_400, // 2024-01-01 07:00:00 UTC
         fork: false,
-        forkWarp: 0
+        forkWarp: 0,
+        enableRoles: false
     });
+
+    Roles roles = Roles({ configRole: CONFIG_ROLE, adminRole: ADMIN_ROLE, actionRole: ACTION_ROLE });
 
     Usdn public usdn;
     Sdex public sdex;
@@ -135,6 +142,10 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         require(success, "DEPLOYER wstETH mint failed");
         usdn = new Usdn(address(0), address(0));
 
+        if (!testParams.enableRoles) {
+            roles = Roles({ configRole: ADMIN, adminRole: ADMIN, actionRole: ADMIN });
+        }
+
         protocol = new UsdnProtocolHandler(
             usdn,
             sdex,
@@ -142,11 +153,15 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             oracleMiddleware,
             liquidationRewardsManager,
             100, // tick spacing 100 = 1%
-            ADMIN
+            ADMIN,
+            roles
         );
 
         rebalancer = new Rebalancer(protocol);
+        vm.stopPrank();
+        vm.prank(roles.configRole);
         protocol.setRebalancer(rebalancer);
+        vm.startPrank(DEPLOYER);
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
@@ -195,7 +210,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
         tickSpacing_ = protocol.getTickSpacing();
 
-        vm.startPrank(DEPLOYER);
+        vm.startPrank(roles.actionRole);
         protocol.setFundingSF(0);
         protocol.resetEMA();
 
@@ -256,7 +271,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
         tickToLiquidateData_ = protocol.getTickData(posToLiquidate_.tick);
 
-        vm.prank(DEPLOYER);
+        vm.prank(roles.actionRole);
         protocol.setExpoImbalanceLimits(
             uint256(defaultLimits.depositExpoImbalanceLimitBps),
             uint256(defaultLimits.withdrawalExpoImbalanceLimitBps),

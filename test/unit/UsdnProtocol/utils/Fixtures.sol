@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
+import { ACTION_ROLE, ADMIN, ADMIN_ROLE, CONFIG_ROLE, DEPLOYER } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { IEventsErrors } from "../../../utils/IEventsErrors.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
@@ -34,6 +34,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         bool enableSdexBurnOnDeposit;
         bool enableLongLimit;
         bool enableRebalancer;
+        bool enableRoles;
     }
 
     struct SetUpParams {
@@ -63,7 +64,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             enableSecurityDeposit: false,
             enableSdexBurnOnDeposit: false,
             enableLongLimit: false,
-            enableRebalancer: false
+            enableRebalancer: false,
+            enableRoles: false
         })
     });
 
@@ -109,12 +111,19 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
         feeCollector = new FeeCollector();
 
+        Roles memory roles = Roles({ configRole: CONFIG_ROLE, adminRole: ADMIN_ROLE, actionRole: ACTION_ROLE });
+        if (!testParams.flags.enableRoles) {
+            roles = Roles({ configRole: ADMIN, adminRole: ADMIN, actionRole: ADMIN });
+        }
+
         protocol = new UsdnProtocolHandler(
-            usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, _tickSpacing, address(feeCollector)
+            usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, _tickSpacing, address(feeCollector), roles
         );
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
 
+        vm.stopPrank();
+        vm.startPrank(roles.actionRole);
         if (!testParams.flags.enablePositionFees) {
             protocol.setPositionFeeBps(0);
             protocol.setVaultFeeBps(0);
@@ -149,14 +158,19 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         if (!testParams.flags.enableLongLimit) {
             protocol.setMinLongPosition(0);
         }
+        vm.stopPrank();
 
+        vm.startPrank(DEPLOYER);
         wstETH.approve(address(protocol), type(uint256).max);
-
         rebalancer = new RebalancerHandler(protocol);
+        vm.stopPrank();
+
         if (testParams.flags.enableRebalancer) {
+            vm.prank(roles.configRole);
             protocol.setRebalancer(rebalancer);
         }
 
+        vm.startPrank(DEPLOYER);
         // leverage approx 2x
         protocol.initialize(
             testParams.initialDeposit,

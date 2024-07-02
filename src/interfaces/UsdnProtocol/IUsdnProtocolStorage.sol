@@ -21,6 +21,24 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /* -------------------------------------------------------------------------- */
 
     /**
+     * @notice The config role signature
+     * @return The role signature
+     */
+    function CONFIG_ROLE() external pure returns (bytes32);
+
+    /**
+     * @notice The admin role signature
+     * @return The role signature
+     */
+    function ADMIN_ROLE() external pure returns (bytes32);
+
+    /**
+     * @notice The action role signature
+     * @return The role signature
+     */
+    function ACTION_ROLE() external pure returns (bytes32);
+
+    /**
      * @notice Get the number of decimals of a position's leverage
      * @return The leverage's number of decimals
      */

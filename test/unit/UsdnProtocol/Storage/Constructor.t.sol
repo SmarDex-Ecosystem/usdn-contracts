@@ -23,7 +23,16 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_constructorUSDNNonZeroTotalSupply() public {
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidUsdn.selector, address(usdn)));
-        new UsdnProtocol(usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(1));
+        new UsdnProtocol(
+            usdn,
+            sdex,
+            wstETH,
+            oracleMiddleware,
+            liquidationRewardsManager,
+            100,
+            address(1),
+            Roles({ configRole: address(1), adminRole: address(1), actionRole: address(1) })
+        );
     }
 
     /**
@@ -36,7 +45,16 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
         usdn = new Usdn(address(0), address(0));
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidFeeCollector.selector));
-        new UsdnProtocol(usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(0));
+        new UsdnProtocol(
+            usdn,
+            sdex,
+            wstETH,
+            oracleMiddleware,
+            liquidationRewardsManager,
+            100,
+            address(0),
+            Roles({ configRole: address(0), adminRole: address(0), actionRole: address(0) })
+        );
     }
 
     /**
@@ -52,7 +70,16 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
         wstETH.setDecimals(wrongDecimals);
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidAssetDecimals.selector, wrongDecimals));
-        new UsdnProtocol(usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(1));
+        new UsdnProtocol(
+            usdn,
+            sdex,
+            wstETH,
+            oracleMiddleware,
+            liquidationRewardsManager,
+            100,
+            address(1),
+            Roles({ configRole: address(1), adminRole: address(1), actionRole: address(1) })
+        );
     }
 
     /**
@@ -67,6 +94,15 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
         sdex.setDecimals(protocol.TOKENS_DECIMALS() - 1);
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidTokenDecimals.selector));
-        new UsdnProtocol(usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(1));
+        new UsdnProtocol(
+            usdn,
+            sdex,
+            wstETH,
+            oracleMiddleware,
+            liquidationRewardsManager,
+            100,
+            address(1),
+            Roles({ configRole: address(1), adminRole: address(1), actionRole: address(1) })
+        );
     }
 }

@@ -28,7 +28,8 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
             oracleMiddleware,
             liquidationRewardsManager,
             100, // tick spacing 100 = 1%
-            ADMIN // Fee collector
+            ADMIN, // Fee collector
+            Roles({ configRole: address(this), adminRole: address(this), actionRole: address(this) })
         );
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));

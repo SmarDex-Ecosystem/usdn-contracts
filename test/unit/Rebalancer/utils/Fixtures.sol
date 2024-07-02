@@ -50,7 +50,8 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
             oracleMiddleware,
             liquidationRewardsManager,
             100, // tick spacing 100 = 1%
-            ADMIN // Fee collector
+            ADMIN, // Fee collector
+            Types.Roles({ configRole: ADMIN, adminRole: ADMIN, actionRole: ADMIN })
         );
         rebalancer = new RebalancerHandler(usdnProtocol);
 

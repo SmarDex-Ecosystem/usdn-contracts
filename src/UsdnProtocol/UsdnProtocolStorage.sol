@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.25;
 
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
@@ -21,12 +22,22 @@ contract UsdnProtocolStorage is
     IUsdnProtocolErrors,
     IUsdnProtocolStorage,
     InitializableReentrancyGuard,
-    Ownable2Step
+    Ownable2Step,
+    AccessControl
 {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
     /// @notice The storage structure of the Usdn protocol
     Storage internal s;
+
+    /// @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant CONFIG_ROLE = keccak256("CONFIG_ROLE");
+
+    /// @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+
+    /// @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant ACTION_ROLE = keccak256("ACTION_ROLE");
 
     /**
      * @notice Constructor
@@ -45,8 +56,13 @@ contract UsdnProtocolStorage is
         IBaseOracleMiddleware oracleMiddleware,
         IBaseLiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
-        address feeCollector
+        address feeCollector,
+        Roles memory roles
     ) Ownable(msg.sender) {
+        // roles
+        _grantRole(CONFIG_ROLE, roles.configRole);
+        _grantRole(ADMIN_ROLE, roles.adminRole);
+        _grantRole(ACTION_ROLE, roles.actionRole);
         // parameters
         s._minLeverage = 10 ** Constants.LEVERAGE_DECIMALS + 10 ** 12;
         s._maxLeverage = 10 * 10 ** Constants.LEVERAGE_DECIMALS;

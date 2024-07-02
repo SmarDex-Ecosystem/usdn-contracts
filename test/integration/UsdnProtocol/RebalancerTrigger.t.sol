@@ -2,7 +2,7 @@
 pragma solidity ^0.8.25;
 
 import { MOCK_PYTH_DATA } from "../../unit/Middlewares/utils/Constants.sol";
-import { DEPLOYER } from "../../utils/Constants.sol";
+import { ADMIN } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 
 import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
@@ -118,7 +118,7 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
      * @custom:then The rebalancer is not triggered
      */
     function test_rebalancerTrigger_zeroLimit() public {
-        vm.startPrank(DEPLOYER);
+        vm.startPrank(ADMIN);
         protocol.setExpoImbalanceLimits(
             uint256(protocol.getOpenExpoImbalanceLimitBps()),
             uint256(protocol.getDepositExpoImbalanceLimitBps()),

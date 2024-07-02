@@ -62,7 +62,12 @@ contract Deploy is Script {
             WstEthOracleMiddleware_,
             LiquidationRewardsManager_,
             100,
-            vm.envAddress("FEE_COLLECTOR")
+            vm.envAddress("FEE_COLLECTOR"),
+            Types.Roles({
+                configRole: vm.envAddress("DEPLOYER_ADDRESS"),
+                adminRole: vm.envAddress("DEPLOYER_ADDRESS"),
+                actionRole: vm.envAddress("DEPLOYER_ADDRESS")
+            })
         );
 
         // deploy the rebalancer

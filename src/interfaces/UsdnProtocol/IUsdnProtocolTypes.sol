@@ -356,6 +356,18 @@ interface IUsdnProtocolTypes {
     }
 
     /**
+     * @notice Structure to hold the roles during deployment
+     * @param configRole The config role
+     * @param adminRole The admin role
+     * @param actionRole The action role
+     */
+    struct Roles {
+        address configRole;
+        address adminRole;
+        address actionRole;
+    }
+
+    /**
      * @notice Structure to hold the state of the protocol
      * @param _tickSpacing The liquidation tick spacing for storing long positions
      * A tick spacing of 1 is equivalent to a 0.1% increase in liquidation price between ticks. A tick spacing of

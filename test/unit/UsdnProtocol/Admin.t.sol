@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { ADMIN } from "../../utils/Constants.sol";
@@ -25,73 +25,70 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      * @custom:scenario Call all admin functions from not admin wallet
      * @custom:given The initial usdnProtocol state
      * @custom:when Non-admin wallet triggers admin contract function
-     * @custom:then Each function should revert with the same custom Ownable error
+     * @custom:then Each function should revert with the same custom accessControl error
      */
     function test_RevertWhen_nonAdminWalletCallAdminFunctions() public {
-        // ownable contract custom error
-        bytes memory customError = abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this));
-
-        vm.expectRevert(customError);
+        vm.expectRevert(customError("CONFIG_ROLE"));
         protocol.setOracleMiddleware(IOracleMiddleware(address(1)));
 
-        vm.expectRevert(customError);
+        vm.expectRevert(customError("ACTION_ROLE"));
         protocol.setMinLeverage(0);
 
-        vm.expectRevert(customError);
+        vm.expectRevert(customError("ACTION_ROLE"));
         protocol.setMaxLeverage(0);
 
-        vm.expectRevert(customError);
+        vm.expectRevert(customError("ACTION_ROLE"));
         protocol.setValidationDeadline(0);
 
-        vm.expectRevert(customError);
+        vm.expectRevert(customError("ACTION_ROLE"));
         protocol.setLiquidationPenalty(0);
 
-        vm.expectRevert(customError);
+        vm.expectRevert(customError("ACTION_ROLE"));
         protocol.setSafetyMarginBps(0);
 
-        vm.expectRevert(customError);
+        vm.expectRevert(customError("ACTION_ROLE"));
         protocol.setLiquidationIteration(0);
 
-        vm.expectRevert(customError);
+        vm.expectRevert(customError("ACTION_ROLE"));
         protocol.setEMAPeriod(0);
 
-        vm.expectRevert(customError);
+        vm.expectRevert(customError("ACTION_ROLE"));
         protocol.setFundingSF(0);
 
-        vm.expectRevert(customError);
+        vm.expectRevert(customError("ACTION_ROLE"));
         protocol.setProtocolFeeBps(0);
 
-        vm.expectRevert(customError);
+        vm.expectRevert(customError("ACTION_ROLE"));
         protocol.setSdexBurnOnDepositRatio(0);
 
-        vm.expectRevert(customError);
+        vm.expectRevert(customError("CONFIG_ROLE"));
         protocol.setFeeCollector(address(this));
 
-        vm.expectRevert(customError);
+        vm.expectRevert(customError("ACTION_ROLE"));
         protocol.setFeeThreshold(0);
 
-        vm.expectRevert(customError);
+        vm.expectRevert(customError("CONFIG_ROLE"));
         protocol.setLiquidationRewardsManager(ILiquidationRewardsManager(address(this)));
 
-        vm.expectRevert(customError);
+        vm.expectRevert(customError("CONFIG_ROLE"));
         protocol.setRebalancer(IRebalancer(address(this)));
 
-        vm.expectRevert(customError);
+        vm.expectRevert(customError("ACTION_ROLE"));
         protocol.setSecurityDepositValue(0);
 
-        vm.expectRevert(customError);
+        vm.expectRevert(customError("ACTION_ROLE"));
         protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
 
-        vm.expectRevert(customError);
+        vm.expectRevert(customError("ACTION_ROLE"));
         protocol.setMinLongPosition(100 ether);
 
-        vm.expectRevert(customError);
+        vm.expectRevert(customError("ACTION_ROLE"));
         protocol.setPositionFeeBps(0);
 
-        vm.expectRevert(customError);
+        vm.expectRevert(customError("ACTION_ROLE"));
         protocol.setVaultFeeBps(0);
 
-        vm.expectRevert(customError);
+        vm.expectRevert(customError("ACTION_ROLE"));
         protocol.setRebalancerBonusBps(0);
     }
 
@@ -985,5 +982,12 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         uint128 minThreshold = protocol.getTargetUsdnPrice();
         vm.expectRevert(UsdnProtocolInvalidUsdnRebaseThreshold.selector);
         protocol.setUsdnRebaseThreshold(minThreshold - 1);
+    }
+
+    function customError(string memory role) internal view returns (bytes memory customError_) {
+        bytes memory roleBytes = bytes(role);
+        customError_ = abi.encodeWithSelector(
+            IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), keccak256(roleBytes)
+        );
     }
 }
