@@ -1,5 +1,5 @@
 corpusDir: echidna_assert_corpus
-testMode: assertion
+testMode: exploration
 testLimit: 10000
 deployer: "0x10000"
 sender: ["0x10000"]
