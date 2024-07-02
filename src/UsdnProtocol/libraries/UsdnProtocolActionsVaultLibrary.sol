@@ -331,8 +331,8 @@ library UsdnProtocolActionsVaultLibrary {
     /**
      * @notice Prepare the pending action struct for a deposit and add it to the queue
      * @param s The storage of the protocol
-     * @param to The address that will receive the minted USDN
      * @param validator The address that will validate the deposit
+     * @param to The address that will receive the minted USDN
      * @param securityDepositValue The value of the security deposit for the newly created pending action
      * @param amount The amount of assets to deposit
      * @param data The deposit action data
@@ -340,8 +340,8 @@ library UsdnProtocolActionsVaultLibrary {
      */
     function _createDepositPendingAction(
         Types.Storage storage s,
-        address to,
         address validator,
+        address to,
         uint64 securityDepositValue,
         uint128 amount,
         InitiateDepositData memory data
@@ -409,7 +409,7 @@ library UsdnProtocolActionsVaultLibrary {
             return (securityDepositValue, false);
         }
 
-        amountToRefund_ = _createDepositPendingAction(s, to, validator, securityDepositValue, amount, data);
+        amountToRefund_ = _createDepositPendingAction(s, validator, to, securityDepositValue, amount, data);
 
         if (data.sdexToBurn > 0) {
             // send SDEX to the dead address
@@ -599,8 +599,8 @@ library UsdnProtocolActionsVaultLibrary {
     /**
      * @notice Prepare the pending action struct for a withdrawal and add it to the queue
      * @param s The storage of the protocol
-     * @param to The address that will receive the assets
      * @param validator The address that will validate the withdrawal
+     * @param to The address that will receive the assets
      * @param usdnShares The amount of USDN shares to burn
      * @param securityDepositValue The value of the security deposit for the newly created pending action
      * @param data The withdrawal action data
@@ -608,8 +608,8 @@ library UsdnProtocolActionsVaultLibrary {
      */
     function _createWithdrawalPendingAction(
         Types.Storage storage s,
-        address to,
         address validator,
+        address to,
         uint152 usdnShares,
         uint64 securityDepositValue,
         WithdrawalData memory data
@@ -701,7 +701,7 @@ library UsdnProtocolActionsVaultLibrary {
             return (securityDepositValue, false);
         }
 
-        amountToRefund_ = _createWithdrawalPendingAction(s, to, validator, usdnShares, securityDepositValue, data);
+        amountToRefund_ = _createWithdrawalPendingAction(s, validator, to, usdnShares, securityDepositValue, data);
 
         // retrieve the USDN tokens, check that the balance is sufficient
         IUsdn usdn = s._usdn;
