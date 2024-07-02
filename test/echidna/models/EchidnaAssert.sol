@@ -72,36 +72,6 @@ contract Setup is Test {
 
         vm.deal(DEPLOYER, ACCOUNT_ETH_AMOUNT);
     }
-
-    // /**
-    //  * @notice Initialize the USDN Protocol
-    //  * @param isProdEnv Env check
-    //  * @param UsdnProtocol_ The USDN protocol
-    //  * @param mockOracleMiddleware The WstETH oracle middleware
-    //  * @param depositAmount The amount to deposit during the protocol initialization
-    //  * @param longAmount The size of the long to open during the protocol initialization
-    //  */
-    // function _initializeUsdnProtocol(
-    //     bool isProdEnv,
-    //     UsdnProtocol UsdnProtocol_,
-    //     MockOracleMiddleware mockOracleMiddleware,
-    //     uint256 depositAmount,
-    //     uint256 longAmount
-    // ) internal {
-    //     uint256 desiredLiqPrice;
-    //     if (isProdEnv) {
-    //         desiredLiqPrice = vm.envUint("INIT_LONG_LIQPRICE");
-    //     } else {
-    //         // for forks, we want a leverage of ~2x so we get the current
-    //         // price from the middleware and divide it by two
-    //         desiredLiqPrice = MockOracleMiddleware.parseAndValidatePrice(
-    //             "", uint128(block.timestamp), MockOracleMiddleware.Types.ProtocolAction.Initialize, ""
-    //         ).price / 2;
-    //     }
-
-    //     UsdnProtocol_.initialize(uint128(depositAmount), uint128(longAmount), uint128(desiredLiqPrice),
-    // abi.encode(0));
-    // }
 }
 
 contract EchidnaAssert is Setup {
