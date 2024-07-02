@@ -234,8 +234,8 @@ library UsdnProtocolCoreLibrary {
         int256 oldVaultExpo = s._balanceVault.toInt256();
 
         // ImbalanceIndex = (longExpo - vaultExpo) / max(longExpo, vaultExpo)
-        // fund = (sign(ImbalanceIndex) * ImbalanceIndex^2 * fundingSF) + _EMA.
-        // fund = (sign(ImbalanceIndex) * (longExpo - vaultExpo)^2 * fundingSF / denominator) + _EMA.
+        // fund = (sign(ImbalanceIndex) * ImbalanceIndex^2 * fundingSF) + _EMA
+        // fund = (sign(ImbalanceIndex) * (longExpo - vaultExpo)^2 * fundingSF / denominator) + _EMA
         // with denominator = vaultExpo^2 if vaultExpo > longExpo, or longExpo^2 if longExpo > vaultExpo
 
         int256 numerator = oldLongExpo_ - oldVaultExpo;
