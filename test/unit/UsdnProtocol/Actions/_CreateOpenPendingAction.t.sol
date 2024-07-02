@@ -24,8 +24,8 @@ contract TestUsdnProtocolActionsCreateOpenPendingAction is UsdnProtocolBaseFixtu
 
     /**
      * @custom:scenario An open pending action is created
-     * @custom:given USER_1 being the `validator` address
-     * @custom:and USER_2 being the `to` address
+     * @custom:given USER_1 being the `to` address
+     * @custom:and USER_2 being the `validator` address
      * @custom:when _createOpenPendingAction is called
      * @custom:then the amount to refund should be 0
      * @custom:and the create pending action's data should match the inputs
@@ -37,15 +37,15 @@ contract TestUsdnProtocolActionsCreateOpenPendingAction is UsdnProtocolBaseFixtu
 
         assertEq(amountToRefund, 0, "Amount to refund should be 0");
 
-        (PendingAction memory pendingAction,) = protocol.i_getPendingAction(USER_1);
+        (PendingAction memory pendingAction,) = protocol.i_getPendingAction(USER_2);
         assertEq(
             uint8(pendingAction.action),
             uint8(ProtocolAction.ValidateOpenPosition),
             "action type should be ValidateOpenPosition"
         );
         assertEq(pendingAction.timestamp, uint40(block.timestamp), "timestamp should be now");
-        assertEq(pendingAction.validator, USER_1, "USER_1 should be the `validator` address");
-        assertEq(pendingAction.to, USER_2, "USER_2 should be the `to` address");
+        assertEq(pendingAction.to, USER_1, "USER_1 should be the `to` address");
+        assertEq(pendingAction.validator, USER_2, "USER_2 should be the `validator` address");
         assertEq(
             pendingAction.securityDepositValue, securityDeposit, "securityDepositValue should be the provided amount"
         );

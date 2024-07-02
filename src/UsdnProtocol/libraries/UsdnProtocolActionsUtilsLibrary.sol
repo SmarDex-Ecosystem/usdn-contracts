@@ -192,16 +192,16 @@ library UsdnProtocolActionsUtilsLibrary {
     /**
      * @notice Prepare the pending action struct for an open position and add it to the queue
      * @param s The storage of the protocol
-     * @param validator The address that will validate the open position
      * @param to The address that will be the owner of the position
+     * @param validator The address that will validate the open position
      * @param securityDepositValue The value of the security deposit for the newly created pending action
      * @param data The open position action data
      * @return amountToRefund_ Refund The security deposit value of a stale pending action
      */
     function _createOpenPendingAction(
         Types.Storage storage s,
-        address validator,
         address to,
+        address validator,
         uint64 securityDepositValue,
         Types.InitiateOpenPositionData memory data
     ) public returns (uint256 amountToRefund_) {

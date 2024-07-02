@@ -237,7 +237,7 @@ library UsdnProtocolActionsLongLibrary {
         posId_ = data.posId;
 
         amountToRefund_ =
-            ActionsUtils._createOpenPendingAction(s, params.validator, params.to, params.securityDepositValue, data);
+            ActionsUtils._createOpenPendingAction(s, params.to, params.validator, params.securityDepositValue, data);
 
         if (params.permit2TokenBitfield.useForAsset()) {
             address(s._asset).permit2TransferFrom(params.user, address(this), params.amount);
