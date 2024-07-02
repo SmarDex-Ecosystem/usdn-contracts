@@ -48,10 +48,10 @@ contract Deploy is Script {
         uint256 longAmount = vm.envOr("INIT_LONG_AMOUNT", uint256(0));
 
         // deploy contracts
+        Usdn_ = _deployUsdn(isProdEnv);
         WstETH_ = _deployWstETH(depositAmount, longAmount);
         WstEthOracleMiddleware_ = _deployWstEthOracleMiddleware(isProdEnv, address(WstETH_));
         LiquidationRewardsManager_ = _deployLiquidationRewardsManager(isProdEnv, address(WstETH_));
-        Usdn_ = _deployUsdn();
         Sdex_ = _deploySdex();
 
         // deploy the protocol with tick spacing 100 = 1%
@@ -167,9 +167,11 @@ contract Deploy is Script {
      * @dev Will return the already deployed one if an address is in the env variables
      * @return usdn_ The deployed contract
      */
-    function _deployUsdn() internal returns (Usdn usdn_) {
-        address usdnAddress = vm.envOr("USDN_ADDRESS", address(0));
-        if (usdnAddress != address(0)) {
+    function _deployUsdn(bool isProdEnv) internal returns (Usdn usdn_) {
+        if (isProdEnv) {
+            // In production environment, we want to deploy the USDN token separately via DeployUsdn.s.sol
+            address usdnAddress = vm.envAddress("USDN_ADDRESS");
+            require(usdnAddress != address(0), "USDN_ADDRESS is required in prod mode");
             usdn_ = Usdn(usdnAddress);
         } else {
             usdn_ = new Usdn(address(0), address(0));
