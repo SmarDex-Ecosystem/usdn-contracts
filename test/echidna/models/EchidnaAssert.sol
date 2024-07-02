@@ -28,9 +28,9 @@ contract Setup is Test {
 
     MockOracleMiddleware public wstEthOracleMiddleware;
     MockLiquidationRewardsManager public liquidationRewardsManager;
-    Usdn usdn;
-    UsdnProtocol usdnProtocol;
-    Rebalancer rebalancer;
+    Usdn public usdn;
+    UsdnProtocol public usdnProtocol;
+    Rebalancer public rebalancer;
 
     constructor() payable {
         uint256 INIT_DEPOSIT_AMOUNT = 10 ether;
