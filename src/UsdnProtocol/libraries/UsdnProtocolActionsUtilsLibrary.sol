@@ -425,8 +425,8 @@ library UsdnProtocolActionsUtilsLibrary {
     /**
      * @notice Prepare the pending action struct for the close position action and add it to the queue
      * @param s The storage of the protocol
-     * @param validator The validator for the pending action
      * @param to The address that will receive the assets
+     * @param validator The validator for the pending action
      * @param posId The unique identifier of the position
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param securityDepositValue The value of the security deposit for the newly created pending action
@@ -435,8 +435,8 @@ library UsdnProtocolActionsUtilsLibrary {
      */
     function _createClosePendingAction(
         Types.Storage storage s,
-        address validator,
         address to,
+        address validator,
         Types.PositionId memory posId,
         uint128 amountToClose,
         uint64 securityDepositValue,

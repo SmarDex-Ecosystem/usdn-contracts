@@ -25,8 +25,8 @@ contract TestUsdnProtocolActionsCreateClosePendingAction is UsdnProtocolBaseFixt
 
     /**
      * @custom:scenario A close position pending action is created
-     * @custom:given USER_1 being the `validator` address
-     * @custom:and USER_2 being the `to` address
+     * @custom:given USER_1 being the `to` address
+     * @custom:and USER_2 being the `validator` address
      * @custom:and the price has increased by 10%
      * @custom:when _createClosePendingAction is called
      * @custom:then the amount to refund should be 0
@@ -45,15 +45,15 @@ contract TestUsdnProtocolActionsCreateClosePendingAction is UsdnProtocolBaseFixt
             protocol.i_calcFixedPrecisionMultiplier(data.lastPrice, data.longTradingExpo, data.liqMulAcc);
         assertEq(amountToRefund, 0, "Amount to refund should be 0");
 
-        (PendingAction memory pendingAction,) = protocol.i_getPendingAction(USER_1);
+        (PendingAction memory pendingAction,) = protocol.i_getPendingAction(USER_2);
         assertEq(
             uint8(pendingAction.action),
             uint8(ProtocolAction.ValidateClosePosition),
             "action type should be ValidateClosePosition"
         );
         assertEq(pendingAction.timestamp, uint40(block.timestamp), "timestamp should be now");
-        assertEq(pendingAction.validator, USER_1, "USER_1 should be the validator address");
-        assertEq(pendingAction.to, USER_2, "USER_2 should be the to address");
+        assertEq(pendingAction.to, USER_1, "USER_1 should be the to address");
+        assertEq(pendingAction.validator, USER_2, "USER_2 should be the validator address");
         assertEq(
             pendingAction.securityDepositValue, securityDeposit, "securityDepositValue should be the provided amount"
         );
