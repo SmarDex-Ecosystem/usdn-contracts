@@ -28,6 +28,8 @@ export GET_WSTETH=true
 # Execute in the context of the project's root
 pushd $SCRIPT_DIR/..
 
-forge script --non-interactive --private-key $DEPLOYER_PRIVATE_KEY -f $RPC_URL script/Deploy.s.sol:Deploy --broadcast
+cast rpc evm_setIntervalMining 2 --rpc-url $RPC_URL
+forge script --non-interactive --private-key $DEPLOYER_PRIVATE_KEY -f $RPC_URL script/Deploy.s.sol:Deploy --broadcast --slow
+cast rpc evm_setIntervalMining 12 --rpc-url $RPC_URL
 
 popd
