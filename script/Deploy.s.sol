@@ -48,10 +48,10 @@ contract Deploy is Script {
         uint256 longAmount = vm.envOr("INIT_LONG_AMOUNT", uint256(0));
 
         // deploy contracts
-        Usdn_ = _deployUsdn(isProdEnv);
         WstETH_ = _deployWstETH(depositAmount, longAmount);
         WstEthOracleMiddleware_ = _deployWstEthOracleMiddleware(isProdEnv, address(WstETH_));
         LiquidationRewardsManager_ = _deployLiquidationRewardsManager(isProdEnv, address(WstETH_));
+        Usdn_ = _deployUsdn(isProdEnv);
         Sdex_ = _deploySdex();
 
         // deploy the protocol with tick spacing 100 = 1%
