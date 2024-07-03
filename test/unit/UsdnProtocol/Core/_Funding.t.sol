@@ -218,11 +218,12 @@ contract TestUsdnProtocolCoreFunding is UsdnProtocolBaseFixture {
         assertEq(fundB, fundA / 4, "funding A vs B");
     }
 
-    function testFuzz_fundingVsScalingFactorPos(
+    function testFuzz_fundingVsScalingFactorAndEMA(
         uint256 sf,
         uint256 totalExpo,
         uint256 balanceLong,
-        uint256 balanceVault
+        uint256 balanceVault,
+        int256 ema
     ) public {
         s.fundingSF = bound(sf, 0, 10 ** protocol.FUNDING_SF_DECIMALS());
         // as a safe upper bound, we use the total supply of eth with a leverage max of 10x
@@ -240,9 +241,16 @@ contract TestUsdnProtocolCoreFunding is UsdnProtocolBaseFixture {
 
         // the funding should double (with 1 wei tolerance)
         assertApproxEqAbs(fundB, fundA * 2, 1, "funding A vs B");
-    }
 
-    function testFuzz_fundingVsEMA() public { }
+        // since we cap the imbalance to 100%, the funding should never exceed the value below (ignoring the EMA)
+        int256 emaMax = int256(s.fundingSF * 10 ** (protocol.FUNDING_RATE_DECIMALS() - protocol.FUNDING_SF_DECIMALS()));
+        ema = bound(ema, -emaMax, emaMax);
+
+        // EMA is added to the new value of the funding
+        (int256 fundC,) = protocol.i_funding(s, s.lastUpdateTimestamp + TIME_ELAPSED, ema);
+
+        assertEq(fundC, fundB + ema, "funding B vs C");
+    }
 
     /**
      * @custom:scenario Revert with a past timestamp
