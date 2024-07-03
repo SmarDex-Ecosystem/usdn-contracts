@@ -165,6 +165,13 @@ contract TestUsdnProtocolCoreFunding is UsdnProtocolBaseFixture {
         assertEq(longExpo, longTradingExpo, "longExpo");
     }
 
+    /**
+     * @custom:scenario Check the funding rate is proportional to the imbalance squared (positive imbalance)
+     * @custom:given An imbalance of +50% (more in the long side)
+     * @custom:or an imbalance of 25%
+     * @custom:when The imbalance is halved
+     * @custom:then The funding rate is 4 times smaller
+     */
     function test_fundingVsImbalancePos() public {
         // long trading expo = 1000 ether
         s.totalExpo = 2000 ether;
@@ -191,6 +198,13 @@ contract TestUsdnProtocolCoreFunding is UsdnProtocolBaseFixture {
         assertEq(fundB, fundA / 4, "funding A vs B");
     }
 
+    /**
+     * @custom:scenario Check the funding rate is proportional to the imbalance squared (negative imbalance)
+     * @custom:given An imbalance of -50% (more in the vault side)
+     * @custom:or an imbalance of -25%
+     * @custom:when The imbalance is halved
+     * @custom:then The funding rate (absolute value) is 4 times smaller
+     */
     function test_fundingVsImbalanceNeg() public {
         // long trading expo = 500 ether
         s.totalExpo = 2000 ether;
@@ -218,6 +232,18 @@ contract TestUsdnProtocolCoreFunding is UsdnProtocolBaseFixture {
         assertEq(fundB, fundA / 4, "funding A vs B");
     }
 
+    /**
+     * @custom:scenario Check the funding rate is proportional to the funding scaling factor
+     * @custom:given A funding scaling factor between 0 and 1
+     * @custom:and a total exposure between 1 ether and 1.2e9 ether
+     * @custom:and a long balance between 0 and the total exposure
+     * @custom:and a vault balance between 0 and 120e6 ether
+     * @custom:and an EMA between in the appropriate range
+     * @custom:when The funding scaling factor is doubled
+     * @custom:then The funding rate is doubled
+     * @custom:when The EMA is passed to the funding calculation
+     * @custom:then The funding rate has the EMA added to it
+     */
     function testFuzz_fundingVsScalingFactorAndEMA(
         uint256 sf,
         uint256 totalExpo,
