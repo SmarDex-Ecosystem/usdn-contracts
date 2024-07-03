@@ -242,8 +242,11 @@ contract TestUsdnProtocolCoreFunding is UsdnProtocolBaseFixture {
         // the funding should double (with 1 wei tolerance)
         assertApproxEqAbs(fundB, fundA * 2, 1, "funding A vs B");
 
-        // since we cap the imbalance to 100%, the funding should never exceed the value below (ignoring the EMA)
-        int256 emaMax = int256(s.fundingSF * 10 ** (protocol.FUNDING_RATE_DECIMALS() - protocol.FUNDING_SF_DECIMALS()));
+        // since we cap the imbalance to 100%, the funding (without EMA contribution) is at most:
+        int256 fundMax = int256(s.fundingSF * 10 ** (protocol.FUNDING_RATE_DECIMALS() - protocol.FUNDING_SF_DECIMALS()));
+        // a good upper bound for the EMA is thus:
+        int256 emaMax = 2 * fundMax;
+        // we bound the EMA by this value
         ema = bound(ema, -emaMax, emaMax);
 
         // EMA is added to the new value of the funding
