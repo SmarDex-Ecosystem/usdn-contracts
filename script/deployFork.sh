@@ -28,8 +28,19 @@ export GET_WSTETH=true
 # Execute in the context of the project's root
 pushd $SCRIPT_DIR/..
 
-cast rpc evm_setIntervalMining 2 --rpc-url $RPC_URL
-forge script --non-interactive --private-key $DEPLOYER_PRIVATE_KEY -f $RPC_URL script/Deploy.s.sol:Deploy --broadcast --slow
-cast rpc evm_setIntervalMining 12 --rpc-url $RPC_URL
+CHAIN_ID="${FORK_CHAIN_ID:-31337}"
+
+deploy() {
+    forge script --non-interactive --private-key $DEPLOYER_PRIVATE_KEY -f $RPC_URL script/Deploy.s.sol:Deploy --broadcast --slow
+}
+
+# If target fork tweak mining interval to speed-up deployment else deploy normally
+if [ $CHAIN_ID -eq "31337" ]; then
+    cast rpc evm_setIntervalMining 2 --rpc-url $RPC_URL
+    deploy
+    cast rpc evm_setIntervalMining 12 --rpc-url $RPC_URL
+else
+    deploy
+fi
 
 popd
