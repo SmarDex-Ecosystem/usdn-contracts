@@ -285,7 +285,7 @@ library UsdnProtocolActionsLongLibrary {
 
         if (isValidated_ || liquidated_) {
             Core._clearPendingAction(s, validator, rawIndex);
-            return (pending.securityDepositValue, isValidated_, liquidated_);
+            securityDepositValue_ = pending.securityDepositValue;
         }
     }
 
@@ -511,7 +511,7 @@ library UsdnProtocolActionsLongLibrary {
 
         if (isValidated_ || liquidated_) {
             Core._clearPendingAction(s, validator, rawIndex);
-            return (pending.securityDepositValue, isValidated_, liquidated_);
+            securityDepositValue_ = pending.securityDepositValue;
         }
     }
 
