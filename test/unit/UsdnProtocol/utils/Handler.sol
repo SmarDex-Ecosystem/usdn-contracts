@@ -106,13 +106,12 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     }
 
     function updateBalances(uint128 currentPrice) external {
-        (bool priceUpdated, int256 tempLongBalance, int256 tempVaultBalance) =
-            Core._applyPnlAndFunding(s, currentPrice, uint128(block.timestamp));
-        if (!priceUpdated) {
+        ApplyPnlAndFundingData memory data = Core._applyPnlAndFunding(s, currentPrice, uint128(block.timestamp));
+        if (!data.isPriceRecent) {
             revert("price was not updated");
         }
-        s._balanceLong = tempLongBalance.toUint256();
-        s._balanceVault = tempVaultBalance.toUint256();
+        s._balanceLong = data.tempLongBalance.toUint256();
+        s._balanceVault = data.tempVaultBalance.toUint256();
     }
 
     function removePendingAction(uint128 rawIndex, address user) external {
@@ -127,6 +126,18 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         InitiateOpenPositionData memory data
     ) public returns (uint256 amountToRefund_) {
         return ActionsUtils._createOpenPendingAction(s, to, validator, securityDepositValue, data);
+    }
+
+    function i_createClosePendingAction(
+        address to,
+        address validator,
+        PositionId memory posId,
+        uint128 amountToClose,
+        uint64 securityDepositValue,
+        ClosePositionData memory data
+    ) external returns (uint256 amountToRefund_) {
+        return
+            ActionsUtils._createClosePendingAction(s, to, validator, posId, amountToClose, securityDepositValue, data);
     }
 
     function findLastSetInTickBitmap(int24 searchFrom) external view returns (uint256 index) {
@@ -208,7 +219,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
 
     function i_applyPnlAndFunding(uint128 currentPrice, uint128 timestamp)
         external
-        returns (bool priceUpdated_, int256 tempLongBalance_, int256 tempVaultBalance_)
+        returns (ApplyPnlAndFundingData memory data_)
     {
         return Core._applyPnlAndFunding(s, currentPrice, timestamp);
     }

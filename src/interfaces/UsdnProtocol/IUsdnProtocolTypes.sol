@@ -356,6 +356,20 @@ interface IUsdnProtocolTypes {
     }
 
     /**
+     * @notice Data structure for the `_applyPnlAndFunding` function
+     * @param isPriceRecent Whether the price was updated or was already the most recent price
+     * @param tempLongBalance The new balance of the long side, could be negative (temporarily)
+     * @param tempVaultBalance The new balance of the vault side, could be negative (temporarily)
+     * @param lastPrice The last price
+     */
+    struct ApplyPnlAndFundingData {
+        bool isPriceRecent;
+        int256 tempLongBalance;
+        int256 tempVaultBalance;
+        uint128 lastPrice;
+    }
+
+    /**
      * @notice Structure to hold the state of the protocol
      * @param _tickSpacing The liquidation tick spacing for storing long positions
      * A tick spacing of 1 is equivalent to a 0.1% increase in liquidation price between ticks. A tick spacing of
