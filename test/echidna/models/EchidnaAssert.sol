@@ -3,7 +3,7 @@ pragma solidity ^0.8.25;
 
 import { Test } from "forge-std/Test.sol";
 
-import { MockLiquidationRewardsManager } from "../../../src/OracleMiddleware/mock/MockLiquidationRewardsManager.sol";
+import { MockLiquidationRewardsManager } from "../mock/MockLiquidationRewardsManager.sol";
 
 import { Rebalancer } from "../../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../../src/Usdn/Usdn.sol";
@@ -44,9 +44,7 @@ contract Setup is Test {
 
         wstEthOracleMiddleware = new MockOracleMiddleware();
 
-        liquidationRewardsManager = new MockLiquidationRewardsManager(
-            0x169E633A2D1E6c10dD91238Ba11c4A708dfEF37C, IWstETH(wsteth), uint256(2 hours + 5 minutes)
-        );
+        liquidationRewardsManager = new MockLiquidationRewardsManager(IWstETH(wsteth), uint256(2 hours + 5 minutes));
 
         usdn = new Usdn(address(0), address(0));
 
