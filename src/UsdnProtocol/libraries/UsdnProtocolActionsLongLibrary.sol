@@ -463,7 +463,7 @@ library UsdnProtocolActionsLongLibrary {
         }
 
         amountToRefund_ =
-            ActionsUtils._createClosePendingAction(s, validator, to, posId, amountToClose, securityDepositValue, data);
+            ActionsUtils._createClosePendingAction(s, to, validator, posId, amountToClose, securityDepositValue, data);
 
         s._balanceLong -= data.tempPositionValue;
 

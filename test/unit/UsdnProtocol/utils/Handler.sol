@@ -129,6 +129,37 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return ActionsVault._createWithdrawalPendingAction(s, to, validator, usdnShares, securityDepositValue, data);
     }
 
+    function i_createDepositPendingAction(
+        address validator,
+        address to,
+        uint64 securityDepositValue,
+        uint128 amount,
+        ActionsVault.InitiateDepositData memory data
+    ) external returns (uint256 amountToRefund_) {
+        return ActionsVault._createDepositPendingAction(s, validator, to, securityDepositValue, amount, data);
+    }
+
+    function i_createOpenPendingAction(
+        address to,
+        address validator,
+        uint64 securityDepositValue,
+        InitiateOpenPositionData memory data
+    ) public returns (uint256 amountToRefund_) {
+        return ActionsUtils._createOpenPendingAction(s, to, validator, securityDepositValue, data);
+    }
+
+    function i_createClosePendingAction(
+        address to,
+        address validator,
+        PositionId memory posId,
+        uint128 amountToClose,
+        uint64 securityDepositValue,
+        ClosePositionData memory data
+    ) external returns (uint256 amountToRefund_) {
+        return
+            ActionsUtils._createClosePendingAction(s, to, validator, posId, amountToClose, securityDepositValue, data);
+    }
+
     function findLastSetInTickBitmap(int24 searchFrom) external view returns (uint256 index) {
         return s._tickBitmap.findLastSet(Core._calcBitmapIndexFromTick(s, searchFrom));
     }
