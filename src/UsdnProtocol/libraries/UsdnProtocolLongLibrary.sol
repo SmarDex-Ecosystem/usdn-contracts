@@ -70,6 +70,7 @@ library UsdnProtocolLongLibrary {
         bool isPriceRecent;
         int256 tempLongBalance;
         int256 tempVaultBalance;
+        uint128 lastPrice;
         bool rebased;
         bool rebalancerTriggered;
         bytes callbackResult;
@@ -278,21 +279,25 @@ library UsdnProtocolLongLibrary {
         bytes calldata priceData
     ) public returns (uint256 liquidatedPositions_, bool isLiquidationPending_) {
         ApplyPnlAndFundingAndLiquidateData memory data;
-        // adjust balances
-        (data.isPriceRecent, data.tempLongBalance, data.tempVaultBalance) =
-            Core._applyPnlAndFunding(s, neutralPrice.toUint128(), timestamp.toUint128());
+        {
+            Types.ApplyPnlAndFundingData memory temporaryData =
+                Core._applyPnlAndFunding(s, neutralPrice.toUint128(), timestamp.toUint128());
+            assembly {
+                mcopy(data, temporaryData, 128)
+            }
+        }
 
         // liquidate if the price was updated or was already the most recent
         if (data.isPriceRecent) {
             Types.LiquidationsEffects memory liquidationEffects =
-                _liquidatePositions(s, s._lastPrice, iterations, data.tempLongBalance, data.tempVaultBalance);
+                _liquidatePositions(s, data.lastPrice, iterations, data.tempLongBalance, data.tempVaultBalance);
 
             isLiquidationPending_ = liquidationEffects.isLiquidationPending;
             if (!isLiquidationPending_ && liquidationEffects.liquidatedTicks > 0) {
                 if (s._closeExpoImbalanceLimitBps > 0) {
                     (liquidationEffects.newLongBalance, liquidationEffects.newVaultBalance) = _triggerRebalancer(
                         s,
-                        s._lastPrice,
+                        data.lastPrice,
                         liquidationEffects.newLongBalance,
                         liquidationEffects.newVaultBalance,
                         liquidationEffects.remainingCollateral
@@ -304,7 +309,7 @@ library UsdnProtocolLongLibrary {
             s._balanceLong = liquidationEffects.newLongBalance;
             s._balanceVault = liquidationEffects.newVaultBalance;
 
-            (data.rebased, data.callbackResult) = Vault._usdnRebase(s, s._lastPrice, ignoreInterval);
+            (data.rebased, data.callbackResult) = Vault._usdnRebase(s, data.lastPrice, ignoreInterval);
 
             if (liquidationEffects.liquidatedTicks > 0) {
                 ActionsUtils._sendRewardsToLiquidator(
