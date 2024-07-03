@@ -161,6 +161,13 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         ActionsLong._validateClosePosition(s, user, priceData);
     }
 
+    function i_validateWithdrawal(address user, bytes calldata priceData)
+        external
+        returns (uint256 securityDepositValue_, bool isValidated_)
+    {
+        return ActionsVault._validateWithdrawal(s, user, priceData);
+    }
+
     function i_removeAmountFromPosition(
         int24 tick,
         uint256 index,
