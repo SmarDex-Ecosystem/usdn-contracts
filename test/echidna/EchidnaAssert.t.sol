@@ -12,7 +12,6 @@ contract TestForkEchidna is Test {
     address internal ATTACKER;
 
     function setUp() public {
-        vm.createSelectFork(vm.rpcUrl("mainnet"));
         echidna = new EchidnaAssert();
         DEPLOYER = echidna.DEPLOYER();
         ATTACKER = echidna.ATTACKER();
@@ -20,6 +19,6 @@ contract TestForkEchidna is Test {
 
     function test_canInitiateDeposit() public {
         vm.prank(DEPLOYER);
-        echidna.initiateDeposit(1 ether, 0, 0);
+        echidna.initiateDeposit(0.1 ether, 0, 0);
     }
 }

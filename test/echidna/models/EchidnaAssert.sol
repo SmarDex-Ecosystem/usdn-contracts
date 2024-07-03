@@ -21,7 +21,8 @@ contract Setup is Test {
     address public constant DEPLOYER = address(0x10000);
     address public constant ATTACKER = address(0x20000);
     address public constant FEE_COLLECTOR = address(0x00fee);
-    uint256 public constant ACCOUNT_ETH_AMOUNT = 100 ether;
+    uint256 public constant ACCOUNT_START_ETH_AMOUNT = 100 ether;
+    uint256 public constant ACCOUNT_START_SDEX_AMOUNT = 10 ether;
 
     Sdex public immutable sdex = new Sdex();
     Weth public immutable weth = new Weth();
@@ -41,18 +42,19 @@ contract Setup is Test {
     Rebalancer public rebalancer;
 
     constructor() payable {
+        vm.warp(1_709_251_200);
         uint256 INIT_DEPOSIT_AMOUNT = 10 ether;
         uint256 INIT_LONG_AMOUNT = 10 ether;
-        uint128 PRICE_VALUE = 2000 ether; // 2000 USDN = 1 ETH
+        uint128 INITIAL_PRICE = 2000 ether; // 2000 USDN = 1 ETH
 
-        uint256 _ethAmount =
-            (INIT_DEPOSIT_AMOUNT + INIT_LONG_AMOUNT + ACCOUNT_ETH_AMOUNT + 10_000) * wsteth.stEthPerToken() / 1 ether;
+        uint256 _ethAmount = (INIT_DEPOSIT_AMOUNT + INIT_LONG_AMOUNT + ACCOUNT_START_ETH_AMOUNT + 10_000)
+            * wsteth.stEthPerToken() / 1 ether;
         vm.deal(address(this), _ethAmount);
         (bool result,) = address(wsteth).call{ value: _ethAmount }("");
         require(result, "WstETH mint failed");
 
-        wsteth.transfer(DEPLOYER, ACCOUNT_ETH_AMOUNT);
-        require(wsteth.balanceOf(DEPLOYER) == ACCOUNT_ETH_AMOUNT, "WstETH transfer failed");
+        wsteth.transfer(DEPLOYER, ACCOUNT_START_ETH_AMOUNT);
+        require(wsteth.balanceOf(DEPLOYER) == ACCOUNT_START_ETH_AMOUNT, "WstETH transfer failed");
 
         wstEthOracleMiddleware = new MockOracleMiddleware();
 
@@ -74,17 +76,36 @@ contract Setup is Test {
         wsteth.approve(address(usdnProtocol), INIT_DEPOSIT_AMOUNT + INIT_LONG_AMOUNT);
 
         uint256 _desiredLiqPrice = wstEthOracleMiddleware.parseAndValidatePrice(
-            bytes32(""), uint128(block.timestamp), IUsdnProtocolTypes.ProtocolAction.Initialize, abi.encode(PRICE_VALUE)
+            bytes32(""),
+            uint128(block.timestamp),
+            IUsdnProtocolTypes.ProtocolAction.Initialize,
+            abi.encode(INITIAL_PRICE)
         ).price / 2;
 
         // leverage approx 2x
         usdnProtocol.initialize(
-            uint128(INIT_DEPOSIT_AMOUNT), uint128(INIT_LONG_AMOUNT), uint128(_desiredLiqPrice), abi.encode(PRICE_VALUE)
+            uint128(INIT_DEPOSIT_AMOUNT),
+            uint128(INIT_LONG_AMOUNT),
+            uint128(_desiredLiqPrice),
+            abi.encode(INITIAL_PRICE)
         );
 
-        vm.deal(DEPLOYER, ACCOUNT_ETH_AMOUNT);
-
         destinationsToken[address(wsteth)] = [DEPLOYER, ATTACKER];
+
+        vm.deal(DEPLOYER, ACCOUNT_START_ETH_AMOUNT);
+
+        deal((address(sdex)), DEPLOYER, ACCOUNT_START_SDEX_AMOUNT);
+        deal((address(sdex)), ATTACKER, ACCOUNT_START_SDEX_AMOUNT);
+
+        vm.prank(DEPLOYER);
+        sdex.approve(address(usdnProtocol), type(uint256).max);
+        vm.prank(ATTACKER);
+        sdex.approve(address(usdnProtocol), type(uint256).max);
+
+        vm.prank(DEPLOYER);
+        wsteth.approve(address(usdnProtocol), type(uint256).max);
+        vm.prank(ATTACKER);
+        wsteth.approve(address(usdnProtocol), type(uint256).max);
     }
 }
 
