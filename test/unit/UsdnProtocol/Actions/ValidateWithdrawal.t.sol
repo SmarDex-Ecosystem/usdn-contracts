@@ -80,7 +80,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
      * @custom:and The withdrawal action isn't validated
      * @custom:and The user's wsteth balance does not change
      */
-    function test_validateWithdrawalIsPendingLiquidation() public {
+    function test_validateWithdrawalWithPendingLiquidation() public {
         PositionId memory userPosId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
@@ -327,6 +327,30 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidPendingAction.selector));
         protocol.i_validateWithdrawal(address(this), priceData);
+    }
+
+    /**
+     * @custom:scenario The user validates a withdrawal pending action that has a different validator
+     * @custom:given A pending action of type ValidateWithdrawal
+     * @custom:and With a validator that is not the caller saved at the caller's address
+     * @custom:when The user calls validateWithdrawal
+     * @custom:then The protocol reverts with a UsdnProtocolInvalidPendingAction error
+     */
+    function test_RevertWhen_validateWithdrawalWithWrongValidator() public {
+        bytes memory currentPrice = abi.encode(uint128(2000 ether));
+        protocol.initiateWithdrawal(
+            withdrawShares, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
+        );
+
+        // update the pending action to put another validator
+        (PendingAction memory pendingAction, uint128 rawIndex) = protocol.i_getPendingAction(address(this));
+        pendingAction.validator = address(1);
+
+        protocol.i_clearPendingAction(address(this), rawIndex);
+        protocol.i_addPendingAction(address(this), pendingAction);
+
+        vm.expectRevert(UsdnProtocolInvalidPendingAction.selector);
+        protocol.i_validateWithdrawal(payable(address(this)), currentPrice);
     }
 
     /**
