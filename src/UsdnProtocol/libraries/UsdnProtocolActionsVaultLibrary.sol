@@ -460,7 +460,7 @@ library UsdnProtocolActionsVaultLibrary {
 
         if (isValidated_) {
             Core._clearPendingAction(s, validator, rawIndex);
-            return (pending.securityDepositValue, true);
+            securityDepositValue_ = pending.securityDepositValue;
         }
     }
 
