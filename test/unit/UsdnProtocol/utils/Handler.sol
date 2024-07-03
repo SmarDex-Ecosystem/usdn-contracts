@@ -157,8 +157,18 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         );
     }
 
-    function i_validateClosePosition(address user, bytes calldata priceData) external {
-        ActionsLong._validateClosePosition(s, user, priceData);
+    function i_validateOpenPosition(address user, bytes calldata priceData)
+        external
+        returns (uint256 securityDepositValue_, bool isValidated_, bool liquidated_)
+    {
+        return ActionsLong._validateOpenPosition(s, user, priceData);
+    }
+
+    function i_validateClosePosition(address user, bytes calldata priceData)
+        external
+        returns (uint256 securityDepositValue_, bool isValidated_, bool liquidated_)
+    {
+        return ActionsLong._validateClosePosition(s, user, priceData);
     }
 
     function i_validateWithdrawal(address user, bytes calldata priceData)
@@ -166,6 +176,13 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         returns (uint256 securityDepositValue_, bool isValidated_)
     {
         return ActionsVault._validateWithdrawal(s, user, priceData);
+    }
+
+    function i_validateDeposit(address user, bytes calldata priceData)
+        external
+        returns (uint256 securityDepositValue_, bool isValidated_)
+    {
+        return ActionsVault._validateDeposit(s, user, priceData);
     }
 
     function i_removeAmountFromPosition(
