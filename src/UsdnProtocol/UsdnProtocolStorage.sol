@@ -46,6 +46,7 @@ contract UsdnProtocolStorage is
      * @param liquidationRewardsManager The liquidation rewards manager contract
      * @param tickSpacing The positions tick spacing
      * @param feeCollector The address of the fee collector
+     * @param roles The roles of the contract
      */
     constructor(
         IUsdn usdn,
