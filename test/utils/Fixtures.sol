@@ -25,12 +25,6 @@ contract BaseFixture is Test {
         vm.stopPrank();
     }
 
-    modifier rolePrank(address role) {
-        vm.startPrank(role);
-        _;
-        vm.stopPrank();
-    }
-
     constructor() {
         /* -------------------------------------------------------------------------- */
         /*                                  Accounts                                  */
