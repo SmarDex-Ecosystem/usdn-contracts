@@ -119,6 +119,18 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         delete s._pendingActions[user];
     }
 
+    function i_createClosePendingAction(
+        address to,
+        address validator,
+        PositionId memory posId,
+        uint128 amountToClose,
+        uint64 securityDepositValue,
+        ClosePositionData memory data
+    ) external returns (uint256 amountToRefund_) {
+        return
+            ActionsUtils._createClosePendingAction(s, to, validator, posId, amountToClose, securityDepositValue, data);
+    }
+
     function findLastSetInTickBitmap(int24 searchFrom) external view returns (uint256 index) {
         return s._tickBitmap.findLastSet(Core._calcBitmapIndexFromTick(s, searchFrom));
     }
