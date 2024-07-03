@@ -165,6 +165,85 @@ contract TestUsdnProtocolCoreFunding is UsdnProtocolBaseFixture {
         assertEq(longExpo, longTradingExpo, "longExpo");
     }
 
+    function test_fundingVsImbalancePos() public {
+        // long trading expo = 1000 ether
+        s.totalExpo = 2000 ether;
+        s.balanceLong = 1000 ether;
+        // vault trading expo = 500 ether
+        s.balanceVault = 500 ether;
+
+        int256 longTradingExpo = int256(s.totalExpo - s.balanceLong);
+        // imbalance = (longExpo - vaultExpo) / max(longExpo, vaultExpo) = (longExpo - vaultExpo) / longExpo
+        // represented here with 18 decimals for the purpose of this test
+        int256 imbalance = (longTradingExpo - int256(s.balanceVault)) * 1 ether / longTradingExpo;
+        assertEq(imbalance, 0.5 ether, "imbalance A");
+
+        // funding should be proportional to the imbalance squared
+        (int256 fundA,) = protocol.i_funding(s, s.lastUpdateTimestamp + TIME_ELAPSED, 0);
+
+        // halve the imbalance
+        s.balanceVault = 750 ether;
+        imbalance = (longTradingExpo - int256(s.balanceVault)) * 1 ether / longTradingExpo;
+        assertEq(imbalance, 0.25 ether, "imbalance B");
+        (int256 fundB,) = protocol.i_funding(s, s.lastUpdateTimestamp + TIME_ELAPSED, 0);
+
+        // the funding is divided by 4
+        assertEq(fundB, fundA / 4, "funding A vs B");
+    }
+
+    function test_fundingVsImbalanceNeg() public {
+        // long trading expo = 500 ether
+        s.totalExpo = 2000 ether;
+        s.balanceLong = 1500 ether;
+        // vault trading expo = 1000 ether
+        s.balanceVault = 1000 ether;
+
+        int256 longTradingExpo = int256(s.totalExpo - s.balanceLong);
+        // imbalance = (longExpo - vaultExpo) / max(longExpo, vaultExpo) = (longExpo - vaultExpo) / vaultExpo
+        // represented here with 18 decimals for the purpose of this test
+        int256 imbalance = (longTradingExpo - int256(s.balanceVault)) * 1 ether / int256(s.balanceVault);
+        assertEq(imbalance, -0.5 ether, "imbalance A");
+
+        // funding should be proportional to the imbalance squared
+        (int256 fundA,) = protocol.i_funding(s, s.lastUpdateTimestamp + TIME_ELAPSED, 0);
+
+        // halve the imbalance
+        s.balanceLong = 1250 ether;
+        longTradingExpo = int256(s.totalExpo - s.balanceLong);
+        imbalance = (longTradingExpo - int256(s.balanceVault)) * 1 ether / int256(s.balanceVault);
+        assertEq(imbalance, -0.25 ether, "imbalance B");
+        (int256 fundB,) = protocol.i_funding(s, s.lastUpdateTimestamp + TIME_ELAPSED, 0);
+
+        // the funding is divided by 4
+        assertEq(fundB, fundA / 4, "funding A vs B");
+    }
+
+    function testFuzz_fundingVsScalingFactorPos(
+        uint256 sf,
+        uint256 totalExpo,
+        uint256 balanceLong,
+        uint256 balanceVault
+    ) public {
+        s.fundingSF = bound(sf, 0, 10 ** protocol.FUNDING_SF_DECIMALS());
+        // as a safe upper bound, we use the total supply of eth with a leverage max of 10x
+        s.totalExpo = bound(totalExpo, 1 ether, 1.2e9 ether);
+        s.balanceLong = bound(balanceLong, 0, s.totalExpo);
+        s.balanceVault = bound(balanceVault, 0, 120e6 ether);
+
+        // funding should be proportional to fundingSF
+        (int256 fundA,) = protocol.i_funding(s, s.lastUpdateTimestamp + TIME_ELAPSED, 0);
+
+        // double the scaling factor
+        s.fundingSF = 2 * s.fundingSF;
+
+        (int256 fundB,) = protocol.i_funding(s, s.lastUpdateTimestamp + TIME_ELAPSED, 0);
+
+        // the funding should double (with 1 wei tolerance)
+        assertApproxEqAbs(fundB, fundA * 2, 1, "funding A vs B");
+    }
+
+    function testFuzz_fundingVsEMA() public { }
+
     /**
      * @custom:scenario Revert with a past timestamp
      * @custom:when The funding rate is calculated with a timestamp prior to the last update timestamp
