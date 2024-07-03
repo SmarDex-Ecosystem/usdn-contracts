@@ -32,10 +32,19 @@ contract UsdnProtocolStorage is
     bytes32 public constant CONFIG_ROLE = keccak256("CONFIG_ROLE");
 
     /// @inheritdoc IUsdnProtocolStorage
-    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+    bytes32 public constant SECURITY_ROLE = keccak256("SECURITY_ROLE");
 
     /// @inheritdoc IUsdnProtocolStorage
     bytes32 public constant ACTION_ROLE = keccak256("ACTION_ROLE");
+
+    /// @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant ADMIN_CONFIG_ROLE = keccak256("ADMIN_CONFIG_ROLE");
+
+    /// @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant ADMIN_SECURITY_ROLE = keccak256("ADMIN_SECURITY_ROLE");
+
+    /// @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant ADMIN_ACTION_ROLE = keccak256("ADMIN_ACTION_ROLE");
 
     /**
      * @notice Constructor
@@ -59,8 +68,11 @@ contract UsdnProtocolStorage is
         Roles memory roles
     ) AccessControlDefaultAdminRules(0, msg.sender) {
         // roles
+        _setRoleAdmin(CONFIG_ROLE, ADMIN_CONFIG_ROLE);
+        _setRoleAdmin(SECURITY_ROLE, ADMIN_SECURITY_ROLE);
+        _setRoleAdmin(ACTION_ROLE, ADMIN_ACTION_ROLE);
         _grantRole(CONFIG_ROLE, roles.configRole);
-        _grantRole(ADMIN_ROLE, roles.adminRole);
+        _grantRole(SECURITY_ROLE, roles.securityRole);
         _grantRole(ACTION_ROLE, roles.actionRole);
         // parameters
         s._minLeverage = 10 ** Constants.LEVERAGE_DECIMALS + 10 ** 12;

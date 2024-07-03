@@ -14,7 +14,7 @@ address payable constant ADMIN = payable(address(0x12121212121212121212121212121
 
 // roles
 address payable constant CONFIG_ROLE = payable(address(0x1313131313131313131313131313131313131313));
-address payable constant ADMIN_ROLE = payable(address(0x1414141414141414141414141414141414141414));
+address payable constant SECURITY_ROLE = payable(address(0x1414141414141414141414141414141414141414));
 address payable constant ACTION_ROLE = payable(address(0x1515151515151515151515151515151515151515));
 
 // generic users

@@ -65,7 +65,7 @@ contract Deploy is Script {
             vm.envAddress("FEE_COLLECTOR"),
             Types.Roles({
                 configRole: vm.envAddress("DEPLOYER_ADDRESS"),
-                adminRole: vm.envAddress("DEPLOYER_ADDRESS"),
+                securityRole: vm.envAddress("DEPLOYER_ADDRESS"),
                 actionRole: vm.envAddress("DEPLOYER_ADDRESS")
             })
         );

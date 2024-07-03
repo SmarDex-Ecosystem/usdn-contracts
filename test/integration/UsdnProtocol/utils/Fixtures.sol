@@ -12,7 +12,6 @@ import { UsdnProtocolHandler } from "../../../unit/UsdnProtocol/utils/Handler.so
 import {
     ACTION_ROLE,
     ADMIN,
-    ADMIN_ROLE,
     CHAINLINK_ORACLE_ETH,
     CHAINLINK_ORACLE_GAS,
     CONFIG_ROLE,
@@ -21,6 +20,7 @@ import {
     PYTH_ORACLE,
     REDSTONE_ETH_USD,
     SDEX,
+    SECURITY_ROLE,
     WSTETH
 } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
@@ -76,7 +76,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         enableRoles: false
     });
 
-    Roles roles = Roles({ configRole: CONFIG_ROLE, adminRole: ADMIN_ROLE, actionRole: ACTION_ROLE });
+    Roles roles = Roles({ configRole: CONFIG_ROLE, securityRole: SECURITY_ROLE, actionRole: ACTION_ROLE });
 
     Usdn public usdn;
     Sdex public sdex;
@@ -143,7 +143,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         usdn = new Usdn(address(0), address(0));
 
         if (!testParams.enableRoles) {
-            roles = Roles({ configRole: ADMIN, adminRole: ADMIN, actionRole: ADMIN });
+            roles = Roles({ configRole: ADMIN, securityRole: ADMIN, actionRole: ADMIN });
         }
 
         protocol = new UsdnProtocolHandler(

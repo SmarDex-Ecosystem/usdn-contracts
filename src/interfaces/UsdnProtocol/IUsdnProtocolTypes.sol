@@ -372,12 +372,12 @@ interface IUsdnProtocolTypes {
     /**
      * @notice Structure to hold the roles during deployment
      * @param configRole The config role
-     * @param adminRole The admin role
+     * @param securityRole The security role
      * @param actionRole The action role
      */
     struct Roles {
         address configRole;
-        address adminRole;
+        address securityRole;
         address actionRole;
     }
 

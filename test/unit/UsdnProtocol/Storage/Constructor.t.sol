@@ -31,7 +31,7 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
             liquidationRewardsManager,
             100,
             address(1),
-            Roles({ configRole: address(1), adminRole: address(1), actionRole: address(1) })
+            Roles({ configRole: address(1), securityRole: address(1), actionRole: address(1) })
         );
     }
 
@@ -53,7 +53,7 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
             liquidationRewardsManager,
             100,
             address(0),
-            Roles({ configRole: address(0), adminRole: address(0), actionRole: address(0) })
+            Roles({ configRole: address(0), securityRole: address(0), actionRole: address(0) })
         );
     }
 
@@ -78,7 +78,7 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
             liquidationRewardsManager,
             100,
             address(1),
-            Roles({ configRole: address(1), adminRole: address(1), actionRole: address(1) })
+            Roles({ configRole: address(1), securityRole: address(1), actionRole: address(1) })
         );
     }
 
@@ -102,7 +102,7 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
             liquidationRewardsManager,
             100,
             address(1),
-            Roles({ configRole: address(1), adminRole: address(1), actionRole: address(1) })
+            Roles({ configRole: address(1), securityRole: address(1), actionRole: address(1) })
         );
     }
 }

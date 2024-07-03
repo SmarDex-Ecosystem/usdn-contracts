@@ -29,7 +29,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
             liquidationRewardsManager,
             100, // tick spacing 100 = 1%
             ADMIN, // Fee collector
-            Roles({ configRole: address(this), adminRole: address(this), actionRole: address(this) })
+            Roles({ configRole: address(this), securityRole: address(this), actionRole: address(this) })
         );
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));

@@ -32,7 +32,7 @@ contract BaseFixture is Test {
         vm.label(constants.DEPLOYER, "Deployer");
         vm.label(constants.ADMIN, "Admin");
         vm.label(constants.CONFIG_ROLE, "ConfigRole");
-        vm.label(constants.ADMIN_ROLE, "AdminRole");
+        vm.label(constants.SECURITY_ROLE, "AdminRole");
         vm.label(constants.ACTION_ROLE, "ActionRole");
         vm.label(constants.USER_1, "User1");
         vm.label(constants.USER_2, "User2");
@@ -88,7 +88,7 @@ contract BaseFixture is Test {
         vm.deal(constants.DEPLOYER, 10_000 ether);
         vm.deal(constants.ADMIN, 10_000 ether);
         vm.deal(constants.CONFIG_ROLE, 10_000 ether);
-        vm.deal(constants.ADMIN_ROLE, 10_000 ether);
+        vm.deal(constants.SECURITY_ROLE, 10_000 ether);
         vm.deal(constants.ACTION_ROLE, 10_000 ether);
         vm.deal(constants.USER_1, 10_000 ether);
         vm.deal(constants.USER_2, 10_000 ether);
