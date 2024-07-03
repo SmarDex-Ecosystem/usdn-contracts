@@ -119,6 +119,16 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         delete s._pendingActions[user];
     }
 
+    function i_createDepositPendingAction(
+        address validator,
+        address to,
+        uint64 securityDepositValue,
+        uint128 amount,
+        ActionsVault.InitiateDepositData memory data
+    ) external returns (uint256 amountToRefund_) {
+        return ActionsVault._createDepositPendingAction(s, validator, to, securityDepositValue, amount, data);
+    }
+
     function i_createOpenPendingAction(
         address to,
         address validator,
