@@ -18,7 +18,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
-        vm.startPrank(DEPLOYER);
+        vm.startPrank(ADMIN);
         usdn = new Usdn(address(0), address(0));
 
         protocol = new UsdnProtocolHandler(
@@ -34,9 +34,10 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
 
-        protocol.transferOwnership(address(this));
+        protocol.beginDefaultAdminTransfer(address(this));
         vm.stopPrank();
-        protocol.acceptOwnership();
+        skip(1);
+        protocol.acceptDefaultAdminTransfer();
         wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
     }
 

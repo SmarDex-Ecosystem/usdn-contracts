@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.25;
 
-import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import { AccessControlDefaultAdminRules } from
+    "@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import { IBaseLiquidationRewardsManager } from "../interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
@@ -22,8 +21,7 @@ contract UsdnProtocolStorage is
     IUsdnProtocolErrors,
     IUsdnProtocolStorage,
     InitializableReentrancyGuard,
-    Ownable2Step,
-    AccessControl
+    AccessControlDefaultAdminRules
 {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
@@ -58,7 +56,7 @@ contract UsdnProtocolStorage is
         int24 tickSpacing,
         address feeCollector,
         Roles memory roles
-    ) Ownable(msg.sender) {
+    ) AccessControlDefaultAdminRules(0, msg.sender) {
         // roles
         _grantRole(CONFIG_ROLE, roles.configRole);
         _grantRole(ADMIN_ROLE, roles.adminRole);

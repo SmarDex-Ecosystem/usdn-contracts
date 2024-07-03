@@ -59,11 +59,12 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
         usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));
 
         // separate the roles ADMIN and DEPLOYER
-        usdnProtocol.transferOwnership(ADMIN);
+        usdnProtocol.beginDefaultAdminTransfer(ADMIN);
         rebalancer.transferOwnership(ADMIN);
         vm.stopPrank();
         vm.startPrank(ADMIN);
-        usdnProtocol.acceptOwnership();
+        skip(1);
+        usdnProtocol.acceptDefaultAdminTransfer();
         rebalancer.acceptOwnership();
         vm.stopPrank();
     }

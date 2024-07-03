@@ -182,12 +182,13 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         initialPosition.tick = protocol.getHighestPopulatedTick();
 
         // separate the roles ADMIN and DEPLOYER
-        protocol.transferOwnership(ADMIN);
+        protocol.beginDefaultAdminTransfer(ADMIN);
         rebalancer.transferOwnership(ADMIN);
         vm.stopPrank();
 
         vm.startPrank(ADMIN);
-        protocol.acceptOwnership();
+        skip(1);
+        protocol.acceptDefaultAdminTransfer();
         rebalancer.acceptOwnership();
         vm.stopPrank();
 
@@ -210,7 +211,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         (Position memory firstPos,) = protocol.getLongPosition(PositionId(firstPosTick, 0, 0));
 
         assertEq(firstPos.totalExpo, 9_919_970_269_703_463_156, "first position total expo");
-        assertEq(firstPos.timestamp, block.timestamp, "first pos timestamp");
+        assertApproxEqAbs(firstPos.timestamp, block.timestamp, 3, "first pos timestamp");
         assertEq(firstPos.user, DEPLOYER, "first pos user");
         assertEq(firstPos.amount, params.initialLong, "first pos amount");
         assertEq(protocol.getPendingProtocolFee(), 0, "initial pending protocol fee");
