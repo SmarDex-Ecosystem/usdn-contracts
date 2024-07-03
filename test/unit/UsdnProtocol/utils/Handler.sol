@@ -119,6 +119,16 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         delete s._pendingActions[user];
     }
 
+    function i_createWithdrawalPendingAction(
+        address to,
+        address validator,
+        uint152 usdnShares,
+        uint64 securityDepositValue,
+        ActionsVault.WithdrawalData memory data
+    ) public returns (uint256 amountToRefund_) {
+        return ActionsVault._createWithdrawalPendingAction(s, to, validator, usdnShares, securityDepositValue, data);
+    }
+
     function findLastSetInTickBitmap(int24 searchFrom) external view returns (uint256 index) {
         return s._tickBitmap.findLastSet(Core._calcBitmapIndexFromTick(s, searchFrom));
     }
