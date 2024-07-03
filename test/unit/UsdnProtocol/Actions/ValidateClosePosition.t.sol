@@ -54,17 +54,13 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         );
     }
 
-    /* -------------------------------------------------------------------------- */
-    /*                                   Reverts                                  */
-    /* -------------------------------------------------------------------------- */
-
     /**
      * @custom:scenario A user tries to validate a close position action with the wrong action pending
      * @custom:given An initiated open position
      * @custom:when The owner of the position calls _validateClosePosition
      * @custom:then The call reverts because the pending action is not ValidateClosePosition
      */
-    function test_RevertsWhen_validateClosePositionWithTheWrongPendingAction() public {
+    function test_RevertWhen_validateClosePositionWithTheWrongPendingAction() public {
         // Setup an initiate action to have a pending validate action for this user
         setUpUserPositionInLong(
             OpenParams({
@@ -80,12 +76,39 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         // Try to validate a close position action with a pending action other than ValidateClosePosition
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidPendingAction.selector));
-        protocol.i_validateClosePosition(address(this), priceData);
+        protocol.i_validateClosePosition(payable(address(this)), priceData);
     }
 
-    /* -------------------------------------------------------------------------- */
-    /*                            validateClosePosition                           */
-    /* -------------------------------------------------------------------------- */
+    /**
+     * @custom:scenario The user validates a close position pending action that has a different validator
+     * @custom:given A pending action of type ValidateClosePosition
+     * @custom:and With a validator that is not the caller saved at the caller's address
+     * @custom:when The user calls validateClosePosition
+     * @custom:then The protocol reverts with a UsdnProtocolInvalidPendingAction error
+     */
+    function test_RevertWhen_validateClosePositionWithWrongValidator() public {
+        setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.InitiateClosePosition,
+                positionSize: POSITION_AMOUNT,
+                desiredLiqPrice: params.initialPrice * 2 / 3,
+                price: params.initialPrice
+            })
+        );
+
+        // update the pending action to put another validator
+        (PendingAction memory pendingAction, uint128 rawIndex) = protocol.i_getPendingAction(address(this));
+        pendingAction.validator = address(1);
+
+        protocol.i_clearPendingAction(address(this), rawIndex);
+        protocol.i_addPendingAction(address(this), pendingAction);
+
+        bytes memory priceData = abi.encode(params.initialPrice);
+
+        vm.expectRevert(UsdnProtocolInvalidPendingAction.selector);
+        protocol.i_validateClosePosition(payable(address(this)), priceData);
+    }
 
     /**
      * @custom:scenario A user validates closes a position but sends too much ether
@@ -644,7 +667,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:then One position is liquidated
      * @custom:and The user's close position action is not validated
      */
-    function test_validateCloseIsPendingLiquidation() public {
+    function test_validateCloseWithPendingLiquidation() public {
         // below all current positions
         setUpUserPositionInLong(
             OpenParams({
