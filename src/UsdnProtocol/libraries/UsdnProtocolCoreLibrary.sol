@@ -234,8 +234,8 @@ library UsdnProtocolCoreLibrary {
         int256 oldVaultExpo = s._balanceVault.toInt256();
 
         // ImbalanceIndex = (longExpo - vaultExpo) / max(longExpo, vaultExpo)
-        // fund = (sign(ImbalanceIndex) * ImbalanceIndex^2 * fundingSF) +s.
-        // fund = (sign(ImbalanceIndex) * (longExpo - vaultExpo)^2 * fundingSF / denominator) +s.
+        // fund = (sign(ImbalanceIndex) * ImbalanceIndex^2 * fundingSF) + _EMA
+        // fund = (sign(ImbalanceIndex) * (longExpo - vaultExpo)^2 * fundingSF / denominator) + _EMA
         // with denominator = vaultExpo^2 if vaultExpo > longExpo, or longExpo^2 if longExpo > vaultExpo
 
         int256 numerator = oldLongExpo_ - oldVaultExpo;
@@ -263,7 +263,7 @@ library UsdnProtocolCoreLibrary {
         // starting here, oldLongExpo and oldVaultExpo are always strictly positive
 
         uint256 elapsedSeconds = timestamp - s._lastUpdateTimestamp;
-        uint256 numerator_squared = uint256(numerator * numerator);
+        uint256 numeratorSquared = uint256(numerator * numerator);
 
         uint256 denominator;
         if (oldVaultExpo > oldLongExpo_) {
@@ -271,7 +271,7 @@ library UsdnProtocolCoreLibrary {
             denominator = uint256(oldVaultExpo * oldVaultExpo) * 1 days;
             fund_ = -int256(
                 FixedPointMathLib.fullMulDiv(
-                    numerator_squared * elapsedSeconds,
+                    numeratorSquared * elapsedSeconds,
                     s._fundingSF * 10 ** (Constants.FUNDING_RATE_DECIMALS - Constants.FUNDING_SF_DECIMALS),
                     denominator
                 )
@@ -281,7 +281,7 @@ library UsdnProtocolCoreLibrary {
             denominator = uint256(oldLongExpo_ * oldLongExpo_) * 1 days;
             fund_ = int256(
                 FixedPointMathLib.fullMulDiv(
-                    numerator_squared * elapsedSeconds,
+                    numeratorSquared * elapsedSeconds,
                     s._fundingSF * 10 ** (Constants.FUNDING_RATE_DECIMALS - Constants.FUNDING_SF_DECIMALS),
                     denominator
                 )
