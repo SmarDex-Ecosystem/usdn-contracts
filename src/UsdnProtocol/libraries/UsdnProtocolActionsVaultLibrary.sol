@@ -460,7 +460,7 @@ library UsdnProtocolActionsVaultLibrary {
 
         if (isValidated_) {
             Core._clearPendingAction(s, validator, rawIndex);
-            return (pending.securityDepositValue, true);
+            securityDepositValue_ = pending.securityDepositValue;
         }
     }
 
@@ -739,7 +739,7 @@ library UsdnProtocolActionsVaultLibrary {
 
         if (isValidated_) {
             Core._clearPendingAction(s, validator, rawIndex);
-            return (pending.securityDepositValue, true);
+            securityDepositValue_ = pending.securityDepositValue;
         }
     }
 
@@ -787,10 +787,7 @@ library UsdnProtocolActionsVaultLibrary {
                 (currentPrice.price + currentPrice.price * s._vaultFeeBps / Constants.BPS_DIVISOR).toUint128();
 
             // we calculate the available balance of the vault side, either considering the asset price at the time of
-            // the
-            // initiate action, or the current price provided for validation. We will use the lower of the two amounts
-            // to
-            // redeem the underlying asset share
+            // the initiate action, or the current price provided for validation
             uint256 available1 = withdrawal.balanceVault;
             uint256 available2 = Vault._vaultAssetAvailable(
                 withdrawal.totalExpo,
@@ -799,6 +796,8 @@ library UsdnProtocolActionsVaultLibrary {
                 withdrawalPriceWithFees,
                 withdrawal.assetPrice
             ).toUint256();
+
+            // we will use the lowest of the two amounts to redeem the underlying asset share
             if (available1 <= available2) {
                 available = available1;
             } else {
