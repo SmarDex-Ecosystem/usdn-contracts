@@ -210,7 +210,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         (Position memory firstPos,) = protocol.getLongPosition(PositionId(firstPosTick, 0, 0));
 
         assertEq(firstPos.totalExpo, 9_919_970_269_703_463_156, "first position total expo");
-        assertApproxEqAbs(firstPos.timestamp, block.timestamp, 3, "first pos timestamp");
+        assertEq(firstPos.timestamp + 1, block.timestamp, "first pos timestamp");
         assertEq(firstPos.user, DEPLOYER, "first pos user");
         assertEq(firstPos.amount, params.initialLong, "first pos amount");
         assertEq(protocol.getPendingProtocolFee(), 0, "initial pending protocol fee");
