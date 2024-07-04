@@ -78,7 +78,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolLong, UsdnProtocolVault, Usd
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setValidationDeadline(uint256 newValidationDeadline) external onlyRole(ACTION_ROLE) {
+    function setValidationDeadline(uint256 newValidationDeadline) external onlyRole(SECURITY_ROLE) {
         Setters.setValidationDeadline(s, newValidationDeadline);
     }
 

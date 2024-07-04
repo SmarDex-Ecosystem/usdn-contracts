@@ -37,7 +37,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         vm.expectRevert(customError("ACTION_ROLE"));
         protocol.setMaxLeverage(0);
 
-        vm.expectRevert(customError("ACTION_ROLE"));
+        vm.expectRevert(customError("SECURITY_ROLE"));
         protocol.setValidationDeadline(0);
 
         vm.expectRevert(customError("ACTION_ROLE"));
