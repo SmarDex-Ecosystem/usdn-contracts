@@ -71,9 +71,13 @@ contract Deploy is Script {
         // set the rebalancer on the USDN protocol
         UsdnProtocol_.setRebalancer(Rebalancer_);
 
-        // grant USDN minter and rebaser roles to protocol and approve wstETH spending
+        // grant USDN minter and rebaser roles to protocol
         Usdn_.grantRole(Usdn_.MINTER_ROLE(), address(UsdnProtocol_));
         Usdn_.grantRole(Usdn_.REBASER_ROLE(), address(UsdnProtocol_));
+        // renounce admin role on the USDN token, no-one can later change roles
+        Usdn_.renounceRole(Usdn_.DEFAULT_ADMIN_ROLE(), vm.envAddress("DEPLOYER_ADDRESS"));
+
+        // approve wstETH spending for initialization
         WstETH_.approve(address(UsdnProtocol_), depositAmount + longAmount);
 
         if (depositAmount > 0 && longAmount > 0) {
