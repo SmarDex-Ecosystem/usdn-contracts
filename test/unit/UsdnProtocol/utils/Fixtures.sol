@@ -121,6 +121,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         );
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
+        wstETH.approve(address(protocol), type(uint256).max);
 
         vm.stopPrank();
         vm.startPrank(roles.actionRole);
@@ -160,10 +161,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         }
         vm.stopPrank();
 
-        vm.startPrank(DEPLOYER);
-        wstETH.approve(address(protocol), type(uint256).max);
+        vm.prank(DEPLOYER);
         rebalancer = new RebalancerHandler(protocol);
-        vm.stopPrank();
 
         if (testParams.flags.enableRebalancer) {
             vm.prank(roles.configRole);

@@ -158,10 +158,6 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         );
 
         rebalancer = new Rebalancer(protocol);
-        vm.stopPrank();
-        vm.prank(roles.configRole);
-        protocol.setRebalancer(rebalancer);
-        vm.startPrank(DEPLOYER);
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
@@ -170,6 +166,8 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             testParams.initialDeposit, testParams.initialLong, testParams.initialLiqPrice, ""
         );
         vm.stopPrank();
+        vm.prank(roles.configRole);
+        protocol.setRebalancer(rebalancer);
         params = testParams;
     }
 
