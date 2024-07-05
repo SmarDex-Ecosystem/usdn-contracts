@@ -13,8 +13,10 @@ import { IRebaseCallback } from "../../../src/interfaces/Usdn/IRebaseCallback.so
 contract TestUsdnAdmin is UsdnTokenFixture {
     function setUp() public override {
         super.setUp();
-        usdn.grantRole(usdn.DEFAULT_ADMIN_ROLE(), ADMIN);
-        usdn.revokeRole(usdn.DEFAULT_ADMIN_ROLE(), address(this));
+        usdn.beginDefaultAdminTransfer(ADMIN);
+        skip(1);
+        vm.prank(ADMIN);
+        usdn.acceptDefaultAdminTransfer();
     }
 
     /**

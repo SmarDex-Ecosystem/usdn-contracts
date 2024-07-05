@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.25;
 
-import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { AccessControlDefaultAdminRules } from
+    "@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ERC20Burnable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
@@ -24,7 +25,7 @@ import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
  *
  * Balances and total supply can only grow over time and never shrink
  */
-contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
+contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControlDefaultAdminRules {
     /**
      * @dev Control the rounding when converting from shares to tokens
      * @param Down Round down (towards zero)
@@ -80,8 +81,11 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
      * @param minter Address which should have the minter role by default (zero address to skip)
      * @param rebaser Address which should have the rebaser role by default (zero address to skip)
      */
-    constructor(address minter, address rebaser) ERC20(NAME, SYMBOL) ERC20Permit(NAME) {
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    constructor(address minter, address rebaser)
+        ERC20(NAME, SYMBOL)
+        ERC20Permit(NAME)
+        AccessControlDefaultAdminRules(0, msg.sender)
+    {
         if (minter != address(0)) {
             _grantRole(MINTER_ROLE, minter);
         }
