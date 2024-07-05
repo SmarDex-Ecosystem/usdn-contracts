@@ -24,7 +24,7 @@ contract TestForkEchidna is Test {
 
     function test_canInitiateDeposit() public {
         vm.prank(DEPLOYER);
-        echidna.initiateDeposit(0.1 ether, 0.01 ether, 0.5 ether, 0, 0);
+        echidna.initiateDeposit(0.1 ether, 10 ether, 0.5 ether, 0, 0, 1000 ether);
 
         IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(DEPLOYER);
         assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, "action type");
