@@ -125,9 +125,14 @@ library UsdnProtocolLongLibrary {
         returns (uint128 liquidationPrice_)
     {
         liquidationPrice_ = _getLiquidationPrice(price, uint128(s._minLeverage));
-        int24 tick = getEffectiveTickForPrice(s, liquidationPrice_);
+        // getEffectiveTickForPrice(price, assetPrice, longTradingExpo, accumulator, tickSpacing);
+        int24 tick = getEffectiveTickForPrice(
+            liquidationPrice_, price, s._totalExpo - s._balanceLong, s._liqMultiplierAccumulator, s._tickSpacing
+        );
         // slither-disable-next-line write-after-write
-        liquidationPrice_ = getEffectivePriceForTick(s, tick + s._tickSpacing);
+        liquidationPrice_ = getEffectivePriceForTick(
+            tick + s._tickSpacing, price, s._totalExpo - s._balanceLong, s._liqMultiplierAccumulator
+        );
     }
 
     /// @notice See {IUsdnProtocolLong}
