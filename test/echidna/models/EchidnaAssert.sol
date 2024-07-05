@@ -131,10 +131,24 @@ contract EchidnaAssert is Setup {
 
         uint64 securityDeposit = usdnProtocol.getSecurityDepositValue();
 
+        uint256 senderBalanceETH = address(msg.sender).balance;
+        uint256 senderBalanceWstETH = wsteth.balanceOf(msg.sender);
+        uint256 senderBalanceSdex = sdex.balanceOf(msg.sender);
+
+        uint256 usdnProtocolBalanceETH = address(usdnProtocol).balance;
+        uint256 usdnProtocolBalanceWstETH = wsteth.balanceOf(address(usdnProtocol));
+
         vm.prank(msg.sender);
         try usdnProtocol.initiateDeposit{ value: securityDeposit }(
             amount, dest, validator, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
-        ) { } catch (bytes memory err) {
+        ) {
+            assertEq(address(msg.sender).balance, senderBalanceETH - securityDeposit);
+            assertEq(wsteth.balanceOf(msg.sender), senderBalanceWstETH - amount);
+            assertLt(sdex.balanceOf(msg.sender), senderBalanceSdex);
+
+            assertEq(address(usdnProtocol).balance, usdnProtocolBalanceETH + securityDeposit);
+            assertEq(wsteth.balanceOf(address(usdnProtocol)), usdnProtocolBalanceWstETH + amount);
+        } catch (bytes memory err) {
             _checkErrors(err, INITIATE_DEPOSIT_ERRORS);
         }
     }
