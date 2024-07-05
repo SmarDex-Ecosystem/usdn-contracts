@@ -9,6 +9,8 @@ import { Rebalancer } from "../../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../../src/Usdn/Usdn.sol";
 import { UsdnProtocol } from "../../../src/UsdnProtocol/UsdnProtocol.sol";
 import { IWstETH } from "../../../src/interfaces/IWstETH.sol";
+
+import { IUsdnProtocolErrors } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolTypes } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Permit2TokenBitfield } from "../../../src/libraries/Permit2TokenBitfield.sol";
 import { MockOracleMiddleware } from "../../../test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
@@ -40,6 +42,8 @@ contract Setup is Test {
     Usdn public usdn;
     UsdnProtocol public usdnProtocol;
     Rebalancer public rebalancer;
+
+    bytes4[] public INITIATE_DEPOSIT_ERRORS = [IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector];
 
     constructor() payable {
         vm.warp(1_709_251_200);
@@ -94,8 +98,8 @@ contract Setup is Test {
 
         vm.deal(DEPLOYER, ACCOUNT_START_ETH_AMOUNT);
 
-        deal((address(sdex)), DEPLOYER, ACCOUNT_START_SDEX_AMOUNT);
-        deal((address(sdex)), ATTACKER, ACCOUNT_START_SDEX_AMOUNT);
+        sdex.mintAndApprove(DEPLOYER, ACCOUNT_START_SDEX_AMOUNT, address(usdnProtocol), type(uint256).max);
+        sdex.mintAndApprove(ATTACKER, ACCOUNT_START_SDEX_AMOUNT, address(usdnProtocol), type(uint256).max);
 
         vm.prank(DEPLOYER);
         sdex.approve(address(usdnProtocol), type(uint256).max);
@@ -128,8 +132,27 @@ contract EchidnaAssert is Setup {
         uint64 securityDeposit = usdnProtocol.getSecurityDepositValue();
 
         vm.prank(msg.sender);
-        usdnProtocol.initiateDeposit{ value: securityDeposit }(
+        try usdnProtocol.initiateDeposit{ value: securityDeposit }(
             amount, dest, validator, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
-        );
+        ) { } catch (bytes memory err) {
+            _checkErrors(err, INITIATE_DEPOSIT_ERRORS);
+        }
+    }
+
+    function _checkErrors(bytes memory err, bytes4[] storage errors) internal {
+        bool expected = false;
+        for (uint256 i = 0; i < errors.length; i++) {
+            if (errors[i] == bytes4(err)) {
+                expected = true;
+                break;
+            }
+        }
+        if (expected) {
+            emit log_named_bytes("Expected error ", err);
+            return;
+        } else {
+            emit log_named_bytes("DOS ", err);
+            assert(false);
+        }
     }
 }
