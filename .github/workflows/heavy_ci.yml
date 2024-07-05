@@ -1,6 +1,8 @@
 name: CI with heavy test run
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 env:
   FOUNDRY_PROFILE: heavy_ci
