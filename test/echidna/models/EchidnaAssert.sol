@@ -3,21 +3,19 @@ pragma solidity ^0.8.25;
 
 import { Test } from "forge-std/Test.sol";
 
+import { MockOracleMiddleware } from "../../../test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
+import { Sdex } from "../../utils/Sdex.sol";
+import { Weth } from "../../utils/WETH.sol";
+import { WstETH } from "../../utils/WstEth.sol";
 import { MockLiquidationRewardsManager } from "../mock/MockLiquidationRewardsManager.sol";
 
 import { Rebalancer } from "../../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../../src/Usdn/Usdn.sol";
 import { UsdnProtocol } from "../../../src/UsdnProtocol/UsdnProtocol.sol";
 import { IWstETH } from "../../../src/interfaces/IWstETH.sol";
-
 import { IUsdnProtocolErrors } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolTypes } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Permit2TokenBitfield } from "../../../src/libraries/Permit2TokenBitfield.sol";
-import { MockOracleMiddleware } from "../../../test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
-
-import { Sdex } from "../../utils/Sdex.sol";
-import { Weth } from "../../utils/WETH.sol";
-import { WstETH } from "../../utils/WstEth.sol";
 
 contract Setup is Test {
     address public constant DEPLOYER = address(0x10000);
@@ -51,10 +49,10 @@ contract Setup is Test {
         uint256 INIT_LONG_AMOUNT = 10 ether;
         uint128 INITIAL_PRICE = 2000 ether; // 2000 USDN = 1 ETH
 
-        uint256 _ethAmount = (INIT_DEPOSIT_AMOUNT + INIT_LONG_AMOUNT + ACCOUNT_START_ETH_AMOUNT + 10_000)
-            * wsteth.stEthPerToken() / 1 ether;
-        vm.deal(address(this), _ethAmount);
-        (bool result,) = address(wsteth).call{ value: _ethAmount }("");
+        uint256 ethAmount =
+            (INIT_DEPOSIT_AMOUNT + INIT_LONG_AMOUNT + ACCOUNT_START_ETH_AMOUNT) * wsteth.stEthPerToken() / 1 ether;
+        vm.deal(address(this), ethAmount);
+        (bool result,) = address(wsteth).call{ value: ethAmount }("");
         require(result, "WstETH mint failed");
 
         wsteth.transfer(DEPLOYER, ACCOUNT_START_ETH_AMOUNT);
@@ -116,14 +114,14 @@ contract EchidnaAssert is Setup {
     /*                             USDN Protocol                                  */
     /* -------------------------------------------------------------------------- */
 
-    function initiateDeposit(uint128 amountRand, uint8 destRand, uint8 validatorRand) public {
-        uint128 amount = uint128(bound(amountRand, 0, wsteth.balanceOf(msg.sender)));
+    function initiateDeposit(uint128 amountRand, uint256 destRand, uint256 validatorRand) public {
+        amountRand = uint128(bound(amountRand, 0, wsteth.balanceOf(msg.sender)));
 
-        uint256 destIndex = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
-        address dest = destinationsToken[address(wsteth)][destIndex];
+        destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
+        address dest = destinationsToken[address(wsteth)][destRand];
 
-        uint256 validatorIndex = bound(validatorRand, 0, validators.length - 1);
-        address payable validator = payable(validators[validatorIndex]);
+        validatorRand = bound(validatorRand, 0, validators.length - 1);
+        address payable validator = payable(validators[validatorRand]);
 
         bytes memory priceData = abi.encode(2 ether);
 
@@ -138,14 +136,14 @@ contract EchidnaAssert is Setup {
 
         vm.prank(msg.sender);
         try usdnProtocol.initiateDeposit{ value: securityDeposit }(
-            amount, dest, validator, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
+            amountRand, dest, validator, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         ) {
             assertEq(address(msg.sender).balance, senderBalanceETH - securityDeposit);
-            assertEq(wsteth.balanceOf(msg.sender), senderBalanceWstETH - amount);
+            assertEq(wsteth.balanceOf(msg.sender), senderBalanceWstETH - amountRand);
             assertLt(sdex.balanceOf(msg.sender), senderBalanceSdex);
 
             assertEq(address(usdnProtocol).balance, usdnProtocolBalanceETH + securityDeposit);
-            assertEq(wsteth.balanceOf(address(usdnProtocol)), usdnProtocolBalanceWstETH + amount);
+            assertEq(wsteth.balanceOf(address(usdnProtocol)), usdnProtocolBalanceWstETH + amountRand);
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_DEPOSIT_ERRORS);
         }

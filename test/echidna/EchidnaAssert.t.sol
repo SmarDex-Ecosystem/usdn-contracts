@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import { Test } from "forge-std/Test.sol";
 
-import "../../src/UsdnProtocol/UsdnProtocol.sol";
+import { UsdnProtocol } from "../../src/UsdnProtocol/UsdnProtocol.sol";
 import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { EchidnaAssert } from "./models/EchidnaAssert.sol";
 
