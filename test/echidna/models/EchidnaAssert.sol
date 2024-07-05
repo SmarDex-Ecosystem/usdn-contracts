@@ -14,8 +14,6 @@ import { Usdn } from "../../../src/Usdn/Usdn.sol";
 import { UsdnProtocol } from "../../../src/UsdnProtocol/UsdnProtocol.sol";
 import { IWstETH } from "../../../src/interfaces/IWstETH.sol";
 import { IUsdnProtocolErrors } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-
-import { IUsdnProtocolEvents } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolTypes } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Permit2TokenBitfield } from "../../../src/libraries/Permit2TokenBitfield.sol";
 
@@ -165,110 +163,62 @@ contract EchidnaAssert is Setup {
         }
     }
 
+    struct OpenPositionParams {
+        uint128 amountRand;
+        uint256 destRand;
+        uint256 validatorRand;
+        address dest;
+        address payable validator;
+        bytes priceData;
+        uint64 securityDeposit;
+        uint256 senderBalanceETH;
+        uint256 senderBalanceWstETH;
+        uint256 usdnProtocolBalanceETH;
+        uint256 usdnProtocolBalanceWstETH;
+        int24 expectedTick;
+    }
+
+    function getOpenPositionParams(uint128 amountRand, uint256 destRand, uint256 validatorRand)
+        internal
+        view
+        returns (OpenPositionParams memory)
+    {
+        OpenPositionParams memory params;
+
+        params.amountRand = uint128(bound(amountRand, 0, wsteth.balanceOf(msg.sender)));
+        params.destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
+        params.dest = destinationsToken[address(wsteth)][params.destRand];
+        params.validatorRand = bound(validatorRand, 0, validators.length - 1);
+        params.validator = payable(validators[params.validatorRand]);
+        params.priceData = abi.encode(CURRENT_PRICE);
+        params.securityDeposit = usdnProtocol.getSecurityDepositValue();
+        params.senderBalanceETH = address(msg.sender).balance;
+        params.senderBalanceWstETH = wsteth.balanceOf(msg.sender);
+        params.usdnProtocolBalanceETH = address(usdnProtocol).balance;
+        params.usdnProtocolBalanceWstETH = wsteth.balanceOf(address(usdnProtocol));
+        params.expectedTick = usdnProtocol.getEffectiveTickForPrice(params.amountRand / 2);
+
+        return params;
+    }
+
     function initiateOpenPosition(uint128 amountRand, uint256 destRand, uint256 validatorRand) public {
-        amountRand = uint128(bound(amountRand, 0, wsteth.balanceOf(msg.sender)));
-
-        destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
-        address dest = destinationsToken[address(wsteth)][destRand];
-
-        validatorRand = bound(validatorRand, 0, validators.length - 1);
-        address payable validator = payable(validators[validatorRand]);
-
-        bytes memory priceData = abi.encode(CURRENT_PRICE);
-
-        uint64 securityDeposit = usdnProtocol.getSecurityDepositValue();
-
-        uint256 senderBalanceETH = address(msg.sender).balance;
-        uint256 senderBalanceWstETH = wsteth.balanceOf(msg.sender);
-
-        uint256 usdnProtocolBalanceETH = address(usdnProtocol).balance;
-        uint256 usdnProtocolBalanceWstETH = wsteth.balanceOf(address(usdnProtocol));
-
-        // int24 expectedTick = usdnProtocol.getEffectiveTickForPrice(amountRand / 2);
-        // uint128 liqPriceWithoutPenalty =
-        //     usdnProtocol.getEffectivePriceForTick(usdnProtocol.i_calcTickWithoutPenalty(expectedTick));
-        // uint128 expectedPosTotalExpo =
-        //     usdnProtocol.i_calcPositionTotalExpo(uint128(amountRand), CURRENT_PRICE, liqPriceWithoutPenalty);
-
-        // // state before opening the position
-        // ValueToCheckBefore memory before = ValueToCheckBefore({
-        //     balance: wsteth.balanceOf(address(this)),
-        //     protocolBalance: wsteth.balanceOf(address(usdnProtocol)),
-        //     totalPositions: usdnProtocol.getTotalLongPositions(),
-        //     totalExpo: usdnProtocol.getTotalExpo(),
-        //     balanceLong: uint256(usdnProtocol.i_longAssetAvailable(CURRENT_PRICE))
-        // });
-
-        // vm.expectEmit();
-        // emit InitiatedOpenPosition(
-        //     destRand,
-        //     validator,
-        //     uint40(block.timestamp),
-        //     expectedPosTotalExpo,
-        //     uint128(amountRand),
-        //     CURRENT_PRICE,
-        //     PositionId(expectedTick, 0, 0)
-        // );
-
-        // PositionId memory posId;
+        OpenPositionParams memory params = getOpenPositionParams(amountRand, destRand, validatorRand);
 
         vm.prank(msg.sender);
-        try /*posId = */ usdnProtocol.initiateOpenPosition{ value: securityDeposit }(
-            amountRand, amountRand / 2, dest, validator, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
+        try usdnProtocol.initiateOpenPosition{ value: params.securityDeposit }(
+            params.amountRand,
+            params.amountRand / 2,
+            params.dest,
+            params.validator,
+            NO_PERMIT2,
+            params.priceData,
+            EMPTY_PREVIOUS_DATA
         ) {
-            // Optional, rechecked after
-            assertEq(address(msg.sender).balance, senderBalanceETH - securityDeposit);
-            assertEq(wsteth.balanceOf(msg.sender), senderBalanceWstETH - amountRand);
+            assertEq(address(msg.sender).balance, params.senderBalanceETH - params.securityDeposit);
+            assertEq(wsteth.balanceOf(msg.sender), params.senderBalanceWstETH - params.amountRand);
 
-            assertEq(address(usdnProtocol).balance, usdnProtocolBalanceETH + securityDeposit);
-            assertEq(wsteth.balanceOf(address(usdnProtocol)), usdnProtocolBalanceWstETH + amountRand);
-
-            // // check state after opening the position
-            // assertEq(posId.tick, expectedTick, "tick number");
-            // assertEq(posId.tickVersion, 0, "tick version");
-
-            // assertEq(posId.index, 0, "index");
-
-            // assertEq(wsteth.balanceOf(address(this)), before.balance - amountRand, "user wsteth balance");
-            // assertEq(
-            //     wsteth.balanceOf(address(usdnProtocol)), before.protocolBalance + amountRand, "protocol wsteth
-            // balance"
-            // );
-            // assertEq(usdnProtocol.getTotalLongPositions(), before.totalPositions + 1, "total long positions");
-            // assertEq(usdnProtocol.getTotalExpo(), before.totalExpo + expectedPosTotalExpo, "protocol total expo");
-            // TickData memory tickData = usdnProtocol.getTickData(expectedTick);
-            // assertEq(tickData.totalExpo, expectedPosTotalExpo, "total expo in tick");
-            // assertEq(tickData.totalPos, 1, "positions in tick");
-            // assertEq(usdnProtocol.getBalanceLong(), before.balanceLong + amountRand, "balance of long side");
-
-            // // the pending action should not yet be actionable by a third party
-            // (PendingAction[] memory pendingActions,) = usdnProtocol.getActionablePendingActions(address(0));
-            // assertEq(pendingActions.length, 0, "no pending action");
-
-            // LongPendingAction memory action =
-            //     usdnProtocol.i_toLongPendingAction(usdnProtocol.getUserPendingAction(validator));
-            // assertTrue(action.action == ProtocolAction.ValidateOpenPosition, "action type");
-            // assertEq(action.timestamp, block.timestamp, "action timestamp");
-            // assertEq(action.to, to, "action to");
-            // assertEq(action.validator, validator, "action validator");
-            // assertEq(action.tick, expectedTick, "action tick");
-            // assertEq(action.tickVersion, 0, "action tickVersion");
-            // assertEq(action.index, 0, "action index");
-
-            // the pending action should be actionable after the validation deadline
-            // skip(usdnProtocol.getValidationDeadline() + 1);
-            // (pendingActions,) = usdnProtocol.getActionablePendingActions(address(0));
-            // action = usdnProtocol.i_toLongPendingAction(pendingActions[0]);
-            // assertEq(action.to, to, "pending action to");
-            // assertEq(action.validator, validator, "pending action validator");
-
-            // Position memory position;
-            // (position,) = usdnProtocol.getLongPosition(posId);
-            // assertFalse(position.validated, "pos validated");
-            // assertEq(position.user, to, "user position");
-            // assertEq(position.timestamp, action.timestamp, "timestamp position");
-            // assertEq(position.amount, uint128(amountRand), "amount position");
-            // assertEq(position.totalExpo, expectedPosTotalExpo, "totalExpo position");
+            assertEq(address(usdnProtocol).balance, params.usdnProtocolBalanceETH + params.securityDeposit);
+            assertEq(wsteth.balanceOf(address(usdnProtocol)), params.usdnProtocolBalanceWstETH + params.amountRand);
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_OPEN_ERRORS);
         }
