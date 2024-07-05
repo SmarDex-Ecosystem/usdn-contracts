@@ -318,7 +318,7 @@ interface IUsdnProtocolTypes {
         bytes32 tickHash;
         Position pos;
         uint128 liqPriceWithoutPenalty;
-        uint128 leverage;
+        uint256 leverage;
         uint8 liquidationPenalty;
         bool isLiquidationPending;
     }
