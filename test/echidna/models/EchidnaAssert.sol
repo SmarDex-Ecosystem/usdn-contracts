@@ -128,6 +128,21 @@ contract EchidnaAssert is Setup {
     /*                             USDN Protocol                                  */
     /* -------------------------------------------------------------------------- */
 
+    struct OpenPositionParams {
+        uint128 amountRand;
+        uint256 destRand;
+        uint256 validatorRand;
+        address dest;
+        address payable validator;
+        bytes priceData;
+        uint64 securityDeposit;
+        uint256 senderBalanceETH;
+        uint256 senderBalanceWstETH;
+        uint256 usdnProtocolBalanceETH;
+        uint256 usdnProtocolBalanceWstETH;
+        int24 expectedTick;
+    }
+
     function initiateDeposit(uint128 amountRand, uint256 destRand, uint256 validatorRand) public {
         amountRand = uint128(bound(amountRand, 0, wsteth.balanceOf(msg.sender)));
 
@@ -163,19 +178,27 @@ contract EchidnaAssert is Setup {
         }
     }
 
-    struct OpenPositionParams {
-        uint128 amountRand;
-        uint256 destRand;
-        uint256 validatorRand;
-        address dest;
-        address payable validator;
-        bytes priceData;
-        uint64 securityDeposit;
-        uint256 senderBalanceETH;
-        uint256 senderBalanceWstETH;
-        uint256 usdnProtocolBalanceETH;
-        uint256 usdnProtocolBalanceWstETH;
-        int24 expectedTick;
+    function initiateOpenPosition(uint128 amountRand, uint256 destRand, uint256 validatorRand) public {
+        OpenPositionParams memory params = getOpenPositionParams(amountRand, destRand, validatorRand);
+
+        vm.prank(msg.sender);
+        try usdnProtocol.initiateOpenPosition{ value: params.securityDeposit }(
+            params.amountRand,
+            params.amountRand / 2,
+            params.dest,
+            params.validator,
+            NO_PERMIT2,
+            params.priceData,
+            EMPTY_PREVIOUS_DATA
+        ) {
+            assertEq(address(msg.sender).balance, params.senderBalanceETH - params.securityDeposit);
+            assertEq(wsteth.balanceOf(msg.sender), params.senderBalanceWstETH - params.amountRand);
+
+            assertEq(address(usdnProtocol).balance, params.usdnProtocolBalanceETH + params.securityDeposit);
+            assertEq(wsteth.balanceOf(address(usdnProtocol)), params.usdnProtocolBalanceWstETH + params.amountRand);
+        } catch (bytes memory err) {
+            _checkErrors(err, INITIATE_OPEN_ERRORS);
+        }
     }
 
     function getOpenPositionParams(uint128 amountRand, uint256 destRand, uint256 validatorRand)
@@ -199,29 +222,6 @@ contract EchidnaAssert is Setup {
         params.expectedTick = usdnProtocol.getEffectiveTickForPrice(params.amountRand / 2);
 
         return params;
-    }
-
-    function initiateOpenPosition(uint128 amountRand, uint256 destRand, uint256 validatorRand) public {
-        OpenPositionParams memory params = getOpenPositionParams(amountRand, destRand, validatorRand);
-
-        vm.prank(msg.sender);
-        try usdnProtocol.initiateOpenPosition{ value: params.securityDeposit }(
-            params.amountRand,
-            params.amountRand / 2,
-            params.dest,
-            params.validator,
-            NO_PERMIT2,
-            params.priceData,
-            EMPTY_PREVIOUS_DATA
-        ) {
-            assertEq(address(msg.sender).balance, params.senderBalanceETH - params.securityDeposit);
-            assertEq(wsteth.balanceOf(msg.sender), params.senderBalanceWstETH - params.amountRand);
-
-            assertEq(address(usdnProtocol).balance, params.usdnProtocolBalanceETH + params.securityDeposit);
-            assertEq(wsteth.balanceOf(address(usdnProtocol)), params.usdnProtocolBalanceWstETH + params.amountRand);
-        } catch (bytes memory err) {
-            _checkErrors(err, INITIATE_OPEN_ERRORS);
-        }
     }
 
     function _checkErrors(bytes memory err, bytes4[] storage errors) internal {
