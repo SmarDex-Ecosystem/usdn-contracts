@@ -75,7 +75,7 @@ contract TestUsdnProtocolActionsPrepareValidateOpenPositionData is UsdnProtocolB
         (ValidateOpenPositionData memory data, bool liquidated) =
             protocol.i_prepareValidateOpenPositionData(pendingAction, currentPriceData);
 
-        // increase tick version as position was liquidated
+        // increase tick version as the position was liquidated
         posId.tickVersion++;
 
         assertTrue(liquidated, "The position should have been liquidated");
