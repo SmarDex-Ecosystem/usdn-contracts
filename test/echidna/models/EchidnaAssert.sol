@@ -76,10 +76,7 @@ contract Setup is Test {
         wsteth.approve(address(usdnProtocol), INIT_DEPOSIT_AMOUNT + INIT_LONG_AMOUNT);
 
         uint256 _desiredLiqPrice = wstEthOracleMiddleware.parseAndValidatePrice(
-            bytes32(""),
-            uint128(block.timestamp),
-            IUsdnProtocolTypes.ProtocolAction.Initialize,
-            abi.encode(INITIAL_PRICE)
+            "", uint128(block.timestamp), IUsdnProtocolTypes.ProtocolAction.Initialize, abi.encode(INITIAL_PRICE)
         ).price / 2;
 
         // leverage approx 2x
