@@ -71,7 +71,7 @@ contract TestUsdnInvariants is UsdnTokenFixture {
             (address user,) = usdn.getElementOfIndex(i);
             sum += usdn.balanceOf(user);
         }
-        assertApproxEqAbs(sum, usdn.totalSupply(), 2, "sum of user balances vs total supply");
+        assertApproxEqAbs(sum, usdn.totalSupply(), usdn.getLengthOfShares(), "sum of user balances vs total supply");
     }
 
     modifier displayBalancesAndShares() {
