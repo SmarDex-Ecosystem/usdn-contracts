@@ -73,7 +73,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         initialTimestamp: 1_704_092_400, // 2024-01-01 07:00:00 UTC
         fork: false,
         forkWarp: 0,
-        enableRoles: false
+        enableRoles: true
     });
 
     Roles roles = Roles({ configRole: CONFIG_ROLE, securityRole: SECURITY_ROLE, actionRole: ACTION_ROLE });
