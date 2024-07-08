@@ -71,33 +71,38 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario EMA updated correctly
-     * @custom:given a negative funding
-     * @custom:and an action for a smaller period than the EMA period
-     * @custom:then EMA should be greater than the last funding rate
+     * @custom:scenario EMA updated correctly with negative funding
+     * @custom:given The funding rate is negative
+     * @custom:when The next action happens just before the EMA period has elapsed
+     * @custom:then The new EMA should almost be equal to the funding rate
      */
     function test_updateEma_negFunding() public {
-        // we create a deposit and skip 1 day and call liquidate() to have a negative funding
+        // we create a deposit to have a negative funding
         bytes memory priceData = abi.encode(params.initialPrice);
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 10 ether, params.initialPrice);
-        skip(1 days);
-        protocol.testLiquidate(priceData, 1);
 
-        int256 lastFundingPerDay = protocol.getLastFundingPerDay();
+        // skip almost the entirety of the EMA period
         skip(protocol.getEMAPeriod() - 1);
         // we call liquidate() to update the EMA
         protocol.testLiquidate(priceData, 1);
 
-        assertGt(protocol.getEMA(), lastFundingPerDay);
+        int256 lastFundingPerDay = protocol.getLastFundingPerDay();
+        assertLt(lastFundingPerDay, 0, "funding should be negative for the elapsed period");
+
+        // within 0.002%
+        assertApproxEqRel(
+            protocol.getEMA(), lastFundingPerDay, 0.00002 ether, "EMA should be approx equal to the last funding"
+        );
     }
 
     /**
-     * @custom:scenario EMA updated correctly
-     * @custom:given a positive funding
-     * @custom:and an action for a smaller period than the EMA period
-     * @custom:then EMA should be lower than the last funding rate
+     * @custom:scenario EMA updated correctly with positive funding
+     * @custom:given The funding rate is positive
+     * @custom:when The next action happens just before the EMA period has elapsed
+     * @custom:then The new EMA should almost be equal to the funding rate
      */
     function test_updateEma_posFunding() public {
+        // we create a long to have a positive funding
         setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
@@ -108,12 +113,18 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
             })
         );
 
-        int256 lastFundingPerDay = protocol.getLastFundingPerDay();
+        // skip almost the entirety of the EMA period
         skip(protocol.getEMAPeriod() - 1);
         // we call liquidate() to update the EMA
         protocol.testLiquidate(abi.encode(params.initialPrice), 1);
 
-        assertLt(protocol.getEMA(), lastFundingPerDay);
+        int256 lastFundingPerDay = protocol.getLastFundingPerDay();
+        assertGt(lastFundingPerDay, 0, "funding should be positive for the elapsed period");
+
+        // within 0.002%
+        assertApproxEqRel(
+            protocol.getEMA(), lastFundingPerDay, 0.00002 ether, "EMA should be approx equal to the last funding"
+        );
     }
 
     /**

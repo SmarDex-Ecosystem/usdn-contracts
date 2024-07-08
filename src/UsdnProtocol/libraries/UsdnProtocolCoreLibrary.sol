@@ -399,11 +399,11 @@ library UsdnProtocolCoreLibrary {
      * @dev If the number of seconds elapsed is greater than or equal to the EMA period, the EMA is updated to the last
      * funding value
      * @param s The storage of the protocol
+     * @param fundingPerDay The funding rate per day that was just calculated for the elapsed period
      * @param secondsElapsed The number of seconds elapsed since the last protocol action
-     * @return The new EMA value
      */
-    function _updateEMA(Types.Storage storage s, uint128 secondsElapsed) public returns (int256) {
-        return s._EMA = calcEMA(s._lastFundingPerDay, secondsElapsed, s._EMAPeriod, s._EMA);
+    function _updateEMA(Types.Storage storage s, int256 fundingPerDay, uint128 secondsElapsed) public {
+        s._EMA = calcEMA(fundingPerDay, secondsElapsed, s._EMAPeriod, s._EMA);
     }
 
     /**
@@ -498,11 +498,14 @@ library UsdnProtocolCoreLibrary {
                 });
             }
 
-            // update the funding EMA
-            int256 ema = _updateEMA(s, timestamp - lastUpdateTimestamp);
-
             // calculate the funding
-            (fundAsset, s._lastFundingPerDay) = _fundingAsset(s, timestamp, ema);
+            int256 fundingPerDay;
+            (fundAsset, fundingPerDay) = _fundingAsset(s, timestamp, s._EMA);
+
+            s._lastFundingPerDay = fundingPerDay;
+
+            // update the funding EMA (mutates the storage)
+            _updateEMA(s, fundingPerDay, timestamp - lastUpdateTimestamp);
         }
 
         // take protocol fee on the funding value

@@ -439,8 +439,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return Long._findHighestPopulatedTick(s, searchStart);
     }
 
-    function i_updateEMA(uint128 secondsElapsed) external returns (int256) {
-        return Core._updateEMA(s, secondsElapsed);
+    function i_updateEMA(int256 fundingPerDay, uint128 secondsElapsed) external {
+        Core._updateEMA(s, fundingPerDay, secondsElapsed);
     }
 
     function i_usdnRebase(uint128 assetPrice, bool ignoreInterval) external returns (bool, bytes memory) {
