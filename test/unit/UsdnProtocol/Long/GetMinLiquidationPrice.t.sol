@@ -31,7 +31,6 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Check value of the `getMinLiquidationPrice` function
      * @custom:given The price of the asset is 5000 USD
-     * @custom:or The price of the asset is 0.000001 USD
      * @custom:when The minimum leverage is 1.000000001
      * @custom:and The multiplier is 1x
      * @custom:then The min liquidation price is the expected price
@@ -138,11 +137,18 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
      * @custom:then The min liquidation price is the price of the lowest usable tick + tick spacing
      */
     function test_getMinLiquidationPrice_minLeverageEqOne() public adminPrank {
+        uint256 newMinLeverage = 10 ** protocol.LEVERAGE_DECIMALS() + 1;
+        // sanity check
+        assertLt(
+            5000 ether - 5000 ether * 10 ** protocol.LEVERAGE_DECIMALS() / newMinLeverage,
+            TickMath.MIN_PRICE,
+            "Expected liquidation price should be below MIN_PRICE"
+        );
         /**
          * 5000 - 5000 / 1.00...01 < MIN_PRICE
          * => minLiquidationPrice = getPriceAtTick(protocol.minTick() + protocol.getTickSpacing())
          */
-        protocol.setMinLeverage(10 ** protocol.LEVERAGE_DECIMALS() + 1);
+        protocol.setMinLeverage(newMinLeverage);
         assertEq(
             protocol.getMinLiquidationPrice(price),
             TickMath.getPriceAtTick(protocol.minTick() + protocol.getTickSpacing()),
