@@ -187,17 +187,6 @@ contract EchidnaAssert is Setup {
         (OpenPositionParams memory params, ValueToCheckBefore memory before) =
             getOpenPositionParams(amountRand, destRand, validatorRand);
 
-        // vm.expectEmit();
-        // emit IUsdnProtocolEvents.InitiatedOpenPosition(
-        //     params.dest,
-        //     params.validator,
-        //     uint40(block.timestamp),
-        //     params.expectedPosTotalExpo,
-        //     uint128(amountRand),
-        //     uint128(CURRENT_PRICE),
-        //     IUsdnProtocolTypes.PositionId(int24(params.expectedTick), uint256(0), uint256(0))
-        // );
-
         vm.prank(msg.sender);
         try usdnProtocol.initiateOpenPosition{ value: params.securityDeposit }(
             params.amountRand,
