@@ -22,37 +22,37 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
 
     /**
      * @notice The config role signature
-     * @return The role signature
+     * @return Get the role signature
      */
     function CONFIG_ROLE() external pure returns (bytes32);
 
     /**
      * @notice The security role signature
-     * @return The role signature
+     * @return Get the role signature
      */
     function SECURITY_ROLE() external pure returns (bytes32);
 
     /**
      * @notice The action role signature
-     * @return The role signature
+     * @return Get the role signature
      */
     function ACTION_ROLE() external pure returns (bytes32);
 
     /**
      * @notice The admin_config role signature
-     * @return The role signature
+     * @return Get the role signature
      */
     function ADMIN_CONFIG_ROLE() external pure returns (bytes32);
 
     /**
      * @notice The admin_security role signature
-     * @return The role signature
+     * @return Get the role signature
      */
     function ADMIN_SECURITY_ROLE() external pure returns (bytes32);
 
     /**
      * @notice The admin_action role signature
-     * @return The role signature
+     * @return Get the role signature
      */
     function ADMIN_ACTION_ROLE() external pure returns (bytes32);
 
