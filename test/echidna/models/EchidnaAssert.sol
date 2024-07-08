@@ -142,9 +142,6 @@ contract EchidnaAssert is Setup {
     struct ValueToCheckBefore {
         uint256 balance;
         uint256 protocolBalance;
-        uint256 totalPositions;
-        uint256 totalExpo;
-        uint256 balanceLong;
     }
 
     function initiateDeposit(uint128 amountRand, uint256 destRand, uint256 validatorRand) public {
