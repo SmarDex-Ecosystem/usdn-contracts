@@ -171,7 +171,7 @@ contract EchidnaAssert is Setup {
         try usdnProtocol.initiateDeposit{ value: securityDeposit }(
             amountRand, dest, validator, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         ) {
-            assert(address(msg.sender).balance, senderBalanceETH - securityDeposit);
+            assertEq(address(msg.sender).balance, senderBalanceETH - securityDeposit);
             assertEq(wsteth.balanceOf(msg.sender), senderBalanceWstETH - amountRand);
             assertLt(sdex.balanceOf(msg.sender), senderBalanceSdex);
 
@@ -205,7 +205,7 @@ contract EchidnaAssert is Setup {
 
             // check state after opening the position
             assert(posId.tick == params.expectedTick); // tick number
-            assert(posId.tickVersion, 0); // tick version
+            assert(posId.tickVersion == 0); // tick version
 
             assert(posId.index == 0); // index
 
