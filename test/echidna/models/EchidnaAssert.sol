@@ -16,7 +16,6 @@ import { Usdn } from "../../../src/Usdn/Usdn.sol";
 import { UsdnProtocol } from "../../../src/UsdnProtocol/UsdnProtocol.sol";
 import { IWstETH } from "../../../src/interfaces/IWstETH.sol";
 import { IUsdnProtocolErrors } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { IUsdnProtocolEvents } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolTypes } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Permit2TokenBitfield } from "../../../src/libraries/Permit2TokenBitfield.sol";
 
