@@ -171,7 +171,7 @@ contract EchidnaAssert is Setup {
         try usdnProtocol.initiateDeposit{ value: securityDeposit }(
             amountRand, dest, validator, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         ) {
-            assertEq(address(msg.sender).balance, senderBalanceETH - securityDeposit);
+            assert(address(msg.sender).balance, senderBalanceETH - securityDeposit);
             assertEq(wsteth.balanceOf(msg.sender), senderBalanceWstETH - amountRand);
             assertLt(sdex.balanceOf(msg.sender), senderBalanceSdex);
 
@@ -197,58 +197,58 @@ contract EchidnaAssert is Setup {
             EMPTY_PREVIOUS_DATA
         ) returns (bool, IUsdnProtocolTypes.PositionId memory posId) {
             // Optional, rechecked after
-            assertEq(address(msg.sender).balance, params.senderBalanceETH - params.securityDeposit);
-            assertEq(wsteth.balanceOf(msg.sender), params.senderBalanceWstETH - params.amountRand);
+            assert(address(msg.sender).balance == params.senderBalanceETH - params.securityDeposit);
+            assert(wsteth.balanceOf(msg.sender) == params.senderBalanceWstETH - params.amountRand);
 
-            assertEq(address(usdnProtocol).balance, params.usdnProtocolBalanceETH + params.securityDeposit);
-            assertEq(wsteth.balanceOf(address(usdnProtocol)), params.usdnProtocolBalanceWstETH + params.amountRand);
+            assert(address(usdnProtocol).balance == params.usdnProtocolBalanceETH + params.securityDeposit);
+            assert(wsteth.balanceOf(address(usdnProtocol)) == params.usdnProtocolBalanceWstETH + params.amountRand);
 
             // check state after opening the position
-            assertEq(posId.tick, params.expectedTick, "tick number");
-            assertEq(posId.tickVersion, 0, "tick version");
+            assert(posId.tick == params.expectedTick); // tick number
+            assert(posId.tickVersion, 0); // tick version
 
-            assertEq(posId.index, 0, "index");
+            assert(posId.index == 0); // index
 
-            assertEq(wsteth.balanceOf(address(this)), before.balance - amountRand, "user wsteth balance");
-            assertEq(
-                wsteth.balanceOf(address(usdnProtocol)), before.protocolBalance + amountRand, "protocol wsteth balance"
-            );
-            assertEq(usdnProtocol.getTotalLongPositions(), before.totalPositions + 1, "total long positions");
-            assertEq(usdnProtocol.getTotalExpo(), before.totalExpo + params.expectedPosTotalExpo, "protocol total expo");
+            assert(wsteth.balanceOf(address(this)) == before.balance - amountRand); // user wsteth balance
+            assert(wsteth.balanceOf(address(usdnProtocol)) == before.protocolBalance + amountRand); // protocol wsteth
+                // balance
+            assert(usdnProtocol.getTotalLongPositions() == before.totalPositions + 1); // total long positions
+            assert(usdnProtocol.getTotalExpo() == before.totalExpo + params.expectedPosTotalExpo); // protocol total
+                // expo
             IUsdnProtocolTypes.TickData memory tickData = usdnProtocol.getTickData(params.expectedTick);
-            assertEq(tickData.totalExpo, params.expectedPosTotalExpo, "total expo in tick");
-            assertEq(tickData.totalPos, 1, "positions in tick");
-            assertEq(usdnProtocol.getBalanceLong(), before.balanceLong + amountRand, "balance of long side");
+            assert(tickData.totalExpo == params.expectedPosTotalExpo); // total expo in tick
+            assert(tickData.totalPos == 1); // positions in tick
+            assert(usdnProtocol.getBalanceLong() == before.balanceLong + amountRand); // balance of long side
 
             // // the pending action should not yet be actionable by a third party
             (IUsdnProtocolTypes.PendingAction[] memory pendingActions,) =
                 usdnProtocol.getActionablePendingActions(address(0));
-            assertEq(pendingActions.length, 0, "no pending action");
+            assert(pendingActions.length == 0); // no pending action
 
             IUsdnProtocolTypes.LongPendingAction memory action =
                 usdnProtocol.i_toLongPendingAction(usdnProtocol.getUserPendingAction(params.validator));
-            assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition, "action type");
-            assertEq(action.timestamp, block.timestamp, "action timestamp");
-            assertEq(action.to, params.dest, "action to"); // not sure of dest, should be to
-            assertEq(action.validator, params.validator, "action validator");
-            assertEq(action.tick, params.expectedTick, "action tick");
-            assertEq(action.tickVersion, 0, "action tickVersion");
-            assertEq(action.index, 0, "action index");
+            assert(action.action == IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition); // action type
+            assert(action.timestamp == block.timestamp); // action timestamp
+            assert(action.to == params.dest); // action to
+            assert(action.validator == params.validator); // action validator
+            assert(action.tick == params.expectedTick); // action tick
+            assert(action.tickVersion == 0); // action tickVersion
+            assert(action.index == 0); // action index
 
             // the pending action should be actionable after the validation deadline
             skip(usdnProtocol.getValidationDeadline() + 1);
             (pendingActions,) = usdnProtocol.getActionablePendingActions(address(0));
             action = usdnProtocol.i_toLongPendingAction(pendingActions[0]);
-            assertEq(action.to, params.dest, "pending action to");
-            assertEq(action.validator, params.validator, "pending action validator");
+            assert(action.to == params.dest); // pending action to
+            assert(action.validator == params.validator); // pending action validator
 
             IUsdnProtocolTypes.Position memory position;
             (position,) = usdnProtocol.getLongPosition(posId);
-            assertFalse(position.validated, "pos validated");
-            assertEq(position.user, params.dest, "user position");
-            assertEq(position.timestamp, action.timestamp, "timestamp position");
-            assertEq(position.amount, uint128(amountRand), "amount position");
-            assertEq(position.totalExpo, params.expectedPosTotalExpo, "totalExpo position");
+            assert(!position.validated); // pos validated
+            assert(position.user == params.dest); // user position
+            assert(position.timestamp == action.timestamp); // timestamp position
+            assert(position.amount == uint128(amountRand)); // amount position
+            assert(position.totalExpo == params.expectedPosTotalExpo); // totalExpo position
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_OPEN_ERRORS);
         }
