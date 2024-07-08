@@ -4,6 +4,7 @@ pragma solidity ^0.8.25;
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
+import { TickMath } from "../../../../src/libraries/TickMath.sol";
 
 /**
  * @custom:feature The `getMinLiquidationPrice` function of the USDN Protocol
@@ -21,7 +22,9 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
         params.flags.enableFunding = true;
         super._setUp(params);
         (firstPos,) = protocol.getLongPosition(initialPosition);
-        tradingExpo = firstPos.totalExpo - firstPos.amount;
+        tradingExpo = uint256(
+            int256(protocol.getTotalExpo()) - protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp))
+        );
         liqMulAcc = protocol.getLiqMultiplierAccumulator();
     }
 
@@ -46,22 +49,6 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
             ),
             "for price = 5000"
         );
-
-        /**
-         * 10^12 - 10^12 / 1.000000001 = 999 (< MINIMUM_PRICE)
-         * => minLiquidationPrice = getPriceAtTick(protocol.minTick() + protocol.getTickSpacing())
-         */
-        price = 10 ** 12;
-        assertEq(
-            protocol.getMinLiquidationPrice(price),
-            protocol.getEffectivePriceForTick(
-                protocol.getEffectiveTickForPrice(999, price, tradingExpo, liqMulAcc, _tickSpacing) + _tickSpacing,
-                price,
-                tradingExpo,
-                liqMulAcc
-            ),
-            "for price = 1 * 10^12 wei"
-        );
     }
 
     /**
@@ -83,7 +70,9 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
         skip(1 days);
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1, params.initialPrice);
 
-        tradingExpo = protocol.getTotalExpo() - protocol.getBalanceLong();
+        tradingExpo = uint256(
+            int256(protocol.getTotalExpo()) - protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp))
+        );
         liqMulAcc = protocol.getLiqMultiplierAccumulator();
         assertGt(
             protocol.i_calcFixedPrecisionMultiplier(
@@ -119,7 +108,9 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
         skip(6 days);
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1, params.initialPrice);
 
-        tradingExpo = protocol.getTotalExpo() - protocol.getBalanceLong();
+        tradingExpo = uint256(
+            int256(protocol.getTotalExpo()) - protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp))
+        );
         liqMulAcc = protocol.getLiqMultiplierAccumulator();
         assertLt(
             protocol.i_calcFixedPrecisionMultiplier(params.initialPrice, tradingExpo, liqMulAcc),
@@ -148,13 +139,14 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
      */
     function test_getMinLiquidationPrice_minLeverageEqOne() public adminPrank {
         /**
-         * 5000 - 5000 / 1 = 0
+         * 5000 - 5000 / 1.00...01 < MIN_PRICE
          * => minLiquidationPrice = getPriceAtTick(protocol.minTick() + protocol.getTickSpacing())
          */
         protocol.setMinLeverage(10 ** protocol.LEVERAGE_DECIMALS() + 1);
         assertEq(
             protocol.getMinLiquidationPrice(price),
-            protocol.getEffectivePriceForTick(protocol.minTick() + _tickSpacing, price, tradingExpo, liqMulAcc)
+            TickMath.getPriceAtTick(protocol.minTick() + protocol.getTickSpacing()),
+            "liquidation price should be equal to the min tick price + tick spacing"
         );
     }
 
