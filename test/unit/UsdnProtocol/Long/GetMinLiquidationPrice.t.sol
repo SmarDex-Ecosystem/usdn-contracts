@@ -69,7 +69,7 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Check value of the `getMinLiquidationPrice` function
      * @custom:when The minimum leverage is 1.000000001
-     * @custom:and The multiplier is > 1.
+     * @custom:and The multiplier is > 1
      * @custom:then The min liquidation price is the expected price
      */
     function test_getMinLiquidationPrice_multiplierGtOne() public {
