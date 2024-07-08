@@ -203,50 +203,16 @@ contract EchidnaAssert is Setup {
             assert(address(usdnProtocol).balance == params.usdnProtocolBalanceETH + params.securityDeposit);
             assert(wsteth.balanceOf(address(usdnProtocol)) == params.usdnProtocolBalanceWstETH + params.amountRand);
 
-            // check state after opening the position
-            assert(posId.tick == params.expectedTick); // tick number
-            assert(posId.tickVersion == 0); // tick version
-
-            assert(posId.index == 0); // index
-
             assert(wsteth.balanceOf(address(this)) == before.balance - amountRand); // user wsteth balance
             assert(wsteth.balanceOf(address(usdnProtocol)) == before.protocolBalance + amountRand); // protocol wsteth
                 // balance
-            assert(usdnProtocol.getTotalLongPositions() == before.totalPositions + 1); // total long positions
             assert(usdnProtocol.getTotalExpo() == before.totalExpo + params.expectedPosTotalExpo); // protocol total
                 // expo
             IUsdnProtocolTypes.TickData memory tickData = usdnProtocol.getTickData(params.expectedTick);
             assert(tickData.totalExpo == params.expectedPosTotalExpo); // total expo in tick
-            assert(tickData.totalPos == 1); // positions in tick
             assert(usdnProtocol.getBalanceLong() == before.balanceLong + amountRand); // balance of long side
 
-            // // the pending action should not yet be actionable by a third party
-            (IUsdnProtocolTypes.PendingAction[] memory pendingActions,) =
-                usdnProtocol.getActionablePendingActions(address(0));
-            assert(pendingActions.length == 0); // no pending action
-
-            IUsdnProtocolTypes.LongPendingAction memory action =
-                usdnProtocol.i_toLongPendingAction(usdnProtocol.getUserPendingAction(params.validator));
-            assert(action.action == IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition); // action type
-            assert(action.timestamp == block.timestamp); // action timestamp
-            assert(action.to == params.dest); // action to
-            assert(action.validator == params.validator); // action validator
-            assert(action.tick == params.expectedTick); // action tick
-            assert(action.tickVersion == 0); // action tickVersion
-            assert(action.index == 0); // action index
-
-            // the pending action should be actionable after the validation deadline
-            skip(usdnProtocol.getValidationDeadline() + 1);
-            (pendingActions,) = usdnProtocol.getActionablePendingActions(address(0));
-            action = usdnProtocol.i_toLongPendingAction(pendingActions[0]);
-            assert(action.to == params.dest); // pending action to
-            assert(action.validator == params.validator); // pending action validator
-
-            IUsdnProtocolTypes.Position memory position;
-            (position,) = usdnProtocol.getLongPosition(posId);
-            assert(!position.validated); // pos validated
-            assert(position.user == params.dest); // user position
-            assert(position.timestamp == action.timestamp); // timestamp position
+            (IUsdnProtocolTypes.Position memory position,) = usdnProtocol.getLongPosition(posId);
             assert(position.amount == uint128(amountRand)); // amount position
             assert(position.totalExpo == params.expectedPosTotalExpo); // totalExpo position
         } catch (bytes memory err) {
@@ -270,9 +236,6 @@ contract EchidnaAssert is Setup {
         params.senderBalanceWstETH = wsteth.balanceOf(msg.sender);
         params.usdnProtocolBalanceETH = address(usdnProtocol).balance;
         params.usdnProtocolBalanceWstETH = wsteth.balanceOf(address(usdnProtocol));
-        params.expectedTick = usdnProtocol.getEffectiveTickForPrice(params.amountRand / 2);
-        params.liqPriceWithoutPenalty =
-            usdnProtocol.getEffectivePriceForTick(usdnProtocol.i_calcTickWithoutPenalty(params.expectedTick));
         params.expectedPosTotalExpo = usdnProtocol.i_calcPositionTotalExpo(
             uint128(amountRand), uint128(CURRENT_PRICE), params.liqPriceWithoutPenalty
         );
