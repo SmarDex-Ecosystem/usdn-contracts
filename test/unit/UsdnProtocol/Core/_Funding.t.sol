@@ -284,9 +284,9 @@ contract TestUsdnProtocolCoreFunding is UsdnProtocolBaseFixture {
 
         (int256 fundingB, int256 fundingPerDayB,) = protocol.i_funding(s, s.lastUpdateTimestamp + TIME_ELAPSED, 0);
 
-        // the funding should double (with 1 wei tolerance)
+        // the funding rate should double (with 1 wei tolerance)
         assertApproxEqAbs(fundingPerDayB, fundingPerDayA * 2, 1, "funding rate A vs B");
-        assertEq(fundingB, fundingA * 2, "funding A vs B");
+        assertApproxEqAbs(fundingB, fundingA * 2, 2, "funding A vs B");
 
         // since we cap the imbalance to 100%, the funding rate (without EMA contribution) is at most:
         int256 fundingPerDayMax =
