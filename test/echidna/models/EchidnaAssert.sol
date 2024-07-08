@@ -4,6 +4,8 @@ pragma solidity ^0.8.25;
 import { Test } from "forge-std/Test.sol";
 
 import { MockOracleMiddleware } from "../../../test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
+
+import { UsdnProtocolHandler } from "../../unit/UsdnProtocol/utils/Handler.sol";
 import { Sdex } from "../../utils/Sdex.sol";
 import { Weth } from "../../utils/WETH.sol";
 import { WstETH } from "../../utils/WstEth.sol";
@@ -14,6 +16,7 @@ import { Usdn } from "../../../src/Usdn/Usdn.sol";
 import { UsdnProtocol } from "../../../src/UsdnProtocol/UsdnProtocol.sol";
 import { IWstETH } from "../../../src/interfaces/IWstETH.sol";
 import { IUsdnProtocolErrors } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { IUsdnProtocolEvents } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolTypes } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Permit2TokenBitfield } from "../../../src/libraries/Permit2TokenBitfield.sol";
 
@@ -39,7 +42,7 @@ contract Setup is Test {
     MockOracleMiddleware public wstEthOracleMiddleware;
     MockLiquidationRewardsManager public liquidationRewardsManager;
     Usdn public usdn;
-    UsdnProtocol public usdnProtocol;
+    UsdnProtocolHandler public usdnProtocol;
     Rebalancer public rebalancer;
 
     bytes4[] public INITIATE_DEPOSIT_ERRORS = [IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector];
@@ -51,14 +54,6 @@ contract Setup is Test {
         IUsdnProtocolErrors.UsdnProtocolLongPositionTooSmall.selector,
         IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction.selector
     ];
-
-    struct ValueToCheckBefore {
-        uint256 balance;
-        uint256 protocolBalance;
-        uint256 totalPositions;
-        uint256 totalExpo;
-        uint256 balanceLong;
-    }
 
     constructor() payable {
         vm.warp(1_709_251_200);
@@ -81,8 +76,9 @@ contract Setup is Test {
 
         usdn = new Usdn(address(0), address(0));
 
-        usdnProtocol =
-            new UsdnProtocol(usdn, sdex, wsteth, wstEthOracleMiddleware, liquidationRewardsManager, 100, FEE_COLLECTOR);
+        usdnProtocol = new UsdnProtocolHandler(
+            usdn, sdex, wsteth, wstEthOracleMiddleware, liquidationRewardsManager, 100, FEE_COLLECTOR
+        );
 
         rebalancer = new Rebalancer(usdnProtocol);
 
@@ -130,7 +126,8 @@ contract EchidnaAssert is Setup {
 
     struct OpenPositionParams {
         uint128 amountRand;
-        uint256 destRand;
+        uint128 liqPriceWithoutPenalty;
+        uint128 expectedPosTotalExpo;
         uint256 validatorRand;
         address dest;
         address payable validator;
@@ -141,6 +138,14 @@ contract EchidnaAssert is Setup {
         uint256 usdnProtocolBalanceETH;
         uint256 usdnProtocolBalanceWstETH;
         int24 expectedTick;
+    }
+
+    struct ValueToCheckBefore {
+        uint256 balance;
+        uint256 protocolBalance;
+        uint256 totalPositions;
+        uint256 totalExpo;
+        uint256 balanceLong;
     }
 
     function initiateDeposit(uint128 amountRand, uint256 destRand, uint256 validatorRand) public {
@@ -179,7 +184,19 @@ contract EchidnaAssert is Setup {
     }
 
     function initiateOpenPosition(uint128 amountRand, uint256 destRand, uint256 validatorRand) public {
-        OpenPositionParams memory params = getOpenPositionParams(amountRand, destRand, validatorRand);
+        (OpenPositionParams memory params, ValueToCheckBefore memory before) =
+            getOpenPositionParams(amountRand, destRand, validatorRand);
+
+        // vm.expectEmit();
+        // emit IUsdnProtocolEvents.InitiatedOpenPosition(
+        //     params.dest,
+        //     params.validator,
+        //     uint40(block.timestamp),
+        //     params.expectedPosTotalExpo,
+        //     uint128(amountRand),
+        //     uint128(CURRENT_PRICE),
+        //     IUsdnProtocolTypes.PositionId(int24(params.expectedTick), uint256(0), uint256(0))
+        // );
 
         vm.prank(msg.sender);
         try usdnProtocol.initiateOpenPosition{ value: params.securityDeposit }(
@@ -190,12 +207,60 @@ contract EchidnaAssert is Setup {
             NO_PERMIT2,
             params.priceData,
             EMPTY_PREVIOUS_DATA
-        ) {
+        ) returns (bool, IUsdnProtocolTypes.PositionId memory posId) {
+            // Optional, rechecked after
             assertEq(address(msg.sender).balance, params.senderBalanceETH - params.securityDeposit);
             assertEq(wsteth.balanceOf(msg.sender), params.senderBalanceWstETH - params.amountRand);
 
             assertEq(address(usdnProtocol).balance, params.usdnProtocolBalanceETH + params.securityDeposit);
             assertEq(wsteth.balanceOf(address(usdnProtocol)), params.usdnProtocolBalanceWstETH + params.amountRand);
+
+            // check state after opening the position
+            assertEq(posId.tick, params.expectedTick, "tick number");
+            assertEq(posId.tickVersion, 0, "tick version");
+
+            assertEq(posId.index, 0, "index");
+
+            assertEq(wsteth.balanceOf(address(this)), before.balance - amountRand, "user wsteth balance");
+            assertEq(
+                wsteth.balanceOf(address(usdnProtocol)), before.protocolBalance + amountRand, "protocol wsteth balance"
+            );
+            assertEq(usdnProtocol.getTotalLongPositions(), before.totalPositions + 1, "total long positions");
+            assertEq(usdnProtocol.getTotalExpo(), before.totalExpo + params.expectedPosTotalExpo, "protocol total expo");
+            IUsdnProtocolTypes.TickData memory tickData = usdnProtocol.getTickData(params.expectedTick);
+            assertEq(tickData.totalExpo, params.expectedPosTotalExpo, "total expo in tick");
+            assertEq(tickData.totalPos, 1, "positions in tick");
+            assertEq(usdnProtocol.getBalanceLong(), before.balanceLong + amountRand, "balance of long side");
+
+            // // the pending action should not yet be actionable by a third party
+            (IUsdnProtocolTypes.PendingAction[] memory pendingActions,) =
+                usdnProtocol.getActionablePendingActions(address(0));
+            assertEq(pendingActions.length, 0, "no pending action");
+
+            IUsdnProtocolTypes.LongPendingAction memory action =
+                usdnProtocol.i_toLongPendingAction(usdnProtocol.getUserPendingAction(params.validator));
+            assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition, "action type");
+            assertEq(action.timestamp, block.timestamp, "action timestamp");
+            assertEq(action.to, params.dest, "action to"); // not sure of dest, should be to
+            assertEq(action.validator, params.validator, "action validator");
+            assertEq(action.tick, params.expectedTick, "action tick");
+            assertEq(action.tickVersion, 0, "action tickVersion");
+            assertEq(action.index, 0, "action index");
+
+            // the pending action should be actionable after the validation deadline
+            skip(usdnProtocol.getValidationDeadline() + 1);
+            (pendingActions,) = usdnProtocol.getActionablePendingActions(address(0));
+            action = usdnProtocol.i_toLongPendingAction(pendingActions[0]);
+            assertEq(action.to, params.dest, "pending action to");
+            assertEq(action.validator, params.validator, "pending action validator");
+
+            IUsdnProtocolTypes.Position memory position;
+            (position,) = usdnProtocol.getLongPosition(posId);
+            assertFalse(position.validated, "pos validated");
+            assertEq(position.user, params.dest, "user position");
+            assertEq(position.timestamp, action.timestamp, "timestamp position");
+            assertEq(position.amount, uint128(amountRand), "amount position");
+            assertEq(position.totalExpo, params.expectedPosTotalExpo, "totalExpo position");
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_OPEN_ERRORS);
         }
@@ -204,13 +269,11 @@ contract EchidnaAssert is Setup {
     function getOpenPositionParams(uint128 amountRand, uint256 destRand, uint256 validatorRand)
         internal
         view
-        returns (OpenPositionParams memory)
+        returns (OpenPositionParams memory params, ValueToCheckBefore memory before)
     {
-        OpenPositionParams memory params;
-
         params.amountRand = uint128(bound(amountRand, 0, wsteth.balanceOf(msg.sender)));
-        params.destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
-        params.dest = destinationsToken[address(wsteth)][params.destRand];
+        uint256 destRandBounded = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
+        params.dest = destinationsToken[address(wsteth)][destRandBounded];
         params.validatorRand = bound(validatorRand, 0, validators.length - 1);
         params.validator = payable(validators[params.validatorRand]);
         params.priceData = abi.encode(CURRENT_PRICE);
@@ -220,8 +283,19 @@ contract EchidnaAssert is Setup {
         params.usdnProtocolBalanceETH = address(usdnProtocol).balance;
         params.usdnProtocolBalanceWstETH = wsteth.balanceOf(address(usdnProtocol));
         params.expectedTick = usdnProtocol.getEffectiveTickForPrice(params.amountRand / 2);
+        params.liqPriceWithoutPenalty =
+            usdnProtocol.getEffectivePriceForTick(usdnProtocol.i_calcTickWithoutPenalty(params.expectedTick));
+        params.expectedPosTotalExpo = usdnProtocol.i_calcPositionTotalExpo(
+            uint128(amountRand), uint128(CURRENT_PRICE), params.liqPriceWithoutPenalty
+        );
 
-        return params;
+        before = ValueToCheckBefore({
+            balance: wsteth.balanceOf(address(this)),
+            protocolBalance: wsteth.balanceOf(address(usdnProtocol)),
+            totalPositions: usdnProtocol.getTotalLongPositions(),
+            totalExpo: usdnProtocol.getTotalExpo(),
+            balanceLong: uint256(usdnProtocol.i_longAssetAvailable(uint128(CURRENT_PRICE)))
+        });
     }
 
     function _checkErrors(bytes memory err, bytes4[] storage errors) internal {
