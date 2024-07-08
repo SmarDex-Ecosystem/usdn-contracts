@@ -78,7 +78,7 @@ interface IUsdnProtocol is
     function setLiquidationIteration(uint16 newLiquidationIteration) external;
 
     /**
-     * @notice Set the new exponential moving average period of the funding rate
+     * @notice Set the new period of the funding rate moving average
      * @param newEMAPeriod The new EMA period
      */
     function setEMAPeriod(uint128 newEMAPeriod) external;

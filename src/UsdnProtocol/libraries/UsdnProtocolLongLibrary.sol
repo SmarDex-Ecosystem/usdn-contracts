@@ -221,7 +221,7 @@ library UsdnProtocolLongLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
         }
 
-        int256 ema = Core.calcEMA(s._lastFunding, timestamp - s._lastUpdateTimestamp, s._EMAPeriod, s._EMA);
+        int256 ema = Core.calcEMA(s._lastFundingPerDay, timestamp - s._lastUpdateTimestamp, s._EMAPeriod, s._EMA);
         (int256 fundAsset,) = Core._fundingAsset(s, timestamp, ema);
 
         if (fundAsset > 0) {

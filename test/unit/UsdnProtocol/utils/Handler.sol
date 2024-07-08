@@ -259,8 +259,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return Core._getActionablePendingAction(s);
     }
 
-    function i_lastFunding() external view returns (int256) {
-        return s._lastFunding;
+    function i_lastFundingPerDay() external view returns (int256) {
+        return s._lastFundingPerDay;
     }
 
     function i_applyPnlAndFunding(uint128 currentPrice, uint128 timestamp)
@@ -623,11 +623,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return Long._triggerRebalancer(s, lastPrice, longBalance, vaultBalance, remainingCollateral);
     }
 
-    function i_calculateFee(int256 fund, int256 fundAsset)
-        external
-        returns (int256 fee_, int256 fundWithFee_, int256 fundAssetWithFee_)
-    {
-        return Core._calculateFee(s, fund, fundAsset);
+    function i_calculateFee(int256 fundAsset) external returns (int256 fee_, int256 fundAssetWithFee_) {
+        return Core._calculateFee(s, fundAsset);
     }
 
     function i_flashClosePosition(
@@ -756,7 +753,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
      */
     function i_funding(FundingStorage memory fundingStorage, uint128 timestamp, int256 ema)
         external
-        returns (int256 fund_, int256 oldLongExpo_)
+        returns (int256 funding_, int256 fundingPerDay_, int256 oldLongExpo_)
     {
         _tempStorage._totalExpo = fundingStorage.totalExpo;
         _tempStorage._balanceVault = fundingStorage.balanceVault;

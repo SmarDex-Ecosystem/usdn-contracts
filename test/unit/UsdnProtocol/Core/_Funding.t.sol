@@ -27,24 +27,27 @@ contract TestUsdnProtocolCoreFunding is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Funding rate calculation when no time has elapsed
+     * @custom:scenario Funding calculation when no time has elapsed
      * @custom:given The timestamp is the same as the last update timestamp
-     * @custom:when The funding rate is calculated
-     * @custom:then The funding rate is 0
+     * @custom:when The funding is calculated
+     * @custom:then The funding is 0
+     * @custom:and The funding rate is 0
      * @custom:and The long exposure is as expected
      */
     function test_fundingNoTimeElapsed() public {
-        (int256 fund, int256 longExpo) = protocol.i_funding(s, s.lastUpdateTimestamp, EMA);
-        assertEq(fund, 0, "funding");
+        (int256 funding, int256 fundingPerDay, int256 longExpo) = protocol.i_funding(s, s.lastUpdateTimestamp, EMA);
+        assertEq(funding, 0, "funding");
+        assertEq(fundingPerDay, 0, "funding rate");
         assertEq(longExpo, int256(s.totalExpo - s.balanceLong), "longExpo");
     }
 
     /**
-     * @custom:scenario Funding rate calculation when long exposure is greater than vault exposure
+     * @custom:scenario Funding calculation when long exposure is greater than vault exposure
      * @custom:given The long trading expo is double that of the vault trading expo
      * @custom:and Some time has passed since the last update
-     * @custom:when The funding rate is calculated
-     * @custom:then The funding rate is positive and as expected
+     * @custom:when The funding is calculated
+     * @custom:then The funding is positive and as expected
+     * @custom:and The funding rate is positive and as expected
      * @custom:and The long exposure is as expected
      */
     function test_fundingTimeElapsedPositive() public {
@@ -56,24 +59,28 @@ contract TestUsdnProtocolCoreFunding is UsdnProtocolBaseFixture {
         assertEq(longTradingExpo, 1000 ether, "longTradingExpo");
         uint256 numeratorSquared = uint256((longTradingExpo - int256(s.balanceVault)) ** 2);
         assertEq(numeratorSquared, 500 ether ** 2, "numeratorSquared");
-        uint256 denominator = uint256(longTradingExpo * longTradingExpo) * 1 days;
-        int256 expectedFunding = int256(
-            numeratorSquared * TIME_ELAPSED * s.fundingSF
-                * 10 ** (Constants.FUNDING_RATE_DECIMALS - Constants.FUNDING_SF_DECIMALS) / denominator
+        uint256 denominator = uint256(longTradingExpo * longTradingExpo);
+        int256 expectedFundingPerDay = int256(
+            numeratorSquared * s.fundingSF * 10 ** (Constants.FUNDING_RATE_DECIMALS - Constants.FUNDING_SF_DECIMALS)
+                / denominator
         ) + EMA;
-        assertGt(expectedFunding, 0, "positive funding");
+        assertGt(expectedFundingPerDay, 0, "positive funding");
+        int256 expectedFunding = expectedFundingPerDay * int256(uint256(TIME_ELAPSED)) / 1 days;
 
-        (int256 fund, int256 longExpo) = protocol.i_funding(s, s.lastUpdateTimestamp + TIME_ELAPSED, EMA);
-        assertEq(fund, expectedFunding, "funding");
+        (int256 funding, int256 fundingPerDay, int256 longExpo) =
+            protocol.i_funding(s, s.lastUpdateTimestamp + TIME_ELAPSED, EMA);
+        assertEq(funding, expectedFunding, "funding");
+        assertEq(fundingPerDay, expectedFundingPerDay, "funding rate");
         assertEq(longExpo, longTradingExpo, "longExpo");
     }
 
     /**
-     * @custom:scenario Funding rate calculation when long exposure is less than vault exposure
+     * @custom:scenario Funding calculation when long exposure is less than vault exposure
      * @custom:given The long trading expo is half that of the vault trading expo
      * @custom:and Some time has passed since the last update
-     * @custom:when The funding rate is calculated
-     * @custom:then The funding rate is negative and as expected
+     * @custom:when The funding is calculated
+     * @custom:then The funding is negative and as expected
+     * @custom:and The funding rate is negative and as expected
      * @custom:and The long exposure is as expected
      */
     function test_fundingTimeElapsedNegative() public {
@@ -85,24 +92,28 @@ contract TestUsdnProtocolCoreFunding is UsdnProtocolBaseFixture {
         assertEq(longTradingExpo, 1000 ether, "longTradingExpo");
         uint256 numeratorSquared = uint256((longTradingExpo - int256(s.balanceVault)) ** 2);
         assertEq(numeratorSquared, 1000 ether ** 2, "numeratorSquared");
-        uint256 denominator = s.balanceVault * s.balanceVault * 1 days;
-        int256 expectedFunding = -int256(
-            numeratorSquared * TIME_ELAPSED * s.fundingSF
-                * 10 ** (Constants.FUNDING_RATE_DECIMALS - Constants.FUNDING_SF_DECIMALS) / denominator
+        uint256 denominator = s.balanceVault * s.balanceVault;
+        int256 expectedFundingPerDay = -int256(
+            numeratorSquared * s.fundingSF * 10 ** (Constants.FUNDING_RATE_DECIMALS - Constants.FUNDING_SF_DECIMALS)
+                / denominator
         ) + EMA;
-        assertLt(expectedFunding, 0, "negative funding");
+        assertLt(expectedFundingPerDay, 0, "negative funding");
+        int256 expectedFunding = expectedFundingPerDay * int256(uint256(TIME_ELAPSED)) / 1 days;
 
-        (int256 fund, int256 longExpo) = protocol.i_funding(s, s.lastUpdateTimestamp + TIME_ELAPSED, EMA);
-        assertEq(fund, expectedFunding, "funding");
+        (int256 funding, int256 fundingPerDay, int256 longExpo) =
+            protocol.i_funding(s, s.lastUpdateTimestamp + TIME_ELAPSED, EMA);
+        assertEq(funding, expectedFunding, "funding");
+        assertEq(fundingPerDay, expectedFundingPerDay, "funding rate");
         assertEq(longExpo, longTradingExpo, "longExpo");
     }
 
     /**
-     * @custom:scenario Funding rate calculation when long exposure is equal to vault exposure
+     * @custom:scenario Funding calculation when long exposure is equal to vault exposure
      * @custom:given The long trading expo is equal to the vault trading expo
      * @custom:and Some time has passed since the last update
-     * @custom:when The funding rate is calculated
+     * @custom:when The funding is calculated
      * @custom:then The funding rate is equal to the EMA
+     * @custom:and The funding is equal to the EMA multiplied by the elapsed time and divided by 86400
      * @custom:and The long exposure is as expected
      */
     function test_fundingEquilibrium() public {
@@ -115,17 +126,19 @@ contract TestUsdnProtocolCoreFunding is UsdnProtocolBaseFixture {
         uint256 numeratorSquared = uint256((longTradingExpo - int256(s.balanceVault)) ** 2);
         assertEq(numeratorSquared, 0, "numeratorSquared");
 
-        (int256 fund, int256 longExpo) = protocol.i_funding(s, s.lastUpdateTimestamp + TIME_ELAPSED, EMA);
-        assertEq(fund, EMA, "funding");
+        (int256 funding, int256 fundingPerDay, int256 longExpo) =
+            protocol.i_funding(s, s.lastUpdateTimestamp + TIME_ELAPSED, EMA);
+        assertEq(funding, EMA * int256(uint256(TIME_ELAPSED)) / 1 days, "funding");
+        assertEq(fundingPerDay, EMA, "funding rate");
         assertEq(longExpo, longTradingExpo, "longExpo");
     }
 
     /**
-     * @custom:scenario Funding rate calculation when vault exposure is zero
+     * @custom:scenario Funding calculation when vault exposure is zero
      * @custom:given The vault trading expo is zero
      * @custom:and Some time has passed since the last update
-     * @custom:when The funding rate is calculated
-     * @custom:then The funding rate is positive and as expected
+     * @custom:when The funding is calculated
+     * @custom:then The funding is positive and as expected
      */
     function test_fundingPositiveZeroVault() public {
         s.totalExpo = 2000 ether;
@@ -133,21 +146,24 @@ contract TestUsdnProtocolCoreFunding is UsdnProtocolBaseFixture {
         s.balanceVault = 0;
 
         int256 longTradingExpo = int256(s.totalExpo - s.balanceLong);
-        int256 expectedFunding =
+        int256 expectedFundingPerDay =
             int256(s.fundingSF * 10 ** (Constants.FUNDING_RATE_DECIMALS - Constants.FUNDING_SF_DECIMALS)) + EMA;
-        assertGt(expectedFunding, 0, "positive funding");
+        assertGt(expectedFundingPerDay, 0, "positive funding rate");
+        int256 expectedFunding = expectedFundingPerDay * int256(uint256(TIME_ELAPSED)) / 1 days;
 
-        (int256 fund, int256 longExpo) = protocol.i_funding(s, s.lastUpdateTimestamp + TIME_ELAPSED, EMA);
-        assertEq(fund, expectedFunding, "funding");
+        (int256 funding, int256 fundingPerDay, int256 longExpo) =
+            protocol.i_funding(s, s.lastUpdateTimestamp + TIME_ELAPSED, EMA);
+        assertEq(funding, expectedFunding, "funding");
+        assertEq(fundingPerDay, expectedFundingPerDay, "funding rate");
         assertEq(longExpo, longTradingExpo, "longExpo");
     }
 
     /**
-     * @custom:scenario Funding rate calculation when long exposure is zero
+     * @custom:scenario Funding calculation when long exposure is zero
      * @custom:given The long trading expo is zero
      * @custom:and Some time has passed since the last update
-     * @custom:when The funding rate is calculated
-     * @custom:then The funding rate is negative and as expected
+     * @custom:when The funding is calculated
+     * @custom:then The funding is negative and as expected
      */
     function test_fundingNegativeZeroLong() public {
         s.totalExpo = 2000 ether;
@@ -156,12 +172,15 @@ contract TestUsdnProtocolCoreFunding is UsdnProtocolBaseFixture {
 
         int256 longTradingExpo = int256(s.totalExpo - s.balanceLong);
         assertEq(longTradingExpo, 0, "longTradingExpo");
-        int256 expectedFunding =
+        int256 expectedFundingPerDay =
             -int256(s.fundingSF * 10 ** (Constants.FUNDING_RATE_DECIMALS - Constants.FUNDING_SF_DECIMALS)) + EMA;
-        assertLt(expectedFunding, 0, "negative funding");
+        assertLt(expectedFundingPerDay, 0, "negative funding rate");
+        int256 expectedFunding = expectedFundingPerDay * int256(uint256(TIME_ELAPSED)) / 1 days;
 
-        (int256 fund, int256 longExpo) = protocol.i_funding(s, s.lastUpdateTimestamp + TIME_ELAPSED, EMA);
-        assertEq(fund, expectedFunding, "funding");
+        (int256 funding, int256 fundingPerDay, int256 longExpo) =
+            protocol.i_funding(s, s.lastUpdateTimestamp + TIME_ELAPSED, EMA);
+        assertEq(funding, expectedFunding, "funding");
+        assertEq(fundingPerDay, expectedFundingPerDay, "funding rate");
         assertEq(longExpo, longTradingExpo, "longExpo");
     }
 
@@ -186,16 +205,16 @@ contract TestUsdnProtocolCoreFunding is UsdnProtocolBaseFixture {
         assertEq(imbalance, 0.5 ether, "imbalance A");
 
         // funding should be proportional to the imbalance squared
-        (int256 fundA,) = protocol.i_funding(s, s.lastUpdateTimestamp + TIME_ELAPSED, 0);
+        (, int256 fundingPerDayA,) = protocol.i_funding(s, s.lastUpdateTimestamp + TIME_ELAPSED, 0);
 
         // halve the imbalance
         s.balanceVault = 750 ether;
         imbalance = (longTradingExpo - int256(s.balanceVault)) * 1 ether / longTradingExpo;
         assertEq(imbalance, 0.25 ether, "imbalance B");
-        (int256 fundB,) = protocol.i_funding(s, s.lastUpdateTimestamp + TIME_ELAPSED, 0);
+        (, int256 fundingPerDayB,) = protocol.i_funding(s, s.lastUpdateTimestamp + TIME_ELAPSED, 0);
 
         // the funding is divided by 4
-        assertEq(fundB, fundA / 4, "funding A vs B");
+        assertEq(fundingPerDayB, fundingPerDayA / 4, "funding rate A vs B");
     }
 
     /**
@@ -219,17 +238,17 @@ contract TestUsdnProtocolCoreFunding is UsdnProtocolBaseFixture {
         assertEq(imbalance, -0.5 ether, "imbalance A");
 
         // funding should be proportional to the imbalance squared
-        (int256 fundA,) = protocol.i_funding(s, s.lastUpdateTimestamp + TIME_ELAPSED, 0);
+        (, int256 fundingPerDayA,) = protocol.i_funding(s, s.lastUpdateTimestamp + TIME_ELAPSED, 0);
 
         // halve the imbalance
         s.balanceLong = 1250 ether;
         longTradingExpo = int256(s.totalExpo - s.balanceLong);
         imbalance = (longTradingExpo - int256(s.balanceVault)) * 1 ether / int256(s.balanceVault);
         assertEq(imbalance, -0.25 ether, "imbalance B");
-        (int256 fundB,) = protocol.i_funding(s, s.lastUpdateTimestamp + TIME_ELAPSED, 0);
+        (, int256 fundingPerDayB,) = protocol.i_funding(s, s.lastUpdateTimestamp + TIME_ELAPSED, 0);
 
         // the funding is divided by 4
-        assertEq(fundB, fundA / 4, "funding A vs B");
+        assertEq(fundingPerDayB, fundingPerDayA / 4, "funding rate A vs B");
     }
 
     /**
@@ -258,32 +277,35 @@ contract TestUsdnProtocolCoreFunding is UsdnProtocolBaseFixture {
         s.balanceVault = bound(balanceVault, 0, 120e6 ether);
 
         // funding should be proportional to fundingSF
-        (int256 fundA,) = protocol.i_funding(s, s.lastUpdateTimestamp + TIME_ELAPSED, 0);
+        (int256 fundingA, int256 fundingPerDayA,) = protocol.i_funding(s, s.lastUpdateTimestamp + TIME_ELAPSED, 0);
 
         // double the scaling factor
         s.fundingSF = 2 * s.fundingSF;
 
-        (int256 fundB,) = protocol.i_funding(s, s.lastUpdateTimestamp + TIME_ELAPSED, 0);
+        (int256 fundingB, int256 fundingPerDayB,) = protocol.i_funding(s, s.lastUpdateTimestamp + TIME_ELAPSED, 0);
 
         // the funding should double (with 1 wei tolerance)
-        assertApproxEqAbs(fundB, fundA * 2, 1, "funding A vs B");
+        assertApproxEqAbs(fundingPerDayB, fundingPerDayA * 2, 1, "funding rate A vs B");
+        assertEq(fundingB, fundingA * 2, "funding A vs B");
 
-        // since we cap the imbalance to 100%, the funding (without EMA contribution) is at most:
-        int256 fundMax = int256(s.fundingSF * 10 ** (protocol.FUNDING_RATE_DECIMALS() - protocol.FUNDING_SF_DECIMALS()));
+        // since we cap the imbalance to 100%, the funding rate (without EMA contribution) is at most:
+        int256 fundingPerDayMax =
+            int256(s.fundingSF * 10 ** (protocol.FUNDING_RATE_DECIMALS() - protocol.FUNDING_SF_DECIMALS()));
         // a good upper bound for the EMA is thus:
-        int256 emaMax = 2 * fundMax;
+        int256 emaMax = 2 * fundingPerDayMax;
         // we bound the EMA by this value
         ema = bound(ema, -emaMax, emaMax);
 
         // EMA is added to the new value of the funding
-        (int256 fundC,) = protocol.i_funding(s, s.lastUpdateTimestamp + TIME_ELAPSED, ema);
+        (int256 fundingC, int256 fundingPerDayC,) = protocol.i_funding(s, s.lastUpdateTimestamp + TIME_ELAPSED, ema);
 
-        assertEq(fundC, fundB + ema, "funding B vs C");
+        assertEq(fundingPerDayC, fundingPerDayB + ema, "funding rate B vs C");
+        assertEq(fundingC, (fundingPerDayB + ema) * int256(uint256(TIME_ELAPSED)) / 1 days, "funding B vs C");
     }
 
     /**
      * @custom:scenario Revert with a past timestamp
-     * @custom:when The funding rate is calculated with a timestamp prior to the last update timestamp
+     * @custom:when The funding is calculated with a timestamp prior to the last update timestamp
      * @custom:then The transaction reverts with `UsdnProtocolTimestampTooOld`
      */
     function test_RevertWhen_fundingWithPastTimestamp() public {
