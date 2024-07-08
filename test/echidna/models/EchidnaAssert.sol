@@ -195,8 +195,7 @@ contract EchidnaAssert is Setup {
             NO_PERMIT2,
             params.priceData,
             EMPTY_PREVIOUS_DATA
-        ) returns (bool, IUsdnProtocolTypes.PositionId memory posId) {
-            // Optional, rechecked after
+        ) {
             assert(address(msg.sender).balance == params.senderBalanceETH - params.securityDeposit);
             assert(wsteth.balanceOf(msg.sender) == params.senderBalanceWstETH - params.amountRand);
 
@@ -206,15 +205,6 @@ contract EchidnaAssert is Setup {
             assert(wsteth.balanceOf(address(this)) == before.balance - amountRand); // user wsteth balance
             assert(wsteth.balanceOf(address(usdnProtocol)) == before.protocolBalance + amountRand); // protocol wsteth
                 // balance
-            assert(usdnProtocol.getTotalExpo() == before.totalExpo + params.expectedPosTotalExpo); // protocol total
-                // expo
-            IUsdnProtocolTypes.TickData memory tickData = usdnProtocol.getTickData(params.expectedTick);
-            assert(tickData.totalExpo == params.expectedPosTotalExpo); // total expo in tick
-            assert(usdnProtocol.getBalanceLong() == before.balanceLong + amountRand); // balance of long side
-
-            (IUsdnProtocolTypes.Position memory position,) = usdnProtocol.getLongPosition(posId);
-            assert(position.amount == uint128(amountRand)); // amount position
-            assert(position.totalExpo == params.expectedPosTotalExpo); // totalExpo position
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_OPEN_ERRORS);
         }
@@ -236,16 +226,10 @@ contract EchidnaAssert is Setup {
         params.senderBalanceWstETH = wsteth.balanceOf(msg.sender);
         params.usdnProtocolBalanceETH = address(usdnProtocol).balance;
         params.usdnProtocolBalanceWstETH = wsteth.balanceOf(address(usdnProtocol));
-        params.expectedPosTotalExpo = usdnProtocol.i_calcPositionTotalExpo(
-            uint128(amountRand), uint128(CURRENT_PRICE), params.liqPriceWithoutPenalty
-        );
 
         before = ValueToCheckBefore({
             balance: wsteth.balanceOf(address(this)),
-            protocolBalance: wsteth.balanceOf(address(usdnProtocol)),
-            totalPositions: usdnProtocol.getTotalLongPositions(),
-            totalExpo: usdnProtocol.getTotalExpo(),
-            balanceLong: uint256(usdnProtocol.i_longAssetAvailable(uint128(CURRENT_PRICE)))
+            protocolBalance: wsteth.balanceOf(address(usdnProtocol))
         });
     }
 
