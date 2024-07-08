@@ -42,6 +42,7 @@ contract Setup is Test {
     Rebalancer public rebalancer;
 
     bytes4[] public INITIATE_DEPOSIT_ERRORS = [IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector];
+    bytes4[] public INITIATE_WITHDRAWAL_ERRORS = [IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector];
 
     constructor() payable {
         vm.warp(1_709_251_200);
@@ -110,12 +111,37 @@ contract Setup is Test {
 }
 
 contract EchidnaAssert is Setup {
+    struct InitiateDepositBalanceBefore {
+        uint256 senderETH;
+        uint256 senderWstETH;
+        uint256 senderSdex;
+        uint256 usdnProtocolETH;
+        uint256 usdnProtocolWstETH;
+    }
+
+    struct InitiateWithdrawalBalanceBefore {
+        uint256 senderETH;
+        uint256 senderUsdn;
+        uint256 usdnProtocolETH;
+        uint256 usdnProtocolUsdn;
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                             USDN Protocol                                  */
     /* -------------------------------------------------------------------------- */
 
-    function initiateDeposit(uint128 amountRand, uint256 destRand, uint256 validatorRand) public {
-        amountRand = uint128(bound(amountRand, 0, wsteth.balanceOf(msg.sender)));
+    function initiateDeposit(
+        uint128 amountWstETHRand,
+        uint128 amountSdexRand,
+        uint256 ethRand,
+        uint256 destRand,
+        uint256 validatorRand,
+        uint256 currentPrice
+    ) public {
+        wsteth.mintAndApprove(msg.sender, amountWstETHRand, address(usdnProtocol), amountWstETHRand);
+        sdex.mintAndApprove(msg.sender, amountSdexRand, address(usdnProtocol), amountSdexRand);
+        vm.deal(msg.sender, ethRand);
+        //        amountRand = uint128(bound(amountRand, 0, wsteth.balanceOf(msg.sender)));
 
         destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
         address dest = destinationsToken[address(wsteth)][destRand];
@@ -123,27 +149,28 @@ contract EchidnaAssert is Setup {
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
 
-        bytes memory priceData = abi.encode(2 ether);
+        bytes memory priceData = abi.encode(currentPrice);
 
-        uint64 securityDeposit = usdnProtocol.getSecurityDepositValue();
-
-        uint256 senderBalanceETH = address(msg.sender).balance;
-        uint256 senderBalanceWstETH = wsteth.balanceOf(msg.sender);
-        uint256 senderBalanceSdex = sdex.balanceOf(msg.sender);
-
-        uint256 usdnProtocolBalanceETH = address(usdnProtocol).balance;
-        uint256 usdnProtocolBalanceWstETH = wsteth.balanceOf(address(usdnProtocol));
+        InitiateDepositBalanceBefore memory balanceBefore = InitiateDepositBalanceBefore({
+            senderETH: address(msg.sender).balance,
+            senderWstETH: wsteth.balanceOf(msg.sender),
+            senderSdex: sdex.balanceOf(msg.sender),
+            usdnProtocolETH: address(usdnProtocol).balance,
+            usdnProtocolWstETH: wsteth.balanceOf(address(usdnProtocol))
+        });
 
         vm.prank(msg.sender);
-        try usdnProtocol.initiateDeposit{ value: securityDeposit }(
-            amountRand, dest, validator, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
+        try usdnProtocol.initiateDeposit{ value: ethRand }(
+            amountWstETHRand, dest, validator, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         ) {
-            assertEq(address(msg.sender).balance, senderBalanceETH - securityDeposit);
-            assertEq(wsteth.balanceOf(msg.sender), senderBalanceWstETH - amountRand);
-            assertLt(sdex.balanceOf(msg.sender), senderBalanceSdex);
+            uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
 
-            assertEq(address(usdnProtocol).balance, usdnProtocolBalanceETH + securityDeposit);
-            assertEq(wsteth.balanceOf(address(usdnProtocol)), usdnProtocolBalanceWstETH + amountRand);
+            assertEq(address(msg.sender).balance, balanceBefore.senderETH - securityDeposit);
+            assertEq(wsteth.balanceOf(msg.sender), balanceBefore.senderWstETH - amountWstETHRand);
+            assertLt(sdex.balanceOf(msg.sender), balanceBefore.senderSdex);
+
+            assertEq(address(usdnProtocol).balance, balanceBefore.usdnProtocolETH + securityDeposit);
+            assertEq(wsteth.balanceOf(address(usdnProtocol)), balanceBefore.usdnProtocolWstETH + amountWstETHRand);
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_DEPOSIT_ERRORS);
         }
@@ -163,6 +190,50 @@ contract EchidnaAssert is Setup {
         } else {
             emit log_named_bytes("DOS ", err);
             assert(false);
+        }
+    }
+
+    function initiateWithdrawal(
+        uint152 usdnShares,
+        uint256 ethRand,
+        uint256 destRand,
+        uint256 validatorRand,
+        uint256 currentPrice
+    ) public {
+        vm.prank(address(usdnProtocol));
+        usdn.mintShares(msg.sender, usdnShares);
+        vm.prank(msg.sender);
+        usdn.approve(address(usdnProtocol), usdnShares);
+        vm.deal(msg.sender, ethRand);
+
+        destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
+        address dest = destinationsToken[address(wsteth)][destRand];
+
+        validatorRand = bound(validatorRand, 0, validators.length - 1);
+        address payable validator = payable(validators[validatorRand]);
+
+        bytes memory priceData = abi.encode(currentPrice);
+
+        InitiateWithdrawalBalanceBefore memory balanceBefore = InitiateWithdrawalBalanceBefore({
+            senderETH: address(msg.sender).balance,
+            senderUsdn: usdn.sharesOf(msg.sender),
+            usdnProtocolETH: address(usdnProtocol).balance,
+            usdnProtocolUsdn: usdn.sharesOf(address(usdnProtocol))
+        });
+
+        vm.prank(msg.sender);
+        try usdnProtocol.initiateWithdrawal{ value: ethRand }(
+            usdnShares, dest, validator, priceData, EMPTY_PREVIOUS_DATA
+        ) {
+            uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
+
+            assertEq(address(msg.sender).balance, balanceBefore.senderETH - securityDeposit);
+            assertEq(usdn.sharesOf(msg.sender), balanceBefore.senderUsdn - usdnShares);
+
+            assertEq(address(usdnProtocol).balance, balanceBefore.usdnProtocolETH + securityDeposit);
+            assertEq(usdn.sharesOf(address(usdnProtocol)), balanceBefore.usdnProtocolUsdn + usdnShares);
+        } catch (bytes memory err) {
+            _checkErrors(err, INITIATE_WITHDRAWAL_ERRORS);
         }
     }
 }
