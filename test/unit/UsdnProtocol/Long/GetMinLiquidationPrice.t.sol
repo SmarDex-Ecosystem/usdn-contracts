@@ -38,7 +38,7 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
     function test_getMinLiquidationPrice_multiplierEqOne() public {
         // 5000 - 5000 / 1.000000001 = 0.000004999999995001
         assertEq(
-            protocol.getMinLiquidationPrice(price),
+            protocol.getMinLiquidationPrice(price, uint128(block.timestamp)),
             protocol.getEffectivePriceForTick(
                 protocol.getEffectiveTickForPrice(4_999_999_995_001, price, tradingExpo, liqMulAcc, _tickSpacing)
                     + _tickSpacing,
@@ -47,6 +47,22 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
                 liqMulAcc
             ),
             "for price = 5000"
+        );
+
+        skip(1 hours);
+        tradingExpo = uint256(
+            int256(protocol.getTotalExpo()) - protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp))
+        );
+        assertEq(
+            protocol.getMinLiquidationPrice(price, uint128(block.timestamp)),
+            protocol.getEffectivePriceForTick(
+                protocol.getEffectiveTickForPrice(4_999_999_995_001, price, tradingExpo, liqMulAcc, _tickSpacing)
+                    + _tickSpacing,
+                price,
+                tradingExpo,
+                liqMulAcc
+            ),
+            "for price = 5000 an hour later"
         );
     }
 
@@ -84,7 +100,7 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
         );
         // 5000 - 5000 / 1.000000001 = 0.000004999999995001
         assertEq(
-            protocol.getMinLiquidationPrice(price),
+            protocol.getMinLiquidationPrice(price, uint128(block.timestamp)),
             protocol.getEffectivePriceForTick(
                 protocol.getEffectiveTickForPrice(4_999_999_995_001, price, tradingExpo, liqMulAcc, _tickSpacing)
                     + _tickSpacing,
@@ -118,7 +134,7 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
         );
         // 5000 - 5000 / 1.000000001 = 0.000004999999995001
         assertEq(
-            protocol.getMinLiquidationPrice(price),
+            protocol.getMinLiquidationPrice(price, uint128(block.timestamp)),
             protocol.getEffectivePriceForTick(
                 protocol.getEffectiveTickForPrice(4_999_999_995_001, price, tradingExpo, liqMulAcc, _tickSpacing)
                     + _tickSpacing,
@@ -150,7 +166,7 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
          */
         protocol.setMinLeverage(newMinLeverage);
         assertEq(
-            protocol.getMinLiquidationPrice(price),
+            protocol.getMinLiquidationPrice(price, uint128(block.timestamp)),
             TickMath.getPriceAtTick(protocol.minTick() + protocol.getTickSpacing()),
             "liquidation price should be equal to the min tick price + tick spacing"
         );
@@ -166,7 +182,7 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
         protocol.setMinLeverage(11 * 10 ** (protocol.LEVERAGE_DECIMALS() - 1)); // = x1.1
         // 5000 - 5000 / 1.1 = 454.545454545454545455
         assertEq(
-            protocol.getMinLiquidationPrice(price),
+            protocol.getMinLiquidationPrice(price, uint128(block.timestamp)),
             protocol.getEffectivePriceForTick(
                 protocol.getEffectiveTickForPrice(
                     454_545_454_545_454_545_455, price, tradingExpo, liqMulAcc, _tickSpacing

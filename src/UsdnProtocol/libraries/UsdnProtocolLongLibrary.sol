@@ -119,7 +119,7 @@ library UsdnProtocolLongLibrary {
     }
 
     /// @notice See {IUsdnProtocolLong}
-    function getMinLiquidationPrice(Types.Storage storage s, uint128 price)
+    function getMinLiquidationPrice(Types.Storage storage s, uint128 price, uint128 timestamp)
         public
         view
         returns (uint128 liquidationPrice_)
@@ -128,7 +128,7 @@ library UsdnProtocolLongLibrary {
         int24 tick = getEffectiveTickForPrice(
             liquidationPrice_,
             price,
-            uint256(int256(s._totalExpo) - longAssetAvailableWithFunding(s, price, uint128(block.timestamp))),
+            uint256(int256(s._totalExpo) - longAssetAvailableWithFunding(s, price, timestamp)),
             s._liqMultiplierAccumulator,
             s._tickSpacing
         );
@@ -136,7 +136,7 @@ library UsdnProtocolLongLibrary {
         liquidationPrice_ = getEffectivePriceForTick(
             tick + s._tickSpacing,
             price,
-            uint256(int256(s._totalExpo) - longAssetAvailableWithFunding(s, price, uint128(block.timestamp))),
+            uint256(int256(s._totalExpo) - longAssetAvailableWithFunding(s, price, timestamp)),
             s._liqMultiplierAccumulator
         );
     }
