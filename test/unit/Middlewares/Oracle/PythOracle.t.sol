@@ -45,4 +45,8 @@ contract TestOracleMiddlewarePythOracle is OracleMiddlewareBaseFixture {
             "", uint128(block.timestamp), Types.ProtocolAction.Liquidation, MOCK_PYTH_DATA
         );
     }
+
+    function test_targetLimit() public {
+        assertEq(oracleMiddleware.getTimestamp(), block.timestamp, "timestamp");
+    }
 }
