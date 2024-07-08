@@ -212,6 +212,16 @@ library UsdnProtocolCoreLibrary {
     /*                             Internal functions                             */
     /* -------------------------------------------------------------------------- */
 
+    /**
+     * @notice Calculate the funding rate per day, the old long exposure and retrieve the last update timestamp
+     * @dev Reverts if `timestamp` < `s._lastUpdateTimestamp`
+     * @param s The storage of the protocol
+     * @param timestamp The current timestamp
+     * @param ema The EMA of the funding rate per day
+     * @return fundingPerDay_ The funding rate (per day) with `FUNDING_RATE_DECIMALS` decimals
+     * @return oldLongExpo_ The old long trading expo
+     * @return lastUpdateTimestamp_ The last update timestamp
+     */
     function _fundingPerDay(Types.Storage storage s, uint128 timestamp, int256 ema)
         public
         view
