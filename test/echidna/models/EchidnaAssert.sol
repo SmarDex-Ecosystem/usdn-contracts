@@ -165,12 +165,12 @@ contract EchidnaAssert is Setup {
         ) {
             uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
 
-            assertEq(address(msg.sender).balance, balanceBefore.senderETH - securityDeposit);
-            assertEq(wsteth.balanceOf(msg.sender), balanceBefore.senderWstETH - amountWstETHRand);
-            assertLt(sdex.balanceOf(msg.sender), balanceBefore.senderSdex);
+            assert(address(msg.sender).balance == balanceBefore.senderETH - securityDeposit);
+            assert(wsteth.balanceOf(msg.sender) == balanceBefore.senderWstETH - amountWstETHRand);
+            assert(sdex.balanceOf(msg.sender) > balanceBefore.senderSdex);
 
-            assertEq(address(usdnProtocol).balance, balanceBefore.usdnProtocolETH + securityDeposit);
-            assertEq(wsteth.balanceOf(address(usdnProtocol)), balanceBefore.usdnProtocolWstETH + amountWstETHRand);
+            assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH + securityDeposit);
+            assert(wsteth.balanceOf(address(usdnProtocol)) == balanceBefore.usdnProtocolWstETH + amountWstETHRand);
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_DEPOSIT_ERRORS);
         }
@@ -227,11 +227,11 @@ contract EchidnaAssert is Setup {
         ) {
             uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
 
-            assertEq(address(msg.sender).balance, balanceBefore.senderETH - securityDeposit);
-            assertEq(usdn.sharesOf(msg.sender), balanceBefore.senderUsdn - usdnShares);
+            assert(address(msg.sender).balance == balanceBefore.senderETH - securityDeposit);
+            assert(usdn.sharesOf(msg.sender) == balanceBefore.senderUsdn - usdnShares);
 
-            assertEq(address(usdnProtocol).balance, balanceBefore.usdnProtocolETH + securityDeposit);
-            assertEq(usdn.sharesOf(address(usdnProtocol)), balanceBefore.usdnProtocolUsdn + usdnShares);
+            assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH + securityDeposit);
+            assert(usdn.sharesOf(address(usdnProtocol)) == balanceBefore.usdnProtocolUsdn + usdnShares);
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_WITHDRAWAL_ERRORS);
         }
