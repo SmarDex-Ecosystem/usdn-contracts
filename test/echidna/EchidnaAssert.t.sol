@@ -22,16 +22,16 @@ contract TestForkEchidna is Test {
         usdnProtocol = echidna.usdnProtocol();
     }
 
-    // function test_canInitiateDeposit() public {
-    //     vm.prank(DEPLOYER);
-    //     echidna.initiateDeposit(0.1 ether, 0, 0);
+    function test_canInitiateDeposit() public {
+        vm.prank(DEPLOYER);
+        echidna.initiateDeposit(0.1 ether, 0, 0);
 
-    //     IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(DEPLOYER);
-    //     assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, "action type");
-    //     assertEq(action.to, DEPLOYER, "action to");
-    //     assertEq(action.validator, DEPLOYER, "action validator");
-    //     assertEq(action.var2, 0.1 ether, "action amount");
-    // }
+        IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(DEPLOYER);
+        assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, "action type");
+        assertEq(action.to, DEPLOYER, "action to");
+        assertEq(action.validator, DEPLOYER, "action validator");
+        assertEq(action.var2, 0.1 ether, "action amount");
+    }
 
     function test_canInitiateOpen() public {
         vm.prank(DEPLOYER);
