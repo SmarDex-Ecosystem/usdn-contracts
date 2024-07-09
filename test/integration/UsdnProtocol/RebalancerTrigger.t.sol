@@ -160,6 +160,7 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
     ) internal {
         uint128 positionTotalExpo = protocol.i_calcPositionTotalExpo(amount + bonus, price, liqPriceWithoutPenalty);
         uint256 defaultAccMultiplier = rebalancer.MULTIPLIER_FACTOR();
+        PositionId memory expectedPositionId = PositionId(tick, 0, 0);
 
         vm.expectEmit(false, false, false, false);
         emit LiquidatedTick(0, 0, 0, 0, 0);
@@ -171,14 +172,14 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
             positionTotalExpo,
             amount + bonus,
             price,
-            PositionId(tick, 0, 0)
+            expectedPositionId
         );
         vm.expectEmit(address(protocol));
         emit ValidatedOpenPosition(
-            address(rebalancer), address(rebalancer), positionTotalExpo, price, PositionId(tick, 0, 0)
+            address(rebalancer), address(rebalancer), positionTotalExpo, price, expectedPositionId
         );
         vm.expectEmit(address(rebalancer));
-        emit PositionVersionUpdated(newPositionVersion, defaultAccMultiplier, amount);
+        emit PositionVersionUpdated(newPositionVersion, defaultAccMultiplier, amount, expectedPositionId);
     }
 
     receive() external payable { }

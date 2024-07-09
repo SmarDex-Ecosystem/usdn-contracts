@@ -564,7 +564,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
             _positionData[positionVersion].tick = Constants.NO_POSITION_TICK;
         }
 
-        emit PositionVersionUpdated(positionVersion, accMultiplier, positionAmount);
+        emit PositionVersionUpdated(positionVersion, accMultiplier, positionAmount, newPosId);
     }
 
     /* -------------------------------------------------------------------------- */

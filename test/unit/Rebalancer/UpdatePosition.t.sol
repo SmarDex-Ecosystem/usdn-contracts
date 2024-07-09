@@ -76,7 +76,7 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
 
         vm.prank(address(usdnProtocol));
         vm.expectEmit();
-        emit PositionVersionUpdated(positionVersionBefore + 1, defaultAccMultiplier, pendingAssetsBefore);
+        emit PositionVersionUpdated(positionVersionBefore + 1, defaultAccMultiplier, pendingAssetsBefore, newPosId);
         rebalancer.updatePosition(newPosId, 0);
 
         // check the position data
@@ -132,7 +132,7 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
         uint256 expectedEntryAccMul = rebalancer.MULTIPLIER_FACTOR() * 11 / 10;
         vm.expectEmit();
         emit PositionVersionUpdated(
-            positionVersionBefore + 2, expectedEntryAccMul, posVersion2Value + user2DepositedAmount
+            positionVersionBefore + 2, expectedEntryAccMul, posVersion2Value + user2DepositedAmount, posId2
         );
         vm.prank(address(usdnProtocol));
         rebalancer.updatePosition(posId2, posVersion2Value);
@@ -184,7 +184,10 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
 
         vm.expectEmit();
         emit PositionVersionUpdated(
-            positionVersionBefore + 2, rebalancer.MULTIPLIER_FACTOR(), USER_0_DEPOSIT_AMOUNT + USER_1_DEPOSIT_AMOUNT
+            positionVersionBefore + 2,
+            rebalancer.MULTIPLIER_FACTOR(),
+            USER_0_DEPOSIT_AMOUNT + USER_1_DEPOSIT_AMOUNT,
+            posId2
         );
         vm.prank(address(usdnProtocol));
         // 0 as a value here means there was no collateral left in the closed position
@@ -222,7 +225,9 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
         uint128 positionVersionBefore = rebalancer.getPositionVersion();
 
         vm.expectEmit();
-        emit PositionVersionUpdated(positionVersionBefore + 1, rebalancer.MULTIPLIER_FACTOR(), 0);
+        emit PositionVersionUpdated(
+            positionVersionBefore + 1, rebalancer.MULTIPLIER_FACTOR(), 0, Types.PositionId(noPositionTick, 0, 0)
+        );
         rebalancer.updatePosition(Types.PositionId(noPositionTick, 0, 0), 0);
         vm.stopPrank();
 
