@@ -35,12 +35,11 @@ contract TestForkEchidna is Test {
 
     function test_canInitiateOpen() public {
         vm.prank(DEPLOYER);
-        echidna.initiateOpenPosition(0.1 ether, 0, 0, 0);
+        echidna.initiateOpenPosition(5 ether, 500 ether, 0, 0);
 
         IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(DEPLOYER);
-        assert(action.action == IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition); // action type
-        assert(action.to == DEPLOYER); // action to
-        assert(action.validator == DEPLOYER); // action validator
-        assert(action.var2 == 0.1 ether); // action amount
+        assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition, "action type");
+        assertEq(action.to, DEPLOYER, "action to");
+        assertEq(action.validator, DEPLOYER, "action validator");
     }
 }

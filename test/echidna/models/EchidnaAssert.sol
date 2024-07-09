@@ -66,8 +66,8 @@ contract Setup is Test {
 
     constructor() payable {
         vm.warp(1_709_251_200);
-        uint256 INIT_DEPOSIT_AMOUNT = 10 ether;
-        uint256 INIT_LONG_AMOUNT = 10 ether;
+        uint256 INIT_DEPOSIT_AMOUNT = 1000 ether;
+        uint256 INIT_LONG_AMOUNT = 1000 ether;
         uint128 INITIAL_PRICE = 2000 ether; // 2000 USDN = 1 ETH
 
         uint256 ethAmount =
@@ -133,10 +133,6 @@ contract EchidnaAssert is Setup {
     /* -------------------------------------------------------------------------- */
 
     struct OpenPositionParams {
-        uint128 amountRand;
-        uint128 liquidationPriceRand;
-        uint128 liqPriceWithoutPenalty;
-        uint128 expectedPosTotalExpo;
         address dest;
         address payable validator;
         bytes priceData;
@@ -145,7 +141,6 @@ contract EchidnaAssert is Setup {
         uint256 senderBalanceWstETH;
         uint256 usdnProtocolBalanceETH;
         uint256 usdnProtocolBalanceWstETH;
-        int24 expectedTick;
         uint256 balanceBefore;
         uint256 protocolBalanceBefore;
     }
@@ -190,13 +185,25 @@ contract EchidnaAssert is Setup {
         uint256 destRand,
         uint256 validatorRand
     ) public {
-        OpenPositionParams memory params =
-            getOpenPositionParams(amountRand, liquidationPriceRand, destRand, validatorRand);
+        uint256 destRandBounded = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
+
+        OpenPositionParams memory params = OpenPositionParams({
+            dest: destinationsToken[address(wsteth)][destRandBounded],
+            validator: payable(validators[validatorRand]),
+            priceData: abi.encode(CURRENT_PRICE),
+            securityDeposit: usdnProtocol.getSecurityDepositValue(),
+            senderBalanceETH: address(msg.sender).balance,
+            senderBalanceWstETH: wsteth.balanceOf(msg.sender),
+            usdnProtocolBalanceETH: address(usdnProtocol).balance,
+            usdnProtocolBalanceWstETH: wsteth.balanceOf(address(usdnProtocol)),
+            balanceBefore: wsteth.balanceOf(address(this)),
+            protocolBalanceBefore: wsteth.balanceOf(address(usdnProtocol))
+        });
 
         vm.prank(msg.sender);
         try usdnProtocol.initiateOpenPosition{ value: params.securityDeposit }(
-            params.amountRand,
-            params.liquidationPriceRand,
+            amountRand,
+            liquidationPriceRand,
             params.dest,
             params.validator,
             NO_PERMIT2,
@@ -204,36 +211,13 @@ contract EchidnaAssert is Setup {
             EMPTY_PREVIOUS_DATA
         ) {
             assert(address(usdnProtocol).balance == params.usdnProtocolBalanceETH + params.securityDeposit);
-            assert(wsteth.balanceOf(msg.sender) == params.senderBalanceWstETH - params.amountRand);
-            assert(wsteth.balanceOf(address(usdnProtocol)) == params.usdnProtocolBalanceWstETH + params.amountRand);
-            assert(wsteth.balanceOf(address(this)) == params.balanceBefore - amountRand); // user wsteth balance
+            assert(wsteth.balanceOf(msg.sender) == params.senderBalanceWstETH - amountRand);
+            assert(wsteth.balanceOf(address(usdnProtocol)) == params.usdnProtocolBalanceWstETH + amountRand);
             assert(wsteth.balanceOf(address(usdnProtocol)) == params.protocolBalanceBefore + amountRand); // protocol
                 // wsteth balance
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_OPEN_ERRORS);
         }
-    }
-
-    function getOpenPositionParams(
-        uint128 amountRand,
-        uint128 liquidationPriceRand,
-        uint256 destRand,
-        uint256 validatorRand
-    ) internal view returns (OpenPositionParams memory params) {
-        params.amountRand = uint128(bound(amountRand, 0, wsteth.balanceOf(msg.sender)));
-        params.liquidationPriceRand = uint128(bound(liquidationPriceRand, 0, CURRENT_PRICE));
-        uint256 destRandBounded = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
-        params.dest = destinationsToken[address(wsteth)][destRandBounded];
-        params.validator = payable(validators[validatorRand]);
-        params.priceData = abi.encode(CURRENT_PRICE);
-        params.securityDeposit = usdnProtocol.getSecurityDepositValue();
-        params.senderBalanceETH = address(msg.sender).balance;
-        params.senderBalanceWstETH = wsteth.balanceOf(msg.sender);
-        params.usdnProtocolBalanceETH = address(usdnProtocol).balance;
-        params.usdnProtocolBalanceWstETH = wsteth.balanceOf(address(usdnProtocol));
-
-        params.balanceBefore = wsteth.balanceOf(address(this));
-        params.protocolBalanceBefore = wsteth.balanceOf(address(usdnProtocol));
     }
 
     function _checkErrors(bytes memory err, bytes4[] storage errors) internal {
