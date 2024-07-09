@@ -155,9 +155,6 @@ contract EchidnaAssert is Setup {
             assert(sdex.balanceOf(msg.sender) < senderBalanceSdex);
             assert(address(usdnProtocol).balance == usdnProtocolBalanceETH + securityDeposit);
             assert(wsteth.balanceOf(address(usdnProtocol)) == usdnProtocolBalanceWstETH + amountRand);
-        } catch Panic(uint256 code) {
-            emit log_named_uint("panic code", code);
-            assert(false);
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_DEPOSIT_ERRORS);
         }
