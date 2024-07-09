@@ -31,9 +31,9 @@ contract BaseFixture is Test {
         /* -------------------------------------------------------------------------- */
         vm.label(constants.DEPLOYER, "Deployer");
         vm.label(constants.ADMIN, "Admin");
-        vm.label(constants.CONFIG_ROLE, "ConfigRole");
-        vm.label(constants.SECURITY_ROLE, "AdminRole");
-        vm.label(constants.ACTION_ROLE, "ActionRole");
+        vm.label(constants.SET_EXTERNAL_ROLE, "ConfigRole");
+        vm.label(constants.CRITICAL_FUNCTIONS_ROLE, "AdminRole");
+        vm.label(constants.SET_PROTOCOL_PARAMS_ROLE, "ActionRole");
         vm.label(constants.USER_1, "User1");
         vm.label(constants.USER_2, "User2");
         vm.label(constants.USER_3, "User3");
@@ -87,9 +87,9 @@ contract BaseFixture is Test {
         // deal ether
         vm.deal(constants.DEPLOYER, 10_000 ether);
         vm.deal(constants.ADMIN, 10_000 ether);
-        vm.deal(constants.CONFIG_ROLE, 10_000 ether);
-        vm.deal(constants.SECURITY_ROLE, 10_000 ether);
-        vm.deal(constants.ACTION_ROLE, 10_000 ether);
+        vm.deal(constants.SET_EXTERNAL_ROLE, 10_000 ether);
+        vm.deal(constants.CRITICAL_FUNCTIONS_ROLE, 10_000 ether);
+        vm.deal(constants.SET_PROTOCOL_PARAMS_ROLE, 10_000 ether);
         vm.deal(constants.USER_1, 10_000 ether);
         vm.deal(constants.USER_2, 10_000 ether);
         vm.deal(constants.USER_3, 10_000 ether);

@@ -29,22 +29,22 @@ contract UsdnProtocolStorage is
     Storage internal s;
 
     /// @inheritdoc IUsdnProtocolStorage
-    bytes32 public constant CONFIG_ROLE = keccak256("CONFIG_ROLE");
+    bytes32 public constant SET_EXTERNAL_ROLE = keccak256("SET_EXTERNAL_ROLE");
 
     /// @inheritdoc IUsdnProtocolStorage
-    bytes32 public constant SECURITY_ROLE = keccak256("SECURITY_ROLE");
+    bytes32 public constant CRITICAL_FUNCTIONS_ROLE = keccak256("CRITICAL_FUNCTIONS_ROLE");
 
     /// @inheritdoc IUsdnProtocolStorage
-    bytes32 public constant ACTION_ROLE = keccak256("ACTION_ROLE");
+    bytes32 public constant SET_PROTOCOL_PARAMS_ROLE = keccak256("SET_PROTOCOL_PARAMS_ROLE");
 
     /// @inheritdoc IUsdnProtocolStorage
-    bytes32 public constant ADMIN_CONFIG_ROLE = keccak256("ADMIN_CONFIG_ROLE");
+    bytes32 public constant ADMIN_SET_EXTERNAL_ROLE = keccak256("ADMIN_SET_EXTERNAL_ROLE");
 
     /// @inheritdoc IUsdnProtocolStorage
-    bytes32 public constant ADMIN_SECURITY_ROLE = keccak256("ADMIN_SECURITY_ROLE");
+    bytes32 public constant ADMIN_CRITICAL_FUNCTIONS_ROLE = keccak256("ADMIN_CRITICAL_FUNCTIONS_ROLE");
 
     /// @inheritdoc IUsdnProtocolStorage
-    bytes32 public constant ADMIN_ACTION_ROLE = keccak256("ADMIN_ACTION_ROLE");
+    bytes32 public constant ADMIN_SET_PROTOCOL_PARAMS_ROLE = keccak256("ADMIN_SET_PROTOCOL_PARAMS_ROLE");
 
     /**
      * @notice Constructor
@@ -68,12 +68,12 @@ contract UsdnProtocolStorage is
         Roles memory roles
     ) AccessControlDefaultAdminRules(0, msg.sender) {
         // roles
-        _setRoleAdmin(CONFIG_ROLE, ADMIN_CONFIG_ROLE);
-        _setRoleAdmin(SECURITY_ROLE, ADMIN_SECURITY_ROLE);
-        _setRoleAdmin(ACTION_ROLE, ADMIN_ACTION_ROLE);
-        _grantRole(CONFIG_ROLE, roles.configRole);
-        _grantRole(SECURITY_ROLE, roles.securityRole);
-        _grantRole(ACTION_ROLE, roles.actionRole);
+        _setRoleAdmin(SET_EXTERNAL_ROLE, ADMIN_SET_EXTERNAL_ROLE);
+        _setRoleAdmin(CRITICAL_FUNCTIONS_ROLE, ADMIN_CRITICAL_FUNCTIONS_ROLE);
+        _setRoleAdmin(SET_PROTOCOL_PARAMS_ROLE, ADMIN_SET_PROTOCOL_PARAMS_ROLE);
+        _grantRole(SET_EXTERNAL_ROLE, roles.configRole);
+        _grantRole(CRITICAL_FUNCTIONS_ROLE, roles.securityRole);
+        _grantRole(SET_PROTOCOL_PARAMS_ROLE, roles.actionRole);
         // parameters
         s._minLeverage = 10 ** Constants.LEVERAGE_DECIMALS + 10 ** 12;
         s._maxLeverage = 10 * 10 ** Constants.LEVERAGE_DECIMALS;

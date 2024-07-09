@@ -10,17 +10,17 @@ import { MockChainlinkOnChain } from "../../../unit/Middlewares/utils/MockChainl
 import { MockPyth } from "../../../unit/Middlewares/utils/MockPyth.sol";
 import { UsdnProtocolHandler } from "../../../unit/UsdnProtocol/utils/Handler.sol";
 import {
-    ACTION_ROLE,
     ADMIN,
     CHAINLINK_ORACLE_ETH,
     CHAINLINK_ORACLE_GAS,
-    CONFIG_ROLE,
+    CRITICAL_FUNCTIONS_ROLE,
     DEPLOYER,
     PYTH_ETH_USD,
     PYTH_ORACLE,
     REDSTONE_ETH_USD,
     SDEX,
-    SECURITY_ROLE,
+    SET_EXTERNAL_ROLE,
+    SET_PROTOCOL_PARAMS_ROLE,
     WSTETH
 } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
@@ -76,7 +76,11 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         enableRoles: true
     });
 
-    Roles roles = Roles({ configRole: CONFIG_ROLE, securityRole: SECURITY_ROLE, actionRole: ACTION_ROLE });
+    Roles roles = Roles({
+        configRole: SET_EXTERNAL_ROLE,
+        securityRole: CRITICAL_FUNCTIONS_ROLE,
+        actionRole: SET_PROTOCOL_PARAMS_ROLE
+    });
 
     Usdn public usdn;
     Sdex public sdex;

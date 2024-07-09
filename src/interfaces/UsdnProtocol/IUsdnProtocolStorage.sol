@@ -21,40 +21,40 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice The config role signature
+     * @notice The set_external role signature
      * @return Get the role signature
      */
-    function CONFIG_ROLE() external pure returns (bytes32);
+    function SET_EXTERNAL_ROLE() external pure returns (bytes32);
 
     /**
-     * @notice The security role signature
+     * @notice The critical_functions role signature
      * @return Get the role signature
      */
-    function SECURITY_ROLE() external pure returns (bytes32);
+    function CRITICAL_FUNCTIONS_ROLE() external pure returns (bytes32);
 
     /**
-     * @notice The action role signature
+     * @notice The set_protocol_params role signature
      * @return Get the role signature
      */
-    function ACTION_ROLE() external pure returns (bytes32);
+    function SET_PROTOCOL_PARAMS_ROLE() external pure returns (bytes32);
 
     /**
-     * @notice The admin_config role signature
+     * @notice The admin_set_external role signature
      * @return Get the role signature
      */
-    function ADMIN_CONFIG_ROLE() external pure returns (bytes32);
+    function ADMIN_SET_EXTERNAL_ROLE() external pure returns (bytes32);
 
     /**
-     * @notice The admin_security role signature
+     * @notice The admin_critical_functions role signature
      * @return Get the role signature
      */
-    function ADMIN_SECURITY_ROLE() external pure returns (bytes32);
+    function ADMIN_CRITICAL_FUNCTIONS_ROLE() external pure returns (bytes32);
 
     /**
-     * @notice The admin_action role signature
+     * @notice The admin_set_protocol_params role signature
      * @return Get the role signature
      */
-    function ADMIN_ACTION_ROLE() external pure returns (bytes32);
+    function ADMIN_SET_PROTOCOL_PARAMS_ROLE() external pure returns (bytes32);
 
     /**
      * @notice Get the number of decimals of a position's leverage

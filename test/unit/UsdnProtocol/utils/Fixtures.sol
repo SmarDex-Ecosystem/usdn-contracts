@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { ACTION_ROLE, ADMIN, CONFIG_ROLE, DEPLOYER, SECURITY_ROLE } from "../../../utils/Constants.sol";
+import {
+    ADMIN,
+    CRITICAL_FUNCTIONS_ROLE,
+    DEPLOYER,
+    SET_EXTERNAL_ROLE,
+    SET_PROTOCOL_PARAMS_ROLE
+} from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { IEventsErrors } from "../../../utils/IEventsErrors.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
@@ -111,7 +117,11 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
         feeCollector = new FeeCollector();
 
-        Roles memory roles = Roles({ configRole: CONFIG_ROLE, securityRole: SECURITY_ROLE, actionRole: ACTION_ROLE });
+        Roles memory roles = Roles({
+            configRole: SET_EXTERNAL_ROLE,
+            securityRole: CRITICAL_FUNCTIONS_ROLE,
+            actionRole: SET_PROTOCOL_PARAMS_ROLE
+        });
         if (!testParams.flags.enableRoles) {
             roles = Roles({ configRole: ADMIN, securityRole: ADMIN, actionRole: ADMIN });
         }

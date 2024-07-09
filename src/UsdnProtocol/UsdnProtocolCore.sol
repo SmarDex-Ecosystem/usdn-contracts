@@ -54,27 +54,33 @@ abstract contract UsdnProtocolCore is UsdnProtocolStorage, IUsdnProtocolCore {
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function removeBlockedPendingAction(address validator, address payable to) external onlyRole(SECURITY_ROLE) {
+    function removeBlockedPendingAction(address validator, address payable to)
+        external
+        onlyRole(CRITICAL_FUNCTIONS_ROLE)
+    {
         Core.removeBlockedPendingAction(s, validator, to);
     }
 
     /// @inheritdoc IUsdnProtocolCore
     function removeBlockedPendingActionNoCleanup(address validator, address payable to)
         external
-        onlyRole(SECURITY_ROLE)
+        onlyRole(CRITICAL_FUNCTIONS_ROLE)
     {
         Core.removeBlockedPendingActionNoCleanup(s, validator, to);
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function removeBlockedPendingAction(uint128 rawIndex, address payable to) external onlyRole(SECURITY_ROLE) {
+    function removeBlockedPendingAction(uint128 rawIndex, address payable to)
+        external
+        onlyRole(CRITICAL_FUNCTIONS_ROLE)
+    {
         Core._removeBlockedPendingAction(s, rawIndex, to, true);
     }
 
     /// @inheritdoc IUsdnProtocolCore
     function removeBlockedPendingActionNoCleanup(uint128 rawIndex, address payable to)
         external
-        onlyRole(SECURITY_ROLE)
+        onlyRole(CRITICAL_FUNCTIONS_ROLE)
     {
         Core._removeBlockedPendingAction(s, rawIndex, to, false);
     }

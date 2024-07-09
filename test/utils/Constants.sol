@@ -13,9 +13,9 @@ address payable constant DEPLOYER = payable(address(0x12341234123412341234123412
 address payable constant ADMIN = payable(address(0x1212121212121212121212121212121212121212));
 
 // roles
-address payable constant CONFIG_ROLE = payable(address(0x1313131313131313131313131313131313131313));
-address payable constant SECURITY_ROLE = payable(address(0x1414141414141414141414141414141414141414));
-address payable constant ACTION_ROLE = payable(address(0x1515151515151515151515151515151515151515));
+address payable constant SET_EXTERNAL_ROLE = payable(address(0x1313131313131313131313131313131313131313));
+address payable constant CRITICAL_FUNCTIONS_ROLE = payable(address(0x1414141414141414141414141414141414141414));
+address payable constant SET_PROTOCOL_PARAMS_ROLE = payable(address(0x1515151515151515151515151515151515151515));
 
 // generic users
 address payable constant USER_1 = payable(address(0x1111111111111111111111111111111111111111));
