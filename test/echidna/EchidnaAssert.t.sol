@@ -5,6 +5,8 @@ import { Test } from "forge-std/Test.sol";
 
 import { UsdnProtocolVaultLibrary as Vault } from "../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 import { UsdnProtocol } from "../../src/UsdnProtocol/UsdnProtocol.sol";
+
+import { IUsdn } from "../../src/interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { EchidnaAssert } from "./models/EchidnaAssert.sol";
 
@@ -36,6 +38,9 @@ contract TestForkEchidna is Test {
 
     function test_canInitiateWithdrawal() public {
         uint152 usdnShares = 0.1 ether;
+        IUsdn usdn = usdnProtocol.getUsdn();
+        vm.prank(address(usdnProtocol));
+        usdn.mintShares(DEPLOYER, usdnShares);
         vm.prank(DEPLOYER);
         echidna.initiateWithdrawal(usdnShares, 10 ether, 0, 0, 1000 ether);
 
