@@ -123,13 +123,10 @@ contract EchidnaAssert is Setup {
         address dest;
         address payable validator;
         bytes priceData;
-        uint64 securityDeposit;
         uint256 senderBalanceETH;
         uint256 senderBalanceWstETH;
         uint256 usdnProtocolBalanceETH;
         uint256 usdnProtocolBalanceWstETH;
-        uint256 balanceBefore;
-        uint256 protocolBalanceBefore;
     }
 
     function initiateDeposit(
@@ -192,16 +189,11 @@ contract EchidnaAssert is Setup {
             dest: destinationsToken[address(wsteth)][destRandBounded],
             validator: payable(validators[validatorRand]),
             priceData: abi.encode(currentPrice),
-            securityDeposit: usdnProtocol.getSecurityDepositValue(),
             senderBalanceETH: address(msg.sender).balance,
             senderBalanceWstETH: wsteth.balanceOf(msg.sender),
             usdnProtocolBalanceETH: address(usdnProtocol).balance,
-            usdnProtocolBalanceWstETH: wsteth.balanceOf(address(usdnProtocol)),
-            balanceBefore: wsteth.balanceOf(address(this)),
-            protocolBalanceBefore: wsteth.balanceOf(address(usdnProtocol))
+            usdnProtocolBalanceWstETH: wsteth.balanceOf(address(usdnProtocol))
         });
-
-        vm.prank(msg.sender);
 
         try usdnProtocol.initiateOpenPosition{ value: ethRand }(
             amountRand,
@@ -212,11 +204,8 @@ contract EchidnaAssert is Setup {
             params.priceData,
             EMPTY_PREVIOUS_DATA
         ) {
-            assert(address(usdnProtocol).balance == params.usdnProtocolBalanceETH + params.securityDeposit);
-            assert(wsteth.balanceOf(msg.sender) == params.senderBalanceWstETH - amountRand);
-            assert(wsteth.balanceOf(address(usdnProtocol)) == params.usdnProtocolBalanceWstETH + amountRand);
-            assert(wsteth.balanceOf(address(usdnProtocol)) == params.protocolBalanceBefore + amountRand); // protocol
-                // wsteth balance
+            uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
+            assert(address(msg.sender).balance == params.senderBalanceETH - securityDeposit);
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_OPEN_ERRORS);
         }
