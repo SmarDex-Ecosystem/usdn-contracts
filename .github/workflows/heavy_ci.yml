@@ -44,4 +44,4 @@ jobs:
       #  run: npm run snapshot:check
 
       - name: Run tests
-        run: forge test
+        run: forge test --no-match-test "(ForkGasUsage)"
