@@ -23,9 +23,6 @@ contract Setup is Test {
     address public constant DEPLOYER = address(0x10000);
     address public constant ATTACKER = address(0x20000);
     address public constant FEE_COLLECTOR = address(0x00fee);
-    uint256 public constant ACCOUNT_START_ETH_AMOUNT = 100 ether;
-    uint256 public constant ACCOUNT_START_SDEX_AMOUNT = 10 ether;
-    uint256 public constant CURRENT_PRICE = 2000 ether;
 
     Sdex public immutable sdex = new Sdex();
     Weth public immutable weth = new Weth();
@@ -66,18 +63,15 @@ contract Setup is Test {
 
     constructor() payable {
         vm.warp(1_709_251_200);
-        uint256 INIT_DEPOSIT_AMOUNT = 1000 ether;
-        uint256 INIT_LONG_AMOUNT = 1000 ether;
+        //TODO see to fuzz these data
+        uint256 INIT_DEPOSIT_AMOUNT = 300 ether;
+        uint256 INIT_LONG_AMOUNT = 300 ether;
         uint128 INITIAL_PRICE = 2000 ether; // 2000 USDN = 1 ETH
 
-        uint256 ethAmount =
-            (INIT_DEPOSIT_AMOUNT + INIT_LONG_AMOUNT + ACCOUNT_START_ETH_AMOUNT) * wsteth.stEthPerToken() / 1 ether;
+        uint256 ethAmount = (INIT_DEPOSIT_AMOUNT + INIT_LONG_AMOUNT) * wsteth.stEthPerToken() / 1 ether;
         vm.deal(address(this), ethAmount);
         (bool result,) = address(wsteth).call{ value: ethAmount }("");
         require(result, "WstETH mint failed");
-
-        wsteth.transfer(DEPLOYER, ACCOUNT_START_ETH_AMOUNT);
-        require(wsteth.balanceOf(DEPLOYER) == ACCOUNT_START_ETH_AMOUNT, "WstETH transfer failed");
 
         wstEthOracleMiddleware = new MockOracleMiddleware();
 
@@ -109,25 +103,18 @@ contract Setup is Test {
         );
 
         destinationsToken[address(wsteth)] = [DEPLOYER, ATTACKER];
-
-        vm.deal(DEPLOYER, ACCOUNT_START_ETH_AMOUNT);
-
-        sdex.mintAndApprove(DEPLOYER, ACCOUNT_START_SDEX_AMOUNT, address(usdnProtocol), type(uint256).max);
-        sdex.mintAndApprove(ATTACKER, ACCOUNT_START_SDEX_AMOUNT, address(usdnProtocol), type(uint256).max);
-
-        vm.prank(DEPLOYER);
-        sdex.approve(address(usdnProtocol), type(uint256).max);
-        vm.prank(ATTACKER);
-        sdex.approve(address(usdnProtocol), type(uint256).max);
-
-        vm.prank(DEPLOYER);
-        wsteth.approve(address(usdnProtocol), type(uint256).max);
-        vm.prank(ATTACKER);
-        wsteth.approve(address(usdnProtocol), type(uint256).max);
     }
 }
 
 contract EchidnaAssert is Setup {
+    struct InitiateDepositBalanceBefore {
+        uint256 senderETH;
+        uint256 senderWstETH;
+        uint256 senderSdex;
+        uint256 usdnProtocolETH;
+        uint256 usdnProtocolWstETH;
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                             USDN Protocol                                  */
     /* -------------------------------------------------------------------------- */
@@ -145,8 +132,17 @@ contract EchidnaAssert is Setup {
         uint256 protocolBalanceBefore;
     }
 
-    function initiateDeposit(uint128 amountRand, uint256 destRand, uint256 validatorRand) public {
-        amountRand = uint128(bound(amountRand, 0, wsteth.balanceOf(msg.sender)));
+    function initiateDeposit(
+        uint128 amountWstETHRand,
+        uint128 amountSdexRand,
+        uint256 ethRand,
+        uint256 destRand,
+        uint256 validatorRand,
+        uint256 currentPrice
+    ) public {
+        wsteth.mintAndApprove(msg.sender, amountWstETHRand, address(usdnProtocol), amountWstETHRand);
+        sdex.mintAndApprove(msg.sender, amountSdexRand, address(usdnProtocol), amountSdexRand);
+        vm.deal(msg.sender, ethRand);
 
         destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
         address dest = destinationsToken[address(wsteth)][destRand];
@@ -154,26 +150,27 @@ contract EchidnaAssert is Setup {
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
 
-        bytes memory priceData = abi.encode(CURRENT_PRICE);
+        bytes memory priceData = abi.encode(currentPrice);
 
-        uint64 securityDeposit = usdnProtocol.getSecurityDepositValue();
-
-        uint256 senderBalanceETH = address(msg.sender).balance;
-        uint256 senderBalanceWstETH = wsteth.balanceOf(msg.sender);
-        uint256 senderBalanceSdex = sdex.balanceOf(msg.sender);
-
-        uint256 usdnProtocolBalanceETH = address(usdnProtocol).balance;
-        uint256 usdnProtocolBalanceWstETH = wsteth.balanceOf(address(usdnProtocol));
+        InitiateDepositBalanceBefore memory balanceBefore = InitiateDepositBalanceBefore({
+            senderETH: address(msg.sender).balance,
+            senderWstETH: wsteth.balanceOf(msg.sender),
+            senderSdex: sdex.balanceOf(msg.sender),
+            usdnProtocolETH: address(usdnProtocol).balance,
+            usdnProtocolWstETH: wsteth.balanceOf(address(usdnProtocol))
+        });
 
         vm.prank(msg.sender);
-        try usdnProtocol.initiateDeposit{ value: securityDeposit }(
-            amountRand, dest, validator, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
+        try usdnProtocol.initiateDeposit{ value: ethRand }(
+            amountWstETHRand, dest, validator, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         ) {
-            assert(address(msg.sender).balance == senderBalanceETH - securityDeposit);
-            assert(wsteth.balanceOf(msg.sender) == senderBalanceWstETH - amountRand);
-            assert(sdex.balanceOf(msg.sender) < senderBalanceSdex);
-            assert(address(usdnProtocol).balance == usdnProtocolBalanceETH + securityDeposit);
-            assert(wsteth.balanceOf(address(usdnProtocol)) == usdnProtocolBalanceWstETH + amountRand);
+            uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
+
+            assert(address(msg.sender).balance == balanceBefore.senderETH - securityDeposit);
+            assert(wsteth.balanceOf(msg.sender) == balanceBefore.senderWstETH - amountWstETHRand);
+            assert(sdex.balanceOf(msg.sender) < balanceBefore.senderSdex);
+            assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH + securityDeposit);
+            assert(wsteth.balanceOf(address(usdnProtocol)) == balanceBefore.usdnProtocolWstETH + amountWstETHRand);
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_DEPOSIT_ERRORS);
         }
@@ -182,15 +179,19 @@ contract EchidnaAssert is Setup {
     function initiateOpenPosition(
         uint128 amountRand,
         uint128 liquidationPriceRand,
+        uint256 ethRand,
         uint256 destRand,
-        uint256 validatorRand
+        uint256 validatorRand,
+        uint256 currentPrice
     ) public {
+        wsteth.mintAndApprove(msg.sender, amountRand, address(usdnProtocol), amountRand);
         uint256 destRandBounded = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
+        vm.deal(msg.sender, ethRand);
 
         OpenPositionParams memory params = OpenPositionParams({
             dest: destinationsToken[address(wsteth)][destRandBounded],
             validator: payable(validators[validatorRand]),
-            priceData: abi.encode(CURRENT_PRICE),
+            priceData: abi.encode(currentPrice),
             securityDeposit: usdnProtocol.getSecurityDepositValue(),
             senderBalanceETH: address(msg.sender).balance,
             senderBalanceWstETH: wsteth.balanceOf(msg.sender),
