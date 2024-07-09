@@ -195,6 +195,8 @@ contract EchidnaAssert is Setup {
             usdnProtocolBalanceWstETH: wsteth.balanceOf(address(usdnProtocol))
         });
 
+        vm.prank(msg.sender);
+
         try usdnProtocol.initiateOpenPosition{ value: ethRand }(
             amountRand,
             liquidationPriceRand,
