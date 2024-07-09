@@ -200,8 +200,7 @@ contract EchidnaAssert is Setup {
 
             assert(wsteth.balanceOf(address(this)) == params.balanceBefore - amountRand); // user wsteth balance
             assert(wsteth.balanceOf(address(usdnProtocol)) == params.protocolBalanceBefore + amountRand); // protocol
-                // wsteth
-                // balance
+                // wsteth balance
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_OPEN_ERRORS);
         }
