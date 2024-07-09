@@ -125,14 +125,14 @@ library UsdnProtocolLongLibrary {
         returns (uint128 liquidationPrice_)
     {
         liquidationPrice_ = _getLiquidationPrice(price, uint128(s._minLeverage));
-        uint256 longTradingExpo =
-            (int256(s._totalExpo) - longAssetAvailableWithFunding(s, price, timestamp)).toUint256();
-        int24 tick = getEffectiveTickForPrice(
-            liquidationPrice_, price, longTradingExpo, s._liqMultiplierAccumulator, s._tickSpacing
-        );
+        HugeUint.Uint512 memory acc = s._liqMultiplierAccumulator;
+        int24 tickSpacing = s._tickSpacing;
+        uint256 longTradingExpo = longTradingExpoWithFunding(s, price, timestamp).toUint256();
+        int24 tick = getEffectiveTickForPrice(liquidationPrice_, price, longTradingExpo, acc, tickSpacing);
         // slither-disable-next-line write-after-write
-        liquidationPrice_ =
-            getEffectivePriceForTick(tick + s._tickSpacing, price, longTradingExpo, s._liqMultiplierAccumulator);
+        liquidationPrice_ = getEffectivePriceForTick(
+            tick + (tickSpacing * int24(uint24(s._liquidationPenalty + 2))), price, longTradingExpo, acc
+        );
     }
 
     /// @notice See {IUsdnProtocolLong}
@@ -235,6 +235,11 @@ library UsdnProtocolLongLibrary {
             int256 fee = fundAsset * Utils.toInt256(s._protocolFeeBps) / int256(Constants.BPS_DIVISOR);
             // fees have the same sign as fundAsset (negative here), so we need to sub them
             available_ = Core._longAssetAvailable(s, currentPrice).safeSub(fundAsset - fee);
+        }
+
+        int256 totalBalance = (s._balanceLong + s._balanceVault).toInt256();
+        if (available_ > totalBalance) {
+            available_ = totalBalance;
         }
     }
 

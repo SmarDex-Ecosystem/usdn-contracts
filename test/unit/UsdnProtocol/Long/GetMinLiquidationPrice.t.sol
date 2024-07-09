@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
+import { ADMIN } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
@@ -41,7 +42,7 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
             protocol.getMinLiquidationPrice(price, uint128(block.timestamp)),
             protocol.getEffectivePriceForTick(
                 protocol.getEffectiveTickForPrice(4_999_999_995_001, price, tradingExpo, liqMulAcc, _tickSpacing)
-                    + _tickSpacing,
+                    + (_tickSpacing * int24(uint24(protocol.getLiquidationPenalty() + 2))),
                 price,
                 tradingExpo,
                 liqMulAcc
@@ -57,7 +58,7 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
             protocol.getMinLiquidationPrice(price, uint128(block.timestamp)),
             protocol.getEffectivePriceForTick(
                 protocol.getEffectiveTickForPrice(4_999_999_995_001, price, tradingExpo, liqMulAcc, _tickSpacing)
-                    + _tickSpacing,
+                    + (_tickSpacing * int24(uint24(protocol.getLiquidationPenalty() + 2))),
                 price,
                 tradingExpo,
                 liqMulAcc
@@ -103,7 +104,7 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
             protocol.getMinLiquidationPrice(price, uint128(block.timestamp)),
             protocol.getEffectivePriceForTick(
                 protocol.getEffectiveTickForPrice(4_999_999_995_001, price, tradingExpo, liqMulAcc, _tickSpacing)
-                    + _tickSpacing,
+                    + (_tickSpacing * int24(uint24(protocol.getLiquidationPenalty() + 2))),
                 price,
                 tradingExpo,
                 liqMulAcc
@@ -119,7 +120,7 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
      * @custom:then The min liquidation price is the expected price
      */
     function test_getMinLiquidationPrice_multiplierLtOne() public {
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, price, params.initialPrice);
+        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 500 ether, params.initialPrice);
         skip(6 days);
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1, params.initialPrice);
 
@@ -137,7 +138,7 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
             protocol.getMinLiquidationPrice(price, uint128(block.timestamp)),
             protocol.getEffectivePriceForTick(
                 protocol.getEffectiveTickForPrice(4_999_999_995_001, price, tradingExpo, liqMulAcc, _tickSpacing)
-                    + _tickSpacing,
+                    + (_tickSpacing * int24(uint24(protocol.getLiquidationPenalty() + 2))),
                 price,
                 tradingExpo,
                 liqMulAcc
@@ -167,7 +168,9 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
         protocol.setMinLeverage(newMinLeverage);
         assertEq(
             protocol.getMinLiquidationPrice(price, uint128(block.timestamp)),
-            TickMath.getPriceAtTick(protocol.minTick() + protocol.getTickSpacing()),
+            TickMath.getPriceAtTick(
+                protocol.minTick() + (_tickSpacing * int24(uint24(protocol.getLiquidationPenalty() + 2)))
+            ),
             "liquidation price should be equal to the min tick price + tick spacing"
         );
     }
@@ -186,11 +189,70 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
             protocol.getEffectivePriceForTick(
                 protocol.getEffectiveTickForPrice(
                     454_545_454_545_454_545_455, price, tradingExpo, liqMulAcc, _tickSpacing
-                ) + _tickSpacing,
+                ) + (_tickSpacing * int24(uint24(protocol.getLiquidationPenalty() + 2))),
                 price,
                 tradingExpo,
                 liqMulAcc
             )
+        );
+    }
+
+    /**
+     * @custom:scenario The price returned by {getMinLiquidationPrice} can be used to open a position
+     * @custom:given Fundings are enabled
+     * @custom:when getMinLiquidationPrice is called
+     * @custom:then The price returned can always be used to open a position
+     * @param startPrice The price at which the position will be opened
+     * @param minLeverage The min leverage of the protocol
+     * @param elapsedSeconds The amount of time to wait before calling the function
+     * @param imbalanceBps The imbalance before the amount of time to wait
+     */
+    function testFuzz_getMinLiquidationPriceCanBeUsedToOpenAPosition(
+        uint256 startPrice,
+        uint256 minLeverage,
+        uint256 elapsedSeconds,
+        int256 imbalanceBps
+    ) public {
+        uint256 levDecimals = protocol.LEVERAGE_DECIMALS();
+        imbalanceBps = bound(imbalanceBps, -10_000, 10_000); // bound between -100%/+100%
+        minLeverage = bound(minLeverage, 10 ** levDecimals + 1, (10 * 10 ** levDecimals));
+        startPrice = bound(startPrice, 1000 ether, 1_000_000 ether);
+        elapsedSeconds = bound(elapsedSeconds, 30 minutes, 1 weeks);
+
+        uint128 amount;
+        if (imbalanceBps < 0) {
+            amount = params.initialDeposit * uint128(uint256(imbalanceBps * -1)) / 10_000;
+            setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, amount, params.initialPrice);
+        } else if (imbalanceBps > 0) {
+            amount = params.initialLong * uint128(uint256(imbalanceBps)) / 10_000;
+            setUpUserPositionInLong(
+                OpenParams(
+                    address(this),
+                    ProtocolAction.ValidateOpenPosition,
+                    amount,
+                    params.initialPrice / 2,
+                    params.initialPrice
+                )
+            );
+        }
+
+        vm.startPrank(ADMIN);
+        protocol.setMaxLeverage(100 * 10 ** protocol.LEVERAGE_DECIMALS());
+        protocol.setMinLeverage(minLeverage);
+        vm.stopPrank();
+
+        skip(elapsedSeconds);
+        uint128 liqPrice = protocol.getMinLiquidationPrice(uint128(startPrice), uint128(block.timestamp - 30 minutes));
+
+        wstETH.mintAndApprove(address(this), 1 ether, address(protocol), 1 ether);
+        protocol.initiateOpenPosition(
+            1 ether,
+            liqPrice,
+            address(this),
+            payable(address(this)),
+            NO_PERMIT2,
+            abi.encode(startPrice),
+            EMPTY_PREVIOUS_DATA
         );
     }
 }
