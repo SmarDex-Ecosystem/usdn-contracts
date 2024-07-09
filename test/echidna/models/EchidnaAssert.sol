@@ -23,8 +23,6 @@ contract Setup is Test {
     address public constant DEPLOYER = address(0x10000);
     address public constant ATTACKER = address(0x20000);
     address public constant FEE_COLLECTOR = address(0x00fee);
-    uint256 public constant ACCOUNT_START_ETH_AMOUNT = 100 ether;
-    //    uint256 public constant ACCOUNT_START_SDEX_AMOUNT = 10 ether;
 
     Sdex public immutable sdex = new Sdex();
     Weth public immutable weth = new Weth();
@@ -158,12 +156,11 @@ contract EchidnaAssert is Setup {
         ) {
             uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
 
-            assertEq(address(msg.sender).balance, balanceBefore.senderETH - securityDeposit);
-            assertEq(wsteth.balanceOf(msg.sender), balanceBefore.senderWstETH - amountWstETHRand);
-            assertLt(sdex.balanceOf(msg.sender), balanceBefore.senderSdex);
-
-            assertEq(address(usdnProtocol).balance, balanceBefore.usdnProtocolETH + securityDeposit);
-            assertEq(wsteth.balanceOf(address(usdnProtocol)), balanceBefore.usdnProtocolWstETH + amountWstETHRand);
+            assert(address(msg.sender).balance == balanceBefore.senderETH - securityDeposit);
+            assert(wsteth.balanceOf(msg.sender) == balanceBefore.senderWstETH - amountWstETHRand);
+            assert(sdex.balanceOf(msg.sender) < balanceBefore.senderSdex);
+            assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH + securityDeposit);
+            assert(wsteth.balanceOf(address(usdnProtocol)) == balanceBefore.usdnProtocolWstETH + amountWstETHRand);
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_DEPOSIT_ERRORS);
         }
