@@ -222,7 +222,7 @@ contract EchidnaAssert is Setup {
         uint256 validatorRand
     ) internal view returns (OpenPositionParams memory params) {
         params.amountRand = uint128(bound(amountRand, 0, wsteth.balanceOf(msg.sender)));
-        params.liquidationPriceRand = uint128(bound(liquidationPriceRand, 0, type(uint256).max));
+        params.liquidationPriceRand = uint128(bound(liquidationPriceRand, 0, CURRENT_PRICE));
         uint256 destRandBounded = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
         params.dest = destinationsToken[address(wsteth)][destRandBounded];
         params.validator = payable(validators[validatorRand]);
