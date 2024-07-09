@@ -24,7 +24,6 @@ contract Setup is Test {
     address public constant ATTACKER = address(0x20000);
     address public constant FEE_COLLECTOR = address(0x00fee);
     uint256 public constant ACCOUNT_START_ETH_AMOUNT = 100 ether;
-    //    uint256 public constant ACCOUNT_START_SDEX_AMOUNT = 10 ether;
 
     Sdex public immutable sdex = new Sdex();
     Weth public immutable weth = new Weth();
@@ -127,7 +126,6 @@ contract EchidnaAssert is Setup {
         wsteth.mintAndApprove(msg.sender, amountWstETHRand, address(usdnProtocol), amountWstETHRand);
         sdex.mintAndApprove(msg.sender, amountSdexRand, address(usdnProtocol), amountSdexRand);
         vm.deal(msg.sender, ethRand);
-        //        amountRand = uint128(bound(amountRand, 0, wsteth.balanceOf(msg.sender)));
 
         destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
         address dest = destinationsToken[address(wsteth)][destRand];
