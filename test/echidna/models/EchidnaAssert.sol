@@ -5,7 +5,6 @@ import { Test } from "forge-std/Test.sol";
 
 import { MockOracleMiddleware } from "../../../test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
 
-import { UsdnProtocolHandler } from "../../unit/UsdnProtocol/utils/Handler.sol";
 import { Sdex } from "../../utils/Sdex.sol";
 import { Weth } from "../../utils/WETH.sol";
 import { WstETH } from "../../utils/WstEth.sol";
@@ -136,11 +135,8 @@ contract EchidnaAssert is Setup {
         uint256 usdnProtocolBalanceETH;
         uint256 usdnProtocolBalanceWstETH;
         int24 expectedTick;
-    }
-
-    struct ValueToCheckBefore {
-        uint256 balance;
-        uint256 protocolBalance;
+        uint256 balanceBefore;
+        uint256 protocolBalanceBefore;
     }
 
     // function initiateDeposit(uint128 amountRand, uint256 destRand, uint256 validatorRand) public {
@@ -184,7 +180,7 @@ contract EchidnaAssert is Setup {
         uint256 destRand,
         uint256 validatorRand
     ) public {
-        (OpenPositionParams memory params, ValueToCheckBefore memory before) =
+        OpenPositionParams memory params =
             getOpenPositionParams(amountRand, liquidationPriceRand, destRand, validatorRand);
 
         vm.prank(msg.sender);
@@ -202,8 +198,9 @@ contract EchidnaAssert is Setup {
             assert(address(usdnProtocol).balance == params.usdnProtocolBalanceETH + params.securityDeposit);
             assert(wsteth.balanceOf(address(usdnProtocol)) == params.usdnProtocolBalanceWstETH + params.amountRand);
 
-            assert(wsteth.balanceOf(address(this)) == before.balance - amountRand); // user wsteth balance
-            assert(wsteth.balanceOf(address(usdnProtocol)) == before.protocolBalance + amountRand); // protocol wsteth
+            assert(wsteth.balanceOf(address(this)) == params.balanceBefore - amountRand); // user wsteth balance
+            assert(wsteth.balanceOf(address(usdnProtocol)) == params.protocolBalanceBefore + amountRand); // protocol
+                // wsteth
                 // balance
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_OPEN_ERRORS);
@@ -215,7 +212,7 @@ contract EchidnaAssert is Setup {
         uint128 liquidationPriceRand,
         uint256 destRand,
         uint256 validatorRand
-    ) internal view returns (OpenPositionParams memory params, ValueToCheckBefore memory before) {
+    ) internal view returns (OpenPositionParams memory params) {
         params.amountRand = uint128(bound(amountRand, 0, wsteth.balanceOf(msg.sender)));
         params.liquidationPriceRand = uint128(bound(liquidationPriceRand, 0, type(uint256).max));
         uint256 destRandBounded = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
@@ -228,10 +225,8 @@ contract EchidnaAssert is Setup {
         params.usdnProtocolBalanceETH = address(usdnProtocol).balance;
         params.usdnProtocolBalanceWstETH = wsteth.balanceOf(address(usdnProtocol));
 
-        before = ValueToCheckBefore({
-            balance: wsteth.balanceOf(address(this)),
-            protocolBalance: wsteth.balanceOf(address(usdnProtocol))
-        });
+        params.balanceBefore = wsteth.balanceOf(address(this));
+        params.protocolBalanceBefore = wsteth.balanceOf(address(usdnProtocol));
     }
 
     function _checkErrors(bytes memory err, bytes4[] storage errors) internal {
