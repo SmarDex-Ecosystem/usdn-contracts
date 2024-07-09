@@ -3,6 +3,8 @@ pragma solidity ^0.8.25;
 
 import { Test } from "forge-std/Test.sol";
 
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+
 import { MockOracleMiddleware } from "../../../test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
 
 import { Sdex } from "../../utils/Sdex.sol";
@@ -43,7 +45,17 @@ contract Setup is Test {
     UsdnProtocol public usdnProtocol;
     Rebalancer public rebalancer;
 
-    bytes4[] public INITIATE_DEPOSIT_ERRORS = [IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector];
+    bytes4[] public INITIATE_DEPOSIT_ERRORS = [
+        IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow.selector,
+        IUsdnProtocolErrors.UsdnProtocolInvalidAddressValidator.selector,
+        IUsdnProtocolErrors.UsdnProtocolZeroAmount.selector,
+        IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector,
+        IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector,
+        IUsdnProtocolErrors.UsdnProtocolDepositTooSmall.selector,
+        IUsdnProtocolErrors.UsdnProtocolInvalidLongExpo.selector,
+        IUsdnProtocolErrors.UsdnProtocolPendingAction.selector,
+        FixedPointMathLib.FullMulDivFailed.selector
+    ];
     bytes4[] public INITIATE_OPEN_ERRORS = [
         IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow.selector,
         IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector,
@@ -163,12 +175,11 @@ contract EchidnaAssert is Setup {
     //     try usdnProtocol.initiateDeposit{ value: securityDeposit }(
     //         amountRand, dest, validator, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
     //     ) {
-    //         assertEq(address(msg.sender).balance, senderBalanceETH - securityDeposit);
-    //         assertEq(wsteth.balanceOf(msg.sender), senderBalanceWstETH - amountRand);
-    //         assertLt(sdex.balanceOf(msg.sender), senderBalanceSdex);
-
-    //         assertEq(address(usdnProtocol).balance, usdnProtocolBalanceETH + securityDeposit);
-    //         assertEq(wsteth.balanceOf(address(usdnProtocol)), usdnProtocolBalanceWstETH + amountRand);
+    //         assert(address(msg.sender).balance == senderBalanceETH - securityDeposit);
+    //         assert(wsteth.balanceOf(msg.sender) == senderBalanceWstETH - amountRand);
+    //         assert(sdex.balanceOf(msg.sender) < senderBalanceSdex);
+    //         assert(address(usdnProtocol).balance == usdnProtocolBalanceETH + securityDeposit);
+    //         assert(wsteth.balanceOf(address(usdnProtocol)) == usdnProtocolBalanceWstETH + amountRand);
     //     } catch (bytes memory err) {
     //         _checkErrors(err, INITIATE_DEPOSIT_ERRORS);
     //     }
@@ -193,11 +204,9 @@ contract EchidnaAssert is Setup {
             params.priceData,
             EMPTY_PREVIOUS_DATA
         ) {
-            assert(wsteth.balanceOf(msg.sender) == params.senderBalanceWstETH - params.amountRand);
-
             assert(address(usdnProtocol).balance == params.usdnProtocolBalanceETH + params.securityDeposit);
+            assert(wsteth.balanceOf(msg.sender) == params.senderBalanceWstETH - params.amountRand);
             assert(wsteth.balanceOf(address(usdnProtocol)) == params.usdnProtocolBalanceWstETH + params.amountRand);
-
             assert(wsteth.balanceOf(address(this)) == params.balanceBefore - amountRand); // user wsteth balance
             assert(wsteth.balanceOf(address(usdnProtocol)) == params.protocolBalanceBefore + amountRand); // protocol
                 // wsteth balance
