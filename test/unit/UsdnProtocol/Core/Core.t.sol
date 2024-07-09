@@ -22,12 +22,14 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:scenario Check return values of the `funding` function
      * @custom:when The timestamp is the same as the initial timestamp
      * @custom:then The funding should be 0
+     * @custom:and The funding rate should be unaffected
+     * @custom:and The long expo should be as expected
      */
-    function test_funding() public {
+    function test_funding() public view {
         int256 longExpo = int256(protocol.getTotalExpo()) - int256(protocol.getBalanceLong());
         (int256 funding, int256 fundingPerDay, int256 oldLongExpo) = protocol.funding(uint128(params.initialTimestamp));
         assertEq(funding, 0, "funding should be 0 if no time has passed");
-        assertEq(fundingPerDay, 0, "funding rate should be 0 if no time has passed");
+        assertEq(fundingPerDay, protocol.getEMA(), "funding rate should be unaffected by time");
         assertEq(oldLongExpo, longExpo, "longExpo if no time has passed");
     }
 
@@ -49,7 +51,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @dev Due to imprecision in the calculations, there are in practice a few wei of difference, but always in favor
      * of the protocol (see fuzzing tests)
      */
-    function test_longAssetAvailable() public {
+    function test_longAssetAvailable() public view {
         // calculate the value of the deployer's long position
         uint128 longLiqPrice =
             protocol.getEffectivePriceForTick(protocol.getEffectiveTickForPrice(params.initialPrice / 2));
@@ -134,7 +136,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:then funding rate should be equal to EMA
      * @custom:then funding should be as expected
      */
-    function test_fundingWhenEqualExpo() public {
+    function test_fundingWhenEqualExpo() public view {
         int256 vaultTradingExpo = protocol.i_vaultAssetAvailable(params.initialPrice);
 
         assertEq(
@@ -376,7 +378,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:when getPendingAction is called
      * @custom:then it returns an empty action and 0 as the rawIndex
      */
-    function test_getPendingActionWithoutPendingAction() public {
+    function test_getPendingActionWithoutPendingAction() public view {
         (PendingAction memory action, uint128 rawIndex) = protocol.i_getPendingAction(address(this));
         assertTrue(action.action == ProtocolAction.None, "action should be None");
         assertEq(action.validator, address(0), "user should be empty");

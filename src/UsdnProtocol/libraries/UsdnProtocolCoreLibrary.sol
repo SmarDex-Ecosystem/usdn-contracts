@@ -213,40 +213,28 @@ library UsdnProtocolCoreLibrary {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Calculate the funding rate per day, the old long exposure and retrieve the last update timestamp
-     * @dev Reverts if `timestamp` < `s._lastUpdateTimestamp`
+     * @notice Calculate the funding rate per day and the old long exposure
      * @param s The storage of the protocol
-     * @param timestamp The current timestamp
      * @param ema The EMA of the funding rate per day
      * @return fundingPerDay_ The funding rate (per day) with `FUNDING_RATE_DECIMALS` decimals
      * @return oldLongExpo_ The old long trading expo
-     * @return lastUpdateTimestamp_ The last update timestamp
      */
-    function _fundingPerDay(Types.Storage storage s, uint128 timestamp, int256 ema)
+    function _fundingPerDay(Types.Storage storage s, int256 ema)
         public
         view
-        returns (int256 fundingPerDay_, int256 oldLongExpo_, uint128 lastUpdateTimestamp_)
+        returns (int256 fundingPerDay_, int256 oldLongExpo_)
     {
-        oldLongExpo_ = s._totalExpo.toInt256().safeSub(s._balanceLong.toInt256());
-        lastUpdateTimestamp_ = s._lastUpdateTimestamp;
-
-        if (timestamp < lastUpdateTimestamp_) {
-            revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
-        } else if (timestamp == lastUpdateTimestamp_) {
-            return (0, oldLongExpo_, lastUpdateTimestamp_);
-        }
-
-        int256 oldVaultExpo = s._balanceVault.toInt256();
-
         // imbalanceIndex = (longExpo - vaultExpo) / max(longExpo, vaultExpo)
         // fundingPerDay = (sign(imbalanceIndex) * imbalanceIndex^2 * fundingSF) + _EMA
         // fundingPerDay = (sign(ImbalanceIndex) * (longExpo - vaultExpo)^2 * fundingSF / denominator) + _EMA
         // with denominator = vaultExpo^2 if vaultExpo > longExpo, or longExpo^2 if longExpo > vaultExpo
 
+        oldLongExpo_ = s._totalExpo.toInt256().safeSub(s._balanceLong.toInt256());
+        int256 oldVaultExpo = s._balanceVault.toInt256();
         int256 numerator = oldLongExpo_ - oldVaultExpo;
         // optimization: if the numerator is zero, then we simply return the EMA
         if (numerator == 0) {
-            return (ema, oldLongExpo_, lastUpdateTimestamp_);
+            return (ema, oldLongExpo_);
         }
 
         if (oldLongExpo_ <= 0) {
@@ -254,15 +242,13 @@ library UsdnProtocolCoreLibrary {
             // this should never happen, but for safety we handle it anyway
             return (
                 -int256(s._fundingSF * 10 ** (Constants.FUNDING_RATE_DECIMALS - Constants.FUNDING_SF_DECIMALS)) + ema,
-                oldLongExpo_,
-                lastUpdateTimestamp_
+                oldLongExpo_
             );
         } else if (oldVaultExpo == 0) {
             // if oldVaultExpo is zero (can't be negative), then we cap the imbalance index to 1
             return (
                 int256(s._fundingSF * 10 ** (Constants.FUNDING_RATE_DECIMALS - Constants.FUNDING_SF_DECIMALS)) + ema,
-                oldLongExpo_,
-                lastUpdateTimestamp_
+                oldLongExpo_
             );
         }
 
@@ -308,19 +294,22 @@ library UsdnProtocolCoreLibrary {
         view
         returns (int256 funding_, int256 fundingPerDay_, int256 oldLongExpo_)
     {
-        uint128 lastUpdateTimestamp;
-        (fundingPerDay_, oldLongExpo_, lastUpdateTimestamp) = _fundingPerDay(s, timestamp, ema);
+        (fundingPerDay_, oldLongExpo_) = _fundingPerDay(s, ema);
 
-        if (fundingPerDay_ == 0) {
-            return (0, 0, oldLongExpo_);
+        uint128 lastUpdateTimestamp = s._lastUpdateTimestamp;
+        if (timestamp < lastUpdateTimestamp) {
+            revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
         }
-
-        // subtraction can't underflow, checked in `_fundingPerDay`
+        // subtraction can't underflow, checked above
         // conversion from uint128 to int256 is always safe
         int256 elapsedSeconds;
         unchecked {
             elapsedSeconds = Utils.toInt256(timestamp - lastUpdateTimestamp);
         }
+        if (elapsedSeconds == 0) {
+            return (0, fundingPerDay_, oldLongExpo_);
+        }
+
         funding_ = fundingPerDay_.safeMul(elapsedSeconds).safeDiv(1 days);
     }
 
