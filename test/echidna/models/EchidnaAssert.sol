@@ -167,7 +167,7 @@ contract EchidnaAssert is Setup {
 
             assert(address(msg.sender).balance == balanceBefore.senderETH - securityDeposit);
             assert(wsteth.balanceOf(msg.sender) == balanceBefore.senderWstETH - amountWstETHRand);
-            assert(sdex.balanceOf(msg.sender) > balanceBefore.senderSdex);
+            assert(sdex.balanceOf(msg.sender) < balanceBefore.senderSdex);
 
             assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH + securityDeposit);
             assert(wsteth.balanceOf(address(usdnProtocol)) == balanceBefore.usdnProtocolWstETH + amountWstETHRand);
@@ -200,8 +200,6 @@ contract EchidnaAssert is Setup {
         uint256 validatorRand,
         uint256 currentPrice
     ) public {
-        vm.prank(address(usdnProtocol));
-        usdn.mintShares(msg.sender, usdnShares);
         vm.prank(msg.sender);
         usdn.approve(address(usdnProtocol), usdnShares);
         vm.deal(msg.sender, ethRand);
