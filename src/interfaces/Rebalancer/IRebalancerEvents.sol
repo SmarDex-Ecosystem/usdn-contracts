@@ -67,8 +67,10 @@ interface IRebalancerEvents {
     /**
      * @notice Emitted when the position version is updated
      * @param newPositionVersion The new version of the position
+     * @param entryAccMultiplier The accumulated multiplier at the opening of the new version
+     * @param amount The amount of assets the rebalancer injected in the position as collateral
      */
-    event PositionVersionUpdated(uint128 newPositionVersion);
+    event PositionVersionUpdated(uint128 newPositionVersion, uint256 entryAccMultiplier, uint128 amount);
 
     /**
      * @notice Emitted when the close imbalance limit in bps is updated
