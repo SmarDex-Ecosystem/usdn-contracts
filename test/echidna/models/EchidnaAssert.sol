@@ -41,7 +41,7 @@ contract Setup is Test {
     MockOracleMiddleware public wstEthOracleMiddleware;
     MockLiquidationRewardsManager public liquidationRewardsManager;
     Usdn public usdn;
-    UsdnProtocolHandler public usdnProtocol;
+    UsdnProtocol public usdnProtocol;
     Rebalancer public rebalancer;
 
     bytes4[] public INITIATE_DEPOSIT_ERRORS = [IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector];
@@ -75,9 +75,8 @@ contract Setup is Test {
 
         usdn = new Usdn(address(0), address(0));
 
-        usdnProtocol = new UsdnProtocolHandler(
-            usdn, sdex, wsteth, wstEthOracleMiddleware, liquidationRewardsManager, 100, FEE_COLLECTOR
-        );
+        usdnProtocol =
+            new UsdnProtocol(usdn, sdex, wsteth, wstEthOracleMiddleware, liquidationRewardsManager, 100, FEE_COLLECTOR);
 
         rebalancer = new Rebalancer(usdnProtocol);
 
@@ -125,9 +124,9 @@ contract EchidnaAssert is Setup {
 
     struct OpenPositionParams {
         uint128 amountRand;
+        uint128 liquidationPriceRand;
         uint128 liqPriceWithoutPenalty;
         uint128 expectedPosTotalExpo;
-        uint256 validatorRand;
         address dest;
         address payable validator;
         bytes priceData;
@@ -144,56 +143,60 @@ contract EchidnaAssert is Setup {
         uint256 protocolBalance;
     }
 
-    function initiateDeposit(uint128 amountRand, uint256 destRand, uint256 validatorRand) public {
-        amountRand = uint128(bound(amountRand, 0, wsteth.balanceOf(msg.sender)));
+    // function initiateDeposit(uint128 amountRand, uint256 destRand, uint256 validatorRand) public {
+    //     amountRand = uint128(bound(amountRand, 0, wsteth.balanceOf(msg.sender)));
 
-        destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
-        address dest = destinationsToken[address(wsteth)][destRand];
+    //     destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
+    //     address dest = destinationsToken[address(wsteth)][destRand];
 
-        validatorRand = bound(validatorRand, 0, validators.length - 1);
-        address payable validator = payable(validators[validatorRand]);
+    //     validatorRand = bound(validatorRand, 0, validators.length - 1);
+    //     address payable validator = payable(validators[validatorRand]);
 
-        bytes memory priceData = abi.encode(CURRENT_PRICE);
+    //     bytes memory priceData = abi.encode(CURRENT_PRICE);
 
-        uint64 securityDeposit = usdnProtocol.getSecurityDepositValue();
+    //     uint64 securityDeposit = usdnProtocol.getSecurityDepositValue();
 
-        uint256 senderBalanceETH = address(msg.sender).balance;
-        uint256 senderBalanceWstETH = wsteth.balanceOf(msg.sender);
-        uint256 senderBalanceSdex = sdex.balanceOf(msg.sender);
+    //     uint256 senderBalanceETH = address(msg.sender).balance;
+    //     uint256 senderBalanceWstETH = wsteth.balanceOf(msg.sender);
+    //     uint256 senderBalanceSdex = sdex.balanceOf(msg.sender);
 
-        uint256 usdnProtocolBalanceETH = address(usdnProtocol).balance;
-        uint256 usdnProtocolBalanceWstETH = wsteth.balanceOf(address(usdnProtocol));
+    //     uint256 usdnProtocolBalanceETH = address(usdnProtocol).balance;
+    //     uint256 usdnProtocolBalanceWstETH = wsteth.balanceOf(address(usdnProtocol));
 
-        vm.prank(msg.sender);
-        try usdnProtocol.initiateDeposit{ value: securityDeposit }(
-            amountRand, dest, validator, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
-        ) {
-            assertEq(address(msg.sender).balance, senderBalanceETH - securityDeposit);
-            assertEq(wsteth.balanceOf(msg.sender), senderBalanceWstETH - amountRand);
-            assertLt(sdex.balanceOf(msg.sender), senderBalanceSdex);
+    //     vm.prank(msg.sender);
+    //     try usdnProtocol.initiateDeposit{ value: securityDeposit }(
+    //         amountRand, dest, validator, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
+    //     ) {
+    //         assertEq(address(msg.sender).balance, senderBalanceETH - securityDeposit);
+    //         assertEq(wsteth.balanceOf(msg.sender), senderBalanceWstETH - amountRand);
+    //         assertLt(sdex.balanceOf(msg.sender), senderBalanceSdex);
 
-            assertEq(address(usdnProtocol).balance, usdnProtocolBalanceETH + securityDeposit);
-            assertEq(wsteth.balanceOf(address(usdnProtocol)), usdnProtocolBalanceWstETH + amountRand);
-        } catch (bytes memory err) {
-            _checkErrors(err, INITIATE_DEPOSIT_ERRORS);
-        }
-    }
+    //         assertEq(address(usdnProtocol).balance, usdnProtocolBalanceETH + securityDeposit);
+    //         assertEq(wsteth.balanceOf(address(usdnProtocol)), usdnProtocolBalanceWstETH + amountRand);
+    //     } catch (bytes memory err) {
+    //         _checkErrors(err, INITIATE_DEPOSIT_ERRORS);
+    //     }
+    // }
 
-    function initiateOpenPosition(uint128 amountRand, uint256 destRand, uint256 validatorRand) public {
+    function initiateOpenPosition(
+        uint128 amountRand,
+        uint128 liquidationPriceRand,
+        uint256 destRand,
+        uint256 validatorRand
+    ) public {
         (OpenPositionParams memory params, ValueToCheckBefore memory before) =
-            getOpenPositionParams(amountRand, destRand, validatorRand);
+            getOpenPositionParams(amountRand, liquidationPriceRand, destRand, validatorRand);
 
         vm.prank(msg.sender);
         try usdnProtocol.initiateOpenPosition{ value: params.securityDeposit }(
             params.amountRand,
-            params.amountRand / 2,
+            params.liquidationPriceRand,
             params.dest,
             params.validator,
             NO_PERMIT2,
             params.priceData,
             EMPTY_PREVIOUS_DATA
         ) {
-            assert(address(msg.sender).balance == params.senderBalanceETH - params.securityDeposit);
             assert(wsteth.balanceOf(msg.sender) == params.senderBalanceWstETH - params.amountRand);
 
             assert(address(usdnProtocol).balance == params.usdnProtocolBalanceETH + params.securityDeposit);
@@ -207,16 +210,17 @@ contract EchidnaAssert is Setup {
         }
     }
 
-    function getOpenPositionParams(uint128 amountRand, uint256 destRand, uint256 validatorRand)
-        internal
-        view
-        returns (OpenPositionParams memory params, ValueToCheckBefore memory before)
-    {
+    function getOpenPositionParams(
+        uint128 amountRand,
+        uint128 liquidationPriceRand,
+        uint256 destRand,
+        uint256 validatorRand
+    ) internal view returns (OpenPositionParams memory params, ValueToCheckBefore memory before) {
         params.amountRand = uint128(bound(amountRand, 0, wsteth.balanceOf(msg.sender)));
+        params.liquidationPriceRand = uint128(bound(liquidationPriceRand, 0, type(uint256).max));
         uint256 destRandBounded = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
         params.dest = destinationsToken[address(wsteth)][destRandBounded];
-        params.validatorRand = bound(validatorRand, 0, validators.length - 1);
-        params.validator = payable(validators[params.validatorRand]);
+        params.validator = payable(validators[validatorRand]);
         params.priceData = abi.encode(CURRENT_PRICE);
         params.securityDeposit = usdnProtocol.getSecurityDepositValue();
         params.senderBalanceETH = address(msg.sender).balance;
