@@ -202,7 +202,8 @@ contract EchidnaAssert is Setup {
         });
 
         vm.prank(msg.sender);
-        try usdnProtocol.initiateOpenPosition{ value: params.securityDeposit }(
+
+        try usdnProtocol.initiateOpenPosition{ value: ethRand }(
             amountRand,
             liquidationPriceRand,
             params.dest,
