@@ -3,6 +3,8 @@ pragma solidity ^0.8.25;
 
 import { Test } from "forge-std/Test.sol";
 
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+
 import { MockOracleMiddleware } from "../../../test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
 import { Sdex } from "../../utils/Sdex.sol";
 import { Weth } from "../../utils/WETH.sol";
@@ -41,7 +43,17 @@ contract Setup is Test {
     UsdnProtocol public usdnProtocol;
     Rebalancer public rebalancer;
 
-    bytes4[] public INITIATE_DEPOSIT_ERRORS = [IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector];
+    bytes4[] public INITIATE_DEPOSIT_ERRORS = [
+        IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow.selector,
+        IUsdnProtocolErrors.UsdnProtocolInvalidAddressValidator.selector,
+        IUsdnProtocolErrors.UsdnProtocolZeroAmount.selector,
+        IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector,
+        IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector,
+        IUsdnProtocolErrors.UsdnProtocolDepositTooSmall.selector,
+        IUsdnProtocolErrors.UsdnProtocolInvalidLongExpo.selector,
+        IUsdnProtocolErrors.UsdnProtocolPendingAction.selector,
+        FixedPointMathLib.FullMulDivFailed.selector
+    ];
     bytes4[] public INITIATE_WITHDRAWAL_ERRORS = [IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector];
 
     constructor() payable {
@@ -163,14 +175,11 @@ contract EchidnaAssert is Setup {
         try usdnProtocol.initiateDeposit{ value: ethRand }(
             amountWstETHRand, dest, validator, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         ) {
-            uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
-
-            assert(address(msg.sender).balance == balanceBefore.senderETH - securityDeposit);
-            assert(wsteth.balanceOf(msg.sender) == balanceBefore.senderWstETH - amountWstETHRand);
-            assert(sdex.balanceOf(msg.sender) < balanceBefore.senderSdex);
-
-            assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH + securityDeposit);
-            assert(wsteth.balanceOf(address(usdnProtocol)) == balanceBefore.usdnProtocolWstETH + amountWstETHRand);
+            assert(address(msg.sender).balance == senderBalanceETH - securityDeposit);
+            assert(wsteth.balanceOf(msg.sender) == senderBalanceWstETH - amountRand);
+            assert(sdex.balanceOf(msg.sender) < senderBalanceSdex);
+            assert(address(usdnProtocol).balance == usdnProtocolBalanceETH + securityDeposit);
+            assert(wsteth.balanceOf(address(usdnProtocol)) == usdnProtocolBalanceWstETH + amountRand);
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_DEPOSIT_ERRORS);
         }
