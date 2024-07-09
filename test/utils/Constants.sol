@@ -16,6 +16,8 @@ address payable constant ADMIN = payable(address(0x12121212121212121212121212121
 address payable constant SET_EXTERNAL_ROLE = payable(address(0x1313131313131313131313131313131313131313));
 address payable constant CRITICAL_FUNCTIONS_ROLE = payable(address(0x1414141414141414141414141414141414141414));
 address payable constant SET_PROTOCOL_PARAMS_ROLE = payable(address(0x1515151515151515151515151515151515151515));
+address payable constant SET_USDN_PARAMS_ROLE = payable(address(0x1616161616161616161616161616161616161616));
+address payable constant SET_OPTIONS_ROLE = payable(address(0x1717171717171717171717171717171717171717));
 
 // generic users
 address payable constant USER_1 = payable(address(0x1111111111111111111111111111111111111111));

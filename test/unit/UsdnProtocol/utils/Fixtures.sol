@@ -6,7 +6,9 @@ import {
     CRITICAL_FUNCTIONS_ROLE,
     DEPLOYER,
     SET_EXTERNAL_ROLE,
-    SET_PROTOCOL_PARAMS_ROLE
+    SET_OPTIONS_ROLE,
+    SET_PROTOCOL_PARAMS_ROLE,
+    SET_USDN_PARAMS_ROLE
 } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { IEventsErrors } from "../../../utils/IEventsErrors.sol";
@@ -118,12 +120,20 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         feeCollector = new FeeCollector();
 
         Roles memory roles = Roles({
-            configRole: SET_EXTERNAL_ROLE,
-            securityRole: CRITICAL_FUNCTIONS_ROLE,
-            actionRole: SET_PROTOCOL_PARAMS_ROLE
+            set_external_role: SET_EXTERNAL_ROLE,
+            critical_functions_role: CRITICAL_FUNCTIONS_ROLE,
+            set_protocol_params_role: SET_PROTOCOL_PARAMS_ROLE,
+            set_usdn_params_role: SET_USDN_PARAMS_ROLE,
+            set_options_role: SET_OPTIONS_ROLE
         });
         if (!testParams.flags.enableRoles) {
-            roles = Roles({ configRole: ADMIN, securityRole: ADMIN, actionRole: ADMIN });
+            roles = Roles({
+                set_external_role: ADMIN,
+                critical_functions_role: ADMIN,
+                set_protocol_params_role: ADMIN,
+                set_usdn_params_role: ADMIN,
+                set_options_role: ADMIN
+            });
         }
 
         protocol = new UsdnProtocolHandler(
@@ -134,7 +144,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         wstETH.approve(address(protocol), type(uint256).max);
 
         vm.stopPrank();
-        vm.startPrank(roles.actionRole);
+        vm.startPrank(roles.set_protocol_params_role);
         if (!testParams.flags.enablePositionFees) {
             protocol.setPositionFeeBps(0);
             protocol.setVaultFeeBps(0);
@@ -145,11 +155,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         if (!testParams.flags.enableFunding) {
             protocol.setFundingSF(0);
             protocol.resetEMA();
-        }
-        if (!testParams.flags.enableUsdnRebase) {
-            // set a high target price to effectively disable rebases
-            protocol.setUsdnRebaseThreshold(type(uint128).max);
-            protocol.setTargetUsdnPrice(type(uint128).max);
         }
         if (!testParams.flags.enableSecurityDeposit) {
             protocol.setSecurityDepositValue(0);
@@ -171,11 +176,19 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         }
         vm.stopPrank();
 
+        vm.startPrank(roles.set_usdn_params_role);
+        if (!testParams.flags.enableUsdnRebase) {
+            // set a high target price to effectively disable rebases
+            protocol.setUsdnRebaseThreshold(type(uint128).max);
+            protocol.setTargetUsdnPrice(type(uint128).max);
+        }
+        vm.stopPrank();
+
         vm.prank(DEPLOYER);
         rebalancer = new RebalancerHandler(protocol);
 
         if (testParams.flags.enableRebalancer) {
-            vm.prank(roles.configRole);
+            vm.prank(roles.set_external_role);
             protocol.setRebalancer(rebalancer);
         }
 
@@ -351,7 +364,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
      * @param b Second `PendingAction`
      * @param err Assert message prefix
      */
-    function _assertActionsEqual(PendingAction memory a, PendingAction memory b, string memory err) internal {
+    function _assertActionsEqual(PendingAction memory a, PendingAction memory b, string memory err) internal pure {
         assertTrue(a.action == b.action, string.concat(err, " - action type"));
         assertEq(a.timestamp, b.timestamp, string.concat(err, " - action timestamp"));
         assertEq(a.to, b.to, string.concat(err, " - action to"));

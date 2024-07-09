@@ -51,7 +51,13 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
             liquidationRewardsManager,
             100, // tick spacing 100 = 1%
             ADMIN, // Fee collector
-            Types.Roles({ configRole: ADMIN, securityRole: ADMIN, actionRole: ADMIN })
+            Types.Roles({
+                set_external_role: ADMIN,
+                critical_functions_role: ADMIN,
+                set_protocol_params_role: ADMIN,
+                set_usdn_params_role: ADMIN,
+                set_options_role: ADMIN
+            })
         );
         rebalancer = new RebalancerHandler(usdnProtocol);
 

@@ -11,7 +11,13 @@ import { UsdnProtocol } from "../../../../src/UsdnProtocol/UsdnProtocol.sol";
  * @custom:background Given a protocol instance that was initialized with default params
  */
 contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
-    Roles roles = Roles({ configRole: address(0), securityRole: address(0), actionRole: address(0) });
+    Roles roles = Roles({
+        set_external_role: address(0),
+        critical_functions_role: address(0),
+        set_protocol_params_role: address(0),
+        set_usdn_params_role: address(0),
+        set_options_role: address(0)
+    });
 
     function setUp() public {
         _setUp(DEFAULT_PARAMS);

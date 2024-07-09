@@ -38,6 +38,12 @@ contract UsdnProtocolStorage is
     bytes32 public constant SET_PROTOCOL_PARAMS_ROLE = keccak256("SET_PROTOCOL_PARAMS_ROLE");
 
     /// @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant SET_USDN_PARAMS_ROLE = keccak256("SET_USDN_PARAMS_ROLE");
+
+    /// @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant SET_OPTIONS_ROLE = keccak256("SET_OPTIONS_ROLE");
+
+    /// @inheritdoc IUsdnProtocolStorage
     bytes32 public constant ADMIN_SET_EXTERNAL_ROLE = keccak256("ADMIN_SET_EXTERNAL_ROLE");
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -45,6 +51,12 @@ contract UsdnProtocolStorage is
 
     /// @inheritdoc IUsdnProtocolStorage
     bytes32 public constant ADMIN_SET_PROTOCOL_PARAMS_ROLE = keccak256("ADMIN_SET_PROTOCOL_PARAMS_ROLE");
+
+    /// @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant ADMIN_SET_USDN_PARAMS_ROLE = keccak256("ADMIN_SET_USDN_PARAMS_ROLE");
+
+    /// @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant ADMIN_SET_OPTIONS_ROLE = keccak256("ADMIN_SET_OPTIONS_ROLE");
 
     /**
      * @notice Constructor
@@ -71,9 +83,14 @@ contract UsdnProtocolStorage is
         _setRoleAdmin(SET_EXTERNAL_ROLE, ADMIN_SET_EXTERNAL_ROLE);
         _setRoleAdmin(CRITICAL_FUNCTIONS_ROLE, ADMIN_CRITICAL_FUNCTIONS_ROLE);
         _setRoleAdmin(SET_PROTOCOL_PARAMS_ROLE, ADMIN_SET_PROTOCOL_PARAMS_ROLE);
-        _grantRole(SET_EXTERNAL_ROLE, roles.configRole);
-        _grantRole(CRITICAL_FUNCTIONS_ROLE, roles.securityRole);
-        _grantRole(SET_PROTOCOL_PARAMS_ROLE, roles.actionRole);
+        _setRoleAdmin(SET_USDN_PARAMS_ROLE, ADMIN_SET_USDN_PARAMS_ROLE);
+        _setRoleAdmin(SET_OPTIONS_ROLE, ADMIN_SET_OPTIONS_ROLE);
+        _grantRole(SET_EXTERNAL_ROLE, roles.set_external_role);
+        _grantRole(CRITICAL_FUNCTIONS_ROLE, roles.critical_functions_role);
+        _grantRole(SET_PROTOCOL_PARAMS_ROLE, roles.set_protocol_params_role);
+        _grantRole(SET_USDN_PARAMS_ROLE, roles.set_usdn_params_role);
+        _grantRole(SET_OPTIONS_ROLE, roles.set_options_role);
+
         // parameters
         s._minLeverage = 10 ** Constants.LEVERAGE_DECIMALS + 10 ** 12;
         s._maxLeverage = 10 * 10 ** Constants.LEVERAGE_DECIMALS;

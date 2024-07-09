@@ -43,10 +43,10 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ROLE"));
         protocol.setLiquidationPenalty(0);
 
-        vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ROLE"));
+        vm.expectRevert(customError("SET_OPTIONS_ROLE"));
         protocol.setSafetyMarginBps(0);
 
-        vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ROLE"));
+        vm.expectRevert(customError("SET_OPTIONS_ROLE"));
         protocol.setLiquidationIteration(0);
 
         vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ROLE"));
@@ -64,7 +64,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         vm.expectRevert(customError("SET_EXTERNAL_ROLE"));
         protocol.setFeeCollector(address(this));
 
-        vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ROLE"));
+        vm.expectRevert(customError("SET_OPTIONS_ROLE"));
         protocol.setFeeThreshold(0);
 
         vm.expectRevert(customError("SET_EXTERNAL_ROLE"));

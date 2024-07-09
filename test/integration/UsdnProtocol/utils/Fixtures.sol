@@ -20,7 +20,9 @@ import {
     REDSTONE_ETH_USD,
     SDEX,
     SET_EXTERNAL_ROLE,
+    SET_OPTIONS_ROLE,
     SET_PROTOCOL_PARAMS_ROLE,
+    SET_USDN_PARAMS_ROLE,
     WSTETH
 } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
@@ -77,9 +79,11 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
     });
 
     Roles roles = Roles({
-        configRole: SET_EXTERNAL_ROLE,
-        securityRole: CRITICAL_FUNCTIONS_ROLE,
-        actionRole: SET_PROTOCOL_PARAMS_ROLE
+        set_external_role: SET_EXTERNAL_ROLE,
+        critical_functions_role: CRITICAL_FUNCTIONS_ROLE,
+        set_protocol_params_role: SET_PROTOCOL_PARAMS_ROLE,
+        set_usdn_params_role: SET_USDN_PARAMS_ROLE,
+        set_options_role: SET_OPTIONS_ROLE
     });
 
     Usdn public usdn;
@@ -147,7 +151,13 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         usdn = new Usdn(address(0), address(0));
 
         if (!testParams.enableRoles) {
-            roles = Roles({ configRole: ADMIN, securityRole: ADMIN, actionRole: ADMIN });
+            roles = Roles({
+                set_external_role: ADMIN,
+                critical_functions_role: ADMIN,
+                set_protocol_params_role: ADMIN,
+                set_usdn_params_role: ADMIN,
+                set_options_role: ADMIN
+            });
         }
 
         protocol = new UsdnProtocolHandler(
@@ -170,7 +180,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             testParams.initialDeposit, testParams.initialLong, testParams.initialLiqPrice, ""
         );
         vm.stopPrank();
-        vm.prank(roles.configRole);
+        vm.prank(roles.set_external_role);
         protocol.setRebalancer(rebalancer);
         params = testParams;
     }
@@ -212,7 +222,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
         tickSpacing_ = protocol.getTickSpacing();
 
-        vm.startPrank(roles.actionRole);
+        vm.startPrank(roles.set_protocol_params_role);
         protocol.setFundingSF(0);
         protocol.resetEMA();
 
@@ -273,7 +283,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
         tickToLiquidateData_ = protocol.getTickData(posToLiquidate_.tick);
 
-        vm.prank(roles.actionRole);
+        vm.prank(roles.set_protocol_params_role);
         protocol.setExpoImbalanceLimits(
             uint256(defaultLimits.depositExpoImbalanceLimitBps),
             uint256(defaultLimits.withdrawalExpoImbalanceLimitBps),

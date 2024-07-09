@@ -39,6 +39,18 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function SET_PROTOCOL_PARAMS_ROLE() external pure returns (bytes32);
 
     /**
+     * @notice The set_options role signature
+     * @return Get the role signature
+     */
+    function SET_OPTIONS_ROLE() external pure returns (bytes32);
+
+    /**
+     * @notice The admin_set_external role signature
+     * @return Get the role signature
+     */
+    function SET_USDN_PARAMS_ROLE() external pure returns (bytes32);
+
+    /**
      * @notice The admin_set_external role signature
      * @return Get the role signature
      */
@@ -55,6 +67,18 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * @return Get the role signature
      */
     function ADMIN_SET_PROTOCOL_PARAMS_ROLE() external pure returns (bytes32);
+
+    /**
+     * @notice The admin_set_usdn_params role signature
+     * @return Get the role signature
+     */
+    function ADMIN_SET_USDN_PARAMS_ROLE() external pure returns (bytes32);
+
+    /**
+     * @notice The admin_set_options role signature
+     * @return Get the role signature
+     */
+    function ADMIN_SET_OPTIONS_ROLE() external pure returns (bytes32);
 
     /**
      * @notice Get the number of decimals of a position's leverage

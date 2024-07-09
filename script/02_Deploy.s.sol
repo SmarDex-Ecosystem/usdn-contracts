@@ -64,9 +64,11 @@ contract Deploy is Script {
             100,
             vm.envAddress("FEE_COLLECTOR"),
             Types.Roles({
-                configRole: vm.envAddress("DEPLOYER_ADDRESS"),
-                securityRole: vm.envAddress("DEPLOYER_ADDRESS"),
-                actionRole: vm.envAddress("DEPLOYER_ADDRESS")
+                set_external_role: vm.envAddress("DEPLOYER_ADDRESS"),
+                critical_functions_role: vm.envAddress("DEPLOYER_ADDRESS"),
+                set_protocol_params_role: vm.envAddress("DEPLOYER_ADDRESS"),
+                set_usdn_params_role: vm.envAddress("DEPLOYER_ADDRESS"),
+                set_options_role: vm.envAddress("DEPLOYER_ADDRESS")
             })
         );
 

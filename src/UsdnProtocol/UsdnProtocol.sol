@@ -88,12 +88,12 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolLong, UsdnProtocolVault, Usd
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setSafetyMarginBps(uint256 newSafetyMarginBps) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
+    function setSafetyMarginBps(uint256 newSafetyMarginBps) external onlyRole(SET_OPTIONS_ROLE) {
         Setters.setSafetyMarginBps(s, newSafetyMarginBps);
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setLiquidationIteration(uint16 newLiquidationIteration) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
+    function setLiquidationIteration(uint16 newLiquidationIteration) external onlyRole(SET_OPTIONS_ROLE) {
         Setters.setLiquidationIteration(s, newLiquidationIteration);
     }
 
@@ -138,7 +138,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolLong, UsdnProtocolVault, Usd
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setFeeThreshold(uint256 newFeeThreshold) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
+    function setFeeThreshold(uint256 newFeeThreshold) external onlyRole(SET_OPTIONS_ROLE) {
         Setters.setFeeThreshold(s, newFeeThreshold);
     }
 
@@ -161,17 +161,17 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolLong, UsdnProtocolVault, Usd
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setTargetUsdnPrice(uint128 newPrice) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
+    function setTargetUsdnPrice(uint128 newPrice) external onlyRole(SET_USDN_PARAMS_ROLE) {
         Setters.setTargetUsdnPrice(s, newPrice);
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setUsdnRebaseThreshold(uint128 newThreshold) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
+    function setUsdnRebaseThreshold(uint128 newThreshold) external onlyRole(SET_USDN_PARAMS_ROLE) {
         Setters.setUsdnRebaseThreshold(s, newThreshold);
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setUsdnRebaseInterval(uint256 newInterval) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
+    function setUsdnRebaseInterval(uint256 newInterval) external onlyRole(SET_USDN_PARAMS_ROLE) {
         Setters.setUsdnRebaseInterval(s, newInterval);
     }
 
