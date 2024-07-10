@@ -19,7 +19,6 @@ import { IUsdnProtocolErrors } from "../../../src/interfaces/UsdnProtocol/IUsdnP
 import { IUsdnProtocolTypes } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Permit2TokenBitfield } from "../../../src/libraries/Permit2TokenBitfield.sol";
 import { SignedMath } from "../../../src/libraries/SignedMath.sol";
-import { SignedMath } from "../../../src/libraries/SignedMath.sol";
 
 contract Setup is Test {
     address public constant DEPLOYER = address(0x10000);
@@ -171,7 +170,7 @@ contract EchidnaAssert is Setup {
             usdnProtocolWstETH: wsteth.balanceOf(address(usdnProtocol))
         });
 
-        vm.prank(DEPLOYER);
+        vm.prank(msg.sender);
         try usdnProtocol.initiateDeposit{ value: ethRand }(
             amountWstETHRand, dest, validator, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         ) {
@@ -209,8 +208,7 @@ contract EchidnaAssert is Setup {
             usdnProtocolBalanceWstETH: wsteth.balanceOf(address(usdnProtocol))
         });
 
-        vm.prank(DEPLOYER);
-
+        vm.prank(msg.sender);
         try usdnProtocol.initiateOpenPosition{ value: ethRand }(
             amountRand,
             liquidationPriceRand,
