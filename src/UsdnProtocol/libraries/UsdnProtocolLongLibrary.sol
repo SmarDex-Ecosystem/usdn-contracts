@@ -119,18 +119,6 @@ library UsdnProtocolLongLibrary {
     }
 
     /// @notice See {IUsdnProtocolLong}
-    function getMinLiquidationPrice(Types.Storage storage s, uint128 price)
-        public
-        view
-        returns (uint128 liquidationPrice_)
-    {
-        liquidationPrice_ = _getLiquidationPrice(price, uint128(s._minLeverage));
-        int24 tick = getEffectiveTickForPrice(s, liquidationPrice_);
-        // slither-disable-next-line write-after-write
-        liquidationPrice_ = getEffectivePriceForTick(s, tick + s._tickSpacing);
-    }
-
-    /// @notice See {IUsdnProtocolLong}
     function getPositionValue(
         Types.Storage storage s,
         Types.PositionId calldata posId,
@@ -229,6 +217,11 @@ library UsdnProtocolLongLibrary {
             int256 fee = fundAsset * Utils.toInt256(s._protocolFeeBps) / int256(Constants.BPS_DIVISOR);
             // fees have the same sign as fundAsset (negative here), so we need to sub them
             available_ = Core._longAssetAvailable(s, currentPrice).safeSub(fundAsset - fee);
+        }
+
+        int256 totalBalance = (s._balanceLong + s._balanceVault).toInt256();
+        if (available_ > totalBalance) {
+            available_ = totalBalance;
         }
     }
 

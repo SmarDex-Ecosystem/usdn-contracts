@@ -83,7 +83,7 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
         int24 expectedTick =
             expectedTickWithoutPenalty + (int24(uint24(tickToLiquidateData.liquidationPenalty)) * tickSpacing);
         uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
-        _expectEmits(wstEthPrice, amountInRebalancer + bonus, liqPriceWithoutPenalty, expectedTick, 1);
+        _expectEmits(wstEthPrice, amountInRebalancer, bonus, liqPriceWithoutPenalty, expectedTick, 1);
         protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA, 1);
 
         imbalance = protocol.i_calcImbalanceCloseBps(
@@ -153,11 +153,14 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
     function _expectEmits(
         uint128 price,
         uint128 amount,
+        uint128 bonus,
         uint128 liqPriceWithoutPenalty,
         int24 tick,
         uint128 newPositionVersion
     ) internal {
-        uint128 positionTotalExpo = protocol.i_calcPositionTotalExpo(amount, price, liqPriceWithoutPenalty);
+        uint128 positionTotalExpo = protocol.i_calcPositionTotalExpo(amount + bonus, price, liqPriceWithoutPenalty);
+        uint256 defaultAccMultiplier = rebalancer.MULTIPLIER_FACTOR();
+        PositionId memory expectedPositionId = PositionId(tick, 0, 0);
 
         vm.expectEmit(false, false, false, false);
         emit LiquidatedTick(0, 0, 0, 0, 0);
@@ -167,16 +170,16 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
             address(rebalancer),
             uint40(block.timestamp),
             positionTotalExpo,
-            amount,
+            amount + bonus,
             price,
-            PositionId(tick, 0, 0)
+            expectedPositionId
         );
         vm.expectEmit(address(protocol));
         emit ValidatedOpenPosition(
-            address(rebalancer), address(rebalancer), positionTotalExpo, price, PositionId(tick, 0, 0)
+            address(rebalancer), address(rebalancer), positionTotalExpo, price, expectedPositionId
         );
         vm.expectEmit(address(rebalancer));
-        emit PositionVersionUpdated(newPositionVersion);
+        emit PositionVersionUpdated(newPositionVersion, defaultAccMultiplier, amount, expectedPositionId);
     }
 
     receive() external payable { }

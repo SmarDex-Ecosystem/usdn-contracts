@@ -58,14 +58,6 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
         returns (Position memory pos_, uint8 liquidationPenalty_);
 
     /**
-     * @notice Get the minimum acceptable desired liquidation price for a new long position
-     * @dev This takes into account the current value of the liquidation price multiplier and the minimum leverage value
-     * @param price The current asset price
-     * @return The minimum acceptable liquidation price
-     */
-    function getMinLiquidationPrice(uint128 price) external view returns (uint128);
-
-    /**
      * @notice Get the value of a long position when the asset price is equal to the given price, at the given timestamp
      * @dev If the current price is smaller than the liquidation price of the position without a liquidation penalty,
      * then the value of the position is negative
