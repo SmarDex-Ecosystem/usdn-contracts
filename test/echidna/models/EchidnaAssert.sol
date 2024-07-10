@@ -128,9 +128,6 @@ contract EchidnaAssert is Setup {
         uint256 usdnProtocolETH;
         uint256 usdnProtocolUsdn;
     }
-    /* -------------------------------------------------------------------------- */
-    /*                             USDN Protocol                                  */
-    /* -------------------------------------------------------------------------- */
 
     struct OpenPositionParams {
         address dest;
@@ -140,8 +137,12 @@ contract EchidnaAssert is Setup {
         uint256 senderBalanceWstETH;
         uint256 usdnProtocolBalanceETH;
         uint256 usdnProtocolBalanceWstETH;
+        uint64 securityDeposit;
     }
 
+    /* -------------------------------------------------------------------------- */
+    /*                             USDN Protocol                                  */
+    /* -------------------------------------------------------------------------- */
     function initiateDeposit(
         uint128 amountWstETHRand,
         uint128 amountSdexRand,
@@ -205,7 +206,8 @@ contract EchidnaAssert is Setup {
             senderBalanceETH: address(msg.sender).balance,
             senderBalanceWstETH: wsteth.balanceOf(msg.sender),
             usdnProtocolBalanceETH: address(usdnProtocol).balance,
-            usdnProtocolBalanceWstETH: wsteth.balanceOf(address(usdnProtocol))
+            usdnProtocolBalanceWstETH: wsteth.balanceOf(address(usdnProtocol)),
+            securityDeposit: usdnProtocol.getSecurityDepositValue()
         });
 
         vm.prank(msg.sender);
@@ -219,7 +221,12 @@ contract EchidnaAssert is Setup {
             EMPTY_PREVIOUS_DATA
         ) {
             uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
+
+            assert(address(usdnProtocol).balance == params.usdnProtocolBalanceETH + params.securityDeposit);
             assert(address(msg.sender).balance == params.senderBalanceETH - securityDeposit);
+
+            assert(wsteth.balanceOf(address(usdnProtocol)) == params.usdnProtocolBalanceWstETH + amountRand);
+            assert(wsteth.balanceOf(msg.sender) == params.senderBalanceWstETH - amountRand);
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_OPEN_ERRORS);
         }
