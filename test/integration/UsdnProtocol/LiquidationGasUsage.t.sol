@@ -241,7 +241,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
 
                 // sanity check, make sure the rebalancer was triggered
                 vm.expectEmit(false, false, false, false);
-                emit PositionVersionUpdated(0);
+                emit PositionVersionUpdated(0, 0, 0, PositionId(0, 0, 0));
             }
 
             uint256 startGas = gasleft();
