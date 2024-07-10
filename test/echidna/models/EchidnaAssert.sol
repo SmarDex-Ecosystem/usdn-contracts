@@ -60,6 +60,11 @@ contract Setup is Test {
         SignedMath.SignedMathDivideByZero.selector
     ];
 
+    bytes4[] public VALIDATE_WITHDRAWAL_ERRORS = [
+        IUsdnProtocolErrors.UsdnProtocolInvalidAddressValidator.selector,
+        IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector
+    ];
+
     constructor() payable {
         vm.warp(1_709_251_200);
         //TODO see to fuzz these data
@@ -122,6 +127,14 @@ contract EchidnaAssert is Setup {
         uint256 senderUsdn;
         uint256 usdnProtocolETH;
         uint256 usdnProtocolUsdn;
+    }
+
+    struct ValidateWithdrawalBalanceBefore {
+        uint256 senderETH;
+        uint256 senderWstETH;
+        uint256 usdnProtocolETH;
+        uint256 usdnProtocolUsdn;
+        uint256 usdnProtocolWstETH;
     }
     /* -------------------------------------------------------------------------- */
     /*                             USDN Protocol                                  */
@@ -227,6 +240,35 @@ contract EchidnaAssert is Setup {
             assert(usdn.sharesOf(address(usdnProtocol)) == balanceBefore.usdnProtocolUsdn + usdnShares);
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_WITHDRAWAL_ERRORS);
+        }
+    }
+
+    function validateWithdrawal(uint256 ethRand, uint256 validatorRand, uint256 currentPrice) public {
+        validatorRand = bound(validatorRand, 0, validators.length - 1);
+        address payable validator = payable(validators[validatorRand]);
+
+        bytes memory priceData = abi.encode(currentPrice);
+
+        ValidateWithdrawalBalanceBefore memory balanceBefore = ValidateWithdrawalBalanceBefore({
+            senderETH: address(msg.sender).balance,
+            senderWstETH: wsteth.balanceOf(msg.sender),
+            usdnProtocolETH: address(usdnProtocol).balance,
+            usdnProtocolUsdn: usdn.sharesOf(address(usdnProtocol)),
+            usdnProtocolWstETH: wsteth.balanceOf(address(usdnProtocol))
+        });
+
+        vm.prank(msg.sender);
+        try usdnProtocol.validateWithdrawal{ value: ethRand }(validator, priceData, EMPTY_PREVIOUS_DATA) {
+            uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
+
+            assert(address(msg.sender).balance == balanceBefore.senderETH + securityDeposit);
+            assert(wsteth.balanceOf(msg.sender) > balanceBefore.senderWstETH);
+
+            assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH - securityDeposit);
+            assert(usdn.sharesOf(msg.sender) < balanceBefore.usdnProtocolUsdn);
+            assert(usdn.sharesOf(address(usdnProtocol)) < balanceBefore.usdnProtocolWstETH);
+        } catch (bytes memory err) {
+            _checkErrors(err, VALIDATE_WITHDRAWAL_ERRORS);
         }
     }
 }
