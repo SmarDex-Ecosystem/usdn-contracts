@@ -124,12 +124,13 @@ library UsdnProtocolLongLibrary {
         view
         returns (uint128 liquidationPrice_)
     {
-        liquidationPrice_ = _getLiquidationPrice(price, uint128(s._minLeverage));
         HugeUint.Uint512 memory acc = s._liqMultiplierAccumulator;
         int24 tickSpacing = s._tickSpacing;
+
+        uint128 rawLiquidationPrice = _getLiquidationPrice(price, uint128(s._minLeverage));
         uint256 longTradingExpo = longTradingExpoWithFunding(s, price, timestamp).toUint256();
-        int24 tick = getEffectiveTickForPrice(liquidationPrice_, price, longTradingExpo, acc, tickSpacing);
-        // slither-disable-next-line write-after-write
+
+        int24 tick = getEffectiveTickForPrice(rawLiquidationPrice, price, longTradingExpo, acc, tickSpacing);
         liquidationPrice_ = getEffectivePriceForTick(
             tick + (tickSpacing * int24(uint24(s._liquidationPenalty + 2))), price, longTradingExpo, acc
         );

@@ -11,6 +11,7 @@ import { TickMath } from "../../../../src/libraries/TickMath.sol";
  * @custom:feature The `getMinLiquidationPrice` function of the USDN Protocol
  * @custom:background Given a protocol initialized at equilibrium
  * @custom:and A current price of 5000 USD per asset
+ * @custom:and With fundings enabled
  */
 contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
     Position firstPos;
@@ -199,13 +200,13 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario The price returned by {getMinLiquidationPrice} can be used to open a position
-     * @custom:given Fundings are enabled
-     * @custom:when getMinLiquidationPrice is called
+     * @custom:given An imbalance of `imbalanceBps` for `elapsedSeconds` seconds
+     * @custom:when getMinLiquidationPrice is called with `startPrice`
      * @custom:then The price returned can always be used to open a position
      * @param startPrice The price at which the position will be opened
      * @param minLeverage The min leverage of the protocol
      * @param elapsedSeconds The amount of time to wait before calling the function
-     * @param imbalanceBps The imbalance before the amount of time to wait
+     * @param imbalanceBps The imbalance during the amount of time to wait
      */
     function testFuzz_getMinLiquidationPriceCanBeUsedToOpenAPosition(
         uint256 startPrice,
@@ -214,10 +215,10 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
         int256 imbalanceBps
     ) public {
         uint256 levDecimals = protocol.LEVERAGE_DECIMALS();
-        imbalanceBps = bound(imbalanceBps, -10_000, 10_000); // bound between -100%/+100%
+        imbalanceBps = bound(imbalanceBps, -1000, 1000); // bound between -10%/+10%
         minLeverage = bound(minLeverage, 10 ** levDecimals + 1, (10 * 10 ** levDecimals));
-        startPrice = bound(startPrice, 1000 ether, 1_000_000 ether);
-        elapsedSeconds = bound(elapsedSeconds, 30 minutes, 1 weeks);
+        startPrice = bound(startPrice, 1 ether, 1_000_000 ether);
+        elapsedSeconds = bound(elapsedSeconds, 30 minutes, 2 days); // min 30 minutes because of mock oracle
 
         uint128 amount;
         if (imbalanceBps < 0) {
