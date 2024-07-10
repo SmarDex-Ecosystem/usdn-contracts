@@ -30,8 +30,6 @@ contract TestRebalancerInitiateClosePosition is
         (, amountInRebalancer,,) = _setUpImbalanced();
         skip(5 minutes);
 
-        vm.prank(ADMIN);
-
         mockPyth.setPrice(1280 ether / 1e10);
         mockPyth.setLastPublishTime(block.timestamp);
 
