@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
+import { Vm } from "forge-std/Vm.sol";
+
 import { ADMIN } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
@@ -200,25 +202,27 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario The price returned by {getMinLiquidationPrice} can be used to open a position
-     * @custom:given An imbalance of `imbalanceBps` for `elapsedSeconds` seconds
-     * @custom:when getMinLiquidationPrice is called with `startPrice`
+     * @custom:given An imbalance of `imbalanceBps` between -10% and 10%
+     * @custom:and A min leverage of `minLeverage`
+     * @custom:when getMinLiquidationPrice is called with `startPrice` after waiting for a variable duration
      * @custom:then The price returned can always be used to open a position
      * @param startPrice The price at which the position will be opened
      * @param minLeverage The min leverage of the protocol
-     * @param elapsedSeconds The amount of time to wait before calling the function
-     * @param imbalanceBps The imbalance during the amount of time to wait
+     * @param maxIteration An upper bound on the number of 1 hour skips we make
+     * @param imbalanceBps The imbalance in the protocol
      */
     function testFuzz_getMinLiquidationPriceCanBeUsedToOpenAPosition(
         uint256 startPrice,
         uint256 minLeverage,
-        uint256 elapsedSeconds,
+        uint16 maxIteration,
         int256 imbalanceBps
     ) public {
-        uint256 levDecimals = protocol.LEVERAGE_DECIMALS();
+        emit log("imbalanceBps:");
         imbalanceBps = bound(imbalanceBps, -1000, 1000); // bound between -10%/+10%
-        minLeverage = bound(minLeverage, 10 ** levDecimals + 1, (10 * 10 ** levDecimals));
-        startPrice = bound(startPrice, 1 ether, 1_000_000 ether);
-        elapsedSeconds = bound(elapsedSeconds, 30 minutes, 2 days); // min 30 minutes because of mock oracle
+        emit log("minLeverage:");
+        minLeverage = bound(minLeverage, protocol.getMinLeverage(), protocol.getMaxLeverage());
+        emit log("startPrice:");
+        startPrice = bound(startPrice, params.initialPrice, 1_000_000 ether);
 
         uint128 amount;
         if (imbalanceBps < 0) {
@@ -242,10 +246,30 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
         protocol.setMinLeverage(minLeverage);
         vm.stopPrank();
 
-        skip(elapsedSeconds);
+        skip(30 minutes);
+        for (uint256 i = 0; i < maxIteration; i++) {
+            skip(1 hours);
+            int256 longTradingExpo =
+                protocol.longTradingExpoWithFunding(uint128(startPrice), uint128(block.timestamp - 30 minutes));
+            if (longTradingExpo < 0) {
+                vm.warp(block.timestamp - 1 hours);
+                break;
+            }
+            if (
+                protocol.getEffectivePriceForTick(
+                    protocol.getHighestPopulatedTick(),
+                    uint128(startPrice),
+                    uint256(longTradingExpo),
+                    protocol.getLiqMultiplierAccumulator()
+                ) < startPrice
+            ) {
+                vm.warp(block.timestamp - 1 hours);
+                break;
+            }
+        }
         uint128 liqPrice = protocol.getMinLiquidationPrice(uint128(startPrice), uint128(block.timestamp - 30 minutes));
-
         wstETH.mintAndApprove(address(this), 1 ether, address(protocol), 1 ether);
+        vm.recordLogs();
         protocol.initiateOpenPosition(
             1 ether,
             liqPrice,
@@ -255,5 +279,10 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
             abi.encode(startPrice),
             EMPTY_PREVIOUS_DATA
         );
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        for (uint256 i = 0; i < logs.length; i++) {
+            bytes32 topic = logs[i].topics[0];
+            assertTrue(topic != LiquidatedTick.selector, "there should be no liquidations");
+        }
     }
 }

@@ -124,17 +124,30 @@ library UsdnProtocolLongLibrary {
         view
         returns (uint128 liquidationPrice_)
     {
+        uint128 minLeverage = uint128(s._minLeverage);
+        uint128 rawLiquidationPrice = _getLiquidationPrice(price, minLeverage);
+        uint256 longTradingExpo = longTradingExpoWithFunding(s, price, timestamp).toUint256();
         HugeUint.Uint512 memory acc = s._liqMultiplierAccumulator;
         int24 tickSpacing = s._tickSpacing;
 
-        uint128 rawLiquidationPrice = _getLiquidationPrice(price, uint128(s._minLeverage));
-        uint256 longTradingExpo = longTradingExpoWithFunding(s, price, timestamp).toUint256();
+        // initial candidate tick
+        int24 tick = getEffectiveTickForPriceRoundUp(rawLiquidationPrice, price, longTradingExpo, acc, tickSpacing);
 
-        int24 tick = getEffectiveTickForPrice(rawLiquidationPrice, price, longTradingExpo, acc, tickSpacing);
-        // add 2 tick spacing on top of the liquidation penalty to compensate the rounding down in initiateOpenPosition
+        // corresponding liqPrice
+        uint128 liqPrice = getEffectivePriceForTick(tick, price, longTradingExpo, acc);
+
+        // check if the leverage of this price is lower than the minimum leverage and add 1 tick spacing to the tick
+        // if it is
+        uint256 leverage = _getLeverage(price, liqPrice);
+        if (leverage < minLeverage) {
+            tick += tickSpacing;
+        }
+
+        // we add a few wei's to account for any imprecision in the calculations and make sure the rounding down
+        // in `initiateOpenPosition` doesn't make the liquidation price lower than the minimum tick
         liquidationPrice_ = getEffectivePriceForTick(
-            tick + (tickSpacing * int24(uint24(s._liquidationPenalty + 2))), price, longTradingExpo, acc
-        );
+            tick + (tickSpacing * int24(uint24(s._liquidationPenalty))), price, longTradingExpo, acc
+        ) + 100_000;
     }
 
     /// @notice See {IUsdnProtocolLong}
@@ -199,6 +212,47 @@ library UsdnProtocolLongLibrary {
             // rounding is desirable here
             // slither-disable-next-line divide-before-multiply
             tick_ = (tick_ / tickSpacing) * tickSpacing;
+        }
+    }
+
+    /**
+     * @notice Get the effective tick for a price, rounding up to the next valid tick spacing
+     * @param price The price for which to get the effective tick
+     * @param assetPrice The price of the asset
+     * @param longTradingExpo The long trading expo
+     * @param accumulator The liquidation multiplier accumulator
+     * @param tickSpacing The tick spacing
+     * @return tick_ The effective tick for the price, rounded up to the next tick spacing
+     */
+    function getEffectiveTickForPriceRoundUp(
+        uint128 price,
+        uint256 assetPrice,
+        uint256 longTradingExpo,
+        HugeUint.Uint512 memory accumulator,
+        int24 tickSpacing
+    ) public pure returns (int24 tick_) {
+        // unadjust price with liquidation multiplier
+        uint256 unadjustedPrice = _unadjustPrice(price, assetPrice, longTradingExpo, accumulator);
+
+        if (unadjustedPrice < TickMath.MIN_PRICE) {
+            return TickMath.minUsableTick(tickSpacing);
+        }
+
+        tick_ = TickMath.getTickAtPrice(unadjustedPrice);
+
+        // round up to the next valid tick according to _tickSpacing (towards positive infinity)
+        if (tick_ < 0) {
+            // rounding is desirable here
+            // slither-disable-next-line divide-before-multiply
+            tick_ = (tick_ / tickSpacing) * tickSpacing;
+        } else {
+            tick_ = int24(int256(FixedPointMathLib.divUp(uint256(int256(tick_)), uint256(int256(tickSpacing)))))
+                * tickSpacing;
+            // avoid invalid ticks
+            int24 maxUsableTick = TickMath.maxUsableTick(tickSpacing);
+            if (tick_ > maxUsableTick) {
+                tick_ = maxUsableTick;
+            }
         }
     }
 
