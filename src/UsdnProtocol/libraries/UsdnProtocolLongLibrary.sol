@@ -119,38 +119,6 @@ library UsdnProtocolLongLibrary {
     }
 
     /// @notice See {IUsdnProtocolLong}
-    function getMinLiquidationPrice(Types.Storage storage s, uint128 price, uint128 timestamp)
-        public
-        view
-        returns (uint128 liquidationPrice_)
-    {
-        uint128 minLeverage = uint128(s._minLeverage);
-        uint128 rawLiquidationPrice = _getLiquidationPrice(price, minLeverage);
-        uint256 longTradingExpo = longTradingExpoWithFunding(s, price, timestamp).toUint256();
-        HugeUint.Uint512 memory acc = s._liqMultiplierAccumulator;
-        int24 tickSpacing = s._tickSpacing;
-
-        // initial candidate tick
-        int24 tick = getEffectiveTickForPriceRoundUp(rawLiquidationPrice, price, longTradingExpo, acc, tickSpacing);
-
-        // corresponding liqPrice
-        uint128 liqPrice = getEffectivePriceForTick(tick, price, longTradingExpo, acc);
-
-        // check if the leverage of this price is lower than the minimum leverage and add 1 tick spacing to the tick
-        // if it is
-        uint256 leverage = _getLeverage(price, liqPrice);
-        if (leverage < minLeverage) {
-            tick += tickSpacing;
-        }
-
-        // we add a few wei's to account for any imprecision in the calculations and make sure the rounding down
-        // in `initiateOpenPosition` doesn't make the liquidation price lower than the minimum tick
-        liquidationPrice_ = getEffectivePriceForTick(
-            tick + (tickSpacing * int24(uint24(s._liquidationPenalty))), price, longTradingExpo, acc
-        ) + 100_000;
-    }
-
-    /// @notice See {IUsdnProtocolLong}
     function getPositionValue(
         Types.Storage storage s,
         Types.PositionId calldata posId,
