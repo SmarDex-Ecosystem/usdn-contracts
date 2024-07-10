@@ -10,7 +10,7 @@ import { IUsdn } from "../../src/interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { EchidnaAssert } from "./models/EchidnaAssert.sol";
 
-contract TestForkEchidna is Test {
+contract TestEchidna is Test {
     EchidnaAssert public echidna;
     UsdnProtocol public usdnProtocol;
 
