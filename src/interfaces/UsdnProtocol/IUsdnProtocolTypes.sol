@@ -318,7 +318,7 @@ interface IUsdnProtocolTypes {
         bytes32 tickHash;
         Position pos;
         uint128 liqPriceWithoutPenalty;
-        uint128 leverage;
+        uint256 leverage;
         uint8 liquidationPenalty;
         bool isLiquidationPending;
     }
@@ -353,6 +353,20 @@ interface IUsdnProtocolTypes {
         uint256 longBalance;
         uint256 vaultBalance;
         HugeUint.Uint512 liqMultiplierAccumulator;
+    }
+
+    /**
+     * @notice Data structure for the `_applyPnlAndFunding` function
+     * @param isPriceRecent Whether the price was updated or was already the most recent price
+     * @param tempLongBalance The new balance of the long side, could be negative (temporarily)
+     * @param tempVaultBalance The new balance of the vault side, could be negative (temporarily)
+     * @param lastPrice The last price
+     */
+    struct ApplyPnlAndFundingData {
+        bool isPriceRecent;
+        int256 tempLongBalance;
+        int256 tempVaultBalance;
+        uint128 lastPrice;
     }
 
     /**
@@ -411,7 +425,7 @@ interface IUsdnProtocolTypes {
      * @param _usdnRebaseInterval The interval between two automatic rebase checks. Disabled by default
      * A rebase can be forced (if the `_usdnRebaseThreshold` is exceeded) by calling the `liquidate` function
      * @param _minLongPosition The minimum long position size (with `_assetDecimals`)
-     * @param _lastFunding The funding corresponding to the last update timestamp
+     * @param _lastFundingPerDay The funding rate calculated at the last update timestamp
      * @param _lastPrice The price of the asset during the last balances update (with price feed decimals)
      * @param _lastUpdateTimestamp The timestamp of the last balances update
      * @param _pendingProtocolFee The pending protocol fee accumulator
@@ -475,7 +489,7 @@ interface IUsdnProtocolTypes {
         uint256 _usdnRebaseInterval;
         uint256 _minLongPosition;
         // State
-        int256 _lastFunding;
+        int256 _lastFundingPerDay;
         uint128 _lastPrice;
         uint128 _lastUpdateTimestamp;
         uint256 _pendingProtocolFee;

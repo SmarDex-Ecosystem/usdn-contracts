@@ -26,7 +26,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         PositionId tempPosId;
         uint256 validateTickVersion;
         uint256 validateIndex;
-        uint128 expectedLeverage;
+        uint256 expectedLeverage;
     }
 
     function setUp() public {
@@ -84,7 +84,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
      * @custom:then The deployer's tick is liquidated
      * @custom:and The open action isn't validated because the user's position still needs to be liquidated
      */
-    function test_validateOpenIsPendingLiquidation() public {
+    function test_validateOpenPositionWithPendingLiquidation() public {
         setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
@@ -123,7 +123,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
      * @custom:then The position is liquidated
      * @custom:and The pending action is cleared
      */
-    function test_validateOpenWasLiquidated() public {
+    function test_validateOpenPositionWasLiquidated() public {
         PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
@@ -362,7 +362,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
 
         {
             // Sanity check
-            uint128 expectedLeverage = protocol.i_getLeverage(data.validatePrice, expectedLiqPrice);
+            uint256 expectedLeverage = protocol.i_getLeverage(data.validatePrice, expectedLiqPrice);
             // final leverage should be above 10x because of the stored liquidation penalty of the target tick
             assertGt(expectedLeverage, uint128(10 * 10 ** protocol.LEVERAGE_DECIMALS()), "final leverage");
         }
@@ -434,6 +434,57 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         protocol.validateOpenPosition{ value: 1 }(
             payable(address(this)), abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA
         );
+    }
+
+    /**
+     * @custom:scenario A user tries to validate an open position action with the wrong pending action
+     * @custom:given An initiated close position action
+     * @custom:when The owner of the position calls validateOpenPosition
+     * @custom:then The call reverts because the pending action is not of type ValidateOpenPosition
+     */
+    function test_RevertWhen_validateOpenPositionWithTheWrongPendingAction() public {
+        // Setup an initiate action to have a pending validate action for this user
+        setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.InitiateClosePosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: DEFAULT_PARAMS.initialPrice / 2,
+                price: DEFAULT_PARAMS.initialPrice
+            })
+        );
+
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidPendingAction.selector));
+        protocol.i_validateOpenPosition(payable(address(this)), abi.encode(CURRENT_PRICE));
+    }
+
+    /**
+     * @custom:scenario The user validates an open position pending action that has a different validator
+     * @custom:given A pending action that of type ValidateOpenPosition
+     * @custom:and With a validator that is not the caller saved at the caller's address
+     * @custom:when The user calls validateOpenPosition
+     * @custom:then The protocol reverts with a UsdnProtocolInvalidPendingAction error
+     */
+    function test_RevertWhen_validateOpenPositionWithWrongValidator() public {
+        setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: uint128(LONG_AMOUNT),
+                desiredLiqPrice: CURRENT_PRICE * 2 / 3,
+                price: CURRENT_PRICE
+            })
+        );
+
+        // update the pending action to put another validator
+        (PendingAction memory pendingAction, uint128 rawIndex) = protocol.i_getPendingAction(address(this));
+        pendingAction.validator = address(1);
+
+        protocol.i_clearPendingAction(address(this), rawIndex);
+        protocol.i_addPendingAction(address(this), pendingAction);
+
+        vm.expectRevert(UsdnProtocolInvalidPendingAction.selector);
+        protocol.i_validateOpenPosition(payable(address(this)), abi.encode(CURRENT_PRICE));
     }
 
     /**

@@ -11,7 +11,6 @@ import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocol
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IUsdnProtocolVault } from "../../interfaces/UsdnProtocol/IUsdnProtocolVault.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
-import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./UsdnProtocolCoreLibrary.sol";
@@ -90,8 +89,7 @@ library UsdnProtocolVaultLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
         }
 
-        int256 ema = Core.calcEMA(s._lastFunding, timestamp - s._lastUpdateTimestamp, s._EMAPeriod, s._EMA);
-        (int256 fundAsset,) = Core._fundingAsset(s, timestamp, ema);
+        (int256 fundAsset,) = Core._fundingAsset(s, timestamp, s._EMA);
 
         if (fundAsset < 0) {
             available_ = _vaultAssetAvailable(s, currentPrice).safeAdd(fundAsset);

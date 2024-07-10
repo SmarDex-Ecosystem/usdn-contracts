@@ -180,13 +180,14 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         view
         returns (uint128 pendingAssets_, uint256 maxLeverage_, Types.PositionId memory currentPosId_)
     {
+        PositionData storage positionData = _positionData[_positionVersion];
         return (
             _pendingAssetsAmount,
             _maxLeverage,
             Types.PositionId({
-                tick: _positionData[_positionVersion].tick,
-                tickVersion: _positionData[_positionVersion].tickVersion,
-                index: _positionData[_positionVersion].index
+                tick: positionData.tick,
+                tickVersion: positionData.tickVersion,
+                index: positionData.index
             })
         );
     }
@@ -418,7 +419,6 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     function initiateClosePosition(
         uint88 amount,
         address to,
-        address payable validator,
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData
     ) external payable nonReentrant returns (bool success_) {
@@ -478,7 +478,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
             }),
             data.amountToClose.toUint128(),
             to,
-            validator,
+            payable(msg.sender),
             currentPriceData,
             previousActionsData
         );

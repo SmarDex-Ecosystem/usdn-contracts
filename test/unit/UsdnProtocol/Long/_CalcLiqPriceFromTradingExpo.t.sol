@@ -15,7 +15,7 @@ contract TestUsdnProtocolLongCalcLiqPriceFromTradingExpo is UsdnProtocolBaseFixt
      * @custom:when {_calcLiqPriceFromTradingExpo} is called
      * @custom:then The call reverts with a {UsdnProtocolZeroTotalExpo} error
      */
-    function test_RevertWhen_totalExpoIsZero() external {
+    function test_RevertWhen_totalExpoIsZero() public {
         vm.expectRevert(UsdnProtocolZeroTotalExpo.selector);
         protocol.i_calcLiqPriceFromTradingExpo(2000 ether, 0, 0);
     }

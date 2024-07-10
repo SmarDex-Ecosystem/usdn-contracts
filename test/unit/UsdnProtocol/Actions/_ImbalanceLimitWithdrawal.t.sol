@@ -53,11 +53,10 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
      * @custom:when The `_checkImbalanceLimitWithdrawal` function is called
      * @custom:then The transaction should not revert
      */
-    function test_checkImbalanceLimitWithdrawalDisabled() public {
+    function test_checkImbalanceLimitWithdrawalDisabled() public adminPrank {
         (, uint256 withdrawalValueToLimit) = _getWithdrawalLimitValues();
 
         // disable withdrawal limit
-        vm.prank(ADMIN);
         protocol.setExpoImbalanceLimits(200, 200, 0, 600, 300);
 
         protocol.i_checkImbalanceLimitWithdrawal(withdrawalValueToLimit + 1, protocol.getTotalExpo());

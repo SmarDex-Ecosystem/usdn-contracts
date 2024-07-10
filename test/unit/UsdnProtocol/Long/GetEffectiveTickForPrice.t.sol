@@ -23,7 +23,7 @@ contract TestUsdnProtocolLongGetEffectiveTickForPrice is UsdnProtocolBaseFixture
      * @custom:when getEffectiveTickForPrice is called
      * @custom:then The function should return expected minTick
      */
-    function testFuzz_getEffectiveTickForPriceExpectedMinTick(int24 tickSpacing) external {
+    function testFuzz_getEffectiveTickForPriceExpectedMinTick(int24 tickSpacing) public {
         if (tickSpacing == 0) {
             return;
         }
@@ -48,7 +48,7 @@ contract TestUsdnProtocolLongGetEffectiveTickForPrice is UsdnProtocolBaseFixture
      * @custom:when getEffectiveTickForPrice is called with price 10_000
      * @custom:then The function should return tick_ = minTick
      */
-    function test_getEffectiveTickForPriceTickLowerThanZero() external {
+    function test_getEffectiveTickForPriceTickLowerThanZero() public {
         /* ------------------------ minUsableTick < tick_ < 0 ----------------------- */
         int24 tickSpacing = 100;
         uint128 price = 60_000 ether;
@@ -83,7 +83,7 @@ contract TestUsdnProtocolLongGetEffectiveTickForPrice is UsdnProtocolBaseFixture
      * @custom:when getEffectiveTickForPrice is called with price 5_000_000_000 ether
      * @custom:then The function should return tick_ > 0
      */
-    function test_getEffectiveTickForPriceTickGreaterThanOrEqualZero() external {
+    function test_getEffectiveTickForPriceTickGreaterThanOrEqualZero() public {
         /* -------------------------------- tick_ = 0 ------------------------------- */
         int24 tickSpacing = 100;
         uint128 price = 1 ether;

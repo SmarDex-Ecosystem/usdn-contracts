@@ -35,9 +35,7 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
      * @param amountToOpen The amount of assets in the position
      * @param amountToClose The amount to close per iteration
      */
-    function testFuzz_closePositionWithAmount(uint256 iterations, uint256 amountToOpen, uint256 amountToClose)
-        external
-    {
+    function testFuzz_closePositionWithAmount(uint256 iterations, uint256 amountToOpen, uint256 amountToClose) public {
         TestData memory data;
         // Bound values
         iterations = bound(iterations, 1, 10);

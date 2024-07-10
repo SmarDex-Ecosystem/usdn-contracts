@@ -72,4 +72,8 @@ contract MockRebalancer is IBaseRebalancer, IRebalancerTypes {
     function setMinAssetDeposit(uint256 minAssetDeposit) external {
         _minAssetDeposit = minAssetDeposit;
     }
+
+    function getPositionVersion() external view returns (uint128) {
+        return _positionVersion;
+    }
 }
