@@ -3,12 +3,12 @@ pragma solidity ^0.8.25;
 
 import {
     ADMIN,
-    CRITICAL_FUNCTIONS_ROLE,
+    CRITICAL_FUNCTIONS_ADMIN,
     DEPLOYER,
-    SET_EXTERNAL_ROLE,
-    SET_OPTIONS_ROLE,
-    SET_PROTOCOL_PARAMS_ROLE,
-    SET_USDN_PARAMS_ROLE
+    SET_EXTERNAL_ADMIN,
+    SET_OPTIONS_ADMIN,
+    SET_PROTOCOL_PARAMS_ADMIN,
+    SET_USDN_PARAMS_ADMIN
 } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { IEventsErrors } from "../../../utils/IEventsErrors.sol";
@@ -120,19 +120,19 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         feeCollector = new FeeCollector();
 
         Roles memory roles = Roles({
-            set_external_role: SET_EXTERNAL_ROLE,
-            critical_functions_role: CRITICAL_FUNCTIONS_ROLE,
-            set_protocol_params_role: SET_PROTOCOL_PARAMS_ROLE,
-            set_usdn_params_role: SET_USDN_PARAMS_ROLE,
-            set_options_role: SET_OPTIONS_ROLE
+            setExternalAdmin: SET_EXTERNAL_ADMIN,
+            criticalFunctionsAdmin: CRITICAL_FUNCTIONS_ADMIN,
+            setProtocolParamsAdmin: SET_PROTOCOL_PARAMS_ADMIN,
+            setUsdnParamsAdmin: SET_USDN_PARAMS_ADMIN,
+            setOptionsAdmin: SET_OPTIONS_ADMIN
         });
         if (!testParams.flags.enableRoles) {
             roles = Roles({
-                set_external_role: ADMIN,
-                critical_functions_role: ADMIN,
-                set_protocol_params_role: ADMIN,
-                set_usdn_params_role: ADMIN,
-                set_options_role: ADMIN
+                setExternalAdmin: ADMIN,
+                criticalFunctionsAdmin: ADMIN,
+                setProtocolParamsAdmin: ADMIN,
+                setUsdnParamsAdmin: ADMIN,
+                setOptionsAdmin: ADMIN
             });
         }
 
@@ -144,7 +144,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         wstETH.approve(address(protocol), type(uint256).max);
 
         vm.stopPrank();
-        vm.startPrank(roles.set_protocol_params_role);
+        vm.startPrank(roles.setProtocolParamsAdmin);
         if (!testParams.flags.enablePositionFees) {
             protocol.setPositionFeeBps(0);
             protocol.setVaultFeeBps(0);
@@ -176,7 +176,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         }
         vm.stopPrank();
 
-        vm.startPrank(roles.set_usdn_params_role);
+        vm.startPrank(roles.setUsdnParamsAdmin);
         if (!testParams.flags.enableUsdnRebase) {
             // set a high target price to effectively disable rebases
             protocol.setUsdnRebaseThreshold(type(uint128).max);
@@ -188,7 +188,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         rebalancer = new RebalancerHandler(protocol);
 
         if (testParams.flags.enableRebalancer) {
-            vm.prank(roles.set_external_role);
+            vm.prank(roles.setExternalAdmin);
             protocol.setRebalancer(rebalancer);
         }
 

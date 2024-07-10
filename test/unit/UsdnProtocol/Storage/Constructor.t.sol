@@ -12,11 +12,11 @@ import { UsdnProtocol } from "../../../../src/UsdnProtocol/UsdnProtocol.sol";
  */
 contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
     Roles roles = Roles({
-        set_external_role: address(0),
-        critical_functions_role: address(0),
-        set_protocol_params_role: address(0),
-        set_usdn_params_role: address(0),
-        set_options_role: address(0)
+        setExternalAdmin: address(0),
+        criticalFunctionsAdmin: address(0),
+        setProtocolParamsAdmin: address(0),
+        setUsdnParamsAdmin: address(0),
+        setOptionsAdmin: address(0)
     });
 
     function setUp() public {

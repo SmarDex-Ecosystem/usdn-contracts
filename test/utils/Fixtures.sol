@@ -31,9 +31,16 @@ contract BaseFixture is Test {
         /* -------------------------------------------------------------------------- */
         vm.label(constants.DEPLOYER, "Deployer");
         vm.label(constants.ADMIN, "Admin");
-        vm.label(constants.SET_EXTERNAL_ROLE, "ConfigRole");
-        vm.label(constants.CRITICAL_FUNCTIONS_ROLE, "AdminRole");
-        vm.label(constants.SET_PROTOCOL_PARAMS_ROLE, "ActionRole");
+        vm.label(constants.SET_EXTERNAL_ADMIN, "setExternalAdmin");
+        vm.label(constants.CRITICAL_FUNCTIONS_ADMIN, "criticalFunctionsAdmin");
+        vm.label(constants.SET_PROTOCOL_PARAMS_ADMIN, "setProtocolParamsAdmin");
+        vm.label(constants.SET_USDN_PARAMS_ADMIN, "setUsdnParamsAdmin");
+        vm.label(constants.SET_OPTIONS_ADMIN, "setOptionsAdmin");
+        vm.label(constants.ADMIN_SET_EXTERNAL_ROLE, "adminSetExternalAdmin");
+        vm.label(constants.ADMIN_CRITICAL_FUNCTIONS_ROLE, "adminCriticalFunctionsAdmin");
+        vm.label(constants.ADMIN_SET_PROTOCOL_PARAMS_ROLE, "adminSetProtocolParamsAdmin");
+        vm.label(constants.ADMIN_SET_USDN_PARAMS_ROLE, "adminSetUsdnParamsAdmin");
+        vm.label(constants.ADMIN_SET_OPTIONS_ROLE, "adminSetOptionsAdmin");
         vm.label(constants.USER_1, "User1");
         vm.label(constants.USER_2, "User2");
         vm.label(constants.USER_3, "User3");
@@ -87,9 +94,11 @@ contract BaseFixture is Test {
         // deal ether
         vm.deal(constants.DEPLOYER, 10_000 ether);
         vm.deal(constants.ADMIN, 10_000 ether);
-        vm.deal(constants.SET_EXTERNAL_ROLE, 10_000 ether);
-        vm.deal(constants.CRITICAL_FUNCTIONS_ROLE, 10_000 ether);
-        vm.deal(constants.SET_PROTOCOL_PARAMS_ROLE, 10_000 ether);
+        vm.deal(constants.SET_EXTERNAL_ADMIN, 10_000 ether);
+        vm.deal(constants.CRITICAL_FUNCTIONS_ADMIN, 10_000 ether);
+        vm.deal(constants.SET_PROTOCOL_PARAMS_ADMIN, 10_000 ether);
+        vm.deal(constants.SET_USDN_PARAMS_ADMIN, 10_000 ether);
+        vm.deal(constants.SET_OPTIONS_ADMIN, 10_000 ether);
         vm.deal(constants.USER_1, 10_000 ether);
         vm.deal(constants.USER_2, 10_000 ether);
         vm.deal(constants.USER_3, 10_000 ether);

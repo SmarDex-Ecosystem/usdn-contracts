@@ -13,16 +13,16 @@ import {
     ADMIN,
     CHAINLINK_ORACLE_ETH,
     CHAINLINK_ORACLE_GAS,
-    CRITICAL_FUNCTIONS_ROLE,
+    CRITICAL_FUNCTIONS_ADMIN,
     DEPLOYER,
     PYTH_ETH_USD,
     PYTH_ORACLE,
     REDSTONE_ETH_USD,
     SDEX,
-    SET_EXTERNAL_ROLE,
-    SET_OPTIONS_ROLE,
-    SET_PROTOCOL_PARAMS_ROLE,
-    SET_USDN_PARAMS_ROLE,
+    SET_EXTERNAL_ADMIN,
+    SET_OPTIONS_ADMIN,
+    SET_PROTOCOL_PARAMS_ADMIN,
+    SET_USDN_PARAMS_ADMIN,
     WSTETH
 } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
@@ -79,11 +79,11 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
     });
 
     Roles roles = Roles({
-        set_external_role: SET_EXTERNAL_ROLE,
-        critical_functions_role: CRITICAL_FUNCTIONS_ROLE,
-        set_protocol_params_role: SET_PROTOCOL_PARAMS_ROLE,
-        set_usdn_params_role: SET_USDN_PARAMS_ROLE,
-        set_options_role: SET_OPTIONS_ROLE
+        setExternalAdmin: SET_EXTERNAL_ADMIN,
+        criticalFunctionsAdmin: CRITICAL_FUNCTIONS_ADMIN,
+        setProtocolParamsAdmin: SET_PROTOCOL_PARAMS_ADMIN,
+        setUsdnParamsAdmin: SET_USDN_PARAMS_ADMIN,
+        setOptionsAdmin: SET_OPTIONS_ADMIN
     });
 
     Usdn public usdn;
@@ -152,11 +152,11 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
         if (!testParams.enableRoles) {
             roles = Roles({
-                set_external_role: ADMIN,
-                critical_functions_role: ADMIN,
-                set_protocol_params_role: ADMIN,
-                set_usdn_params_role: ADMIN,
-                set_options_role: ADMIN
+                setExternalAdmin: ADMIN,
+                criticalFunctionsAdmin: ADMIN,
+                setProtocolParamsAdmin: ADMIN,
+                setUsdnParamsAdmin: ADMIN,
+                setOptionsAdmin: ADMIN
             });
         }
 
@@ -180,7 +180,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             testParams.initialDeposit, testParams.initialLong, testParams.initialLiqPrice, ""
         );
         vm.stopPrank();
-        vm.prank(roles.set_external_role);
+        vm.prank(roles.setExternalAdmin);
         protocol.setRebalancer(rebalancer);
         params = testParams;
     }
@@ -222,7 +222,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
         tickSpacing_ = protocol.getTickSpacing();
 
-        vm.startPrank(roles.set_protocol_params_role);
+        vm.startPrank(roles.setProtocolParamsAdmin);
         protocol.setFundingSF(0);
         protocol.resetEMA();
 
@@ -283,7 +283,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
         tickToLiquidateData_ = protocol.getTickData(posToLiquidate_.tick);
 
-        vm.prank(roles.set_protocol_params_role);
+        vm.prank(roles.setProtocolParamsAdmin);
         protocol.setExpoImbalanceLimits(
             uint256(defaultLimits.depositExpoImbalanceLimitBps),
             uint256(defaultLimits.withdrawalExpoImbalanceLimitBps),

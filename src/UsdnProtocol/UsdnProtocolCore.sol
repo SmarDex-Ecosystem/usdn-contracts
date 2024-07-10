@@ -56,7 +56,7 @@ abstract contract UsdnProtocolCore is UsdnProtocolStorage, IUsdnProtocolCore {
     /// @inheritdoc IUsdnProtocolCore
     function removeBlockedPendingAction(address validator, address payable to)
         external
-        onlyRole(CRITICAL_FUNCTIONS_ROLE)
+        onlyRole(CRITICAL_FUNCTIONS_ADMIN)
     {
         Core.removeBlockedPendingAction(s, validator, to);
     }
@@ -64,7 +64,7 @@ abstract contract UsdnProtocolCore is UsdnProtocolStorage, IUsdnProtocolCore {
     /// @inheritdoc IUsdnProtocolCore
     function removeBlockedPendingActionNoCleanup(address validator, address payable to)
         external
-        onlyRole(CRITICAL_FUNCTIONS_ROLE)
+        onlyRole(CRITICAL_FUNCTIONS_ADMIN)
     {
         Core.removeBlockedPendingActionNoCleanup(s, validator, to);
     }
@@ -72,7 +72,7 @@ abstract contract UsdnProtocolCore is UsdnProtocolStorage, IUsdnProtocolCore {
     /// @inheritdoc IUsdnProtocolCore
     function removeBlockedPendingAction(uint128 rawIndex, address payable to)
         external
-        onlyRole(CRITICAL_FUNCTIONS_ROLE)
+        onlyRole(CRITICAL_FUNCTIONS_ADMIN)
     {
         Core._removeBlockedPendingAction(s, rawIndex, to, true);
     }
@@ -80,7 +80,7 @@ abstract contract UsdnProtocolCore is UsdnProtocolStorage, IUsdnProtocolCore {
     /// @inheritdoc IUsdnProtocolCore
     function removeBlockedPendingActionNoCleanup(uint128 rawIndex, address payable to)
         external
-        onlyRole(CRITICAL_FUNCTIONS_ROLE)
+        onlyRole(CRITICAL_FUNCTIONS_ADMIN)
     {
         Core._removeBlockedPendingAction(s, rawIndex, to, false);
     }

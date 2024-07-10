@@ -371,18 +371,18 @@ interface IUsdnProtocolTypes {
 
     /**
      * @notice Structure to hold the roles during deployment
-     * @param set_external_role The role to set the external contracts
-     * @param critical_functions_role The role to perform critical functions
-     * @param set_protocol_params_role The role to set the protocol parameters
-     * @param set_usdn_params_role The role to set the USDN parameters
-     * @param set_options_role The role to set the protocol options
+     * @param setExternalAdmin The role to set the external contracts
+     * @param criticalFunctionsAdmin The role to perform critical functions
+     * @param setProtocolParamsAdmin The role to set the protocol parameters
+     * @param setUsdnParamsAdmin The role to set the USDN parameters
+     * @param setOptionsAdmin The role to set the protocol options
      */
     struct Roles {
-        address set_external_role;
-        address critical_functions_role;
-        address set_protocol_params_role;
-        address set_usdn_params_role;
-        address set_options_role;
+        address setExternalAdmin;
+        address criticalFunctionsAdmin;
+        address setProtocolParamsAdmin;
+        address setUsdnParamsAdmin;
+        address setOptionsAdmin;
     }
 
     /**

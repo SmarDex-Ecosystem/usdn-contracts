@@ -30,11 +30,11 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
             100, // tick spacing 100 = 1%
             ADMIN, // Fee collector
             Roles({
-                set_external_role: address(this),
-                critical_functions_role: address(this),
-                set_protocol_params_role: address(this),
-                set_usdn_params_role: address(this),
-                set_options_role: address(this)
+                setExternalAdmin: address(this),
+                criticalFunctionsAdmin: address(this),
+                setProtocolParamsAdmin: address(this),
+                setUsdnParamsAdmin: address(this),
+                setOptionsAdmin: address(this)
             })
         );
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));

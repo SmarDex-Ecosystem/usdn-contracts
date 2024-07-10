@@ -50,97 +50,97 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolLong, UsdnProtocolVault, Usd
     { }
 
     /* -------------------------------------------------------------------------- */
-    /*                              SET_EXTERNAL_ROLE                             */
+    /*                              SET_EXTERNAL_ADMIN                             */
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdnProtocol
-    function setOracleMiddleware(IBaseOracleMiddleware newOracleMiddleware) external onlyRole(SET_EXTERNAL_ROLE) {
+    function setOracleMiddleware(IBaseOracleMiddleware newOracleMiddleware) external onlyRole(SET_EXTERNAL_ADMIN) {
         Setters.setOracleMiddleware(s, newOracleMiddleware);
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setFeeCollector(address newFeeCollector) external onlyRole(SET_EXTERNAL_ROLE) {
+    function setFeeCollector(address newFeeCollector) external onlyRole(SET_EXTERNAL_ADMIN) {
         Setters.setFeeCollector(s, newFeeCollector);
     }
 
     /// @inheritdoc IUsdnProtocol
     function setLiquidationRewardsManager(ILiquidationRewardsManager newLiquidationRewardsManager)
         external
-        onlyRole(SET_EXTERNAL_ROLE)
+        onlyRole(SET_EXTERNAL_ADMIN)
     {
         Setters.setLiquidationRewardsManager(s, newLiquidationRewardsManager);
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setRebalancer(IBaseRebalancer newRebalancer) external onlyRole(SET_EXTERNAL_ROLE) {
+    function setRebalancer(IBaseRebalancer newRebalancer) external onlyRole(SET_EXTERNAL_ADMIN) {
         Setters.setRebalancer(s, newRebalancer);
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                           CRITICAL_FUNCTIONS_ROLE                          */
+    /*                           CRITICAL_FUNCTIONS_ADMIN                          */
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdnProtocol
-    function setValidationDeadline(uint256 newValidationDeadline) external onlyRole(CRITICAL_FUNCTIONS_ROLE) {
+    function setValidationDeadline(uint256 newValidationDeadline) external onlyRole(CRITICAL_FUNCTIONS_ADMIN) {
         Setters.setValidationDeadline(s, newValidationDeadline);
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                          SET_PROTOCOL_PARAMS_ROLE                          */
+    /*                          SET_PROTOCOL_PARAMS_ADMIN                          */
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdnProtocol
-    function setMinLongPosition(uint256 newMinLongPosition) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
+    function setMinLongPosition(uint256 newMinLongPosition) external onlyRole(SET_PROTOCOL_PARAMS_ADMIN) {
         Setters.setMinLongPosition(s, newMinLongPosition);
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setMinLeverage(uint256 newMinLeverage) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
+    function setMinLeverage(uint256 newMinLeverage) external onlyRole(SET_PROTOCOL_PARAMS_ADMIN) {
         Setters.setMinLeverage(s, newMinLeverage);
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setMaxLeverage(uint256 newMaxLeverage) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
+    function setMaxLeverage(uint256 newMaxLeverage) external onlyRole(SET_PROTOCOL_PARAMS_ADMIN) {
         Setters.setMaxLeverage(s, newMaxLeverage);
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setEMAPeriod(uint128 newEMAPeriod) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
+    function setEMAPeriod(uint128 newEMAPeriod) external onlyRole(SET_PROTOCOL_PARAMS_ADMIN) {
         Setters.setEMAPeriod(s, newEMAPeriod);
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setLiquidationPenalty(uint8 newLiquidationPenalty) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
+    function setLiquidationPenalty(uint8 newLiquidationPenalty) external onlyRole(SET_PROTOCOL_PARAMS_ADMIN) {
         Setters.setLiquidationPenalty(s, newLiquidationPenalty);
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setFundingSF(uint256 newFundingSF) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
+    function setFundingSF(uint256 newFundingSF) external onlyRole(SET_PROTOCOL_PARAMS_ADMIN) {
         Setters.setFundingSF(s, newFundingSF);
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setProtocolFeeBps(uint16 newProtocolFeeBps) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
+    function setProtocolFeeBps(uint16 newProtocolFeeBps) external onlyRole(SET_PROTOCOL_PARAMS_ADMIN) {
         Setters.setProtocolFeeBps(s, newProtocolFeeBps);
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setPositionFeeBps(uint16 newPositionFee) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
+    function setPositionFeeBps(uint16 newPositionFee) external onlyRole(SET_PROTOCOL_PARAMS_ADMIN) {
         Setters.setPositionFeeBps(s, newPositionFee);
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setVaultFeeBps(uint16 newVaultFee) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
+    function setVaultFeeBps(uint16 newVaultFee) external onlyRole(SET_PROTOCOL_PARAMS_ADMIN) {
         Setters.setVaultFeeBps(s, newVaultFee);
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setRebalancerBonusBps(uint16 newBonus) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
+    function setRebalancerBonusBps(uint16 newBonus) external onlyRole(SET_PROTOCOL_PARAMS_ADMIN) {
         Setters.setRebalancerBonusBps(s, newBonus);
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setSdexBurnOnDepositRatio(uint32 newRatio) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
+    function setSdexBurnOnDepositRatio(uint32 newRatio) external onlyRole(SET_PROTOCOL_PARAMS_ADMIN) {
         Setters.setSdexBurnOnDepositRatio(s, newRatio);
     }
 
@@ -151,52 +151,52 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolLong, UsdnProtocolVault, Usd
         uint256 newWithdrawalLimitBps,
         uint256 newCloseLimitBps,
         int256 newLongImbalanceTargetBps
-    ) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
+    ) external onlyRole(SET_PROTOCOL_PARAMS_ADMIN) {
         Setters.setExpoImbalanceLimits(
             s, newOpenLimitBps, newDepositLimitBps, newWithdrawalLimitBps, newCloseLimitBps, newLongImbalanceTargetBps
         );
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setSecurityDepositValue(uint64 securityDepositValue) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
+    function setSecurityDepositValue(uint64 securityDepositValue) external onlyRole(SET_PROTOCOL_PARAMS_ADMIN) {
         Setters.setSecurityDepositValue(s, securityDepositValue);
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                              SET_OPTIONS_ROLE                              */
+    /*                              SET_OPTIONS_ADMIN                              */
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdnProtocol
-    function setSafetyMarginBps(uint256 newSafetyMarginBps) external onlyRole(SET_OPTIONS_ROLE) {
+    function setSafetyMarginBps(uint256 newSafetyMarginBps) external onlyRole(SET_OPTIONS_ADMIN) {
         Setters.setSafetyMarginBps(s, newSafetyMarginBps);
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setLiquidationIteration(uint16 newLiquidationIteration) external onlyRole(SET_OPTIONS_ROLE) {
+    function setLiquidationIteration(uint16 newLiquidationIteration) external onlyRole(SET_OPTIONS_ADMIN) {
         Setters.setLiquidationIteration(s, newLiquidationIteration);
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setFeeThreshold(uint256 newFeeThreshold) external onlyRole(SET_OPTIONS_ROLE) {
+    function setFeeThreshold(uint256 newFeeThreshold) external onlyRole(SET_OPTIONS_ADMIN) {
         Setters.setFeeThreshold(s, newFeeThreshold);
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                            SET_USDN_PARAMS_ROLE                            */
+    /*                            SET_USDN_PARAMS_ADMIN                            */
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdnProtocol
-    function setTargetUsdnPrice(uint128 newPrice) external onlyRole(SET_USDN_PARAMS_ROLE) {
+    function setTargetUsdnPrice(uint128 newPrice) external onlyRole(SET_USDN_PARAMS_ADMIN) {
         Setters.setTargetUsdnPrice(s, newPrice);
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setUsdnRebaseThreshold(uint128 newThreshold) external onlyRole(SET_USDN_PARAMS_ROLE) {
+    function setUsdnRebaseThreshold(uint128 newThreshold) external onlyRole(SET_USDN_PARAMS_ADMIN) {
         Setters.setUsdnRebaseThreshold(s, newThreshold);
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setUsdnRebaseInterval(uint256 newInterval) external onlyRole(SET_USDN_PARAMS_ROLE) {
+    function setUsdnRebaseInterval(uint256 newInterval) external onlyRole(SET_USDN_PARAMS_ADMIN) {
         Setters.setUsdnRebaseInterval(s, newInterval);
     }
 }
