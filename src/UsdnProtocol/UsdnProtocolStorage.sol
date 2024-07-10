@@ -29,19 +29,19 @@ contract UsdnProtocolStorage is
     Storage internal s;
 
     /// @inheritdoc IUsdnProtocolStorage
-    bytes32 public constant SET_EXTERNAL_ADMIN = keccak256("SET_EXTERNAL_ADMIN");
+    bytes32 public constant SET_EXTERNAL_ROLE = keccak256("SET_EXTERNAL_ROLE");
 
     /// @inheritdoc IUsdnProtocolStorage
-    bytes32 public constant CRITICAL_FUNCTIONS_ADMIN = keccak256("CRITICAL_FUNCTIONS_ADMIN");
+    bytes32 public constant CRITICAL_FUNCTIONS_ROLE = keccak256("CRITICAL_FUNCTIONS_ROLE");
 
     /// @inheritdoc IUsdnProtocolStorage
-    bytes32 public constant SET_PROTOCOL_PARAMS_ADMIN = keccak256("SET_PROTOCOL_PARAMS_ADMIN");
+    bytes32 public constant SET_PROTOCOL_PARAMS_ROLE = keccak256("SET_PROTOCOL_PARAMS_ROLE");
 
     /// @inheritdoc IUsdnProtocolStorage
-    bytes32 public constant SET_USDN_PARAMS_ADMIN = keccak256("SET_USDN_PARAMS_ADMIN");
+    bytes32 public constant SET_USDN_PARAMS_ROLE = keccak256("SET_USDN_PARAMS_ROLE");
 
     /// @inheritdoc IUsdnProtocolStorage
-    bytes32 public constant SET_OPTIONS_ADMIN = keccak256("SET_OPTIONS_ADMIN");
+    bytes32 public constant SET_OPTIONS_ROLE = keccak256("SET_OPTIONS_ROLE");
 
     /// @inheritdoc IUsdnProtocolStorage
     bytes32 public constant ADMIN_SET_EXTERNAL_ROLE = keccak256("ADMIN_SET_EXTERNAL_ROLE");
@@ -80,16 +80,16 @@ contract UsdnProtocolStorage is
         Roles memory roles
     ) AccessControlDefaultAdminRules(0, msg.sender) {
         // roles
-        _setRoleAdmin(SET_EXTERNAL_ADMIN, ADMIN_SET_EXTERNAL_ROLE);
-        _setRoleAdmin(CRITICAL_FUNCTIONS_ADMIN, ADMIN_CRITICAL_FUNCTIONS_ROLE);
-        _setRoleAdmin(SET_PROTOCOL_PARAMS_ADMIN, ADMIN_SET_PROTOCOL_PARAMS_ROLE);
-        _setRoleAdmin(SET_USDN_PARAMS_ADMIN, ADMIN_SET_USDN_PARAMS_ROLE);
-        _setRoleAdmin(SET_OPTIONS_ADMIN, ADMIN_SET_OPTIONS_ROLE);
-        _grantRole(SET_EXTERNAL_ADMIN, roles.setExternalAdmin);
-        _grantRole(CRITICAL_FUNCTIONS_ADMIN, roles.criticalFunctionsAdmin);
-        _grantRole(SET_PROTOCOL_PARAMS_ADMIN, roles.setProtocolParamsAdmin);
-        _grantRole(SET_USDN_PARAMS_ADMIN, roles.setUsdnParamsAdmin);
-        _grantRole(SET_OPTIONS_ADMIN, roles.setOptionsAdmin);
+        _setRoleAdmin(SET_EXTERNAL_ROLE, ADMIN_SET_EXTERNAL_ROLE);
+        _setRoleAdmin(CRITICAL_FUNCTIONS_ROLE, ADMIN_CRITICAL_FUNCTIONS_ROLE);
+        _setRoleAdmin(SET_PROTOCOL_PARAMS_ROLE, ADMIN_SET_PROTOCOL_PARAMS_ROLE);
+        _setRoleAdmin(SET_USDN_PARAMS_ROLE, ADMIN_SET_USDN_PARAMS_ROLE);
+        _setRoleAdmin(SET_OPTIONS_ROLE, ADMIN_SET_OPTIONS_ROLE);
+        _grantRole(SET_EXTERNAL_ROLE, roles.setExternalAdmin);
+        _grantRole(CRITICAL_FUNCTIONS_ROLE, roles.criticalFunctionsAdmin);
+        _grantRole(SET_PROTOCOL_PARAMS_ROLE, roles.setProtocolParamsAdmin);
+        _grantRole(SET_USDN_PARAMS_ROLE, roles.setUsdnParamsAdmin);
+        _grantRole(SET_OPTIONS_ROLE, roles.setOptionsAdmin);
 
         // parameters
         s._minLeverage = 10 ** Constants.LEVERAGE_DECIMALS + 10 ** 12;

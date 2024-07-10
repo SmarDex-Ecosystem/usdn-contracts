@@ -36,11 +36,11 @@ contract BaseFixture is Test {
         vm.label(constants.SET_PROTOCOL_PARAMS_ADMIN, "setProtocolParamsAdmin");
         vm.label(constants.SET_USDN_PARAMS_ADMIN, "setUsdnParamsAdmin");
         vm.label(constants.SET_OPTIONS_ADMIN, "setOptionsAdmin");
-        vm.label(constants.ADMIN_SET_EXTERNAL_ROLE, "adminSetExternalAdmin");
-        vm.label(constants.ADMIN_CRITICAL_FUNCTIONS_ROLE, "adminCriticalFunctionsAdmin");
-        vm.label(constants.ADMIN_SET_PROTOCOL_PARAMS_ROLE, "adminSetProtocolParamsAdmin");
-        vm.label(constants.ADMIN_SET_USDN_PARAMS_ROLE, "adminSetUsdnParamsAdmin");
-        vm.label(constants.ADMIN_SET_OPTIONS_ROLE, "adminSetOptionsAdmin");
+        vm.label(constants.SET_EXTERNAL_ROLE_ADMIN, "setExternalRoleAdmin");
+        vm.label(constants.CRITICAL_FUNCTIONS_ROLE_ADMIN, "criticalFunctionsRoleAdmin");
+        vm.label(constants.SET_PROTOCOL_PARAMS_ROLE_ADMIN, "setProtocolParamsRoleAdmin");
+        vm.label(constants.SET_USDN_PARAMS_ROLE_ADMIN, "setUsdnParamsRoleAdmin");
+        vm.label(constants.SET_OPTIONS_ROLE_ADMIN, "setOptionsRoleAdmin");
         vm.label(constants.USER_1, "User1");
         vm.label(constants.USER_2, "User2");
         vm.label(constants.USER_3, "User3");

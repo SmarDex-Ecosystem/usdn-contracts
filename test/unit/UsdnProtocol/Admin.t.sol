@@ -28,67 +28,67 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      * @custom:then Each function should revert with the same custom accessControl error
      */
     function test_RevertWhen_nonAdminWalletCallAdminFunctions() public {
-        vm.expectRevert(customError("SET_EXTERNAL_ADMIN"));
+        vm.expectRevert(customError("SET_EXTERNAL_ROLE"));
         protocol.setOracleMiddleware(IOracleMiddleware(address(1)));
 
-        vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ADMIN"));
+        vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ROLE"));
         protocol.setMinLeverage(0);
 
-        vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ADMIN"));
+        vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ROLE"));
         protocol.setMaxLeverage(0);
 
-        vm.expectRevert(customError("CRITICAL_FUNCTIONS_ADMIN"));
+        vm.expectRevert(customError("CRITICAL_FUNCTIONS_ROLE"));
         protocol.setValidationDeadline(0);
 
-        vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ADMIN"));
+        vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ROLE"));
         protocol.setLiquidationPenalty(0);
 
-        vm.expectRevert(customError("SET_OPTIONS_ADMIN"));
+        vm.expectRevert(customError("SET_OPTIONS_ROLE"));
         protocol.setSafetyMarginBps(0);
 
-        vm.expectRevert(customError("SET_OPTIONS_ADMIN"));
+        vm.expectRevert(customError("SET_OPTIONS_ROLE"));
         protocol.setLiquidationIteration(0);
 
-        vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ADMIN"));
+        vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ROLE"));
         protocol.setEMAPeriod(0);
 
-        vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ADMIN"));
+        vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ROLE"));
         protocol.setFundingSF(0);
 
-        vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ADMIN"));
+        vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ROLE"));
         protocol.setProtocolFeeBps(0);
 
-        vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ADMIN"));
+        vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ROLE"));
         protocol.setSdexBurnOnDepositRatio(0);
 
-        vm.expectRevert(customError("SET_EXTERNAL_ADMIN"));
+        vm.expectRevert(customError("SET_EXTERNAL_ROLE"));
         protocol.setFeeCollector(address(this));
 
-        vm.expectRevert(customError("SET_OPTIONS_ADMIN"));
+        vm.expectRevert(customError("SET_OPTIONS_ROLE"));
         protocol.setFeeThreshold(0);
 
-        vm.expectRevert(customError("SET_EXTERNAL_ADMIN"));
+        vm.expectRevert(customError("SET_EXTERNAL_ROLE"));
         protocol.setLiquidationRewardsManager(ILiquidationRewardsManager(address(this)));
 
-        vm.expectRevert(customError("SET_EXTERNAL_ADMIN"));
+        vm.expectRevert(customError("SET_EXTERNAL_ROLE"));
         protocol.setRebalancer(IRebalancer(address(this)));
 
-        vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ADMIN"));
+        vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ROLE"));
         protocol.setSecurityDepositValue(0);
 
-        vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ADMIN"));
+        vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ROLE"));
         protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
 
-        vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ADMIN"));
+        vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ROLE"));
         protocol.setMinLongPosition(100 ether);
 
-        vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ADMIN"));
+        vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ROLE"));
         protocol.setPositionFeeBps(0);
 
-        vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ADMIN"));
+        vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ROLE"));
         protocol.setVaultFeeBps(0);
 
-        vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ADMIN"));
+        vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ROLE"));
         protocol.setRebalancerBonusBps(0);
     }
 
