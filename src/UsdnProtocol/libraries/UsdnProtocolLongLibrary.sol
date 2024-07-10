@@ -131,6 +131,7 @@ library UsdnProtocolLongLibrary {
         uint256 longTradingExpo = longTradingExpoWithFunding(s, price, timestamp).toUint256();
 
         int24 tick = getEffectiveTickForPrice(rawLiquidationPrice, price, longTradingExpo, acc, tickSpacing);
+        // add 2 tick spacing on top of the liquidation penalty to compensate the rounding down in initiateOpenPosition
         liquidationPrice_ = getEffectivePriceForTick(
             tick + (tickSpacing * int24(uint24(s._liquidationPenalty + 2))), price, longTradingExpo, acc
         );
