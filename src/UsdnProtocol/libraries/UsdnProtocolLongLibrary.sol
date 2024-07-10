@@ -221,8 +221,7 @@ library UsdnProtocolLongLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
         }
 
-        int256 ema = Core.calcEMA(s._lastFunding, timestamp - s._lastUpdateTimestamp, s._EMAPeriod, s._EMA);
-        (int256 fundAsset,) = Core._fundingAsset(s, timestamp, ema);
+        (int256 fundAsset,) = Core._fundingAsset(s, timestamp, s._EMA);
 
         if (fundAsset > 0) {
             available_ = Core._longAssetAvailable(s, currentPrice).safeSub(fundAsset);
@@ -645,7 +644,7 @@ library UsdnProtocolLongLibrary {
     {
         // calculate position leverage
         // reverts if liquidationPrice >= entryPrice
-        uint128 leverage = _getLeverage(adjustedPrice, liqPriceWithoutPenalty);
+        uint256 leverage = _getLeverage(adjustedPrice, liqPriceWithoutPenalty);
         if (leverage < s._minLeverage) {
             revert IUsdnProtocolErrors.UsdnProtocolLeverageTooLow();
         }
@@ -969,15 +968,14 @@ library UsdnProtocolLongLibrary {
      * @param liquidationPrice Liquidation price of the position
      * @return leverage_ The leverage of the position
      */
-    function _getLeverage(uint128 startPrice, uint128 liquidationPrice) public pure returns (uint128 leverage_) {
+    function _getLeverage(uint128 startPrice, uint128 liquidationPrice) public pure returns (uint256 leverage_) {
         if (startPrice <= liquidationPrice) {
             // this situation is not allowed (newly open position must be solvent)
             // also, the calculation below would underflow
             revert IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationPrice(liquidationPrice, startPrice);
         }
 
-        leverage_ =
-            ((10 ** Constants.LEVERAGE_DECIMALS * uint256(startPrice)) / (startPrice - liquidationPrice)).toUint128();
+        leverage_ = (10 ** Constants.LEVERAGE_DECIMALS * uint256(startPrice)) / (startPrice - liquidationPrice);
     }
 
     /**

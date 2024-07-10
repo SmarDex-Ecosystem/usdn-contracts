@@ -383,8 +383,8 @@ contract UsdnProtocolStorage is
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getLastFunding() external view returns (int256) {
-        return s._lastFunding;
+    function getLastFundingPerDay() external view returns (int256) {
+        return s._lastFundingPerDay;
     }
 
     /// @inheritdoc IUsdnProtocolStorage

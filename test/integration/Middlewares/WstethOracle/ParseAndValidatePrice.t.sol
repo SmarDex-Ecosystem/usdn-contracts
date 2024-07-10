@@ -235,7 +235,8 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
                     uint256 pythWstethTimestamp,
                 ) = getHermesApiSignature(PYTH_WSTETH_USD, block.timestamp);
 
-                assertEq(middlewarePrice.timestamp, pythWstethTimestamp, "Wrong similar timestamp");
+                // we're not guaranteed to obtain a price from Pyth for wstETH at the same timestamp that we got for ETH
+                assertApproxEqAbs(middlewarePrice.timestamp, pythWstethTimestamp, 5, "Wrong similar timestamp");
 
                 // should obtain a short different price between the pyth wsteth price feed
                 // and the pyth eth price feed adjusted with ratio.

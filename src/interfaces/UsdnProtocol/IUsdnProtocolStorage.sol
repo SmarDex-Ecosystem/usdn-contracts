@@ -284,7 +284,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getFundingSF() external view returns (uint256);
 
     /**
-     * @notice Get the fee taken by the protocol during the application of funding rates
+     * @notice Get the fee taken by the protocol during the application of funding
      * @return The fee (in basis points)
      */
     function getProtocolFeeBps() external view returns (uint16);
@@ -399,10 +399,10 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Get the last value of the funding rate at the last timestamp (`getLastUpdateTimestamp`)
-     * @return The last value of the funding rate
+     * @notice Get the value of the funding rate at the last timestamp (`getLastUpdateTimestamp`)
+     * @return The last value of the funding rate (per day) with `FUNDING_RATE_DECIMALS` decimals
      */
-    function getLastFunding() external view returns (int256);
+    function getLastFundingPerDay() external view returns (int256);
 
     /**
      * @notice Get the price of the asset during the last update of the vault and long balances

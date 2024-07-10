@@ -27,7 +27,7 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
 
     /**
      * @notice Get the predicted value of the long trading exposure for the given asset price and timestamp
-     * @dev The effects of the funding rates and any profit or loss of the long positions since the last contract state
+     * @dev The effects of the funding and any profit or loss of the long positions since the last contract state
      * update is taken into account
      * @param currentPrice The current or predicted asset price
      * @param timestamp The timestamp corresponding to `currentPrice`
@@ -37,7 +37,7 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
 
     /**
      * @notice Get the predicted value of the long balance for the given asset price and timestamp
-     * @dev The effects of the funding rates and any profit or loss of the long positions since the last contract state
+     * @dev The effects of the funding and any profit or loss of the long positions since the last contract state
      * update is taken into account, as well as the fees. If the provided timestamp is older than the last state
      * update, the function reverts with `UsdnProtocolTimestampTooOld`
      * @param currentPrice The current or predicted asset price

@@ -260,8 +260,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return Core._getActionablePendingAction(s);
     }
 
-    function i_lastFunding() external view returns (int256) {
-        return s._lastFunding;
+    function i_lastFundingPerDay() external view returns (int256) {
+        return s._lastFundingPerDay;
     }
 
     function i_applyPnlAndFunding(uint128 currentPrice, uint128 timestamp)
@@ -408,7 +408,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         ActionsUtils._checkImbalanceLimitClose(s, posTotalExpoToClose, posValueToClose);
     }
 
-    function i_getLeverage(uint128 price, uint128 liqPrice) external pure returns (uint128) {
+    function i_getLeverage(uint128 price, uint128 liqPrice) external pure returns (uint256) {
         return Long._getLeverage(price, liqPrice);
     }
 
@@ -440,8 +440,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return Long._findHighestPopulatedTick(s, searchStart);
     }
 
-    function i_updateEMA(uint128 secondsElapsed) external returns (int256) {
-        return Core._updateEMA(s, secondsElapsed);
+    function i_updateEMA(int256 fundingPerDay, uint128 secondsElapsed) external {
+        Core._updateEMA(s, fundingPerDay, secondsElapsed);
     }
 
     function i_usdnRebase(uint128 assetPrice, bool ignoreInterval) external returns (bool, bytes memory) {
@@ -624,11 +624,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return Long._triggerRebalancer(s, lastPrice, longBalance, vaultBalance, remainingCollateral);
     }
 
-    function i_calculateFee(int256 fund, int256 fundAsset)
-        external
-        returns (int256 fee_, int256 fundWithFee_, int256 fundAssetWithFee_)
-    {
-        return Core._calculateFee(s, fund, fundAsset);
+    function i_calculateFee(int256 fundAsset) external returns (int256 fee_, int256 fundAssetWithFee_) {
+        return Core._calculateFee(s, fundAsset);
     }
 
     function i_flashClosePosition(
@@ -721,6 +718,13 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return ActionsUtils._prepareClosePositionData(s, owner, to, validator, posId, amountToClose, currentPriceData);
     }
 
+    function i_prepareValidateOpenPositionData(PendingAction memory pending, bytes calldata priceData)
+        external
+        returns (ValidateOpenPositionData memory data_, bool liquidated_)
+    {
+        return ActionsUtils._prepareValidateOpenPositionData(s, pending, priceData);
+    }
+
     function i_checkInitiateClosePosition(
         address owner,
         address to,
@@ -750,7 +754,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
      */
     function i_funding(FundingStorage memory fundingStorage, uint128 timestamp, int256 ema)
         external
-        returns (int256 fund_, int256 oldLongExpo_)
+        returns (int256 funding_, int256 fundingPerDay_, int256 oldLongExpo_)
     {
         _tempStorage._totalExpo = fundingStorage.totalExpo;
         _tempStorage._balanceVault = fundingStorage.balanceVault;
