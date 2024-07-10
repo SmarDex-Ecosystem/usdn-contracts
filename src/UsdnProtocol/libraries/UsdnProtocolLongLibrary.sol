@@ -183,47 +183,6 @@ library UsdnProtocolLongLibrary {
         }
     }
 
-    /**
-     * @notice Get the effective tick for a price, rounding up to the next valid tick spacing
-     * @param price The price for which to get the effective tick
-     * @param assetPrice The price of the asset
-     * @param longTradingExpo The long trading expo
-     * @param accumulator The liquidation multiplier accumulator
-     * @param tickSpacing The tick spacing
-     * @return tick_ The effective tick for the price, rounded up to the next tick spacing
-     */
-    function getEffectiveTickForPriceRoundUp(
-        uint128 price,
-        uint256 assetPrice,
-        uint256 longTradingExpo,
-        HugeUint.Uint512 memory accumulator,
-        int24 tickSpacing
-    ) public pure returns (int24 tick_) {
-        // unadjust price with liquidation multiplier
-        uint256 unadjustedPrice = _unadjustPrice(price, assetPrice, longTradingExpo, accumulator);
-
-        if (unadjustedPrice < TickMath.MIN_PRICE) {
-            return TickMath.minUsableTick(tickSpacing);
-        }
-
-        tick_ = TickMath.getTickAtPrice(unadjustedPrice);
-
-        // round up to the next valid tick according to _tickSpacing (towards positive infinity)
-        if (tick_ < 0) {
-            // rounding is desirable here
-            // slither-disable-next-line divide-before-multiply
-            tick_ = (tick_ / tickSpacing) * tickSpacing;
-        } else {
-            tick_ = int24(int256(FixedPointMathLib.divUp(uint256(int256(tick_)), uint256(int256(tickSpacing)))))
-                * tickSpacing;
-            // avoid invalid ticks
-            int24 maxUsableTick = TickMath.maxUsableTick(tickSpacing);
-            if (tick_ > maxUsableTick) {
-                tick_ = maxUsableTick;
-            }
-        }
-    }
-
     /// @notice See {IUsdnProtocolLong}
     function getEffectivePriceForTick(Types.Storage storage s, int24 tick) public view returns (uint128 price_) {
         price_ =
