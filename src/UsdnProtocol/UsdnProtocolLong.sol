@@ -27,11 +27,6 @@ abstract contract UsdnProtocolLong is UsdnProtocolStorage, IUsdnProtocolLong {
     }
 
     /// @inheritdoc IUsdnProtocolLong
-    function getMinLiquidationPrice(uint128 price) external view returns (uint128 liquidationPrice_) {
-        return Long.getMinLiquidationPrice(s, price);
-    }
-
-    /// @inheritdoc IUsdnProtocolLong
     function getPositionValue(PositionId calldata posId, uint128 price, uint128 timestamp)
         external
         view
