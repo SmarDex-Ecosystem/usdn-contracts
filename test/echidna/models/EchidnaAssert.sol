@@ -18,6 +18,7 @@ import { IWstETH } from "../../../src/interfaces/IWstETH.sol";
 import { IUsdnProtocolErrors } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolTypes } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Permit2TokenBitfield } from "../../../src/libraries/Permit2TokenBitfield.sol";
+import { SignedMath } from "../../../src/libraries/SignedMath.sol";
 
 contract Setup is Test {
     address public constant DEPLOYER = address(0x10000);
@@ -59,6 +60,12 @@ contract Setup is Test {
         IUsdnProtocolErrors.UsdnProtocolZeroAmount.selector,
         IUsdnProtocolErrors.UsdnProtocolLongPositionTooSmall.selector,
         IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction.selector
+    ];
+    bytes4[] public INITIATE_WITHDRAWAL_ERRORS = [
+        IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector,
+        IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow.selector,
+        IUsdnProtocolErrors.UsdnProtocolZeroAmount.selector,
+        SignedMath.SignedMathDivideByZero.selector
     ];
 
     constructor() payable {
@@ -115,6 +122,12 @@ contract EchidnaAssert is Setup {
         uint256 usdnProtocolWstETH;
     }
 
+    struct InitiateWithdrawalBalanceBefore {
+        uint256 senderETH;
+        uint256 senderUsdn;
+        uint256 usdnProtocolETH;
+        uint256 usdnProtocolUsdn;
+    }
     /* -------------------------------------------------------------------------- */
     /*                             USDN Protocol                                  */
     /* -------------------------------------------------------------------------- */
@@ -227,6 +240,48 @@ contract EchidnaAssert is Setup {
         } else {
             emit log_named_bytes("DOS ", err);
             assert(false);
+        }
+    }
+
+    function initiateWithdrawal(
+        uint152 usdnShares,
+        uint256 ethRand,
+        uint256 destRand,
+        uint256 validatorRand,
+        uint256 currentPrice
+    ) public {
+        vm.prank(msg.sender);
+        usdn.approve(address(usdnProtocol), usdnShares);
+        vm.deal(msg.sender, ethRand);
+
+        destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
+        address dest = destinationsToken[address(wsteth)][destRand];
+
+        validatorRand = bound(validatorRand, 0, validators.length - 1);
+        address payable validator = payable(validators[validatorRand]);
+
+        bytes memory priceData = abi.encode(currentPrice);
+
+        InitiateWithdrawalBalanceBefore memory balanceBefore = InitiateWithdrawalBalanceBefore({
+            senderETH: address(msg.sender).balance,
+            senderUsdn: usdn.sharesOf(msg.sender),
+            usdnProtocolETH: address(usdnProtocol).balance,
+            usdnProtocolUsdn: usdn.sharesOf(address(usdnProtocol))
+        });
+
+        vm.prank(msg.sender);
+        try usdnProtocol.initiateWithdrawal{ value: ethRand }(
+            usdnShares, dest, validator, priceData, EMPTY_PREVIOUS_DATA
+        ) {
+            uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
+
+            assert(address(msg.sender).balance == balanceBefore.senderETH - securityDeposit);
+            assert(usdn.sharesOf(msg.sender) == balanceBefore.senderUsdn - usdnShares);
+
+            assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH + securityDeposit);
+            assert(usdn.sharesOf(address(usdnProtocol)) == balanceBefore.usdnProtocolUsdn + usdnShares);
+        } catch (bytes memory err) {
+            _checkErrors(err, INITIATE_WITHDRAWAL_ERRORS);
         }
     }
 }
