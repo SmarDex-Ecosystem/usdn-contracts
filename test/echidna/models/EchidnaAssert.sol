@@ -55,6 +55,9 @@ contract Setup is Test {
         FixedPointMathLib.FullMulDivFailed.selector
     ];
 
+    bytes4[] public INITIATE_CLOSE_ERRORS =
+        [IUsdnProtocolErrors.UsdnProtocolUnauthorized.selector, FixedPointMathLib.FullMulDivFailed.selector];
+
     constructor() payable {
         vm.warp(1_709_251_200);
         uint256 INIT_DEPOSIT_AMOUNT = 10 ether;
@@ -157,6 +160,53 @@ contract EchidnaAssert is Setup {
             assert(wsteth.balanceOf(address(usdnProtocol)) == usdnProtocolBalanceWstETH + amountRand);
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_DEPOSIT_ERRORS);
+        }
+    }
+
+    function initiateClosePosition(uint128 amountRand, uint256 destRand, uint256 validatorRand) public {
+        amountRand = uint128(bound(amountRand, 0, wsteth.balanceOf(msg.sender)));
+
+        destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
+        address dest = destinationsToken[address(wsteth)][destRand];
+
+        validatorRand = bound(validatorRand, 0, validators.length - 1);
+        address payable validator = payable(validators[validatorRand]);
+
+        bytes memory priceData = abi.encode(2 ether);
+        uint64 securityDeposit = usdnProtocol.getSecurityDepositValue();
+
+        // // uint256 senderBalanceETH = address(msg.sender).balance;
+        // // uint256 senderBalanceWstETH = wsteth.balanceOf(msg.sender);
+        // // uint256 senderBalanceSdex = sdex.balanceOf(msg.sender);
+
+        // // uint256 usdnProtocolBalanceETH = address(usdnProtocol).balance;
+        // // uint256 usdnProtocolBalanceWstETH = wsteth.balanceOf(address(usdnProtocol));
+
+        IUsdnProtocolTypes.PositionId memory posId;
+        posId.tick = usdnProtocol.getHighestPopulatedTick();
+        uint256 length = usdnProtocol.getTickData(posId.tick).totalPos;
+
+        posId.tickVersion = usdnProtocol.getTickVersion(posId.tick);
+
+        if (length > 0) {
+            posId.index = bound(posId.index, 0, length - 1);
+        }
+
+        uint128 amountToClose = uint128(bound(0, 0, type(uint128).max));
+
+        vm.prank(msg.sender);
+        try usdnProtocol.initiateClosePosition{ value: securityDeposit }(
+            posId, amountToClose, dest, validator, priceData, EMPTY_PREVIOUS_DATA
+        ) {
+            assert(false);
+            // assert(address(msg.sender).balance == senderBalanceETH - securityDeposit);
+            // assert(wsteth.balanceOf(msg.sender) == senderBalanceWstETH - amountRand);
+            // assert(sdex.balanceOf(msg.sender) < senderBalanceSdex);
+            // assert(address(usdnProtocol).balance == usdnProtocolBalanceETH + securityDeposit);
+            // assert(wsteth.balanceOf(address(usdnProtocol)) == usdnProtocolBalanceWstETH + amountRand);
+        } catch (bytes memory err) {
+            emit log_named_bytes("Error", err);
+            _checkErrors(err, INITIATE_CLOSE_ERRORS);
         }
     }
 
