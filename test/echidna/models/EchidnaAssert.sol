@@ -157,7 +157,7 @@ contract EchidnaAssert is Setup {
             usdnProtocolWstETH: wsteth.balanceOf(address(usdnProtocol))
         });
 
-        vm.prank(msg.sender);
+        vm.prank(DEPLOYER);
         try usdnProtocol.initiateDeposit{ value: ethRand }(
             amountWstETHRand, dest, validator, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         ) {
@@ -195,7 +195,7 @@ contract EchidnaAssert is Setup {
             usdnProtocolBalanceWstETH: wsteth.balanceOf(address(usdnProtocol))
         });
 
-        vm.prank(msg.sender);
+        vm.prank(DEPLOYER);
 
         try usdnProtocol.initiateOpenPosition{ value: ethRand }(
             amountRand,
