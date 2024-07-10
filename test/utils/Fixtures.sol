@@ -99,6 +99,10 @@ contract BaseFixture is Test {
         vm.deal(constants.SET_PROTOCOL_PARAMS_ADMIN, 10_000 ether);
         vm.deal(constants.SET_USDN_PARAMS_ADMIN, 10_000 ether);
         vm.deal(constants.SET_OPTIONS_ADMIN, 10_000 ether);
+        vm.deal(constants.SET_EXTERNAL_ROLE_ADMIN, 10_000 ether);
+        vm.deal(constants.CRITICAL_FUNCTIONS_ROLE_ADMIN, 10_000 ether);
+        vm.deal(constants.SET_PROTOCOL_PARAMS_ROLE_ADMIN, 10_000 ether);
+        vm.deal(constants.SET_USDN_PARAMS_ROLE_ADMIN, 10_000 ether);
         vm.deal(constants.USER_1, 10_000 ether);
         vm.deal(constants.USER_2, 10_000 ether);
         vm.deal(constants.USER_3, 10_000 ether);
