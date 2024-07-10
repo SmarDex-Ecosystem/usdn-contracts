@@ -22,11 +22,14 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:scenario Check return values of the `funding` function
      * @custom:when The timestamp is the same as the initial timestamp
      * @custom:then The funding should be 0
+     * @custom:and The funding rate should be unaffected
+     * @custom:and The long expo should be as expected
      */
-    function test_funding() public {
+    function test_funding() public view {
         int256 longExpo = int256(protocol.getTotalExpo()) - int256(protocol.getBalanceLong());
-        (int256 fund, int256 oldLongExpo) = protocol.funding(uint128(params.initialTimestamp));
-        assertEq(fund, 0, "funding should be 0 if no time has passed");
+        (int256 funding, int256 fundingPerDay, int256 oldLongExpo) = protocol.funding(uint128(params.initialTimestamp));
+        assertEq(funding, 0, "funding should be 0 if no time has passed");
+        assertEq(fundingPerDay, protocol.getEMA(), "funding rate should be unaffected by time");
         assertEq(oldLongExpo, longExpo, "longExpo if no time has passed");
     }
 
@@ -48,7 +51,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @dev Due to imprecision in the calculations, there are in practice a few wei of difference, but always in favor
      * of the protocol (see fuzzing tests)
      */
-    function test_longAssetAvailable() public {
+    function test_longAssetAvailable() public view {
         // calculate the value of the deployer's long position
         uint128 longLiqPrice =
             protocol.getEffectivePriceForTick(protocol.getEffectiveTickForPrice(params.initialPrice / 2));
@@ -70,33 +73,38 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario EMA updated correctly
-     * @custom:given a negative funding
-     * @custom:and an action for a smaller period than the EMA period
-     * @custom:then EMA should be greater than the last funding
+     * @custom:scenario EMA updated correctly with negative funding
+     * @custom:given The funding rate is negative
+     * @custom:when The next action happens just before the EMA period has elapsed
+     * @custom:then The new EMA should almost be equal to the funding rate
      */
     function test_updateEma_negFunding() public {
-        // we create a deposit and skip 1 day and call liquidate() to have a negative funding
+        // we create a deposit to have a negative funding
         bytes memory priceData = abi.encode(params.initialPrice);
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 10 ether, params.initialPrice);
-        skip(1 days);
-        protocol.testLiquidate(priceData, 1);
 
-        int256 lastFunding = protocol.getLastFunding();
+        // skip almost the entirety of the EMA period
         skip(protocol.getEMAPeriod() - 1);
         // we call liquidate() to update the EMA
         protocol.testLiquidate(priceData, 1);
 
-        assertGt(protocol.getEMA(), lastFunding);
+        int256 lastFundingPerDay = protocol.getLastFundingPerDay();
+        assertLt(lastFundingPerDay, 0, "funding should be negative for the elapsed period");
+
+        // within 0.002%
+        assertApproxEqRel(
+            protocol.getEMA(), lastFundingPerDay, 0.00002 ether, "EMA should be approx equal to the last funding"
+        );
     }
 
     /**
-     * @custom:scenario EMA updated correctly
-     * @custom:given a positive funding
-     * @custom:and an action for a smaller period than the EMA period
-     * @custom:then EMA should be lower than the last funding
+     * @custom:scenario EMA updated correctly with positive funding
+     * @custom:given The funding rate is positive
+     * @custom:when The next action happens just before the EMA period has elapsed
+     * @custom:then The new EMA should almost be equal to the funding rate
      */
     function test_updateEma_posFunding() public {
+        // we create a long to have a positive funding
         setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
@@ -107,20 +115,28 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
             })
         );
 
-        int256 lastFunding = protocol.getLastFunding();
+        // skip almost the entirety of the EMA period
         skip(protocol.getEMAPeriod() - 1);
         // we call liquidate() to update the EMA
         protocol.testLiquidate(abi.encode(params.initialPrice), 1);
 
-        assertLt(protocol.getEMA(), lastFunding);
+        int256 lastFundingPerDay = protocol.getLastFundingPerDay();
+        assertGt(lastFundingPerDay, 0, "funding should be positive for the elapsed period");
+
+        // within 0.002%
+        assertApproxEqRel(
+            protocol.getEMA(), lastFundingPerDay, 0.00002 ether, "EMA should be approx equal to the last funding"
+        );
     }
 
     /**
      * @custom:scenario Funding calculation
+     * @custom:given 60 seconds have elapsed since the last update timestamp
      * @custom:when long and vault expos are equal
-     * @custom:then fund should be equal to EMA
+     * @custom:then funding rate should be equal to EMA
+     * @custom:then funding should be as expected
      */
-    function test_fundingWhenEqualExpo() public {
+    function test_fundingWhenEqualExpo() public view {
         int256 vaultTradingExpo = protocol.i_vaultAssetAvailable(params.initialPrice);
 
         assertEq(
@@ -128,8 +144,10 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         );
 
         int256 EMA = protocol.getEMA();
-        (int256 fund_, int256 oldLongExpo) = protocol.funding(uint128(params.initialTimestamp + 60));
-        assertEq(fund_, EMA, "funding should be equal to EMA");
+        (int256 funding, int256 fundingPerDay, int256 oldLongExpo) =
+            protocol.funding(uint128(protocol.getLastUpdateTimestamp() + 60));
+        assertEq(fundingPerDay, EMA, "funding rate should be equal to EMA");
+        assertEq(funding, EMA * 60 / 1 days, "funding should be as expected");
         assertEq(
             oldLongExpo,
             int256(protocol.getTotalExpo() - protocol.getBalanceLong()),
@@ -150,12 +168,12 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         skip(1 days);
         protocol.testLiquidate(priceData, 1);
 
-        int256 lastFunding = protocol.getLastFunding();
+        int256 lastFundingPerDay = protocol.getLastFundingPerDay();
         skip(protocol.getEMAPeriod() + 1);
         // we call liquidate() to update the EMA
         protocol.testLiquidate(priceData, 1);
 
-        assertEq(protocol.getEMA(), lastFunding, "EMA should be equal to last funding");
+        assertEq(protocol.getEMA(), lastFundingPerDay, "EMA should be equal to last funding rate");
     }
 
     /**
@@ -186,10 +204,10 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
 
         int256 EMA = protocol.getEMA();
         uint256 fundingSF = protocol.getFundingSF();
-        (int256 fund_,) = protocol.funding(uint128(block.timestamp));
+        (, int256 fundingPerDay,) = protocol.funding(uint128(block.timestamp));
 
         assertEq(
-            fund_,
+            fundingPerDay,
             -int256(fundingSF * 10 ** (protocol.FUNDING_RATE_DECIMALS() - protocol.FUNDING_SF_DECIMALS())) + EMA,
             "funding should be equal to -fundingSF + EMA"
         );
@@ -221,10 +239,10 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
 
         int256 EMA = protocol.getEMA();
         uint256 fundingSF = protocol.getFundingSF();
-        (int256 fund_,) = protocol.funding(uint128(block.timestamp));
+        (, int256 fundingPerDay,) = protocol.funding(uint128(block.timestamp));
 
         assertEq(
-            fund_,
+            fundingPerDay,
             int256(fundingSF * 10 ** (protocol.FUNDING_RATE_DECIMALS() - protocol.FUNDING_SF_DECIMALS())) + EMA,
             "funding should be equal to fundingSF + EMA"
         );
@@ -250,8 +268,8 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         );
         skip(30);
 
-        (int256 fund,) = protocol.funding(uint128(block.timestamp));
-        assertGt(fund, 0, "funding should be positive");
+        (, int256 fundingPerDay,) = protocol.funding(uint128(block.timestamp));
+        assertGt(fundingPerDay, 0, "funding rate should be positive");
 
         // we have to subtract 30 seconds from the timestamp because of the mock oracle middleware behavior
         int256 available = protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
@@ -270,8 +288,8 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 10 ether, price);
         skip(1 hours);
 
-        (int256 fund,) = protocol.funding(uint128(block.timestamp));
-        assertLt(fund, 0, "funding should be negative");
+        (, int256 fundingPerDay,) = protocol.funding(uint128(block.timestamp));
+        assertLt(fundingPerDay, 0, "funding rate should be negative");
 
         // we have to subtract 30 seconds from the timestamp because of the mock oracle middleware behavior
         int256 available = protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
@@ -302,8 +320,8 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 10 ether, price);
         skip(1 hours);
 
-        (int256 fund,) = protocol.funding(uint128(block.timestamp));
-        assertLt(fund, 0, "funding should be negative");
+        (, int256 fundingPerDay,) = protocol.funding(uint128(block.timestamp));
+        assertLt(fundingPerDay, 0, "funding rate should be negative");
 
         // we have to subtract 30 seconds from the timestamp because of the mock oracle middleware behavior
         int256 available = protocol.vaultAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
@@ -333,8 +351,8 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         );
         skip(30);
 
-        (int256 fund,) = protocol.funding(uint128(block.timestamp));
-        assertGt(fund, 0, "funding should be positive");
+        (, int256 fundingPerDay,) = protocol.funding(uint128(block.timestamp));
+        assertGt(fundingPerDay, 0, "funding rate should be positive");
 
         // we have to subtract 30 seconds from the timestamp because of the mock oracle middleware behavior
         int256 available = protocol.vaultAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
@@ -360,7 +378,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:when getPendingAction is called
      * @custom:then it returns an empty action and 0 as the rawIndex
      */
-    function test_getPendingActionWithoutPendingAction() public {
+    function test_getPendingActionWithoutPendingAction() public view {
         (PendingAction memory action, uint128 rawIndex) = protocol.i_getPendingAction(address(this));
         assertTrue(action.action == ProtocolAction.None, "action should be None");
         assertEq(action.validator, address(0), "user should be empty");
@@ -642,17 +660,15 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:then The function should return the expected fee, fundWithFee and fundAssetWithFee
      */
     function test_calculateFeeMoreThanZero() public {
-        int256 fund = 2000 ether;
         int256 fundAsset = 1000 ether;
 
         uint16 protocolFeeBps = protocol.getProtocolFeeBps();
         uint256 bpsDivisor = protocol.BPS_DIVISOR();
         uint256 expectedFee = (uint256(fundAsset) * protocolFeeBps) / bpsDivisor;
 
-        (int256 fee, int256 fundWithFee, int256 fundAssetWithFee) = protocol.i_calculateFee(fund, fundAsset);
+        (int256 fee, int256 fundAssetWithFee) = protocol.i_calculateFee(fundAsset);
 
         assertEq(uint256(fee), expectedFee, "fee should be equal to fundAsset * protocolFeeBps / bpsDivisor");
-        assertEq(fundWithFee, fund, "fundWithFee should be equal to fund");
         assertEq(
             uint256(fundAssetWithFee),
             uint256(fundAsset) - expectedFee,
@@ -667,12 +683,9 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * and fundWithFee should be equal to fund
      */
     function test_calculateFeeEqualZero() public {
-        int256 fund = 2000 ether;
-
-        (int256 fee, int256 fundWithFee, int256 fundAssetWithFee) = protocol.i_calculateFee(fund, 0);
+        (int256 fee, int256 fundAssetWithFee) = protocol.i_calculateFee(0);
 
         assertEq(fee, 0, "fee should be 0");
-        assertEq(fundWithFee, fund, "fundWithFee should be equal to fund");
         assertEq(fundAssetWithFee, 0, "fundAssetWithFee should be equal to fund");
     }
 
@@ -682,22 +695,15 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:then The function should return the expected fee, fundWithFee and fundAssetWithFee
      */
     function test_calculateFeeLessThanZero() public {
-        int256 fund = -2000;
         int256 fundAsset = -1;
 
         uint16 protocolFeeBps = protocol.getProtocolFeeBps();
         uint256 bpsDivisor = protocol.BPS_DIVISOR();
         uint256 expectedFee = (uint256(-fundAsset) * protocolFeeBps) / bpsDivisor;
-        int256 expectedFundWithFee = fund - (fund * int256(uint256(protocolFeeBps)) / int256(bpsDivisor));
 
-        (int256 fee, int256 fundWithFee, int256 fundAssetWithFee) = protocol.i_calculateFee(fund, fundAsset);
+        (int256 fee, int256 fundAssetWithFee) = protocol.i_calculateFee(fundAsset);
 
         assertEq(uint256(fee), expectedFee, "fee should be equal to fundAsset * protocolFeeBps / bpsDivisor");
-        assertEq(
-            fundWithFee,
-            expectedFundWithFee,
-            "fundWithFee should be equal to fund - (fund * protocolFeeBps / bpsDivisor)"
-        );
         assertEq(
             uint256(fundAssetWithFee),
             uint256(fundAsset) - expectedFee,
