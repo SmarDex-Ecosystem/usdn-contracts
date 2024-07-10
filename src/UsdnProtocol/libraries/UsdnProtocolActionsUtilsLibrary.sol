@@ -319,6 +319,9 @@ library UsdnProtocolActionsUtilsLibrary {
         if (!pos.validated) {
             revert IUsdnProtocolErrors.UsdnProtocolPositionNotValidated();
         }
+        if (amountToClose == 0) {
+            revert IUsdnProtocolErrors.UsdnProtocolZeroAmount();
+        }
         if (amountToClose > pos.amount) {
             revert IUsdnProtocolErrors.UsdnProtocolAmountToCloseHigherThanPositionAmount(amountToClose, pos.amount);
         }
@@ -329,16 +332,14 @@ library UsdnProtocolActionsUtilsLibrary {
         if (remainingAmount > 0 && remainingAmount < s._minLongPosition) {
             IBaseRebalancer rebalancer = s._rebalancer;
             if (owner == address(rebalancer)) {
-                uint128 userPosAmount = rebalancer.getUserDepositData(to).amount;
+                // note: the rebalancer always indicates the rebalancer user's address as validator
+                uint128 userPosAmount = rebalancer.getUserDepositData(validator).amount;
                 if (amountToClose != userPosAmount) {
                     revert IUsdnProtocolErrors.UsdnProtocolLongPositionTooSmall();
                 }
             } else {
                 revert IUsdnProtocolErrors.UsdnProtocolLongPositionTooSmall();
             }
-        }
-        if (amountToClose == 0) {
-            revert IUsdnProtocolErrors.UsdnProtocolAmountToCloseIsZero();
         }
     }
 
@@ -424,8 +425,8 @@ library UsdnProtocolActionsUtilsLibrary {
     /**
      * @notice Prepare the pending action struct for the close position action and add it to the queue
      * @param s The storage of the protocol
-     * @param validator The validator for the pending action
      * @param to The address that will receive the assets
+     * @param validator The validator for the pending action
      * @param posId The unique identifier of the position
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param securityDepositValue The value of the security deposit for the newly created pending action
@@ -434,8 +435,8 @@ library UsdnProtocolActionsUtilsLibrary {
      */
     function _createClosePendingAction(
         Types.Storage storage s,
-        address validator,
         address to,
+        address validator,
         Types.PositionId memory posId,
         uint128 amountToClose,
         uint64 securityDepositValue,
@@ -566,6 +567,8 @@ library UsdnProtocolActionsUtilsLibrary {
         if (tick > s._highestPopulatedTick) {
             // keep track of the highest populated tick
             s._highestPopulatedTick = tick;
+
+            emit IUsdnProtocolEvents.HighestPopulatedTickUpdated(tick);
         }
         tickArray.push(long);
 

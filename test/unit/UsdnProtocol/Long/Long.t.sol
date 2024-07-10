@@ -22,7 +22,7 @@ contract TestUsdnProtocolLongLong is UsdnProtocolBaseFixture {
      * @custom:then The leverage of the position should be adjusted, changing the value of the total expo for the tick
      * and the protocol
      */
-    function test_validateAPositionAfterPriceChangedRecalculateLeverageAndTotalExpo() external {
+    function test_validateAPositionAfterPriceChangedRecalculateLeverageAndTotalExpo() public {
         uint128 price = 2000 ether;
         uint128 desiredLiqPrice = 1700 ether;
 

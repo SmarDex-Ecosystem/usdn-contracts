@@ -327,6 +327,12 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     event MinLongPositionUpdated(uint256 minLongPosition);
 
     /**
+     * @notice Emitted when the highest populated tick is updated
+     * @param tick The new highest populated tick
+     */
+    event HighestPopulatedTickUpdated(int24 tick);
+
+    /**
      * @notice Emitted when a security deposit is refunded
      * @param pendingActionValidator Address of the validator
      * @param receivedBy Address of the user who received the security deposit

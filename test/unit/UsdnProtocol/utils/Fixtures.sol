@@ -16,6 +16,7 @@ import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUs
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { Permit2TokenBitfield } from "../../../../src/libraries/Permit2TokenBitfield.sol";
+import { FeeCollector } from "../../../../src/utils/FeeCollector.sol";
 import { MockOracleMiddleware } from "./MockOracleMiddleware.sol";
 
 /**
@@ -82,6 +83,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
     LiquidationRewardsManager public liquidationRewardsManager;
     RebalancerHandler public rebalancer;
     UsdnProtocolHandler public protocol;
+    FeeCollector public feeCollector;
     PositionId public initialPosition;
     uint256 public usdnInitialTotalSupply;
     address[] public users;
@@ -105,15 +107,10 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         oracleMiddleware = new MockOracleMiddleware();
         chainlinkGasPriceFeed = new MockChainlinkOnChain();
         liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
+        feeCollector = new FeeCollector();
 
         protocol = new UsdnProtocolHandler(
-            usdn,
-            sdex,
-            wstETH,
-            oracleMiddleware,
-            liquidationRewardsManager,
-            _tickSpacing,
-            ADMIN // Fee collector
+            usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, _tickSpacing, address(feeCollector)
         );
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
@@ -129,12 +126,12 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             protocol.setFundingSF(0);
             protocol.resetEMA();
         }
-        if (!params.flags.enableUsdnRebase) {
+        if (!testParams.flags.enableUsdnRebase) {
             // set a high target price to effectively disable rebases
             protocol.setUsdnRebaseThreshold(type(uint128).max);
             protocol.setTargetUsdnPrice(type(uint128).max);
         }
-        if (!params.flags.enableSecurityDeposit) {
+        if (!testParams.flags.enableSecurityDeposit) {
             protocol.setSecurityDepositValue(0);
         }
 
@@ -203,7 +200,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         assertEq(firstPos.user, DEPLOYER, "first pos user");
         assertEq(firstPos.amount, params.initialLong, "first pos amount");
         assertEq(protocol.getPendingProtocolFee(), 0, "initial pending protocol fee");
-        assertEq(protocol.getFeeCollector(), ADMIN, "fee collector");
+        assertEq(protocol.getFeeCollector(), address(feeCollector), "fee collector");
         assertEq(protocol.owner(), ADMIN, "protocol owner");
     }
 

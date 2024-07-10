@@ -285,7 +285,7 @@ library UsdnProtocolActionsLongLibrary {
 
         if (isValidated_ || liquidated_) {
             Core._clearPendingAction(s, validator, rawIndex);
-            return (pending.securityDepositValue, isValidated_, liquidated_);
+            securityDepositValue_ = pending.securityDepositValue;
         }
     }
 
@@ -463,7 +463,7 @@ library UsdnProtocolActionsLongLibrary {
         }
 
         amountToRefund_ =
-            ActionsUtils._createClosePendingAction(s, validator, to, posId, amountToClose, securityDepositValue, data);
+            ActionsUtils._createClosePendingAction(s, to, validator, posId, amountToClose, securityDepositValue, data);
 
         s._balanceLong -= data.tempPositionValue;
 
@@ -511,7 +511,7 @@ library UsdnProtocolActionsLongLibrary {
 
         if (isValidated_ || liquidated_) {
             Core._clearPendingAction(s, validator, rawIndex);
-            return (pending.securityDepositValue, isValidated_, liquidated_);
+            securityDepositValue_ = pending.securityDepositValue;
         }
     }
 
