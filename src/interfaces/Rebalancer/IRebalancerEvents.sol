@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.0;
 
-import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PositionId } from "../UsdnProtocol/IUsdnProtocolTypes.sol";
 
 interface IRebalancerEvents {
     /**
@@ -74,7 +74,7 @@ interface IRebalancerEvents {
      * @param positionId The ID of the new position in the USDN protocol
      */
     event PositionVersionUpdated(
-        uint128 newPositionVersion, uint256 entryAccMultiplier, uint128 amount, Types.PositionId positionId
+        uint128 newPositionVersion, uint256 entryAccMultiplier, uint128 amount, PositionId positionId
     );
 
     /**
