@@ -15,6 +15,8 @@ import { Rebalancer } from "../../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../../src/Usdn/Usdn.sol";
 import { UsdnProtocol } from "../../../src/UsdnProtocol/UsdnProtocol.sol";
 import { IWstETH } from "../../../src/interfaces/IWstETH.sol";
+
+import { IUsdnErrors } from "../../../src/interfaces/Usdn/IUsdnErrors.sol";
 import { IUsdnProtocolErrors } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolTypes } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Permit2TokenBitfield } from "../../../src/libraries/Permit2TokenBitfield.sol";
@@ -60,7 +62,8 @@ contract Setup is Test {
         IUsdnProtocolErrors.UsdnProtocolInvalidAddressValidator.selector,
         IUsdnProtocolErrors.UsdnProtocolZeroAmount.selector,
         IUsdnProtocolErrors.UsdnProtocolLongPositionTooSmall.selector,
-        IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction.selector
+        IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction.selector,
+        IUsdnErrors.UsdnInsufficientSharesBalance.selector
     ];
     bytes4[] public INITIATE_WITHDRAWAL_ERRORS = [
         IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector,
