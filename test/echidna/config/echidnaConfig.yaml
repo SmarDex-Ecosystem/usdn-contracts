@@ -1,5 +1,5 @@
 corpusDir: echidna_assert_corpus
-testMode: assertion
+testMode: exploration
 testLimit: 10000
 deployer: "0x10000"
 sender: ["0x10000"]
@@ -29,5 +29,5 @@ stopOnFail: false
 workers: 8
 #maxTimeDelay: 3628800
 maxTimeDelay: 604800
-shrinkLimit: 50
+shrinkLimit: 5000
 seqLen: 30

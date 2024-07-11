@@ -3,8 +3,8 @@ pragma solidity ^0.8.25;
 
 import { Test } from "forge-std/Test.sol";
 
-import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { MockOracleMiddleware } from "../../../test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
 import { Sdex } from "../../utils/Sdex.sol";
@@ -59,7 +59,7 @@ contract Setup is Test {
         IUsdnProtocolErrors.UsdnProtocolInvalidLongExpo.selector,
         IUsdnProtocolErrors.UsdnProtocolPendingAction.selector,
         FixedPointMathLib.FullMulDivFailed.selector,
-        // IERC20Errors.ERC20InsufficientAllowance.selector,
+        SafeTransferLib.TransferFromFailed.selector,
         SignedMath.SignedMathDivideByZero.selector
     ];
     bytes4[] public INITIATE_OPEN_ERRORS = [
@@ -188,12 +188,11 @@ contract EchidnaAssert is Setup {
         try usdnProtocol.initiateDeposit{ value: ethRand }(
             amountWstETHRand, dest, validator, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         ) {
-            assert(false);
-            // assert(address(msg.sender).balance == balanceBefore.senderETH - securityDeposit);
-            // assert(wsteth.balanceOf(msg.sender) == balanceBefore.senderWstETH - amountWstETHRand);
-            // assert(sdex.balanceOf(msg.sender) < balanceBefore.senderSdex);
-            // assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH + securityDeposit);
-            // assert(wsteth.balanceOf(address(usdnProtocol)) == balanceBefore.usdnProtocolWstETH + amountWstETHRand);
+            assert(address(msg.sender).balance == balanceBefore.senderETH - securityDeposit);
+            assert(wsteth.balanceOf(msg.sender) == balanceBefore.senderWstETH - amountWstETHRand);
+            assert(sdex.balanceOf(msg.sender) < balanceBefore.senderSdex);
+            assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH + securityDeposit);
+            assert(wsteth.balanceOf(address(usdnProtocol)) == balanceBefore.usdnProtocolWstETH + amountWstETHRand);
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_DEPOSIT_ERRORS);
         }
@@ -231,12 +230,11 @@ contract EchidnaAssert is Setup {
             params.priceData,
             EMPTY_PREVIOUS_DATA
         ) {
-            assert(false);
-            // assert(address(usdnProtocol).balance == params.usdnProtocolBalanceETH + securityDeposit);
-            // assert(address(msg.sender).balance == params.senderBalanceETH - securityDeposit);
+            assert(address(usdnProtocol).balance == params.usdnProtocolBalanceETH + securityDeposit);
+            assert(address(msg.sender).balance == params.senderBalanceETH - securityDeposit);
 
-            // assert(wsteth.balanceOf(address(usdnProtocol)) == params.usdnProtocolBalanceWstETH + amountRand);
-            // assert(wsteth.balanceOf(msg.sender) == params.senderBalanceWstETH - amountRand);
+            assert(wsteth.balanceOf(address(usdnProtocol)) == params.usdnProtocolBalanceWstETH + amountRand);
+            assert(wsteth.balanceOf(msg.sender) == params.senderBalanceWstETH - amountRand);
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_OPEN_ERRORS);
         }
@@ -289,12 +287,11 @@ contract EchidnaAssert is Setup {
         try usdnProtocol.initiateWithdrawal{ value: ethRand }(
             usdnShares, dest, validator, priceData, EMPTY_PREVIOUS_DATA
         ) {
-            assert(false);
-            // assert(address(msg.sender).balance == balanceBefore.senderETH - securityDeposit);
-            // assert(usdn.sharesOf(msg.sender) == balanceBefore.senderUsdn - usdnShares);
+            assert(address(msg.sender).balance == balanceBefore.senderETH - securityDeposit);
+            assert(usdn.sharesOf(msg.sender) == balanceBefore.senderUsdn - usdnShares);
 
-            // assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH + securityDeposit);
-            // assert(usdn.sharesOf(address(usdnProtocol)) == balanceBefore.usdnProtocolUsdn + usdnShares);
+            assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH + securityDeposit);
+            assert(usdn.sharesOf(address(usdnProtocol)) == balanceBefore.usdnProtocolUsdn + usdnShares);
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_WITHDRAWAL_ERRORS);
         }
