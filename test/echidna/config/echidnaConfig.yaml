@@ -23,7 +23,7 @@ deployContracts:
     ["0xf8", "UsdnProtocolSettersLibrary"],
     ["0xf9", "UsdnProtocolVaultLibrary"],
   ]
-stopOnFail: false
+stopOnFail: true
 #filterBlacklist: true
 #filterFunctions: [""]
 workers: 8
