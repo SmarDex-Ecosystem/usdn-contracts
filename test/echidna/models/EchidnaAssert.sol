@@ -4,6 +4,7 @@ pragma solidity ^0.8.25;
 import { Test } from "forge-std/Test.sol";
 
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { MockOracleMiddleware } from "../../../test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
 import { Sdex } from "../../utils/Sdex.sol";
@@ -15,10 +16,13 @@ import { Rebalancer } from "../../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../../src/Usdn/Usdn.sol";
 import { UsdnProtocol } from "../../../src/UsdnProtocol/UsdnProtocol.sol";
 import { IWstETH } from "../../../src/interfaces/IWstETH.sol";
+
+import { IUsdnErrors } from "../../../src/interfaces/Usdn/IUsdnErrors.sol";
 import { IUsdnProtocolErrors } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolTypes } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Permit2TokenBitfield } from "../../../src/libraries/Permit2TokenBitfield.sol";
 import { SignedMath } from "../../../src/libraries/SignedMath.sol";
+import { TickMath } from "../../../src/libraries/TickMath.sol";
 
 contract Setup is Test {
     address public constant DEPLOYER = address(0x10000);
@@ -35,6 +39,7 @@ contract Setup is Test {
 
     mapping(address => address[]) public destinationsToken;
     address[2] public validators = [DEPLOYER, ATTACKER];
+    IUsdnProtocolTypes.PositionId[] posIds;
 
     MockOracleMiddleware public wstEthOracleMiddleware;
     MockLiquidationRewardsManager public liquidationRewardsManager;
@@ -51,20 +56,33 @@ contract Setup is Test {
         IUsdnProtocolErrors.UsdnProtocolDepositTooSmall.selector,
         IUsdnProtocolErrors.UsdnProtocolInvalidLongExpo.selector,
         IUsdnProtocolErrors.UsdnProtocolPendingAction.selector,
-        FixedPointMathLib.FullMulDivFailed.selector
+        FixedPointMathLib.FullMulDivFailed.selector,
+        SafeTransferLib.TransferFromFailed.selector,
+        SignedMath.SignedMathDivideByZero.selector
+    ];
+    bytes4[] public INITIATE_OPEN_ERRORS = [
+        IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow.selector,
+        IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector,
+        IUsdnProtocolErrors.UsdnProtocolInvalidAddressValidator.selector,
+        IUsdnProtocolErrors.UsdnProtocolZeroAmount.selector,
+        IUsdnProtocolErrors.UsdnProtocolLongPositionTooSmall.selector,
+        IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction.selector,
+        IUsdnErrors.UsdnInsufficientSharesBalance.selector
     ];
     bytes4[] public INITIATE_WITHDRAWAL_ERRORS = [
         IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector,
         IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow.selector,
         IUsdnProtocolErrors.UsdnProtocolZeroAmount.selector,
-        SignedMath.SignedMathDivideByZero.selector
+        SignedMath.SignedMathDivideByZero.selector,
+        IUsdnErrors.UsdnInsufficientSharesBalance.selector,
+        TickMath.TickMathInvalidPrice.selector
     ];
 
     constructor() payable {
         vm.warp(1_709_251_200);
         //TODO see to fuzz these data
-        uint256 INIT_DEPOSIT_AMOUNT = 10 ether;
-        uint256 INIT_LONG_AMOUNT = 10 ether;
+        uint256 INIT_DEPOSIT_AMOUNT = 300 ether;
+        uint256 INIT_LONG_AMOUNT = 300 ether;
         uint128 INITIAL_PRICE = 2000 ether; // 2000 USDN = 1 ETH
 
         uint256 ethAmount = (INIT_DEPOSIT_AMOUNT + INIT_LONG_AMOUNT) * wsteth.stEthPerToken() / 1 ether;
@@ -90,10 +108,7 @@ contract Setup is Test {
         wsteth.approve(address(usdnProtocol), INIT_DEPOSIT_AMOUNT + INIT_LONG_AMOUNT);
 
         uint256 _desiredLiqPrice = wstEthOracleMiddleware.parseAndValidatePrice(
-            bytes32(""),
-            uint128(block.timestamp),
-            IUsdnProtocolTypes.ProtocolAction.Initialize,
-            abi.encode(INITIAL_PRICE)
+            "", uint128(block.timestamp), IUsdnProtocolTypes.ProtocolAction.Initialize, abi.encode(INITIAL_PRICE)
         ).price / 2;
 
         // leverage approx 2x
@@ -123,10 +138,21 @@ contract EchidnaAssert is Setup {
         uint256 usdnProtocolETH;
         uint256 usdnProtocolUsdn;
     }
+
+    struct OpenPositionParams {
+        address dest;
+        address payable validator;
+        bytes priceData;
+        uint256 senderBalanceETH;
+        uint256 senderBalanceWstETH;
+        uint256 usdnProtocolBalanceETH;
+        uint256 usdnProtocolBalanceWstETH;
+        uint64 securityDeposit;
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                             USDN Protocol                                  */
     /* -------------------------------------------------------------------------- */
-
     function initiateDeposit(
         uint128 amountWstETHRand,
         uint128 amountSdexRand,
@@ -168,6 +194,51 @@ contract EchidnaAssert is Setup {
             assert(wsteth.balanceOf(address(usdnProtocol)) == balanceBefore.usdnProtocolWstETH + amountWstETHRand);
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_DEPOSIT_ERRORS);
+        }
+    }
+
+    function initiateOpenPosition(
+        uint128 amountRand,
+        uint128 liquidationPriceRand,
+        uint256 ethRand,
+        uint256 destRand,
+        uint256 validatorRand,
+        uint256 currentPrice
+    ) public {
+        wsteth.mintAndApprove(msg.sender, amountRand, address(usdnProtocol), amountRand);
+        uint256 destRandBounded = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
+        vm.deal(msg.sender, ethRand);
+        validatorRand = bound(validatorRand, 0, validators.length - 1);
+        OpenPositionParams memory params = OpenPositionParams({
+            dest: destinationsToken[address(wsteth)][destRandBounded],
+            validator: payable(validators[validatorRand]),
+            priceData: abi.encode(currentPrice),
+            senderBalanceETH: address(msg.sender).balance,
+            senderBalanceWstETH: wsteth.balanceOf(msg.sender),
+            usdnProtocolBalanceETH: address(usdnProtocol).balance,
+            usdnProtocolBalanceWstETH: wsteth.balanceOf(address(usdnProtocol)),
+            securityDeposit: usdnProtocol.getSecurityDepositValue()
+        });
+
+        vm.prank(msg.sender);
+        try usdnProtocol.initiateOpenPosition{ value: ethRand }(
+            amountRand,
+            liquidationPriceRand,
+            params.dest,
+            params.validator,
+            NO_PERMIT2,
+            params.priceData,
+            EMPTY_PREVIOUS_DATA
+        ) returns (bool, IUsdnProtocolTypes.PositionId memory posId) {
+            posIds.push(posId);
+
+            assert(address(usdnProtocol).balance == params.usdnProtocolBalanceETH + params.securityDeposit);
+            assert(address(msg.sender).balance == params.senderBalanceETH - params.securityDeposit);
+
+            assert(wsteth.balanceOf(address(usdnProtocol)) == params.usdnProtocolBalanceWstETH + amountRand);
+            assert(wsteth.balanceOf(msg.sender) == params.senderBalanceWstETH - amountRand);
+        } catch (bytes memory err) {
+            _checkErrors(err, INITIATE_OPEN_ERRORS);
         }
     }
 
