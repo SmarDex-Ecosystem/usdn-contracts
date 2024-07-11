@@ -77,17 +77,16 @@ contract TestEchidna is Test {
             IUsdnProtocolTypes.PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) })
         );
 
-        uint256 balanceBefore = DEPLOYER.balance;
         uint256 balanceBeforeProtocol = address(usdnProtocol).balance;
         uint256 balanceWstEthBefore = wsteth.balanceOf(DEPLOYER);
 
         skip(wstEthOracleMiddleware.getValidationDelay() + 1);
         vm.prank(DEPLOYER);
-        echidna.validateWithdrawal(0.001 ether, 0, 4000 ether);
+        echidna.validateWithdrawal(0, 0, 4000 ether);
 
         IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(DEPLOYER);
         assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.None, "action type");
-        assertEq(DEPLOYER.balance, balanceBefore + securityDeposit, "DEPLOYER balance");
+        assertEq(DEPLOYER.balance, securityDeposit, "DEPLOYER balance");
         assertEq(address(usdnProtocol).balance, balanceBeforeProtocol - securityDeposit, "protocol balance");
         assertGt(wsteth.balanceOf(DEPLOYER), balanceWstEthBefore, "wstETH balance");
     }
