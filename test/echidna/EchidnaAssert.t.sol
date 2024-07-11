@@ -3,16 +3,21 @@ pragma solidity ^0.8.0;
 
 import { Test } from "forge-std/Test.sol";
 
+import { console2 } from "./../../lib/forge-std/src/console2.sol";
+
 import { UsdnProtocol } from "../../src/UsdnProtocol/UsdnProtocol.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 
 import { IUsdn } from "../../src/interfaces/Usdn/IUsdn.sol";
+
 import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { WstETH } from "../utils/WstEth.sol";
 import { EchidnaAssert } from "./models/EchidnaAssert.sol";
 
 contract TestEchidna is Test {
     EchidnaAssert public echidna;
     UsdnProtocol public usdnProtocol;
+    WstETH public wsteth;
 
     address internal DEPLOYER;
     address internal ATTACKER;
@@ -23,6 +28,7 @@ contract TestEchidna is Test {
         ATTACKER = echidna.ATTACKER();
 
         usdnProtocol = echidna.usdnProtocol();
+        wsteth = echidna.wsteth();
     }
 
     function test_canInitiateDeposit() public {
@@ -59,5 +65,49 @@ contract TestEchidna is Test {
         assertEq(action.validator, DEPLOYER, "action validator");
         assertEq(action.var1, int24(Vault._calcWithdrawalAmountLSB(usdnShares)), "action amount LSB");
         assertEq(action.var2, Vault._calcWithdrawalAmountMSB(usdnShares), "action amount MSB");
+    }
+
+    function test_canValidateOpen() public {
+        uint128 wstethOpenPositionAmount = 5 ether;
+        uint128 liquidationPrice = 1000 ether;
+        uint256 etherPrice = 4000 ether;
+        uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
+
+        vm.deal(DEPLOYER, 10 ether);
+
+        vm.startPrank(DEPLOYER);
+        wsteth.approve(address(usdnProtocol), wstethOpenPositionAmount);
+        deal(address(wsteth), address(DEPLOYER), wstethOpenPositionAmount);
+
+        bytes[] memory priceData = new bytes[](1);
+        priceData[0] = abi.encode(etherPrice);
+        uint128[] memory rawIndices = new uint128[](1);
+        rawIndices[0] = 0;
+
+        usdnProtocol.initiateOpenPosition{ value: securityDeposit }(
+            wstethOpenPositionAmount,
+            liquidationPrice,
+            DEPLOYER,
+            payable(DEPLOYER),
+            echidna.NO_PERMIT2(),
+            abi.encode(etherPrice),
+            IUsdnProtocolTypes.PreviousActionsData(priceData, rawIndices)
+        );
+        vm.stopPrank();
+
+        // TODO assertions
+        // uint256 balanceBefore = DEPLOYER.balance;
+        // uint256 balanceBeforeProtocol = address(usdnProtocol).balance;
+        // uint256 balanceWstEthBefore = wsteth.balanceOf(DEPLOYER);
+
+        // skip(wstEthOracleMiddleware.getValidationDelay() + 1);
+        // vm.prank(DEPLOYER);
+        // echidna.validateWithdrawal(0, 4000 ether);
+
+        // IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(DEPLOYER);
+        // assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.None, "action type");
+        // assertEq(DEPLOYER.balance, balanceBefore + securityDeposit, "DEPLOYER balance");
+        // assertEq(address(usdnProtocol).balance, balanceBeforeProtocol - securityDeposit, "protocol balance");
+        // assertGt(wsteth.balanceOf(DEPLOYER), balanceWstEthBefore, "wstETH balance");
     }
 }
