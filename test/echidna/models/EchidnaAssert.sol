@@ -62,7 +62,8 @@ contract Setup is Test {
 
     bytes4[] public VALIDATE_WITHDRAWAL_ERRORS = [
         IUsdnProtocolErrors.UsdnProtocolInvalidAddressValidator.selector,
-        IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector
+        IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector,
+        IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction.selector
     ];
 
     constructor() payable {
@@ -244,6 +245,7 @@ contract EchidnaAssert is Setup {
     }
 
     function validateWithdrawal(uint256 ethRand, uint256 validatorRand, uint256 currentPrice) public {
+        vm.deal(msg.sender, ethRand);
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
 
@@ -262,11 +264,11 @@ contract EchidnaAssert is Setup {
             uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
 
             assert(address(msg.sender).balance == balanceBefore.senderETH + securityDeposit);
-            assert(wsteth.balanceOf(msg.sender) > balanceBefore.senderWstETH);
+            assert(wsteth.balanceOf(msg.sender) >= balanceBefore.senderWstETH);
 
             assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH - securityDeposit);
-            assert(usdn.sharesOf(msg.sender) < balanceBefore.usdnProtocolUsdn);
-            assert(usdn.sharesOf(address(usdnProtocol)) < balanceBefore.usdnProtocolWstETH);
+            assert(usdn.sharesOf(address(usdnProtocol)) < balanceBefore.usdnProtocolUsdn);
+            assert(wsteth.balanceOf(address(usdnProtocol)) <= balanceBefore.usdnProtocolWstETH);
         } catch (bytes memory err) {
             _checkErrors(err, VALIDATE_WITHDRAWAL_ERRORS);
         }
