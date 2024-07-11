@@ -60,4 +60,17 @@ contract TestEchidna is Test {
         assertEq(action.var1, int24(Vault._calcWithdrawalAmountLSB(usdnShares)), "action amount LSB");
         assertEq(action.var2, Vault._calcWithdrawalAmountMSB(usdnShares), "action amount MSB");
     }
+
+    function test_canValidateDeposit() public {
+        IUsdn usdn = usdnProtocol.getUsdn();
+        uint256 balanceDeployer = usdn.balanceOf(DEPLOYER);
+        vm.prank(DEPLOYER);
+        echidna.initiateDeposit(0.1 ether, 10 ether, 0.5 ether, 0, 0, 1000 ether);
+
+        skip(1 minutes);
+        vm.prank(DEPLOYER);
+        echidna.validateDeposit(0, 1000 ether);
+
+        assertGt(usdn.balanceOf(DEPLOYER), balanceDeployer, "balance usdn");
+    }
 }
