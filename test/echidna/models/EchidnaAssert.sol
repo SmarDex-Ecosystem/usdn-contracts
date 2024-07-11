@@ -34,7 +34,6 @@ contract Setup is Test {
     Sdex public immutable sdex = new Sdex();
     Weth public immutable weth = new Weth();
     WstETH public immutable wsteth = new WstETH();
-    uint256 public immutable securityDeposit;
 
     Permit2TokenBitfield.Bitfield constant NO_PERMIT2 = Permit2TokenBitfield.Bitfield.wrap(0);
     IUsdnProtocolTypes.PreviousActionsData internal EMPTY_PREVIOUS_DATA =
@@ -123,8 +122,6 @@ contract Setup is Test {
         );
 
         destinationsToken[address(wsteth)] = [DEPLOYER, ATTACKER];
-
-        securityDeposit = usdnProtocol.getSecurityDepositValue();
     }
 }
 
@@ -152,6 +149,7 @@ contract EchidnaAssert is Setup {
         uint256 senderBalanceWstETH;
         uint256 usdnProtocolBalanceETH;
         uint256 usdnProtocolBalanceWstETH;
+        uint64 securityDeposit;
     }
 
     /* -------------------------------------------------------------------------- */
@@ -189,6 +187,8 @@ contract EchidnaAssert is Setup {
         try usdnProtocol.initiateDeposit{ value: ethRand }(
             amountWstETHRand, dest, validator, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         ) {
+            uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
+
             assert(address(msg.sender).balance == balanceBefore.senderETH - securityDeposit);
             assert(wsteth.balanceOf(msg.sender) == balanceBefore.senderWstETH - amountWstETHRand);
             assert(sdex.balanceOf(msg.sender) < balanceBefore.senderSdex);
@@ -218,7 +218,8 @@ contract EchidnaAssert is Setup {
             senderBalanceETH: address(msg.sender).balance,
             senderBalanceWstETH: wsteth.balanceOf(msg.sender),
             usdnProtocolBalanceETH: address(usdnProtocol).balance,
-            usdnProtocolBalanceWstETH: wsteth.balanceOf(address(usdnProtocol))
+            usdnProtocolBalanceWstETH: wsteth.balanceOf(address(usdnProtocol)),
+            securityDeposit: usdnProtocol.getSecurityDepositValue()
         });
 
         vm.prank(msg.sender);
@@ -233,8 +234,8 @@ contract EchidnaAssert is Setup {
         ) returns (bool, IUsdnProtocolTypes.PositionId memory posId) {
             posIds.push(posId);
 
-            assert(address(usdnProtocol).balance == params.usdnProtocolBalanceETH + securityDeposit);
-            assert(address(msg.sender).balance == params.senderBalanceETH - securityDeposit);
+            assert(address(usdnProtocol).balance == params.usdnProtocolBalanceETH + params.securityDeposit);
+            assert(address(msg.sender).balance == params.senderBalanceETH - params.securityDeposit);
 
             assert(wsteth.balanceOf(address(usdnProtocol)) == params.usdnProtocolBalanceWstETH + amountRand);
             assert(wsteth.balanceOf(msg.sender) == params.senderBalanceWstETH - amountRand);
@@ -290,6 +291,8 @@ contract EchidnaAssert is Setup {
         try usdnProtocol.initiateWithdrawal{ value: ethRand }(
             usdnShares, dest, validator, priceData, EMPTY_PREVIOUS_DATA
         ) {
+            uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
+
             assert(address(msg.sender).balance == balanceBefore.senderETH - securityDeposit);
             assert(usdn.sharesOf(msg.sender) == balanceBefore.senderUsdn - usdnShares);
 
