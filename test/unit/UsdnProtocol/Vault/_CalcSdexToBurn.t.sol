@@ -18,7 +18,7 @@ contract TestUsdnProtocolCalcUsdnPrice is UsdnProtocolBaseFixture {
      * @custom:when The function is called with this amount
      * @custom:then The correct amount of SDEX to burn is returned
      */
-    function test_calcSdexToBurn() public {
+    function test_calcSdexToBurn() public view {
         uint32 burnRatio = protocol.getSdexBurnOnDepositRatio();
         uint256 burnRatioDivisor = protocol.SDEX_BURN_ON_DEPOSIT_DIVISOR();
         uint8 usdnDecimals = protocol.TOKENS_DECIMALS();

@@ -38,7 +38,7 @@ contract TestOracleMiddlewareSetPythRecentPriceDelay is OracleMiddlewareBaseFixt
      * @custom:when The result of the function is compared to 45
      * @custom:then It should succeed
      */
-    function test_recentPriceDelay() public {
+    function test_recentPriceDelay() public view {
         assertEq(oracleMiddleware.getPythRecentPriceDelay(), 45);
     }
 

@@ -23,7 +23,7 @@ contract TestHugeUintMul256 is HugeUintFixture {
      * @custom:when The `mul` function is called with 0 and 1
      * @custom:then The result is equal to 0
      */
-    function test_mul() public {
+    function test_mul() public view {
         uint256 a = 42;
         uint256 b = 420;
         HugeUint.Uint512 memory res = handler.mul(a, b);

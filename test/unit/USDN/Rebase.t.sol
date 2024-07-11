@@ -26,7 +26,7 @@ contract TestUsdnRebase is UsdnTokenFixture {
      * @custom:when The `divisor` function is called
      * @custom:then The result is MAX_DIVISOR
      */
-    function test_getDivisor() public {
+    function test_getDivisor() public view {
         assertEq(usdn.divisor(), maxDivisor);
     }
 

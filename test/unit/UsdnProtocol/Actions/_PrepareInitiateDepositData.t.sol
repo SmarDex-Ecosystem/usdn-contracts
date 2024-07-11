@@ -119,7 +119,7 @@ contract TestUsdnProtocolActionsPrepareInitiateDepositData is UsdnProtocolBaseFi
     }
 
     /// @notice Assert the data in InitiateDepositData depending on `isEarlyReturn`
-    function _assertData(ActionsVault.InitiateDepositData memory data, bool isEarlyReturn) private {
+    function _assertData(ActionsVault.InitiateDepositData memory data, bool isEarlyReturn) private view {
         uint128 currentPrice = abi.decode(currentPriceData, (uint128));
 
         if (isEarlyReturn) {

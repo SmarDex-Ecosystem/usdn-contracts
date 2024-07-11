@@ -23,7 +23,7 @@ contract TestFeeCollectorSupportsInterface is UsdnProtocolBaseFixture {
      * @custom:then The function should return `true` for the supported interfaces and `false` for any other
      * interface
      */
-    function test_supportsInterfaceFeeCollector() public {
+    function test_supportsInterfaceFeeCollector() public view {
         assertEq(feeCollector.supportsInterface(type(IERC165).interfaceId), true, "IERC165_ID supported");
         assertEq(
             feeCollector.supportsInterface(type(IFeeCollectorCallback).interfaceId),
