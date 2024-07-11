@@ -42,6 +42,7 @@ contract Setup is Test {
 
     mapping(address => address[]) public destinationsToken;
     address[2] public validators = [DEPLOYER, ATTACKER];
+    IUsdnProtocolTypes.PositionId[] posIds;
 
     MockOracleMiddleware public wstEthOracleMiddleware;
     MockLiquidationRewardsManager public liquidationRewardsManager;
@@ -229,7 +230,9 @@ contract EchidnaAssert is Setup {
             NO_PERMIT2,
             params.priceData,
             EMPTY_PREVIOUS_DATA
-        ) {
+        ) returns (bool, IUsdnProtocolTypes.PositionId memory posId) {
+            posIds.push(posId);
+
             assert(address(usdnProtocol).balance == params.usdnProtocolBalanceETH + securityDeposit);
             assert(address(msg.sender).balance == params.senderBalanceETH - securityDeposit);
 
