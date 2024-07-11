@@ -244,8 +244,7 @@ contract EchidnaAssert is Setup {
         }
     }
 
-    function validateWithdrawal(uint256 ethRand, uint256 validatorRand, uint256 currentPrice) public {
-        vm.deal(msg.sender, ethRand);
+    function validateWithdrawal(uint256 validatorRand, uint256 currentPrice) public {
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
 
@@ -260,7 +259,7 @@ contract EchidnaAssert is Setup {
         });
 
         vm.prank(msg.sender);
-        try usdnProtocol.validateWithdrawal{ value: ethRand }(validator, priceData, EMPTY_PREVIOUS_DATA) {
+        try usdnProtocol.validateWithdrawal(validator, priceData, EMPTY_PREVIOUS_DATA) {
             uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
 
             assert(address(msg.sender).balance == balanceBefore.senderETH + securityDeposit);
