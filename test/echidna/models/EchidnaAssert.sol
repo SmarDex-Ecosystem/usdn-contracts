@@ -309,8 +309,7 @@ contract EchidnaAssert is Setup {
         }
     }
 
-    function validateOpen(uint256 validatorRand, uint256 ethRand, uint256 currentPrice) public {
-        vm.deal(address(msg.sender), ethRand);
+    function validateOpen(uint256 validatorRand, uint256 currentPrice) public {
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
         bytes memory priceData = abi.encode(currentPrice);
