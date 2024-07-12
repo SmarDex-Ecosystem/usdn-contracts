@@ -8,17 +8,17 @@ import { UsdnProtocolVaultLibrary as Vault } from "../../src/UsdnProtocol/librar
 
 import { IUsdn } from "../../src/interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { EchidnaAssert } from "./models/EchidnaAssert.sol";
+import { FuzzingSuite } from "./FuzzingSuite.sol";
 
 contract TestEchidna is Test {
-    EchidnaAssert public echidna;
+    FuzzingSuite public echidna;
     UsdnProtocol public usdnProtocol;
 
     address internal DEPLOYER;
     address internal ATTACKER;
 
     function setUp() public {
-        echidna = new EchidnaAssert();
+        echidna = new FuzzingSuite();
         DEPLOYER = echidna.DEPLOYER();
         ATTACKER = echidna.ATTACKER();
 
