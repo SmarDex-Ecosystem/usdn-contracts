@@ -27,7 +27,7 @@ contract TestUsdnProtocolLongCalcLiqPriceFromTradingExpo is UsdnProtocolBaseFixt
      * @custom:when {_calcLiqPriceFromTradingExpo} is called
      * @custom:then The returned liquidation price is correct
      */
-    function test_calcLiqPriceFromTradingExpo() public {
+    function test_calcLiqPriceFromTradingExpo() public view {
         uint128 amount = 2 ether;
         uint128 price = 2000 ether;
 
@@ -55,7 +55,7 @@ contract TestUsdnProtocolLongCalcLiqPriceFromTradingExpo is UsdnProtocolBaseFixt
      * @param price The current price of the asset
      * @param leverage The leverage to use
      */
-    function testFuzz_calcLiqPriceFromTradingExpo(uint256 amount, uint256 price, uint256 leverage) public {
+    function testFuzz_calcLiqPriceFromTradingExpo(uint256 amount, uint256 price, uint256 leverage) public view {
         amount = bound(amount, 1, type(uint128).max);
         price = bound(price, 1, type(uint128).max);
         leverage = bound(leverage, protocol.getMinLeverage(), protocol.getMaxLeverage());

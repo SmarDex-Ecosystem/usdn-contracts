@@ -87,7 +87,7 @@ contract TestUsdnProtocolActionsPrepareWithdrawalData is UsdnProtocolBaseFixture
     }
 
     /// @notice Assert the data in WithdrawalData depending on `isEarlyReturn`
-    function _assertData(ActionsVault.WithdrawalData memory data, bool isEarlyReturn) private {
+    function _assertData(ActionsVault.WithdrawalData memory data, bool isEarlyReturn) private view {
         uint128 currentPrice = abi.decode(currentPriceData, (uint128));
 
         if (isEarlyReturn) {

@@ -35,7 +35,7 @@ contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture, 
         (pos,) = protocol.getLongPosition(posId);
     }
 
-    function test_setUpAmount() public {
+    function test_setUpAmount() public view {
         assertGt(protocol.getMinLongPosition(), 0, "min position");
         assertGt(AMOUNT, protocol.getMinLongPosition(), "position amount");
     }

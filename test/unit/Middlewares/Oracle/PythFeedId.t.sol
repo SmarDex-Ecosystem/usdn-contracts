@@ -15,7 +15,7 @@ contract TestOracleMiddlewarePythFeedId is OracleMiddlewareBaseFixture {
      * @custom:when The result of the result of the function is compared to PYTH_ETH_USD
      * @custom:then It should succeed
      */
-    function test_getPythFeedId() public {
+    function test_getPythFeedId() public view {
         assertEq(oracleMiddleware.getPythFeedId(), PYTH_ETH_USD);
     }
 }

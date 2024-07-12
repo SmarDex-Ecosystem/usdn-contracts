@@ -327,7 +327,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
      * @param b Second `PendingAction`
      * @param err Assert message prefix
      */
-    function _assertActionsEqual(PendingAction memory a, PendingAction memory b, string memory err) internal {
+    function _assertActionsEqual(PendingAction memory a, PendingAction memory b, string memory err) internal pure {
         assertTrue(a.action == b.action, string.concat(err, " - action type"));
         assertEq(a.timestamp, b.timestamp, string.concat(err, " - action timestamp"));
         assertEq(a.to, b.to, string.concat(err, " - action to"));

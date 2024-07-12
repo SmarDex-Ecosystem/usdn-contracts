@@ -336,7 +336,7 @@ contract TestHugeUintFuzzing is HugeUintFixture {
      * @param a the first operand
      * @param b the second operand
      */
-    function testFuzz_mulThenDiv(uint256 a, uint256 b) public {
+    function testFuzz_mulThenDiv(uint256 a, uint256 b) public view {
         vm.assume(a > 0 && b > 0);
         HugeUint.Uint512 memory m = handler.mul(a, b);
         uint256 res = handler.div(m, b);

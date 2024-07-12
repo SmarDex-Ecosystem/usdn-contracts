@@ -43,7 +43,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         uint128 assetPrice,
         uint128 targetPrice,
         uint8 assetDecimals
-    ) public {
+    ) public view {
         assetDecimals = uint8(bound(assetDecimals, 6, 18));
         // when the balance becomes really small, the error on the final price becomes larger
         vaultBalance = uint128(bound(vaultBalance, 10 ** assetDecimals, type(uint128).max));

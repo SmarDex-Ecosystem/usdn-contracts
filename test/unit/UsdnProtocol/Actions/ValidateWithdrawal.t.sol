@@ -63,7 +63,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
      * @custom:then The user's USDN balance is 2000 USDN
      * @custom:and The user's wstETH balance is 9 wstETH
      */
-    function test_withdrawSetUp() public {
+    function test_withdrawSetUp() public view {
         // Using the price computed with the default position fees
         assertEq(initialUsdnBalance, 2000 * DEPOSIT_AMOUNT, "initial usdn balance");
         assertEq(initialUsdnShares, 2000 * DEPOSIT_AMOUNT * usdn.MAX_DIVISOR(), "initial usdn shares");

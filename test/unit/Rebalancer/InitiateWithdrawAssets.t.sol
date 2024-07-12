@@ -28,7 +28,7 @@ contract TestRebalancerInitiateWithdrawAssets is RebalancerFixture {
         initialPendingAssets = rebalancer.getPendingAssetsAmount();
     }
 
-    function test_setUp() public {
+    function test_setUp() public view {
         assertGe(INITIAL_DEPOSIT, rebalancer.getMinAssetDeposit());
     }
 

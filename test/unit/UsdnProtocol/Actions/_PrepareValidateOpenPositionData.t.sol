@@ -123,7 +123,7 @@ contract TestUsdnProtocolActionsPrepareValidateOpenPositionData is UsdnProtocolB
     }
 
     /// @notice Assert the data in ValidateOpenPositionData depending on `isEarlyReturn`
-    function _assertData(ValidateOpenPositionData memory data, bool isEarlyReturn) private {
+    function _assertData(ValidateOpenPositionData memory data, bool isEarlyReturn) private view {
         uint128 currentPrice = abi.decode(currentPriceData, (uint128));
         uint8 liquidationPenalty = protocol.getLiquidationPenalty();
         uint256 positionTotalExpo =

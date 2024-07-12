@@ -50,7 +50,7 @@ contract TestRebalancerInitiateClosePosition is
         posAmount = protocolPosition.amount;
     }
 
-    function test_setUp() public {
+    function test_setUp() public view {
         assertGt(rebalancer.getPositionVersion(), 0, "The rebalancer version should be updated");
         assertGt(posAmount - previousPositionData.amount, 0, "The protocol bonus should be positive");
     }
