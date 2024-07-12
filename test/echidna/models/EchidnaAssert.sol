@@ -312,16 +312,16 @@ contract EchidnaAssert is Setup {
 
         bytes memory priceData = abi.encode(currentPrice);
 
-        uint256 balanceBefore = DEPLOYER.balance;
+        uint256 balanceBefore = address(msg.sender).balance;
         uint256 balanceBeforeProtocol = address(usdnProtocol).balance;
 
         vm.prank(msg.sender);
         try usdnProtocol.validateOpenPosition(validator, priceData, EMPTY_PREVIOUS_DATA) {
             uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
 
-            assert(address(msg.sender).balance == balanceBefore - securityDeposit);
+            assert(address(msg.sender).balance == balanceBefore + securityDeposit);
 
-            assert(address(usdnProtocol).balance == balanceBeforeProtocol + securityDeposit);
+            assert(address(usdnProtocol).balance == balanceBeforeProtocol - securityDeposit);
         } catch (bytes memory err) {
             _checkErrors(err, VALIDATE_OPEN_ERRORS);
         }
