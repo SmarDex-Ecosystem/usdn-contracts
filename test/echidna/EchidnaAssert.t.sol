@@ -102,7 +102,7 @@ contract TestEchidna is Test {
 
         skip(wstEthOracleMiddleware.getValidationDelay() + 1);
         (IUsdnProtocolTypes.Position memory tempPos,) = usdnProtocol.getLongPosition(posId);
-        echidna.validateOpen(uint256(uint160(DEPLOYER)), 5 ether, etherPrice);
+        echidna.validateOpen(uint256(uint160(DEPLOYER)), etherPrice);
         (IUsdnProtocolTypes.Position memory pos,) = usdnProtocol.getLongPosition(posId);
 
         assertTrue(pos.validated, "validated");
