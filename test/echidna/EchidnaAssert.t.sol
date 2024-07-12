@@ -100,7 +100,7 @@ contract TestEchidna is Test {
         uint256 balanceWstEthBefore = wsteth.balanceOf(DEPLOYER);
 
         skip(wstEthOracleMiddleware.getValidationDelay() + 1);
-        echidna.validateOpen(uint256(uint160(DEPLOYER)), etherPrice);
+        echidna.validateOpen(uint256(uint160(DEPLOYER)), 5 ether, etherPrice);
 
         IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(DEPLOYER);
         assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.None, "action type");
