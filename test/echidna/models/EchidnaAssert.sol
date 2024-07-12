@@ -323,9 +323,10 @@ contract EchidnaAssert is Setup {
         });
 
         vm.prank(msg.sender);
-        try usdnProtocol.validateOpenPosition(validator, priceData, EMPTY_PREVIOUS_DATA) {
-            uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
+        try usdnProtocol.validateOpenPosition(validator, priceData, EMPTY_PREVIOUS_DATA) returns (bool success) {
+            uint256 securityDeposit = usdnProtocol.getUserPendingAction(msg.sender).securityDepositValue;
 
+            assert(success);
             assert(address(validator).balance == balanceBefore.validatorETH + securityDeposit);
             assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH - securityDeposit);
             assert(wsteth.balanceOf(address(usdnProtocol)) == balanceBefore.usdnProtocolWstETH);
