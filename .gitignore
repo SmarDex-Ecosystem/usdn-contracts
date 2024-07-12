@@ -36,3 +36,6 @@ natspec-smells.txt
 
 # Rust
 target/
+
+# TruffleHog config file
+.trufflehog.yml
