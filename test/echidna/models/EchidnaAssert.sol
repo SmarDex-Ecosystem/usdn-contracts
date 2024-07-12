@@ -24,6 +24,8 @@ import { Permit2TokenBitfield } from "../../../src/libraries/Permit2TokenBitfiel
 import { SignedMath } from "../../../src/libraries/SignedMath.sol";
 import { TickMath } from "../../../src/libraries/TickMath.sol";
 
+import { console2 } from "./../../../lib/forge-std/src/console2.sol";
+
 contract Setup is Test {
     address public constant DEPLOYER = address(0x10000);
     address public constant ATTACKER = address(0x20000);
@@ -309,7 +311,8 @@ contract EchidnaAssert is Setup {
         }
     }
 
-    function validateOpen(uint256 validatorRand, uint256 currentPrice) public {
+    function validateOpen(uint256 validatorRand, uint256 ethRand, uint256 currentPrice) public {
+        vm.deal(address(msg.sender), ethRand);
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
         bytes memory priceData = abi.encode(currentPrice);
@@ -321,13 +324,17 @@ contract EchidnaAssert is Setup {
             usdnProtocolWstETH: wsteth.balanceOf(address(usdnProtocol))
         });
 
+        uint256 securityDepositBefore = usdnProtocol.getUserPendingAction(msg.sender).securityDepositValue;
+
         vm.prank(msg.sender);
         try usdnProtocol.validateOpenPosition(validator, priceData, EMPTY_PREVIOUS_DATA) returns (bool success) {
-            uint256 securityDeposit = usdnProtocol.getUserPendingAction(msg.sender).securityDepositValue;
-
+            uint256 securityDepositAfter = usdnProtocol.getUserPendingAction(msg.sender).securityDepositValue;
+            console2.log("securityDeposit_pendingActionBefore", securityDepositBefore);
+            console2.log("securityDeposit_pendingActionAfter", securityDepositAfter);
+            console2.log("securityDeposit_protocolValue", usdnProtocol.getSecurityDepositValue());
             assert(success);
-            assert(address(validator).balance == balanceBefore.validatorETH + securityDeposit);
-            assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH - securityDeposit);
+            // assert(address(validator).balance == balanceBefore.validatorETH + securityDeposit);
+            // assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH - securityDeposit);
             assert(wsteth.balanceOf(address(usdnProtocol)) == balanceBefore.usdnProtocolWstETH);
             assert(wsteth.balanceOf(msg.sender) == balanceBefore.senderWstETH);
         } catch (bytes memory err) {

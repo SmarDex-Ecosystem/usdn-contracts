@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
+import { console2 } from "./../../lib/forge-std/src/console2.sol";
 import { Test } from "forge-std/Test.sol";
 
 import { MockOracleMiddleware } from "../unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
@@ -85,6 +86,7 @@ contract TestEchidna is Test {
 
         vm.startPrank(DEPLOYER);
         wsteth.approve(address(usdnProtocol), wstethOpenPositionAmount);
+        console2.log("securityDeposit_beforValidate", securityDeposit);
         (, IUsdnProtocolTypes.PositionId memory posId) = usdnProtocol.initiateOpenPosition{ value: securityDeposit }(
             wstethOpenPositionAmount,
             liquidationPrice,
@@ -102,7 +104,7 @@ contract TestEchidna is Test {
 
         skip(wstEthOracleMiddleware.getValidationDelay() + 1);
         (IUsdnProtocolTypes.Position memory tempPos,) = usdnProtocol.getLongPosition(posId);
-        echidna.validateOpen(uint256(uint160(DEPLOYER)), etherPrice);
+        echidna.validateOpen(uint256(uint160(DEPLOYER)), 5 ether, etherPrice);
         (IUsdnProtocolTypes.Position memory pos,) = usdnProtocol.getLongPosition(posId);
 
         assertTrue(pos.validated, "validated");
