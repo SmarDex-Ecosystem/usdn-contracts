@@ -77,6 +77,11 @@ contract Setup is Test {
         IUsdnErrors.UsdnInsufficientSharesBalance.selector,
         TickMath.TickMathInvalidPrice.selector
     ];
+    bytes4[] public VALIDATE_OPEN_ERRORS = [
+        IUsdnProtocolErrors.UsdnProtocolInvalidAddressValidator.selector,
+        IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction.selector,
+        IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector
+    ];
 
     constructor() payable {
         vm.warp(1_709_251_200);
@@ -298,6 +303,27 @@ contract EchidnaAssert is Setup {
             assert(usdn.sharesOf(address(usdnProtocol)) == balanceBefore.usdnProtocolUsdn + usdnShares);
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_WITHDRAWAL_ERRORS);
+        }
+    }
+
+    function validateOpen(uint256 validatorRand, uint256 currentPrice) public {
+        validatorRand = bound(validatorRand, 0, validators.length - 1);
+        address payable validator = payable(validators[validatorRand]);
+
+        bytes memory priceData = abi.encode(currentPrice);
+
+        uint256 balanceBefore = DEPLOYER.balance;
+        uint256 balanceBeforeProtocol = address(usdnProtocol).balance;
+
+        vm.prank(msg.sender);
+        try usdnProtocol.validateOpenPosition(validator, priceData, EMPTY_PREVIOUS_DATA) {
+            uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
+
+            assert(address(msg.sender).balance == balanceBefore - securityDeposit);
+
+            assert(address(usdnProtocol).balance == balanceBeforeProtocol + securityDeposit);
+        } catch (bytes memory err) {
+            _checkErrors(err, VALIDATE_OPEN_ERRORS);
         }
     }
 }
