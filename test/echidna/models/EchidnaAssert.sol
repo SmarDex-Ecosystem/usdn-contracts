@@ -33,7 +33,7 @@ contract Setup is Test {
     Weth public immutable weth = new Weth();
     WstETH public immutable wsteth = new WstETH();
 
-    Permit2TokenBitfield.Bitfield constant NO_PERMIT2 = Permit2TokenBitfield.Bitfield.wrap(0);
+    Permit2TokenBitfield.Bitfield public constant NO_PERMIT2 = Permit2TokenBitfield.Bitfield.wrap(0);
     IUsdnProtocolTypes.PreviousActionsData internal EMPTY_PREVIOUS_DATA =
         IUsdnProtocolTypes.PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
 

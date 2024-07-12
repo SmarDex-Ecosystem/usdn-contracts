@@ -1,18 +1,23 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import { Test } from "forge-std/Test.sol";
-
 import { UsdnProtocol } from "../../src/UsdnProtocol/UsdnProtocol.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
-
 import { IUsdn } from "../../src/interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+
+import { Permit2TokenBitfield } from "../../src/libraries/Permit2TokenBitfield.sol";
+import { Sdex } from "../utils/Sdex.sol";
+import { WstETH } from "../utils/WstEth.sol";
 import { EchidnaAssert } from "./models/EchidnaAssert.sol";
+
+import { MockOracleMiddleware } from "../../../test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
+import { Test } from "forge-std/Test.sol";
 
 contract TestEchidna is Test {
     EchidnaAssert public echidna;
     UsdnProtocol public usdnProtocol;
+    MockOracleMiddleware public wstEthOracleMiddleware;
 
     address internal DEPLOYER;
     address internal ATTACKER;
@@ -23,6 +28,7 @@ contract TestEchidna is Test {
         ATTACKER = echidna.ATTACKER();
 
         usdnProtocol = echidna.usdnProtocol();
+        wstEthOracleMiddleware = echidna.wstEthOracleMiddleware();
     }
 
     function test_canInitiateDeposit() public {
@@ -63,13 +69,34 @@ contract TestEchidna is Test {
 
     function test_canValidateDeposit() public {
         IUsdn usdn = usdnProtocol.getUsdn();
-        uint256 balanceDeployer = usdn.balanceOf(DEPLOYER);
-        vm.prank(DEPLOYER);
-        echidna.initiateDeposit(0.1 ether, 10 ether, 0.5 ether, 0, 0, 1000 ether);
+        Sdex sdex = echidna.sdex();
+        WstETH wsteth = echidna.wsteth();
+        uint128 amountWstETH = 0.1 ether;
+        uint256 price = 1000 ether;
 
-        skip(1 minutes);
+        wsteth.mintAndApprove(DEPLOYER, amountWstETH, address(usdnProtocol), amountWstETH);
+        sdex.mintAndApprove(DEPLOYER, 10 ether, address(usdnProtocol), 10 ether);
+
+        uint256 balanceDeployer = usdn.balanceOf(DEPLOYER);
+        uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
+        vm.deal(DEPLOYER, securityDeposit);
+
+        Permit2TokenBitfield.Bitfield NO_PERMIT2 = echidna.NO_PERMIT2();
+
         vm.prank(DEPLOYER);
-        echidna.validateDeposit(0, 1000 ether);
+        usdnProtocol.initiateDeposit{ value: securityDeposit }(
+            amountWstETH,
+            DEPLOYER,
+            payable(DEPLOYER),
+            NO_PERMIT2,
+            abi.encode(price),
+            IUsdnProtocolTypes.PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) })
+        );
+        //        echidna.initiateDeposit(0.1 ether, 10 ether, 0.5 ether, 0, 0, 1000 ether);
+
+        skip(wstEthOracleMiddleware.getValidationDelay() + 1);
+        vm.prank(DEPLOYER);
+        echidna.validateDeposit(0, price);
 
         assertGt(usdn.balanceOf(DEPLOYER), balanceDeployer, "balance usdn");
     }
