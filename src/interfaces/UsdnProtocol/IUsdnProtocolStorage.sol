@@ -21,61 +21,61 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice The set_external role signature
+     * @notice The setExternal role's signature
      * @return Get the role signature
      */
     function SET_EXTERNAL_ROLE() external pure returns (bytes32);
 
     /**
-     * @notice The critical_functions role signature
+     * @notice The criticalFunctions role's signature
      * @return Get the role signature
      */
     function CRITICAL_FUNCTIONS_ROLE() external pure returns (bytes32);
 
     /**
-     * @notice The set_protocol_params role signature
+     * @notice The setProtocolParams role's signature
      * @return Get the role signature
      */
     function SET_PROTOCOL_PARAMS_ROLE() external pure returns (bytes32);
 
     /**
-     * @notice The set_options role signature
+     * @notice The setOptions role's signature
      * @return Get the role signature
      */
     function SET_OPTIONS_ROLE() external pure returns (bytes32);
 
     /**
-     * @notice The admin_set_external role signature
+     * @notice The adminSetExternal role's signature
      * @return Get the role signature
      */
     function SET_USDN_PARAMS_ROLE() external pure returns (bytes32);
 
     /**
-     * @notice The admin_set_external role signature
+     * @notice The adminSetExternal role's signature
      * @return Get the role signature
      */
     function ADMIN_SET_EXTERNAL_ROLE() external pure returns (bytes32);
 
     /**
-     * @notice The admin_critical_functions role signature
+     * @notice The adminCriticalFunctions role's signature
      * @return Get the role signature
      */
     function ADMIN_CRITICAL_FUNCTIONS_ROLE() external pure returns (bytes32);
 
     /**
-     * @notice The admin_set_protocol_params role signature
+     * @notice The adminSetProtocolParams role's signature
      * @return Get the role signature
      */
     function ADMIN_SET_PROTOCOL_PARAMS_ROLE() external pure returns (bytes32);
 
     /**
-     * @notice The admin_set_usdn_params role signature
+     * @notice The adminSetUsdnParams role's signature
      * @return Get the role signature
      */
     function ADMIN_SET_USDN_PARAMS_ROLE() external pure returns (bytes32);
 
     /**
-     * @notice The admin_set_options role signature
+     * @notice The adminSetOptions role's signature
      * @return Get the role signature
      */
     function ADMIN_SET_OPTIONS_ROLE() external pure returns (bytes32);
