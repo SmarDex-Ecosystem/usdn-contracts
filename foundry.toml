@@ -11,6 +11,13 @@ optimizer = true
 optimizer_runs = 20_000
 libs = ["node_modules", "lib"]
 invariant = { fail_on_revert = true }
+ignored_error_codes = [
+    "license",
+    "code-size",
+    "init-code-size",
+    "transient-storage",
+    "too-many-warnings",
+]
 
 # -------------------------------- Remappings -------------------------------- #
 
