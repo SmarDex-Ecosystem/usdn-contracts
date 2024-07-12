@@ -325,11 +325,17 @@ contract EchidnaAssert is Setup {
 
         vm.prank(msg.sender);
         try usdnProtocol.validateOpenPosition(validator, priceData, EMPTY_PREVIOUS_DATA) returns (bool success) {
-            assert(success);
-            assert(address(validator).balance == balanceBefore.validatorETH + securityDeposit);
-            assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH - securityDeposit);
-            assert(wsteth.balanceOf(address(usdnProtocol)) == balanceBefore.usdnProtocolWstETH);
-            assert(wsteth.balanceOf(msg.sender) == balanceBefore.senderWstETH);
+            if (success) {
+                assert(address(validator).balance == balanceBefore.validatorETH + securityDeposit);
+                assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH - securityDeposit);
+                assert(wsteth.balanceOf(address(usdnProtocol)) == balanceBefore.usdnProtocolWstETH);
+                assert(wsteth.balanceOf(msg.sender) == balanceBefore.senderWstETH);
+            } else {
+                assert(address(validator).balance == balanceBefore.validatorETH);
+                assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH);
+                assert(wsteth.balanceOf(address(usdnProtocol)) == balanceBefore.usdnProtocolWstETH);
+                assert(wsteth.balanceOf(msg.sender) == balanceBefore.senderWstETH);
+            }
         } catch (bytes memory err) {
             _checkErrors(err, VALIDATE_OPEN_ERRORS);
         }
