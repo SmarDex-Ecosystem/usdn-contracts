@@ -152,10 +152,9 @@ contract EchidnaAssert is Setup {
     }
 
     struct ValidateOpenBalanceBefore {
-        uint256 senderETH;
+        uint256 validatorETH;
         uint256 senderWstETH;
         uint256 usdnProtocolETH;
-        uint256 usdnProtocolUsdn;
         uint256 usdnProtocolWstETH;
     }
 
@@ -317,10 +316,9 @@ contract EchidnaAssert is Setup {
         bytes memory priceData = abi.encode(currentPrice);
 
         ValidateOpenBalanceBefore memory balanceBefore = ValidateOpenBalanceBefore({
-            senderETH: address(msg.sender).balance,
+            validatorETH: address(validator).balance,
             senderWstETH: wsteth.balanceOf(msg.sender),
             usdnProtocolETH: address(usdnProtocol).balance,
-            usdnProtocolUsdn: usdn.sharesOf(address(usdnProtocol)),
             usdnProtocolWstETH: wsteth.balanceOf(address(usdnProtocol))
         });
 
@@ -328,13 +326,10 @@ contract EchidnaAssert is Setup {
         try usdnProtocol.validateOpenPosition(validator, priceData, EMPTY_PREVIOUS_DATA) {
             uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
 
-            // TODO assertions
-            // assert(address(msg.sender).balance == 0);
-            // assert(wsteth.balanceOf(msg.sender) >= 0);
-
-            // assert(address(usdnProtocol).balance == 0);
-            // assert(usdn.sharesOf(address(usdnProtocol)) < 0);
-            // assert(wsteth.balanceOf(address(usdnProtocol)) <= 0);
+            assert(address(validator).balance == balanceBefore.validatorETH + securityDeposit);
+            assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH - securityDeposit);
+            assert(wsteth.balanceOf(address(usdnProtocol)) == balanceBefore.usdnProtocolWstETH);
+            assert(wsteth.balanceOf(msg.sender) == balanceBefore.senderWstETH);
         } catch (bytes memory err) {
             _checkErrors(err, VALIDATE_OPEN_ERRORS);
         }

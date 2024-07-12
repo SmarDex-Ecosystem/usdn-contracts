@@ -3,14 +3,13 @@ pragma solidity ^0.8.0;
 
 import { Test } from "forge-std/Test.sol";
 
-import { console2 } from "./../../lib/forge-std/src/console2.sol";
-
 import { UsdnProtocol } from "../../src/UsdnProtocol/UsdnProtocol.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
-
 import { IUsdn } from "../../src/interfaces/Usdn/IUsdn.sol";
-
 import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+
+import { MockOracleMiddleware } from "../unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
+
 import { WstETH } from "../utils/WstEth.sol";
 import { EchidnaAssert } from "./models/EchidnaAssert.sol";
 
@@ -18,6 +17,7 @@ contract TestEchidna is Test {
     EchidnaAssert public echidna;
     UsdnProtocol public usdnProtocol;
     WstETH public wsteth;
+    MockOracleMiddleware wstEthOracleMiddleware;
 
     address internal DEPLOYER;
     address internal ATTACKER;
@@ -28,6 +28,7 @@ contract TestEchidna is Test {
         ATTACKER = echidna.ATTACKER();
 
         usdnProtocol = echidna.usdnProtocol();
+        wstEthOracleMiddleware = echidna.wstEthOracleMiddleware();
         wsteth = echidna.wsteth();
     }
 
@@ -75,8 +76,6 @@ contract TestEchidna is Test {
 
         vm.deal(DEPLOYER, 10 ether);
 
-        vm.startPrank(DEPLOYER);
-        wsteth.approve(address(usdnProtocol), wstethOpenPositionAmount);
         deal(address(wsteth), address(DEPLOYER), wstethOpenPositionAmount);
 
         bytes[] memory priceData = new bytes[](1);
@@ -84,6 +83,8 @@ contract TestEchidna is Test {
         uint128[] memory rawIndices = new uint128[](1);
         rawIndices[0] = 0;
 
+        vm.startPrank(DEPLOYER);
+        wsteth.approve(address(usdnProtocol), wstethOpenPositionAmount);
         usdnProtocol.initiateOpenPosition{ value: securityDeposit }(
             wstethOpenPositionAmount,
             liquidationPrice,
@@ -93,21 +94,19 @@ contract TestEchidna is Test {
             abi.encode(etherPrice),
             IUsdnProtocolTypes.PreviousActionsData(priceData, rawIndices)
         );
-
-        // TODO assertions
-        // uint256 balanceBefore = DEPLOYER.balance;
-        // uint256 balanceBeforeProtocol = address(usdnProtocol).balance;
-        // uint256 balanceWstEthBefore = wsteth.balanceOf(DEPLOYER);
-
-        // skip(wstEthOracleMiddleware.getValidationDelay() + 1);
         vm.stopPrank();
-        skip(1 minutes);
+
+        uint256 balanceBefore = DEPLOYER.balance;
+        uint256 balanceBeforeProtocol = address(usdnProtocol).balance;
+        uint256 balanceWstEthBefore = wsteth.balanceOf(DEPLOYER);
+
+        skip(wstEthOracleMiddleware.getValidationDelay() + 1);
         echidna.validateOpen(uint256(uint160(DEPLOYER)), etherPrice);
 
         IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(DEPLOYER);
         assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.None, "action type");
-        // assertEq(DEPLOYER.balance, balanceBefore + securityDeposit, "DEPLOYER balance");
-        // assertEq(address(usdnProtocol).balance, balanceBeforeProtocol - securityDeposit, "protocol balance");
-        // assertGt(wsteth.balanceOf(DEPLOYER), balanceWstEthBefore, "wstETH balance");
+        assertEq(DEPLOYER.balance, balanceBefore + securityDeposit, "DEPLOYER balance");
+        assertEq(address(usdnProtocol).balance, balanceBeforeProtocol - securityDeposit, "protocol balance");
+        assertEq(wsteth.balanceOf(DEPLOYER), balanceWstEthBefore, "wstETH balance");
     }
 }
