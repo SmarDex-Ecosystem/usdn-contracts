@@ -329,15 +329,14 @@ contract EchidnaAssert is Setup {
             usdnProtocolUsdn: usdn.sharesOf(address(usdnProtocol)),
             usdnProtocolWstETH: wsteth.balanceOf(address(usdnProtocol))
         });
+        IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(validator);
 
         vm.prank(msg.sender);
         try usdnProtocol.validateWithdrawal(validator, priceData, EMPTY_PREVIOUS_DATA) {
-            uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
-
-            assert(address(msg.sender).balance == balanceBefore.senderETH + securityDeposit);
+            assert(address(msg.sender).balance == balanceBefore.senderETH + action.securityDepositValue);
             assert(wsteth.balanceOf(msg.sender) >= balanceBefore.senderWstETH);
 
-            assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH - securityDeposit);
+            assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH - action.securityDepositValue);
             assert(usdn.sharesOf(address(usdnProtocol)) < balanceBefore.usdnProtocolUsdn);
             assert(wsteth.balanceOf(address(usdnProtocol)) <= balanceBefore.usdnProtocolWstETH);
         } catch (bytes memory err) {
