@@ -4,9 +4,9 @@ pragma solidity ^0.8.0;
 import { Test } from "forge-std/Test.sol";
 
 import { Usdn } from "../../../src/Usdn/Usdn.sol";
-import { UsdnProtocolVaultLibrary as Vault } from "../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 import { MockOracleMiddleware } from "../../../test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
 import { UsdnProtocol } from "../../src/UsdnProtocol/UsdnProtocol.sol";
+import { UsdnProtocolVaultLibrary as Vault } from "../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 import { IUsdn } from "../../src/interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { WstETH } from "../utils/WstEth.sol";
@@ -47,6 +47,15 @@ contract TestEchidna is Test {
         assertEq(action.to, DEPLOYER, "action to");
         assertEq(action.validator, DEPLOYER, "action validator");
         assertEq(action.var2, 0.1 ether, "action amount");
+    }
+
+    function test_canInitiateOpen() public {
+        vm.prank(DEPLOYER);
+        echidna.initiateOpenPosition(5 ether, 1000 ether, 10 ether, 0, 0, 2000 ether);
+        IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(DEPLOYER);
+        assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition, "action type");
+        assertEq(action.to, DEPLOYER, "action to");
+        assertEq(action.validator, DEPLOYER, "action validator");
     }
 
     function test_canInitiateWithdrawal() public {
