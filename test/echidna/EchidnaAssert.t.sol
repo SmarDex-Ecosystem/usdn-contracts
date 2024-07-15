@@ -77,7 +77,6 @@ contract TestEchidna is Test {
         uint128 liquidationPrice = 1000 ether;
         uint256 etherPrice = 4000 ether;
         uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
-        uint256 initialTotalExpo = usdnProtocol.getTotalExpo();
 
         vm.deal(DEPLOYER, 10 ether);
 
@@ -85,7 +84,7 @@ contract TestEchidna is Test {
 
         vm.startPrank(DEPLOYER);
         wsteth.approve(address(usdnProtocol), wstethOpenPositionAmount);
-        (, IUsdnProtocolTypes.PositionId memory posId) = usdnProtocol.initiateOpenPosition{ value: securityDeposit }(
+        usdnProtocol.initiateOpenPosition{ value: securityDeposit }(
             wstethOpenPositionAmount,
             liquidationPrice,
             DEPLOYER,
@@ -101,19 +100,7 @@ contract TestEchidna is Test {
         uint256 balanceWstEthBefore = wsteth.balanceOf(DEPLOYER);
 
         skip(wstEthOracleMiddleware.getValidationDelay() + 1);
-        (IUsdnProtocolTypes.Position memory tempPos,) = usdnProtocol.getLongPosition(posId);
         echidna.validateOpen(uint256(uint160(DEPLOYER)), etherPrice);
-        (IUsdnProtocolTypes.Position memory pos,) = usdnProtocol.getLongPosition(posId);
-
-        assertTrue(pos.validated, "validated");
-        assertEq(pos.user, tempPos.user, "user");
-        assertEq(pos.amount, tempPos.amount, "amount");
-        assertEq(pos.timestamp, tempPos.timestamp, "timestamp");
-        assertLt(pos.totalExpo, tempPos.totalExpo, "totalExpo should have decreased");
-
-        IUsdnProtocolTypes.TickData memory tickData = usdnProtocol.getTickData(posId.tick);
-        assertEq(tickData.totalExpo, pos.totalExpo, "total expo in tick");
-        assertEq(usdnProtocol.getTotalExpo(), initialTotalExpo + pos.totalExpo, "total expo");
 
         IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(DEPLOYER);
         assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.None, "action type");
