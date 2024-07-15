@@ -83,11 +83,6 @@ contract TestEchidna is Test {
 
         deal(address(wsteth), address(DEPLOYER), wstethOpenPositionAmount);
 
-        bytes[] memory priceData = new bytes[](1);
-        priceData[0] = abi.encode(etherPrice);
-        uint128[] memory rawIndices = new uint128[](1);
-        rawIndices[0] = 0;
-
         vm.startPrank(DEPLOYER);
         wsteth.approve(address(usdnProtocol), wstethOpenPositionAmount);
         (, IUsdnProtocolTypes.PositionId memory posId) = usdnProtocol.initiateOpenPosition{ value: securityDeposit }(
