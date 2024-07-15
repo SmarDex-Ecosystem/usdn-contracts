@@ -6,7 +6,6 @@ import { Test } from "forge-std/Test.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
-import { UsdnProtocolHandler } from "../../unit/UsdnProtocol/utils/Handler.sol";
 import { MockOracleMiddleware } from "../../unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
 import { Sdex } from "../../utils/Sdex.sol";
 import { Weth } from "../../utils/WETH.sol";
@@ -15,8 +14,10 @@ import { MockLiquidationRewardsManager } from "../mock/MockLiquidationRewardsMan
 
 import { Rebalancer } from "../../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../../src/Usdn/Usdn.sol";
+import { UsdnProtocol } from "../../../src/UsdnProtocol/UsdnProtocol.sol";
 import { IWstETH } from "../../../src/interfaces/IWstETH.sol";
 
+import { UsdnProtocolCoreLibrary as Core } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolCoreLibrary.sol";
 import { IUsdnErrors } from "../../../src/interfaces/Usdn/IUsdnErrors.sol";
 import { IUsdnProtocolErrors } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolTypes } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -39,12 +40,12 @@ contract Setup is Test {
 
     mapping(address => address[]) public destinationsToken;
     address[2] public validators = [DEPLOYER, ATTACKER];
-    IUsdnProtocolTypes.PositionId[] posIds;
+    IUsdnProtocolTypes.PositionId[] public posIds;
 
     MockOracleMiddleware public wstEthOracleMiddleware;
     MockLiquidationRewardsManager public liquidationRewardsManager;
     Usdn public usdn;
-    UsdnProtocolHandler public usdnProtocol;
+    UsdnProtocol public usdnProtocol;
     Rebalancer public rebalancer;
 
     bytes4[] public INITIATE_DEPOSIT_ERRORS = [
@@ -104,9 +105,8 @@ contract Setup is Test {
 
         usdn = new Usdn(address(0), address(0));
 
-        usdnProtocol = new UsdnProtocolHandler(
-            usdn, sdex, wsteth, wstEthOracleMiddleware, liquidationRewardsManager, 100, FEE_COLLECTOR
-        );
+        usdnProtocol =
+            new UsdnProtocol(usdn, sdex, wsteth, wstEthOracleMiddleware, liquidationRewardsManager, 100, FEE_COLLECTOR);
 
         rebalancer = new Rebalancer(usdnProtocol);
 
@@ -323,7 +323,7 @@ contract EchidnaAssert is Setup {
         bytes memory priceData = abi.encode(currentPrice);
 
         IUsdnProtocolTypes.DepositPendingAction memory pendingAction =
-            usdnProtocol.i_toDepositPendingAction(usdnProtocol.getUserPendingAction(validator));
+            Core._toDepositPendingAction(usdnProtocol.getUserPendingAction(validator));
 
         ValidateDepositBalanceBefore memory balanceBefore = ValidateDepositBalanceBefore({
             senderWstETH: wsteth.balanceOf(msg.sender),
@@ -342,7 +342,6 @@ contract EchidnaAssert is Setup {
 
         vm.prank(msg.sender);
         try usdnProtocol.validateDeposit(validator, priceData, EMPTY_PREVIOUS_DATA) returns (bool success_) {
-            uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
             if (success_) {
                 //todo maybe determine the exact amount if it can be know before the call
                 assert(usdn.sharesOf(pendingAction.to) > balanceBefore.toUsdn);
@@ -359,7 +358,7 @@ contract EchidnaAssert is Setup {
                 assert(usdn.sharesOf(validator) == balanceBefore.validatorUsdn);
                 assert(usdn.sharesOf(pendingAction.to) == balanceBefore.toUsdn);
             }
-            assert(validator.balance == balanceBefore.validatorETH + securityDeposit);
+            assert(validator.balance == balanceBefore.validatorETH + pendingAction.securityDepositValue);
 
             assert(usdn.sharesOf(address(usdnProtocol)) == balanceBefore.usdnProtocolUsdn);
 
