@@ -78,6 +78,7 @@ contract Setup is Test {
         IUsdnErrors.UsdnInsufficientSharesBalance.selector,
         TickMath.TickMathInvalidPrice.selector
     ];
+    bytes4[] public VALIDATE_CLOSE_ERRORS = [IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector];
 
     constructor() payable {
         vm.warp(1_709_251_200);
@@ -338,4 +339,6 @@ contract EchidnaAssert is Setup {
             _checkErrors(err, VALIDATE_OPEN_ERRORS);
         }
     }
+
+    function validateClose() public { }
 }
