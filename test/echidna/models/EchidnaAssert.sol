@@ -7,6 +7,7 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { MockOracleMiddleware } from "../../../test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
+
 import { Sdex } from "../../utils/Sdex.sol";
 import { Weth } from "../../utils/WETH.sol";
 import { WstETH } from "../../utils/WstEth.sol";
@@ -15,8 +16,6 @@ import { MockLiquidationRewardsManager } from "../mock/MockLiquidationRewardsMan
 import { Rebalancer } from "../../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../../src/Usdn/Usdn.sol";
 import { UsdnProtocol } from "../../../src/UsdnProtocol/UsdnProtocol.sol";
-import { IWstETH } from "../../../src/interfaces/IWstETH.sol";
-
 import { IUsdnErrors } from "../../../src/interfaces/Usdn/IUsdnErrors.sol";
 import { IUsdnProtocolErrors } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolTypes } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -103,7 +102,7 @@ contract Setup is Test {
 
         wstEthOracleMiddleware = new MockOracleMiddleware();
 
-        liquidationRewardsManager = new MockLiquidationRewardsManager(IWstETH(wsteth), uint256(2 hours + 5 minutes));
+        liquidationRewardsManager = new MockLiquidationRewardsManager(WstETH(wsteth), uint256(2 hours + 5 minutes));
 
         usdn = new Usdn(address(0), address(0));
 
@@ -394,20 +393,50 @@ contract EchidnaAssert is Setup {
         }
     }
 
-    function validateClose(uint256 currentPrice) public {
-        IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(msg.sender);
+    function validateClose(uint256 validatorRand, uint256 currentPrice) public {
+        validatorRand = bound(validatorRand, 0, validators.length - 1);
+        address payable validator = payable(validators[validatorRand]);
         bytes memory priceData = abi.encode(currentPrice);
-        uint256 securityDeposit = action.securityDepositValue;
 
-        uint256 balanceBefore = address(msg.sender).balance;
-        uint256 balanceBeforeProtocol = address(usdnProtocol).balance;
-        uint256 balanceWstEthBefore = wsteth.balanceOf(msg.sender);
+        IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(validator);
+        uint256 securityDeposit = action.securityDepositValue;
+        uint256 closeAmount = action.var2;
+        address to = action.to;
+
+        uint256 validatorETHBefore = validator.balance;
+        uint256 validatorWstethBefore = wsteth.balanceOf(validator);
+        uint256 senderETHBefore = msg.sender.balance;
+        uint256 senderWstethBefore = wsteth.balanceOf(msg.sender);
+        uint256 usdnETHBefore = address(usdnProtocol).balance;
+        uint256 usdnWstethBefore = wsteth.balanceOf(address(usdnProtocol));
 
         vm.prank(msg.sender);
-        try usdnProtocol.validateClosePosition(payable(msg.sender), priceData, EMPTY_PREVIOUS_DATA) {
-            assert(address(msg.sender).balance == balanceBefore + securityDeposit);
-            assert(address(usdnProtocol).balance == balanceBeforeProtocol - securityDeposit);
-            assert(wsteth.balanceOf(msg.sender) == balanceWstEthBefore);
+        try usdnProtocol.validateClosePosition(payable(msg.sender), priceData, EMPTY_PREVIOUS_DATA) returns (
+            bool success
+        ) {
+            if (success) {
+                if (address(validator) == msg.sender) {
+                    assert(msg.sender.balance == senderETHBefore + securityDeposit);
+                    assert(wsteth.balanceOf(msg.sender) == senderWstethBefore);
+                } else {
+                    assert(validator.balance == validatorETHBefore);
+                    assert(msg.sender.balance == senderETHBefore);
+                    assert(wsteth.balanceOf(msg.sender) == senderWstethBefore);
+                    assert(wsteth.balanceOf(validator) == validatorWstethBefore);
+                }
+                assert(
+                    wsteth.balanceOf(to) == senderWstethBefore + closeAmount + (to == validator ? securityDeposit : 0)
+                );
+                assert(wsteth.balanceOf(address(usdnProtocol)) == usdnWstethBefore - closeAmount);
+                assert(address(usdnProtocol).balance == usdnETHBefore - securityDeposit);
+            } else {
+                assert(validator.balance == validatorETHBefore);
+                assert(wsteth.balanceOf(validator) == validatorWstethBefore);
+                assert(msg.sender.balance == senderETHBefore);
+                assert(wsteth.balanceOf(msg.sender) == senderWstethBefore);
+                assert(address(usdnProtocol).balance == usdnETHBefore);
+                assert(wsteth.balanceOf(address(usdnProtocol)) == usdnWstethBefore);
+            }
         } catch (bytes memory err) {
             _checkErrors(err, VALIDATE_CLOSE_ERRORS);
         }
