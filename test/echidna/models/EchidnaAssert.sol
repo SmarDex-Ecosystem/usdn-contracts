@@ -341,6 +341,7 @@ contract EchidnaAssert is Setup {
                 assert(usdn.sharesOf(address(usdnProtocol)) < balanceBefore.usdnProtocolUsdn);
                 assert(wsteth.balanceOf(address(usdnProtocol)) <= balanceBefore.usdnProtocolWstETH);
             } else {
+                assert(address(msg.sender).balance == balanceBefore.senderETH + action.securityDepositValue);
                 assert(wsteth.balanceOf(msg.sender) == balanceBefore.senderWstETH);
 
                 assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH);
