@@ -3,19 +3,16 @@ pragma solidity ^0.8.0;
 
 import { Test } from "forge-std/Test.sol";
 
+import { MockOracleMiddleware } from "../../test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
 import { MockOracleMiddleware } from "../unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
-import { WstETH } from "../utils/WstEth.sol";
-
 import { WstETH } from "../utils/WstEth.sol";
 import { EchidnaAssert } from "./models/EchidnaAssert.sol";
 import { EchidnaAssert } from "./models/EchidnaAssert.sol";
 
 import { Usdn } from "../../src/Usdn/Usdn.sol";
-
 import { UsdnProtocol } from "../../src/UsdnProtocol/UsdnProtocol.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { MockOracleMiddleware } from "../../test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
 
 contract TestEchidna is Test {
     EchidnaAssert public echidna;
