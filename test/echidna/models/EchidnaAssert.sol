@@ -69,7 +69,7 @@ contract Setup is Test {
         IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction.selector,
         IUsdnErrors.UsdnInsufficientSharesBalance.selector
     ];
-    bytes4[] public VALIDATE_OPEN_ERRORS = [IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector];
+    bytes4[] public VALIDATE_OPEN_ERRORS = [IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector];
     bytes4[] public INITIATE_WITHDRAWAL_ERRORS = [
         IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector,
         IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow.selector,
@@ -79,6 +79,12 @@ contract Setup is Test {
         TickMath.TickMathInvalidPrice.selector
     ];
     bytes4[] public VALIDATE_CLOSE_ERRORS = [IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector];
+
+    bytes4[] public VALIDATE_WITHDRAWAL_ERRORS = [
+        IUsdnProtocolErrors.UsdnProtocolInvalidAddressValidator.selector,
+        IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector,
+        IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction.selector
+    ];
 
     constructor() payable {
         vm.warp(1_709_251_200);
@@ -141,6 +147,14 @@ contract EchidnaAssert is Setup {
         uint256 usdnProtocolUsdn;
     }
 
+    struct ValidateWithdrawalBalanceBefore {
+        uint256 senderETH;
+        uint256 senderWstETH;
+        uint256 usdnProtocolETH;
+        uint256 usdnProtocolUsdn;
+        uint256 usdnProtocolWstETH;
+    }
+
     struct OpenPositionParams {
         address dest;
         address payable validator;
@@ -162,6 +176,7 @@ contract EchidnaAssert is Setup {
     /* -------------------------------------------------------------------------- */
     /*                             USDN Protocol                                  */
     /* -------------------------------------------------------------------------- */
+
     function initiateDeposit(
         uint128 amountWstETHRand,
         uint128 amountSdexRand,
@@ -307,6 +322,42 @@ contract EchidnaAssert is Setup {
             assert(usdn.sharesOf(address(usdnProtocol)) == balanceBefore.usdnProtocolUsdn + usdnShares);
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_WITHDRAWAL_ERRORS);
+        }
+    }
+
+    function validateWithdrawal(uint256 validatorRand, uint256 currentPrice) public {
+        validatorRand = bound(validatorRand, 0, validators.length - 1);
+        address payable validator = payable(validators[validatorRand]);
+
+        bytes memory priceData = abi.encode(currentPrice);
+
+        ValidateWithdrawalBalanceBefore memory balanceBefore = ValidateWithdrawalBalanceBefore({
+            senderETH: address(msg.sender).balance,
+            senderWstETH: wsteth.balanceOf(msg.sender),
+            usdnProtocolETH: address(usdnProtocol).balance,
+            usdnProtocolUsdn: usdn.sharesOf(address(usdnProtocol)),
+            usdnProtocolWstETH: wsteth.balanceOf(address(usdnProtocol))
+        });
+        IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(validator);
+
+        vm.prank(msg.sender);
+        try usdnProtocol.validateWithdrawal(validator, priceData, EMPTY_PREVIOUS_DATA) returns (bool success_) {
+            assert(address(msg.sender).balance == balanceBefore.senderETH + action.securityDepositValue);
+            if (success_) {
+                assert(wsteth.balanceOf(msg.sender) >= balanceBefore.senderWstETH);
+
+                assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH - action.securityDepositValue);
+                assert(usdn.sharesOf(address(usdnProtocol)) < balanceBefore.usdnProtocolUsdn);
+                assert(wsteth.balanceOf(address(usdnProtocol)) <= balanceBefore.usdnProtocolWstETH);
+            } else {
+                assert(wsteth.balanceOf(msg.sender) == balanceBefore.senderWstETH);
+
+                assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH);
+                assert(usdn.sharesOf(address(usdnProtocol)) == balanceBefore.usdnProtocolUsdn);
+                assert(wsteth.balanceOf(address(usdnProtocol)) == balanceBefore.usdnProtocolWstETH);
+            }
+        } catch (bytes memory err) {
+            _checkErrors(err, VALIDATE_WITHDRAWAL_ERRORS);
         }
     }
 
