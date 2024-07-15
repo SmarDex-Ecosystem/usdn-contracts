@@ -14,6 +14,7 @@ methods
 rule partialTransferShouldBeOKSpec(address recipient, uint divisor, uint tokens) {
     env e;
 
+    require divisor() == MAX_DIVISOR();
     require divisor > MIN_DIVISOR();
     require divisor < MAX_DIVISOR();
     require tokens >= 0;
