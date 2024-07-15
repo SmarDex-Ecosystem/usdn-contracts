@@ -69,7 +69,7 @@ contract Setup is Test {
         IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction.selector,
         IUsdnErrors.UsdnInsufficientSharesBalance.selector
     ];
-    bytes4[] public VALIDATE_OPEN_ERRORS = [IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector];
+    bytes4[] public VALIDATE_OPEN_ERRORS = [IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector];
     bytes4[] public INITIATE_WITHDRAWAL_ERRORS = [
         IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector,
         IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow.selector,
