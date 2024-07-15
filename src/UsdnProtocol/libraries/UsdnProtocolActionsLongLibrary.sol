@@ -233,7 +233,11 @@ library UsdnProtocolActionsLongLibrary {
         });
         (data.posId.tickVersion, data.posId.index,) =
             ActionsUtils._saveNewPosition(s, data.posId.tick, long, data.liquidationPenalty);
-        s._balanceLong += long.amount;
+        // because of the position fee, the position value is smaller than the amount
+        s._balanceLong += data.positionValue;
+        // positionValue must be smaller than or equal to amount, because the adjustedPrice (with fee) is larger than
+        // or equal to the current price
+        s._balanceVault += long.amount - data.positionValue;
         posId_ = data.posId;
 
         amountToRefund_ =
@@ -407,6 +411,23 @@ library UsdnProtocolActionsLongLibrary {
             s._liqMultiplierAccumulator = s._liqMultiplierAccumulator.add(
                 HugeUint.wrap(expoAfter * unadjustedTickPrice)
             ).sub(HugeUint.wrap(expoBefore * unadjustedTickPrice));
+        }
+
+        // we now need to adjust the balances because the position that we created during the initiateOpenPosition might
+        // have gained or lost some value, and we need to reflect that the position value is now `newPosValue`
+        // any potential PnL on that temporary position must be "cancelled" so that it doesn't affect the other
+        // positions and the vault
+        uint256 newPosValue = uint256(expoAfter) * (data.currentPrice - data.liqPriceWithoutPenalty) / data.currentPrice;
+        if (newPosValue > data.oldPosValue) {
+            // the long side is missing some value, we need to take it from the vault
+            uint256 diff = newPosValue - data.oldPosValue;
+            s._balanceVault -= diff;
+            s._balanceLong += diff;
+        } else if (newPosValue < data.oldPosValue) {
+            // the long side has too much value, we need to give it to the vault side
+            uint256 diff = data.oldPosValue - newPosValue;
+            s._balanceVault += diff;
+            s._balanceLong -= diff;
         }
 
         isValidated_ = true;

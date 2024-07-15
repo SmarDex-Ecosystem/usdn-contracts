@@ -25,6 +25,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         uint256 totalPositions;
         uint256 totalExpo;
         uint256 balanceLong;
+        uint256 balanceVault;
     }
 
     struct TestData {
@@ -93,7 +94,8 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             protocolBalance: wstETH.balanceOf(address(protocol)),
             totalPositions: protocol.getTotalLongPositions(),
             totalExpo: protocol.getTotalExpo(),
-            balanceLong: uint256(protocol.i_longAssetAvailable(CURRENT_PRICE))
+            balanceLong: uint256(protocol.i_longAssetAvailable(CURRENT_PRICE)),
+            balanceVault: uint256(protocol.i_vaultAssetAvailable(CURRENT_PRICE))
         });
 
         vm.expectEmit();
@@ -129,7 +131,11 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         TickData memory tickData = protocol.getTickData(expectedTick);
         assertEq(tickData.totalExpo, expectedPosTotalExpo, "total expo in tick");
         assertEq(tickData.totalPos, 1, "positions in tick");
-        assertEq(protocol.getBalanceLong(), before.balanceLong + LONG_AMOUNT, "balance of long side");
+        assertEq(
+            protocol.getBalanceLong() + protocol.getBalanceVault(),
+            before.balanceLong + before.balanceVault + LONG_AMOUNT,
+            "total balance of protocol"
+        );
 
         // the pending action should not yet be actionable by a third party
         (PendingAction[] memory pendingActions,) = protocol.getActionablePendingActions(address(0));

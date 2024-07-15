@@ -622,6 +622,9 @@ library UsdnProtocolLongLibrary {
         _checkOpenPositionLeverage(s, data_.adjustedPrice, liqPriceWithoutPenalty);
 
         data_.positionTotalExpo = _calcPositionTotalExpo(amount, data_.adjustedPrice, liqPriceWithoutPenalty);
+        // multiplication can't overflow because operands are uint128
+        data_.positionValue =
+            uint256(data_.positionTotalExpo) * (currentPrice.price - liqPriceWithoutPenalty) / currentPrice.price;
         _checkImbalanceLimitOpen(s, data_.positionTotalExpo, amount);
     }
 

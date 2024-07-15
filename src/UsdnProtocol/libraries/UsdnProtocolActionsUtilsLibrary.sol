@@ -243,6 +243,7 @@ library UsdnProtocolActionsUtilsLibrary {
             _calcActionId(data_.action.validator, data_.action.timestamp),
             priceData
         );
+        data_.currentPrice = (currentPrice.price).toUint128();
         // apply fees on price
         data_.startPrice =
             (currentPrice.price + currentPrice.price * s._positionFeeBps / Constants.BPS_DIVISOR).toUint128();
@@ -286,6 +287,13 @@ library UsdnProtocolActionsUtilsLibrary {
         );
         // reverts if liqPriceWithoutPenalty >= startPrice
         data_.leverage = Long._getLeverage(data_.startPrice, data_.liqPriceWithoutPenalty);
+        // calculate how much the position that was opened in the initiate is now worth (it might be too large or too
+        // small considering the new entry price). We will adjust the long and vault balances accordingly
+        uint128 lastPrice = s._lastPrice;
+        // multiplication cannot overflow because operands are uint128
+        // lastPrice is larger than liqPriceWithoutPenalty because we performed liquidations above and would early
+        // return in case of liquidation of this position
+        data_.oldPosValue = uint256(data_.pos.totalExpo) * (lastPrice - data_.liqPriceWithoutPenalty) / lastPrice;
     }
 
     /**
