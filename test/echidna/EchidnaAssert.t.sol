@@ -3,15 +3,15 @@ pragma solidity ^0.8.0;
 
 import { Test } from "forge-std/Test.sol";
 
-import { Usdn } from "../../../src/Usdn/Usdn.sol";
-import { MockOracleMiddleware } from "../../../test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
-import { UsdnProtocol } from "../../src/UsdnProtocol/UsdnProtocol.sol";
-import { UsdnProtocolVaultLibrary as Vault } from "../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
-import { IUsdn } from "../../src/interfaces/Usdn/IUsdn.sol";
-import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
 import { USER_1, USER_2 } from "../utils/Constants.sol";
 import { WstETH } from "../utils/WstEth.sol";
+
+import { MockOracleMiddleware } from "../unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
+
+import { Usdn } from "../../../src/Usdn/Usdn.sol";
+import { UsdnProtocol } from "../../src/UsdnProtocol/UsdnProtocol.sol";
+import { UsdnProtocolVaultLibrary as Vault } from "../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
+import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { EchidnaAssert } from "./models/EchidnaAssert.sol";
 
 contract TestEchidna is Test {
@@ -25,6 +25,9 @@ contract TestEchidna is Test {
     address internal ATTACKER;
 
     uint152 usdnShares = 100_000 ether;
+
+    IUsdnProtocolTypes.PreviousActionsData internal EMPTY_PREVIOUS_DATA =
+        IUsdnProtocolTypes.PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
 
     function setUp() public {
         echidna = new EchidnaAssert();
@@ -111,18 +114,10 @@ contract TestEchidna is Test {
         vm.startPrank(DEPLOYER);
         usdn.approve(address(usdnProtocol), usdnShares);
         usdnProtocol.initiateWithdrawal{ value: securityDeposit }(
-            usdnShares / 2,
-            USER_1,
-            payable(USER_1),
-            priceData,
-            IUsdnProtocolTypes.PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) })
+            usdnShares / 2, USER_1, payable(USER_1), priceData, EMPTY_PREVIOUS_DATA
         );
         usdnProtocol.initiateWithdrawal{ value: securityDeposit }(
-            usdnShares / 2,
-            USER_2,
-            payable(USER_2),
-            priceData,
-            IUsdnProtocolTypes.PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) })
+            usdnShares / 2, USER_2, payable(USER_2), priceData, EMPTY_PREVIOUS_DATA
         );
         vm.stopPrank();
 
