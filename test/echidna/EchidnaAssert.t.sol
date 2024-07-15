@@ -103,7 +103,7 @@ contract TestEchidna is Test {
         assertGt(wsteth.balanceOf(DEPLOYER), balanceWstEthBefore, "wstETH balance");
     }
 
-    function test_canValidatePendingAction() public {
+    function test_canValidatePendingActions() public {
         vm.deal(DEPLOYER, 10 ether);
         uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
         bytes memory priceData = abi.encode(4000 ether);
