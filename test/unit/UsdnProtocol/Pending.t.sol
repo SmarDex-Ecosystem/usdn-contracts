@@ -14,6 +14,27 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario Get the pending action of a user
+     * @custom:given The user has initiated a deposit
+     * @custom:when The pending action are requested
+     * @custom:then The pending action is returned
+     */
+    function test_getPendingAction() public {
+        // there should be no pending action at this stage
+        uint256 nb = protocol.getPendingAction(address(this));
+        assertEq(nb, 0, "pending action before initiate");
+
+        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 1 ether, 2000 ether);
+
+        nb = protocol.getPendingAction(address(this));
+        assertEq(nb, 1, "pending action after initiate");
+
+        protocol.validateDeposit(payable(address(this)), abi.encode(2000 ether), EMPTY_PREVIOUS_DATA);
+        nb = protocol.getPendingAction(address(this));
+        assertEq(nb, 0, "pending action after validate");
+    }
+
+    /**
      * @custom:scenario Get the actionable pending actions
      * @custom:given The user has initiated a deposit
      * @custom:and The validation deadline has elapsed
