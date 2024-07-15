@@ -23,6 +23,8 @@ contract TestGetLongPosition is UsdnProtocolBaseFixture {
         _setUp(params);
     }
 
+    // function test_getCurrentLongPosition() public { }
+
     /**
      * @custom:scenario Check the return value of the function `getLongPosition`
      * @custom:given A initialized protocol
