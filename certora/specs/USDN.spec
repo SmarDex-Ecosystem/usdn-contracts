@@ -7,38 +7,30 @@ methods
     function sharesOf(address) external returns (uint) envfree;
     function balanceOf(address) external returns (uint) envfree;
     function totalSupply() external returns (uint) envfree;
+    function totalShares() external returns (uint) envfree;
     function divisor() external returns (uint) envfree;
     function rebaseHandler() external returns (address) envfree;
 }
 
-rule partialTransferShouldBeOKSpec(address recipient, uint divisor, uint tokens) {
-    env e;
-
-    require divisor() == MAX_DIVISOR();
-    require divisor > MIN_DIVISOR();
-    require divisor < MAX_DIVISOR();
-    require tokens >= 0;
-    require tokens <= maxTokens();
-    require rebaseHandler() == 0;
-
-    grantRole(e, MINTER_ROLE(), e.msg.sender);
-
-    mint(e, e.msg.sender, maxTokens());
-
-    mathint shares_before = sharesOf(e, e.msg.sender);
-
-    rebase(e, divisor);
-
-    transfer(e, recipient, tokens);
-
-    rebase(e, MIN_DIVISOR());
-
-    mathint sender_shares_after = sharesOf(e.msg.sender);
-    mathint recipient_shares_after = sharesOf(recipient);
-
-    assert shares_before == sender_shares_after + recipient_shares_after, "shares sum invariant";
+ghost mathint sumOfShares {
+    init_state axiom sumOfShares == 0;
 }
 
+ghost mathint numberOfChangesOfShares {
+	init_state axiom numberOfChangesOfShares == 0;
+}
+
+hook Sload uint256 shares _shares[KEY address addr] {
+    require sumOfShares >= to_mathint(shares);
+}
+
+hook Sstore _shares[KEY address addr] uint256 newValue (uint256 oldValue) {
+    sumOfShares = sumOfShares - oldValue + newValue;
+    numberOfChangesOfShares = numberOfChangesOfShares + 1;
+}
+
+invariant totalSharesIsSumOfSharesBalances()
+    to_mathint(totalShares()) == sumOfShares;
 
 rule partialTransferShouldFailSpec(address recipient, uint divisor, uint tokens) {
     env e;
