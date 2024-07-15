@@ -25,7 +25,7 @@ contract TestEchidna is Test {
     address internal DEPLOYER;
     address internal ATTACKER;
 
-    uint152 usdnShares = 100_000 ether;
+    uint152 internal usdnShares = 100_000 ether;
 
     function setUp() public {
         echidna = new EchidnaAssert();
@@ -74,9 +74,7 @@ contract TestEchidna is Test {
     }
 
     function test_canValidateDeposit() public {
-        IUsdn usdn = usdnProtocol.getUsdn();
         Sdex sdex = echidna.sdex();
-        WstETH wsteth = echidna.wsteth();
         uint128 amountWstETH = 0.1 ether;
         uint256 price = 1000 ether;
 

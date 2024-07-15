@@ -343,7 +343,6 @@ contract EchidnaAssert is Setup {
         vm.prank(msg.sender);
         try usdnProtocol.validateDeposit(validator, priceData, EMPTY_PREVIOUS_DATA) returns (bool success_) {
             uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
-
             if (success_) {
                 //todo maybe determine the exact amount if it can be know before the call
                 assert(usdn.sharesOf(pendingAction.to) > balanceBefore.toUsdn);
@@ -353,12 +352,13 @@ contract EchidnaAssert is Setup {
                 if (pendingAction.to != validator) {
                     assert(usdn.sharesOf(validator) == balanceBefore.validatorUsdn);
                 }
+
+                assert(uint8(pendingAction.action) == uint8(IUsdnProtocolTypes.ProtocolAction.ValidateDeposit));
             } else {
                 assert(usdn.sharesOf(msg.sender) == balanceBefore.senderUsdn);
                 assert(usdn.sharesOf(validator) == balanceBefore.validatorUsdn);
                 assert(usdn.sharesOf(pendingAction.to) == balanceBefore.toUsdn);
             }
-
             assert(validator.balance == balanceBefore.validatorETH + securityDeposit);
 
             assert(usdn.sharesOf(address(usdnProtocol)) == balanceBefore.usdnProtocolUsdn);
