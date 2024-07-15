@@ -83,6 +83,8 @@ contract Setup is Test {
         IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction.selector
     ];
 
+    bytes4[] public VALIDATE_PENDING_ACTIONS_ERRORS = [IUsdnProtocolErrors.UsdnProtocolEtherRefundFailed.selector];
+
     constructor() payable {
         vm.warp(1_709_251_200);
         //TODO see to fuzz these data
@@ -381,8 +383,7 @@ contract EchidnaAssert is Setup {
             assert(address(msg.sender).balance == balanceBefore + securityDeposit);
             assert(address(usdnProtocol).balance == balanceBeforeProtocol - securityDeposit);
         } catch (bytes memory err) {
-            emit log_named_bytes("DOS ", err);
-            assert(false);
+            _checkErrors(err, VALIDATE_PENDING_ACTIONS_ERRORS);
         }
     }
 }
