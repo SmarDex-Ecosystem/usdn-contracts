@@ -50,7 +50,14 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
             oracleMiddleware,
             liquidationRewardsManager,
             100, // tick spacing 100 = 1%
-            ADMIN // Fee collector
+            ADMIN, // Fee collector
+            Types.Roles({
+                setExternalAdmin: ADMIN,
+                criticalFunctionsAdmin: ADMIN,
+                setProtocolParamsAdmin: ADMIN,
+                setUsdnParamsAdmin: ADMIN,
+                setOptionsAdmin: ADMIN
+            })
         );
         rebalancer = new RebalancerHandler(usdnProtocol);
 
@@ -58,11 +65,12 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
         usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));
 
         // separate the roles ADMIN and DEPLOYER
-        usdnProtocol.transferOwnership(ADMIN);
+        usdnProtocol.beginDefaultAdminTransfer(ADMIN);
         rebalancer.transferOwnership(ADMIN);
         vm.stopPrank();
         vm.startPrank(ADMIN);
-        usdnProtocol.acceptOwnership();
+        skip(1);
+        usdnProtocol.acceptDefaultAdminTransfer();
         rebalancer.acceptOwnership();
         vm.stopPrank();
     }

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.25;
 
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import { AccessControlDefaultAdminRules } from
+    "@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import { IBaseLiquidationRewardsManager } from "../interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
@@ -21,12 +21,42 @@ contract UsdnProtocolStorage is
     IUsdnProtocolErrors,
     IUsdnProtocolStorage,
     InitializableReentrancyGuard,
-    Ownable2Step
+    AccessControlDefaultAdminRules
 {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
     /// @notice The storage structure of the Usdn protocol
     Storage internal s;
+
+    /// @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant SET_EXTERNAL_ROLE = keccak256("SET_EXTERNAL_ROLE");
+
+    /// @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant CRITICAL_FUNCTIONS_ROLE = keccak256("CRITICAL_FUNCTIONS_ROLE");
+
+    /// @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant SET_PROTOCOL_PARAMS_ROLE = keccak256("SET_PROTOCOL_PARAMS_ROLE");
+
+    /// @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant SET_USDN_PARAMS_ROLE = keccak256("SET_USDN_PARAMS_ROLE");
+
+    /// @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant SET_OPTIONS_ROLE = keccak256("SET_OPTIONS_ROLE");
+
+    /// @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant ADMIN_SET_EXTERNAL_ROLE = keccak256("ADMIN_SET_EXTERNAL_ROLE");
+
+    /// @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant ADMIN_CRITICAL_FUNCTIONS_ROLE = keccak256("ADMIN_CRITICAL_FUNCTIONS_ROLE");
+
+    /// @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant ADMIN_SET_PROTOCOL_PARAMS_ROLE = keccak256("ADMIN_SET_PROTOCOL_PARAMS_ROLE");
+
+    /// @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant ADMIN_SET_USDN_PARAMS_ROLE = keccak256("ADMIN_SET_USDN_PARAMS_ROLE");
+
+    /// @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant ADMIN_SET_OPTIONS_ROLE = keccak256("ADMIN_SET_OPTIONS_ROLE");
 
     /**
      * @notice Constructor
@@ -37,6 +67,7 @@ contract UsdnProtocolStorage is
      * @param liquidationRewardsManager The liquidation rewards manager contract
      * @param tickSpacing The positions tick spacing
      * @param feeCollector The address of the fee collector
+     * @param roles The roles of the contract
      */
     constructor(
         IUsdn usdn,
@@ -45,8 +76,21 @@ contract UsdnProtocolStorage is
         IBaseOracleMiddleware oracleMiddleware,
         IBaseLiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
-        address feeCollector
-    ) Ownable(msg.sender) {
+        address feeCollector,
+        Roles memory roles
+    ) AccessControlDefaultAdminRules(0, msg.sender) {
+        // roles
+        _setRoleAdmin(SET_EXTERNAL_ROLE, ADMIN_SET_EXTERNAL_ROLE);
+        _setRoleAdmin(CRITICAL_FUNCTIONS_ROLE, ADMIN_CRITICAL_FUNCTIONS_ROLE);
+        _setRoleAdmin(SET_PROTOCOL_PARAMS_ROLE, ADMIN_SET_PROTOCOL_PARAMS_ROLE);
+        _setRoleAdmin(SET_USDN_PARAMS_ROLE, ADMIN_SET_USDN_PARAMS_ROLE);
+        _setRoleAdmin(SET_OPTIONS_ROLE, ADMIN_SET_OPTIONS_ROLE);
+        _grantRole(SET_EXTERNAL_ROLE, roles.setExternalAdmin);
+        _grantRole(CRITICAL_FUNCTIONS_ROLE, roles.criticalFunctionsAdmin);
+        _grantRole(SET_PROTOCOL_PARAMS_ROLE, roles.setProtocolParamsAdmin);
+        _grantRole(SET_USDN_PARAMS_ROLE, roles.setUsdnParamsAdmin);
+        _grantRole(SET_OPTIONS_ROLE, roles.setOptionsAdmin);
+
         // parameters
         s._minLeverage = 10 ** Constants.LEVERAGE_DECIMALS + 10 ** 12;
         s._maxLeverage = 10 * 10 ** Constants.LEVERAGE_DECIMALS;

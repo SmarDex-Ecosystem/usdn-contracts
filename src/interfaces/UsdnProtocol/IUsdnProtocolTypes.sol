@@ -370,6 +370,22 @@ interface IUsdnProtocolTypes {
     }
 
     /**
+     * @notice Structure to hold the roles during deployment
+     * @param setExternalAdmin The role to set the external contracts
+     * @param criticalFunctionsAdmin The role to perform critical functions
+     * @param setProtocolParamsAdmin The role to set the protocol parameters
+     * @param setUsdnParamsAdmin The role to set the USDN parameters
+     * @param setOptionsAdmin The role to set the protocol options that do not impact the usage of the protocol
+     */
+    struct Roles {
+        address setExternalAdmin;
+        address criticalFunctionsAdmin;
+        address setProtocolParamsAdmin;
+        address setUsdnParamsAdmin;
+        address setOptionsAdmin;
+    }
+
+    /**
      * @notice Structure to hold the state of the protocol
      * @param _tickSpacing The liquidation tick spacing for storing long positions
      * A tick spacing of 1 is equivalent to a 0.1% increase in liquidation price between ticks. A tick spacing of

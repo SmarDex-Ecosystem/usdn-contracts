@@ -46,8 +46,9 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         IBaseOracleMiddleware oracleMiddleware,
         ILiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
-        address feeCollector
-    ) UsdnProtocol(usdn, sdex, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector) { }
+        address feeCollector,
+        Roles memory roles
+    ) UsdnProtocol(usdn, sdex, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector, roles) { }
 
     /// @dev Useful to completely disable funding, which is normally initialized with a positive bias value
     function resetEMA() external {

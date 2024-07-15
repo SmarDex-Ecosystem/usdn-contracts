@@ -18,7 +18,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
-        vm.startPrank(DEPLOYER);
+        vm.startPrank(ADMIN);
         usdn = new Usdn(address(0), address(0));
 
         protocol = new UsdnProtocolHandler(
@@ -28,14 +28,22 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
             oracleMiddleware,
             liquidationRewardsManager,
             100, // tick spacing 100 = 1%
-            ADMIN // Fee collector
+            ADMIN, // Fee collector
+            Roles({
+                setExternalAdmin: address(this),
+                criticalFunctionsAdmin: address(this),
+                setProtocolParamsAdmin: address(this),
+                setUsdnParamsAdmin: address(this),
+                setOptionsAdmin: address(this)
+            })
         );
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
 
-        protocol.transferOwnership(address(this));
+        protocol.beginDefaultAdminTransfer(address(this));
         vm.stopPrank();
-        protocol.acceptOwnership();
+        skip(1);
+        protocol.acceptDefaultAdminTransfer();
         wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
     }
 

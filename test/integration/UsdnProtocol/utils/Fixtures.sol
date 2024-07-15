@@ -13,11 +13,16 @@ import {
     ADMIN,
     CHAINLINK_ORACLE_ETH,
     CHAINLINK_ORACLE_GAS,
+    CRITICAL_FUNCTIONS_ADMIN,
     DEPLOYER,
     PYTH_ETH_USD,
     PYTH_ORACLE,
     REDSTONE_ETH_USD,
     SDEX,
+    SET_EXTERNAL_ADMIN,
+    SET_OPTIONS_ADMIN,
+    SET_PROTOCOL_PARAMS_ADMIN,
+    SET_USDN_PARAMS_ADMIN,
     WSTETH
 } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
@@ -48,6 +53,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         uint256 initialTimestamp; // ignored if `fork` is true
         bool fork;
         uint256 forkWarp; // warp to this timestamp after forking, before deploying protocol. Zero to disable
+        bool enableRoles;
     }
 
     struct ExpoImbalanceLimitsBps {
@@ -68,7 +74,16 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         initialPrice: 2000 ether, // 2000 USD per wstETH, ignored if forking
         initialTimestamp: 1_704_092_400, // 2024-01-01 07:00:00 UTC
         fork: false,
-        forkWarp: 0
+        forkWarp: 0,
+        enableRoles: true
+    });
+
+    Roles roles = Roles({
+        setExternalAdmin: SET_EXTERNAL_ADMIN,
+        criticalFunctionsAdmin: CRITICAL_FUNCTIONS_ADMIN,
+        setProtocolParamsAdmin: SET_PROTOCOL_PARAMS_ADMIN,
+        setUsdnParamsAdmin: SET_USDN_PARAMS_ADMIN,
+        setOptionsAdmin: SET_OPTIONS_ADMIN
     });
 
     Usdn public usdn;
@@ -135,6 +150,16 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         require(success, "DEPLOYER wstETH mint failed");
         usdn = new Usdn(address(0), address(0));
 
+        if (!testParams.enableRoles) {
+            roles = Roles({
+                setExternalAdmin: ADMIN,
+                criticalFunctionsAdmin: ADMIN,
+                setProtocolParamsAdmin: ADMIN,
+                setUsdnParamsAdmin: ADMIN,
+                setOptionsAdmin: ADMIN
+            });
+        }
+
         protocol = new UsdnProtocolHandler(
             usdn,
             sdex,
@@ -142,11 +167,11 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             oracleMiddleware,
             liquidationRewardsManager,
             100, // tick spacing 100 = 1%
-            ADMIN
+            ADMIN,
+            roles
         );
 
         rebalancer = new Rebalancer(protocol);
-        protocol.setRebalancer(rebalancer);
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
@@ -155,6 +180,8 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             testParams.initialDeposit, testParams.initialLong, testParams.initialLiqPrice, ""
         );
         vm.stopPrank();
+        vm.prank(roles.setExternalAdmin);
+        protocol.setRebalancer(rebalancer);
         params = testParams;
     }
 
@@ -195,7 +222,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
         tickSpacing_ = protocol.getTickSpacing();
 
-        vm.startPrank(DEPLOYER);
+        vm.startPrank(roles.setProtocolParamsAdmin);
         protocol.setFundingSF(0);
         protocol.resetEMA();
 
@@ -256,7 +283,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
         tickToLiquidateData_ = protocol.getTickData(posToLiquidate_.tick);
 
-        vm.prank(DEPLOYER);
+        vm.prank(roles.setProtocolParamsAdmin);
         protocol.setExpoImbalanceLimits(
             uint256(defaultLimits.depositExpoImbalanceLimitBps),
             uint256(defaultLimits.withdrawalExpoImbalanceLimitBps),
