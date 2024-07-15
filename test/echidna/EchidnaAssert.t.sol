@@ -21,6 +21,8 @@ contract TestEchidna is Test {
 
     address internal DEPLOYER;
     address internal ATTACKER;
+    IUsdnProtocolTypes.PreviousActionsData internal EMPTY_PREVIOUS_DATA =
+        IUsdnProtocolTypes.PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
 
     uint152 usdnShares = 100_000 ether;
 
@@ -95,7 +97,7 @@ contract TestEchidna is Test {
             payable(DEPLOYER),
             echidna.NO_PERMIT2(),
             abi.encode(etherPrice),
-            IUsdnProtocolTypes.PreviousActionsData(priceData, rawIndices)
+            EMPTY_PREVIOUS_DATA
         );
         vm.stopPrank();
 
@@ -134,11 +136,7 @@ contract TestEchidna is Test {
 
         vm.prank(DEPLOYER);
         usdnProtocol.initiateWithdrawal{ value: securityDeposit }(
-            usdnShares,
-            DEPLOYER,
-            payable(DEPLOYER),
-            priceData,
-            IUsdnProtocolTypes.PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) })
+            usdnShares, DEPLOYER, payable(DEPLOYER), priceData, EMPTY_PREVIOUS_DATA
         );
 
         uint256 balanceBefore = DEPLOYER.balance;
