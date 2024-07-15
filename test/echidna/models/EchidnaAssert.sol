@@ -23,7 +23,6 @@ import { IUsdnProtocolTypes } from "../../../src/interfaces/UsdnProtocol/IUsdnPr
 import { Permit2TokenBitfield } from "../../../src/libraries/Permit2TokenBitfield.sol";
 import { SignedMath } from "../../../src/libraries/SignedMath.sol";
 import { TickMath } from "../../../src/libraries/TickMath.sol";
-import { console2 } from "forge-std/Test.sol";
 
 contract Setup is Test {
     address public constant DEPLOYER = address(0x10000);
