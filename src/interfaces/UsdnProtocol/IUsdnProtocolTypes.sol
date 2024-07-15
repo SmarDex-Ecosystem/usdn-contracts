@@ -375,7 +375,7 @@ interface IUsdnProtocolTypes {
      * @param criticalFunctionsAdmin The role to perform critical functions
      * @param setProtocolParamsAdmin The role to set the protocol parameters
      * @param setUsdnParamsAdmin The role to set the USDN parameters
-     * @param setOptionsAdmin The role to set the protocol options
+     * @param setOptionsAdmin The role to set the protocol options that do not impact the usage of the protocol
      */
     struct Roles {
         address setExternalAdmin;
