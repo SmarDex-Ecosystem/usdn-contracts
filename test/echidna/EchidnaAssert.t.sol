@@ -9,6 +9,8 @@ import { UsdnProtocol } from "../../src/UsdnProtocol/UsdnProtocol.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 import { IUsdn } from "../../src/interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+
+import { USER_1, USER_2 } from "../utils/Constants.sol";
 import { WstETH } from "../utils/WstEth.sol";
 import { EchidnaAssert } from "./models/EchidnaAssert.sol";
 
@@ -99,5 +101,40 @@ contract TestEchidna is Test {
         assertEq(DEPLOYER.balance, balanceBefore + securityDeposit, "DEPLOYER balance");
         assertEq(address(usdnProtocol).balance, balanceBeforeProtocol - securityDeposit, "protocol balance");
         assertGt(wsteth.balanceOf(DEPLOYER), balanceWstEthBefore, "wstETH balance");
+    }
+
+    function test_canValidatePendingAction() public {
+        vm.deal(DEPLOYER, 10 ether);
+        uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
+        bytes memory priceData = abi.encode(4000 ether);
+
+        vm.startPrank(DEPLOYER);
+        usdn.approve(address(usdnProtocol), usdnShares);
+        usdnProtocol.initiateWithdrawal{ value: securityDeposit }(
+            usdnShares / 2,
+            USER_1,
+            payable(USER_1),
+            priceData,
+            IUsdnProtocolTypes.PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) })
+        );
+        usdnProtocol.initiateWithdrawal{ value: securityDeposit }(
+            usdnShares / 2,
+            USER_2,
+            payable(USER_2),
+            priceData,
+            IUsdnProtocolTypes.PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) })
+        );
+        vm.stopPrank();
+
+        uint256 balanceBefore = DEPLOYER.balance;
+        uint256 balanceBeforeProtocol = address(usdnProtocol).balance;
+
+        skip(usdnProtocol.getValidationDeadline() + 1);
+
+        vm.prank(DEPLOYER);
+        echidna.validatePendingActions(10, 4000 ether);
+
+        assertEq(DEPLOYER.balance, balanceBefore + securityDeposit * 2, "DEPLOYER balance");
+        assertEq(address(usdnProtocol).balance, balanceBeforeProtocol - securityDeposit * 2, "protocol balance");
     }
 }
