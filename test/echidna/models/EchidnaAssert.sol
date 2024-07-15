@@ -333,15 +333,14 @@ contract EchidnaAssert is Setup {
 
         vm.prank(msg.sender);
         try usdnProtocol.validateWithdrawal(validator, priceData, EMPTY_PREVIOUS_DATA) returns (bool success_) {
+            assert(address(msg.sender).balance == balanceBefore.senderETH + action.securityDepositValue);
             if (success_) {
-                assert(address(msg.sender).balance == balanceBefore.senderETH + action.securityDepositValue);
                 assert(wsteth.balanceOf(msg.sender) >= balanceBefore.senderWstETH);
 
                 assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH - action.securityDepositValue);
                 assert(usdn.sharesOf(address(usdnProtocol)) < balanceBefore.usdnProtocolUsdn);
                 assert(wsteth.balanceOf(address(usdnProtocol)) <= balanceBefore.usdnProtocolWstETH);
             } else {
-                assert(address(msg.sender).balance == balanceBefore.senderETH + action.securityDepositValue);
                 assert(wsteth.balanceOf(msg.sender) == balanceBefore.senderWstETH);
 
                 assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH);
