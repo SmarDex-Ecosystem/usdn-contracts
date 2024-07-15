@@ -165,7 +165,7 @@ contract TestEchidna is Test {
         );
         vm.stopPrank();
 
-        echidna.validateClose();
+        echidna.validateClose(etherPrice);
     }
 
     function test_canValidateWithdrawal() public {

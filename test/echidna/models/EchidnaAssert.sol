@@ -78,7 +78,10 @@ contract Setup is Test {
         IUsdnErrors.UsdnInsufficientSharesBalance.selector,
         TickMath.TickMathInvalidPrice.selector
     ];
-    bytes4[] public VALIDATE_CLOSE_ERRORS = [IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector];
+    bytes4[] public VALIDATE_CLOSE_ERRORS = [
+        IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector,
+        IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector
+    ];
 
     bytes4[] public VALIDATE_WITHDRAWAL_ERRORS = [
         IUsdnProtocolErrors.UsdnProtocolInvalidAddressValidator.selector,
@@ -391,5 +394,22 @@ contract EchidnaAssert is Setup {
         }
     }
 
-    function validateClose() public { }
+    function validateClose(uint256 currentPrice) public {
+        IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(msg.sender);
+        bytes memory priceData = abi.encode(currentPrice);
+        uint256 securityDeposit = action.securityDepositValue;
+
+        uint256 balanceBefore = address(msg.sender).balance;
+        uint256 balanceBeforeProtocol = address(usdnProtocol).balance;
+        uint256 balanceWstEthBefore = wsteth.balanceOf(msg.sender);
+
+        vm.prank(msg.sender);
+        try usdnProtocol.validateClosePosition(payable(msg.sender), priceData, EMPTY_PREVIOUS_DATA) {
+            assert(address(msg.sender).balance == balanceBefore + securityDeposit);
+            assert(address(usdnProtocol).balance == balanceBeforeProtocol - securityDeposit);
+            assert(wsteth.balanceOf(msg.sender) == balanceWstEthBefore);
+        } catch (bytes memory err) {
+            _checkErrors(err, VALIDATE_CLOSE_ERRORS);
+        }
+    }
 }
