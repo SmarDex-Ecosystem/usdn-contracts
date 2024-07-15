@@ -36,11 +36,10 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
      * @custom:when The `_checkImbalanceLimitOpen` function is called with values above the open limit
      * @custom:then The transaction should not revert
      */
-    function test_checkImbalanceLimitOpenDisabled() public {
+    function test_checkImbalanceLimitOpenDisabled() public adminPrank {
         (, uint256 longAmount, uint256 totalExpoValueToLimit) = _getOpenLimitValues();
 
         // disable open limit
-        vm.prank(ADMIN);
         protocol.setExpoImbalanceLimits(0, 200, 600, 600, 300);
 
         protocol.i_checkImbalanceLimitOpen(totalExpoValueToLimit + 1, longAmount);

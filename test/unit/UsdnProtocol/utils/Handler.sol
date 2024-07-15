@@ -37,6 +37,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     using SafeCast for uint256;
     using SignedMath for int256;
 
+    Storage _tempStorage;
+
     constructor(
         IUsdn usdn,
         IERC20Metadata sdex,
@@ -106,18 +108,58 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     }
 
     function updateBalances(uint128 currentPrice) external {
-        (bool priceUpdated, int256 tempLongBalance, int256 tempVaultBalance) =
-            Core._applyPnlAndFunding(s, currentPrice, uint128(block.timestamp));
-        if (!priceUpdated) {
+        ApplyPnlAndFundingData memory data = Core._applyPnlAndFunding(s, currentPrice, uint128(block.timestamp));
+        if (!data.isPriceRecent) {
             revert("price was not updated");
         }
-        s._balanceLong = tempLongBalance.toUint256();
-        s._balanceVault = tempVaultBalance.toUint256();
+        s._balanceLong = data.tempLongBalance.toUint256();
+        s._balanceVault = data.tempVaultBalance.toUint256();
     }
 
     function removePendingAction(uint128 rawIndex, address user) external {
         s._pendingActionsQueue.clearAt(rawIndex);
         delete s._pendingActions[user];
+    }
+
+    function i_createWithdrawalPendingAction(
+        address to,
+        address validator,
+        uint152 usdnShares,
+        uint64 securityDepositValue,
+        ActionsVault.WithdrawalData memory data
+    ) public returns (uint256 amountToRefund_) {
+        return ActionsVault._createWithdrawalPendingAction(s, to, validator, usdnShares, securityDepositValue, data);
+    }
+
+    function i_createDepositPendingAction(
+        address validator,
+        address to,
+        uint64 securityDepositValue,
+        uint128 amount,
+        ActionsVault.InitiateDepositData memory data
+    ) external returns (uint256 amountToRefund_) {
+        return ActionsVault._createDepositPendingAction(s, validator, to, securityDepositValue, amount, data);
+    }
+
+    function i_createOpenPendingAction(
+        address to,
+        address validator,
+        uint64 securityDepositValue,
+        InitiateOpenPositionData memory data
+    ) public returns (uint256 amountToRefund_) {
+        return ActionsUtils._createOpenPendingAction(s, to, validator, securityDepositValue, data);
+    }
+
+    function i_createClosePendingAction(
+        address to,
+        address validator,
+        PositionId memory posId,
+        uint128 amountToClose,
+        uint64 securityDepositValue,
+        ClosePositionData memory data
+    ) external returns (uint256 amountToRefund_) {
+        return
+            ActionsUtils._createClosePendingAction(s, to, validator, posId, amountToClose, securityDepositValue, data);
     }
 
     function findLastSetInTickBitmap(int24 searchFrom) external view returns (uint256 index) {
@@ -158,8 +200,32 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         );
     }
 
-    function i_validateClosePosition(address user, bytes calldata priceData) external {
-        ActionsLong._validateClosePosition(s, user, priceData);
+    function i_validateOpenPosition(address user, bytes calldata priceData)
+        external
+        returns (uint256 securityDepositValue_, bool isValidated_, bool liquidated_)
+    {
+        return ActionsLong._validateOpenPosition(s, user, priceData);
+    }
+
+    function i_validateClosePosition(address user, bytes calldata priceData)
+        external
+        returns (uint256 securityDepositValue_, bool isValidated_, bool liquidated_)
+    {
+        return ActionsLong._validateClosePosition(s, user, priceData);
+    }
+
+    function i_validateWithdrawal(address user, bytes calldata priceData)
+        external
+        returns (uint256 securityDepositValue_, bool isValidated_)
+    {
+        return ActionsVault._validateWithdrawal(s, user, priceData);
+    }
+
+    function i_validateDeposit(address user, bytes calldata priceData)
+        external
+        returns (uint256 securityDepositValue_, bool isValidated_)
+    {
+        return ActionsVault._validateDeposit(s, user, priceData);
     }
 
     function i_removeAmountFromPosition(
@@ -193,13 +259,13 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return Core._getActionablePendingAction(s);
     }
 
-    function i_lastFunding() external view returns (int256) {
-        return s._lastFunding;
+    function i_lastFundingPerDay() external view returns (int256) {
+        return s._lastFundingPerDay;
     }
 
     function i_applyPnlAndFunding(uint128 currentPrice, uint128 timestamp)
         external
-        returns (bool priceUpdated_, int256 tempLongBalance_, int256 tempVaultBalance_)
+        returns (ApplyPnlAndFundingData memory data_)
     {
         return Core._applyPnlAndFunding(s, currentPrice, timestamp);
     }
@@ -341,7 +407,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         ActionsUtils._checkImbalanceLimitClose(s, posTotalExpoToClose, posValueToClose);
     }
 
-    function i_getLeverage(uint128 price, uint128 liqPrice) external pure returns (uint128) {
+    function i_getLeverage(uint128 price, uint128 liqPrice) external pure returns (uint256) {
         return Long._getLeverage(price, liqPrice);
     }
 
@@ -373,8 +439,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return Long._findHighestPopulatedTick(s, searchStart);
     }
 
-    function i_updateEMA(uint128 secondsElapsed) external returns (int256) {
-        return Core._updateEMA(s, secondsElapsed);
+    function i_updateEMA(int256 fundingPerDay, uint128 secondsElapsed) external {
+        Core._updateEMA(s, fundingPerDay, secondsElapsed);
     }
 
     function i_usdnRebase(uint128 assetPrice, bool ignoreInterval) external returns (bool, bytes memory) {
@@ -557,11 +623,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return Long._triggerRebalancer(s, lastPrice, longBalance, vaultBalance, remainingCollateral);
     }
 
-    function i_calculateFee(int256 fund, int256 fundAsset)
-        external
-        returns (int256 fee_, int256 fundWithFee_, int256 fundAssetWithFee_)
-    {
-        return Core._calculateFee(s, fund, fundAsset);
+    function i_calculateFee(int256 fundAsset) external returns (int256 fee_, int256 fundAssetWithFee_) {
+        return Core._calculateFee(s, fundAsset);
     }
 
     function i_flashClosePosition(
@@ -636,6 +699,13 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return ActionsVault._prepareInitiateDepositData(s, validator, amount, currentPriceData);
     }
 
+    function i_prepareWithdrawalData(address validator, uint152 usdnShares, bytes calldata currentPriceData)
+        public
+        returns (ActionsVault.WithdrawalData memory data_)
+    {
+        return ActionsVault._prepareWithdrawalData(s, validator, usdnShares, currentPriceData);
+    }
+
     function i_prepareClosePositionData(
         address owner,
         address to,
@@ -647,6 +717,13 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return ActionsUtils._prepareClosePositionData(s, owner, to, validator, posId, amountToClose, currentPriceData);
     }
 
+    function i_prepareValidateOpenPositionData(PendingAction memory pending, bytes calldata priceData)
+        external
+        returns (ValidateOpenPositionData memory data_, bool liquidated_)
+    {
+        return ActionsUtils._prepareValidateOpenPositionData(s, pending, priceData);
+    }
+
     function i_checkInitiateClosePosition(
         address owner,
         address to,
@@ -655,5 +732,34 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         Position memory pos
     ) external view {
         ActionsUtils._checkInitiateClosePosition(s, owner, to, validator, amountToClose, pos);
+    }
+
+    /**
+     * @notice These are the storage fields that are used by the `_funding` function
+     * @dev We can pass these to `i_funding` to effectively make the function "pure", by controlling all variables
+     * manually
+     */
+    struct FundingStorage {
+        uint256 totalExpo;
+        uint256 balanceLong;
+        uint256 balanceVault;
+        uint128 lastUpdateTimestamp;
+        uint256 fundingSF;
+    }
+
+    /**
+     * @dev The first argument contains all the storage variables accessed by `_funding`, so that they can be
+     * controlled manually in the tests
+     */
+    function i_funding(FundingStorage memory fundingStorage, uint128 timestamp, int256 ema)
+        external
+        returns (int256 funding_, int256 fundingPerDay_, int256 oldLongExpo_)
+    {
+        _tempStorage._totalExpo = fundingStorage.totalExpo;
+        _tempStorage._balanceVault = fundingStorage.balanceVault;
+        _tempStorage._balanceLong = fundingStorage.balanceLong;
+        _tempStorage._lastUpdateTimestamp = fundingStorage.lastUpdateTimestamp;
+        _tempStorage._fundingSF = fundingStorage.fundingSF;
+        return Core._funding(_tempStorage, timestamp, ema);
     }
 }

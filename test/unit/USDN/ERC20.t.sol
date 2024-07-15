@@ -22,7 +22,7 @@ contract TestUsdnErc20 is UsdnTokenFixture {
      * @custom:when The name is retrieved
      * @custom:then The name is equal to "Ultimate Synthetic Delta Neutral"
      */
-    function test_name() public {
+    function test_name() public view {
         assertEq(usdn.name(), "Ultimate Synthetic Delta Neutral");
     }
 
@@ -31,7 +31,7 @@ contract TestUsdnErc20 is UsdnTokenFixture {
      * @custom:when The symbol is retrieved
      * @custom:then The symbol is equal to "USDN"
      */
-    function test_symbol() public {
+    function test_symbol() public view {
         assertEq(usdn.symbol(), "USDN");
     }
 
@@ -40,7 +40,7 @@ contract TestUsdnErc20 is UsdnTokenFixture {
      * @custom:when The decimals are retrieved
      * @custom:then The decimals are equal to 18
      */
-    function test_decimals() public {
+    function test_decimals() public view {
         assertEq(usdn.decimals(), 18);
     }
 

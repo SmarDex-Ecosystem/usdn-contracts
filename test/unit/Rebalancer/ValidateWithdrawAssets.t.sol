@@ -31,7 +31,7 @@ contract TestRebalancerValidateWithdrawAssets is RebalancerFixture {
         minAssetDeposit = uint88(rebalancer.getMinAssetDeposit());
     }
 
-    function test_setUp() public {
+    function test_setUp() public view {
         assertGe(INITIAL_DEPOSIT, rebalancer.getMinAssetDeposit());
     }
 

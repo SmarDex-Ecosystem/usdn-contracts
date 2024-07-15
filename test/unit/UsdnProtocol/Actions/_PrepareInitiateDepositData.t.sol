@@ -75,12 +75,12 @@ contract TestUsdnProtocolActionsPrepareInitiateDepositData is UsdnProtocolBaseFi
 
     /**
      * @custom:scenario _prepareInitiateDepositData is called with 2 ticks that can be liquidated
-     * @custom:given A current price below the position's liquidation price
+     * @custom:given A current price below the second tick's liquidation price
      * @custom:and A high risk position that will be liquidated first
      * @custom:and A liquidation iterations setting at 1
      * @custom:when _prepareInitiateDepositData is called
      * @custom:then The matching data is returned
-     * @custom:and The high risk position should have been liquidated
+     * @custom:and Only the high risk position should have been liquidated
      * @custom:and The function should have returned early
      * @custom:and There should be pending liquidations
      */
@@ -119,7 +119,7 @@ contract TestUsdnProtocolActionsPrepareInitiateDepositData is UsdnProtocolBaseFi
     }
 
     /// @notice Assert the data in InitiateDepositData depending on `isEarlyReturn`
-    function _assertData(ActionsVault.InitiateDepositData memory data, bool isEarlyReturn) private {
+    function _assertData(ActionsVault.InitiateDepositData memory data, bool isEarlyReturn) private view {
         uint128 currentPrice = abi.decode(currentPriceData, (uint128));
 
         if (isEarlyReturn) {

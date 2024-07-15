@@ -16,7 +16,7 @@ contract TestOracleMiddlewareUpdateValidationDelay is OracleMiddlewareBaseFixtur
      * @custom:when The result of the result of the function is compared to 24
      * @custom:then It should succeed
      */
-    function test_validationDelay() public {
+    function test_validationDelay() public view {
         assertEq(oracleMiddleware.getValidationDelay(), 24 seconds);
     }
 

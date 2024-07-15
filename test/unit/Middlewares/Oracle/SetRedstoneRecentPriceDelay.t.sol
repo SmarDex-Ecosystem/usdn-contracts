@@ -23,7 +23,7 @@ contract TestSetRedstoneRecentPriceDelay is OracleMiddlewareBaseFixture {
      * @custom:when Non admin wallet trigger `setRedstoneRecentPriceDelay`
      * @custom:then functions should revert with custom Ownable error
      */
-    function test_RevertWhen_nonAdminWalletCallSetRedstoneRecentPriceDelay() external {
+    function test_RevertWhen_nonAdminWalletCallSetRedstoneRecentPriceDelay() public {
         vm.startPrank(USER_1);
         // Ownable contract custom error
         bytes memory customError = abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, USER_1);
@@ -38,7 +38,7 @@ contract TestSetRedstoneRecentPriceDelay is OracleMiddlewareBaseFixture {
      * @custom:when The result of the function is compared to 45
      * @custom:then It should succeed
      */
-    function test_recentPriceDelay() public {
+    function test_recentPriceDelay() public view {
         assertEq(oracleMiddleware.getRedstoneRecentPriceDelay(), 45);
     }
 

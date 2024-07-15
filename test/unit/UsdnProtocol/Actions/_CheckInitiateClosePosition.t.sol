@@ -35,7 +35,7 @@ contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture, 
         (pos,) = protocol.getLongPosition(posId);
     }
 
-    function test_setUpAmount() public {
+    function test_setUpAmount() public view {
         assertGt(protocol.getMinLongPosition(), 0, "min position");
         assertGt(AMOUNT, protocol.getMinLongPosition(), "position amount");
     }
@@ -115,10 +115,10 @@ contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture, 
     /**
      * @custom:scenario Check an initiate close of a position with zero amount
      * @custom:when The user initiates a close position with an amount of zero
-     * @custom:then The function should revert with `UsdnProtocolAmountToCloseIsZero`
+     * @custom:then The function should revert with `UsdnProtocolZeroAmount`
      */
     function test_RevertWhen_checkInitiateClosePositionAmountZero() public {
-        vm.expectRevert(UsdnProtocolAmountToCloseIsZero.selector);
+        vm.expectRevert(UsdnProtocolZeroAmount.selector);
         protocol.i_checkInitiateClosePosition(address(this), USER_1, USER_2, 0, pos);
     }
 

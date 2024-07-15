@@ -15,7 +15,7 @@ contract TestOracleMiddlewareIsPythData is OracleMiddlewareBaseFixture {
      * @custom:when The data has a length lower than or equal to 32 bytes
      * @custom:then The function should return false
      */
-    function test_isPythDataShortBytes() public {
+    function test_isPythDataShortBytes() public view {
         assertFalse(oracleMiddleware.i_isPythData(""), "empty bytes");
         assertFalse(oracleMiddleware.i_isPythData(new bytes(32)), "32 bytes");
     }
@@ -26,7 +26,7 @@ contract TestOracleMiddlewareIsPythData is OracleMiddlewareBaseFixture {
      * @custom:when The data starts with the magic bytes
      * @custom:then The function should return true
      */
-    function test_isPythDataMagic() public {
+    function test_isPythDataMagic() public view {
         assertTrue(oracleMiddleware.i_isPythData(MOCK_PYTH_DATA), "magic data");
     }
 
@@ -36,7 +36,7 @@ contract TestOracleMiddlewareIsPythData is OracleMiddlewareBaseFixture {
      * @custom:when The data has a higher length than 32 bytes
      * @custom:then The function should return false
      */
-    function test_isPythDataLongBytes() public {
+    function test_isPythDataLongBytes() public view {
         assertFalse(oracleMiddleware.i_isPythData(new bytes(33)), "33 bytes");
         assertFalse(oracleMiddleware.i_isPythData(new bytes(64)), "64 bytes");
     }

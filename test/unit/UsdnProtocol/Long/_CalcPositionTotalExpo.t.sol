@@ -74,7 +74,7 @@ contract TestUsdnProtocolLongCalcPositionTotalExpo is UsdnProtocolBaseFixture {
      * @custom:when The function `_calcPositionTotalExpo` is called with some parameters
      * @custom:then Expo is calculated correctly
      */
-    function test_calcPositionTotalExpo() public {
+    function test_calcPositionTotalExpo() public view {
         uint256 expo = protocol.i_calcPositionTotalExpo(1 ether, 2000 ether, 1500 ether);
         assertEq(expo, 4 ether, "Position total expo should be 4 ether");
 

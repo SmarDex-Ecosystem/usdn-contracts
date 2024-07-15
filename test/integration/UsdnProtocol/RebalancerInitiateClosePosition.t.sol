@@ -50,7 +50,7 @@ contract TestRebalancerInitiateClosePosition is
         posAmount = protocolPosition.amount;
     }
 
-    function test_setUp() external {
+    function test_setUp() public view {
         assertGt(rebalancer.getPositionVersion(), 0, "The rebalancer version should be updated");
         assertGt(posAmount - previousPositionData.amount, 0, "The protocol bonus should be positive");
     }
@@ -64,7 +64,7 @@ contract TestRebalancerInitiateClosePosition is
      * @custom:and The position data is updated
      * @custom:and The user action is pending in protocol
      */
-    function test_rebalancerInitiateClosePositionPartial() external {
+    function test_rebalancerInitiateClosePositionPartial() public {
         uint88 amount = amountInRebalancer / 10;
 
         uint256 amountToCloseWithoutBonus = FixedPointMathLib.fullMulDiv(
@@ -120,7 +120,7 @@ contract TestRebalancerInitiateClosePosition is
      * @custom:and The position data is updated
      * @custom:and The user initiate close position is pending in protocol
      */
-    function test_rebalancerInitiateClosePosition() external {
+    function test_rebalancerInitiateClosePosition() public {
         vm.prank(DEPLOYER);
         protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
 
@@ -164,7 +164,7 @@ contract TestRebalancerInitiateClosePosition is
      * @custom:when The user calls the rebalancer's {initiateClosePosition} function with too much ether
      * @custom:then The user gets back the excess ether sent
      */
-    function test_rebalancerInitiateClosePositionRefundsExcessEther() external {
+    function test_rebalancerInitiateClosePositionRefundsExcessEther() public {
         vm.prank(DEPLOYER);
         protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
 

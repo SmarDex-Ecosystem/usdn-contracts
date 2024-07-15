@@ -17,16 +17,20 @@ abstract contract UsdnProtocolCore is UsdnProtocolStorage, IUsdnProtocolCore {
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
+    function calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
         external
         pure
         returns (int256)
     {
-        return Core.calcEMA(lastFunding, secondsElapsed, emaPeriod, previousEMA);
+        return Core.calcEMA(lastFundingPerDay, secondsElapsed, emaPeriod, previousEMA);
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function funding(uint128 timestamp) external view returns (int256 fund_, int256 oldLongExpo_) {
+    function funding(uint128 timestamp)
+        external
+        view
+        returns (int256 funding_, int256 fundingPerDay_, int256 oldLongExpo_)
+    {
         return Core.funding(s, timestamp);
     }
 

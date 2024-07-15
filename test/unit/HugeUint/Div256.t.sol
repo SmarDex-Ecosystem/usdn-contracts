@@ -24,7 +24,7 @@ contract TestHugeUintDiv256 is HugeUintFixture {
      * @custom:when The `div` function is called with `<uint256.max - 1, uint256.max>` and `uint256.max`
      * @custom:then The result is equal to `uint256.max`
      */
-    function test_div() public {
+    function test_div() public view {
         HugeUint.Uint512 memory a = HugeUint.Uint512(0, 1);
         uint256 b = 10;
         uint256 res = handler.div(a, b);
