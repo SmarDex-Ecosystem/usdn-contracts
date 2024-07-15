@@ -369,14 +369,12 @@ contract EchidnaAssert is Setup {
             if (success) {
                 assert(address(validator).balance == validatorETH + securityDeposit);
                 assert(address(usdnProtocol).balance == usdnProtocolETH - securityDeposit);
-                assert(wsteth.balanceOf(address(usdnProtocol)) == usdnProtocolWstETH);
-                assert(wsteth.balanceOf(msg.sender) == senderWstETH);
             } else {
                 assert(address(validator).balance == validatorETH);
                 assert(address(usdnProtocol).balance == usdnProtocolETH);
-                assert(wsteth.balanceOf(address(usdnProtocol)) == usdnProtocolWstETH);
-                assert(wsteth.balanceOf(msg.sender) == senderWstETH);
             }
+            assert(wsteth.balanceOf(address(usdnProtocol)) == usdnProtocolWstETH);
+            assert(wsteth.balanceOf(msg.sender) == senderWstETH);
         } catch (bytes memory err) {
             _checkErrors(err, VALIDATE_OPEN_ERRORS);
         }
