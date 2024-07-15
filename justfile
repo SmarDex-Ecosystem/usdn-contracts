@@ -8,6 +8,7 @@ default:
     just --list
 
 @trufflehog-config:
+    [[ "${TRUFFLEHOG_URL}" == https* ]] || { echo "Error: TRUFFLEHOG_URL does not start with 'https'"; exit 1; }
     echo "{{ config }}" > .trufflehog.yml
 
 @trufflehog:
