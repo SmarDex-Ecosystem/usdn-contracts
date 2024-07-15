@@ -37,5 +37,8 @@ natspec-smells.txt
 # Rust
 target/
 
+# TruffleHog config file
+.trufflehog.yml
+
 # Certora prover
 .certora_internal

@@ -1,0 +1,38 @@
+# This is the template to generate the truffle config file via the just command
+# Do not edit manually
+detectors:
+  - name: evm_private_key_detector
+    keywords:
+      - pk
+      - private
+      - key
+      - priv
+      - secret
+      - mnemonic
+      - phrase
+      - words
+      - seed
+      - '0x'
+      - pass
+    regex:
+      private_key: '[A-Fa-f0-9]{64}'
+    verify:
+      - endpoint: '[TRUFFLEHOG_URL]'
+  - name: evm_mnemonic_detector
+    keywords:
+      - pk
+      - private
+      - key
+      - priv
+      - secret
+      - mnemonic
+      - phrase
+      - words
+      - seed
+      - '0x'
+      - pass
+    regex:
+      # Match 12, 15, 18, 21 or 24-words mnemonics (comma-separated list of 3 to 8-letter words)
+      mnemonic: '(?:[a-z]{3,8}\s){11}(?:(?:[a-z]{3,8}\s){3}){0,4}[a-z]{3,8}'
+    verify:
+      - endpoint: '[TRUFFLEHOG_URL]'
