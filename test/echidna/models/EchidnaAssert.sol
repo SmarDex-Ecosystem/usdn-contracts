@@ -174,7 +174,7 @@ contract EchidnaAssert is Setup {
         uint256 ethRand,
         uint256 destRand,
         uint256 validatorRand,
-        uint256 currentPrice
+        uint256 priceRand
     ) public {
         wsteth.mintAndApprove(msg.sender, amountWstETHRand, address(usdnProtocol), amountWstETHRand);
         sdex.mintAndApprove(msg.sender, amountSdexRand, address(usdnProtocol), amountSdexRand);
@@ -182,11 +182,9 @@ contract EchidnaAssert is Setup {
 
         destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
         address dest = destinationsToken[address(wsteth)][destRand];
-
+        bytes memory priceData = abi.encode(bound(priceRand, 0, type(uint128).max));
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
-
-        bytes memory priceData = abi.encode(currentPrice);
 
         InitiateDepositBalanceBefore memory balanceBefore = InitiateDepositBalanceBefore({
             senderETH: address(msg.sender).balance,
@@ -218,16 +216,17 @@ contract EchidnaAssert is Setup {
         uint256 ethRand,
         uint256 destRand,
         uint256 validatorRand,
-        uint256 currentPrice
+        uint256 priceRand
     ) public {
         wsteth.mintAndApprove(msg.sender, amountRand, address(usdnProtocol), amountRand);
         uint256 destRandBounded = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
         vm.deal(msg.sender, ethRand);
         validatorRand = bound(validatorRand, 0, validators.length - 1);
+        bytes memory priceData = abi.encode(bound(priceRand, 0, type(uint128).max));
         OpenPositionParams memory params = OpenPositionParams({
             dest: destinationsToken[address(wsteth)][destRandBounded],
             validator: payable(validators[validatorRand]),
-            priceData: abi.encode(currentPrice),
+            priceData: priceData,
             senderBalanceETH: address(msg.sender).balance,
             senderBalanceWstETH: wsteth.balanceOf(msg.sender),
             usdnProtocolBalanceETH: address(usdnProtocol).balance,
@@ -279,7 +278,7 @@ contract EchidnaAssert is Setup {
         uint256 ethRand,
         uint256 destRand,
         uint256 validatorRand,
-        uint256 currentPrice
+        uint256 priceRand
     ) public {
         vm.prank(msg.sender);
         usdn.approve(address(usdnProtocol), usdnShares);
@@ -287,11 +286,9 @@ contract EchidnaAssert is Setup {
 
         destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
         address dest = destinationsToken[address(wsteth)][destRand];
-
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
-
-        bytes memory priceData = abi.encode(currentPrice);
+        bytes memory priceData = abi.encode(bound(priceRand, 0, type(uint128).max));
 
         InitiateWithdrawalBalanceBefore memory balanceBefore = InitiateWithdrawalBalanceBefore({
             senderETH: address(msg.sender).balance,
@@ -316,11 +313,10 @@ contract EchidnaAssert is Setup {
         }
     }
 
-    function validateWithdrawal(uint256 validatorRand, uint256 currentPrice) public {
+    function validateWithdrawal(uint256 validatorRand, uint256 priceRand) public {
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
-
-        bytes memory priceData = abi.encode(currentPrice);
+        bytes memory priceData = abi.encode(bound(priceRand, 0, type(uint128).max));
 
         ValidateWithdrawalBalanceBefore memory balanceBefore = ValidateWithdrawalBalanceBefore({
             senderETH: address(msg.sender).balance,
@@ -352,10 +348,10 @@ contract EchidnaAssert is Setup {
         }
     }
 
-    function validateOpen(uint256 validatorRand, uint256 currentPrice) public {
+    function validateOpen(uint256 validatorRand, uint256 priceRand) public {
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
-        bytes memory priceData = abi.encode(currentPrice);
+        bytes memory priceData = abi.encode(bound(priceRand, 0, type(uint128).max));
 
         uint256 validatorETH = address(validator).balance;
         uint256 senderWstETH = wsteth.balanceOf(msg.sender);
