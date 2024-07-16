@@ -6,7 +6,7 @@ import { Test } from "forge-std/Test.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
-import { MockOracleMiddleware } from "../../../test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
+import { MockOracleMiddleware } from "../../unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
 import { Sdex } from "../../utils/Sdex.sol";
 import { Weth } from "../../utils/WETH.sol";
 import { WstETH } from "../../utils/WstEth.sol";
@@ -378,26 +378,24 @@ contract EchidnaAssert is Setup {
         address payable validator = payable(validators[validatorRand]);
         bytes memory priceData = abi.encode(currentPrice);
 
-        ValidateOpenBalanceBefore memory balanceBefore = ValidateOpenBalanceBefore({
-            validatorETH: address(validator).balance,
-            senderWstETH: wsteth.balanceOf(msg.sender),
-            usdnProtocolETH: address(usdnProtocol).balance,
-            usdnProtocolWstETH: wsteth.balanceOf(address(usdnProtocol))
-        });
+        uint256 validatorETH = address(validator).balance;
+        uint256 senderWstETH = wsteth.balanceOf(msg.sender);
+        uint256 usdnProtocolETH = address(usdnProtocol).balance;
+        uint256 usdnProtocolWstETH = wsteth.balanceOf(address(usdnProtocol));
 
         uint256 securityDeposit = usdnProtocol.getUserPendingAction(validator).securityDepositValue;
 
         vm.prank(msg.sender);
         try usdnProtocol.validateOpenPosition(validator, priceData, EMPTY_PREVIOUS_DATA) returns (bool success) {
             if (success) {
-                assert(address(validator).balance == balanceBefore.validatorETH + securityDeposit);
-                assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH - securityDeposit);
+                assert(address(validator).balance == validatorETH + securityDeposit);
+                assert(address(usdnProtocol).balance == usdnProtocolETH - securityDeposit);
             } else {
-                assert(address(validator).balance == balanceBefore.validatorETH);
-                assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH);
+                assert(address(validator).balance == validatorETH);
+                assert(address(usdnProtocol).balance == usdnProtocolETH);
             }
-            assert(wsteth.balanceOf(address(usdnProtocol)) == balanceBefore.usdnProtocolWstETH);
-            assert(wsteth.balanceOf(msg.sender) == balanceBefore.senderWstETH);
+            assert(wsteth.balanceOf(address(usdnProtocol)) == usdnProtocolWstETH);
+            assert(wsteth.balanceOf(msg.sender) == senderWstETH);
         } catch (bytes memory err) {
             _checkErrors(err, VALIDATE_OPEN_ERRORS);
         }
