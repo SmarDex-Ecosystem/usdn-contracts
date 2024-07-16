@@ -29,6 +29,19 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         uint256 expectedLeverage;
     }
 
+    struct InitialData {
+        uint256 initialLongBalance;
+        uint256 initialVaultBalance;
+        uint256 initialTotalExpo;
+    }
+
+    struct ExpectedData {
+        int256 expectedLongBalanceWithoutPos;
+        uint128 expectedLiqPrice;
+        uint128 expectedPosTotalExpo;
+        uint256 expectedPosValue;
+    }
+
     function setUp() public {
         params = DEFAULT_PARAMS;
         params.flags.enableProtocolFees = false;
@@ -150,7 +163,15 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
     }
 
     function _validateOpenPositionScenario(address to, address validator) internal {
-        uint256 initialTotalExpo = protocol.getTotalExpo();
+        InitialData memory initialData = InitialData({
+            initialLongBalance: protocol.getBalanceLong(),
+            initialVaultBalance: protocol.getBalanceVault(),
+            initialTotalExpo: protocol.getTotalExpo()
+        });
+        uint128 newPrice = CURRENT_PRICE + 100 ether;
+        ExpectedData memory expected;
+        expected.expectedLongBalanceWithoutPos = protocol.i_longAssetAvailable(newPrice);
+
         uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
         (, PositionId memory posId) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
@@ -166,8 +187,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
 
         _waitDelay();
 
-        uint128 newPrice = CURRENT_PRICE + 100 ether;
-        uint128 expectedLiqPrice = protocol.getEffectivePriceForTick(
+        expected.expectedLiqPrice = protocol.getEffectivePriceForTick(
             protocol.i_calcTickWithoutPenalty(posId.tick),
             uint256(newPrice),
             uint256(
@@ -177,15 +197,17 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
             ),
             protocol.getLiqMultiplierAccumulator()
         );
-        uint128 expectedPosTotalExpo = protocol.i_calcPositionTotalExpo(tempPos.amount, newPrice, expectedLiqPrice);
-        uint256 expectedPosValue = uint256(expectedPosTotalExpo) * (CURRENT_PRICE - expectedLiqPrice) / CURRENT_PRICE;
+        expected.expectedPosTotalExpo =
+            protocol.i_calcPositionTotalExpo(tempPos.amount, newPrice, expected.expectedLiqPrice);
+        expected.expectedPosValue =
+            uint256(expected.expectedPosTotalExpo) * (newPrice - expected.expectedLiqPrice) / newPrice;
 
         vm.expectEmit();
-        emit ValidatedOpenPosition(to, validator, expectedPosTotalExpo, newPrice, posId);
+        emit ValidatedOpenPosition(to, validator, expected.expectedPosTotalExpo, newPrice, posId);
         bool success = protocol.validateOpenPosition(payable(validator), abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
         assertTrue(success, "success");
-        int256 posValue = protocol.getPositionValue(posId, CURRENT_PRICE, uint128(block.timestamp));
-        assertEq(uint256(posValue), expectedPosValue, "pos value");
+        int256 posValue = protocol.getPositionValue(posId, newPrice, uint128(block.timestamp));
+        assertEq(uint256(posValue), expected.expectedPosValue, "pos value");
 
         (Position memory pos,) = protocol.getLongPosition(posId);
         assertTrue(pos.validated, "validated");
@@ -194,12 +216,22 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         assertEq(pos.timestamp, tempPos.timestamp, "timestamp");
         // price increased -> total expo decreased
         assertLt(pos.totalExpo, tempPos.totalExpo, "totalExpo should have decreased");
-        assertEq(pos.totalExpo, expectedPosTotalExpo, "totalExpo");
+        assertEq(pos.totalExpo, expected.expectedPosTotalExpo, "totalExpo");
 
         TickData memory tickData = protocol.getTickData(posId.tick);
         assertEq(tickData.totalExpo, pos.totalExpo, "total expo in tick");
-        assertEq(protocol.getTotalExpo(), initialTotalExpo + pos.totalExpo, "total expo");
+        assertEq(protocol.getTotalExpo(), initialData.initialTotalExpo + pos.totalExpo, "total expo");
         assertEq(oracleMiddleware.lastActionId(), actionId, "middleware action ID");
+        assertEq(
+            protocol.getBalanceLong() + protocol.getBalanceVault(),
+            initialData.initialLongBalance + initialData.initialVaultBalance + LONG_AMOUNT,
+            "total balance"
+        );
+        assertEq(
+            protocol.getBalanceLong(),
+            uint256(expected.expectedLongBalanceWithoutPos) + uint256(posValue),
+            "long balance"
+        );
     }
 
     /**
