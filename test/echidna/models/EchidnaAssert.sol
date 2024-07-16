@@ -12,12 +12,11 @@ import { Weth } from "../../utils/WETH.sol";
 import { WstETH } from "../../utils/WstEth.sol";
 import { MockLiquidationRewardsManager } from "../mock/MockLiquidationRewardsManager.sol";
 
+import { UsdnProtocolCoreLibrary as Core } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolCoreLibrary.sol";
 import { Rebalancer } from "../../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../../src/Usdn/Usdn.sol";
 import { UsdnProtocol } from "../../../src/UsdnProtocol/UsdnProtocol.sol";
 import { IWstETH } from "../../../src/interfaces/IWstETH.sol";
-
-import { UsdnProtocolCoreLibrary as Core } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolCoreLibrary.sol";
 import { IUsdnErrors } from "../../../src/interfaces/Usdn/IUsdnErrors.sol";
 import { IUsdnProtocolErrors } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolTypes } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -29,12 +28,12 @@ contract Setup is Test {
     address public constant DEPLOYER = address(0x10000);
     address public constant ATTACKER = address(0x20000);
     address public constant FEE_COLLECTOR = address(0x00fee);
+    Permit2TokenBitfield.Bitfield public constant NO_PERMIT2 = Permit2TokenBitfield.Bitfield.wrap(0);
 
     Sdex public immutable sdex = new Sdex();
     Weth public immutable weth = new Weth();
     WstETH public immutable wsteth = new WstETH();
 
-    Permit2TokenBitfield.Bitfield public constant NO_PERMIT2 = Permit2TokenBitfield.Bitfield.wrap(0);
     IUsdnProtocolTypes.PreviousActionsData internal EMPTY_PREVIOUS_DATA =
         IUsdnProtocolTypes.PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
 
@@ -70,6 +69,7 @@ contract Setup is Test {
         IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction.selector,
         IUsdnErrors.UsdnInsufficientSharesBalance.selector
     ];
+    bytes4[] public VALIDATE_OPEN_ERRORS = [IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector];
     bytes4[] public INITIATE_WITHDRAWAL_ERRORS = [
         IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector,
         IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow.selector,
@@ -404,6 +404,34 @@ contract EchidnaAssert is Setup {
             }
         } catch (bytes memory err) {
             _checkErrors(err, VALIDATE_WITHDRAWAL_ERRORS);
+        }
+    }
+
+    function validateOpen(uint256 validatorRand, uint256 currentPrice) public {
+        validatorRand = bound(validatorRand, 0, validators.length - 1);
+        address payable validator = payable(validators[validatorRand]);
+        bytes memory priceData = abi.encode(currentPrice);
+
+        uint256 validatorETH = address(validator).balance;
+        uint256 senderWstETH = wsteth.balanceOf(msg.sender);
+        uint256 usdnProtocolETH = address(usdnProtocol).balance;
+        uint256 usdnProtocolWstETH = wsteth.balanceOf(address(usdnProtocol));
+
+        uint256 securityDeposit = usdnProtocol.getUserPendingAction(validator).securityDepositValue;
+
+        vm.prank(msg.sender);
+        try usdnProtocol.validateOpenPosition(validator, priceData, EMPTY_PREVIOUS_DATA) returns (bool success) {
+            if (success) {
+                assert(address(validator).balance == validatorETH + securityDeposit);
+                assert(address(usdnProtocol).balance == usdnProtocolETH - securityDeposit);
+            } else {
+                assert(address(validator).balance == validatorETH);
+                assert(address(usdnProtocol).balance == usdnProtocolETH);
+            }
+            assert(wsteth.balanceOf(address(usdnProtocol)) == usdnProtocolWstETH);
+            assert(wsteth.balanceOf(msg.sender) == senderWstETH);
+        } catch (bytes memory err) {
+            _checkErrors(err, VALIDATE_OPEN_ERRORS);
         }
     }
 
