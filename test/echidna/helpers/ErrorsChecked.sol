@@ -45,6 +45,14 @@ contract ErrorsChecked is Test {
 
     bytes4[] public VALIDATE_DEPOSIT_ERRORS = [IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector];
 
+    bytes4[] public VALIDATE_WITHDRAWAL_ERRORS = [
+        IUsdnProtocolErrors.UsdnProtocolInvalidAddressValidator.selector,
+        IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector,
+        IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction.selector
+    ];
+
+    bytes4[] public VALIDATE_OPEN_ERRORS = [IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector];
+
     function _checkErrors(bytes memory err, bytes4[] storage errors) internal {
         bool expected = false;
         for (uint256 i = 0; i < errors.length; i++) {

@@ -23,18 +23,18 @@ contract Setup is Test, ErrorsChecked {
     address public constant DEPLOYER = address(0x10000);
     address public constant ATTACKER = address(0x20000);
     address public constant FEE_COLLECTOR = address(0x00fee);
+    Permit2TokenBitfield.Bitfield public constant NO_PERMIT2 = Permit2TokenBitfield.Bitfield.wrap(0);
 
     Sdex public immutable sdex = new Sdex();
     Weth public immutable weth = new Weth();
     WstETH public immutable wsteth = new WstETH();
 
-    Permit2TokenBitfield.Bitfield constant NO_PERMIT2 = Permit2TokenBitfield.Bitfield.wrap(0);
     IUsdnProtocolTypes.PreviousActionsData internal EMPTY_PREVIOUS_DATA =
         IUsdnProtocolTypes.PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
 
     mapping(address => address[]) public destinationsToken;
     address[2] public validators = [DEPLOYER, ATTACKER];
-    IUsdnProtocolTypes.PositionId[] posIds;
+    IUsdnProtocolTypes.PositionId[] public posIds;
 
     MockOracleMiddleware public wstEthOracleMiddleware;
     MockLiquidationRewardsManager public liquidationRewardsManager;
