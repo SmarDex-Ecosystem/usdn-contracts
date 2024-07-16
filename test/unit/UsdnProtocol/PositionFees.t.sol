@@ -16,6 +16,14 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         super._setUp(params);
     }
 
+    struct ExpectedData {
+        uint256 expectedPrice;
+        int24 expectedTick;
+        uint128 effectiveTickPrice;
+        uint128 expectedPosTotalExpo;
+        uint256 expectedPositionValue;
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                         Open / close long position                         */
     /* -------------------------------------------------------------------------- */
@@ -29,22 +37,31 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
      * @custom:and The protocol emit an event with the correct total expo computed with the fees
      */
     function test_initiateOpenPosition() public {
-        uint128 desiredLiqPrice = 2000 ether / 2;
+        uint128 currentPrice = 2000 ether;
+        uint128 desiredLiqPrice = currentPrice / 2;
+        uint128 amount = 1 ether;
 
-        uint256 expectedPrice = 2000 ether + 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
-        int24 expectedTick = protocol.getEffectiveTickForPrice(desiredLiqPrice);
+        ExpectedData memory expected;
+        expected.expectedPrice =
+            currentPrice + currentPrice * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
+        expected.expectedTick = protocol.getEffectiveTickForPrice(desiredLiqPrice);
 
         // Price without the liquidation penalty
-        uint128 effectiveTickPrice = protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(expectedTick));
-        uint128 expectedPosTotalExpo =
-            protocol.i_calcPositionTotalExpo(1 ether, uint128(expectedPrice), effectiveTickPrice);
+        uint128 effectiveTickPrice =
+            protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(expected.expectedTick));
+        expected.expectedPosTotalExpo =
+            protocol.i_calcPositionTotalExpo(amount, uint128(expected.expectedPrice), effectiveTickPrice);
+        expected.expectedPositionValue =
+            uint256(expected.expectedPosTotalExpo) * (currentPrice - effectiveTickPrice) / currentPrice;
 
-        wstETH.mintAndApprove(address(this), 1 ether, address(protocol), 1 ether);
+        uint256 longBalanceBefore = protocol.getBalanceLong();
+        uint256 vaultBalanceBefore = protocol.getBalanceVault();
+        wstETH.mintAndApprove(address(this), amount, address(protocol), amount);
         vm.recordLogs();
 
-        bytes memory priceData = abi.encode(2000 ether);
-        protocol.initiateOpenPosition(
-            1 ether, desiredLiqPrice, address(this), payable(address(this)), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
+        bytes memory priceData = abi.encode(currentPrice);
+        (, PositionId memory posId) = protocol.initiateOpenPosition(
+            amount, desiredLiqPrice, address(this), payable(address(this)), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         );
 
         Vm.Log[] memory logs = vm.getRecordedLogs();
@@ -53,8 +70,19 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         (, uint128 posTotalExpo,, uint256 price,,,) =
             abi.decode(logs[1].data, (uint40, uint128, uint128, uint128, int24, uint256, uint256));
 
-        assertEq(price, expectedPrice, "assetPrice");
-        assertEq(posTotalExpo, expectedPosTotalExpo, "posTotalExpo");
+        assertEq(price, expected.expectedPrice, "assetPrice");
+        assertEq(posTotalExpo, expected.expectedPosTotalExpo, "posTotalExpo");
+        assertEq(
+            protocol.getPositionValue(posId, currentPrice, uint128(block.timestamp)),
+            int256(expected.expectedPositionValue),
+            "position value"
+        );
+        assertEq(protocol.getBalanceLong(), longBalanceBefore + expected.expectedPositionValue, "balance long");
+        assertEq(
+            protocol.getBalanceLong() + protocol.getBalanceVault(),
+            longBalanceBefore + vaultBalanceBefore + amount,
+            "total balance"
+        );
     }
 
     /**
