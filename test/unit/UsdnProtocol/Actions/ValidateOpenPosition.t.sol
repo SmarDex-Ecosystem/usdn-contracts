@@ -178,11 +178,14 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
             protocol.getLiqMultiplierAccumulator()
         );
         uint128 expectedPosTotalExpo = protocol.i_calcPositionTotalExpo(tempPos.amount, newPrice, expectedLiqPrice);
+        uint256 expectedPosValue = uint256(expectedPosTotalExpo) * (CURRENT_PRICE - expectedLiqPrice) / CURRENT_PRICE;
 
         vm.expectEmit();
         emit ValidatedOpenPosition(to, validator, expectedPosTotalExpo, newPrice, posId);
         bool success = protocol.validateOpenPosition(payable(validator), abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
         assertTrue(success, "success");
+        int256 posValue = protocol.getPositionValue(posId, CURRENT_PRICE, uint128(block.timestamp));
+        assertEq(uint256(posValue), expectedPosValue, "pos value");
 
         (Position memory pos,) = protocol.getLongPosition(posId);
         assertTrue(pos.validated, "validated");
