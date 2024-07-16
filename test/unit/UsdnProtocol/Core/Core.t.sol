@@ -498,8 +498,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
 
         uint256 securityDepositValue = protocol.i_addPendingAction(address(this), pendingAction);
 
-        (, uint128 rawIndexAfter) = protocol.i_getPendingAction(address(this));
-        PendingAction memory actionSaved = protocol.getPendingActionAt(rawIndexAfter - 1);
+        (PendingAction memory actionSaved, uint128 rawIndexAfter) = protocol.i_getPendingAction(address(this));
 
         assertEq(securityDepositValue, 0.01 ether, "securityDepositValue should be 0.01 ether");
         assertEq(rawIndexBefore + 1, rawIndexAfter, "rawIndex should be incremented by 1");

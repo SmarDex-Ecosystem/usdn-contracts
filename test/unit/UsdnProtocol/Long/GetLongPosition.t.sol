@@ -24,6 +24,37 @@ contract TestGetLongPosition is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario Check the return value of the function `getCurrentLongPosition`
+     * @custom:given A initialized protocol
+     * @custom:and A user position is validated
+     * @custom:when The function is called with user position arguments
+     * @custom:then The function should return expected user position values
+     */
+    function test_getCurrentLongPosition() public {
+        PositionId memory posId = setUpUserPositionInLong(
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: OPEN_AMOUNT,
+                desiredLiqPrice: params.initialPrice / 2,
+                price: params.initialPrice
+            })
+        );
+
+        (Position memory position,) = protocol.getLongPosition(posId);
+
+        int24 expectedTick = protocol.getEffectiveTickForPrice(params.initialPrice / 2);
+        // index = 0, because the position is the first in the list
+        Position memory posRet = protocol.getCurrentLongPosition(expectedTick, 0);
+
+        assertEq(position.validated, posRet.validated, "validated");
+        assertEq(position.timestamp, posRet.timestamp, "timestamp");
+        assertEq(position.user, posRet.user, "user");
+        assertEq(position.totalExpo, posRet.totalExpo, "totalExpo");
+        assertEq(position.amount, posRet.amount, "amount");
+    }
+
+    /**
      * @custom:scenario Check the return value of the function `getLongPosition`
      * @custom:given A initialized protocol
      * @custom:and A user position is opened
