@@ -217,8 +217,8 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             EMPTY_PREVIOUS_DATA
         );
         assertEq(posId.tick, posId2.tick, "tick is the same");
-        (Position memory pos, uint8 liqPenalty) = protocol.getLongPosition(posId);
-        assertEq(pos.totalExpo, expectedTotalExpo, "pos total expo indicates that the stored penalty was used");
+        (Position memory pos, uint8 liqPenalty) = protocol.getLongPosition(posId2);
+        assertEq(pos.totalExpo, expectedTotalExpo, "total expo: stored penalty was used");
         assertEq(liqPenalty, storedLiqPenalty, "pos liquidation penalty");
     }
 

@@ -36,14 +36,15 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
     function test_rebalancerTrigger() public {
         skip(5 minutes);
 
-        uint128 wstEthPrice = uint128(wstETH.getWstETHByStETH(1280 ether));
-        mockPyth.setPrice(1280 ether / 1e10);
+        uint128 wstEthPrice = uint128(wstETH.getWstETHByStETH(1300 ether));
+        mockPyth.setPrice(1300 ether / 1e10);
         mockPyth.setLastPublishTime(block.timestamp);
 
-        uint128 remainingCollateral =
-            uint128(uint256(protocol.getPositionValue(posToLiquidate, wstEthPrice, uint40(block.timestamp))));
+        int256 positionValue = protocol.getPositionValue(posToLiquidate, wstEthPrice, uint40(block.timestamp));
+        assertGt(positionValue, 0, "position value should be positive");
+        uint128 remainingCollateral = uint128(uint256(positionValue));
 
-        uint128 bonus = uint128(uint256(remainingCollateral)) * protocol.getRebalancerBonusBps() / uint128(BPS_DIVISOR);
+        uint128 bonus = uint128(uint256(remainingCollateral) * protocol.getRebalancerBonusBps() / BPS_DIVISOR);
         uint256 totalExpo = protocol.getTotalExpo() - tickToLiquidateData.totalExpo;
         uint256 vaultAssetAvailable = uint256(protocol.i_vaultAssetAvailable(wstEthPrice)) + remainingCollateral;
         uint256 longAssetAvailable = uint256(protocol.i_longAssetAvailable(wstEthPrice)) - remainingCollateral;
@@ -130,7 +131,7 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
 
         skip(5 minutes);
 
-        mockPyth.setPrice(1280 ether / 1e10);
+        mockPyth.setPrice(1300 ether / 1e10);
         mockPyth.setLastPublishTime(block.timestamp);
 
         uint256 pendingAssets = rebalancer.getPendingAssetsAmount();
