@@ -118,6 +118,9 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             EMPTY_PREVIOUS_DATA
         );
         assertTrue(success, "success");
+        int256 expectedPosValue = protocol.getPositionValue(posId, CURRENT_PRICE, uint128(block.timestamp));
+        assertGt(expectedPosValue, 0, "pos value > 0");
+        assertLt(uint256(expectedPosValue), LONG_AMOUNT, "pos value < long amount");
 
         // check state after opening the position
         assertEq(posId.tick, expectedTick, "tick number");
@@ -136,6 +139,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             before.balanceLong + before.balanceVault + LONG_AMOUNT,
             "total balance of protocol"
         );
+        assertEq(protocol.getBalanceLong(), before.balanceLong + uint256(expectedPosValue), "balance long");
 
         // the pending action should not yet be actionable by a third party
         (PendingAction[] memory pendingActions,) = protocol.getActionablePendingActions(address(0));
