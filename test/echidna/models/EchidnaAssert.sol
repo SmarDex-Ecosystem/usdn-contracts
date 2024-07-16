@@ -359,7 +359,7 @@ contract EchidnaAssert is Setup {
         uint256 securityDeposit;
 
         (IUsdnProtocolTypes.PendingAction[] memory actions, uint128[] memory rawIndices) =
-            usdnProtocol.getActionablePendingActions(address(this));
+            usdnProtocol.getActionablePendingActions(msg.sender);
         if (rawIndices.length == 0) {
             return;
         }
