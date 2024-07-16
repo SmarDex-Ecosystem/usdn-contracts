@@ -21,6 +21,14 @@ contract FuzzActions is Setup {
         uint256 usdnProtocolUsdn;
     }
 
+    struct ValidateWithdrawalBalanceBefore {
+        uint256 senderETH;
+        uint256 senderWstETH;
+        uint256 usdnProtocolETH;
+        uint256 usdnProtocolUsdn;
+        uint256 usdnProtocolWstETH;
+    }
+
     struct OpenPositionParams {
         address dest;
         address payable validator;
@@ -234,6 +242,70 @@ contract FuzzActions is Setup {
             assert(wsteth.balanceOf(pendingAction.to) == balanceBefore.toWstETH);
         } catch (bytes memory err) {
             _checkErrors(err, VALIDATE_DEPOSIT_ERRORS);
+        }
+    }
+
+    function validateWithdrawal(uint256 validatorRand, uint256 currentPrice) public {
+        validatorRand = bound(validatorRand, 0, validators.length - 1);
+        address payable validator = payable(validators[validatorRand]);
+
+        bytes memory priceData = abi.encode(currentPrice);
+
+        ValidateWithdrawalBalanceBefore memory balanceBefore = ValidateWithdrawalBalanceBefore({
+            senderETH: address(msg.sender).balance,
+            senderWstETH: wsteth.balanceOf(msg.sender),
+            usdnProtocolETH: address(usdnProtocol).balance,
+            usdnProtocolUsdn: usdn.sharesOf(address(usdnProtocol)),
+            usdnProtocolWstETH: wsteth.balanceOf(address(usdnProtocol))
+        });
+        IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(validator);
+
+        vm.prank(msg.sender);
+        try usdnProtocol.validateWithdrawal(validator, priceData, EMPTY_PREVIOUS_DATA) returns (bool success_) {
+            assert(address(msg.sender).balance == balanceBefore.senderETH + action.securityDepositValue);
+            if (success_) {
+                assert(wsteth.balanceOf(msg.sender) >= balanceBefore.senderWstETH);
+
+                assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH - action.securityDepositValue);
+                assert(usdn.sharesOf(address(usdnProtocol)) < balanceBefore.usdnProtocolUsdn);
+                assert(wsteth.balanceOf(address(usdnProtocol)) <= balanceBefore.usdnProtocolWstETH);
+            } else {
+                assert(wsteth.balanceOf(msg.sender) == balanceBefore.senderWstETH);
+
+                assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH);
+                assert(usdn.sharesOf(address(usdnProtocol)) == balanceBefore.usdnProtocolUsdn);
+                assert(wsteth.balanceOf(address(usdnProtocol)) == balanceBefore.usdnProtocolWstETH);
+            }
+        } catch (bytes memory err) {
+            _checkErrors(err, VALIDATE_WITHDRAWAL_ERRORS);
+        }
+    }
+
+    function validateOpen(uint256 validatorRand, uint256 currentPrice) public {
+        validatorRand = bound(validatorRand, 0, validators.length - 1);
+        address payable validator = payable(validators[validatorRand]);
+        bytes memory priceData = abi.encode(currentPrice);
+
+        uint256 validatorETH = address(validator).balance;
+        uint256 senderWstETH = wsteth.balanceOf(msg.sender);
+        uint256 usdnProtocolETH = address(usdnProtocol).balance;
+        uint256 usdnProtocolWstETH = wsteth.balanceOf(address(usdnProtocol));
+
+        uint256 securityDeposit = usdnProtocol.getUserPendingAction(validator).securityDepositValue;
+
+        vm.prank(msg.sender);
+        try usdnProtocol.validateOpenPosition(validator, priceData, EMPTY_PREVIOUS_DATA) returns (bool success) {
+            if (success) {
+                assert(address(validator).balance == validatorETH + securityDeposit);
+                assert(address(usdnProtocol).balance == usdnProtocolETH - securityDeposit);
+            } else {
+                assert(address(validator).balance == validatorETH);
+                assert(address(usdnProtocol).balance == usdnProtocolETH);
+            }
+            assert(wsteth.balanceOf(address(usdnProtocol)) == usdnProtocolWstETH);
+            assert(wsteth.balanceOf(msg.sender) == senderWstETH);
+        } catch (bytes memory err) {
+            _checkErrors(err, VALIDATE_OPEN_ERRORS);
         }
     }
 }
