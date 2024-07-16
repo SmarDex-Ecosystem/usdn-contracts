@@ -130,17 +130,6 @@ contract Setup is Test {
 }
 
 contract EchidnaAssert is Setup {
-    struct OpenPositionParams {
-        address dest;
-        address payable validator;
-        bytes priceData;
-        uint256 senderBalanceETH;
-        uint256 senderBalanceWstETH;
-        uint256 usdnProtocolBalanceETH;
-        uint256 usdnProtocolBalanceWstETH;
-        uint64 securityDeposit;
-    }
-
     struct BalancesSnapshot {
         uint256 validatorEth;
         uint256 validatorWsteth;
@@ -185,7 +174,7 @@ contract EchidnaAssert is Setup {
         try usdnProtocol.initiateDeposit{ value: ethRand }(
             amountWstETHRand, dest, validator, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         ) {
-            uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
+            uint64 securityDeposit = usdnProtocol.getSecurityDepositValue();
 
             assert(address(msg.sender).balance == balancesBefore.senderEth - securityDeposit);
             assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth - amountWstETHRand);
@@ -209,34 +198,24 @@ contract EchidnaAssert is Setup {
         uint256 destRandBounded = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
         vm.deal(msg.sender, ethRand);
         validatorRand = bound(validatorRand, 0, validators.length - 1);
-        OpenPositionParams memory params = OpenPositionParams({
-            dest: destinationsToken[address(wsteth)][destRandBounded],
-            validator: payable(validators[validatorRand]),
-            priceData: abi.encode(currentPrice),
-            senderBalanceETH: address(msg.sender).balance,
-            senderBalanceWstETH: wsteth.balanceOf(msg.sender),
-            usdnProtocolBalanceETH: address(usdnProtocol).balance,
-            usdnProtocolBalanceWstETH: wsteth.balanceOf(address(usdnProtocol)),
-            securityDeposit: usdnProtocol.getSecurityDepositValue()
-        });
+        address dest = destinationsToken[address(wsteth)][destRandBounded];
+        address validator = validators[validatorRand];
+        bytes memory priceData = abi.encode(currentPrice);
+        uint64 securityDeposit = usdnProtocol.getSecurityDepositValue();
+
+        BalancesSnapshot memory balancesBefore = getBalances(validator, dest);
 
         vm.prank(msg.sender);
         try usdnProtocol.initiateOpenPosition{ value: ethRand }(
-            amountRand,
-            liquidationPriceRand,
-            params.dest,
-            params.validator,
-            NO_PERMIT2,
-            params.priceData,
-            EMPTY_PREVIOUS_DATA
+            amountRand, liquidationPriceRand, dest, payable(validator), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         ) returns (bool, IUsdnProtocolTypes.PositionId memory posId) {
             posIds.push(posId);
 
-            assert(address(usdnProtocol).balance == params.usdnProtocolBalanceETH + params.securityDeposit);
-            assert(address(msg.sender).balance == params.senderBalanceETH - params.securityDeposit);
+            assert(address(usdnProtocol).balance == balancesBefore.protocolEth + securityDeposit);
+            assert(address(msg.sender).balance == balancesBefore.senderEth - securityDeposit);
 
-            assert(wsteth.balanceOf(address(usdnProtocol)) == params.usdnProtocolBalanceWstETH + amountRand);
-            assert(wsteth.balanceOf(msg.sender) == params.senderBalanceWstETH - amountRand);
+            assert(wsteth.balanceOf(address(usdnProtocol)) == balancesBefore.protocolWsteth + amountRand);
+            assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth - amountRand);
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_OPEN_ERRORS);
         }
@@ -284,7 +263,7 @@ contract EchidnaAssert is Setup {
         try usdnProtocol.initiateWithdrawal{ value: ethRand }(
             usdnShares, dest, validator, priceData, EMPTY_PREVIOUS_DATA
         ) {
-            uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
+            uint64 securityDeposit = usdnProtocol.getSecurityDepositValue();
 
             assert(address(msg.sender).balance == balancesBefore.senderEth - securityDeposit);
             assert(usdn.sharesOf(msg.sender) == balancesBefore.senderUsdnShares - usdnShares);
@@ -331,7 +310,7 @@ contract EchidnaAssert is Setup {
         bytes memory priceData = abi.encode(currentPrice);
 
         BalancesSnapshot memory balancesBefore = getBalances(validator, msg.sender);
-        uint256 securityDeposit = usdnProtocol.getUserPendingAction(validator).securityDepositValue;
+        uint64 securityDeposit = usdnProtocol.getUserPendingAction(validator).securityDepositValue;
 
         vm.prank(msg.sender);
         try usdnProtocol.validateOpenPosition(validator, priceData, EMPTY_PREVIOUS_DATA) returns (bool success) {
