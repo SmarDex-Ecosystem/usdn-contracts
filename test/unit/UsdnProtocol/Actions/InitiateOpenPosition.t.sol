@@ -118,6 +118,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             EMPTY_PREVIOUS_DATA
         );
         assertTrue(success, "success");
+        // timestamp is not critical as there is no funding
         int256 expectedPosValue = protocol.getPositionValue(posId, CURRENT_PRICE, uint128(block.timestamp));
         assertGt(expectedPosValue, 0, "pos value > 0");
         assertLt(uint256(expectedPosValue), LONG_AMOUNT, "pos value < long amount");
