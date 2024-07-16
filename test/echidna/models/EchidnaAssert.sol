@@ -130,29 +130,6 @@ contract Setup is Test {
 }
 
 contract EchidnaAssert is Setup {
-    struct InitiateDepositBalanceBefore {
-        uint256 senderETH;
-        uint256 senderWstETH;
-        uint256 senderSdex;
-        uint256 usdnProtocolETH;
-        uint256 usdnProtocolWstETH;
-    }
-
-    struct InitiateWithdrawalBalanceBefore {
-        uint256 senderETH;
-        uint256 senderUsdn;
-        uint256 usdnProtocolETH;
-        uint256 usdnProtocolUsdn;
-    }
-
-    struct ValidateWithdrawalBalanceBefore {
-        uint256 senderETH;
-        uint256 senderWstETH;
-        uint256 usdnProtocolETH;
-        uint256 usdnProtocolUsdn;
-        uint256 usdnProtocolWstETH;
-    }
-
     struct OpenPositionParams {
         address dest;
         address payable validator;
@@ -162,6 +139,20 @@ contract EchidnaAssert is Setup {
         uint256 usdnProtocolBalanceETH;
         uint256 usdnProtocolBalanceWstETH;
         uint64 securityDeposit;
+    }
+
+    struct BalancesSnapshot {
+        uint256 validatorEth;
+        uint256 validatorWsteth;
+        uint256 senderEth;
+        uint256 senderWsteth;
+        uint256 senderSdex;
+        uint256 senderUsdnShares;
+        uint256 protocolEth;
+        uint256 protocolWsteth;
+        uint256 protocolUsdnShares;
+        uint256 toEth;
+        uint256 toWsteth;
     }
 
     /* -------------------------------------------------------------------------- */
@@ -188,13 +179,7 @@ contract EchidnaAssert is Setup {
 
         bytes memory priceData = abi.encode(currentPrice);
 
-        InitiateDepositBalanceBefore memory balanceBefore = InitiateDepositBalanceBefore({
-            senderETH: address(msg.sender).balance,
-            senderWstETH: wsteth.balanceOf(msg.sender),
-            senderSdex: sdex.balanceOf(msg.sender),
-            usdnProtocolETH: address(usdnProtocol).balance,
-            usdnProtocolWstETH: wsteth.balanceOf(address(usdnProtocol))
-        });
+        BalancesSnapshot memory balancesBefore = getBalances(validator, dest);
 
         vm.prank(msg.sender);
         try usdnProtocol.initiateDeposit{ value: ethRand }(
@@ -202,11 +187,11 @@ contract EchidnaAssert is Setup {
         ) {
             uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
 
-            assert(address(msg.sender).balance == balanceBefore.senderETH - securityDeposit);
-            assert(wsteth.balanceOf(msg.sender) == balanceBefore.senderWstETH - amountWstETHRand);
-            assert(sdex.balanceOf(msg.sender) < balanceBefore.senderSdex);
-            assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH + securityDeposit);
-            assert(wsteth.balanceOf(address(usdnProtocol)) == balanceBefore.usdnProtocolWstETH + amountWstETHRand);
+            assert(address(msg.sender).balance == balancesBefore.senderEth - securityDeposit);
+            assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth - amountWstETHRand);
+            assert(sdex.balanceOf(msg.sender) < balancesBefore.senderSdex);
+            assert(address(usdnProtocol).balance == balancesBefore.protocolEth + securityDeposit);
+            assert(wsteth.balanceOf(address(usdnProtocol)) == balancesBefore.protocolWsteth + amountWstETHRand);
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_DEPOSIT_ERRORS);
         }
@@ -293,12 +278,7 @@ contract EchidnaAssert is Setup {
 
         bytes memory priceData = abi.encode(currentPrice);
 
-        InitiateWithdrawalBalanceBefore memory balanceBefore = InitiateWithdrawalBalanceBefore({
-            senderETH: address(msg.sender).balance,
-            senderUsdn: usdn.sharesOf(msg.sender),
-            usdnProtocolETH: address(usdnProtocol).balance,
-            usdnProtocolUsdn: usdn.sharesOf(address(usdnProtocol))
-        });
+        BalancesSnapshot memory balancesBefore = getBalances(validator, msg.sender);
 
         vm.prank(msg.sender);
         try usdnProtocol.initiateWithdrawal{ value: ethRand }(
@@ -306,11 +286,11 @@ contract EchidnaAssert is Setup {
         ) {
             uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
 
-            assert(address(msg.sender).balance == balanceBefore.senderETH - securityDeposit);
-            assert(usdn.sharesOf(msg.sender) == balanceBefore.senderUsdn - usdnShares);
+            assert(address(msg.sender).balance == balancesBefore.senderEth - securityDeposit);
+            assert(usdn.sharesOf(msg.sender) == balancesBefore.senderUsdnShares - usdnShares);
 
-            assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH + securityDeposit);
-            assert(usdn.sharesOf(address(usdnProtocol)) == balanceBefore.usdnProtocolUsdn + usdnShares);
+            assert(address(usdnProtocol).balance == balancesBefore.protocolEth + securityDeposit);
+            assert(usdn.sharesOf(address(usdnProtocol)) == balancesBefore.protocolUsdnShares + usdnShares);
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_WITHDRAWAL_ERRORS);
         }
@@ -322,30 +302,23 @@ contract EchidnaAssert is Setup {
 
         bytes memory priceData = abi.encode(currentPrice);
 
-        ValidateWithdrawalBalanceBefore memory balanceBefore = ValidateWithdrawalBalanceBefore({
-            senderETH: address(msg.sender).balance,
-            senderWstETH: wsteth.balanceOf(msg.sender),
-            usdnProtocolETH: address(usdnProtocol).balance,
-            usdnProtocolUsdn: usdn.sharesOf(address(usdnProtocol)),
-            usdnProtocolWstETH: wsteth.balanceOf(address(usdnProtocol))
-        });
+        BalancesSnapshot memory balancesBefore = getBalances(validator, msg.sender);
         IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(validator);
 
         vm.prank(msg.sender);
         try usdnProtocol.validateWithdrawal(validator, priceData, EMPTY_PREVIOUS_DATA) returns (bool success_) {
-            assert(address(msg.sender).balance == balanceBefore.senderETH + action.securityDepositValue);
+            assert(address(msg.sender).balance == balancesBefore.senderEth + action.securityDepositValue);
             if (success_) {
-                assert(wsteth.balanceOf(msg.sender) >= balanceBefore.senderWstETH);
+                assert(wsteth.balanceOf(msg.sender) >= balancesBefore.senderWsteth);
 
-                assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH - action.securityDepositValue);
-                assert(usdn.sharesOf(address(usdnProtocol)) < balanceBefore.usdnProtocolUsdn);
-                assert(wsteth.balanceOf(address(usdnProtocol)) <= balanceBefore.usdnProtocolWstETH);
+                assert(address(usdnProtocol).balance == balancesBefore.protocolEth - action.securityDepositValue);
+                assert(usdn.sharesOf(address(usdnProtocol)) < balancesBefore.protocolUsdnShares);
+                assert(wsteth.balanceOf(address(usdnProtocol)) <= balancesBefore.protocolWsteth);
             } else {
-                assert(wsteth.balanceOf(msg.sender) == balanceBefore.senderWstETH);
-
-                assert(address(usdnProtocol).balance == balanceBefore.usdnProtocolETH);
-                assert(usdn.sharesOf(address(usdnProtocol)) == balanceBefore.usdnProtocolUsdn);
-                assert(wsteth.balanceOf(address(usdnProtocol)) == balanceBefore.usdnProtocolWstETH);
+                assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth);
+                assert(address(usdnProtocol).balance == balancesBefore.protocolEth);
+                assert(usdn.sharesOf(address(usdnProtocol)) == balancesBefore.protocolUsdnShares);
+                assert(wsteth.balanceOf(address(usdnProtocol)) == balancesBefore.protocolWsteth);
             }
         } catch (bytes memory err) {
             _checkErrors(err, VALIDATE_WITHDRAWAL_ERRORS);
@@ -357,26 +330,38 @@ contract EchidnaAssert is Setup {
         address payable validator = payable(validators[validatorRand]);
         bytes memory priceData = abi.encode(currentPrice);
 
-        uint256 validatorETH = address(validator).balance;
-        uint256 senderWstETH = wsteth.balanceOf(msg.sender);
-        uint256 usdnProtocolETH = address(usdnProtocol).balance;
-        uint256 usdnProtocolWstETH = wsteth.balanceOf(address(usdnProtocol));
-
+        BalancesSnapshot memory balancesBefore = getBalances(validator, msg.sender);
         uint256 securityDeposit = usdnProtocol.getUserPendingAction(validator).securityDepositValue;
 
         vm.prank(msg.sender);
         try usdnProtocol.validateOpenPosition(validator, priceData, EMPTY_PREVIOUS_DATA) returns (bool success) {
             if (success) {
-                assert(address(validator).balance == validatorETH + securityDeposit);
-                assert(address(usdnProtocol).balance == usdnProtocolETH - securityDeposit);
+                assert(address(validator).balance == balancesBefore.validatorEth + securityDeposit);
+                assert(address(usdnProtocol).balance == balancesBefore.protocolEth - securityDeposit);
             } else {
-                assert(address(validator).balance == validatorETH);
-                assert(address(usdnProtocol).balance == usdnProtocolETH);
+                assert(address(validator).balance == balancesBefore.validatorEth);
+                assert(address(usdnProtocol).balance == balancesBefore.protocolEth);
             }
-            assert(wsteth.balanceOf(address(usdnProtocol)) == usdnProtocolWstETH);
-            assert(wsteth.balanceOf(msg.sender) == senderWstETH);
+            assert(wsteth.balanceOf(address(usdnProtocol)) == balancesBefore.protocolWsteth);
+            assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth);
         } catch (bytes memory err) {
             _checkErrors(err, VALIDATE_OPEN_ERRORS);
         }
+    }
+
+    function getBalances(address validator, address to) internal view returns (BalancesSnapshot memory) {
+        return BalancesSnapshot({
+            validatorEth: validator.balance,
+            validatorWsteth: wsteth.balanceOf(validator),
+            senderEth: msg.sender.balance,
+            senderWsteth: wsteth.balanceOf(msg.sender),
+            senderSdex: sdex.balanceOf(msg.sender),
+            senderUsdnShares: usdn.sharesOf(msg.sender),
+            protocolEth: address(usdnProtocol).balance,
+            protocolWsteth: wsteth.balanceOf(address(usdnProtocol)),
+            protocolUsdnShares: usdn.sharesOf(address(usdnProtocol)),
+            toEth: address(to).balance,
+            toWsteth: wsteth.balanceOf(to)
+        });
     }
 }
