@@ -7,7 +7,6 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { MockOracleMiddleware } from "../../../test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
-
 import { Sdex } from "../../utils/Sdex.sol";
 import { Weth } from "../../utils/WETH.sol";
 import { WstETH } from "../../utils/WstEth.sol";
@@ -173,6 +172,17 @@ contract EchidnaAssert is Setup {
         uint256 senderWstETH;
         uint256 usdnProtocolETH;
         uint256 usdnProtocolWstETH;
+    }
+
+    struct ValidateCloseBalanceBefore {
+        uint256 validatorETHBefore;
+        uint256 validatorWstethBefore;
+        uint256 senderETHBefore;
+        uint256 toETHBefore;
+        uint256 senderWstethBefore;
+        uint256 usdnETHBefore;
+        uint256 usdnWstethBefore;
+        uint256 toWstethBefore;
     }
 
     /* -------------------------------------------------------------------------- */
@@ -403,39 +413,46 @@ contract EchidnaAssert is Setup {
         uint256 closeAmount = action.var2;
         address to = action.to;
 
-        uint256 validatorETHBefore = validator.balance;
-        uint256 validatorWstethBefore = wsteth.balanceOf(validator);
-        uint256 senderETHBefore = msg.sender.balance;
-        uint256 senderWstethBefore = wsteth.balanceOf(msg.sender);
-        uint256 usdnETHBefore = address(usdnProtocol).balance;
-        uint256 usdnWstethBefore = wsteth.balanceOf(address(usdnProtocol));
+        ValidateCloseBalanceBefore memory beforeBalance;
+        beforeBalance.validatorETHBefore = validator.balance;
+        beforeBalance.validatorWstethBefore = wsteth.balanceOf(validator);
+        beforeBalance.senderETHBefore = msg.sender.balance;
+        beforeBalance.toETHBefore = to.balance;
+        beforeBalance.senderWstethBefore = wsteth.balanceOf(msg.sender);
+        beforeBalance.usdnETHBefore = address(usdnProtocol).balance;
+        beforeBalance.usdnWstethBefore = wsteth.balanceOf(address(usdnProtocol));
+        beforeBalance.toWstethBefore = wsteth.balanceOf(to);
 
         vm.prank(msg.sender);
-        try usdnProtocol.validateClosePosition(payable(msg.sender), priceData, EMPTY_PREVIOUS_DATA) returns (
-            bool success
-        ) {
+        try usdnProtocol.validateClosePosition(validator, priceData, EMPTY_PREVIOUS_DATA) returns (bool success) {
             if (success) {
-                if (address(validator) == msg.sender) {
-                    assert(msg.sender.balance == senderETHBefore + securityDeposit);
-                    assert(wsteth.balanceOf(msg.sender) == senderWstethBefore);
-                } else {
-                    assert(validator.balance == validatorETHBefore);
-                    assert(msg.sender.balance == senderETHBefore);
-                    assert(wsteth.balanceOf(msg.sender) == senderWstethBefore);
-                    assert(wsteth.balanceOf(validator) == validatorWstethBefore);
+                assert(msg.sender.balance == beforeBalance.senderETHBefore + securityDeposit);
+                assert(address(usdnProtocol).balance == beforeBalance.usdnETHBefore - securityDeposit);
+                assert(wsteth.balanceOf(address(usdnProtocol)) < beforeBalance.usdnWstethBefore);
+                assert(wsteth.balanceOf(address(usdnProtocol)) > beforeBalance.usdnWstethBefore - closeAmount);
+                assert(wsteth.balanceOf(to) < beforeBalance.toWstethBefore + closeAmount);
+                assert(wsteth.balanceOf(to) > beforeBalance.toWstethBefore);
+                if (msg.sender != address(validator)) {
+                    assert(validator.balance == beforeBalance.validatorETHBefore);
                 }
-                assert(
-                    wsteth.balanceOf(to) == senderWstethBefore + closeAmount + (to == validator ? securityDeposit : 0)
-                );
-                assert(wsteth.balanceOf(address(usdnProtocol)) == usdnWstethBefore - closeAmount);
-                assert(address(usdnProtocol).balance == usdnETHBefore - securityDeposit);
+                if (to != address(validator)) {
+                    assert(to.balance == beforeBalance.toETHBefore);
+                }
+                if (msg.sender != to) {
+                    assert(wsteth.balanceOf(msg.sender) == beforeBalance.senderWstethBefore);
+                }
+                if (validator != to) {
+                    assert(wsteth.balanceOf(validator) == beforeBalance.validatorWstethBefore);
+                }
             } else {
-                assert(validator.balance == validatorETHBefore);
-                assert(wsteth.balanceOf(validator) == validatorWstethBefore);
-                assert(msg.sender.balance == senderETHBefore);
-                assert(wsteth.balanceOf(msg.sender) == senderWstethBefore);
-                assert(address(usdnProtocol).balance == usdnETHBefore);
-                assert(wsteth.balanceOf(address(usdnProtocol)) == usdnWstethBefore);
+                assert(msg.sender.balance == beforeBalance.senderETHBefore);
+                assert(address(usdnProtocol).balance == beforeBalance.usdnETHBefore);
+                assert(validator.balance == beforeBalance.validatorETHBefore);
+                assert(to.balance == beforeBalance.toETHBefore);
+                assert(wsteth.balanceOf(address(usdnProtocol)) == beforeBalance.usdnWstethBefore);
+                assert(wsteth.balanceOf(msg.sender) == beforeBalance.senderWstethBefore);
+                assert(wsteth.balanceOf(to) == beforeBalance.toWstethBefore);
+                assert(wsteth.balanceOf(validator) == beforeBalance.validatorWstethBefore);
             }
         } catch (bytes memory err) {
             _checkErrors(err, VALIDATE_CLOSE_ERRORS);

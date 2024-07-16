@@ -134,7 +134,6 @@ contract TestEchidna is Test {
         uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
 
         vm.deal(DEPLOYER, 10 ether);
-
         deal(address(wsteth), address(DEPLOYER), wstethOpenPositionAmount);
 
         bytes[] memory priceData = new bytes[](1);
@@ -160,17 +159,20 @@ contract TestEchidna is Test {
         );
         vm.stopPrank();
 
-        echidna.validateClose(0, etherPrice);
-
         uint256 balanceBefore = DEPLOYER.balance;
         uint256 balanceBeforeProtocol = address(usdnProtocol).balance;
         uint256 balanceWstEthBefore = wsteth.balanceOf(DEPLOYER);
 
+        skip(wstEthOracleMiddleware.getValidationDelay() + 1);
+        vm.prank(DEPLOYER);
+        echidna.validateClose(0, etherPrice);
+
         IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(DEPLOYER);
-        // assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.None, "action type");
-        // assertEq(DEPLOYER.balance, balanceBefore + securityDeposit, "DEPLOYER balance");
-        // assertEq(address(usdnProtocol).balance, balanceBeforeProtocol - securityDeposit, "protocol balance");
-        // assertEq(wsteth.balanceOf(DEPLOYER), balanceWstEthBefore + wstethOpenPositionAmount, "wstETH balance");
+        assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.None, "action type");
+        assertEq(DEPLOYER.balance, balanceBefore + securityDeposit, "DEPLOYER balance");
+        assertEq(address(usdnProtocol).balance, balanceBeforeProtocol - securityDeposit, "protocol balance");
+        assertGt(wsteth.balanceOf(DEPLOYER), balanceWstEthBefore, "wstETH balance");
+        assertLt(wsteth.balanceOf(DEPLOYER), balanceWstEthBefore + wstethOpenPositionAmount, "wstETH balance");
     }
 
     function test_canValidateWithdrawal() public {
