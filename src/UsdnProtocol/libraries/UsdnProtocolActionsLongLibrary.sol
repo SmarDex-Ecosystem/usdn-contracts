@@ -417,7 +417,7 @@ library UsdnProtocolActionsLongLibrary {
         // have gained or lost some value, and we need to reflect that the position value is now `newPosValue`
         // any potential PnL on that temporary position must be "cancelled" so that it doesn't affect the other
         // positions and the vault
-        uint256 newPosValue = uint256(expoAfter) * (data.currentPrice - data.liqPriceWithoutPenalty) / data.currentPrice;
+        uint256 newPosValue = Utils.positionValue(expoAfter, data.currentPrice, data.liqPriceWithoutPenalty);
         if (newPosValue > data.oldPosValue) {
             // the long side is missing some value, we need to take it from the vault
             uint256 diff = newPosValue - data.oldPosValue;

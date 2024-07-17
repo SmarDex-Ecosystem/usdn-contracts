@@ -21,6 +21,7 @@ import { UsdnProtocolActionsVaultLibrary as ActionsVault } from "./UsdnProtocolA
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "./UsdnProtocolLongLibrary.sol";
+import { UsdnProtocolUtils as Utils } from "./UsdnProtocolUtils.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.sol";
 
 library UsdnProtocolActionsUtilsLibrary {
@@ -293,7 +294,7 @@ library UsdnProtocolActionsUtilsLibrary {
         // multiplication cannot overflow because operands are uint128
         // lastPrice is larger than liqPriceWithoutPenalty because we performed liquidations above and would early
         // return in case of liquidation of this position
-        data_.oldPosValue = uint256(data_.pos.totalExpo) * (lastPrice - data_.liqPriceWithoutPenalty) / lastPrice;
+        data_.oldPosValue = Utils.positionValue(data_.pos.totalExpo, lastPrice, data_.liqPriceWithoutPenalty);
     }
 
     /**
