@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import { Test } from "forge-std/Test.sol";
 
 import { MockOracleMiddleware } from "../unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
-
 import { USER_1, USER_2 } from "../utils/Constants.sol";
 import { WstETH } from "../utils/WstEth.sol";
 import { FuzzingSuite } from "./FuzzingSuite.sol";
