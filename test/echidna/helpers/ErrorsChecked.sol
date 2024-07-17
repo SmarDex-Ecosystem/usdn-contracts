@@ -56,6 +56,8 @@ contract ErrorsChecked is Test {
 
     bytes4[] public VALIDATE_OPEN_ERRORS = [IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector];
 
+    bytes4[] public VALIDATE_PENDING_ACTIONS_ERRORS = [IUsdnProtocolErrors.UsdnProtocolEtherRefundFailed.selector];
+
     function _checkErrors(bytes memory err, bytes4[] storage errors) internal {
         bool expected = false;
         for (uint256 i = 0; i < errors.length; i++) {
