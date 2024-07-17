@@ -18,8 +18,9 @@ interface IUsdnProtocolTypes {
      * @param validated Whether the position was validated
      * @param timestamp The timestamp of the position start
      * @param user The user's address
-     * @param totalExpo The total expo of the position (0 for vault deposits)
-     * @param amount The amount of the position
+     * @param totalExpo The total exposition of the position (0 for vault deposits). Is the result of collateral *
+     * leverage
+     * @param amount The amount of collateral in the position
      */
     struct Position {
         bool validated; // 1 byte
@@ -328,7 +329,7 @@ interface IUsdnProtocolTypes {
      * @param adjustedPrice The adjusted price with position fees applied
      * @param posId The new position id
      * @param liquidationPenalty The liquidation penalty
-     * @param positionTotalExpo The total expo of the position
+     * @param positionTotalExpo The total expo of the position. Is the result of collateral * leverage
      * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
      */
     struct InitiateOpenPositionData {
