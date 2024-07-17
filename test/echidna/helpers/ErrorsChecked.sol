@@ -43,6 +43,9 @@ contract ErrorsChecked is Test {
         TickMath.TickMathInvalidPrice.selector
     ];
 
+    bytes4[] public INITIATE_CLOSE_ERRORS =
+        [IUsdnProtocolErrors.UsdnProtocolUnauthorized.selector, FixedPointMathLib.FullMulDivFailed.selector];
+
     bytes4[] public VALIDATE_DEPOSIT_ERRORS = [IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector];
 
     bytes4[] public VALIDATE_WITHDRAWAL_ERRORS = [
