@@ -3,21 +3,19 @@ pragma solidity ^0.8.25;
 
 import { Test } from "forge-std/Test.sol";
 
-import { Rebalancer } from "../../src/Rebalancer/Rebalancer.sol";
-import { Usdn } from "../../src/Usdn/Usdn.sol";
-import { IWstETH } from "../../src/interfaces/IWstETH.sol";
-
-import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { Permit2TokenBitfield } from "../../src/libraries/Permit2TokenBitfield.sol";
 import { UsdnProtocolHandler } from "../unit/UsdnProtocol/utils/Handler.sol";
 import { MockOracleMiddleware } from "../unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
-
 import { Sdex } from "../utils/Sdex.sol";
 import { Weth } from "../utils/WETH.sol";
 import { WstETH } from "../utils/WstEth.sol";
-
 import { ErrorsChecked } from "./helpers/ErrorsChecked.sol";
 import { MockLiquidationRewardsManager } from "./mock/MockLiquidationRewardsManager.sol";
+
+import { Rebalancer } from "../../src/Rebalancer/Rebalancer.sol";
+import { Usdn } from "../../src/Usdn/Usdn.sol";
+import { IWstETH } from "../../src/interfaces/IWstETH.sol";
+import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Permit2TokenBitfield } from "../../src/libraries/Permit2TokenBitfield.sol";
 
 contract Setup is Test, ErrorsChecked {
     address public constant DEPLOYER = address(0x10000);
@@ -41,6 +39,22 @@ contract Setup is Test, ErrorsChecked {
     Usdn public usdn;
     UsdnProtocolHandler public usdnProtocol;
     Rebalancer public rebalancer;
+
+    struct BalancesSnapshot {
+        uint256 validatorEth;
+        uint256 validatorWsteth;
+        uint256 validatorUsdnShares;
+        uint256 senderEth;
+        uint256 senderWsteth;
+        uint256 senderSdex;
+        uint256 senderUsdnShares;
+        uint256 protocolEth;
+        uint256 protocolWsteth;
+        uint256 protocolUsdnShares;
+        uint256 toEth;
+        uint256 toUsdnShares;
+        uint256 toWsteth;
+    }
 
     constructor() payable {
         vm.warp(1_709_251_200);
@@ -85,5 +99,23 @@ contract Setup is Test, ErrorsChecked {
         );
 
         destinationsToken[address(wsteth)] = [DEPLOYER, ATTACKER];
+    }
+
+    function getBalances(address validator, address to) internal view returns (BalancesSnapshot memory) {
+        return BalancesSnapshot({
+            validatorEth: validator.balance,
+            validatorWsteth: wsteth.balanceOf(validator),
+            validatorUsdnShares: usdn.sharesOf(validator),
+            senderEth: msg.sender.balance,
+            senderWsteth: wsteth.balanceOf(msg.sender),
+            senderSdex: sdex.balanceOf(msg.sender),
+            senderUsdnShares: usdn.sharesOf(msg.sender),
+            protocolEth: address(usdnProtocol).balance,
+            protocolWsteth: wsteth.balanceOf(address(usdnProtocol)),
+            protocolUsdnShares: usdn.sharesOf(address(usdnProtocol)),
+            toEth: address(to).balance,
+            toUsdnShares: usdn.sharesOf(to),
+            toWsteth: wsteth.balanceOf(to)
+        });
     }
 }

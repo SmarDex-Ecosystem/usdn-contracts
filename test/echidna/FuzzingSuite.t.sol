@@ -5,12 +5,12 @@ import { Test } from "forge-std/Test.sol";
 
 import { MockOracleMiddleware } from "../unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
 import { WstETH } from "../utils/WstEth.sol";
+import { FuzzingSuite } from "./FuzzingSuite.sol";
 
 import { Usdn } from "../../src/Usdn/Usdn.sol";
 import { UsdnProtocol } from "../../src/UsdnProtocol/UsdnProtocol.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { FuzzingSuite } from "./FuzzingSuite.sol";
 
 contract FuzzingSuiteTest is Test {
     FuzzingSuite public echidna;
