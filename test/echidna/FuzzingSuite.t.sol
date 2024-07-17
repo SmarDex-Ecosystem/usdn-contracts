@@ -1,22 +1,22 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
+import { FuzzingSuite } from "./FuzzingSuite.sol";
 import { Test } from "forge-std/Test.sol";
 
 import { MockOracleMiddleware } from "../unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
+
+import { Sdex } from "../utils/Sdex.sol";
 import { WstETH } from "../utils/WstEth.sol";
-import { EchidnaAssert } from "./models/EchidnaAssert.sol";
 
 import { Usdn } from "../../src/Usdn/Usdn.sol";
 import { UsdnProtocol } from "../../src/UsdnProtocol/UsdnProtocol.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
 import { Permit2TokenBitfield } from "../../src/libraries/Permit2TokenBitfield.sol";
-import { Sdex } from "../utils/Sdex.sol";
 
-contract TestEchidna is Test {
-    EchidnaAssert public echidna;
+contract FuzzingSuiteTest is Test {
+    FuzzingSuite public echidna;
     UsdnProtocol public usdnProtocol;
     MockOracleMiddleware public wstEthOracleMiddleware;
     WstETH public wsteth;
@@ -30,7 +30,7 @@ contract TestEchidna is Test {
     uint152 internal usdnShares = 100_000 ether;
 
     function setUp() public {
-        echidna = new EchidnaAssert();
+        echidna = new FuzzingSuite();
         DEPLOYER = echidna.DEPLOYER();
         ATTACKER = echidna.ATTACKER();
 
@@ -98,7 +98,6 @@ contract TestEchidna is Test {
             abi.encode(price),
             IUsdnProtocolTypes.PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) })
         );
-        //        echidna.initiateDeposit(0.1 ether, 10 ether, 0.5 ether, 0, 0, 1000 ether);
 
         skip(wstEthOracleMiddleware.getValidationDelay() + 1);
         vm.prank(DEPLOYER);
