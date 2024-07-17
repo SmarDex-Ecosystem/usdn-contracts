@@ -3,20 +3,17 @@ pragma solidity ^0.8.0;
 
 import { Test } from "forge-std/Test.sol";
 
-import { USER_1, USER_2 } from "../utils/Constants.sol";
-import { WstETH } from "../utils/WstEth.sol";
-
 import { MockOracleMiddleware } from "../unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
+import { WstETH } from "../utils/WstEth.sol";
+import { FuzzingSuite } from "./FuzzingSuite.sol";
 
-import { Usdn } from "../../../src/Usdn/Usdn.sol";
-import { MockOracleMiddleware } from "../../../test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
+import { Usdn } from "../../src/Usdn/Usdn.sol";
 import { UsdnProtocol } from "../../src/UsdnProtocol/UsdnProtocol.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { EchidnaAssert } from "./models/EchidnaAssert.sol";
 
-contract TestEchidna is Test {
-    EchidnaAssert public echidna;
+contract FuzzingSuiteTest is Test {
+    FuzzingSuite public echidna;
     UsdnProtocol public usdnProtocol;
     MockOracleMiddleware public wstEthOracleMiddleware;
     WstETH public wsteth;
@@ -73,6 +70,18 @@ contract TestEchidna is Test {
         assertEq(action.validator, DEPLOYER, "action validator");
         assertEq(action.var1, int24(Vault._calcWithdrawalAmountLSB(usdnShares)), "action amount LSB");
         assertEq(action.var2, Vault._calcWithdrawalAmountMSB(usdnShares), "action amount MSB");
+    }
+
+    function test_canValidateDeposit() public {
+        uint256 balanceDeployer = usdn.balanceOf(DEPLOYER);
+        vm.prank(DEPLOYER);
+        echidna.initiateDeposit(0.1 ether, 10 ether, 0.5 ether, 0, 0, 1000 ether);
+
+        skip(1 minutes);
+        vm.prank(DEPLOYER);
+        echidna.validateDeposit(0, 1000 ether);
+
+        assertGt(usdn.balanceOf(DEPLOYER), balanceDeployer, "balance usdn");
     }
 
     function test_canValidateOpen() public {
