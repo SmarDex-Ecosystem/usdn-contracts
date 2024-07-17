@@ -24,10 +24,8 @@ contract FuzzActions is Setup {
 
         destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
         address dest = destinationsToken[address(wsteth)][destRand];
-
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
-
         bytes memory priceData = abi.encode(currentPrice);
 
         BalancesSnapshot memory balancesBefore = getBalances(validator, dest);
@@ -59,6 +57,7 @@ contract FuzzActions is Setup {
         wsteth.mintAndApprove(msg.sender, amountRand, address(usdnProtocol), amountRand);
         uint256 destRandBounded = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
         vm.deal(msg.sender, ethRand);
+
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address dest = destinationsToken[address(wsteth)][destRandBounded];
         address validator = validators[validatorRand];
@@ -96,10 +95,8 @@ contract FuzzActions is Setup {
 
         destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
         address dest = destinationsToken[address(wsteth)][destRand];
-
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
-
         bytes memory priceData = abi.encode(currentPrice);
 
         BalancesSnapshot memory balancesBefore = getBalances(validator, msg.sender);
@@ -123,7 +120,6 @@ contract FuzzActions is Setup {
     function validateDeposit(uint256 validatorRand, uint256 currentPrice) public {
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
-
         bytes memory priceData = abi.encode(currentPrice);
 
         BalancesSnapshot memory balancesBefore = getBalances(validator, msg.sender);
@@ -165,7 +161,6 @@ contract FuzzActions is Setup {
     function validateWithdrawal(uint256 validatorRand, uint256 currentPrice) public {
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
-
         bytes memory priceData = abi.encode(currentPrice);
 
         BalancesSnapshot memory balancesBefore = getBalances(validator, msg.sender);
@@ -195,9 +190,9 @@ contract FuzzActions is Setup {
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
         bytes memory priceData = abi.encode(currentPrice);
+        uint64 securityDeposit = usdnProtocol.getUserPendingAction(validator).securityDepositValue;
 
         BalancesSnapshot memory balancesBefore = getBalances(validator, msg.sender);
-        uint64 securityDeposit = usdnProtocol.getUserPendingAction(validator).securityDepositValue;
 
         vm.prank(msg.sender);
         try usdnProtocol.validateOpenPosition(validator, priceData, EMPTY_PREVIOUS_DATA) returns (bool success) {
