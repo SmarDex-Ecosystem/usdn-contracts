@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 import { Test } from "forge-std/Test.sol";
 
 import { MockOracleMiddleware } from "../unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
+
+import { USER_1, USER_2 } from "../utils/Constants.sol";
 import { WstETH } from "../utils/WstEth.sol";
 import { FuzzingSuite } from "./FuzzingSuite.sol";
 
@@ -24,10 +26,10 @@ contract FuzzingSuiteTest is Test {
     IUsdnProtocolTypes.PreviousActionsData internal EMPTY_PREVIOUS_DATA =
         IUsdnProtocolTypes.PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
 
-    uint152 usdnShares = 100_000 ether;
+    uint152 internal usdnShares = 100_000 ether;
 
     function setUp() public {
-        echidna = new EchidnaAssert();
+        echidna = new FuzzingSuite();
         DEPLOYER = echidna.DEPLOYER();
         ATTACKER = echidna.ATTACKER();
 
