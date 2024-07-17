@@ -23,9 +23,9 @@ contract Setup is Test, ErrorsChecked {
     address public constant FEE_COLLECTOR = address(0x00fee);
     Permit2TokenBitfield.Bitfield public constant NO_PERMIT2 = Permit2TokenBitfield.Bitfield.wrap(0);
 
-    Sdex public immutable sdex = new Sdex();
-    Weth public immutable weth = new Weth();
-    WstETH public immutable wsteth = new WstETH();
+    Sdex public sdex = new Sdex();
+    Weth public weth = new Weth();
+    WstETH public wsteth = new WstETH();
 
     IUsdnProtocolTypes.PreviousActionsData internal EMPTY_PREVIOUS_DATA =
         IUsdnProtocolTypes.PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
