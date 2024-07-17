@@ -424,22 +424,6 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getPendingProtocolFee() external view returns (uint256);
 
     /**
-     * @notice Get the pending action of the user (1 per user max)
-     * @dev The value stored is an index into the `pendingActionsQueue` deque, shifted by one. A value of 0 means no
-     * pending action. Since the deque uses uint128 indices, the highest index will not overflow when adding one
-     * @param user The user's address
-     * @return The pending action of the user (if there is one)
-     */
-    function getPendingAction(address user) external view returns (uint256);
-
-    /**
-     * @notice Get the pending action at the provided index of the pending queue
-     * @param index The index in the queue
-     * @return The pending action
-     */
-    function getPendingActionAt(uint256 index) external view returns (PendingAction memory);
-
-    /**
      * @notice Get the amount of assets backing the USDN token
      * @return The amount of assets on the vault side (in `_assetDecimals`)
      */

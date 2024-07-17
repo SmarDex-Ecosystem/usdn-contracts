@@ -403,16 +403,6 @@ contract UsdnProtocolStorage is
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getPendingAction(address user) external view returns (uint256) {
-        return s._pendingActions[user];
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getPendingActionAt(uint256 index) external view returns (PendingAction memory action_) {
-        (action_,) = s._pendingActionsQueue.at(index);
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
     function getBalanceVault() external view returns (uint256) {
         return s._balanceVault;
     }

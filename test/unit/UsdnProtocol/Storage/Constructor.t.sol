@@ -24,10 +24,10 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Try to instantiate the protocol with the USDN token having a non-zero total supply.
-     * @custom:given Deployed external contracts.
+     * @custom:scenario Try to instantiate the protocol with the USDN token having a non-zero total supply
+     * @custom:given Deployed external contracts
      * @custom:when The protocol is instantiated with the USDN token already having some supply created
-     * @custom:then The instantiation should revert.
+     * @custom:then The instantiation should revert
      */
     function test_RevertWhen_constructorUSDNNonZeroTotalSupply() public {
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidUsdn.selector, address(usdn)));
@@ -35,10 +35,10 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Try to instantiate the protocol with the zero address as the fee collector.
-     * @custom:given Deployed external contracts.
+     * @custom:scenario Try to instantiate the protocol with the zero address as the fee collector
+     * @custom:given Deployed external contracts
      * @custom:when The protocol is instantiated with the fee collector being the zero address
-     * @custom:then The instantiation should revert.
+     * @custom:then The instantiation should revert
      */
     function test_RevertWhen_constructorFeeCollectorIsZeroAddress() public {
         usdn = new Usdn(address(0), address(0));
@@ -48,10 +48,10 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Try to instantiate the protocol with the asset decimal being lower than FUNDING_SF_DECIMALS.
-     * @custom:given Deployed external contracts.
+     * @custom:scenario Try to instantiate the protocol with the asset decimal being lower than FUNDING_SF_DECIMALS
+     * @custom:given Deployed external contracts
      * @custom:when The protocol is instantiated with the fee collector being the zero address
-     * @custom:then The instantiation should revert.
+     * @custom:then The instantiation should revert
      */
     function test_RevertWhen_constructorAssetDecimalsToLow() public {
         uint8 wrongDecimals = protocol.FUNDING_SF_DECIMALS() - 1;
@@ -64,11 +64,11 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Try to instantiate the protocol with the SDEX tokens decimals not equal to TOKENS_DECIMALS.
-     * @custom:given Deployed external contracts.
+     * @custom:scenario Try to instantiate the protocol with the SDEX tokens decimals not equal to TOKENS_DECIMALS
+     * @custom:given Deployed external contracts
      * @custom:when The protocol is instantiated with tokens that do not have a number of decimals equal to
-     * TOKENS_DECIMALS.
-     * @custom:then The instantiation should revert.
+     * TOKENS_DECIMALS
+     * @custom:then The instantiation should revert
      */
     function test_RevertWhen_constructorTokenDecimalsMismatch() public {
         usdn = new Usdn(address(0), address(0));
@@ -76,5 +76,20 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidTokenDecimals.selector));
         new UsdnProtocol(usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(1), roles);
+    }
+
+    /**
+     * @custom:scenario Test the protocol's getters
+     * @custom:given A protocol instance that was initialized with default params
+     * @custom:when The getters are called
+     * @custom:then The expected values should be returned
+     */
+    function test_getters() public view {
+        assertEq(protocol.LIQUIDATION_MULTIPLIER_DECIMALS(), 38);
+        assertEq(protocol.MAX_ACTIONABLE_PENDING_ACTIONS(), 20);
+        assertEq(address(protocol.getSdex()), address(sdex));
+        assertEq(protocol.getUsdnMinDivisor(), usdn.MIN_DIVISOR());
+        assertEq(protocol.getMiddlewareValidationDelay(), oracleMiddleware.getValidationDelay());
+        assertEq(protocol.getLastPrice(), DEFAULT_PARAMS.initialPrice);
     }
 }

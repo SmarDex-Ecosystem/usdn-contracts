@@ -9,19 +9,6 @@ import { IUsdnProtocolTypes } from "./IUsdnProtocolTypes.sol";
  */
 interface IUsdnProtocolCore is IUsdnProtocolTypes {
     /**
-     * @notice Calculation of the EMA of the funding rate per day
-     * @param lastFundingPerDay The last funding rate per day, with `FUNDING_RATE_DECIMALS` decimals
-     * @param secondsElapsed The number of seconds elapsed since the last protocol action
-     * @param emaPeriod The EMA period
-     * @param previousEMA The previous EMA
-     * @return The new EMA value, with `FUNDING_RATE_DECIMALS` decimals
-     */
-    function calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
-        external
-        pure
-        returns (int256);
-
-    /**
      * @notice Get the predicted value of the funding since the last state update for the given timestamp
      * @dev When multiplied with the long trading exposure, the funding value gives the asset balance that needs to be
      * paid to the vault side (or long side if negative)

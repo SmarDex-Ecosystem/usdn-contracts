@@ -59,17 +59,3 @@ enum ConfidenceInterval {
     Down,
     None
 }
-
-/**
- * @notice All possible price oracles for the protocol
- * @param None No particular oracle
- * @param Pyth Pyth Network
- * @param ChainlinkDataStream Chainlink Data Stream
- * @param ChainlinkOnChain Chainlink On-Chain
- */
-enum Oracle {
-    None,
-    Pyth,
-    ChainlinkDataStream,
-    ChainlinkOnChain
-}
