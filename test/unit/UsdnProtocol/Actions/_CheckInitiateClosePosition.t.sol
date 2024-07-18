@@ -17,6 +17,8 @@ contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture, 
     MockRebalancer mockedRebalancer;
     PositionId posId;
     Position pos;
+    uint256 minLongPos;
+    uint256 maxLeverage;
 
     function setUp() public {
         params = DEFAULT_PARAMS;
@@ -33,11 +35,12 @@ contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture, 
             )
         );
         (pos,) = protocol.getLongPosition(posId);
+        (, maxLeverage, minLongPos) = protocol.getEdgePositionValues();
     }
 
     function test_setUpAmount() public view {
-        assertGt(protocol.getMinLongPosition(), 0, "min position");
-        assertGt(AMOUNT, protocol.getMinLongPosition(), "position amount");
+        assertGt(minLongPos, 0, "min position");
+        assertGt(AMOUNT, minLongPos, "position amount");
     }
 
     /**
@@ -46,7 +49,7 @@ contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture, 
      * @custom:then The function should not revert
      */
     function test_checkInitiateClosePosition() public view {
-        uint128 amountToClose = AMOUNT - uint128(protocol.getMinLongPosition());
+        uint128 amountToClose = AMOUNT - uint128(minLongPos);
 
         protocol.i_checkInitiateClosePosition(address(this), USER_1, USER_2, amountToClose, pos);
         protocol.i_checkInitiateClosePosition(address(this), USER_1, USER_2, AMOUNT, pos);
@@ -128,7 +131,7 @@ contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture, 
      * @custom:then The function should revert with `UsdnProtocolLongPositionTooSmall`
      */
     function test_RevertWhen_checkInitiateClosePositionRemainingLow() public {
-        uint128 amountToClose = AMOUNT - uint128(protocol.getMinLongPosition()) + 1;
+        uint128 amountToClose = AMOUNT - uint128(minLongPos) + 1;
         vm.expectRevert(UsdnProtocolLongPositionTooSmall.selector);
         protocol.i_checkInitiateClosePosition(address(this), USER_1, USER_2, amountToClose, pos);
     }
@@ -142,7 +145,7 @@ contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture, 
      * @custom:then The function should not revert
      */
     function test_checkInitiateClosePositionFromRebalancerBelowMin() public {
-        uint128 amountToClose = AMOUNT - uint128(protocol.getMinLongPosition()) + 1;
+        uint128 amountToClose = AMOUNT - uint128(minLongPos) + 1;
         _setUpRebalancerPosition(uint88(amountToClose));
         // note: the rebalancer always sets the rebalancer user as "validator" (USER_1)
         protocol.i_checkInitiateClosePosition(address(mockedRebalancer), USER_2, USER_1, amountToClose, pos);
@@ -156,7 +159,7 @@ contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture, 
      * @custom:then The function should not revert
      */
     function test_checkInitiateClosePositionFromRebalancer() public {
-        uint128 amountToClose = AMOUNT - uint128(protocol.getMinLongPosition());
+        uint128 amountToClose = AMOUNT - uint128(minLongPos);
         _setUpRebalancerPosition(uint88(amountToClose + 1));
         // note: the rebalancer always sets the rebalancer user as "validator" (USER_1)
         protocol.i_checkInitiateClosePosition(address(mockedRebalancer), USER_2, USER_1, amountToClose, pos);
@@ -171,7 +174,7 @@ contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture, 
      * @custom:then The function should revert with `UsdnProtocolLongPositionTooSmall`
      */
     function test_RevertWhen_checkInitiateClosePositionFromRebalancerTooSmall() public {
-        uint128 amountToClose = AMOUNT - uint128(protocol.getMinLongPosition()) + 1;
+        uint128 amountToClose = AMOUNT - uint128(minLongPos) + 1;
         _setUpRebalancerPosition(uint88(amountToClose + 1));
         // note: the rebalancer always sets the rebalancer user as "validator" (USER_1)
         vm.expectRevert(UsdnProtocolLongPositionTooSmall.selector);
@@ -194,7 +197,7 @@ contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture, 
             )
         );
         (pos,) = protocol.getLongPosition(posId);
-        mockedRebalancer.setCurrentStateData(0, protocol.getMaxLeverage(), posId);
+        mockedRebalancer.setCurrentStateData(0, maxLeverage, posId);
         UserDeposit memory userDeposit = UserDeposit({
             initiateTimestamp: uint40(block.timestamp),
             amount: userAmount,

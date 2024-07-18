@@ -61,7 +61,8 @@ contract TestUsdnProtocolLongCalcLiqPriceFromTradingExpo is UsdnProtocolBaseFixt
     function testFuzz_calcLiqPriceFromTradingExpo(uint256 amount, uint256 price, uint256 leverage) public view {
         amount = bound(amount, 1, type(uint128).max);
         price = bound(price, 1, type(uint128).max);
-        leverage = bound(leverage, protocol.getMinLeverage(), protocol.getMaxLeverage());
+        (uint256 minLeverage, uint256 maxLeverage,) = protocol.getEdgePositionValues();
+        leverage = bound(leverage, minLeverage, maxLeverage);
 
         uint256 tradingExpo = (amount * leverage - amount) / Constants.LEVERAGE_DECIMALS;
 

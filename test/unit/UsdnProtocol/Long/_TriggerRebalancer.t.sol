@@ -18,6 +18,7 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
     uint256 vaultBalance = DEFAULT_PARAMS.initialDeposit;
     uint128 lastPrice = DEFAULT_PARAMS.initialPrice;
     int256 remainingCollateral = 1 ether;
+    uint256 maxLeverage;
 
     function setUp() public {
         params = DEFAULT_PARAMS;
@@ -28,6 +29,7 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
 
         vm.prank(ADMIN);
         protocol.setRebalancer(mockedRebalancer);
+        (, maxLeverage,) = protocol.getEdgePositionValues();
     }
 
     /**
@@ -114,7 +116,7 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
             })
         );
 
-        mockedRebalancer.setCurrentStateData(0, protocol.getMaxLeverage(), posId);
+        mockedRebalancer.setCurrentStateData(0, maxLeverage, posId);
 
         vm.prank(ADMIN);
         protocol.setMinLongPosition(10 ** assetDecimals);
@@ -158,7 +160,7 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
             })
         );
 
-        mockedRebalancer.setCurrentStateData(0, protocol.getMaxLeverage(), posId);
+        mockedRebalancer.setCurrentStateData(0, maxLeverage, posId);
 
         (uint256 newLongBalance, uint256 newVaultBalance) =
             protocol.i_triggerRebalancer(DEFAULT_PARAMS.initialPrice, longBalance, vaultBalance, remainingCollateral);
@@ -186,9 +188,7 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
         vm.prank(address(mockedRebalancer));
         wstETH.mintAndApprove(address(mockedRebalancer), pendingAssets, address(protocol), type(uint256).max);
 
-        mockedRebalancer.setCurrentStateData(
-            pendingAssets, protocol.getMaxLeverage(), PositionId(Constants.NO_POSITION_TICK, 0, 0)
-        );
+        mockedRebalancer.setCurrentStateData(pendingAssets, maxLeverage, PositionId(Constants.NO_POSITION_TICK, 0, 0));
 
         (uint256 newLongBalance, uint256 newVaultBalance) =
             protocol.i_triggerRebalancer(lastPrice, longBalance, vaultBalance, remainingCollateral);
@@ -235,7 +235,7 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
         vm.prank(address(mockedRebalancer));
         wstETH.mintAndApprove(address(mockedRebalancer), pendingAssets, address(protocol), type(uint256).max);
 
-        mockedRebalancer.setCurrentStateData(pendingAssets, protocol.getMaxLeverage(), posId);
+        mockedRebalancer.setCurrentStateData(pendingAssets, maxLeverage, posId);
 
         (uint256 newLongBalance, uint256 newVaultBalance) =
             protocol.i_triggerRebalancer(lastPrice, longBalance, vaultBalance, remainingCollateral);

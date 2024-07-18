@@ -39,14 +39,14 @@ contract TestUsdnProtocolFuzzingLong is UsdnProtocolBaseFixture {
         view
     {
         uint256 levDecimals = 10 ** Constants.LEVERAGE_DECIMALS;
-        uint256 maxLeverage = protocol.getMaxLeverage();
+        (uint256 minLeverage, uint256 maxLeverage,) = protocol.getEdgePositionValues();
 
         // Set some boundaries for the fuzzed inputs
         amount = bound(amount, 1, type(uint128).max * levDecimals / maxLeverage).toUint128();
         // Take uint128 max value as the upper limit because TickMath.MAX_PRICE is above it
         priceAtOpening = bound(priceAtOpening, TickMath.MIN_PRICE, type(uint128).max).toUint128();
         currentPrice = bound(currentPrice, TickMath.MIN_PRICE, type(uint128).max).toUint128();
-        leverage = bound(leverage, protocol.getMinLeverage(), maxLeverage);
+        leverage = bound(leverage, minLeverage, maxLeverage);
 
         // Start checks
         uint128 liqPrice = protocol.i_getLiquidationPrice(priceAtOpening, uint128(leverage));
@@ -84,14 +84,14 @@ contract TestUsdnProtocolFuzzingLong is UsdnProtocolBaseFixture {
         uint256 leverage
     ) public view {
         uint256 levDecimals = 10 ** Constants.LEVERAGE_DECIMALS;
-        uint256 maxLeverage = protocol.getMaxLeverage();
+        (uint256 minLeverage, uint256 maxLeverage,) = protocol.getEdgePositionValues();
 
         // Set some boundaries for the fuzzed inputs
         amount = bound(amount, 1, type(uint128).max * levDecimals / maxLeverage).toUint128();
         // Take uint128 max value as the upper limit because TickMath.MAX_PRICE is above it
         priceAtOpening = bound(priceAtOpening, TickMath.MIN_PRICE, type(uint128).max).toUint128();
         currentPrice = bound(currentPrice, priceAtOpening, type(uint128).max).toUint128();
-        leverage = bound(leverage, protocol.getMinLeverage(), maxLeverage);
+        leverage = bound(leverage, minLeverage, maxLeverage);
 
         // Start checks
         uint128 liqPrice = protocol.i_getLiquidationPrice(priceAtOpening, uint128(leverage));

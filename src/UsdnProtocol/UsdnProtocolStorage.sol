@@ -203,10 +203,9 @@ contract UsdnProtocolStorage is
         return s._rebalancer;
     }
 
-    /// TO DO : combine with get min long position
     /// @inheritdoc IUsdnProtocolStorage
-    function getMinLeverage() external view returns (uint256, uint256) {
-        return (s._minLeverage, s._maxLeverage);
+    function getEdgePositionValues() external view returns (uint256, uint256, uint256) {
+        return (s._minLeverage, s._maxLeverage, s._minLongPosition);
     }
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -293,11 +292,6 @@ contract UsdnProtocolStorage is
     /// @inheritdoc IUsdnProtocolStorage
     function getUsdnRebaseInterval() external view returns (uint256) {
         return s._usdnRebaseInterval;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getMinLongPosition() external view returns (uint256) {
-        return s._minLongPosition;
     }
 
     /* -------------------------------------------------------------------------- */

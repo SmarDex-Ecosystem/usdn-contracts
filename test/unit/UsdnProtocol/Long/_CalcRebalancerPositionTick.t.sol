@@ -14,9 +14,12 @@ import { UsdnProtocolConstantsLibrary as Constants } from
 contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixture {
     uint256 vaultBalance = 200 ether;
     uint256 longBalance = 100 ether;
+    uint256 minLeverage;
+    uint256 maxLeverage;
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
+        (minLeverage, maxLeverage,) = protocol.getEdgePositionValues();
     }
 
     /**
@@ -27,7 +30,6 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
      * @custom:then The result is the expected tick
      */
     function test_calcRebalancerPositionTick() public view {
-        uint256 maxLeverage = protocol.getMaxLeverage();
         uint256 totalExpo = 295 ether;
         uint256 missingTradingExpo = vaultBalance + longBalance - totalExpo;
         uint128 amount = 2 ether;
@@ -61,13 +63,12 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
      * @custom:then The result has been capped to the protocol's max leverage
      */
     function test_calcRebalancerPositionTickCappedByTheProtocolMaxLeverage() public view {
-        uint256 rebalancerMaxLeverage = protocol.getMaxLeverage() + 1;
+        uint256 rebalancerMaxLeverage = maxLeverage + 1;
         uint256 totalExpo = 200 ether;
         uint128 amount = 1 ether;
 
         // calculate the highest usable trading expo to stay below the max leverage
-        uint256 highestUsableTradingExpo =
-            amount * protocol.getMaxLeverage() / 10 ** Constants.LEVERAGE_DECIMALS - amount;
+        uint256 highestUsableTradingExpo = amount * maxLeverage / 10 ** Constants.LEVERAGE_DECIMALS - amount;
         int24 expectedTick = protocol.getEffectiveTickForPrice(
             protocol.i_calcLiqPriceFromTradingExpo(DEFAULT_PARAMS.initialPrice, amount, highestUsableTradingExpo),
             DEFAULT_PARAMS.initialPrice,
@@ -97,13 +98,12 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
      * @custom:then The result is the expected tick capped to the protocol's min leverage
      */
     function test_calcRebalancerPositionTickCappedByTheMinLeverage() public view {
-        uint256 rebalancerMaxLeverage = protocol.getMaxLeverage();
+        uint256 rebalancerMaxLeverage = maxLeverage;
         uint256 totalExpo = vaultBalance + longBalance - 1;
         uint128 amount = 1 ether;
 
         // calculate the lowest usable trading expo to stay above the min leverage
-        uint256 lowestUsableTradingExpo =
-            amount * protocol.getMinLeverage() / 10 ** Constants.LEVERAGE_DECIMALS - amount;
+        uint256 lowestUsableTradingExpo = amount * minLeverage / 10 ** Constants.LEVERAGE_DECIMALS - amount;
         int24 expectedTick = protocol.getEffectiveTickForPrice(
             protocol.i_calcLiqPriceFromTradingExpo(DEFAULT_PARAMS.initialPrice, amount, lowestUsableTradingExpo),
             DEFAULT_PARAMS.initialPrice,
@@ -134,7 +134,7 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
      * @custom:then The result is the expected tick capped to the rebalancer max's leverage
      */
     function test_calcRebalancerPositionTickCappedByTheRebalancerMaxLeverage() public view {
-        uint256 rebalancerMaxLeverage = protocol.getMaxLeverage() / 2;
+        uint256 rebalancerMaxLeverage = maxLeverage / 2;
         uint256 totalExpo = 200 ether;
         uint128 amount = 1 ether;
 
@@ -171,13 +171,12 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
      * @custom:then The result is the expected tick capped by the protocol's min leverage
      */
     function test_calcRebalancerPositionTickCappedByTheRebalancerMaxLeverageBelowTheMinLeverage() public view {
-        uint256 rebalancerMaxLeverage = protocol.getMinLeverage() - 1;
+        uint256 rebalancerMaxLeverage = minLeverage - 1;
         uint256 totalExpo = vaultBalance + longBalance - 1;
         uint128 amount = 1 ether;
 
         // calculate the lowest usable trading expo to stay above the min leverage
-        uint256 lowestUsableTradingExpo =
-            amount * protocol.getMinLeverage() / 10 ** Constants.LEVERAGE_DECIMALS - amount;
+        uint256 lowestUsableTradingExpo = amount * minLeverage / 10 ** Constants.LEVERAGE_DECIMALS - amount;
         int24 expectedTick = protocol.getEffectiveTickForPrice(
             protocol.i_calcLiqPriceFromTradingExpo(DEFAULT_PARAMS.initialPrice, amount, lowestUsableTradingExpo),
             DEFAULT_PARAMS.initialPrice,
@@ -206,7 +205,7 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
      * @custom:then The result is NO_POSITION_TICK sentinel value
      */
     function test_calcRebalancerPositionTickWithNoTradingExpoToFill() public view {
-        uint256 rebalancerMaxLeverage = protocol.getMaxLeverage() + 1;
+        uint256 rebalancerMaxLeverage = maxLeverage + 1;
         uint256 totalExpo = vaultBalance + longBalance;
         uint128 amount = 1 ether;
 

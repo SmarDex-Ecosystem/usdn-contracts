@@ -19,8 +19,13 @@ import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalance
  * @custom:background Given a protocol instance that was initialized with default params
  */
 contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
+    uint256 minLeverage;
+    uint256 maxLeverage;
+
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
+
+        (minLeverage, maxLeverage,) = protocol.getEdgePositionValues();
     }
 
     /**
@@ -143,7 +148,6 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      * @custom:then Revert because greater than max
      */
     function test_RevertWhen_setMinLeverageWithMax() public adminPrank {
-        uint256 maxLeverage = protocol.getMaxLeverage();
         // minLeverage higher than max disallowed
         vm.expectRevert(UsdnProtocolInvalidMinLeverage.selector);
         // set minLeverage
@@ -165,7 +169,8 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         // assign new minLeverage value
         protocol.setMinLeverage(expectedNewValue);
         // check new value is equal to expected value
-        assertEq(protocol.getMinLeverage(), expectedNewValue);
+        (minLeverage,,) = protocol.getEdgePositionValues();
+        assertEq(minLeverage, expectedNewValue);
     }
 
     /**
@@ -175,7 +180,6 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      * @custom:then Revert because lower than min
      */
     function test_RevertWhen_setMaxLeverageWithMin() public adminPrank {
-        uint256 minLeverage = protocol.getMinLeverage();
         // maxLeverage lower than min disallowed
         vm.expectRevert(UsdnProtocolInvalidMaxLeverage.selector);
         // set maxLeverage
@@ -205,14 +209,15 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      */
     function test_setMaxLeverage() public adminPrank {
         // cache the new maxLeverage value to assign
-        uint256 expectedNewValue = protocol.getMinLeverage() + 1;
+        uint256 expectedNewValue = minLeverage + 1;
         // expected event
         vm.expectEmit();
         emit MaxLeverageUpdated(expectedNewValue);
         // assign new maxLeverage value
         protocol.setMaxLeverage(expectedNewValue);
         // check new value is equal to the expected value
-        assertEq(protocol.getMaxLeverage(), expectedNewValue);
+        (, maxLeverage,) = protocol.getEdgePositionValues();
+        assertEq(maxLeverage, expectedNewValue);
     }
 
     /**
@@ -793,7 +798,8 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         // set minimum long position
         protocol.setMinLongPosition(newValue);
         // assert that the new value is equal to the expected value
-        assertEq(protocol.getMinLongPosition(), newValue);
+        (,, uint256 minLongPosition) = protocol.getEdgePositionValues();
+        assertEq(minLongPosition, newValue);
     }
 
     /**
@@ -817,7 +823,8 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         // set minimum long position
         protocol.setMinLongPosition(newValue);
         // assert that the new values are equal to the expected values
-        assertEq(protocol.getMinLongPosition(), newValue, "protocol value isn't updated");
+        (,, uint256 minLongPosition) = protocol.getEdgePositionValues();
+        assertEq(minLongPosition, newValue, "protocol value isn't updated");
         assertEq(rebalancer.getMinAssetDeposit(), newValue, "rebalancer value isn't updated");
     }
 

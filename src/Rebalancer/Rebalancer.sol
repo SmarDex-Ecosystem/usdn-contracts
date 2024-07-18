@@ -132,8 +132,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         IERC20Metadata asset = usdnProtocol.getAsset();
         _asset = asset;
         _assetDecimals = asset.decimals();
-        (, _maxLeverage) = usdnProtocol.getMinLeverage();
-        _minAssetDeposit = usdnProtocol.getMinLongPosition();
+        (, _maxLeverage, _minAssetDeposit) = usdnProtocol.getEdgePositionValues();
 
         // set allowance to allow the protocol to pull assets from this contract
         asset.forceApprove(address(usdnProtocol), type(uint256).max);
@@ -168,7 +167,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     /// @inheritdoc IRebalancer
     function getPositionMaxLeverage() external view returns (uint256 maxLeverage_) {
         maxLeverage_ = _maxLeverage;
-        (, uint256 protocolMaxLeverage) = _usdnProtocol.getMinLeverage();
+        (, uint256 protocolMaxLeverage,) = _usdnProtocol.getEdgePositionValues();
         if (protocolMaxLeverage < maxLeverage_) {
             return protocolMaxLeverage;
         }
@@ -573,7 +572,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
     /// @inheritdoc IRebalancer
     function setPositionMaxLeverage(uint256 newMaxLeverage) external onlyOwner {
-        (uint256 minLeverage, uint256 maxLeverage) = _usdnProtocol.getMinLeverage();
+        (uint256 minLeverage, uint256 maxLeverage,) = _usdnProtocol.getEdgePositionValues();
         if (newMaxLeverage < minLeverage || newMaxLeverage > maxLeverage) {
             revert RebalancerInvalidMaxLeverage();
         }
@@ -585,7 +584,8 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
     /// @inheritdoc IBaseRebalancer
     function setMinAssetDeposit(uint256 minAssetDeposit) external onlyAdmin {
-        if (_usdnProtocol.getMinLongPosition() > minAssetDeposit) {
+        (,, uint256 minLongPosition) = _usdnProtocol.getEdgePositionValues();
+        if (minLongPosition > minAssetDeposit) {
             revert RebalancerInvalidMinAssetDeposit();
         }
 

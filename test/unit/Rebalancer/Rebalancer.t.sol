@@ -79,7 +79,9 @@ contract TestRebalancer is RebalancerFixture {
      * @custom:then The value of the _positionMaxLeverage should be equal to the USDN protocol's max leverage
      */
     function test_getPositionMaxLeverage() public view {
-        assertEq(rebalancer.getPositionMaxLeverage(), usdnProtocol.getMaxLeverage());
+        (, uint256 maxLeverage,) = usdnProtocol.getEdgePositionValues();
+
+        assertEq(rebalancer.getPositionMaxLeverage(), maxLeverage);
     }
 
     /**
@@ -89,19 +91,21 @@ contract TestRebalancer is RebalancerFixture {
      * @custom:then The returned value should be equal to the USDN protocol's max leverage
      */
     function test_getPositionMaxLeverageWhenHigherThanProtocol() public adminPrank {
+        (, uint256 maxLeverage,) = usdnProtocol.getEdgePositionValues();
         // Sanity check
         assertEq(
             rebalancer.getPositionMaxLeverage(),
-            usdnProtocol.getMaxLeverage(),
+            maxLeverage,
             "Both max leverage values should be equal for this test to work"
         );
 
-        uint256 protocolMaxLeverage = usdnProtocol.getMaxLeverage() - 1;
+        uint256 protocolMaxLeverage = maxLeverage - 1;
         usdnProtocol.setMaxLeverage(protocolMaxLeverage);
 
+        (, maxLeverage,) = usdnProtocol.getEdgePositionValues();
         assertEq(
             rebalancer.getPositionMaxLeverage(),
-            usdnProtocol.getMaxLeverage(),
+            maxLeverage,
             "The max leverage of the USDN protocol should have been returned"
         );
     }
@@ -113,6 +117,8 @@ contract TestRebalancer is RebalancerFixture {
      * @custom:then The value of the _minAssetDeposit should be equal to the protocol _minLongPosition
      */
     function test_minAssetDeposit() public view {
-        assertEq(usdnProtocol.getMinLongPosition(), rebalancer.getMinAssetDeposit());
+        (,, uint256 minLongPos) = usdnProtocol.getEdgePositionValues();
+
+        assertEq(minLongPos, rebalancer.getMinAssetDeposit());
     }
 }

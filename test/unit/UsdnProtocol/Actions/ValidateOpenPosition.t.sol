@@ -29,6 +29,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         uint256 validateTickVersion;
         uint256 validateIndex;
         uint256 expectedLeverage;
+        uint256 maxLeverage;
     }
 
     function setUp() public {
@@ -230,7 +231,8 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         _waitDelay();
 
         testData.validatePrice = CURRENT_PRICE - 100 ether;
-        uint128 newLiqPrice = protocol.i_getLiquidationPrice(testData.validatePrice, uint128(protocol.getMaxLeverage()));
+        (, testData.maxLeverage,) = protocol.getEdgePositionValues();
+        uint128 newLiqPrice = protocol.i_getLiquidationPrice(testData.validatePrice, uint128(testData.maxLeverage));
         testData.validateTick = protocol.getEffectiveTickForPrice(
             newLiqPrice,
             testData.validatePrice,
@@ -293,10 +295,11 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
      */
     function test_validateOpenPositionAboveMaxLeverageDifferentPenalty() public {
         TestData memory data;
+        (, uint256 maxLeverage,) = protocol.getEdgePositionValues();
         // calculate the future expected tick for the position we will validate later
         data.validatePrice = CURRENT_PRICE - 100 ether;
         data.validateTick = protocol.getEffectiveTickForPrice(
-            protocol.i_getLiquidationPrice(data.validatePrice, uint128(protocol.getMaxLeverage())),
+            protocol.i_getLiquidationPrice(data.validatePrice, uint128(maxLeverage)),
             data.validatePrice,
             uint256(protocol.getLongTradingExpo(data.validatePrice)),
             protocol.getLiqMultiplierAccumulator(),

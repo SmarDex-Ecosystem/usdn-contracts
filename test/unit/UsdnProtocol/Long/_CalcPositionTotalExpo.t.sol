@@ -27,11 +27,13 @@ contract TestUsdnProtocolLongCalcPositionTotalExpo is UsdnProtocolBaseFixture {
      * @custom:then The result is equal to the result of the Rust implementation
      */
     function testFuzzFFI_calcPositionTotalExpo(uint128 amount, uint256 startPrice, uint256 liqPrice) public {
+        (uint256 minLeverage, uint256 maxLeverage,) = protocol.getEdgePositionValues();
+
         uint256 levDecimals = 10 ** Constants.LEVERAGE_DECIMALS;
-        amount = bound(amount, 1, type(uint128).max * levDecimals / protocol.getMaxLeverage()).toUint128();
+        amount = bound(amount, 1, type(uint128).max * levDecimals / maxLeverage).toUint128();
         startPrice = bound(startPrice, TickMath.MIN_PRICE, type(uint128).max);
-        uint256 minLiqrice = startPrice - (startPrice * levDecimals / protocol.getMinLeverage());
-        uint256 maxLiqrice = startPrice - (startPrice * levDecimals / protocol.getMaxLeverage());
+        uint256 minLiqrice = startPrice - (startPrice * levDecimals / minLeverage);
+        uint256 maxLiqrice = startPrice - (startPrice * levDecimals / maxLeverage);
         liqPrice = bound(liqPrice, minLiqrice, maxLiqrice);
 
         bytes memory result =

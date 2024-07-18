@@ -145,18 +145,17 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getRebalancer() external view returns (IBaseRebalancer);
 
     /**
-     * @notice Get the lowest leverage used to open a position
-     * @return The minimum leverage (with `LEVERAGE_DECIMALS` decimals)
+     * @notice Get edge values for the position
+     * @return minLeverage_ The minimum leverage value to open a position, with `LEVERAGE_DECIMALS` decimals
+     * @return maxLeverage_ The highest leverage value to open a position, with `LEVERAGE_DECIMALS` decimals (A position
+     * can have a leverage a bit higher than this value under specific conditions involving a change to the liquidation
+     * penalty setting)
+     * @return minLongPosition_ The minimum amount of collateral to open a long position (in `_assetDecimals`)
      */
-    function getMinLeverage() external view returns (uint256, uint256);
-
-    // /**
-    //  * @notice Get the highest leverage used to open a position
-    //  * @dev A position can have a leverage a bit higher than this value under specific conditions involving
-    //  * a change to the liquidation penalty setting
-    //  * @return The maximum leverage value (with `LEVERAGE_DECIMALS` decimals)
-    //  */
-    // function getMaxLeverage() external view returns (uint256);
+    function getEdgePositionValues()
+        external
+        view
+        returns (uint256 minLeverage_, uint256 maxLeverage_, uint256 minLongPosition_);
 
     /**
      * @notice Get the amount of time a user can validate its action, after which other users can do it
@@ -283,12 +282,6 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * @return The interval between 2 rebase checks (in seconds)
      */
     function getUsdnRebaseInterval() external view returns (uint256);
-
-    /**
-     * @notice Get the minimum collateral amount when opening a long position
-     * @return The minimum amount (with `_assetDecimals`)
-     */
-    function getMinLongPosition() external view returns (uint256);
 
     /* -------------------------------------------------------------------------- */
     /*                                    State getters                           */

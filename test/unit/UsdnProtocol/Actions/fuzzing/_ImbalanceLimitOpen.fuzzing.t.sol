@@ -23,7 +23,9 @@ contract TestImbalanceLimitOpenFuzzing is UsdnProtocolBaseFixture {
         // initialize random balanced protocol
         _randInitBalanced(initialAmount);
 
-        leverage = bound(leverage, protocol.getMinLeverage(), protocol.getMaxLeverage());
+        (uint256 minLeverage, uint256 maxLeverage,) = protocol.getEdgePositionValues();
+
+        leverage = bound(leverage, minLeverage, maxLeverage);
         // range withdrawalAmount properly
         openAmount = bound(openAmount, 1, type(uint128).max);
         // total expo to add

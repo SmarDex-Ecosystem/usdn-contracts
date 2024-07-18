@@ -59,7 +59,8 @@ contract TestRebalancerAdmin is RebalancerFixture {
      * @custom:then The value should have changed
      */
     function test_setMinAssetDeposit() public adminPrank {
-        uint256 newValue = usdnProtocol.getMinLongPosition() + 1 ether;
+        (,, uint256 newValue) = usdnProtocol.getEdgePositionValues();
+        newValue += 1 ether;
 
         vm.expectEmit();
         emit MinAssetDepositUpdated(newValue);
@@ -75,7 +76,7 @@ contract TestRebalancerAdmin is RebalancerFixture {
      * @custom:then The transaction reverts
      */
     function test_RevertWhen_setMinAssetDeposit_Invalid() public adminPrank {
-        uint256 minLimit = usdnProtocol.getMinLongPosition();
+        (,, uint256 minLimit) = usdnProtocol.getEdgePositionValues();
         assertGt(minLimit, 0, "the minimum of the protocol should be greater than 0");
 
         vm.expectRevert(RebalancerInvalidMinAssetDeposit.selector);
@@ -104,7 +105,7 @@ contract TestRebalancerAdmin is RebalancerFixture {
      * @custom:then The call reverts with a {RebalancerInvalidMaxLeverage} error
      */
     function test_RevertWhen_setPositionMaxLeverageWithLeverageTooLow() public adminPrank {
-        uint256 minLeverage = usdnProtocol.getMinLeverage();
+        (uint256 minLeverage,,) = usdnProtocol.getEdgePositionValues();
 
         vm.expectRevert(RebalancerInvalidMaxLeverage.selector);
         rebalancer.setPositionMaxLeverage(minLeverage - 1);
@@ -117,7 +118,7 @@ contract TestRebalancerAdmin is RebalancerFixture {
      * @custom:then The call reverts with a {RebalancerInvalidMaxLeverage} error
      */
     function test_RevertWhen_setPositionMaxLeverageWithLeverageTooHigh() public adminPrank {
-        uint256 maxLeverage = usdnProtocol.getMaxLeverage();
+        (, uint256 maxLeverage,) = usdnProtocol.getEdgePositionValues();
 
         vm.expectRevert(RebalancerInvalidMaxLeverage.selector);
         rebalancer.setPositionMaxLeverage(maxLeverage + 1);
@@ -130,7 +131,7 @@ contract TestRebalancerAdmin is RebalancerFixture {
      * @custom:then The call reverts with an {OwnableUnauthorizedAccount} error
      */
     function test_RevertWhen_setPositionMaxLeverageWithCallerNotTheOwner() public {
-        uint256 maxLeverage = usdnProtocol.getMaxLeverage();
+        (, uint256 maxLeverage,) = usdnProtocol.getEdgePositionValues();
 
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
         rebalancer.setPositionMaxLeverage(maxLeverage - 1);
@@ -144,7 +145,7 @@ contract TestRebalancerAdmin is RebalancerFixture {
      * @custom:and A {PositionMaxLeverageUpdated} event is emitted
      */
     function test_setPositionMaxLeverage() public adminPrank {
-        uint256 maxLeverage = usdnProtocol.getMaxLeverage();
+        (, uint256 maxLeverage,) = usdnProtocol.getEdgePositionValues();
         uint256 newMaxLeverage = maxLeverage - 1;
 
         vm.expectEmit();

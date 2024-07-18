@@ -347,8 +347,9 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
      * @custom:then The protocol reverts with UsdnProtocolLeverageTooHigh
      */
     function test_RevertWhen_initiateOpenPositionHighLeverage() public {
+        (, uint256 maxLeverage,) = protocol.getEdgePositionValues();
         // max liquidation price without liquidation penalty
-        uint256 maxLiquidationPrice = protocol.i_getLiquidationPrice(CURRENT_PRICE, uint128(protocol.getMaxLeverage()));
+        uint256 maxLiquidationPrice = protocol.i_getLiquidationPrice(CURRENT_PRICE, uint128(maxLeverage));
         // add 3% to be above max liquidation price including penalty
         uint128 desiredLiqPrice = uint128(maxLiquidationPrice * 1.03 ether / 1 ether);
 
