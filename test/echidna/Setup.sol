@@ -48,12 +48,20 @@ contract Setup is Test, ErrorsChecked {
         uint256 senderWsteth;
         uint256 senderSdex;
         uint256 senderUsdnShares;
-        uint256 protocolEth;
-        uint256 protocolWsteth;
-        uint256 protocolUsdnShares;
         uint256 toEth;
         uint256 toUsdnShares;
         uint256 toWsteth;
+    }
+
+    struct ProtocolSnapshot {
+        uint256 protocolEth;
+        uint256 protocolWsteth;
+        uint256 protocolUsdnShares;
+    }
+
+    struct RebalancerSnapshot {
+        uint256 rebalancerEth;
+        uint256 rebalancerWsteth;
     }
 
     constructor() payable {
@@ -110,12 +118,24 @@ contract Setup is Test, ErrorsChecked {
             senderWsteth: wsteth.balanceOf(msg.sender),
             senderSdex: sdex.balanceOf(msg.sender),
             senderUsdnShares: usdn.sharesOf(msg.sender),
-            protocolEth: address(usdnProtocol).balance,
-            protocolWsteth: wsteth.balanceOf(address(usdnProtocol)),
-            protocolUsdnShares: usdn.sharesOf(address(usdnProtocol)),
             toEth: address(to).balance,
             toUsdnShares: usdn.sharesOf(to),
             toWsteth: wsteth.balanceOf(to)
+        });
+    }
+
+    function getBalancesProtocol() internal view returns (ProtocolSnapshot memory) {
+        return ProtocolSnapshot({
+            protocolEth: address(usdnProtocol).balance,
+            protocolWsteth: wsteth.balanceOf(address(usdnProtocol)),
+            protocolUsdnShares: usdn.sharesOf(address(usdnProtocol))
+        });
+    }
+
+    function getBalancesRebalancer() internal view returns (RebalancerSnapshot memory) {
+        return RebalancerSnapshot({
+            rebalancerEth: address(rebalancer).balance,
+            rebalancerWsteth: wsteth.balanceOf(address(rebalancer))
         });
     }
 }
