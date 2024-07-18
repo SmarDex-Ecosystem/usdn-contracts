@@ -12,12 +12,22 @@ import { SignedMath } from "../../../src/libraries/SignedMath.sol";
 import { TickMath } from "../../../src/libraries/TickMath.sol";
 
 contract ErrorsChecked is Test {
+    /* -------------------------------------------------------------------------- */
+    /*                              Common errors                                 */
+    /* -------------------------------------------------------------------------- */
+    bytes4[] public INITIATE_ERRORS = [
+        IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow.selector,
+        IUsdnProtocolErrors.UsdnProtocolZeroAmount.selector,
+        IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector,
+        IUsdnProtocolErrors.UsdnProtocolZeroAmount.selector
+    ];
+
+    /* -------------------------------------------------------------------------- */
+    /*                           Functionnal errors                               */
+    /* -------------------------------------------------------------------------- */
     bytes4[][] public INITIATE_DEPOSIT_ERRORS = [
         [
-            IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow.selector,
             IUsdnProtocolErrors.UsdnProtocolInvalidAddressValidator.selector,
-            IUsdnProtocolErrors.UsdnProtocolZeroAmount.selector,
-            IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector,
             IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector,
             IUsdnProtocolErrors.UsdnProtocolDepositTooSmall.selector,
             IUsdnProtocolErrors.UsdnProtocolInvalidLongExpo.selector,
@@ -29,10 +39,7 @@ contract ErrorsChecked is Test {
     ];
     bytes4[][] public INITIATE_OPEN_ERRORS = [
         [
-            IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow.selector,
-            IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector,
             IUsdnProtocolErrors.UsdnProtocolInvalidAddressValidator.selector,
-            IUsdnProtocolErrors.UsdnProtocolZeroAmount.selector,
             IUsdnProtocolErrors.UsdnProtocolLongPositionTooSmall.selector,
             IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction.selector,
             IUsdnErrors.UsdnInsufficientSharesBalance.selector
@@ -40,9 +47,6 @@ contract ErrorsChecked is Test {
     ];
     bytes4[][] public INITIATE_WITHDRAWAL_ERRORS = [
         [
-            IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector,
-            IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow.selector,
-            IUsdnProtocolErrors.UsdnProtocolZeroAmount.selector,
             SignedMath.SignedMathDivideByZero.selector,
             IUsdnErrors.UsdnInsufficientSharesBalance.selector,
             TickMath.TickMathInvalidPrice.selector
@@ -62,6 +66,13 @@ contract ErrorsChecked is Test {
     bytes4[][] public VALIDATE_OPEN_ERRORS = [[IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector]];
 
     bytes4[][] public VALIDATE_PENDING_ACTIONS_ERRORS = [[IUsdnProtocolErrors.UsdnProtocolEtherRefundFailed.selector]];
+
+    constructor() {
+        bytes4[] memory initiateErrors = INITIATE_ERRORS;
+        INITIATE_DEPOSIT_ERRORS.push(initiateErrors);
+        INITIATE_OPEN_ERRORS.push(initiateErrors);
+        INITIATE_WITHDRAWAL_ERRORS.push(initiateErrors);
+    }
 
     function _checkErrors(bytes memory err, bytes4[][] memory errorsArrays) internal {
         bool expected = false;
