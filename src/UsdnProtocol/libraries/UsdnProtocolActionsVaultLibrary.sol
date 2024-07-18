@@ -22,6 +22,8 @@ import { UsdnProtocolLongLibrary as Long } from "./UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolUtils as Utils } from "./UsdnProtocolUtils.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.sol";
 
+import { console2 } from "forge-std/Test.sol";
+
 library UsdnProtocolActionsVaultLibrary {
     using SafeTransferLib for address;
     using SafeCast for uint256;
@@ -865,6 +867,7 @@ library UsdnProtocolActionsVaultLibrary {
         }
         uint256 length = data.priceData.length;
         if (data.rawIndices.length != length || length < 1) {
+            console2.log("1", length);
             return (false, false, false, 0);
         }
         uint128 offset;

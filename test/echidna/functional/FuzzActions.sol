@@ -194,11 +194,23 @@ contract FuzzActions is Setup {
 
         BalancesSnapshot memory balancesBefore = getBalances(validator, msg.sender);
 
+        (
+            IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
+            ,
+            IUsdnProtocolTypes.PendingAction memory lastAction,
+        ) = getPreviousActionsData(msg.sender, currentPrice);
+
         vm.prank(msg.sender);
-        try usdnProtocol.validateOpenPosition(validator, priceData, EMPTY_PREVIOUS_DATA) returns (bool success) {
+        try usdnProtocol.validateOpenPosition(validator, priceData, previousActionsData) returns (bool success) {
             if (success) {
-                assert(address(validator).balance == balancesBefore.validatorEth + securityDeposit);
-                assert(address(usdnProtocol).balance == balancesBefore.protocolEth - securityDeposit);
+                assert(
+                    address(validator).balance
+                        == balancesBefore.validatorEth + securityDeposit + lastAction.securityDepositValue
+                );
+                assert(
+                    address(usdnProtocol).balance
+                        == balancesBefore.protocolEth - securityDeposit - lastAction.securityDepositValue
+                );
             } else {
                 assert(address(validator).balance == balancesBefore.validatorEth);
                 assert(address(usdnProtocol).balance == balancesBefore.protocolEth);
@@ -213,34 +225,50 @@ contract FuzzActions is Setup {
     function validatePendingActions(uint256 maxValidations, uint256 currentPrice) public {
         uint256 balanceBefore = address(msg.sender).balance;
         uint256 balanceBeforeProtocol = address(usdnProtocol).balance;
-        uint256 securityDeposit;
 
-        (IUsdnProtocolTypes.PendingAction[] memory actions, uint128[] memory rawIndices) =
-            usdnProtocol.getActionablePendingActions(address(0));
-        if (rawIndices.length == 0) {
-            return;
-        }
-        bytes[] memory priceData = new bytes[](rawIndices.length);
-        for (uint256 i = 0; i < rawIndices.length; i++) {
-            priceData[i] = abi.encode(currentPrice);
-            securityDeposit += actions[i].securityDepositValue;
-        }
-        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData =
-            IUsdnProtocolTypes.PreviousActionsData({ priceData: priceData, rawIndices: rawIndices });
+        (
+            IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
+            uint256 securityDeposit,
+            ,
+            uint256 actionsLength
+        ) = getPreviousActionsData(msg.sender, currentPrice);
 
         vm.prank(msg.sender);
         try usdnProtocol.validateActionablePendingActions(previousActionsData, maxValidations) returns (
             uint256 validatedActions
         ) {
             assert(
-                actions.length < maxValidations
-                    ? validatedActions == actions.length
-                    : validatedActions == maxValidations
+                actionsLength < maxValidations ? validatedActions == actionsLength : validatedActions == maxValidations
             );
             assert(address(msg.sender).balance == balanceBefore + securityDeposit);
             assert(address(usdnProtocol).balance == balanceBeforeProtocol - securityDeposit);
         } catch (bytes memory err) {
             _checkErrors(err, VALIDATE_PENDING_ACTIONS_ERRORS);
         }
+    }
+
+    function getPreviousActionsData(address user, uint256 currentPrice)
+        public
+        view
+        returns (
+            IUsdnProtocolTypes.PreviousActionsData memory previousActionsData_,
+            uint256 securityDeposit_,
+            IUsdnProtocolTypes.PendingAction memory lastAction_,
+            uint256 actionsLength_
+        )
+    {
+        (IUsdnProtocolTypes.PendingAction[] memory actions, uint128[] memory rawIndices) =
+            usdnProtocol.getActionablePendingActions(user);
+        if (rawIndices.length == 0) {
+            return (previousActionsData_, securityDeposit_, lastAction_, 0);
+        }
+        bytes[] memory priceData = new bytes[](rawIndices.length);
+        for (uint256 i = 0; i < rawIndices.length; i++) {
+            priceData[i] = abi.encode(currentPrice);
+            securityDeposit_ += actions[i].securityDepositValue;
+        }
+        lastAction_ = actions[actions.length - 1];
+        actionsLength_ = actions.length;
+        previousActionsData_ = IUsdnProtocolTypes.PreviousActionsData({ priceData: priceData, rawIndices: rawIndices });
     }
 }
