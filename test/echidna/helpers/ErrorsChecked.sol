@@ -22,14 +22,14 @@ contract ErrorsChecked is Test {
         IUsdnProtocolErrors.UsdnProtocolInvalidLongExpo.selector,
         IUsdnProtocolErrors.UsdnProtocolPendingAction.selector,
         FixedPointMathLib.FullMulDivFailed.selector,
-        SignedMath.SignedMathDivideByZero.selector
+        SignedMath.SignedMathDivideByZero.selector,
+        IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction.selector
     ];
 
     bytes4[] public INITIATE_DEPOSIT_ERRORS = [SafeTransferLib.TransferFromFailed.selector];
 
     bytes4[] public INITIATE_OPEN_ERRORS = [
         IUsdnProtocolErrors.UsdnProtocolLongPositionTooSmall.selector,
-        IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction.selector,
         IUsdnErrors.UsdnInsufficientSharesBalance.selector
     ];
 
@@ -38,10 +38,7 @@ contract ErrorsChecked is Test {
 
     bytes4[] public VALIDATE_DEPOSIT_ERRORS;
 
-    bytes4[] public VALIDATE_WITHDRAWAL_ERRORS = [
-        IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector,
-        IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction.selector
-    ];
+    bytes4[] public VALIDATE_WITHDRAWAL_ERRORS = [IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector];
 
     bytes4[] public VALIDATE_OPEN_ERRORS = [IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector];
 
