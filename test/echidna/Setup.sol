@@ -40,7 +40,7 @@ contract Setup is Test, ErrorsChecked {
     UsdnProtocolHandler public usdnProtocol;
     Rebalancer public rebalancer;
 
-    struct BalancesSnapshot {
+    struct ProtocolSnapshot {
         uint256 validatorEth;
         uint256 validatorWsteth;
         uint256 validatorUsdnShares;
@@ -51,15 +51,16 @@ contract Setup is Test, ErrorsChecked {
         uint256 toEth;
         uint256 toUsdnShares;
         uint256 toWsteth;
-    }
-
-    struct ProtocolSnapshot {
         uint256 protocolEth;
         uint256 protocolWsteth;
         uint256 protocolUsdnShares;
     }
 
     struct RebalancerSnapshot {
+        uint256 senderEth;
+        uint256 senderWsteth;
+        uint256 toEth;
+        uint256 toWsteth;
         uint256 rebalancerEth;
         uint256 rebalancerWsteth;
     }
@@ -109,8 +110,8 @@ contract Setup is Test, ErrorsChecked {
         destinationsToken[address(wsteth)] = [DEPLOYER, ATTACKER];
     }
 
-    function getBalances(address validator, address to) internal view returns (BalancesSnapshot memory) {
-        return BalancesSnapshot({
+    function getBalancesProtocol(address validator, address to) internal view returns (ProtocolSnapshot memory) {
+        return ProtocolSnapshot({
             validatorEth: validator.balance,
             validatorWsteth: wsteth.balanceOf(validator),
             validatorUsdnShares: usdn.sharesOf(validator),
@@ -120,20 +121,19 @@ contract Setup is Test, ErrorsChecked {
             senderUsdnShares: usdn.sharesOf(msg.sender),
             toEth: address(to).balance,
             toUsdnShares: usdn.sharesOf(to),
-            toWsteth: wsteth.balanceOf(to)
-        });
-    }
-
-    function getBalancesProtocol() internal view returns (ProtocolSnapshot memory) {
-        return ProtocolSnapshot({
+            toWsteth: wsteth.balanceOf(to),
             protocolEth: address(usdnProtocol).balance,
             protocolWsteth: wsteth.balanceOf(address(usdnProtocol)),
             protocolUsdnShares: usdn.sharesOf(address(usdnProtocol))
         });
     }
 
-    function getBalancesRebalancer() internal view returns (RebalancerSnapshot memory) {
+    function getBalancesRebalancer(address dest) internal view returns (RebalancerSnapshot memory) {
         return RebalancerSnapshot({
+            senderEth: msg.sender.balance,
+            senderWsteth: wsteth.balanceOf(msg.sender),
+            toEth: dest.balance,
+            toWsteth: wsteth.balanceOf(dest),
             rebalancerEth: address(rebalancer).balance,
             rebalancerWsteth: wsteth.balanceOf(address(rebalancer))
         });
