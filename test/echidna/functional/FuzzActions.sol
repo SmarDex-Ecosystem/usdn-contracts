@@ -330,9 +330,8 @@ contract FuzzActions is Setup {
     }
 
     function setFeeCollector(address newFeeCollector) public {
-        if (newFeeCollector != address(0)) {
-            usdnProtocol.setFeeCollector(newFeeCollector);
-        }
+        require(newFeeCollector != address(0));
+        usdnProtocol.setFeeCollector(newFeeCollector);
     }
 
     function setExpoImbalanceLimits(
