@@ -148,7 +148,6 @@ contract FuzzingSuiteTest is Test {
         usdnProtocol.initiateDeposit{ value: securityDeposit }(
             amountWstETH / 2, USER_2, payable(USER_2), echidna.NO_PERMIT2(), abi.encode(etherPrice), EMPTY_PREVIOUS_DATA
         );
-        skip(usdnProtocol.getValidationDeadline() + 1);
         usdnProtocol.initiateOpenPosition{ value: securityDeposit }(
             wstethOpenPositionAmount,
             liquidationPrice,
@@ -164,13 +163,14 @@ contract FuzzingSuiteTest is Test {
         uint256 balanceBeforeProtocol = address(usdnProtocol).balance;
         uint256 balanceWstEthBefore = wsteth.balanceOf(DEPLOYER);
 
-        skip(wstEthOracleMiddleware.getValidationDelay() + 1);
+        skip(usdnProtocol.getValidationDeadline() + 1);
+        vm.prank(DEPLOYER);
         echidna.validateOpen(uint256(uint160(DEPLOYER)), etherPrice);
 
         IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(DEPLOYER);
         assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.None, "action type");
-        assertEq(DEPLOYER.balance, balanceBefore + securityDeposit * 3, "DEPLOYER balance");
-        assertEq(address(usdnProtocol).balance, balanceBeforeProtocol - securityDeposit * 3, "protocol balance");
+        assertEq(DEPLOYER.balance, balanceBefore + securityDeposit * 2, "DEPLOYER balance");
+        assertEq(address(usdnProtocol).balance, balanceBeforeProtocol - securityDeposit * 2, "protocol balance");
         assertEq(wsteth.balanceOf(DEPLOYER), balanceWstEthBefore, "wstETH balance");
     }
 
