@@ -373,23 +373,10 @@ library UsdnProtocolActionsLongLibrary {
                 s, maxLeverageData.newPosId.tick, data.pos, maxLeverageData.liquidationPenalty
             );
 
-            // we now need to adjust the balances because the position that we created during the initiateOpenPosition
-            // might have gained or lost some value, and we need to reflect that the position value is now
-            // `updatedPosValue` any potential PnL on that temporary position must be "cancelled" so that it doesn't
-            // affect the other positions and the vault
+            // adjust the balances to reflect the new value of the position
             uint256 updatedPosValue =
                 Utils.positionValue(data.pos.totalExpo, data.currentPrice, data.liqPriceWithoutPenalty);
-            if (updatedPosValue > data.oldPosValue) {
-                // the long side is missing some value, we need to take it from the vault
-                uint256 diff = updatedPosValue - data.oldPosValue;
-                s._balanceVault -= diff;
-                s._balanceLong += diff;
-            } else if (updatedPosValue < data.oldPosValue) {
-                // the long side has too much value, we need to give it to the vault side
-                uint256 diff = data.oldPosValue - updatedPosValue;
-                s._balanceVault += diff;
-                s._balanceLong -= diff;
-            }
+            _validateOpenPositionUpdateBalances(s, updatedPosValue, data.oldPosValue);
 
             emit IUsdnProtocolEvents.LiquidationPriceUpdated(
                 Types.PositionId({
@@ -430,22 +417,9 @@ library UsdnProtocolActionsLongLibrary {
             ).sub(HugeUint.wrap(expoBefore * unadjustedTickPrice));
         }
 
-        // we now need to adjust the balances because the position that we created during the initiateOpenPosition might
-        // have gained or lost some value, and we need to reflect that the position value is now `newPosValue`
-        // any potential PnL on that temporary position must be "cancelled" so that it doesn't affect the other
-        // positions and the vault
+        // adjust the balances to reflect the new value of the position
         uint256 newPosValue = Utils.positionValue(expoAfter, data.currentPrice, data.liqPriceWithoutPenalty);
-        if (newPosValue > data.oldPosValue) {
-            // the long side is missing some value, we need to take it from the vault
-            uint256 diff = newPosValue - data.oldPosValue;
-            s._balanceVault -= diff;
-            s._balanceLong += diff;
-        } else if (newPosValue < data.oldPosValue) {
-            // the long side has too much value, we need to give it to the vault side
-            uint256 diff = data.oldPosValue - newPosValue;
-            s._balanceVault += diff;
-            s._balanceLong -= diff;
-        }
+        _validateOpenPositionUpdateBalances(s, newPosValue, data.oldPosValue);
 
         isValidated_ = true;
         emit IUsdnProtocolEvents.ValidatedOpenPosition(
@@ -677,5 +651,33 @@ library UsdnProtocolActionsLongLibrary {
             assetToTransfer,
             assetToTransfer.toInt256() - Utils.toInt256(long.closeAmount)
         );
+    }
+
+    /**
+     * @notice Update the protocol balances during `validateOpenPosition` to reflect the new entry price of the
+     * position
+     * @dev We need to adjust the balances because the position that was created during the `initiateOpenPosition` might
+     * have gained or lost some value, and we need to reflect that the position value is now `newPosValue`
+     * Any potential PnL on that temporary position must be "cancelled" so that it doesn't affect the other positions
+     * and the vault
+     * @param s The storage of the protocol
+     * @param newPosValue The new value of the position
+     * @param oldPosValue The value of the position at the current price, using its old parameters
+     */
+    function _validateOpenPositionUpdateBalances(Types.Storage storage s, uint256 newPosValue, uint256 oldPosValue)
+        private
+    {
+        if (newPosValue > oldPosValue) {
+            // the long side is missing some value, we need to take it from the vault
+            uint256 diff = newPosValue - oldPosValue;
+            s._balanceVault -= diff;
+            s._balanceLong += diff;
+        } else if (newPosValue < oldPosValue) {
+            // the long side has too much value, we need to give it to the vault side
+            uint256 diff = oldPosValue - newPosValue;
+            s._balanceVault += diff;
+            s._balanceLong -= diff;
+        }
+        // if both are equal, no action is needed
     }
 }
