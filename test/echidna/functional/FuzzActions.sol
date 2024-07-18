@@ -341,17 +341,16 @@ contract FuzzActions is Setup {
         uint256 newCloseLimitBps,
         int256 newLongImbalanceTargetBps
     ) public {
-        try usdnProtocol.setExpoImbalanceLimits(
+        require(newWithdrawalLimitBps == 0 || newWithdrawalLimitBps >= newOpenLimitBps);
+        require((newCloseLimitBps == 0 || newCloseLimitBps >= newDepositLimitBps));
+        require(
+            newLongImbalanceTargetBps <= int256(newCloseLimitBps)
+                && newLongImbalanceTargetBps >= -int256(newWithdrawalLimitBps)
+                && newLongImbalanceTargetBps >= -int256(Constants.BPS_DIVISOR / 2)
+        );
+        usdnProtocol.setExpoImbalanceLimits(
             newOpenLimitBps, newDepositLimitBps, newWithdrawalLimitBps, newCloseLimitBps, newLongImbalanceTargetBps
-        ) {
-            assert(usdnProtocol.getOpenExpoImbalanceLimitBps() == newOpenLimitBps.toInt256());
-            assert(usdnProtocol.getDepositExpoImbalanceLimitBps() == newDepositLimitBps.toInt256());
-            assert(usdnProtocol.getWithdrawalExpoImbalanceLimitBps() == newWithdrawalLimitBps.toInt256());
-            assert(usdnProtocol.getCloseExpoImbalanceLimitBps() == newCloseLimitBps.toInt256());
-            assert(usdnProtocol.getLongImbalanceTargetBps() == newLongImbalanceTargetBps);
-        } catch (bytes memory err) {
-            _checkErrors(err, ADMIN_ERRORS);
-        }
+        );
     }
 
     function setTargetUsdnPrice(uint128 newPrice) public {

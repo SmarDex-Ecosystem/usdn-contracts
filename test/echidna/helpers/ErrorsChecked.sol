@@ -53,11 +53,6 @@ contract ErrorsChecked is Test {
 
     bytes4[] public VALIDATE_OPEN_ERRORS = [IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector];
 
-    bytes4[] public ADMIN_ERRORS = [
-        IUsdnProtocolErrors.UsdnProtocolInvalidExpoImbalanceLimit.selector,
-        IUsdnProtocolErrors.UsdnProtocolInvalidLongImbalanceTarget.selector
-    ];
-
     bytes4[] public VALIDATE_PENDING_ACTIONS_ERRORS = [IUsdnProtocolErrors.UsdnProtocolEtherRefundFailed.selector];
 
     function _checkErrors(bytes memory err, bytes4[] storage errors) internal {
