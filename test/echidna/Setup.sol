@@ -13,6 +13,7 @@ import { MockLiquidationRewardsManager } from "./mock/MockLiquidationRewardsMana
 
 import { Rebalancer } from "../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../src/Usdn/Usdn.sol";
+import { UsdnProtocolCoreLibrary as Core } from "../../src/UsdnProtocol/libraries/UsdnProtocolCoreLibrary.sol";
 import { IWstETH } from "../../src/interfaces/IWstETH.sol";
 import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Permit2TokenBitfield } from "../../src/libraries/Permit2TokenBitfield.sol";
