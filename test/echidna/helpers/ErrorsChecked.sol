@@ -51,7 +51,7 @@ contract ErrorsChecked is Test {
         IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction.selector
     ];
 
-    bytes4[] public VALIDATE_CLOSE_ERRORS = [IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector];
+    bytes4[] public VALIDATE_OPEN_ERRORS = [IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector];
 
     bytes4[] public ADMIN_ERRORS = [
         IUsdnProtocolErrors.UsdnProtocolInvalidExpoImbalanceLimit.selector,
