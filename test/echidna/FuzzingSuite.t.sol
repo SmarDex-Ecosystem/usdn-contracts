@@ -8,6 +8,7 @@ import { USER_1, USER_2 } from "../utils/Constants.sol";
 import { WstETH } from "../utils/WstEth.sol";
 import { FuzzingSuite } from "./FuzzingSuite.sol";
 
+import { Rebalancer } from "../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../src/Usdn/Usdn.sol";
 import { UsdnProtocol } from "../../src/UsdnProtocol/UsdnProtocol.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
@@ -16,6 +17,7 @@ import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProto
 contract FuzzingSuiteTest is Test {
     FuzzingSuite public echidna;
     UsdnProtocol public usdnProtocol;
+    Rebalancer public rebalancer;
     MockOracleMiddleware public wstEthOracleMiddleware;
     WstETH public wsteth;
     Usdn public usdn;
@@ -36,6 +38,7 @@ contract FuzzingSuiteTest is Test {
         wstEthOracleMiddleware = echidna.wstEthOracleMiddleware();
         wsteth = echidna.wsteth();
         usdn = echidna.usdn();
+        rebalancer = echidna.rebalancer();
 
         vm.prank(address(usdnProtocol));
         usdn.mintShares(DEPLOYER, usdnShares);
@@ -174,5 +177,22 @@ contract FuzzingSuiteTest is Test {
 
         assertEq(DEPLOYER.balance, balanceBefore + securityDeposit * 2, "DEPLOYER balance");
         assertEq(address(usdnProtocol).balance, balanceBeforeProtocol - securityDeposit * 2, "protocol balance");
+    }
+
+    function test_canInitiateDepositRebalancer() public {
+        uint88 wstethDepositAmount = 5 ether;
+        vm.deal(DEPLOYER, 10 ether);
+        deal(address(wsteth), address(DEPLOYER), wstethDepositAmount);
+        uint256 balanceBefore = DEPLOYER.balance;
+
+        vm.prank(DEPLOYER);
+        wsteth.approve(address(rebalancer), wstethDepositAmount);
+        vm.prank(DEPLOYER);
+        echidna.initiateDepositRebalancer(wstethDepositAmount, DEPLOYER);
+
+        assertEq(DEPLOYER.balance, balanceBefore, "deployer eth balance");
+        assertEq(wsteth.balanceOf(DEPLOYER), 0, "deployer wsteth balance");
+        assertEq(wsteth.balanceOf(address(rebalancer)), wstethDepositAmount, "rebalancer wsteth balance");
+        assertEq(address(rebalancer).balance, 0, "rebalancer eth balance");
     }
 }

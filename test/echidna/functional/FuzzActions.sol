@@ -247,6 +247,7 @@ contract FuzzActions is Setup {
     function initiateDepositRebalancer(uint88 amountRand, address destRand) public {
         require(destRand != address(0), "FuzzActions: Invalid destination address");
         require(amountRand >= rebalancer.getMinAssetDeposit(), "FuzzActions: Rebalancer insufficient amount");
+        vm.prank(msg.sender);
         try rebalancer.initiateDepositAssets(amountRand, destRand) { }
         catch (bytes memory err) {
             _checkErrors(err, INITIATE_DEPOSIT_REBALANCER);
