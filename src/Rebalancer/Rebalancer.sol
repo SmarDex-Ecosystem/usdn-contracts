@@ -132,7 +132,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         IERC20Metadata asset = usdnProtocol.getAsset();
         _asset = asset;
         _assetDecimals = asset.decimals();
-        _maxLeverage = usdnProtocol.getMaxLeverage();
+        (, _maxLeverage) = usdnProtocol.getMinLeverage();
         _minAssetDeposit = usdnProtocol.getMinLongPosition();
 
         // set allowance to allow the protocol to pull assets from this contract
@@ -168,7 +168,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     /// @inheritdoc IRebalancer
     function getPositionMaxLeverage() external view returns (uint256 maxLeverage_) {
         maxLeverage_ = _maxLeverage;
-        uint256 protocolMaxLeverage = _usdnProtocol.getMaxLeverage();
+        (, uint256 protocolMaxLeverage) = _usdnProtocol.getMinLeverage();
         if (protocolMaxLeverage < maxLeverage_) {
             return protocolMaxLeverage;
         }
@@ -573,7 +573,8 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
     /// @inheritdoc IRebalancer
     function setPositionMaxLeverage(uint256 newMaxLeverage) external onlyOwner {
-        if (newMaxLeverage < _usdnProtocol.getMinLeverage() || newMaxLeverage > _usdnProtocol.getMaxLeverage()) {
+        (uint256 minLeverage, uint256 maxLeverage) = _usdnProtocol.getMinLeverage();
+        if (newMaxLeverage < minLeverage || newMaxLeverage > maxLeverage) {
             revert RebalancerInvalidMaxLeverage();
         }
 

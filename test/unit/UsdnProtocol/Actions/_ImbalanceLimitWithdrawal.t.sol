@@ -6,6 +6,8 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
 /**
@@ -112,7 +114,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
         int256 newVaultExpo =
             int256(protocol.getBalanceVault()) + protocol.getPendingBalanceVault() - int256(withdrawalValueToLimit);
         int256 expectedImbalance = (int256(totalExpo - protocol.getBalanceLong()) - newVaultExpo)
-            * int256(protocol.BPS_DIVISOR()) / newVaultExpo;
+            * int256(Constants.BPS_DIVISOR) / newVaultExpo;
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -134,7 +136,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
 
         // the imbalance ratio: must be scaled for calculation
         uint256 scaledWithdrawalImbalanceRatio =
-            FixedPointMathLib.divWad(uint256(withdrawalLimitBps_), protocol.BPS_DIVISOR());
+            FixedPointMathLib.divWad(uint256(withdrawalLimitBps_), Constants.BPS_DIVISOR);
 
         // vault expo value limit from current long expo: numerator and denominator
         // are at the same scale and result is rounded up

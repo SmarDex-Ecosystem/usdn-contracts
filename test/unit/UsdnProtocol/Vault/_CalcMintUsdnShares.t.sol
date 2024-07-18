@@ -3,6 +3,9 @@ pragma solidity ^0.8.25;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
+
 /**
  * @custom:feature The _calcMintUsdnShares internal function of the UsdnProtocolVault contract.
  * @custom:background Given a protocol instance that was initialized with default params
@@ -32,8 +35,8 @@ contract TestUsdnProtocolCalcMintUsdnShares is UsdnProtocolBaseFixture {
         price = bound(price, 0, priceMax);
 
         uint8 assetDecimals = protocol.getAsset().decimals();
-        uint8 priceFeedDecimals = protocol.getPriceFeedDecimals();
-        uint8 tokensDecimals = protocol.TOKENS_DECIMALS();
+        uint8 priceFeedDecimals = protocol.getOracleMiddleware().getDecimals();
+        uint8 tokensDecimals = Constants.TOKENS_DECIMALS;
         uint8 decimals = assetDecimals + priceFeedDecimals - tokensDecimals;
 
         bytes memory result = vmFFIRustCommand(

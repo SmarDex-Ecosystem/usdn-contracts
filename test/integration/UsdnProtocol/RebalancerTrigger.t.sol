@@ -122,7 +122,6 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
             int256 withdrawalExpoImbalanceLimitBps,
             int256 openExpoImbalanceLimitBps,
             int256 closeExpoImbalanceLimitBps,
-            int256 longImbalanceTargetBps
         ) = protocol.getExpoImbalanceLimits();
 
         vm.startPrank(SET_PROTOCOL_PARAMS_ADMIN);

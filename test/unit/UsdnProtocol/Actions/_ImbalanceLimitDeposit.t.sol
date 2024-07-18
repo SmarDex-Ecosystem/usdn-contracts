@@ -4,6 +4,8 @@ pragma solidity ^0.8.25;
 import { ADMIN, DEPLOYER, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
 /**
@@ -125,7 +127,7 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
         int256 newVaultExpo =
             int256(protocol.getBalanceVault() + vaultExpoValueToLimit) + protocol.getPendingBalanceVault();
         int256 currentLongExpo = int256(protocol.getTotalExpo() - protocol.getBalanceLong());
-        int256 expectedImbalance = (newVaultExpo - currentLongExpo) * int256(protocol.BPS_DIVISOR()) / currentLongExpo;
+        int256 expectedImbalance = (newVaultExpo - currentLongExpo) * int256(Constants.BPS_DIVISOR) / currentLongExpo;
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -141,7 +143,7 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
         // deposit limit bps
         (depositLimitBps_,,,,) = protocol.getExpoImbalanceLimits();
         // current vault expo value to imbalance the protocol
-        int256 vaultExpoValueToLimit = int256(longExpo * uint256(depositLimitBps_) / protocol.BPS_DIVISOR());
+        int256 vaultExpoValueToLimit = int256(longExpo * uint256(depositLimitBps_) / Constants.BPS_DIVISOR);
         vaultExpoValueToLimit -= protocol.getPendingBalanceVault();
         require(vaultExpoValueToLimit > 0, "_ImbalanceLimitDeposit: deposit is not allowed");
         vaultExpoValueToLimit_ = uint256(vaultExpoValueToLimit);

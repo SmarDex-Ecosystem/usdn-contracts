@@ -4,6 +4,8 @@ pragma solidity ^0.8.25;
 import { ADMIN, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
 /**
@@ -364,7 +366,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
             // Sanity check
             uint256 expectedLeverage = protocol.i_getLeverage(data.validatePrice, expectedLiqPrice);
             // final leverage should be above 10x because of the stored liquidation penalty of the target tick
-            assertGt(expectedLeverage, uint128(10 * 10 ** protocol.LEVERAGE_DECIMALS()), "final leverage");
+            assertGt(expectedLeverage, uint128(10 * 10 ** Constants.LEVERAGE_DECIMALS), "final leverage");
         }
 
         // validate deposit with a lower entry price

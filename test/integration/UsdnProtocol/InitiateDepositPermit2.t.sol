@@ -6,6 +6,8 @@ import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { Permit2TokenBitfield } from "../../../src/libraries/Permit2TokenBitfield.sol";
 
 /**
@@ -57,7 +59,7 @@ contract TestForkUsdnProtocolInitiateDepositPermit2 is UsdnProtocolBaseIntegrati
     function test_ForkFFIInitiateDepositWithPermit2ForSdex() public {
         wstETH.approve(address(protocol), type(uint256).max);
         PERMIT2.approve(address(sdex), address(protocol), type(uint160).max, type(uint48).max);
-        uint256 balanceBefore = sdex.balanceOf(protocol.DEAD_ADDRESS());
+        uint256 balanceBefore = sdex.balanceOf(Constants.DEAD_ADDRESS);
         bool success = protocol.initiateDeposit{ value: protocol.getSecurityDepositValue() }(
             DEPOSIT_AMOUNT,
             address(this),
@@ -67,7 +69,7 @@ contract TestForkUsdnProtocolInitiateDepositPermit2 is UsdnProtocolBaseIntegrati
             EMPTY_PREVIOUS_DATA
         );
         assertTrue(success);
-        assertGt(sdex.balanceOf(protocol.DEAD_ADDRESS()), balanceBefore);
+        assertGt(sdex.balanceOf(Constants.DEAD_ADDRESS), balanceBefore);
     }
 
     /**
@@ -80,7 +82,7 @@ contract TestForkUsdnProtocolInitiateDepositPermit2 is UsdnProtocolBaseIntegrati
         PERMIT2.approve(address(wstETH), address(protocol), DEPOSIT_AMOUNT, type(uint48).max);
         PERMIT2.approve(address(sdex), address(protocol), type(uint160).max, type(uint48).max);
         uint256 assetBalanceBefore = wstETH.balanceOf(address(protocol));
-        uint256 sdexBalanceBefore = sdex.balanceOf(protocol.DEAD_ADDRESS());
+        uint256 sdexBalanceBefore = sdex.balanceOf(Constants.DEAD_ADDRESS);
         bool success = protocol.initiateDeposit{ value: protocol.getSecurityDepositValue() }(
             DEPOSIT_AMOUNT,
             address(this),
@@ -91,6 +93,6 @@ contract TestForkUsdnProtocolInitiateDepositPermit2 is UsdnProtocolBaseIntegrati
         );
         assertTrue(success);
         assertEq(wstETH.balanceOf(address(protocol)), assetBalanceBefore + DEPOSIT_AMOUNT);
-        assertGt(sdex.balanceOf(protocol.DEAD_ADDRESS()), sdexBalanceBefore);
+        assertGt(sdex.balanceOf(Constants.DEAD_ADDRESS), sdexBalanceBefore);
     }
 }

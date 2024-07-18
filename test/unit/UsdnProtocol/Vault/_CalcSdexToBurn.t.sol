@@ -3,6 +3,9 @@ pragma solidity ^0.8.25;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
+
 /**
  * @custom:feature The _calcSdexToBurn internal function of the UsdnProtocolVault contract.
  * @custom:background Given a protocol instance that was initialized with default params
@@ -21,7 +24,7 @@ contract TestUsdnProtocolCalcUsdnPrice is UsdnProtocolBaseFixture {
     function test_calcSdexToBurn() public view {
         uint32 burnRatio = protocol.getSdexBurnOnDepositRatio();
         uint256 burnRatioDivisor = protocol.SDEX_BURN_ON_DEPOSIT_DIVISOR();
-        uint8 usdnDecimals = protocol.TOKENS_DECIMALS();
+        uint8 usdnDecimals = Constants.TOKENS_DECIMALS;
 
         uint256 usdnToMint = 100 * 10 ** usdnDecimals;
         uint256 expectedSdexToBurn = usdnToMint * burnRatio / burnRatioDivisor;

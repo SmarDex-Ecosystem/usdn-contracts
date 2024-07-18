@@ -5,6 +5,9 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
+
 /**
  * @custom:feature The _checkSafetyMargin internal function of the UsdnProtocolLong contract.
  * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a
@@ -28,7 +31,7 @@ contract TestUsdnProtocolLongCheckSafetyMargin is UsdnProtocolBaseFixture {
     function test_RevertWhen_setLiquidationPriceWithoutSafetyMarginBps() public {
         uint128 currentPrice = 100 ether;
         uint128 liquidationPrice = 98 ether;
-        uint128 bpsDivisor = (protocol.BPS_DIVISOR()).toUint128();
+        uint128 bpsDivisor = (Constants.BPS_DIVISOR).toUint128();
         uint128 maxLiquidationPrice =
             (currentPrice * (bpsDivisor - protocol.getSafetyMarginBps()) / bpsDivisor).toUint128();
 

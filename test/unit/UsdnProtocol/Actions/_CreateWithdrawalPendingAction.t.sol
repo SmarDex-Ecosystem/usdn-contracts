@@ -6,6 +6,8 @@ import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { UsdnProtocolActionsVaultLibrary as ActionsVault } from
     "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsVaultLibrary.sol";
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 
 /**
  * @custom:feature Test the `_createWithdrawalPendingAction` internal function of the actions vault layer
@@ -27,7 +29,7 @@ contract TestUsdnProtocolActionsCreateWithdrawalPendingAction is UsdnProtocolBas
         data.totalExpo = 420 ether;
         data.balanceVault = 41 ether;
         data.balanceLong = 42 ether;
-        data.usdnTotalShares = 100_000 * (10 ** protocol.TOKENS_DECIMALS());
+        data.usdnTotalShares = 100_000 * (10 ** Constants.TOKENS_DECIMALS);
     }
 
     /**

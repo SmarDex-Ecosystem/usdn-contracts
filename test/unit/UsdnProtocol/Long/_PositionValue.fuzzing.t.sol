@@ -6,6 +6,8 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { TickMath } from "../../../../src/libraries/TickMath.sol";
 
 /**
@@ -36,7 +38,7 @@ contract TestUsdnProtocolFuzzingLong is UsdnProtocolBaseFixture {
         public
         view
     {
-        uint256 levDecimals = 10 ** protocol.LEVERAGE_DECIMALS();
+        uint256 levDecimals = 10 ** Constants.LEVERAGE_DECIMALS;
         uint256 maxLeverage = protocol.getMaxLeverage();
 
         // Set some boundaries for the fuzzed inputs
@@ -81,7 +83,7 @@ contract TestUsdnProtocolFuzzingLong is UsdnProtocolBaseFixture {
         uint128 currentPrice,
         uint256 leverage
     ) public view {
-        uint256 levDecimals = 10 ** protocol.LEVERAGE_DECIMALS();
+        uint256 levDecimals = 10 ** Constants.LEVERAGE_DECIMALS;
         uint256 maxLeverage = protocol.getMaxLeverage();
 
         // Set some boundaries for the fuzzed inputs

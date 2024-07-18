@@ -4,6 +4,8 @@ pragma solidity ^0.8.25;
 import { ADMIN, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
 /**
@@ -371,13 +373,13 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
      */
     function test_RevertWhen_initiateOpenPositionSafetyMargin() public {
         // set the max leverage very high to allow for such a case
-        uint8 leverageDecimals = protocol.LEVERAGE_DECIMALS();
+        uint8 leverageDecimals = Constants.LEVERAGE_DECIMALS;
         vm.prank(ADMIN);
         protocol.setMaxLeverage(uint128(100 * 10 ** leverageDecimals));
 
         // calculate expected error values
         uint128 expectedMaxLiqPrice =
-            uint128(CURRENT_PRICE * (protocol.BPS_DIVISOR() - protocol.getSafetyMarginBps()) / protocol.BPS_DIVISOR());
+            uint128(CURRENT_PRICE * (Constants.BPS_DIVISOR - protocol.getSafetyMarginBps()) / Constants.BPS_DIVISOR);
 
         int24 expectedTick = protocol.getEffectiveTickForPrice(CURRENT_PRICE);
         uint128 expectedLiqPrice = protocol.getEffectivePriceForTick(expectedTick);

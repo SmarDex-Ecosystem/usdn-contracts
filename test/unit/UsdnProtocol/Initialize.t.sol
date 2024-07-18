@@ -6,6 +6,8 @@ import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
 import { UsdnProtocolHandler } from "./utils/Handler.sol";
 
 import { Usdn } from "../../../src/Usdn/Usdn.sol";
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 
 /**
  * @custom:feature Test the functions linked to initialization of the protocol
@@ -65,15 +67,15 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
     function test_createInitialDeposit() public {
         uint256 expectedUsdnMinted = (
             uint256(INITIAL_DEPOSIT) * INITIAL_PRICE
-                / 10 ** (assetDecimals + protocol.getPriceFeedDecimals() - protocol.TOKENS_DECIMALS())
-        ) - protocol.MIN_USDN_SUPPLY();
+                / 10 ** (assetDecimals + protocol.getOracleMiddleware().getDecimals() - Constants.TOKENS_DECIMALS)
+        ) - Constants.MIN_USDN_SUPPLY;
         uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
 
         vm.expectEmit();
         emit InitiatedDeposit(address(this), address(this), INITIAL_DEPOSIT, block.timestamp);
         vm.expectEmit();
         emit ValidatedDeposit(
-            protocol.DEAD_ADDRESS(), protocol.DEAD_ADDRESS(), 0, protocol.MIN_USDN_SUPPLY(), block.timestamp
+            Constants.DEAD_ADDRESS, Constants.DEAD_ADDRESS, 0, Constants.MIN_USDN_SUPPLY, block.timestamp
         );
         vm.expectEmit();
         emit ValidatedDeposit(address(this), address(this), INITIAL_DEPOSIT, expectedUsdnMinted, block.timestamp);
@@ -82,7 +84,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         assertEq(wstETH.balanceOf(address(this)), assetBalanceBefore - INITIAL_DEPOSIT, "deployer wstETH balance");
         assertEq(wstETH.balanceOf(address(protocol)), INITIAL_DEPOSIT, "protocol wstETH balance");
         assertEq(usdn.balanceOf(address(this)), expectedUsdnMinted, "deployer USDN balance");
-        assertEq(usdn.balanceOf(protocol.DEAD_ADDRESS()), protocol.MIN_USDN_SUPPLY(), "dead address USDN balance");
+        assertEq(usdn.balanceOf(Constants.DEAD_ADDRESS), Constants.MIN_USDN_SUPPLY, "dead address USDN balance");
         assertEq(protocol.getBalanceVault(), INITIAL_DEPOSIT, "vault balance");
     }
 
@@ -213,8 +215,8 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
     function test_initialize() public {
         uint256 expectedUsdnMinted = (
             uint256(INITIAL_DEPOSIT) * INITIAL_PRICE
-                / 10 ** (assetDecimals + protocol.getPriceFeedDecimals() - protocol.TOKENS_DECIMALS())
-        ) - protocol.MIN_USDN_SUPPLY();
+                / 10 ** (assetDecimals + protocol.getOracleMiddleware().getDecimals() - Constants.TOKENS_DECIMALS)
+        ) - Constants.MIN_USDN_SUPPLY;
         int24 tickWithoutPenalty = protocol.getEffectiveTickForPrice(INITIAL_PRICE / 2);
         int24 expectedTick =
             tickWithoutPenalty + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
@@ -227,7 +229,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         emit InitiatedDeposit(address(this), address(this), INITIAL_DEPOSIT, block.timestamp);
         vm.expectEmit();
         emit ValidatedDeposit(
-            protocol.DEAD_ADDRESS(), protocol.DEAD_ADDRESS(), 0, protocol.MIN_USDN_SUPPLY(), block.timestamp
+            Constants.DEAD_ADDRESS, Constants.DEAD_ADDRESS, 0, Constants.MIN_USDN_SUPPLY, block.timestamp
         );
         vm.expectEmit();
         emit ValidatedDeposit(address(this), address(this), INITIAL_DEPOSIT, expectedUsdnMinted, block.timestamp);
@@ -254,7 +256,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         );
         assertEq(wstETH.balanceOf(address(protocol)), INITIAL_DEPOSIT + INITIAL_POSITION, "protocol wstETH balance");
         assertEq(usdn.balanceOf(address(this)), expectedUsdnMinted, "deployer USDN balance");
-        assertEq(usdn.balanceOf(protocol.DEAD_ADDRESS()), protocol.MIN_USDN_SUPPLY(), "dead address USDN balance");
+        assertEq(usdn.balanceOf(Constants.DEAD_ADDRESS), Constants.MIN_USDN_SUPPLY, "dead address USDN balance");
 
         (Position memory pos,) = protocol.getLongPosition(PositionId(expectedTick, 0, 0));
         assertEq(pos.user, address(this), "position user");
@@ -269,7 +271,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      * @custom:then The transaction reverts with the error `UsdnProtocolMinInitAmount`
      */
     function test_RevertWhen_initializeDepositAmountLow() public {
-        uint256 minDeposit = protocol.MIN_INIT_DEPOSIT();
+        uint256 minDeposit = Constants.MIN_INIT_DEPOSIT;
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolMinInitAmount.selector, minDeposit));
         protocol.initialize(uint128(minDeposit - 1), INITIAL_POSITION, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE));
     }
@@ -280,7 +282,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      * @custom:then The transaction reverts with the error `UsdnProtocolMinInitAmount`
      */
     function test_RevertWhen_initializeLongAmountLow() public {
-        uint256 minDeposit = protocol.MIN_INIT_DEPOSIT();
+        uint256 minDeposit = Constants.MIN_INIT_DEPOSIT;
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolMinInitAmount.selector, minDeposit));
         protocol.initialize(INITIAL_DEPOSIT, uint128(minDeposit - 1), INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE));
     }

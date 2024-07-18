@@ -5,6 +5,8 @@ import { USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "./../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 
 /**
  * @custom:feature The initiateDeposit function of the USDN Protocol
@@ -79,7 +81,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         uint256 expectedSdexBurnAmount =
             protocol.i_calcSdexToBurn(usdn.convertToTokens(usdnSharesToMint), protocol.getSdexBurnOnDepositRatio());
         uint256 sdexBalanceBefore = sdex.balanceOf(address(this));
-        address deadAddress = protocol.DEAD_ADDRESS();
+        address deadAddress = Constants.DEAD_ADDRESS;
 
         vm.expectEmit(address(sdex));
         emit Transfer(address(this), deadAddress, expectedSdexBurnAmount); // SDEX transfer

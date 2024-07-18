@@ -3,6 +3,8 @@ pragma solidity ^0.8.25;
 
 import { IUsdnProtocolErrors } from "../../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolBaseFixture } from "../../utils/Fixtures.sol";
 
 /**
@@ -25,14 +27,14 @@ contract TestImbalanceLimitOpenFuzzing is UsdnProtocolBaseFixture {
         // range withdrawalAmount properly
         openAmount = bound(openAmount, 1, type(uint128).max);
         // total expo to add
-        uint256 totalExpoToAdd = openAmount * leverage / 10 ** protocol.LEVERAGE_DECIMALS();
+        uint256 totalExpoToAdd = openAmount * leverage / 10 ** Constants.LEVERAGE_DECIMALS;
 
         int256 vaultExpo = int256(protocol.getBalanceVault());
         // expected imbalance bps
         int256 imbalanceBps = (
             (int256(protocol.getTotalExpo() + totalExpoToAdd) - int256(protocol.getBalanceLong() + openAmount))
                 - vaultExpo
-        ) * int256(protocol.BPS_DIVISOR()) / vaultExpo;
+        ) * int256(Constants.BPS_DIVISOR) / vaultExpo;
 
         // initial open limit bps
         int256 openLimit = initialLimits.openExpoImbalanceLimit;

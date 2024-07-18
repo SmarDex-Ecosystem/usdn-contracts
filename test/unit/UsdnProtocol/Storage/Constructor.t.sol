@@ -5,6 +5,8 @@ import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { UsdnProtocol } from "../../../../src/UsdnProtocol/UsdnProtocol.sol";
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 
 /**
  * @custom:feature The constructor of the protocol's storage
@@ -54,7 +56,7 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
      * @custom:then The instantiation should revert
      */
     function test_RevertWhen_constructorAssetDecimalsToLow() public {
-        uint8 wrongDecimals = protocol.FUNDING_SF_DECIMALS() - 1;
+        uint8 wrongDecimals = Constants.FUNDING_SF_DECIMALS - 1;
         usdn = new Usdn(address(0), address(0));
         // Lower the asset's decimals
         wstETH.setDecimals(wrongDecimals);
@@ -72,7 +74,7 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_constructorTokenDecimalsMismatch() public {
         usdn = new Usdn(address(0), address(0));
-        sdex.setDecimals(protocol.TOKENS_DECIMALS() - 1);
+        sdex.setDecimals(Constants.TOKENS_DECIMALS - 1);
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidTokenDecimals.selector));
         new UsdnProtocol(usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(1), roles);
@@ -85,8 +87,6 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
      * @custom:then The expected values should be returned
      */
     function test_getters() public view {
-        assertEq(protocol.LIQUIDATION_MULTIPLIER_DECIMALS(), 38);
-        assertEq(protocol.MAX_ACTIONABLE_PENDING_ACTIONS(), 20);
         assertEq(address(protocol.getSdex()), address(sdex));
         assertEq(protocol.getLastPrice(), DEFAULT_PARAMS.initialPrice);
     }

@@ -20,6 +20,9 @@ import { UsdnProtocolHandler } from "./Handler.sol";
 
 import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
+
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
@@ -240,11 +243,11 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         assertEq(
             wstETH.balanceOf(address(protocol)), params.initialDeposit + params.initialLong, "wstETH protocol balance"
         );
-        assertEq(usdn.balanceOf(protocol.DEAD_ADDRESS()), protocol.MIN_USDN_SUPPLY(), "usdn dead address balance");
+        assertEq(usdn.balanceOf(Constants.DEAD_ADDRESS), Constants.MIN_USDN_SUPPLY, "usdn dead address balance");
         uint256 usdnTotalSupply = uint256(params.initialDeposit) * params.initialPrice / 10 ** 18;
-        usdnTotalSupply -= usdnTotalSupply * protocol.getPositionFeeBps() / protocol.BPS_DIVISOR();
+        usdnTotalSupply -= usdnTotalSupply * protocol.getPositionFeeBps() / Constants.BPS_DIVISOR;
         assertEq(usdnTotalSupply, usdnInitialTotalSupply, "usdn total supply");
-        assertEq(usdn.balanceOf(DEPLOYER), usdnTotalSupply - protocol.MIN_USDN_SUPPLY(), "usdn deployer balance");
+        assertEq(usdn.balanceOf(DEPLOYER), usdnTotalSupply - Constants.MIN_USDN_SUPPLY, "usdn deployer balance");
         int24 firstPosTick = protocol.getHighestPopulatedTick();
         (Position memory firstPos,) = protocol.getLongPosition(PositionId(firstPosTick, 0, 0));
 
@@ -415,13 +418,13 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         _setUp(params);
 
         // cannot be less than 1 ether
-        initialAmount = uint128(bound(initialAmount, protocol.MIN_INIT_DEPOSIT(), 5000 ether));
+        initialAmount = uint128(bound(initialAmount, Constants.MIN_INIT_DEPOSIT, 5000 ether));
         (int256 depositLimit,, int256 longLimit,,) = protocol.getExpoImbalanceLimits();
-        uint128 margin = uint128(initialAmount * uint256(depositLimit) / protocol.BPS_DIVISOR());
+        uint128 margin = uint128(initialAmount * uint256(depositLimit) / Constants.BPS_DIVISOR);
 
         uint128 initialDeposit = uint128(bound(initialAmount, initialAmount, initialAmount + margin));
 
-        margin = uint128(initialAmount * uint256(longLimit) / protocol.BPS_DIVISOR());
+        margin = uint128(initialAmount * uint256(longLimit) / Constants.BPS_DIVISOR);
 
         uint256 initialLongExpo = bound(initialAmount, initialAmount, initialAmount + margin);
 

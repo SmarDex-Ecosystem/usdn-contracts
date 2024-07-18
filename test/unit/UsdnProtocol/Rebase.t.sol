@@ -69,7 +69,9 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
      */
     function test_usdnRebaseWhenLiquidate() public {
         // initial price is $1
-        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
+        assertEq(
+            protocol.usdnPrice(params.initialPrice), 10 ** protocol.getOracleMiddleware().getDecimals(), "initial price"
+        );
 
         skip(1 hours);
 
@@ -112,7 +114,9 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
      */
     function test_usdnRebaseWhenInitiateDeposit() public {
         // initial price is $1
-        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
+        assertEq(
+            protocol.usdnPrice(params.initialPrice), 10 ** protocol.getOracleMiddleware().getDecimals(), "initial price"
+        );
 
         // we wait long enough to check for a rebase again
         skip(protocol.getUsdnRebaseInterval() + 1);
@@ -138,7 +142,9 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 1 ether, params.initialPrice);
 
         // initial price is $1
-        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
+        assertEq(
+            protocol.usdnPrice(params.initialPrice), 10 ** protocol.getOracleMiddleware().getDecimals(), "initial price"
+        );
 
         // we wait long enough to check for a rebase again
         skip(protocol.getUsdnRebaseInterval() + 1);
@@ -161,7 +167,9 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
 
         // initial price is $1
-        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
+        assertEq(
+            protocol.usdnPrice(params.initialPrice), 10 ** protocol.getOracleMiddleware().getDecimals(), "initial price"
+        );
 
         uint128 newPrice = params.initialPrice - 100 ether;
 
@@ -186,7 +194,9 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         setUpUserPositionInVault(address(this), ProtocolAction.InitiateWithdrawal, 1 ether, params.initialPrice);
 
         // initial price is $1
-        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
+        assertEq(
+            protocol.usdnPrice(params.initialPrice), 10 ** protocol.getOracleMiddleware().getDecimals(), "initial price"
+        );
 
         uint128 newPrice = params.initialPrice - 100 ether;
 
@@ -207,7 +217,9 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
      */
     function test_usdnRebaseWhenInitiateOpenPosition() public {
         // initial price is $1
-        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
+        assertEq(
+            protocol.usdnPrice(params.initialPrice), 10 ** protocol.getOracleMiddleware().getDecimals(), "initial price"
+        );
 
         // we wait long enough to check for a rebase again
         skip(protocol.getUsdnRebaseInterval() + 1);
@@ -247,7 +259,9 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         );
 
         // initial price is $1
-        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
+        assertEq(
+            protocol.usdnPrice(params.initialPrice), 10 ** protocol.getOracleMiddleware().getDecimals(), "initial price"
+        );
 
         uint128 newPrice = params.initialPrice - 100 ether;
 
@@ -278,7 +292,9 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         );
 
         // initial price is $1
-        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
+        assertEq(
+            protocol.usdnPrice(params.initialPrice), 10 ** protocol.getOracleMiddleware().getDecimals(), "initial price"
+        );
 
         uint128 newPrice = params.initialPrice - 100 ether;
 
@@ -311,7 +327,9 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         );
 
         // initial price is $1
-        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
+        assertEq(
+            protocol.usdnPrice(params.initialPrice), 10 ** protocol.getOracleMiddleware().getDecimals(), "initial price"
+        );
 
         uint128 newPrice = params.initialPrice - 100 ether;
 

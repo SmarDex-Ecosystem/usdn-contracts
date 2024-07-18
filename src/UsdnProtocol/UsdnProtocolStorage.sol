@@ -151,68 +151,13 @@ contract UsdnProtocolStorage is
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function LEVERAGE_DECIMALS() external pure returns (uint8) {
-        return Constants.LEVERAGE_DECIMALS;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function FUNDING_RATE_DECIMALS() external pure returns (uint8) {
-        return Constants.FUNDING_RATE_DECIMALS;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function TOKENS_DECIMALS() external pure returns (uint8) {
-        return Constants.TOKENS_DECIMALS;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function LIQUIDATION_MULTIPLIER_DECIMALS() external pure returns (uint8) {
-        return Constants.LIQUIDATION_MULTIPLIER_DECIMALS;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function FUNDING_SF_DECIMALS() external pure returns (uint8) {
-        return Constants.FUNDING_SF_DECIMALS;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
     function SDEX_BURN_ON_DEPOSIT_DIVISOR() external pure returns (uint256) {
         return Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function BPS_DIVISOR() external pure returns (uint256) {
-        return Constants.BPS_DIVISOR;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function MAX_LIQUIDATION_ITERATION() external pure returns (uint16) {
-        return Constants.MAX_LIQUIDATION_ITERATION;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
     function NO_POSITION_TICK() external pure returns (int24) {
         return Constants.NO_POSITION_TICK;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function DEAD_ADDRESS() external pure returns (address) {
-        return Constants.DEAD_ADDRESS;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function MIN_USDN_SUPPLY() external pure returns (uint256) {
-        return Constants.MIN_USDN_SUPPLY;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function MIN_INIT_DEPOSIT() external pure returns (uint256) {
-        return Constants.MIN_INIT_DEPOSIT;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function MAX_ACTIONABLE_PENDING_ACTIONS() external pure returns (uint256) {
-        return Constants.MAX_ACTIONABLE_PENDING_ACTIONS;
     }
 
     /* -------------------------------------------------------------------------- */
@@ -232,11 +177,6 @@ contract UsdnProtocolStorage is
     /// @inheritdoc IUsdnProtocolStorage
     function getSdex() external view returns (IERC20Metadata) {
         return s._sdex;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getPriceFeedDecimals() external view returns (uint8) {
-        return s._priceFeedDecimals;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -263,14 +203,10 @@ contract UsdnProtocolStorage is
         return s._rebalancer;
     }
 
+    /// TO DO : combine with get min long position
     /// @inheritdoc IUsdnProtocolStorage
-    function getMinLeverage() external view returns (uint256) {
-        return s._minLeverage;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getMaxLeverage() external view returns (uint256) {
-        return s._maxLeverage;
+    function getMinLeverage() external view returns (uint256, uint256) {
+        return (s._minLeverage, s._maxLeverage);
     }
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -283,6 +219,7 @@ contract UsdnProtocolStorage is
         return s._liquidationPenalty;
     }
 
+    // TO DO : maybe
     /// @inheritdoc IUsdnProtocolStorage
     function getSafetyMarginBps() external view returns (uint256) {
         return s._safetyMarginBps;

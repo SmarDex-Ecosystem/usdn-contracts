@@ -6,6 +6,8 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { ADMIN, DEPLOYER, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
 /**
@@ -129,7 +131,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
         int256 currentVaultExpo = int256(protocol.getBalanceVault()) + protocol.getPendingBalanceVault();
         int256 newLongExpo =
             int256(protocol.getTotalExpo() - totalExpoValueToLimit) - int256(protocol.getBalanceLong() - longAmount);
-        int256 expectedImbalance = (currentVaultExpo - newLongExpo) * int256(protocol.BPS_DIVISOR()) / newLongExpo;
+        int256 expectedImbalance = (currentVaultExpo - newLongExpo) * int256(Constants.BPS_DIVISOR) / newLongExpo;
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -151,7 +153,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
         (,,, closeLimitBps_,) = protocol.getExpoImbalanceLimits();
 
         // the imbalance ratio: must be scaled for calculation
-        uint256 scaledImbalanceRatio = FixedPointMathLib.divWad(uint256(closeLimitBps_), protocol.BPS_DIVISOR());
+        uint256 scaledImbalanceRatio = FixedPointMathLib.divWad(uint256(closeLimitBps_), Constants.BPS_DIVISOR);
 
         uint256 vaultExpo = uint256(int256(protocol.getBalanceVault()) + protocol.getPendingBalanceVault());
 
@@ -164,7 +166,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
 
         // long amount to reach limit from longExpoValueToLimit and any leverage
         longAmount_ =
-            longExpoValueToLimit * 10 ** protocol.LEVERAGE_DECIMALS() / protocol.i_getLeverage(2000 ether, 1500 ether);
+            longExpoValueToLimit * 10 ** Constants.LEVERAGE_DECIMALS / protocol.i_getLeverage(2000 ether, 1500 ether);
 
         // total expo value to reach limit
         totalExpoValueToLimit_ = longExpoValueToLimit + longAmount_;

@@ -4,6 +4,8 @@ pragma solidity ^0.8.25;
 import { USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { DoubleEndedQueue } from "../../../../src/libraries/DoubleEndedQueue.sol";
 
 /**
@@ -208,7 +210,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
 
         assertEq(
             fundingPerDay,
-            -int256(fundingSF * 10 ** (protocol.FUNDING_RATE_DECIMALS() - protocol.FUNDING_SF_DECIMALS())) + EMA,
+            -int256(fundingSF * 10 ** (Constants.FUNDING_RATE_DECIMALS - Constants.FUNDING_SF_DECIMALS)) + EMA,
             "funding should be equal to -fundingSF + EMA"
         );
     }
@@ -243,7 +245,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
 
         assertEq(
             fundingPerDay,
-            int256(fundingSF * 10 ** (protocol.FUNDING_RATE_DECIMALS() - protocol.FUNDING_SF_DECIMALS())) + EMA,
+            int256(fundingSF * 10 ** (Constants.FUNDING_RATE_DECIMALS - Constants.FUNDING_SF_DECIMALS)) + EMA,
             "funding should be equal to fundingSF + EMA"
         );
     }
@@ -662,7 +664,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         int256 fundAsset = 1000 ether;
 
         uint16 protocolFeeBps = protocol.getProtocolFeeBps();
-        uint256 bpsDivisor = protocol.BPS_DIVISOR();
+        uint256 bpsDivisor = Constants.BPS_DIVISOR;
         uint256 expectedFee = (uint256(fundAsset) * protocolFeeBps) / bpsDivisor;
 
         (int256 fee, int256 fundAssetWithFee) = protocol.i_calculateFee(fundAsset);
@@ -697,7 +699,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         int256 fundAsset = -1;
 
         uint16 protocolFeeBps = protocol.getProtocolFeeBps();
-        uint256 bpsDivisor = protocol.BPS_DIVISOR();
+        uint256 bpsDivisor = Constants.BPS_DIVISOR;
         uint256 expectedFee = (uint256(-fundAsset) * protocolFeeBps) / bpsDivisor;
 
         (int256 fee, int256 fundAssetWithFee) = protocol.i_calculateFee(fundAsset);

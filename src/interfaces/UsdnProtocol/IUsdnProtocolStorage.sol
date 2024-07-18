@@ -81,84 +81,16 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function ADMIN_SET_OPTIONS_ROLE() external pure returns (bytes32);
 
     /**
-     * @notice Get the number of decimals of a position's leverage
-     * @return The leverage's number of decimals
-     */
-    function LEVERAGE_DECIMALS() external view returns (uint8);
-
-    /**
-     * @notice Get the number of decimals of the funding rate
-     * @return The funding rate's number of decimals
-     */
-    function FUNDING_RATE_DECIMALS() external view returns (uint8);
-
-    /**
-     * @notice Get the number of decimals of tokens used in the protocol (except the asset)
-     * @return The tokens' number of decimals
-     */
-    function TOKENS_DECIMALS() external view returns (uint8);
-
-    /**
-     * @notice Get the number of decimals used for the fixed representation of the liquidation multiplier
-     * @return The liquidation multiplier's number of decimals
-     */
-    function LIQUIDATION_MULTIPLIER_DECIMALS() external view returns (uint8);
-
-    /**
-     * @notice Get the number of decimals in the scaling factor of the funding rate
-     * @return The scaling factor's number of decimals
-     */
-    function FUNDING_SF_DECIMALS() external view returns (uint8);
-
-    /**
      * @notice Get the divisor for the ratio of USDN to SDEX to burn on deposit
      * @return The USDN to SDEX burn ratio divisor
      */
     function SDEX_BURN_ON_DEPOSIT_DIVISOR() external view returns (uint256);
 
     /**
-     * @notice Get the divisor for basis point values
-     * @dev Example: 200 -> 2%
-     * @return The basis points divisor
-     */
-    function BPS_DIVISOR() external view returns (uint256);
-
-    /**
-     * @notice Get the maximum number of tick liquidations that can be done per call
-     * @return The maximum number of iterations
-     */
-    function MAX_LIQUIDATION_ITERATION() external view returns (uint16);
-
-    /**
      * @notice Get the sentinel value indicating that a `PositionId` represents no position
      * @return The tick value for a `PositionId` that represents no position
      */
     function NO_POSITION_TICK() external view returns (int24);
-
-    /**
-     * @notice Get the minimum amount of wstETH for the initialization deposit and long
-     * @return The minimum amount of wstETH
-     */
-    function MIN_INIT_DEPOSIT() external view returns (uint256);
-
-    /**
-     * @notice The minimum total supply of USDN that we allow
-     * @dev Upon the first deposit, this amount is sent to the dead address and cannot be later recovered
-     * @return The minimum total supply of USDN
-     */
-    function MIN_USDN_SUPPLY() external view returns (uint256);
-
-    /**
-     * @notice The address that holds the minimum supply of USDN and the first minimum long position
-     * @return The address
-     */
-    function DEAD_ADDRESS() external view returns (address);
-
-    /**
-     * @notice The maximum number of actionable pending action items returned by `getActionablePendingActions`
-     * @return The maximum value
-     */
-    function MAX_ACTIONABLE_PENDING_ACTIONS() external pure returns (uint256);
 
     /* -------------------------------------------------------------------------- */
     /*                                 Immutables getters                         */
@@ -183,12 +115,6 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * @return The SDEX ERC20 token contract
      */
     function getSdex() external view returns (IERC20Metadata);
-
-    /**
-     * @notice Get the number of decimals the price feed for the asset has
-     * @return The number of decimals of the price feed
-     */
-    function getPriceFeedDecimals() external view returns (uint8);
 
     /**
      * @notice Get the USDN ERC20 token contract
@@ -222,15 +148,15 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * @notice Get the lowest leverage used to open a position
      * @return The minimum leverage (with `LEVERAGE_DECIMALS` decimals)
      */
-    function getMinLeverage() external view returns (uint256);
+    function getMinLeverage() external view returns (uint256, uint256);
 
-    /**
-     * @notice Get the highest leverage used to open a position
-     * @dev A position can have a leverage a bit higher than this value under specific conditions involving
-     * a change to the liquidation penalty setting
-     * @return The maximum leverage value (with `LEVERAGE_DECIMALS` decimals)
-     */
-    function getMaxLeverage() external view returns (uint256);
+    // /**
+    //  * @notice Get the highest leverage used to open a position
+    //  * @dev A position can have a leverage a bit higher than this value under specific conditions involving
+    //  * a change to the liquidation penalty setting
+    //  * @return The maximum leverage value (with `LEVERAGE_DECIMALS` decimals)
+    //  */
+    // function getMaxLeverage() external view returns (uint256);
 
     /**
      * @notice Get the amount of time a user can validate its action, after which other users can do it

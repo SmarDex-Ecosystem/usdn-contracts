@@ -4,6 +4,8 @@ pragma solidity ^0.8.25;
 import { USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 
 /**
@@ -302,7 +304,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         (PendingAction memory action,) = protocol.i_getPendingAction(address(this));
         LongPendingAction memory longAction = protocol.i_toLongPendingAction(action);
         uint256 priceWithFees =
-            liquidationPrice - (liquidationPrice * protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
+            liquidationPrice - (liquidationPrice * protocol.getPositionFeeBps()) / Constants.BPS_DIVISOR;
 
         int256 positionValue = protocol.i_positionValue(
             uint128(priceWithFees),
