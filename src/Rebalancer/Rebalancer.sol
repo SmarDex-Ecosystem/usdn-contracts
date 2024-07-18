@@ -131,7 +131,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         _usdnProtocol = usdnProtocol;
         IERC20Metadata asset = usdnProtocol.getAsset();
         _asset = asset;
-        _assetDecimals = usdnProtocol.getAssetDecimals();
+        _assetDecimals = asset.decimals();
         _maxLeverage = usdnProtocol.getMaxLeverage();
         _minAssetDeposit = usdnProtocol.getMinLongPosition();
 

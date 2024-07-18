@@ -31,7 +31,7 @@ contract TestImbalanceLimitDepositFuzzing is UsdnProtocolBaseFixture {
             (newExpoVault - int256(initialLongExpo)) * int256(protocol.BPS_DIVISOR()) / int256(initialLongExpo);
 
         // initial deposit limit bps
-        int256 depositLimit = protocol.getDepositExpoImbalanceLimitBps();
+        int256 depositLimit = initialLimits.depositExpoImbalanceLimit;
 
         if (imbalanceBps >= depositLimit) {
             // should revert with above deposit imbalance limit

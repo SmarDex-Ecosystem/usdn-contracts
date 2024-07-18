@@ -15,6 +15,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
     uint128 public constant INITIAL_DEPOSIT = 100 ether;
     uint128 public constant INITIAL_POSITION = 100 ether;
     uint128 public constant INITIAL_PRICE = 3000 ether;
+    uint256 public assetDecimals;
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
@@ -45,6 +46,8 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         skip(1);
         protocol.acceptDefaultAdminTransfer();
         wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
+
+        assetDecimals = protocol.getAsset().decimals();
     }
 
     /**
@@ -62,7 +65,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
     function test_createInitialDeposit() public {
         uint256 expectedUsdnMinted = (
             uint256(INITIAL_DEPOSIT) * INITIAL_PRICE
-                / 10 ** (protocol.getAssetDecimals() + protocol.getPriceFeedDecimals() - protocol.TOKENS_DECIMALS())
+                / 10 ** (assetDecimals + protocol.getPriceFeedDecimals() - protocol.TOKENS_DECIMALS())
         ) - protocol.MIN_USDN_SUPPLY();
         uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
 
@@ -210,7 +213,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
     function test_initialize() public {
         uint256 expectedUsdnMinted = (
             uint256(INITIAL_DEPOSIT) * INITIAL_PRICE
-                / 10 ** (protocol.getAssetDecimals() + protocol.getPriceFeedDecimals() - protocol.TOKENS_DECIMALS())
+                / 10 ** (assetDecimals + protocol.getPriceFeedDecimals() - protocol.TOKENS_DECIMALS())
         ) - protocol.MIN_USDN_SUPPLY();
         int24 tickWithoutPenalty = protocol.getEffectiveTickForPrice(INITIAL_PRICE / 2);
         int24 expectedTick =

@@ -226,13 +226,13 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         protocol.setFundingSF(0);
         protocol.resetEMA();
 
-        defaultLimits = ExpoImbalanceLimitsBps({
-            depositExpoImbalanceLimitBps: protocol.getDepositExpoImbalanceLimitBps(),
-            withdrawalExpoImbalanceLimitBps: protocol.getWithdrawalExpoImbalanceLimitBps(),
-            openExpoImbalanceLimitBps: protocol.getOpenExpoImbalanceLimitBps(),
-            closeExpoImbalanceLimitBps: protocol.getCloseExpoImbalanceLimitBps(),
-            longImbalanceTargetBps: protocol.getLongImbalanceTargetBps()
-        });
+        (
+            defaultLimits.depositExpoImbalanceLimitBps,
+            defaultLimits.withdrawalExpoImbalanceLimitBps,
+            defaultLimits.openExpoImbalanceLimitBps,
+            defaultLimits.closeExpoImbalanceLimitBps,
+            defaultLimits.longImbalanceTargetBps
+        ) = protocol.getExpoImbalanceLimits();
 
         protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
 

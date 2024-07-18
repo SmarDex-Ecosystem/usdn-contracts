@@ -83,7 +83,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         uint256 expectedVaultBalance =
             uint256(protocol.vaultAssetAvailableWithFunding(newPrice, uint128(block.timestamp - 30)));
         uint256 expectedTotalSupply = protocol.i_calcRebaseTotalSupply(
-            expectedVaultBalance, newPrice, protocol.getTargetUsdnPrice(), protocol.getAssetDecimals()
+            expectedVaultBalance, newPrice, protocol.getTargetUsdnPrice(), protocol.getAsset().decimals()
         );
         uint256 expectedDivisor = usdn.totalSupply() * usdn.divisor() / expectedTotalSupply;
 

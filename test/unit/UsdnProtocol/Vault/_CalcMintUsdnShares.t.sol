@@ -31,7 +31,7 @@ contract TestUsdnProtocolCalcMintUsdnShares is UsdnProtocolBaseFixture {
         }
         price = bound(price, 0, priceMax);
 
-        uint8 assetDecimals = protocol.getAssetDecimals();
+        uint8 assetDecimals = protocol.getAsset().decimals();
         uint8 priceFeedDecimals = protocol.getPriceFeedDecimals();
         uint8 tokensDecimals = protocol.TOKENS_DECIMALS();
         uint8 decimals = assetDecimals + priceFeedDecimals - tokensDecimals;

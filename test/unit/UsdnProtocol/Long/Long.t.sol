@@ -86,7 +86,7 @@ contract TestUsdnProtocolLongLong is UsdnProtocolBaseFixture {
      * @custom:then The transaction reverts with a UsdnProtocolLongPositionTooSmall error
      */
     function test_RevertWhen_initiateOpenPositionAmountTooLow() public {
-        uint256 minLongPositionSize = 10 ** protocol.getAssetDecimals();
+        uint256 minLongPositionSize = 10 ** protocol.getAsset().decimals();
         vm.prank(ADMIN);
         protocol.setMinLongPosition(minLongPositionSize);
 

@@ -69,18 +69,16 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
      * @custom:and The long and vault balances should not have changed
      */
     function test_triggerRebalancerWithNotEnoughImbalance() public {
-        int256 imbalanceLimit = protocol.getCloseExpoImbalanceLimitBps();
+        int256 closeLimit = initialLimits.closeExpoImbalanceLimit;
         uint256 totalExpo = protocol.getTotalExpo();
 
         // calculate the long balance that would make the imbalance just below the trigger
         // -1 at the end just to compensate for precision errors during imbalance calculations
         longBalance = totalExpo
-            - (vaultBalance * Constants.BPS_DIVISOR / uint256(imbalanceLimit - 1 + int256(Constants.BPS_DIVISOR))) - 1;
+            - (vaultBalance * Constants.BPS_DIVISOR / uint256(closeLimit - 1 + int256(Constants.BPS_DIVISOR))) - 1;
 
         // sanity check
-        assertEq(
-            imbalanceLimit - 1, protocol.i_calcImbalanceCloseBps(int256(vaultBalance), int256(longBalance), totalExpo)
-        );
+        assertEq(closeLimit - 1, protocol.i_calcImbalanceCloseBps(int256(vaultBalance), int256(longBalance), totalExpo));
 
         (uint256 newLongBalance, uint256 newVaultBalance) =
             protocol.i_triggerRebalancer(lastPrice, longBalance, vaultBalance, remainingCollateral);
@@ -100,7 +98,7 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
      * @custom:and no new position is opened
      */
     function test_triggerRebalancerWithNoPendingAssetsAndLowPosValue() public {
-        uint8 assetDecimals = protocol.getAssetDecimals();
+        uint8 assetDecimals = protocol.getAsset().decimals();
         uint128 amount = 10_000;
 
         // make sure there's enough imbalance

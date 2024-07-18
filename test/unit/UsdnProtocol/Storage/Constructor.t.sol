@@ -88,8 +88,6 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
         assertEq(protocol.LIQUIDATION_MULTIPLIER_DECIMALS(), 38);
         assertEq(protocol.MAX_ACTIONABLE_PENDING_ACTIONS(), 20);
         assertEq(address(protocol.getSdex()), address(sdex));
-        assertEq(protocol.getUsdnMinDivisor(), usdn.MIN_DIVISOR());
-        assertEq(protocol.getMiddlewareValidationDelay(), oracleMiddleware.getValidationDelay());
         assertEq(protocol.getLastPrice(), DEFAULT_PARAMS.initialPrice);
     }
 }

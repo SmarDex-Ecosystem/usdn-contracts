@@ -40,7 +40,7 @@ contract TestImbalanceLimitCloseFuzzing is UsdnProtocolBaseFixture {
         }
 
         // initial close limit bps
-        int256 initialCloseLimit = protocol.getCloseExpoImbalanceLimitBps();
+        int256 initialCloseLimit = initialLimits.closeExpoImbalanceLimit;
 
         if (newLongExpo == 0) {
             // should revert with the maximum imbalance

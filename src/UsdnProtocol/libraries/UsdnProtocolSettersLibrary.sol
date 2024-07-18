@@ -217,8 +217,8 @@ library UsdnProtocolSettersLibrary {
     /// @notice See {IUsdnProtocol}
     function setExpoImbalanceLimits(
         Types.Storage storage s,
-        uint256 newOpenLimitBps,
-        uint256 newDepositLimitBps,
+        uint256 newOpenLimitBps, // TO DO : refactor position of open after withdrawal
+        uint256 newDepositLimitBps, // TO DO : to int256
         uint256 newWithdrawalLimitBps,
         uint256 newCloseLimitBps,
         int256 newLongImbalanceTargetBps

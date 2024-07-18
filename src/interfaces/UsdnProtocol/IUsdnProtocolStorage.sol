@@ -191,23 +191,10 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getPriceFeedDecimals() external view returns (uint8);
 
     /**
-     * @notice Get the number of decimals the asset ERC20 token has
-     * @return The number of decimals for the asset
-     */
-    function getAssetDecimals() external view returns (uint8);
-
-    /**
      * @notice Get the USDN ERC20 token contract
      * @return The USDN ERC20 token contract
      */
     function getUsdn() external view returns (IUsdn);
-
-    /**
-     * @notice Get the MIN_DIVISOR constant of the USDN token
-     * @dev Check the USDN contract for more information
-     * @return The MIN_DIVISOR constant of the USDN token
-     */
-    function getUsdnMinDivisor() external view returns (uint256);
 
     /* -------------------------------------------------------------------------- */
     /*                                 Parameters getters                         */
@@ -333,42 +320,25 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getFeeCollector() external view returns (address);
 
     /**
-     * @notice Returns the delay between the moment an action is initiated and
-     * the timestamp of the price data used to validate that action
-     * @return The delay (in seconds)
-     */
-    function getMiddlewareValidationDelay() external view returns (uint256);
-
-    /**
-     * @notice Get the expo imbalance limit when depositing assets (in basis points)
+     * @notice Get the limits for the imbalance of the protocol when depositing, withdrawing, opening, and closing
+     * (in basis points)
      * @return depositExpoImbalanceLimitBps_ The deposit expo imbalance limit
-     */
-    function getDepositExpoImbalanceLimitBps() external view returns (int256 depositExpoImbalanceLimitBps_);
-
-    /**
-     * @notice Get the expo imbalance limit when withdrawing assets (in basis points)
      * @return withdrawalExpoImbalanceLimitBps_ The withdrawal expo imbalance limit
-     */
-    function getWithdrawalExpoImbalanceLimitBps() external view returns (int256 withdrawalExpoImbalanceLimitBps_);
-
-    /**
-     * @notice Get the expo imbalance limit when opening a position (in basis points)
      * @return openExpoImbalanceLimitBps_ The open expo imbalance limit
-     */
-    function getOpenExpoImbalanceLimitBps() external view returns (int256 openExpoImbalanceLimitBps_);
-
-    /**
-     * @notice Get the expo imbalance limit when closing a position (in basis points)
      * @return closeExpoImbalanceLimitBps_ The close expo imbalance limit
+     * @return longImbalanceTargetBps_ The target imbalance to have on the long side after the creation of a rebalancer
+     * position (the creation of the rebalancer position aims for this target but does not guarantee to hit it)
      */
-    function getCloseExpoImbalanceLimitBps() external view returns (int256 closeExpoImbalanceLimitBps_);
-
-    /**
-     * @notice Returns the target imbalance to have on the long side after the creation of a rebalancer position
-     * @dev The creation of the rebalancer position aims for this target but does not guarantee to hit it
-     * @return targetLongImbalance_ The target long imbalance
-     */
-    function getLongImbalanceTargetBps() external view returns (int256 targetLongImbalance_);
+    function getExpoImbalanceLimits()
+        external
+        view
+        returns (
+            int256 depositExpoImbalanceLimitBps_,
+            int256 withdrawalExpoImbalanceLimitBps_,
+            int256 openExpoImbalanceLimitBps_,
+            int256 closeExpoImbalanceLimitBps_,
+            int256 longImbalanceTargetBps_
+        );
 
     /**
      * @notice Get the nominal (target) price of USDN

@@ -45,6 +45,14 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         bool enableRoles;
     }
 
+    struct ExpoImbalanceLimits {
+        int256 depositExpoImbalanceLimit;
+        int256 withdrawalExpoImbalanceLimit;
+        int256 openExpoImbalanceLimit;
+        int256 closeExpoImbalanceLimit;
+        int256 longImbalanceTarget;
+    }
+
     struct SetUpParams {
         uint128 initialDeposit;
         uint128 initialLong;
@@ -97,6 +105,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
     PositionId public initialPosition;
     uint256 public usdnInitialTotalSupply;
     address[] public users;
+    ExpoImbalanceLimits public initialLimits;
 
     int24 internal _tickSpacing = 100; // tick spacing 100 = 1%
     PreviousActionsData internal EMPTY_PREVIOUS_DATA =
@@ -216,6 +225,13 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
 
         usdnInitialTotalSupply = usdn.totalSupply();
         params = testParams;
+        (
+            initialLimits.depositExpoImbalanceLimit,
+            initialLimits.withdrawalExpoImbalanceLimit,
+            initialLimits.openExpoImbalanceLimit,
+            initialLimits.closeExpoImbalanceLimit,
+            initialLimits.longImbalanceTarget
+        ) = protocol.getExpoImbalanceLimits();
     }
 
     function test_setUp() public {
@@ -400,13 +416,11 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
 
         // cannot be less than 1 ether
         initialAmount = uint128(bound(initialAmount, protocol.MIN_INIT_DEPOSIT(), 5000 ether));
-
-        int256 depositLimit = protocol.getDepositExpoImbalanceLimitBps();
+        (int256 depositLimit,, int256 longLimit,,) = protocol.getExpoImbalanceLimits();
         uint128 margin = uint128(initialAmount * uint256(depositLimit) / protocol.BPS_DIVISOR());
 
         uint128 initialDeposit = uint128(bound(initialAmount, initialAmount, initialAmount + margin));
 
-        int256 longLimit = protocol.getOpenExpoImbalanceLimitBps();
         margin = uint128(initialAmount * uint256(longLimit) / protocol.BPS_DIVISOR());
 
         uint256 initialLongExpo = bound(initialAmount, initialAmount, initialAmount + margin);

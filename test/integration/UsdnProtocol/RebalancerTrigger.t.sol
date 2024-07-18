@@ -34,6 +34,7 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
      * @custom:and A rebalancer position is created
      */
     function test_rebalancerTrigger() public {
+        (,,, int256 closeExpoImbalanceLimitBps, int256 longImbalanceTarget) = protocol.getExpoImbalanceLimits();
         skip(5 minutes);
 
         uint128 wstEthPrice = uint128(wstETH.getWstETHByStETH(1280 ether));
@@ -48,7 +49,7 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
         uint256 vaultAssetAvailable = uint256(protocol.i_vaultAssetAvailable(wstEthPrice)) + remainingCollateral;
         uint256 longAssetAvailable = uint256(protocol.i_longAssetAvailable(wstEthPrice)) - remainingCollateral;
         uint256 tradingExpoToFill = vaultAssetAvailable * BPS_DIVISOR
-            / uint256(int256(BPS_DIVISOR) + protocol.getLongImbalanceTargetBps()) - (totalExpo - longAssetAvailable);
+            / uint256(int256(BPS_DIVISOR) + longImbalanceTarget) - (totalExpo - longAssetAvailable);
 
         // calculate the state of the liq accumulator after the liquidations
         HugeUint.Uint512 memory expectedAccumulator = HugeUint.sub(
@@ -65,7 +66,7 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
         // Sanity check
         assertGt(
             imbalance,
-            protocol.getCloseExpoImbalanceLimitBps(),
+            closeExpoImbalanceLimitBps,
             "The imbalance is not high enough to trigger the rebalancer, adjust the long positions in the setup"
         );
 
@@ -90,9 +91,7 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
             int256(protocol.getBalanceVault()), int256(protocol.getBalanceLong()), protocol.getTotalExpo()
         );
 
-        assertLe(
-            imbalance, protocol.getLongImbalanceTargetBps(), "The imbalance should be below or equal to the target"
-        );
+        assertLe(imbalance, longImbalanceTarget, "The imbalance should be below or equal to the target");
 
         // get the position that has been created
         (Position memory pos,) = protocol.getLongPosition(PositionId(expectedTick, 0, 0));
@@ -118,11 +117,19 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
      * @custom:then The rebalancer is not triggered
      */
     function test_rebalancerTrigger_zeroLimit() public {
+        (
+            int256 depositExpoImbalanceLimitBps,
+            int256 withdrawalExpoImbalanceLimitBps,
+            int256 openExpoImbalanceLimitBps,
+            int256 closeExpoImbalanceLimitBps,
+            int256 longImbalanceTargetBps
+        ) = protocol.getExpoImbalanceLimits();
+
         vm.startPrank(SET_PROTOCOL_PARAMS_ADMIN);
         protocol.setExpoImbalanceLimits(
-            uint256(protocol.getOpenExpoImbalanceLimitBps()),
-            uint256(protocol.getDepositExpoImbalanceLimitBps()),
-            uint256(protocol.getWithdrawalExpoImbalanceLimitBps()),
+            uint256(openExpoImbalanceLimitBps),
+            uint256(depositExpoImbalanceLimitBps),
+            uint256(withdrawalExpoImbalanceLimitBps),
             0,
             0
         );
@@ -136,8 +143,9 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
         uint256 pendingAssets = rebalancer.getPendingAssetsAmount();
         uint256 posVersion = rebalancer.getPositionVersion();
 
+        (,,, closeExpoImbalanceLimitBps,) = protocol.getExpoImbalanceLimits();
         // Sanity check
-        assertEq(0, protocol.getCloseExpoImbalanceLimitBps(), "The close limit should be zero");
+        assertEq(0, closeExpoImbalanceLimitBps, "The close limit should be zero");
 
         uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
 

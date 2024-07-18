@@ -240,18 +240,8 @@ contract UsdnProtocolStorage is
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getAssetDecimals() external view returns (uint8) {
-        return s._assetDecimals;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
     function getUsdn() external view returns (IUsdn) {
         return s._usdn;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getUsdnMinDivisor() external view returns (uint256) {
-        return s._usdnMinDivisor;
     }
 
     /* -------------------------------------------------------------------------- */
@@ -351,11 +341,6 @@ contract UsdnProtocolStorage is
     /// @inheritdoc IUsdnProtocolStorage
     function getFeeCollector() external view returns (address) {
         return s._feeCollector;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getMiddlewareValidationDelay() external view returns (uint256) {
-        return s._oracleMiddleware.getValidationDelay();
     }
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -466,27 +451,23 @@ contract UsdnProtocolStorage is
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getDepositExpoImbalanceLimitBps() external view returns (int256 depositExpoImbalanceLimitBps_) {
-        depositExpoImbalanceLimitBps_ = s._depositExpoImbalanceLimitBps;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getWithdrawalExpoImbalanceLimitBps() external view returns (int256 withdrawalExpoImbalanceLimitBps_) {
-        withdrawalExpoImbalanceLimitBps_ = s._withdrawalExpoImbalanceLimitBps;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getOpenExpoImbalanceLimitBps() external view returns (int256 openExpoImbalanceLimitBps_) {
-        openExpoImbalanceLimitBps_ = s._openExpoImbalanceLimitBps;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getCloseExpoImbalanceLimitBps() external view returns (int256 closeExpoImbalanceLimitBps_) {
-        closeExpoImbalanceLimitBps_ = s._closeExpoImbalanceLimitBps;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getLongImbalanceTargetBps() external view returns (int256 longImbalanceTargetBps_) {
-        longImbalanceTargetBps_ = s._longImbalanceTargetBps;
+    function getExpoImbalanceLimits()
+        external
+        view
+        returns (
+            int256 depositExpoImbalanceLimitBps_,
+            int256 withdrawalExpoImbalanceLimitBps_,
+            int256 openExpoImbalanceLimitBps_,
+            int256 closeExpoImbalanceLimitBps_,
+            int256 longImbalanceTargetBps_
+        )
+    {
+        return (
+            s._depositExpoImbalanceLimitBps,
+            s._withdrawalExpoImbalanceLimitBps,
+            s._openExpoImbalanceLimitBps,
+            s._closeExpoImbalanceLimitBps,
+            s._longImbalanceTargetBps
+        );
     }
 }
