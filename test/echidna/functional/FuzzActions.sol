@@ -243,4 +243,13 @@ contract FuzzActions is Setup {
             _checkErrors(err, VALIDATE_PENDING_ACTIONS_ERRORS);
         }
     }
+
+    function initiateDepositRebalancer(uint88 amountRand, address destRand) public {
+        require(destRand != address(0), "FuzzActions: Invalid destination address");
+        require(amountRand >= rebalancer.getMinAssetDeposit(), "FuzzActions: Rebalancer insufficient amount");
+        try rebalancer.initiateDepositAssets(amountRand, destRand) { }
+        catch (bytes memory err) {
+            _checkErrors(err, INITIATE_DEPOSIT_REBALANCER);
+        }
+    }
 }
