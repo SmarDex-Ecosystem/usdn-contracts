@@ -699,8 +699,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
     function test_RevertWhen_setExpoImbalanceLimitsLow() public adminPrank {
         protocol.setExpoImbalanceLimits(2, 2, 0, 0, 0);
 
-        (int256 depositLimit, int256 withdrawalLimit, int256 openLimit, int256 closeLimit, int256 longImbalanceTarget) =
-            protocol.getExpoImbalanceLimits();
+        (int256 depositLimit,, int256 openLimit,,) = protocol.getExpoImbalanceLimits();
 
         uint256 withdrawalLimitBpsBelowOpen = uint256(openLimit - 1);
         // expected revert
