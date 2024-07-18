@@ -209,4 +209,38 @@ contract FuzzActions is Setup {
             _checkErrors(err, VALIDATE_OPEN_ERRORS);
         }
     }
+
+    function validatePendingActions(uint256 maxValidations, uint256 currentPrice) public {
+        uint256 balanceBefore = address(msg.sender).balance;
+        uint256 balanceBeforeProtocol = address(usdnProtocol).balance;
+        uint256 securityDeposit;
+
+        (IUsdnProtocolTypes.PendingAction[] memory actions, uint128[] memory rawIndices) =
+            usdnProtocol.getActionablePendingActions(address(0));
+        if (rawIndices.length == 0) {
+            return;
+        }
+        bytes[] memory priceData = new bytes[](rawIndices.length);
+        for (uint256 i = 0; i < rawIndices.length; i++) {
+            priceData[i] = abi.encode(currentPrice);
+            securityDeposit += actions[i].securityDepositValue;
+        }
+        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData =
+            IUsdnProtocolTypes.PreviousActionsData({ priceData: priceData, rawIndices: rawIndices });
+
+        vm.prank(msg.sender);
+        try usdnProtocol.validateActionablePendingActions(previousActionsData, maxValidations) returns (
+            uint256 validatedActions
+        ) {
+            assert(
+                actions.length < maxValidations
+                    ? validatedActions == actions.length
+                    : validatedActions == maxValidations
+            );
+            assert(address(msg.sender).balance == balanceBefore + securityDeposit);
+            assert(address(usdnProtocol).balance == balanceBeforeProtocol - securityDeposit);
+        } catch (bytes memory err) {
+            _checkErrors(err, VALIDATE_PENDING_ACTIONS_ERRORS);
+        }
+    }
 }
