@@ -372,7 +372,24 @@ library UsdnProtocolActionsLongLibrary {
             (maxLeverageData.newPosId.tickVersion, maxLeverageData.newPosId.index,) = ActionsUtils._saveNewPosition(
                 s, maxLeverageData.newPosId.tick, data.pos, maxLeverageData.liquidationPenalty
             );
-            // no long balance update is necessary (collateral didn't change)
+
+            // we now need to adjust the balances because the position that we created during the initiateOpenPosition
+            // might have gained or lost some value, and we need to reflect that the position value is now
+            // `updatedPosValue` any potential PnL on that temporary position must be "cancelled" so that it doesn't
+            // affect the other positions and the vault
+            uint256 updatedPosValue =
+                Utils.positionValue(data.pos.totalExpo, data.currentPrice, data.liqPriceWithoutPenalty);
+            if (updatedPosValue > data.oldPosValue) {
+                // the long side is missing some value, we need to take it from the vault
+                uint256 diff = updatedPosValue - data.oldPosValue;
+                s._balanceVault -= diff;
+                s._balanceLong += diff;
+            } else if (updatedPosValue < data.oldPosValue) {
+                // the long side has too much value, we need to give it to the vault side
+                uint256 diff = data.oldPosValue - updatedPosValue;
+                s._balanceVault += diff;
+                s._balanceLong -= diff;
+            }
 
             emit IUsdnProtocolEvents.LiquidationPriceUpdated(
                 Types.PositionId({
