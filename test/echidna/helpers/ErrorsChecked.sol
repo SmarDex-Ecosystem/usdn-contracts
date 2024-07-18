@@ -12,37 +12,56 @@ import { SignedMath } from "../../../src/libraries/SignedMath.sol";
 import { TickMath } from "../../../src/libraries/TickMath.sol";
 
 contract ErrorsChecked is Test {
-    bytes4[] public PROTOCOL_ERRORS = [
-        IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow.selector,
-        IUsdnProtocolErrors.UsdnProtocolInvalidAddressValidator.selector,
-        IUsdnProtocolErrors.UsdnProtocolZeroAmount.selector,
-        IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector,
-        IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector,
-        IUsdnProtocolErrors.UsdnProtocolDepositTooSmall.selector,
-        IUsdnProtocolErrors.UsdnProtocolInvalidLongExpo.selector,
-        IUsdnProtocolErrors.UsdnProtocolPendingAction.selector,
-        FixedPointMathLib.FullMulDivFailed.selector,
-        SignedMath.SignedMathDivideByZero.selector,
-        IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction.selector
+    bytes4[][] public INITIATE_DEPOSIT_ERRORS = [
+        [
+            IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow.selector,
+            IUsdnProtocolErrors.UsdnProtocolInvalidAddressValidator.selector,
+            IUsdnProtocolErrors.UsdnProtocolZeroAmount.selector,
+            IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector,
+            IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector,
+            IUsdnProtocolErrors.UsdnProtocolDepositTooSmall.selector,
+            IUsdnProtocolErrors.UsdnProtocolInvalidLongExpo.selector,
+            IUsdnProtocolErrors.UsdnProtocolPendingAction.selector,
+            FixedPointMathLib.FullMulDivFailed.selector,
+            SafeTransferLib.TransferFromFailed.selector,
+            SignedMath.SignedMathDivideByZero.selector
+        ]
+    ];
+    bytes4[][] public INITIATE_OPEN_ERRORS = [
+        [
+            IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow.selector,
+            IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector,
+            IUsdnProtocolErrors.UsdnProtocolInvalidAddressValidator.selector,
+            IUsdnProtocolErrors.UsdnProtocolZeroAmount.selector,
+            IUsdnProtocolErrors.UsdnProtocolLongPositionTooSmall.selector,
+            IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction.selector,
+            IUsdnErrors.UsdnInsufficientSharesBalance.selector
+        ]
+    ];
+    bytes4[][] public INITIATE_WITHDRAWAL_ERRORS = [
+        [
+            IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector,
+            IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow.selector,
+            IUsdnProtocolErrors.UsdnProtocolZeroAmount.selector,
+            SignedMath.SignedMathDivideByZero.selector,
+            IUsdnErrors.UsdnInsufficientSharesBalance.selector,
+            TickMath.TickMathInvalidPrice.selector
+        ]
     ];
 
-    bytes4[] public INITIATE_DEPOSIT_ERRORS = [SafeTransferLib.TransferFromFailed.selector];
+    bytes4[][] public VALIDATE_DEPOSIT_ERRORS = [[IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector]];
 
-    bytes4[] public INITIATE_OPEN_ERRORS = [
-        IUsdnProtocolErrors.UsdnProtocolLongPositionTooSmall.selector,
-        IUsdnErrors.UsdnInsufficientSharesBalance.selector
+    bytes4[][] public VALIDATE_WITHDRAWAL_ERRORS = [
+        [
+            IUsdnProtocolErrors.UsdnProtocolInvalidAddressValidator.selector,
+            IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector,
+            IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction.selector
+        ]
     ];
 
-    bytes4[] public INITIATE_WITHDRAWAL_ERRORS =
-        [IUsdnErrors.UsdnInsufficientSharesBalance.selector, TickMath.TickMathInvalidPrice.selector];
+    bytes4[][] public VALIDATE_OPEN_ERRORS = [[IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector]];
 
-    bytes4[] public VALIDATE_DEPOSIT_ERRORS;
-
-    bytes4[] public VALIDATE_WITHDRAWAL_ERRORS = [IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector];
-
-    bytes4[] public VALIDATE_OPEN_ERRORS = [IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector];
-
-    bytes4[] public VALIDATE_PENDING_ACTIONS_ERRORS = [IUsdnProtocolErrors.UsdnProtocolEtherRefundFailed.selector];
+    bytes4[][] public VALIDATE_PENDING_ACTIONS_ERRORS = [[IUsdnProtocolErrors.UsdnProtocolEtherRefundFailed.selector]];
 
     function _checkErrors(bytes memory err, bytes4[][] memory errorsArrays) internal {
         bool expected = false;
