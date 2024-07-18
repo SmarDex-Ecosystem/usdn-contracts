@@ -10,22 +10,6 @@ import { IUsdnProtocolTypes } from "./IUsdnProtocolTypes.sol";
  */
 interface IUsdnProtocolLong is IUsdnProtocolTypes {
     /**
-     * @notice Get the value of the lowest usable tick, taking into account the tick spacing
-     * @dev Note that the effective minimum tick of a newly open long position also depends on the minimum allowed
-     * leverage value and the current value of the liquidation price multiplier
-     * @return The lowest usable tick
-     */
-    function minTick() external view returns (int24);
-
-    /**
-     * @notice Get the value of the highest usable tick, taking into account the tick spacing
-     * @dev Note that the effective maximum tick of a newly open long position also depends on the maximum allowed
-     * leverage value and the current value of the liquidation price multiplier
-     * @return The highest usable tick
-     */
-    function maxTick() external view returns (int24);
-
-    /**
      * @notice Get the predicted value of the long trading exposure for the given asset price and timestamp
      * @dev The effects of the funding and any profit or loss of the long positions since the last contract state
      * update is taken into account

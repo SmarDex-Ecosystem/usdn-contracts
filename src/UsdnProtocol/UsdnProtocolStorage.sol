@@ -240,18 +240,26 @@ contract UsdnProtocolStorage is
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getProtocolFeeBps() external view returns (uint16) {
-        return s._protocolFeeBps;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getPositionFeeBps() external view returns (uint16) {
-        return s._positionFeeBps;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getVaultFeeBps() external view returns (uint16) {
-        return s._vaultFeeBps;
+    function getFeesInfo()
+        external
+        view
+        returns (
+            uint16 protocolFeeBps_,
+            uint16 positionFeeBps_,
+            uint16 vaultFeeBps_,
+            uint256 feeThreshold_,
+            uint256 pendingProtocolFee_,
+            address feeCollector_
+        )
+    {
+        return (
+            s._protocolFeeBps,
+            s._positionFeeBps,
+            s._vaultFeeBps,
+            s._feeThreshold,
+            s._pendingProtocolFee,
+            s._feeCollector
+        );
     }
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -267,16 +275,6 @@ contract UsdnProtocolStorage is
     /// @inheritdoc IUsdnProtocolStorage
     function getSecurityDepositValue() external view returns (uint64) {
         return s._securityDepositValue;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getFeeThreshold() external view returns (uint256) {
-        return s._feeThreshold;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getFeeCollector() external view returns (address) {
-        return s._feeCollector;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -311,11 +309,6 @@ contract UsdnProtocolStorage is
     /// @inheritdoc IUsdnProtocolStorage
     function getLastUpdateTimestamp() external view returns (uint128) {
         return s._lastUpdateTimestamp;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getPendingProtocolFee() external view returns (uint256) {
-        return s._pendingProtocolFee;
     }
 
     /// @inheritdoc IUsdnProtocolStorage

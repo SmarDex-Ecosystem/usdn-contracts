@@ -196,22 +196,25 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getFundingSF() external view returns (uint256);
 
     /**
-     * @notice Get the fee taken by the protocol during the application of funding
-     * @return The fee (in basis points)
+     * @notice Get all the fees information of the protocol
+     * @return protocolFeeBps_ The fee taken by the protocol during the application of funding (in basis points)
+     * @return positionFeeBps_ The fee taken when a long position is opened or closed (in basis points)
+     * @return vaultFeeBps_ The fee taken when a deposit or withdrawal is made to the vault (in basis points)
+     * @return feeThreshold_ The threshold before fees are sent to the fee collector (in `_assetDecimals`)
+     * @return pendingProtocolFee_ The amount of assets accumulated as fees still in the contract (in `_assetDecimals`)
+     * @return feeCollector_ The address of the fee collector
      */
-    function getProtocolFeeBps() external view returns (uint16);
-
-    /**
-     * @notice Get the fee applied when a long position is opened or closed
-     * @return The position fee (in basis points)
-     */
-    function getPositionFeeBps() external view returns (uint16);
-
-    /**
-     * @notice Get the fee applied during a vault deposit or withdrawal
-     * @return The action fee (in basis points)
-     */
-    function getVaultFeeBps() external view returns (uint16);
+    function getFeesInfo()
+        external
+        view
+        returns (
+            uint16 protocolFeeBps_,
+            uint16 positionFeeBps_,
+            uint16 vaultFeeBps_,
+            uint256 feeThreshold_,
+            uint256 pendingProtocolFee_,
+            address feeCollector_
+        );
 
     /**
      * @notice Get the part of the remaining collateral that is given as a bonus
@@ -231,18 +234,6 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * @return The amount of assets to use as a security deposit (in ether)
      */
     function getSecurityDepositValue() external view returns (uint64);
-
-    /**
-     * @notice Get the threshold before fees are sent to the fee collector
-     * @return The amount of fees to be accumulated (in `_assetDecimals`)
-     */
-    function getFeeThreshold() external view returns (uint256);
-
-    /**
-     * @notice Get the address of the fee collector
-     * @return The address of the fee collector
-     */
-    function getFeeCollector() external view returns (address);
 
     /**
      * @notice Get the limits for the imbalance of the protocol when depositing, withdrawing, opening, and closing
@@ -304,13 +295,6 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * @return The timestamp of the last update
      */
     function getLastUpdateTimestamp() external view returns (uint128);
-
-    /**
-     * @notice Get the fees that were accumulated by the contract and are yet to be sent to the fee collector
-     * (in `_assetDecimals`)
-     * @return The amount of assets accumulated as fees still in the contract
-     */
-    function getPendingProtocolFee() external view returns (uint256);
 
     /**
      * @notice Get the amount of assets backing the USDN token

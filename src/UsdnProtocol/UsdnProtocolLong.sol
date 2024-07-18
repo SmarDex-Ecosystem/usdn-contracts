@@ -8,16 +8,6 @@ import { UsdnProtocolLongLibrary as Long } from "./libraries/UsdnProtocolLongLib
 
 abstract contract UsdnProtocolLong is UsdnProtocolStorage, IUsdnProtocolLong {
     /// @inheritdoc IUsdnProtocolLong
-    function minTick() external view returns (int24 tick_) {
-        return Long.minTick(s);
-    }
-
-    /// @inheritdoc IUsdnProtocolLong
-    function maxTick() external view returns (int24 tick_) {
-        return Long.maxTick(s);
-    }
-
-    /// @inheritdoc IUsdnProtocolLong
     function getLongPosition(PositionId memory posId)
         external
         view

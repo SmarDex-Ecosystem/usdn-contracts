@@ -12,10 +12,15 @@ import { UsdnProtocolConstantsLibrary as Constants } from
  * @custom:feature The entry/exit position fees mechanism of the protocol
  */
 contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
+    uint16 positionFeeBps;
+    uint16 vaultFeeBps;
+    uint256 feeThreshold;
+
     function setUp() public {
         params = DEFAULT_PARAMS;
         params.flags.enablePositionFees = true;
         super._setUp(params);
+        (, positionFeeBps, vaultFeeBps,,,) = protocol.getFeesInfo();
     }
 
     /* -------------------------------------------------------------------------- */
@@ -33,7 +38,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
     function test_initiateOpenPosition() public {
         uint128 desiredLiqPrice = 2000 ether / 2;
 
-        uint256 expectedPrice = 2000 ether + 2000 ether * uint256(protocol.getPositionFeeBps()) / Constants.BPS_DIVISOR;
+        uint256 expectedPrice = 2000 ether + 2000 ether * uint256(positionFeeBps) / Constants.BPS_DIVISOR;
         int24 expectedTick = protocol.getEffectiveTickForPrice(desiredLiqPrice);
 
         // Price without the liquidation penalty
@@ -90,7 +95,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         // Price without the liquidation penalty
         uint128 effectiveTickPrice = protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(posId.tick));
-        uint256 expectedPrice = 2000 ether + 2000 ether * uint256(protocol.getPositionFeeBps()) / Constants.BPS_DIVISOR;
+        uint256 expectedPrice = 2000 ether + 2000 ether * uint256(positionFeeBps) / Constants.BPS_DIVISOR;
         uint128 expectedPosTotalExpo =
             protocol.i_calcPositionTotalExpo(1 ether, uint128(expectedPrice), effectiveTickPrice);
 
@@ -142,7 +147,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         uint256 expectedTransfer = uint256(
             protocol.i_positionValue(
-                uint128(2000 ether - 2000 ether * uint256(protocol.getPositionFeeBps()) / Constants.BPS_DIVISOR),
+                uint128(2000 ether - 2000 ether * uint256(positionFeeBps) / Constants.BPS_DIVISOR),
                 protocol.i_getEffectivePriceForTick(
                     protocol.i_calcTickWithoutPenalty(posId.tick), action.closeLiqMultiplier
                 ),
@@ -180,7 +185,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         DepositPendingAction memory action =
             protocol.i_toDepositPendingAction(protocol.getUserPendingAction(address(this)));
 
-        uint256 priceWithoutFees = 2000 ether - 2000 ether * uint256(protocol.getVaultFeeBps()) / Constants.BPS_DIVISOR;
+        uint256 priceWithoutFees = 2000 ether - 2000 ether * uint256(vaultFeeBps) / Constants.BPS_DIVISOR;
         assertEq(action.assetPrice, priceWithoutFees, "assetPrice");
     }
 
@@ -202,7 +207,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
             depositAmount,
             protocol.getBalanceVault(),
             usdn.totalShares(),
-            2000 ether - 2000 ether * uint256(protocol.getVaultFeeBps()) / Constants.BPS_DIVISOR
+            2000 ether - 2000 ether * uint256(vaultFeeBps) / Constants.BPS_DIVISOR
         );
 
         _waitDelay();
@@ -218,12 +223,12 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
                     deposit.totalExpo,
                     deposit.balanceVault,
                     deposit.balanceLong,
-                    uint128(2000 ether - 2000 ether * uint256(protocol.getVaultFeeBps()) / Constants.BPS_DIVISOR),
+                    uint128(2000 ether - 2000 ether * uint256(vaultFeeBps) / Constants.BPS_DIVISOR),
                     deposit.assetPrice
                 )
             ),
             deposit.usdnTotalShares,
-            2000 ether - 2000 ether * uint256(protocol.getVaultFeeBps()) / Constants.BPS_DIVISOR
+            2000 ether - 2000 ether * uint256(vaultFeeBps) / Constants.BPS_DIVISOR
         );
 
         uint256 expectedSharesBalance =
@@ -274,7 +279,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         WithdrawalPendingAction memory withdraw = protocol.i_toWithdrawalPendingAction(action);
 
         // Check stored position asset price
-        uint256 expectedPrice = 2000 ether + 2000 ether * uint256(protocol.getVaultFeeBps()) / Constants.BPS_DIVISOR;
+        uint256 expectedPrice = 2000 ether + 2000 ether * uint256(vaultFeeBps) / Constants.BPS_DIVISOR;
         assertEq(withdraw.assetPrice, expectedPrice, "assetPrice validate");
     }
 

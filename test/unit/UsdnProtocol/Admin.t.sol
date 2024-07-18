@@ -452,7 +452,8 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         // assign new feeBps value
         protocol.setProtocolFeeBps(expectedNewValue);
         // check new value is equal to the expected value
-        assertEq(protocol.getProtocolFeeBps(), expectedNewValue);
+        (uint16 protocolFeeBps,,,,,) = protocol.getFeesInfo();
+        assertEq(protocolFeeBps, expectedNewValue);
     }
 
     /**
@@ -513,7 +514,8 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         // assign new feeCollector address
         protocol.setFeeCollector(expectedNewValue);
         // check new address is equal to the expected value
-        assertEq(protocol.getFeeCollector(), expectedNewValue);
+        (,,,,, address feeCollector) = protocol.getFeesInfo();
+        assertEq(feeCollector, expectedNewValue);
     }
 
     /**
@@ -531,7 +533,8 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         // assign new feeThreshold value
         protocol.setFeeThreshold(expectedNewValue);
         // check new value is equal to the expected value
-        assertEq(protocol.getFeeThreshold(), expectedNewValue);
+        (,,, uint256 feeThreshold,,) = protocol.getFeesInfo();
+        assertEq(feeThreshold, expectedNewValue);
     }
 
     /**
@@ -839,9 +842,11 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         vm.expectEmit();
         emit PositionFeeUpdated(newValue);
         protocol.setPositionFeeBps(newValue);
-        assertEq(protocol.getPositionFeeBps(), newValue, "max");
+        (, uint16 positionFeeBps,,,,) = protocol.getFeesInfo();
+        assertEq(positionFeeBps, newValue, "max");
         protocol.setPositionFeeBps(0);
-        assertEq(protocol.getPositionFeeBps(), 0, "zero");
+        (, positionFeeBps,,,,) = protocol.getFeesInfo();
+        assertEq(positionFeeBps, 0, "zero");
     }
 
     /**
@@ -865,9 +870,11 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         vm.expectEmit();
         emit VaultFeeUpdated(newValue);
         protocol.setVaultFeeBps(newValue);
-        assertEq(protocol.getVaultFeeBps(), newValue, "max");
+        (,, uint16 vaultFeeBps,,,) = protocol.getFeesInfo();
+        assertEq(vaultFeeBps, newValue, "max");
         protocol.setVaultFeeBps(0);
-        assertEq(protocol.getVaultFeeBps(), 0, "zero");
+        (,, vaultFeeBps,,,) = protocol.getFeesInfo();
+        assertEq(vaultFeeBps, 0, "zero");
     }
 
     /**

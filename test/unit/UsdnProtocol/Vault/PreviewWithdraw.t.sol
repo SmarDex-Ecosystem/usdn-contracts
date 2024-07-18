@@ -34,8 +34,9 @@ contract TestUsdnProtocolPreviewWithdraw is UsdnProtocolBaseFixture {
      * @custom:then The amount of asset should be equal to half of the available balance
      */
     function test_previewWithdraw() public view {
+        (,, uint16 vaultFeeBps,,,) = protocol.getFeesInfo();
         uint128 price = 2000 ether;
-        uint128 priceWithFees = uint128(price + price * protocol.getVaultFeeBps() / Constants.BPS_DIVISOR);
+        uint128 priceWithFees = uint128(price + price * vaultFeeBps / Constants.BPS_DIVISOR);
         uint256 shares = usdn.totalShares() / 2;
         int256 available = protocol.vaultAssetAvailableWithFunding(priceWithFees, protocol.getLastUpdateTimestamp());
         assertEq(
@@ -66,8 +67,8 @@ contract TestUsdnProtocolPreviewWithdraw is UsdnProtocolBaseFixture {
         uint128 timestamp = protocol.getLastUpdateTimestamp();
 
         // Apply fees on price
-        uint128 withdrawalPriceWithFees =
-            (price * 10 + price * 10 * protocol.getPositionFeeBps() / Constants.BPS_DIVISOR).toUint128();
+        (, uint16 positionFeeBps,,,,) = protocol.getFeesInfo();
+        uint128 withdrawalPriceWithFees = (price * 10 + price * 10 * positionFeeBps / Constants.BPS_DIVISOR).toUint128();
         int256 available = protocol.vaultAssetAvailableWithFunding(withdrawalPriceWithFees, timestamp);
         assertLt(available, 0, "vaultAssetAvailableWithFunding should be less than 0");
 

@@ -303,8 +303,8 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
 
         (PendingAction memory action,) = protocol.i_getPendingAction(address(this));
         LongPendingAction memory longAction = protocol.i_toLongPendingAction(action);
-        uint256 priceWithFees =
-            liquidationPrice - (liquidationPrice * protocol.getPositionFeeBps()) / Constants.BPS_DIVISOR;
+        (, uint16 positionFeeBps,,,,) = protocol.getFeesInfo();
+        uint256 priceWithFees = liquidationPrice - (liquidationPrice * positionFeeBps) / Constants.BPS_DIVISOR;
 
         int256 positionValue = protocol.i_positionValue(
             uint128(priceWithFees),

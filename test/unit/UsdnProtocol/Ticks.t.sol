@@ -28,11 +28,16 @@ contract TestUsdnProtocolTicks is UsdnProtocolBaseFixture {
         int24 tick = protocol.getEffectiveTickForPrice(price); // next valid tick towards infinity
         // make sure we rounded down (except at low end)
         // e.g. if desired price is 1000, the closest tick down is -34_556, but the min usable tick is -34_550
-        closestTickDown = int24(FixedPointMathLib.max(int256(closestTickDown), int256(protocol.minTick())));
+        closestTickDown =
+            int24(FixedPointMathLib.max(int256(closestTickDown), int256(TickMath.minUsableTick(_tickSpacing))));
         assertLe(tick, closestTickDown, "tick <= closestTickDown");
         // make sure the effective liquidation price is always <= the desired liquidation price (except at low end)
         // e.g. if desired price is 1000, the lowest usable tick gives a price of 1006, so the effective price is 1006
-        price = uint128(FixedPointMathLib.max(uint256(price), uint256(TickMath.getPriceAtTick(protocol.minTick()))));
+        price = uint128(
+            FixedPointMathLib.max(
+                uint256(price), uint256(TickMath.getPriceAtTick(TickMath.minUsableTick(_tickSpacing)))
+            )
+        );
         uint128 effLiqPrice = protocol.getEffectivePriceForTick(tick);
         assertLe(effLiqPrice, price, "effLiqPrice <= price");
         // for very small prices, the `getEffectiveTickForPrice` result might not be the best tick to use to represent

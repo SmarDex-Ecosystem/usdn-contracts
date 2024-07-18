@@ -29,7 +29,8 @@ contract TestFeeCollectorCallback is UsdnProtocolBaseFixture {
         address feeCollectorWithCallback = address(new FeeCollectorWithCallback());
         vm.prank(ADMIN);
         protocol.setFeeCollector(feeCollectorWithCallback);
-        assertEq(protocol.getFeeCollector(), feeCollectorWithCallback);
+        (,,,,, address feeCollector) = protocol.getFeesInfo();
+        assertEq(feeCollector, feeCollectorWithCallback);
 
         setUpUserPositionInVault(
             address(this), ProtocolAction.ValidateDeposit, 10_000 ether, DEFAULT_PARAMS.initialPrice
@@ -39,10 +40,9 @@ contract TestFeeCollectorCallback is UsdnProtocolBaseFixture {
         assertEq(wstETH.balanceOf(address(feeCollectorWithCallback)), 0, "fee collector balance before collect");
         setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 1 ether, DEFAULT_PARAMS.initialPrice);
 
+        (,,, uint256 feeThreshold,,) = protocol.getFeesInfo();
         assertGe(
-            wstETH.balanceOf(address(feeCollectorWithCallback)),
-            protocol.getFeeThreshold(),
-            "fee collector balance after collect"
+            wstETH.balanceOf(address(feeCollectorWithCallback)), feeThreshold, "fee collector balance after collect"
         );
         assertEq(FeeCollectorWithCallback(feeCollectorWithCallback).called(), true, "fee collector callback called");
     }

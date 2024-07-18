@@ -48,7 +48,8 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         _waitBeforeLiquidation();
         protocol.testLiquidate(abi.encode(DEFAULT_PARAMS.initialPrice), 0);
 
-        assertEq(protocol.getPendingProtocolFee(), 0, "initial pending protocol fee");
+        (,,,, uint256 pendingProtocolFee,) = protocol.getFeesInfo();
+        assertEq(pendingProtocolFee, 0, "initial pending protocol fee");
     }
 
     /**
@@ -71,7 +72,8 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit FeeCollectorUpdated(address(this));
         protocol.setFeeCollector(address(this));
-        assertEq(protocol.getFeeCollector(), address(this));
+        (,,,,, address feeCollector) = protocol.getFeesInfo();
+        assertEq(feeCollector, address(this));
     }
 
     /**
@@ -84,7 +86,8 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit FeeThresholdUpdated(5 ether);
         protocol.setFeeThreshold(5 ether);
-        assertEq(protocol.getFeeThreshold(), 5 ether);
+        (,,, uint256 feeThreshold,,) = protocol.getFeesInfo();
+        assertEq(feeThreshold, 5 ether);
     }
 
     /**
@@ -95,11 +98,13 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
      * @custom:then The pending protocol fee is > 0
      */
     function test_pendingProtocolFee() public {
-        assertEq(protocol.getPendingProtocolFee(), 0, "initial pending protocol fee");
+        (,,,, uint256 pendingProtocolFee,) = protocol.getFeesInfo();
+        assertEq(pendingProtocolFee, 0, "initial pending protocol fee");
         setUpUserPositionInVault(
             address(this), ProtocolAction.ValidateDeposit, 10_000 ether, DEFAULT_PARAMS.initialPrice
         );
-        assertGt(protocol.getPendingProtocolFee(), 0, "pending protocol fee after deposit");
+        (,,,, pendingProtocolFee,) = protocol.getFeesInfo();
+        assertGt(pendingProtocolFee, 0, "pending protocol fee after deposit");
     }
 
     /**
@@ -118,9 +123,8 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         assertEq(wstETH.balanceOf(address(feeCollector)), 0, "fee collector balance before collect");
         setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 1 ether, DEFAULT_PARAMS.initialPrice);
 
-        assertGe(
-            wstETH.balanceOf(address(feeCollector)), protocol.getFeeThreshold(), "fee collector balance after collect"
-        );
+        (,,, uint256 feeThreshold,,) = protocol.getFeesInfo();
+        assertGe(wstETH.balanceOf(address(feeCollector)), feeThreshold, "fee collector balance after collect");
     }
 
     /**
@@ -133,7 +137,8 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         address feeCollectorNoCallback = address(new FeeCollectorNoCallback());
         vm.prank(ADMIN);
         protocol.setFeeCollector(feeCollectorNoCallback);
-        assertEq(protocol.getFeeCollector(), feeCollectorNoCallback);
+        (,,,,, address feeCollector) = protocol.getFeesInfo();
+        assertEq(feeCollector, feeCollectorNoCallback);
 
         setUpUserPositionInVault(
             address(this), ProtocolAction.ValidateDeposit, 10_000 ether, DEFAULT_PARAMS.initialPrice
@@ -143,11 +148,8 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         assertEq(wstETH.balanceOf(address(feeCollectorNoCallback)), 0, "fee collector balance before collect");
         setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 1 ether, DEFAULT_PARAMS.initialPrice);
 
-        assertGe(
-            wstETH.balanceOf(address(feeCollectorNoCallback)),
-            protocol.getFeeThreshold(),
-            "fee collector balance after collect"
-        );
+        (,,, uint256 feeThreshold,,) = protocol.getFeesInfo();
+        assertGe(wstETH.balanceOf(address(feeCollectorNoCallback)), feeThreshold, "fee collector balance after collect");
     }
 
     /**
@@ -160,7 +162,8 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         address feeCollectorRevertCallback = address(new FeeCollectorRevertCallback());
         vm.prank(ADMIN);
         protocol.setFeeCollector(feeCollectorRevertCallback);
-        assertEq(protocol.getFeeCollector(), feeCollectorRevertCallback);
+        (,,,,, address feeCollector) = protocol.getFeesInfo();
+        assertEq(feeCollector, feeCollectorRevertCallback);
 
         setUpUserPositionInVault(
             address(this), ProtocolAction.ValidateDeposit, 10_000 ether, DEFAULT_PARAMS.initialPrice

@@ -65,9 +65,10 @@ contract TestGetLongPosition is UsdnProtocolBaseFixture {
      * @custom:then The function should return expected user position values
      */
     function test_getLongPosition() public {
+        (, uint16 positionFeeBps,,,,) = protocol.getFeesInfo();
         int24 expectedTick = protocol.getEffectiveTickForPrice(params.initialPrice / 2);
         uint128 adjustedPrice =
-            uint128(params.initialPrice + (params.initialPrice * protocol.getPositionFeeBps()) / Constants.BPS_DIVISOR);
+            uint128(params.initialPrice + (params.initialPrice * positionFeeBps) / Constants.BPS_DIVISOR);
         uint8 liqPenalty = protocol.getTickLiquidationPenalty(expectedTick);
 
         uint128 liqPriceWithoutPenalty =

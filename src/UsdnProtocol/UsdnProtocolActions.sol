@@ -136,9 +136,4 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
     {
         return ActionsUtils.transferPositionOwnership(s, posId, newOwner);
     }
-
-    /// @inheritdoc IUsdnProtocolActions
-    function tickHash(int24 tick, uint256 version) external pure returns (bytes32) {
-        return Core.tickHash(tick, version);
-    }
 }

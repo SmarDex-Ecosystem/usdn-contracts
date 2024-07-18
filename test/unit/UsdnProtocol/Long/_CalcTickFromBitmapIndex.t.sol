@@ -13,8 +13,8 @@ contract TestUsdnProtocolLongCalcTickFromBitmapIndex is UsdnProtocolBaseFixture 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
 
-        _minTick = protocol.minTick();
-        _maxTick = protocol.maxTick();
+        _minTick = TickMath.minUsableTick(_tickSpacing);
+        _maxTick = TickMath.maxUsableTick(_tickSpacing);
     }
 
     /**

@@ -3,6 +3,7 @@ pragma solidity ^0.8.25;
 
 import { ADMIN, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
+import { UsdnProtocolCoreLibrary as Core } from "./../../../../src/UsdnProtocol/libraries/UsdnProtocolCoreLibrary.sol";
 
 /**
  * @custom:feature Test of the protocol `_prepareValidateOpenPositionData` internal function
@@ -132,7 +133,7 @@ contract TestUsdnProtocolActionsPrepareValidateOpenPositionData is UsdnProtocolB
         // asserts that should be done independently from the `isEarlyReturn` param
         assertEq(
             data.tickHash,
-            protocol.tickHash(posId.tick, posId.tickVersion),
+            Core.tickHash(posId.tick, posId.tickVersion),
             "The tick hash should match the provided position's ID"
         );
         assertEq(data.startPrice, currentPrice, "The last price should match the expected value");

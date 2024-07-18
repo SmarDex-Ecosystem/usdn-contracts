@@ -3,6 +3,8 @@ pragma solidity ^0.8.25;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { TickMath } from "../../../../src/libraries/TickMath.sol";
+
 /**
  * @custom:feature Test the _findHighestPopulatedTick internal function of the UsdnProtocolLong contract
  * @custom:background Given an initialized USDN Protocol with default parameters
@@ -58,6 +60,8 @@ contract TestUsdnProtocolLongFindHighestPopulatedTick is UsdnProtocolBaseFixture
      */
     function test_findHighestPopulatedTickWhenNothingFound() public view {
         int24 result = protocol.i_findHighestPopulatedTick(_initialTick - protocol.getTickSpacing());
-        assertEq(result, protocol.minTick(), "No tick should have been found (min usable tick returned)");
+        assertEq(
+            result, TickMath.minUsableTick(_tickSpacing), "No tick should have been found (min usable tick returned)"
+        );
     }
 }

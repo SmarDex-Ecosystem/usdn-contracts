@@ -239,13 +239,16 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
 
     function test_setUp() public {
         _setUp(DEFAULT_PARAMS);
+
+        (, uint16 positionFeeBps,,, uint256 pendingProtocolFee, address feeCollectorInfo) = protocol.getFeesInfo();
+
         assertGt(protocol.getTickSpacing(), 1, "tickSpacing"); // we want to test all functions for a tickSpacing > 1
         assertEq(
             wstETH.balanceOf(address(protocol)), params.initialDeposit + params.initialLong, "wstETH protocol balance"
         );
         assertEq(usdn.balanceOf(Constants.DEAD_ADDRESS), Constants.MIN_USDN_SUPPLY, "usdn dead address balance");
         uint256 usdnTotalSupply = uint256(params.initialDeposit) * params.initialPrice / 10 ** 18;
-        usdnTotalSupply -= usdnTotalSupply * protocol.getPositionFeeBps() / Constants.BPS_DIVISOR;
+        usdnTotalSupply -= usdnTotalSupply * positionFeeBps / Constants.BPS_DIVISOR;
         assertEq(usdnTotalSupply, usdnInitialTotalSupply, "usdn total supply");
         assertEq(usdn.balanceOf(DEPLOYER), usdnTotalSupply - Constants.MIN_USDN_SUPPLY, "usdn deployer balance");
         int24 firstPosTick = protocol.getHighestPopulatedTick();
@@ -255,8 +258,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         assertEq(firstPos.timestamp + 1, block.timestamp, "first pos timestamp");
         assertEq(firstPos.user, DEPLOYER, "first pos user");
         assertEq(firstPos.amount, params.initialLong, "first pos amount");
-        assertEq(protocol.getPendingProtocolFee(), 0, "initial pending protocol fee");
-        assertEq(protocol.getFeeCollector(), address(feeCollector), "fee collector");
+        assertEq(pendingProtocolFee, 0, "initial pending protocol fee");
+        assertEq(feeCollectorInfo, address(feeCollector), "fee collector");
         assertEq(protocol.owner(), ADMIN, "protocol owner");
     }
 

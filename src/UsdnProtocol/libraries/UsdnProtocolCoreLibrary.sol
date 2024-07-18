@@ -74,8 +74,6 @@ library UsdnProtocolCoreLibrary {
         ActionsVault._refundEther(address(this).balance, payable(msg.sender));
     }
 
-    /* -------------------------- public view functions ------------------------- */
-
     /// @notice See {IUsdnProtocolCore}
     function calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
         public
@@ -91,8 +89,6 @@ library UsdnProtocolCoreLibrary {
                 + previousEMA * Utils.toInt256(emaPeriod - secondsElapsed)
         ) / Utils.toInt256(emaPeriod);
     }
-
-    /* --------------------------  public functions --------------------------- */
 
     /// @notice See {IUsdnProtocolCore}
     function funding(Types.Storage storage s, uint128 timestamp)
@@ -175,11 +171,6 @@ library UsdnProtocolCoreLibrary {
         returns (Types.PendingAction memory action_)
     {
         (action_,) = _getPendingAction(s, user);
-    }
-
-    /// @notice See {IUsdnProtocolActions}
-    function tickHash(int24 tick, uint256 version) public pure returns (bytes32) {
-        return keccak256(abi.encodePacked(tick, version));
     }
 
     /// @notice See {IUsdnProtocolCore}
@@ -863,5 +854,15 @@ library UsdnProtocolCoreLibrary {
     function _tickHash(Types.Storage storage s, int24 tick) public view returns (bytes32 hash_, uint256 version_) {
         version_ = s._tickVersion[tick];
         hash_ = tickHash(tick, version_);
+    }
+
+    /**
+     * @notice Get the hash generated from the tick and a version
+     * @param tick The tick number
+     * @param version The tick version
+     * @return The hash of the tick and version
+     */
+    function tickHash(int24 tick, uint256 version) public pure returns (bytes32) {
+        return keccak256(abi.encodePacked(tick, version));
     }
 }

@@ -662,8 +662,8 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      */
     function test_calculateFeeMoreThanZero() public {
         int256 fundAsset = 1000 ether;
+        (uint16 protocolFeeBps,,,,,) = protocol.getFeesInfo();
 
-        uint16 protocolFeeBps = protocol.getProtocolFeeBps();
         uint256 bpsDivisor = Constants.BPS_DIVISOR;
         uint256 expectedFee = (uint256(fundAsset) * protocolFeeBps) / bpsDivisor;
 
@@ -697,8 +697,8 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      */
     function test_calculateFeeLessThanZero() public {
         int256 fundAsset = -1;
+        (uint16 protocolFeeBps,,,,,) = protocol.getFeesInfo();
 
-        uint16 protocolFeeBps = protocol.getProtocolFeeBps();
         uint256 bpsDivisor = Constants.BPS_DIVISOR;
         uint256 expectedFee = (uint256(-fundAsset) * protocolFeeBps) / bpsDivisor;
 

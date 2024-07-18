@@ -3,6 +3,7 @@ pragma solidity ^0.8.25;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolCoreLibrary as Core } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolCoreLibrary.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { TickMath } from "../../../../src/libraries/TickMath.sol";
 
@@ -65,7 +66,7 @@ contract TestUsdnProtocolLongGetEffectiveTickForPrice is UsdnProtocolBaseFixture
         assertEq(tick, -303_500, "tick should be equal to -303_500");
 
         /* -------------------------- tick_ < minUsableTick ------------------------- */
-        int24 expectedMinTick = protocol.minTick();
+        int24 expectedMinTick = TickMath.minUsableTick(_tickSpacing);
         price = 10_000;
 
         assertEq(

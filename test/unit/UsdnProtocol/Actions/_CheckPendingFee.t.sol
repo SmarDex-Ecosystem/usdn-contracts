@@ -8,13 +8,13 @@ import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 /// @custom:feature The `_checkPendingFee` function
 contract TestUsdnProtocolCheckPendingFee is UsdnProtocolBaseFixture {
     uint256 limit;
+    uint256 pendingProtocolFee;
     address feeCollectorAddr;
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
 
-        limit = protocol.getFeeThreshold();
-        feeCollectorAddr = protocol.getFeeCollector();
+        (,,, limit,, feeCollectorAddr) = protocol.getFeesInfo();
     }
 
     /**
@@ -33,8 +33,9 @@ contract TestUsdnProtocolCheckPendingFee is UsdnProtocolBaseFixture {
         emit ProtocolFeeDistributed(feeCollectorAddr, limit);
         protocol.i_checkPendingFee();
 
+        (,,,, pendingProtocolFee,) = protocol.getFeesInfo();
         assertEq(wstETH.balanceOf(feeCollectorAddr), balanceBefore + limit, "fee collector balance");
-        assertEq(protocol.getPendingProtocolFee(), 0, "pending fee");
+        assertEq(pendingProtocolFee, 0, "pending fee");
     }
 
     /**
@@ -54,7 +55,8 @@ contract TestUsdnProtocolCheckPendingFee is UsdnProtocolBaseFixture {
         Vm.Log[] memory logs = vm.getRecordedLogs();
         assertEq(logs.length, 0, "logs length");
 
+        (,,,, pendingProtocolFee,) = protocol.getFeesInfo();
         assertEq(wstETH.balanceOf(feeCollectorAddr), balanceBefore, "fee collector balance");
-        assertEq(protocol.getPendingProtocolFee(), limit - 1, "pending fee");
+        assertEq(pendingProtocolFee, limit - 1, "pending fee");
     }
 }

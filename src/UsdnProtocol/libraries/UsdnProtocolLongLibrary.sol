@@ -95,16 +95,6 @@ library UsdnProtocolLongLibrary {
     /* -------------------------------------------------------------------------- */
 
     /// @notice See {IUsdnProtocolLong}
-    function minTick(Types.Storage storage s) public view returns (int24 tick_) {
-        tick_ = TickMath.minUsableTick(s._tickSpacing);
-    }
-
-    /// @notice See {IUsdnProtocolLong}
-    function maxTick(Types.Storage storage s) public view returns (int24 tick_) {
-        tick_ = TickMath.maxUsableTick(s._tickSpacing);
-    }
-
-    /// @notice See {IUsdnProtocolLong}
     function getLongPosition(Types.Storage storage s, Types.PositionId memory posId)
         public
         view
@@ -879,7 +869,7 @@ library UsdnProtocolLongLibrary {
     function _findHighestPopulatedTick(Types.Storage storage s, int24 searchStart) public view returns (int24 tick_) {
         uint256 index = s._tickBitmap.findLastSet(Core._calcBitmapIndexFromTick(s, searchStart));
         if (index == LibBitmap.NOT_FOUND) {
-            tick_ = minTick(s);
+            tick_ = TickMath.minUsableTick(s._tickSpacing);
         } else {
             tick_ = _calcTickFromBitmapIndex(s, index);
         }
