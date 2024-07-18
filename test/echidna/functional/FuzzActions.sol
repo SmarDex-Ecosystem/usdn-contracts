@@ -234,7 +234,7 @@ contract FuzzActions is Setup {
         }
     }
 
-    function validatePendingActions(uint256 maxValidations, uint256 currentPrice) public {
+    function validatePendingActions(uint256 maxValidations, uint256 priceRand) public {
         uint256 balanceBefore = address(msg.sender).balance;
         uint256 balanceBeforeProtocol = address(usdnProtocol).balance;
         uint256 securityDeposit;
@@ -246,7 +246,7 @@ contract FuzzActions is Setup {
         }
         bytes[] memory priceData = new bytes[](rawIndices.length);
         for (uint256 i = 0; i < rawIndices.length; i++) {
-            priceData[i] = abi.encode(currentPrice);
+            priceData[i] = abi.encode(bound(priceRand, 0, type(uint128).max));
             securityDeposit += actions[i].securityDepositValue;
         }
         IUsdnProtocolTypes.PreviousActionsData memory previousActionsData =
