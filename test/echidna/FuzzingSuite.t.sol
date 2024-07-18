@@ -4,13 +4,14 @@ pragma solidity ^0.8.0;
 import { Test } from "forge-std/Test.sol";
 
 import { MockOracleMiddleware } from "../unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
+import { USER_1, USER_2 } from "../utils/Constants.sol";
 import { WstETH } from "../utils/WstEth.sol";
+import { FuzzingSuite } from "./FuzzingSuite.sol";
 
 import { Usdn } from "../../src/Usdn/Usdn.sol";
 import { UsdnProtocol } from "../../src/UsdnProtocol/UsdnProtocol.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { FuzzingSuite } from "./FuzzingSuite.sol";
 
 contract FuzzingSuiteTest is Test {
     FuzzingSuite public echidna;
@@ -146,6 +147,33 @@ contract FuzzingSuiteTest is Test {
         assertEq(DEPLOYER.balance, balanceBefore + securityDeposit, "DEPLOYER balance");
         assertEq(address(usdnProtocol).balance, balanceBeforeProtocol - securityDeposit, "protocol balance");
         assertGt(wsteth.balanceOf(DEPLOYER), balanceWstEthBefore, "wstETH balance");
+    }
+
+    function test_canValidatePendingActions() public {
+        vm.deal(DEPLOYER, 10 ether);
+        uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
+        bytes memory priceData = abi.encode(4000 ether);
+
+        vm.startPrank(DEPLOYER);
+        usdn.approve(address(usdnProtocol), usdnShares);
+        usdnProtocol.initiateWithdrawal{ value: securityDeposit }(
+            usdnShares / 2, USER_1, payable(USER_1), priceData, EMPTY_PREVIOUS_DATA
+        );
+        usdnProtocol.initiateWithdrawal{ value: securityDeposit }(
+            usdnShares / 2, USER_2, payable(USER_2), priceData, EMPTY_PREVIOUS_DATA
+        );
+        vm.stopPrank();
+
+        uint256 balanceBefore = DEPLOYER.balance;
+        uint256 balanceBeforeProtocol = address(usdnProtocol).balance;
+
+        skip(usdnProtocol.getValidationDeadline() + 1);
+
+        vm.prank(DEPLOYER);
+        echidna.validatePendingActions(10, 4000 ether);
+
+        assertEq(DEPLOYER.balance, balanceBefore + securityDeposit * 2, "DEPLOYER balance");
+        assertEq(address(usdnProtocol).balance, balanceBeforeProtocol - securityDeposit * 2, "protocol balance");
     }
 
     function test_adminFunctions() public {

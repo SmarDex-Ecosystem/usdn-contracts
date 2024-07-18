@@ -3,13 +3,13 @@ pragma solidity ^0.8.25;
 
 import { Test } from "forge-std/Test.sol";
 
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
+
 import { IUsdnErrors } from "../../../src/interfaces/Usdn/IUsdnErrors.sol";
 import { IUsdnProtocolErrors } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { SignedMath } from "../../../src/libraries/SignedMath.sol";
 import { TickMath } from "../../../src/libraries/TickMath.sol";
-
-import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
-import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 contract ErrorsChecked is Test {
     bytes4[] public INITIATE_DEPOSIT_ERRORS = [
@@ -57,6 +57,8 @@ contract ErrorsChecked is Test {
         IUsdnProtocolErrors.UsdnProtocolInvalidExpoImbalanceLimit.selector,
         IUsdnProtocolErrors.UsdnProtocolInvalidLongImbalanceTarget.selector
     ];
+
+    bytes4[] public VALIDATE_PENDING_ACTIONS_ERRORS = [IUsdnProtocolErrors.UsdnProtocolEtherRefundFailed.selector];
 
     function _checkErrors(bytes memory err, bytes4[] storage errors) internal {
         bool expected = false;
