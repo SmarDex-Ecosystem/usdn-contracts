@@ -30,7 +30,7 @@ library UsdnProtocolActionsLongLibrary {
      * @param isLiquidationPending Whether a liquidation is pending
      * @param priceWithFees The price of the position with fees
      * @param liquidationPrice The liquidation price of the position
-     * @param positionValue The value of the position
+     * @param positionValue The value of the position. The amount the user will receive when closing the position
      */
     struct ValidateClosePositionWithActionData {
         bool isLiquidationPending;
