@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IUsdnProtocolTypes } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -10,6 +12,7 @@ import { Setup } from "../Setup.sol";
 import { IUsdnProtocolTypes } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 contract FuzzActions is Setup {
+    using SafeCast for uint256;
     /* -------------------------------------------------------------------------- */
     /*                             USDN Protocol                                  */
     /* -------------------------------------------------------------------------- */
@@ -342,7 +345,11 @@ contract FuzzActions is Setup {
         try usdnProtocol.setExpoImbalanceLimits(
             newOpenLimitBps, newDepositLimitBps, newWithdrawalLimitBps, newCloseLimitBps, newLongImbalanceTargetBps
         ) {
-            assert(usdnProtocol.getOpenExpoImbalanceLimitBps() == newOpenLimitBps);
+            assert(usdnProtocol.getOpenExpoImbalanceLimitBps() == newOpenLimitBps.toInt256());
+            assert(usdnProtocol.getDepositExpoImbalanceLimitBps() == newDepositLimitBps.toInt256());
+            assert(usdnProtocol.getWithdrawalExpoImbalanceLimitBps() == newWithdrawalLimitBps.toInt256());
+            assert(usdnProtocol.getCloseExpoImbalanceLimitBps() == newCloseLimitBps.toInt256());
+            assert(usdnProtocol.getLongImbalanceTargetBps() == newLongImbalanceTargetBps);
         } catch (bytes memory err) {
             _checkErrors(err, ADMIN_ERRORS);
         }
