@@ -110,22 +110,26 @@ contract Setup is Test, ErrorsChecked {
         destinationsToken[address(wsteth)] = [DEPLOYER, ATTACKER];
     }
 
-    function getBalancesProtocol(address validator, address to) internal view returns (ProtocolSnapshot memory) {
-        return ProtocolSnapshot({
-            validatorEth: validator.balance,
-            validatorWsteth: wsteth.balanceOf(validator),
-            validatorUsdnShares: usdn.sharesOf(validator),
-            senderEth: msg.sender.balance,
-            senderWsteth: wsteth.balanceOf(msg.sender),
-            senderSdex: sdex.balanceOf(msg.sender),
-            senderUsdnShares: usdn.sharesOf(msg.sender),
-            toEth: address(to).balance,
-            toUsdnShares: usdn.sharesOf(to),
-            toWsteth: wsteth.balanceOf(to),
-            protocolEth: address(usdnProtocol).balance,
-            protocolWsteth: wsteth.balanceOf(address(usdnProtocol)),
-            protocolUsdnShares: usdn.sharesOf(address(usdnProtocol))
-        });
+    function getBalancesProtocol(address validator, address to)
+        internal
+        view
+        returns (ProtocolSnapshot memory snapshot)
+    {
+        snapshot.validatorEth = validator.balance;
+        snapshot.validatorWsteth = wsteth.balanceOf(validator);
+        snapshot.validatorUsdnShares = usdn.sharesOf(validator);
+        snapshot.senderEth = msg.sender.balance;
+        snapshot.senderWsteth = wsteth.balanceOf(msg.sender);
+        snapshot.senderSdex = sdex.balanceOf(msg.sender);
+        snapshot.senderUsdnShares = usdn.sharesOf(msg.sender);
+        snapshot.protocolEth = address(usdnProtocol).balance;
+        snapshot.protocolWsteth = wsteth.balanceOf(address(usdnProtocol));
+        snapshot.protocolUsdnShares = usdn.sharesOf(address(usdnProtocol));
+        if (to != address(0)) {
+            snapshot.toEth = address(to).balance;
+            snapshot.toUsdnShares = usdn.sharesOf(to);
+            snapshot.toWsteth = wsteth.balanceOf(to);
+        }
     }
 
     function getBalancesRebalancer(address dest) internal view returns (RebalancerSnapshot memory) {

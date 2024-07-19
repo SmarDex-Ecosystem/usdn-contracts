@@ -121,9 +121,9 @@ contract FuzzActions is Setup {
         address payable validator = payable(validators[validatorRand]);
         bytes memory priceData = abi.encode(currentPrice);
 
-        ProtocolSnapshot memory balancesBefore = getBalancesProtocol(validator, msg.sender);
         IUsdnProtocolTypes.DepositPendingAction memory pendingAction =
             usdnProtocol.i_toDepositPendingAction(usdnProtocol.getUserPendingAction(validator));
+        ProtocolSnapshot memory balancesBefore = getBalancesProtocol(validator, pendingAction.to);
 
         vm.prank(msg.sender);
         try usdnProtocol.validateDeposit(validator, priceData, EMPTY_PREVIOUS_DATA) returns (bool success_) {
@@ -161,7 +161,7 @@ contract FuzzActions is Setup {
         address payable validator = payable(validators[validatorRand]);
         bytes memory priceData = abi.encode(currentPrice);
 
-        ProtocolSnapshot memory balancesBefore = getBalancesProtocol(validator, msg.sender);
+        ProtocolSnapshot memory balancesBefore = getBalancesProtocol(validator, address(0));
         IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(validator);
 
         vm.prank(msg.sender);
@@ -190,7 +190,7 @@ contract FuzzActions is Setup {
         bytes memory priceData = abi.encode(currentPrice);
         uint64 securityDeposit = usdnProtocol.getUserPendingAction(validator).securityDepositValue;
 
-        ProtocolSnapshot memory balancesBefore = getBalancesProtocol(validator, msg.sender);
+        ProtocolSnapshot memory balancesBefore = getBalancesProtocol(validator, address(0));
 
         vm.prank(msg.sender);
         try usdnProtocol.validateOpenPosition(validator, priceData, EMPTY_PREVIOUS_DATA) returns (bool success) {
