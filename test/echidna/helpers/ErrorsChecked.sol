@@ -6,13 +6,14 @@ import { Test } from "forge-std/Test.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
+import { IRebalancerErrors } from "../../../src/interfaces/Rebalancer/IRebalancerErrors.sol";
 import { IUsdnErrors } from "../../../src/interfaces/Usdn/IUsdnErrors.sol";
 import { IUsdnProtocolErrors } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { SignedMath } from "../../../src/libraries/SignedMath.sol";
 import { TickMath } from "../../../src/libraries/TickMath.sol";
 
 contract ErrorsChecked is Test {
-    bytes4[] public INITIATE_DEPOSIT_ERRORS = [
+    bytes4[] public PROTOCOL_INITIATE_DEPOSIT_ERRORS = [
         IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow.selector,
         IUsdnProtocolErrors.UsdnProtocolInvalidAddressValidator.selector,
         IUsdnProtocolErrors.UsdnProtocolZeroAmount.selector,
@@ -23,7 +24,8 @@ contract ErrorsChecked is Test {
         IUsdnProtocolErrors.UsdnProtocolPendingAction.selector,
         FixedPointMathLib.FullMulDivFailed.selector,
         SafeTransferLib.TransferFromFailed.selector,
-        SignedMath.SignedMathDivideByZero.selector
+        SignedMath.SignedMathDivideByZero.selector,
+        TickMath.TickMathInvalidPrice.selector
     ];
     bytes4[] public INITIATE_OPEN_ERRORS = [
         IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow.selector,
@@ -32,7 +34,10 @@ contract ErrorsChecked is Test {
         IUsdnProtocolErrors.UsdnProtocolZeroAmount.selector,
         IUsdnProtocolErrors.UsdnProtocolLongPositionTooSmall.selector,
         IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction.selector,
-        IUsdnErrors.UsdnInsufficientSharesBalance.selector
+        IUsdnProtocolErrors.UsdnProtocolLiquidationPriceSafetyMargin.selector,
+        IUsdnProtocolErrors.UsdnProtocolLeverageTooLow.selector,
+        IUsdnErrors.UsdnInsufficientSharesBalance.selector,
+        TickMath.TickMathInvalidTick.selector
     ];
     bytes4[] public INITIATE_WITHDRAWAL_ERRORS = [
         IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector,
@@ -43,7 +48,10 @@ contract ErrorsChecked is Test {
         TickMath.TickMathInvalidPrice.selector
     ];
 
-    bytes4[] public VALIDATE_DEPOSIT_ERRORS = [IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector];
+    bytes4[] public VALIDATE_DEPOSIT_ERRORS = [
+        IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector,
+        IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector
+    ];
 
     bytes4[] public VALIDATE_WITHDRAWAL_ERRORS = [
         IUsdnProtocolErrors.UsdnProtocolInvalidAddressValidator.selector,
@@ -55,7 +63,7 @@ contract ErrorsChecked is Test {
 
     bytes4[] public VALIDATE_PENDING_ACTIONS_ERRORS = [IUsdnProtocolErrors.UsdnProtocolEtherRefundFailed.selector];
 
-    bytes4[] public INITIATE_DEPOSIT_REBALANCER;
+    bytes4[] public REBALANCER_INITIATE_DEPOSIT_ERRORS = [IRebalancerErrors.RebalancerDepositUnauthorized.selector];
 
     function _checkErrors(bytes memory err, bytes4[] storage errors) internal {
         bool expected = false;

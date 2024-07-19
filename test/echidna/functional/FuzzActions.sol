@@ -42,7 +42,7 @@ contract FuzzActions is Setup {
             assert(address(usdnProtocol).balance == balancesBefore.protocolEth + securityDeposit);
             assert(wsteth.balanceOf(address(usdnProtocol)) == balancesBefore.protocolWsteth + amountWstETHRand);
         } catch (bytes memory err) {
-            _checkErrors(err, INITIATE_DEPOSIT_ERRORS);
+            _checkErrors(err, PROTOCOL_INITIATE_DEPOSIT_ERRORS);
         }
     }
 
@@ -246,8 +246,13 @@ contract FuzzActions is Setup {
     function initiateDepositRebalancer(uint88 amountRand, address destRand) public {
         require(destRand != address(0), "FuzzActions: Invalid destination address");
 
-        RebalancerSnapshot memory balancesBefore = getBalancesRebalancer(destRand);
         uint88 amount = uint88(bound(amountRand, rebalancer.getMinAssetDeposit(), type(uint88).max));
+
+        vm.deal(msg.sender, amount);
+        vm.prank(msg.sender);
+        wsteth.mintAndApprove(msg.sender, amount, address(rebalancer), amount);
+
+        RebalancerSnapshot memory balancesBefore = getBalancesRebalancer(destRand);
 
         vm.prank(msg.sender);
         try rebalancer.initiateDepositAssets(amount, destRand) {
@@ -260,7 +265,7 @@ contract FuzzActions is Setup {
                 assert(wsteth.balanceOf(destRand) == balancesBefore.toWsteth);
             }
         } catch (bytes memory err) {
-            _checkErrors(err, INITIATE_DEPOSIT_REBALANCER);
+            _checkErrors(err, INITIATE_OPEN_ERRORS);
         }
     }
 }
