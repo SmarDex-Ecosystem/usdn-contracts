@@ -1,18 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-
-import { UsdnProtocolConstantsLibrary as Constants } from
-    "../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IUsdnProtocolTypes } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Permit2TokenBitfield } from "../../../src/libraries/Permit2TokenBitfield.sol";
-import { FuzzActionsAdmin } from "./FuzzActionsAdmin.sol";
+import { Setup } from "../Setup.sol";
 
 import { IUsdnProtocolTypes } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
-contract FuzzActions is FuzzActionsAdmin {
-    using SafeCast for uint256;
+contract FuzzActions is Setup {
     /* -------------------------------------------------------------------------- */
     /*                             USDN Protocol                                  */
     /* -------------------------------------------------------------------------- */
