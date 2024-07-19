@@ -84,25 +84,24 @@ contract FuzzActions is Setup {
         uint256 ethRand,
         uint256 destRand,
         uint256 validatorRand,
-        uint256 currentPrice,
-        uint128 amountToClose
+        uint256 priceRand,
+        uint128 amountToClose,
+        uint256 posIdsIndexRand
     ) public {
-        uint256 destRandBounded = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
-        address dest = destinationsToken[address(wsteth)][destRandBounded];
+        destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
+        address dest = destinationsToken[address(wsteth)][destRand];
         vm.deal(dest, ethRand);
-
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
-        bytes memory priceData = abi.encode(currentPrice);
+        bytes memory priceData = abi.encode(priceRand);
         BalancesSnapshot memory balancesBefore = getBalances(validator, dest);
 
-        uint64 securityDeposit = usdnProtocol.getSecurityDepositValue();
         amountToClose = uint128(bound(amountToClose, 0, type(uint128).max));
 
         IUsdnProtocolTypes.PositionId memory posId;
         uint256 posIdsIndex;
         if (posIds.length > 0) {
-            posIdsIndex = bound(0, 0, posIds.length - 1);
+            posIdsIndex = bound(posIdsIndexRand, 0, posIds.length - 1);
             posId = posIds[posIdsIndex];
         }
 
@@ -111,6 +110,8 @@ contract FuzzActions is Setup {
             posId, amountToClose, dest, validator, priceData, EMPTY_PREVIOUS_DATA
         ) returns (bool success_) {
             if (success_) {
+                uint64 securityDeposit = usdnProtocol.getSecurityDepositValue();
+
                 // remove the position
                 posIds[posIdsIndex] = posIds[posIds.length - 1];
                 posIds.pop();

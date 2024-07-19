@@ -188,7 +188,8 @@ contract FuzzingSuiteTest is Test {
             uint256(uint160(DEPLOYER)),
             uint256(uint160(DEPLOYER)),
             4000 ether,
-            1 ether
+            1 ether,
+            0
         );
     }
 }
