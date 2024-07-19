@@ -360,7 +360,7 @@ contract FuzzActions is Setup {
             uint256 assetToTransfer = usdnProtocol.previewWithdraw(amount, price, uint128(block.timestamp));
             return (-int256(amount), assetToTransfer);
         } else if (action.action == IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition) {
-            return (0, 0);
+            return (usdn_, wsteth_);
         } else if (action.action == IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition) {
             IUsdnProtocolTypes.LongPendingAction memory longAction = usdnProtocol.i_toLongPendingAction(action);
             return (0, longAction.closeAmount);
