@@ -622,6 +622,11 @@ library UsdnProtocolLongLibrary {
         _checkOpenPositionLeverage(s, data_.adjustedPrice, liqPriceWithoutPenalty);
 
         data_.positionTotalExpo = _calcPositionTotalExpo(amount, data_.adjustedPrice, liqPriceWithoutPenalty);
+        // the current price is known to be above the liquidation price because we checked the safety margin
+        // the `currentPrice.price` value can safely be cast to uint128 because we already did so above after the
+        // `adjustedPrice` calculation
+        data_.positionValue =
+            Utils.positionValue(data_.positionTotalExpo, uint128(currentPrice.price), liqPriceWithoutPenalty);
         _checkImbalanceLimitOpen(s, data_.positionTotalExpo, amount);
     }
 

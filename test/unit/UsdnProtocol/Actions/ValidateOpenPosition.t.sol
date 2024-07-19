@@ -20,6 +20,9 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
     bool internal _reenter;
 
     struct TestData {
+        uint256 initialLongBalance;
+        uint256 initialVaultBalance;
+        int256 longBalanceWithoutPos;
         uint128 validatePrice;
         int24 validateTick;
         uint8 originalLiqPenalty;
@@ -27,6 +30,20 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         uint256 validateTickVersion;
         uint256 validateIndex;
         uint256 expectedLeverage;
+        uint256 expectedPosValue;
+    }
+
+    struct InitialData {
+        uint256 initialLongBalance;
+        uint256 initialVaultBalance;
+        uint256 initialTotalExpo;
+    }
+
+    struct ExpectedData {
+        int256 expectedLongBalanceWithoutPos;
+        uint128 expectedLiqPrice;
+        uint128 expectedPosTotalExpo;
+        uint256 expectedPosValue;
     }
 
     function setUp() public {
@@ -150,7 +167,15 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
     }
 
     function _validateOpenPositionScenario(address to, address validator) internal {
-        uint256 initialTotalExpo = protocol.getTotalExpo();
+        InitialData memory initialData = InitialData({
+            initialLongBalance: protocol.getBalanceLong(),
+            initialVaultBalance: protocol.getBalanceVault(),
+            initialTotalExpo: protocol.getTotalExpo()
+        });
+        uint128 newPrice = CURRENT_PRICE + 100 ether;
+        ExpectedData memory expected;
+        expected.expectedLongBalanceWithoutPos = protocol.i_longAssetAvailable(newPrice);
+
         uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
         (, PositionId memory posId) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
@@ -166,8 +191,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
 
         _waitDelay();
 
-        uint128 newPrice = CURRENT_PRICE + 100 ether;
-        uint128 expectedLiqPrice = protocol.getEffectivePriceForTick(
+        expected.expectedLiqPrice = protocol.getEffectivePriceForTick(
             protocol.i_calcTickWithoutPenalty(posId.tick),
             uint256(newPrice),
             uint256(
@@ -177,12 +201,17 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
             ),
             protocol.getLiqMultiplierAccumulator()
         );
-        uint128 expectedPosTotalExpo = protocol.i_calcPositionTotalExpo(tempPos.amount, newPrice, expectedLiqPrice);
+        expected.expectedPosTotalExpo =
+            protocol.i_calcPositionTotalExpo(tempPos.amount, newPrice, expected.expectedLiqPrice);
+        expected.expectedPosValue =
+            uint256(expected.expectedPosTotalExpo) * (newPrice - expected.expectedLiqPrice) / newPrice;
 
         vm.expectEmit();
-        emit ValidatedOpenPosition(to, validator, expectedPosTotalExpo, newPrice, posId);
+        emit ValidatedOpenPosition(to, validator, expected.expectedPosTotalExpo, newPrice, posId);
         bool success = protocol.validateOpenPosition(payable(validator), abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
         assertTrue(success, "success");
+        int256 posValue = protocol.getPositionValue(posId, newPrice, uint128(block.timestamp));
+        assertEq(uint256(posValue), expected.expectedPosValue, "pos value");
 
         (Position memory pos,) = protocol.getLongPosition(posId);
         assertTrue(pos.validated, "validated");
@@ -191,12 +220,22 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         assertEq(pos.timestamp, tempPos.timestamp, "timestamp");
         // price increased -> total expo decreased
         assertLt(pos.totalExpo, tempPos.totalExpo, "totalExpo should have decreased");
-        assertEq(pos.totalExpo, expectedPosTotalExpo, "totalExpo");
+        assertEq(pos.totalExpo, expected.expectedPosTotalExpo, "totalExpo");
 
         TickData memory tickData = protocol.getTickData(posId.tick);
         assertEq(tickData.totalExpo, pos.totalExpo, "total expo in tick");
-        assertEq(protocol.getTotalExpo(), initialTotalExpo + pos.totalExpo, "total expo");
+        assertEq(protocol.getTotalExpo(), initialData.initialTotalExpo + pos.totalExpo, "total expo");
         assertEq(oracleMiddleware.lastActionId(), actionId, "middleware action ID");
+        assertEq(
+            protocol.getBalanceLong() + protocol.getBalanceVault(),
+            initialData.initialLongBalance + initialData.initialVaultBalance + LONG_AMOUNT,
+            "total balance"
+        );
+        assertEq(
+            protocol.getBalanceLong(),
+            uint256(expected.expectedLongBalanceWithoutPos) + uint256(posValue),
+            "long balance"
+        );
     }
 
     /**
@@ -212,6 +251,11 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
      */
     function test_validateOpenPositionAboveMaxLeverage() public {
         TestData memory testData;
+        testData.initialLongBalance = protocol.getBalanceLong();
+        testData.initialVaultBalance = protocol.getBalanceVault();
+        testData.validatePrice = CURRENT_PRICE - 100 ether;
+        testData.longBalanceWithoutPos = protocol.i_longAssetAvailable(testData.validatePrice);
+
         int24 liqPenalty = int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
         // leverage approx 10x
         (, PositionId memory posId) = protocol.initiateOpenPosition(
@@ -227,7 +271,6 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
 
         _waitDelay();
 
-        testData.validatePrice = CURRENT_PRICE - 100 ether;
         uint128 newLiqPrice = protocol.i_getLiquidationPrice(testData.validatePrice, uint128(protocol.getMaxLeverage()));
         testData.validateTick = protocol.getEffectiveTickForPrice(
             newLiqPrice,
@@ -241,8 +284,6 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         TickData memory tickData = protocol.getTickData(testData.validateTick);
         testData.validateIndex = tickData.totalPos;
 
-        int256 longBalanceBefore =
-            protocol.longAssetAvailableWithFunding(testData.validatePrice, uint128(block.timestamp - 1));
         uint128 expectedLiqPrice = protocol.getEffectivePriceForTick(
             testData.validateTick - liqPenalty,
             uint256(testData.validatePrice),
@@ -255,6 +296,8 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         );
         uint128 expectedPosTotalExpo =
             protocol.i_calcPositionTotalExpo(tempPos.amount, testData.validatePrice, expectedLiqPrice);
+        testData.expectedPosValue =
+            uint256(expectedPosTotalExpo) * (testData.validatePrice - expectedLiqPrice) / testData.validatePrice;
 
         vm.expectEmit();
         emit LiquidationPriceUpdated(
@@ -270,15 +313,22 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         );
         protocol.validateOpenPosition(payable(address(this)), abi.encode(testData.validatePrice), EMPTY_PREVIOUS_DATA);
 
-        (Position memory pos,) = protocol.getLongPosition(
-            PositionId(testData.validateTick, testData.validateTickVersion, testData.validateIndex)
-        );
+        PositionId memory newPosId =
+            PositionId(testData.validateTick, testData.validateTickVersion, testData.validateIndex);
+        int256 posValue = protocol.getPositionValue(newPosId, testData.validatePrice, uint128(block.timestamp));
+        assertEq(uint256(posValue), testData.expectedPosValue, "pos value");
+        (Position memory pos,) = protocol.getLongPosition(newPosId);
         assertEq(pos.user, tempPos.user, "user");
         assertEq(pos.timestamp, tempPos.timestamp, "timestamp");
         assertEq(pos.amount, tempPos.amount, "amount");
         assertLt(testData.validateTick, posId.tick, "tick");
         assertGt(pos.totalExpo, tempPos.totalExpo, "totalExpo");
-        assertEq(protocol.getBalanceLong(), uint256(longBalanceBefore), "balance of long side unchanged");
+        assertEq(
+            protocol.getBalanceLong() + protocol.getBalanceVault(),
+            testData.initialLongBalance + testData.initialVaultBalance + LONG_AMOUNT,
+            "total balance"
+        );
+        assertEq(protocol.getBalanceLong(), uint256(testData.longBalanceWithoutPos) + uint256(posValue), "long balance");
     }
 
     /**

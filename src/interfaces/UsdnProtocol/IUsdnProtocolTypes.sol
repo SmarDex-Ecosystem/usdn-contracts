@@ -306,20 +306,25 @@ interface IUsdnProtocolTypes {
      * @dev Structure to hold the transient data during `_validateOpenPosition`
      * @param action The long pending action
      * @param startPrice The new entry price of the position
+     * @param currentPrice The current price of the asset as reported by the oracle, potentially biased in favor of the
+     * protocol
      * @param tickHash The tick hash
      * @param pos The position object
      * @param liqPriceWithoutPenalty The new liquidation price without penalty
      * @param leverage The new leverage
+     * @param oldPosValue The value of the position according to the old entry price and the _lastPrice
      * @param liquidationPenalty The liquidation penalty for the position's tick
      * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
      */
     struct ValidateOpenPositionData {
         LongPendingAction action;
         uint128 startPrice;
+        uint128 currentPrice;
         bytes32 tickHash;
         Position pos;
         uint128 liqPriceWithoutPenalty;
         uint256 leverage;
+        uint256 oldPosValue;
         uint8 liquidationPenalty;
         bool isLiquidationPending;
     }
@@ -331,6 +336,7 @@ interface IUsdnProtocolTypes {
      * @param liquidationPenalty The liquidation penalty
      * @param positionTotalExpo The total expo of the position. The product of the initial collateral and the initial
      * leverage
+     * @param positionValue The value of the position, taking into account the position fee
      * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
      */
     struct InitiateOpenPositionData {
@@ -338,6 +344,7 @@ interface IUsdnProtocolTypes {
         PositionId posId;
         uint8 liquidationPenalty;
         uint128 positionTotalExpo;
+        uint256 positionValue;
         bool isLiquidationPending;
     }
 
