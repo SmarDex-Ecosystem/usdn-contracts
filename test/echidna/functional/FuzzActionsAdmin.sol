@@ -3,6 +3,7 @@ pragma solidity ^0.8.25;
 
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
+
 import { Setup } from "../Setup.sol";
 
 contract FuzzActionsAdmin is Setup {
