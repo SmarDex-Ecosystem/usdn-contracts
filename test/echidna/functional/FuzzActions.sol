@@ -40,12 +40,18 @@ contract FuzzActions is Setup {
             amountWstETHRand, dest, validator, NO_PERMIT2, priceData, previousActionsData
         ) {
             uint64 securityDeposit = usdnProtocol.getSecurityDepositValue();
-            (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction);
+            (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, currentPrice);
 
-            assert(address(msg.sender).balance == balancesBefore.senderEth - securityDeposit);
+            assert(
+                address(msg.sender).balance
+                    == balancesBefore.senderEth - securityDeposit + lastAction.securityDepositValue
+            );
             assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth - amountWstETHRand);
             assert(sdex.balanceOf(msg.sender) < balancesBefore.senderSdex);
-            assert(address(usdnProtocol).balance == balancesBefore.protocolEth + securityDeposit);
+            assert(
+                address(usdnProtocol).balance
+                    == balancesBefore.protocolEth + securityDeposit - lastAction.securityDepositValue
+            );
             assert(
                 wsteth.balanceOf(address(usdnProtocol))
                     == balancesBefore.protocolWsteth + amountWstETHRand - wstethPendingActions
@@ -89,10 +95,16 @@ contract FuzzActions is Setup {
             previousActionsData
         ) returns (bool, IUsdnProtocolTypes.PositionId memory posId) {
             posIds.push(posId);
-            (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction);
+            (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, currentPrice);
 
-            assert(address(usdnProtocol).balance == balancesBefore.protocolEth + usdnProtocol.getSecurityDepositValue());
-            assert(address(msg.sender).balance == balancesBefore.senderEth - usdnProtocol.getSecurityDepositValue());
+            assert(
+                address(usdnProtocol).balance
+                    == balancesBefore.protocolEth + usdnProtocol.getSecurityDepositValue() - lastAction.securityDepositValue
+            );
+            assert(
+                address(msg.sender).balance
+                    == balancesBefore.senderEth - usdnProtocol.getSecurityDepositValue() + lastAction.securityDepositValue
+            );
 
             assert(
                 wsteth.balanceOf(address(usdnProtocol))
@@ -133,12 +145,15 @@ contract FuzzActions is Setup {
             usdnShares, dest, validator, priceData, previousActionsData
         ) {
             uint64 securityDeposit = usdnProtocol.getSecurityDepositValue();
-            (int256 usdnPendingActions,) = getTokenFromPendingAction(lastAction);
+            (int256 usdnPendingActions,) = getTokenFromPendingAction(lastAction, currentPrice);
 
             assert(address(msg.sender).balance == balancesBefore.senderEth - securityDeposit);
             assert(usdn.sharesOf(msg.sender) == balancesBefore.senderUsdnShares - usdnShares);
 
-            assert(address(usdnProtocol).balance == balancesBefore.protocolEth + securityDeposit);
+            assert(
+                address(usdnProtocol).balance
+                    == balancesBefore.protocolEth + securityDeposit - lastAction.securityDepositValue
+            );
             assert(
                 usdn.sharesOf(address(usdnProtocol))
                     == uint256(int256(balancesBefore.protocolUsdnShares) + int152(usdnShares) + usdnPendingActions)
@@ -165,7 +180,8 @@ contract FuzzActions is Setup {
         vm.prank(msg.sender);
         try usdnProtocol.validateDeposit(validator, priceData, previousActionsData) returns (bool success_) {
             uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
-            (int256 usdnPendingActions, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction);
+            (int256 usdnPendingActions, uint256 wstethPendingActions) =
+                getTokenFromPendingAction(lastAction, currentPrice);
 
             if (success_) {
                 //todo maybe determine the exact amount if it can be know before the call
@@ -213,7 +229,8 @@ contract FuzzActions is Setup {
 
         vm.prank(msg.sender);
         try usdnProtocol.validateWithdrawal(validator, priceData, previousActionsData) returns (bool success_) {
-            (int256 usdnPendingActions, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction);
+            (int256 usdnPendingActions, uint256 wstethPendingActions) =
+                getTokenFromPendingAction(lastAction, currentPrice);
             assert(address(msg.sender).balance == balancesBefore.senderEth + action.securityDepositValue);
             if (success_) {
                 assert(wsteth.balanceOf(msg.sender) >= balancesBefore.senderWsteth);
@@ -267,7 +284,7 @@ contract FuzzActions is Setup {
                 assert(address(validator).balance == balancesBefore.validatorEth);
                 assert(address(usdnProtocol).balance == balancesBefore.protocolEth);
             }
-            (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction);
+            (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, currentPrice);
             assert(wsteth.balanceOf(address(usdnProtocol)) == balancesBefore.protocolWsteth - wstethPendingActions);
             assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth);
         } catch (bytes memory err) {
@@ -325,7 +342,7 @@ contract FuzzActions is Setup {
         previousActionsData_ = IUsdnProtocolTypes.PreviousActionsData({ priceData: priceData, rawIndices: rawIndices });
     }
 
-    function getTokenFromPendingAction(IUsdnProtocolTypes.PendingAction memory action)
+    function getTokenFromPendingAction(IUsdnProtocolTypes.PendingAction memory action, uint256 price)
         public
         view
         returns (int256 usdn_, uint256 wsteth_)
@@ -340,7 +357,8 @@ contract FuzzActions is Setup {
                 usdnProtocol.i_toWithdrawalPendingAction(action);
             uint256 amount =
                 usdnProtocol.i_mergeWithdrawalAmountParts(withdrawalAction.sharesLSB, withdrawalAction.sharesMSB);
-            return (-int256(amount), 0);
+            uint256 assetToTransfer = usdnProtocol.previewWithdraw(amount, price, uint128(block.timestamp));
+            return (-int256(amount), assetToTransfer);
         } else if (action.action == IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition) {
             return (0, 0);
         } else if (action.action == IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition) {

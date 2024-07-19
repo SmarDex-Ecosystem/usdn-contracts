@@ -87,27 +87,22 @@ contract FuzzingSuiteTest is Test {
     }
 
     function test_canInitiateDepositAndValidateOpen() public {
-        uint128 wstethOpenPositionAmount = 5 ether;
-        uint128 liquidationPrice = 1000 ether;
         uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
 
         vm.deal(DEPLOYER, 10 ether);
 
-        vm.startPrank(DEPLOYER);
-        wsteth.mintAndApprove(DEPLOYER, wstethOpenPositionAmount, address(usdnProtocol), wstethOpenPositionAmount);
-        usdnProtocol.initiateOpenPosition{ value: securityDeposit }(
-            wstethOpenPositionAmount,
-            liquidationPrice,
-            USER_1,
-            payable(USER_1),
-            echidna.NO_PERMIT2(),
-            abi.encode(4000 ether),
-            EMPTY_PREVIOUS_DATA
-        );
-        vm.stopPrank();
+        vm.prank(DEPLOYER);
+        usdn.approve(address(usdnProtocol), usdnShares);
+        bytes memory priceData = abi.encode(4000 ether);
 
         vm.prank(DEPLOYER);
-        echidna.initiateDeposit(0.1 ether, 10 ether, 0.5 ether, 0, 0, 1000 ether);
+        usdnProtocol.initiateWithdrawal{ value: securityDeposit }(
+            usdnShares, USER_1, payable(USER_1), priceData, EMPTY_PREVIOUS_DATA
+        );
+
+        skip(usdnProtocol.getValidationDeadline() + 1);
+        vm.prank(DEPLOYER);
+        echidna.initiateDeposit(0.1 ether, 10 ether, 0.5 ether, 0, 0, 4000 ether);
 
         IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(DEPLOYER);
         assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, "action type");
