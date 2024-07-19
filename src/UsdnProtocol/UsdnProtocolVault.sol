@@ -17,24 +17,6 @@ abstract contract UsdnProtocolVault is UsdnProtocolStorage, IUsdnProtocolVault {
     }
 
     /// @inheritdoc IUsdnProtocolVault
-    function previewDeposit(uint256 amount, uint128 price, uint128 timestamp)
-        external
-        view
-        returns (uint256 usdnSharesExpected_, uint256 sdexToBurn_)
-    {
-        return Vault.previewDeposit(s, amount, price, timestamp);
-    }
-
-    /// @inheritdoc IUsdnProtocolVault
-    function previewWithdraw(uint256 usdnShares, uint256 price, uint128 timestamp)
-        external
-        view
-        returns (uint256 assetExpected_)
-    {
-        return Vault.previewWithdraw(s, usdnShares, price, timestamp);
-    }
-
-    /// @inheritdoc IUsdnProtocolVault
     function vaultAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
         external
         view

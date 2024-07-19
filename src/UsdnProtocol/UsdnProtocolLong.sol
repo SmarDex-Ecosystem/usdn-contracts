@@ -66,11 +66,6 @@ abstract contract UsdnProtocolLong is UsdnProtocolStorage, IUsdnProtocolLong {
     }
 
     /// @inheritdoc IUsdnProtocolLong
-    function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256 expo_) {
-        return Long.longTradingExpoWithFunding(s, currentPrice, timestamp);
-    }
-
-    /// @inheritdoc IUsdnProtocolLong
     function getTickLiquidationPenalty(int24 tick) external view returns (uint8 liquidationPenalty_) {
         return Long.getTickLiquidationPenalty(s, tick);
     }

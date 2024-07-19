@@ -216,15 +216,6 @@ library UsdnProtocolLongLibrary {
     }
 
     /// @notice See {IUsdnProtocolLong}
-    function longTradingExpoWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
-        public
-        view
-        returns (int256 expo_)
-    {
-        expo_ = s._totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(s, currentPrice, timestamp));
-    }
-
-    /// @notice See {IUsdnProtocolLong}
     function getTickLiquidationPenalty(Types.Storage storage s, int24 tick)
         public
         view
@@ -237,6 +228,22 @@ library UsdnProtocolLongLibrary {
     /* -------------------------------------------------------------------------- */
     /*                             Internal functions                             */
     /* -------------------------------------------------------------------------- */
+
+    /**
+     * @notice Get the predicted value of the long trading exposure for the given asset price and timestamp
+     * @dev The effects of the funding and any profit or loss of the long positions since the last contract state
+     * update is taken into account
+     * @param currentPrice The current or predicted asset price
+     * @param timestamp The timestamp corresponding to `currentPrice`
+     * @return expo_ The long trading exposure
+     */
+    function longTradingExpoWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
+        public
+        view
+        returns (int256 expo_)
+    {
+        expo_ = s._totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(s, currentPrice, timestamp));
+    }
 
     /**
      * @notice Applies PnL, funding, and liquidates positions if necessary

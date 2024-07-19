@@ -7,7 +7,6 @@ import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./libraries/UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./libraries/UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolActionsVaultLibrary as ActionsVault } from "./libraries/UsdnProtocolActionsVaultLibrary.sol";
-import { UsdnProtocolCoreLibrary as Core } from "./libraries/UsdnProtocolCoreLibrary.sol";
 
 abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActions {
     /// @inheritdoc IUsdnProtocolActions
