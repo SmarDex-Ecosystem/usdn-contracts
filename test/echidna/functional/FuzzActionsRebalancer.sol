@@ -7,25 +7,24 @@ contract FuzzActionsRebalancer is Setup {
     /* -------------------------------------------------------------------------- */
     /*                               Rebalancer                                   */
     /* -------------------------------------------------------------------------- */
-    function initiateDepositRebalancer(uint88 amountRand, address destRand) public {
-        require(destRand != address(0), "FuzzActionsRebalancer: Invalid destination address");
+    function initiateDepositRebalancer(uint88 amountRand, uint256 destRand) public {
+        destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
+        address dest = destinationsToken[address(wsteth)][destRand];
+        amountRand = uint88(bound(amountRand, 0, type(uint88).max));
 
-        uint88 amount = uint88(bound(amountRand, rebalancer.getMinAssetDeposit(), type(uint88).max));
+        wsteth.mintAndApprove(msg.sender, amountRand, address(rebalancer), amountRand);
+
+        RebalancerSnapshot memory balancesBefore = getBalancesRebalancer(dest);
 
         vm.prank(msg.sender);
-        wsteth.mintAndApprove(msg.sender, amount, address(rebalancer), amount);
-
-        RebalancerSnapshot memory balancesBefore = getBalancesRebalancer(destRand);
-
-        vm.prank(msg.sender);
-        try rebalancer.initiateDepositAssets(amount, destRand) {
+        try rebalancer.initiateDepositAssets(amountRand, dest) {
             assert(msg.sender.balance == balancesBefore.senderEth);
             assert(address(rebalancer).balance == balancesBefore.rebalancerEth);
-            assert(wsteth.balanceOf(address(rebalancer)) == balancesBefore.rebalancerWsteth + amount);
-            assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth - amount);
-            if (destRand != msg.sender) {
-                assert(address(destRand).balance == balancesBefore.toEth);
-                assert(wsteth.balanceOf(destRand) == balancesBefore.toWsteth);
+            assert(wsteth.balanceOf(address(rebalancer)) == balancesBefore.rebalancerWsteth + amountRand);
+            assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth - amountRand);
+            if (dest != msg.sender) {
+                assert(address(dest).balance == balancesBefore.toEth);
+                assert(wsteth.balanceOf(dest) == balancesBefore.toWsteth);
             }
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_OPEN_ERRORS);

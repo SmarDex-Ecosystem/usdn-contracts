@@ -183,7 +183,7 @@ contract FuzzingSuiteTest is Test {
         uint88 wstethDepositAmount = 5 ether;
 
         vm.prank(DEPLOYER);
-        echidna.initiateDepositRebalancer(wstethDepositAmount, DEPLOYER);
+        echidna.initiateDepositRebalancer(wstethDepositAmount, 0);
 
         assertEq(DEPLOYER.balance, 0, "deployer eth balance");
         assertEq(wsteth.balanceOf(DEPLOYER), 0, "deployer wsteth balance");
