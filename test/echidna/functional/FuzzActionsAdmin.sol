@@ -96,8 +96,10 @@ contract FuzzActionsAdmin is Setup {
         uint256 newCloseLimitBps,
         int256 newLongImbalanceTargetBps
     ) public {
-        require(newWithdrawalLimitBps == 0 || newWithdrawalLimitBps >= newOpenLimitBps);
-        require((newCloseLimitBps == 0 || newCloseLimitBps >= newDepositLimitBps));
+        newOpenLimitBps = bound(newOpenLimitBps, 1, type(uint256).max);
+        newWithdrawalLimitBps = bound(newWithdrawalLimitBps, newOpenLimitBps, type(uint256).max);
+        newDepositLimitBps = bound(newDepositLimitBps, 1, type(uint256).max);
+        newCloseLimitBps = bound(newCloseLimitBps, newDepositLimitBps, type(uint256).max);
         require(
             newLongImbalanceTargetBps <= int256(newCloseLimitBps)
                 && newLongImbalanceTargetBps >= -int256(newWithdrawalLimitBps)
