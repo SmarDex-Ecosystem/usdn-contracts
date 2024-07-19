@@ -9,7 +9,6 @@ contract FuzzActions is Setup {
     /* -------------------------------------------------------------------------- */
     /*                             USDN Protocol                                  */
     /* -------------------------------------------------------------------------- */
-
     function initiateDeposit(
         uint128 amountWstETHRand,
         uint128 amountSdexRand,
