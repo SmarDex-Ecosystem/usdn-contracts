@@ -244,4 +244,18 @@ contract FuzzingSuiteTest is Test {
         assertEq(DEPLOYER.balance, balanceBefore + securityDeposit * 2, "DEPLOYER balance");
         assertEq(address(usdnProtocol).balance, balanceBeforeProtocol - securityDeposit * 2, "protocol balance");
     }
+
+    function test_canInitiateClosePosition() public {
+        test_canInitiateOpen();
+
+        skip(wstEthOracleMiddleware.getValidationDelay() + 1);
+        echidna.validateOpen(uint256(uint160(DEPLOYER)), 4000 ether);
+        skip(wstEthOracleMiddleware.getValidationDelay() + 1);
+        uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
+
+        vm.prank(DEPLOYER);
+        echidna.initiateClosePosition(
+            securityDeposit, uint256(uint160(DEPLOYER)), uint256(uint160(DEPLOYER)), 4000 ether, 1 ether, 0
+        );
+    }
 }

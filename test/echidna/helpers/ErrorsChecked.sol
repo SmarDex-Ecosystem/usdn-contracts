@@ -53,6 +53,15 @@ contract ErrorsChecked is Test {
         ]
     ];
 
+    bytes4[][] public INITIATE_CLOSE_ERRORS = [
+        [
+            IUsdnProtocolErrors.UsdnProtocolUnauthorized.selector,
+            IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector,
+            IUsdnProtocolErrors.UsdnProtocolLiquidationPriceSafetyMargin.selector,
+            FixedPointMathLib.FullMulDivFailed.selector
+        ]
+    ];
+
     bytes4[][] public VALIDATE_DEPOSIT_ERRORS = [[IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector]];
 
     bytes4[][] public VALIDATE_WITHDRAWAL_ERRORS = [
