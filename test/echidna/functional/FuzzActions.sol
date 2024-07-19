@@ -90,7 +90,7 @@ contract FuzzActions is Setup {
     ) public {
         destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
         address dest = destinationsToken[address(wsteth)][destRand];
-        vm.deal(dest, ethRand);
+        vm.deal(msg.sender, ethRand);
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
         bytes memory priceData = abi.encode(priceRand);
@@ -105,7 +105,7 @@ contract FuzzActions is Setup {
             posId = posIds[posIdsIndex];
         }
 
-        vm.prank(dest);
+        vm.prank(msg.sender);
         try usdnProtocol.initiateClosePosition{ value: ethRand }(
             posId, amountToClose, dest, validator, priceData, EMPTY_PREVIOUS_DATA
         ) returns (bool success_) {
@@ -116,7 +116,7 @@ contract FuzzActions is Setup {
                 posIds[posIdsIndex] = posIds[posIds.length - 1];
                 posIds.pop();
 
-                assert(address(dest).balance == balancesBefore.toEth - securityDeposit);
+                assert(address(msg.sender).balance == balancesBefore.senderEth - securityDeposit);
                 assert(
                     uint8(usdnProtocol.getUserPendingAction(validator).action)
                         == uint8(IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition)
@@ -126,7 +126,7 @@ contract FuzzActions is Setup {
                 assert(address(usdnProtocol).balance == balancesBefore.protocolEth);
             }
 
-            assert(wsteth.balanceOf(dest) == balancesBefore.toWsteth);
+            assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth);
             assert(wsteth.balanceOf(address(usdnProtocol)) == balancesBefore.protocolWsteth);
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_CLOSE_ERRORS);

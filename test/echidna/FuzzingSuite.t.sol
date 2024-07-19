@@ -203,14 +203,11 @@ contract FuzzingSuiteTest is Test {
         skip(wstEthOracleMiddleware.getValidationDelay() + 1);
         echidna.validateOpen(uint256(uint160(DEPLOYER)), 4000 ether);
         skip(wstEthOracleMiddleware.getValidationDelay() + 1);
+        uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
 
+        vm.prank(DEPLOYER);
         echidna.initiateClosePosition(
-            usdnProtocol.getSecurityDepositValue(),
-            uint256(uint160(DEPLOYER)),
-            uint256(uint160(DEPLOYER)),
-            4000 ether,
-            1 ether,
-            0
+            securityDeposit, uint256(uint160(DEPLOYER)), uint256(uint160(DEPLOYER)), 4000 ether, 1 ether, 0
         );
     }
 }
