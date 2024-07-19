@@ -221,15 +221,6 @@ contract FuzzActions is Setup {
 
         BalancesSnapshot memory balancesBefore = getBalances(validator, msg.sender);
 
-        // beforeBalance.validatorETHBefore = validator.balance;
-        // beforeBalance.validatorWstethBefore = wsteth.balanceOf(validator);
-        // beforeBalance.senderETHBefore = msg.sender.balance;
-        // beforeBalance.toETHBefore = to.balance;
-        // beforeBalance.senderWstethBefore = wsteth.balanceOf(msg.sender);
-        // beforeBalance.usdnETHBefore = address(usdnProtocol).balance;
-        // beforeBalance.usdnWstethBefore = wsteth.balanceOf(address(usdnProtocol));
-        // beforeBalance.toWstethBefore = wsteth.balanceOf(to);
-
         vm.prank(msg.sender);
         try usdnProtocol.validateClosePosition(validator, priceData, EMPTY_PREVIOUS_DATA) returns (bool success) {
             if (success) {
