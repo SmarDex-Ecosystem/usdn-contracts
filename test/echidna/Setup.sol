@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { Test } from "forge-std/Test.sol";
-
 import { UsdnProtocolHandler } from "../unit/UsdnProtocol/utils/Handler.sol";
 import { MockOracleMiddleware } from "../unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
 import { Sdex } from "../utils/Sdex.sol";
@@ -18,7 +16,7 @@ import { IWstETH } from "../../src/interfaces/IWstETH.sol";
 import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Permit2TokenBitfield } from "../../src/libraries/Permit2TokenBitfield.sol";
 
-contract Setup is Test, ErrorsChecked {
+contract Setup is ErrorsChecked {
     address public constant DEPLOYER = address(0x10000);
     address public constant ATTACKER = address(0x20000);
     address public constant FEE_COLLECTOR = address(0x00fee);
