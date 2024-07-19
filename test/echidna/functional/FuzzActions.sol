@@ -76,8 +76,7 @@ contract FuzzActions is Setup {
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address dest = destinationsToken[address(wsteth)][destRandBounded];
         address validator = validators[validatorRand];
-        bytes memory priceData = abi.encode(bound(priceRand, 0, type(uint128).max));
-        uint64 securityDeposit = usdnProtocol.getSecurityDepositValue();
+        priceRand = bound(priceRand, 0, type(uint128).max);
 
         BalancesSnapshot memory balancesBefore = getBalances(validator, dest);
         (
