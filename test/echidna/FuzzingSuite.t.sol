@@ -227,10 +227,10 @@ contract FuzzingSuiteTest is Test {
 
         echidna.setExpoImbalanceLimits(5000, 0, 10_000, 1, -4900);
         assertEq(usdnProtocol.getOpenExpoImbalanceLimitBps(), 5000, "openExpoImbalanceLimitBps");
-        assertEq(usdnProtocol.getDepositExpoImbalanceLimitBps(), 0, "depositExpoImbalanceLimitBps");
+        assertEq(usdnProtocol.getDepositExpoImbalanceLimitBps(), 1, "depositExpoImbalanceLimitBps");
         assertEq(usdnProtocol.getWithdrawalExpoImbalanceLimitBps(), 10_000, "withdrawalExpoImbalanceLimitBps");
         assertEq(usdnProtocol.getCloseExpoImbalanceLimitBps(), 1, "closeExpoImbalanceLimitBps");
-        assertEq(usdnProtocol.getLongImbalanceTargetBps(), -4900, "longImbalanceTargetBps");
+        assertEq(usdnProtocol.getLongImbalanceTargetBps(), -1613, "longImbalanceTargetBps");
 
         echidna.setTargetUsdnPrice(1e18);
         assertEq(usdnProtocol.getTargetUsdnPrice(), 1e18, "targetUsdnPrice");

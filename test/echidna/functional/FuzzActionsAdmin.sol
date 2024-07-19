@@ -3,10 +3,11 @@ pragma solidity ^0.8.25;
 
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
+import { Bound } from "../helpers/Bound.sol";
 
 import { Setup } from "../Setup.sol";
 
-contract FuzzActionsAdmin is Setup {
+contract FuzzActionsAdmin is Setup, Bound {
     /* -------------------------------------------------------------------------- */
     /*                               ADMIN functions                              */
     /* -------------------------------------------------------------------------- */
@@ -97,13 +98,17 @@ contract FuzzActionsAdmin is Setup {
         uint256 newCloseLimitBps,
         int256 newLongImbalanceTargetBps
     ) public {
-        require(newWithdrawalLimitBps == 0 || newWithdrawalLimitBps >= newOpenLimitBps);
-        require((newCloseLimitBps == 0 || newCloseLimitBps >= newDepositLimitBps));
-        require(
-            newLongImbalanceTargetBps <= int256(newCloseLimitBps)
-                && newLongImbalanceTargetBps >= -int256(newWithdrawalLimitBps)
-                && newLongImbalanceTargetBps >= -int256(Constants.BPS_DIVISOR / 2)
-        );
+        newOpenLimitBps = bound(newOpenLimitBps, 1, type(uint256).max);
+        newWithdrawalLimitBps = bound(newWithdrawalLimitBps, newOpenLimitBps, type(uint256).max);
+        newDepositLimitBps = bound(newDepositLimitBps, 1, type(uint256).max);
+        newCloseLimitBps = bound(newCloseLimitBps, newDepositLimitBps, type(uint256).max);
+        if (newWithdrawalLimitBps < Constants.BPS_DIVISOR / 2) {
+            newLongImbalanceTargetBps =
+                int256Bound(uint256(newLongImbalanceTargetBps), Constants.BPS_DIVISOR / 2, newCloseLimitBps);
+        } else {
+            newLongImbalanceTargetBps =
+                int256Bound(uint256(newLongImbalanceTargetBps), newWithdrawalLimitBps, newCloseLimitBps);
+        }
         usdnProtocol.setExpoImbalanceLimits(
             newOpenLimitBps, newDepositLimitBps, newWithdrawalLimitBps, newCloseLimitBps, newLongImbalanceTargetBps
         );
