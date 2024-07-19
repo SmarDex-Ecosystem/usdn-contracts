@@ -1,18 +1,20 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
+import { FuzzingSuite } from "./FuzzingSuite.sol";
 import { Test } from "forge-std/Test.sol";
 
 import { MockOracleMiddleware } from "../unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
 import { USER_1, USER_2 } from "../utils/Constants.sol";
+import { Sdex } from "../utils/Sdex.sol";
 import { WstETH } from "../utils/WstEth.sol";
-import { FuzzingSuite } from "./FuzzingSuite.sol";
 
 import { Rebalancer } from "../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../src/Usdn/Usdn.sol";
 import { UsdnProtocol } from "../../src/UsdnProtocol/UsdnProtocol.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Permit2TokenBitfield } from "../../src/libraries/Permit2TokenBitfield.sol";
 
 contract FuzzingSuiteTest is Test {
     FuzzingSuite public echidna;
@@ -77,13 +79,32 @@ contract FuzzingSuiteTest is Test {
     }
 
     function test_canValidateDeposit() public {
-        uint256 balanceDeployer = usdn.balanceOf(DEPLOYER);
-        vm.prank(DEPLOYER);
-        echidna.initiateDeposit(0.1 ether, 10 ether, 0.5 ether, 0, 0, 1000 ether);
+        Sdex sdex = echidna.sdex();
+        uint128 amountWstETH = 0.1 ether;
+        uint256 price = 1000 ether;
 
-        skip(1 minutes);
+        wsteth.mintAndApprove(DEPLOYER, amountWstETH, address(usdnProtocol), amountWstETH);
+        sdex.mintAndApprove(DEPLOYER, 10 ether, address(usdnProtocol), 10 ether);
+
+        uint256 balanceDeployer = usdn.balanceOf(DEPLOYER);
+        uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
+        vm.deal(DEPLOYER, securityDeposit);
+
+        Permit2TokenBitfield.Bitfield NO_PERMIT2 = echidna.NO_PERMIT2();
+
         vm.prank(DEPLOYER);
-        echidna.validateDeposit(0, 1000 ether);
+        usdnProtocol.initiateDeposit{ value: securityDeposit }(
+            amountWstETH,
+            DEPLOYER,
+            payable(DEPLOYER),
+            NO_PERMIT2,
+            abi.encode(price),
+            IUsdnProtocolTypes.PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) })
+        );
+
+        skip(wstEthOracleMiddleware.getValidationDelay() + 1);
+        vm.prank(DEPLOYER);
+        echidna.validateDeposit(0, price);
 
         assertGt(usdn.balanceOf(DEPLOYER), balanceDeployer, "balance usdn");
     }
