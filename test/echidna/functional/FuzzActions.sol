@@ -96,7 +96,7 @@ contract FuzzActions is Setup {
         address payable validator = payable(validators[validatorRand]);
         priceRand = bound(priceRand, 0, type(uint128).max);
         bytes memory priceData = abi.encode(uint128(priceRand));
-        amountToClose = uint128(bound(amountToClose, 0, type(uint128).max));
+        amountToClose = bound(amountToClose, 0, type(uint128).max);
 
         IUsdnProtocolTypes.PositionId memory posId;
         uint256 posIdsIndex;
