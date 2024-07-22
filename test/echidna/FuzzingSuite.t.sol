@@ -199,7 +199,6 @@ contract FuzzingSuiteTest is Test {
 
     function test_canFullDeposit() public {
         Sdex sdex = echidna.sdex();
-        uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
         uint128 amountWstETH = 0.1 ether;
 
         wsteth.mintAndApprove(DEPLOYER, amountWstETH, address(usdnProtocol), amountWstETH);
@@ -208,10 +207,8 @@ contract FuzzingSuiteTest is Test {
         uint256 balanceDeployer = usdn.balanceOf(DEPLOYER);
         uint256 balanceProtocol = address(usdnProtocol).balance;
 
-        vm.deal(DEPLOYER, securityDeposit);
-
         vm.prank(DEPLOYER);
-        echidna.fullDeposit(0.1 ether, 10 ether, 0.5 ether, 0, 0, 1000 ether);
+        echidna.fullDeposit(amountWstETH, 10 ether, 0.5 ether, 0, 0, 1000 ether);
 
         assertGt(usdn.balanceOf(DEPLOYER), balanceDeployer, "balance usdn");
         assertEq(address(usdnProtocol).balance, balanceProtocol, "protocol balance");
