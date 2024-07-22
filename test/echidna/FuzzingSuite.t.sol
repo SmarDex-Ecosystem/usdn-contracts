@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import { FuzzingSuite } from "./FuzzingSuite.sol";
 import { Test } from "forge-std/Test.sol";
 
 import { MockOracleMiddleware } from "../unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
 import { USER_1, USER_2 } from "../utils/Constants.sol";
 import { Sdex } from "../utils/Sdex.sol";
 import { WstETH } from "../utils/WstEth.sol";
+import { FuzzingSuite } from "./FuzzingSuite.sol";
 
 import { Usdn } from "../../src/Usdn/Usdn.sol";
 import { UsdnProtocol } from "../../src/UsdnProtocol/UsdnProtocol.sol";
@@ -208,7 +208,7 @@ contract FuzzingSuiteTest is Test {
 
         skip(wstEthOracleMiddleware.getValidationDelay() + 1);
         vm.prank(DEPLOYER);
-        echidna.validateClose(0, etherPrice);
+        echidna.validateClosePosition(0, etherPrice);
 
         IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(DEPLOYER);
         assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.None, "action type");

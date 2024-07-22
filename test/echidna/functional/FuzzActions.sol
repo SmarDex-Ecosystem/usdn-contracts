@@ -9,6 +9,7 @@ contract FuzzActions is Setup {
     /* -------------------------------------------------------------------------- */
     /*                             USDN Protocol                                  */
     /* -------------------------------------------------------------------------- */
+
     function initiateDeposit(
         uint128 amountWstETHRand,
         uint128 amountSdexRand,
@@ -260,15 +261,16 @@ contract FuzzActions is Setup {
         }
     }
 
-    function validateClose(uint256 validatorRand, uint256 currentPrice) public {
+    function validateClosePosition(uint256 validatorRand, uint256 currentPrice) public {
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
         bytes memory priceData = abi.encode(currentPrice);
 
-        IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(validator);
-        uint256 securityDeposit = action.securityDepositValue;
-        uint256 closeAmount = action.var2;
-        address to = action.to;
+        IUsdnProtocolTypes.LongPendingAction memory longAction =
+            usdnProtocol.i_toLongPendingAction(usdnProtocol.getUserPendingAction(validator));
+        uint256 securityDeposit = longAction.securityDepositValue;
+        uint256 closeAmount = longAction.closeAmount;
+        address to = longAction.to;
 
         BalancesSnapshot memory balancesBefore = getBalances(validator, msg.sender);
 
