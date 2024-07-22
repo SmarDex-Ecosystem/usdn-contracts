@@ -209,5 +209,11 @@ contract FuzzingSuiteTest is Test {
         echidna.initiateClosePosition(
             securityDeposit, uint256(uint160(DEPLOYER)), uint256(uint160(DEPLOYER)), 4000 ether, 1 ether, 0
         );
+
+        assertEq(
+            uint8(usdnProtocol.getUserPendingAction(DEPLOYER).action),
+            uint8(IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition),
+            "The user action should pending"
+        );
     }
 }
