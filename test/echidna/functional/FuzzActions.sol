@@ -237,7 +237,7 @@ contract FuzzActions is Setup {
         }
     }
 
-    function validateOpen(uint256 validatorRand, uint256 priceRand) public {
+    function validateOpenPosition(uint256 validatorRand, uint256 priceRand) public {
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
         bytes memory priceData = abi.encode(bound(priceRand, 0, type(uint128).max));
