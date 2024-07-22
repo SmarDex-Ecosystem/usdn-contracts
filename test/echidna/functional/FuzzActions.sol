@@ -34,7 +34,6 @@ contract FuzzActions is Setup {
             amountWstETHRand, dest, validator, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         ) {
             uint64 securityDeposit = usdnProtocol.getSecurityDepositValue();
-
             assert(address(msg.sender).balance == balancesBefore.senderEth - securityDeposit);
             assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth - amountWstETHRand);
             assert(sdex.balanceOf(msg.sender) < balancesBefore.senderSdex);
@@ -70,10 +69,8 @@ contract FuzzActions is Setup {
             amountRand, liquidationPriceRand, dest, payable(validator), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         ) returns (bool, IUsdnProtocolTypes.PositionId memory posId) {
             posIds.push(posId);
-
             assert(address(usdnProtocol).balance == balancesBefore.protocolEth + securityDeposit);
             assert(address(msg.sender).balance == balancesBefore.senderEth - securityDeposit);
-
             assert(wsteth.balanceOf(address(usdnProtocol)) == balancesBefore.protocolWsteth + amountRand);
             assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth - amountRand);
         } catch (bytes memory err) {
@@ -105,10 +102,8 @@ contract FuzzActions is Setup {
             usdnShares, dest, validator, priceData, EMPTY_PREVIOUS_DATA
         ) {
             uint64 securityDeposit = usdnProtocol.getSecurityDepositValue();
-
             assert(address(msg.sender).balance == balancesBefore.senderEth - securityDeposit);
             assert(usdn.sharesOf(msg.sender) == balancesBefore.senderUsdnShares - usdnShares);
-
             assert(address(usdnProtocol).balance == balancesBefore.protocolEth + securityDeposit);
             assert(usdn.sharesOf(address(usdnProtocol)) == balancesBefore.protocolUsdnShares + usdnShares);
         } catch (bytes memory err) {
@@ -128,7 +123,6 @@ contract FuzzActions is Setup {
         vm.prank(msg.sender);
         try usdnProtocol.validateDeposit(validator, priceData, EMPTY_PREVIOUS_DATA) returns (bool success_) {
             uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
-
             if (success_) {
                 //todo maybe determine the exact amount if it can be know before the call
                 assert(usdn.sharesOf(pendingAction.to) > balancesBefore.toUsdnShares);
@@ -143,9 +137,7 @@ contract FuzzActions is Setup {
                 assert(usdn.sharesOf(validator) == balancesBefore.validatorUsdnShares);
                 assert(usdn.sharesOf(pendingAction.to) == balancesBefore.toUsdnShares);
             }
-
             assert(validator.balance == balancesBefore.validatorEth + securityDeposit);
-
             assert(usdn.sharesOf(address(usdnProtocol)) == balancesBefore.protocolUsdnShares);
             assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth);
             assert(wsteth.balanceOf(address(usdnProtocol)) == balancesBefore.protocolWsteth);
@@ -169,7 +161,6 @@ contract FuzzActions is Setup {
             assert(address(msg.sender).balance == balancesBefore.senderEth + action.securityDepositValue);
             if (success_) {
                 assert(wsteth.balanceOf(msg.sender) >= balancesBefore.senderWsteth);
-
                 assert(address(usdnProtocol).balance == balancesBefore.protocolEth - action.securityDepositValue);
                 assert(usdn.sharesOf(address(usdnProtocol)) < balancesBefore.protocolUsdnShares);
                 assert(wsteth.balanceOf(address(usdnProtocol)) <= balancesBefore.protocolWsteth);

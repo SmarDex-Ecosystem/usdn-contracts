@@ -11,7 +11,6 @@ import { MockLiquidationRewardsManager } from "./mock/MockLiquidationRewardsMana
 
 import { Rebalancer } from "../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../src/Usdn/Usdn.sol";
-import { UsdnProtocolCoreLibrary as Core } from "../../src/UsdnProtocol/libraries/UsdnProtocolCoreLibrary.sol";
 import { IWstETH } from "../../src/interfaces/IWstETH.sol";
 import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Permit2TokenBitfield } from "../../src/libraries/Permit2TokenBitfield.sol";
@@ -124,11 +123,9 @@ contract Setup is ErrorsChecked {
         snapshot.protocolEth = address(usdnProtocol).balance;
         snapshot.protocolWsteth = wsteth.balanceOf(address(usdnProtocol));
         snapshot.protocolUsdnShares = usdn.sharesOf(address(usdnProtocol));
-        if (to != address(0)) {
-            snapshot.toEth = address(to).balance;
-            snapshot.toUsdnShares = usdn.sharesOf(to);
-            snapshot.toWsteth = wsteth.balanceOf(to);
-        }
+        snapshot.toEth = address(to).balance;
+        snapshot.toUsdnShares = usdn.sharesOf(to);
+        snapshot.toWsteth = wsteth.balanceOf(to);
     }
 
     function getBalancesRebalancer(address dest) internal view returns (RebalancerSnapshot memory) {
