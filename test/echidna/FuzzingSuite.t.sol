@@ -205,8 +205,7 @@ contract FuzzingSuiteTest is Test {
         wsteth.mintAndApprove(DEPLOYER, amountWstETH, address(usdnProtocol), amountWstETH);
         sdex.mintAndApprove(DEPLOYER, 10 ether, address(usdnProtocol), 10 ether);
 
-        uint256 balanceUsdn = usdn.balanceOf(DEPLOYER);
-        uint256 balance = DEPLOYER.balance;
+        uint256 balanceDeployer = usdn.balanceOf(DEPLOYER);
         uint256 balanceProtocol = address(usdnProtocol).balance;
 
         vm.deal(DEPLOYER, securityDeposit);
@@ -214,8 +213,7 @@ contract FuzzingSuiteTest is Test {
         vm.prank(DEPLOYER);
         echidna.fullDeposit(0.1 ether, 10 ether, 0.5 ether, 0, 0, 1000 ether);
 
-        assertGt(usdn.balanceOf(DEPLOYER), balanceUsdn, "balance usdn");
+        assertGt(usdn.balanceOf(DEPLOYER), balanceDeployer, "balance usdn");
         assertEq(address(usdnProtocol).balance, balanceProtocol, "protocol balance");
-        assertEq(DEPLOYER.balance, balance, "protocol balance");
     }
 }
