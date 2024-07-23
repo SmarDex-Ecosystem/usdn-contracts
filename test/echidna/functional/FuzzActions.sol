@@ -257,7 +257,7 @@ contract FuzzActions is Setup {
         }
     }
 
-    function validateOpen(uint256 validatorRand, uint256 priceRand) public {
+    function validateOpenPosition(uint256 validatorRand, uint256 priceRand) public {
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
         uint256 priceData = bound(priceRand, 0, type(uint128).max);
@@ -320,6 +320,44 @@ contract FuzzActions is Setup {
         } catch (bytes memory err) {
             _checkErrors(err, VALIDATE_PENDING_ACTIONS_ERRORS);
         }
+    }
+
+    function fullDeposit(
+        uint128 amountWstETHRand,
+        uint128 amountSdexRand,
+        uint256 ethRand,
+        uint256 destRand,
+        uint256 validatorRand,
+        uint256 priceRand
+    ) public {
+        initiateDeposit(amountWstETHRand, amountSdexRand, ethRand, destRand, validatorRand, priceRand);
+        skip(usdnProtocol.getValidationDeadline() + 1);
+        validateDeposit(validatorRand, priceRand);
+    }
+
+    function fullWithdrawal(
+        uint152 usdnShares,
+        uint256 ethRand,
+        uint256 destRand,
+        uint256 validatorRand,
+        uint256 priceRand
+    ) public {
+        initiateWithdrawal(usdnShares, ethRand, destRand, validatorRand, priceRand);
+        skip(usdnProtocol.getValidationDeadline() + 1);
+        validateWithdrawal(validatorRand, priceRand);
+    }
+
+    function fullOpenPosition(
+        uint128 amountRand,
+        uint128 liquidationPriceRand,
+        uint256 ethRand,
+        uint256 destRand,
+        uint256 validatorRand,
+        uint256 priceRand
+    ) public {
+        initiateOpenPosition(amountRand, liquidationPriceRand, ethRand, destRand, validatorRand, priceRand);
+        skip(usdnProtocol.getValidationDeadline() + 1);
+        validateOpenPosition(validatorRand, priceRand);
     }
 
     function getPreviousActionsData(address user, uint256 currentPrice)
