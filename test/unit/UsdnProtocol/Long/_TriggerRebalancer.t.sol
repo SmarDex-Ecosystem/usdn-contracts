@@ -251,4 +251,16 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
             newVaultBalance, vaultBalance - bonus, "The bonus should have been subtracted from the vault's balance"
         );
     }
+
+    /**
+     * @custom:scenario Trigger with an empty rebalancer
+     * @custom:given The rebalancer with no deposit
+     * @custom:when The rebalancer is triggered
+     * @custom:then The rebalancer position version should not be incremented
+     */
+    function test_triggerEmptyRebalancer() public {
+        uint256 totalExpo = protocol.getTotalExpo();
+        protocol.i_triggerRebalancer(lastPrice, totalExpo - 1, totalExpo * 10, 0);
+        assertEq(rebalancer.getPositionVersion(), 0, "Version should not be incremented");
+    }
 }
