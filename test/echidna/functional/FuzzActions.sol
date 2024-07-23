@@ -244,6 +244,31 @@ contract FuzzActions is Setup {
         }
     }
 
+    function fullDeposit(
+        uint128 amountWstETHRand,
+        uint128 amountSdexRand,
+        uint256 ethRand,
+        uint256 destRand,
+        uint256 validatorRand,
+        uint256 priceRand
+    ) public {
+        initiateDeposit(amountWstETHRand, amountSdexRand, ethRand, destRand, validatorRand, priceRand);
+        skip(usdnProtocol.getValidationDeadline() + 1);
+        validateDeposit(validatorRand, priceRand);
+    }
+
+    function fullWithdrawal(
+        uint152 usdnShares,
+        uint256 ethRand,
+        uint256 destRand,
+        uint256 validatorRand,
+        uint256 priceRand
+    ) public {
+        initiateWithdrawal(usdnShares, ethRand, destRand, validatorRand, priceRand);
+        skip(usdnProtocol.getValidationDeadline() + 1);
+        validateWithdrawal(validatorRand, priceRand);
+    }
+
     function fullOpenPosition(
         uint128 amountRand,
         uint128 liquidationPriceRand,
