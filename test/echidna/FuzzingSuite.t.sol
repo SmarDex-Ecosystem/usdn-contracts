@@ -198,10 +198,7 @@ contract FuzzingSuiteTest is Test {
     }
 
     function test_canInitiateClosePosition() public {
-        test_canInitiateOpen();
-
-        skip(wstEthOracleMiddleware.getValidationDelay() + 1);
-        echidna.validateOpen(uint256(uint160(DEPLOYER)), 4000 ether);
+        test_canFullOpenPosition();
         skip(wstEthOracleMiddleware.getValidationDelay() + 1);
         uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
 
