@@ -476,6 +476,7 @@ interface IUsdnProtocolTypes {
      * @param _tickBitmap The bitmap used to quickly find populated ticks
      */
     struct Storage {
+        address _utilsContract; // TO DO : change address to contract type
         // immutable
         int24 _tickSpacing;
         IERC20Metadata _asset;

@@ -15,6 +15,7 @@ import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../src/Usdn/Usdn.sol";
 import { UsdnProtocol } from "../src/UsdnProtocol/UsdnProtocol.sol";
 import { IWstETH } from "../src/interfaces/IWstETH.sol";
+import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 contract Deploy is Script {
@@ -73,7 +74,7 @@ contract Deploy is Script {
         );
 
         // deploy the rebalancer
-        Rebalancer_ = _deployRebalancer(UsdnProtocol_);
+        Rebalancer_ = _deployRebalancer(address(UsdnProtocol_));
 
         // set the rebalancer on the USDN protocol
         UsdnProtocol_.setRebalancer(Rebalancer_);
@@ -230,12 +231,12 @@ contract Deploy is Script {
      * @param usdnProtocol The USDN protocol
      * @return rebalancer_ The deployed contract
      */
-    function _deployRebalancer(UsdnProtocol usdnProtocol) internal returns (Rebalancer rebalancer_) {
+    function _deployRebalancer(address usdnProtocol) internal returns (Rebalancer rebalancer_) {
         address payable rebalancerAddress = payable(vm.envOr("REBALANCER_ADDRESS", address(0)));
         if (rebalancerAddress != address(0)) {
             rebalancer_ = Rebalancer(rebalancerAddress);
         } else {
-            rebalancer_ = new Rebalancer(usdnProtocol);
+            rebalancer_ = new Rebalancer(IUsdnProtocol(usdnProtocol));
         }
     }
 
@@ -265,6 +266,8 @@ contract Deploy is Script {
             ).price / 2;
         }
 
-        UsdnProtocol_.initialize(uint128(depositAmount), uint128(longAmount), uint128(desiredLiqPrice), "");
+        IUsdnProtocol(address(UsdnProtocol_)).initialize(
+            uint128(depositAmount), uint128(longAmount), uint128(desiredLiqPrice), ""
+        );
     }
 }

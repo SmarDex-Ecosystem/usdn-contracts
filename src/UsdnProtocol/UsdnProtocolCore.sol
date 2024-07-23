@@ -1,11 +1,38 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.25;
 
+import { InitializableReentrancyGuard } from "../utils/InitializableReentrancyGuard.sol";
+import { AccessControlDefaultAdminRules } from
+    "@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol";
+
 import { IUsdnProtocolCore } from "../interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
-import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./libraries/UsdnProtocolCoreLibrary.sol";
 
-abstract contract UsdnProtocolCore is UsdnProtocolStorage, IUsdnProtocolCore {
+contract UsdnProtocolCore is IUsdnProtocolCore, InitializableReentrancyGuard, AccessControlDefaultAdminRules {
+    Storage internal s;
+
+    bytes32 private constant SET_EXTERNAL_ROLE = keccak256("SET_EXTERNAL_ROLE");
+
+    bytes32 private constant CRITICAL_FUNCTIONS_ROLE = keccak256("CRITICAL_FUNCTIONS_ROLE");
+
+    bytes32 private constant SET_PROTOCOL_PARAMS_ROLE = keccak256("SET_PROTOCOL_PARAMS_ROLE");
+
+    bytes32 private constant SET_USDN_PARAMS_ROLE = keccak256("SET_USDN_PARAMS_ROLE");
+
+    bytes32 private constant SET_OPTIONS_ROLE = keccak256("SET_OPTIONS_ROLE");
+
+    bytes32 private constant ADMIN_SET_EXTERNAL_ROLE = keccak256("ADMIN_SET_EXTERNAL_ROLE");
+
+    bytes32 private constant ADMIN_CRITICAL_FUNCTIONS_ROLE = keccak256("ADMIN_CRITICAL_FUNCTIONS_ROLE");
+
+    bytes32 private constant ADMIN_SET_PROTOCOL_PARAMS_ROLE = keccak256("ADMIN_SET_PROTOCOL_PARAMS_ROLE");
+
+    bytes32 private constant ADMIN_SET_USDN_PARAMS_ROLE = keccak256("ADMIN_SET_USDN_PARAMS_ROLE");
+
+    bytes32 private constant ADMIN_SET_OPTIONS_ROLE = keccak256("ADMIN_SET_OPTIONS_ROLE");
+
+    constructor() AccessControlDefaultAdminRules(0, msg.sender) { }
+
     /// @inheritdoc IUsdnProtocolCore
     function initialize(
         uint128 depositAmount,
