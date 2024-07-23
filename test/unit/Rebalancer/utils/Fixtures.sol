@@ -30,7 +30,7 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
     MockChainlinkOnChain public chainlinkGasPriceFeed;
     LiquidationRewardsManager public liquidationRewardsManager;
     RebalancerHandler public rebalancer;
-    UsdnProtocol public usdnProtocol;
+    IUsdnProtocol public usdnProtocol;
 
     Types.PreviousActionsData internal EMPTY_PREVIOUS_DATA =
         Types.PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
@@ -44,21 +44,25 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
         chainlinkGasPriceFeed = new MockChainlinkOnChain();
         liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
 
-        usdnProtocol = new UsdnProtocol(
-            usdn,
-            sdex,
-            wstETH,
-            oracleMiddleware,
-            liquidationRewardsManager,
-            100, // tick spacing 100 = 1%
-            ADMIN, // Fee collector
-            Types.Roles({
-                setExternalAdmin: ADMIN,
-                criticalFunctionsAdmin: ADMIN,
-                setProtocolParamsAdmin: ADMIN,
-                setUsdnParamsAdmin: ADMIN,
-                setOptionsAdmin: ADMIN
-            })
+        usdnProtocol = IUsdnProtocol(
+            address(
+                new UsdnProtocol(
+                    usdn,
+                    sdex,
+                    wstETH,
+                    oracleMiddleware,
+                    liquidationRewardsManager,
+                    100, // tick spacing 100 = 1%
+                    ADMIN, // Fee collector
+                    Types.Roles({
+                        setExternalAdmin: ADMIN,
+                        criticalFunctionsAdmin: ADMIN,
+                        setProtocolParamsAdmin: ADMIN,
+                        setUsdnParamsAdmin: ADMIN,
+                        setOptionsAdmin: ADMIN
+                    })
+                )
+            )
         );
         rebalancer = new RebalancerHandler(IUsdnProtocol(address(usdnProtocol)));
 

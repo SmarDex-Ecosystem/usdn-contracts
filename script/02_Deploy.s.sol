@@ -38,7 +38,7 @@ contract Deploy is Script {
             LiquidationRewardsManager LiquidationRewardsManager_,
             Rebalancer Rebalancer_,
             Usdn Usdn_,
-            UsdnProtocol UsdnProtocol_
+            IUsdnProtocol UsdnProtocol_
         )
     {
         bool isProdEnv = block.chainid != vm.envOr("FORK_CHAIN_ID", uint256(31_337));
@@ -56,21 +56,25 @@ contract Deploy is Script {
         Sdex_ = _deploySdex();
 
         // deploy the protocol with tick spacing 100 = 1%
-        UsdnProtocol_ = new UsdnProtocol(
-            Usdn_,
-            Sdex_,
-            WstETH_,
-            WstEthOracleMiddleware_,
-            LiquidationRewardsManager_,
-            100,
-            vm.envAddress("FEE_COLLECTOR"),
-            Types.Roles({
-                setExternalAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
-                criticalFunctionsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
-                setProtocolParamsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
-                setUsdnParamsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
-                setOptionsAdmin: vm.envAddress("DEPLOYER_ADDRESS")
-            })
+        UsdnProtocol_ = IUsdnProtocol(
+            address(
+                new UsdnProtocol(
+                    Usdn_,
+                    Sdex_,
+                    WstETH_,
+                    WstEthOracleMiddleware_,
+                    LiquidationRewardsManager_,
+                    100,
+                    vm.envAddress("FEE_COLLECTOR"),
+                    Types.Roles({
+                        setExternalAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
+                        criticalFunctionsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
+                        setProtocolParamsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
+                        setUsdnParamsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
+                        setOptionsAdmin: vm.envAddress("DEPLOYER_ADDRESS")
+                    })
+                )
+            )
         );
 
         // deploy the rebalancer
@@ -250,7 +254,7 @@ contract Deploy is Script {
      */
     function _initializeUsdnProtocol(
         bool isProdEnv,
-        UsdnProtocol UsdnProtocol_,
+        IUsdnProtocol UsdnProtocol_,
         WstEthOracleMiddleware WstEthOracleMiddleware_,
         uint256 depositAmount,
         uint256 longAmount
