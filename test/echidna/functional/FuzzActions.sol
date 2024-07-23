@@ -256,4 +256,16 @@ contract FuzzActions is Setup {
         skip(usdnProtocol.getValidationDeadline() + 1);
         validateDeposit(validatorRand, priceRand);
     }
+
+    function fullWithdrawal(
+        uint152 usdnShares,
+        uint256 ethRand,
+        uint256 destRand,
+        uint256 validatorRand,
+        uint256 priceRand
+    ) public {
+        initiateWithdrawal(usdnShares, ethRand, destRand, validatorRand, priceRand);
+        skip(usdnProtocol.getValidationDeadline() + 1);
+        validateWithdrawal(validatorRand, priceRand);
+    }
 }

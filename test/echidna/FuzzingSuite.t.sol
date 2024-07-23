@@ -207,4 +207,15 @@ contract FuzzingSuiteTest is Test {
         assertGt(usdn.balanceOf(DEPLOYER), balanceDeployer, "balance usdn");
         assertEq(address(usdnProtocol).balance, balanceProtocol, "protocol balance");
     }
+
+    function test_canFullWithdrawal() public {
+        assertGt(usdn.balanceOf(DEPLOYER), 0, "usdn balance before withdrawal");
+        uint256 balanceProtocol = address(usdnProtocol).balance;
+
+        vm.prank(DEPLOYER);
+        echidna.fullWithdrawal(usdnShares, 10 ether, 0, 0, 1000 ether);
+
+        assertEq(usdn.balanceOf(DEPLOYER), 0, "usdn balance after withdrawal");
+        assertEq(address(usdnProtocol).balance, balanceProtocol, "protocol balance");
+    }
 }
