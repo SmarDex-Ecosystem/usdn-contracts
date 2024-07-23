@@ -246,10 +246,7 @@ contract FuzzingSuiteTest is Test {
     }
 
     function test_canInitiateClosePosition() public {
-        test_canInitiateOpenPosition();
-
-        skip(wstEthOracleMiddleware.getValidationDelay() + 1);
-        echidna.validateOpenPosition(uint256(uint160(DEPLOYER)), 4000 ether);
+        test_canFullOpenPosition();
         skip(wstEthOracleMiddleware.getValidationDelay() + 1);
         uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
 
@@ -257,5 +254,44 @@ contract FuzzingSuiteTest is Test {
         echidna.initiateClosePosition(
             securityDeposit, uint256(uint160(DEPLOYER)), uint256(uint160(DEPLOYER)), 4000 ether, 1 ether, 0
         );
+
+        assertEq(
+            uint8(usdnProtocol.getUserPendingAction(DEPLOYER).action),
+            uint8(IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition),
+            "The user action should pending"
+        );
+    }
+
+    function test_canFullDeposit() public {
+        uint256 balanceDeployer = usdn.balanceOf(DEPLOYER);
+        uint256 balanceProtocol = address(usdnProtocol).balance;
+
+        vm.prank(DEPLOYER);
+        echidna.fullDeposit(0.1 ether, 10 ether, 0.5 ether, 0, 0, 1000 ether);
+
+        assertGt(usdn.balanceOf(DEPLOYER), balanceDeployer, "balance usdn");
+        assertEq(address(usdnProtocol).balance, balanceProtocol, "protocol balance");
+    }
+
+    function test_canFullWithdrawal() public {
+        assertGt(usdn.balanceOf(DEPLOYER), 0, "usdn balance before withdrawal");
+        uint256 balanceProtocol = address(usdnProtocol).balance;
+
+        vm.prank(DEPLOYER);
+        echidna.fullWithdrawal(usdnShares, 10 ether, 0, 0, 1000 ether);
+
+        assertEq(usdn.balanceOf(DEPLOYER), 0, "usdn balance after withdrawal");
+        assertEq(address(usdnProtocol).balance, balanceProtocol, "protocol balance");
+    }
+
+    function test_canFullOpenPosition() public {
+        uint256 balanceBeforeProtocol = address(usdnProtocol).balance;
+        uint256 balanceWstEthBefore = wsteth.balanceOf(DEPLOYER);
+
+        vm.prank(DEPLOYER);
+        echidna.fullOpenPosition(5 ether, 1000 ether, 10 ether, 0, 0, 2000 ether);
+
+        assertEq(address(usdnProtocol).balance, balanceBeforeProtocol, "protocol balance");
+        assertEq(wsteth.balanceOf(DEPLOYER), balanceWstEthBefore, "wstETH balance");
     }
 }
