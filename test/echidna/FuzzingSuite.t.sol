@@ -1,17 +1,19 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
+import { FuzzingSuite } from "./FuzzingSuite.sol";
 import { Test } from "forge-std/Test.sol";
 
 import { MockOracleMiddleware } from "../unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
 import { USER_1, USER_2 } from "../utils/Constants.sol";
+import { Sdex } from "../utils/Sdex.sol";
 import { WstETH } from "../utils/WstEth.sol";
-import { FuzzingSuite } from "./FuzzingSuite.sol";
 
 import { Usdn } from "../../src/Usdn/Usdn.sol";
 import { UsdnProtocol } from "../../src/UsdnProtocol/UsdnProtocol.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Permit2TokenBitfield } from "../../src/libraries/Permit2TokenBitfield.sol";
 
 contract FuzzingSuiteTest is Test {
     FuzzingSuite public echidna;
@@ -52,7 +54,7 @@ contract FuzzingSuiteTest is Test {
         assertEq(action.var2, 0.1 ether, "action amount");
     }
 
-    function test_canInitiateOpen() public {
+    function test_canInitiateOpenPosition() public {
         vm.prank(DEPLOYER);
         echidna.initiateOpenPosition(5 ether, 1000 ether, 10 ether, 0, 0, 2000 ether);
         IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(DEPLOYER);
@@ -74,18 +76,37 @@ contract FuzzingSuiteTest is Test {
     }
 
     function test_canValidateDeposit() public {
-        uint256 balanceDeployer = usdn.balanceOf(DEPLOYER);
-        vm.prank(DEPLOYER);
-        echidna.initiateDeposit(0.1 ether, 10 ether, 0.5 ether, 0, 0, 1000 ether);
+        Sdex sdex = echidna.sdex();
+        uint128 amountWstETH = 0.1 ether;
+        uint256 price = 1000 ether;
 
-        skip(1 minutes);
+        wsteth.mintAndApprove(DEPLOYER, amountWstETH, address(usdnProtocol), amountWstETH);
+        sdex.mintAndApprove(DEPLOYER, 10 ether, address(usdnProtocol), 10 ether);
+
+        uint256 balanceDeployer = usdn.balanceOf(DEPLOYER);
+        uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
+        vm.deal(DEPLOYER, securityDeposit);
+
+        Permit2TokenBitfield.Bitfield NO_PERMIT2 = echidna.NO_PERMIT2();
+
         vm.prank(DEPLOYER);
-        echidna.validateDeposit(0, 1000 ether);
+        usdnProtocol.initiateDeposit{ value: securityDeposit }(
+            amountWstETH,
+            DEPLOYER,
+            payable(DEPLOYER),
+            NO_PERMIT2,
+            abi.encode(price),
+            IUsdnProtocolTypes.PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) })
+        );
+
+        skip(wstEthOracleMiddleware.getValidationDelay() + 1);
+        vm.prank(DEPLOYER);
+        echidna.validateDeposit(0, price);
 
         assertGt(usdn.balanceOf(DEPLOYER), balanceDeployer, "balance usdn");
     }
 
-    function test_canValidateOpen() public {
+    function test_canValidateOpenPosition() public {
         uint128 wstethOpenPositionAmount = 5 ether;
         uint128 liquidationPrice = 1000 ether;
         uint256 etherPrice = 4000 ether;
@@ -113,7 +134,7 @@ contract FuzzingSuiteTest is Test {
         uint256 balanceWstEthBefore = wsteth.balanceOf(DEPLOYER);
 
         skip(wstEthOracleMiddleware.getValidationDelay() + 1);
-        echidna.validateOpen(uint256(uint160(DEPLOYER)), etherPrice);
+        echidna.validateOpenPosition(uint256(uint160(DEPLOYER)), etherPrice);
 
         IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(DEPLOYER);
         assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.None, "action type");
@@ -174,6 +195,39 @@ contract FuzzingSuiteTest is Test {
 
         assertEq(DEPLOYER.balance, balanceBefore + securityDeposit * 2, "DEPLOYER balance");
         assertEq(address(usdnProtocol).balance, balanceBeforeProtocol - securityDeposit * 2, "protocol balance");
+    }
+
+    function test_canFullDeposit() public {
+        uint256 balanceDeployer = usdn.balanceOf(DEPLOYER);
+        uint256 balanceProtocol = address(usdnProtocol).balance;
+
+        vm.prank(DEPLOYER);
+        echidna.fullDeposit(0.1 ether, 10 ether, 0.5 ether, 0, 0, 1000 ether);
+
+        assertGt(usdn.balanceOf(DEPLOYER), balanceDeployer, "balance usdn");
+        assertEq(address(usdnProtocol).balance, balanceProtocol, "protocol balance");
+    }
+
+    function test_canFullWithdrawal() public {
+        assertGt(usdn.balanceOf(DEPLOYER), 0, "usdn balance before withdrawal");
+        uint256 balanceProtocol = address(usdnProtocol).balance;
+
+        vm.prank(DEPLOYER);
+        echidna.fullWithdrawal(usdnShares, 10 ether, 0, 0, 1000 ether);
+
+        assertEq(usdn.balanceOf(DEPLOYER), 0, "usdn balance after withdrawal");
+        assertEq(address(usdnProtocol).balance, balanceProtocol, "protocol balance");
+    }
+
+    function test_canFullOpenPosition() public {
+        uint256 balanceBeforeProtocol = address(usdnProtocol).balance;
+        uint256 balanceWstEthBefore = wsteth.balanceOf(DEPLOYER);
+
+        vm.prank(DEPLOYER);
+        echidna.fullOpenPosition(5 ether, 1000 ether, 10 ether, 0, 0, 2000 ether);
+
+        assertEq(address(usdnProtocol).balance, balanceBeforeProtocol, "protocol balance");
+        assertEq(wsteth.balanceOf(DEPLOYER), balanceWstEthBefore, "wstETH balance");
     }
 
     function test_adminFunctions() public {
