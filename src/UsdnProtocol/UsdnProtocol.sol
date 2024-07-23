@@ -13,6 +13,7 @@ import { UsdnProtocolLong } from "./UsdnProtocolLong.sol";
 import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { UsdnProtocolVault } from "./UsdnProtocolVault.sol";
 import { UsdnProtocolSettersLibrary as Setters } from "./libraries/UsdnProtocolSettersLibrary.sol";
+import { console2 } from "forge-std/Test.sol";
 
 contract UsdnProtocol is UsdnProtocolLong, UsdnProtocolVault, UsdnProtocolActions {
     /**
@@ -197,5 +198,34 @@ contract UsdnProtocol is UsdnProtocolLong, UsdnProtocolVault, UsdnProtocolAction
     // / @inheritdoc IUsdnProtocol
     function setUsdnRebaseInterval(uint256 newInterval) external onlyRole(SET_USDN_PARAMS_ROLE) {
         Setters.setUsdnRebaseInterval(s, newInterval);
+    }
+
+    function _delegate(address implementation) internal {
+        assembly {
+            calldatacopy(0, 0, calldatasize())
+
+            let result := delegatecall(gas(), implementation, 0, calldatasize(), 0, 0)
+
+            // Copy the returned data.
+            returndatacopy(0, 0, returndatasize())
+
+            switch result
+            // delegatecall returns 0 on error.
+            case 0 { revert(0, returndatasize()) }
+            default { return(0, returndatasize()) }
+        }
+    }
+
+    // TO DO : remove this function
+    function setUtilsContract(address newUtilsContract) external {
+        s._utilsContract = newUtilsContract;
+    }
+
+    function getUtilsContract() external view returns (address) {
+        return s._utilsContract;
+    }
+
+    fallback() external payable {
+        _delegate(s._utilsContract);
     }
 }

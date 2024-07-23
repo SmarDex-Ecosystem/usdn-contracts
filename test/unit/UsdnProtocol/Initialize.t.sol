@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { Usdn } from "../../../src/Usdn/Usdn.sol";
 import { ADMIN, DEPLOYER } from "../../utils/Constants.sol";
 import { IUsdnProtocolHandler } from "../../utils/IUsdnProtocolHandler.sol";
 import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
 import { UsdnProtocolHandler } from "./utils/Handler.sol";
+
+import { Usdn } from "../../../src/Usdn/Usdn.sol";
+import { UsdnProtocolCore } from "../../../src/UsdnProtocol/UsdnProtocolCore.sol";
 
 /**
  * @custom:feature Test the functions linked to initialization of the protocol
@@ -41,6 +43,8 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
                 )
             )
         );
+        UsdnProtocolCore core = new UsdnProtocolCore();
+        protocol.setUtilsContract(address(core));
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
 
@@ -49,6 +53,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         skip(1);
         protocol.acceptDefaultAdminTransfer();
         wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
+        emit log_named_address("protocol", address(protocol));
     }
 
     /**
@@ -307,6 +312,8 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      * @custom:then The protocol refunds the excess ether and the balance remains the same
      */
     function test_initializeRefundEther() public {
+        emit log_named_address("protocol", address(protocol));
+        emit log_named_address("impl", protocol.getUtilsContract());
         uint256 balanceBefore = address(this).balance;
         protocol.initialize{ value: 1 ether }(
             INITIAL_DEPOSIT, INITIAL_POSITION, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE)

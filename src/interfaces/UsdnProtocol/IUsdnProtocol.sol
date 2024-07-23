@@ -191,4 +191,8 @@ interface IUsdnProtocol is
      * When calling `liquidate`, this limit is ignored and the check is always performed
      */
     function setUsdnRebaseInterval(uint256 newInterval) external;
+
+    // TO DO : remove
+    function setUtilsContract(address newUtilsContract) external;
+    function getUtilsContract() external view returns (address);
 }
