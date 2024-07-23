@@ -196,4 +196,15 @@ contract FuzzingSuiteTest is Test {
         assertEq(DEPLOYER.balance, balanceBefore + securityDeposit * 2, "DEPLOYER balance");
         assertEq(address(usdnProtocol).balance, balanceBeforeProtocol - securityDeposit * 2, "protocol balance");
     }
+
+    function test_canFullDeposit() public {
+        uint256 balanceDeployer = usdn.balanceOf(DEPLOYER);
+        uint256 balanceProtocol = address(usdnProtocol).balance;
+
+        vm.prank(DEPLOYER);
+        echidna.fullDeposit(0.1 ether, 10 ether, 0.5 ether, 0, 0, 1000 ether);
+
+        assertGt(usdn.balanceOf(DEPLOYER), balanceDeployer, "balance usdn");
+        assertEq(address(usdnProtocol).balance, balanceProtocol, "protocol balance");
+    }
 }
