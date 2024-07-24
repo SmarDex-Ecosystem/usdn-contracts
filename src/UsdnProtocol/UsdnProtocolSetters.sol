@@ -49,7 +49,7 @@ contract UsdnProtocolSetters is IUsdnProtocolSetters, InitializableReentrancyGua
     /*                              SET_EXTERNAL_ROLE                             */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice See {IUsdnProtocol}
+    /// @inheritdoc IUsdnProtocolSetters
     function setOracleMiddleware(IBaseOracleMiddleware newOracleMiddleware) external onlyRole(SET_EXTERNAL_ROLE) {
         if (address(newOracleMiddleware) == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidMiddlewareAddress();
@@ -58,7 +58,7 @@ contract UsdnProtocolSetters is IUsdnProtocolSetters, InitializableReentrancyGua
         emit IUsdnProtocolEvents.OracleMiddlewareUpdated(address(newOracleMiddleware));
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @inheritdoc IUsdnProtocolSetters
     function setLiquidationRewardsManager(ILiquidationRewardsManager newLiquidationRewardsManager)
         external
         onlyRole(SET_EXTERNAL_ROLE)
@@ -72,14 +72,14 @@ contract UsdnProtocolSetters is IUsdnProtocolSetters, InitializableReentrancyGua
         emit IUsdnProtocolEvents.LiquidationRewardsManagerUpdated(address(newLiquidationRewardsManager));
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @inheritdoc IUsdnProtocolSetters
     function setRebalancer(IBaseRebalancer newRebalancer) external onlyRole(SET_EXTERNAL_ROLE) {
         s._rebalancer = newRebalancer;
 
         emit IUsdnProtocolEvents.RebalancerUpdated(address(newRebalancer));
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @inheritdoc IUsdnProtocolSetters
     function setFeeCollector(address newFeeCollector) external onlyRole(SET_EXTERNAL_ROLE) {
         if (newFeeCollector == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidFeeCollector();
@@ -92,7 +92,7 @@ contract UsdnProtocolSetters is IUsdnProtocolSetters, InitializableReentrancyGua
     /*                           CRITICAL_FUNCTIONS_ROLE                          */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice See {IUsdnProtocol}
+    /// @inheritdoc IUsdnProtocolSetters
     function setValidationDeadline(uint256 newValidationDeadline) external onlyRole(CRITICAL_FUNCTIONS_ROLE) {
         if (newValidationDeadline < 60) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidValidationDeadline();
@@ -110,7 +110,7 @@ contract UsdnProtocolSetters is IUsdnProtocolSetters, InitializableReentrancyGua
     /*                          SET_PROTOCOL_PARAMS_ROLE                          */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice See {IUsdnProtocol}
+    /// @inheritdoc IUsdnProtocolSetters
     function setMinLeverage(uint256 newMinLeverage) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
         // zero minLeverage
         if (newMinLeverage <= 10 ** Constants.LEVERAGE_DECIMALS) {
@@ -125,7 +125,7 @@ contract UsdnProtocolSetters is IUsdnProtocolSetters, InitializableReentrancyGua
         emit IUsdnProtocolEvents.MinLeverageUpdated(newMinLeverage);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @inheritdoc IUsdnProtocolSetters
     function setMaxLeverage(uint256 newMaxLeverage) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
         if (newMaxLeverage <= s._minLeverage) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidMaxLeverage();
@@ -140,7 +140,7 @@ contract UsdnProtocolSetters is IUsdnProtocolSetters, InitializableReentrancyGua
         emit IUsdnProtocolEvents.MaxLeverageUpdated(newMaxLeverage);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @inheritdoc IUsdnProtocolSetters
     function setLiquidationPenalty(uint8 newLiquidationPenalty) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
         if (newLiquidationPenalty > 15) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationPenalty();
@@ -150,7 +150,7 @@ contract UsdnProtocolSetters is IUsdnProtocolSetters, InitializableReentrancyGua
         emit IUsdnProtocolEvents.LiquidationPenaltyUpdated(newLiquidationPenalty);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @inheritdoc IUsdnProtocolSetters
     function setEMAPeriod(uint128 newEMAPeriod) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
         if (newEMAPeriod > 90 days) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidEMAPeriod();
@@ -160,7 +160,7 @@ contract UsdnProtocolSetters is IUsdnProtocolSetters, InitializableReentrancyGua
         emit IUsdnProtocolEvents.EMAPeriodUpdated(newEMAPeriod);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @inheritdoc IUsdnProtocolSetters
     function setFundingSF(uint256 newFundingSF) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
         if (newFundingSF > 10 ** Constants.FUNDING_SF_DECIMALS) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidFundingSF();
@@ -170,7 +170,7 @@ contract UsdnProtocolSetters is IUsdnProtocolSetters, InitializableReentrancyGua
         emit IUsdnProtocolEvents.FundingSFUpdated(newFundingSF);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @inheritdoc IUsdnProtocolSetters
     function setProtocolFeeBps(uint16 newProtocolFeeBps) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
         if (newProtocolFeeBps > Constants.BPS_DIVISOR) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidProtocolFeeBps();
@@ -179,7 +179,7 @@ contract UsdnProtocolSetters is IUsdnProtocolSetters, InitializableReentrancyGua
         emit IUsdnProtocolEvents.FeeBpsUpdated(newProtocolFeeBps);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @inheritdoc IUsdnProtocolSetters
     function setPositionFeeBps(uint16 newPositionFee) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
         // `newPositionFee` greater than 20%
         if (newPositionFee > 2000) {
@@ -189,7 +189,7 @@ contract UsdnProtocolSetters is IUsdnProtocolSetters, InitializableReentrancyGua
         emit IUsdnProtocolEvents.PositionFeeUpdated(newPositionFee);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @inheritdoc IUsdnProtocolSetters
     function setVaultFeeBps(uint16 newVaultFee) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
         // `newVaultFee` greater than 20%
         if (newVaultFee > 2000) {
@@ -199,7 +199,7 @@ contract UsdnProtocolSetters is IUsdnProtocolSetters, InitializableReentrancyGua
         emit IUsdnProtocolEvents.VaultFeeUpdated(newVaultFee);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @inheritdoc IUsdnProtocolSetters
     function setRebalancerBonusBps(uint16 newBonus) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
         // `newBonus` greater than 100%
         if (newBonus > Constants.BPS_DIVISOR) {
@@ -209,7 +209,7 @@ contract UsdnProtocolSetters is IUsdnProtocolSetters, InitializableReentrancyGua
         emit IUsdnProtocolEvents.RebalancerBonusUpdated(newBonus);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @inheritdoc IUsdnProtocolSetters
     function setSdexBurnOnDepositRatio(uint32 newRatio) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
         // `newRatio` greater than 5%
         if (newRatio > Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR / 20) {
@@ -221,13 +221,13 @@ contract UsdnProtocolSetters is IUsdnProtocolSetters, InitializableReentrancyGua
         emit IUsdnProtocolEvents.BurnSdexOnDepositRatioUpdated(newRatio);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @inheritdoc IUsdnProtocolSetters
     function setSecurityDepositValue(uint64 securityDepositValue) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
         s._securityDepositValue = securityDepositValue;
         emit IUsdnProtocolEvents.SecurityDepositValueUpdated(securityDepositValue);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @inheritdoc IUsdnProtocolSetters
     function setExpoImbalanceLimits(
         uint256 newOpenLimitBps,
         uint256 newDepositLimitBps,
@@ -266,7 +266,7 @@ contract UsdnProtocolSetters is IUsdnProtocolSetters, InitializableReentrancyGua
         );
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @inheritdoc IUsdnProtocolSetters
     function setMinLongPosition(uint256 newMinLongPosition) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
         s._minLongPosition = newMinLongPosition;
         emit IUsdnProtocolEvents.MinLongPositionUpdated(newMinLongPosition);
@@ -281,7 +281,7 @@ contract UsdnProtocolSetters is IUsdnProtocolSetters, InitializableReentrancyGua
     /*                              SET_OPTIONS_ROLE                              */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice See {IUsdnProtocol}
+    /// @inheritdoc IUsdnProtocolSetters
     function setSafetyMarginBps(uint256 newSafetyMarginBps) external onlyRole(SET_OPTIONS_ROLE) {
         // safetyMarginBps greater than 20%
         if (newSafetyMarginBps > 2000) {
@@ -292,7 +292,7 @@ contract UsdnProtocolSetters is IUsdnProtocolSetters, InitializableReentrancyGua
         emit IUsdnProtocolEvents.SafetyMarginBpsUpdated(newSafetyMarginBps);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @inheritdoc IUsdnProtocolSetters
     function setLiquidationIteration(uint16 newLiquidationIteration) external onlyRole(SET_OPTIONS_ROLE) {
         if (newLiquidationIteration > Constants.MAX_LIQUIDATION_ITERATION) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationIteration();
@@ -302,7 +302,7 @@ contract UsdnProtocolSetters is IUsdnProtocolSetters, InitializableReentrancyGua
         emit IUsdnProtocolEvents.LiquidationIterationUpdated(newLiquidationIteration);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @inheritdoc IUsdnProtocolSetters
     function setFeeThreshold(uint256 newFeeThreshold) external onlyRole(SET_OPTIONS_ROLE) {
         s._feeThreshold = newFeeThreshold;
         emit IUsdnProtocolEvents.FeeThresholdUpdated(newFeeThreshold);
@@ -312,7 +312,7 @@ contract UsdnProtocolSetters is IUsdnProtocolSetters, InitializableReentrancyGua
     /*                            SET_USDN_PARAMS_ROLE                            */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice See {IUsdnProtocol}
+    /// @inheritdoc IUsdnProtocolSetters
     function setTargetUsdnPrice(uint128 newPrice) external onlyRole(SET_USDN_PARAMS_ROLE) {
         if (newPrice > s._usdnRebaseThreshold) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidTargetUsdnPrice();
@@ -325,7 +325,7 @@ contract UsdnProtocolSetters is IUsdnProtocolSetters, InitializableReentrancyGua
         emit IUsdnProtocolEvents.TargetUsdnPriceUpdated(newPrice);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @inheritdoc IUsdnProtocolSetters
     function setUsdnRebaseThreshold(uint128 newThreshold) external onlyRole(SET_USDN_PARAMS_ROLE) {
         if (newThreshold < s._targetUsdnPrice) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidUsdnRebaseThreshold();
@@ -334,7 +334,7 @@ contract UsdnProtocolSetters is IUsdnProtocolSetters, InitializableReentrancyGua
         emit IUsdnProtocolEvents.UsdnRebaseThresholdUpdated(newThreshold);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @inheritdoc IUsdnProtocolSetters
     function setUsdnRebaseInterval(uint256 newInterval) external onlyRole(SET_USDN_PARAMS_ROLE) {
         s._usdnRebaseInterval = newInterval;
         emit IUsdnProtocolEvents.UsdnRebaseIntervalUpdated(newInterval);
