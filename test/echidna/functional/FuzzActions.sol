@@ -34,13 +34,13 @@ contract FuzzActions is Setup {
             ,
             IUsdnProtocolTypes.PendingAction memory lastAction,
         ) = getPreviousActionsData(msg.sender, priceData);
+        (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceData);
 
         vm.prank(msg.sender);
         try usdnProtocol.initiateDeposit{ value: ethRand }(
             amountWstETHRand, dest, validator, NO_PERMIT2, abi.encode(priceData), previousActionsData
         ) {
             uint64 securityDeposit = usdnProtocol.getSecurityDepositValue();
-            (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceData);
 
             assert(
                 address(msg.sender).balance
@@ -84,6 +84,7 @@ contract FuzzActions is Setup {
             ,
             IUsdnProtocolTypes.PendingAction memory lastAction,
         ) = getPreviousActionsData(msg.sender, priceRand);
+        (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceRand);
 
         vm.prank(msg.sender);
         try usdnProtocol.initiateOpenPosition{ value: ethRand }(
@@ -96,7 +97,6 @@ contract FuzzActions is Setup {
             previousActionsData
         ) returns (bool, IUsdnProtocolTypes.PositionId memory posId) {
             posIds.push(posId);
-            (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceRand);
 
             assert(
                 address(usdnProtocol).balance
@@ -140,13 +140,13 @@ contract FuzzActions is Setup {
             ,
             IUsdnProtocolTypes.PendingAction memory lastAction,
         ) = getPreviousActionsData(msg.sender, priceData);
+        (int256 usdnPendingActions,) = getTokenFromPendingAction(lastAction, priceData);
 
         vm.prank(msg.sender);
         try usdnProtocol.initiateWithdrawal{ value: ethRand }(
             usdnShares, dest, validator, abi.encode(priceData), previousActionsData
         ) {
             uint64 securityDeposit = usdnProtocol.getSecurityDepositValue();
-            (int256 usdnPendingActions,) = getTokenFromPendingAction(lastAction, priceData);
 
             assert(address(msg.sender).balance == balancesBefore.senderEth - securityDeposit);
             assert(usdn.sharesOf(msg.sender) == balancesBefore.senderUsdnShares - usdnShares);
@@ -177,12 +177,12 @@ contract FuzzActions is Setup {
             ,
             IUsdnProtocolTypes.PendingAction memory lastAction,
         ) = getPreviousActionsData(msg.sender, priceData);
+        (int256 usdnPendingActions, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceData);
 
         vm.prank(msg.sender);
         try usdnProtocol.validateDeposit(validator, abi.encode(priceData), previousActionsData) returns (bool success_)
         {
             uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
-            (int256 usdnPendingActions, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceData);
 
             if (success_) {
                 //todo maybe determine the exact amount if it can be know before the call
@@ -227,12 +227,12 @@ contract FuzzActions is Setup {
             ,
             IUsdnProtocolTypes.PendingAction memory lastAction,
         ) = getPreviousActionsData(msg.sender, priceData);
+        (int256 usdnPendingActions, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceData);
 
         vm.prank(msg.sender);
         try usdnProtocol.validateWithdrawal(validator, abi.encode(priceData), previousActionsData) returns (
             bool success_
         ) {
-            (int256 usdnPendingActions, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceData);
             assert(address(msg.sender).balance == balancesBefore.senderEth + action.securityDepositValue);
             if (success_) {
                 assert(wsteth.balanceOf(msg.sender) >= balancesBefore.senderWsteth);
@@ -270,6 +270,7 @@ contract FuzzActions is Setup {
             ,
             IUsdnProtocolTypes.PendingAction memory lastAction,
         ) = getPreviousActionsData(msg.sender, priceData);
+        (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceData);
 
         vm.prank(msg.sender);
         try usdnProtocol.validateOpenPosition(validator, abi.encode(priceData), previousActionsData) returns (
@@ -288,7 +289,6 @@ contract FuzzActions is Setup {
                 assert(address(validator).balance == balancesBefore.validatorEth);
                 assert(address(usdnProtocol).balance == balancesBefore.protocolEth);
             }
-            (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceData);
             assert(wsteth.balanceOf(address(usdnProtocol)) == balancesBefore.protocolWsteth - wstethPendingActions);
             assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth);
         } catch (bytes memory err) {
