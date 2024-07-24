@@ -22,4 +22,5 @@ library UsdnProtocolConstantsLibrary {
     uint256 internal constant MAX_EMA_PERIOD = 90 days;
     uint256 internal constant MAX_POSITION_FEE_BPS = 2000;
     uint256 internal constant MAX_VAULT_FEE_BPS = 2000;
+    uint256 internal constant MAX_MAX_LEVERAGE = 100;
 }

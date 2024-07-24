@@ -69,7 +69,7 @@ library UsdnProtocolSettersLibrary {
         }
 
         // `maxLeverage` greater than 100
-        if (newMaxLeverage > 100 * 10 ** Constants.LEVERAGE_DECIMALS) {
+        if (newMaxLeverage > Constants.MAX_MAX_LEVERAGE * 10 ** Constants.LEVERAGE_DECIMALS) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidMaxLeverage();
         }
 
