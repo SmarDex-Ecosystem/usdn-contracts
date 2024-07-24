@@ -25,11 +25,7 @@
     "clean": "rm -rf dist && rm -rf node_modules && rm -rf .coverage && rm -rf out && rm -rf lib && forge clean && npm i && forge install"
   },
   "main": "dist/index.js",
-  "files": [
-    "dist",
-    "broadcast",
-    "docs"
-  ],
+  "files": ["dist", "broadcast", "docs"],
   "devDependencies": {
     "@biomejs/biome": "^1.7.0",
     "@chainlink/contracts": "^1.0.0",
