@@ -6,8 +6,8 @@ import { ILiquidationRewardsManager } from "../OracleMiddleware/ILiquidationRewa
 import { IBaseRebalancer } from "../Rebalancer/IBaseRebalancer.sol";
 
 /**
- * @title IUsdnProtocol
- * @notice Interface for the USDN protocol
+ * @title IUsdnProtocolSetters
+ * @notice Interface for the USDN protocol setters
  */
 interface IUsdnProtocolSetters {
     /**

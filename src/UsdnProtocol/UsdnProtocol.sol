@@ -12,7 +12,7 @@ import { UsdnProtocolLong } from "./UsdnProtocolLong.sol";
 import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { UsdnProtocolVault } from "./UsdnProtocolVault.sol";
 
-contract UsdnProtocol is UsdnProtocolLong, UsdnProtocolVault, UsdnProtocolActions, UsdnProtocolCore {
+contract UsdnProtocol is UsdnProtocolLong, UsdnProtocolVault, UsdnProtocolCore, UsdnProtocolActions {
     /**
      * @notice Constructor
      * @param usdn The USDN ERC20 contract
@@ -49,14 +49,9 @@ contract UsdnProtocol is UsdnProtocolLong, UsdnProtocolVault, UsdnProtocolAction
     function _delegate(address implementation) internal {
         assembly {
             calldatacopy(0, 0, calldatasize())
-
             let result := delegatecall(gas(), implementation, 0, calldatasize(), 0, 0)
-
-            // Copy the returned data.
             returndatacopy(0, 0, returndatasize())
-
             switch result
-            // delegatecall returns 0 on error.
             case 0 { revert(0, returndatasize()) }
             default { return(0, returndatasize()) }
         }

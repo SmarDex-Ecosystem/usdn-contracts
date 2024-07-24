@@ -12,6 +12,7 @@ import {
 } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { IEventsErrors } from "../../../utils/IEventsErrors.sol";
+import { IUsdnProtocolHandler } from "../../../utils/IUsdnProtocolHandler.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
 import { MockChainlinkOnChain } from "../../Middlewares/utils/MockChainlinkOnChain.sol";
@@ -26,7 +27,6 @@ import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUs
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { Permit2TokenBitfield } from "../../../../src/libraries/Permit2TokenBitfield.sol";
 import { FeeCollector } from "../../../../src/utils/FeeCollector.sol";
-import { IUsdnProtocolHandler } from "../../../utils/IUsdnProtocolHandler.sol";
 import { MockOracleMiddleware } from "./MockOracleMiddleware.sol";
 
 /**

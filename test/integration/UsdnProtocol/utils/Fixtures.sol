@@ -26,6 +26,7 @@ import {
     WSTETH
 } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
+import { IUsdnProtocolHandler } from "../../../utils/IUsdnProtocolHandler.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
 import {
@@ -44,7 +45,6 @@ import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMi
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { Permit2TokenBitfield } from "../../../../src/libraries/Permit2TokenBitfield.sol";
-import { IUsdnProtocolHandler } from "../../../utils/IUsdnProtocolHandler.sol";
 
 contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProtocolEvents {
     struct SetUpParams {

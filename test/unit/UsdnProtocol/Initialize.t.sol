@@ -53,7 +53,6 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         skip(1);
         protocol.acceptDefaultAdminTransfer();
         wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
-        emit log_named_address("protocol", address(protocol));
     }
 
     /**
