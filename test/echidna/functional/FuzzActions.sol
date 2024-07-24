@@ -71,7 +71,6 @@ contract FuzzActions is Setup {
             amountRand, liquidationPriceRand, dest, payable(validator), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         ) returns (bool, IUsdnProtocolTypes.PositionId memory posId) {
             posIds.push(posId);
-
             assert(address(usdnProtocol).balance == balancesBefore.protocolEth + securityDeposit);
             assert(address(msg.sender).balance == balancesBefore.senderEth - securityDeposit);
 
@@ -79,6 +78,60 @@ contract FuzzActions is Setup {
             assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth - amountRand);
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_OPEN_ERRORS);
+        }
+    }
+
+    function initiateClosePosition(
+        uint256 ethRand,
+        uint256 destRand,
+        uint256 validatorRand,
+        uint256 priceRand,
+        uint256 amountToClose,
+        uint256 posIdsIndexRand
+    ) public {
+        vm.deal(msg.sender, ethRand);
+        destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
+        address dest = destinationsToken[address(wsteth)][destRand];
+        validatorRand = bound(validatorRand, 0, validators.length - 1);
+        address payable validator = payable(validators[validatorRand]);
+        priceRand = bound(priceRand, 0, type(uint128).max);
+        bytes memory priceData = abi.encode(uint128(priceRand));
+        amountToClose = bound(amountToClose, 0, type(uint128).max);
+
+        IUsdnProtocolTypes.PositionId memory posId;
+        uint256 posIdsIndex;
+        if (posIds.length > 0) {
+            posIdsIndex = bound(posIdsIndexRand, 0, posIds.length - 1);
+            posId = posIds[posIdsIndex];
+        }
+
+        BalancesSnapshot memory balancesBefore = getBalances(validator, dest);
+
+        vm.prank(msg.sender);
+        try usdnProtocol.initiateClosePosition{ value: ethRand }(
+            posId, uint128(amountToClose), dest, validator, priceData, EMPTY_PREVIOUS_DATA
+        ) returns (bool success_) {
+            if (success_) {
+                uint64 securityDeposit = usdnProtocol.getSecurityDepositValue();
+
+                // remove the position
+                posIds[posIdsIndex] = posIds[posIds.length - 1];
+                posIds.pop();
+
+                assert(address(msg.sender).balance == balancesBefore.senderEth - securityDeposit);
+                assert(
+                    uint8(usdnProtocol.getUserPendingAction(validator).action)
+                        == uint8(IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition)
+                );
+                assert(address(usdnProtocol).balance == balancesBefore.protocolEth + securityDeposit);
+            } else {
+                assert(address(usdnProtocol).balance == balancesBefore.protocolEth);
+            }
+
+            assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth);
+            assert(wsteth.balanceOf(address(usdnProtocol)) == balancesBefore.protocolWsteth);
+        } catch (bytes memory err) {
+            _checkErrors(err, INITIATE_CLOSE_ERRORS);
         }
     }
 
