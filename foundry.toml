@@ -18,7 +18,6 @@ ignored_error_codes = [
     "transient-storage",
     "too-many-warnings",
     "missing-receive-ether",
-    3628,
 ]
 
 # -------------------------------- Remappings -------------------------------- #

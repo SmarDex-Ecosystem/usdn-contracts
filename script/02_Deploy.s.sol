@@ -10,7 +10,6 @@ import { LiquidationRewardsManager } from "../src/OracleMiddleware/LiquidationRe
 import { WstEthOracleMiddleware } from "../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { MockLiquidationRewardsManager } from "../src/OracleMiddleware/mock/MockLiquidationRewardsManager.sol";
 import { MockWstEthOracleMiddleware } from "../src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
-
 import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../src/Usdn/Usdn.sol";
 import { UsdnProtocol } from "../src/UsdnProtocol/UsdnProtocol.sol";
@@ -38,7 +37,7 @@ contract Deploy is Script {
             LiquidationRewardsManager LiquidationRewardsManager_,
             Rebalancer Rebalancer_,
             Usdn Usdn_,
-            IUsdnProtocol UsdnProtocol_
+            UsdnProtocol UsdnProtocol_
         )
     {
         bool isProdEnv = block.chainid != vm.envOr("FORK_CHAIN_ID", uint256(31_337));
@@ -56,32 +55,28 @@ contract Deploy is Script {
         Sdex_ = _deploySdex();
 
         // deploy the protocol with tick spacing 100 = 1%
-        UsdnProtocol_ = IUsdnProtocol(
-            address(
-                new UsdnProtocol(
-                    Usdn_,
-                    Sdex_,
-                    WstETH_,
-                    WstEthOracleMiddleware_,
-                    LiquidationRewardsManager_,
-                    100,
-                    vm.envAddress("FEE_COLLECTOR"),
-                    Types.Roles({
-                        setExternalAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
-                        criticalFunctionsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
-                        setProtocolParamsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
-                        setUsdnParamsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
-                        setOptionsAdmin: vm.envAddress("DEPLOYER_ADDRESS")
-                    })
-                )
-            )
+        UsdnProtocol_ = new UsdnProtocol(
+            Usdn_,
+            Sdex_,
+            WstETH_,
+            WstEthOracleMiddleware_,
+            LiquidationRewardsManager_,
+            100,
+            vm.envAddress("FEE_COLLECTOR"),
+            Types.Roles({
+                setExternalAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
+                criticalFunctionsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
+                setProtocolParamsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
+                setUsdnParamsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
+                setOptionsAdmin: vm.envAddress("DEPLOYER_ADDRESS")
+            })
         );
 
         // deploy the rebalancer
         Rebalancer_ = _deployRebalancer(address(UsdnProtocol_));
 
         // set the rebalancer on the USDN protocol
-        UsdnProtocol_.setRebalancer(Rebalancer_);
+        IUsdnProtocol(address(UsdnProtocol_)).setRebalancer(Rebalancer_);
 
         // grant USDN minter and rebaser roles to protocol
         Usdn_.grantRole(Usdn_.MINTER_ROLE(), address(UsdnProtocol_));
@@ -254,7 +249,7 @@ contract Deploy is Script {
      */
     function _initializeUsdnProtocol(
         bool isProdEnv,
-        IUsdnProtocol UsdnProtocol_,
+        UsdnProtocol UsdnProtocol_,
         WstEthOracleMiddleware WstEthOracleMiddleware_,
         uint256 depositAmount,
         uint256 longAmount
@@ -270,8 +265,6 @@ contract Deploy is Script {
             ).price / 2;
         }
 
-        IUsdnProtocol(address(UsdnProtocol_)).initialize(
-            uint128(depositAmount), uint128(longAmount), uint128(desiredLiqPrice), ""
-        );
+        UsdnProtocol_.initialize(uint128(depositAmount), uint128(longAmount), uint128(desiredLiqPrice), "");
     }
 }
