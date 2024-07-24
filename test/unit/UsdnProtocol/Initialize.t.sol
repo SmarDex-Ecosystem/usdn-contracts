@@ -311,8 +311,6 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      * @custom:then The protocol refunds the excess ether and the balance remains the same
      */
     function test_initializeRefundEther() public {
-        emit log_named_address("protocol", address(protocol));
-        emit log_named_address("impl", protocol.getUtilsContract());
         uint256 balanceBefore = address(this).balance;
         protocol.initialize{ value: 1 ether }(
             INITIAL_DEPOSIT, INITIAL_POSITION, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE)
