@@ -39,7 +39,7 @@ import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/Liqu
 import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { Rebalancer } from "../../../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
-import { UsdnProtocolCore } from "../../../../src/UsdnProtocol/UsdnProtocolCore.sol";
+import { UsdnProtocolSetters } from "../../../../src/UsdnProtocol/UsdnProtocolSetters.sol";
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
@@ -176,8 +176,8 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
                 )
             )
         );
-        UsdnProtocolCore core = new UsdnProtocolCore();
-        protocol.setUtilsContract(address(core));
+        UsdnProtocolSetters protocolSetters = new UsdnProtocolSetters();
+        protocol.setUtilsContract(address(protocolSetters));
         rebalancer = new Rebalancer(protocol);
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));

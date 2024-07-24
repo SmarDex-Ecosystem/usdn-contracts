@@ -6,6 +6,8 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
+import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IUsdn } from "../../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolCore } from "../../interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
@@ -14,6 +16,7 @@ import { DoubleEndedQueue } from "../../libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../../libraries/HugeUint.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
 import { TickMath } from "../../libraries/TickMath.sol";
+import { UsdnProtocolActionsVaultLibrary as ActionsVault } from "./UsdnProtocolActionsVaultLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "./UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolUtils as Utils } from "./UsdnProtocolUtils.sol";
@@ -30,6 +33,48 @@ library UsdnProtocolCoreLibrary {
     /* -------------------------------------------------------------------------- */
     /*                              Public functions                              */
     /* -------------------------------------------------------------------------- */
+
+    /// @notice See {IUsdnProtocolCore}
+    function initialize(
+        Types.Storage storage s,
+        uint128 depositAmount,
+        uint128 longAmount,
+        uint128 desiredLiqPrice,
+        bytes calldata currentPriceData
+    ) public {
+        if (depositAmount < Constants.MIN_INIT_DEPOSIT) {
+            revert IUsdnProtocolErrors.UsdnProtocolMinInitAmount(Constants.MIN_INIT_DEPOSIT);
+        }
+        if (longAmount < Constants.MIN_INIT_DEPOSIT) {
+            revert IUsdnProtocolErrors.UsdnProtocolMinInitAmount(Constants.MIN_INIT_DEPOSIT);
+        }
+        // since all USDN must be minted by the protocol, we check that the total supply is 0
+        IUsdn usdn = s._usdn;
+        if (usdn.totalSupply() != 0) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidUsdn(address(usdn));
+        }
+
+        PriceInfo memory currentPrice =
+            ActionsVault._getOraclePrice(s, Types.ProtocolAction.Initialize, block.timestamp, "", currentPriceData);
+
+        s._lastUpdateTimestamp = uint128(block.timestamp);
+        s._lastPrice = currentPrice.price.toUint128();
+
+        int24 tick = Long.getEffectiveTickForPrice(s, desiredLiqPrice); // without penalty
+        uint128 liquidationPriceWithoutPenalty = Long.getEffectivePriceForTick(s, tick);
+        uint128 positionTotalExpo =
+            Long._calcPositionTotalExpo(longAmount, currentPrice.price.toUint128(), liquidationPriceWithoutPenalty);
+
+        Vault._checkInitImbalance(s, positionTotalExpo, longAmount, depositAmount);
+
+        Vault._createInitialDeposit(s, depositAmount, currentPrice.price.toUint128());
+
+        Vault._createInitialPosition(s, longAmount, currentPrice.price.toUint128(), tick, positionTotalExpo);
+
+        ActionsVault._refundEther(address(this).balance, payable(msg.sender));
+    }
+
+    /* -------------------------- public view functions ------------------------- */
 
     /// @notice See {IUsdnProtocolCore}
     function calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)

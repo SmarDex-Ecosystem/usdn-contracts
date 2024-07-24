@@ -7,7 +7,7 @@ import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
 import { UsdnProtocolHandler } from "./utils/Handler.sol";
 
 import { Usdn } from "../../../src/Usdn/Usdn.sol";
-import { UsdnProtocolCore } from "../../../src/UsdnProtocol/UsdnProtocolCore.sol";
+import { UsdnProtocolSetters } from "../../../src/UsdnProtocol/UsdnProtocolSetters.sol";
 
 /**
  * @custom:feature Test the functions linked to initialization of the protocol
@@ -43,8 +43,8 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
                 )
             )
         );
-        UsdnProtocolCore core = new UsdnProtocolCore();
-        protocol.setUtilsContract(address(core));
+        UsdnProtocolSetters protocolSetters = new UsdnProtocolSetters();
+        protocol.setUtilsContract(address(protocolSetters));
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
 

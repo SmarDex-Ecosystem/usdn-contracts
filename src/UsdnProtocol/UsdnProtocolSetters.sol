@@ -106,9 +106,9 @@ contract UsdnProtocolSetters is IUsdnProtocolSetters, InitializableReentrancyGua
         emit IUsdnProtocolEvents.ValidationDeadlineUpdated(newValidationDeadline);
     }
 
-    // /* -------------------------------------------------------------------------- */
-    // /*                          SET_PROTOCOL_PARAMS_ROLE                          */
-    // /* -------------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------------- */
+    /*                          SET_PROTOCOL_PARAMS_ROLE                          */
+    /* -------------------------------------------------------------------------- */
 
     /// @notice See {IUsdnProtocol}
     function setMinLeverage(uint256 newMinLeverage) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {

@@ -5,15 +5,14 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { ILiquidationRewardsManager } from "../interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
-import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
-import { IUsdnProtocol } from "../interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { UsdnProtocolActions } from "./UsdnProtocolActions.sol";
+import { UsdnProtocolCore } from "./UsdnProtocolCore.sol";
 import { UsdnProtocolLong } from "./UsdnProtocolLong.sol";
 import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { UsdnProtocolVault } from "./UsdnProtocolVault.sol";
 
-contract UsdnProtocol is UsdnProtocolLong, UsdnProtocolVault, UsdnProtocolActions {
+contract UsdnProtocol is UsdnProtocolLong, UsdnProtocolVault, UsdnProtocolActions, UsdnProtocolCore {
     /**
      * @notice Constructor
      * @param usdn The USDN ERC20 contract
