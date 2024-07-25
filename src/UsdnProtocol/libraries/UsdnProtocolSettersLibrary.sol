@@ -69,7 +69,7 @@ library UsdnProtocolSettersLibrary {
         }
 
         // `maxLeverage` greater than 100
-        if (newMaxLeverage > Constants.MAX_MAX_LEVERAGE * 10 ** Constants.LEVERAGE_DECIMALS) {
+        if (newMaxLeverage > 100 * 10 ** Constants.LEVERAGE_DECIMALS) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidMaxLeverage();
         }
 
@@ -79,11 +79,11 @@ library UsdnProtocolSettersLibrary {
 
     /// @notice See {IUsdnProtocol}
     function setValidationDeadline(Types.Storage storage s, uint256 newValidationDeadline) external {
-        if (newValidationDeadline < Constants.MIN_VALIDATION_DEADLINE) {
+        if (newValidationDeadline < 60) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidValidationDeadline();
         }
 
-        if (newValidationDeadline > Constants.MAX_VALIDATION_DEADLINE) {
+        if (newValidationDeadline > 1 days) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidValidationDeadline();
         }
 
@@ -93,7 +93,7 @@ library UsdnProtocolSettersLibrary {
 
     /// @notice See {IUsdnProtocol}
     function setLiquidationPenalty(Types.Storage storage s, uint8 newLiquidationPenalty) external {
-        if (newLiquidationPenalty > Constants.MAX_LIQUIDATION_PENALTY) {
+        if (newLiquidationPenalty > 15) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationPenalty();
         }
 
@@ -104,7 +104,7 @@ library UsdnProtocolSettersLibrary {
     /// @notice See {IUsdnProtocol}
     function setSafetyMarginBps(Types.Storage storage s, uint256 newSafetyMarginBps) external {
         // safetyMarginBps greater than 20%
-        if (newSafetyMarginBps > Constants.MAX_SAFETY_MARGIN_BPS) {
+        if (newSafetyMarginBps > 2000) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidSafetyMarginBps();
         }
 
@@ -124,7 +124,7 @@ library UsdnProtocolSettersLibrary {
 
     /// @notice See {IUsdnProtocol}
     function setEMAPeriod(Types.Storage storage s, uint128 newEMAPeriod) external {
-        if (newEMAPeriod > Constants.MAX_EMA_PERIOD) {
+        if (newEMAPeriod > 90 days) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidEMAPeriod();
         }
 
@@ -154,7 +154,7 @@ library UsdnProtocolSettersLibrary {
     /// @notice See {IUsdnProtocol}
     function setPositionFeeBps(Types.Storage storage s, uint16 newPositionFee) external {
         // `newPositionFee` greater than 20%
-        if (newPositionFee > Constants.MAX_POSITION_FEE_BPS) {
+        if (newPositionFee > 2000) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidPositionFee();
         }
         s._positionFeeBps = newPositionFee;
@@ -164,7 +164,7 @@ library UsdnProtocolSettersLibrary {
     /// @notice See {IUsdnProtocol}
     function setVaultFeeBps(Types.Storage storage s, uint16 newVaultFee) external {
         // `newVaultFee` greater than 20%
-        if (newVaultFee > Constants.MAX_VAULT_FEE_BPS) {
+        if (newVaultFee > 2000) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidVaultFee();
         }
         s._vaultFeeBps = newVaultFee;
