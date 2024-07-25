@@ -10,6 +10,9 @@ contract FuzzActions is Setup {
     /*                             USDN Protocol                                  */
     /* -------------------------------------------------------------------------- */
 
+    /**
+     * @notice PROTCL-0
+     */
     function initiateDeposit(
         uint128 amountWstETHRand,
         uint128 amountSdexRand,
@@ -61,6 +64,59 @@ contract FuzzActions is Setup {
         }
     }
 
+    /**
+     * @notice PROTCL-1
+     */
+    function initiateWithdrawal(
+        uint152 usdnShares,
+        uint256 ethRand,
+        uint256 destRand,
+        uint256 validatorRand,
+        uint256 priceRand
+    ) public {
+        vm.prank(msg.sender);
+        usdn.approve(address(usdnProtocol), usdnShares);
+        vm.deal(msg.sender, ethRand);
+
+        destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
+        address dest = destinationsToken[address(wsteth)][destRand];
+        validatorRand = bound(validatorRand, 0, validators.length - 1);
+        address payable validator = payable(validators[validatorRand]);
+        uint256 priceData = bound(priceRand, 0, type(uint128).max);
+
+        BalancesSnapshot memory balancesBefore = getBalances(validator, msg.sender);
+        (
+            IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
+            ,
+            IUsdnProtocolTypes.PendingAction memory lastAction,
+        ) = getPreviousActionsData(msg.sender, priceData);
+        (int256 usdnPendingActions,) = getTokenFromPendingAction(lastAction, priceData);
+
+        vm.prank(msg.sender);
+        try usdnProtocol.initiateWithdrawal{ value: ethRand }(
+            usdnShares, dest, validator, abi.encode(priceData), previousActionsData
+        ) {
+            uint64 securityDeposit = usdnProtocol.getSecurityDepositValue();
+
+            assert(address(msg.sender).balance == balancesBefore.senderEth - securityDeposit);
+            assert(usdn.sharesOf(msg.sender) == balancesBefore.senderUsdnShares - usdnShares);
+
+            assert(
+                address(usdnProtocol).balance
+                    == balancesBefore.protocolEth + securityDeposit - lastAction.securityDepositValue
+            );
+            assert(
+                usdn.sharesOf(address(usdnProtocol))
+                    == uint256(int256(balancesBefore.protocolUsdnShares) + int152(usdnShares) + usdnPendingActions)
+            );
+        } catch (bytes memory err) {
+            _checkErrors(err, INITIATE_WITHDRAWAL_ERRORS);
+        }
+    }
+
+    /**
+     * @notice PROTCL-2
+     */
     function initiateOpenPosition(
         uint128 amountRand,
         uint128 liquidationPriceRand,
@@ -117,6 +173,9 @@ contract FuzzActions is Setup {
         }
     }
 
+    /**
+     * @notice PROTCL-3
+     */
     function initiateClosePosition(
         uint256 ethRand,
         uint256 destRand,
@@ -171,53 +230,9 @@ contract FuzzActions is Setup {
         }
     }
 
-    function initiateWithdrawal(
-        uint152 usdnShares,
-        uint256 ethRand,
-        uint256 destRand,
-        uint256 validatorRand,
-        uint256 priceRand
-    ) public {
-        vm.prank(msg.sender);
-        usdn.approve(address(usdnProtocol), usdnShares);
-        vm.deal(msg.sender, ethRand);
-
-        destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
-        address dest = destinationsToken[address(wsteth)][destRand];
-        validatorRand = bound(validatorRand, 0, validators.length - 1);
-        address payable validator = payable(validators[validatorRand]);
-        uint256 priceData = bound(priceRand, 0, type(uint128).max);
-
-        BalancesSnapshot memory balancesBefore = getBalances(validator, msg.sender);
-        (
-            IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
-            ,
-            IUsdnProtocolTypes.PendingAction memory lastAction,
-        ) = getPreviousActionsData(msg.sender, priceData);
-        (int256 usdnPendingActions,) = getTokenFromPendingAction(lastAction, priceData);
-
-        vm.prank(msg.sender);
-        try usdnProtocol.initiateWithdrawal{ value: ethRand }(
-            usdnShares, dest, validator, abi.encode(priceData), previousActionsData
-        ) {
-            uint64 securityDeposit = usdnProtocol.getSecurityDepositValue();
-
-            assert(address(msg.sender).balance == balancesBefore.senderEth - securityDeposit);
-            assert(usdn.sharesOf(msg.sender) == balancesBefore.senderUsdnShares - usdnShares);
-
-            assert(
-                address(usdnProtocol).balance
-                    == balancesBefore.protocolEth + securityDeposit - lastAction.securityDepositValue
-            );
-            assert(
-                usdn.sharesOf(address(usdnProtocol))
-                    == uint256(int256(balancesBefore.protocolUsdnShares) + int152(usdnShares) + usdnPendingActions)
-            );
-        } catch (bytes memory err) {
-            _checkErrors(err, INITIATE_WITHDRAWAL_ERRORS);
-        }
-    }
-
+    /**
+     * @notice PROTCL-4
+     */
     function validateDeposit(uint256 validatorRand, uint256 priceRand) public {
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
@@ -269,6 +284,9 @@ contract FuzzActions is Setup {
         }
     }
 
+    /**
+     * @notice PROTCL-5
+     */
     function validateWithdrawal(uint256 validatorRand, uint256 priceRand) public {
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
@@ -311,6 +329,9 @@ contract FuzzActions is Setup {
         }
     }
 
+    /**
+     * @notice PROTCL-6
+     */
     function validateOpenPosition(uint256 validatorRand, uint256 priceRand) public {
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
@@ -350,6 +371,9 @@ contract FuzzActions is Setup {
         }
     }
 
+    /**
+     * @notice PROTCL-8
+     */
     function validatePendingActions(uint256 maxValidations, uint256 priceRand) public {
         uint256 balanceBefore = address(msg.sender).balance;
         uint256 balanceBeforeProtocol = address(usdnProtocol).balance;
@@ -376,6 +400,9 @@ contract FuzzActions is Setup {
         }
     }
 
+    /**
+     * @notice PROTCL-9
+     */
     function fullDeposit(
         uint128 amountWstETHRand,
         uint128 amountSdexRand,
@@ -389,6 +416,9 @@ contract FuzzActions is Setup {
         validateDeposit(validatorRand, priceRand);
     }
 
+    /**
+     * @notice PROTCL-10
+     */
     function fullWithdrawal(
         uint152 usdnShares,
         uint256 ethRand,
@@ -401,6 +431,9 @@ contract FuzzActions is Setup {
         validateWithdrawal(validatorRand, priceRand);
     }
 
+    /**
+     * @notice PROTCL-11
+     */
     function fullOpenPosition(
         uint128 amountRand,
         uint128 liquidationPriceRand,
