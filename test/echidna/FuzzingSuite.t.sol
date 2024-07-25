@@ -246,4 +246,9 @@ contract FuzzingSuiteTest is Test {
         assertEq(address(usdnProtocol).balance, balanceBeforeProtocol, "protocol balance");
         assertEq(wsteth.balanceOf(DEPLOYER), balanceWstEthBefore, "wstETH balance");
     }
+
+    function test_canInitialize() public {
+        // vm.prank(DEPLOYER);
+        echidna.initializeUsdn(1 ether, 10 ether, 1 ether);
+    }
 }
