@@ -325,6 +325,6 @@ contract FuzzingSuiteTest is Test {
 
     function test_canInitialize() public {
         // vm.prank(DEPLOYER);
-        echidna.initializeUsdn(1 ether, 10 ether, 1 ether);
+        echidna.initializeUsdn(300 ether, 300 ether, 2000 ether, 1000 ether);
     }
 }
