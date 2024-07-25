@@ -347,4 +347,10 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
      * @param newOwner The new owner
      */
     event PositionOwnershipTransferred(PositionId indexed posId, address indexed oldOwner, address indexed newOwner);
+
+    /**
+     * @notice Emitted when the last funding per day is updated
+     * @param lastFundingPerDay The new last funding per day
+     */
+    event LastFundingPerDayUpdated(int256 lastFundingPerDay);
 }
