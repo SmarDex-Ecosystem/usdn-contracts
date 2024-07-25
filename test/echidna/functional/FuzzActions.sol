@@ -230,6 +230,9 @@ contract FuzzActions is Setup {
         }
     }
 
+    /**
+     * @notice PROTCL-4
+     */
     function validateDeposit(uint256 validatorRand, uint256 priceRand) public {
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
