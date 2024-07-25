@@ -44,7 +44,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
             )
         );
         UsdnProtocolSetters protocolSetters = new UsdnProtocolSetters();
-        protocol.setUtilsContract(address(protocolSetters));
+        protocol.setSettersContract(address(protocolSetters));
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
 

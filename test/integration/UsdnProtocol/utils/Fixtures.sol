@@ -177,7 +177,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             )
         );
         UsdnProtocolSetters protocolSetters = new UsdnProtocolSetters();
-        protocol.setUtilsContract(address(protocolSetters));
+        protocol.setSettersContract(address(protocolSetters));
         rebalancer = new Rebalancer(protocol);
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));

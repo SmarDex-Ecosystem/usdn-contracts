@@ -20,7 +20,6 @@ interface IUsdnProtocol is
     IUsdnProtocolCore,
     IUsdnProtocolSetters
 {
-    // TO DO : remove
-    function setUtilsContract(address newUtilsContract) external;
-    function getUtilsContract() external view returns (address);
+    // TO DO : remove when the proxy is implemented
+    function setSettersContract(address newSettersContract) external;
 }

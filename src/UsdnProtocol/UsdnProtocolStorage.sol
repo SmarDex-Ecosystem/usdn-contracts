@@ -397,4 +397,9 @@ abstract contract UsdnProtocolStorage is
     function getLongImbalanceTargetBps() external view returns (int256 longImbalanceTargetBps_) {
         longImbalanceTargetBps_ = s._longImbalanceTargetBps;
     }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getSettersContract() external view returns (address) {
+        return s._settersContract;
+    }
 }

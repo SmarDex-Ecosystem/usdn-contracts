@@ -24,7 +24,7 @@ contract UsdnProtocol is UsdnProtocolLong, UsdnProtocolVault, UsdnProtocolCore, 
      * @param liquidationRewardsManager The liquidation rewards manager contract
      * @param tickSpacing The positions tick spacing
      * @param feeCollector The address of the fee collector
-     * @param roles The roles of the contract
+     * @param roles The protocol roles
      */
     constructor(
         IUsdn usdn,
@@ -107,6 +107,10 @@ contract UsdnProtocol is UsdnProtocolLong, UsdnProtocolVault, UsdnProtocolCore, 
         s._minLongPosition = 2 * 10 ** assetDecimals;
     }
 
+    /**
+     * @notice Delegates the call to the setters contract
+     * @param implementation The address of the setters contract
+     */
     function _delegate(address implementation) internal {
         assembly {
             calldatacopy(0, 0, calldatasize())
@@ -118,16 +122,12 @@ contract UsdnProtocol is UsdnProtocolLong, UsdnProtocolVault, UsdnProtocolCore, 
         }
     }
 
-    // TO DO : remove those function
-    function setUtilsContract(address newUtilsContract) external {
-        s._utilsContract = newUtilsContract;
-    }
-
-    function getUtilsContract() external view returns (address) {
-        return s._utilsContract;
+    // TO DO : remove this function when the proxy is implemented
+    function setSettersContract(address newUtilsContract) external {
+        s._settersContract = newUtilsContract;
     }
 
     fallback() external {
-        _delegate(s._utilsContract);
+        _delegate(s._settersContract);
     }
 }

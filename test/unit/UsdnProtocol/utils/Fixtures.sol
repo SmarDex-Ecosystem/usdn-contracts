@@ -153,7 +153,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             )
         );
         UsdnProtocolSetters protocolSetters = new UsdnProtocolSetters();
-        protocol.setUtilsContract(address(protocolSetters));
+        protocol.setSettersContract(address(protocolSetters));
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);

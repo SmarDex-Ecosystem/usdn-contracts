@@ -506,4 +506,10 @@ interface IUsdnProtocolStorage is
      * @return The number of long positions
      */
     function getTotalLongPositions() external view returns (uint256);
+
+    /**
+     * @notice Get the address of the contract that handles the setters
+     * @return The address of the setters contract
+     */
+    function getSettersContract() external view returns (address);
 }
