@@ -1,12 +1,10 @@
 # README
 
-Assuming you have Echidna installed, it should be as easy as
+Assuming you have Echidna installed
 
 `npm run echidna` to launch echidna with npm
 
 # Invariants being Tested
-
-## Stateful tests
 
 ## Protocol tests
 
