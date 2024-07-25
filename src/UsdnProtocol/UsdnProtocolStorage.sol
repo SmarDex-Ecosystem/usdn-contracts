@@ -17,7 +17,7 @@ import { InitializableReentrancyGuard } from "../utils/InitializableReentrancyGu
 import { UsdnProtocolConstantsLibrary as Constants } from "./libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./libraries/UsdnProtocolCoreLibrary.sol";
 
-contract UsdnProtocolStorage is
+abstract contract UsdnProtocolStorage is
     IUsdnProtocolErrors,
     IUsdnProtocolStorage,
     InitializableReentrancyGuard,
@@ -57,8 +57,6 @@ contract UsdnProtocolStorage is
 
     /// @inheritdoc IUsdnProtocolStorage
     bytes32 public constant ADMIN_SET_OPTIONS_ROLE = keccak256("ADMIN_SET_OPTIONS_ROLE");
-
-    constructor() AccessControlDefaultAdminRules(0, msg.sender) { }
 
     /// @inheritdoc IUsdnProtocolStorage
     function LEVERAGE_DECIMALS() external pure returns (uint8) {

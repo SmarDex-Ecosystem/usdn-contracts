@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.25;
 
+import { AccessControlDefaultAdminRules } from
+    "@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import { IBaseLiquidationRewardsManager } from "../interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
@@ -9,7 +11,6 @@ import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { UsdnProtocolActions } from "./UsdnProtocolActions.sol";
 import { UsdnProtocolCore } from "./UsdnProtocolCore.sol";
 import { UsdnProtocolLong } from "./UsdnProtocolLong.sol";
-import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { UsdnProtocolVault } from "./UsdnProtocolVault.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./libraries/UsdnProtocolConstantsLibrary.sol";
 
@@ -34,7 +35,7 @@ contract UsdnProtocol is UsdnProtocolLong, UsdnProtocolVault, UsdnProtocolCore, 
         int24 tickSpacing,
         address feeCollector,
         Roles memory roles
-    ) UsdnProtocolStorage() {
+    ) AccessControlDefaultAdminRules(0, msg.sender) {
         // roles
         _setRoleAdmin(SET_EXTERNAL_ROLE, ADMIN_SET_EXTERNAL_ROLE);
         _setRoleAdmin(CRITICAL_FUNCTIONS_ROLE, ADMIN_CRITICAL_FUNCTIONS_ROLE);
@@ -117,7 +118,7 @@ contract UsdnProtocol is UsdnProtocolLong, UsdnProtocolVault, UsdnProtocolCore, 
         }
     }
 
-    // TO DO : remove this function
+    // TO DO : remove those function
     function setUtilsContract(address newUtilsContract) external {
         s._utilsContract = newUtilsContract;
     }
@@ -126,7 +127,7 @@ contract UsdnProtocol is UsdnProtocolLong, UsdnProtocolVault, UsdnProtocolCore, 
         return s._utilsContract;
     }
 
-    fallback() external payable {
+    fallback() external {
         _delegate(s._utilsContract);
     }
 }

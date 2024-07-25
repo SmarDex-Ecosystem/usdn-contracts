@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.25;
 
+import { AccessControlDefaultAdminRules } from
+    "@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
@@ -17,7 +19,7 @@ import { UsdnProtocolUtils as Utils } from "./libraries/UsdnProtocolUtils.sol";
 contract UsdnProtocolSetters is IUsdnProtocolSetters, UsdnProtocolStorage {
     using SafeCast for uint256;
 
-    constructor() UsdnProtocolStorage() { }
+    constructor() AccessControlDefaultAdminRules(0, msg.sender) { }
 
     /* -------------------------------------------------------------------------- */
     /*                              SET_EXTERNAL_ROLE                             */
