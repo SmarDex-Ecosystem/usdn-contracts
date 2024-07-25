@@ -30,7 +30,7 @@ Assuming you have Medusa and Echidna installed, it should be as easy as
 | Test name | Description | Result |
 | --------- | ----------- | ------ |
 
-## Invariants tests
+## Protocol invariants
 
 | Invariant name | Description                                   | Status  |
 | -------------- | --------------------------------------------- | ------- |
