@@ -10,15 +10,18 @@ Assuming you have Medusa and Echidna installed, it should be as easy as
 
 | Test name      | Description                                                             | Status |
 |---------|-------------------------------------------------------------------------|--------|
-| initiateDeposit  | Initiates a deposit of WSTETH and SDEX to the USDN Protocol.             | Unknown revert |
-| initiateWithdrawal  | Initiates a withdrawal of USDN shares.                   | Unknown revert |
-| initiateOpenPosition  | Initiates a long position with WSTETH.       | Unknown revert |
-| initiateClosePosition  | Close a long position with WSTETH. | Unknown revert |
-| validateDeposit  | Validates a deposit of WSTETH and SDX.                   | Unknown revert |
-| validateWithdrawal  | Validates a withdrawal of USDN shares.               | Unknown revert |
-| validateOpenPosition  | Validate a long position with WSTETH.      | Unknown revert |
-| validateClosePosition  | Validate a WSTETH long position closing.                | Unknown revert |
-| validatePendingActions  | Validates pending actions.              | Unknown revert |
+| PROTCL-0  | Initiates a deposit of WSTETH and SDEX to the USDN Protocol.             | Unknown revert |
+| PROTCL-1  | Initiates a withdrawal of USDN shares.                   | Unknown revert |
+| PROTCL-2  | Initiates a long position with WSTETH.       | Unknown revert |
+| PROTCL-3  | Initiates the closing of a WSTETH long position. | Unknown revert |
+| PROTCL-4  | Validates a deposit of WSTETH and SDX.                   | Unknown revert |
+| PROTCL-5  | Validates a withdrawal of USDN shares.               | Unknown revert |
+| PROTCL-6  | Validate a long position with WSTETH.      | Unknown revert |
+| PROTCL-7  | Validate a WSTETH long position closing.                | Unknown revert |
+| PROTCL-8  | Validates pending actions.              | Unknown revert |
+| PROTCL-9  | Initiate and validate a deposit action without test              | Passing |
+| PROTCL-10  | Initiate and validate a withdrawal action without test              | Passing |
+| PROTCL-11  | Initiate and validate a long action without test              | Passing |
 
 ## Admin tests
 | Test name       | Description                                                                                                            | Result |
