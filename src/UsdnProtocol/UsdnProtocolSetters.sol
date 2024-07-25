@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.25;
 
-import { InitializableReentrancyGuard } from "../utils/InitializableReentrancyGuard.sol";
-import { AccessControlDefaultAdminRules } from
-    "@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
@@ -12,37 +9,15 @@ import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IUsdnProtocolErrors } from "../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolSetters } from "../interfaces/UsdnProtocol/IUsdnProtocolSetters.sol";
-import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolUtils as Utils } from "./libraries/UsdnProtocolUtils.sol";
 
-contract UsdnProtocolSetters is IUsdnProtocolSetters, InitializableReentrancyGuard, AccessControlDefaultAdminRules {
+contract UsdnProtocolSetters is IUsdnProtocolSetters, UsdnProtocolStorage {
     using SafeCast for uint256;
 
-    Types.Storage internal s;
-
-    bytes32 private constant SET_EXTERNAL_ROLE = keccak256("SET_EXTERNAL_ROLE");
-
-    bytes32 private constant CRITICAL_FUNCTIONS_ROLE = keccak256("CRITICAL_FUNCTIONS_ROLE");
-
-    bytes32 private constant SET_PROTOCOL_PARAMS_ROLE = keccak256("SET_PROTOCOL_PARAMS_ROLE");
-
-    bytes32 private constant SET_USDN_PARAMS_ROLE = keccak256("SET_USDN_PARAMS_ROLE");
-
-    bytes32 private constant SET_OPTIONS_ROLE = keccak256("SET_OPTIONS_ROLE");
-
-    bytes32 private constant ADMIN_SET_EXTERNAL_ROLE = keccak256("ADMIN_SET_EXTERNAL_ROLE");
-
-    bytes32 private constant ADMIN_CRITICAL_FUNCTIONS_ROLE = keccak256("ADMIN_CRITICAL_FUNCTIONS_ROLE");
-
-    bytes32 private constant ADMIN_SET_PROTOCOL_PARAMS_ROLE = keccak256("ADMIN_SET_PROTOCOL_PARAMS_ROLE");
-
-    bytes32 private constant ADMIN_SET_USDN_PARAMS_ROLE = keccak256("ADMIN_SET_USDN_PARAMS_ROLE");
-
-    bytes32 private constant ADMIN_SET_OPTIONS_ROLE = keccak256("ADMIN_SET_OPTIONS_ROLE");
-
-    constructor() AccessControlDefaultAdminRules(0, msg.sender) { }
+    constructor() UsdnProtocolStorage() { }
 
     /* -------------------------------------------------------------------------- */
     /*                              SET_EXTERNAL_ROLE                             */
