@@ -1,6 +1,6 @@
-# Quickstart
+# README
 
-Assuming you have Medusa and Echidna installed, it should be as easy as
+Assuming you have Echidna installed, it should be as easy as
 
 `npm run echidna` to launch echidna with npm
 
