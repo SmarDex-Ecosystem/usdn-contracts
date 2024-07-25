@@ -1,0 +1,28 @@
+name: Scan for secrets
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  trufflehog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.head_ref }}
+
+      - name: Install just
+        uses: taiki-e/install-action@just
+
+      - name: Generate trufflehog config
+        env:
+          TRUFFLEHOG_URL: ${{ secrets.TRUFFLEHOG_URL }}
+        run: just trufflehog-config
+
+      - name: TruffleHog
+        uses: trufflesecurity/trufflehog@main
+        with:
+          extra_args: --only-verified --config .trufflehog.yml
