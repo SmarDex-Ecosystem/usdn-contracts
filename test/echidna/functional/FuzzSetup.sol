@@ -55,20 +55,15 @@ contract FuzzSetup is Setup {
         uint256 _desiredLiqPrice = wstEthOracleMiddleware.parseAndValidatePrice(
             "", uint128(block.timestamp), IUsdnProtocolTypes.ProtocolAction.Initialize, abi.encode(priceRand)
         ).price / 2;
-        // // vm.prank(msg.sender);
-        // try usdnProtocol.initialize(
-        //     uint128(depositAmountRand), uint128(longAmountRand), uint128(desiredLiqPriceRand), ""
-        // ) {
-        //     // Check balances
-        //     // assert(address(usdnProtocol).balance == depositAmountRand);
-        //     // assert(wsteth.balanceOf(address(usdnProtocol)) == longAmountRand);
-        //     // assert(usdn.balanceOf(msg.sender) == usdn.balanceOf(msg.sender));
-        // } catch (bytes memory err) {
-        //     _checkErrors(err, VALIDATE_OPEN_ERRORS);
-        // }
-
-        usdnProtocol.initialize(
+        // vm.prank(msg.sender);
+        try usdnProtocol.initialize(
             uint128(depositAmountRand), uint128(longAmountRand), uint128(_desiredLiqPrice), abi.encode(priceRand)
-        );
+        ) {
+            // Check balances
+            // assert(address(usdnProtocol).balance == depositAmountRand);
+            // assert(wsteth.balanceOf(address(usdnProtocol)) == longAmountRand);
+        } catch (bytes memory err) {
+            _checkErrors(err, VALIDATE_OPEN_ERRORS);
+        }
     }
 }
