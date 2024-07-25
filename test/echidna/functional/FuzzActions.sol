@@ -349,10 +349,10 @@ contract FuzzActions is Setup {
         }
     }
 
-    function validateClosePosition(uint256 validatorRand, uint256 currentPrice) public {
+    function validateClosePosition(uint256 validatorRand, uint256 priceRand) public {
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
-        bytes memory priceData = abi.encode(currentPrice);
+        bytes memory priceData = abi.encode(bound(priceRand, 0, type(uint128).max));
 
         IUsdnProtocolTypes.LongPendingAction memory longAction =
             usdnProtocol.i_toLongPendingAction(usdnProtocol.getUserPendingAction(validator));
@@ -367,21 +367,23 @@ contract FuzzActions is Setup {
             if (success) {
                 assert(msg.sender.balance == balancesBefore.senderEth + securityDeposit);
                 assert(address(usdnProtocol).balance == balancesBefore.protocolEth - securityDeposit);
-                assert(wsteth.balanceOf(address(usdnProtocol)) < balancesBefore.protocolWsteth);
-                assert(wsteth.balanceOf(address(usdnProtocol)) > balancesBefore.protocolWsteth - closeAmount);
-                assert(wsteth.balanceOf(to) < balancesBefore.toWsteth + closeAmount);
-                assert(wsteth.balanceOf(to) > balancesBefore.toWsteth);
+                assert(
+                    wsteth.balanceOf(address(usdnProtocol)) < balancesBefore.protocolWsteth
+                        && wsteth.balanceOf(address(usdnProtocol)) > balancesBefore.protocolWsteth - closeAmount
+                );
+                assert(
+                    wsteth.balanceOf(to) < balancesBefore.toWsteth + closeAmount
+                        && wsteth.balanceOf(to) > balancesBefore.toWsteth
+                );
                 if (msg.sender != address(validator)) {
                     assert(validator.balance == balancesBefore.validatorEth);
                 }
                 if (to != address(validator)) {
                     assert(to.balance == balancesBefore.toEth);
+                    assert(wsteth.balanceOf(validator) == balancesBefore.validatorWsteth);
                 }
                 if (msg.sender != to) {
                     assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth);
-                }
-                if (validator != to) {
-                    assert(wsteth.balanceOf(validator) == balancesBefore.validatorWsteth);
                 }
             } else {
                 assert(msg.sender.balance == balancesBefore.senderEth);
