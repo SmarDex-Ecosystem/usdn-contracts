@@ -3,6 +3,8 @@ pragma solidity ^0.8.25;
 
 import { Setup } from "../Setup.sol";
 
+import { console2 } from "forge-std/Test.sol";
+
 import { IUsdnProtocolTypes } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 contract FuzzActions is Setup {
@@ -352,7 +354,15 @@ contract FuzzActions is Setup {
     function validateClosePosition(uint256 validatorRand, uint256 priceRand) public {
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
-        bytes memory priceData = abi.encode(bound(priceRand, 0, type(uint128).max));
+        uint256 priceData = bound(priceRand, 0, type(uint128).max);
+
+        (
+            IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
+            ,
+            IUsdnProtocolTypes.PendingAction memory lastAction,
+        ) = getPreviousActionsData(msg.sender, priceData);
+        (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceData); // should return wtheth and
+            // therefore positive wstethPendingActions
 
         IUsdnProtocolTypes.LongPendingAction memory longAction =
             usdnProtocol.i_toLongPendingAction(usdnProtocol.getUserPendingAction(validator));
@@ -363,10 +373,17 @@ contract FuzzActions is Setup {
         BalancesSnapshot memory balancesBefore = getBalances(validator, msg.sender);
 
         vm.prank(msg.sender);
-        try usdnProtocol.validateClosePosition(validator, priceData, EMPTY_PREVIOUS_DATA) returns (bool success) {
+        try usdnProtocol.validateClosePosition(validator, abi.encode(priceData), previousActionsData) returns (
+            bool success
+        ) {
             if (success) {
                 assert(msg.sender.balance == balancesBefore.senderEth + securityDeposit);
                 assert(address(usdnProtocol).balance == balancesBefore.protocolEth - securityDeposit);
+
+                // console2.log("wsteth.balanceOf(address(usdnProtocol))", wsteth.balanceOf(address(usdnProtocol)));
+                // console2.log("balancesBefore.protocolWsteth", balancesBefore.protocolWsteth);
+                // console2.log("wstethPendingActions", wstethPendingActions);
+                // assert(wstethPendingActions == closeAmount); // check if necessary // fails
                 assert(
                     wsteth.balanceOf(address(usdnProtocol)) < balancesBefore.protocolWsteth
                         && wsteth.balanceOf(address(usdnProtocol)) > balancesBefore.protocolWsteth - closeAmount
