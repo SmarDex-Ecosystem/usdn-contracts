@@ -197,6 +197,23 @@ contract FuzzingSuiteTest is Test {
         assertEq(address(usdnProtocol).balance, balanceBeforeProtocol - securityDeposit * 2, "protocol balance");
     }
 
+    function test_canInitiateClosePosition() public {
+        test_canFullOpenPosition();
+        skip(wstEthOracleMiddleware.getValidationDelay() + 1);
+        uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
+
+        vm.prank(DEPLOYER);
+        echidna.initiateClosePosition(
+            securityDeposit, uint256(uint160(DEPLOYER)), uint256(uint160(DEPLOYER)), 4000 ether, 1 ether, 0
+        );
+
+        assertEq(
+            uint8(usdnProtocol.getUserPendingAction(DEPLOYER).action),
+            uint8(IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition),
+            "The user action should pending"
+        );
+    }
+
     function test_canFullDeposit() public {
         uint256 balanceDeployer = usdn.balanceOf(DEPLOYER);
         uint256 balanceProtocol = address(usdnProtocol).balance;
