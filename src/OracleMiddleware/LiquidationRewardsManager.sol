@@ -28,20 +28,20 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     /// @inheritdoc ILiquidationRewardsManager
     uint256 public constant BASE_GAS_COST = 21_000;
 
-    /// @notice Maximum gas used per tick liquidated
-    uint256 internal constant MAX_GAS_USED_PER_TICK = 500_000;
+    /// @inheritdoc ILiquidationRewardsManager
+    uint256 public constant MAX_GAS_USED_PER_TICK = 500_000;
 
-    /// @notice Maximum gas used for the rest of the computation
-    uint256 internal constant MAX_OTHER_GAS_USED = 1_000_000;
+    /// @inheritdoc ILiquidationRewardsManager
+    uint256 public constant MAX_OTHER_GAS_USED = 1_000_000;
 
-    /// @notice Maximum gas used for the optional USDN rebase
-    uint256 internal constant MAX_REBASE_GAS_USED = 200_000;
+    /// @inheritdoc ILiquidationRewardsManager
+    uint256 public constant MAX_REBASE_GAS_USED = 200_000;
 
-    /// @notice Maximum gas used for the optional rebalancer trigger
-    uint256 internal constant MAX_REBALANCER_GAS_USED = 300_000;
+    /// @inheritdoc ILiquidationRewardsManager
+    uint256 public constant MAX_REBALANCER_GAS_USED = 300_000;
 
-    /// @notice Maximum upper limit for the gas price
-    uint256 internal constant MAX_GAS_PRICE_LIMIT = 8000 gwei;
+    /// @inheritdoc ILiquidationRewardsManager
+    uint256 public constant MAX_GAS_PRICE_LIMIT = 8000 gwei;
 
     /* -------------------------------------------------------------------------- */
     /*                              Storage Variables                             */

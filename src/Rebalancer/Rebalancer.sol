@@ -27,9 +27,6 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
 
-    /// @notice Minimum action cooldown duration
-    uint256 internal constant MIN_ACTION_COOLDOWN = 48 hours;
-
     /**
      * @dev Structure to hold the transient data during `initiateClosePosition`
      * @param userDepositData The user deposit data
@@ -72,6 +69,9 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
     /// @inheritdoc IRebalancer
     uint256 public constant MULTIPLIER_FACTOR = 1e38;
+
+    /// @inheritdoc IRebalancer
+    uint256 public constant MIN_ACTION_COOLDOWN = 48 hours;
 
     /* -------------------------------------------------------------------------- */
     /*                                 Immutables                                 */
