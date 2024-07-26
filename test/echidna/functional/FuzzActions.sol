@@ -356,16 +356,16 @@ contract FuzzActions is Setup {
         address payable validator = payable(validators[validatorRand]);
         uint256 priceData = bound(priceRand, 0, type(uint128).max);
 
+        IUsdnProtocolTypes.LongPendingAction memory longAction =
+            usdnProtocol.i_toLongPendingAction(usdnProtocol.getUserPendingAction(validator));
+
         (
             IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
             ,
             IUsdnProtocolTypes.PendingAction memory lastAction,
         ) = getPreviousActionsData(msg.sender, priceData);
-        (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceData); // should return wtheth and
-            // therefore positive wstethPendingActions
+        (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceData);
 
-        IUsdnProtocolTypes.LongPendingAction memory longAction =
-            usdnProtocol.i_toLongPendingAction(usdnProtocol.getUserPendingAction(validator));
         uint256 securityDeposit = longAction.securityDepositValue;
         uint256 closeAmount = longAction.closeAmount;
         address to = longAction.to;
@@ -379,11 +379,6 @@ contract FuzzActions is Setup {
             if (success) {
                 assert(msg.sender.balance == balancesBefore.senderEth + securityDeposit);
                 assert(address(usdnProtocol).balance == balancesBefore.protocolEth - securityDeposit);
-
-                // console2.log("wsteth.balanceOf(address(usdnProtocol))", wsteth.balanceOf(address(usdnProtocol)));
-                // console2.log("balancesBefore.protocolWsteth", balancesBefore.protocolWsteth);
-                // console2.log("wstethPendingActions", wstethPendingActions);
-                // assert(wstethPendingActions == closeAmount); // check if necessary // fails
                 assert(
                     wsteth.balanceOf(address(usdnProtocol)) < balancesBefore.protocolWsteth
                         && wsteth.balanceOf(address(usdnProtocol)) > balancesBefore.protocolWsteth - closeAmount
@@ -401,6 +396,11 @@ contract FuzzActions is Setup {
                 }
                 if (msg.sender != to) {
                     assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth);
+                }
+                if (wstethPendingActions > 0) {
+                    assert(
+                        wsteth.balanceOf(address(usdnProtocol)) == balancesBefore.protocolWsteth - wstethPendingActions
+                    );
                 }
             } else {
                 assert(msg.sender.balance == balancesBefore.senderEth);
