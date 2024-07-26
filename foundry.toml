@@ -11,6 +11,10 @@ optimizer = true
 optimizer_runs = 20_000
 libs = ["node_modules", "lib"]
 invariant = { fail_on_revert = true }
+ffi = true
+ast = true
+build_info = true
+extra_output = ["storageLayout"]
 ignored_error_codes = [
     "license",
     "code-size",
@@ -23,7 +27,8 @@ ignored_error_codes = [
 
 remappings = [
     "@chainlink/=node_modules/@chainlink/",
-    "@openzeppelin/=node_modules/@openzeppelin/",
+    "@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/",
+    "@openzeppelin/contracts=node_modules/@openzeppelin/contracts-upgradeable/",
     "@pythnetwork=node_modules/@pythnetwork/",
     "solady/src/=node_modules/solady/src/",
     "@uniswap/permit2/=node_modules/@uniswap/permit2/",
