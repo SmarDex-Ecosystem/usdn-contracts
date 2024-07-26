@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
+import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
+
 import {
     ADMIN,
     CRITICAL_FUNCTIONS_ADMIN,
@@ -18,16 +20,17 @@ import { WstETH } from "../../../utils/WstEth.sol";
 import { MockChainlinkOnChain } from "../../Middlewares/utils/MockChainlinkOnChain.sol";
 import { RebalancerHandler } from "../../Rebalancer/utils/Handler.sol";
 import { UsdnProtocolHandler } from "./Handler.sol";
+import { MockOracleMiddleware } from "./MockOracleMiddleware.sol";
 
 import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
+import { UsdnProtocol } from "../../../../src/UsdnProtocol/UsdnProtocol.sol";
 import { UsdnProtocolSetters } from "../../../../src/UsdnProtocol/UsdnProtocolSetters.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { Permit2TokenBitfield } from "../../../../src/libraries/Permit2TokenBitfield.sol";
 import { FeeCollector } from "../../../../src/utils/FeeCollector.sol";
-import { MockOracleMiddleware } from "./MockOracleMiddleware.sol";
 
 /**
  * @title UsdnProtocolBaseFixture
@@ -138,9 +141,11 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             });
         }
 
-        protocol = IUsdnProtocolHandler(
-            address(
-                new UsdnProtocolHandler(
+        address proxy = Upgrades.deployUUPSProxy(
+            "Handler.sol:UsdnProtocolHandler",
+            abi.encodeCall(
+                UsdnProtocolHandler.initializeStorageHandler,
+                (
                     usdn,
                     sdex,
                     wstETH,
@@ -152,6 +157,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
                 )
             )
         );
+        protocol = IUsdnProtocolHandler(proxy);
         UsdnProtocolSetters protocolSetters = new UsdnProtocolSetters();
         protocol.setSettersContract(address(protocolSetters));
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));

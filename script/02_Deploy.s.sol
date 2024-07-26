@@ -3,6 +3,8 @@ pragma solidity ^0.8.25;
 
 import { Script } from "forge-std/Script.sol";
 
+import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
+
 import { Sdex } from "../test/utils/Sdex.sol";
 import { WstETH } from "../test/utils/WstEth.sol";
 
@@ -13,6 +15,7 @@ import { MockWstEthOracleMiddleware } from "../src/OracleMiddleware/mock/MockWst
 import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../src/Usdn/Usdn.sol";
 import { UsdnProtocol } from "../src/UsdnProtocol/UsdnProtocol.sol";
+import { UsdnProtocolSetters } from "../src/UsdnProtocol/UsdnProtocolSetters.sol";
 import { IWstETH } from "../src/interfaces/IWstETH.sol";
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -55,22 +58,31 @@ contract Deploy is Script {
         Sdex_ = _deploySdex();
 
         // deploy the protocol with tick spacing 100 = 1%
-        UsdnProtocol_ = new UsdnProtocol(
-            Usdn_,
-            Sdex_,
-            WstETH_,
-            WstEthOracleMiddleware_,
-            LiquidationRewardsManager_,
-            100,
-            vm.envAddress("FEE_COLLECTOR"),
-            Types.Roles({
-                setExternalAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
-                criticalFunctionsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
-                setProtocolParamsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
-                setUsdnParamsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
-                setOptionsAdmin: vm.envAddress("DEPLOYER_ADDRESS")
-            })
+        address proxy = Upgrades.deployUUPSProxy(
+            "UsdnProtocol.sol",
+            abi.encodeCall(
+                UsdnProtocol.initializeStorage,
+                (
+                    Usdn_,
+                    Sdex_,
+                    WstETH_,
+                    WstEthOracleMiddleware_,
+                    LiquidationRewardsManager_,
+                    100,
+                    vm.envAddress("FEE_COLLECTOR"),
+                    Types.Roles({
+                        setExternalAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
+                        criticalFunctionsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
+                        setProtocolParamsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
+                        setUsdnParamsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
+                        setOptionsAdmin: vm.envAddress("DEPLOYER_ADDRESS")
+                    })
+                )
+            )
         );
+        UsdnProtocol_ = UsdnProtocol(proxy);
+        UsdnProtocolSetters protocolSetters = new UsdnProtocolSetters();
+        UsdnProtocol_.setSettersContract(address(protocolSetters));
 
         // deploy the rebalancer
         Rebalancer_ = _deployRebalancer(address(UsdnProtocol_));

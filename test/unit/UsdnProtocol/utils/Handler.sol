@@ -5,6 +5,7 @@ import { Test } from "forge-std/Test.sol";
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
 import { UsdnProtocol } from "../../../../src/UsdnProtocol/UsdnProtocol.sol";
@@ -39,7 +40,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
 
     Storage _tempStorage;
 
-    constructor(
+    function initializeStorageHandler(
         IUsdn usdn,
         IERC20Metadata sdex,
         IERC20Metadata asset,
@@ -48,7 +49,11 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         int24 tickSpacing,
         address feeCollector,
         Roles memory roles
-    ) UsdnProtocol(usdn, sdex, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector, roles) { }
+    ) public initializer {
+        initializeStorage(
+            usdn, sdex, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector, roles
+        );
+    }
 
     /// @dev Useful to completely disable funding, which is normally initialized with a positive bias value
     function resetEMA() external {

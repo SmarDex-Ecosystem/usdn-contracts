@@ -49,7 +49,7 @@ abstract contract InitializableReentrancyGuard {
     }
 
     /// @notice Reverts if the contract is initialized, or set it as initialized
-    modifier initializer() {
+    modifier protocolInitializer() {
         _checkUninitialized();
         _;
         _status = NOT_ENTERED; // mark initialized

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
+import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
+
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
@@ -31,7 +33,13 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_constructorUSDNNonZeroTotalSupply() public {
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidUsdn.selector, address(usdn)));
-        new UsdnProtocol(usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(1), roles);
+        Upgrades.deployUUPSProxy(
+            "UsdnProtocol.sol",
+            abi.encodeCall(
+                UsdnProtocol.initializeStorage,
+                (usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(1), roles)
+            )
+        );
     }
 
     /**
@@ -44,7 +52,13 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
         usdn = new Usdn(address(0), address(0));
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidFeeCollector.selector));
-        new UsdnProtocol(usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(0), roles);
+        Upgrades.deployUUPSProxy(
+            "UsdnProtocol.sol",
+            abi.encodeCall(
+                UsdnProtocol.initializeStorage,
+                (usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(0), roles)
+            )
+        );
     }
 
     /**
@@ -60,7 +74,13 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
         wstETH.setDecimals(wrongDecimals);
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidAssetDecimals.selector, wrongDecimals));
-        new UsdnProtocol(usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(1), roles);
+        Upgrades.deployUUPSProxy(
+            "UsdnProtocol.sol",
+            abi.encodeCall(
+                UsdnProtocol.initializeStorage,
+                (usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(1), roles)
+            )
+        );
     }
 
     /**
@@ -75,7 +95,13 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
         sdex.setDecimals(protocol.TOKENS_DECIMALS() - 1);
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidTokenDecimals.selector));
-        new UsdnProtocol(usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(1), roles);
+        Upgrades.deployUUPSProxy(
+            "UsdnProtocol.sol",
+            abi.encodeCall(
+                UsdnProtocol.initializeStorage,
+                (usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(1), roles)
+            )
+        );
     }
 
     /**

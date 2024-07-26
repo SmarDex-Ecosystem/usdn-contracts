@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
+import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
+
 import { ADMIN, DEPLOYER } from "../../utils/Constants.sol";
 import { IUsdnProtocolHandler } from "../../utils/IUsdnProtocolHandler.sol";
 import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
@@ -23,9 +25,11 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         vm.startPrank(ADMIN);
         usdn = new Usdn(address(0), address(0));
 
-        protocol = IUsdnProtocolHandler(
-            address(
-                new UsdnProtocolHandler(
+        address proxy = Upgrades.deployUUPSProxy(
+            "UsdnProtocolHandler.sol",
+            abi.encodeCall(
+                UsdnProtocolHandler.initializeStorageHandler,
+                (
                     usdn,
                     sdex,
                     wstETH,
@@ -43,8 +47,10 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
                 )
             )
         );
+        protocol = IUsdnProtocolHandler(proxy);
         UsdnProtocolSetters protocolSetters = new UsdnProtocolSetters();
         protocol.setSettersContract(address(protocolSetters));
+
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
 

@@ -19,8 +19,6 @@ import { UsdnProtocolUtils as Utils } from "./libraries/UsdnProtocolUtils.sol";
 contract UsdnProtocolSetters is IUsdnProtocolSetters, UsdnProtocolStorage {
     using SafeCast for uint256;
 
-    constructor() AccessControlDefaultAdminRules(0, msg.sender) { }
-
     /* -------------------------------------------------------------------------- */
     /*                              SET_EXTERNAL_ROLE                             */
     /* -------------------------------------------------------------------------- */

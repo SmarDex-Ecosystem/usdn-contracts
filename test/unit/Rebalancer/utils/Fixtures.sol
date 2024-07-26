@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
+import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
+
 import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
@@ -12,6 +14,7 @@ import { RebalancerHandler } from "../utils/Handler.sol";
 import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { UsdnProtocol } from "../../../../src/UsdnProtocol/UsdnProtocol.sol";
+import { UsdnProtocolSetters } from "../../../../src/UsdnProtocol/UsdnProtocolSetters.sol";
 import { IRebalancerErrors } from "../../../../src/interfaces/Rebalancer/IRebalancerErrors.sol";
 import { IRebalancerEvents } from "../../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
 import { IRebalancerTypes } from "../../../../src/interfaces/Rebalancer/IRebalancerTypes.sol";
@@ -44,9 +47,11 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
         chainlinkGasPriceFeed = new MockChainlinkOnChain();
         liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
 
-        usdnProtocol = IUsdnProtocol(
-            address(
-                new UsdnProtocol(
+        address proxy = Upgrades.deployUUPSProxy(
+            "UsdnProtocol.sol",
+            abi.encodeCall(
+                UsdnProtocol.initializeStorage,
+                (
                     usdn,
                     sdex,
                     wstETH,
@@ -64,7 +69,11 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
                 )
             )
         );
-        rebalancer = new RebalancerHandler(IUsdnProtocol(address(usdnProtocol)));
+        usdnProtocol = IUsdnProtocol(proxy);
+        UsdnProtocolSetters protocolSetters = new UsdnProtocolSetters();
+        usdnProtocol.setSettersContract(address(protocolSetters));
+
+        rebalancer = new RebalancerHandler(usdnProtocol);
 
         usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));

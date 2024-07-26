@@ -12,7 +12,7 @@ abstract contract UsdnProtocolCore is UsdnProtocolStorage, IUsdnProtocolCore {
         uint128 longAmount,
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData
-    ) external payable initializer {
+    ) external payable protocolInitializer {
         return Core.initialize(s, depositAmount, longAmount, desiredLiqPrice, currentPriceData);
     }
 
