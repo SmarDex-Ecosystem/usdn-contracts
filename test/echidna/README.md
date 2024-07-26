@@ -8,15 +8,31 @@ Assuming you have Echidna installed
 
 ## Protocol invariants
 
-| Invariant name | Description                                                             | Status |
-|----------------|-------------------------------------------------------------------------|--------|
-| PROTCL-1       | When initializing an action, the sender should pay the security deposit | x      |
+TODO lastAction doc
+
+
+| Invariant name | Description                                                        | Status |
+|----------------|--------------------------------------------------------------------|--------|
+| PROTCL-1       | When initializing an action, the sender pay the security deposit   | x      |
+| PROTCL-2       | When initializing an action, the protocol pay the security deposit | x      |
+
+
+## Vault invariants
+
+| Invariant name | Description                                                                      | Status |
+|----------------|----------------------------------------------------------------------------------|--------|
+| VAULT-1        | When an user initialize a deposit, msg.sender pay the amount of wstETH defined   | x      |
+| VAULT-2        | When an user initialize a deposit, msg.sender pay some SDEX                      | x      |
+| VAULT-3        | When an user initialize a deposit, protocol receive the amount of wstETH defined | x      |
+
+
+
 
 ## What to do in case of failure?
 
 Tips and tricks:
 
-- Add `export ECHIDNA_SAVE_TRACES=true`, then run Echidna to get full traces for entire length of callsequences ([reference](https://github.com/crytic/echidna/pull/1180))
+- Add `export ECHIDNA_SAVE_TRACES=true`, then run Echidna to get full traces for entire length of call sequences ([reference](https://github.com/crytic/echidna/pull/1180))
 
 ## Installation Requirements
 

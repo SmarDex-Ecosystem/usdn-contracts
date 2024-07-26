@@ -10,7 +10,11 @@ contract FuzzActions is Setup {
     /*                             USDN Protocol                                  */
     /* -------------------------------------------------------------------------- */
 
-    /// @custom:property protcl-1 When initializing an action, the sender should pay the security deposit
+    /// @custom:property PROTCL-1 When initializing an action, the sender pay the security deposit
+    /// @custom:property PROTCL-2 When initializing an action, the protocol receive the security deposit
+    /// @custom:property VAULT-1 When an user initialize a deposit, msg.sender pay the amount of wstETH defined
+    /// @custom:property VAULT-2 When an user initialize a deposit, msg.sender pay some SDEX
+    /// @custom:property VAULT-3 When an user initialize a deposit, protocol receive the amount of wstETH defined
     function initiateDeposit(
         uint128 amountWstETHRand,
         uint128 amountSdexRand,
@@ -46,26 +50,25 @@ contract FuzzActions is Setup {
             assertEq(
                 address(msg.sender).balance,
                 balancesBefore.senderEth - securityDeposit + lastAction.securityDepositValue,
-                "protcl-1 When initializing an action, the sender should pay the security deposit"
+                "PROTCL-1"
             );
-            assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth - amountWstETHRand);
-            assert(sdex.balanceOf(msg.sender) < balancesBefore.senderSdex);
-            assert(
-                address(usdnProtocol).balance
-                    == balancesBefore.protocolEth + securityDeposit - lastAction.securityDepositValue
+            assertEq(wsteth.balanceOf(msg.sender), balancesBefore.senderWsteth - amountWstETHRand, "VAULT-1");
+            assertLt(sdex.balanceOf(msg.sender), balancesBefore.senderSdex, "VAULT-2");
+            assertEq(
+                address(usdnProtocol).balance,
+                balancesBefore.protocolEth + securityDeposit - lastAction.securityDepositValue,
+                "PROTCL-2"
             );
-            assert(
-                wsteth.balanceOf(address(usdnProtocol))
-                    == balancesBefore.protocolWsteth + amountWstETHRand - wstethPendingActions
+            assertEq(
+                wsteth.balanceOf(address(usdnProtocol)),
+                balancesBefore.protocolWsteth + amountWstETHRand - wstethPendingActions,
+                "VAULT-3"
             );
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_DEPOSIT_ERRORS);
         }
     }
 
-    /**
-     * @notice PROTCL-1
-     */
     function initiateWithdrawal(
         uint152 usdnShares,
         uint256 ethRand,
@@ -113,9 +116,6 @@ contract FuzzActions is Setup {
         }
     }
 
-    /**
-     * @notice PROTCL-2
-     */
     function initiateOpenPosition(
         uint128 amountRand,
         uint128 liquidationPriceRand,
@@ -172,9 +172,6 @@ contract FuzzActions is Setup {
         }
     }
 
-    /**
-     * @notice PROTCL-3
-     */
     function initiateClosePosition(
         uint256 ethRand,
         uint256 destRand,
@@ -229,9 +226,6 @@ contract FuzzActions is Setup {
         }
     }
 
-    /**
-     * @notice PROTCL-4
-     */
     function validateDeposit(uint256 validatorRand, uint256 priceRand) public {
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
@@ -283,9 +277,6 @@ contract FuzzActions is Setup {
         }
     }
 
-    /**
-     * @notice PROTCL-5
-     */
     function validateWithdrawal(uint256 validatorRand, uint256 priceRand) public {
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
@@ -328,9 +319,6 @@ contract FuzzActions is Setup {
         }
     }
 
-    /**
-     * @notice PROTCL-6
-     */
     function validateOpenPosition(uint256 validatorRand, uint256 priceRand) public {
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
@@ -370,9 +358,6 @@ contract FuzzActions is Setup {
         }
     }
 
-    /**
-     * @notice PROTCL-8
-     */
     function validatePendingActions(uint256 maxValidations, uint256 priceRand) public {
         uint256 balanceBefore = address(msg.sender).balance;
         uint256 balanceBeforeProtocol = address(usdnProtocol).balance;
@@ -399,9 +384,6 @@ contract FuzzActions is Setup {
         }
     }
 
-    /**
-     * @notice PROTCL-9
-     */
     function fullDeposit(
         uint128 amountWstETHRand,
         uint128 amountSdexRand,
@@ -415,9 +397,6 @@ contract FuzzActions is Setup {
         validateDeposit(validatorRand, priceRand);
     }
 
-    /**
-     * @notice PROTCL-10
-     */
     function fullWithdrawal(
         uint152 usdnShares,
         uint256 ethRand,
@@ -430,9 +409,6 @@ contract FuzzActions is Setup {
         validateWithdrawal(validatorRand, priceRand);
     }
 
-    /**
-     * @notice PROTCL-11
-     */
     function fullOpenPosition(
         uint128 amountRand,
         uint128 liquidationPriceRand,
