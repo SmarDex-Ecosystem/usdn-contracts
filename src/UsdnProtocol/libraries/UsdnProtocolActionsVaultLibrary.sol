@@ -430,7 +430,7 @@ library UsdnProtocolActionsVaultLibrary {
 
         isInitiated_ = true;
 
-        emit IUsdnProtocolEvents.InitiatedDeposit(to, validator, amount, block.timestamp);
+        emit IUsdnProtocolEvents.InitiatedDeposit(to, validator, amount, block.timestamp, data.sdexToBurn);
     }
 
     /**
