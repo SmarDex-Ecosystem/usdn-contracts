@@ -10,9 +10,7 @@ contract FuzzActions is Setup {
     /*                             USDN Protocol                                  */
     /* -------------------------------------------------------------------------- */
 
-    /**
-     * @notice PROTCL-0
-     */
+    /// @custom:property protcl-1 When initializing an action, the sender should pay the security deposit
     function initiateDeposit(
         uint128 amountWstETHRand,
         uint128 amountSdexRand,
@@ -45,9 +43,10 @@ contract FuzzActions is Setup {
         ) {
             uint64 securityDeposit = usdnProtocol.getSecurityDepositValue();
 
-            assert(
-                address(msg.sender).balance
-                    == balancesBefore.senderEth - securityDeposit + lastAction.securityDepositValue
+            assertEq(
+                address(msg.sender).balance,
+                balancesBefore.senderEth - securityDeposit + lastAction.securityDepositValue,
+                "protcl-1 When initializing an action, the sender should pay the security deposit"
             );
             assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth - amountWstETHRand);
             assert(sdex.balanceOf(msg.sender) < balancesBefore.senderSdex);

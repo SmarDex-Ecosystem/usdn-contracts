@@ -23,7 +23,7 @@ contract ErrorsChecked is Test {
     ];
 
     /* -------------------------------------------------------------------------- */
-    /*                           Functionnal errors                               */
+    /*                           Functional errors                               */
     /* -------------------------------------------------------------------------- */
     bytes4[][] public INITIATE_DEPOSIT_ERRORS = [
         [
