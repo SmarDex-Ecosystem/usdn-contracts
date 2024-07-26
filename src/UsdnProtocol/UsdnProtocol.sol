@@ -1,21 +1,20 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.25;
 
+import { AccessControlDefaultAdminRules } from
+    "@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
+import { IBaseLiquidationRewardsManager } from "../interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
-import { ILiquidationRewardsManager } from "../interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
-import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
-import { IUsdnProtocol } from "../interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { UsdnProtocolActions } from "./UsdnProtocolActions.sol";
 import { UsdnProtocolCore } from "./UsdnProtocolCore.sol";
 import { UsdnProtocolLong } from "./UsdnProtocolLong.sol";
-import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { UsdnProtocolVault } from "./UsdnProtocolVault.sol";
-import { UsdnProtocolSettersLibrary as Setters } from "./libraries/UsdnProtocolSettersLibrary.sol";
+import { UsdnProtocolConstantsLibrary as Constants } from "./libraries/UsdnProtocolConstantsLibrary.sol";
 
-contract UsdnProtocol is IUsdnProtocol, UsdnProtocolLong, UsdnProtocolVault, UsdnProtocolCore, UsdnProtocolActions {
+contract UsdnProtocol is UsdnProtocolLong, UsdnProtocolVault, UsdnProtocolCore, UsdnProtocolActions {
     /**
      * @notice Constructor
      * @param usdn The USDN ERC20 contract
@@ -32,171 +31,103 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolLong, UsdnProtocolVault, Usd
         IERC20Metadata sdex,
         IERC20Metadata asset,
         IBaseOracleMiddleware oracleMiddleware,
-        ILiquidationRewardsManager liquidationRewardsManager,
+        IBaseLiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector,
         Roles memory roles
-    )
-        UsdnProtocolStorage(
-            usdn,
-            sdex,
-            asset,
-            oracleMiddleware,
-            liquidationRewardsManager,
-            tickSpacing,
-            feeCollector,
-            roles
-        )
-    { }
+    ) AccessControlDefaultAdminRules(0, msg.sender) {
+        // roles
+        _setRoleAdmin(SET_EXTERNAL_ROLE, ADMIN_SET_EXTERNAL_ROLE);
+        _setRoleAdmin(CRITICAL_FUNCTIONS_ROLE, ADMIN_CRITICAL_FUNCTIONS_ROLE);
+        _setRoleAdmin(SET_PROTOCOL_PARAMS_ROLE, ADMIN_SET_PROTOCOL_PARAMS_ROLE);
+        _setRoleAdmin(SET_USDN_PARAMS_ROLE, ADMIN_SET_USDN_PARAMS_ROLE);
+        _setRoleAdmin(SET_OPTIONS_ROLE, ADMIN_SET_OPTIONS_ROLE);
+        _grantRole(SET_EXTERNAL_ROLE, roles.setExternalAdmin);
+        _grantRole(CRITICAL_FUNCTIONS_ROLE, roles.criticalFunctionsAdmin);
+        _grantRole(SET_PROTOCOL_PARAMS_ROLE, roles.setProtocolParamsAdmin);
+        _grantRole(SET_USDN_PARAMS_ROLE, roles.setUsdnParamsAdmin);
+        _grantRole(SET_OPTIONS_ROLE, roles.setOptionsAdmin);
 
-    /* -------------------------------------------------------------------------- */
-    /*                              SET_EXTERNAL_ROLE                             */
-    /* -------------------------------------------------------------------------- */
+        // parameters
+        s._minLeverage = 10 ** Constants.LEVERAGE_DECIMALS + 10 ** 12;
+        s._maxLeverage = 10 * 10 ** Constants.LEVERAGE_DECIMALS;
+        s._validationDeadline = 90 minutes;
+        s._safetyMarginBps = 200; // 2%
+        s._liquidationIteration = 1;
+        s._protocolFeeBps = 800;
+        s._rebalancerBonusBps = 8000; // 80%
+        s._liquidationPenalty = 2; // 200 ticks -> ~2.02%
+        s._EMAPeriod = 5 days;
+        s._fundingSF = 12 * 10 ** (Constants.FUNDING_SF_DECIMALS - 2);
+        s._feeThreshold = 1 ether;
+        s._openExpoImbalanceLimitBps = 500;
+        s._withdrawalExpoImbalanceLimitBps = 600;
+        s._depositExpoImbalanceLimitBps = 500;
+        s._closeExpoImbalanceLimitBps = 600;
+        s._longImbalanceTargetBps = 550;
+        s._positionFeeBps = 4; // 0.04%
+        s._vaultFeeBps = 4; // 0.04%
+        s._sdexBurnOnDepositRatio = 1e6; // 1%
+        s._securityDepositValue = 0.5 ether;
 
-    /// @inheritdoc IUsdnProtocol
-    function setOracleMiddleware(IBaseOracleMiddleware newOracleMiddleware) external onlyRole(SET_EXTERNAL_ROLE) {
-        Setters.setOracleMiddleware(s, newOracleMiddleware);
+        // Long positions
+        s._EMA = int256(3 * 10 ** (Constants.FUNDING_RATE_DECIMALS - 4));
+
+        // since all USDN must be minted by the protocol, we check that the total supply is 0
+        if (usdn.totalSupply() != 0) {
+            revert UsdnProtocolInvalidUsdn(address(usdn));
+        }
+        if (feeCollector == address(0)) {
+            revert UsdnProtocolInvalidFeeCollector();
+        }
+
+        s._usdn = usdn;
+        s._sdex = sdex;
+        // those tokens should have 18 decimals
+        if (usdn.decimals() != Constants.TOKENS_DECIMALS || sdex.decimals() != Constants.TOKENS_DECIMALS) {
+            revert UsdnProtocolInvalidTokenDecimals();
+        }
+
+        s._usdnMinDivisor = usdn.MIN_DIVISOR();
+        s._asset = asset;
+        uint8 assetDecimals = asset.decimals();
+        s._assetDecimals = assetDecimals;
+        if (assetDecimals < Constants.FUNDING_SF_DECIMALS) {
+            revert UsdnProtocolInvalidAssetDecimals(assetDecimals);
+        }
+        s._oracleMiddleware = oracleMiddleware;
+        uint8 priceFeedDecimals = oracleMiddleware.getDecimals();
+        s._priceFeedDecimals = priceFeedDecimals;
+        s._liquidationRewardsManager = liquidationRewardsManager;
+        s._tickSpacing = tickSpacing;
+        s._feeCollector = feeCollector;
+
+        s._targetUsdnPrice = uint128(10_087 * 10 ** (priceFeedDecimals - 4)); // $1.0087
+        s._usdnRebaseThreshold = uint128(1009 * 10 ** (priceFeedDecimals - 3)); // $1.009
+        s._minLongPosition = 2 * 10 ** assetDecimals;
     }
 
-    /// @inheritdoc IUsdnProtocol
-    function setFeeCollector(address newFeeCollector) external onlyRole(SET_EXTERNAL_ROLE) {
-        Setters.setFeeCollector(s, newFeeCollector);
+    /**
+     * @notice Delegates the call to the setters contract
+     * @param implementation The address of the setters contract
+     */
+    function _delegate(address implementation) internal {
+        assembly {
+            calldatacopy(0, 0, calldatasize())
+            let result := delegatecall(gas(), implementation, 0, calldatasize(), 0, 0)
+            returndatacopy(0, 0, returndatasize())
+            switch result
+            case 0 { revert(0, returndatasize()) }
+            default { return(0, returndatasize()) }
+        }
     }
 
-    /// @inheritdoc IUsdnProtocol
-    function setLiquidationRewardsManager(ILiquidationRewardsManager newLiquidationRewardsManager)
-        external
-        onlyRole(SET_EXTERNAL_ROLE)
-    {
-        Setters.setLiquidationRewardsManager(s, newLiquidationRewardsManager);
+    // TO DO : remove this function when the proxy is implemented
+    function setSettersContract(address newUtilsContract) external {
+        s._settersContract = newUtilsContract;
     }
 
-    /// @inheritdoc IUsdnProtocol
-    function setRebalancer(IBaseRebalancer newRebalancer) external onlyRole(SET_EXTERNAL_ROLE) {
-        Setters.setRebalancer(s, newRebalancer);
-    }
-
-    /* -------------------------------------------------------------------------- */
-    /*                           CRITICAL_FUNCTIONS_ROLE                          */
-    /* -------------------------------------------------------------------------- */
-
-    /// @inheritdoc IUsdnProtocol
-    function setValidationDeadline(uint256 newValidationDeadline) external onlyRole(CRITICAL_FUNCTIONS_ROLE) {
-        Setters.setValidationDeadline(s, newValidationDeadline);
-    }
-
-    /* -------------------------------------------------------------------------- */
-    /*                          SET_PROTOCOL_PARAMS_ROLE                          */
-    /* -------------------------------------------------------------------------- */
-
-    /// @inheritdoc IUsdnProtocol
-    function setMinLongPosition(uint256 newMinLongPosition) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        Setters.setMinLongPosition(s, newMinLongPosition);
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setMinLeverage(uint256 newMinLeverage) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        Setters.setMinLeverage(s, newMinLeverage);
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setMaxLeverage(uint256 newMaxLeverage) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        Setters.setMaxLeverage(s, newMaxLeverage);
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setEMAPeriod(uint128 newEMAPeriod) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        Setters.setEMAPeriod(s, newEMAPeriod);
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setLiquidationPenalty(uint8 newLiquidationPenalty) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        Setters.setLiquidationPenalty(s, newLiquidationPenalty);
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setFundingSF(uint256 newFundingSF) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        Setters.setFundingSF(s, newFundingSF);
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setProtocolFeeBps(uint16 newProtocolFeeBps) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        Setters.setProtocolFeeBps(s, newProtocolFeeBps);
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setPositionFeeBps(uint16 newPositionFee) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        Setters.setPositionFeeBps(s, newPositionFee);
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setVaultFeeBps(uint16 newVaultFee) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        Setters.setVaultFeeBps(s, newVaultFee);
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setRebalancerBonusBps(uint16 newBonus) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        Setters.setRebalancerBonusBps(s, newBonus);
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setSdexBurnOnDepositRatio(uint32 newRatio) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        Setters.setSdexBurnOnDepositRatio(s, newRatio);
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setExpoImbalanceLimits(
-        uint256 newOpenLimitBps,
-        uint256 newDepositLimitBps,
-        uint256 newWithdrawalLimitBps,
-        uint256 newCloseLimitBps,
-        int256 newLongImbalanceTargetBps
-    ) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        Setters.setExpoImbalanceLimits(
-            s, newOpenLimitBps, newDepositLimitBps, newWithdrawalLimitBps, newCloseLimitBps, newLongImbalanceTargetBps
-        );
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setSecurityDepositValue(uint64 securityDepositValue) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        Setters.setSecurityDepositValue(s, securityDepositValue);
-    }
-
-    /* -------------------------------------------------------------------------- */
-    /*                              SET_OPTIONS_ROLE                              */
-    /* -------------------------------------------------------------------------- */
-
-    /// @inheritdoc IUsdnProtocol
-    function setSafetyMarginBps(uint256 newSafetyMarginBps) external onlyRole(SET_OPTIONS_ROLE) {
-        Setters.setSafetyMarginBps(s, newSafetyMarginBps);
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setLiquidationIteration(uint16 newLiquidationIteration) external onlyRole(SET_OPTIONS_ROLE) {
-        Setters.setLiquidationIteration(s, newLiquidationIteration);
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setFeeThreshold(uint256 newFeeThreshold) external onlyRole(SET_OPTIONS_ROLE) {
-        Setters.setFeeThreshold(s, newFeeThreshold);
-    }
-
-    /* -------------------------------------------------------------------------- */
-    /*                            SET_USDN_PARAMS_ROLE                            */
-    /* -------------------------------------------------------------------------- */
-
-    /// @inheritdoc IUsdnProtocol
-    function setTargetUsdnPrice(uint128 newPrice) external onlyRole(SET_USDN_PARAMS_ROLE) {
-        Setters.setTargetUsdnPrice(s, newPrice);
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setUsdnRebaseThreshold(uint128 newThreshold) external onlyRole(SET_USDN_PARAMS_ROLE) {
-        Setters.setUsdnRebaseThreshold(s, newThreshold);
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setUsdnRebaseInterval(uint256 newInterval) external onlyRole(SET_USDN_PARAMS_ROLE) {
-        Setters.setUsdnRebaseInterval(s, newInterval);
+    fallback() external {
+        _delegate(s._settersContract);
     }
 }

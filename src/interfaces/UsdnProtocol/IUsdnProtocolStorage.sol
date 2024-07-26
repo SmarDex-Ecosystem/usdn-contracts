@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
+import { IAccessControlDefaultAdminRules } from
+    "@openzeppelin/contracts/access/extensions/IAccessControlDefaultAdminRules.sol";
+import { IERC5313 } from "@openzeppelin/contracts/interfaces/IERC5313.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import { HugeUint } from "../../libraries/HugeUint.sol";
@@ -15,7 +18,12 @@ import { IUsdnProtocolEvents } from "./IUsdnProtocolEvents.sol";
  * @title IUsdnProtocolStorage
  * @notice Interface for the storage layer of the USDN protocol
  */
-interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
+interface IUsdnProtocolStorage is
+    IUsdnProtocolEvents,
+    IUsdnProtocolErrors,
+    IAccessControlDefaultAdminRules,
+    IERC5313
+{
     /* -------------------------------------------------------------------------- */
     /*                                  Constants                                 */
     /* -------------------------------------------------------------------------- */
@@ -498,4 +506,10 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * @return The number of long positions
      */
     function getTotalLongPositions() external view returns (uint256);
+
+    /**
+     * @notice Get the address of the contract that handles the setters
+     * @return The address of the setters contract
+     */
+    function getSettersContract() external view returns (address);
 }
