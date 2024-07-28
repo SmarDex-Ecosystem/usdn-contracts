@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
+import { Options, UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import {
     ADMIN,
@@ -141,8 +141,11 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             });
         }
 
-        address proxy = Upgrades.deployUUPSProxy(
-            "Handler.sol:UsdnProtocolHandler",
+        // Options memory opts;
+        // opts.unsafeSkipAllChecks = true;
+        UsdnProtocolHandler test = new UsdnProtocolHandler();
+        address proxy = UnsafeUpgrades.deployUUPSProxy(
+            address(test),
             abi.encodeCall(
                 UsdnProtocolHandler.initializeStorageHandler,
                 (
@@ -157,6 +160,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
                 )
             )
         );
+
         protocol = IUsdnProtocolHandler(proxy);
         UsdnProtocolSetters protocolSetters = new UsdnProtocolSetters();
         protocol.setSettersContract(address(protocolSetters));

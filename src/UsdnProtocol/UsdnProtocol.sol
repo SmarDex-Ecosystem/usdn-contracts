@@ -35,8 +35,9 @@ contract UsdnProtocol is UsdnProtocolLong, UsdnProtocolVault, UsdnProtocolCore, 
         int24 tickSpacing,
         address feeCollector,
         Roles memory roles
-    ) public {
+    ) public initializer {
         __AccessControlDefaultAdminRules_init(0, msg.sender);
+        __initializeReentrancyGuard_init();
         // roles
         _setRoleAdmin(SET_EXTERNAL_ROLE, ADMIN_SET_EXTERNAL_ROLE);
         _setRoleAdmin(CRITICAL_FUNCTIONS_ROLE, ADMIN_CRITICAL_FUNCTIONS_ROLE);

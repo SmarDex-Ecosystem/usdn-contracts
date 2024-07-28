@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
+import { Options, UnsafeUpgrades, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
@@ -32,9 +32,12 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
      * @custom:then The instantiation should revert
      */
     function test_RevertWhen_constructorUSDNNonZeroTotalSupply() public {
+        Options memory opts;
+        opts.unsafeAllow = "external-library-linking";
+        UsdnProtocol test = new UsdnProtocol();
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidUsdn.selector, address(usdn)));
-        Upgrades.deployUUPSProxy(
-            "UsdnProtocol.sol",
+        UnsafeUpgrades.deployUUPSProxy(
+            address(test),
             abi.encodeCall(
                 UsdnProtocol.initializeStorage,
                 (usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(1), roles)
