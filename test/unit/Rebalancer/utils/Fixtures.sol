@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
+import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
@@ -47,6 +47,8 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
         chainlinkGasPriceFeed = new MockChainlinkOnChain();
         liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
 
+        Options memory opts;
+        opts.unsafeAllow = "external-library-linking";
         address proxy = Upgrades.deployUUPSProxy(
             "UsdnProtocol.sol",
             abi.encodeCall(
@@ -67,7 +69,8 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
                         setOptionsAdmin: ADMIN
                     })
                 )
-            )
+            ),
+            opts
         );
         usdnProtocol = IUsdnProtocol(proxy);
         UsdnProtocolSetters protocolSetters = new UsdnProtocolSetters();

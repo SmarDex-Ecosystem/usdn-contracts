@@ -3,6 +3,8 @@ pragma solidity ^0.8.25;
 
 import { Options, UnsafeUpgrades, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
+import { DeployUups } from "../../../../script/DeployUups.s.sol";
+
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
@@ -32,17 +34,19 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
      * @custom:then The instantiation should revert
      */
     function test_RevertWhen_constructorUSDNNonZeroTotalSupply() public {
-        Options memory opts;
-        opts.unsafeAllow = "external-library-linking";
-        UsdnProtocol test = new UsdnProtocol();
+        // Options memory opts;
+        // opts.unsafeAllow = "external-library-linking";
+        // UsdnProtocol test = new UsdnProtocol();
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidUsdn.selector, address(usdn)));
-        UnsafeUpgrades.deployUUPSProxy(
-            address(test),
-            abi.encodeCall(
-                UsdnProtocol.initializeStorage,
-                (usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(1), roles)
-            )
-        );
+        // Upgrades.deployUUPSProxy(
+        //     "UsdnProtocol.sol",
+        //     abi.encodeCall(
+        //         UsdnProtocol.initializeStorage,
+        //         (usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(1), roles)
+        //     ),
+        //     opts
+        // );
+        DeployUups.deployUnsafe(usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(1), roles);
     }
 
     /**
