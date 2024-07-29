@@ -17,7 +17,7 @@ abstract contract FuzzActions is Setup {
         uint256 destRand,
         uint256 validatorRand,
         uint256 priceRand
-    ) public isInitialized {
+    ) public onlyInitialized {
         wsteth.mintAndApprove(msg.sender, amountWstETHRand, address(usdnProtocol), amountWstETHRand);
         sdex.mintAndApprove(msg.sender, amountSdexRand, address(usdnProtocol), amountSdexRand);
         vm.deal(msg.sender, ethRand);
@@ -68,7 +68,7 @@ abstract contract FuzzActions is Setup {
         uint256 destRand,
         uint256 validatorRand,
         uint256 priceRand
-    ) public isInitialized {
+    ) public onlyInitialized {
         wsteth.mintAndApprove(msg.sender, amountRand, address(usdnProtocol), amountRand);
         uint256 destRandBounded = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
         vm.deal(msg.sender, ethRand);
@@ -124,7 +124,7 @@ abstract contract FuzzActions is Setup {
         uint256 priceRand,
         uint256 amountToClose,
         uint256 posIdsIndexRand
-    ) public isInitialized {
+    ) public onlyInitialized {
         vm.deal(msg.sender, ethRand);
         destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
         address dest = destinationsToken[address(wsteth)][destRand];
@@ -177,7 +177,7 @@ abstract contract FuzzActions is Setup {
         uint256 destRand,
         uint256 validatorRand,
         uint256 priceRand
-    ) public isInitialized {
+    ) public onlyInitialized {
         vm.prank(msg.sender);
         usdn.approve(address(usdnProtocol), usdnShares);
         vm.deal(msg.sender, ethRand);
@@ -218,7 +218,7 @@ abstract contract FuzzActions is Setup {
         }
     }
 
-    function validateDeposit(uint256 validatorRand, uint256 priceRand) public isInitialized {
+    function validateDeposit(uint256 validatorRand, uint256 priceRand) public onlyInitialized {
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
         uint256 priceData = bound(priceRand, 0, type(uint128).max);
@@ -269,7 +269,7 @@ abstract contract FuzzActions is Setup {
         }
     }
 
-    function validateWithdrawal(uint256 validatorRand, uint256 priceRand) public isInitialized {
+    function validateWithdrawal(uint256 validatorRand, uint256 priceRand) public onlyInitialized {
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
         uint256 priceData = bound(priceRand, 0, type(uint128).max);
@@ -311,7 +311,7 @@ abstract contract FuzzActions is Setup {
         }
     }
 
-    function validateOpenPosition(uint256 validatorRand, uint256 priceRand) public isInitialized {
+    function validateOpenPosition(uint256 validatorRand, uint256 priceRand) public onlyInitialized {
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
         uint256 priceData = bound(priceRand, 0, type(uint128).max);
@@ -350,7 +350,7 @@ abstract contract FuzzActions is Setup {
         }
     }
 
-    function validatePendingActions(uint256 maxValidations, uint256 priceRand) public isInitialized {
+    function validatePendingActions(uint256 maxValidations, uint256 priceRand) public onlyInitialized {
         uint256 balanceBefore = address(msg.sender).balance;
         uint256 balanceBeforeProtocol = address(usdnProtocol).balance;
         priceRand = bound(priceRand, 0, type(uint128).max);
@@ -383,7 +383,7 @@ abstract contract FuzzActions is Setup {
         uint256 destRand,
         uint256 validatorRand,
         uint256 priceRand
-    ) public isInitialized {
+    ) public onlyInitialized {
         initiateDeposit(amountWstETHRand, amountSdexRand, ethRand, destRand, validatorRand, priceRand);
         skip(usdnProtocol.getValidationDeadline() + 1);
         validateDeposit(validatorRand, priceRand);
@@ -395,7 +395,7 @@ abstract contract FuzzActions is Setup {
         uint256 destRand,
         uint256 validatorRand,
         uint256 priceRand
-    ) public isInitialized {
+    ) public onlyInitialized {
         initiateWithdrawal(usdnShares, ethRand, destRand, validatorRand, priceRand);
         skip(usdnProtocol.getValidationDeadline() + 1);
         validateWithdrawal(validatorRand, priceRand);
@@ -408,7 +408,7 @@ abstract contract FuzzActions is Setup {
         uint256 destRand,
         uint256 validatorRand,
         uint256 priceRand
-    ) public isInitialized {
+    ) public onlyInitialized {
         initiateOpenPosition(amountRand, liquidationPriceRand, ethRand, destRand, validatorRand, priceRand);
         skip(usdnProtocol.getValidationDeadline() + 1);
         validateOpenPosition(validatorRand, priceRand);
@@ -417,7 +417,7 @@ abstract contract FuzzActions is Setup {
     function getPreviousActionsData(address user, uint256 currentPrice)
         public
         view
-        isInitialized
+        onlyInitialized
         returns (
             IUsdnProtocolTypes.PreviousActionsData memory previousActionsData_,
             uint256 securityDeposit_,
@@ -443,7 +443,7 @@ abstract contract FuzzActions is Setup {
     function getTokenFromPendingAction(IUsdnProtocolTypes.PendingAction memory action, uint256 price)
         public
         view
-        isInitialized
+        onlyInitialized
         returns (int256 usdn_, uint256 wsteth_)
     {
         if (action.action == IUsdnProtocolTypes.ProtocolAction.ValidateDeposit) {

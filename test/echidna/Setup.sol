@@ -121,7 +121,11 @@ contract Setup is ErrorsChecked {
         });
     }
 
-    modifier isInitialized() {
+    modifier onlyInitialized() {
         if (initialized) _;
+    }
+
+    modifier onlyUninitialized() {
+        if (!initialized) _;
     }
 }

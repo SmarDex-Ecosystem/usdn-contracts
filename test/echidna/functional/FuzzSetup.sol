@@ -25,7 +25,7 @@ abstract contract FuzzSetup is Setup {
         uint256 longAmountRand,
         uint256 priceRand,
         uint256 desiredLiqPriceRand
-    ) external {
+    ) external onlyUninitialized {
         vm.prank(msg.sender);
         Sdex sdex = new Sdex();
         vm.prank(msg.sender);
