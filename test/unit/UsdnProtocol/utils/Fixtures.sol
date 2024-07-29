@@ -160,10 +160,10 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
                 )
             )
         );
-
         protocol = IUsdnProtocolHandler(proxy);
         UsdnProtocolSetters protocolSetters = new UsdnProtocolSetters();
         protocol.setSettersContract(address(protocolSetters));
+
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);

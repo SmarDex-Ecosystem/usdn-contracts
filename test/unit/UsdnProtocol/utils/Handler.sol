@@ -81,7 +81,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
      * update. Call `_waitBeforeLiquidation()` before calling this function to make sure enough time has passed.
      * Do not use this function in contexts where ether needs to be refunded.
      */
-    function testLiquidate(bytes calldata currentPriceData, uint16 iterations)
+    function mockLiquidate(bytes calldata currentPriceData, uint16 iterations)
         external
         payable
         returns (uint256 liquidatedPositions_)

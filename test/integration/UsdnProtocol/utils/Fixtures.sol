@@ -3,7 +3,7 @@ pragma solidity ^0.8.25;
 
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
-import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
+import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import { MOCK_PYTH_DATA } from "../../../unit/Middlewares/utils/Constants.sol";
 import { MockChainlinkOnChain } from "../../../unit/Middlewares/utils/MockChainlinkOnChain.sol";
@@ -162,8 +162,9 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             });
         }
 
-        address proxy = Upgrades.deployUUPSProxy(
-            "UsdnProtocolHandler.sol",
+        UsdnProtocolHandler test = new UsdnProtocolHandler();
+        address proxy = UnsafeUpgrades.deployUUPSProxy(
+            address(test),
             abi.encodeCall(
                 UsdnProtocolHandler.initializeStorageHandler,
                 (

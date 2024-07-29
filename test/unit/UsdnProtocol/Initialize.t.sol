@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
+import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import { ADMIN, DEPLOYER } from "../../utils/Constants.sol";
 import { IUsdnProtocolHandler } from "../../utils/IUsdnProtocolHandler.sol";
@@ -25,8 +25,9 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         vm.startPrank(ADMIN);
         usdn = new Usdn(address(0), address(0));
 
-        address proxy = Upgrades.deployUUPSProxy(
-            "UsdnProtocolHandler.sol",
+        UsdnProtocolHandler test = new UsdnProtocolHandler();
+        address proxy = UnsafeUpgrades.deployUUPSProxy(
+            address(test),
             abi.encodeCall(
                 UsdnProtocolHandler.initializeStorageHandler,
                 (
