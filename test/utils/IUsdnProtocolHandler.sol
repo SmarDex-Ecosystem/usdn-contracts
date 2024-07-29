@@ -5,7 +5,7 @@ import { UsdnProtocolActionsVaultLibrary as ActionsVault } from
     "../../src/UsdnProtocol/libraries/UsdnProtocolActionsVaultLibrary.sol";
 import { PriceInfo } from "../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocol } from "../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import { IUsdnProtocol } from "../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IUsdnProtocolWithFallback } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolWithFallback.sol";
 import { HugeUint } from "../../src/libraries/HugeUint.sol";
 import { UsdnProtocolHandler } from "../unit/UsdnProtocol/utils/Handler.sol";
 
@@ -13,7 +13,7 @@ import { UsdnProtocolHandler } from "../unit/UsdnProtocol/utils/Handler.sol";
  * @title IUsdnProtocolHandler
  * @notice Interface for the USDN protocol handler
  */
-interface IUsdnProtocolHandler is IUsdnProtocol {
+interface IUsdnProtocolHandler is IUsdnProtocol, IUsdnProtocolWithFallback {
     function resetEMA() external;
 
     function queuePushFront(PendingAction memory action) external returns (uint128 rawIndex_);

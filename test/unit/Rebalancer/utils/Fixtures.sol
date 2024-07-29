@@ -18,8 +18,8 @@ import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolF
 import { IRebalancerErrors } from "../../../../src/interfaces/Rebalancer/IRebalancerErrors.sol";
 import { IRebalancerEvents } from "../../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
 import { IRebalancerTypes } from "../../../../src/interfaces/Rebalancer/IRebalancerTypes.sol";
-import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolWithFallback } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolWithFallback.sol";
 
 /**
  * @title RebalancerFixture
@@ -33,7 +33,7 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
     MockChainlinkOnChain public chainlinkGasPriceFeed;
     LiquidationRewardsManager public liquidationRewardsManager;
     RebalancerHandler public rebalancer;
-    IUsdnProtocol public usdnProtocol;
+    IUsdnProtocolWithFallback public usdnProtocol;
 
     Types.PreviousActionsData internal EMPTY_PREVIOUS_DATA =
         Types.PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
@@ -72,7 +72,7 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
                 )
             )
         );
-        usdnProtocol = IUsdnProtocol(proxy);
+        usdnProtocol = IUsdnProtocolWithFallback(proxy);
 
         rebalancer = new RebalancerHandler(usdnProtocol);
 

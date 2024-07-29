@@ -17,8 +17,8 @@ import { Usdn } from "../src/Usdn/Usdn.sol";
 import { UsdnProtocol } from "../src/UsdnProtocol/UsdnProtocol.sol";
 import { UsdnProtocolFallback } from "../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { IWstETH } from "../src/interfaces/IWstETH.sol";
-import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolWithFallback } from "../src/interfaces/UsdnProtocol/IUsdnProtocolWithFallback.sol";
 
 contract Deploy is Script {
     /**
@@ -89,7 +89,7 @@ contract Deploy is Script {
         Rebalancer_ = _deployRebalancer(address(UsdnProtocol_));
 
         // set the rebalancer on the USDN protocol
-        IUsdnProtocol(address(UsdnProtocol_)).setRebalancer(Rebalancer_);
+        IUsdnProtocolWithFallback(address(UsdnProtocol_)).setRebalancer(Rebalancer_);
 
         // grant USDN minter and rebaser roles to protocol
         Usdn_.grantRole(Usdn_.MINTER_ROLE(), address(UsdnProtocol_));
@@ -102,7 +102,11 @@ contract Deploy is Script {
 
         if (depositAmount > 0 && longAmount > 0) {
             _initializeUsdnProtocol(
-                isProdEnv, IUsdnProtocol(address(UsdnProtocol_)), WstEthOracleMiddleware_, depositAmount, longAmount
+                isProdEnv,
+                IUsdnProtocolWithFallback(address(UsdnProtocol_)),
+                WstEthOracleMiddleware_,
+                depositAmount,
+                longAmount
             );
         }
 
@@ -250,7 +254,7 @@ contract Deploy is Script {
         if (rebalancerAddress != address(0)) {
             rebalancer_ = Rebalancer(rebalancerAddress);
         } else {
-            rebalancer_ = new Rebalancer(IUsdnProtocol(usdnProtocol));
+            rebalancer_ = new Rebalancer(IUsdnProtocolWithFallback(usdnProtocol));
         }
     }
 
@@ -264,7 +268,7 @@ contract Deploy is Script {
      */
     function _initializeUsdnProtocol(
         bool isProdEnv,
-        IUsdnProtocol UsdnProtocol_,
+        IUsdnProtocolWithFallback UsdnProtocol_,
         WstEthOracleMiddleware WstEthOracleMiddleware_,
         uint256 depositAmount,
         uint256 longAmount

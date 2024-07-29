@@ -8,6 +8,7 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 import { IBaseLiquidationRewardsManager } from "../interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
+import { IUsdnProtocol } from "../interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolFallback } from "../interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
 import { UsdnProtocolActions } from "./UsdnProtocolActions.sol";
 import { UsdnProtocolCore } from "./UsdnProtocolCore.sol";
@@ -15,20 +16,8 @@ import { UsdnProtocolLong } from "./UsdnProtocolLong.sol";
 import { UsdnProtocolVault } from "./UsdnProtocolVault.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./libraries/UsdnProtocolConstantsLibrary.sol";
 
-contract UsdnProtocol is UsdnProtocolLong, UsdnProtocolVault, UsdnProtocolCore, UsdnProtocolActions {
-    /**
-     * @notice Function to initialize the protocol storage
-     * @dev This function should be called on deployment when creating the proxy
-     * It can only be called once
-     * @param usdn The USDN ERC20 contract
-     * @param sdex The SDEX ERC20 contract
-     * @param asset The asset ERC20 contract (wstETH)
-     * @param oracleMiddleware The oracle middleware contract
-     * @param liquidationRewardsManager The liquidation rewards manager contract
-     * @param tickSpacing The positions tick spacing
-     * @param feeCollector The address of the fee collector
-     * @param roles The protocol roles
-     */
+contract UsdnProtocol is IUsdnProtocol, UsdnProtocolLong, UsdnProtocolVault, UsdnProtocolCore, UsdnProtocolActions {
+    /// @inheritdoc IUsdnProtocol
     function initializeStorage(
         IUsdn usdn,
         IERC20Metadata sdex,

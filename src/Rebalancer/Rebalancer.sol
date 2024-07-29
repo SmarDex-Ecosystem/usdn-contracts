@@ -16,6 +16,7 @@ import { IRebalancer } from "../interfaces/Rebalancer/IRebalancer.sol";
 import { IOwnershipCallback } from "../interfaces/UsdnProtocol/IOwnershipCallback.sol";
 import { IUsdnProtocol } from "../interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolWithFallback } from "../interfaces/UsdnProtocol/IUsdnProtocolWithFallback.sol";
 
 /**
  * @title Rebalancer
@@ -81,7 +82,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     uint256 internal immutable _assetDecimals;
 
     /// @notice The address of the USDN protocol
-    IUsdnProtocol internal immutable _usdnProtocol;
+    IUsdnProtocolWithFallback internal immutable _usdnProtocol;
 
     /* -------------------------------------------------------------------------- */
     /*                                 Parameters                                 */
@@ -127,7 +128,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     mapping(uint256 => PositionData) internal _positionData;
 
     /// @param usdnProtocol The address of the USDN protocol
-    constructor(IUsdnProtocol usdnProtocol) Ownable(msg.sender) {
+    constructor(IUsdnProtocolWithFallback usdnProtocol) Ownable(msg.sender) {
         _usdnProtocol = usdnProtocol;
         IERC20Metadata asset = usdnProtocol.getAsset();
         _asset = asset;
