@@ -419,11 +419,6 @@ contract FuzzActions is Setup {
                 if (msg.sender != to) {
                     assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth);
                 }
-                if (wstethPendingActions > 0) {
-                    assert(
-                        wsteth.balanceOf(address(usdnProtocol)) == balancesBefore.protocolWsteth - wstethPendingActions
-                    );
-                }
             } else {
                 assert(msg.sender.balance == balancesBefore.senderEth);
                 assert(address(usdnProtocol).balance == balancesBefore.protocolEth);
@@ -433,6 +428,11 @@ contract FuzzActions is Setup {
                 assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth);
                 assert(wsteth.balanceOf(to) == balancesBefore.toWsteth);
                 assert(wsteth.balanceOf(validator) == balancesBefore.validatorWsteth);
+                if (wstethPendingActions > 0) {
+                    assert(
+                        wsteth.balanceOf(address(usdnProtocol)) == balancesBefore.protocolWsteth - wstethPendingActions
+                    );
+                }
             }
         } catch (bytes memory err) {
             _checkErrors(err, VALIDATE_WITHDRAWAL_ERRORS);
