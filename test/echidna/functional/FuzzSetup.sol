@@ -1,25 +1,25 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { console2 } from "forge-std/Test.sol";
-
-import { Usdn } from "../../../src/Usdn/Usdn.sol";
 import { UsdnProtocolHandler } from "../../unit/UsdnProtocol/utils/Handler.sol";
 import { MockOracleMiddleware } from "../../unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
 import { Sdex } from "../../utils/Sdex.sol";
 import { Weth } from "../../utils/WETH.sol";
 import { WstETH } from "../../utils/WstEth.sol";
-import { MockLiquidationRewardsManager } from "../mock/MockLiquidationRewardsManager.sol";
 
 import { Setup } from "../Setup.sol";
+import { MockLiquidationRewardsManager } from "../mock/MockLiquidationRewardsManager.sol";
 
 import { Rebalancer } from "../../../src/Rebalancer/Rebalancer.sol";
+
+import { Usdn } from "../../../src/Usdn/Usdn.sol";
 import { IWstETH } from "../../../src/interfaces/IWstETH.sol";
 
-contract FuzzSetup is Setup {
+abstract contract FuzzSetup is Setup {
     /* -------------------------------------------------------------------------- */
     /*                             USDN Protocol                                  */
     /* -------------------------------------------------------------------------- */
+
     function initializeUsdn(
         uint256 depositAmountRand,
         uint256 longAmountRand,
@@ -33,6 +33,7 @@ contract FuzzSetup is Setup {
         vm.prank(msg.sender);
         wstEthOracleMiddleware = new MockOracleMiddleware();
         vm.prank(msg.sender);
+        // todo: see if we want to fuse chainlinkElapsedTimeLimit
         liquidationRewardsManager = new MockLiquidationRewardsManager(IWstETH(wsteth), uint256(2 hours + 5 minutes));
         vm.prank(msg.sender);
         usdn = new Usdn(address(0), address(0));
@@ -62,9 +63,9 @@ contract FuzzSetup is Setup {
         try usdnProtocol.initialize(
             uint128(depositAmountRand), uint128(longAmountRand), uint128(desiredLiqPriceRand), abi.encode(priceRand)
         ) {
-            uint256 usdnNoFees = depositAmountRand * priceRand / 10 ** 18;
+            uint256 usdnNoFees = depositAmountRand * priceRand / 10 ** 18; // todo: add fees
             assert(address(usdnProtocol).balance == 0);
-            assert(usdn.balanceOf(msg.sender) >= usdnNoFees - usdnNoFees / 10 ** 20);
+            assert(usdn.balanceOf(msg.sender) >= usdnNoFees - usdnNoFees / 10 ** 20); // imperfect estimation
             assert(wsteth.balanceOf(address(usdnProtocol)) == depositAmountRand + longAmountRand);
         } catch (bytes memory err) {
             _checkErrors(err, VALIDATE_OPEN_ERRORS);

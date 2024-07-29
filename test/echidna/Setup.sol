@@ -38,6 +38,8 @@ contract Setup is ErrorsChecked {
     UsdnProtocolHandler public usdnProtocol;
     Rebalancer public rebalancer;
 
+    bool initialized;
+
     struct BalancesSnapshot {
         uint256 validatorEth;
         uint256 validatorWsteth;
@@ -54,49 +56,51 @@ contract Setup is ErrorsChecked {
         uint256 toWsteth;
     }
 
-    constructor() payable {
+    constructor(bool isFuzzed) payable {
         vm.warp(1_709_251_200);
-        //TODO see to fuzz these data
+
         uint256 INIT_DEPOSIT_AMOUNT = 300 ether;
         uint256 INIT_LONG_AMOUNT = 300 ether;
         uint128 INITIAL_PRICE = 2000 ether; // 2000 USDN = 1 ETH
-
         uint256 ethAmount = (INIT_DEPOSIT_AMOUNT + INIT_LONG_AMOUNT) * wsteth.stEthPerToken() / 1 ether;
         vm.deal(address(this), ethAmount);
+
         (bool result,) = address(wsteth).call{ value: ethAmount }("");
         require(result, "WstETH mint failed");
 
         wstEthOracleMiddleware = new MockOracleMiddleware();
-
-        liquidationRewardsManager = new MockLiquidationRewardsManager(IWstETH(wsteth), uint256(2 hours + 5 minutes));
-
-        usdn = new Usdn(address(0), address(0));
-
-        usdnProtocol = new UsdnProtocolHandler(
-            usdn, sdex, wsteth, wstEthOracleMiddleware, liquidationRewardsManager, 100, FEE_COLLECTOR
-        );
-
-        rebalancer = new Rebalancer(usdnProtocol);
-
-        usdnProtocol.setRebalancer(rebalancer);
-
-        usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
-        usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));
-        wsteth.approve(address(usdnProtocol), INIT_DEPOSIT_AMOUNT + INIT_LONG_AMOUNT);
-
-        uint256 _desiredLiqPrice = wstEthOracleMiddleware.parseAndValidatePrice(
-            "", uint128(block.timestamp), IUsdnProtocolTypes.ProtocolAction.Initialize, abi.encode(INITIAL_PRICE)
-        ).price / 2;
-
-        // leverage approx 2x
-        usdnProtocol.initialize(
-            uint128(INIT_DEPOSIT_AMOUNT),
-            uint128(INIT_LONG_AMOUNT),
-            uint128(_desiredLiqPrice),
-            abi.encode(INITIAL_PRICE)
-        );
-
         destinationsToken[address(wsteth)] = [DEPLOYER, ATTACKER];
+
+        if (!isFuzzed) {
+            initialized = true;
+            liquidationRewardsManager = new MockLiquidationRewardsManager(IWstETH(wsteth), uint256(2 hours + 5 minutes));
+
+            usdn = new Usdn(address(0), address(0));
+
+            usdnProtocol = new UsdnProtocolHandler(
+                usdn, sdex, wsteth, wstEthOracleMiddleware, liquidationRewardsManager, 100, FEE_COLLECTOR
+            );
+
+            rebalancer = new Rebalancer(usdnProtocol);
+
+            usdnProtocol.setRebalancer(rebalancer);
+
+            usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
+            usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));
+            wsteth.approve(address(usdnProtocol), INIT_DEPOSIT_AMOUNT + INIT_LONG_AMOUNT);
+
+            uint256 _desiredLiqPrice = wstEthOracleMiddleware.parseAndValidatePrice(
+                "", uint128(block.timestamp), IUsdnProtocolTypes.ProtocolAction.Initialize, abi.encode(INITIAL_PRICE)
+            ).price / 2;
+
+            // leverage approx 2x
+            usdnProtocol.initialize(
+                uint128(INIT_DEPOSIT_AMOUNT),
+                uint128(INIT_LONG_AMOUNT),
+                uint128(_desiredLiqPrice),
+                abi.encode(INITIAL_PRICE)
+            );
+        }
     }
 
     function getBalances(address validator, address to) internal view returns (BalancesSnapshot memory) {
@@ -115,5 +119,9 @@ contract Setup is ErrorsChecked {
             toUsdnShares: usdn.sharesOf(to),
             toWsteth: wsteth.balanceOf(to)
         });
+    }
+
+    modifier isInitialized() {
+        if (initialized) _;
     }
 }
