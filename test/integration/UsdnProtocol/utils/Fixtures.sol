@@ -162,10 +162,10 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             });
         }
 
-        UsdnProtocolHandler test = new UsdnProtocolHandler();
+        UsdnProtocolHandler implementation = new UsdnProtocolHandler();
         UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
         address proxy = UnsafeUpgrades.deployUUPSProxy(
-            address(test),
+            address(implementation),
             abi.encodeCall(
                 UsdnProtocolHandler.initializeStorageHandler,
                 (

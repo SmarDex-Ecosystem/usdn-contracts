@@ -11,7 +11,6 @@ import { IBaseLiquidationRewardsManager } from "../OracleMiddleware/IBaseLiquida
 import { IBaseOracleMiddleware } from "../OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IBaseRebalancer } from "../Rebalancer/IBaseRebalancer.sol";
 import { IUsdn } from "../Usdn/IUsdn.sol";
-import { IUsdnProtocolFallback } from "./IUsdnProtocolFallback.sol";
 
 interface IUsdnProtocolTypes {
     /**

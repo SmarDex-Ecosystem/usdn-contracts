@@ -4,13 +4,7 @@ pragma solidity >=0.8.0;
 import { IAccessControlDefaultAdminRules } from
     "@openzeppelin/contracts/access/extensions/IAccessControlDefaultAdminRules.sol";
 import { IERC5313 } from "@openzeppelin/contracts/interfaces/IERC5313.sol";
-import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import { HugeUint } from "../../libraries/HugeUint.sol";
-import { IBaseLiquidationRewardsManager } from "../OracleMiddleware/IBaseLiquidationRewardsManager.sol";
-import { IBaseOracleMiddleware } from "../OracleMiddleware/IBaseOracleMiddleware.sol";
-import { IBaseRebalancer } from "../Rebalancer/IBaseRebalancer.sol";
-import { IUsdn } from "../Usdn/IUsdn.sol";
 import { IUsdnProtocolErrors } from "./IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "./IUsdnProtocolEvents.sol";
 
