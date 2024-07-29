@@ -72,22 +72,25 @@ contract Setup is ErrorsChecked {
         wstEthOracleMiddleware = new MockOracleMiddleware();
         destinationsToken[address(wsteth)] = [DEPLOYER, ATTACKER];
 
+        // todo: see if we want to fuse chainlinkElapsedTimeLimit
+        liquidationRewardsManager = new MockLiquidationRewardsManager(IWstETH(wsteth), uint256(2 hours + 5 minutes));
+
+        usdn = new Usdn(address(0), address(0));
+
+        usdnProtocol = new UsdnProtocolHandler(
+            usdn, sdex, wsteth, wstEthOracleMiddleware, liquidationRewardsManager, 100, FEE_COLLECTOR
+        );
+
+        rebalancer = new Rebalancer(usdnProtocol);
+
+        usdnProtocol.setRebalancer(rebalancer);
+
+        usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
+        usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));
+
         if (!IS_FUZZED) {
             initialized = true;
-            liquidationRewardsManager = new MockLiquidationRewardsManager(IWstETH(wsteth), uint256(2 hours + 5 minutes));
 
-            usdn = new Usdn(address(0), address(0));
-
-            usdnProtocol = new UsdnProtocolHandler(
-                usdn, sdex, wsteth, wstEthOracleMiddleware, liquidationRewardsManager, 100, FEE_COLLECTOR
-            );
-
-            rebalancer = new Rebalancer(usdnProtocol);
-
-            usdnProtocol.setRebalancer(rebalancer);
-
-            usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
-            usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));
             wsteth.approve(address(usdnProtocol), INIT_DEPOSIT_AMOUNT + INIT_LONG_AMOUNT);
 
             uint256 _desiredLiqPrice = wstEthOracleMiddleware.parseAndValidatePrice(
