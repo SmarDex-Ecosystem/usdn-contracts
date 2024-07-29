@@ -39,6 +39,7 @@ contract Setup is ErrorsChecked {
     Rebalancer public rebalancer;
 
     bool initialized;
+    bool constant IS_FUZZED = false;
 
     struct BalancesSnapshot {
         uint256 validatorEth;
@@ -56,7 +57,7 @@ contract Setup is ErrorsChecked {
         uint256 toWsteth;
     }
 
-    constructor(bool isFuzzed) payable {
+    constructor() payable {
         vm.warp(1_709_251_200);
 
         uint256 INIT_DEPOSIT_AMOUNT = 300 ether;
@@ -71,7 +72,7 @@ contract Setup is ErrorsChecked {
         wstEthOracleMiddleware = new MockOracleMiddleware();
         destinationsToken[address(wsteth)] = [DEPLOYER, ATTACKER];
 
-        if (!isFuzzed) {
+        if (!IS_FUZZED) {
             initialized = true;
             liquidationRewardsManager = new MockLiquidationRewardsManager(IWstETH(wsteth), uint256(2 hours + 5 minutes));
 

@@ -30,7 +30,7 @@ contract FuzzingSuiteTest is Test {
     uint152 internal usdnShares = 100_000 ether;
 
     function setUp() public {
-        echidna = new FuzzingSuite(false);
+        echidna = new FuzzingSuite();
         DEPLOYER = echidna.DEPLOYER();
         ATTACKER = echidna.ATTACKER();
 
