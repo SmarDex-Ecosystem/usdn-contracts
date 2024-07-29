@@ -36,6 +36,7 @@ interface IUsdnProtocol is
      * @param tickSpacing The positions tick spacing
      * @param feeCollector The address of the fee collector
      * @param roles The protocol roles
+     * @param protocolFallback The protocol fallback contract
      */
     function initializeStorage(
         IUsdn usdn,
