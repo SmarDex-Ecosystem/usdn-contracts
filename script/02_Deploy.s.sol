@@ -100,7 +100,9 @@ contract Deploy is Script {
         WstETH_.approve(address(UsdnProtocol_), depositAmount + longAmount);
 
         if (depositAmount > 0 && longAmount > 0) {
-            _initializeUsdnProtocol(isProdEnv, UsdnProtocol_, WstEthOracleMiddleware_, depositAmount, longAmount);
+            _initializeUsdnProtocol(
+                isProdEnv, IUsdnProtocol(address(UsdnProtocol_)), WstEthOracleMiddleware_, depositAmount, longAmount
+            );
         }
 
         vm.stopBroadcast();
@@ -261,7 +263,7 @@ contract Deploy is Script {
      */
     function _initializeUsdnProtocol(
         bool isProdEnv,
-        UsdnProtocol UsdnProtocol_,
+        IUsdnProtocol UsdnProtocol_,
         WstEthOracleMiddleware WstEthOracleMiddleware_,
         uint256 depositAmount,
         uint256 longAmount

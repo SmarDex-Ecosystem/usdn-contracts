@@ -30,10 +30,6 @@ abstract contract InitializableReentrancyGuard {
     /// @dev Contract was already initialized
     error InitializableReentrancyGuardInvalidInitialization();
 
-    // constructor() {
-    //     _status = UNINITIALIZED;
-    // }
-
     function __initializeReentrancyGuard_init() internal {
         _status = UNINITIALIZED;
     }
