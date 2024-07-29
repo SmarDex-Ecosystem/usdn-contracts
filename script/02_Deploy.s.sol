@@ -29,7 +29,7 @@ contract Deploy is Script {
      * @return LiquidationRewardsManager_ The liquidation rewards manager
      * @return Rebalancer_ The rebalancer
      * @return Usdn_ The USDN token
-     * @return UsdnProtocol_ The USDN protocol
+     * @return UsdnProtocol_ The USDN protocol with fallback
      */
     function run()
         external
@@ -40,7 +40,7 @@ contract Deploy is Script {
             LiquidationRewardsManager LiquidationRewardsManager_,
             Rebalancer Rebalancer_,
             Usdn Usdn_,
-            UsdnProtocol UsdnProtocol_
+            IUsdnProtocolWithFallback UsdnProtocol_
         )
     {
         bool isProdEnv = block.chainid != vm.envOr("FORK_CHAIN_ID", uint256(31_337));
@@ -83,13 +83,13 @@ contract Deploy is Script {
                 )
             )
         );
-        UsdnProtocol_ = UsdnProtocol(proxy);
+        UsdnProtocol_ = IUsdnProtocolWithFallback(proxy);
 
         // deploy the rebalancer
-        Rebalancer_ = _deployRebalancer(address(UsdnProtocol_));
+        Rebalancer_ = _deployRebalancer(UsdnProtocol_);
 
         // set the rebalancer on the USDN protocol
-        IUsdnProtocolWithFallback(address(UsdnProtocol_)).setRebalancer(Rebalancer_);
+        UsdnProtocol_.setRebalancer(Rebalancer_);
 
         // grant USDN minter and rebaser roles to protocol
         Usdn_.grantRole(Usdn_.MINTER_ROLE(), address(UsdnProtocol_));
@@ -101,13 +101,7 @@ contract Deploy is Script {
         WstETH_.approve(address(UsdnProtocol_), depositAmount + longAmount);
 
         if (depositAmount > 0 && longAmount > 0) {
-            _initializeUsdnProtocol(
-                isProdEnv,
-                IUsdnProtocolWithFallback(address(UsdnProtocol_)),
-                WstEthOracleMiddleware_,
-                depositAmount,
-                longAmount
-            );
+            _initializeUsdnProtocol(isProdEnv, UsdnProtocol_, WstEthOracleMiddleware_, depositAmount, longAmount);
         }
 
         vm.stopBroadcast();
@@ -249,12 +243,12 @@ contract Deploy is Script {
      * @param usdnProtocol The USDN protocol
      * @return rebalancer_ The deployed contract
      */
-    function _deployRebalancer(address usdnProtocol) internal returns (Rebalancer rebalancer_) {
+    function _deployRebalancer(IUsdnProtocolWithFallback usdnProtocol) internal returns (Rebalancer rebalancer_) {
         address payable rebalancerAddress = payable(vm.envOr("REBALANCER_ADDRESS", address(0)));
         if (rebalancerAddress != address(0)) {
             rebalancer_ = Rebalancer(rebalancerAddress);
         } else {
-            rebalancer_ = new Rebalancer(IUsdnProtocolWithFallback(usdnProtocol));
+            rebalancer_ = new Rebalancer(usdnProtocol);
         }
     }
 
