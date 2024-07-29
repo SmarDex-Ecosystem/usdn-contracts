@@ -8,6 +8,7 @@ import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { UsdnProtocol } from "../../../../src/UsdnProtocol/UsdnProtocol.sol";
+import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { IBaseLiquidationRewardsManager } from
     "../../../../src/interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../../../../src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
@@ -18,6 +19,9 @@ import { IUsdn } from "../../../../src/interfaces/Usdn/IUsdn.sol";
  * @custom:background Given a protocol instance that was initialized with default params
  */
 contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
+    UsdnProtocol implementation;
+    UsdnProtocolFallback protocolFallback;
+
     Roles roles = Roles({
         setExternalAdmin: address(0),
         criticalFunctionsAdmin: address(0),
@@ -25,11 +29,11 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
         setUsdnParamsAdmin: address(0),
         setOptionsAdmin: address(0)
     });
-    UsdnProtocol implementation;
 
     function setUp() public {
         _setUp(DEFAULT_PARAMS);
         implementation = new UsdnProtocol();
+        protocolFallback = new UsdnProtocolFallback();
     }
 
     /**
@@ -116,7 +120,17 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
             address(implementation),
             abi.encodeCall(
                 UsdnProtocol.initializeStorage,
-                (usdn, sdex, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector, role)
+                (
+                    usdn,
+                    sdex,
+                    asset,
+                    oracleMiddleware,
+                    liquidationRewardsManager,
+                    tickSpacing,
+                    feeCollector,
+                    role,
+                    protocolFallback
+                )
             )
         );
     }

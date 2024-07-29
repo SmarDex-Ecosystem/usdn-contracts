@@ -144,6 +144,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         // Options memory opts;
         // opts.unsafeSkipAllChecks = true;
         UsdnProtocolHandler test = new UsdnProtocolHandler();
+        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
         address proxy = UnsafeUpgrades.deployUUPSProxy(
             address(test),
             abi.encodeCall(
@@ -156,13 +157,12 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
                     liquidationRewardsManager,
                     _tickSpacing,
                     address(feeCollector),
-                    roles
+                    roles,
+                    protocolFallback
                 )
             )
         );
         protocol = IUsdnProtocolHandler(proxy);
-        UsdnProtocolFallback protocolSetters = new UsdnProtocolFallback();
-        protocol.setSettersContract(address(protocolSetters));
 
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));

@@ -415,8 +415,8 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getSettersContract() external view returns (address) {
-        return s._settersContract;
+    function getFallbackAddress() external view returns (address) {
+        return s._protocolFallbackAddr;
     }
 
     /* -------------------------------------------------------------------------- */

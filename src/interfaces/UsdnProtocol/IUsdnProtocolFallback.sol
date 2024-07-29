@@ -505,7 +505,7 @@ interface IUsdnProtocolFallback {
      * @notice Get the address of the contract that handles the setters
      * @return The address of the setters contract
      */
-    function getSettersContract() external view returns (address);
+    function getFallbackAddress() external view returns (address);
 
     /**
      * @notice Replace the OracleMiddleware contract with a new implementation

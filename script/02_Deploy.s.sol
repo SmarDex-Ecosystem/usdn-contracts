@@ -15,7 +15,7 @@ import { MockWstEthOracleMiddleware } from "../src/OracleMiddleware/mock/MockWst
 import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../src/Usdn/Usdn.sol";
 import { UsdnProtocol } from "../src/UsdnProtocol/UsdnProtocol.sol";
-import { UsdnProtocolSetters } from "../src/UsdnProtocol/UsdnProtocolSetters.sol";
+import { UsdnProtocolFallback } from "../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { IWstETH } from "../src/interfaces/IWstETH.sol";
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -57,6 +57,8 @@ contract Deploy is Script {
         Usdn_ = _deployUsdn(isProdEnv);
         Sdex_ = _deploySdex();
 
+        // deploy the protocol fallback
+        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
         // deploy the protocol with tick spacing 100 = 1%
         address proxy = Upgrades.deployUUPSProxy(
             "UsdnProtocol.sol",
@@ -76,13 +78,12 @@ contract Deploy is Script {
                         setProtocolParamsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
                         setUsdnParamsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
                         setOptionsAdmin: vm.envAddress("DEPLOYER_ADDRESS")
-                    })
+                    }),
+                    protocolFallback
                 )
             )
         );
         UsdnProtocol_ = UsdnProtocol(proxy);
-        UsdnProtocolSetters protocolSetters = new UsdnProtocolSetters();
-        UsdnProtocol_.setSettersContract(address(protocolSetters));
 
         // deploy the rebalancer
         Rebalancer_ = _deployRebalancer(address(UsdnProtocol_));

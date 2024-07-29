@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
+import { Options, UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
@@ -47,10 +47,10 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
         chainlinkGasPriceFeed = new MockChainlinkOnChain();
         liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
 
-        Options memory opts;
-        opts.unsafeAllow = "external-library-linking";
-        address proxy = Upgrades.deployUUPSProxy(
-            "UsdnProtocol.sol",
+        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
+        UsdnProtocol implementation = new UsdnProtocol();
+        address proxy = UnsafeUpgrades.deployUUPSProxy(
+            address(implementation),
             abi.encodeCall(
                 UsdnProtocol.initializeStorage,
                 (
@@ -67,14 +67,12 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
                         setProtocolParamsAdmin: ADMIN,
                         setUsdnParamsAdmin: ADMIN,
                         setOptionsAdmin: ADMIN
-                    })
+                    }),
+                    protocolFallback
                 )
-            ),
-            opts
+            )
         );
         usdnProtocol = IUsdnProtocol(proxy);
-        UsdnProtocolFallback protocolSetters = new UsdnProtocolFallback();
-        usdnProtocol.setSettersContract(address(protocolSetters));
 
         rebalancer = new RebalancerHandler(usdnProtocol);
 

@@ -25,6 +25,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         vm.startPrank(ADMIN);
         usdn = new Usdn(address(0), address(0));
 
+        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
         UsdnProtocolHandler test = new UsdnProtocolHandler();
         address proxy = UnsafeUpgrades.deployUUPSProxy(
             address(test),
@@ -44,13 +45,12 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
                         setProtocolParamsAdmin: address(this),
                         setUsdnParamsAdmin: address(this),
                         setOptionsAdmin: address(this)
-                    })
+                    }),
+                    protocolFallback
                 )
             )
         );
         protocol = IUsdnProtocolHandler(proxy);
-        UsdnProtocolFallback protocolSetters = new UsdnProtocolFallback();
-        protocol.setSettersContract(address(protocolSetters));
 
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));

@@ -8,6 +8,7 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 import { IBaseLiquidationRewardsManager } from "../interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
+import { IUsdnProtocolFallback } from "../interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
 import { UsdnProtocolActions } from "./UsdnProtocolActions.sol";
 import { UsdnProtocolCore } from "./UsdnProtocolCore.sol";
 import { UsdnProtocolLong } from "./UsdnProtocolLong.sol";
@@ -36,7 +37,8 @@ contract UsdnProtocol is UsdnProtocolLong, UsdnProtocolVault, UsdnProtocolCore, 
         IBaseLiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector,
-        Roles memory roles
+        Roles memory roles,
+        IUsdnProtocolFallback protocolFallback
     ) public initializer {
         __AccessControlDefaultAdminRules_init(0, msg.sender);
         __initializeReentrancyGuard_init();
@@ -109,16 +111,17 @@ contract UsdnProtocol is UsdnProtocolLong, UsdnProtocolVault, UsdnProtocolCore, 
         s._targetUsdnPrice = uint128(10_087 * 10 ** (priceFeedDecimals - 4)); // $1.0087
         s._usdnRebaseThreshold = uint128(1009 * 10 ** (priceFeedDecimals - 3)); // $1.009
         s._minLongPosition = 2 * 10 ** assetDecimals;
+        s._protocolFallbackAddr = address(protocolFallback);
     }
 
     /**
-     * @notice Delegates the call to the setters contract
-     * @param implementation The address of the setters contract
+     * @notice Delegates the call to the fallback contract
+     * @param protocolFallbackAddr The address of the fallback contract
      */
-    function _delegate(address implementation) internal {
+    function _delegate(address protocolFallbackAddr) internal {
         assembly {
             calldatacopy(0, 0, calldatasize())
-            let result := delegatecall(gas(), implementation, 0, calldatasize(), 0, 0)
+            let result := delegatecall(gas(), protocolFallbackAddr, 0, calldatasize(), 0, 0)
             returndatacopy(0, 0, returndatasize())
             switch result
             case 0 { revert(0, returndatasize()) }
@@ -126,12 +129,7 @@ contract UsdnProtocol is UsdnProtocolLong, UsdnProtocolVault, UsdnProtocolCore, 
         }
     }
 
-    // TO DO : remove this function when the proxy is implemented
-    function setSettersContract(address newUtilsContract) external {
-        s._settersContract = newUtilsContract;
-    }
-
     fallback() external {
-        _delegate(s._settersContract);
+        _delegate(s._protocolFallbackAddr);
     }
 }

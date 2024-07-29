@@ -163,6 +163,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         }
 
         UsdnProtocolHandler test = new UsdnProtocolHandler();
+        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
         address proxy = UnsafeUpgrades.deployUUPSProxy(
             address(test),
             abi.encodeCall(
@@ -175,13 +176,12 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
                     liquidationRewardsManager,
                     100, // tick spacing 100 = 1%
                     ADMIN,
-                    roles
+                    roles,
+                    protocolFallback
                 )
             )
         );
         protocol = IUsdnProtocolHandler(proxy);
-        UsdnProtocolFallback protocolSetters = new UsdnProtocolFallback();
-        protocol.setSettersContract(address(protocolSetters));
 
         rebalancer = new Rebalancer(protocol);
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
