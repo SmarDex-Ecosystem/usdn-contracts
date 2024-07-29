@@ -2,12 +2,12 @@
 pragma solidity ^0.8.25;
 
 import { REDSTONE_ETH_DATA, REDSTONE_ETH_PRICE, REDSTONE_ETH_TIMESTAMP } from "../../utils/Constants.sol";
-import { OracleMiddlewareBaseFixture } from "../../utils/Fixtures.sol";
+import { OracleMiddlewareWithRedstoneFixture } from "../../utils/Fixtures.sol";
 
 import { RedstonePriceInfo } from "../../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
 /// @custom:feature The `getFormattedRedstonePrice` function of `RedstoneOracle`
-contract TestRedstoneOracleGetFormattedRedstonePrice is OracleMiddlewareBaseFixture {
+contract TestRedstoneOracleGetFormattedRedstonePrice is OracleMiddlewareWithRedstoneFixture {
     function setUp() public override {
         super.setUp();
     }

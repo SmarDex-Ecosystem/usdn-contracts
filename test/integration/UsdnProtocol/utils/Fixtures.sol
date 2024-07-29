@@ -17,7 +17,6 @@ import {
     DEPLOYER,
     PYTH_ETH_USD,
     PYTH_ORACLE,
-    REDSTONE_ETH_USD,
     SDEX,
     SET_EXTERNAL_ADMIN,
     SET_OPTIONS_ADMIN,
@@ -118,7 +117,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             IPyth pyth = IPyth(PYTH_ORACLE);
             AggregatorV3Interface chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE_ETH);
             oracleMiddleware = new WstEthOracleMiddleware(
-                address(pyth), PYTH_ETH_USD, REDSTONE_ETH_USD, address(chainlinkOnChain), address(wstETH), 1 hours
+                address(pyth), PYTH_ETH_USD, address(chainlinkOnChain), address(wstETH), 1 hours
             );
             PriceInfo memory currentPrice =
                 oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.Initialize, "");
@@ -136,12 +135,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
                 int256(wstETH.getStETHByWstETH(uint256(testParams.initialPrice / 10 ** (18 - 8))))
             );
             oracleMiddleware = new WstEthOracleMiddleware(
-                address(mockPyth),
-                PYTH_ETH_USD,
-                REDSTONE_ETH_USD,
-                address(mockChainlinkOnChain),
-                address(wstETH),
-                1 hours
+                address(mockPyth), PYTH_ETH_USD, address(mockChainlinkOnChain), address(wstETH), 1 hours
             );
             vm.warp(testParams.initialTimestamp);
             liquidationRewardsManager =

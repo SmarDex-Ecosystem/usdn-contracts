@@ -10,11 +10,14 @@ import {
     ChainlinkPriceInfo,
     ConfidenceInterval,
     FormattedPythPrice,
-    PriceInfo
+    PriceInfo,
+    RedstonePriceInfo
 } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IOracleMiddlewareWithRedstone } from "../interfaces/OracleMiddleware/IOracleMiddlewareWithRedstone.sol";
 import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { ChainlinkOracle } from "./oracles/ChainlinkOracle.sol";
 import { PythOracle } from "./oracles/PythOracle.sol";
+import { RedstoneOracle } from "./oracles/RedstoneOracle.sol";
 
 /**
  * @title OracleMiddleware contract
@@ -22,7 +25,13 @@ import { PythOracle } from "./oracles/PythOracle.sol";
  * It is used by the USDN protocol to get the price of the USDN underlying asset
  * @dev This contract is a middleware between the USDN protocol and the price oracles
  */
-contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Ownable2Step {
+contract OracleMiddlewareWithRedstone is
+    IOracleMiddlewareWithRedstone,
+    PythOracle,
+    RedstoneOracle,
+    ChainlinkOracle,
+    Ownable2Step
+{
     /// @inheritdoc IOracleMiddleware
     uint16 public constant BPS_DIVISOR = 10_000;
 
@@ -44,14 +53,25 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     /// @notice The delay during which a low latency oracle price validation is available
     uint16 internal _lowLatencyDelay = 20 minutes;
 
+    /// @notice The penalty for using a non-Pyth price with low latency oracle, in basis points: default 0.25%
+    uint16 internal _penaltyBps = 25; // to divide by BPS_DIVISOR
+
     /**
      * @param pythContract Address of the Pyth contract
      * @param pythFeedId The Pyth price feed ID for the asset
+     * @param redstoneFeedId The Redstone price feed ID for the asset
      * @param chainlinkPriceFeed Address of the Chainlink price feed
      * @param chainlinkTimeElapsedLimit The duration after which a Chainlink price is considered stale
      */
-    constructor(address pythContract, bytes32 pythFeedId, address chainlinkPriceFeed, uint256 chainlinkTimeElapsedLimit)
+    constructor(
+        address pythContract,
+        bytes32 pythFeedId,
+        bytes32 redstoneFeedId,
+        address chainlinkPriceFeed,
+        uint256 chainlinkTimeElapsedLimit
+    )
         PythOracle(pythContract, pythFeedId)
+        RedstoneOracle(redstoneFeedId)
         ChainlinkOracle(chainlinkPriceFeed, chainlinkTimeElapsedLimit)
         Ownable(msg.sender)
     { }
@@ -130,6 +150,11 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         return _lowLatencyDelay;
     }
 
+    /// @inheritdoc IOracleMiddlewareWithRedstone
+    function getPenaltyBps() external view returns (uint16) {
+        return _penaltyBps;
+    }
+
     /// @inheritdoc IBaseOracleMiddleware
     function validationCost(bytes calldata data, Types.ProtocolAction) public view virtual returns (uint256 result_) {
         if (_isPythData(data)) {
@@ -142,10 +167,10 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @dev Get the price from the low-latency oracle (Pyth)
+     * @dev Get the price from the low-latency oracle (Pyth or Redstone)
      * @param data The signed price update data
      * @param actionTimestamp The timestamp of the action corresponding to the price. If zero, then we must accept all
-     * recent prices according to `_pythRecentPriceDelay`
+     * recent prices according to `_pythRecentPriceDelay` or `_redstoneRecentPriceDelay`
      * @param dir The direction for the confidence interval adjusted price
      * @param targetLimit The maximum timestamp when a low-latency price should be used (can be zero if
      * `actionTimestamp` is zero)
@@ -164,9 +189,28 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
             actionTimestamp += uint128(_validationDelay);
         }
 
-        FormattedPythPrice memory pythPrice =
-            _getFormattedPythPrice(data, actionTimestamp, MIDDLEWARE_DECIMALS, targetLimit);
-        price_ = _adjustPythPrice(pythPrice, dir);
+        if (_isPythData(data)) {
+            FormattedPythPrice memory pythPrice =
+                _getFormattedPythPrice(data, actionTimestamp, MIDDLEWARE_DECIMALS, targetLimit);
+            price_ = _adjustPythPrice(pythPrice, dir);
+        } else {
+            // note: redstone automatically retrieves data from the end of the calldata, no need to pass the pointer
+            RedstonePriceInfo memory redstonePrice = _getFormattedRedstonePrice(actionTimestamp, MIDDLEWARE_DECIMALS);
+            price_ = _adjustRedstonePrice(redstonePrice, dir);
+            // sanity check the order of magnitude of the redstone price against chainlink
+            // if the redstone price is more than 3x the chainlink price or less than a third, we consider that it's
+            // not reliable
+            ChainlinkPriceInfo memory chainlinkPrice = _getFormattedChainlinkLatestPrice(MIDDLEWARE_DECIMALS);
+            // we check that the chainlink price is valid and not too old
+            if (chainlinkPrice.price > 0) {
+                if (price_.price > uint256(chainlinkPrice.price) * 3) {
+                    revert OracleMiddlewareRedstoneSafeguard();
+                }
+                if (price_.price < uint256(chainlinkPrice.price) / 3) {
+                    revert OracleMiddlewareRedstoneSafeguard();
+                }
+            }
+        }
     }
 
     /**
@@ -254,6 +298,28 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
 
         price_.timestamp = pythPrice.publishTime;
         price_.neutralPrice = pythPrice.price;
+    }
+
+    /**
+     * @notice Apply the confidence interval in the `dir` direction, applying the penalty for non-Pyth oracles
+     * @param redstonePrice The formatted Redstone price object
+     * @param dir The direction to apply the confidence interval
+     * @return price_ The adjusted price according to the confidence interval and penalty
+     */
+    function _adjustRedstonePrice(RedstonePriceInfo memory redstonePrice, ConfidenceInterval dir)
+        internal
+        view
+        returns (PriceInfo memory price_)
+    {
+        if (dir == ConfidenceInterval.Down) {
+            price_.price = redstonePrice.price - (redstonePrice.price * _penaltyBps / BPS_DIVISOR);
+        } else if (dir == ConfidenceInterval.Up) {
+            price_.price = redstonePrice.price + (redstonePrice.price * _penaltyBps / BPS_DIVISOR);
+        } else {
+            price_.price = redstonePrice.price;
+        }
+        price_.neutralPrice = redstonePrice.price;
+        price_.timestamp = redstonePrice.timestamp;
     }
 
     /**
@@ -364,6 +430,19 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         emit PythRecentPriceDelayUpdated(newDelay);
     }
 
+    /// @inheritdoc IOracleMiddlewareWithRedstone
+    function setRedstoneRecentPriceDelay(uint48 newDelay) external onlyOwner {
+        if (newDelay < 10 seconds) {
+            revert OracleMiddlewareInvalidRecentPriceDelay(newDelay);
+        }
+        if (newDelay > 10 minutes) {
+            revert OracleMiddlewareInvalidRecentPriceDelay(newDelay);
+        }
+        _redstoneRecentPriceDelay = newDelay;
+
+        emit RedstoneRecentPriceDelayUpdated(newDelay);
+    }
+
     /// @inheritdoc IOracleMiddleware
     function setConfRatio(uint16 newConfRatio) external onlyOwner {
         // confidence ratio limit check
@@ -399,5 +478,16 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         if (!success) {
             revert OracleMiddlewareTransferFailed(to);
         }
+    }
+
+    /// @inheritdoc IOracleMiddlewareWithRedstone
+    function setPenaltyBps(uint16 newPenaltyBps) external onlyOwner {
+        // penalty greater than max 10%
+        if (newPenaltyBps > 1000) {
+            revert OracleMiddlewareInvalidPenaltyBps();
+        }
+        _penaltyBps = newPenaltyBps;
+
+        emit PenaltyBpsUpdated(newPenaltyBps);
     }
 }

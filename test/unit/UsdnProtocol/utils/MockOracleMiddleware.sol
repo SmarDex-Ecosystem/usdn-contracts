@@ -82,11 +82,6 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable2Step {
     }
 
     /// @inheritdoc IOracleMiddleware
-    function getPenaltyBps() external view returns (uint16) {
-        return _penaltyBps;
-    }
-
-    /// @inheritdoc IOracleMiddleware
     function setValidationDelay(uint256 newDelay) external {
         _validationDelay = newDelay;
     }
