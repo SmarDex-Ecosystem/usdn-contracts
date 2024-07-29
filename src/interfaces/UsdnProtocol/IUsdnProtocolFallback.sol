@@ -11,10 +11,10 @@ import { IUsdn } from "../Usdn/IUsdn.sol";
 import { IUsdnProtocolTypes as Types } from "./IUsdnProtocolTypes.sol";
 
 /**
- * @title IUsdnProtocolSetters
- * @notice Interface for the USDN protocol setters
+ * @title IUsdnProtocolFallback
+ * @notice Interface for the USDN protocol fallback functions
  */
-interface IUsdnProtocolSetters {
+interface IUsdnProtocolFallback {
     /**
      * @notice Calculate an estimation of assets received when withdrawing
      * @param usdnShares The amount of USDN shares

@@ -30,6 +30,7 @@ abstract contract InitializableReentrancyGuard {
     /// @dev Contract was already initialized
     error InitializableReentrancyGuardInvalidInitialization();
 
+    /// @notice Initializes the contract in the uninitialized state
     function __initializeReentrancyGuard_init() internal {
         _status = UNINITIALIZED;
     }

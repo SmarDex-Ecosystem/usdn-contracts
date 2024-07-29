@@ -16,7 +16,9 @@ import { UsdnProtocolConstantsLibrary as Constants } from "./libraries/UsdnProto
 
 contract UsdnProtocol is UsdnProtocolLong, UsdnProtocolVault, UsdnProtocolCore, UsdnProtocolActions {
     /**
-     * @notice Constructor
+     * @notice Function to initialize the protocol storage
+     * @dev This function should be called on deployment when creating a the proxy
+     * It can only be called once
      * @param usdn The USDN ERC20 contract
      * @param sdex The SDEX ERC20 contract
      * @param asset The asset ERC20 contract (wstETH)

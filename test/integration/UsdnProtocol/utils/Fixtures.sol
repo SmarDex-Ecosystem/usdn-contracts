@@ -40,7 +40,7 @@ import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/Liqu
 import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { Rebalancer } from "../../../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
-import { UsdnProtocolSetters } from "../../../../src/UsdnProtocol/UsdnProtocolSetters.sol";
+import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
@@ -180,7 +180,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             )
         );
         protocol = IUsdnProtocolHandler(proxy);
-        UsdnProtocolSetters protocolSetters = new UsdnProtocolSetters();
+        UsdnProtocolFallback protocolSetters = new UsdnProtocolFallback();
         protocol.setSettersContract(address(protocolSetters));
 
         rebalancer = new Rebalancer(protocol);

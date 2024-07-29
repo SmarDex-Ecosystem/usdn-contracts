@@ -25,7 +25,7 @@ import { MockOracleMiddleware } from "./MockOracleMiddleware.sol";
 import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { UsdnProtocol } from "../../../../src/UsdnProtocol/UsdnProtocol.sol";
-import { UsdnProtocolSetters } from "../../../../src/UsdnProtocol/UsdnProtocolSetters.sol";
+import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
@@ -161,7 +161,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             )
         );
         protocol = IUsdnProtocolHandler(proxy);
-        UsdnProtocolSetters protocolSetters = new UsdnProtocolSetters();
+        UsdnProtocolFallback protocolSetters = new UsdnProtocolFallback();
         protocol.setSettersContract(address(protocolSetters));
 
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));

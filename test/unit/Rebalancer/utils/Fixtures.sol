@@ -14,7 +14,7 @@ import { RebalancerHandler } from "../utils/Handler.sol";
 import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { UsdnProtocol } from "../../../../src/UsdnProtocol/UsdnProtocol.sol";
-import { UsdnProtocolSetters } from "../../../../src/UsdnProtocol/UsdnProtocolSetters.sol";
+import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { IRebalancerErrors } from "../../../../src/interfaces/Rebalancer/IRebalancerErrors.sol";
 import { IRebalancerEvents } from "../../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
 import { IRebalancerTypes } from "../../../../src/interfaces/Rebalancer/IRebalancerTypes.sol";
@@ -73,7 +73,7 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
             opts
         );
         usdnProtocol = IUsdnProtocol(proxy);
-        UsdnProtocolSetters protocolSetters = new UsdnProtocolSetters();
+        UsdnProtocolFallback protocolSetters = new UsdnProtocolFallback();
         usdnProtocol.setSettersContract(address(protocolSetters));
 
         rebalancer = new RebalancerHandler(usdnProtocol);
