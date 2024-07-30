@@ -387,14 +387,14 @@ contract FuzzingSuiteTest is Test {
     }
 
     function test_canInitialize() public {
+        uint256 usdnBalanceBefore = usdn.balanceOf(DEPLOYER);
         vm.deal(DEPLOYER, 1000 ether);
         deal(address(wsteth), DEPLOYER, 1000 ether);
         vm.prank(DEPLOYER);
         echidna.initializeUsdn(300 ether, 300 ether, 2000 ether, 1000 ether);
 
         assertEq(address(usdnProtocol).balance, 0, "protocol balance");
-        assertEq(usdn.balanceOf(DEPLOYER), 100_000, "usdn balance"); // todo: should be 300 * 2000 * 10 ** 18 -
-            // (sdexAmount + fees)
+        assertEq(usdn.balanceOf(DEPLOYER), usdnBalanceBefore, "usdn balance");
         assertEq(wsteth.balanceOf(address(usdnProtocol)), 600 ether, "wstETH balance");
     }
 
