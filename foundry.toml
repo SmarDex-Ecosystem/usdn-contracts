@@ -13,11 +13,11 @@ libs = ["node_modules", "dependencies"]
 invariant = { fail_on_revert = true }
 gas_reports = ["*"]
 ignored_error_codes = [
-    "license",
     "code-size",
     "init-code-size",
-    "transient-storage",
+    "license",
     "too-many-warnings",
+    "transient-storage",
 ]
 
 # -------------------------------- Remappings -------------------------------- #
