@@ -22,7 +22,7 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
      * @notice The minimum cooldown time between actions
      * @return The minimum cooldown time between actions
      */
-    function MIN_ACTION_COOLDOWN() external view returns (uint256);
+    function MAX_ACTION_COOLDOWN() external view returns (uint256);
 
     /**
      * @notice Returns the address of the asset used by the USDN protocol
