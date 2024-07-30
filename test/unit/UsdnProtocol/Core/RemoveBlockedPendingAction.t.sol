@@ -437,12 +437,24 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         assertEq(protocol.getPendingBalanceVault(), -10 ether, "pending vault balance");
     }
 
+    /**
+     * @custom:scenario The admin tries to remove a blocked pending action but tx fails
+     * @custom:given The protocol does not have pending actions for the user
+     * @custom:when The admin tries to remove the pending action
+     * @custom:then The transaction reverts with the `UsdnProtocolNoPendingAction` error
+     */
     function test_RevertWhen_removeBlockedPendingActionWithoutPendingAction() public {
         vm.expectRevert(UsdnProtocolNoPendingAction.selector);
         vm.prank(ADMIN);
         protocol.removeBlockedPendingAction(payable(this), payable(this));
     }
 
+    /**
+     * @custom:scenario The admin tries to remove a blocked pending action but tx fails
+     * @custom:given The protocol does not have pending actions for the user
+     * @custom:when The admin tries to remove the pending action
+     * @custom:then The transaction reverts with the `UsdnProtocolNoPendingAction` error
+     */
     function test_RevertWhen_removeBlockedPendingActionNoCleanupWithoutPendingAction() public {
         vm.expectRevert(UsdnProtocolNoPendingAction.selector);
         vm.prank(ADMIN);
