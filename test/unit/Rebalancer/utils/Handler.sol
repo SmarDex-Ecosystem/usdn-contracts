@@ -4,14 +4,14 @@ pragma solidity ^0.8.25;
 import { Test } from "forge-std/Test.sol";
 
 import { Rebalancer } from "../../../../src/Rebalancer/Rebalancer.sol";
-import { IUsdnProtocolWithFallback } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolWithFallback.sol";
+import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 /**
  * @title RebalancerHandler
  * @dev Wrapper to aid in testing the rebalancer
  */
 contract RebalancerHandler is Rebalancer, Test {
-    constructor(IUsdnProtocolWithFallback usdnProtocol) Rebalancer(usdnProtocol) { }
+    constructor(IUsdnProtocol usdnProtocol) Rebalancer(usdnProtocol) { }
 
     /// @dev Sets the position version to the current one + 1
     function incrementPositionVersion() external {

@@ -5,7 +5,7 @@ import { IUsdnProtocolFallback } from "./IUsdnProtocolFallback.sol";
 import { IUsdnProtocolImpl } from "./IUsdnProtocolImpl.sol";
 
 /**
- * @title IUsdnProtocolWithFallback
+ * @title IUsdnProtocol
  * @notice Interface for the USDN protocol and fallback
  */
-interface IUsdnProtocolWithFallback is IUsdnProtocolImpl, IUsdnProtocolFallback { }
+interface IUsdnProtocol is IUsdnProtocolImpl, IUsdnProtocolFallback { }
