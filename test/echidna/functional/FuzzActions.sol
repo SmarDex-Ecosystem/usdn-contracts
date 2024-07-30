@@ -60,7 +60,7 @@ abstract contract FuzzActions is Setup {
                     == balancesBefore.protocolWsteth + amountWstETHRand - wstethPendingActions
             );
         } catch (bytes memory err) {
-            _checkErrors(err, INITIATE_DEPOSIT_ERRORS);
+            _checkErrors(err, INITIATE_DEPOSIT_ERRORS, initialized);
         }
     }
 
@@ -110,7 +110,7 @@ abstract contract FuzzActions is Setup {
                     == uint256(int256(balancesBefore.protocolUsdnShares) + int152(usdnShares) + usdnPendingActions)
             );
         } catch (bytes memory err) {
-            _checkErrors(err, INITIATE_WITHDRAWAL_ERRORS);
+            _checkErrors(err, INITIATE_WITHDRAWAL_ERRORS, initialized);
         }
     }
 
@@ -169,7 +169,7 @@ abstract contract FuzzActions is Setup {
             );
             assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth - amountRand);
         } catch (bytes memory err) {
-            _checkErrors(err, INITIATE_OPEN_ERRORS);
+            _checkErrors(err, INITIATE_OPEN_ERRORS, initialized);
         }
     }
 
@@ -226,7 +226,7 @@ abstract contract FuzzActions is Setup {
             assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth);
             assert(wsteth.balanceOf(address(usdnProtocol)) == balancesBefore.protocolWsteth);
         } catch (bytes memory err) {
-            _checkErrors(err, INITIATE_CLOSE_ERRORS);
+            _checkErrors(err, INITIATE_CLOSE_ERRORS, initialized);
         }
     }
 
@@ -280,7 +280,7 @@ abstract contract FuzzActions is Setup {
             assert(wsteth.balanceOf(validator) == balancesBefore.validatorWsteth);
             assert(wsteth.balanceOf(pendingAction.to) == balancesBefore.toWsteth);
         } catch (bytes memory err) {
-            _checkErrors(err, VALIDATE_DEPOSIT_ERRORS);
+            _checkErrors(err, VALIDATE_DEPOSIT_ERRORS, initialized);
         }
     }
 
@@ -324,7 +324,7 @@ abstract contract FuzzActions is Setup {
                 assert(wsteth.balanceOf(address(usdnProtocol)) == balancesBefore.protocolWsteth - wstethPendingActions);
             }
         } catch (bytes memory err) {
-            _checkErrors(err, VALIDATE_WITHDRAWAL_ERRORS);
+            _checkErrors(err, VALIDATE_WITHDRAWAL_ERRORS, initialized);
         }
     }
 
@@ -366,7 +366,7 @@ abstract contract FuzzActions is Setup {
             assert(wsteth.balanceOf(address(usdnProtocol)) == balancesBefore.protocolWsteth - wstethPendingActions);
             assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth);
         } catch (bytes memory err) {
-            _checkErrors(err, VALIDATE_OPEN_ERRORS);
+            _checkErrors(err, VALIDATE_OPEN_ERRORS, initialized);
         }
     }
 
@@ -430,7 +430,7 @@ abstract contract FuzzActions is Setup {
                 assert(wsteth.balanceOf(validator) == balancesBefore.validatorWsteth);
             }
         } catch (bytes memory err) {
-            _checkErrors(err, VALIDATE_WITHDRAWAL_ERRORS);
+            _checkErrors(err, VALIDATE_WITHDRAWAL_ERRORS, initialized);
         }
     }
 
@@ -459,7 +459,7 @@ abstract contract FuzzActions is Setup {
             assert(address(msg.sender).balance == balanceBefore + securityDeposit);
             assert(address(usdnProtocol).balance == balanceBeforeProtocol - securityDeposit);
         } catch (bytes memory err) {
-            _checkErrors(err, VALIDATE_CLOSE_ERRORS);
+            _checkErrors(err, VALIDATE_CLOSE_ERRORS, initialized);
         }
     }
 

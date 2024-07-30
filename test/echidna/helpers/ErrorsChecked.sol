@@ -90,7 +90,7 @@ contract ErrorsChecked is Test {
         INITIATE_WITHDRAWAL_ERRORS.push(initiateErrors);
     }
 
-    function _checkErrors(bytes memory err, bytes4[][] memory errorsArrays) internal {
+    function _checkErrors(bytes memory err, bytes4[][] memory errorsArrays, bool initialized) internal {
         bool expected = false;
         for (uint256 arrayIndex = 0; arrayIndex < errorsArrays.length; arrayIndex++) {
             for (uint256 errorIndex = 0; errorIndex < errorsArrays[arrayIndex].length; errorIndex++) {
@@ -104,7 +104,11 @@ contract ErrorsChecked is Test {
             emit log_named_bytes("Expected error ", err);
             return;
         } else {
-            emit log_named_bytes("DOS ", err);
+            if (!initialized) {
+                emit log_named_bytes("DOS: Before initialization error ", err);
+            } else {
+                emit log_named_bytes("DOS ", err);
+            }
             assert(false);
         }
     }

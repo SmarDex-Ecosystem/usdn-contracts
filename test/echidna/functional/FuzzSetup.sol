@@ -31,7 +31,7 @@ abstract contract FuzzSetup is Setup {
                 assert(usdn.balanceOf(msg.sender) >= usdnNoFees - usdnNoFees / 10 ** 20); // imperfect estimation
                 assert(wsteth.balanceOf(address(usdnProtocol)) == depositAmountRand + longAmountRand);
             } catch (bytes memory err) {
-                _checkErrors(err, VALIDATE_OPEN_ERRORS);
+                _checkErrors(err, VALIDATE_OPEN_ERRORS, initialized);
             }
         }
     }
