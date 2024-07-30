@@ -17,7 +17,6 @@ Environment variables can be used to control the script execution:
 - `CHAINLINK_ETH_PRICE_VALIDITY`: the amount of time (in seconds) we consider the price valid. A tolerance should be added to avoid reverting if chainlink misses the heartbeat by a few minutes
 - `LIQUIDATION_REWARDS_MANAGER_ADDRESS`: if provided, skips deployment of the liquidation rewards manager
 - `REBALANCER_ADDRESS`: if provided, skips deployment of the rebalancer
-- `CHAINLINK_GAS_PRICE_ADDRESS`: required if liquidation rewards manager address is not provided, the address of the gas price chainlink oracle
 - `CHAINLINK_GAS_PRICE_VALIDITY`: the amount of time (in seconds) we consider the price valid. A tolerance should be added to avoid reverting if chainlink misses the heartbeat by a few minutes
 - `USDN_ADDRESS`: required if running `02_Deploy.s.sol` in a production environment (not fork)
 - `INIT_DEPOSIT_AMOUNT`: amount to use for the `initialize` function call (if not provided, then initialization is skipped).
@@ -44,7 +43,6 @@ export PYTH_ETH_FEED_ID=0xff61491a931112ddf1bd8147cd1b641375f79f5825126d66548087
 export REDSTONE_ETH_FEED_ID=0x4554480000000000000000000000000000000000000000000000000000000000
 export CHAINLINK_ETH_PRICE_ADDRESS=0x694AA1769357215DE4FAC081bf1f309aDC325306
 export CHAINLINK_ETH_PRICE_VALIDITY=3720
-export CHAINLINK_GAS_PRICE_ADDRESS=0x169E633A2D1E6c10dD91238Ba11c4A708dfEF37C
 export CHAINLINK_GAS_PRICE_VALIDITY=7500
 export GET_WSTETH=true
 ```
