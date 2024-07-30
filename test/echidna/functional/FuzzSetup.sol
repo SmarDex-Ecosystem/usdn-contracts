@@ -17,20 +17,22 @@ abstract contract FuzzSetup is Setup {
         uint256 longAmountRand,
         uint256 priceRand,
         uint256 desiredLiqPriceRand
-    ) external onlyUninitialized {
-        vm.prank(msg.sender);
-        wsteth.approve(address(usdnProtocol), depositAmountRand + longAmountRand);
+    ) external {
+        if (!initialized) {
+            vm.prank(msg.sender);
+            wsteth.approve(address(usdnProtocol), depositAmountRand + longAmountRand);
 
-        vm.prank(msg.sender);
-        try usdnProtocol.initialize(
-            uint128(depositAmountRand), uint128(longAmountRand), uint128(desiredLiqPriceRand), abi.encode(priceRand)
-        ) {
-            uint256 usdnNoFees = depositAmountRand * priceRand / 10 ** 18; // todo: add fees
-            assert(address(usdnProtocol).balance == 0);
-            assert(usdn.balanceOf(msg.sender) >= usdnNoFees - usdnNoFees / 10 ** 20); // imperfect estimation
-            assert(wsteth.balanceOf(address(usdnProtocol)) == depositAmountRand + longAmountRand);
-        } catch (bytes memory err) {
-            _checkErrors(err, VALIDATE_OPEN_ERRORS);
+            vm.prank(msg.sender);
+            try usdnProtocol.initialize(
+                uint128(depositAmountRand), uint128(longAmountRand), uint128(desiredLiqPriceRand), abi.encode(priceRand)
+            ) {
+                uint256 usdnNoFees = depositAmountRand * priceRand / 10 ** 18; // todo: add fees
+                assert(address(usdnProtocol).balance == 0);
+                assert(usdn.balanceOf(msg.sender) >= usdnNoFees - usdnNoFees / 10 ** 20); // imperfect estimation
+                assert(wsteth.balanceOf(address(usdnProtocol)) == depositAmountRand + longAmountRand);
+            } catch (bytes memory err) {
+                _checkErrors(err, VALIDATE_OPEN_ERRORS);
+            }
         }
     }
 }

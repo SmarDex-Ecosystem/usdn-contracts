@@ -124,12 +124,4 @@ contract Setup is ErrorsChecked {
             toWsteth: wsteth.balanceOf(to)
         });
     }
-
-    modifier onlyInitialized() {
-        if (initialized) _;
-    }
-
-    modifier onlyUninitialized() {
-        if (!initialized) _;
-    }
 }
