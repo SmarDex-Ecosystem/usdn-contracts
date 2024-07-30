@@ -341,6 +341,18 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         protocol.i_removeBlockedPendingAction(rawIndex, payable(this), true);
     }
 
+    function test_RevertWhen_removeBlockedPendingActionWithoutPendingAction() public {
+        vm.expectRevert(UsdnProtocolNoPendingAction.selector);
+        vm.prank(ADMIN);
+        protocol.removeBlockedPendingAction(payable(this), payable(this));
+    }
+
+    function test_RevertWhen_removeBlockedPendingActionNoCleanupWithoutPendingAction() public {
+        vm.expectRevert(UsdnProtocolNoPendingAction.selector);
+        vm.prank(ADMIN);
+        protocol.removeBlockedPendingActionNoCleanup(payable(this), payable(this));
+    }
+
     function _wait() internal {
         _waitBeforeActionablePendingAction();
         skip(1 hours);
