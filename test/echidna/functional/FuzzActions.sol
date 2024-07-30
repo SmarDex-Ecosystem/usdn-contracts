@@ -402,8 +402,9 @@ contract FuzzActions is Setup {
                 assert(msg.sender.balance == balancesBefore.senderEth + securityDeposit);
                 assert(address(usdnProtocol).balance == balancesBefore.protocolEth - securityDeposit);
                 assert(
-                    wsteth.balanceOf(address(usdnProtocol)) < balancesBefore.protocolWsteth
-                        && wsteth.balanceOf(address(usdnProtocol)) > balancesBefore.protocolWsteth - closeAmount
+                    wsteth.balanceOf(address(usdnProtocol)) < balancesBefore.protocolWsteth - wstethPendingActions
+                        && wsteth.balanceOf(address(usdnProtocol))
+                            > balancesBefore.protocolWsteth - closeAmount - wstethPendingActions
                 );
                 assert(
                     wsteth.balanceOf(to) < balancesBefore.toWsteth + closeAmount
@@ -428,11 +429,6 @@ contract FuzzActions is Setup {
                 assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth);
                 assert(wsteth.balanceOf(to) == balancesBefore.toWsteth);
                 assert(wsteth.balanceOf(validator) == balancesBefore.validatorWsteth);
-                if (wstethPendingActions > 0) {
-                    assert(
-                        wsteth.balanceOf(address(usdnProtocol)) == balancesBefore.protocolWsteth - wstethPendingActions
-                    );
-                }
             }
         } catch (bytes memory err) {
             _checkErrors(err, VALIDATE_WITHDRAWAL_ERRORS);
@@ -540,6 +536,13 @@ contract FuzzActions is Setup {
         previousActionsData_ = IUsdnProtocolTypes.PreviousActionsData({ priceData: priceData, rawIndices: rawIndices });
     }
 
+    /**
+     * @dev Returns the amount of USDN shares and WstETH that will be transferred in the next action
+     * @param action The pending action
+     * @param price The current price
+     * @return usdn_ The amount of USDN shares
+     * @return wsteth_ The amount of WstETH
+     */
     function getTokenFromPendingAction(IUsdnProtocolTypes.PendingAction memory action, uint256 price)
         public
         view
