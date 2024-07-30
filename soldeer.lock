@@ -1,15 +1,9 @@
 
 [[dependencies]]
-name = "@uniswap/permit2"
-version = "1.0.0"
-source = "https://github.com/Uniswap/permit2.git"
-checksum = "cc56ad0f3439c502c246fc5cfcc3db92bb8b7219"
-
-[[dependencies]]
-name = "forge-std"
-version = "1.9.1"
-source = "https://soldeer-revisions.s3.amazonaws.com/forge-std/v1_9_1_03-07-2024_14:44:59_forge-std-v1.9.1.zip"
-checksum = "110b35ad3604d91a919c521c71206c18cd07b29c750bd90b5cbbaf37288c9636"
+name = "@chainlink"
+version = "1.2.0"
+source = "https://github.com/smartcontractkit/chainlink.git"
+checksum = "c3dc764bba9e1c57b3f7933bcb804a1740fab695"
 
 [[dependencies]]
 name = "@openzeppelin-contracts"
@@ -30,13 +24,19 @@ source = "https://soldeer-revisions.s3.amazonaws.com/@redstone-finance-evm-conne
 checksum = "7532d8972be86e4df8b902205333c4760fe1eda7ca1ee073b1be06c4b4523863"
 
 [[dependencies]]
+name = "@uniswap/permit2"
+version = "1.0.0"
+source = "https://github.com/Uniswap/permit2.git"
+checksum = "cc56ad0f3439c502c246fc5cfcc3db92bb8b7219"
+
+[[dependencies]]
+name = "forge-std"
+version = "1.9.1"
+source = "https://soldeer-revisions.s3.amazonaws.com/forge-std/v1_9_1_03-07-2024_14:44:59_forge-std-v1.9.1.zip"
+checksum = "110b35ad3604d91a919c521c71206c18cd07b29c750bd90b5cbbaf37288c9636"
+
+[[dependencies]]
 name = "solady"
 version = "0.0.228"
 source = "https://soldeer-revisions.s3.amazonaws.com/solady/0_0_228_28-07-2024_08:37:28_solady.zip"
 checksum = "fa66187898039b91958e962e49db3e31ca920e48599c62eec43cf03156335210"
-
-[[dependencies]]
-name = "@chainlink"
-version = "1.2.0"
-source = "https://github.com/smartcontractkit/chainlink.git"
-checksum = "c3dc764bba9e1c57b3f7933bcb804a1740fab695"

@@ -20,11 +20,11 @@ foundryup
 To install existing dependencies, run the following commands:
 
 ```bash
-forge install
+forge soldeer install
 npm install
 ```
 
-The `forge install` command is only used to add the forge standard library. Other dependencies should be managed with
+The `forge soldeer install` command is only used to add libraries for the smart contracts. Other dependencies should be managed with
 npm.
 
 In order to add a new dependency, use the `npm i [packagename]` command with any package from the
