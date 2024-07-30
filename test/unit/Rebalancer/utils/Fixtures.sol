@@ -13,8 +13,8 @@ import { RebalancerHandler } from "../utils/Handler.sol";
 
 import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
-import { UsdnProtocol } from "../../../../src/UsdnProtocol/UsdnProtocol.sol";
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
+import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { IRebalancerErrors } from "../../../../src/interfaces/Rebalancer/IRebalancerErrors.sol";
 import { IRebalancerEvents } from "../../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
 import { IRebalancerTypes } from "../../../../src/interfaces/Rebalancer/IRebalancerTypes.sol";
@@ -48,11 +48,11 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
         liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
 
         UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
-        UsdnProtocol implementation = new UsdnProtocol();
+        UsdnProtocolImpl implementation = new UsdnProtocolImpl();
         address proxy = UnsafeUpgrades.deployUUPSProxy(
             address(implementation),
             abi.encodeCall(
-                UsdnProtocol.initializeStorage,
+                UsdnProtocolImpl.initializeStorage,
                 (
                     usdn,
                     sdex,

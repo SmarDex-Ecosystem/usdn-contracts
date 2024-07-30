@@ -8,7 +8,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
-import { UsdnProtocol } from "../../../../src/UsdnProtocol/UsdnProtocol.sol";
+import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from
     "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from
@@ -32,7 +32,7 @@ import { SignedMath } from "../../../../src/libraries/SignedMath.sol";
  * @title UsdnProtocolHandler
  * @dev Wrapper to aid in testing the protocol
  */
-contract UsdnProtocolHandler is UsdnProtocol, Test {
+contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
     using LibBitmap for LibBitmap.Bitmap;
     using SafeCast for int256;

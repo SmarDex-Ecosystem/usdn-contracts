@@ -7,8 +7,8 @@ import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
-import { UsdnProtocol } from "../../../../src/UsdnProtocol/UsdnProtocol.sol";
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
+import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { IBaseLiquidationRewardsManager } from
     "../../../../src/interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../../../../src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
@@ -19,7 +19,7 @@ import { IUsdn } from "../../../../src/interfaces/Usdn/IUsdn.sol";
  * @custom:background Given a protocol instance that was initialized with default params
  */
 contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
-    UsdnProtocol implementation;
+    UsdnProtocolImpl implementation;
     UsdnProtocolFallback protocolFallback;
 
     Roles roles = Roles({
@@ -32,7 +32,7 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
 
     function setUp() public {
         _setUp(DEFAULT_PARAMS);
-        implementation = new UsdnProtocol();
+        implementation = new UsdnProtocolImpl();
         protocolFallback = new UsdnProtocolFallback();
     }
 
@@ -119,7 +119,7 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
         UnsafeUpgrades.deployUUPSProxy(
             address(implementation),
             abi.encodeCall(
-                UsdnProtocol.initializeStorage,
+                UsdnProtocolImpl.initializeStorage,
                 (
                     usdn,
                     sdex,

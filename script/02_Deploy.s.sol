@@ -14,8 +14,8 @@ import { MockLiquidationRewardsManager } from "../src/OracleMiddleware/mock/Mock
 import { MockWstEthOracleMiddleware } from "../src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
 import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../src/Usdn/Usdn.sol";
-import { UsdnProtocol } from "../src/UsdnProtocol/UsdnProtocol.sol";
 import { UsdnProtocolFallback } from "../src/UsdnProtocol/UsdnProtocolFallback.sol";
+import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { IWstETH } from "../src/interfaces/IWstETH.sol";
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IUsdnProtocolWithFallback } from "../src/interfaces/UsdnProtocol/IUsdnProtocolWithFallback.sol";
@@ -63,7 +63,7 @@ contract Deploy is Script {
         address proxy = Upgrades.deployUUPSProxy(
             "UsdnProtocol.sol",
             abi.encodeCall(
-                UsdnProtocol.initializeStorage,
+                UsdnProtocolImpl.initializeStorage,
                 (
                     Usdn_,
                     Sdex_,
