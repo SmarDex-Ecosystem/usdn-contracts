@@ -11,6 +11,7 @@ optimizer = true
 optimizer_runs = 20_000
 libs = ["node_modules", "dependencies"]
 invariant = { fail_on_revert = true }
+gas_reports = ["*"]
 ignored_error_codes = [
     "license",
     "code-size",
@@ -124,3 +125,11 @@ anvil = "${URL_ANVIL}"
 
 [etherscan]
 mainnet = { key = "${ETHERSCAN_API_KEY}" }
+
+[dependencies]
+"@uniswap/permit2" = { version = "1.0.0", git = "https://github.com/Uniswap/permit2.git", rev = "cc56ad0f3439c502c246fc5cfcc3db92bb8b7219" }
+forge-std = "1.9.1"
+"@openzeppelin-contracts" = "5.0.2"
+"@pythnetwork-pyth-sdk-solidity" = "3.1.0"
+"@redstone-finance-evm-connector" = "0.6.1"
+solady = "0.0.228"

@@ -1,5 +1,11 @@
 
 [[dependencies]]
+name = "@uniswap/permit2"
+version = "1.0.0"
+source = "https://github.com/Uniswap/permit2.git"
+checksum = "cc56ad0f3439c502c246fc5cfcc3db92bb8b7219"
+
+[[dependencies]]
 name = "forge-std"
 version = "1.9.1"
 source = "https://soldeer-revisions.s3.amazonaws.com/forge-std/v1_9_1_03-07-2024_14:44:59_forge-std-v1.9.1.zip"
