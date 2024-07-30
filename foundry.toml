@@ -24,11 +24,11 @@ ignored_error_codes = [
 
 
 remappings = [
-    "@chainlink/=node_modules/@chainlink/",
+    "@chainlink/=dependencies/@chainlink-1.2.0/",
     "@openzeppelin/contracts/=dependencies/@openzeppelin-contracts-5.0.2/",
     "@pythnetwork/pyth-sdk-solidity/=dependencies/@pythnetwork-pyth-sdk-solidity-3.1.0/",
     "@redstone-finance/evm-connector/=dependencies/@redstone-finance-evm-connector-0.6.1/",
-    "@uniswap/permit2/=node_modules/@uniswap/permit2/",
+    "@uniswap/permit2/=dependencies/@uniswap/permit2-1.0.0/",
     "forge-std/=dependencies/forge-std-1.9.1/src/",
     "solady/src/=dependencies/solady-0.0.228/src/",
 ]
@@ -127,9 +127,10 @@ anvil = "${URL_ANVIL}"
 mainnet = { key = "${ETHERSCAN_API_KEY}" }
 
 [dependencies]
-"@uniswap/permit2" = { version = "1.0.0", git = "https://github.com/Uniswap/permit2.git", rev = "cc56ad0f3439c502c246fc5cfcc3db92bb8b7219" }
-forge-std = "1.9.1"
+"@chainlink" = { version = "1.2.0", git = "https://github.com/smartcontractkit/chainlink.git", rev = "c3dc764bba9e1c57b3f7933bcb804a1740fab695" }
 "@openzeppelin-contracts" = "5.0.2"
 "@pythnetwork-pyth-sdk-solidity" = "3.1.0"
 "@redstone-finance-evm-connector" = "0.6.1"
+"@uniswap/permit2" = { version = "1.0.0", git = "https://github.com/Uniswap/permit2.git", rev = "cc56ad0f3439c502c246fc5cfcc3db92bb8b7219" }
+forge-std = "1.9.1"
 solady = "0.0.228"
