@@ -2,10 +2,12 @@
 pragma solidity ^0.8.25;
 
 import { ADMIN, DEPLOYER } from "../../utils/Constants.sol";
+import { IUsdnProtocolHandler } from "../../utils/IUsdnProtocolHandler.sol";
 import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
 import { UsdnProtocolHandler } from "./utils/Handler.sol";
 
 import { Usdn } from "../../../src/Usdn/Usdn.sol";
+import { UsdnProtocolSetters } from "../../../src/UsdnProtocol/UsdnProtocolSetters.sol";
 
 /**
  * @custom:feature Test the functions linked to initialization of the protocol
@@ -21,22 +23,28 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         vm.startPrank(ADMIN);
         usdn = new Usdn(address(0), address(0));
 
-        protocol = new UsdnProtocolHandler(
-            usdn,
-            sdex,
-            wstETH,
-            oracleMiddleware,
-            liquidationRewardsManager,
-            100, // tick spacing 100 = 1%
-            ADMIN, // Fee collector
-            Roles({
-                setExternalAdmin: address(this),
-                criticalFunctionsAdmin: address(this),
-                setProtocolParamsAdmin: address(this),
-                setUsdnParamsAdmin: address(this),
-                setOptionsAdmin: address(this)
-            })
+        protocol = IUsdnProtocolHandler(
+            address(
+                new UsdnProtocolHandler(
+                    usdn,
+                    sdex,
+                    wstETH,
+                    oracleMiddleware,
+                    liquidationRewardsManager,
+                    100, // tick spacing 100 = 1%
+                    ADMIN, // Fee collector
+                    Roles({
+                        setExternalAdmin: address(this),
+                        criticalFunctionsAdmin: address(this),
+                        setProtocolParamsAdmin: address(this),
+                        setUsdnParamsAdmin: address(this),
+                        setOptionsAdmin: address(this)
+                    })
+                )
+            )
         );
+        UsdnProtocolSetters protocolSetters = new UsdnProtocolSetters();
+        protocol.setSettersContract(address(protocolSetters));
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
 

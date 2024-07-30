@@ -12,6 +12,7 @@ import {
 } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { IEventsErrors } from "../../../utils/IEventsErrors.sol";
+import { IUsdnProtocolHandler } from "../../../utils/IUsdnProtocolHandler.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
 import { MockChainlinkOnChain } from "../../Middlewares/utils/MockChainlinkOnChain.sol";
@@ -20,6 +21,7 @@ import { UsdnProtocolHandler } from "./Handler.sol";
 
 import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
+import { UsdnProtocolSetters } from "../../../../src/UsdnProtocol/UsdnProtocolSetters.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
@@ -92,7 +94,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
     MockChainlinkOnChain public chainlinkGasPriceFeed;
     LiquidationRewardsManager public liquidationRewardsManager;
     RebalancerHandler public rebalancer;
-    UsdnProtocolHandler public protocol;
+    IUsdnProtocolHandler public protocol;
     FeeCollector public feeCollector;
     PositionId public initialPosition;
     uint256 public usdnInitialTotalSupply;
@@ -136,9 +138,22 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             });
         }
 
-        protocol = new UsdnProtocolHandler(
-            usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, _tickSpacing, address(feeCollector), roles
+        protocol = IUsdnProtocolHandler(
+            address(
+                new UsdnProtocolHandler(
+                    usdn,
+                    sdex,
+                    wstETH,
+                    oracleMiddleware,
+                    liquidationRewardsManager,
+                    _tickSpacing,
+                    address(feeCollector),
+                    roles
+                )
+            )
         );
+        UsdnProtocolSetters protocolSetters = new UsdnProtocolSetters();
+        protocol.setSettersContract(address(protocolSetters));
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);

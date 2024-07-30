@@ -10,11 +10,11 @@ import { LiquidationRewardsManager } from "../src/OracleMiddleware/LiquidationRe
 import { WstEthOracleMiddleware } from "../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { MockLiquidationRewardsManager } from "../src/OracleMiddleware/mock/MockLiquidationRewardsManager.sol";
 import { MockWstEthOracleMiddleware } from "../src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
-
 import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../src/Usdn/Usdn.sol";
 import { UsdnProtocol } from "../src/UsdnProtocol/UsdnProtocol.sol";
 import { IWstETH } from "../src/interfaces/IWstETH.sol";
+import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 contract Deploy is Script {
@@ -73,10 +73,10 @@ contract Deploy is Script {
         );
 
         // deploy the rebalancer
-        Rebalancer_ = _deployRebalancer(UsdnProtocol_);
+        Rebalancer_ = _deployRebalancer(address(UsdnProtocol_));
 
         // set the rebalancer on the USDN protocol
-        UsdnProtocol_.setRebalancer(Rebalancer_);
+        IUsdnProtocol(address(UsdnProtocol_)).setRebalancer(Rebalancer_);
 
         // grant USDN minter and rebaser roles to protocol
         Usdn_.grantRole(Usdn_.MINTER_ROLE(), address(UsdnProtocol_));
@@ -230,12 +230,12 @@ contract Deploy is Script {
      * @param usdnProtocol The USDN protocol
      * @return rebalancer_ The deployed contract
      */
-    function _deployRebalancer(UsdnProtocol usdnProtocol) internal returns (Rebalancer rebalancer_) {
+    function _deployRebalancer(address usdnProtocol) internal returns (Rebalancer rebalancer_) {
         address payable rebalancerAddress = payable(vm.envOr("REBALANCER_ADDRESS", address(0)));
         if (rebalancerAddress != address(0)) {
             rebalancer_ = Rebalancer(rebalancerAddress);
         } else {
-            rebalancer_ = new Rebalancer(usdnProtocol);
+            rebalancer_ = new Rebalancer(IUsdnProtocol(usdnProtocol));
         }
     }
 

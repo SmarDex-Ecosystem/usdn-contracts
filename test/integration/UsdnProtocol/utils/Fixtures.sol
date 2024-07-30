@@ -26,6 +26,7 @@ import {
     WSTETH
 } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
+import { IUsdnProtocolHandler } from "../../../utils/IUsdnProtocolHandler.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
 import {
@@ -39,6 +40,7 @@ import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/Liqu
 import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { Rebalancer } from "../../../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
+import { UsdnProtocolSetters } from "../../../../src/UsdnProtocol/UsdnProtocolSetters.sol";
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
@@ -88,7 +90,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
     Usdn public usdn;
     Sdex public sdex;
-    UsdnProtocolHandler public protocol;
+    IUsdnProtocolHandler public protocol;
     WstETH public wstETH;
     MockPyth public mockPyth;
     MockChainlinkOnChain public mockChainlinkOnChain;
@@ -160,17 +162,22 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             });
         }
 
-        protocol = new UsdnProtocolHandler(
-            usdn,
-            sdex,
-            wstETH,
-            oracleMiddleware,
-            liquidationRewardsManager,
-            100, // tick spacing 100 = 1%
-            ADMIN,
-            roles
+        protocol = IUsdnProtocolHandler(
+            address(
+                new UsdnProtocolHandler(
+                    usdn,
+                    sdex,
+                    wstETH,
+                    oracleMiddleware,
+                    liquidationRewardsManager,
+                    100, // tick spacing 100 = 1%
+                    ADMIN,
+                    roles
+                )
+            )
         );
-
+        UsdnProtocolSetters protocolSetters = new UsdnProtocolSetters();
+        protocol.setSettersContract(address(protocolSetters));
         rebalancer = new Rebalancer(protocol);
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
