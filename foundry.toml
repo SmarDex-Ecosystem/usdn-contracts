@@ -28,7 +28,7 @@ remappings = [
     "@pythnetwork/pyth-sdk-solidity/=dependencies/@pythnetwork-pyth-sdk-solidity-3.1.0/",
     "solady/src/=node_modules/solady/src/",
     "@uniswap/permit2/=node_modules/@uniswap/permit2/",
-    "@redstone-finance/evm-connector/=node_modules/@redstone-finance/evm-connector/",
+    "@redstone-finance/evm-connector/=dependencies/@redstone-finance-evm-connector-0.6.1/",
     "forge-std/=dependencies/forge-std-1.9.1/src/",
 ]
 

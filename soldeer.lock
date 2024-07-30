@@ -16,3 +16,9 @@ name = "@pythnetwork-pyth-sdk-solidity"
 version = "3.1.0"
 source = "https://soldeer-revisions.s3.amazonaws.com/@pythnetwork-pyth-sdk-solidity/3_1_0_15-04-2024_18:51:28_pyth-sdk-solidity.zip"
 checksum = "f71446fe21a725f3f95d4b2e981936313dae05b78621a0d2ab2dba20c59a87cb"
+
+[[dependencies]]
+name = "@redstone-finance-evm-connector"
+version = "0.6.1"
+source = "https://soldeer-revisions.s3.amazonaws.com/@redstone-finance-evm-connector/0_6_1_25-07-2024_06:26:58_evm-connector.zip"
+checksum = "7532d8972be86e4df8b902205333c4760fe1eda7ca1ee073b1be06c4b4523863"
