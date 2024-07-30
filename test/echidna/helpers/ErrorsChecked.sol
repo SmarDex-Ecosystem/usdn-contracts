@@ -72,6 +72,13 @@ contract ErrorsChecked is Test {
         ]
     ];
 
+    bytes4[][] public VALIDATE_CLOSE_ERRORS = [
+        [
+            IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector,
+            IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector
+        ]
+    ];
+
     bytes4[][] public VALIDATE_OPEN_ERRORS = [[IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector]];
 
     bytes4[][] public VALIDATE_PENDING_ACTIONS_ERRORS = [[IUsdnProtocolErrors.UsdnProtocolEtherRefundFailed.selector]];
