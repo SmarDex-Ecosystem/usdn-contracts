@@ -351,6 +351,7 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     /**
      * @notice Emitted when the last funding per day is updated
      * @param lastFundingPerDay The new last funding per day
+     * @param lastUpdateTimestamp The timestamp of the last balances update
      */
-    event LastFundingPerDayUpdated(int256 lastFundingPerDay);
+    event LastFundingPerDayUpdated(int256 lastFundingPerDay, uint256 lastUpdateTimestamp);
 }
