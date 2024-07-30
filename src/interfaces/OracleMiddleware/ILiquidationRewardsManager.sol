@@ -35,8 +35,8 @@ interface ILiquidationRewardsManager is IBaseLiquidationRewardsManager, ILiquida
     function MAX_OTHER_GAS_USED() external pure returns (uint256);
 
     /**
-     * @notice Maximum gas used for the optional rebalancer trigger
-     * @return The maximum gas used for the optional rebalancer trigger
+     * @notice Maximum gas used for the rebase
+     * @return The maximum gas used for the rebase
      */
     function MAX_REBASE_GAS_USED() external pure returns (uint256);
 
