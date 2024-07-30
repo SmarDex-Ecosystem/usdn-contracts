@@ -22,3 +22,9 @@ name = "@redstone-finance-evm-connector"
 version = "0.6.1"
 source = "https://soldeer-revisions.s3.amazonaws.com/@redstone-finance-evm-connector/0_6_1_25-07-2024_06:26:58_evm-connector.zip"
 checksum = "7532d8972be86e4df8b902205333c4760fe1eda7ca1ee073b1be06c4b4523863"
+
+[[dependencies]]
+name = "solady"
+version = "0.0.228"
+source = "https://soldeer-revisions.s3.amazonaws.com/solady/0_0_228_28-07-2024_08:37:28_solady.zip"
+checksum = "fa66187898039b91958e962e49db3e31ca920e48599c62eec43cf03156335210"
