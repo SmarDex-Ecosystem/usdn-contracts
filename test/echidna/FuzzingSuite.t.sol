@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import { FuzzingSuite } from "./FuzzingSuite.sol";
 import { Test } from "forge-std/Test.sol";
 
 import { MockOracleMiddleware } from "../unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
 import { USER_1, USER_2 } from "../utils/Constants.sol";
 import { Sdex } from "../utils/Sdex.sol";
 import { WstETH } from "../utils/WstEth.sol";
+import { FuzzingSuite } from "./FuzzingSuite.sol";
 
 import { Rebalancer } from "../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../src/Usdn/Usdn.sol";
@@ -249,6 +249,69 @@ contract FuzzingSuiteTest is Test {
         assertGt(wsteth.balanceOf(DEPLOYER), balanceWstEthBefore, "wstETH balance");
     }
 
+    function test_canValidateClose() public {
+        uint128 wstethOpenPositionAmount = 5 ether;
+        uint128 liquidationPrice = 1000 ether;
+        uint256 etherPrice = 4000 ether;
+        uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
+        bytes[] memory priceData = new bytes[](1);
+        priceData[0] = abi.encode(etherPrice);
+        uint128[] memory rawIndices = new uint128[](1);
+        rawIndices[0] = 0;
+
+        vm.deal(DEPLOYER, 10 ether);
+        deal(address(wsteth), address(DEPLOYER), wstethOpenPositionAmount);
+        wsteth.mintAndApprove(DEPLOYER, wstethOpenPositionAmount, address(usdnProtocol), wstethOpenPositionAmount);
+
+        vm.startPrank(DEPLOYER);
+        _validateCloseAndAssert(
+            securityDeposit, wstethOpenPositionAmount, liquidationPrice, etherPrice, priceData, rawIndices
+        );
+    }
+
+    function test_canValidateCloseAndPendingAction() public {
+        uint128 amountWstETHPending = 0.1 ether;
+        uint128 wstethOpenPositionAmount = 5 ether;
+        uint128 liquidationPrice = 1000 ether;
+        uint256 etherPrice = 4000 ether;
+        uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
+        bytes[] memory priceData = new bytes[](1);
+        priceData[0] = abi.encode(etherPrice);
+        uint128[] memory rawIndices = new uint128[](1);
+        rawIndices[0] = 0;
+        Sdex sdex = echidna.sdex();
+
+        vm.deal(DEPLOYER, 10 ether);
+        wsteth.mintAndApprove(
+            DEPLOYER,
+            amountWstETHPending + wstethOpenPositionAmount,
+            address(usdnProtocol),
+            amountWstETHPending + wstethOpenPositionAmount
+        );
+        sdex.mintAndApprove(DEPLOYER, 10 ether, address(usdnProtocol), 10 ether);
+
+        vm.startPrank(DEPLOYER);
+        usdnProtocol.initiateDeposit{ value: securityDeposit }(
+            amountWstETHPending / 2,
+            USER_1,
+            payable(USER_1),
+            echidna.NO_PERMIT2(),
+            abi.encode(etherPrice),
+            EMPTY_PREVIOUS_DATA
+        );
+        usdnProtocol.initiateDeposit{ value: securityDeposit }(
+            amountWstETHPending / 2,
+            USER_2,
+            payable(USER_2),
+            echidna.NO_PERMIT2(),
+            abi.encode(etherPrice),
+            EMPTY_PREVIOUS_DATA
+        );
+        _validateCloseAndAssert(
+            securityDeposit, wstethOpenPositionAmount, liquidationPrice, etherPrice, priceData, rawIndices
+        );
+    }
+
     function test_canValidatePendingActions() public {
         vm.deal(DEPLOYER, 10 ether);
         uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
@@ -336,5 +399,45 @@ contract FuzzingSuiteTest is Test {
 
         assertEq(address(usdnProtocol).balance, balanceBeforeProtocol, "protocol balance");
         assertEq(wsteth.balanceOf(DEPLOYER), balanceWstEthBefore, "wstETH balance");
+    }
+
+    function _validateCloseAndAssert(
+        uint256 securityDeposit,
+        uint128 wstethOpenPositionAmount,
+        uint128 liquidationPrice,
+        uint256 etherPrice,
+        bytes[] memory priceData,
+        uint128[] memory rawIndices
+    ) internal {
+        (, IUsdnProtocolTypes.PositionId memory posId) = usdnProtocol.initiateOpenPosition{ value: securityDeposit }(
+            wstethOpenPositionAmount,
+            liquidationPrice,
+            DEPLOYER,
+            payable(DEPLOYER),
+            echidna.NO_PERMIT2(),
+            abi.encode(etherPrice),
+            IUsdnProtocolTypes.PreviousActionsData(priceData, rawIndices)
+        );
+        skip(wstEthOracleMiddleware.getValidationDelay() + 1);
+        usdnProtocol.validateOpenPosition(payable(DEPLOYER), abi.encode(etherPrice), EMPTY_PREVIOUS_DATA);
+        usdnProtocol.initiateClosePosition{ value: securityDeposit }(
+            posId, wstethOpenPositionAmount, DEPLOYER, payable(DEPLOYER), abi.encode(etherPrice), EMPTY_PREVIOUS_DATA
+        );
+        vm.stopPrank();
+
+        uint256 balanceBefore = DEPLOYER.balance;
+        uint256 balanceBeforeProtocol = address(usdnProtocol).balance;
+        uint256 balanceWstEthBefore = wsteth.balanceOf(DEPLOYER);
+
+        skip(wstEthOracleMiddleware.getValidationDelay() + 1);
+        vm.prank(DEPLOYER);
+        echidna.validateClosePosition(0, etherPrice);
+
+        IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(DEPLOYER);
+        assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.None, "action type");
+        assertEq(DEPLOYER.balance, balanceBefore + securityDeposit, "DEPLOYER balance");
+        assertEq(address(usdnProtocol).balance, balanceBeforeProtocol - securityDeposit, "protocol balance");
+        assertGt(wsteth.balanceOf(DEPLOYER), balanceWstEthBefore, "wstETH balance");
+        assertLt(wsteth.balanceOf(DEPLOYER), balanceWstEthBefore + wstethOpenPositionAmount, "wstETH balance");
     }
 }

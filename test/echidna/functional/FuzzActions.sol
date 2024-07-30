@@ -369,6 +369,70 @@ contract FuzzActions is Setup {
     }
 
     /**
+     * @notice PROTCL-7
+     */
+    function validateClosePosition(uint256 validatorRand, uint256 priceRand) public {
+        validatorRand = bound(validatorRand, 0, validators.length - 1);
+        address payable validator = payable(validators[validatorRand]);
+        uint256 priceData = bound(priceRand, 0, type(uint128).max);
+
+        IUsdnProtocolTypes.LongPendingAction memory longAction =
+            usdnProtocol.i_toLongPendingAction(usdnProtocol.getUserPendingAction(validator));
+
+        (
+            IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
+            ,
+            IUsdnProtocolTypes.PendingAction memory lastAction,
+        ) = getPreviousActionsData(msg.sender, priceData);
+        (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceData);
+
+        uint256 securityDeposit = longAction.securityDepositValue;
+        uint256 closeAmount = longAction.closeAmount;
+        address to = longAction.to;
+
+        ProtocolSnapshot memory balancesBefore = getBalancesProtocol(validator, msg.sender);
+
+        vm.prank(msg.sender);
+        try usdnProtocol.validateClosePosition(validator, abi.encode(priceData), previousActionsData) returns (
+            bool success
+        ) {
+            if (success) {
+                assert(msg.sender.balance == balancesBefore.senderEth + securityDeposit);
+                assert(address(usdnProtocol).balance == balancesBefore.protocolEth - securityDeposit);
+                assert(
+                    wsteth.balanceOf(address(usdnProtocol)) < balancesBefore.protocolWsteth - wstethPendingActions
+                        && wsteth.balanceOf(address(usdnProtocol))
+                            > balancesBefore.protocolWsteth - closeAmount - wstethPendingActions
+                );
+                assert(
+                    wsteth.balanceOf(to) < balancesBefore.toWsteth + closeAmount
+                        && wsteth.balanceOf(to) > balancesBefore.toWsteth
+                );
+                if (msg.sender != address(validator)) {
+                    assert(validator.balance == balancesBefore.validatorEth);
+                }
+                if (msg.sender != to) {
+                    assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth);
+                }
+                if (to != address(validator)) {
+                    assert(to.balance == balancesBefore.toEth);
+                    assert(wsteth.balanceOf(validator) == balancesBefore.validatorWsteth);
+                }
+            } else {
+                assert(msg.sender.balance == balancesBefore.senderEth);
+                assert(address(usdnProtocol).balance <= balancesBefore.protocolEth - wstethPendingActions);
+                assert(validator.balance == balancesBefore.validatorEth);
+                assert(to.balance == balancesBefore.toEth);
+                assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth);
+                assert(wsteth.balanceOf(to) == balancesBefore.toWsteth);
+                assert(wsteth.balanceOf(validator) == balancesBefore.validatorWsteth);
+            }
+        } catch (bytes memory err) {
+            _checkErrors(err, VALIDATE_WITHDRAWAL_ERRORS);
+        }
+    }
+
+    /**
      * @notice PROTCL-8
      */
     function validatePendingActions(uint256 maxValidations, uint256 priceRand) public {
@@ -393,7 +457,7 @@ contract FuzzActions is Setup {
             assert(address(msg.sender).balance == balanceBefore + securityDeposit);
             assert(address(usdnProtocol).balance == balanceBeforeProtocol - securityDeposit);
         } catch (bytes memory err) {
-            _checkErrors(err, VALIDATE_PENDING_ACTIONS_ERRORS);
+            _checkErrors(err, VALIDATE_CLOSE_ERRORS);
         }
     }
 
@@ -469,6 +533,13 @@ contract FuzzActions is Setup {
         previousActionsData_ = IUsdnProtocolTypes.PreviousActionsData({ priceData: priceData, rawIndices: rawIndices });
     }
 
+    /**
+     * @dev Returns the amount of USDN shares and WstETH that will be transferred in the next action
+     * @param action The pending action
+     * @param price The current price
+     * @return usdn_ The amount of USDN shares
+     * @return wsteth_ The amount of WstETH
+     */
     function getTokenFromPendingAction(IUsdnProtocolTypes.PendingAction memory action, uint256 price)
         public
         view
