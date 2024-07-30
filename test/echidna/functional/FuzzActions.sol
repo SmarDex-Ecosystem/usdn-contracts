@@ -45,14 +45,11 @@ contract FuzzActions is Setup {
             amountWstETHRand, dest, validator, NO_PERMIT2, abi.encode(priceData), previousActionsData
         ) {
             uint64 securityDeposit = usdnProtocol.getSecurityDepositValue();
-            assert(address(msg.sender).balance == balancesBefore.senderEth - securityDeposit);
 
             assert(
                 address(msg.sender).balance
                     == balancesBefore.senderEth - securityDeposit + lastAction.securityDepositValue
             );
-            assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth - amountWstETHRand);
-            assert(sdex.balanceOf(msg.sender) < balancesBefore.senderSdex);
             assert(
                 address(usdnProtocol).balance
                     == balancesBefore.protocolEth + securityDeposit - lastAction.securityDepositValue
@@ -61,6 +58,8 @@ contract FuzzActions is Setup {
                 wsteth.balanceOf(address(usdnProtocol))
                     == balancesBefore.protocolWsteth + amountWstETHRand - wstethPendingActions
             );
+            assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth - amountWstETHRand);
+            assert(sdex.balanceOf(msg.sender) < balancesBefore.senderSdex);
         } catch (bytes memory err) {
             _checkErrors(err, PROTOCOL_INITIATE_DEPOSIT_ERRORS);
         }
