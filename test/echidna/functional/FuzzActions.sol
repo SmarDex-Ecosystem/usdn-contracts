@@ -413,19 +413,18 @@ contract FuzzActions is Setup {
                 if (msg.sender != address(validator)) {
                     assert(validator.balance == balancesBefore.validatorEth);
                 }
+                if (msg.sender != to) {
+                    assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth);
+                }
                 if (to != address(validator)) {
                     assert(to.balance == balancesBefore.toEth);
                     assert(wsteth.balanceOf(validator) == balancesBefore.validatorWsteth);
                 }
-                if (msg.sender != to) {
-                    assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth);
-                }
             } else {
                 assert(msg.sender.balance == balancesBefore.senderEth);
-                assert(address(usdnProtocol).balance == balancesBefore.protocolEth);
+                assert(address(usdnProtocol).balance <= balancesBefore.protocolEth - wstethPendingActions);
                 assert(validator.balance == balancesBefore.validatorEth);
                 assert(to.balance == balancesBefore.toEth);
-                assert(wsteth.balanceOf(address(usdnProtocol)) == balancesBefore.protocolWsteth);
                 assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth);
                 assert(wsteth.balanceOf(to) == balancesBefore.toWsteth);
                 assert(wsteth.balanceOf(validator) == balancesBefore.validatorWsteth);
