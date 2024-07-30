@@ -9,7 +9,7 @@ solc_version = "0.8.26"
 evm_version = "cancun"
 optimizer = true
 optimizer_runs = 20_000
-libs = ["node_modules", "lib"]
+libs = ["node_modules", "dependencies"]
 invariant = { fail_on_revert = true }
 ignored_error_codes = [
     "license",
@@ -21,13 +21,15 @@ ignored_error_codes = [
 
 # -------------------------------- Remappings -------------------------------- #
 
+
 remappings = [
     "@chainlink/=node_modules/@chainlink/",
-    "@openzeppelin/=node_modules/@openzeppelin/",
-    "@pythnetwork=node_modules/@pythnetwork/",
+    "@openzeppelin/contracts/=dependencies/@openzeppelin-contracts-5.0.2/",
+    "@pythnetwork/pyth-sdk-solidity/=dependencies/@pythnetwork-pyth-sdk-solidity-3.1.0/",
     "solady/src/=node_modules/solady/src/",
     "@uniswap/permit2/=node_modules/@uniswap/permit2/",
     "@redstone-finance/evm-connector/=node_modules/@redstone-finance/evm-connector/",
+    "forge-std/=dependencies/forge-std-1.9.1/src/",
 ]
 
 # ---------------------------------- Format ---------------------------------- #
