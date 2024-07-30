@@ -5,10 +5,10 @@ FROM node:${NODE_VERSION}-alpine AS node
 
 
 # Exceptional nightly build usage as we need some fixes that are not yet in the stable release
-FROM ghcr.io/foundry-rs/foundry:nightly-7bef9caccfe62761225be66e84bea2810e656c96
+FROM ghcr.io/foundry-rs/foundry:latest
 
 # Fork env
-ENV FORK_CODE_LIMIT=100000
+ENV FORK_CODE_LIMIT=200000
 ENV FORK_BLOCK_TIME=12
 ENV FORK_PORT=8545
 ENV FORK_URL=https://eth-mainnet.g.alchemy.com/v2/ZMTGh2wcbFIUDheXaKBN7cFHBfccH-RT
@@ -52,11 +52,10 @@ RUN source ~/.shrc
 RUN pnpm install
 
 # Run node and deploy contracts
-RUN nohup /bin/sh -c "anvil --code-size-limit $FORK_CODE_LIMIT --block-time $FORK_BLOCK_TIME --host 0.0.0.0 --port $FORK_PORT --fork-url $FORK_URL --state state.json --state-interval 12 --auto-impersonate --chain-id $FORK_CHAIN_ID &" && sleep 10 && ./script/deployFork.sh
-
-RUN echo $(($(jq -r '[.blocks[] | { number: .header.number }] | sort_by(.number) | .[0].number' state.json)-1))
+RUN nohup /bin/sh -c "anvil --code-size-limit $FORK_CODE_LIMIT --host 0.0.0.0 --port $FORK_PORT --fork-url $FORK_URL --auto-impersonate --chain-id $FORK_CHAIN_ID &" && sleep 10 && ./script/deployFork.sh && cast rpc -r http://localhost:${FORK_PORT:-8545} anvil_dumpState > state.hex
 
 # Note command: $(($(jq -r '[.blocks[] | { number: .header.number }] | sort_by(.number) | .[0].number' state.json)-1))
 # This command will get the last block number before the dump (state.json)
 # It is necessary to fork until this block number to prevent state to conflict with mainnet fork resulting in a node blocks mismatch and crashs
-ENTRYPOINT ["/bin/sh", "-c", "anvil -a 100 --host 0.0.0.0 --port ${FORK_PORT:-8545} --fork-url ${FORK_URL:-https://1rpc.io/eth} --state state.json --auto-impersonate --block-time ${FORK_BLOCK_TIME:-12} --state-interval ${FORK_BLOCK_TIME:-12} --chain-id 31337 --code-size-limit 100000 --fork-block-number $(($(jq -r '[.blocks[] | { number: .header.number }] | sort_by(.number) | .[0].number' state.json)-1))"]
+# --fork-block-number $(($(jq -r '[.blocks[] | { number: .header.number }] | sort_by(.number) | .[0].number' state.json)-1))
+ENTRYPOINT ["/bin/sh", "-c", "anvil -a 100 --host 0.0.0.0 --port ${FORK_PORT:-8545} --fork-url ${FORK_URL:-https://1rpc.io/eth} --auto-impersonate --block-time ${FORK_BLOCK_TIME:-12} --state-interval ${FORK_BLOCK_TIME:-12} --chain-id 31337 --code-size-limit ${FORK_CODE_LIMIT:-200000} && sleep 10 && cast rpc -r http://localhost:${FORK_PORT:-8545} anvil_loadState $(cat state.hex)"]
