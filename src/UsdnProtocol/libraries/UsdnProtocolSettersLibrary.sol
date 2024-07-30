@@ -7,9 +7,10 @@ import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 import { IBaseOracleMiddleware } from "../../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { ILiquidationRewardsManager } from "../../interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IBaseRebalancer } from "../../interfaces/Rebalancer/IBaseRebalancer.sol";
-import { IUsdnProtocol } from "../../interfaces/UsdnProtocol/IUsdnProtocol.sol";
+
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
+import { IUsdnProtocolImpl } from "../../interfaces/UsdnProtocol/IUsdnProtocolImpl.sol";
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 
@@ -17,7 +18,7 @@ library UsdnProtocolSettersLibrary {
     using SafeTransferLib for address;
     using SafeCast for uint256;
 
-    /// @notice See {IUsdnProtocol}
+    /// @notice See {IUsdnProtocolImpl}
     function setOracleMiddleware(Types.Storage storage s, IBaseOracleMiddleware newOracleMiddleware) external {
         if (address(newOracleMiddleware) == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidMiddlewareAddress();
@@ -26,7 +27,7 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.OracleMiddlewareUpdated(address(newOracleMiddleware));
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @notice See {IUsdnProtocolImpl}
     function setLiquidationRewardsManager(
         Types.Storage storage s,
         ILiquidationRewardsManager newLiquidationRewardsManager
@@ -40,14 +41,14 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.LiquidationRewardsManagerUpdated(address(newLiquidationRewardsManager));
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @notice See {IUsdnProtocolImpl}
     function setRebalancer(Types.Storage storage s, IBaseRebalancer newRebalancer) external {
         s._rebalancer = newRebalancer;
 
         emit IUsdnProtocolEvents.RebalancerUpdated(address(newRebalancer));
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @notice See {IUsdnProtocolImpl}
     function setMinLeverage(Types.Storage storage s, uint256 newMinLeverage) external {
         // zero minLeverage
         if (newMinLeverage <= 10 ** Constants.LEVERAGE_DECIMALS) {
@@ -62,7 +63,7 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.MinLeverageUpdated(newMinLeverage);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @notice See {IUsdnProtocolImpl}
     function setMaxLeverage(Types.Storage storage s, uint256 newMaxLeverage) external {
         if (newMaxLeverage <= s._minLeverage) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidMaxLeverage();
@@ -77,7 +78,7 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.MaxLeverageUpdated(newMaxLeverage);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @notice See {IUsdnProtocolImpl}
     function setValidationDeadline(Types.Storage storage s, uint256 newValidationDeadline) external {
         if (newValidationDeadline < 60) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidValidationDeadline();
@@ -91,7 +92,7 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.ValidationDeadlineUpdated(newValidationDeadline);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @notice See {IUsdnProtocolImpl}
     function setLiquidationPenalty(Types.Storage storage s, uint8 newLiquidationPenalty) external {
         if (newLiquidationPenalty > 15) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationPenalty();
@@ -101,7 +102,7 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.LiquidationPenaltyUpdated(newLiquidationPenalty);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @notice See {IUsdnProtocolImpl}
     function setSafetyMarginBps(Types.Storage storage s, uint256 newSafetyMarginBps) external {
         // safetyMarginBps greater than 20%
         if (newSafetyMarginBps > 2000) {
@@ -112,7 +113,7 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.SafetyMarginBpsUpdated(newSafetyMarginBps);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @notice See {IUsdnProtocolImpl}
     function setLiquidationIteration(Types.Storage storage s, uint16 newLiquidationIteration) external {
         if (newLiquidationIteration > Constants.MAX_LIQUIDATION_ITERATION) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationIteration();
@@ -122,7 +123,7 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.LiquidationIterationUpdated(newLiquidationIteration);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @notice See {IUsdnProtocolImpl}
     function setEMAPeriod(Types.Storage storage s, uint128 newEMAPeriod) external {
         if (newEMAPeriod > 90 days) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidEMAPeriod();
@@ -132,7 +133,7 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.EMAPeriodUpdated(newEMAPeriod);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @notice See {IUsdnProtocolImpl}
     function setFundingSF(Types.Storage storage s, uint256 newFundingSF) external {
         if (newFundingSF > 10 ** Constants.FUNDING_SF_DECIMALS) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidFundingSF();
@@ -142,7 +143,7 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.FundingSFUpdated(newFundingSF);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @notice See {IUsdnProtocolImpl}
     function setProtocolFeeBps(Types.Storage storage s, uint16 newProtocolFeeBps) external {
         if (newProtocolFeeBps > Constants.BPS_DIVISOR) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidProtocolFeeBps();
@@ -151,7 +152,7 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.FeeBpsUpdated(newProtocolFeeBps);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @notice See {IUsdnProtocolImpl}
     function setPositionFeeBps(Types.Storage storage s, uint16 newPositionFee) external {
         // `newPositionFee` greater than 20%
         if (newPositionFee > 2000) {
@@ -161,7 +162,7 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.PositionFeeUpdated(newPositionFee);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @notice See {IUsdnProtocolImpl}
     function setVaultFeeBps(Types.Storage storage s, uint16 newVaultFee) external {
         // `newVaultFee` greater than 20%
         if (newVaultFee > 2000) {
@@ -171,7 +172,7 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.VaultFeeUpdated(newVaultFee);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @notice See {IUsdnProtocolImpl}
     function setRebalancerBonusBps(Types.Storage storage s, uint16 newBonus) external {
         // `newBonus` greater than 100%
         if (newBonus > Constants.BPS_DIVISOR) {
@@ -181,7 +182,7 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.RebalancerBonusUpdated(newBonus);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @notice See {IUsdnProtocolImpl}
     function setSdexBurnOnDepositRatio(Types.Storage storage s, uint32 newRatio) external {
         // `newRatio` greater than 5%
         if (newRatio > Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR / 20) {
@@ -193,19 +194,19 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.BurnSdexOnDepositRatioUpdated(newRatio);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @notice See {IUsdnProtocolImpl}
     function setSecurityDepositValue(Types.Storage storage s, uint64 securityDepositValue) external {
         s._securityDepositValue = securityDepositValue;
         emit IUsdnProtocolEvents.SecurityDepositValueUpdated(securityDepositValue);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @notice See {IUsdnProtocolImpl}
     function setFeeThreshold(Types.Storage storage s, uint256 newFeeThreshold) external {
         s._feeThreshold = newFeeThreshold;
         emit IUsdnProtocolEvents.FeeThresholdUpdated(newFeeThreshold);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @notice See {IUsdnProtocolImpl}
     function setFeeCollector(Types.Storage storage s, address newFeeCollector) external {
         if (newFeeCollector == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidFeeCollector();
@@ -214,7 +215,7 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.FeeCollectorUpdated(newFeeCollector);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @notice See {IUsdnProtocolImpl}
     function setExpoImbalanceLimits(
         Types.Storage storage s,
         uint256 newOpenLimitBps,
@@ -254,7 +255,7 @@ library UsdnProtocolSettersLibrary {
         );
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @notice See {IUsdnProtocolImpl}
     function setTargetUsdnPrice(Types.Storage storage s, uint128 newPrice) external {
         if (newPrice > s._usdnRebaseThreshold) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidTargetUsdnPrice();
@@ -267,7 +268,7 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.TargetUsdnPriceUpdated(newPrice);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @notice See {IUsdnProtocolImpl}
     function setUsdnRebaseThreshold(Types.Storage storage s, uint128 newThreshold) external {
         if (newThreshold < s._targetUsdnPrice) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidUsdnRebaseThreshold();
@@ -276,13 +277,13 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.UsdnRebaseThresholdUpdated(newThreshold);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @notice See {IUsdnProtocolImpl}
     function setUsdnRebaseInterval(Types.Storage storage s, uint256 newInterval) external {
         s._usdnRebaseInterval = newInterval;
         emit IUsdnProtocolEvents.UsdnRebaseIntervalUpdated(newInterval);
     }
 
-    /// @notice See {IUsdnProtocol}
+    /// @notice See {IUsdnProtocolImpl}
     function setMinLongPosition(Types.Storage storage s, uint256 newMinLongPosition) external {
         s._minLongPosition = newMinLongPosition;
         emit IUsdnProtocolEvents.MinLongPositionUpdated(newMinLongPosition);

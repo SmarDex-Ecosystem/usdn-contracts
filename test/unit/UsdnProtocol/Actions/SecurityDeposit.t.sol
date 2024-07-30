@@ -4,7 +4,7 @@ pragma solidity ^0.8.25;
 import { ADMIN, USER_1, USER_2 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IUsdnProtocolImpl } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolImpl.sol";
 import { IUsdnProtocolTypes } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
@@ -1293,7 +1293,7 @@ contract DummyContract is IUsdnProtocolTypes {
         bytes calldata priceData,
         PreviousActionsData calldata previousData
     ) external {
-        IUsdnProtocol(usdnProtocolAddr).validateDeposit(payable(address(this)), priceData, previousData);
+        IUsdnProtocolImpl(usdnProtocolAddr).validateDeposit(payable(address(this)), priceData, previousData);
     }
 
     function validateWithdrawal(
@@ -1301,7 +1301,7 @@ contract DummyContract is IUsdnProtocolTypes {
         bytes calldata priceData,
         PreviousActionsData calldata previousData
     ) external {
-        IUsdnProtocol(usdnProtocolAddr).validateWithdrawal(payable(address(this)), priceData, previousData);
+        IUsdnProtocolImpl(usdnProtocolAddr).validateWithdrawal(payable(address(this)), priceData, previousData);
     }
 
     function validateOpenPosition(
@@ -1309,7 +1309,7 @@ contract DummyContract is IUsdnProtocolTypes {
         bytes calldata priceData,
         PreviousActionsData calldata previousData
     ) external {
-        IUsdnProtocol(usdnProtocolAddr).validateOpenPosition(payable(address(this)), priceData, previousData);
+        IUsdnProtocolImpl(usdnProtocolAddr).validateOpenPosition(payable(address(this)), priceData, previousData);
     }
 
     function validateClosePosition(
@@ -1317,6 +1317,6 @@ contract DummyContract is IUsdnProtocolTypes {
         bytes calldata priceData,
         PreviousActionsData calldata previousData
     ) external {
-        IUsdnProtocol(usdnProtocolAddr).validateClosePosition(payable(address(this)), priceData, previousData);
+        IUsdnProtocolImpl(usdnProtocolAddr).validateClosePosition(payable(address(this)), priceData, previousData);
     }
 }

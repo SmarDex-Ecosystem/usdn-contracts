@@ -14,7 +14,7 @@ import { UsdnProtocolConstantsLibrary as Constants } from "../UsdnProtocol/libra
 import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IRebalancer } from "../interfaces/Rebalancer/IRebalancer.sol";
 import { IOwnershipCallback } from "../interfaces/UsdnProtocol/IOwnershipCallback.sol";
-import { IUsdnProtocol } from "../interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IUsdnProtocolImpl } from "../interfaces/UsdnProtocol/IUsdnProtocolImpl.sol";
 import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IUsdnProtocolWithFallback } from "../interfaces/UsdnProtocol/IUsdnProtocolWithFallback.sol";
 
@@ -152,7 +152,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     }
 
     /// @inheritdoc IRebalancer
-    function getUsdnProtocol() external view returns (IUsdnProtocol) {
+    function getUsdnProtocol() external view returns (IUsdnProtocolImpl) {
         return _usdnProtocol;
     }
 

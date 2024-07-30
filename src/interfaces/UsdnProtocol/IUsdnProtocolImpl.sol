@@ -14,10 +14,10 @@ import { IUsdnProtocolStorage } from "./IUsdnProtocolStorage.sol";
 import { IUsdnProtocolVault } from "./IUsdnProtocolVault.sol";
 
 /**
- * @title IUsdnProtocol
+ * @title IUsdnProtocolImpl
  * @notice Interface for the USDN protocol
  */
-interface IUsdnProtocol is
+interface IUsdnProtocolImpl is
     IUsdnProtocolStorage,
     IUsdnProtocolActions,
     IUsdnProtocolVault,
