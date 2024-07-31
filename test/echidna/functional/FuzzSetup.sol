@@ -12,6 +12,9 @@ abstract contract FuzzSetup is Setup {
     /*                             USDN Protocol                                  */
     /* -------------------------------------------------------------------------- */
 
+    /**
+     * @notice PROTCL-12
+     */
     function initializeUsdnProtocol(
         uint256 depositAmountRand,
         uint256 longAmountRand,

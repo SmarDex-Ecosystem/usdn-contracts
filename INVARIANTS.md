@@ -22,6 +22,7 @@ Assuming you have Echidna installed
 | PROTCL-9  | Initiate and validate a deposit action without test          | Passing        |
 | PROTCL-10 | Initiate and validate a withdrawal action without test       | Passing        |
 | PROTCL-11 | Initiate and validate a long action without test             | Passing        |
+| PROTCL-12 | Initiate and validate a long action without test             | Unknown revert |
 
 ## Admin tests
 
