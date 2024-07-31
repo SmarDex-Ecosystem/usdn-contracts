@@ -12,7 +12,7 @@ abstract contract UsdnProtocolCore is UsdnProtocolStorage, IUsdnProtocolCore {
         uint128 longAmount,
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData
-    ) external payable initializer {
+    ) external payable protocolInitializer {
         return Core.initialize(s, depositAmount, longAmount, desiredLiqPrice, currentPriceData);
     }
 
@@ -46,37 +46,5 @@ abstract contract UsdnProtocolCore is UsdnProtocolStorage, IUsdnProtocolCore {
     /// @inheritdoc IUsdnProtocolCore
     function getUserPendingAction(address user) external view returns (PendingAction memory action_) {
         return Core.getUserPendingAction(s, user);
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
-    function removeBlockedPendingAction(address validator, address payable to)
-        external
-        onlyRole(CRITICAL_FUNCTIONS_ROLE)
-    {
-        Core.removeBlockedPendingAction(s, validator, to);
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
-    function removeBlockedPendingActionNoCleanup(address validator, address payable to)
-        external
-        onlyRole(CRITICAL_FUNCTIONS_ROLE)
-    {
-        Core.removeBlockedPendingActionNoCleanup(s, validator, to);
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
-    function removeBlockedPendingAction(uint128 rawIndex, address payable to)
-        external
-        onlyRole(CRITICAL_FUNCTIONS_ROLE)
-    {
-        Core._removeBlockedPendingAction(s, rawIndex, to, true);
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
-    function removeBlockedPendingActionNoCleanup(uint128 rawIndex, address payable to)
-        external
-        onlyRole(CRITICAL_FUNCTIONS_ROLE)
-    {
-        Core._removeBlockedPendingAction(s, rawIndex, to, false);
     }
 }
