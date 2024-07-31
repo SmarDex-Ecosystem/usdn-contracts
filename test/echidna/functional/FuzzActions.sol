@@ -45,18 +45,16 @@ contract FuzzActions is Setup {
         try usdnProtocol.initiateDeposit{ value: ethRand }(
             amountWstETHRand, dest, validator, NO_PERMIT2, abi.encode(priceData), previousActionsData
         ) {
-            uint64 securityDeposit = usdnProtocol.getSecurityDepositValue();
-
             assertEq(
                 address(msg.sender).balance,
-                balancesBefore.senderEth - securityDeposit + lastAction.securityDepositValue,
+                balancesBefore.senderEth - usdnProtocol.getSecurityDepositValue() + lastAction.securityDepositValue,
                 "PROTCL-1"
             );
             assertEq(wsteth.balanceOf(msg.sender), balancesBefore.senderWsteth - amountWstETHRand, "VAULT-1");
             assertLt(sdex.balanceOf(msg.sender), balancesBefore.senderSdex, "VAULT-2");
             assertEq(
                 address(usdnProtocol).balance,
-                balancesBefore.protocolEth + securityDeposit - lastAction.securityDepositValue,
+                balancesBefore.protocolEth + usdnProtocol.getSecurityDepositValue() - lastAction.securityDepositValue,
                 "PROTCL-2"
             );
             assertEq(
