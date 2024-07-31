@@ -38,9 +38,6 @@ contract Setup is ErrorsChecked {
     UsdnProtocolHandler public usdnProtocol;
     Rebalancer public rebalancer;
 
-    bool initialized;
-    bool constant IS_FUZZED = false;
-
     struct BalancesSnapshot {
         uint256 validatorEth;
         uint256 validatorWsteth;
@@ -60,15 +57,6 @@ contract Setup is ErrorsChecked {
     constructor() payable {
         vm.warp(1_709_251_200);
 
-        uint256 INIT_DEPOSIT_AMOUNT = 300 ether;
-        uint256 INIT_LONG_AMOUNT = 300 ether;
-        uint128 INITIAL_PRICE = 2000 ether; // 2000 USDN = 1 ETH
-        uint256 ethAmount = (INIT_DEPOSIT_AMOUNT + INIT_LONG_AMOUNT) * wsteth.stEthPerToken() / 1 ether;
-        vm.deal(address(this), ethAmount);
-
-        (bool result,) = address(wsteth).call{ value: ethAmount }("");
-        require(result, "WstETH mint failed");
-
         wstEthOracleMiddleware = new MockOracleMiddleware();
         destinationsToken[address(wsteth)] = [DEPLOYER, ATTACKER];
 
@@ -87,24 +75,6 @@ contract Setup is ErrorsChecked {
 
         usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));
-
-        if (!IS_FUZZED) {
-            initialized = true;
-
-            wsteth.approve(address(usdnProtocol), INIT_DEPOSIT_AMOUNT + INIT_LONG_AMOUNT);
-
-            uint256 _desiredLiqPrice = wstEthOracleMiddleware.parseAndValidatePrice(
-                "", uint128(block.timestamp), IUsdnProtocolTypes.ProtocolAction.Initialize, abi.encode(INITIAL_PRICE)
-            ).price / 2;
-
-            // leverage approx 2x
-            usdnProtocol.initialize(
-                uint128(INIT_DEPOSIT_AMOUNT),
-                uint128(INIT_LONG_AMOUNT),
-                uint128(_desiredLiqPrice),
-                abi.encode(INITIAL_PRICE)
-            );
-        }
     }
 
     function getBalances(address validator, address to) internal view returns (BalancesSnapshot memory) {

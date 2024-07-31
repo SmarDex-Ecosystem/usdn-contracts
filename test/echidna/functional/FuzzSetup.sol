@@ -12,27 +12,29 @@ abstract contract FuzzSetup is Setup {
     /*                             USDN Protocol                                  */
     /* -------------------------------------------------------------------------- */
 
-    function initializeUsdn(
+    function initializeUsdnProtocol(
         uint256 depositAmountRand,
         uint256 longAmountRand,
         uint256 priceRand,
         uint256 desiredLiqPriceRand
     ) external {
-        if (!initialized) {
-            vm.prank(msg.sender);
-            wsteth.approve(address(usdnProtocol), depositAmountRand + longAmountRand);
+        uint256 ethAmount = (depositAmountRand + longAmountRand) * wsteth.stEthPerToken() / 1 ether;
+        vm.deal(address(msg.sender), ethAmount);
+        vm.prank(msg.sender);
+        address(wsteth).call{ value: ethAmount }("");
 
-            vm.prank(msg.sender);
-            try usdnProtocol.initialize(
-                uint128(depositAmountRand), uint128(longAmountRand), uint128(desiredLiqPriceRand), abi.encode(priceRand)
-            ) {
-                uint256 usdnNoFees = depositAmountRand * priceRand / 10 ** 18; // todo: add fees
-                assert(address(usdnProtocol).balance == 0);
-                assert(usdn.balanceOf(msg.sender) >= usdnNoFees - usdnNoFees / 10 ** 20); // imperfect estimation
-                assert(wsteth.balanceOf(address(usdnProtocol)) == depositAmountRand + longAmountRand);
-            } catch (bytes memory err) {
-                _checkErrors(err, VALIDATE_OPEN_ERRORS, initialized);
-            }
+        vm.prank(msg.sender);
+        wsteth.approve(address(usdnProtocol), depositAmountRand + longAmountRand);
+        vm.prank(msg.sender);
+        try usdnProtocol.initialize(
+            uint128(depositAmountRand), uint128(longAmountRand), uint128(desiredLiqPriceRand), abi.encode(priceRand)
+        ) {
+            uint256 usdnNoFees = depositAmountRand * priceRand / 10 ** 18; // todo: add fees
+            assert(address(usdnProtocol).balance == 0);
+            assert(usdn.balanceOf(msg.sender) >= usdnNoFees - usdnNoFees / 10 ** 20); // imperfect estimation
+            assert(wsteth.balanceOf(address(usdnProtocol)) == depositAmountRand + longAmountRand);
+        } catch (bytes memory err) {
+            _checkErrors(err, VALIDATE_OPEN_ERRORS);
         }
     }
 }

@@ -31,13 +31,19 @@ contract FuzzingSuiteTest is Test {
 
     function setUp() public {
         echidna = new FuzzingSuite();
+
         DEPLOYER = echidna.DEPLOYER();
         ATTACKER = echidna.ATTACKER();
-
         usdnProtocol = echidna.usdnProtocol();
         wstEthOracleMiddleware = echidna.wstEthOracleMiddleware();
         wsteth = echidna.wsteth();
         usdn = echidna.usdn();
+
+        vm.prank(DEPLOYER);
+        echidna.initializeUsdnProtocol(300 ether, 300 ether, 2000 ether, 1000 ether);
+        assertEq(address(usdnProtocol).balance, 0, "protocol balance");
+        // assertEq(usdn.balanceOf(DEPLOYER), usdnBalanceBeforeInit, "usdn balance");
+        assertEq(wsteth.balanceOf(address(usdnProtocol)), 600 ether, "wstETH balance");
 
         vm.prank(address(usdnProtocol));
         usdn.mintShares(DEPLOYER, usdnShares);
@@ -367,11 +373,12 @@ contract FuzzingSuiteTest is Test {
     function test_canFullWithdrawal() public {
         assertGt(usdn.balanceOf(DEPLOYER), 0, "usdn balance before withdrawal");
         uint256 balanceProtocol = address(usdnProtocol).balance;
+        uint256 usdnSharesBefore = usdn.sharesOf(DEPLOYER);
 
         vm.prank(DEPLOYER);
         echidna.fullWithdrawal(usdnShares, 10 ether, 0, 0, 1000 ether);
 
-        assertEq(usdn.balanceOf(DEPLOYER), 0, "usdn balance after withdrawal");
+        assertEq(usdn.sharesOf(DEPLOYER), usdnSharesBefore - usdnShares, "usdn shares balance after withdrawal");
         assertEq(address(usdnProtocol).balance, balanceProtocol, "protocol balance");
     }
 
@@ -384,16 +391,6 @@ contract FuzzingSuiteTest is Test {
 
         assertEq(address(usdnProtocol).balance, balanceBeforeProtocol, "protocol balance");
         assertEq(wsteth.balanceOf(DEPLOYER), balanceWstEthBefore, "wstETH balance");
-    }
-
-    function test_canInitialize() public {
-        uint256 usdnBalanceBefore = usdn.balanceOf(DEPLOYER);
-        vm.prank(DEPLOYER);
-        echidna.initializeUsdn(300 ether, 300 ether, 2000 ether, 1000 ether);
-
-        assertEq(address(usdnProtocol).balance, 0, "protocol balance");
-        assertEq(usdn.balanceOf(DEPLOYER), usdnBalanceBefore, "usdn balance");
-        assertEq(wsteth.balanceOf(address(usdnProtocol)), 600 ether, "wstETH balance");
     }
 
     function _validateCloseAndAssert(
