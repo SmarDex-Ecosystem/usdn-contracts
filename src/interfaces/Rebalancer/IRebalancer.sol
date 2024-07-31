@@ -4,7 +4,7 @@ pragma solidity >=0.8.0;
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { IUsdnProtocolImpl } from "../UsdnProtocol/IUsdnProtocolImpl.sol";
+import { IUsdnProtocol } from "../UsdnProtocol/IUsdnProtocol.sol";
 import { IBaseRebalancer } from "./IBaseRebalancer.sol";
 import { IRebalancerErrors } from "./IRebalancerErrors.sol";
 import { IRebalancerEvents } from "./IRebalancerEvents.sol";
@@ -28,7 +28,7 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
      * @notice Returns the address of the USDN protocol
      * @return The address of the USDN protocol
      */
-    function getUsdnProtocol() external view returns (IUsdnProtocolImpl);
+    function getUsdnProtocol() external view returns (IUsdnProtocol);
 
     /**
      * @notice Returns the version of the current position (0 means no position open)

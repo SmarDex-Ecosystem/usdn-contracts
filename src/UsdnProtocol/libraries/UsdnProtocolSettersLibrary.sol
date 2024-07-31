@@ -7,7 +7,6 @@ import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 import { IBaseOracleMiddleware } from "../../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { ILiquidationRewardsManager } from "../../interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IBaseRebalancer } from "../../interfaces/Rebalancer/IBaseRebalancer.sol";
-
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolImpl } from "../../interfaces/UsdnProtocol/IUsdnProtocolImpl.sol";
