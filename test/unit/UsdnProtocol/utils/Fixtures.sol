@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
+import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
+
 import {
     ADMIN,
     CRITICAL_FUNCTIONS_ADMIN,
@@ -18,16 +20,16 @@ import { WstETH } from "../../../utils/WstEth.sol";
 import { MockChainlinkOnChain } from "../../Middlewares/utils/MockChainlinkOnChain.sol";
 import { RebalancerHandler } from "../../Rebalancer/utils/Handler.sol";
 import { UsdnProtocolHandler } from "./Handler.sol";
+import { MockOracleMiddleware } from "./MockOracleMiddleware.sol";
 
 import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
-import { UsdnProtocolSetters } from "../../../../src/UsdnProtocol/UsdnProtocolSetters.sol";
+import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { Permit2TokenBitfield } from "../../../../src/libraries/Permit2TokenBitfield.sol";
 import { FeeCollector } from "../../../../src/utils/FeeCollector.sol";
-import { MockOracleMiddleware } from "./MockOracleMiddleware.sol";
 
 /**
  * @title UsdnProtocolBaseFixture
@@ -138,9 +140,13 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             });
         }
 
-        protocol = IUsdnProtocolHandler(
-            address(
-                new UsdnProtocolHandler(
+        UsdnProtocolHandler test = new UsdnProtocolHandler();
+        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
+        address proxy = UnsafeUpgrades.deployUUPSProxy(
+            address(test),
+            abi.encodeCall(
+                UsdnProtocolHandler.initializeStorageHandler,
+                (
                     usdn,
                     sdex,
                     wstETH,
@@ -148,12 +154,13 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
                     liquidationRewardsManager,
                     _tickSpacing,
                     address(feeCollector),
-                    roles
+                    roles,
+                    protocolFallback
                 )
             )
         );
-        UsdnProtocolSetters protocolSetters = new UsdnProtocolSetters();
-        protocol.setSettersContract(address(protocolSetters));
+        protocol = IUsdnProtocolHandler(proxy);
+
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);

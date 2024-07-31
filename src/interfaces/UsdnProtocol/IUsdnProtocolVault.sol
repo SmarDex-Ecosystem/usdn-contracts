@@ -26,31 +26,6 @@ interface IUsdnProtocolVault {
     function usdnPrice(uint128 currentPrice) external view returns (uint256);
 
     /**
-     * @notice Calculate an estimation of assets received when withdrawing
-     * @param usdnShares The amount of USDN shares
-     * @param price The price of the asset
-     * @param timestamp The timestamp of the operation
-     * @return assetExpected_ The expected amount of assets to be received
-     */
-    function previewWithdraw(uint256 usdnShares, uint256 price, uint128 timestamp)
-        external
-        view
-        returns (uint256 assetExpected_);
-
-    /**
-     * @notice Calculate an estimation of USDN tokens to be minted and SDEX tokens to be burned for a deposit
-     * @param amount The amount of assets of the pending deposit
-     * @param price The price of the asset at the time of the last update
-     * @param timestamp The timestamp of the operation
-     * @return usdnSharesExpected_ The amount of USDN shares to be minted
-     * @return sdexToBurn_ The amount of SDEX tokens to be burned
-     */
-    function previewDeposit(uint256 amount, uint128 price, uint128 timestamp)
-        external
-        view
-        returns (uint256 usdnSharesExpected_, uint256 sdexToBurn_);
-
-    /**
      * @notice Get the predicted value of the vault balance for the given asset price and timestamp
      * @dev The effects of the funding and any profit or loss of the long positions since the last contract state
      * update is taken into account, as well as the fees. If the provided timestamp is older than the last state
