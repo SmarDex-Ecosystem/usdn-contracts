@@ -29,9 +29,19 @@ contract TestUsdnPermit is UsdnTokenFixture {
      * @custom:then The domain separator is equal to the expected value
      */
     function test_domainSeparator() public view {
+        bytes32 typeHash =
+            keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
         assertEq(
             usdn.DOMAIN_SEPARATOR(),
-            keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)")
+            keccak256(
+                abi.encode(
+                    typeHash,
+                    keccak256(bytes("Ultimate Synthetic Delta Neutral")),
+                    keccak256(bytes("1")),
+                    block.chainid,
+                    address(usdn)
+                )
+            )
         );
     }
 
