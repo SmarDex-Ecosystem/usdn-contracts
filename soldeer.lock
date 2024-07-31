@@ -40,3 +40,15 @@ name = "solady"
 version = "0.0.228"
 source = "https://soldeer-revisions.s3.amazonaws.com/solady/0_0_228_28-07-2024_08:37:28_solady.zip"
 checksum = "fa66187898039b91958e962e49db3e31ca920e48599c62eec43cf03156335210"
+
+[[dependencies]]
+name = "@openzeppelin-contracts-upgradeable"
+version = "5.0.2"
+source = "https://soldeer-revisions.s3.amazonaws.com/@openzeppelin-contracts-upgradeable/5_0_2_14-03-2024_06:12:07_contracts-upgradeable.zip"
+checksum = "fb3f8db8541fc01636f91b0e7d9dd6f450f1bf7e2b4a17e96caf6e779ace8f5b"
+
+[[dependencies]]
+name = "openzeppelin-foundry-upgrades"
+version = "0.3.1"
+source = "https://soldeer-revisions.s3.amazonaws.com/openzeppelin-foundry-upgrades/0_3_1_25-06-2024_18:12:33_openzeppelin-foundry-upgrades.zip"
+checksum = "16a43c67b7c62e4a638b669b35f7b19c98a37278811fe910750b62b6e6fdffa7"

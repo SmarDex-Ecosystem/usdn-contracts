@@ -5,3 +5,5 @@
 @redstone-finance-evm-connector-0.6.1=dependencies/@redstone-finance-evm-connector-0.6.1
 @solady-0.0.228=dependencies/solady-0.0.228
 @chainlink-1.2.0=dependencies/@chainlink-1.2.0
+@openzeppelin-contracts-upgradeable-5.0.2=dependencies/@openzeppelin-contracts-upgradeable-5.0.2
+@openzeppelin-foundry-upgrades-0.3.1=dependencies/openzeppelin-foundry-upgrades-0.3.1
