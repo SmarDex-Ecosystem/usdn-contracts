@@ -12,9 +12,9 @@ contract FuzzActions is Setup {
 
     /// @custom:property PROTCL-1 When initializing an action, the sender pay the security deposit
     /// @custom:property PROTCL-2 When initializing an action, the protocol receive the security deposit
-    /// @custom:property VAULT-1 When an user initialize a deposit, msg.sender pay the amount of wstETH defined
-    /// @custom:property VAULT-2 When an user initialize a deposit, msg.sender pay some SDEX
-    /// @custom:property VAULT-3 When an user initialize a deposit, protocol receive the amount of wstETH defined
+    /// @custom:property PROTCL-3 When initializing an action, the sender pay the amount of wstETH defined
+    /// @custom:property PROTCL-4 When initializing an action, the protocol receive the amount of wstETH defined
+    /// @custom:property VAULT-1 When an user initialize a deposit, msg.sender pay some SDEX
     function initiateDeposit(
         uint128 amountWstETHRand,
         uint128 amountSdexRand,
@@ -45,23 +45,9 @@ contract FuzzActions is Setup {
         try usdnProtocol.initiateDeposit{ value: ethRand }(
             amountWstETHRand, dest, validator, NO_PERMIT2, abi.encode(priceData), previousActionsData
         ) {
-            assertEq(
-                address(msg.sender).balance,
-                balancesBefore.senderEth - usdnProtocol.getSecurityDepositValue() + lastAction.securityDepositValue,
-                "PROTCL-1"
-            );
-            assertEq(wsteth.balanceOf(msg.sender), balancesBefore.senderWsteth - amountWstETHRand, "VAULT-1");
-            assertLt(sdex.balanceOf(msg.sender), balancesBefore.senderSdex, "VAULT-2");
-            assertEq(
-                address(usdnProtocol).balance,
-                balancesBefore.protocolEth + usdnProtocol.getSecurityDepositValue() - lastAction.securityDepositValue,
-                "PROTCL-2"
-            );
-            assertEq(
-                wsteth.balanceOf(address(usdnProtocol)),
-                balancesBefore.protocolWsteth + amountWstETHRand - wstethPendingActions,
-                "VAULT-3"
-            );
+            _checkBalancesETH(balancesBefore, lastAction);
+            _checkBalancesWstETH(balancesBefore, amountWstETHRand, wstethPendingActions);
+            assertLt(sdex.balanceOf(msg.sender), balancesBefore.senderSdex, "VAULT-1");
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_DEPOSIT_ERRORS);
         }
@@ -69,9 +55,9 @@ contract FuzzActions is Setup {
 
     /// @custom:property PROTCL-1 When initializing an action, the sender pay the security deposit
     /// @custom:property PROTCL-2 When initializing an action, the protocol receive the security deposit
-    /// @custom:property VAULT-4 When an user initialize a withdraw, msg.sender pay the amount of usdn shares defined
-    /// @custom:property VAULT-5 When an user initialize a withdraw, protocol receive the amount of usdn shares defined
-    /// @custom:property VAULT-6 An user can't initialize a withdraw with zero shares
+    /// @custom:property VAULT-2 When an user initialize a withdraw, msg.sender pay the amount of usdn shares defined
+    /// @custom:property VAULT-3 When an user initialize a withdraw, protocol receive the amount of usdn shares defined
+    /// @custom:property VAULT-4 An user can't initialize a withdraw with zero shares
     function initiateWithdrawal(
         uint152 usdnShares,
         uint256 ethRand,
@@ -101,19 +87,11 @@ contract FuzzActions is Setup {
         try usdnProtocol.initiateWithdrawal{ value: ethRand }(
             usdnShares, dest, validator, abi.encode(priceData), previousActionsData
         ) {
+            _checkBalancesETH(balancesBefore, lastAction);
+
             assertGt(usdnShares, 0, "VAULT-6");
-            assertEq(
-                address(msg.sender).balance,
-                balancesBefore.senderEth - usdnProtocol.getSecurityDepositValue(),
-                "PROTCL-1"
-            );
             assertEq(usdn.sharesOf(msg.sender), balancesBefore.senderUsdnShares - usdnShares, "VAULT-4");
 
-            assertEq(
-                address(usdnProtocol).balance,
-                balancesBefore.protocolEth + usdnProtocol.getSecurityDepositValue() - lastAction.securityDepositValue,
-                "PROTCL-2"
-            );
             assertEq(
                 usdn.sharesOf(address(usdnProtocol)),
                 uint256(int256(balancesBefore.protocolUsdnShares) + int152(usdnShares) + usdnPendingActions),
@@ -124,6 +102,10 @@ contract FuzzActions is Setup {
         }
     }
 
+    /// @custom:property PROTCL-1 When initializing an action, the sender pay the security deposit
+    /// @custom:property PROTCL-2 When initializing an action, the protocol receive the security deposit
+    /// @custom:property PROTCL-3 When initializing an action, the sender pay the amount of wstETH defined
+    /// @custom:property PROTCL-4 When initializing an action, the protocol receive the amount of wstETH defined
     function initiateOpenPosition(
         uint128 amountRand,
         uint128 liquidationPriceRand,
@@ -133,11 +115,11 @@ contract FuzzActions is Setup {
         uint256 priceRand
     ) public {
         wsteth.mintAndApprove(msg.sender, amountRand, address(usdnProtocol), amountRand);
-        uint256 destRandBounded = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
         vm.deal(msg.sender, ethRand);
 
+        destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
+        address dest = destinationsToken[address(wsteth)][destRand];
         validatorRand = bound(validatorRand, 0, validators.length - 1);
-        address dest = destinationsToken[address(wsteth)][destRandBounded];
         address validator = validators[validatorRand];
         priceRand = bound(priceRand, 0, type(uint128).max);
 
@@ -161,20 +143,8 @@ contract FuzzActions is Setup {
         ) returns (bool, IUsdnProtocolTypes.PositionId memory posId) {
             posIds.push(posId);
 
-            assert(
-                address(usdnProtocol).balance
-                    == balancesBefore.protocolEth + usdnProtocol.getSecurityDepositValue() - lastAction.securityDepositValue
-            );
-            assert(
-                address(msg.sender).balance
-                    == balancesBefore.senderEth - usdnProtocol.getSecurityDepositValue() + lastAction.securityDepositValue
-            );
-
-            assert(
-                wsteth.balanceOf(address(usdnProtocol))
-                    == balancesBefore.protocolWsteth + amountRand - wstethPendingActions
-            );
-            assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth - amountRand);
+            _checkBalancesETH(balancesBefore, lastAction);
+            _checkBalancesWstETH(balancesBefore, amountRand, wstethPendingActions);
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_OPEN_ERRORS);
         }
@@ -480,5 +450,33 @@ contract FuzzActions is Setup {
         } else {
             return (usdn_, wsteth_);
         }
+    }
+
+    function _checkBalancesETH(
+        BalancesSnapshot memory balancesBefore,
+        IUsdnProtocolTypes.PendingAction memory lastAction
+    ) internal view {
+        assertEq(
+            address(msg.sender).balance,
+            balancesBefore.senderEth - usdnProtocol.getSecurityDepositValue() + lastAction.securityDepositValue,
+            "PROTCL-1"
+        );
+        assertEq(
+            address(usdnProtocol).balance,
+            balancesBefore.protocolEth + usdnProtocol.getSecurityDepositValue() - lastAction.securityDepositValue,
+            "PROTCL-2"
+        );
+    }
+
+    function _checkBalancesWstETH(BalancesSnapshot memory balancesBefore, uint256 amount, uint256 wstethPendingActions)
+        internal
+        view
+    {
+        assertEq(wsteth.balanceOf(msg.sender), balancesBefore.senderWsteth - amount, "PROTCL-3");
+        assertEq(
+            wsteth.balanceOf(address(usdnProtocol)),
+            balancesBefore.protocolWsteth + amount - wstethPendingActions,
+            "PROTCL-4"
+        );
     }
 }

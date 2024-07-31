@@ -11,24 +11,29 @@ Assuming you have Echidna installed
 TODO lastAction doc
 
 
-| Invariant name | Description                                                            | Status |
-|----------------|------------------------------------------------------------------------|--------|
-| PROTCL-1       | When initializing an action, the sender pay the security deposit       | x      |
-| PROTCL-2       | When initializing an action, the protocol receive the security deposit | x      |
+| Invariant name | Description                                                                    | Status |
+|----------------|--------------------------------------------------------------------------------|--------|
+| PROTCL-1       | When initializing an action, the sender pay the security deposit               | x      |
+| PROTCL-2       | When initializing an action, the protocol receive the security deposit         | x      |
+| PROTCL-3       | When initializing an action, the sender pay the amount of wstETH defined       | x      |
+| PROTCL-4       | When initializing an action, the protocol receive the amount of wstETH defined | x      |
 
 
 ## Vault invariants
 
 | Invariant name | Description                                                                            | Status |
 |----------------|----------------------------------------------------------------------------------------|--------|
-| VAULT-1        | When an user initialize a deposit, msg.sender pay the amount of wstETH defined         | x      |
-| VAULT-2        | When an user initialize a deposit, msg.sender pay some SDEX                            | x      |
-| VAULT-3        | When an user initialize a deposit, protocol receive the amount of wstETH defined       | x      |
-| VAULT-4        | When an user initialize a withdraw, msg.sender pay the amount of usdn shares defined   | x      |
-| VAULT-5        | When an user initialize a withdraw, protocol receive the amount of usdn shares defined | x      |
-| VAULT-6        | An user can't initialize a withdraw with zero shares                                   | x      |
+| VAULT-1        | When an user initialize a deposit, msg.sender pay some SDEX                            | x      |
+| VAULT-2        | When an user initialize a withdraw, msg.sender pay the amount of usdn shares defined   | x      |
+| VAULT-3        | When an user initialize a withdraw, protocol receive the amount of usdn shares defined | x      |
+| VAULT-4        | An user can't initialize a withdraw with zero shares                                   | x      |
+
+## Long invariants
 
 
+| Invariant name | Description | Status |
+|----------------|-------------|--------|
+| LONG-1         |             | x      |
 
 
 ## What to do in case of failure?
