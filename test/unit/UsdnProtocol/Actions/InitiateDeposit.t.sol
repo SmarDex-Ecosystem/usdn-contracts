@@ -84,7 +84,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         vm.expectEmit(address(sdex));
         emit Transfer(address(this), deadAddress, expectedSdexBurnAmount); // SDEX transfer
         vm.expectEmit();
-        emit InitiatedDeposit(to, validator, depositAmount, block.timestamp);
+        emit InitiatedDeposit(to, validator, depositAmount, block.timestamp, expectedSdexBurnAmount);
         bool success = protocol.initiateDeposit(
             depositAmount, to, payable(validator), NO_PERMIT2, currentPrice, EMPTY_PREVIOUS_DATA
         );
