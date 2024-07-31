@@ -67,6 +67,11 @@ contract FuzzActions is Setup {
         }
     }
 
+    /// @custom:property PROTCL-1 When initializing an action, the sender pay the security deposit
+    /// @custom:property PROTCL-2 When initializing an action, the protocol receive the security deposit
+    /// @custom:property VAULT-4 When an user initialize a withdraw, msg.sender pay the amount of usdn shares defined
+    /// @custom:property VAULT-5 When an user initialize a withdraw, protocol receive the amount of usdn shares defined
+    /// @custom:property VAULT-6 An user can't initialize a withdraw with zero shares
     function initiateWithdrawal(
         uint152 usdnShares,
         uint256 ethRand,
@@ -96,18 +101,23 @@ contract FuzzActions is Setup {
         try usdnProtocol.initiateWithdrawal{ value: ethRand }(
             usdnShares, dest, validator, abi.encode(priceData), previousActionsData
         ) {
-            uint64 securityDeposit = usdnProtocol.getSecurityDepositValue();
-
-            assert(address(msg.sender).balance == balancesBefore.senderEth - securityDeposit);
-            assert(usdn.sharesOf(msg.sender) == balancesBefore.senderUsdnShares - usdnShares);
-
-            assert(
-                address(usdnProtocol).balance
-                    == balancesBefore.protocolEth + securityDeposit - lastAction.securityDepositValue
+            assertGt(usdnShares, 0, "VAULT-6");
+            assertEq(
+                address(msg.sender).balance,
+                balancesBefore.senderEth - usdnProtocol.getSecurityDepositValue(),
+                "PROTCL-1"
             );
-            assert(
-                usdn.sharesOf(address(usdnProtocol))
-                    == uint256(int256(balancesBefore.protocolUsdnShares) + int152(usdnShares) + usdnPendingActions)
+            assertEq(usdn.sharesOf(msg.sender), balancesBefore.senderUsdnShares - usdnShares, "VAULT-4");
+
+            assertEq(
+                address(usdnProtocol).balance,
+                balancesBefore.protocolEth + usdnProtocol.getSecurityDepositValue() - lastAction.securityDepositValue,
+                "PROTCL-2"
+            );
+            assertEq(
+                usdn.sharesOf(address(usdnProtocol)),
+                uint256(int256(balancesBefore.protocolUsdnShares) + int152(usdnShares) + usdnPendingActions),
+                "VAULT-5"
             );
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_WITHDRAWAL_ERRORS);
