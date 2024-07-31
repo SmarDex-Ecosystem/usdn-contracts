@@ -1,32 +1,30 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.25;
 
-import { AccessControlDefaultAdminRules } from
-    "@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol";
+import { AccessControlDefaultAdminRulesUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import { IBaseLiquidationRewardsManager } from "../interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
+import { IUsdnProtocolFallback } from "../interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
+import { IUsdnProtocolImpl } from "../interfaces/UsdnProtocol/IUsdnProtocolImpl.sol";
 import { UsdnProtocolActions } from "./UsdnProtocolActions.sol";
 import { UsdnProtocolCore } from "./UsdnProtocolCore.sol";
 import { UsdnProtocolLong } from "./UsdnProtocolLong.sol";
 import { UsdnProtocolVault } from "./UsdnProtocolVault.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./libraries/UsdnProtocolConstantsLibrary.sol";
 
-contract UsdnProtocol is UsdnProtocolLong, UsdnProtocolVault, UsdnProtocolCore, UsdnProtocolActions {
-    /**
-     * @notice Constructor
-     * @param usdn The USDN ERC20 contract
-     * @param sdex The SDEX ERC20 contract
-     * @param asset The asset ERC20 contract (wstETH)
-     * @param oracleMiddleware The oracle middleware contract
-     * @param liquidationRewardsManager The liquidation rewards manager contract
-     * @param tickSpacing The positions tick spacing
-     * @param feeCollector The address of the fee collector
-     * @param roles The protocol roles
-     */
-    constructor(
+contract UsdnProtocolImpl is
+    IUsdnProtocolImpl,
+    UsdnProtocolLong,
+    UsdnProtocolVault,
+    UsdnProtocolCore,
+    UsdnProtocolActions
+{
+    /// @inheritdoc IUsdnProtocolImpl
+    function initializeStorage(
         IUsdn usdn,
         IERC20Metadata sdex,
         IERC20Metadata asset,
@@ -34,8 +32,11 @@ contract UsdnProtocol is UsdnProtocolLong, UsdnProtocolVault, UsdnProtocolCore, 
         IBaseLiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector,
-        Roles memory roles
-    ) AccessControlDefaultAdminRules(0, msg.sender) {
+        Roles memory roles,
+        IUsdnProtocolFallback protocolFallback
+    ) public initializer {
+        __AccessControlDefaultAdminRules_init(0, msg.sender);
+        __initializeReentrancyGuard_init();
         // roles
         _setRoleAdmin(SET_EXTERNAL_ROLE, ADMIN_SET_EXTERNAL_ROLE);
         _setRoleAdmin(CRITICAL_FUNCTIONS_ROLE, ADMIN_CRITICAL_FUNCTIONS_ROLE);
@@ -105,16 +106,17 @@ contract UsdnProtocol is UsdnProtocolLong, UsdnProtocolVault, UsdnProtocolCore, 
         s._targetUsdnPrice = uint128(10_087 * 10 ** (priceFeedDecimals - 4)); // $1.0087
         s._usdnRebaseThreshold = uint128(1009 * 10 ** (priceFeedDecimals - 3)); // $1.009
         s._minLongPosition = 2 * 10 ** assetDecimals;
+        s._protocolFallbackAddr = address(protocolFallback);
     }
 
     /**
-     * @notice Delegates the call to the setters contract
-     * @param implementation The address of the setters contract
+     * @notice Delegates the call to the fallback contract
+     * @param protocolFallbackAddr The address of the fallback contract
      */
-    function _delegate(address implementation) internal {
+    function _delegate(address protocolFallbackAddr) internal {
         assembly {
             calldatacopy(0, 0, calldatasize())
-            let result := delegatecall(gas(), implementation, 0, calldatasize(), 0, 0)
+            let result := delegatecall(gas(), protocolFallbackAddr, 0, calldatasize(), 0, 0)
             returndatacopy(0, 0, returndatasize())
             switch result
             case 0 { revert(0, returndatasize()) }
@@ -122,12 +124,7 @@ contract UsdnProtocol is UsdnProtocolLong, UsdnProtocolVault, UsdnProtocolCore, 
         }
     }
 
-    // TO DO : remove this function when the proxy is implemented
-    function setSettersContract(address newUtilsContract) external {
-        s._settersContract = newUtilsContract;
-    }
-
     fallback() external {
-        _delegate(s._settersContract);
+        _delegate(s._protocolFallbackAddr);
     }
 }

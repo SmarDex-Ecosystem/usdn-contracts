@@ -5,7 +5,6 @@ import { UsdnProtocolActionsVaultLibrary as ActionsVault } from
     "../../src/UsdnProtocol/libraries/UsdnProtocolActionsVaultLibrary.sol";
 import { PriceInfo } from "../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocol } from "../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import { IUsdnProtocol } from "../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { HugeUint } from "../../src/libraries/HugeUint.sol";
 import { UsdnProtocolHandler } from "../unit/UsdnProtocol/utils/Handler.sol";
 
@@ -22,7 +21,7 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
 
     function getQueueItem(uint128 rawIndex) external view returns (PendingAction memory);
 
-    function testLiquidate(bytes calldata currentPriceData, uint16 iterations)
+    function mockLiquidate(bytes calldata currentPriceData, uint16 iterations)
         external
         payable
         returns (uint256 liquidatedPositions_);

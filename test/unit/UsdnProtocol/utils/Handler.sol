@@ -5,9 +5,10 @@ import { Test } from "forge-std/Test.sol";
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
-import { UsdnProtocol } from "../../../../src/UsdnProtocol/UsdnProtocol.sol";
+import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from
     "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from
@@ -21,6 +22,7 @@ import { IBaseOracleMiddleware } from "../../../../src/interfaces/OracleMiddlewa
 import { ILiquidationRewardsManager } from "../../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../../../../src/interfaces/Usdn/IUsdn.sol";
+import { IUsdnProtocolFallback } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
 import { DoubleEndedQueue } from "../../../../src/libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
@@ -30,7 +32,7 @@ import { SignedMath } from "../../../../src/libraries/SignedMath.sol";
  * @title UsdnProtocolHandler
  * @dev Wrapper to aid in testing the protocol
  */
-contract UsdnProtocolHandler is UsdnProtocol, Test {
+contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
     using LibBitmap for LibBitmap.Bitmap;
     using SafeCast for int256;
@@ -39,7 +41,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
 
     Storage _tempStorage;
 
-    constructor(
+    function initializeStorageHandler(
         IUsdn usdn,
         IERC20Metadata sdex,
         IERC20Metadata asset,
@@ -47,8 +49,21 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         ILiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector,
-        Roles memory roles
-    ) UsdnProtocol(usdn, sdex, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector, roles) { }
+        Roles memory roles,
+        IUsdnProtocolFallback protocolFallback
+    ) public initializer {
+        initializeStorage(
+            usdn,
+            sdex,
+            asset,
+            oracleMiddleware,
+            liquidationRewardsManager,
+            tickSpacing,
+            feeCollector,
+            roles,
+            protocolFallback
+        );
+    }
 
     /// @dev Useful to completely disable funding, which is normally initialized with a positive bias value
     function resetEMA() external {
@@ -76,7 +91,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
      * update. Call `_waitBeforeLiquidation()` before calling this function to make sure enough time has passed.
      * Do not use this function in contexts where ether needs to be refunded.
      */
-    function testLiquidate(bytes calldata currentPriceData, uint16 iterations)
+    function mockLiquidate(bytes calldata currentPriceData, uint16 iterations)
         external
         payable
         returns (uint256 liquidatedPositions_)
