@@ -1,16 +1,27 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
+import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
+
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
-import { UsdnProtocol } from "../../../../src/UsdnProtocol/UsdnProtocol.sol";
+import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
+import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
+import { IBaseLiquidationRewardsManager } from
+    "../../../../src/interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
+import { IBaseOracleMiddleware } from "../../../../src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
+import { IUsdn } from "../../../../src/interfaces/Usdn/IUsdn.sol";
 
 /**
  * @custom:feature The constructor of the protocol's storage
  * @custom:background Given a protocol instance that was initialized with default params
  */
 contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
+    UsdnProtocolImpl implementation;
+    UsdnProtocolFallback protocolFallback;
+
     Roles roles = Roles({
         setExternalAdmin: address(0),
         criticalFunctionsAdmin: address(0),
@@ -21,6 +32,8 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
 
     function setUp() public {
         _setUp(DEFAULT_PARAMS);
+        implementation = new UsdnProtocolImpl();
+        protocolFallback = new UsdnProtocolFallback();
     }
 
     /**
@@ -31,7 +44,7 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_constructorUSDNNonZeroTotalSupply() public {
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidUsdn.selector, address(usdn)));
-        new UsdnProtocol(usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(1), roles);
+        deployProtocol(usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(1), roles);
     }
 
     /**
@@ -44,7 +57,7 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
         usdn = new Usdn(address(0), address(0));
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidFeeCollector.selector));
-        new UsdnProtocol(usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(0), roles);
+        deployProtocol(usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(0), roles);
     }
 
     /**
@@ -60,7 +73,7 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
         wstETH.setDecimals(wrongDecimals);
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidAssetDecimals.selector, wrongDecimals));
-        new UsdnProtocol(usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(1), roles);
+        deployProtocol(usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(1), roles);
     }
 
     /**
@@ -75,7 +88,7 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
         sdex.setDecimals(protocol.TOKENS_DECIMALS() - 1);
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidTokenDecimals.selector));
-        new UsdnProtocol(usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(1), roles);
+        deployProtocol(usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(1), roles);
     }
 
     /**
@@ -91,5 +104,34 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
         assertEq(protocol.getUsdnMinDivisor(), usdn.MIN_DIVISOR());
         assertEq(protocol.getMiddlewareValidationDelay(), oracleMiddleware.getValidationDelay());
         assertEq(protocol.getLastPrice(), DEFAULT_PARAMS.initialPrice);
+    }
+
+    function deployProtocol(
+        IUsdn usdn,
+        IERC20Metadata sdex,
+        IERC20Metadata asset,
+        IBaseOracleMiddleware oracleMiddleware,
+        IBaseLiquidationRewardsManager liquidationRewardsManager,
+        int24 tickSpacing,
+        address feeCollector,
+        Roles memory role
+    ) public {
+        UnsafeUpgrades.deployUUPSProxy(
+            address(implementation),
+            abi.encodeCall(
+                UsdnProtocolImpl.initializeStorage,
+                (
+                    usdn,
+                    sdex,
+                    asset,
+                    oracleMiddleware,
+                    liquidationRewardsManager,
+                    tickSpacing,
+                    feeCollector,
+                    role,
+                    protocolFallback
+                )
+            )
+        );
     }
 }

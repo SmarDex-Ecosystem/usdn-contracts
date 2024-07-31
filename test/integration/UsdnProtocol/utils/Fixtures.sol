@@ -3,9 +3,9 @@ pragma solidity ^0.8.25;
 
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
+import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import { MOCK_PYTH_DATA } from "../../../unit/Middlewares/utils/Constants.sol";
-
 import { MockChainlinkOnChain } from "../../../unit/Middlewares/utils/MockChainlinkOnChain.sol";
 import { MockPyth } from "../../../unit/Middlewares/utils/MockPyth.sol";
 import { UsdnProtocolHandler } from "../../../unit/UsdnProtocol/utils/Handler.sol";
@@ -40,7 +40,7 @@ import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/Liqu
 import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { Rebalancer } from "../../../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
-import { UsdnProtocolSetters } from "../../../../src/UsdnProtocol/UsdnProtocolSetters.sol";
+import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
@@ -162,9 +162,13 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             });
         }
 
-        protocol = IUsdnProtocolHandler(
-            address(
-                new UsdnProtocolHandler(
+        UsdnProtocolHandler implementation = new UsdnProtocolHandler();
+        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
+        address proxy = UnsafeUpgrades.deployUUPSProxy(
+            address(implementation),
+            abi.encodeCall(
+                UsdnProtocolHandler.initializeStorageHandler,
+                (
                     usdn,
                     sdex,
                     wstETH,
@@ -172,12 +176,13 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
                     liquidationRewardsManager,
                     100, // tick spacing 100 = 1%
                     ADMIN,
-                    roles
+                    roles,
+                    protocolFallback
                 )
             )
         );
-        UsdnProtocolSetters protocolSetters = new UsdnProtocolSetters();
-        protocol.setSettersContract(address(protocolSetters));
+        protocol = IUsdnProtocolHandler(proxy);
+
         rebalancer = new Rebalancer(protocol);
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));

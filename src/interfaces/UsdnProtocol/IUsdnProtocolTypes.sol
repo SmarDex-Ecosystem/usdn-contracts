@@ -474,7 +474,7 @@ interface IUsdnProtocolTypes {
      * @param _highestPopulatedTick The highest tick with a position
      * @param _totalLongPositions Cache of the total long positions count
      * @param _tickBitmap The bitmap used to quickly find populated ticks
-     * @param _settersContract The setters contract
+     * @param _protocolFallbackAddr The address of the fallback contract
      */
     struct Storage {
         // immutable
@@ -537,6 +537,6 @@ interface IUsdnProtocolTypes {
         int24 _highestPopulatedTick;
         uint256 _totalLongPositions;
         LibBitmap.Bitmap _tickBitmap;
-        address _settersContract;
+        address _protocolFallbackAddr;
     }
 }
