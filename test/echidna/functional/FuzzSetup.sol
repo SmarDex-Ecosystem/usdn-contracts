@@ -18,6 +18,7 @@ abstract contract FuzzSetup is Setup {
         uint256 priceRand,
         uint256 desiredLiqPriceRand
     ) external {
+        priceRand = bound(priceRand, 0, type(uint128).max);
         uint256 ethAmount = (depositAmountRand + longAmountRand) * wsteth.stEthPerToken() / 1 ether;
         vm.deal(address(msg.sender), ethAmount);
         vm.prank(msg.sender);
