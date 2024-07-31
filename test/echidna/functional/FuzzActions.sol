@@ -31,7 +31,6 @@ contract FuzzActions is Setup {
         address payable validator = payable(validators[validatorRand]);
         uint256 priceData = bound(priceRand, 0, type(uint128).max);
 
-        // ProtocolSnapshot memory balancesBefore = getProtocolSnapshot(validator, dest);
         ProtocolSnapshot memory balancesBefore = getProtocolSnapshot(validator, dest);
         (
             IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
