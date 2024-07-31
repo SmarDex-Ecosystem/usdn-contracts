@@ -506,7 +506,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
         }
 
         // `maxLeverage` greater than 100
-        if (newMaxLeverage > Constants.MAX_LEVERAGE * 10 ** Constants.LEVERAGE_DECIMALS) {
+        if (newMaxLeverage > Constants.MAX_LEVERAGE) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidMaxLeverage();
         }
 
