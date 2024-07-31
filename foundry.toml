@@ -134,11 +134,11 @@ mainnet = { key = "${ETHERSCAN_API_KEY}" }
 
 [dependencies]
 "@chainlink" = { version = "1.2.0", git = "https://github.com/smartcontractkit/chainlink.git", rev = "c3dc764bba9e1c57b3f7933bcb804a1740fab695" }
+"@openzeppelin-contracts-upgradeable" = "5.0.2"
 "@openzeppelin-contracts" = "5.0.2"
 "@pythnetwork-pyth-sdk-solidity" = "3.1.0"
 "@redstone-finance-evm-connector" = "0.6.1"
 "@uniswap/permit2" = { version = "1.0.0", git = "https://github.com/Uniswap/permit2.git", rev = "cc56ad0f3439c502c246fc5cfcc3db92bb8b7219" }
 forge-std = "1.9.1"
-solady = "0.0.228"
-"@openzeppelin-contracts-upgradeable" = "5.0.2"
 openzeppelin-foundry-upgrades = "0.3.1"
+solady = "0.0.228"
