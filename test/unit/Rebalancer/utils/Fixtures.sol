@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
+import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
+
 import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
@@ -11,7 +13,8 @@ import { RebalancerHandler } from "../utils/Handler.sol";
 
 import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
-import { UsdnProtocol } from "../../../../src/UsdnProtocol/UsdnProtocol.sol";
+import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
+import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { IRebalancerErrors } from "../../../../src/interfaces/Rebalancer/IRebalancerErrors.sol";
 import { IRebalancerEvents } from "../../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
 import { IRebalancerTypes } from "../../../../src/interfaces/Rebalancer/IRebalancerTypes.sol";
@@ -44,9 +47,13 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
         chainlinkGasPriceFeed = new MockChainlinkOnChain();
         liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
 
-        usdnProtocol = IUsdnProtocol(
-            address(
-                new UsdnProtocol(
+        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
+        UsdnProtocolImpl implementation = new UsdnProtocolImpl();
+        address proxy = UnsafeUpgrades.deployUUPSProxy(
+            address(implementation),
+            abi.encodeCall(
+                UsdnProtocolImpl.initializeStorage,
+                (
                     usdn,
                     sdex,
                     wstETH,
@@ -60,11 +67,14 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
                         setProtocolParamsAdmin: ADMIN,
                         setUsdnParamsAdmin: ADMIN,
                         setOptionsAdmin: ADMIN
-                    })
+                    }),
+                    protocolFallback
                 )
             )
         );
-        rebalancer = new RebalancerHandler(IUsdnProtocol(address(usdnProtocol)));
+        usdnProtocol = IUsdnProtocol(proxy);
+
+        rebalancer = new RebalancerHandler(usdnProtocol);
 
         usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));

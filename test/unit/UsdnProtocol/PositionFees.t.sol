@@ -117,7 +117,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         _waitBeforeLiquidation();
 
         // Call liquidate to trigger liquidation multiplier update
-        protocol.testLiquidate(priceData, 0);
+        protocol.mockLiquidate(priceData, 0);
 
         ExpectedData memory expected;
         // Price without the liquidation penalty

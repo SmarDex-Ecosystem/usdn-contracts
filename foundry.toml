@@ -12,6 +12,10 @@ optimizer_runs = 20_000
 libs = ["node_modules", "dependencies"]
 invariant = { fail_on_revert = true }
 gas_reports = ["*"]
+ffi = true
+ast = true
+build_info = true
+extra_output = ["storageLayout"]
 ignored_error_codes = [
     "code-size",
     "init-code-size",
@@ -31,6 +35,7 @@ remappings = [
     "@uniswap/permit2/=dependencies/@uniswap/permit2-1.0.0/",
     "forge-std/=dependencies/forge-std-1.9.1/src/",
     "solady/src/=dependencies/solady-0.0.228/src/",
+    "@openzeppelin/contracts-upgradeable/=node_modules/@openzeppelin/contracts-upgradeable/",
 ]
 
 # ---------------------------------- Format ---------------------------------- #

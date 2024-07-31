@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
+import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
+
 import { ADMIN, DEPLOYER } from "../../utils/Constants.sol";
 import { IUsdnProtocolHandler } from "../../utils/IUsdnProtocolHandler.sol";
 import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
 import { UsdnProtocolHandler } from "./utils/Handler.sol";
 
 import { Usdn } from "../../../src/Usdn/Usdn.sol";
-import { UsdnProtocolSetters } from "../../../src/UsdnProtocol/UsdnProtocolSetters.sol";
+import { UsdnProtocolFallback } from "../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 
 /**
  * @custom:feature Test the functions linked to initialization of the protocol
@@ -23,9 +25,13 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         vm.startPrank(ADMIN);
         usdn = new Usdn(address(0), address(0));
 
-        protocol = IUsdnProtocolHandler(
-            address(
-                new UsdnProtocolHandler(
+        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
+        UsdnProtocolHandler test = new UsdnProtocolHandler();
+        address proxy = UnsafeUpgrades.deployUUPSProxy(
+            address(test),
+            abi.encodeCall(
+                UsdnProtocolHandler.initializeStorageHandler,
+                (
                     usdn,
                     sdex,
                     wstETH,
@@ -39,12 +45,13 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
                         setProtocolParamsAdmin: address(this),
                         setUsdnParamsAdmin: address(this),
                         setOptionsAdmin: address(this)
-                    })
+                    }),
+                    protocolFallback
                 )
             )
         );
-        UsdnProtocolSetters protocolSetters = new UsdnProtocolSetters();
-        protocol.setSettersContract(address(protocolSetters));
+        protocol = IUsdnProtocolHandler(proxy);
+
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
 
