@@ -25,9 +25,12 @@ contract WstETH is ERC20Permit, Ownable {
 
     /**
      * @notice Update the amount of stEth a WstEth token is worth
+     * @dev The provided value cannot be 0
      * @param stEthAmount The new amount of stEth given for a WstEth token
      */
     function setStEthPerToken(uint256 stEthAmount) external onlyOwner {
+        require(stEthAmount > 0, "Cannot be 0");
+
         _stEthPerToken = stEthAmount;
     }
 
