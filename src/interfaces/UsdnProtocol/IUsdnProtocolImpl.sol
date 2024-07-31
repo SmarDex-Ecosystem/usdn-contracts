@@ -15,7 +15,7 @@ import { IUsdnProtocolVault } from "./IUsdnProtocolVault.sol";
 
 /**
  * @title IUsdnProtocolImpl
- * @notice Interface for the USDN protocol
+ * @notice Interface for the implementation of the USDN protocol (completed with {IUsdnProtocolFallback})
  */
 interface IUsdnProtocolImpl is
     IUsdnProtocolStorage,

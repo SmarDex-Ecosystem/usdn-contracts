@@ -40,6 +40,10 @@ interface IUsdnProtocolFallback {
         view
         returns (uint256 usdnSharesExpected_, uint256 sdexToBurn_);
 
+    /* -------------------------------------------------------------------------- */
+    /*                               Admin functions                              */
+    /* -------------------------------------------------------------------------- */
+
     /**
      * @notice Remove a stuck pending action and perform the minimal amount of cleanup necessary
      * @dev This function can only be called by the owner of the protocol, it serves as an escape hatch if a
@@ -506,6 +510,10 @@ interface IUsdnProtocolFallback {
      * @return The address of the setters contract
      */
     function getFallbackAddress() external view returns (address);
+
+    /* -------------------------------------------------------------------------- */
+    /*                                   Setters                                  */
+    /* -------------------------------------------------------------------------- */
 
     /**
      * @notice Replace the OracleMiddleware contract with a new implementation
