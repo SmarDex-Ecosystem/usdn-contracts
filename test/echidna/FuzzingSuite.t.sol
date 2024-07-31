@@ -127,11 +127,11 @@ contract FuzzingSuiteTest is Test {
         vm.prank(DEPLOYER);
         echidna.initiateDeposit(0.1 ether, 10 ether, 0.5 ether, 0, 0, 4000 ether);
 
-        // IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(DEPLOYER);
-        // assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, "action type");
-        // assertEq(action.to, DEPLOYER, "action to");
-        // assertEq(action.validator, DEPLOYER, "action validator");
-        // assertEq(action.var2, 0.1 ether, "action amount");
+        IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(DEPLOYER);
+        assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, "action type");
+        assertEq(action.to, DEPLOYER, "action to");
+        assertEq(action.validator, DEPLOYER, "action validator");
+        assertEq(action.var2, 0.1 ether, "action amount");
     }
 
     function test_canValidateOpenPosition() public {
