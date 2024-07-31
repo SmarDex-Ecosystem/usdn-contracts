@@ -170,10 +170,15 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         protocol.setPositionFeeBps(0); // 0% fees
 
         bytes memory currentPrice = abi.encode(initialPrice); // only used to apply PnL + funding
-
+        uint256 usdnSharesToMint = protocol.i_calcMintUsdnShares(
+            DEPOSIT_AMOUNT, protocol.getBalanceVault(), protocol.getUsdn().totalShares(), initialPrice
+        );
+        uint256 expectedSdexBurnAmount =
+            protocol.i_calcSdexToBurn(usdn.convertToTokens(usdnSharesToMint), protocol.getSdexBurnOnDepositRatio());
         uint256 initiateDepositTimestamp = block.timestamp;
         vm.expectEmit();
-        emit InitiatedDeposit(to, address(this), DEPOSIT_AMOUNT, initiateDepositTimestamp); // expected event
+        emit InitiatedDeposit(to, address(this), DEPOSIT_AMOUNT, initiateDepositTimestamp, expectedSdexBurnAmount); // expected
+            // event
         protocol.initiateDeposit(
             DEPOSIT_AMOUNT, to, payable(address(this)), NO_PERMIT2, currentPrice, EMPTY_PREVIOUS_DATA
         );
