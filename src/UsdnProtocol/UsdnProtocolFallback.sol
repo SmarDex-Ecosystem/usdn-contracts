@@ -468,11 +468,11 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
 
     /// @inheritdoc IUsdnProtocolFallback
     function setValidationDeadline(uint256 newValidationDeadline) external onlyRole(CRITICAL_FUNCTIONS_ROLE) {
-        if (newValidationDeadline < 60) {
+        if (newValidationDeadline < Constants.MIN_VALIDATION_DEADLINE) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidValidationDeadline();
         }
 
-        if (newValidationDeadline > 1 days) {
+        if (newValidationDeadline > Constants.MAX_VALIDATION_DEADLINE) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidValidationDeadline();
         }
 
@@ -506,7 +506,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
         }
 
         // `maxLeverage` greater than 100
-        if (newMaxLeverage > 100 * 10 ** Constants.LEVERAGE_DECIMALS) {
+        if (newMaxLeverage > Constants.MAX_LEVERAGE * 10 ** Constants.LEVERAGE_DECIMALS) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidMaxLeverage();
         }
 
@@ -516,7 +516,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
 
     /// @inheritdoc IUsdnProtocolFallback
     function setLiquidationPenalty(uint8 newLiquidationPenalty) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        if (newLiquidationPenalty > 15) {
+        if (newLiquidationPenalty > Constants.MAX_LIQUIDATION_PENALTY) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationPenalty();
         }
 
@@ -526,7 +526,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
 
     /// @inheritdoc IUsdnProtocolFallback
     function setEMAPeriod(uint128 newEMAPeriod) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        if (newEMAPeriod > 90 days) {
+        if (newEMAPeriod > Constants.MAX_EMA_PERIOD) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidEMAPeriod();
         }
 
@@ -556,7 +556,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     /// @inheritdoc IUsdnProtocolFallback
     function setPositionFeeBps(uint16 newPositionFee) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
         // `newPositionFee` greater than 20%
-        if (newPositionFee > 2000) {
+        if (newPositionFee > Constants.MAX_POSITION_FEE_BPS) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidPositionFee();
         }
         s._positionFeeBps = newPositionFee;
@@ -566,7 +566,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     /// @inheritdoc IUsdnProtocolFallback
     function setVaultFeeBps(uint16 newVaultFee) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
         // `newVaultFee` greater than 20%
-        if (newVaultFee > 2000) {
+        if (newVaultFee > Constants.MAX_VAULT_FEE_BPS) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidVaultFee();
         }
         s._vaultFeeBps = newVaultFee;
@@ -658,7 +658,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     /// @inheritdoc IUsdnProtocolFallback
     function setSafetyMarginBps(uint256 newSafetyMarginBps) external onlyRole(SET_OPTIONS_ROLE) {
         // safetyMarginBps greater than 20%
-        if (newSafetyMarginBps > 2000) {
+        if (newSafetyMarginBps > Constants.MAX_SAFETY_MARGIN_BPS) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidSafetyMarginBps();
         }
 
