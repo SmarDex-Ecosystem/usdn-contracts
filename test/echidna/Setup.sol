@@ -108,7 +108,7 @@ contract Setup is ErrorsChecked {
         destinationsToken[address(wsteth)] = [DEPLOYER, ATTACKER];
     }
 
-    function getBalancesProtocol(address validator, address to)
+    function getProtocolSnapshot(address validator, address to)
         internal
         view
         returns (ProtocolSnapshot memory snapshot)
@@ -128,7 +128,7 @@ contract Setup is ErrorsChecked {
         snapshot.toWsteth = wsteth.balanceOf(to);
     }
 
-    function getBalancesRebalancer(address dest) internal view returns (RebalancerSnapshot memory) {
+    function getRebalancerSnapshot(address dest) internal view returns (RebalancerSnapshot memory) {
         return RebalancerSnapshot({
             senderEth: msg.sender.balance,
             senderWsteth: wsteth.balanceOf(msg.sender),

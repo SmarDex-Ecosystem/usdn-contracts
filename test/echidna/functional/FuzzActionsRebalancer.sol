@@ -14,7 +14,7 @@ contract FuzzActionsRebalancer is Setup {
 
         wsteth.mintAndApprove(msg.sender, amountRand, address(rebalancer), amountRand);
 
-        RebalancerSnapshot memory balancesBefore = getBalancesRebalancer(dest);
+        RebalancerSnapshot memory balancesBefore = getRebalancerSnapshot(dest);
 
         vm.prank(msg.sender);
         try rebalancer.initiateDepositAssets(amountRand, dest) {
