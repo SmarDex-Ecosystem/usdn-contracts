@@ -3,7 +3,7 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-utils.url = "github:numtide/flake-utils";
     foundry = {
-      url = "github:shazow/foundry.nix/monthly"; # Use monthly branch for permanent releases
+      url = "github:shazow/foundry.nix"; # Use monthly branch for permanent releases
       inputs.nixpkgs.follows = "nixpkgs";
     };
     solc = {
@@ -52,7 +52,6 @@
           shellHook = ''
             set -a; source .env; set +a
             npm i
-            forge install
           '';
 
           RUST_SRC_PATH = "${toolchain}/lib/rustlib/src/rust/library";
