@@ -16,7 +16,7 @@
     "installDeps": "npm i && forge soldeer install",
     "lint:test": "solhint -c test/.solhint.json 'test/**/*.sol'",
     "lint": "solhint 'src/**/*.sol'",
-    "natspec": "npx natspec-smells > natspec-smells.txt 2>&1",
+    "natspec": "rm -f remappings.txt && npx natspec-smells > natspec-smells.txt 2>&1",
     "prepare": "husky",
     "quicktest:gas": "npm run quicktest -- --gas-report",
     "quicktest": "forge test -vvv --no-match-test \"(FFI|Fork|Fuzz|invariant)\" --no-match-contract Fork --offline",
@@ -34,7 +34,7 @@
   ],
   "devDependencies": {
     "@biomejs/biome": "^1.8.3",
-    "@defi-wonderland/natspec-smells": "^1.1.3",
+    "@defi-wonderland/natspec-smells": "^1.1.4",
     "@types/luxon": "^3.4.2",
     "abitype": "^1.0.5",
     "commander": "^12.1.0",
