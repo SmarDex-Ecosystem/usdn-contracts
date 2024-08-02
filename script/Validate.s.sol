@@ -18,11 +18,14 @@ contract Deploy is Script {
     }
 
     function buildCommandFunctionClashes(Options memory opts) internal {
-        string[] memory inputBuilder = new string[](10);
-
+        string[] memory inputBuilder = new string[](6);
         uint8 i = 0;
 
-        inputBuilder[i++] = "bash ts-node script/functionClashes.ts UsdnProtocolImpl.sol UsdnProtocolFallback.sol";
+        inputBuilder[i++] = "ts-node";
+        inputBuilder[i++] = "script/functionClashes.ts";
+        // TO DO : find a way to automate this
+        inputBuilder[i++] = "UsdnProtocolImpl.sol";
+        inputBuilder[i++] = "UsdnProtocolFallback.sol";
 
         if (opts.sameName) {
             inputBuilder[i++] = "--same-name";
@@ -32,29 +35,17 @@ contract Deploy is Script {
             inputBuilder[i++] = "--debug";
         }
 
-        // Create a copy of inputs but with the correct length
+        // Create a copy inputs with the correct length
         string[] memory inputs = new string[](i);
         for (uint8 j = 0; j < i; j++) {
             inputs[j] = inputBuilder[j];
         }
 
-        // string memory commandString;
-
-        // for (uint256 z = 0; i < inputs.length; i++) {
-        //     commandString = string(abi.encodePacked(commandString, inputs[i]));
-        //     if (i != inputs.length - 1) {
-        //         commandString = string(abi.encodePacked(commandString, " "));
-        //     }
-        // }
-        string[] memory inputs2 = new string[](1);
-        inputs2[0] = "echo lol";
-        bytes memory result = vm.ffi(inputs2);
-        console2.logBytes(result);
-        // Vm.FfiResult memory result = vm.tryFfi(inputs);
-        // if (result.exitCode != 0 && result.stdout.length == 0 && result.stderr.length == 0) {
-        //     revert(string(abi.encodePacked('Failed to run bash command with "', inputs[0])));
-        // } else {
-        //     // return result;
-        // }
+        bytes memory result = vm.ffi(inputs);
+        if (result.length == 0) { } else {
+            // string memory output = abi.decode(result, (string));
+            // console2.log(output);
+            revert("Error in functionClashes.ts");
+        }
     }
 }
