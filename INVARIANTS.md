@@ -24,6 +24,12 @@ Assuming you have Echidna installed
 | PROTCL-11 | Initiate and validate a long action without test             | Passing        |
 | PROTCL-12 | Initiate and validate a close action without test            | Passing        |
 
+## Rebalancer tests
+
+| Test name | Description                                               | Status         |
+| --------- | --------------------------------------------------------- | -------------- |
+| RBLCR-0   | Initiates a deposit of WSTETH and SDEX to the Rebalancer. | Unknown revert |
+
 ## Admin tests
 
 | Test name | Description | Result |
