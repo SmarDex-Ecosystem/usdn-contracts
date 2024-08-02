@@ -14,7 +14,6 @@ contract FuzzActionsRebalancer is Setup {
     function initiateDepositRebalancer(uint88 amountRand, uint256 destRand) public {
         destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
         address dest = destinationsToken[address(wsteth)][destRand];
-        amountRand = uint88(bound(amountRand, 0, type(uint88).max));
 
         wsteth.mintAndApprove(msg.sender, amountRand, address(rebalancer), amountRand);
 
