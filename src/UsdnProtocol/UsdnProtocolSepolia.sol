@@ -29,7 +29,7 @@ contract UsdnProtocolSepolia {
      * this is the admin: 0xFB8A0f060CA1DB2f1D241a3b147aCDA1859901B0
      * _sweepAdmin2 = keccak256(
      *   abi.encodePacked(
-     *     bytes32(bytes20(uint160(0xFB8A0f060CA1DB2f1D241a3b147aCDA1859901B0))),
+     *     bytes32(bytes20(uint160(0xFB8A0f060CA1DB2f1D241a3b147aCDA1859901B0))) | _sweepSalt4,
      *     _sweepSalt2 >> 12
      *   )
      * )
