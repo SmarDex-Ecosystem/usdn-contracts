@@ -400,6 +400,9 @@ library UsdnProtocolLongLibrary {
             data.positionValue = uint256(realPositionValue).toUint128();
             data.positionAmount += data.positionValue;
             longBalance_ -= data.positionValue;
+        } else if (data.positionAmount == 0) {
+            // avoid to update an empty rebalancer
+            return (longBalance_, vaultBalance_);
         }
 
         // if the amount in the position we wanted to open is below a fraction of the _minLongPosition setting,
