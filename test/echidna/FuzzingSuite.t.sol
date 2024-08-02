@@ -401,6 +401,31 @@ contract FuzzingSuiteTest is Test {
         assertEq(wsteth.balanceOf(DEPLOYER), balanceWstEthBefore, "wstETH balance");
     }
 
+    function test_canFullClosePosition() public {
+        test_canFullOpenPosition();
+        uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
+
+        skip(wstEthOracleMiddleware.getValidationDelay() + 1);
+
+        assertEq(
+            uint8(usdnProtocol.getUserPendingAction(DEPLOYER).action),
+            uint8(IUsdnProtocolTypes.ProtocolAction.None),
+            "The user action should be none"
+        );
+        uint256 balanceBeforeWsteth = wsteth.balanceOf(DEPLOYER);
+
+        vm.prank(DEPLOYER);
+        echidna.fullClosePosition(securityDeposit, 0, 0, 2000 ether, 5 ether, 0);
+
+        // the protocol fees are collected during all skip. So, wee have a delta of 1.05e15(0.105%)
+        assertApproxEqRel(wsteth.balanceOf(DEPLOYER), balanceBeforeWsteth + 5 ether, 1.05e15, "wstETH balance");
+        assertEq(
+            uint8(usdnProtocol.getUserPendingAction(DEPLOYER).action),
+            uint8(IUsdnProtocolTypes.ProtocolAction.None),
+            "The user action should be none"
+        );
+    }
+
     function _validateCloseAndAssert(
         uint256 securityDeposit,
         uint128 wstethOpenPositionAmount,
