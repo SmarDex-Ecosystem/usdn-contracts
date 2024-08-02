@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { REDSTONE_ETH_DATA, REDSTONE_ETH_TIMESTAMP } from "../../utils/Constants.sol";
 import { OracleMiddlewareWithRedstoneFixture } from "../../utils/Fixtures.sol";

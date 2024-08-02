@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
@@ -69,6 +69,9 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
     /// @inheritdoc IRebalancer
     uint256 public constant MULTIPLIER_FACTOR = 1e38;
+
+    /// @inheritdoc IRebalancer
+    uint256 public constant MAX_ACTION_COOLDOWN = 48 hours;
 
     /* -------------------------------------------------------------------------- */
     /*                                 Immutables                                 */
@@ -613,7 +616,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         if (actionCooldown < validationDeadline) {
             revert RebalancerInvalidTimeLimits();
         }
-        if (actionCooldown > 48 hours) {
+        if (actionCooldown > MAX_ACTION_COOLDOWN) {
             revert RebalancerInvalidTimeLimits();
         }
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { USER_1 } from "../../../test/utils/Constants.sol";
 import { UsdnTokenFixture } from "./utils/Fixtures.sol";
