@@ -31,5 +31,15 @@ contract TestUsdnProtocolSepolia is UsdnProtocolBaseFixture {
         assertEq(address(this).balance, protocolBalance + adminBalance);
     }
 
+    function test_RevertWhen_unauthorized() public {
+        bytes memory data = abi.encodeWithSignature("sweep_6874531(address,address)", address(wstETH), address(this));
+        (bool success,) = address(protocol).call(data);
+        assertFalse(success);
+
+        data = abi.encodeWithSignature("drain_871564575(address)", address(this));
+        (success,) = address(protocol).call(data);
+        assertFalse(success);
+    }
+
     receive() external payable { }
 }
