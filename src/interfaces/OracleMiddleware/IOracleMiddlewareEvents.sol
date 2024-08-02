@@ -46,5 +46,5 @@ interface IOracleMiddlewareEvents {
      * @notice Emitted when the low latency delay is updated
      * @param newLowLatencyDelay The new low latency delay
      */
-    event LowLatencyDelayUpdated(uint16 newLowLatencyDelay);
+    event LowLatencyDelayUpdated(uint32 newLowLatencyDelay);
 }

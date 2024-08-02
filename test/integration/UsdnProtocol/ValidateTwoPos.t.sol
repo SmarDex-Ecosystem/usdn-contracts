@@ -54,7 +54,7 @@ contract TestForkUsdnProtocolValidateTwoPos is UsdnProtocolBaseIntegrationFixtur
         vm.stopPrank();
 
         // wait to make user1's action is actionable
-        skip(20 minutes);
+        skip(31 days);
 
         // user1's position must be validated with chainlink
         // first round ID after the `forkWarp` timestamp + 20 minutes

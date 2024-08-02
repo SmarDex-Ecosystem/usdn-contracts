@@ -124,11 +124,11 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable2Step {
         }
     }
 
-    function getLowLatencyDelay() external pure returns (uint16) {
-        return uint16(20 minutes);
+    function getLowLatencyDelay() external pure returns (uint32) {
+        return uint32(31 days);
     }
 
-    function setLowLatencyDelay(uint16) external { }
+    function setLowLatencyDelay(uint32) external { }
 
     function setPenaltyBps(uint16 newPenaltyBps) external onlyOwner { }
 }

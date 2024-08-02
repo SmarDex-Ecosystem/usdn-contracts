@@ -43,7 +43,7 @@ interface IOracleMiddleware is IBaseOracleMiddleware, IOracleMiddlewareErrors, I
      * @notice Getter for the delay during which a low latency oracle price validation is available
      * @return The low latency delay
      */
-    function getLowLatencyDelay() external view returns (uint16);
+    function getLowLatencyDelay() external view returns (uint32);
 
     /**
      * @notice Getter for the penalty value
@@ -99,7 +99,7 @@ interface IOracleMiddleware is IBaseOracleMiddleware, IOracleMiddlewareErrors, I
      * @notice Set the new low latency delay
      * @param newLowLatencyDelay The new low latency delay
      */
-    function setLowLatencyDelay(uint16 newLowLatencyDelay) external;
+    function setLowLatencyDelay(uint32 newLowLatencyDelay) external;
 
     /**
      * @notice Set the penalty basis points

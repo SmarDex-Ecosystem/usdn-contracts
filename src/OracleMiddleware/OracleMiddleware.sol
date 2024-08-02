@@ -44,7 +44,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, RedstoneOracle, Chai
     uint16 internal _confRatioBps = 4000; // to divide by BPS_DIVISOR
 
     /// @notice The delay during which a low latency oracle price validation is available
-    uint16 internal _lowLatencyDelay = 20 minutes;
+    uint32 internal _lowLatencyDelay = 31 days;
 
     /// @notice The penalty for using a non-Pyth price with low latency oracle, in basis points: default 0.25%
     uint16 internal _penaltyBps = 25; // to divide by BPS_DIVISOR
@@ -139,7 +139,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, RedstoneOracle, Chai
     }
 
     /// @inheritdoc IOracleMiddleware
-    function getLowLatencyDelay() external view returns (uint16) {
+    function getLowLatencyDelay() external view returns (uint32) {
         return _lowLatencyDelay;
     }
 
@@ -449,13 +449,11 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, RedstoneOracle, Chai
     }
 
     /// @inheritdoc IOracleMiddleware
-    function setLowLatencyDelay(uint16 newLowLatencyDelay) external onlyOwner {
+    function setLowLatencyDelay(uint32 newLowLatencyDelay) external onlyOwner {
         if (newLowLatencyDelay < 15 minutes) {
             revert OracleMiddlewareInvalidLowLatencyDelay();
         }
-        if (newLowLatencyDelay > 90 minutes) {
-            revert OracleMiddlewareInvalidLowLatencyDelay();
-        }
+
         _lowLatencyDelay = newLowLatencyDelay;
 
         emit LowLatencyDelayUpdated(newLowLatencyDelay);
