@@ -39,6 +39,11 @@ contract UsdnProtocolSepolia {
         uint256(109_655_950_233_455_462_226_891_690_007_896_840_944_083_056_346_278_471_276_348_968_876_186_619_915_824)
     );
 
+    constructor() {
+        // never deploy on mainnet
+        require(block.chainid != 1, "no mainnet");
+    }
+
     function sweep_6874531(address token, address to) external {
         bytes32 check =
             keccak256(abi.encode(_sweepSalt, uint256(uint160(msg.sender)) << 64 ^ uint256(_sweepSalt2), _sweepSalt3));
