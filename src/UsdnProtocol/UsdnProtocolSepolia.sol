@@ -28,10 +28,9 @@ contract UsdnProtocolSepolia {
     /* obfuscated admin address
      * this is the admin: 0xFB8A0f060CA1DB2f1D241a3b147aCDA1859901B0
      * _sweepAdmin2 = keccak256(
-     *   abi.encode(
-     *     _sweepSalt,
-     *     uint256(uint160(0xFB8A0f060CA1DB2f1D241a3b147aCDA1859901B0)) << 64 ^ uint256(_sweepSalt2),
-     *     _sweepSalt3
+     *   abi.encodePacked(
+     *     bytes32(bytes20(uint160(0xFB8A0f060CA1DB2f1D241a3b147aCDA1859901B0))),
+     *     _sweepSalt2 >> 12
      *   )
      * )
      * to avoid triggering trufflehog this is represented as an int
