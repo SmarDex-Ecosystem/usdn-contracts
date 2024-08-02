@@ -492,6 +492,7 @@ library UsdnProtocolCoreLibrary {
             (fundAsset, fundingPerDay) = _fundingAsset(s, timestamp, s._EMA);
 
             s._lastFundingPerDay = fundingPerDay;
+            emit IUsdnProtocolEvents.LastFundingPerDayUpdated(fundingPerDay, timestamp);
 
             // update the funding EMA (mutates the storage)
             _updateEMA(s, fundingPerDay, timestamp - lastUpdateTimestamp);

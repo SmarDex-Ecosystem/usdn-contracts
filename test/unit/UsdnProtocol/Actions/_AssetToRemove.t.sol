@@ -61,7 +61,7 @@ contract TestUsdnProtocolActionsAssetToRemove is UsdnProtocolBaseFixture {
         uint128 price = 500 ether;
         skip(1 weeks);
         // liquidate the default position
-        protocol.testLiquidate(abi.encode(price), 10);
+        protocol.mockLiquidate(abi.encode(price), 10);
 
         assertEq(protocol.getTotalLongPositions(), 0, "total long positions");
         assertEq(protocol.getLongTradingExpo(price), 0, "long trading expo with funding");
