@@ -23,7 +23,7 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
      * @custom:when The setup was performed
      * @custom:then The initial deposit amount is greater than the minimum asset deposit
      */
-    function test_setUp() public {
+    function test_setUp() public view {
         assertGe(INITIAL_DEPOSIT, rebalancer.getMinAssetDeposit());
     }
 

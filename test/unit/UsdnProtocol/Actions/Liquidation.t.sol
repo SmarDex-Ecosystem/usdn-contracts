@@ -407,7 +407,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint256 longPositionsBeforeLiquidation = protocol.getTotalLongPositions();
 
         _waitBeforeLiquidation();
-        uint256 liquidatedPositions = protocol.testLiquidate(priceData, 1);
+        uint256 liquidatedPositions = protocol.mockLiquidate(priceData, 1);
 
         assertEq(liquidatedPositions, 0, "No position should have been liquidated");
 
@@ -479,7 +479,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         _waitBeforeLiquidation();
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
-        uint256 liquidatedPositions = protocol.testLiquidate(abi.encode(price), 1);
+        uint256 liquidatedPositions = protocol.mockLiquidate(abi.encode(price), 1);
 
         // Check that the right number of positions have been liquidated
         assertEq(liquidatedPositions, 1, "One position should have been liquidated");
@@ -557,7 +557,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         _waitBeforeLiquidation();
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedRewards);
-        uint256 liquidatedPositions = protocol.testLiquidate(abi.encode(price), 1);
+        uint256 liquidatedPositions = protocol.mockLiquidate(abi.encode(price), 1);
 
         // Check that the right number of positions have been liquidated
         assertEq(liquidatedPositions, 1, "One position should have been liquidated");

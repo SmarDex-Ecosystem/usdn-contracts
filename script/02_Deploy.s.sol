@@ -3,6 +3,8 @@ pragma solidity ^0.8.25;
 
 import { Script } from "forge-std/Script.sol";
 
+import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
+
 import { Sdex } from "../test/utils/Sdex.sol";
 import { WstETH } from "../test/utils/WstEth.sol";
 
@@ -10,11 +12,12 @@ import { LiquidationRewardsManager } from "../src/OracleMiddleware/LiquidationRe
 import { WstEthOracleMiddleware } from "../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { MockLiquidationRewardsManager } from "../src/OracleMiddleware/mock/MockLiquidationRewardsManager.sol";
 import { MockWstEthOracleMiddleware } from "../src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
-
 import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../src/Usdn/Usdn.sol";
-import { UsdnProtocol } from "../src/UsdnProtocol/UsdnProtocol.sol";
+import { UsdnProtocolFallback } from "../src/UsdnProtocol/UsdnProtocolFallback.sol";
+import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { IWstETH } from "../src/interfaces/IWstETH.sol";
+import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 contract Deploy is Script {
@@ -26,7 +29,7 @@ contract Deploy is Script {
      * @return LiquidationRewardsManager_ The liquidation rewards manager
      * @return Rebalancer_ The rebalancer
      * @return Usdn_ The USDN token
-     * @return UsdnProtocol_ The USDN protocol
+     * @return UsdnProtocol_ The USDN protocol with fallback
      */
     function run()
         external
@@ -37,7 +40,7 @@ contract Deploy is Script {
             LiquidationRewardsManager LiquidationRewardsManager_,
             Rebalancer Rebalancer_,
             Usdn Usdn_,
-            UsdnProtocol UsdnProtocol_
+            IUsdnProtocol UsdnProtocol_
         )
     {
         bool isProdEnv = block.chainid != vm.envOr("FORK_CHAIN_ID", uint256(31_337));
@@ -51,19 +54,36 @@ contract Deploy is Script {
         WstETH_ = _deployWstETH(depositAmount, longAmount);
         WstEthOracleMiddleware_ = _deployWstEthOracleMiddleware(isProdEnv, address(WstETH_));
         LiquidationRewardsManager_ = _deployLiquidationRewardsManager(isProdEnv, address(WstETH_));
-        Usdn_ = _deployUsdn();
+        Usdn_ = _deployUsdn(isProdEnv);
         Sdex_ = _deploySdex();
 
+        // deploy the protocol fallback
+        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
         // deploy the protocol with tick spacing 100 = 1%
-        UsdnProtocol_ = new UsdnProtocol(
-            Usdn_,
-            Sdex_,
-            WstETH_,
-            WstEthOracleMiddleware_,
-            LiquidationRewardsManager_,
-            100,
-            vm.envAddress("FEE_COLLECTOR")
+        address proxy = Upgrades.deployUUPSProxy(
+            "UsdnProtocol.sol",
+            abi.encodeCall(
+                UsdnProtocolImpl.initializeStorage,
+                (
+                    Usdn_,
+                    Sdex_,
+                    WstETH_,
+                    WstEthOracleMiddleware_,
+                    LiquidationRewardsManager_,
+                    100,
+                    vm.envAddress("FEE_COLLECTOR"),
+                    Types.Roles({
+                        setExternalAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
+                        criticalFunctionsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
+                        setProtocolParamsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
+                        setUsdnParamsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
+                        setOptionsAdmin: vm.envAddress("DEPLOYER_ADDRESS")
+                    }),
+                    protocolFallback
+                )
+            )
         );
+        UsdnProtocol_ = IUsdnProtocol(proxy);
 
         // deploy the rebalancer
         Rebalancer_ = _deployRebalancer(UsdnProtocol_);
@@ -71,9 +91,13 @@ contract Deploy is Script {
         // set the rebalancer on the USDN protocol
         UsdnProtocol_.setRebalancer(Rebalancer_);
 
-        // grant USDN minter and rebaser roles to protocol and approve wstETH spending
+        // grant USDN minter and rebaser roles to protocol
         Usdn_.grantRole(Usdn_.MINTER_ROLE(), address(UsdnProtocol_));
         Usdn_.grantRole(Usdn_.REBASER_ROLE(), address(UsdnProtocol_));
+        // renounce admin role on the USDN token, no-one can later change roles
+        Usdn_.renounceRole(Usdn_.DEFAULT_ADMIN_ROLE(), vm.envAddress("DEPLOYER_ADDRESS"));
+
+        // approve wstETH spending for initialization
         WstETH_.approve(address(UsdnProtocol_), depositAmount + longAmount);
 
         if (depositAmount > 0 && longAmount > 0) {
@@ -167,9 +191,11 @@ contract Deploy is Script {
      * @dev Will return the already deployed one if an address is in the env variables
      * @return usdn_ The deployed contract
      */
-    function _deployUsdn() internal returns (Usdn usdn_) {
-        address usdnAddress = vm.envOr("USDN_ADDRESS", address(0));
-        if (usdnAddress != address(0)) {
+    function _deployUsdn(bool isProdEnv) internal returns (Usdn usdn_) {
+        if (isProdEnv) {
+            // in production environment, we want to deploy the USDN token separately via `01_DeployUsdn.s.sol`
+            address usdnAddress = vm.envAddress("USDN_ADDRESS");
+            require(usdnAddress != address(0), "USDN_ADDRESS is required in prod mode");
             usdn_ = Usdn(usdnAddress);
         } else {
             usdn_ = new Usdn(address(0), address(0));
@@ -217,7 +243,7 @@ contract Deploy is Script {
      * @param usdnProtocol The USDN protocol
      * @return rebalancer_ The deployed contract
      */
-    function _deployRebalancer(UsdnProtocol usdnProtocol) internal returns (Rebalancer rebalancer_) {
+    function _deployRebalancer(IUsdnProtocol usdnProtocol) internal returns (Rebalancer rebalancer_) {
         address payable rebalancerAddress = payable(vm.envOr("REBALANCER_ADDRESS", address(0)));
         if (rebalancerAddress != address(0)) {
             rebalancer_ = Rebalancer(rebalancerAddress);
@@ -236,7 +262,7 @@ contract Deploy is Script {
      */
     function _initializeUsdnProtocol(
         bool isProdEnv,
-        UsdnProtocol UsdnProtocol_,
+        IUsdnProtocol UsdnProtocol_,
         WstEthOracleMiddleware WstEthOracleMiddleware_,
         uint256 depositAmount,
         uint256 longAmount

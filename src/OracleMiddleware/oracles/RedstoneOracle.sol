@@ -6,9 +6,9 @@ pragma solidity ^0.8.25;
 import { IOracleMiddlewareErrors } from "../../interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
 import { RedstonePriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IRedstoneOracle } from "../../interfaces/OracleMiddleware/IRedstoneOracle.sol";
-import { RedstoneConsumerBase } from "../../vendored/Redstone/core/RedstoneConsumerBase.sol";
+import { RedstoneConsumerBase } from "@redstone-finance/evm-connector/contracts/core/RedstoneConsumerBase.sol";
 import { PrimaryProdDataServiceConsumerBase } from
-    "../../vendored/Redstone/data-services/PrimaryProdDataServiceConsumerBase.sol";
+    "@redstone-finance/evm-connector/contracts/data-services/PrimaryProdDataServiceConsumerBase.sol";
 
 /**
  * @title Redstone Oracle

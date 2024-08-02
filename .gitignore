@@ -14,6 +14,7 @@ cache/
 
 # Dependencies
 node_modules/
+dependencies/
 
 # direnv
 .direnv
@@ -39,6 +40,7 @@ target/
 
 # TruffleHog config file
 .trufflehog.yml
+
 
 # Echidna
 echidna_assert_corpus/

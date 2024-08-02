@@ -34,6 +34,7 @@ contract TestUsdnProtocolFuzzingLong is UsdnProtocolBaseFixture {
      */
     function testFuzz_positionValue(uint128 amount, uint128 priceAtOpening, uint128 currentPrice, uint256 leverage)
         public
+        view
     {
         uint256 levDecimals = 10 ** protocol.LEVERAGE_DECIMALS();
         uint256 maxLeverage = protocol.getMaxLeverage();
@@ -79,7 +80,7 @@ contract TestUsdnProtocolFuzzingLong is UsdnProtocolBaseFixture {
         uint128 priceAtOpening,
         uint128 currentPrice,
         uint256 leverage
-    ) public {
+    ) public view {
         uint256 levDecimals = 10 ** protocol.LEVERAGE_DECIMALS();
         uint256 maxLeverage = protocol.getMaxLeverage();
 

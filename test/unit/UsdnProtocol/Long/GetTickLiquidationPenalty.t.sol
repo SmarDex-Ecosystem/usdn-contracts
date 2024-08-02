@@ -6,7 +6,7 @@ import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 /// @custom:feature The `GetTickLiquidationPenalty` function of the long layer
 contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
-    function setUp() external {
+    function setUp() public {
         _setUp(DEFAULT_PARAMS);
     }
 
@@ -16,7 +16,7 @@ contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
      * @custom:when We call the function
      * @custom:then The function should return the current value of the liquidation penalty setting
      */
-    function test_getTickLiquidationPenaltyEmpty() public {
+    function test_getTickLiquidationPenaltyEmpty() public adminPrank {
         uint8 startPenalty = protocol.getLiquidationPenalty();
         int24 tick = 69_420;
         TickData memory tickData = protocol.getTickData(tick);
@@ -26,7 +26,6 @@ contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
         assertEq(protocol.getTickLiquidationPenalty(tick), startPenalty, "initial value");
 
         // change the penalty setting
-        vm.prank(ADMIN);
         protocol.setLiquidationPenalty(startPenalty + 1);
 
         // check new value
@@ -82,7 +81,7 @@ contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
         skip(1 minutes);
         assertEq(protocol.getTickLiquidationPenalty(posId.tick), startPenalty, "tick value");
         _waitBeforeLiquidation();
-        protocol.testLiquidate(abi.encode(params.initialPrice / 3), 10);
+        protocol.mockLiquidate(abi.encode(params.initialPrice / 3), 10);
 
         // change the penalty setting
         vm.prank(ADMIN);

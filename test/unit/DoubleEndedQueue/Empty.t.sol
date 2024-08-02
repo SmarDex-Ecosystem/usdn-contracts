@@ -19,7 +19,7 @@ contract TestDequeEmpty is DequeFixture {
      * @custom:when Calling `empty` and `length`
      * @custom:then Returns `true` and `0`
      */
-    function test_view() public {
+    function test_view() public view {
         assertEq(handler.empty(), true, "empty");
         assertEq(handler.length(), 0, "length");
     }

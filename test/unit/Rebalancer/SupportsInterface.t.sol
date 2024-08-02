@@ -24,7 +24,7 @@ contract TestRebalancerSupportsInterface is RebalancerFixture {
      * @custom:when The {supportsInterface} function is called with the interface IDs
      * @custom:then The function should return `true` for the supported interfaces and `false` for any other interface
      */
-    function test_supportsInterface() external {
+    function test_supportsInterface() public view {
         assertEq(rebalancer.supportsInterface(type(IERC165).interfaceId), true, "IERC165_ID supported");
         assertEq(
             rebalancer.supportsInterface(type(IOwnershipCallback).interfaceId), true, "IOwnershipCallback_ID supported"

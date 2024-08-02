@@ -9,32 +9,25 @@ import { IUsdnProtocolTypes } from "./IUsdnProtocolTypes.sol";
  */
 interface IUsdnProtocolCore is IUsdnProtocolTypes {
     /**
-     * @notice Calculation of the EMA of the funding rate
-     * @param lastFunding The last funding rate
-     * @param secondsElapsed The number of seconds elapsed since the last protocol action
-     * @param emaPeriod The EMA period
-     * @param previousEMA The previous EMA
-     * @return The new EMA value
-     */
-    function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
-        external
-        pure
-        returns (int256);
-
-    /**
      * @notice Get the predicted value of the funding since the last state update for the given timestamp
-     * @dev When multiplied with the long trading exposure, this value gives the asset balance that needs to be paid to
-     * the vault side (or long side if negative). If the provided timestamp is older than the last state update, the
-     * function reverts with `UsdnProtocolTimestampTooOld`
+     * @dev When multiplied with the long trading exposure, the funding value gives the asset balance that needs to be
+     * paid to the vault side (or long side if negative)
+     * If the provided timestamp is older than the last state update, the function reverts with
+     * `UsdnProtocolTimestampTooOld`
      * @param timestamp The current timestamp
-     * @return fund_ The magnitude of the funding (with `FUNDING_RATE_DECIMALS` decimals)
+     * @return funding_ The magnitude of the funding (with `FUNDING_RATE_DECIMALS` decimals) since the last update
+     * timestamp
+     * @return fundingPerDay_ The value of the funding rate (per day) with `FUNDING_RATE_DECIMALS` decimals
      * @return oldLongExpo_ The long trading exposure after the last state update
      */
-    function funding(uint128 timestamp) external view returns (int256 fund_, int256 oldLongExpo_);
+    function funding(uint128 timestamp)
+        external
+        view
+        returns (int256 funding_, int256 fundingPerDay_, int256 oldLongExpo_);
 
     /**
      * @notice Get the predicted value of the vault trading exposure for the given asset price and timestamp
-     * @dev The effects of the funding rates and any profit or loss of the long positions since the last contract state
+     * @dev The effects of the funding and any profit or loss of the long positions since the last contract state
      * update is taken into account
      * @param currentPrice The current or predicted asset price
      * @param timestamp The timestamp corresponding to `currentPrice`
@@ -66,44 +59,6 @@ interface IUsdnProtocolCore is IUsdnProtocolTypes {
      * `ProtocolAction.None`
      */
     function getUserPendingAction(address user) external view returns (PendingAction memory action_);
-
-    /**
-     * @notice Remove a stuck pending action and perform the minimal amount of cleanup necessary
-     * @dev This function can only be called by the owner of the protocol, it serves as an escape hatch if a
-     * pending action ever gets stuck due to something internal reverting unexpectedly
-     * @param validator The address of the validator
-     * @param to Where the retrieved funds should be sent (security deposit, assets, usdn)
-     */
-    function removeBlockedPendingAction(address validator, address payable to) external;
-
-    /**
-     * @notice Remove a stuck pending action with no cleanup
-     * @dev This function can only be called by the owner of the protocol, it serves as an escape hatch if a
-     * pending action ever gets stuck due to something internal reverting unexpectedly
-     * Always try to use `removeBlockedPendingAction` first, and only call this function if the other one fails
-     * @param validator The address of the validator
-     * @param to Where the retrieved funds should be sent (security deposit, assets, usdn)
-     */
-    function removeBlockedPendingActionNoCleanup(address validator, address payable to) external;
-
-    /**
-     * @notice Remove a stuck pending action and perform the minimal amount of cleanup necessary
-     * @dev This function can only be called by the owner of the protocol, it serves as an escape hatch if a
-     * pending action ever gets stuck due to something internal reverting unexpectedly
-     * @param rawIndex The raw index of the pending action in the queue
-     * @param to Where the retrieved funds should be sent (security deposit, assets, usdn)
-     */
-    function removeBlockedPendingAction(uint128 rawIndex, address payable to) external;
-
-    /**
-     * @notice Remove a stuck pending action with no cleanup
-     * @dev This function can only be called by the owner of the protocol, it serves as an escape hatch if a
-     * pending action ever gets stuck due to something internal reverting unexpectedly
-     * Always try to use `removeBlockedPendingAction` first, and only call this function if the other one fails
-     * @param rawIndex The raw index of the pending action in the queue
-     * @param to Where the retrieved funds should be sent (security deposit, assets, usdn)
-     */
-    function removeBlockedPendingActionNoCleanup(uint128 rawIndex, address payable to) external;
 
     /**
      * @notice Initialize the protocol, making a first deposit and creating a first long position

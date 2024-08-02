@@ -22,7 +22,7 @@ contract TestOracleMiddlewareUpdateChainlinkTimeElapsedLimit is OracleMiddleware
      * @custom:when The value returned by the function is compared to the value used in the ChainlinkOracle constructor.
      * @custom:then It should succeed.
      */
-    function test_chainlinkTimeElapsedLimit() public {
+    function test_chainlinkTimeElapsedLimit() public view {
         assertEq(oracleMiddleware.getChainlinkTimeElapsedLimit(), chainlinkTimeElapsedLimit);
     }
 

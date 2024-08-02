@@ -16,7 +16,7 @@ contract TestOracleMiddlewareDecimals is OracleMiddlewareBaseFixture {
      * @custom:when The result of the result of the function is compared to 18
      * @custom:then It should succeed
      */
-    function test_decimals() public {
+    function test_decimals() public view {
         assertEq(oracleMiddleware.getDecimals(), 18);
     }
 
@@ -25,7 +25,7 @@ contract TestOracleMiddlewareDecimals is OracleMiddlewareBaseFixture {
      * @custom:when The result of the result of the function is compared to 8
      * @custom:then It should succeed
      */
-    function test_chainlinkDecimals() public {
+    function test_chainlinkDecimals() public view {
         assertEq(oracleMiddleware.getChainlinkDecimals(), 8);
     }
 }

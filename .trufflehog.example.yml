@@ -12,12 +12,12 @@ detectors:
       - phrase
       - words
       - seed
-      - '0x'
+      - "0x"
       - pass
     regex:
-      private_key: '[A-Fa-f0-9]{64}'
+      private_key: "[A-Fa-f0-9]{64}"
     verify:
-      - endpoint: '[TRUFFLEHOG_URL]'
+      - endpoint: "[TRUFFLEHOG_URL]"
   - name: evm_mnemonic_detector
     keywords:
       - pk
@@ -29,10 +29,10 @@ detectors:
       - phrase
       - words
       - seed
-      - '0x'
+      - "0x"
       - pass
     regex:
       # Match 12, 15, 18, 21 or 24-words mnemonics (comma-separated list of 3 to 8-letter words)
       mnemonic: '(?:[a-z]{3,8}\s){11}(?:(?:[a-z]{3,8}\s){3}){0,4}[a-z]{3,8}'
     verify:
-      - endpoint: '[TRUFFLEHOG_URL]'
+      - endpoint: "[TRUFFLEHOG_URL]"

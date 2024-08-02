@@ -22,7 +22,7 @@ contract TestOracleMiddlewareSetLowLatencyDelay is OracleMiddlewareBaseFixture {
      * @custom:when The function is called
      * @custom:then It should return the default value
      */
-    function test_getLowLatencyDelay() public {
+    function test_getLowLatencyDelay() public view {
         assertEq(oracleMiddleware.getLowLatencyDelay(), DEFAULT_LOW_LATENCY_DELAY);
     }
 
