@@ -8,7 +8,7 @@ codeSize: 0xffffffff
 #balanceAddr: 0x487A9A304539440000 #1337 eth
 cryticArgs:
   [
-    "--compile-libraries=(DoubleEndedQueue,0xf0),(HugeUint,0xf1),(TickMath,0xf2),(UsdnProtocolActionsLongLibrary,0xf3),(UsdnProtocolActionsUtilsLibrary,0xf4),(UsdnProtocolActionsVaultLibrary,0xf5),(UsdnProtocolCoreLibrary,0xf6),(UsdnProtocolLongLibrary,0xf7),(UsdnProtocolSettersLibrary,0xf8),(UsdnProtocolVaultLibrary,0xf9)",
+    "--compile-libraries=(DoubleEndedQueue,0xf0),(HugeUint,0xf1),(TickMath,0xf2),(UsdnProtocolActionsLongLibrary,0xf3),(UsdnProtocolActionsUtilsLibrary,0xf4),(UsdnProtocolActionsVaultLibrary,0xf5),(UsdnProtocolConstantsLibrary,0xf6),(UsdnProtocolCoreLibrary,0xf7),(UsdnProtocolLongLibrary,0xf8),(UsdnProtocolUtils,0xf9),(UsdnProtocolVaultLibrary,0xfa)",
   ]
 deployContracts:
   [
@@ -18,10 +18,11 @@ deployContracts:
     ["0xf3", "UsdnProtocolActionsLongLibrary"],
     ["0xf4", "UsdnProtocolActionsUtilsLibrary"],
     ["0xf5", "UsdnProtocolActionsVaultLibrary"],
-    ["0xf6", "UsdnProtocolCoreLibrary"],
-    ["0xf7", "UsdnProtocolLongLibrary"],
-    ["0xf8", "UsdnProtocolSettersLibrary"],
-    ["0xf9", "UsdnProtocolVaultLibrary"],
+    ["0xf6", "UsdnProtocolConstantsLibrary"],
+    ["0xf7", "UsdnProtocolCoreLibrary"],
+    ["0xf8", "UsdnProtocolLongLibrary"],
+    ["0xf9", "UsdnProtocolUtils"],
+    ["0xfa", "UsdnProtocolVaultLibrary"],
   ]
 stopOnFail: true
 #filterBlacklist: true

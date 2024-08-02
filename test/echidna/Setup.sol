@@ -1,8 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
+import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
+
 import { UsdnProtocolHandler } from "../unit/UsdnProtocol/utils/Handler.sol";
 import { MockOracleMiddleware } from "../unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
+import { ADMIN } from "../utils/Constants.sol";
+import { IUsdnProtocolHandler } from "../utils/IUsdnProtocolHandler.sol";
 import { Sdex } from "../utils/Sdex.sol";
 import { Weth } from "../utils/WETH.sol";
 import { WstETH } from "../utils/WstEth.sol";
@@ -11,6 +15,8 @@ import { MockLiquidationRewardsManager } from "./mock/MockLiquidationRewardsMana
 
 import { Rebalancer } from "../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../src/Usdn/Usdn.sol";
+
+import { UsdnProtocolFallback } from "../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { IWstETH } from "../../src/interfaces/IWstETH.sol";
 import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Permit2TokenBitfield } from "../../src/libraries/Permit2TokenBitfield.sol";
@@ -35,7 +41,7 @@ contract Setup is ErrorsChecked {
     MockOracleMiddleware public wstEthOracleMiddleware;
     MockLiquidationRewardsManager public liquidationRewardsManager;
     Usdn public usdn;
-    UsdnProtocolHandler public usdnProtocol;
+    IUsdnProtocolHandler public usdnProtocol;
     Rebalancer public rebalancer;
 
     struct BalancesSnapshot {
@@ -72,12 +78,38 @@ contract Setup is ErrorsChecked {
 
         usdn = new Usdn(address(0), address(0));
 
-        usdnProtocol = new UsdnProtocolHandler(
-            usdn, sdex, wsteth, wstEthOracleMiddleware, liquidationRewardsManager, 100, FEE_COLLECTOR
+        IUsdnProtocolTypes.Roles memory roles = IUsdnProtocolTypes.Roles({
+            setExternalAdmin: ADMIN,
+            criticalFunctionsAdmin: ADMIN,
+            setProtocolParamsAdmin: ADMIN,
+            setUsdnParamsAdmin: ADMIN,
+            setOptionsAdmin: ADMIN
+        });
+
+        UsdnProtocolHandler implementation = new UsdnProtocolHandler();
+        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
+        address proxy = UnsafeUpgrades.deployUUPSProxy(
+            address(implementation),
+            abi.encodeCall(
+                UsdnProtocolHandler.initializeStorageHandler,
+                (
+                    usdn,
+                    sdex,
+                    wsteth,
+                    wstEthOracleMiddleware,
+                    liquidationRewardsManager,
+                    100, // tick spacing 100 = 1%
+                    ADMIN,
+                    roles,
+                    protocolFallback
+                )
+            )
         );
+        usdnProtocol = IUsdnProtocolHandler(proxy);
 
         rebalancer = new Rebalancer(usdnProtocol);
 
+        vm.prank(ADMIN);
         usdnProtocol.setRebalancer(rebalancer);
 
         usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
@@ -89,12 +121,9 @@ contract Setup is ErrorsChecked {
         ).price / 2;
 
         // leverage approx 2x
-        usdnProtocol.initialize(
-            uint128(INIT_DEPOSIT_AMOUNT),
-            uint128(INIT_LONG_AMOUNT),
-            uint128(_desiredLiqPrice),
-            abi.encode(INITIAL_PRICE)
-        );
+        usdnProtocol.initialize{
+            value: wstEthOracleMiddleware.validationCost("", IUsdnProtocolTypes.ProtocolAction.Initialize)
+        }(uint128(INIT_DEPOSIT_AMOUNT), uint128(INIT_LONG_AMOUNT), uint128(_desiredLiqPrice), abi.encode(INITIAL_PRICE));
 
         destinationsToken[address(wsteth)] = [DEPLOYER, ATTACKER];
     }
