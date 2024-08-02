@@ -70,6 +70,9 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     /// @inheritdoc IRebalancer
     uint256 public constant MULTIPLIER_FACTOR = 1e38;
 
+    /// @inheritdoc IRebalancer
+    uint256 public constant MAX_ACTION_COOLDOWN = 48 hours;
+
     /* -------------------------------------------------------------------------- */
     /*                                 Immutables                                 */
     /* -------------------------------------------------------------------------- */
@@ -613,7 +616,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         if (actionCooldown < validationDeadline) {
             revert RebalancerInvalidTimeLimits();
         }
-        if (actionCooldown > 48 hours) {
+        if (actionCooldown > MAX_ACTION_COOLDOWN) {
             revert RebalancerInvalidTimeLimits();
         }
 
