@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
+import { Validate } from "./Validate.s.sol";
 import { Script } from "forge-std/Script.sol";
 
 import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
@@ -46,6 +47,8 @@ contract Deploy is Script {
         bool isProdEnv = block.chainid != vm.envOr("FORK_CHAIN_ID", uint256(31_337));
 
         vm.startBroadcast(vm.envAddress("DEPLOYER_ADDRESS"));
+
+        _validateProtocol();
 
         uint256 depositAmount = vm.envOr("INIT_DEPOSIT_AMOUNT", uint256(0));
         uint256 longAmount = vm.envOr("INIT_LONG_AMOUNT", uint256(0));
@@ -279,5 +282,11 @@ contract Deploy is Script {
         }
 
         UsdnProtocol_.initialize(uint128(depositAmount), uint128(longAmount), uint128(desiredLiqPrice), "");
+    }
+
+    function _validateProtocol() internal {
+        Validate validate = new Validate();
+        Validate.Options memory opts = Validate.Options({ debug: false, sameName: false });
+        validate.validateProtocol(opts);
     }
 }
