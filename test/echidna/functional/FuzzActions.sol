@@ -510,6 +510,22 @@ abstract contract FuzzActions is Setup {
         validateOpenPosition(validatorRand, priceRand);
     }
 
+    /**
+     * @notice PROTCL-12
+     */
+    function fullClosePosition(
+        uint256 ethRand,
+        uint256 destRand,
+        uint256 validatorRand,
+        uint256 priceRand,
+        uint256 amountToClose,
+        uint256 posIdsIndexRand
+    ) public {
+        initiateClosePosition(ethRand, destRand, validatorRand, priceRand, amountToClose, posIdsIndexRand);
+        skip(usdnProtocol.getValidationDeadline() + 1);
+        validateClosePosition(validatorRand, priceRand);
+    }
+
     function getPreviousActionsData(address user, uint256 currentPrice)
         public
         view
