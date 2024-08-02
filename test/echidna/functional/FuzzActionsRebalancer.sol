@@ -7,6 +7,10 @@ contract FuzzActionsRebalancer is Setup {
     /* -------------------------------------------------------------------------- */
     /*                               Rebalancer                                   */
     /* -------------------------------------------------------------------------- */
+
+    /**
+     * @notice RBLCR-0
+     */
     function initiateDepositRebalancer(uint88 amountRand, uint256 destRand) public {
         destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
         address dest = destinationsToken[address(wsteth)][destRand];
