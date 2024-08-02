@@ -13,7 +13,7 @@ abstract contract FuzzSetup is Setup {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice PROTCL-12
+     * @notice PROTCL-13
      */
     function initializeUsdnProtocol(
         uint256 depositAmountRand,
@@ -26,9 +26,10 @@ abstract contract FuzzSetup is Setup {
         vm.deal(address(msg.sender), ethAmount);
         vm.prank(msg.sender);
         address(wsteth).call{ value: ethAmount }("");
+        wsteth.mintAndApprove(
+            msg.sender, depositAmountRand + longAmountRand, address(usdnProtocol), depositAmountRand + longAmountRand
+        );
 
-        vm.prank(msg.sender);
-        wsteth.approve(address(usdnProtocol), depositAmountRand + longAmountRand);
         vm.prank(msg.sender);
         try usdnProtocol.initialize(
             uint128(depositAmountRand), uint128(longAmountRand), uint128(desiredLiqPriceRand), abi.encode(priceRand)
