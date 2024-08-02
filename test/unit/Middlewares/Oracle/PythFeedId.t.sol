@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { PYTH_ETH_USD } from "../../../utils/Constants.sol";
 import { OracleMiddlewareBaseFixture } from "../utils/Fixtures.sol";
