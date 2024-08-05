@@ -3,7 +3,7 @@ pragma solidity 0.8.26;
 
 import { Script } from "forge-std/Script.sol";
 
-import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
+import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import { Sdex } from "../test/utils/Sdex.sol";
 import { WstETH } from "../test/utils/WstEth.sol";
@@ -57,33 +57,8 @@ contract Deploy is Script {
         Usdn_ = _deployUsdn(isProdEnv);
         Sdex_ = _deploySdex();
 
-        // deploy the protocol fallback
-        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
-        // deploy the protocol with tick spacing 100 = 1%
-        address proxy = Upgrades.deployUUPSProxy(
-            "UsdnProtocol.sol",
-            abi.encodeCall(
-                UsdnProtocolImpl.initializeStorage,
-                (
-                    Usdn_,
-                    Sdex_,
-                    WstETH_,
-                    WstEthOracleMiddleware_,
-                    LiquidationRewardsManager_,
-                    100,
-                    vm.envAddress("FEE_COLLECTOR"),
-                    Types.Roles({
-                        setExternalAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
-                        criticalFunctionsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
-                        setProtocolParamsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
-                        setUsdnParamsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
-                        setOptionsAdmin: vm.envAddress("DEPLOYER_ADDRESS")
-                    }),
-                    protocolFallback
-                )
-            )
-        );
-        UsdnProtocol_ = IUsdnProtocol(proxy);
+        // deploy the protocol
+        UsdnProtocol_ = _deployProxy(WstETH_, Sdex_, WstEthOracleMiddleware_, LiquidationRewardsManager_, Usdn_);
 
         // deploy the rebalancer
         Rebalancer_ = _deployRebalancer(UsdnProtocol_);
@@ -105,6 +80,54 @@ contract Deploy is Script {
         }
 
         vm.stopBroadcast();
+    }
+
+    /**
+     * @notice Deploy the protocol implementation behind a proxy
+     * @param wstETH The address of the wstETH token
+     * @param sdex The address of the SDEX token
+     * @param middleware The address of the oracle middleware
+     * @param manager The address of the liquidation rewards manager
+     * @param usdn The address of the USDN token
+     * @return protocol The address of the protocol proxy
+     */
+    function _deployProxy(
+        WstETH wstETH,
+        Sdex sdex,
+        WstEthOracleMiddleware middleware,
+        LiquidationRewardsManager manager,
+        Usdn usdn
+    ) internal returns (IUsdnProtocol protocol) {
+        // deploy the protocol fallback
+        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
+        // deploy the protocol with tick spacing 100 = 1%
+        Options memory options;
+        options.unsafeAllow = "constructor,external-library-linking";
+        address proxy = Upgrades.deployUUPSProxy(
+            "UsdnProtocolImpl.sol",
+            abi.encodeCall(
+                UsdnProtocolImpl.initializeStorage,
+                (
+                    usdn,
+                    sdex,
+                    wstETH,
+                    middleware,
+                    manager,
+                    100,
+                    vm.envAddress("FEE_COLLECTOR"),
+                    Types.Roles({
+                        setExternalAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
+                        criticalFunctionsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
+                        setProtocolParamsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
+                        setUsdnParamsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
+                        setOptionsAdmin: vm.envAddress("DEPLOYER_ADDRESS")
+                    }),
+                    protocolFallback
+                )
+            ),
+            options
+        );
+        protocol = IUsdnProtocol(proxy);
     }
 
     /**
@@ -254,29 +277,22 @@ contract Deploy is Script {
 
     /**
      * @notice Initialize the USDN Protocol
-     * @param isProdEnv Env check
      * @param UsdnProtocol_ The USDN protocol
      * @param WstEthOracleMiddleware_ The WstETH oracle middleware
      * @param depositAmount The amount to deposit during the protocol initialization
      * @param longAmount The size of the long to open during the protocol initialization
      */
     function _initializeUsdnProtocol(
-        bool isProdEnv,
+        bool,
         IUsdnProtocol UsdnProtocol_,
         WstEthOracleMiddleware WstEthOracleMiddleware_,
         uint256 depositAmount,
         uint256 longAmount
     ) internal {
-        uint256 desiredLiqPrice;
-        if (isProdEnv) {
-            desiredLiqPrice = vm.envUint("INIT_LONG_LIQPRICE");
-        } else {
-            // for forks, we want a leverage of ~2x so we get the current
-            // price from the middleware and divide it by two
-            desiredLiqPrice = WstEthOracleMiddleware_.parseAndValidatePrice(
-                "", uint128(block.timestamp), Types.ProtocolAction.Initialize, ""
-            ).price / 2;
-        }
+        // NOTE: ONLY FOR SEPOLIA. Always use a 2x leverage for the deployer's position, with the current price
+        uint256 desiredLiqPrice = WstEthOracleMiddleware_.parseAndValidatePrice(
+            "", uint128(block.timestamp), Types.ProtocolAction.Initialize, ""
+        ).price / 2;
 
         UsdnProtocol_.initialize(uint128(depositAmount), uint128(longAmount), uint128(desiredLiqPrice), "");
     }

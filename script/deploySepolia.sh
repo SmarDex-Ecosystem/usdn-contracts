@@ -13,7 +13,6 @@ export ETHERSCAN_API_KEY=XXXXXXXXXXXXXXXXX # not needed but needs to exist
 # Deployer position
 export INIT_DEPOSIT_AMOUNT=1000000000000000000000
 export INIT_LONG_AMOUNT=1000000000000000000000
-export INIT_LONG_LIQPRICE=1000000000000000000000 # $1000
 
 # RPC URL, can be customized but defaults to localhost/anvil for testing
 : "${RPC_URL:=http://localhost:8545}"
@@ -45,6 +44,6 @@ export CHAINLINK_ETH_PRICE_VALIDITY=3720
 export CHAINLINK_GAS_PRICE_VALIDITY=7500
 export GET_WSTETH=false
 
-forge script --non-interactive --private-key "$DEPLOYER_PRIVATE_KEY" -f "$RPC_URL" script/02_Deploy.s.sol:Deploy --broadcast
+forge script --force --non-interactive --private-key "$DEPLOYER_PRIVATE_KEY" -f "$RPC_URL" script/02_Deploy.s.sol:Deploy --broadcast
 
 popd
