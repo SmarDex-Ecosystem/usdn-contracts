@@ -22,7 +22,7 @@ contract Validate is Script {
         string[] memory inputs = _buildCommandFunctionClashes();
         bool success = _runCommand(inputs);
         if (!success) {
-            revert("function clach detected, run the functionClashes.ts script to see the clashing functions");
+            revert("function clash detected, run the functionClashes.ts script to see the clashing functions");
         }
     }
 
@@ -53,10 +53,6 @@ contract Validate is Script {
      */
     function _runCommand(string[] memory inputs) internal returns (bool success) {
         bytes memory result = vm.ffi(inputs);
-        if (result.length == 0) {
-            return true;
-        } else {
-            return false;
-        }
+        return (result.length == 0);
     }
 }

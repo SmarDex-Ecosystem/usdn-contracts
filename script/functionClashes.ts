@@ -18,7 +18,7 @@ program
   .parse(process.argv);
 
 const options = program.opts();
-const DEBUG: boolean = !!options.debug;
+const DEBUG = !!options.debug;
 const STORAGE: string = options.storage;
 const contracts = program.args;
 let storageFunctions: string[] = []; // if storage contract is provided, we will ignore its functions because they are common
@@ -40,26 +40,28 @@ if (STORAGE) {
   const storage = `src/UsdnProtocol/${STORAGE}`;
 
   if (DEBUG) console.log('storage:', storage);
-  const storageName = basename(storage, '.sol');
+  const storagePath = `./out/${storage}/${basename(storage, '.sol')}.json`;
 
   try {
-    const file = readFileSync(`./out/${storageName}.sol/${storageName}.json`);
+    const file = readFileSync(storagePath);
     const artifact = JSON.parse(file.toString());
     storageFunctions = artifact.abi
       .filter((abiItem: AbiFunction) => abiItem.type === 'function')
       .map((abiItem: AbiFunction) => toFunctionSignature(abiItem));
+
+    if (DEBUG) console.log('storage functions:', storageFunctions);
   } catch {
-    console.error(`\n./out/${storageName}.sol/${storageName}.json does not exist`);
+    console.error(`\n${storagePath} does not exist`);
     process.exit(1);
   }
 }
 
 // check for clashes
 const selectorMap = new Map<`0x${string}`, string>();
-for (const name of solFiles) {
+for (const file of solFiles) {
   try {
-    const file = readFileSync(`./out/${name}.sol/${name}.json`);
-    const artifact = JSON.parse(file.toString());
+    const fileContent = readFileSync(`./out/${file}.sol/${file}.json`);
+    const artifact = JSON.parse(fileContent.toString());
 
     const abiItems = artifact.abi.filter((abiItem: AbiFunction) => abiItem.type === 'function');
     for (const abiItem of abiItems) {
@@ -67,21 +69,27 @@ for (const name of solFiles) {
       const signature = toFunctionSignature(abiItem);
 
       if (selectorMap.has(selector)) {
+        const existingSignature = selectorMap.get(selector);
+
+        if (DEBUG) {
+          console.log(`${signature}: selector ${selector} is already in the map with signature ${existingSignature}`);
+        }
+
         if (STORAGE && storageFunctions.includes(signature)) continue;
 
         // if the function selector is already in the map
-        // and it is not in the storage contract then we have a clash
+        // but not in the storage contract then we have a clash
         console.log(
           '\n',
           pc.bgRed('ERROR:'),
-          `function ${pc.blue(signature)} in ${pc.green(name)} have the same selector (${selector})\n`,
-          `\t    than ${pc.blue(selectorMap.get(selector))} in ${pc.green(solFiles[0])}`,
+          `function ${pc.blue(signature)} in ${pc.green(file)} have the same selector (${selector})\n`,
+          `\t    than ${pc.blue(existingSignature)} in ${pc.green(solFiles[0])}`,
         );
       } else {
         selectorMap.set(selector, signature);
       }
     }
-  } catch {
-    console.log(`./out/${name}.sol/${name}.json does not exist`);
+  } catch (error) {
+    console.log(`Error with ./out/${file}.sol/${file}.json: ${error.message}`);
   }
 }
