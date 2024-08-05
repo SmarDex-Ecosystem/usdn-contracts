@@ -39,11 +39,15 @@ contract FuzzingSuiteTest is Test {
         wsteth = echidna.wsteth();
         usdn = echidna.usdn();
         uint256 usdnBalanceBeforeInit = usdn.balanceOf(DEPLOYER);
+        uint256 DEPOSIT_AMOUNT = 300 ether;
+        uint256 LONG_AMOUNT = 300 ether;
+        uint256 PRICE = 2000 ether;
+        uint256 LIQUIDATION_PRICE = 1000 ether;
 
         vm.prank(DEPLOYER);
-        echidna.initializeUsdnProtocol(300 ether, 300 ether, 2000 ether, 1000 ether);
+        echidna.initializeUsdnProtocol(DEPOSIT_AMOUNT, LONG_AMOUNT, PRICE, LIQUIDATION_PRICE);
         assertEq(address(usdnProtocol).balance, 0, "protocol balance");
-        assertGt(usdn.balanceOf(DEPLOYER), usdnBalanceBeforeInit, "usdn balance");
+        assertEq(usdn.balanceOf(DEPLOYER), (300 ether * 2000 ether) / 10 ** 18 - 1000, "usdn balance");
         assertEq(wsteth.balanceOf(address(usdnProtocol)), 600 ether, "wstETH balance");
 
         vm.prank(address(usdnProtocol));
