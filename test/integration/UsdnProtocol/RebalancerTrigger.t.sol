@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { MOCK_PYTH_DATA } from "../../unit/Middlewares/utils/Constants.sol";
 import { SET_PROTOCOL_PARAMS_ADMIN } from "../../utils/Constants.sol";
