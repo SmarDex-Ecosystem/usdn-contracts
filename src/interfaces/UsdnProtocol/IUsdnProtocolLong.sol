@@ -129,4 +129,12 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
      * @return liquidationPenalty_ The liquidation penalty, in tick spacing units
      */
     function getTickLiquidationPenalty(int24 tick) external view returns (uint8);
+
+    /**
+     * @notice Calculate the imbalance of the protocol
+     * @dev This takes the vault's balance as the point of reference
+     * @param currentPrice The current price of the asset
+     * @param timestamp The timestamp of the price
+     */
+    function calcImbalanceBps(uint128 currentPrice, uint128 timestamp) external view returns (int256 imbalanceBps_);
 }
