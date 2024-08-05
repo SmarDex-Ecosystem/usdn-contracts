@@ -411,6 +411,8 @@ contract FuzzingSuiteTest is Test {
         );
     }
 
+    function can_liquidate() public { }
+
     function _validateCloseAndAssert(
         uint256 securityDeposit,
         uint128 wstethOpenPositionAmount,

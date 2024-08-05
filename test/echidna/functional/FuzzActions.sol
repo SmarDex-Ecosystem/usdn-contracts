@@ -526,6 +526,13 @@ contract FuzzActions is Setup {
         validateClosePosition(validatorRand, priceRand);
     }
 
+    /**
+     * @notice PROTCL-14
+     */
+    function liquidate() public {
+        // usdnProtocol.liquidate();
+    }
+
     function _getPreviousActionsData(address user, uint256 currentPrice)
         internal
         view
