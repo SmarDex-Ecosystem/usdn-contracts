@@ -1,25 +1,28 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
-
-import { UsdnProtocolImpl } from "../../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { IUsdnProtocol } from "../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { MockChainlinkOnChain } from "../unit/Middlewares/utils/MockChainlinkOnChain.sol";
+import { MockPyth } from "../unit/Middlewares/utils/MockPyth.sol";
+import { UsdnProtocolHandler } from "../unit/UsdnProtocol/utils/Handler.sol";
 import { MockOracleMiddleware } from "../unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
-import { ADMIN } from "../utils/Constants.sol";
+import { ADMIN, DEPLOYER, PYTH_ETH_USD, REDSTONE_ETH_USD } from "../utils/Constants.sol";
 import { Sdex } from "../utils/Sdex.sol";
 import { Weth } from "../utils/WETH.sol";
 import { WstETH } from "../utils/WstEth.sol";
 import { ErrorsChecked } from "./helpers/ErrorsChecked.sol";
 import { MockLiquidationRewardsManager } from "./mock/MockLiquidationRewardsManager.sol";
 
+import { WstEthOracleMiddleware } from "../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { Rebalancer } from "../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../src/Usdn/Usdn.sol";
 
+import { LiquidationRewardsManager } from "../../src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { UsdnProtocolFallback } from "../../src/UsdnProtocol/UsdnProtocolFallback.sol";
-import { IWstETH } from "../../src/interfaces/IWstETH.sol";
+
 import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Permit2TokenBitfield } from "../../src/libraries/Permit2TokenBitfield.sol";
+import { IUsdnProtocolHandler } from "../utils/IUsdnProtocolHandler.sol";
 
 contract Setup is ErrorsChecked {
     address public constant DEPLOYER = address(0x10000);
@@ -27,9 +30,11 @@ contract Setup is ErrorsChecked {
     address public constant FEE_COLLECTOR = address(0x00fee);
     Permit2TokenBitfield.Bitfield public constant NO_PERMIT2 = Permit2TokenBitfield.Bitfield.wrap(0);
 
-    Sdex public sdex = new Sdex();
-    Weth public weth = new Weth();
-    WstETH public wsteth = new WstETH();
+    Sdex public sdex;
+    Weth public weth;
+    WstETH public wsteth;
+    MockPyth public mockPyth;
+    MockChainlinkOnChain public mockChainlinkOnChain;
 
     IUsdnProtocolTypes.PreviousActionsData internal EMPTY_PREVIOUS_DATA =
         IUsdnProtocolTypes.PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
@@ -38,10 +43,11 @@ contract Setup is ErrorsChecked {
     address[2] public validators = [DEPLOYER, ATTACKER];
     IUsdnProtocolTypes.PositionId[] public posIds;
 
-    MockOracleMiddleware public wstEthOracleMiddleware;
-    MockLiquidationRewardsManager public liquidationRewardsManager;
+    WstEthOracleMiddleware public oracleMiddleware;
+    LiquidationRewardsManager public liquidationRewardsManager;
     Usdn public usdn;
     IUsdnProtocol public usdnProtocol;
+    IUsdnProtocolHandler public protocol;
     Rebalancer public rebalancer;
 
     struct BalancesSnapshot {
@@ -62,20 +68,23 @@ contract Setup is ErrorsChecked {
 
     constructor() payable {
         vm.warp(1_709_251_200);
-        //TODO see to fuzz these data
-        uint256 INIT_DEPOSIT_AMOUNT = 300 ether;
-        uint256 INIT_LONG_AMOUNT = 300 ether;
-        uint128 INITIAL_PRICE = 2000 ether; // 2000 USDN = 1 ETH
 
-        uint256 ethAmount = (INIT_DEPOSIT_AMOUNT + INIT_LONG_AMOUNT) * wsteth.stEthPerToken() / 1 ether;
-        vm.deal(address(this), ethAmount);
-        (bool result,) = address(wsteth).call{ value: ethAmount }("");
-        require(result, "WstETH mint failed");
+        wsteth = new WstETH();
+        sdex = new Sdex();
+        mockPyth = new MockPyth();
+        mockChainlinkOnChain = new MockChainlinkOnChain();
+        mockChainlinkOnChain.setLastPublishTime(1_704_092_400 - 10 minutes);
+        // this is the stETH/USD oracle, we need to convert the initialPrice
+        mockChainlinkOnChain.setLastPrice(int256(wsteth.getStETHByWstETH(uint256(2000 ether / 10 ** (18 - 8)))));
+        oracleMiddleware = new WstEthOracleMiddleware(
+            address(mockPyth), PYTH_ETH_USD, REDSTONE_ETH_USD, address(mockChainlinkOnChain), address(wsteth), 1 hours
+        );
+        vm.warp(1_704_092_400);
+        liquidationRewardsManager = new LiquidationRewardsManager(address(new MockChainlinkOnChain()), wsteth, 2 days);
 
-        wstEthOracleMiddleware = new MockOracleMiddleware();
-
-        liquidationRewardsManager = new MockLiquidationRewardsManager(IWstETH(wsteth), uint256(2 hours + 5 minutes));
-
+        vm.deal(address(this), 100_000_000_000_000 ether);
+        (bool success,) = address(wsteth).call{ value: DEPLOYER.balance * 9 / 10 }("");
+        require(success, "DEPLOYER wstETH mint failed");
         usdn = new Usdn(address(0), address(0));
 
         IUsdnProtocolTypes.Roles memory roles = IUsdnProtocolTypes.Roles({
@@ -86,54 +95,34 @@ contract Setup is ErrorsChecked {
             setOptionsAdmin: ADMIN
         });
 
-        UsdnProtocolImpl implementation = new UsdnProtocolImpl();
+        UsdnProtocolHandler implementation = new UsdnProtocolHandler();
         UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
-        // address proxy = UnsafeUpgrades.deployUUPSProxy(
-        //     address(implementation),
-        //     abi.encodeCall(
-        //         UsdnProtocolImpl.initializeStorage,
-        //         (
-        //             usdn,
-        //             sdex,
-        //             wsteth,
-        //             wstEthOracleMiddleware,
-        //             liquidationRewardsManager,
-        //             100, // tick spacing 100 = 1%
-        //             ADMIN,
-        //             roles,
-        //             protocolFallback
-        //         )
-        //     )
-        // );
-        // usdnProtocol = IUsdnProtocol(proxy);
-        usdnProtocol = IUsdnProtocol(address(implementation));
-        implementation.initializeStorage(
+        protocol = IUsdnProtocolHandler(address(implementation));
+        protocol.initializeStorage(
             usdn,
             sdex,
             wsteth,
-            wstEthOracleMiddleware,
+            oracleMiddleware,
             liquidationRewardsManager,
             100, // tick spacing 100 = 1%
             ADMIN,
             roles,
             protocolFallback
         );
-        rebalancer = new Rebalancer(usdnProtocol);
 
-        vm.prank(ADMIN);
-        usdnProtocol.setRebalancer(rebalancer);
-
-        usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
-        usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));
-        wsteth.approve(address(usdnProtocol), INIT_DEPOSIT_AMOUNT + INIT_LONG_AMOUNT);
-
+        rebalancer = new Rebalancer(protocol);
+        usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
+        usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
+        wsteth.approve(address(protocol), type(uint256).max);
         // leverage approx 2x
-        // vm.prank(ADMIN);
-        // usdnProtocol.initialize{
-        //     value: wstEthOracleMiddleware.validationCost("", IUsdnProtocolTypes.ProtocolAction.Initialize)
-        // }(uint128(INIT_DEPOSIT_AMOUNT), uint128(INIT_LONG_AMOUNT), uint128(4000 ether), abi.encode(INITIAL_PRICE));
+        protocol.initialize{ value: oracleMiddleware.validationCost("", IUsdnProtocolTypes.ProtocolAction.Initialize) }(
+            99.474794733414559008 ether, 100 ether, 1000 ether, ""
+        );
+        // vm.stopPrank();
+        vm.prank(roles.setExternalAdmin);
+        protocol.setRebalancer(rebalancer);
 
-        // destinationsToken[address(wsteth)] = [DEPLOYER, ATTACKER];
+        destinationsToken[address(wsteth)] = [DEPLOYER, ATTACKER];
     }
 
     function getBalances(address validator, address to) internal view returns (BalancesSnapshot memory) {
