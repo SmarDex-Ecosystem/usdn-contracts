@@ -89,13 +89,13 @@ contract FuzzActions is Setup {
         ) {
             _checkBalancesETH(balancesBefore, lastAction);
 
-            assertGt(usdnShares, 0, "VAULT-6");
-            assertEq(usdn.sharesOf(msg.sender), balancesBefore.senderUsdnShares - usdnShares, "VAULT-4");
+            assertGt(usdnShares, 0, "VAULT-4");
+            assertEq(usdn.sharesOf(msg.sender), balancesBefore.senderUsdnShares - usdnShares, "VAULT-2");
 
             assertEq(
                 usdn.sharesOf(address(usdnProtocol)),
                 uint256(int256(balancesBefore.protocolUsdnShares) + int152(usdnShares) + usdnPendingActions),
-                "VAULT-5"
+                "VAULT-3"
             );
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_WITHDRAWAL_ERRORS);
