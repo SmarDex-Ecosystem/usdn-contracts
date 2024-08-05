@@ -2,8 +2,8 @@
 [[dependencies]]
 name = "@chainlink"
 version = "1.2.0"
-source = "https://github.com/smartcontractkit/chainlink.git"
-checksum = "c3dc764bba9e1c57b3f7933bcb804a1740fab695"
+source = "https://github.com/smartcontractkit/chainlink/archive/c3dc764bba9e1c57b3f7933bcb804a1740fab695.zip"
+checksum = "7050515ce90fd3dbac7cb958e960dd22ac85f6d0093bfdec87acc12560edbe3a"
 
 [[dependencies]]
 name = "@openzeppelin-contracts-upgradeable"
@@ -30,10 +30,10 @@ source = "https://soldeer-revisions.s3.amazonaws.com/@redstone-finance-evm-conne
 checksum = "7532d8972be86e4df8b902205333c4760fe1eda7ca1ee073b1be06c4b4523863"
 
 [[dependencies]]
-name = "@uniswap/permit2"
+name = "@uniswap-permit2"
 version = "1.0.0"
-source = "https://github.com/Uniswap/permit2.git"
-checksum = "cc56ad0f3439c502c246fc5cfcc3db92bb8b7219"
+source = "https://github.com/Uniswap/permit2/archive/cc56ad0f3439c502c246fc5cfcc3db92bb8b7219.zip"
+checksum = "180e009e8abfc5ed43383418f2593ac790655b58ec18ae52a92a636d5f298ad4"
 
 [[dependencies]]
 name = "forge-std"
