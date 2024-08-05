@@ -38,11 +38,12 @@ contract FuzzingSuiteTest is Test {
         wstEthOracleMiddleware = echidna.wstEthOracleMiddleware();
         wsteth = echidna.wsteth();
         usdn = echidna.usdn();
+        uint256 usdnBalanceBeforeInit = usdn.balanceOf(DEPLOYER);
 
         vm.prank(DEPLOYER);
         echidna.initializeUsdnProtocol(300 ether, 300 ether, 2000 ether, 1000 ether);
         assertEq(address(usdnProtocol).balance, 0, "protocol balance");
-        // assertEq(usdn.balanceOf(DEPLOYER), usdnBalanceBeforeInit, "usdn balance");
+        assertGt(usdn.balanceOf(DEPLOYER), usdnBalanceBeforeInit, "usdn balance");
         assertEq(wsteth.balanceOf(address(usdnProtocol)), 600 ether, "wstETH balance");
 
         vm.prank(address(usdnProtocol));
