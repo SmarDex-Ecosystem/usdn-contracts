@@ -1,19 +1,18 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { Test } from "forge-std/Test.sol";
-
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { IUsdnErrors } from "../../../src/interfaces/Usdn/IUsdnErrors.sol";
 import { IUsdnProtocolErrors } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-
 import { SignedMath } from "../../../src/libraries/SignedMath.sol";
 import { TickMath } from "../../../src/libraries/TickMath.sol";
 import { InitializableReentrancyGuard } from "../../../src/utils/InitializableReentrancyGuard.sol";
 
-contract ErrorsChecked is Test {
+import { Setup } from "../Setup.sol";
+
+contract ErrorsChecked is Setup {
     /* -------------------------------------------------------------------------- */
     /*                              Common errors                                 */
     /* -------------------------------------------------------------------------- */
