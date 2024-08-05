@@ -30,10 +30,9 @@ TODO lastAction doc
 
 ## Long invariants
 
-
-| Invariant name | Description | Status |
-|----------------|-------------|--------|
-| LONG-1         |             | x      |
+| Invariant name | Description                                            | Status |
+|----------------|--------------------------------------------------------|--------|
+| LONG-1         | No wstETH is transferred during a close initialization | x      |
 
 
 ## What to do in case of failure?

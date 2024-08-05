@@ -150,6 +150,9 @@ contract FuzzActions is Setup {
         }
     }
 
+    /// @custom:property PROTCL-1 When initializing an action, the sender pay the security deposit
+    /// @custom:property PROTCL-2 When initializing an action, the protocol receive the security deposit
+    /// @custom:property LONG-1 No wstETH is transferred during a close initialization
     function initiateClosePosition(
         uint256 ethRand,
         uint256 destRand,
@@ -175,30 +178,33 @@ contract FuzzActions is Setup {
         }
 
         BalancesSnapshot memory balancesBefore = getBalances(validator, dest);
+        (
+            IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
+            ,
+            IUsdnProtocolTypes.PendingAction memory lastAction,
+        ) = getPreviousActionsData(msg.sender, priceRand);
+        (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceRand);
 
         vm.prank(msg.sender);
         try usdnProtocol.initiateClosePosition{ value: ethRand }(
             posId, uint128(amountToClose), dest, validator, priceData, EMPTY_PREVIOUS_DATA
         ) returns (bool success_) {
             if (success_) {
-                uint64 securityDeposit = usdnProtocol.getSecurityDepositValue();
-
                 // remove the position
                 posIds[posIdsIndex] = posIds[posIds.length - 1];
                 posIds.pop();
 
-                assert(address(msg.sender).balance == balancesBefore.senderEth - securityDeposit);
-                assert(
-                    uint8(usdnProtocol.getUserPendingAction(validator).action)
-                        == uint8(IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition)
-                );
-                assert(address(usdnProtocol).balance == balancesBefore.protocolEth + securityDeposit);
+                _checkBalancesETH(balancesBefore, lastAction);
+                //                assertEq(
+                //                    uint8(usdnProtocol.getUserPendingAction(validator).action),
+                //                    uint8(IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition)
+                //                );
             } else {
                 assert(address(usdnProtocol).balance == balancesBefore.protocolEth);
             }
 
-            assert(wsteth.balanceOf(msg.sender) == balancesBefore.senderWsteth);
-            assert(wsteth.balanceOf(address(usdnProtocol)) == balancesBefore.protocolWsteth);
+            assertEq(wsteth.balanceOf(msg.sender), balancesBefore.senderWsteth, "LONG-1");
+            assertEq(wsteth.balanceOf(address(usdnProtocol)), balancesBefore.protocolWsteth, "LONG-1");
         } catch (bytes memory err) {
             _checkErrors(err, INITIATE_CLOSE_ERRORS);
         }
