@@ -44,11 +44,11 @@ contract Deploy is Script {
             IUsdnProtocol UsdnProtocol_
         )
     {
+        _validateProtocol();
+
         bool isProdEnv = block.chainid != vm.envOr("FORK_CHAIN_ID", uint256(31_337));
 
         vm.startBroadcast(vm.envAddress("DEPLOYER_ADDRESS"));
-
-        _validateProtocol();
 
         uint256 depositAmount = vm.envOr("INIT_DEPOSIT_AMOUNT", uint256(0));
         uint256 longAmount = vm.envOr("INIT_LONG_AMOUNT", uint256(0));
