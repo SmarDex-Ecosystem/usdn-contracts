@@ -83,6 +83,9 @@ contract ErrorsChecked is Test {
 
     bytes4[][] public VALIDATE_PENDING_ACTIONS_ERRORS = [[IUsdnProtocolErrors.UsdnProtocolEtherRefundFailed.selector]];
 
+    bytes4[][] public LIQUIDATE_ERRORS =
+        [[TickMath.TickMathInvalidPrice.selector, SignedMath.SignedMathDivideByZero.selector]];
+
     constructor() {
         bytes4[] memory initiateErrors = INITIATE_ERRORS;
         INITIATE_DEPOSIT_ERRORS.push(initiateErrors);

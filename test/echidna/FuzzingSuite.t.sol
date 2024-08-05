@@ -411,7 +411,50 @@ contract FuzzingSuiteTest is Test {
         );
     }
 
-    function can_liquidate() public { }
+    /**
+     * @custom:scenario The user sends too much ether when liquidating positions
+     * @custom:given The user performs a liquidation
+     * @custom:when The user sends 0.5 ether as value in the `liquidate` call
+     * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
+     */
+    function test_canLiquidate() public {
+        uint256 initialTotalPos = protocol.getTotalLongPositions();
+        uint128 currentPrice = 2000 ether;
+        bytes memory priceData = abi.encode(currentPrice);
+
+        wstETH.mintAndApprove(address(this), 1_000_000 ether, address(protocol), type(uint256).max);
+
+        // create high risk position
+        protocol.initiateOpenPosition{
+            value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
+        }(
+            5 ether,
+            9 * currentPrice / 10,
+            address(this),
+            payable(address(this)),
+            NO_PERMIT2,
+            priceData,
+            EMPTY_PREVIOUS_DATA
+        );
+        _waitDelay();
+        protocol.validateOpenPosition{
+            value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
+        }(payable(address(this)), priceData, EMPTY_PREVIOUS_DATA);
+        assertEq(protocol.getTotalLongPositions(), initialTotalPos + 1, "total positions after create");
+
+        // price drops
+        skip(1 hours);
+        priceData = abi.encode(1000 ether);
+
+        // liquidate
+        uint256 balanceBefore = address(this).balance;
+        uint256 validationCost = oracleMiddleware.validationCost(priceData, ProtocolAction.Liquidation);
+
+        // we use `liquidate` instead of `testLiquidate` to avoid testing the "hack" in the handler
+        protocol.liquidate{ value: 0.5 ether }(priceData, 1);
+        assertEq(protocol.getTotalLongPositions(), initialTotalPos, "total positions after liquidate");
+        assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
+    }
 
     function _validateCloseAndAssert(
         uint256 securityDeposit,
