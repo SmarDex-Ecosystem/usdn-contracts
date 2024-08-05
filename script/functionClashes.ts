@@ -21,8 +21,9 @@ const options = program.opts();
 const DEBUG: boolean = !!options.debug;
 const STORAGE: string = options.storage;
 const contracts = program.args;
-let storageFunctions: string[] = [];
+let storageFunctions: string[] = []; // if storage contract is provided, we will ignore its functions because they are common
 
+// parse arguments
 const solFiles = globSync(`src/UsdnProtocol/{${contracts.join(',')}}`);
 if (solFiles.length !== 2) {
   console.log('\nPlease provide two valid contracts to compare');
@@ -34,8 +35,10 @@ for (const [i, file] of solFiles.entries()) {
   solFiles[i] = basename(file, '.sol');
 }
 
+// parse storage contract
 if (STORAGE) {
   const storage = `src/UsdnProtocol/${STORAGE}`;
+
   if (DEBUG) console.log('storage:', storage);
   const storageName = basename(storage, '.sol');
 
@@ -51,6 +54,7 @@ if (STORAGE) {
   }
 }
 
+// check for clashes
 const selectorMap = new Map<`0x${string}`, string>();
 for (const name of solFiles) {
   try {
@@ -65,7 +69,9 @@ for (const name of solFiles) {
       if (selectorMap.has(selector)) {
         if (STORAGE && storageFunctions.includes(signature)) continue;
 
-        console.error(
+        // if the function selector is already in the map
+        // and it is not in the storage contract then we have a clash
+        console.log(
           '\n',
           pc.bgRed('ERROR:'),
           `function ${pc.blue(signature)} in ${pc.green(name)} have the same selector (${selector})\n` +
@@ -76,6 +82,6 @@ for (const name of solFiles) {
       }
     }
   } catch {
-    console.error(`./out/${name}.sol/${name}.json does not exist`);
+    console.log(`./out/${name}.sol/${name}.json does not exist`);
   }
 }

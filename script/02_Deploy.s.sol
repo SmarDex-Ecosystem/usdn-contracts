@@ -286,7 +286,6 @@ contract Deploy is Script {
 
     function _validateProtocol() internal {
         Validate validate = new Validate();
-        Validate.Options memory opts = Validate.Options({ debug: false, sameName: false });
-        validate.validateProtocol(opts);
+        validate.validateProtocol();
     }
 }

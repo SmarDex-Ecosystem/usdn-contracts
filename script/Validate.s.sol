@@ -7,43 +7,43 @@ import { Vm } from "forge-std/Vm.sol";
 import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
 
 contract Validate is Script {
-    struct Options {
-        bool debug;
-        bool sameName;
-    }
-
     string constant SCRIPT_PATH = "script/functionClashes.ts";
 
+    // to run the script in standalone mode
     function run() external {
-        validateProtocol(Options(true, true));
+        validateProtocol();
     }
 
-    function validateProtocol(Options memory opts) public {
-        string[] memory inputs = _buildCommandFunctionClashes(opts);
+    /**
+     * @notice Validate the Usdn protocol
+     * @dev Call this function to validate the Usdn protocol before deploying it
+     */
+    function validateProtocol() public {
+        string[] memory inputs = _buildCommandFunctionClashes();
         bool success = _runCommand(inputs);
         if (!success) {
             revert("function clach detected, run the functionClashes.ts script to see the clashing functions");
         }
     }
 
-    function _buildCommandFunctionClashes(Options memory opts) internal pure returns (string[] memory inputs) {
-        string[] memory inputBuilder = new string[](7);
+    /**
+     * @notice Build the command to run the functionClashes.ts script
+     * @return inputs The command to run the functionClashes.ts script
+     */
+    function _buildCommandFunctionClashes() internal pure returns (string[] memory inputs) {
+        string[] memory inputBuilder = new string[](100);
         uint8 i = 0;
 
+        // create the command to run the functionClashes.ts script
+        // npx ts-node UsdnProtocolImpl.sol UsdnProtocolFallback.sol -s UsdnProtocolStorage.sol
         inputBuilder[i++] = "npx";
         inputBuilder[i++] = "ts-node";
         inputBuilder[i++] = SCRIPT_PATH;
-        // TO DO : find a way to automate this
         inputBuilder[i++] = "UsdnProtocolImpl.sol";
         inputBuilder[i++] = "UsdnProtocolFallback.sol";
-
-        if (opts.sameName) {
-            inputBuilder[i++] = "--same-name";
-        }
-
-        if (opts.debug) {
-            inputBuilder[i++] = "--debug";
-        }
+        // we need to give the storage contract to remove common functions
+        inputBuilder[i++] = "-s";
+        inputBuilder[i++] = "UsdnProtocolStorage.sol";
 
         // Create a copy inputs with the correct length
         inputs = new string[](i);
@@ -52,6 +52,11 @@ contract Validate is Script {
         }
     }
 
+    /**
+     * @notice Function to run an external command with ffi
+     * @param inputs The command to run
+     * @return success True if the command was successful, false otherwise
+     */
     function _runCommand(string[] memory inputs) internal returns (bool success) {
         bytes memory result = vm.ffi(inputs);
         if (result.length == 0) {
