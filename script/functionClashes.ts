@@ -9,17 +9,19 @@ import pc from 'picocolors';
 const program = new Command();
 
 program
-  .description('Export ABI from artifacts')
+  .description('Check if two contracts have functions with the same selector')
   .argument('<contract1>', 'first contract to compare')
   .argument('<contract2>', 'second contract to compare')
+  .allowExcessArguments(false)
+  .option('-s, --storage <storageContract>', 'the common storage layout')
   .option('-d, --debug', 'output extra debugging')
-  .option('-sn, --same-name', 'output errors for functions with the same name')
   .parse(process.argv);
 
 const options = program.opts();
 const DEBUG: boolean = !!options.debug;
-const SAME_NAME: boolean = !!options.sameName;
+const STORAGE: string = options.storage;
 const contracts = program.args;
+let storageFunctions: string[] = [];
 
 const solFiles = globSync(`src/UsdnProtocol/{${contracts.join(',')}}`);
 if (solFiles.length !== 2) {
@@ -27,9 +29,26 @@ if (solFiles.length !== 2) {
   process.exit(1);
 }
 
-if (DEBUG) console.log('files:', solFiles);
+if (DEBUG) console.log('contracts:', solFiles);
 for (const [i, file] of solFiles.entries()) {
   solFiles[i] = basename(file, '.sol');
+}
+
+if (STORAGE) {
+  const storage = `src/UsdnProtocol/${STORAGE}`;
+  if (DEBUG) console.log('storage:', storage);
+  const storageName = basename(storage, '.sol');
+
+  try {
+    const file = readFileSync(`./out/${storageName}.sol/${storageName}.json`);
+    const artifact = JSON.parse(file.toString());
+    storageFunctions = artifact.abi
+      .filter((abiItem: AbiFunction) => abiItem.type === 'function')
+      .map((abiItem: AbiFunction) => toFunctionSignature(abiItem));
+  } catch {
+    console.error(`\n./out/${storageName}.sol/${storageName}.json does not exist`);
+    process.exit(1);
+  }
 }
 
 const selectorMap = new Map<`0x${string}`, string>();
@@ -38,28 +57,25 @@ for (const name of solFiles) {
     const file = readFileSync(`./out/${name}.sol/${name}.json`);
     const artifact = JSON.parse(file.toString());
 
-    artifact.abi
-      .filter((abiItem: AbiFunction) => abiItem.type === 'function')
-      .map((abiItem: AbiFunction) => {
-        const selector = toFunctionSelector(abiItem);
-        const signature = toFunctionSignature(abiItem);
+    const abiItems = artifact.abi.filter((abiItem: AbiFunction) => abiItem.type === 'function');
+    for (const abiItem of abiItems) {
+      const selector = toFunctionSelector(abiItem);
+      const signature = toFunctionSignature(abiItem);
 
-        if (selectorMap.has(selector)) {
-          const duplicateSignature = selectorMap.get(selector);
+      if (selectorMap.has(selector)) {
+        if (STORAGE && storageFunctions.includes(signature)) continue;
 
-          if (duplicateSignature !== signature || SAME_NAME) {
-            console.log(
-              '\n',
-              pc.bgRed('ERROR:'),
-              `function ${pc.blue(signature)} in ${pc.green(name)} have the same selector (${selector})\n` +
-                `\t    than ${pc.blue(duplicateSignature)} in ${pc.green(solFiles[0])}`,
-            );
-          }
-        } else {
-          selectorMap.set(selector, signature);
-        }
-      });
+        console.error(
+          '\n',
+          pc.bgRed('ERROR:'),
+          `function ${pc.blue(signature)} in ${pc.green(name)} have the same selector (${selector})\n` +
+            `\t    than ${pc.blue(selectorMap.get(selector))} in ${pc.green(solFiles[0])}`,
+        );
+      } else {
+        selectorMap.set(selector, signature);
+      }
+    }
   } catch {
-    console.log(`./out/${name}.sol/${name}.json does not exist`);
+    console.error(`./out/${name}.sol/${name}.json does not exist`);
   }
 }

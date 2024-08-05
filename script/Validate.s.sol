@@ -2,7 +2,6 @@
 pragma solidity 0.8.26;
 
 import { Script } from "forge-std/Script.sol";
-import { console2 } from "forge-std/Test.sol";
 import { Vm } from "forge-std/Vm.sol";
 
 import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
@@ -13,22 +12,27 @@ contract Validate is Script {
         bool sameName;
     }
 
+    string constant SCRIPT_PATH = "script/functionClashes.ts";
+
     function run() external {
-        string[] memory inputs = _buildCommandFunctionClashes(Options(false, true));
-        _runCommand(inputs);
+        validateProtocol(Options(true, true));
     }
 
-    function validateProtocol(Options memory opts) external {
+    function validateProtocol(Options memory opts) public {
         string[] memory inputs = _buildCommandFunctionClashes(opts);
-        _runCommand(inputs);
+        bool success = _runCommand(inputs);
+        if (!success) {
+            revert("function clach detected, run the functionClashes.ts script to see the clashing functions");
+        }
     }
 
     function _buildCommandFunctionClashes(Options memory opts) internal pure returns (string[] memory inputs) {
-        string[] memory inputBuilder = new string[](6);
+        string[] memory inputBuilder = new string[](7);
         uint8 i = 0;
 
+        inputBuilder[i++] = "npx";
         inputBuilder[i++] = "ts-node";
-        inputBuilder[i++] = "script/functionClashes.ts";
+        inputBuilder[i++] = SCRIPT_PATH;
         // TO DO : find a way to automate this
         inputBuilder[i++] = "UsdnProtocolImpl.sol";
         inputBuilder[i++] = "UsdnProtocolFallback.sol";
@@ -48,12 +52,12 @@ contract Validate is Script {
         }
     }
 
-    function _runCommand(string[] memory inputs) internal {
+    function _runCommand(string[] memory inputs) internal returns (bool success) {
         bytes memory result = vm.ffi(inputs);
-        if (result.length == 0) { } else {
-            // string memory output = abi.decode(result, (string));
-            // console2.log(output);
-            revert("Error in functionClashes.ts");
+        if (result.length == 0) {
+            return true;
+        } else {
+            return false;
         }
     }
 }
