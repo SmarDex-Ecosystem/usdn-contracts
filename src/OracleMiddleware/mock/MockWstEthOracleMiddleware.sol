@@ -118,6 +118,11 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
         _verifySignature = verify;
     }
 
+    /// @notice Returns the signature verification flag
+    function getVerifySignature() external view returns (bool) {
+        return _verifySignature;
+    }
+
     /// @inheritdoc OracleMiddleware
     function validationCost(bytes calldata data, ProtocolAction action)
         public
