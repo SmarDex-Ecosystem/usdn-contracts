@@ -8,6 +8,7 @@ fi
 # Path of the script folder (so that the script can be invoked from somewhere else than the project's root)
 SCRIPT_DIR=$(dirname -- "$(readlink -f -- "$BASH_SOURCE")")
 pushd $SCRIPT_DIR/..
+export ETHERSCAN_API_KEY=XXXXXXXXXXXXXXXXX # not needed but needs to exist
 
 # Deployer position
 export INIT_DEPOSIT_AMOUNT=1000000000000000000000
@@ -34,7 +35,6 @@ BROADCAST="broadcast/01_DeployUsdn.s.sol/$CHAIN_ID/run-latest.json"
 export USDN_ADDRESS=$(cat "$BROADCAST" | jq -r '.returns.Usdn_.value')
 
 # Deploy protocol
-export ETHERSCAN_API_KEY=XXXXXXXXXXXXXXXXX # not needed but needs to exist
 export DEPLOYER_ADDRESS=$(cast wallet address "$DEPLOYER_PRIVATE_KEY")
 export FEE_COLLECTOR="$DEPLOYER_ADDRESS"
 export PYTH_ADDRESS=0xDd24F84d36BF92C65F92307595335bdFab5Bbd21
