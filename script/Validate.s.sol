@@ -31,25 +31,19 @@ contract Validate is Script {
      * @return inputs The command to run the functionClashes.ts script
      */
     function _buildCommandFunctionClashes() internal pure returns (string[] memory inputs) {
-        string[] memory inputBuilder = new string[](100);
+        inputs = new string[](7);
         uint8 i = 0;
 
         // create the command to run the functionClashes.ts script
         // npx ts-node UsdnProtocolImpl.sol UsdnProtocolFallback.sol -s UsdnProtocolStorage.sol
-        inputBuilder[i++] = "npx";
-        inputBuilder[i++] = "ts-node";
-        inputBuilder[i++] = SCRIPT_PATH;
-        inputBuilder[i++] = "UsdnProtocolImpl.sol";
-        inputBuilder[i++] = "UsdnProtocolFallback.sol";
+        inputs[i++] = "npx";
+        inputs[i++] = "ts-node";
+        inputs[i++] = SCRIPT_PATH;
+        inputs[i++] = "UsdnProtocolImpl.sol";
+        inputs[i++] = "UsdnProtocolFallback.sol";
         // we need to give the storage contract to remove common functions
-        inputBuilder[i++] = "-s";
-        inputBuilder[i++] = "UsdnProtocolStorage.sol";
-
-        // Create a copy inputs with the correct length
-        inputs = new string[](i);
-        for (uint8 j = 0; j < i; j++) {
-            inputs[j] = inputBuilder[j];
-        }
+        inputs[i++] = "-s";
+        inputs[i++] = "UsdnProtocolStorage.sol";
     }
 
     /**

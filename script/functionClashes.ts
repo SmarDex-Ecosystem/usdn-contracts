@@ -74,8 +74,8 @@ for (const name of solFiles) {
         console.log(
           '\n',
           pc.bgRed('ERROR:'),
-          `function ${pc.blue(signature)} in ${pc.green(name)} have the same selector (${selector})\n` +
-            `\t    than ${pc.blue(selectorMap.get(selector))} in ${pc.green(solFiles[0])}`,
+          `function ${pc.blue(signature)} in ${pc.green(name)} have the same selector (${selector})\n`,
+          `\t    than ${pc.blue(selectorMap.get(selector))} in ${pc.green(solFiles[0])}`,
         );
       } else {
         selectorMap.set(selector, signature);
