@@ -14,11 +14,8 @@ export INIT_DEPOSIT_AMOUNT=1000000000000000000000
 export INIT_LONG_AMOUNT=1000000000000000000000
 export INIT_LONG_LIQPRICE=1000000000000000000000 # $1000
 
-npm ci
-forge soldeer install
-
 # RPC URL, can be customized but defaults to localhost/anvil for testing
-: "${RPC_URL:-http://localhost:8545}"
+: "${RPC_URL:=http://localhost:8545}"
 
 CHAIN_ID=$(cast chain-id -r "$RPC_URL")
 
@@ -37,6 +34,7 @@ BROADCAST="broadcast/01_DeployUsdn.s.sol/$CHAIN_ID/run-latest.json"
 export USDN_ADDRESS=$(cat "$BROADCAST" | jq -r '.returns.Usdn_.value')
 
 # Deploy protocol
+export ETHERSCAN_API_KEY=XXXXXXXXXXXXXXXXX # not needed but needs to exist
 export DEPLOYER_ADDRESS=$(cast wallet address "$DEPLOYER_PRIVATE_KEY")
 export FEE_COLLECTOR="$DEPLOYER_ADDRESS"
 export PYTH_ADDRESS=0xDd24F84d36BF92C65F92307595335bdFab5Bbd21
