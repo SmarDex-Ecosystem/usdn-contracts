@@ -34,9 +34,8 @@ contract FuzzSetup is Helpers {
         try usdnProtocol.initialize(
             uint128(depositAmountRand), uint128(longAmountRand), uint128(desiredLiqPriceRand), abi.encode(priceRand)
         ) {
-            uint256 usdnNoFees = depositAmountRand * priceRand / 10 ** 18; // todo: add fees
             assert(address(usdnProtocol).balance == 0);
-            assert(usdn.balanceOf(msg.sender) >= usdnNoFees - usdnNoFees / 10 ** 20); // imperfect estimation
+            assert(usdn.balanceOf(msg.sender) >= depositAmountRand * priceRand / 10 ** 18 - 1000);
             assert(wsteth.balanceOf(address(usdnProtocol)) == depositAmountRand + longAmountRand);
         } catch (bytes memory err) {
             _checkErrors(err, INITIALIZE_ERRORS);

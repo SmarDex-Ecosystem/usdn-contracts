@@ -130,7 +130,10 @@ contract ErrorsChecked is Setup {
         }
         if (expected) {
             emit log_named_bytes("Expected error ", err);
-            return;
+            if (err != bytes4(InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector)) {
+                // emit log_named_bytes("Uninitialized ", ); // todo get initialize position
+                return;
+            }
         } else {
             emit log_named_bytes("DOS ", err);
             assert(false);
