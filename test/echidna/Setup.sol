@@ -3,10 +3,10 @@ pragma solidity ^0.8.25;
 
 import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
-import { UsdnProtocolHandler } from "../unit/UsdnProtocol/utils/Handler.sol";
+import { UsdnProtocolImpl } from "../../src/UsdnProtocol/UsdnProtocolImpl.sol";
+import { IUsdnProtocol } from "../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { MockOracleMiddleware } from "../unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
 import { ADMIN } from "../utils/Constants.sol";
-import { IUsdnProtocolHandler } from "../utils/IUsdnProtocolHandler.sol";
 import { Sdex } from "../utils/Sdex.sol";
 import { Weth } from "../utils/WETH.sol";
 import { WstETH } from "../utils/WstEth.sol";
@@ -41,7 +41,7 @@ contract Setup is ErrorsChecked {
     MockOracleMiddleware public wstEthOracleMiddleware;
     MockLiquidationRewardsManager public liquidationRewardsManager;
     Usdn public usdn;
-    IUsdnProtocolHandler public usdnProtocol;
+    IUsdnProtocol public usdnProtocol;
     Rebalancer public rebalancer;
 
     struct BalancesSnapshot {
@@ -86,12 +86,12 @@ contract Setup is ErrorsChecked {
             setOptionsAdmin: ADMIN
         });
 
-        UsdnProtocolHandler implementation = new UsdnProtocolHandler();
+        UsdnProtocolImpl implementation = new UsdnProtocolImpl();
         UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
         address proxy = UnsafeUpgrades.deployUUPSProxy(
             address(implementation),
             abi.encodeCall(
-                UsdnProtocolHandler.initializeStorageHandler,
+                UsdnProtocolImpl.initializeStorage,
                 (
                     usdn,
                     sdex,
@@ -105,7 +105,7 @@ contract Setup is ErrorsChecked {
                 )
             )
         );
-        usdnProtocol = IUsdnProtocolHandler(proxy);
+        usdnProtocol = IUsdnProtocol(proxy);
 
         rebalancer = new Rebalancer(usdnProtocol);
 

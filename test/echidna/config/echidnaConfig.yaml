@@ -8,21 +8,23 @@ codeSize: 0xffffffff
 #balanceAddr: 0x487A9A304539440000 #1337 eth
 cryticArgs:
   [
-    "--compile-libraries=(DoubleEndedQueue,0xf0),(HugeUint,0xf1),(TickMath,0xf2),(UsdnProtocolActionsLongLibrary,0xf3),(UsdnProtocolActionsUtilsLibrary,0xf4),(UsdnProtocolActionsVaultLibrary,0xf5),(UsdnProtocolConstantsLibrary,0xf6),(UsdnProtocolCoreLibrary,0xf7),(UsdnProtocolLongLibrary,0xf8),(UsdnProtocolUtils,0xf9),(UsdnProtocolVaultLibrary,0xfa)",
+    "--compile-libraries=(DoubleEndedQueue,0xf0),(HugeUint,0xf1),(TickMath,0xf2),(Permit2TokenBitfield,0xf3),(SignedMath,0xf4),(UsdnProtocolActionsLongLibrary,0xf5),(UsdnProtocolActionsUtilsLibrary,0xf6),(UsdnProtocolActionsVaultLibrary,0xf7),(UsdnProtocolConstantsLibrary,0xf8),(UsdnProtocolCoreLibrary,0xf9),(UsdnProtocolLongLibrary,0xfa),(UsdnProtocolUtils,0xfb),(UsdnProtocolVaultLibrary,0xfc)",
   ]
 deployContracts:
   [
     ["0xf0", "DoubleEndedQueue"],
     ["0xf1", "HugeUint"],
     ["0xf2", "TickMath"],
-    ["0xf3", "UsdnProtocolActionsLongLibrary"],
-    ["0xf4", "UsdnProtocolActionsUtilsLibrary"],
-    ["0xf5", "UsdnProtocolActionsVaultLibrary"],
-    ["0xf6", "UsdnProtocolConstantsLibrary"],
-    ["0xf7", "UsdnProtocolCoreLibrary"],
-    ["0xf8", "UsdnProtocolLongLibrary"],
-    ["0xf9", "UsdnProtocolUtils"],
-    ["0xfa", "UsdnProtocolVaultLibrary"],
+    ["0xf3", "Permit2TokenBitfield"],
+    ["0xf4", "SignedMath"],
+    ["0xf5", "UsdnProtocolActionsLongLibrary"],
+    ["0xf6", "UsdnProtocolActionsUtilsLibrary"],
+    ["0xf7", "UsdnProtocolActionsVaultLibrary"],
+    ["0xf8", "UsdnProtocolConstantsLibrary"],
+    ["0xf9", "UsdnProtocolCoreLibrary"],
+    ["0xfa", "UsdnProtocolLongLibrary"],
+    ["0xfb", "UsdnProtocolUtils"],
+    ["0xfc", "UsdnProtocolVaultLibrary"],
   ]
 stopOnFail: true
 #filterBlacklist: true
@@ -32,3 +34,4 @@ workers: 8
 maxTimeDelay: 604800
 shrinkLimit: 5000
 seqLen: 30
+allowFFI: true

@@ -239,8 +239,13 @@ contract FuzzActions is Setup {
         uint256 priceData = bound(priceRand, 0, type(uint128).max);
 
         BalancesSnapshot memory balancesBefore = getBalances(validator, msg.sender);
-        IUsdnProtocolTypes.DepositPendingAction memory pendingAction =
-            usdnProtocol.i_toDepositPendingAction(usdnProtocol.getUserPendingAction(validator));
+        IUsdnProtocolTypes.DepositPendingAction memory pendingAction;
+        IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(validator);
+
+        assembly {
+            pendingAction := action
+        }
+
         (
             IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
             ,
@@ -378,8 +383,12 @@ contract FuzzActions is Setup {
         address payable validator = payable(validators[validatorRand]);
         uint256 priceData = bound(priceRand, 0, type(uint128).max);
 
-        IUsdnProtocolTypes.LongPendingAction memory longAction =
-            usdnProtocol.i_toLongPendingAction(usdnProtocol.getUserPendingAction(validator));
+        IUsdnProtocolTypes.LongPendingAction memory longAction;
+        IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(validator);
+
+        assembly {
+            longAction := action
+        }
 
         (
             IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
@@ -564,21 +573,32 @@ contract FuzzActions is Setup {
         returns (int256 usdn_, uint256 wsteth_)
     {
         if (action.action == IUsdnProtocolTypes.ProtocolAction.ValidateDeposit) {
-            IUsdnProtocolTypes.DepositPendingAction memory depositAction = usdnProtocol.i_toDepositPendingAction(action);
+            IUsdnProtocolTypes.DepositPendingAction memory depositAction;
+
+            assembly {
+                depositAction := action
+            }
             (uint256 usdnSharesExpected,) =
                 usdnProtocol.previewDeposit(depositAction.amount, depositAction.assetPrice, uint128(block.timestamp));
             return (int256(usdnSharesExpected), 0);
         } else if (action.action == IUsdnProtocolTypes.ProtocolAction.ValidateWithdrawal) {
-            IUsdnProtocolTypes.WithdrawalPendingAction memory withdrawalAction =
-                usdnProtocol.i_toWithdrawalPendingAction(action);
-            uint256 amount =
-                usdnProtocol.i_mergeWithdrawalAmountParts(withdrawalAction.sharesLSB, withdrawalAction.sharesMSB);
+            IUsdnProtocolTypes.WithdrawalPendingAction memory withdrawalAction;
+
+            assembly {
+                withdrawalAction := action
+            }
+
+            uint256 amount = withdrawalAction.sharesLSB | uint256(withdrawalAction.sharesMSB) << 24;
             uint256 assetToTransfer = usdnProtocol.previewWithdraw(amount, price, uint128(block.timestamp));
             return (-int256(amount), assetToTransfer);
         } else if (action.action == IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition) {
             return (usdn_, wsteth_);
         } else if (action.action == IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition) {
-            IUsdnProtocolTypes.LongPendingAction memory longAction = usdnProtocol.i_toLongPendingAction(action);
+            IUsdnProtocolTypes.LongPendingAction memory longAction;
+
+            assembly {
+                longAction := action
+            }
             return (0, longAction.closeAmount);
         } else {
             return (usdn_, wsteth_);
