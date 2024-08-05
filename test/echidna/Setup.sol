@@ -88,25 +88,36 @@ contract Setup is ErrorsChecked {
 
         UsdnProtocolImpl implementation = new UsdnProtocolImpl();
         UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
-        address proxy = UnsafeUpgrades.deployUUPSProxy(
-            address(implementation),
-            abi.encodeCall(
-                UsdnProtocolImpl.initializeStorage,
-                (
-                    usdn,
-                    sdex,
-                    wsteth,
-                    wstEthOracleMiddleware,
-                    liquidationRewardsManager,
-                    100, // tick spacing 100 = 1%
-                    ADMIN,
-                    roles,
-                    protocolFallback
-                )
-            )
+        // address proxy = UnsafeUpgrades.deployUUPSProxy(
+        //     address(implementation),
+        //     abi.encodeCall(
+        //         UsdnProtocolImpl.initializeStorage,
+        //         (
+        //             usdn,
+        //             sdex,
+        //             wsteth,
+        //             wstEthOracleMiddleware,
+        //             liquidationRewardsManager,
+        //             100, // tick spacing 100 = 1%
+        //             ADMIN,
+        //             roles,
+        //             protocolFallback
+        //         )
+        //     )
+        // );
+        // usdnProtocol = IUsdnProtocol(proxy);
+        usdnProtocol = IUsdnProtocol(address(implementation));
+        implementation.initializeStorage(
+            usdn,
+            sdex,
+            wsteth,
+            wstEthOracleMiddleware,
+            liquidationRewardsManager,
+            100, // tick spacing 100 = 1%
+            ADMIN,
+            roles,
+            protocolFallback
         );
-        usdnProtocol = IUsdnProtocol(proxy);
-
         rebalancer = new Rebalancer(usdnProtocol);
 
         vm.prank(ADMIN);
@@ -116,16 +127,13 @@ contract Setup is ErrorsChecked {
         usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));
         wsteth.approve(address(usdnProtocol), INIT_DEPOSIT_AMOUNT + INIT_LONG_AMOUNT);
 
-        uint256 _desiredLiqPrice = wstEthOracleMiddleware.parseAndValidatePrice(
-            "", uint128(block.timestamp), IUsdnProtocolTypes.ProtocolAction.Initialize, abi.encode(INITIAL_PRICE)
-        ).price / 2;
-
         // leverage approx 2x
-        usdnProtocol.initialize{
-            value: wstEthOracleMiddleware.validationCost("", IUsdnProtocolTypes.ProtocolAction.Initialize)
-        }(uint128(INIT_DEPOSIT_AMOUNT), uint128(INIT_LONG_AMOUNT), uint128(_desiredLiqPrice), abi.encode(INITIAL_PRICE));
+        // vm.prank(ADMIN);
+        // usdnProtocol.initialize{
+        //     value: wstEthOracleMiddleware.validationCost("", IUsdnProtocolTypes.ProtocolAction.Initialize)
+        // }(uint128(INIT_DEPOSIT_AMOUNT), uint128(INIT_LONG_AMOUNT), uint128(4000 ether), abi.encode(INITIAL_PRICE));
 
-        destinationsToken[address(wsteth)] = [DEPLOYER, ATTACKER];
+        // destinationsToken[address(wsteth)] = [DEPLOYER, ATTACKER];
     }
 
     function getBalances(address validator, address to) internal view returns (BalancesSnapshot memory) {

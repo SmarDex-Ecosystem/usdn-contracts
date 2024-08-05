@@ -139,7 +139,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         _minAssetDeposit = usdnProtocol.getMinLongPosition();
 
         // set allowance to allow the protocol to pull assets from this contract
-        asset.forceApprove(address(usdnProtocol), type(uint256).max);
+        asset.approve(address(usdnProtocol), type(uint256).max);
 
         // indicate that there are no position for version 0
         _positionData[0].tick = Constants.NO_POSITION_TICK;
