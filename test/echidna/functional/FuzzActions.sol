@@ -36,7 +36,7 @@ contract FuzzActions is Setup {
             IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
             ,
             IUsdnProtocolTypes.PendingAction memory lastAction,
-        ) = getPreviousActionsData(msg.sender, priceData);
+        ) = _getPreviousActionsData(msg.sender, priceData);
         (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceData);
 
         vm.prank(msg.sender);
@@ -89,7 +89,7 @@ contract FuzzActions is Setup {
             IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
             ,
             IUsdnProtocolTypes.PendingAction memory lastAction,
-        ) = getPreviousActionsData(msg.sender, priceData);
+        ) = _getPreviousActionsData(msg.sender, priceData);
         (int256 usdnPendingActions,) = getTokenFromPendingAction(lastAction, priceData);
 
         vm.prank(msg.sender);
@@ -139,7 +139,7 @@ contract FuzzActions is Setup {
             IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
             ,
             IUsdnProtocolTypes.PendingAction memory lastAction,
-        ) = getPreviousActionsData(msg.sender, priceRand);
+        ) = _getPreviousActionsData(msg.sender, priceRand);
         (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceRand);
 
         vm.prank(msg.sender);
@@ -245,7 +245,7 @@ contract FuzzActions is Setup {
             IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
             ,
             IUsdnProtocolTypes.PendingAction memory lastAction,
-        ) = getPreviousActionsData(msg.sender, priceData);
+        ) = _getPreviousActionsData(msg.sender, priceData);
         (int256 usdnPendingActions, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceData);
 
         vm.prank(msg.sender);
@@ -298,7 +298,7 @@ contract FuzzActions is Setup {
             IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
             ,
             IUsdnProtocolTypes.PendingAction memory lastAction,
-        ) = getPreviousActionsData(msg.sender, priceData);
+        ) = _getPreviousActionsData(msg.sender, priceData);
         (int256 usdnPendingActions, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceData);
 
         vm.prank(msg.sender);
@@ -343,7 +343,7 @@ contract FuzzActions is Setup {
             IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
             ,
             IUsdnProtocolTypes.PendingAction memory lastAction,
-        ) = getPreviousActionsData(msg.sender, priceData);
+        ) = _getPreviousActionsData(msg.sender, priceData);
         (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceData);
 
         vm.prank(msg.sender);
@@ -385,7 +385,7 @@ contract FuzzActions is Setup {
             IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
             ,
             IUsdnProtocolTypes.PendingAction memory lastAction,
-        ) = getPreviousActionsData(msg.sender, priceData);
+        ) = _getPreviousActionsData(msg.sender, priceData);
         (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceData);
 
         uint256 securityDeposit = longAction.securityDepositValue;
@@ -447,7 +447,7 @@ contract FuzzActions is Setup {
             uint256 securityDeposit,
             ,
             uint256 actionsLength
-        ) = getPreviousActionsData(msg.sender, priceRand);
+        ) = _getPreviousActionsData(msg.sender, priceRand);
 
         vm.prank(msg.sender);
         try usdnProtocol.validateActionablePendingActions(previousActionsData, maxValidations) returns (
@@ -526,8 +526,8 @@ contract FuzzActions is Setup {
         validateClosePosition(validatorRand, priceRand);
     }
 
-    function getPreviousActionsData(address user, uint256 currentPrice)
-        public
+    function _getPreviousActionsData(address user, uint256 currentPrice)
+        internal
         view
         returns (
             IUsdnProtocolTypes.PreviousActionsData memory previousActionsData_,
