@@ -5,7 +5,7 @@ import { Setup } from "../Setup.sol";
 
 import { IUsdnProtocolTypes } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
-abstract contract FuzzActions is Setup {
+contract FuzzActions is Setup {
     /* -------------------------------------------------------------------------- */
     /*                             USDN Protocol                                  */
     /* -------------------------------------------------------------------------- */

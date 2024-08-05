@@ -7,7 +7,7 @@ import { Setup } from "../Setup.sol";
 
 import { Usdn } from "../../../src/Usdn/Usdn.sol";
 
-abstract contract FuzzSetup is Setup {
+contract FuzzSetup is Setup {
     /* -------------------------------------------------------------------------- */
     /*                             USDN Protocol                                  */
     /* -------------------------------------------------------------------------- */
