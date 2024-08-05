@@ -10,6 +10,7 @@ import { Sdex } from "../utils/Sdex.sol";
 import { WstETH } from "../utils/WstEth.sol";
 import { FuzzingSuite } from "./FuzzingSuite.sol";
 
+import { WstEthOracleMiddleware } from "../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { Usdn } from "../../src/Usdn/Usdn.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 
@@ -20,7 +21,7 @@ import { Permit2TokenBitfield } from "../../src/libraries/Permit2TokenBitfield.s
 contract FuzzingSuiteTest is Test {
     FuzzingSuite public echidna;
     IUsdnProtocol public usdnProtocol;
-    MockOracleMiddleware public wstEthOracleMiddleware;
+    WstEthOracleMiddleware public wstEthOracleMiddleware;
     WstETH public wsteth;
     Usdn public usdn;
 
@@ -37,7 +38,7 @@ contract FuzzingSuiteTest is Test {
         ATTACKER = echidna.ATTACKER();
 
         usdnProtocol = echidna.usdnProtocol();
-        wstEthOracleMiddleware = echidna.wstEthOracleMiddleware();
+        wstEthOracleMiddleware = echidna.oracleMiddleware();
         wsteth = echidna.wsteth();
         usdn = echidna.usdn();
 

@@ -46,8 +46,7 @@ contract Setup is ErrorsChecked {
     WstEthOracleMiddleware public oracleMiddleware;
     LiquidationRewardsManager public liquidationRewardsManager;
     Usdn public usdn;
-    IUsdnProtocol public usdnProtocol;
-    IUsdnProtocolHandler public protocol;
+    IUsdnProtocolHandler public usdnProtocol;
     Rebalancer public rebalancer;
 
     struct BalancesSnapshot {
@@ -97,8 +96,8 @@ contract Setup is ErrorsChecked {
 
         UsdnProtocolHandler implementation = new UsdnProtocolHandler();
         UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
-        protocol = IUsdnProtocolHandler(address(implementation));
-        protocol.initializeStorage(
+        usdnProtocol = IUsdnProtocolHandler(address(implementation));
+        usdnProtocol.initializeStorage(
             usdn,
             sdex,
             wsteth,
@@ -110,17 +109,16 @@ contract Setup is ErrorsChecked {
             protocolFallback
         );
 
-        rebalancer = new Rebalancer(protocol);
-        usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
-        usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
-        wsteth.approve(address(protocol), type(uint256).max);
+        rebalancer = new Rebalancer(usdnProtocol);
+        usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
+        usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));
+        wsteth.approve(address(usdnProtocol), type(uint256).max);
         // leverage approx 2x
-        protocol.initialize{ value: oracleMiddleware.validationCost("", IUsdnProtocolTypes.ProtocolAction.Initialize) }(
-            99.474794733414559008 ether, 100 ether, 1000 ether, ""
-        );
-        // vm.stopPrank();
+        usdnProtocol.initialize{
+            value: oracleMiddleware.validationCost("", IUsdnProtocolTypes.ProtocolAction.Initialize)
+        }(99.474794733414559008 ether, 100 ether, 1000 ether, "");
         vm.prank(roles.setExternalAdmin);
-        protocol.setRebalancer(rebalancer);
+        usdnProtocol.setRebalancer(rebalancer);
 
         destinationsToken[address(wsteth)] = [DEPLOYER, ATTACKER];
     }
