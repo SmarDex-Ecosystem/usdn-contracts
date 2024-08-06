@@ -350,7 +350,7 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Helper function to setup a vault pending action and remove it with the admin function(With validator)
+     * @notice Helper function to setup a vault pending action and remove it with the admin function with validator
      * @param untilAction Whether to initiate a deposit or a withdrawal
      * @param amount The amount to deposit
      * @param cleanup Whether to remove the action with more cleanup
