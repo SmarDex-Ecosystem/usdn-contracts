@@ -61,7 +61,7 @@ contract Setup is Test {
         wstEthOracleMiddleware = new MockOracleMiddleware();
         destinationsToken[address(wsteth)] = [DEPLOYER, ATTACKER];
 
-        // todo: see if we want to fuse chainlinkElapsedTimeLimit
+        // todo: see if we want to fuzz chainlinkElapsedTimeLimit
         liquidationRewardsManager = new MockLiquidationRewardsManager(IWstETH(wsteth), uint256(2 hours + 5 minutes));
 
         usdn = new Usdn(address(0), address(0));

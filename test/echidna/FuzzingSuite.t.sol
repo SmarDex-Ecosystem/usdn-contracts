@@ -50,7 +50,7 @@ contract FuzzingSuiteTest is Test {
         assertEq(
             usdn.balanceOf(DEPLOYER), usdnBalanceBeforeInit + (DEPOSIT_AMOUNT * PRICE) / 10 ** 18 - 1000, "usdn balance"
         );
-        assertEq(wsteth.balanceOf(address(usdnProtocol)), 600 ether, "wstETH balance");
+        assertEq(wsteth.balanceOf(address(usdnProtocol)), DEPOSIT_AMOUNT + LONG_AMOUNT, "wstETH balance");
 
         vm.prank(address(usdnProtocol));
         usdn.mintShares(DEPLOYER, usdnShares);

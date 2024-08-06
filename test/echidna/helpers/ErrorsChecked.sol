@@ -4,13 +4,13 @@ pragma solidity ^0.8.25;
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
+import { Setup } from "../Setup.sol";
+
 import { IUsdnErrors } from "../../../src/interfaces/Usdn/IUsdnErrors.sol";
 import { IUsdnProtocolErrors } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { SignedMath } from "../../../src/libraries/SignedMath.sol";
 import { TickMath } from "../../../src/libraries/TickMath.sol";
 import { InitializableReentrancyGuard } from "../../../src/utils/InitializableReentrancyGuard.sol";
-
-import { Setup } from "../Setup.sol";
 
 contract ErrorsChecked is Setup {
     /* -------------------------------------------------------------------------- */
