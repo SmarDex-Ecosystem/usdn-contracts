@@ -5,8 +5,10 @@ import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 
 interface IPythOracle {
     /**
-     * @notice Get ahead delay threshold for Pyth price feed
-     * @return The ahead delay threshold in seconds
+     * @notice Ahead threshold for Pyth, in seconds
+     * @dev Pyth price updates can have a timestamp that exceeds the block.timestamp. In such a case, we accept that
+     * price up to this offset in the future
+     * @return The ahead threshold
      */
     function PYTH_AHEAD_THRESHOLD() external view returns (uint8);
 
