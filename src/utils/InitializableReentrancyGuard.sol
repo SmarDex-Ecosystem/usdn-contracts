@@ -87,7 +87,7 @@ abstract contract InitializableReentrancyGuard {
     }
 
     /// @notice Get the current status of the usdn protocol initialization
-    function initialized() external view returns (bool) {
+    function isInitialized() external view returns (bool) {
         return _status != 0;
     }
 }

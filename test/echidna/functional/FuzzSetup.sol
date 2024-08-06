@@ -22,7 +22,7 @@ contract FuzzSetup is Setup {
         uint256 priceRand,
         uint256 desiredLiqPriceRand
     ) external {
-        if (!usdnProtocol.initialized()) {
+        if (!usdnProtocol.isInitialized()) {
             priceRand = bound(priceRand, 0, type(uint128).max);
             uint256 ethAmount = (depositAmountRand + longAmountRand) * wsteth.stEthPerToken() / 1 ether;
             vm.deal(msg.sender, ethAmount);
@@ -50,18 +50,33 @@ contract FuzzSetup is Setup {
         if (
             bytes4(abi.encodePacked(err))
                 == bytes4(InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector)
-                && usdnProtocol.initialized()
+                && usdnProtocol.isInitialized()
         ) {
-            emit log_named_bytes("Initialized but: ", err);
+            emit log_named_bytes("Should not be initialized: ", err);
+            assert(false);
+        } else if (
+            bytes4(abi.encodePacked(err))
+                == bytes4(InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector)
+                && usdnProtocol.isInitialized()
+        ) {
+            emit log_named_bytes("Should not be initialized :", err);
             assert(false);
         } else if (
             bytes4(abi.encodePacked(err))
                 != bytes4(InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector)
-                && usdnProtocol.initialized()
+                && bytes4(abi.encodePacked(err))
+                    != bytes4(InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector)
+                && !usdnProtocol.isInitialized()
         ) {
-            emit log_named_bytes("Uninitialized but no InitializableReentrancyGuardUninitialized error:", err);
+            emit log_named_bytes("Uninitialized without expected error:", err);
             assert(false);
+        } else if (
+            bytes4(abi.encodePacked(err))
+                != bytes4(InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector)
+                && bytes4(abi.encodePacked(err))
+                    != bytes4(InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector)
+        ) {
+            super._checkErrors(err, errorsArrays);
         }
-        super._checkErrors(err, errorsArrays);
     }
 }
