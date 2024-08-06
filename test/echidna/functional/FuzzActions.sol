@@ -191,15 +191,13 @@ contract FuzzActions is Setup {
         priceRand = bound(priceRand, 0, type(uint128).max);
         bytes memory priceData = abi.encode(uint128(priceRand));
         amountToClose = bound(amountToClose, 0, type(uint128).max);
-
+        ProtocolSnapshot memory balancesBefore = getProtocolSnapshot(validator, dest);
         IUsdnProtocolTypes.PositionId memory posId;
         uint256 posIdsIndex;
         if (posIds.length > 0) {
             posIdsIndex = bound(posIdsIndexRand, 0, posIds.length - 1);
             posId = posIds[posIdsIndex];
         }
-
-        ProtocolSnapshot memory balancesBefore = getProtocolSnapshot(validator, dest);
 
         vm.prank(msg.sender);
         try usdnProtocol.initiateClosePosition{ value: ethRand }(
@@ -236,7 +234,6 @@ contract FuzzActions is Setup {
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
         uint256 priceData = bound(priceRand, 0, type(uint128).max);
-
         IUsdnProtocolTypes.DepositPendingAction memory pendingAction =
             usdnProtocol.i_toDepositPendingAction(usdnProtocol.getUserPendingAction(validator));
         ProtocolSnapshot memory balancesBefore = getProtocolSnapshot(validator, pendingAction.to);
@@ -288,7 +285,6 @@ contract FuzzActions is Setup {
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
         uint256 priceData = bound(priceRand, 0, type(uint128).max);
-
         ProtocolSnapshot memory balancesBefore = getProtocolSnapshot(validator, address(0));
         IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(validator);
         (
@@ -333,9 +329,7 @@ contract FuzzActions is Setup {
         address payable validator = payable(validators[validatorRand]);
         uint256 priceData = bound(priceRand, 0, type(uint128).max);
         uint64 securityDeposit = usdnProtocol.getUserPendingAction(validator).securityDepositValue;
-
         ProtocolSnapshot memory balancesBefore = getProtocolSnapshot(validator, address(0));
-
         (
             IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
             ,
@@ -374,21 +368,17 @@ contract FuzzActions is Setup {
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address payable validator = payable(validators[validatorRand]);
         uint256 priceData = bound(priceRand, 0, type(uint128).max);
-
         IUsdnProtocolTypes.LongPendingAction memory longAction =
             usdnProtocol.i_toLongPendingAction(usdnProtocol.getUserPendingAction(validator));
-
+        uint256 securityDeposit = longAction.securityDepositValue;
+        uint256 closeAmount = longAction.closeAmount;
+        address to = longAction.to;
         (
             IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
             ,
             IUsdnProtocolTypes.PendingAction memory lastAction,
         ) = getPreviousActionsData(msg.sender, priceData);
         (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceData);
-
-        uint256 securityDeposit = longAction.securityDepositValue;
-        uint256 closeAmount = longAction.closeAmount;
-        address to = longAction.to;
-
         ProtocolSnapshot memory balancesBefore = getProtocolSnapshot(validator, msg.sender);
 
         vm.prank(msg.sender);
@@ -438,7 +428,6 @@ contract FuzzActions is Setup {
         uint256 balanceBefore = address(msg.sender).balance;
         uint256 balanceBeforeProtocol = address(usdnProtocol).balance;
         priceRand = bound(priceRand, 0, type(uint128).max);
-
         (
             IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
             uint256 securityDeposit,
