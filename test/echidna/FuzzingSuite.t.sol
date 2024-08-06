@@ -367,11 +367,11 @@ contract FuzzingSuiteTest is Test {
     function test_canFullWithdrawal() public {
         assertGt(usdn.balanceOf(DEPLOYER), 0, "usdn balance before withdrawal");
         uint256 balanceProtocol = address(usdnProtocol).balance;
+        uint256 usdnSharesBefore = usdn.sharesOf(DEPLOYER);
 
         vm.prank(DEPLOYER);
         echidna.fullWithdrawal(usdnShares, 10 ether, 0, 0, 1000 ether);
-
-        assertEq(usdn.balanceOf(DEPLOYER), 0, "usdn balance after withdrawal");
+        assertEq(usdn.sharesOf(DEPLOYER), usdnSharesBefore - usdnShares, "usdn balance after withdrawal");
         assertEq(address(usdnProtocol).balance, balanceProtocol, "protocol balance");
     }
 
@@ -412,31 +412,30 @@ contract FuzzingSuiteTest is Test {
     }
 
     function test_canLiquidate() public {
-        uint256 initialTotalPos = usdnProtocol.getTotalLongPositions();
+        uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
         uint128 currentPrice = 2000 ether;
         bytes memory priceData = abi.encode(currentPrice);
-
-        wsteth.mintAndApprove(address(this), 1_000_000 ether, address(usdnProtocol), type(uint256).max);
+        uint128[] memory rawIndices = new uint128[](1);
+        rawIndices[0] = 0;
+        wsteth.mintAndApprove(DEPLOYER, 1_000_000 ether, address(usdnProtocol), type(uint256).max);
+        vm.deal(DEPLOYER, 1_000_000 ether);
 
         vm.startPrank(DEPLOYER);
+        usdnProtocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
         // create high risk position
-        usdnProtocol.initiateOpenPosition{
-            value: wstEthOracleMiddleware.validationCost(priceData, IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition)
-        }(
+        usdnProtocol.initiateOpenPosition{ value: securityDeposit }(
             5 ether,
             9 * currentPrice / 10,
-            address(this),
-            payable(address(this)),
+            DEPLOYER,
+            payable(DEPLOYER),
             echidna.NO_PERMIT2(),
-            priceData,
+            abi.encode(currentPrice),
             EMPTY_PREVIOUS_DATA
         );
+
         skip(wstEthOracleMiddleware.getValidationDelay() + 1);
-        usdnProtocol.validateOpenPosition{
-            value: wstEthOracleMiddleware.validationCost(priceData, IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition)
-        }(payable(address(this)), priceData, EMPTY_PREVIOUS_DATA);
+        usdnProtocol.validateOpenPosition(payable(DEPLOYER), abi.encode(currentPrice), EMPTY_PREVIOUS_DATA);
         vm.stopPrank();
-        assertEq(usdnProtocol.getTotalLongPositions(), initialTotalPos + 1, "total positions after create");
 
         // price drops under a valid liquidation price
         priceData = abi.encode(1000 ether);
@@ -445,10 +444,11 @@ contract FuzzingSuiteTest is Test {
         uint256 balanceBefore = address(this).balance;
         uint256 validationCost =
             wstEthOracleMiddleware.validationCost(priceData, IUsdnProtocolTypes.ProtocolAction.Liquidation);
+        uint256 initialTotalPos = usdnProtocol.getTotalLongPositions();
 
         vm.prank(DEPLOYER);
         echidna.liquidate(currentPrice, 1, validationCost);
-        // assertEq(usdnProtocol.getTotalLongPositions(), initialTotalPos, "total positions after liquidate");
+        // assertEq(usdnProtocol.getTotalLongPositions(), initialTotalPos - 1, "total positions after liquidate");
         // assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
 

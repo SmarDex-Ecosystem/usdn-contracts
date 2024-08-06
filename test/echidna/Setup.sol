@@ -62,26 +62,40 @@ contract Setup is ErrorsChecked {
         uint128 INITIAL_PRICE = 2000 ether; // 2000 USDN = 1 ETH
 
         uint256 ethAmount = (INIT_DEPOSIT_AMOUNT + INIT_LONG_AMOUNT) * wsteth.stEthPerToken() / 1 ether;
-        vm.deal(address(this), ethAmount);
+        vm.deal(DEPLOYER, ethAmount);
+        vm.prank(DEPLOYER);
         (bool result,) = address(wsteth).call{ value: ethAmount }("");
         require(result, "WstETH mint failed");
 
+        vm.prank(DEPLOYER);
         wstEthOracleMiddleware = new MockOracleMiddleware();
 
+        vm.prank(DEPLOYER);
         liquidationRewardsManager = new MockLiquidationRewardsManager(IWstETH(wsteth), uint256(2 hours + 5 minutes));
 
+        vm.prank(DEPLOYER);
         usdn = new Usdn(address(0), address(0));
+        bytes32 MINTER_ROLE = usdn.MINTER_ROLE();
+        bytes32 REBASER_ROLE = usdn.REBASER_ROLE();
 
+        vm.prank(DEPLOYER);
         usdnProtocol = new UsdnProtocolHandler(
             usdn, sdex, wsteth, wstEthOracleMiddleware, liquidationRewardsManager, 100, FEE_COLLECTOR
         );
 
+        vm.prank(DEPLOYER);
         rebalancer = new Rebalancer(usdnProtocol);
 
+        vm.prank(DEPLOYER);
         usdnProtocol.setRebalancer(rebalancer);
 
-        usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
-        usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));
+        vm.prank(DEPLOYER);
+        usdn.grantRole(MINTER_ROLE, address(usdnProtocol));
+
+        vm.prank(DEPLOYER);
+        usdn.grantRole(REBASER_ROLE, address(usdnProtocol));
+
+        vm.prank(DEPLOYER);
         wsteth.approve(address(usdnProtocol), INIT_DEPOSIT_AMOUNT + INIT_LONG_AMOUNT);
 
         uint256 _desiredLiqPrice = wstEthOracleMiddleware.parseAndValidatePrice(
@@ -89,6 +103,7 @@ contract Setup is ErrorsChecked {
         ).price / 2;
 
         // leverage approx 2x
+        vm.prank(DEPLOYER);
         usdnProtocol.initialize(
             uint128(INIT_DEPOSIT_AMOUNT),
             uint128(INIT_LONG_AMOUNT),
