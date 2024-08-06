@@ -3,11 +3,12 @@ pragma solidity ^0.8.25;
 
 import { Weth } from "../../utils/WETH.sol";
 import { WstETH } from "../../utils/WstEth.sol";
-import { Helpers } from "../helpers/Helpers.sol";
+import { Setup } from "../Setup.sol";
 
 import { Usdn } from "../../../src/Usdn/Usdn.sol";
+import { InitializableReentrancyGuard } from "../../../src/utils/InitializableReentrancyGuard.sol";
 
-contract FuzzSetup is Helpers {
+contract FuzzSetup is Setup {
     /* -------------------------------------------------------------------------- */
     /*                             USDN Protocol                                  */
     /* -------------------------------------------------------------------------- */
@@ -25,7 +26,6 @@ contract FuzzSetup is Helpers {
         priceRand = bound(priceRand, 0, type(uint128).max);
         uint256 ethAmount = (depositAmountRand + longAmountRand) * wsteth.stEthPerToken() / 1 ether;
         vm.deal(msg.sender, ethAmount);
-        vm.prank(msg.sender);
         wsteth.mintAndApprove(
             msg.sender, depositAmountRand + longAmountRand, address(usdnProtocol), depositAmountRand + longAmountRand
         );
@@ -40,5 +40,24 @@ contract FuzzSetup is Helpers {
         } catch (bytes memory err) {
             _checkErrors(err, INITIALIZE_ERRORS);
         }
+    }
+
+    function _checkErrors(bytes memory err, bytes4[][] memory errorsArrays) internal virtual override {
+        if (
+            bytes4(abi.encodePacked(err))
+                == bytes4(InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector)
+                && usdnProtocol.initialized()
+        ) {
+            emit log_named_bytes("Initialized but: ", err);
+            assert(false);
+        } else if (
+            bytes4(abi.encodePacked(err))
+                != bytes4(InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector)
+                && usdnProtocol.initialized()
+        ) {
+            emit log_named_bytes("Uninitialized but no InitializableReentrancyGuardUninitialized error:", err);
+            assert(false);
+        }
+        super._checkErrors(err, errorsArrays);
     }
 }
