@@ -285,6 +285,10 @@ contract Deploy is Script {
         UsdnProtocol_.initialize(uint128(depositAmount), uint128(longAmount), uint128(desiredLiqPrice), "");
     }
 
+    /**
+     * @notice Validate the Usdn protocol
+     * @dev Call this function to validate the Usdn protocol before deploying it
+     */
     function _validateProtocol() internal {
         Validate validate = new Validate();
         validate.validateProtocol();
