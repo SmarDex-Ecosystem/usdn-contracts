@@ -100,8 +100,9 @@ contract Deploy is Script {
     ) internal returns (IUsdnProtocol protocol) {
         // deploy the protocol fallback
         UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
-        // deploy the protocol with tick spacing 100 = 1%
+        // deploy the protocol proxy
         Options memory options;
+        // we need to allow constructors for the UsdnProtocolSepolia safeguard mechanism
         options.unsafeAllow = "constructor,external-library-linking";
         address proxy = Upgrades.deployUUPSProxy(
             "UsdnProtocolImpl.sol",
@@ -113,7 +114,7 @@ contract Deploy is Script {
                     wstETH,
                     middleware,
                     manager,
-                    100,
+                    100, // tick spacing 100 = 1%
                     vm.envAddress("FEE_COLLECTOR"),
                     Types.Roles({
                         setExternalAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
