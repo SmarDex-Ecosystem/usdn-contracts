@@ -24,8 +24,6 @@ contract FuzzSetup is Setup {
     ) external {
         if (!usdnProtocol.isInitialized()) {
             priceRand = bound(priceRand, 0, type(uint128).max);
-            uint256 ethAmount = (depositAmountRand + longAmountRand) * wsteth.stEthPerToken() / 1 ether;
-            vm.deal(msg.sender, ethAmount);
             wsteth.mintAndApprove(
                 msg.sender,
                 depositAmountRand + longAmountRand,
