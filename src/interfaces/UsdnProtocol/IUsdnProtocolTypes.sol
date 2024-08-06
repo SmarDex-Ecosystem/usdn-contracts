@@ -385,6 +385,7 @@ interface IUsdnProtocolTypes {
      * @param setProtocolParamsManager The role to set the protocol parameters
      * @param setUsdnParamsManager The role to set the USDN parameters
      * @param setOptionsManager The role to set the protocol options that do not impact the usage of the protocol
+     * @param proxyUpgradeManager The role to upgrade the the protocol implementation
      */
     struct Roles {
         address setExternalManager;
