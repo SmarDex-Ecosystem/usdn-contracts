@@ -23,6 +23,9 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
     /// @notice The maximum age of a recent price to be considered valid
     uint64 internal _pythRecentPriceDelay = 45 seconds;
 
+    /// @inheritdoc IPythOracle
+    uint8 public constant PYTH_AHEAD_THRESHOLD = 1 minutes;
+
     /**
      * @param pythAddress The address of the Pyth contract
      * @param pythFeedId The ID of the Pyth price feed
@@ -81,7 +84,10 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
             // we don't enforce that the price update is the first one in a given second
             // slither-disable-next-line arbitrary-send-eth
             priceFeeds = _pyth.parsePriceFeedUpdates{ value: pythFee }(
-                pricesUpdateData, feedIds, uint64(block.timestamp) - _pythRecentPriceDelay, uint64(block.timestamp)
+                pricesUpdateData,
+                feedIds,
+                uint64(block.timestamp) - _pythRecentPriceDelay,
+                uint64(block.timestamp) + PYTH_AHEAD_THRESHOLD
             );
         } else {
             // we want to validate that the price is exactly at `targetTimestamp` (first in the second) or the next
