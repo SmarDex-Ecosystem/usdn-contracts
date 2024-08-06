@@ -24,7 +24,7 @@ contract FuzzSetup is Helpers {
         usdnProtocol.i_checkUninitialized();
         priceRand = bound(priceRand, 0, type(uint128).max);
         uint256 ethAmount = (depositAmountRand + longAmountRand) * wsteth.stEthPerToken() / 1 ether;
-        vm.deal(address(msg.sender), ethAmount);
+        vm.deal(msg.sender, ethAmount);
         vm.prank(msg.sender);
         address(wsteth).call{ value: ethAmount }("");
         wsteth.mintAndApprove(
