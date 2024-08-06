@@ -87,7 +87,7 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
                 pricesUpdateData,
                 feedIds,
                 uint64(block.timestamp) - _pythRecentPriceDelay,
-                uint64(block.timestamp) + PYTH_AHEAD_THRESHOLD
+                uint64(block.timestamp) + PYTH_AHEAD_THRESHOLD // we accept prices up to 1 minute in the future
             );
         } else {
             // we want to validate that the price is exactly at `targetTimestamp` (first in the second) or the next
