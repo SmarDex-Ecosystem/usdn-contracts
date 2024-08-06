@@ -59,20 +59,14 @@ contract Setup is ErrorsChecked {
 
         wstEthOracleMiddleware = new MockOracleMiddleware();
         destinationsToken[address(wsteth)] = [DEPLOYER, ATTACKER];
-
         // todo: see if we want to fuzz chainlinkElapsedTimeLimit
         liquidationRewardsManager = new MockLiquidationRewardsManager(IWstETH(wsteth), uint256(2 hours + 5 minutes));
-
         usdn = new Usdn(address(0), address(0));
-
         usdnProtocol = new UsdnProtocolHandler(
             usdn, sdex, wsteth, wstEthOracleMiddleware, liquidationRewardsManager, 100, FEE_COLLECTOR
         );
-
         rebalancer = new Rebalancer(usdnProtocol);
-
         usdnProtocol.setRebalancer(rebalancer);
-
         usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));
     }
