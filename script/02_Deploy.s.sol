@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { Validate } from "./Validate.s.sol";
 import { Script } from "forge-std/Script.sol";
 
 import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import { Sdex } from "../test/utils/Sdex.sol";
 import { WstETH } from "../test/utils/WstEth.sol";
+
+import { Validate } from "./Validate.s.sol";
 
 import { LiquidationRewardsManager } from "../src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { WstEthOracleMiddleware } from "../src/OracleMiddleware/WstEthOracleMiddleware.sol";
