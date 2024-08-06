@@ -73,11 +73,11 @@ contract Deploy is Script {
                     100,
                     vm.envAddress("FEE_COLLECTOR"),
                     Types.Roles({
-                        setExternalAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
-                        criticalFunctionsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
-                        setProtocolParamsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
-                        setUsdnParamsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
-                        setOptionsAdmin: vm.envAddress("DEPLOYER_ADDRESS")
+                        setExternalManager: vm.envAddress("DEPLOYER_ADDRESS"),
+                        criticalFunctionsManager: vm.envAddress("DEPLOYER_ADDRESS"),
+                        setProtocolParamsManager: vm.envAddress("DEPLOYER_ADDRESS"),
+                        setUsdnParamsManager: vm.envAddress("DEPLOYER_ADDRESS"),
+                        setOptionsManager: vm.envAddress("DEPLOYER_ADDRESS")
                     }),
                     protocolFallback
                 )

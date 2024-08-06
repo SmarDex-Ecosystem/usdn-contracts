@@ -43,11 +43,13 @@ contract UsdnProtocolImpl is
         _setRoleAdmin(SET_PROTOCOL_PARAMS_ROLE, ADMIN_SET_PROTOCOL_PARAMS_ROLE);
         _setRoleAdmin(SET_USDN_PARAMS_ROLE, ADMIN_SET_USDN_PARAMS_ROLE);
         _setRoleAdmin(SET_OPTIONS_ROLE, ADMIN_SET_OPTIONS_ROLE);
-        _grantRole(SET_EXTERNAL_ROLE, roles.setExternalAdmin);
-        _grantRole(CRITICAL_FUNCTIONS_ROLE, roles.criticalFunctionsAdmin);
-        _grantRole(SET_PROTOCOL_PARAMS_ROLE, roles.setProtocolParamsAdmin);
-        _grantRole(SET_USDN_PARAMS_ROLE, roles.setUsdnParamsAdmin);
-        _grantRole(SET_OPTIONS_ROLE, roles.setOptionsAdmin);
+        _setRoleAdmin(UPGRADE_PROXY_ROLE, ADMIN_UPGRADE_PROXY_ROLE);
+        _grantRole(SET_EXTERNAL_ROLE, roles.setExternalManager);
+        _grantRole(CRITICAL_FUNCTIONS_ROLE, roles.criticalFunctionsManager);
+        _grantRole(SET_PROTOCOL_PARAMS_ROLE, roles.setProtocolParamsManager);
+        _grantRole(SET_USDN_PARAMS_ROLE, roles.setUsdnParamsManager);
+        _grantRole(SET_OPTIONS_ROLE, roles.setOptionsManager);
+        // _grantRole(UPGRADE_PROXY_ROLE, roles.upgradeProxyManager);
 
         // parameters
         s._minLeverage = 10 ** Constants.LEVERAGE_DECIMALS + 10 ** 12;

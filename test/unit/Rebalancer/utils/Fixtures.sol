@@ -62,11 +62,11 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
                     100, // tick spacing 100 = 1%
                     ADMIN, // Fee collector
                     Types.Roles({
-                        setExternalAdmin: ADMIN,
-                        criticalFunctionsAdmin: ADMIN,
-                        setProtocolParamsAdmin: ADMIN,
-                        setUsdnParamsAdmin: ADMIN,
-                        setOptionsAdmin: ADMIN
+                        setExternalManager: ADMIN,
+                        criticalFunctionsManager: ADMIN,
+                        setProtocolParamsManager: ADMIN,
+                        setUsdnParamsManager: ADMIN,
+                        setOptionsManager: ADMIN
                     }),
                     protocolFallback
                 )

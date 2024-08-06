@@ -31,11 +31,11 @@ contract BaseFixture is Test {
         /* -------------------------------------------------------------------------- */
         vm.label(constants.DEPLOYER, "Deployer");
         vm.label(constants.ADMIN, "Admin");
-        vm.label(constants.SET_EXTERNAL_ADMIN, "setExternalAdmin");
-        vm.label(constants.CRITICAL_FUNCTIONS_ADMIN, "criticalFunctionsAdmin");
-        vm.label(constants.SET_PROTOCOL_PARAMS_ADMIN, "setProtocolParamsAdmin");
-        vm.label(constants.SET_USDN_PARAMS_ADMIN, "setUsdnParamsAdmin");
-        vm.label(constants.SET_OPTIONS_ADMIN, "setOptionsAdmin");
+        vm.label(constants.SET_EXTERNAL_ADMIN, "setExternalManager");
+        vm.label(constants.CRITICAL_FUNCTIONS_ADMIN, "criticalFunctionsManager");
+        vm.label(constants.SET_PROTOCOL_PARAMS_ADMIN, "setProtocolParamsManager");
+        vm.label(constants.SET_USDN_PARAMS_ADMIN, "setUsdnParamsManager");
+        vm.label(constants.SET_OPTIONS_ADMIN, "setOptionsManager");
         vm.label(constants.SET_EXTERNAL_ROLE_ADMIN, "setExternalRoleAdmin");
         vm.label(constants.CRITICAL_FUNCTIONS_ROLE_ADMIN, "criticalFunctionsRoleAdmin");
         vm.label(constants.SET_PROTOCOL_PARAMS_ROLE_ADMIN, "setProtocolParamsRoleAdmin");

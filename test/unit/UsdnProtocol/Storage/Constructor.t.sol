@@ -23,11 +23,11 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
     UsdnProtocolFallback protocolFallback;
 
     Roles roles = Roles({
-        setExternalAdmin: address(0),
-        criticalFunctionsAdmin: address(0),
-        setProtocolParamsAdmin: address(0),
-        setUsdnParamsAdmin: address(0),
-        setOptionsAdmin: address(0)
+        setExternalManager: address(0),
+        criticalFunctionsManager: address(0),
+        setProtocolParamsManager: address(0),
+        setUsdnParamsManager: address(0),
+        setOptionsManager: address(0)
     });
 
     function setUp() public {

@@ -124,19 +124,19 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         feeCollector = new FeeCollector();
 
         Roles memory roles = Roles({
-            setExternalAdmin: SET_EXTERNAL_ADMIN,
-            criticalFunctionsAdmin: CRITICAL_FUNCTIONS_ADMIN,
-            setProtocolParamsAdmin: SET_PROTOCOL_PARAMS_ADMIN,
-            setUsdnParamsAdmin: SET_USDN_PARAMS_ADMIN,
-            setOptionsAdmin: SET_OPTIONS_ADMIN
+            setExternalManager: SET_EXTERNAL_ADMIN,
+            criticalFunctionsManager: CRITICAL_FUNCTIONS_ADMIN,
+            setProtocolParamsManager: SET_PROTOCOL_PARAMS_ADMIN,
+            setUsdnParamsManager: SET_USDN_PARAMS_ADMIN,
+            setOptionsManager: SET_OPTIONS_ADMIN
         });
         if (!testParams.flags.enableRoles) {
             roles = Roles({
-                setExternalAdmin: ADMIN,
-                criticalFunctionsAdmin: ADMIN,
-                setProtocolParamsAdmin: ADMIN,
-                setUsdnParamsAdmin: ADMIN,
-                setOptionsAdmin: ADMIN
+                setExternalManager: ADMIN,
+                criticalFunctionsManager: ADMIN,
+                setProtocolParamsManager: ADMIN,
+                setUsdnParamsManager: ADMIN,
+                setOptionsManager: ADMIN
             });
         }
 
@@ -166,7 +166,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         wstETH.approve(address(protocol), type(uint256).max);
 
         vm.stopPrank();
-        vm.startPrank(roles.setProtocolParamsAdmin);
+        vm.startPrank(roles.setProtocolParamsManager);
         if (!testParams.flags.enablePositionFees) {
             protocol.setPositionFeeBps(0);
             protocol.setVaultFeeBps(0);
@@ -198,7 +198,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         }
         vm.stopPrank();
 
-        vm.startPrank(roles.setUsdnParamsAdmin);
+        vm.startPrank(roles.setUsdnParamsManager);
         if (!testParams.flags.enableUsdnRebase) {
             // set a high target price to effectively disable rebases
             protocol.setUsdnRebaseThreshold(type(uint128).max);
@@ -210,7 +210,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         rebalancer = new RebalancerHandler(protocol);
 
         if (testParams.flags.enableRebalancer) {
-            vm.prank(roles.setExternalAdmin);
+            vm.prank(roles.setExternalManager);
             protocol.setRebalancer(rebalancer);
         }
 

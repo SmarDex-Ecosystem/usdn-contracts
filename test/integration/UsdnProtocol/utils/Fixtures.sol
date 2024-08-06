@@ -81,11 +81,11 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
     });
 
     Roles roles = Roles({
-        setExternalAdmin: SET_EXTERNAL_ADMIN,
-        criticalFunctionsAdmin: CRITICAL_FUNCTIONS_ADMIN,
-        setProtocolParamsAdmin: SET_PROTOCOL_PARAMS_ADMIN,
-        setUsdnParamsAdmin: SET_USDN_PARAMS_ADMIN,
-        setOptionsAdmin: SET_OPTIONS_ADMIN
+        setExternalManager: SET_EXTERNAL_ADMIN,
+        criticalFunctionsManager: CRITICAL_FUNCTIONS_ADMIN,
+        setProtocolParamsManager: SET_PROTOCOL_PARAMS_ADMIN,
+        setUsdnParamsManager: SET_USDN_PARAMS_ADMIN,
+        setOptionsManager: SET_OPTIONS_ADMIN
     });
 
     Usdn public usdn;
@@ -154,11 +154,11 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
         if (!testParams.enableRoles) {
             roles = Roles({
-                setExternalAdmin: ADMIN,
-                criticalFunctionsAdmin: ADMIN,
-                setProtocolParamsAdmin: ADMIN,
-                setUsdnParamsAdmin: ADMIN,
-                setOptionsAdmin: ADMIN
+                setExternalManager: ADMIN,
+                criticalFunctionsManager: ADMIN,
+                setProtocolParamsManager: ADMIN,
+                setUsdnParamsManager: ADMIN,
+                setOptionsManager: ADMIN
             });
         }
 
@@ -192,7 +192,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             testParams.initialDeposit, testParams.initialLong, testParams.initialLiqPrice, ""
         );
         vm.stopPrank();
-        vm.prank(roles.setExternalAdmin);
+        vm.prank(roles.setExternalManager);
         protocol.setRebalancer(rebalancer);
         params = testParams;
     }
@@ -234,7 +234,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
         tickSpacing_ = protocol.getTickSpacing();
 
-        vm.startPrank(roles.setProtocolParamsAdmin);
+        vm.startPrank(roles.setProtocolParamsManager);
         protocol.setFundingSF(0);
         protocol.resetEMA();
 
@@ -295,7 +295,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
         tickToLiquidateData_ = protocol.getTickData(posToLiquidate_.tick);
 
-        vm.prank(roles.setProtocolParamsAdmin);
+        vm.prank(roles.setProtocolParamsManager);
         protocol.setExpoImbalanceLimits(
             uint256(defaultLimits.depositExpoImbalanceLimitBps),
             uint256(defaultLimits.withdrawalExpoImbalanceLimitBps),
