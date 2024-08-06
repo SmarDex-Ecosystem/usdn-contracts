@@ -3,6 +3,7 @@ pragma solidity 0.8.26;
 
 import { AccessControlDefaultAdminRulesUpgradeable } from
     "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
+import { UUPSUpgradeable } from "solady/src/utils/UUPSUpgradeable.sol";
 
 import { IUsdnProtocolErrors } from "../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolStorage } from "../interfaces/UsdnProtocol/IUsdnProtocolStorage.sol";
@@ -13,7 +14,8 @@ abstract contract UsdnProtocolStorage is
     IUsdnProtocolErrors,
     IUsdnProtocolStorage,
     InitializableReentrancyGuard,
-    AccessControlDefaultAdminRulesUpgradeable
+    AccessControlDefaultAdminRulesUpgradeable,
+    UUPSUpgradeable
 {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
@@ -35,6 +37,8 @@ abstract contract UsdnProtocolStorage is
     /// @inheritdoc IUsdnProtocolStorage
     bytes32 public constant SET_OPTIONS_ROLE = keccak256("SET_OPTIONS_ROLE");
 
+    bytes32 public constant UPGRADE_PROXY_ROLE = keccak256("UPGRADE_PROXY_ROLE");
+
     /// @inheritdoc IUsdnProtocolStorage
     bytes32 public constant ADMIN_SET_EXTERNAL_ROLE = keccak256("ADMIN_SET_EXTERNAL_ROLE");
 
@@ -49,4 +53,8 @@ abstract contract UsdnProtocolStorage is
 
     /// @inheritdoc IUsdnProtocolStorage
     bytes32 public constant ADMIN_SET_OPTIONS_ROLE = keccak256("ADMIN_SET_OPTIONS_ROLE");
+
+    bytes32 public constant ADMIN_UPGRADE_PROXY_ROLE = keccak256("ADMIN_UPGRADE_PROXY_ROLE");
+
+    function _authorizeUpgrade(address implementation) internal override onlyRole(UPGRADE_PROXY_ROLE) { }
 }
