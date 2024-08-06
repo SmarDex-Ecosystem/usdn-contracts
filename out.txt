@@ -1,7 +1,0 @@
-🔨 Building Kontrol project 🔨
-An error occurred while building your Kontrol project: Command '('kompile', 'kompiled/foundry.k', '--main-module', 'FOUNDRY-MAIN', '-I', 
-'/nix/store/37mxfizfvb6xhz9wiwlqngk3acjaxsd2-python3.10-kontrol-0.1.377/lib/python3.10/site-packages/kontrol/kdist', '-I', 
-'/nix/store/mpqi50m3sl8b8isaysc8k012w2k8sg1a-python3.10-kevm-pyk-1.0.656/lib/python3.10/site-packages/kevm_pyk/kproj/evm-semantics', '-I', 
-'/nix/store/mpqi50m3sl8b8isaysc8k012w2k8sg1a-python3.10-kevm-pyk-1.0.656/lib/python3.10/site-packages/kevm_pyk/kproj/plugin', '--md-selector', 'k & ! concrete', '--hook-namespaces', 'JSON KRYPTO', 
-'--emit-json', '--backend', 'haskell', '--output-definition', 'kompiled', '--type-inference-mode', 'simplesub', '--debug', '--verbose', '-Wno', 'non-exhaustive-match,missing-syntax-module')' 
-returned non-zero exit status 137.
