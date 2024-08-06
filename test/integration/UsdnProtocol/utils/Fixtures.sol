@@ -13,16 +13,17 @@ import {
     ADMIN,
     CHAINLINK_ORACLE_ETH,
     CHAINLINK_ORACLE_GAS,
-    CRITICAL_FUNCTIONS_ADMIN,
+    CRITICAL_FUNCTIONS_MANAGER,
     DEPLOYER,
+    PROXY_UPGRADE_MANAGER,
     PYTH_ETH_USD,
     PYTH_ORACLE,
     REDSTONE_ETH_USD,
     SDEX,
-    SET_EXTERNAL_ADMIN,
-    SET_OPTIONS_ADMIN,
-    SET_PROTOCOL_PARAMS_ADMIN,
-    SET_USDN_PARAMS_ADMIN,
+    SET_EXTERNAL_MANAGER,
+    SET_OPTIONS_MANAGER,
+    SET_PROTOCOL_PARAMS_MANAGER,
+    SET_USDN_PARAMS_MANAGER,
     WSTETH
 } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
@@ -81,11 +82,12 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
     });
 
     Roles roles = Roles({
-        setExternalManager: SET_EXTERNAL_ADMIN,
-        criticalFunctionsManager: CRITICAL_FUNCTIONS_ADMIN,
-        setProtocolParamsManager: SET_PROTOCOL_PARAMS_ADMIN,
-        setUsdnParamsManager: SET_USDN_PARAMS_ADMIN,
-        setOptionsManager: SET_OPTIONS_ADMIN
+        setExternalManager: SET_EXTERNAL_MANAGER,
+        criticalFunctionsManager: CRITICAL_FUNCTIONS_MANAGER,
+        setProtocolParamsManager: SET_PROTOCOL_PARAMS_MANAGER,
+        setUsdnParamsManager: SET_USDN_PARAMS_MANAGER,
+        setOptionsManager: SET_OPTIONS_MANAGER,
+        proxyUpgradeManager: PROXY_UPGRADE_MANAGER
     });
 
     Usdn public usdn;
@@ -158,7 +160,8 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
                 criticalFunctionsManager: ADMIN,
                 setProtocolParamsManager: ADMIN,
                 setUsdnParamsManager: ADMIN,
-                setOptionsManager: ADMIN
+                setOptionsManager: ADMIN,
+                proxyUpgradeManager: ADMIN
             });
         }
 

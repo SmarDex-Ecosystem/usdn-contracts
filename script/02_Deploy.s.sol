@@ -77,7 +77,8 @@ contract Deploy is Script {
                         criticalFunctionsManager: vm.envAddress("DEPLOYER_ADDRESS"),
                         setProtocolParamsManager: vm.envAddress("DEPLOYER_ADDRESS"),
                         setUsdnParamsManager: vm.envAddress("DEPLOYER_ADDRESS"),
-                        setOptionsManager: vm.envAddress("DEPLOYER_ADDRESS")
+                        setOptionsManager: vm.envAddress("DEPLOYER_ADDRESS"),
+                        proxyUpgradeManager: vm.envAddress("DEPLOYER_ADDRESS")
                     }),
                     protocolFallback
                 )

@@ -392,6 +392,7 @@ interface IUsdnProtocolTypes {
         address setProtocolParamsManager;
         address setUsdnParamsManager;
         address setOptionsManager;
+        address proxyUpgradeManager;
     }
 
     /**

@@ -37,7 +37,7 @@ abstract contract UsdnProtocolStorage is
     /// @inheritdoc IUsdnProtocolStorage
     bytes32 public constant SET_OPTIONS_ROLE = keccak256("SET_OPTIONS_ROLE");
 
-    bytes32 public constant UPGRADE_PROXY_ROLE = keccak256("UPGRADE_PROXY_ROLE");
+    bytes32 public constant PROXY_UPGRADE_ROLE = keccak256("PROXY_UPGRADE_ROLE");
 
     /// @inheritdoc IUsdnProtocolStorage
     bytes32 public constant ADMIN_SET_EXTERNAL_ROLE = keccak256("ADMIN_SET_EXTERNAL_ROLE");
@@ -54,7 +54,11 @@ abstract contract UsdnProtocolStorage is
     /// @inheritdoc IUsdnProtocolStorage
     bytes32 public constant ADMIN_SET_OPTIONS_ROLE = keccak256("ADMIN_SET_OPTIONS_ROLE");
 
-    bytes32 public constant ADMIN_UPGRADE_PROXY_ROLE = keccak256("ADMIN_UPGRADE_PROXY_ROLE");
+    bytes32 public constant ADMIN_PROXY_UPGRADE_ROLE = keccak256("ADMIN_PROXY_UPGRADE_ROLE");
 
-    function _authorizeUpgrade(address implementation) internal override onlyRole(UPGRADE_PROXY_ROLE) { }
+    /**
+     * @notice Function to upgrade the implementation of the the protocol
+     * @param implementation The address of the new implementation
+     */
+    function _authorizeUpgrade(address implementation) internal override onlyRole(PROXY_UPGRADE_ROLE) { }
 }

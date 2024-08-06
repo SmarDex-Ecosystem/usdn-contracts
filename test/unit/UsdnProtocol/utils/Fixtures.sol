@@ -5,12 +5,13 @@ import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import {
     ADMIN,
-    CRITICAL_FUNCTIONS_ADMIN,
+    CRITICAL_FUNCTIONS_MANAGER,
     DEPLOYER,
-    SET_EXTERNAL_ADMIN,
-    SET_OPTIONS_ADMIN,
-    SET_PROTOCOL_PARAMS_ADMIN,
-    SET_USDN_PARAMS_ADMIN
+    PROXY_UPGRADE_MANAGER,
+    SET_EXTERNAL_MANAGER,
+    SET_OPTIONS_MANAGER,
+    SET_PROTOCOL_PARAMS_MANAGER,
+    SET_USDN_PARAMS_MANAGER
 } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { IEventsErrors } from "../../../utils/IEventsErrors.sol";
@@ -124,11 +125,12 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         feeCollector = new FeeCollector();
 
         Roles memory roles = Roles({
-            setExternalManager: SET_EXTERNAL_ADMIN,
-            criticalFunctionsManager: CRITICAL_FUNCTIONS_ADMIN,
-            setProtocolParamsManager: SET_PROTOCOL_PARAMS_ADMIN,
-            setUsdnParamsManager: SET_USDN_PARAMS_ADMIN,
-            setOptionsManager: SET_OPTIONS_ADMIN
+            setExternalManager: SET_EXTERNAL_MANAGER,
+            criticalFunctionsManager: CRITICAL_FUNCTIONS_MANAGER,
+            setProtocolParamsManager: SET_PROTOCOL_PARAMS_MANAGER,
+            setUsdnParamsManager: SET_USDN_PARAMS_MANAGER,
+            setOptionsManager: SET_OPTIONS_MANAGER,
+            proxyUpgradeManager: PROXY_UPGRADE_MANAGER
         });
         if (!testParams.flags.enableRoles) {
             roles = Roles({
@@ -136,7 +138,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
                 criticalFunctionsManager: ADMIN,
                 setProtocolParamsManager: ADMIN,
                 setUsdnParamsManager: ADMIN,
-                setOptionsManager: ADMIN
+                setOptionsManager: ADMIN,
+                proxyUpgradeManager: ADMIN
             });
         }
 
