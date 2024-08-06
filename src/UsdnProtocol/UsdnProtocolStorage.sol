@@ -59,6 +59,7 @@ abstract contract UsdnProtocolStorage is
     bytes32 public constant ADMIN_PROXY_UPGRADE_ROLE = keccak256("ADMIN_PROXY_UPGRADE_ROLE");
 
     /**
+     * @inheritdoc UUPSUpgradeable
      * @notice Function to upgrade the implementation of the the protocol
      * @param implementation The address of the new implementation
      */
