@@ -39,6 +39,7 @@
           ];
           packages = with pkgs; [
             foundry-bin
+            jq
             just
             lcov
             nodejs_20

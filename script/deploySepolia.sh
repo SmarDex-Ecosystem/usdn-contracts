@@ -27,6 +27,12 @@ export SDEX_ADDRESS=$(cat "$BROADCAST" | jq -r '.returns.Sdex_.value')
 export WSTETH_ADDRESS=$(cat "$BROADCAST" | jq -r '.returns.WstETH_.value')
 export CHAINLINK_GAS_PRICE_ADDRESS=$(cat "$BROADCAST" | jq -r '.returns.MockFastGasGwei_.value')
 
+# Set wstETH conversion rate
+RATE=$(cast call -r https://ethereum-rpc.publicnode.com 0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0 "stEthPerToken()" | tr -d '\n')
+RATE_UINT=$(cast to-dec "$RATE" | tr -d '\n')
+TXDATA=$(cast mktx --private-key "$DEPLOYER_PRIVATE_KEY" "$WSTETH_ADDRESS" "setStEthPerToken(uint256)" "$RATE_UINT" | tr -d '\n')
+cast publish -r "$RPC_URL" "$TXDATA"
+
 # Deploy USDN token
 forge script --non-interactive --private-key "$DEPLOYER_PRIVATE_KEY" -f "$RPC_URL" script/01_DeployUsdn.s.sol:DeployUsdn --broadcast
 
