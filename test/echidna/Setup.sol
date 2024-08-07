@@ -106,7 +106,7 @@ contract Setup is ErrorsChecked {
         } else if (
             bytes4(abi.encodePacked(err))
                 == InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector
-                && usdnProtocol.isInitialized()
+                && !usdnProtocol.isInitialized()
         ) {
             emit log_named_bytes("Should not be initialized :", err);
             assert(false);
