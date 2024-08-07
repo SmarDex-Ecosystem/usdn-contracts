@@ -114,7 +114,9 @@ contract ErrorsChecked is Test {
         [
             IUsdnProtocolErrors.UsdnProtocolMinInitAmount.selector,
             IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector,
-            IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationPrice.selector
+            IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationPrice.selector,
+            InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector,
+            InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector
         ]
     ];
 
