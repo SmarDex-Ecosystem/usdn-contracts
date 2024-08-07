@@ -57,19 +57,30 @@ contract Setup is ErrorsChecked {
 
     constructor() payable {
         vm.warp(1_709_251_200);
-
+        vm.prank(DEPLOYER);
         wstEthOracleMiddleware = new MockOracleMiddleware();
         destinationsToken[address(wsteth)] = [DEPLOYER, ATTACKER];
         // todo: see if we want to fuzz chainlinkElapsedTimeLimit
+        vm.prank(DEPLOYER);
         liquidationRewardsManager = new MockLiquidationRewardsManager(IWstETH(wsteth), uint256(2 hours + 5 minutes));
+        vm.prank(DEPLOYER);
         usdn = new Usdn(address(0), address(0));
+
+        bytes32 MINTER_ROLE = usdn.MINTER_ROLE();
+        bytes32 REBASER_ROLE = usdn.REBASER_ROLE();
+
+        vm.prank(DEPLOYER);
         usdnProtocol = new UsdnProtocolHandler(
             usdn, sdex, wsteth, wstEthOracleMiddleware, liquidationRewardsManager, 100, FEE_COLLECTOR
         );
+        vm.prank(DEPLOYER);
         rebalancer = new Rebalancer(usdnProtocol);
+        vm.prank(DEPLOYER);
         usdnProtocol.setRebalancer(rebalancer);
-        usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
-        usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));
+        vm.prank(DEPLOYER);
+        usdn.grantRole(MINTER_ROLE, address(usdnProtocol));
+        vm.prank(DEPLOYER);
+        usdn.grantRole(REBASER_ROLE, address(usdnProtocol));
     }
 
     function getBalances(address validator, address to) internal view returns (BalancesSnapshot memory) {
