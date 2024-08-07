@@ -54,6 +54,7 @@ contract OracleMiddlewareWithRedstone is IOracleMiddlewareWithRedstone, OracleMi
     /* -------------------------------------------------------------------------- */
 
     /**
+     * @inheritdoc OracleMiddleware
      * @dev Get the price from the low-latency oracle (Pyth or Redstone)
      * @param data The signed price update data
      * @param actionTimestamp The timestamp of the action corresponding to the price. If zero, then we must accept all
