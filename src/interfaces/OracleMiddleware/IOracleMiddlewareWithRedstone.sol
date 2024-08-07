@@ -2,13 +2,10 @@
 pragma solidity >=0.8.0;
 
 import { IOracleMiddleware } from "./IOracleMiddleware.sol";
-import { IOracleMiddlewareErrors } from "./IOracleMiddlewareErrors.sol";
-import { IOracleMiddlewareEvents } from "./IOracleMiddlewareEvents.sol";
 
 /**
  * @title Oracle Middleware interface
- * @notice The oracle middleware is a contract that is called by the USDN protocol to validate price data. Using a
- * middleware allows the protocol to later upgrade to a new oracle logic without having to modify the vault contract
+ * @notice Same as the default oracle middleware, with added support for Redstone
  */
 interface IOracleMiddlewareWithRedstone is IOracleMiddleware {
     /* -------------------------------------------------------------------------- */

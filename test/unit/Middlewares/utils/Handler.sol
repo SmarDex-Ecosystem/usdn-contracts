@@ -4,12 +4,7 @@ pragma solidity 0.8.26;
 import { Test } from "forge-std/Test.sol";
 
 import { OracleMiddleware } from "../../../../src/OracleMiddleware/OracleMiddleware.sol";
-import { RedstonePriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
-/**
- * @title OracleMiddlewareHandler
- * @dev
- */
 contract OracleMiddlewareHandler is OracleMiddleware, Test {
     bool internal _mockRedstonePriceZero;
 

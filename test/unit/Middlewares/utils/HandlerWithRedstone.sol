@@ -6,10 +6,6 @@ import { Test } from "forge-std/Test.sol";
 import { OracleMiddlewareWithRedstone } from "../../../../src/OracleMiddleware/OracleMiddlewareWithRedstone.sol";
 import { RedstonePriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
-/**
- * @title OracleMiddlewareHandler
- * @dev
- */
 contract OracleMiddlewareWithRedstoneHandler is OracleMiddlewareWithRedstone, Test {
     bool internal _mockRedstonePriceZero;
 

@@ -47,7 +47,7 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
         if (_verifySignature || _wstethMockedPrice == 0) {
             price_ = super.parseAndValidatePrice(actionId, targetTimestamp, action, data);
         } else {
-            price_.timestamp = targetTimestamp;
+            price_.timestamp = targetTimestamp == 0 ? block.timestamp : targetTimestamp;
         }
 
         // if the mocked price is not set, return
