@@ -9,6 +9,7 @@ import { UUPSUpgradeable } from "solady/src/utils/UUPSUpgradeable.sol";
 import { ADMIN } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolImplV2 } from "../utils/UsdnProtocolImplV2.sol";
 
@@ -23,12 +24,6 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
         super._setUp(DEFAULT_PARAMS);
     }
 
-    // function test_RevertWhen_upgradeProxyIsCalledWithZeroAddress() public {
-    //     vm.startPrank(ADMIN);
-    //     vm.expectRevert();
-    //     UnsafeUpgrades.upgradeProxy(address(protocol), address(0), "");
-    // }
-
     function test_RevertWhen_upgradeProxyIsCalledWithNonAdmin() public {
         UsdnProtocolImplV2 newImplementation = new UsdnProtocolImplV2();
 
@@ -37,9 +32,7 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
                 IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), protocol.PROXY_UPGRADE_ROLE()
             )
         );
-        UnsafeUpgrades.upgradeProxy(
-            address(protocol), address(newImplementation), abi.encodeCall(UsdnProtocolImplV2.initializeV2, ())
-        );
+        UsdnProtocolImpl(address(protocol)).upgradeToAndCall(address(newImplementation), bytes(""));
     }
 
     /**
