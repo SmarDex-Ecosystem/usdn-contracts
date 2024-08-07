@@ -57,13 +57,10 @@ contract Setup is ErrorsChecked {
 
     constructor() payable {
         vm.warp(1_709_251_200);
-        vm.prank(msg.sender);
         wstEthOracleMiddleware = new MockOracleMiddleware();
         destinationsToken[address(wsteth)] = [DEPLOYER, ATTACKER];
         // todo: see if we want to fuzz chainlinkElapsedTimeLimit
-        vm.prank(msg.sender);
         liquidationRewardsManager = new MockLiquidationRewardsManager(IWstETH(wsteth), uint256(2 hours + 5 minutes));
-        vm.prank(msg.sender);
         usdn = new Usdn(address(0), address(0));
 
         bytes32 MINTER_ROLE = usdn.MINTER_ROLE();
@@ -73,13 +70,10 @@ contract Setup is ErrorsChecked {
         usdnProtocol = new UsdnProtocolHandler(
             usdn, sdex, wsteth, wstEthOracleMiddleware, liquidationRewardsManager, 100, FEE_COLLECTOR
         );
-        vm.prank(msg.sender);
         rebalancer = new Rebalancer(usdnProtocol);
         vm.prank(msg.sender);
         usdnProtocol.setRebalancer(rebalancer);
-        vm.prank(msg.sender);
         usdn.grantRole(MINTER_ROLE, address(usdnProtocol));
-        vm.prank(msg.sender);
         usdn.grantRole(REBASER_ROLE, address(usdnProtocol));
     }
 
