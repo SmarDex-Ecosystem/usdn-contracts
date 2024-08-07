@@ -88,6 +88,6 @@ abstract contract RedstoneOracle is IRedstoneOracle, PrimaryProdDataServiceConsu
      * @return extractedTimestamp_ The timestamp of the price update
      */
     function _extractPriceUpdateTimestamp() internal pure returns (uint48 extractedTimestamp_) {
-        extractedTimestamp_ = uint48(extractTimestampsAndAssertAllAreEqual()) / 1000;
+        extractedTimestamp_ = uint48(extractTimestampsAndAssertAllAreEqual() / 1000);
     }
 }
