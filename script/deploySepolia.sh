@@ -11,8 +11,8 @@ pushd $SCRIPT_DIR/..
 export ETHERSCAN_API_KEY=XXXXXXXXXXXXXXXXX # not needed but needs to exist
 
 # Deployer position
-export INIT_DEPOSIT_AMOUNT=200000000000000000000 # 200 wstETH
-export INIT_LONG_AMOUNT=200000000000000000000 # 200 wstETH
+export INIT_DEPOSIT_AMOUNT="${INIT_DEPOSIT_AMOUNT:=200000000000000000000}" # 200 wstETH by default
+export INIT_LONG_AMOUNT="${INIT_LONG_AMOUNT:=200000000000000000000}" # 200 wstETH by default
 
 # RPC URL, can be customized but defaults to localhost/anvil for testing
 : "${RPC_URL:=http://localhost:8545}"
@@ -41,7 +41,7 @@ export USDN_ADDRESS=$(cat "$BROADCAST" | jq -r '.returns.Usdn_.value')
 
 # Calculate liquidation price for leverage 2x
 export CHAINLINK_ETH_PRICE_ADDRESS=0x694AA1769357215DE4FAC081bf1f309aDC325306
-ETH_PRICE=${cast call -r "$RPC_URL" "$CHAINLINK_ETH_PRICE_ADDRESS" "latestAnswer()" | tr -d '\n'}
+ETH_PRICE=$(cast call -r "$RPC_URL" "$CHAINLINK_ETH_PRICE_ADDRESS" "latestAnswer()" | tr -d '\n')
 ETH_PRICE_UINT=$(cast to-dec "$ETH_PRICE" | tr -d '\n')
 ETH_PRICE_NORM=$(expr $ETH_PRICE_UINT \* 10000000000)
 export INIT_LONG_LIQPRICE=$(expr $ETH_PRICE_NORM \* $RATE_UINT / 2000000000000000000)
