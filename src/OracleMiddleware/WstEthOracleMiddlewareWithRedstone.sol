@@ -2,8 +2,10 @@
 pragma solidity ^0.8.25;
 
 import { IWstETH } from "../interfaces/IWstETH.sol";
+import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { OracleMiddleware } from "./OracleMiddleware.sol";
 import { OracleMiddlewareWithRedstone } from "./OracleMiddlewareWithRedstone.sol";
 
 /**
@@ -42,7 +44,7 @@ contract WstEthOracleMiddlewareWithRedstone is OracleMiddlewareWithRedstone {
     }
 
     /**
-     * @inheritdoc OracleMiddlewareWithRedstone
+     * @inheritdoc IBaseOracleMiddleware
      * @notice Parses and validates price data by applying eth/wsteth ratio
      * @dev The data format is specific to the middleware and is simply forwarded from the user transaction's calldata
      * Wsteth price is calculated as follows: ethPrice x stEthPerToken / 1 ether
@@ -52,7 +54,7 @@ contract WstEthOracleMiddlewareWithRedstone is OracleMiddlewareWithRedstone {
         uint128 targetTimestamp,
         Types.ProtocolAction action,
         bytes calldata data
-    ) public payable virtual override returns (PriceInfo memory) {
+    ) public payable virtual override(IBaseOracleMiddleware, OracleMiddleware) returns (PriceInfo memory) {
         // fetched eth price
         PriceInfo memory ethPrice = super.parseAndValidatePrice(actionId, targetTimestamp, action, data);
 

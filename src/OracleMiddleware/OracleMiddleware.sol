@@ -156,7 +156,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         uint128 actionTimestamp,
         ConfidenceInterval dir,
         uint128 targetLimit
-    ) internal returns (PriceInfo memory price_) {
+    ) internal virtual returns (PriceInfo memory price_) {
         // if actionTimestamp is 0 we're performing a liquidation and we don't add the validation delay
         if (actionTimestamp > 0) {
             // add the validation delay to the action timestamp to get the timestamp of the price data used to

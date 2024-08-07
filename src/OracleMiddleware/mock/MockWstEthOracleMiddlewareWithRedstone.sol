@@ -124,7 +124,7 @@ contract MockWstEthOracleMiddlewareWithRedstone is WstEthOracleMiddlewareWithRed
     function validationCost(bytes calldata data, Types.ProtocolAction action)
         public
         view
-        override
+        override(IBaseOracleMiddleware, OracleMiddleware)
         returns (uint256 result_)
     {
         // no signature verification -> no oracle fee
