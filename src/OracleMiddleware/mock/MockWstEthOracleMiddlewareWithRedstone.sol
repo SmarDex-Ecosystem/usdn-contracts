@@ -3,16 +3,17 @@ pragma solidity 0.8.26;
 
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
+import { IBaseOracleMiddleware } from "../../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { OracleMiddleware } from "../OracleMiddleware.sol";
-import { WstEthOracleMiddleware } from "../WstEthOracleMiddleware.sol";
+import { WstEthOracleMiddlewareWithRedstone } from "../WstEthOracleMiddlewareWithRedstone.sol";
 
 /**
  * @title Contract to apply and return a mocked wstETH price
  * @notice This contract is used to get the price of wsteth by setting up a price or forwarding it to wstethMiddleware
  * @dev This aims at simulating price action. Do not use in production
  */
-contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
+contract MockWstEthOracleMiddlewareWithRedstone is WstEthOracleMiddlewareWithRedstone {
     /// @notice Confidence interval percentage numerator
     uint16 internal _wstethMockedConfBps = 20; // default 0.2% conf
 
@@ -30,12 +31,22 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
     constructor(
         address pythContract,
         bytes32 pythFeedId,
+        bytes32 redstoneFeedId,
         address chainlinkPriceFeed,
         address wsteth,
         uint256 chainlinkTimeElapsedLimit
-    ) WstEthOracleMiddleware(pythContract, pythFeedId, chainlinkPriceFeed, wsteth, chainlinkTimeElapsedLimit) { }
+    )
+        WstEthOracleMiddlewareWithRedstone(
+            pythContract,
+            pythFeedId,
+            redstoneFeedId,
+            chainlinkPriceFeed,
+            wsteth,
+            chainlinkTimeElapsedLimit
+        )
+    { }
 
-    /// @inheritdoc OracleMiddleware
+    /// @inheritdoc WstEthOracleMiddlewareWithRedstone
     function parseAndValidatePrice(
         bytes32 actionId,
         uint128 targetTimestamp,
@@ -109,11 +120,11 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
         _verifySignature = verify;
     }
 
-    /// @inheritdoc OracleMiddleware
+    /// @inheritdoc IBaseOracleMiddleware
     function validationCost(bytes calldata data, Types.ProtocolAction action)
         public
         view
-        override
+        override(IBaseOracleMiddleware, OracleMiddleware)
         returns (uint256 result_)
     {
         // no signature verification -> no oracle fee
