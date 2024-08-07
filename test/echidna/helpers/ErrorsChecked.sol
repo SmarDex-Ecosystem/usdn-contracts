@@ -10,6 +10,7 @@ import { IUsdnErrors } from "../../../src/interfaces/Usdn/IUsdnErrors.sol";
 import { IUsdnProtocolErrors } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { SignedMath } from "../../../src/libraries/SignedMath.sol";
 import { TickMath } from "../../../src/libraries/TickMath.sol";
+import { InitializableReentrancyGuard } from "../../../src/utils/InitializableReentrancyGuard.sol";
 
 contract ErrorsChecked is Test {
     /* -------------------------------------------------------------------------- */
@@ -19,7 +20,9 @@ contract ErrorsChecked is Test {
         IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow.selector,
         IUsdnProtocolErrors.UsdnProtocolZeroAmount.selector,
         IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector,
-        IUsdnProtocolErrors.UsdnProtocolZeroAmount.selector
+        IUsdnProtocolErrors.UsdnProtocolZeroAmount.selector,
+        InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector,
+        InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector
     ];
 
     /* -------------------------------------------------------------------------- */
@@ -58,30 +61,54 @@ contract ErrorsChecked is Test {
             IUsdnProtocolErrors.UsdnProtocolUnauthorized.selector,
             IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector,
             IUsdnProtocolErrors.UsdnProtocolLiquidationPriceSafetyMargin.selector,
-            FixedPointMathLib.FullMulDivFailed.selector
+            FixedPointMathLib.FullMulDivFailed.selector,
+            InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector,
+            InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector
         ]
     ];
 
-    bytes4[][] public VALIDATE_DEPOSIT_ERRORS = [[IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector]];
+    bytes4[][] public VALIDATE_DEPOSIT_ERRORS = [
+        [
+            IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector,
+            InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector,
+            InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector
+        ]
+    ];
 
     bytes4[][] public VALIDATE_WITHDRAWAL_ERRORS = [
         [
             IUsdnProtocolErrors.UsdnProtocolInvalidAddressValidator.selector,
             IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector,
-            IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction.selector
+            IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction.selector,
+            InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector,
+            InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector
         ]
     ];
 
     bytes4[][] public VALIDATE_CLOSE_ERRORS = [
         [
             IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector,
-            IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector
+            IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector,
+            InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector,
+            InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector
         ]
     ];
 
-    bytes4[][] public VALIDATE_OPEN_ERRORS = [[IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector]];
+    bytes4[][] public VALIDATE_OPEN_ERRORS = [
+        [
+            IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector,
+            InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector,
+            InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector
+        ]
+    ];
 
-    bytes4[][] public VALIDATE_PENDING_ACTIONS_ERRORS = [[IUsdnProtocolErrors.UsdnProtocolEtherRefundFailed.selector]];
+    bytes4[][] public VALIDATE_PENDING_ACTIONS_ERRORS = [
+        [
+            IUsdnProtocolErrors.UsdnProtocolEtherRefundFailed.selector,
+            InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector,
+            InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector
+        ]
+    ];
 
     bytes4[][] public INITIALIZE_ERRORS = [
         [
