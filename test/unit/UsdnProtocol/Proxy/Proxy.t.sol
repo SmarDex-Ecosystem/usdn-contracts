@@ -24,6 +24,12 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
         super._setUp(DEFAULT_PARAMS);
     }
 
+    /**
+     * @custom:scenario Try to upgrade the protocol with a non-admin account
+     * @custom:given An initialized protocol
+     * @custom:when {upgradeProxy} is called with a new implementation by a non-admin account
+     * @custom:then The call should revert
+     */
     function test_RevertWhen_upgradeProxyIsCalledWithNonAdmin() public {
         UsdnProtocolImplV2 newImplementation = new UsdnProtocolImplV2();
 
@@ -32,7 +38,7 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
                 IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), protocol.PROXY_UPGRADE_ROLE()
             )
         );
-        UsdnProtocolImpl(address(protocol)).upgradeToAndCall(address(newImplementation), bytes(""));
+        protocol.upgradeToAndCall(address(newImplementation), bytes(""));
     }
 
     /**
