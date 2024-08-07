@@ -1,6 +1,6 @@
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
-import { basename } from 'path';
-import { AbiError, AbiEvent, AbiFunction, formatAbiItem } from 'abitype';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { basename } from 'node:path';
+import { type AbiError, type AbiEvent, type AbiFunction, formatAbiItem } from 'abitype';
 import { Command } from 'commander';
 import { globSync } from 'glob';
 import { toEventSelector, toEventSignature, toFunctionSelector, toFunctionSignature } from 'viem';
@@ -27,7 +27,7 @@ program
 
 const options = program.opts();
 const glob = options.glob || '**/*.sol';
-const DEBUG: boolean = options.debug ? true : false;
+const DEBUG: boolean = !!options.debug;
 
 const solFiles = globSync(`src/${glob}`);
 if (DEBUG) console.log('files:', solFiles);

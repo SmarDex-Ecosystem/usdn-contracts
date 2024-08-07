@@ -2,21 +2,24 @@
 pragma solidity 0.8.26;
 
 import { IWstETH } from "../interfaces/IWstETH.sol";
+import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { OracleMiddleware } from "./OracleMiddleware.sol";
+import { OracleMiddlewareWithRedstone } from "./OracleMiddlewareWithRedstone.sol";
 
 /**
  * @title Contract to apply and return wsteth price
  * @notice This contract is used to get the price of wsteth from the eth price oracle
  */
-contract WstEthOracleMiddleware is OracleMiddleware {
+contract WstEthOracleMiddlewareWithRedstone is OracleMiddlewareWithRedstone {
     /// @notice wsteth instance
     IWstETH internal immutable _wstEth;
 
     /**
      * @param pythContract The address of the Pyth contract
      * @param pythPriceID The ID of the Pyth price feed
+     * @param redstoneFeedId The ID of the Redstone price feed
      * @param chainlinkPriceFeed The address of the Chainlink price feed
      * @param wstETH The address of the wstETH contract
      * @param chainlinkTimeElapsedLimit The duration after which a Chainlink price is considered stale
@@ -24,15 +27,24 @@ contract WstEthOracleMiddleware is OracleMiddleware {
     constructor(
         address pythContract,
         bytes32 pythPriceID,
+        bytes32 redstoneFeedId,
         address chainlinkPriceFeed,
         address wstETH,
         uint256 chainlinkTimeElapsedLimit
-    ) OracleMiddleware(pythContract, pythPriceID, chainlinkPriceFeed, chainlinkTimeElapsedLimit) {
+    )
+        OracleMiddlewareWithRedstone(
+            pythContract,
+            pythPriceID,
+            redstoneFeedId,
+            chainlinkPriceFeed,
+            chainlinkTimeElapsedLimit
+        )
+    {
         _wstEth = IWstETH(wstETH);
     }
 
     /**
-     * @inheritdoc OracleMiddleware
+     * @inheritdoc IBaseOracleMiddleware
      * @notice Parses and validates price data by applying eth/wsteth ratio
      * @dev The data format is specific to the middleware and is simply forwarded from the user transaction's calldata
      * Wsteth price is calculated as follows: ethPrice x stEthPerToken / 1 ether
@@ -42,7 +54,7 @@ contract WstEthOracleMiddleware is OracleMiddleware {
         uint128 targetTimestamp,
         Types.ProtocolAction action,
         bytes calldata data
-    ) public payable virtual override returns (PriceInfo memory) {
+    ) public payable virtual override(IBaseOracleMiddleware, OracleMiddleware) returns (PriceInfo memory) {
         // fetched eth price
         PriceInfo memory ethPrice = super.parseAndValidatePrice(actionId, targetTimestamp, action, data);
 

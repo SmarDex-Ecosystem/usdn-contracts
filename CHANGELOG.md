@@ -1,5 +1,63 @@
 # Changelog
 
+## [0.17.0](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v0.16.0...v0.17.0) (2024-08-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* **middleware:** `IOracleMiddleware` does not have the functions `getPenaltyBps`, `setRedstoneRecentPriceDelay`, `setPenaltyBps` anymore.
+* uups proxy ([#475](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/475))
+* The `getMinLiquidationprice` function has been removed
+* **core:** `IUsdnProtocolCore.funding` returns an additional parameter `fundingPerDay_`. `IUsdnProtocolCore.calcEMA` now expects the last funding rate (per day) as first argument instead of the last funding value. `IUsdnProtocolStorage.getLastFunding` was renamed to `getLastFundingPerDay` and now returns the last funding rate. `IUsdnProtocolTypes.Storage` has a `_lastFundingPerDay` field that replaces `_lastFunding`.
+* Remove the error `UsdnProtocolAmountToCloseIsZero` to use `UsdnProtocolZeroAmount` instead in `initiateClosePosition`
+* **rebalancer:** the `IRebalancer.initiateClosePosition` function does not have a `validator` parameter anymore
+
+### Features
+
+* add constants ([#469](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/469)) ([74f36cb](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/74f36cb213d5784ff97585cf0f0f864d88b7ffc1))
+* emit an event when the highest populated tick is updated ([#407](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/407)) ([a8a5383](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/a8a5383d6283bd20275516bde5a9f19a98bd586a))
+* event when funding rate updated ([#470](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/470)) ([8d06050](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/8d060509eb34976e18b8cf2452b224b835123b09))
+* fee collector callback when the treshold is reached ([#402](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/402)) ([edba31d](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/edba31d236de1571f5d9aedf81fc50120ec1ee0b))
+* refactor protocol ([#468](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/468)) ([29ad6b5](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/29ad6b5fa5d262e93210c0c91201ea7ea0d7a200))
+* remove the getMinLiquidationPrice function ([c52bdfb](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/c52bdfb7dca56c77673200778212e56213eaa1ad))
+* replace ownable by access control ([#420](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/420)) ([4064e29](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/4064e2984947c5bf94059e9a1ed41c1095ee9695))
+* uups proxy ([#475](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/475)) ([f920d30](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/f920d30ce72c1973a602e46fca09ecc31142a8e7))
+* validation step for deployment ([#488](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/488)) ([e1f773f](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/e1f773f7c7a31bb5af9a019bd4ad698d258bd578))
+
+
+### Bug Fixes
+
+* add redstone feed id in env.example ([#394](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/394)) ([0189e72](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/0189e72f02fa68542b9b53dac5b218e21d488260))
+* avoid empty rebalancer update ([#465](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/465)) ([6a52466](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/6a52466408f50ea4315d0d66c407e5700fe3d18a))
+* **core:** always update the EMA with the funding rate (per day) and adjust funding calculations to reflect this change ([#428](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/428)) ([df50aa1](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/df50aa152ce84e403dcf3645ec56114c887074c8))
+* **core:** calcEMA formula ([#390](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/390)) ([9d4a828](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/9d4a828716e72844a26edbeb1abfd98bb7330410))
+* **deploy:** set block time and --slow when using the deploy script ([#417](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/417)) ([d58957d](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/d58957dc402b8d21c0d258f86461a90a0c68c576))
+* **gas-usage:** fix the gas usage tests ([#375](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/375)) ([a737d1e](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/a737d1e9ce343f5af4a35024c4fe89a46aa108a9))
+* ignore gas test in CI ([#434](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/434)) ([52cff74](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/52cff7480262ed684c41e086f4dff85293021e19))
+* **mock:** set the timestamp at block.timestamp in the wsteth mock oracle middleware ([#495](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/495)) ([555b051](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/555b051a88dcf34828ca52136e3408cf456f89f0))
+* **open:** reflect the position fees immediately on the balances ([#452](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/452)) ([9bb1d75](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/9bb1d7509c8763174d3e133536fd2c08ac1e40fc))
+* package.json script and unused file ([#449](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/449)) ([bfca9c4](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/bfca9c4c4ecaa1ab9d931296d1a29f4cd1ab6577))
+* **rebalancer:** disallow choosing the validator address on closing ([#397](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/397)) ([d4e0f9e](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/d4e0f9ed318367cd9a14be870b3321d22e2ccc35))
+* remove unused enum ([#455](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/455)) ([6993021](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/699302190d2a5763fa75225ac70168958d3ce185))
+* **trigger-rebalancer:** fix the previous position value counted twice in balanceLong ([#384](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/384)) ([401c33c](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/401c33c1c2c325a509e5ac6243ef79708da638ab))
+* use adminPrank modifier when possible ([#408](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/408)) ([4e6f565](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/4e6f5650223120aa40a4d168bedaad10dc5ac7c1))
+
+
+### Performance Improvements
+
+* avoid using a delegatecall for casting ([#381](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/381)) ([d1b1416](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/d1b1416365cfb07bc614825348739ce5d5854ddb))
+* cache "immutable" storage accesses ([#388](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/388)) ([c30cc0a](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/c30cc0a3d01ee5c2f271ffad483b99f1cb346555))
+* optimize `_checkPendingFee` and add tests ([#387](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/387)) ([538b6fe](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/538b6fead457a346c33508ceb8564ab97cff848c))
+* **rebalancer:** avoid loading from storage more than once ([#393](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/393)) ([a59c0d9](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/a59c0d9ddb2b4c000c29c68bb591a23a28abfae1))
+* regroup functions related to `removeBlockedPendingAction` ([#380](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/380)) ([9db577a](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/9db577af499dfe43df393e08a33e2e2831d1c151))
+* return lastPrice_  in _applyPnlAndFunding ([#400](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/400)) ([7fb6efa](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/7fb6efaaf506833db680764ebbaf094228a69232))
+
+
+### Code Refactoring
+
+* **middleware:** move Redstone logic to a separate middleware ([#476](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/476)) ([a7c02c8](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/a7c02c8594adc9aff47c59c3b90d880297b10cff))
+* remove an error for the zero amount check in initiateClosePosition to use an existing one ([#404](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/404)) ([4374a03](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/4374a030c42e85dc37cb8219d2c3a514a8d820f8))
+
 ## [0.16.0](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v0.15.0...v0.16.0) (2024-06-21)
 
 
