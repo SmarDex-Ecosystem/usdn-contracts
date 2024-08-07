@@ -148,7 +148,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      * @custom:then The transaction completes successfully
      */
     function test_checkInitImbalance() public {
-        protocol.setExpoImbalanceLimits(200, 200, 0, 0, 0); // 2%
+        protocol.setExpoImbalanceLimits(200, 200, 0, 0, 0, 0); // 2%
 
         uint128 depositAmount = 100 ether;
         uint128 longAmount = 100 ether;
@@ -169,7 +169,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      * @custom:then The transaction completes successfully
      */
     function test_checkInitImbalanceDisabled() public {
-        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0); // disabled
+        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0, 0); // disabled
 
         uint128 depositAmount = 1000 ether;
         uint128 longAmount = 100 ether;
@@ -187,7 +187,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      * @custom:then The transaction reverts with the error `UsdnProtocolImbalanceLimitReached`
      */
     function test_RevertWhen_checkInitImbalanceDepositTooBig() public {
-        protocol.setExpoImbalanceLimits(0, 200, 0, 0, 0); // 2% for deposit
+        protocol.setExpoImbalanceLimits(0, 200, 0, 0, 0, 0); // 2% for deposit
 
         uint128 depositAmount = 102.01 ether;
         uint128 longAmount = 100 ether;
@@ -203,7 +203,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      * @custom:then The transaction reverts with the error `UsdnProtocolImbalanceLimitReached`
      */
     function test_RevertWhen_checkInitImbalanceLongTooBig() public {
-        protocol.setExpoImbalanceLimits(200, 0, 0, 0, 0); // 2% for open
+        protocol.setExpoImbalanceLimits(200, 0, 0, 0, 0, 0); // 2% for open
 
         uint128 depositAmount = 100 ether;
         uint128 longAmount = 102.01 ether;

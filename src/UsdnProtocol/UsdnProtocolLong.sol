@@ -84,9 +84,4 @@ abstract contract UsdnProtocolLong is UsdnProtocolStorage, IUsdnProtocolLong {
     function getTickLiquidationPenalty(int24 tick) external view returns (uint8 liquidationPenalty_) {
         return Long.getTickLiquidationPenalty(s, tick);
     }
-
-    /// @inheritdoc IUsdnProtocolLong
-    function calcImbalanceBps(uint128 currentPrice, uint128 timestamp) external view returns (int256 imbalanceBps_) {
-        return Long.calcImbalanceBps(s, currentPrice, timestamp);
-    }
 }

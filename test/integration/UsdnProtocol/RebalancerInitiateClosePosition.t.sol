@@ -120,7 +120,7 @@ contract TestRebalancerInitiateClosePosition is
      */
     function test_rebalancerInitiateClosePosition() public {
         vm.prank(SET_PROTOCOL_PARAMS_ADMIN);
-        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
+        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0, 0);
 
         uint256 amountToCloseWithoutBonus = FixedPointMathLib.fullMulDiv(
             amountInRebalancer,
@@ -164,7 +164,7 @@ contract TestRebalancerInitiateClosePosition is
      */
     function test_rebalancerInitiateClosePositionRefundsExcessEther() public {
         vm.prank(SET_PROTOCOL_PARAMS_ADMIN);
-        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
+        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0, 0);
 
         uint256 securityDeposit = protocol.getSecurityDepositValue();
         uint256 userBalanceBefore = address(this).balance;

@@ -410,6 +410,15 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
+    function getRebalancerCloseExpoImbalanceLimitBps()
+        external
+        view
+        returns (int256 rebalancerCloseExpoImbalanceLimitBps_)
+    {
+        rebalancerCloseExpoImbalanceLimitBps_ = s._rebalancerCloseExpoImbalanceLimitBps;
+    }
+
+    /// @inheritdoc IUsdnProtocolFallback
     function getLongImbalanceTargetBps() external view returns (int256 longImbalanceTargetBps_) {
         longImbalanceTargetBps_ = s._longImbalanceTargetBps;
     }
@@ -607,6 +616,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
         uint256 newDepositLimitBps,
         uint256 newWithdrawalLimitBps,
         uint256 newCloseLimitBps,
+        uint256 newRebalancerCloseLimitBps,
         int256 newLongImbalanceTargetBps
     ) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
         s._openExpoImbalanceLimitBps = newOpenLimitBps.toInt256();
@@ -624,6 +634,12 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
         }
         s._closeExpoImbalanceLimitBps = newCloseLimitBps.toInt256();
 
+        if (newRebalancerCloseLimitBps != 0 && newRebalancerCloseLimitBps > newCloseLimitBps) {
+            // rebalancer close limit higher than close limit not permitted
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidExpoImbalanceLimit();
+        }
+        s._rebalancerCloseExpoImbalanceLimitBps = newRebalancerCloseLimitBps.toInt256();
+
         // casts are safe here as values are safely casted earlier
         if (
             newLongImbalanceTargetBps > int256(newCloseLimitBps)
@@ -636,7 +652,12 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
         s._longImbalanceTargetBps = newLongImbalanceTargetBps;
 
         emit IUsdnProtocolEvents.ImbalanceLimitsUpdated(
-            newOpenLimitBps, newDepositLimitBps, newWithdrawalLimitBps, newCloseLimitBps, newLongImbalanceTargetBps
+            newOpenLimitBps,
+            newDepositLimitBps,
+            newWithdrawalLimitBps,
+            newCloseLimitBps,
+            newRebalancerCloseLimitBps,
+            newLongImbalanceTargetBps
         );
     }
 

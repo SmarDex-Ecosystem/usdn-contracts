@@ -244,17 +244,6 @@ library UsdnProtocolLongLibrary {
         liquidationPenalty_ = _getTickLiquidationPenalty(s, tickHash);
     }
 
-    /// @notice See {IUsdnProtocolLong}
-    function calcImbalanceBps(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
-        public
-        view
-        returns (int256 imbalanceBps_)
-    {
-        int256 vaultBalance = Vault.vaultAssetAvailableWithFunding(s, currentPrice, timestamp);
-        int256 longBalance = longAssetAvailableWithFunding(s, currentPrice, timestamp);
-        imbalanceBps_ = _calcImbalanceCloseBps(vaultBalance, longBalance, s._totalExpo);
-    }
-
     /* -------------------------------------------------------------------------- */
     /*                             Internal functions                             */
     /* -------------------------------------------------------------------------- */
