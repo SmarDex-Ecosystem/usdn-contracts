@@ -25,6 +25,11 @@ contract ErrorsChecked is Test {
         InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector
     ];
 
+    bytes4[] public INITIALIZABLE_ERRORS = [
+        InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector,
+        InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector
+    ];
+
     /* -------------------------------------------------------------------------- */
     /*                           Functionnal errors                               */
     /* -------------------------------------------------------------------------- */
@@ -61,9 +66,7 @@ contract ErrorsChecked is Test {
             IUsdnProtocolErrors.UsdnProtocolUnauthorized.selector,
             IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector,
             IUsdnProtocolErrors.UsdnProtocolLiquidationPriceSafetyMargin.selector,
-            FixedPointMathLib.FullMulDivFailed.selector,
-            InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector,
-            InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector
+            FixedPointMathLib.FullMulDivFailed.selector
         ]
     ];
 
@@ -114,17 +117,22 @@ contract ErrorsChecked is Test {
         [
             IUsdnProtocolErrors.UsdnProtocolMinInitAmount.selector,
             IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector,
-            IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationPrice.selector,
-            InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector,
-            InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector
+            IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationPrice.selector
         ]
     ];
 
     constructor() {
-        bytes4[] memory initiateErrors = INITIATE_ERRORS;
-        INITIATE_DEPOSIT_ERRORS.push(initiateErrors);
-        INITIATE_OPEN_ERRORS.push(initiateErrors);
-        INITIATE_WITHDRAWAL_ERRORS.push(initiateErrors);
+        INITIATE_DEPOSIT_ERRORS.push(INITIATE_ERRORS);
+        INITIATE_OPEN_ERRORS.push(INITIATE_ERRORS);
+        INITIATE_WITHDRAWAL_ERRORS.push(INITIATE_ERRORS);
+
+        INITIATE_CLOSE_ERRORS.push(INITIALIZABLE_ERRORS);
+        VALIDATE_DEPOSIT_ERRORS.push(INITIALIZABLE_ERRORS);
+        VALIDATE_WITHDRAWAL_ERRORS.push(INITIALIZABLE_ERRORS);
+        VALIDATE_CLOSE_ERRORS.push(INITIALIZABLE_ERRORS);
+        VALIDATE_OPEN_ERRORS.push(INITIALIZABLE_ERRORS);
+        VALIDATE_PENDING_ACTIONS_ERRORS.push(INITIALIZABLE_ERRORS);
+        INITIALIZE_ERRORS.push(INITIALIZABLE_ERRORS);
     }
 
     function _checkErrors(bytes memory err, bytes4[][] memory errorsArrays) internal virtual {
