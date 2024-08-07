@@ -2,6 +2,7 @@
 pragma solidity 0.8.26;
 
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { UUPSUpgradeable } from "solady/src/utils/UUPSUpgradeable.sol";
 
@@ -20,6 +21,25 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
+    }
+
+    // function test_RevertWhen_upgradeProxyIsCalledWithZeroAddress() public {
+    //     vm.startPrank(ADMIN);
+    //     vm.expectRevert();
+    //     UnsafeUpgrades.upgradeProxy(address(protocol), address(0), "");
+    // }
+
+    function test_RevertWhen_upgradeProxyIsCalledWithNonAdmin() public {
+        UsdnProtocolImplV2 newImplementation = new UsdnProtocolImplV2();
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), protocol.PROXY_UPGRADE_ROLE()
+            )
+        );
+        UnsafeUpgrades.upgradeProxy(
+            address(protocol), address(newImplementation), abi.encodeCall(UsdnProtocolImplV2.initializeV2, ())
+        );
     }
 
     /**
