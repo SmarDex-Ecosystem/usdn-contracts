@@ -50,7 +50,7 @@ contract FuzzSetup is Setup {
                 == bytes4(InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector)
                 && usdnProtocol.isInitialized()
         ) {
-            emit log_named_bytes("Should not be initialized: ", err);
+            emit log_named_bytes("Should be initialized: ", err);
             assert(false);
         } else if (
             bytes4(abi.encodePacked(err))
@@ -60,19 +60,16 @@ contract FuzzSetup is Setup {
             emit log_named_bytes("Should not be initialized :", err);
             assert(false);
         } else if (
-            bytes4(abi.encodePacked(err))
-                != bytes4(InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector)
-                && bytes4(abi.encodePacked(err))
-                    != bytes4(InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector)
+            bytes4(err) != bytes4(InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector)
+                && bytes4(err) != bytes4(InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector)
                 && !usdnProtocol.isInitialized()
         ) {
             emit log_named_bytes("Uninitialized without expected error:", err);
             assert(false);
         } else if (
-            bytes4(abi.encodePacked(err))
+            bytes4(err)
                 != bytes4(InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector)
-                && bytes4(abi.encodePacked(err))
-                    != bytes4(InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector)
+                && bytes4(err) != bytes4(InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector)
         ) {
             super._checkErrors(err, errorsArrays);
         }
