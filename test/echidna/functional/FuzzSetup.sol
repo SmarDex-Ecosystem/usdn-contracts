@@ -6,7 +6,6 @@ import { WstETH } from "../../utils/WstEth.sol";
 import { Setup } from "../Setup.sol";
 
 import { Usdn } from "../../../src/Usdn/Usdn.sol";
-import { InitializableReentrancyGuard } from "../../../src/utils/InitializableReentrancyGuard.sol";
 
 contract FuzzSetup is Setup {
     /* -------------------------------------------------------------------------- */
@@ -41,37 +40,6 @@ contract FuzzSetup is Setup {
             } catch (bytes memory err) {
                 _checkErrors(err, INITIALIZE_ERRORS);
             }
-        }
-    }
-
-    function _checkErrors(bytes memory err, bytes4[][] memory errorsArrays) internal virtual override {
-        if (
-            bytes4(abi.encodePacked(err))
-                == bytes4(InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector)
-                && usdnProtocol.isInitialized()
-        ) {
-            emit log_named_bytes("Should be initialized: ", err);
-            assert(false);
-        } else if (
-            bytes4(abi.encodePacked(err))
-                == bytes4(InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector)
-                && usdnProtocol.isInitialized()
-        ) {
-            emit log_named_bytes("Should not be initialized :", err);
-            assert(false);
-        } else if (
-            bytes4(err) != bytes4(InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector)
-                && bytes4(err) != bytes4(InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector)
-                && !usdnProtocol.isInitialized()
-        ) {
-            emit log_named_bytes("Uninitialized without expected error:", err);
-            assert(false);
-        } else if (
-            bytes4(err)
-                != bytes4(InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector)
-                && bytes4(err) != bytes4(InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector)
-        ) {
-            super._checkErrors(err, errorsArrays);
         }
     }
 }

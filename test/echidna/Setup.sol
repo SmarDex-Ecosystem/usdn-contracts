@@ -14,6 +14,7 @@ import { Usdn } from "../../src/Usdn/Usdn.sol";
 import { IWstETH } from "../../src/interfaces/IWstETH.sol";
 import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Permit2TokenBitfield } from "../../src/libraries/Permit2TokenBitfield.sol";
+import { InitializableReentrancyGuard } from "../../src/utils/InitializableReentrancyGuard.sol";
 
 contract Setup is ErrorsChecked {
     address public constant DEPLOYER = address(0x10000);
@@ -87,5 +88,24 @@ contract Setup is ErrorsChecked {
             toUsdnShares: usdn.sharesOf(to),
             toWsteth: wsteth.balanceOf(to)
         });
+    }
+
+    function _checkErrors(bytes memory err, bytes4[][] memory errorsArrays) internal virtual override {
+        if (
+            bytes4(abi.encodePacked(err))
+                == bytes4(InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector)
+                && usdnProtocol.isInitialized()
+        ) {
+            emit log_named_bytes("Should be initialized: ", err);
+            assert(false);
+        } else if (
+            bytes4(abi.encodePacked(err))
+                == bytes4(InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector)
+                && usdnProtocol.isInitialized()
+        ) {
+            emit log_named_bytes("Should not be initialized :", err);
+            assert(false);
+        }
+        super._checkErrors(err, errorsArrays);
     }
 }
