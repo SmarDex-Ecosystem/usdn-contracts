@@ -8,6 +8,8 @@ import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { Sdex } from "../test/utils/Sdex.sol";
 import { WstETH } from "../test/utils/WstEth.sol";
 
+import { Validate } from "./Validate.s.sol";
+
 import { LiquidationRewardsManager } from "../src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { WstEthOracleMiddleware } from "../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { MockLiquidationRewardsManager } from "../src/OracleMiddleware/mock/MockLiquidationRewardsManager.sol";
@@ -43,6 +45,8 @@ contract Deploy is Script {
             IUsdnProtocol UsdnProtocol_
         )
     {
+        _validateProtocol();
+
         bool isProdEnv = block.chainid != vm.envOr("FORK_CHAIN_ID", uint256(31_337));
 
         vm.startBroadcast(vm.envAddress("DEPLOYER_ADDRESS"));
@@ -279,5 +283,14 @@ contract Deploy is Script {
         }
 
         UsdnProtocol_.initialize(uint128(depositAmount), uint128(longAmount), uint128(desiredLiqPrice), "");
+    }
+
+    /**
+     * @notice Validate the Usdn protocol
+     * @dev Call this function to validate the Usdn protocol before deploying it
+     */
+    function _validateProtocol() internal {
+        Validate validate = new Validate();
+        validate.validateProtocol();
     }
 }
