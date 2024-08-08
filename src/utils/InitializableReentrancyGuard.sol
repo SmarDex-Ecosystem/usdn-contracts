@@ -85,9 +85,4 @@ abstract contract InitializableReentrancyGuard {
         // by storing the original value once again, a refund is triggered (see https://eips.ethereum.org/EIPS/eip-2200)
         _status = NOT_ENTERED;
     }
-
-    /// @notice Get the current status of the usdn protocol initialization
-    function isInitialized() external view returns (bool) {
-        return _status != 0;
-    }
 }
