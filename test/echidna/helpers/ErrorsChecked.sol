@@ -16,6 +16,7 @@ contract ErrorsChecked is Test {
     /* -------------------------------------------------------------------------- */
     /*                              Common errors                                 */
     /* -------------------------------------------------------------------------- */
+
     bytes4[] public INITIATE_ERRORS = [
         IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow.selector,
         IUsdnProtocolErrors.UsdnProtocolZeroAmount.selector,
@@ -26,6 +27,7 @@ contract ErrorsChecked is Test {
     /* -------------------------------------------------------------------------- */
     /*                           Functionnal errors                               */
     /* -------------------------------------------------------------------------- */
+
     bytes4[][] public PROTOCOL_INITIATE_DEPOSIT_ERRORS = [
         [
             IUsdnProtocolErrors.UsdnProtocolInvalidAddressValidator.selector,
