@@ -8,11 +8,10 @@ import { UUPSUpgradeable } from "solady/src/utils/UUPSUpgradeable.sol";
 
 import { ADMIN } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
+import { UsdnProtocolImplV2 } from "../utils/UsdnProtocolImplV2.sol";
 
-import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { IUsdnProtocolFallback } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
 import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { UsdnProtocolImplV2 } from "../utils/UsdnProtocolImplV2.sol";
 
 /**
  * @custom:feature The proxy functionality of the protocol
@@ -79,7 +78,7 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
      * @custom:and The new implementation function should return true
      */
     function test_upgrade() public {
-        _saveStorage();
+        _storageSnapshot();
 
         vm.startPrank(ADMIN);
         UsdnProtocolImplV2 newImplementation = new UsdnProtocolImplV2();
@@ -93,12 +92,13 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
         );
         UsdnProtocolImplV2 protocol = UsdnProtocolImplV2(address(protocol));
 
-        _compareStorage();
+        _assertIdenticalStorage();
+
         assertEq(protocol.newVariable(), 1, "initializeV2 should set newVariable to 1");
         assertEq(protocol.retBool(), true, "retBool should return true");
     }
 
-    function _saveStorage() internal {
+    function _storageSnapshot() internal {
         sV1._tickSpacing = protocol.getTickSpacing();
         sV1._asset = protocol.getAsset();
         sV1._sdex = protocol.getSdex();
@@ -150,7 +150,7 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
         sV1._protocolFallbackAddr = protocol.getFallbackAddress();
     }
 
-    function _compareStorage() internal view {
+    function _assertIdenticalStorage() internal view {
         assertEq(sV1._tickSpacing, protocol.getTickSpacing());
         assertEq(address(sV1._asset), address(protocol.getAsset()));
         assertEq(address(sV1._sdex), address(protocol.getSdex()));
