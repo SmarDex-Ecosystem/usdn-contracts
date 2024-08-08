@@ -10,6 +10,7 @@ import { ADMIN } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 import { UsdnProtocolImplV2 } from "../utils/UsdnProtocolImplV2.sol";
 
+import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { IUsdnProtocolFallback } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
 import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
@@ -22,6 +23,28 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
+    }
+
+    /**
+     * @custom:scenario Try to call {initialize} function before {initializeStorage}
+     * @custom:given An initialized protocol
+     * @custom:when {initialize} is called
+     * @custom:then The call should revert since the storage is not initialized
+     */
+    function test_RevertWhen_InitialezeBeforeInitializeStorage() public {
+        UsdnProtocolImpl freshProtocol = new UsdnProtocolImpl();
+        // Deploy a fresh protocol without calling the initializeStorage function
+        address freshProxy = UnsafeUpgrades.deployUUPSProxy(address(freshProtocol), "");
+        freshProtocol = UsdnProtocolImpl(freshProxy);
+
+        // The call should revert without message because the storage is not initialized
+        vm.expectRevert();
+        freshProtocol.initialize(
+            DEFAULT_PARAMS.initialDeposit,
+            DEFAULT_PARAMS.initialLong,
+            DEFAULT_PARAMS.initialPrice / 2,
+            abi.encode(DEFAULT_PARAMS.initialPrice)
+        );
     }
 
     /**
