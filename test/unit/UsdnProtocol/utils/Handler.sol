@@ -607,4 +607,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     function i_checkPendingFee() external {
         ActionsVault._checkPendingFee(s);
     }
+
+    function isInitialized() external view returns (bool) {
+        return s._lastUpdateTimestamp > 0;
+    }
 }

@@ -26,18 +26,29 @@ contract FuzzingSuiteTest is Test {
     address internal ATTACKER;
     IUsdnProtocolTypes.PreviousActionsData internal EMPTY_PREVIOUS_DATA =
         IUsdnProtocolTypes.PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
-
     uint152 internal usdnShares = 100_000 ether;
 
     function setUp() public {
         echidna = new FuzzingSuite();
         DEPLOYER = echidna.DEPLOYER();
         ATTACKER = echidna.ATTACKER();
-
         usdnProtocol = echidna.usdnProtocol();
         wstEthOracleMiddleware = echidna.wstEthOracleMiddleware();
         wsteth = echidna.wsteth();
         usdn = echidna.usdn();
+        uint256 usdnBalanceBeforeInit = usdn.balanceOf(DEPLOYER);
+        uint256 DEPOSIT_AMOUNT = 300 ether;
+        uint256 LONG_AMOUNT = 300 ether;
+        uint256 PRICE = 2000 ether;
+        uint256 LIQUIDATION_PRICE = 1000 ether;
+
+        vm.prank(DEPLOYER);
+        echidna.initializeUsdnProtocol(DEPOSIT_AMOUNT, LONG_AMOUNT, PRICE, LIQUIDATION_PRICE);
+        assertEq(address(usdnProtocol).balance, 0, "protocol balance");
+        assertEq(
+            usdn.balanceOf(DEPLOYER), usdnBalanceBeforeInit + (DEPOSIT_AMOUNT * PRICE) / 10 ** 18 - 1000, "usdn balance"
+        );
+        assertEq(wsteth.balanceOf(address(usdnProtocol)), DEPOSIT_AMOUNT + LONG_AMOUNT, "wstETH balance");
 
         vm.prank(address(usdnProtocol));
         usdn.mintShares(DEPLOYER, usdnShares);
@@ -367,11 +378,12 @@ contract FuzzingSuiteTest is Test {
     function test_canFullWithdrawal() public {
         assertGt(usdn.balanceOf(DEPLOYER), 0, "usdn balance before withdrawal");
         uint256 balanceProtocol = address(usdnProtocol).balance;
+        uint256 usdnSharesBefore = usdn.sharesOf(DEPLOYER);
 
         vm.prank(DEPLOYER);
         echidna.fullWithdrawal(usdnShares, 10 ether, 0, 0, 1000 ether);
 
-        assertEq(usdn.balanceOf(DEPLOYER), 0, "usdn balance after withdrawal");
+        assertEq(usdn.sharesOf(DEPLOYER), usdnSharesBefore - usdnShares, "usdn shares balance after withdrawal");
         assertEq(address(usdnProtocol).balance, balanceProtocol, "protocol balance");
     }
 
