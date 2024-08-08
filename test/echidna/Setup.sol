@@ -97,15 +97,13 @@ contract Setup is ErrorsChecked {
 
     function _checkErrors(bytes memory err, bytes4[][] memory errorsArrays) internal virtual override {
         if (
-            bytes4(abi.encodePacked(err))
-                == InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector
+            bytes4(err) == InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector
                 && usdnProtocol.isInitialized()
         ) {
             emit log_named_bytes("Should be initialized: ", err);
             assert(false);
         } else if (
-            bytes4(abi.encodePacked(err))
-                == InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector
+            bytes4(err) == InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector
                 && !usdnProtocol.isInitialized()
         ) {
             emit log_named_bytes("Should be initialized :", err);
