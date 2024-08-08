@@ -62,7 +62,7 @@ contract TestRebalancerInitiateClosePosition is
      * @custom:and The user action is pending in protocol
      */
     function test_rebalancerInitiateClosePositionPartial() public {
-        // choose an amount small enough as to not trigger imbalance limits
+        // choose an amount small enough to not trigger imbalance limits
         uint88 amount = amountInRebalancer / 100;
 
         uint256 amountToCloseWithoutBonus = FixedPointMathLib.fullMulDiv(
