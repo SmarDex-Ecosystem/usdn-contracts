@@ -2,10 +2,10 @@
 pragma solidity 0.8.26;
 
 import { REDSTONE_ETH_DATA, REDSTONE_ETH_TIMESTAMP } from "../../utils/Constants.sol";
-import { OracleMiddlewareBaseFixture } from "../../utils/Fixtures.sol";
+import { OracleMiddlewareWithRedstoneFixture } from "../../utils/Fixtures.sol";
 
 /// @custom:feature The `extractPriceUpdateTimestamp` function of `RedstoneOracle`
-contract TestRedstoneOracleExtractPriceUpdateTimestamp is OracleMiddlewareBaseFixture {
+contract TestRedstoneOracleExtractPriceUpdateTimestamp is OracleMiddlewareWithRedstoneFixture {
     function setUp() public override {
         super.setUp();
     }

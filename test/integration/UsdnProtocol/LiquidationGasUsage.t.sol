@@ -6,7 +6,6 @@ import {
     DEPLOYER,
     PYTH_ETH_USD,
     PYTH_WSTETH_USD,
-    REDSTONE_ETH_USD,
     SET_EXTERNAL_ADMIN,
     SET_PROTOCOL_PARAMS_ADMIN,
     SET_USDN_PARAMS_ADMIN,
@@ -82,7 +81,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
 
         // use the mock oracle to open positions to avoid hermes calls
         MockWstEthOracleMiddleware mockOracle = new MockWstEthOracleMiddleware(
-            address(mockPyth), PYTH_ETH_USD, REDSTONE_ETH_USD, address(mockChainlinkOnChain), address(wstETH), 1 hours
+            address(mockPyth), PYTH_ETH_USD, address(mockChainlinkOnChain), address(wstETH), 1 hours
         );
         vm.prank(SET_EXTERNAL_ADMIN);
         protocol.setOracleMiddleware(mockOracle);

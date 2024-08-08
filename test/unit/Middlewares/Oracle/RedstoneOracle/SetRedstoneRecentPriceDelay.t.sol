@@ -3,16 +3,16 @@ pragma solidity 0.8.26;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-import { USER_1 } from "../../../utils/Constants.sol";
-import { OracleMiddlewareBaseFixture } from "../utils/Fixtures.sol";
+import { USER_1 } from "../../../../utils/Constants.sol";
+import { OracleMiddlewareWithRedstoneFixture } from "../../utils/Fixtures.sol";
 
-import { IOracleMiddlewareErrors } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
-import { IOracleMiddlewareEvents } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareEvents.sol";
+import { IOracleMiddlewareErrors } from "../../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
+import { IOracleMiddlewareEvents } from "../../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareEvents.sol";
 
 /**
  * @custom:feature The `setRedstoneRecentPriceDelay` function of `RedstoneOracle`
  */
-contract TestSetRedstoneRecentPriceDelay is OracleMiddlewareBaseFixture {
+contract TestSetRedstoneRecentPriceDelay is OracleMiddlewareWithRedstoneFixture {
     function setUp() public override {
         super.setUp();
     }
