@@ -37,10 +37,8 @@ for (const [i, file] of solFiles.entries()) {
 
 // parse storage contract
 if (STORAGE) {
-  const storage = `src/UsdnProtocol/${STORAGE}`;
-
-  if (DEBUG) console.log('storage:', storage);
-  const storagePath = `./out/${storage}/${basename(storage, '.sol')}.json`;
+  if (DEBUG) console.log('storage:', STORAGE);
+  const storagePath = `./out/${STORAGE}/${basename(STORAGE, '.sol')}.json`;
 
   try {
     const file = readFileSync(storagePath);
@@ -89,7 +87,7 @@ for (const file of solFiles) {
         selectorMap.set(selector, signature);
       }
     }
-  } catch (error) {
-    console.log(`Error with ./out/${file}.sol/${file}.json: ${error.message}`);
+  } catch {
+    console.log(`Error with ./out/${file}.sol/${file}.json`);
   }
 }
