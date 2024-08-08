@@ -20,9 +20,7 @@ contract ErrorsChecked is Test {
         IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow.selector,
         IUsdnProtocolErrors.UsdnProtocolZeroAmount.selector,
         IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector,
-        IUsdnProtocolErrors.UsdnProtocolZeroAmount.selector,
-        InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector,
-        InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector
+        IUsdnProtocolErrors.UsdnProtocolZeroAmount.selector
     ];
 
     bytes4[] public INITIALIZABLE_ERRORS = [
@@ -104,6 +102,9 @@ contract ErrorsChecked is Test {
         INITIATE_OPEN_ERRORS.push(INITIATE_ERRORS);
         INITIATE_WITHDRAWAL_ERRORS.push(INITIATE_ERRORS);
 
+        INITIATE_DEPOSIT_ERRORS.push(INITIALIZABLE_ERRORS);
+        INITIATE_OPEN_ERRORS.push(INITIALIZABLE_ERRORS);
+        INITIATE_WITHDRAWAL_ERRORS.push(INITIALIZABLE_ERRORS);
         INITIATE_CLOSE_ERRORS.push(INITIALIZABLE_ERRORS);
         VALIDATE_DEPOSIT_ERRORS.push(INITIALIZABLE_ERRORS);
         VALIDATE_WITHDRAWAL_ERRORS.push(INITIALIZABLE_ERRORS);
