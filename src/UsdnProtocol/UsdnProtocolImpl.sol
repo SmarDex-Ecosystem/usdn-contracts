@@ -32,7 +32,7 @@ contract UsdnProtocolImpl is
         IBaseLiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector,
-        Roles memory roles,
+        Managers memory managers,
         IUsdnProtocolFallback protocolFallback
     ) public initializer {
         __AccessControlDefaultAdminRules_init(0, msg.sender);
@@ -44,12 +44,12 @@ contract UsdnProtocolImpl is
         _setRoleAdmin(SET_USDN_PARAMS_ROLE, ADMIN_SET_USDN_PARAMS_ROLE);
         _setRoleAdmin(SET_OPTIONS_ROLE, ADMIN_SET_OPTIONS_ROLE);
         _setRoleAdmin(PROXY_UPGRADE_ROLE, ADMIN_PROXY_UPGRADE_ROLE);
-        _grantRole(SET_EXTERNAL_ROLE, roles.setExternalManager);
-        _grantRole(CRITICAL_FUNCTIONS_ROLE, roles.criticalFunctionsManager);
-        _grantRole(SET_PROTOCOL_PARAMS_ROLE, roles.setProtocolParamsManager);
-        _grantRole(SET_USDN_PARAMS_ROLE, roles.setUsdnParamsManager);
-        _grantRole(SET_OPTIONS_ROLE, roles.setOptionsManager);
-        _grantRole(PROXY_UPGRADE_ROLE, roles.proxyUpgradeManager);
+        _grantRole(SET_EXTERNAL_ROLE, managers.setExternalManager);
+        _grantRole(CRITICAL_FUNCTIONS_ROLE, managers.criticalFunctionsManager);
+        _grantRole(SET_PROTOCOL_PARAMS_ROLE, managers.setProtocolParamsManager);
+        _grantRole(SET_USDN_PARAMS_ROLE, managers.setUsdnParamsManager);
+        _grantRole(SET_OPTIONS_ROLE, managers.setOptionsManager);
+        _grantRole(PROXY_UPGRADE_ROLE, managers.proxyUpgradeManager);
 
         // parameters
         s._minLeverage = 10 ** Constants.LEVERAGE_DECIMALS + 10 ** 12;

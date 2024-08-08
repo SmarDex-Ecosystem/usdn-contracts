@@ -80,7 +80,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         enableRoles: true
     });
 
-    Roles roles = Roles({
+    Managers managers = Managers({
         setExternalManager: SET_EXTERNAL_MANAGER,
         criticalFunctionsManager: CRITICAL_FUNCTIONS_MANAGER,
         setProtocolParamsManager: SET_PROTOCOL_PARAMS_MANAGER,
@@ -149,7 +149,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         usdn = new Usdn(address(0), address(0));
 
         if (!testParams.enableRoles) {
-            roles = Roles({
+            managers = Managers({
                 setExternalManager: ADMIN,
                 criticalFunctionsManager: ADMIN,
                 setProtocolParamsManager: ADMIN,
@@ -173,7 +173,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
                     liquidationRewardsManager,
                     100, // tick spacing 100 = 1%
                     ADMIN,
-                    roles,
+                    managers,
                     protocolFallback
                 )
             )
@@ -189,7 +189,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             testParams.initialDeposit, testParams.initialLong, testParams.initialLiqPrice, ""
         );
         vm.stopPrank();
-        vm.prank(roles.setExternalManager);
+        vm.prank(managers.setExternalManager);
         protocol.setRebalancer(rebalancer);
         params = testParams;
     }
@@ -231,7 +231,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
         tickSpacing_ = protocol.getTickSpacing();
 
-        vm.startPrank(roles.setProtocolParamsManager);
+        vm.startPrank(managers.setProtocolParamsManager);
         protocol.setFundingSF(0);
         protocol.resetEMA();
 
@@ -292,7 +292,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
         tickToLiquidateData_ = protocol.getTickData(posToLiquidate_.tick);
 
-        vm.prank(roles.setProtocolParamsManager);
+        vm.prank(managers.setProtocolParamsManager);
         protocol.setExpoImbalanceLimits(
             uint256(defaultLimits.depositExpoImbalanceLimitBps),
             uint256(defaultLimits.withdrawalExpoImbalanceLimitBps),

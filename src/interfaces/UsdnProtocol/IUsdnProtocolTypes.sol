@@ -379,7 +379,7 @@ interface IUsdnProtocolTypes {
     }
 
     /**
-     * @notice Structure to hold the roles during deployment
+     * @notice Structure to hold the managers during deployment
      * @param setExternalManager The role to set the external contracts
      * @param criticalFunctionsManager The role to perform critical functions
      * @param setProtocolParamsManager The role to set the protocol parameters
@@ -387,7 +387,7 @@ interface IUsdnProtocolTypes {
      * @param setOptionsManager The role to set the protocol options that do not impact the usage of the protocol
      * @param proxyUpgradeManager The role to upgrade the the protocol implementation
      */
-    struct Roles {
+    struct Managers {
         address setExternalManager;
         address criticalFunctionsManager;
         address setProtocolParamsManager;

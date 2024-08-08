@@ -61,7 +61,7 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
                     liquidationRewardsManager,
                     100, // tick spacing 100 = 1%
                     ADMIN, // Fee collector
-                    Types.Roles({
+                    Types.Managers({
                         setExternalManager: ADMIN,
                         criticalFunctionsManager: ADMIN,
                         setProtocolParamsManager: ADMIN,

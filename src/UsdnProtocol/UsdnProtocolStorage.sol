@@ -60,7 +60,7 @@ abstract contract UsdnProtocolStorage is
 
     /**
      * @inheritdoc UUPSUpgradeable
-     * @notice Function to upgrade the implementation of the the protocol
+     * @notice Function to verify that the caller to upgrade the protocol is authorized
      * @param implementation The address of the new implementation
      */
     function _authorizeUpgrade(address implementation) internal override onlyRole(PROXY_UPGRADE_ROLE) { }

@@ -57,7 +57,7 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
             liquidationRewardsManager,
             _tickSpacing,
             address(feeCollector),
-            Roles({
+            Managers({
                 setExternalManager: ADMIN,
                 criticalFunctionsManager: ADMIN,
                 setProtocolParamsManager: ADMIN,

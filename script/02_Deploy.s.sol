@@ -76,7 +76,7 @@ contract Deploy is Script {
                     LiquidationRewardsManager_,
                     100,
                     vm.envAddress("FEE_COLLECTOR"),
-                    Types.Roles({
+                    Types.Managers({
                         setExternalManager: vm.envAddress("DEPLOYER_ADDRESS"),
                         criticalFunctionsManager: vm.envAddress("DEPLOYER_ADDRESS"),
                         setProtocolParamsManager: vm.envAddress("DEPLOYER_ADDRESS"),
