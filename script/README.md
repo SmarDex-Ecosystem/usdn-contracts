@@ -68,10 +68,9 @@ The `anvil` fork should be launched with at least the following parameters:
 - `-a 100` to fund 100 addresses with 10'000 Ξ
 - `-f https://..` to fork mainnet at the latest height
 - `--chain-id $FORK_CHAIN_ID` to change from the default (1) forked chain ID
-- `--code-size-limit 50000` to support larger contracts (50kB) since we are still in the process of optimizing code size
 
 ```
-anvil -a 100 -f [Mainnet RPC] --chain-id $FORK_CHAIN_ID --code-size-limit 50000
+anvil -a 100 -f [Mainnet RPC] --chain-id $FORK_CHAIN_ID
 ```
 
 ## Logs analysis command
