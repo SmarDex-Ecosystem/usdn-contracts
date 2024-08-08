@@ -106,7 +106,7 @@ contract Setup is ErrorsChecked {
             bytes4(err) == InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector
                 && !usdnProtocol.isInitialized()
         ) {
-            emit log_named_bytes("Should be initialized :", err);
+            emit log_named_bytes("Should not be initialized :", err);
             assert(false);
         }
         super._checkErrors(err, errorsArrays);
