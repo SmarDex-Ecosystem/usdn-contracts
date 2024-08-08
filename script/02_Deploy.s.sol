@@ -271,22 +271,29 @@ contract Deploy is Script {
 
     /**
      * @notice Initialize the USDN Protocol
+     * @param isProdEnv Env check
      * @param UsdnProtocol_ The USDN protocol
      * @param WstEthOracleMiddleware_ The WstETH oracle middleware
      * @param depositAmount The amount to deposit during the protocol initialization
      * @param longAmount The size of the long to open during the protocol initialization
      */
     function _initializeUsdnProtocol(
-        bool,
+        bool isProdEnv,
         IUsdnProtocol UsdnProtocol_,
         WstEthOracleMiddleware WstEthOracleMiddleware_,
         uint256 depositAmount,
         uint256 longAmount
     ) internal {
-        // NOTE: ONLY FOR SEPOLIA. Always use a 2x leverage for the deployer's position, with the current price
-        uint256 desiredLiqPrice = WstEthOracleMiddleware_.parseAndValidatePrice(
-            "", uint128(block.timestamp), Types.ProtocolAction.Initialize, ""
-        ).price / 2;
+        uint256 desiredLiqPrice;
+        if (isProdEnv) {
+            desiredLiqPrice = vm.envUint("INIT_LONG_LIQPRICE");
+        } else {
+            // for forks, we want a leverage of ~2x so we get the current
+            // price from the middleware and divide it by two
+            desiredLiqPrice = WstEthOracleMiddleware_.parseAndValidatePrice(
+                "", uint128(block.timestamp), Types.ProtocolAction.Initialize, ""
+            ).price / 2;
+        }
 
         UsdnProtocol_.initialize(uint128(depositAmount), uint128(longAmount), uint128(desiredLiqPrice), "");
     }
