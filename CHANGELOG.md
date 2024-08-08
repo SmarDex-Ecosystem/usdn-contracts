@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.17.1](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v0.17.0...v0.17.1) (2024-08-08)
+
+
+### Bug Fixes
+
+* **build:** add ABI for mock contracts ([#500](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/500)) ([e0c74a5](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/e0c74a59d056bad821c4692ec360ea48c3a646de))
+
 ## [0.17.0](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v0.16.0...v0.17.0) (2024-08-07)
 
 
