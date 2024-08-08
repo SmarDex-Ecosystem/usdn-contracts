@@ -10,7 +10,7 @@
     "cov:html": "npm run coverage && genhtml --ignore-errors corrupt,inconsistent -o .coverage lcov.info && open .coverage/index.html",
     "cov": "forge build --skip .sol && forge coverage --no-match-test \"(FFI|Fork|Fuzz|invariant)\" --no-match-contract Fork -vvv --offline",
     "coverage": "npm run cov -- --report lcov",
-    "exportAbi": "forge build --ast && ts-node ./script/exportAbi.ts -g 'interfaces/**/*.sol' && tsup ./dist/abi/index.ts --format cjs --format esm --dts --sourcemap",
+    "exportAbi": "forge build --ast && ts-node ./script/exportAbi.ts -g '{interfaces/**/*.sol,**/*[mM]ock*.sol}' && tsup ./dist/abi/index.ts --format cjs --format esm --dts --sourcemap",
     "format:js": "npx @biomejs/biome format . --write",
     "format": "forge fmt",
     "installDeps": "npm i && forge soldeer install",
