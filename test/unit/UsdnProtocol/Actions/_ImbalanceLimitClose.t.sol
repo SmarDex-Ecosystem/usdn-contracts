@@ -126,7 +126,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
 
         // reassign limit to activate verification
         vm.prank(ADMIN);
-        protocol.setExpoImbalanceLimits(0, 0, 0, uint256(initialCloseLimit), 0, 0);
+        protocol.setExpoImbalanceLimits(0, 0, 0, uint256(initialCloseLimit), uint256(initialCloseLimit), 0);
 
         // should revert
         vm.expectRevert(
