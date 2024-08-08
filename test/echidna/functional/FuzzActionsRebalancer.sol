@@ -11,8 +11,9 @@ contract FuzzActionsRebalancer is Setup {
     /**
      * @notice RBLCR-0
      */
-    function initiateDepositRebalancer(uint88 amountRand, uint256 destRand) public {
+    function initiateDepositRebalancer(uint256 amountRand, uint256 destRand) public {
         destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
+        amountRand = bound(destRand, 0, type(uint88).max);
         address dest = destinationsToken[address(wsteth)][destRand];
 
         wsteth.mintAndApprove(msg.sender, amountRand, address(rebalancer), amountRand);
@@ -20,7 +21,7 @@ contract FuzzActionsRebalancer is Setup {
         RebalancerSnapshot memory balancesBefore = getRebalancerSnapshot(dest);
 
         vm.prank(msg.sender);
-        try rebalancer.initiateDepositAssets(amountRand, dest) {
+        try rebalancer.initiateDepositAssets(uint88(amountRand), dest) {
             assert(msg.sender.balance == balancesBefore.senderEth);
             assert(address(rebalancer).balance == balancesBefore.rebalancerEth);
             assert(wsteth.balanceOf(address(rebalancer)) == balancesBefore.rebalancerWsteth + amountRand);
