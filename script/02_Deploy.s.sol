@@ -8,7 +8,7 @@ import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { Sdex } from "../test/utils/Sdex.sol";
 import { WstETH } from "../test/utils/WstEth.sol";
 
-import { Validate } from "./Validate.s.sol";
+import { Utils } from "./Utils.s.sol";
 
 import { LiquidationRewardsManager } from "../src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { WstEthOracleMiddleware } from "../src/OracleMiddleware/WstEthOracleMiddleware.sol";
@@ -23,7 +23,7 @@ import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol"
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 contract Deploy is Script {
-    Validate validate = new Validate();
+    Utils utils = new Utils();
     address deployerAddress;
 
     /**
@@ -49,10 +49,11 @@ contract Deploy is Script {
         )
     {
         // validate the Usdn protocol before deploying it
-        validate.validateProtocol();
+        bool success = utils.validateProtocol();
+        require(success, "Protocol validation failed");
 
-        bool isProdEnv = block.chainid != vm.envOr("FORK_CHAIN_ID", uint256(31_337));
         deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
+        bool isProdEnv = block.chainid != vm.envOr("FORK_CHAIN_ID", uint256(31_337));
         uint256 depositAmount = vm.envOr("INIT_DEPOSIT_AMOUNT", uint256(0));
         uint256 longAmount = vm.envOr("INIT_LONG_AMOUNT", uint256(0));
 
@@ -97,9 +98,6 @@ contract Deploy is Script {
         WstEthOracleMiddleware wstEthOracleMiddleware,
         LiquidationRewardsManager liquidationRewardsManager
     ) internal returns (IUsdnProtocol usdnProtocol_) {
-        // recompile the protocol because of openzeppelin module
-        validate.cleanAndCompile();
-
         // we need to allow external library linking for the openzeppelin module
         Options memory opts;
         opts.unsafeAllow = "external-library-linking";
@@ -297,10 +295,4 @@ contract Deploy is Script {
 
         UsdnProtocol_.initialize(uint128(depositAmount), uint128(longAmount), uint128(desiredLiqPrice), "");
     }
-
-    /**
-     * @notice Validate the Usdn protocol
-     * @dev Call this function to validate the Usdn protocol before deploying it
-     */
-    function _validateProtocol() internal { }
 }

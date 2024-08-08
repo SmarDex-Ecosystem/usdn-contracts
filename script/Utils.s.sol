@@ -6,7 +6,7 @@ import { Vm } from "forge-std/Vm.sol";
 
 import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
 
-contract Validate is Script {
+contract Utils is Script {
     string constant SCRIPT_PATH = "script/functionClashes.ts";
 
     // to run the script in standalone mode
@@ -18,26 +18,12 @@ contract Validate is Script {
      * @notice Validate the Usdn protocol
      * @dev Call this function to validate the Usdn protocol before deploying it
      */
-    function validateProtocol() public {
-        _buildSources();
+    function validateProtocol() public returns (bool success) {
         string[] memory inputs = _buildCommandFunctionClashes();
-        bool success = _runCommand(inputs);
+        success = _runCommand(inputs);
         if (!success) {
             revert("function clash detected, run the functionClashes.ts script to see the clashing functions");
         }
-    }
-
-    function cleanAndCompile() external {
-        _cleanOutDir();
-        _buildSources();
-    }
-
-    function _cleanOutDir() internal {
-        string[] memory inputs = new string[](2);
-
-        inputs[0] = "forge";
-        inputs[1] = "clean";
-        _runCommand(inputs);
     }
 
     /**
@@ -58,16 +44,6 @@ contract Validate is Script {
         // we need to give the storage contract to remove common functions
         inputs[i++] = "-s";
         inputs[i++] = "UsdnProtocolStorage.sol";
-    }
-
-    function _buildSources() internal {
-        string[] memory inputs = new string[](4);
-
-        inputs[0] = "forge";
-        inputs[1] = "build";
-        inputs[2] = "--skip";
-        inputs[3] = "test";
-        _runCommand(inputs);
     }
 
     /**
