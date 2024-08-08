@@ -129,7 +129,12 @@ library UsdnProtocolActionsUtilsLibrary {
         public
         view
     {
-        int256 closeExpoImbalanceLimitBps = s._closeExpoImbalanceLimitBps;
+        int256 closeExpoImbalanceLimitBps;
+        if (msg.sender == address(s._rebalancer)) {
+            closeExpoImbalanceLimitBps = s._rebalancerCloseExpoImbalanceLimitBps;
+        } else {
+            closeExpoImbalanceLimitBps = s._closeExpoImbalanceLimitBps;
+        }
 
         // early return in case limit is disabled
         if (closeExpoImbalanceLimitBps == 0) {
