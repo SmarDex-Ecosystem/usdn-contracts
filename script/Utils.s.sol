@@ -6,7 +6,7 @@ import { Vm } from "forge-std/Vm.sol";
 
 import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
 
-contract Validate is Script {
+contract Utils is Script {
     string constant SCRIPT_PATH = "script/functionClashes.ts";
 
     // to run the script in standalone mode
@@ -18,9 +18,9 @@ contract Validate is Script {
      * @notice Validate the Usdn protocol
      * @dev Call this function to validate the Usdn protocol before deploying it
      */
-    function validateProtocol() public {
+    function validateProtocol() public returns (bool success) {
         string[] memory inputs = _buildCommandFunctionClashes();
-        bool success = _runCommand(inputs);
+        success = _runCommand(inputs);
         if (!success) {
             revert("function clash detected, run the functionClashes.ts script to see the clashing functions");
         }

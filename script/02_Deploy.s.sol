@@ -8,7 +8,7 @@ import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { Sdex } from "../test/utils/Sdex.sol";
 import { WstETH } from "../test/utils/WstEth.sol";
 
-import { Validate } from "./Validate.s.sol";
+import { Utils } from "./Utils.s.sol";
 
 import { LiquidationRewardsManager } from "../src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { WstEthOracleMiddleware } from "../src/OracleMiddleware/WstEthOracleMiddleware.sol";
@@ -23,6 +23,9 @@ import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol"
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 contract Deploy is Script {
+    Utils utils = new Utils();
+    address deployerAddress;
+
     /**
      * @notice Deploy the USDN ecosystem
      * @return WstETH_ The WstETH token
@@ -45,14 +48,16 @@ contract Deploy is Script {
             IUsdnProtocol UsdnProtocol_
         )
     {
-        _validateProtocol();
+        // validate the Usdn protocol before deploying it
+        bool success = utils.validateProtocol();
+        require(success, "Protocol validation failed");
 
+        deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
         bool isProdEnv = block.chainid != vm.envOr("FORK_CHAIN_ID", uint256(31_337));
-
-        vm.startBroadcast(vm.envAddress("DEPLOYER_ADDRESS"));
-
         uint256 depositAmount = vm.envOr("INIT_DEPOSIT_AMOUNT", uint256(0));
         uint256 longAmount = vm.envOr("INIT_LONG_AMOUNT", uint256(0));
+
+        vm.startBroadcast(deployerAddress);
 
         // deploy contracts
         WstETH_ = _deployWstETH(depositAmount, longAmount);
@@ -61,8 +66,8 @@ contract Deploy is Script {
         Usdn_ = _deployUsdn(isProdEnv);
         Sdex_ = _deploySdex();
 
-        // deploy the protocol
-        UsdnProtocol_ = _deployProxy(WstETH_, Sdex_, WstEthOracleMiddleware_, LiquidationRewardsManager_, Usdn_);
+        // deploy the USDN protocol
+        UsdnProtocol_ = _deployProtocol(Usdn_, Sdex_, WstETH_, WstEthOracleMiddleware_, LiquidationRewardsManager_);
 
         // deploy the rebalancer
         Rebalancer_ = _deployRebalancer(UsdnProtocol_);
@@ -74,7 +79,7 @@ contract Deploy is Script {
         Usdn_.grantRole(Usdn_.MINTER_ROLE(), address(UsdnProtocol_));
         Usdn_.grantRole(Usdn_.REBASER_ROLE(), address(UsdnProtocol_));
         // renounce admin role on the USDN token, no-one can later change roles
-        Usdn_.renounceRole(Usdn_.DEFAULT_ADMIN_ROLE(), vm.envAddress("DEPLOYER_ADDRESS"));
+        Usdn_.renounceRole(Usdn_.DEFAULT_ADMIN_ROLE(), deployerAddress);
 
         // approve wstETH spending for initialization
         WstETH_.approve(address(UsdnProtocol_), depositAmount + longAmount);
@@ -86,28 +91,21 @@ contract Deploy is Script {
         vm.stopBroadcast();
     }
 
-    /**
-     * @notice Deploy the protocol implementation behind a proxy
-     * @param wstETH The address of the wstETH token
-     * @param sdex The address of the SDEX token
-     * @param middleware The address of the oracle middleware
-     * @param manager The address of the liquidation rewards manager
-     * @param usdn The address of the USDN token
-     * @return protocol The address of the protocol proxy
-     */
-    function _deployProxy(
-        WstETH wstETH,
+    function _deployProtocol(
+        Usdn usdn,
         Sdex sdex,
-        WstEthOracleMiddleware middleware,
-        LiquidationRewardsManager manager,
-        Usdn usdn
-    ) internal returns (IUsdnProtocol protocol) {
+        WstETH wstETH,
+        WstEthOracleMiddleware wstEthOracleMiddleware,
+        LiquidationRewardsManager liquidationRewardsManager
+    ) internal returns (IUsdnProtocol usdnProtocol_) {
+        // we need to allow external library linking for the openzeppelin module
+        Options memory opts;
+        // we need to allow constructors for the UsdnProtocolSepolia safeguard mechanism
+        opts.unsafeAllow = "constructor,external-library-linking";
+
         // deploy the protocol fallback
         UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
-        // deploy the protocol proxy
-        Options memory options;
-        // we need to allow constructors for the UsdnProtocolSepolia safeguard mechanism
-        options.unsafeAllow = "constructor,external-library-linking";
+
         address proxy = Upgrades.deployUUPSProxy(
             "UsdnProtocolImpl.sol",
             abi.encodeCall(
@@ -116,23 +114,24 @@ contract Deploy is Script {
                     usdn,
                     sdex,
                     wstETH,
-                    middleware,
-                    manager,
+                    wstEthOracleMiddleware,
+                    liquidationRewardsManager,
                     100, // tick spacing 100 = 1%
                     vm.envAddress("FEE_COLLECTOR"),
                     Types.Roles({
-                        setExternalAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
-                        criticalFunctionsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
-                        setProtocolParamsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
-                        setUsdnParamsAdmin: vm.envAddress("DEPLOYER_ADDRESS"),
-                        setOptionsAdmin: vm.envAddress("DEPLOYER_ADDRESS")
+                        setExternalAdmin: deployerAddress,
+                        criticalFunctionsAdmin: deployerAddress,
+                        setProtocolParamsAdmin: deployerAddress,
+                        setUsdnParamsAdmin: deployerAddress,
+                        setOptionsAdmin: deployerAddress
                     }),
                     protocolFallback
                 )
             ),
-            options
+            opts
         );
-        protocol = IUsdnProtocol(proxy);
+
+        usdnProtocol_ = IUsdnProtocol(proxy);
     }
 
     /**
@@ -296,14 +295,5 @@ contract Deploy is Script {
         }
 
         UsdnProtocol_.initialize(uint128(depositAmount), uint128(longAmount), uint128(desiredLiqPrice), "");
-    }
-
-    /**
-     * @notice Validate the Usdn protocol
-     * @dev Call this function to validate the Usdn protocol before deploying it
-     */
-    function _validateProtocol() internal {
-        Validate validate = new Validate();
-        validate.validateProtocol();
     }
 }
