@@ -115,7 +115,7 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
         IBaseLiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector,
-        Managers memory role
+        Managers memory manager
     ) public {
         UnsafeUpgrades.deployUUPSProxy(
             address(implementation),
@@ -129,7 +129,7 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
                     liquidationRewardsManager,
                     tickSpacing,
                     feeCollector,
-                    role,
+                    manager,
                     protocolFallback
                 )
             )
