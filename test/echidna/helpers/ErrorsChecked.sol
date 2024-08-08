@@ -70,48 +70,26 @@ contract ErrorsChecked is Test {
         ]
     ];
 
-    bytes4[][] public VALIDATE_DEPOSIT_ERRORS = [
-        [
-            IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector,
-            InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector,
-            InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector
-        ]
-    ];
+    bytes4[][] public VALIDATE_DEPOSIT_ERRORS = [[IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector]];
 
     bytes4[][] public VALIDATE_WITHDRAWAL_ERRORS = [
         [
             IUsdnProtocolErrors.UsdnProtocolInvalidAddressValidator.selector,
             IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector,
-            IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction.selector,
-            InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector,
-            InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector
+            IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction.selector
         ]
     ];
 
     bytes4[][] public VALIDATE_CLOSE_ERRORS = [
         [
             IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo.selector,
-            IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector,
-            InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector,
-            InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector
+            IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector
         ]
     ];
 
-    bytes4[][] public VALIDATE_OPEN_ERRORS = [
-        [
-            IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector,
-            InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector,
-            InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector
-        ]
-    ];
+    bytes4[][] public VALIDATE_OPEN_ERRORS = [[IUsdnProtocolErrors.UsdnProtocolNoPendingAction.selector]];
 
-    bytes4[][] public VALIDATE_PENDING_ACTIONS_ERRORS = [
-        [
-            IUsdnProtocolErrors.UsdnProtocolEtherRefundFailed.selector,
-            InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector,
-            InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector
-        ]
-    ];
+    bytes4[][] public VALIDATE_PENDING_ACTIONS_ERRORS = [[IUsdnProtocolErrors.UsdnProtocolEtherRefundFailed.selector]];
 
     bytes4[][] public INITIALIZE_ERRORS = [
         [
