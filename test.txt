@@ -1,4 +1,0 @@
-
-> @smardex/usdn-contracts@0.15.0 quicktest
-> forge test -vvv --no-match-test "(FFI|Fork|Fuzz|invariant)" --no-match-contract Fork --offline --gas-report
-
