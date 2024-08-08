@@ -340,15 +340,15 @@ contract FuzzingSuiteTest is Test {
     }
 
     function test_canInitiateDepositRebalancer() public {
-        uint88 wstethDepositAmount = 5 ether;
+        uint256 wstethDepositAmount = 5 ether;
+        wsteth.mintAndApprove(DEPLOYER, wstethDepositAmount, address(rebalancer), wstethDepositAmount);
+        uint256 balanceWstethBefore = wsteth.balanceOf(DEPLOYER);
 
         vm.prank(DEPLOYER);
         echidna.initiateDepositRebalancer(wstethDepositAmount, 0);
 
-        assertEq(DEPLOYER.balance, 0, "deployer eth balance");
-        assertEq(wsteth.balanceOf(DEPLOYER), 0, "deployer wsteth balance");
+        assertEq(wsteth.balanceOf(DEPLOYER), balanceWstethBefore - wstethDepositAmount, "deployer wsteth balance");
         assertEq(wsteth.balanceOf(address(rebalancer)), wstethDepositAmount, "rebalancer wsteth balance");
-        assertEq(address(rebalancer).balance, 0, "rebalancer eth balance");
     }
 
     function test_canInitiateClosePosition() public {
