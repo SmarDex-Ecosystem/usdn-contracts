@@ -23,6 +23,7 @@ jobs:
         run: just trufflehog-config
 
       - name: TruffleHog
-        uses: trufflesecurity/trufflehog@v3.80.6
+        uses: trufflesecurity/trufflehog@main
         with:
-          extra_args: --no-update --only-verified --config .trufflehog.yml --exclude-paths=.trufflehog-ignore
+          extra_args: --only-verified --config .trufflehog.yml --exclude-paths=.trufflehog-ignore
+          version: 3.80.6
