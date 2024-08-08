@@ -10,6 +10,7 @@ import { ADMIN } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
+import { IUsdnProtocolFallback } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
 import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolImplV2 } from "../utils/UsdnProtocolImplV2.sol";
 
@@ -39,6 +40,34 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
             )
         );
         protocol.upgradeToAndCall(address(newImplementation), bytes(""));
+    }
+
+    /**
+     * @custom:scenario Try to initialize the protocol twice
+     * @custom:given An initialized protocol
+     * @custom:when {initializeStorage} is called again
+     * @custom:then The call should revert
+     */
+    function test_RevertWhen_initializeIsCalledSecondTime() public {
+        vm.expectRevert(Initializable.InvalidInitialization.selector);
+        protocol.initializeStorage(
+            usdn,
+            sdex,
+            wstETH,
+            oracleMiddleware,
+            liquidationRewardsManager,
+            _tickSpacing,
+            address(feeCollector),
+            Roles({
+                setExternalManager: ADMIN,
+                criticalFunctionsManager: ADMIN,
+                setProtocolParamsManager: ADMIN,
+                setUsdnParamsManager: ADMIN,
+                setOptionsManager: ADMIN,
+                proxyUpgradeManager: ADMIN
+            }),
+            IUsdnProtocolFallback(address(0))
+        );
     }
 
     /**
