@@ -20,8 +20,9 @@ contract Utils is Script {
      */
     function validateProtocol() public returns (bool success) {
         string[] memory inputs = _buildCommandFunctionClashes();
-        success = _runCommand(inputs);
-        if (!success) {
+        try this.runFfiCommand(inputs) {
+            return true;
+        } catch {
             revert("function clash detected, run the functionClashes.ts script to see the clashing functions");
         }
     }
@@ -31,11 +32,27 @@ contract Utils is Script {
         _buildContracts();
     }
 
+    /**
+     * @notice Function to run an external command with ffi
+     * @dev This function revert if the command fails
+     * @param inputs The command to run
+     * @return The result of the command, printed to stdout
+     */
+    function runFfiCommand(string[] memory inputs) public returns (bytes memory) {
+        Vm.FfiResult memory result = vm.tryFfi(inputs);
+
+        if (result.exitCode != 0 && result.stdout.length == 0 && result.stderr.length == 0) {
+            revert(string(abi.encodePacked('Failed to run bash command with "', inputs[0], '": ', result.stderr)));
+        } else {
+            return (result.stdout);
+        }
+    }
+
     function _cleanOutDir() internal {
         string[] memory inputs = new string[](2);
         inputs[0] = "forge";
         inputs[1] = "clean";
-        _runCommand(inputs);
+        runFfiCommand(inputs);
     }
 
     function _buildContracts() internal {
@@ -44,7 +61,7 @@ contract Utils is Script {
         inputs[1] = "build";
         inputs[2] = "--skip";
         inputs[3] = "test";
-        _runCommand(inputs);
+        runFfiCommand(inputs);
     }
 
     /**
@@ -65,15 +82,5 @@ contract Utils is Script {
         // we need to give the storage contract to remove common functions
         inputs[i++] = "-s";
         inputs[i++] = "UsdnProtocolStorage.sol";
-    }
-
-    /**
-     * @notice Function to run an external command with ffi
-     * @param inputs The command to run
-     * @return success True if the command was successful, false otherwise
-     */
-    function _runCommand(string[] memory inputs) internal returns (bool success) {
-        bytes memory result = vm.ffi(inputs);
-        return (result.length == 0);
     }
 }

@@ -2,6 +2,7 @@
 pragma solidity 0.8.26;
 
 import { Script } from "forge-std/Script.sol";
+import { Vm } from "forge-std/Vm.sol";
 
 import { AggregatorInterface } from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorInterface.sol";
 import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
@@ -348,7 +349,7 @@ contract Deploy is Script {
         UsdnProtocol_.initialize(uint128(depositAmount), uint128(longAmount), uint128(desiredLiqPrice), "");
     }
 
-    function _handleSepoliaDeployment(uint256 wstEthNeeded) internal returns (Usdn Usdn_, Sdex Sdex_, WstETH WstETH_) {
+    function _handleSepoliaDeployment(uint256 wstEthNeeded) internal returns (Usdn usdn_, Sdex sdex_, WstETH wstETH_) {
         vm.startBroadcast(deployerAddress);
 
         SdexSepolia sdex = new SdexSepolia();
@@ -366,21 +367,22 @@ contract Deploy is Script {
         inputs[3] = "https://ethereum-rpc.publicnode.com";
         inputs[4] = "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0";
         inputs[5] = "stEthPerToken()";
-        bytes memory result = vm.ffi(inputs);
+
+        bytes memory result = utils.runFfiCommand(inputs);
         uint256 stEthPerToken = abi.decode(result, (uint256));
 
         vm.startBroadcast(deployerAddress);
         wsteth.setStEthPerToken(stEthPerToken);
 
-        Usdn_ = new Usdn(address(0), address(0));
+        usdn_ = new Usdn(address(0), address(0));
         vm.stopBroadcast();
 
         uint256 ethPrice = uint256(AggregatorInterface(0x694AA1769357215DE4FAC081bf1f309aDC325306).latestAnswer());
         ethPrice *= 10_000_000_000;
         uint256 liqPrice = ethPrice * stEthPerToken / 2_000_000_000_000_000_000;
 
-        Sdex_ = Sdex(address(sdex));
-        WstETH_ = WstETH(payable(address(wsteth)));
+        sdex_ = Sdex(address(sdex));
+        wstETH_ = WstETH(payable(address(wsteth)));
 
         vm.setEnv("PYTH_ADDRESS", "0xDd24F84d36BF92C65F92307595335bdFab5Bbd21");
         vm.setEnv("PYTH_ETH_FEED_ID", "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace");
