@@ -30,8 +30,11 @@
 	"compilation": {
 		"platform": "crytic-compile",
 		"platformConfig": {
-			"args": ["--compile-force-framework", "foundry"],
-			"target": "./test/fuzzing/FuzzingSuite.sol"
+			"args": [
+				"--compile-force-framework", "foundry",
+				"--compile-libraries", "(DoubleEndedQueue,0xf0),(HugeUint,0xf1),(TickMath,0xf2),(UsdnProtocolActionsLongLibrary,0xf3),(UsdnProtocolActionsUtilsLibrary,0xf4),(UsdnProtocolActionsVaultLibrary,0xf5),(UsdnProtocolCoreLibrary,0xf6),(UsdnProtocolLongLibrary,0xf7),(UsdnProtocolSettersLibrary,0xf8),(UsdnProtocolVaultLibrary,0xf9)"
+			],
+			"target": "../../.."
 		}
 	},
 	"logging": {
