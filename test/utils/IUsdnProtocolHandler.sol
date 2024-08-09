@@ -424,4 +424,6 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         uint256 vaultBalance,
         int256 remainingCollateral
     ) external returns (uint256 longBalance_, uint256 vaultBalance_);
+
+    function isInitialized() external view returns (bool);
 }

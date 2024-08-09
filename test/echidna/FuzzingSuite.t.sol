@@ -3,21 +3,22 @@ pragma solidity ^0.8.0;
 
 import { Test } from "forge-std/Test.sol";
 
+import { UsdnProtocolHandler } from "../unit/UsdnProtocol/utils/Handler.sol";
 import { MockOracleMiddleware } from "../unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
 import { USER_1, USER_2 } from "../utils/Constants.sol";
+import { IUsdnProtocolHandler } from "../utils/IUsdnProtocolHandler.sol";
 import { Sdex } from "../utils/Sdex.sol";
 import { WstETH } from "../utils/WstEth.sol";
 import { FuzzingSuite } from "./FuzzingSuite.sol";
 
 import { Usdn } from "../../src/Usdn/Usdn.sol";
-import { UsdnProtocol } from "../../src/UsdnProtocol/UsdnProtocol.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Permit2TokenBitfield } from "../../src/libraries/Permit2TokenBitfield.sol";
 
 contract FuzzingSuiteTest is Test {
     FuzzingSuite public echidna;
-    UsdnProtocol public usdnProtocol;
+    IUsdnProtocolHandler public usdnProtocol;
     MockOracleMiddleware public wstEthOracleMiddleware;
     WstETH public wsteth;
     Usdn public usdn;
