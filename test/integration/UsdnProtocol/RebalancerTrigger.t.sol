@@ -36,7 +36,7 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
     function test_rebalancerTrigger() public {
         skip(5 minutes);
 
-        uint128 wstEthPrice = uint128(wstETH.getWstETHByStETH(1300 ether));
+        uint128 wstEthPrice = uint128(wstETH.getStETHByWstETH(1300 ether));
         mockPyth.setPrice(1300 ether / 1e10);
         mockPyth.setLastPublishTime(block.timestamp);
 
