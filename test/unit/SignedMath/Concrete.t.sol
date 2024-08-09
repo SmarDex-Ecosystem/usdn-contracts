@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { SignedMathFixture } from "./utils/Fixtures.sol";
 
@@ -20,7 +20,7 @@ contract TestSignedMathConcrete is SignedMathFixture {
      * @custom:when Calling `safeAdd`
      * @custom:then Return the sum of the operands
      */
-    function test_safeAdd() public {
+    function test_safeAdd() public view {
         assertEq(handler.safeAdd(42, 69), 111, "positive + positive");
         assertEq(handler.safeAdd(-42, 69), 27, "negative + positive");
         assertEq(handler.safeAdd(42, -69), -27, "positive + negative");
@@ -67,7 +67,7 @@ contract TestSignedMathConcrete is SignedMathFixture {
      * @custom:when Calling `safeSub`
      * @custom:then Return the difference of the operands
      */
-    function test_safeSub() public {
+    function test_safeSub() public view {
         assertEq(handler.safeSub(42, 69), -27, "positive - positive");
         assertEq(handler.safeSub(-42, 69), -111, "negative - positive");
         assertEq(handler.safeSub(42, -69), 111, "positive - negative");
@@ -114,7 +114,7 @@ contract TestSignedMathConcrete is SignedMathFixture {
      * @custom:when Calling `safeMul`
      * @custom:then Return the product of the operands
      */
-    function test_safeMul() public {
+    function test_safeMul() public view {
         assertEq(handler.safeMul(42, 69), 2898, "positive * positive");
         assertEq(handler.safeMul(-42, 69), -2898, "negative * positive");
         assertEq(handler.safeMul(-42, -69), 2898, "negative * negative");
@@ -175,7 +175,7 @@ contract TestSignedMathConcrete is SignedMathFixture {
      * @custom:when Calling `safeDiv`
      * @custom:then Return the quotient of the operands
      */
-    function test_safeDiv() public {
+    function test_safeDiv() public view {
         assertEq(handler.safeDiv(420, 69), 6, "positive / positive");
         assertEq(handler.safeDiv(-420, 69), -6, "negative / positive");
         assertEq(handler.safeDiv(420, -69), -6, "positive / negative");

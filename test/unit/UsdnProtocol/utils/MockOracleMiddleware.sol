@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
@@ -18,7 +18,6 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable2Step {
     uint8 internal constant DECIMALS = 18;
 
     uint16 internal _confRatioBps = 4000;
-    uint16 internal _penaltyBps = 25;
     uint256 internal _validationDelay = 24 seconds;
     uint256 internal _timeElapsedLimit = 1 hours;
     // if true, then the middleware requires a payment of 1 wei for any action
@@ -82,11 +81,6 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable2Step {
     }
 
     /// @inheritdoc IOracleMiddleware
-    function getPenaltyBps() external view returns (uint16) {
-        return _penaltyBps;
-    }
-
-    /// @inheritdoc IOracleMiddleware
     function setValidationDelay(uint256 newDelay) external {
         _validationDelay = newDelay;
     }
@@ -106,8 +100,6 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable2Step {
     }
 
     function setPythRecentPriceDelay(uint64) external { }
-
-    function setRedstoneRecentPriceDelay(uint48) external { }
 
     function requireValidationCost() external view returns (bool) {
         return _requireValidationCost;
@@ -129,6 +121,4 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable2Step {
     }
 
     function setLowLatencyDelay(uint16) external { }
-
-    function setPenaltyBps(uint16 newPenaltyBps) external onlyOwner { }
 }

@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 // Temporary measure, forked the contracts to remove dependency on safemath
 
 import { IOracleMiddlewareErrors } from "../../interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
 import { RedstonePriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IRedstoneOracle } from "../../interfaces/OracleMiddleware/IRedstoneOracle.sol";
-import { RedstoneConsumerBase } from "../../vendored/Redstone/core/RedstoneConsumerBase.sol";
+import { RedstoneConsumerBase } from "@redstone-finance/evm-connector/contracts/core/RedstoneConsumerBase.sol";
 import { PrimaryProdDataServiceConsumerBase } from
-    "../../vendored/Redstone/data-services/PrimaryProdDataServiceConsumerBase.sol";
+    "@redstone-finance/evm-connector/contracts/data-services/PrimaryProdDataServiceConsumerBase.sol";
 
 /**
  * @title Redstone Oracle
@@ -88,6 +88,6 @@ abstract contract RedstoneOracle is IRedstoneOracle, PrimaryProdDataServiceConsu
      * @return extractedTimestamp_ The timestamp of the price update
      */
     function _extractPriceUpdateTimestamp() internal pure returns (uint48 extractedTimestamp_) {
-        extractedTimestamp_ = uint48(extractTimestampsAndAssertAllAreEqual()) / 1000;
+        extractedTimestamp_ = uint48(extractTimestampsAndAssertAllAreEqual() / 1000);
     }
 }

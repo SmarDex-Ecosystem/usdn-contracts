@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { DequeHandler } from "./Handler.sol";
@@ -26,6 +26,7 @@ contract DequeFixture is BaseFixture {
      */
     function _assertActionsEqual(Types.PendingAction memory a, Types.PendingAction memory b, string memory err)
         internal
+        pure
     {
         assertTrue(a.action == b.action, string.concat(err, " - action type"));
         assertEq(a.timestamp, b.timestamp, string.concat(err, " - action timestamp"));

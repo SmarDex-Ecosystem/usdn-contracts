@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { ADMIN, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
@@ -25,6 +25,13 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         uint256 totalPositions;
         uint256 totalExpo;
         uint256 balanceLong;
+        uint256 balanceVault;
+    }
+
+    struct ExpectedValues {
+        int24 expectedTick;
+        uint256 expectedPosTotalExpo;
+        uint256 expectedPosValue;
     }
 
     struct TestData {
@@ -81,11 +88,14 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
 
     function _initiateOpenPositionScenario(address to, address validator) internal {
         uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
-        int24 expectedTick = protocol.getEffectiveTickForPrice(desiredLiqPrice);
+        ExpectedValues memory expected;
+        expected.expectedTick = protocol.getEffectiveTickForPrice(desiredLiqPrice);
         uint128 liqPriceWithoutPenalty =
-            protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(expectedTick));
-        uint128 expectedPosTotalExpo =
+            protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(expected.expectedTick));
+        expected.expectedPosTotalExpo =
             protocol.i_calcPositionTotalExpo(uint128(LONG_AMOUNT), CURRENT_PRICE, liqPriceWithoutPenalty);
+        expected.expectedPosValue =
+            expected.expectedPosTotalExpo * (CURRENT_PRICE - liqPriceWithoutPenalty) / CURRENT_PRICE;
 
         // state before opening the position
         ValueToCheckBefore memory before = ValueToCheckBefore({
@@ -93,7 +103,8 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             protocolBalance: wstETH.balanceOf(address(protocol)),
             totalPositions: protocol.getTotalLongPositions(),
             totalExpo: protocol.getTotalExpo(),
-            balanceLong: uint256(protocol.i_longAssetAvailable(CURRENT_PRICE))
+            balanceLong: uint256(protocol.i_longAssetAvailable(CURRENT_PRICE)),
+            balanceVault: uint256(protocol.i_vaultAssetAvailable(CURRENT_PRICE))
         });
 
         vm.expectEmit();
@@ -101,10 +112,10 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             to,
             validator,
             uint40(block.timestamp),
-            expectedPosTotalExpo,
+            uint128(expected.expectedPosTotalExpo),
             uint128(LONG_AMOUNT),
             CURRENT_PRICE,
-            PositionId(expectedTick, 0, 0)
+            PositionId(expected.expectedTick, 0, 0)
         );
         (bool success, PositionId memory posId) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
@@ -116,20 +127,28 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             EMPTY_PREVIOUS_DATA
         );
         assertTrue(success, "success");
+        // timestamp is not critical as there is no funding
+        int256 posValue = protocol.getPositionValue(posId, CURRENT_PRICE, uint128(block.timestamp));
+        assertEq(uint256(posValue), expected.expectedPosValue, "pos value");
 
         // check state after opening the position
-        assertEq(posId.tick, expectedTick, "tick number");
+        assertEq(posId.tick, expected.expectedTick, "tick number");
         assertEq(posId.tickVersion, 0, "tick version");
         assertEq(posId.index, 0, "index");
 
         assertEq(wstETH.balanceOf(address(this)), before.balance - LONG_AMOUNT, "user wstETH balance");
         assertEq(wstETH.balanceOf(address(protocol)), before.protocolBalance + LONG_AMOUNT, "protocol wstETH balance");
         assertEq(protocol.getTotalLongPositions(), before.totalPositions + 1, "total long positions");
-        assertEq(protocol.getTotalExpo(), before.totalExpo + expectedPosTotalExpo, "protocol total expo");
-        TickData memory tickData = protocol.getTickData(expectedTick);
-        assertEq(tickData.totalExpo, expectedPosTotalExpo, "total expo in tick");
+        assertEq(protocol.getTotalExpo(), before.totalExpo + expected.expectedPosTotalExpo, "protocol total expo");
+        TickData memory tickData = protocol.getTickData(expected.expectedTick);
+        assertEq(tickData.totalExpo, expected.expectedPosTotalExpo, "total expo in tick");
         assertEq(tickData.totalPos, 1, "positions in tick");
-        assertEq(protocol.getBalanceLong(), before.balanceLong + LONG_AMOUNT, "balance of long side");
+        assertEq(
+            protocol.getBalanceLong() + protocol.getBalanceVault(),
+            before.balanceLong + before.balanceVault + LONG_AMOUNT,
+            "total balance of protocol"
+        );
+        assertEq(protocol.getBalanceLong(), before.balanceLong + uint256(posValue), "balance long");
 
         // the pending action should not yet be actionable by a third party
         (PendingAction[] memory pendingActions,) = protocol.getActionablePendingActions(address(0));
@@ -140,7 +159,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         assertEq(action.timestamp, block.timestamp, "action timestamp");
         assertEq(action.to, to, "action to");
         assertEq(action.validator, validator, "action validator");
-        assertEq(action.tick, expectedTick, "action tick");
+        assertEq(action.tick, expected.expectedTick, "action tick");
         assertEq(action.tickVersion, 0, "action tickVersion");
         assertEq(action.index, 0, "action index");
 
@@ -157,7 +176,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         assertEq(position.user, to, "user position");
         assertEq(position.timestamp, action.timestamp, "timestamp position");
         assertEq(position.amount, uint128(LONG_AMOUNT), "amount position");
-        assertEq(position.totalExpo, expectedPosTotalExpo, "totalExpo position");
+        assertEq(position.totalExpo, expected.expectedPosTotalExpo, "totalExpo position");
 
         vm.stopPrank();
     }
@@ -211,8 +230,8 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             EMPTY_PREVIOUS_DATA
         );
         assertEq(posId.tick, posId2.tick, "tick is the same");
-        (Position memory pos, uint8 liqPenalty) = protocol.getLongPosition(posId);
-        assertEq(pos.totalExpo, expectedTotalExpo, "pos total expo indicates that the stored penalty was used");
+        (Position memory pos, uint8 liqPenalty) = protocol.getLongPosition(posId2);
+        assertEq(pos.totalExpo, expectedTotalExpo, "total expo: stored penalty was used");
         assertEq(liqPenalty, storedLiqPenalty, "pos liquidation penalty");
     }
 

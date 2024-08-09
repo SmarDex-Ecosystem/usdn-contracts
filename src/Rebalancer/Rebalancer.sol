@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
@@ -69,6 +69,9 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
     /// @inheritdoc IRebalancer
     uint256 public constant MULTIPLIER_FACTOR = 1e38;
+
+    /// @inheritdoc IRebalancer
+    uint256 public constant MAX_ACTION_COOLDOWN = 48 hours;
 
     /* -------------------------------------------------------------------------- */
     /*                                 Immutables                                 */
@@ -180,13 +183,14 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         view
         returns (uint128 pendingAssets_, uint256 maxLeverage_, Types.PositionId memory currentPosId_)
     {
+        PositionData storage positionData = _positionData[_positionVersion];
         return (
             _pendingAssetsAmount,
             _maxLeverage,
             Types.PositionId({
-                tick: _positionData[_positionVersion].tick,
-                tickVersion: _positionData[_positionVersion].tickVersion,
-                index: _positionData[_positionVersion].index
+                tick: positionData.tick,
+                tickVersion: positionData.tickVersion,
+                index: positionData.index
             })
         );
     }
@@ -418,7 +422,6 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     function initiateClosePosition(
         uint88 amount,
         address to,
-        address payable validator,
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData
     ) external payable nonReentrant returns (bool success_) {
@@ -478,7 +481,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
             }),
             data.amountToClose.toUint128(),
             to,
-            validator,
+            payable(msg.sender),
             currentPriceData,
             previousActionsData
         );
@@ -548,12 +551,13 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         ++positionVersion;
         _positionVersion = positionVersion;
 
+        uint128 positionAmount = _pendingAssetsAmount + previousPosValue;
         if (newPosId.tick != Constants.NO_POSITION_TICK) {
             _positionData[positionVersion] = PositionData({
                 entryAccMultiplier: accMultiplier,
                 tickVersion: newPosId.tickVersion,
                 index: newPosId.index,
-                amount: _pendingAssetsAmount + previousPosValue,
+                amount: positionAmount,
                 tick: newPosId.tick
             });
 
@@ -563,7 +567,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
             _positionData[positionVersion].tick = Constants.NO_POSITION_TICK;
         }
 
-        emit PositionVersionUpdated(positionVersion);
+        emit PositionVersionUpdated(positionVersion, accMultiplier, positionAmount, newPosId);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -612,7 +616,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         if (actionCooldown < validationDeadline) {
             revert RebalancerInvalidTimeLimits();
         }
-        if (actionCooldown > 48 hours) {
+        if (actionCooldown > MAX_ACTION_COOLDOWN) {
             revert RebalancerInvalidTimeLimits();
         }
 

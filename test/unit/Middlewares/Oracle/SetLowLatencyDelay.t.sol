@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
@@ -22,7 +22,7 @@ contract TestOracleMiddlewareSetLowLatencyDelay is OracleMiddlewareBaseFixture {
      * @custom:when The function is called
      * @custom:then It should return the default value
      */
-    function test_getLowLatencyDelay() public {
+    function test_getLowLatencyDelay() public view {
         assertEq(oracleMiddleware.getLowLatencyDelay(), DEFAULT_LOW_LATENCY_DELAY);
     }
 

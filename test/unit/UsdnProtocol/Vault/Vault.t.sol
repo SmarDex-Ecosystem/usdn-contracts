@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
@@ -19,7 +19,7 @@ contract TestUsdnProtocolVault is UsdnProtocolBaseFixture {
      * @custom:then The original amount should be the same as the input
      * @param amount The amount to be split and merged
      */
-    function testFuzz_withdrawalAmountSplitting(uint152 amount) public {
+    function testFuzz_withdrawalAmountSplitting(uint152 amount) public view {
         uint24 lsb = protocol.i_calcWithdrawalAmountLSB(amount);
         uint128 msb = protocol.i_calcWithdrawalAmountMSB(amount);
         uint256 res = protocol.i_mergeWithdrawalAmountParts(lsb, msb);

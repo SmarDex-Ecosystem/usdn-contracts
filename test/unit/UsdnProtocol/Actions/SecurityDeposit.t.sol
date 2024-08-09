@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { ADMIN, USER_1, USER_2 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IUsdnProtocolImpl } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolImpl.sol";
 import { IUsdnProtocolTypes } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
@@ -1123,7 +1123,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     /*                                test helpers                                */
     /* -------------------------------------------------------------------------- */
 
-    function assertSecurityDepositPaid() public {
+    function assertSecurityDepositPaid() public view {
         assertEq(
             address(this).balance,
             balanceUser0Before - SECURITY_DEPOSIT_VALUE,
@@ -1136,7 +1136,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
     }
 
-    function assertSecurityDepositPaidDummyContract() public {
+    function assertSecurityDepositPaidDummyContract() public view {
         assertEq(
             address(this).balance,
             balanceUser0Before - SECURITY_DEPOSIT_VALUE,
@@ -1159,7 +1159,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
     }
 
-    function assertBalancesEnd() public {
+    function assertBalancesEnd() public view {
         assertEq(
             address(this).balance,
             balanceUser0Before,
@@ -1172,7 +1172,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
     }
 
-    function assertBalancesEndDummyContract() public {
+    function assertBalancesEndDummyContract() public view {
         assertEq(
             address(this).balance,
             balanceUser0Before - SECURITY_DEPOSIT_VALUE,
@@ -1195,7 +1195,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
     }
 
-    function assertBalancesEndTwoUsers() public {
+    function assertBalancesEndTwoUsers() public view {
         assertEq(
             address(this).balance,
             balanceUser0Before - SECURITY_DEPOSIT_VALUE,
@@ -1213,7 +1213,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
     }
 
-    function assertRefundEthToUser1() public {
+    function assertRefundEthToUser1() public view {
         assertEq(
             USER_1.balance,
             balanceUser1Before,
@@ -1231,7 +1231,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
     }
 
-    function assertSecurityDepositPaidTwoUsers() public {
+    function assertSecurityDepositPaidTwoUsers() public view {
         assertEq(
             USER_1.balance,
             balanceUser1Before - SECURITY_DEPOSIT_VALUE,
@@ -1264,6 +1264,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
     function _createPrevActionDataStruct(address user, bool assertValidatorContract)
         internal
+        view
         returns (PreviousActionsData memory prevActionsData_)
     {
         (PendingAction[] memory pendingAction, uint128[] memory rawIndices) = protocol.getActionablePendingActions(user);
@@ -1292,7 +1293,7 @@ contract DummyContract is IUsdnProtocolTypes {
         bytes calldata priceData,
         PreviousActionsData calldata previousData
     ) external {
-        IUsdnProtocol(usdnProtocolAddr).validateDeposit(payable(address(this)), priceData, previousData);
+        IUsdnProtocolImpl(usdnProtocolAddr).validateDeposit(payable(address(this)), priceData, previousData);
     }
 
     function validateWithdrawal(
@@ -1300,7 +1301,7 @@ contract DummyContract is IUsdnProtocolTypes {
         bytes calldata priceData,
         PreviousActionsData calldata previousData
     ) external {
-        IUsdnProtocol(usdnProtocolAddr).validateWithdrawal(payable(address(this)), priceData, previousData);
+        IUsdnProtocolImpl(usdnProtocolAddr).validateWithdrawal(payable(address(this)), priceData, previousData);
     }
 
     function validateOpenPosition(
@@ -1308,7 +1309,7 @@ contract DummyContract is IUsdnProtocolTypes {
         bytes calldata priceData,
         PreviousActionsData calldata previousData
     ) external {
-        IUsdnProtocol(usdnProtocolAddr).validateOpenPosition(payable(address(this)), priceData, previousData);
+        IUsdnProtocolImpl(usdnProtocolAddr).validateOpenPosition(payable(address(this)), priceData, previousData);
     }
 
     function validateClosePosition(
@@ -1316,6 +1317,6 @@ contract DummyContract is IUsdnProtocolTypes {
         bytes calldata priceData,
         PreviousActionsData calldata previousData
     ) external {
-        IUsdnProtocol(usdnProtocolAddr).validateClosePosition(payable(address(this)), priceData, previousData);
+        IUsdnProtocolImpl(usdnProtocolAddr).validateClosePosition(payable(address(this)), priceData, previousData);
     }
 }

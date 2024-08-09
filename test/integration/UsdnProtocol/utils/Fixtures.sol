@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
+import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import { MOCK_PYTH_DATA } from "../../../unit/Middlewares/utils/Constants.sol";
-
 import { MockChainlinkOnChain } from "../../../unit/Middlewares/utils/MockChainlinkOnChain.sol";
 import { MockPyth } from "../../../unit/Middlewares/utils/MockPyth.sol";
 import { UsdnProtocolHandler } from "../../../unit/UsdnProtocol/utils/Handler.sol";
@@ -13,14 +13,19 @@ import {
     ADMIN,
     CHAINLINK_ORACLE_ETH,
     CHAINLINK_ORACLE_GAS,
+    CRITICAL_FUNCTIONS_ADMIN,
     DEPLOYER,
     PYTH_ETH_USD,
     PYTH_ORACLE,
-    REDSTONE_ETH_USD,
     SDEX,
+    SET_EXTERNAL_ADMIN,
+    SET_OPTIONS_ADMIN,
+    SET_PROTOCOL_PARAMS_ADMIN,
+    SET_USDN_PARAMS_ADMIN,
     WSTETH
 } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
+import { IUsdnProtocolHandler } from "../../../utils/IUsdnProtocolHandler.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
 import {
@@ -34,6 +39,7 @@ import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/Liqu
 import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { Rebalancer } from "../../../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
+import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
@@ -48,6 +54,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         uint256 initialTimestamp; // ignored if `fork` is true
         bool fork;
         uint256 forkWarp; // warp to this timestamp after forking, before deploying protocol. Zero to disable
+        bool enableRoles;
     }
 
     struct ExpoImbalanceLimitsBps {
@@ -68,12 +75,21 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         initialPrice: 2000 ether, // 2000 USD per wstETH, ignored if forking
         initialTimestamp: 1_704_092_400, // 2024-01-01 07:00:00 UTC
         fork: false,
-        forkWarp: 0
+        forkWarp: 0,
+        enableRoles: true
+    });
+
+    Roles roles = Roles({
+        setExternalAdmin: SET_EXTERNAL_ADMIN,
+        criticalFunctionsAdmin: CRITICAL_FUNCTIONS_ADMIN,
+        setProtocolParamsAdmin: SET_PROTOCOL_PARAMS_ADMIN,
+        setUsdnParamsAdmin: SET_USDN_PARAMS_ADMIN,
+        setOptionsAdmin: SET_OPTIONS_ADMIN
     });
 
     Usdn public usdn;
     Sdex public sdex;
-    UsdnProtocolHandler public protocol;
+    IUsdnProtocolHandler public protocol;
     WstETH public wstETH;
     MockPyth public mockPyth;
     MockChainlinkOnChain public mockChainlinkOnChain;
@@ -101,7 +117,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             IPyth pyth = IPyth(PYTH_ORACLE);
             AggregatorV3Interface chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE_ETH);
             oracleMiddleware = new WstEthOracleMiddleware(
-                address(pyth), PYTH_ETH_USD, REDSTONE_ETH_USD, address(chainlinkOnChain), address(wstETH), 1 hours
+                address(pyth), PYTH_ETH_USD, address(chainlinkOnChain), address(wstETH), 1 hours
             );
             PriceInfo memory currentPrice =
                 oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.Initialize, "");
@@ -119,12 +135,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
                 int256(wstETH.getStETHByWstETH(uint256(testParams.initialPrice / 10 ** (18 - 8))))
             );
             oracleMiddleware = new WstEthOracleMiddleware(
-                address(mockPyth),
-                PYTH_ETH_USD,
-                REDSTONE_ETH_USD,
-                address(mockChainlinkOnChain),
-                address(wstETH),
-                1 hours
+                address(mockPyth), PYTH_ETH_USD, address(mockChainlinkOnChain), address(wstETH), 1 hours
             );
             vm.warp(testParams.initialTimestamp);
             liquidationRewardsManager =
@@ -135,18 +146,38 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         require(success, "DEPLOYER wstETH mint failed");
         usdn = new Usdn(address(0), address(0));
 
-        protocol = new UsdnProtocolHandler(
-            usdn,
-            sdex,
-            wstETH,
-            oracleMiddleware,
-            liquidationRewardsManager,
-            100, // tick spacing 100 = 1%
-            ADMIN
+        if (!testParams.enableRoles) {
+            roles = Roles({
+                setExternalAdmin: ADMIN,
+                criticalFunctionsAdmin: ADMIN,
+                setProtocolParamsAdmin: ADMIN,
+                setUsdnParamsAdmin: ADMIN,
+                setOptionsAdmin: ADMIN
+            });
+        }
+
+        UsdnProtocolHandler implementation = new UsdnProtocolHandler();
+        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
+        address proxy = UnsafeUpgrades.deployUUPSProxy(
+            address(implementation),
+            abi.encodeCall(
+                UsdnProtocolHandler.initializeStorageHandler,
+                (
+                    usdn,
+                    sdex,
+                    wstETH,
+                    oracleMiddleware,
+                    liquidationRewardsManager,
+                    100, // tick spacing 100 = 1%
+                    ADMIN,
+                    roles,
+                    protocolFallback
+                )
+            )
         );
+        protocol = IUsdnProtocolHandler(proxy);
 
         rebalancer = new Rebalancer(protocol);
-        protocol.setRebalancer(rebalancer);
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
@@ -155,6 +186,8 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             testParams.initialDeposit, testParams.initialLong, testParams.initialLiqPrice, ""
         );
         vm.stopPrank();
+        vm.prank(roles.setExternalAdmin);
+        protocol.setRebalancer(rebalancer);
         params = testParams;
     }
 
@@ -195,7 +228,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
         tickSpacing_ = protocol.getTickSpacing();
 
-        vm.startPrank(DEPLOYER);
+        vm.startPrank(roles.setProtocolParamsAdmin);
         protocol.setFundingSF(0);
         protocol.resetEMA();
 
@@ -256,7 +289,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
         tickToLiquidateData_ = protocol.getTickData(posToLiquidate_.tick);
 
-        vm.prank(DEPLOYER);
+        vm.prank(roles.setProtocolParamsAdmin);
         protocol.setExpoImbalanceLimits(
             uint256(defaultLimits.depositExpoImbalanceLimitBps),
             uint256(defaultLimits.withdrawalExpoImbalanceLimitBps),

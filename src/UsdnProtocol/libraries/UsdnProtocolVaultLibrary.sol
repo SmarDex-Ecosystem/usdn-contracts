@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
@@ -11,7 +11,6 @@ import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocol
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IUsdnProtocolVault } from "../../interfaces/UsdnProtocol/IUsdnProtocolVault.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
-import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./UsdnProtocolCoreLibrary.sol";
@@ -90,8 +89,7 @@ library UsdnProtocolVaultLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
         }
 
-        int256 ema = Core.calcEMA(s._lastFunding, timestamp - s._lastUpdateTimestamp, s._EMAPeriod, s._EMA);
-        (int256 fundAsset,) = Core._fundingAsset(s, timestamp, ema);
+        (int256 fundAsset,) = Core._fundingAsset(s, timestamp, s._EMA);
 
         if (fundAsset < 0) {
             available_ = _vaultAssetAvailable(s, currentPrice).safeAdd(fundAsset);
@@ -149,7 +147,7 @@ library UsdnProtocolVaultLibrary {
         // transfer the wstETH for the deposit
         address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
         s._balanceVault += amount;
-        emit IUsdnProtocolEvents.InitiatedDeposit(msg.sender, msg.sender, amount, block.timestamp);
+        emit IUsdnProtocolEvents.InitiatedDeposit(msg.sender, msg.sender, amount, block.timestamp, 0);
 
         // calculate the total minted amount of USDN shares (vault balance and total supply are zero for now, we assume
         // the USDN price to be $1 per token)

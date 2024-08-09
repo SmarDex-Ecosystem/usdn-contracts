@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { MOCK_PYTH_DATA } from "../../unit/Middlewares/utils/Constants.sol";
-import { DEPLOYER } from "../../utils/Constants.sol";
+import { SET_PROTOCOL_PARAMS_ADMIN } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 
 import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
@@ -30,9 +30,7 @@ contract TestRebalancerInitiateClosePosition is
         (, amountInRebalancer,,) = _setUpImbalanced();
         skip(5 minutes);
 
-        vm.prank(DEPLOYER);
-
-        mockPyth.setPrice(1280 ether / 1e10);
+        mockPyth.setPrice(1300 ether / 1e10);
         mockPyth.setLastPublishTime(block.timestamp);
 
         uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
@@ -50,7 +48,7 @@ contract TestRebalancerInitiateClosePosition is
         posAmount = protocolPosition.amount;
     }
 
-    function test_setUp() external {
+    function test_setUp() public view {
         assertGt(rebalancer.getPositionVersion(), 0, "The rebalancer version should be updated");
         assertGt(posAmount - previousPositionData.amount, 0, "The protocol bonus should be positive");
     }
@@ -64,8 +62,8 @@ contract TestRebalancerInitiateClosePosition is
      * @custom:and The position data is updated
      * @custom:and The user action is pending in protocol
      */
-    function test_rebalancerInitiateClosePositionPartial() external {
-        uint88 amount = amountInRebalancer / 10;
+    function test_rebalancerInitiateClosePositionPartial() public {
+        uint88 amount = amountInRebalancer / 20;
 
         uint256 amountToCloseWithoutBonus = FixedPointMathLib.fullMulDiv(
             amount,
@@ -80,7 +78,7 @@ contract TestRebalancerInitiateClosePosition is
         vm.expectEmit();
         emit ClosePositionInitiated(address(this), amount, amountToClose, amountInRebalancer - amount);
         (bool success) = rebalancer.initiateClosePosition{ value: protocol.getSecurityDepositValue() }(
-            amount, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA
+            amount, address(this), "", EMPTY_PREVIOUS_DATA
         );
 
         assertTrue(success, "The rebalancer close should be successful");
@@ -120,8 +118,8 @@ contract TestRebalancerInitiateClosePosition is
      * @custom:and The position data is updated
      * @custom:and The user initiate close position is pending in protocol
      */
-    function test_rebalancerInitiateClosePosition() external {
-        vm.prank(DEPLOYER);
+    function test_rebalancerInitiateClosePosition() public {
+        vm.prank(SET_PROTOCOL_PARAMS_ADMIN);
         protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
 
         uint256 amountToCloseWithoutBonus = FixedPointMathLib.fullMulDiv(
@@ -137,7 +135,7 @@ contract TestRebalancerInitiateClosePosition is
         vm.expectEmit();
         emit ClosePositionInitiated(address(this), amountInRebalancer, amountToClose, 0);
         (bool success) = rebalancer.initiateClosePosition{ value: protocol.getSecurityDepositValue() }(
-            amountInRebalancer, address(this), payable(this), "", EMPTY_PREVIOUS_DATA
+            amountInRebalancer, address(this), "", EMPTY_PREVIOUS_DATA
         );
 
         UserDeposit memory depositData = rebalancer.getUserDepositData(address(this));
@@ -164,8 +162,8 @@ contract TestRebalancerInitiateClosePosition is
      * @custom:when The user calls the rebalancer's {initiateClosePosition} function with too much ether
      * @custom:then The user gets back the excess ether sent
      */
-    function test_rebalancerInitiateClosePositionRefundsExcessEther() external {
-        vm.prank(DEPLOYER);
+    function test_rebalancerInitiateClosePositionRefundsExcessEther() public {
+        vm.prank(SET_PROTOCOL_PARAMS_ADMIN);
         protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
 
         uint256 securityDeposit = protocol.getSecurityDepositValue();
@@ -174,7 +172,7 @@ contract TestRebalancerInitiateClosePosition is
 
         // send more ether than necessary to trigger the refund
         rebalancer.initiateClosePosition{ value: securityDeposit + excessAmount }(
-            amountInRebalancer, address(this), payable(this), "", EMPTY_PREVIOUS_DATA
+            amountInRebalancer, address(this), "", EMPTY_PREVIOUS_DATA
         );
 
         assertEq(payable(rebalancer).balance, 0, "There should be no ether left in the rebalancer");

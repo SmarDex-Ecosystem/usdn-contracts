@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
@@ -24,7 +24,7 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario The sum of all long position's value is smaller or equal to the available long balance
-     * @custom:given No time has elapsed since the initialization (no funding rates)
+     * @custom:given No time has elapsed since the initialization (no funding)
      * @custom:and The price of the asset starts at 2000 dollars
      * @custom:and 10 random long positions and 10 random deposits are created with prices between 2000 and 3000 dollars
      * @custom:when The sum of all position values is calculated at a price between the max position start price and

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
@@ -77,16 +77,19 @@ library UsdnProtocolCoreLibrary {
     /* -------------------------- public view functions ------------------------- */
 
     /// @notice See {IUsdnProtocolCore}
-    function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
+    function calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
         public
         pure
         returns (int256)
     {
         if (secondsElapsed >= emaPeriod) {
-            return lastFunding;
+            return lastFundingPerDay;
         }
 
-        return (lastFunding + previousEMA * Utils.toInt256(emaPeriod - secondsElapsed)) / Utils.toInt256(emaPeriod);
+        return (
+            lastFundingPerDay * Utils.toInt256(secondsElapsed)
+                + previousEMA * Utils.toInt256(emaPeriod - secondsElapsed)
+        ) / Utils.toInt256(emaPeriod);
     }
 
     /* --------------------------  public functions --------------------------- */
@@ -95,9 +98,9 @@ library UsdnProtocolCoreLibrary {
     function funding(Types.Storage storage s, uint128 timestamp)
         public
         view
-        returns (int256 fund_, int256 oldLongExpo_)
+        returns (int256 funding_, int256 fundingPerDay_, int256 oldLongExpo_)
     {
-        (fund_, oldLongExpo_) = _funding(s, timestamp, s._EMA);
+        (funding_, fundingPerDay_, oldLongExpo_) = _funding(s, timestamp, s._EMA);
     }
 
     /// @notice See {IUsdnProtocolCore}
@@ -210,49 +213,39 @@ library UsdnProtocolCoreLibrary {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Calculate the funding rate and the old long exposure
+     * @notice Calculate the funding rate per day and the old long exposure
      * @param s The storage of the protocol
-     * @param timestamp The current timestamp
-     * @param ema The EMA of the funding rate
-     * @return fund_ The funding rate
-     * @return oldLongExpo_ The old long exposure
+     * @param ema The EMA of the funding rate per day
+     * @return fundingPerDay_ The funding rate (per day) with `FUNDING_RATE_DECIMALS` decimals
+     * @return oldLongExpo_ The old long trading expo
      */
-    function _funding(Types.Storage storage s, uint128 timestamp, int256 ema)
+    function _fundingPerDay(Types.Storage storage s, int256 ema)
         public
         view
-        returns (int256 fund_, int256 oldLongExpo_)
+        returns (int256 fundingPerDay_, int256 oldLongExpo_)
     {
-        oldLongExpo_ = s._totalExpo.toInt256().safeSub(s._balanceLong.toInt256());
-
-        if (timestamp < s._lastUpdateTimestamp) {
-            revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
-        } else if (timestamp == s._lastUpdateTimestamp) {
-            return (0, oldLongExpo_);
-        }
-
-        int256 oldVaultExpo = s._balanceVault.toInt256();
-
-        // ImbalanceIndex = (longExpo - vaultExpo) / max(longExpo, vaultExpo)
-        // fund = (sign(ImbalanceIndex) * ImbalanceIndex^2 * fundingSF) +s.
-        // fund = (sign(ImbalanceIndex) * (longExpo - vaultExpo)^2 * fundingSF / denominator) +s.
+        // imbalanceIndex = (longExpo - vaultExpo) / max(longExpo, vaultExpo)
+        // fundingPerDay = (sign(imbalanceIndex) * imbalanceIndex^2 * fundingSF) + _EMA
+        // fundingPerDay = (sign(ImbalanceIndex) * (longExpo - vaultExpo)^2 * fundingSF / denominator) + _EMA
         // with denominator = vaultExpo^2 if vaultExpo > longExpo, or longExpo^2 if longExpo > vaultExpo
 
+        oldLongExpo_ = s._totalExpo.toInt256().safeSub(s._balanceLong.toInt256());
+        int256 oldVaultExpo = s._balanceVault.toInt256();
         int256 numerator = oldLongExpo_ - oldVaultExpo;
-        // optimization: if the numerator is zero, then return the EMA
+        // optimization: if the numerator is zero, then we simply return the EMA
         if (numerator == 0) {
             return (ema, oldLongExpo_);
         }
 
         if (oldLongExpo_ <= 0) {
             // if oldLongExpo is negative, then we cap the imbalance index to -1
-            // oldVaultExpo is always positive
+            // this should never happen, but for safety we handle it anyway
             return (
                 -int256(s._fundingSF * 10 ** (Constants.FUNDING_RATE_DECIMALS - Constants.FUNDING_SF_DECIMALS)) + ema,
                 oldLongExpo_
             );
         } else if (oldVaultExpo == 0) {
             // if oldVaultExpo is zero (can't be negative), then we cap the imbalance index to 1
-            // oldLongExpo must be positive in this case
             return (
                 int256(s._fundingSF * 10 ** (Constants.FUNDING_RATE_DECIMALS - Constants.FUNDING_SF_DECIMALS)) + ema,
                 oldLongExpo_
@@ -260,32 +253,64 @@ library UsdnProtocolCoreLibrary {
         }
 
         // starting here, oldLongExpo and oldVaultExpo are always strictly positive
-
-        uint256 elapsedSeconds = timestamp - s._lastUpdateTimestamp;
-        uint256 numerator_squared = uint256(numerator * numerator);
+        uint256 numeratorSquared = uint256(numerator * numerator);
 
         uint256 denominator;
         if (oldVaultExpo > oldLongExpo_) {
-            // we have to multiply by 1 day to get the correct units
-            denominator = uint256(oldVaultExpo * oldVaultExpo) * 1 days;
-            fund_ = -int256(
+            denominator = uint256(oldVaultExpo * oldVaultExpo);
+            fundingPerDay_ = -int256(
                 FixedPointMathLib.fullMulDiv(
-                    numerator_squared * elapsedSeconds,
+                    numeratorSquared,
                     s._fundingSF * 10 ** (Constants.FUNDING_RATE_DECIMALS - Constants.FUNDING_SF_DECIMALS),
                     denominator
                 )
             ) + ema;
         } else {
-            // we have to multiply by 1 day to get the correct units
-            denominator = uint256(oldLongExpo_ * oldLongExpo_) * 1 days;
-            fund_ = int256(
+            denominator = uint256(oldLongExpo_ * oldLongExpo_);
+            fundingPerDay_ = int256(
                 FixedPointMathLib.fullMulDiv(
-                    numerator_squared * elapsedSeconds,
+                    numeratorSquared,
                     s._fundingSF * 10 ** (Constants.FUNDING_RATE_DECIMALS - Constants.FUNDING_SF_DECIMALS),
                     denominator
                 )
             ) + ema;
         }
+    }
+
+    /**
+     * @notice Calculate the funding value, funding rate value and the old long exposure
+     * @dev Reverts if `timestamp` < `s._lastUpdateTimestamp`
+     * @param s The storage of the protocol
+     * @param timestamp The current timestamp
+     * @param ema The EMA of the funding rate per day
+     * @return funding_ The funding (proportion of long trading expo that needs to be transferred from one side to the
+     * other) with `FUNDING_RATE_DECIMALS` decimals. If positive, long side pays to vault side, otherwise it's the
+     * opposite
+     * @return fundingPerDay_ The funding rate (per day) with `FUNDING_RATE_DECIMALS` decimals
+     * @return oldLongExpo_ The old long trading expo
+     */
+    function _funding(Types.Storage storage s, uint128 timestamp, int256 ema)
+        public
+        view
+        returns (int256 funding_, int256 fundingPerDay_, int256 oldLongExpo_)
+    {
+        (fundingPerDay_, oldLongExpo_) = _fundingPerDay(s, ema);
+
+        uint128 lastUpdateTimestamp = s._lastUpdateTimestamp;
+        if (timestamp < lastUpdateTimestamp) {
+            revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
+        }
+        // subtraction can't underflow, checked above
+        // conversion from uint128 to int256 is always safe
+        int256 elapsedSeconds;
+        unchecked {
+            elapsedSeconds = Utils.toInt256(timestamp - lastUpdateTimestamp);
+        }
+        if (elapsedSeconds == 0) {
+            return (0, fundingPerDay_, oldLongExpo_);
+        }
+
+        funding_ = fundingPerDay_.safeMul(elapsedSeconds).safeDiv(1 days);
     }
 
     /**
@@ -296,16 +321,17 @@ library UsdnProtocolCoreLibrary {
      * @param timestamp The current timestamp
      * @param ema The EMA of the funding rate
      * @return fundingAsset_ The number of asset tokens of funding (with asset decimals)
-     * @return fund_ The magnitude of the funding (with `FUNDING_RATE_DECIMALS` decimals)
+     * @return fundingPerDay_ The funding rate (per day) with `FUNDING_RATE_DECIMALS` decimals
      */
     function _fundingAsset(Types.Storage storage s, uint128 timestamp, int256 ema)
         public
         view
-        returns (int256 fundingAsset_, int256 fund_)
+        returns (int256 fundingAsset_, int256 fundingPerDay_)
     {
         int256 oldLongExpo;
-        (fund_, oldLongExpo) = _funding(s, timestamp, ema);
-        fundingAsset_ = fund_.safeMul(oldLongExpo) / int256(10) ** Constants.FUNDING_RATE_DECIMALS;
+        int256 fund;
+        (fund, fundingPerDay_, oldLongExpo) = _funding(s, timestamp, ema);
+        fundingAsset_ = fund.safeMul(oldLongExpo) / int256(10) ** Constants.FUNDING_RATE_DECIMALS;
     }
 
     /**
@@ -356,17 +382,17 @@ library UsdnProtocolCoreLibrary {
     }
 
     /**
-     * @notice Update the Exponential Moving Average (EMA) of the funding
+     * @notice Update the Exponential Moving Average (EMA) of the funding rate (per day)
      * @dev This function is called every time the protocol state is updated
      * @dev All required checks are done in the caller function (_applyPnlAndFunding)
      * @dev If the number of seconds elapsed is greater than or equal to the EMA period, the EMA is updated to the last
      * funding value
      * @param s The storage of the protocol
+     * @param fundingPerDay The funding rate per day that was just calculated for the elapsed period
      * @param secondsElapsed The number of seconds elapsed since the last protocol action
-     * @return The new EMA value
      */
-    function _updateEMA(Types.Storage storage s, uint128 secondsElapsed) public returns (int256) {
-        return s._EMA = calcEMA(s._lastFunding, secondsElapsed, s._EMAPeriod, s._EMA);
+    function _updateEMA(Types.Storage storage s, int256 fundingPerDay, uint128 secondsElapsed) public {
+        s._EMA = calcEMA(fundingPerDay, secondsElapsed, s._EMAPeriod, s._EMA);
     }
 
     /**
@@ -374,26 +400,20 @@ library UsdnProtocolCoreLibrary {
      * @dev The funding factor is only adjusted by the fee rate when the funding is negative (vault pays to the long
      * side)
      * @param s The storage of the protocol
-     * @param fund The funding factor
      * @param fundAsset The funding asset amount to be used for the fee calculation
      * @return fee_ The absolute value of the calculated fee
-     * @return fundWithFee_ The updated funding factor after applying the fee
      * @return fundAssetWithFee_ The updated funding asset amount after applying the fee
      */
-    function _calculateFee(Types.Storage storage s, int256 fund, int256 fundAsset)
+    function _calculateFee(Types.Storage storage s, int256 fundAsset)
         public
-        returns (int256 fee_, int256 fundWithFee_, int256 fundAssetWithFee_)
+        returns (int256 fee_, int256 fundAssetWithFee_)
     {
         int256 protocolFeeBps = Utils.toInt256(s._protocolFeeBps);
-        fundWithFee_ = fund;
         fee_ = fundAsset * protocolFeeBps / int256(Constants.BPS_DIVISOR);
         // fundAsset and fee_ have the same sign, we can safely subtract them to reduce the absolute amount of asset
         fundAssetWithFee_ = fundAsset - fee_;
 
         if (fee_ < 0) {
-            // when funding is negative, the part that is taken as fees does not contribute to the liquidation
-            // multiplier adjustment, and so we should deduce it from the funding factor
-            fundWithFee_ -= fund * protocolFeeBps / int256(Constants.BPS_DIVISOR);
             // we want to return the absolute value of the fee
             fee_ = -fee_;
         }
@@ -446,58 +466,65 @@ library UsdnProtocolCoreLibrary {
      * @param s The storage of the protocol
      * @param currentPrice The current price
      * @param timestamp The timestamp of the current price
-     * @return isPriceRecent_ Whether the price was updated or was already the most recent price
-     * @return tempLongBalance_ The new balance of the long side, could be negative (temporarily)
-     * @return tempVaultBalance_ The new balance of the vault side, could be negative (temporarily)
+     * @return data_ The data containing the temporary long balance, the temporary vault
+     * balance, the last price and a flag indicating if the price is recent
      */
     function _applyPnlAndFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
         public
-        returns (bool isPriceRecent_, int256 tempLongBalance_, int256 tempVaultBalance_)
+        returns (Types.ApplyPnlAndFundingData memory data_)
     {
         int256 fundAsset;
-        int256 fund;
         {
             // cache variable for optimization
             uint128 lastUpdateTimestamp = s._lastUpdateTimestamp;
             // if the price is not fresh, do nothing
             if (timestamp <= lastUpdateTimestamp) {
-                return (timestamp == lastUpdateTimestamp, s._balanceLong.toInt256(), s._balanceVault.toInt256());
+                return Types.ApplyPnlAndFundingData({
+                    isPriceRecent: timestamp == lastUpdateTimestamp,
+                    tempLongBalance: s._balanceLong.toInt256(),
+                    tempVaultBalance: s._balanceVault.toInt256(),
+                    lastPrice: s._lastPrice
+                });
             }
 
-            // update the funding EMA
-            int256 ema = _updateEMA(s, timestamp - lastUpdateTimestamp);
-
             // calculate the funding
-            (fundAsset, fund) = _fundingAsset(s, timestamp, ema);
+            int256 fundingPerDay;
+            (fundAsset, fundingPerDay) = _fundingAsset(s, timestamp, s._EMA);
+
+            s._lastFundingPerDay = fundingPerDay;
+            emit IUsdnProtocolEvents.LastFundingPerDayUpdated(fundingPerDay, timestamp);
+
+            // update the funding EMA (mutates the storage)
+            _updateEMA(s, fundingPerDay, timestamp - lastUpdateTimestamp);
         }
 
         // take protocol fee on the funding value
-        (int256 fee, int256 fundWithFee, int256 fundAssetWithFee) = _calculateFee(s, fund, fundAsset);
+        (int256 fee, int256 fundAssetWithFee) = _calculateFee(s, fundAsset);
 
         // we subtract the fee from the total balance
         int256 totalBalance = s._balanceLong.toInt256();
         totalBalance = totalBalance.safeAdd(s._balanceVault.toInt256()).safeSub(fee);
         // calculate new balances (for now, any bad debt has not been repaid, balances could become negative)
 
-        if (fund > 0) {
+        if (fundAsset > 0) {
             // in case of positive funding, the vault balance must be decremented by the totality of the funding amount
             // however, since we deducted the fee amount from the total balance, the vault balance will be incremented
             // only by the funding amount minus the fee amount
-            tempLongBalance_ = _longAssetAvailable(s, currentPrice).safeSub(fundAsset);
+            data_.tempLongBalance = _longAssetAvailable(s, currentPrice).safeSub(fundAsset);
         } else {
             // in case of negative funding, the vault balance must be decremented by the totality of the funding amount
             // however, since we deducted the fee amount from the total balance, the long balance will be incremented
             // only by the funding amount minus the fee amount
-            tempLongBalance_ = _longAssetAvailable(s, currentPrice).safeSub(fundAssetWithFee);
+            data_.tempLongBalance = _longAssetAvailable(s, currentPrice).safeSub(fundAssetWithFee);
         }
-        tempVaultBalance_ = totalBalance.safeSub(tempLongBalance_);
+        data_.tempVaultBalance = totalBalance.safeSub(data_.tempLongBalance);
 
         // update state variables
         s._lastPrice = currentPrice;
+        data_.lastPrice = currentPrice;
         s._lastUpdateTimestamp = timestamp;
-        s._lastFunding = fundWithFee;
 
-        isPriceRecent_ = true;
+        data_.isPriceRecent = true;
     }
 
     /**

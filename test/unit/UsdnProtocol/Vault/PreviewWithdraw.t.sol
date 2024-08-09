@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
@@ -30,7 +30,7 @@ contract TestUsdnProtocolPreviewWithdraw is UsdnProtocolBaseFixture {
      * @custom:when The user simulates the withdrawal of half of the total shares of USDN
      * @custom:then The amount of asset should be equal to half of the available balance
      */
-    function test_previewWithdraw() public {
+    function test_previewWithdraw() public view {
         uint128 price = 2000 ether;
         uint128 priceWithFees = uint128(price + price * protocol.getVaultFeeBps() / protocol.BPS_DIVISOR());
         uint256 shares = usdn.totalShares() / 2;
