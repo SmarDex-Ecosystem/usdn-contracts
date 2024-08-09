@@ -10,7 +10,6 @@ import { WstETH as WstETHSepolia } from "../src/utils/sepolia/tokens/WstETH.sol"
 import { Sdex } from "../test/utils/Sdex.sol";
 import { WstETH } from "../test/utils/WstEth.sol";
 
-import { DeploySepoliaMocks } from "./00_DeploySepoliaMocks.s.sol";
 import { Utils } from "./Utils.s.sol";
 
 import { LiquidationRewardsManager } from "../src/OracleMiddleware/LiquidationRewardsManager.sol";
@@ -97,48 +96,7 @@ contract Deploy is Script {
         }
 
         if (chain == ChainId.sepolia) {
-            DeploySepoliaMocks deploySepoliaMocks = new DeploySepoliaMocks();
-            (SdexSepolia sdex, WstETHSepolia wsteth, MockFastGasGwei mockFastGasGwei) =
-                deploySepoliaMocks.run(deployerAddress, depositAmount + longAmount);
-
-            string[] memory inputs = new string[](6);
-            inputs[0] = "cast";
-            inputs[1] = "call";
-            inputs[2] = "-r";
-            inputs[3] = vm.envString("RPC_URL");
-            inputs[4] = "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0";
-            inputs[5] = "stEthPerToken()";
-            bytes memory result = vm.ffi(inputs);
-            uint256 stEthPerToken = abi.decode(result, (uint256));
-            vm.startBroadcast(deployerAddress);
-            wsteth.setStEthPerToken(stEthPerToken);
-            vm.stopBroadcast();
-
-            Usdn_ = new Usdn(address(0), address(0));
-
-            string[] memory inputs2 = new string[](6);
-            inputs2[0] = "cast";
-            inputs2[1] = "call";
-            inputs2[2] = "-r";
-            inputs2[3] = vm.envString("RPC_URL");
-            inputs2[4] = "0x694AA1769357215DE4FAC081bf1f309aDC325306";
-            inputs2[5] = "latestAnswer()";
-            result = vm.ffi(inputs2);
-            uint256 ethPrice = abi.decode(result, (uint256));
-            ethPrice *= 10_000_000_000;
-            uint256 liqPrice = ethPrice * stEthPerToken / 2_000_000_000_000_000_000;
-
-            Sdex_ = Sdex(address(sdex));
-            WstETH_ = WstETH(payable(address(wsteth)));
-
-            vm.setEnv("PYTH_ADDRESS", "0xDd24F84d36BF92C65F92307595335bdFab5Bbd21");
-            vm.setEnv("PYTH_ETH_FEED_ID", "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace");
-            vm.setEnv("CHAINLINK_ETH_PRICE_ADDRESS", "0x694AA1769357215DE4FAC081bf1f309aDC325306");
-            vm.setEnv("FEE_COLLECTOR", vm.toString(deployerAddress));
-            vm.setEnv("CHAINLINK_ETH_PRICE_VALIDITY", "3720");
-            vm.setEnv("CHAINLINK_GAS_PRICE_ADDRESS", vm.toString(address(mockFastGasGwei)));
-            vm.setEnv("CHAINLINK_GAS_PRICE_VALIDITY", "7500");
-            vm.setEnv("INIT_LONG_LIQPRICE", vm.toString(liqPrice));
+            (Usdn_, Sdex_, WstETH_) = _handleSepoliaDeployment(depositAmount + longAmount);
         } else {
             vm.startBroadcast(deployerAddress);
 
@@ -384,5 +342,57 @@ contract Deploy is Script {
         }
 
         UsdnProtocol_.initialize(uint128(depositAmount), uint128(longAmount), uint128(desiredLiqPrice), "");
+    }
+
+    function _handleSepoliaDeployment(uint256 wstEthNeeded) internal returns (Usdn Usdn_, Sdex Sdex_, WstETH WstETH_) {
+        vm.startBroadcast(deployerAddress);
+
+        SdexSepolia sdex = new SdexSepolia();
+        WstETHSepolia wsteth = new WstETHSepolia();
+        MockFastGasGwei mockFastGasGwei = new MockFastGasGwei();
+        // mint wstETH to deployer
+        wsteth.mint(deployerAddress, wstEthNeeded);
+
+        vm.stopBroadcast();
+
+        string[] memory inputs = new string[](6);
+        inputs[0] = "cast";
+        inputs[1] = "call";
+        inputs[2] = "-r";
+        inputs[3] = vm.envString("RPC_URL");
+        inputs[4] = "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0";
+        inputs[5] = "stEthPerToken()";
+        bytes memory result = vm.ffi(inputs);
+        uint256 stEthPerToken = abi.decode(result, (uint256));
+
+        vm.startBroadcast(deployerAddress);
+        wsteth.setStEthPerToken(stEthPerToken);
+        vm.stopBroadcast();
+
+        Usdn_ = new Usdn(address(0), address(0));
+
+        string[] memory inputs2 = new string[](6);
+        inputs2[0] = "cast";
+        inputs2[1] = "call";
+        inputs2[2] = "-r";
+        inputs2[3] = vm.envString("RPC_URL");
+        inputs2[4] = "0x694AA1769357215DE4FAC081bf1f309aDC325306";
+        inputs2[5] = "latestAnswer()";
+        result = vm.ffi(inputs2);
+        uint256 ethPrice = abi.decode(result, (uint256));
+        ethPrice *= 10_000_000_000;
+        uint256 liqPrice = ethPrice * stEthPerToken / 2_000_000_000_000_000_000;
+
+        Sdex_ = Sdex(address(sdex));
+        WstETH_ = WstETH(payable(address(wsteth)));
+
+        vm.setEnv("PYTH_ADDRESS", "0xDd24F84d36BF92C65F92307595335bdFab5Bbd21");
+        vm.setEnv("PYTH_ETH_FEED_ID", "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace");
+        vm.setEnv("CHAINLINK_ETH_PRICE_ADDRESS", "0x694AA1769357215DE4FAC081bf1f309aDC325306");
+        vm.setEnv("FEE_COLLECTOR", vm.toString(deployerAddress));
+        vm.setEnv("CHAINLINK_ETH_PRICE_VALIDITY", "3720");
+        vm.setEnv("CHAINLINK_GAS_PRICE_ADDRESS", vm.toString(address(mockFastGasGwei)));
+        vm.setEnv("CHAINLINK_GAS_PRICE_VALIDITY", "7500");
+        vm.setEnv("INIT_LONG_LIQPRICE", vm.toString(liqPrice));
     }
 }

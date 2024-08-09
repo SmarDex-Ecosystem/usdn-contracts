@@ -22,7 +22,7 @@ CHAIN_ID=$(cast chain-id -r "$RPC_URL")
 # Deploy mocks
 forge script --non-interactive --private-key "$DEPLOYER_PRIVATE_KEY" -f "$RPC_URL" script/00_DeploySepoliaMocks.s.sol:DeploySepoliaMocks --broadcast
 
-# BROADCAST="broadcast/00_DeploySepoliaMocks.s.sol/$CHAIN_ID/run-latest.json"
+BROADCAST="broadcast/00_DeploySepoliaMocks.s.sol/$CHAIN_ID/run-latest.json"
 export SDEX_ADDRESS=$(cat "$BROADCAST" | jq -r '.returns.Sdex_.value')
 export WSTETH_ADDRESS=$(cat "$BROADCAST" | jq -r '.returns.WstETH_.value')
 export CHAINLINK_GAS_PRICE_ADDRESS=$(cat "$BROADCAST" | jq -r '.returns.MockFastGasGwei_.value')
@@ -36,7 +36,7 @@ cast publish -r "$RPC_URL" "$TXDATA"
 # Deploy USDN token
 forge script --non-interactive --private-key "$DEPLOYER_PRIVATE_KEY" -f "$RPC_URL" script/01_DeployUsdn.s.sol:DeployUsdn --broadcast
 
-# BROADCAST="broadcast/01_DeployUsdn.s.sol/$CHAIN_ID/run-latest.json"
+BROADCAST="broadcast/01_DeployUsdn.s.sol/$CHAIN_ID/run-latest.json"
 export USDN_ADDRESS=$(cat "$BROADCAST" | jq -r '.returns.Usdn_.value')
 
 # Calculate liquidation price for leverage 2x
