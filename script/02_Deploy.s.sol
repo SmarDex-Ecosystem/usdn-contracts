@@ -3,6 +3,7 @@ pragma solidity 0.8.26;
 
 import { Script } from "forge-std/Script.sol";
 
+import { AggregatorInterface } from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorInterface.sol";
 import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import { Sdex as SdexSepolia } from "../src/utils/sepolia/tokens/Sdex.sol";
@@ -81,17 +82,6 @@ contract Deploy is Script {
             // TO DO : verify that still needed
             // not needed but needs to exist
             vm.setEnv("ETHERSCAN_API_KEY", "XXXXXXXXXXXXXXXXX");
-        }
-
-        try vm.envString("RPC_URL") { }
-        catch {
-            if (chain == ChainId.sepolia) {
-                vm.setEnv("RPC_URL", "https://sepolia.gateway.tenderly.co");
-            } else if (chain == ChainId.mainnet) {
-                vm.setEnv("RPC_URL", "https://eth.llamarpc.com");
-            } else {
-                vm.setEnv("RPC_URL", "http://localhost:8545");
-            }
         }
 
         bool isProdEnv = chain != ChainId.fork;
@@ -385,15 +375,7 @@ contract Deploy is Script {
         Usdn_ = new Usdn(address(0), address(0));
         vm.stopBroadcast();
 
-        string[] memory inputs2 = new string[](6);
-        inputs2[0] = "cast";
-        inputs2[1] = "call";
-        inputs2[2] = "-r";
-        inputs2[3] = vm.envString("RPC_URL");
-        inputs2[4] = "0x694AA1769357215DE4FAC081bf1f309aDC325306";
-        inputs2[5] = "latestAnswer()";
-        result = vm.ffi(inputs2);
-        uint256 ethPrice = abi.decode(result, (uint256));
+        uint256 ethPrice = uint256(AggregatorInterface(0x694AA1769357215DE4FAC081bf1f309aDC325306).latestAnswer());
         ethPrice *= 10_000_000_000;
         uint256 liqPrice = ethPrice * stEthPerToken / 2_000_000_000_000_000_000;
 
