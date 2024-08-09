@@ -29,6 +29,7 @@
     "platform": "solc",
     "platformConfig": {
       "args": ["--compile-force-framework", "foundry"],
+      "solcVersion": "0.8.26",
       "target": "./test/fuzzing/FuzzingSuite.sol"
     }
   },
