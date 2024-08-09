@@ -55,8 +55,8 @@ contract WstETH is ERC20Permit, Ownable {
      * @param _stETHAmount amount of stETH
      * @return Amount of wstETH for a given stETH amount
      */
-    function getWstETHByStETH(uint256 _stETHAmount) external view returns (uint256) {
-        return _stETHAmount * _stEthPerToken / 1 ether;
+    function getWstETHByStETH(uint256 _stETHAmount) public view returns (uint256) {
+        return _stETHAmount * 1 ether / _stEthPerToken;
     }
 
     /**
@@ -65,6 +65,10 @@ contract WstETH is ERC20Permit, Ownable {
      * @return Amount of stETH for a given wstETH amount
      */
     function getStETHByWstETH(uint256 _wstETHAmount) external view returns (uint256) {
-        return _wstETHAmount * 1 ether / _stEthPerToken;
+        return _wstETHAmount * _stEthPerToken / 1 ether;
+    }
+
+    receive() external payable {
+        _mint(msg.sender, getWstETHByStETH(msg.value));
     }
 }
