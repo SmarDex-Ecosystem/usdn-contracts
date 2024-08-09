@@ -8,8 +8,10 @@ import { Sdex } from "../src/utils/sepolia/tokens/Sdex.sol";
 import { WstETH } from "../src/utils/sepolia/tokens/WstETH.sol";
 
 contract DeploySepoliaMocks is Script {
-    function run() external returns (Sdex Sdex_, WstETH WstETH_, MockFastGasGwei MockFastGasGwei_) {
-        address deployer = vm.envAddress("DEPLOYER_ADDRESS");
+    function run(address deployer, uint256 wstethNeeded)
+        external
+        returns (Sdex Sdex_, WstETH WstETH_, MockFastGasGwei MockFastGasGwei_)
+    {
         vm.startBroadcast(deployer);
 
         Sdex_ = new Sdex();
@@ -17,9 +19,7 @@ contract DeploySepoliaMocks is Script {
         MockFastGasGwei_ = new MockFastGasGwei();
 
         // mint wstETH to deployer
-        uint256 depositAmount = vm.envUint("INIT_DEPOSIT_AMOUNT");
-        uint256 longAmount = vm.envUint("INIT_LONG_AMOUNT");
-        WstETH_.mint(deployer, depositAmount + longAmount);
+        WstETH_.mint(deployer, wstethNeeded);
 
         vm.stopBroadcast();
     }
