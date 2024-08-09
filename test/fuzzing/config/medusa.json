@@ -28,10 +28,11 @@
 		}
 	},
 	"compilation": {
-		"platform": "crytic-compile",
+		"platform": "solc",
 		"platformConfig": {
 			"args": ["--compile-force-framework", "foundry"],
-			"target": "./test/fuzzing/FuzzingSuite.sol"
+			"solcVersion": "0.8.26",
+			"target": "../FuzzingSuite.sol"
 		}
 	},
 	"logging": {
