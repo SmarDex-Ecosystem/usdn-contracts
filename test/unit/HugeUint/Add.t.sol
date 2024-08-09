@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { HugeUintFixture } from "./utils/Fixtures.sol";
 
@@ -21,7 +21,7 @@ contract TestHugeUintAdd is HugeUintFixture {
      * @custom:when The `add` function is called with `uint512.max/2` and `uint512.max/2`
      * @custom:then The result is equal to `uint512.max - 1`
      */
-    function test_add() public {
+    function test_add() public view {
         HugeUint.Uint512 memory a = HugeUint.wrap(42);
         HugeUint.Uint512 memory b = HugeUint.wrap(420);
         HugeUint.Uint512 memory res = handler.add(a, b);

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { USER_1 } from "../../utils/Constants.sol";
 import { RebalancerFixture } from "./utils/Fixtures.sol";
@@ -23,7 +23,7 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
      * @custom:when The setup was performed
      * @custom:then The initial deposit amount is greater than the minimum asset deposit
      */
-    function test_setUp() public {
+    function test_setUp() public view {
         assertGe(INITIAL_DEPOSIT, rebalancer.getMinAssetDeposit());
     }
 

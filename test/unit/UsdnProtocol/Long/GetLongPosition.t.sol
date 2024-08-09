@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
@@ -15,12 +15,43 @@ import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUs
 contract TestGetLongPosition is UsdnProtocolBaseFixture {
     uint128 constant OPEN_AMOUNT = 10 ether;
 
-    function setUp() external {
+    function setUp() public {
         params = DEFAULT_PARAMS;
         params.flags.enableFunding = false;
         params.flags.enableProtocolFees = false;
         params.flags.enablePositionFees = true;
         _setUp(params);
+    }
+
+    /**
+     * @custom:scenario Check the return value of the function `getCurrentLongPosition`
+     * @custom:given A initialized protocol
+     * @custom:and A user position is validated
+     * @custom:when The function is called with user position arguments
+     * @custom:then The function should return expected user position values
+     */
+    function test_getCurrentLongPosition() public {
+        PositionId memory posId = setUpUserPositionInLong(
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: OPEN_AMOUNT,
+                desiredLiqPrice: params.initialPrice / 2,
+                price: params.initialPrice
+            })
+        );
+
+        (Position memory position,) = protocol.getLongPosition(posId);
+
+        int24 expectedTick = protocol.getEffectiveTickForPrice(params.initialPrice / 2);
+        // index = 0, because the position is the first in the list
+        Position memory posRet = protocol.getCurrentLongPosition(expectedTick, 0);
+
+        assertEq(position.validated, posRet.validated, "validated");
+        assertEq(position.timestamp, posRet.timestamp, "timestamp");
+        assertEq(position.user, posRet.user, "user");
+        assertEq(position.totalExpo, posRet.totalExpo, "totalExpo");
+        assertEq(position.amount, posRet.amount, "amount");
     }
 
     /**
@@ -100,7 +131,7 @@ contract TestGetLongPosition is UsdnProtocolBaseFixture {
         );
 
         _waitBeforeLiquidation();
-        protocol.testLiquidate(abi.encode(params.initialPrice / 3), 10);
+        protocol.mockLiquidate(abi.encode(params.initialPrice / 3), 10);
 
         vm.expectRevert(
             abi.encodeWithSelector(

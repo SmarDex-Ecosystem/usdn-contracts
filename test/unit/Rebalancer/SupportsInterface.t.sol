@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
@@ -24,7 +24,7 @@ contract TestRebalancerSupportsInterface is RebalancerFixture {
      * @custom:when The {supportsInterface} function is called with the interface IDs
      * @custom:then The function should return `true` for the supported interfaces and `false` for any other interface
      */
-    function test_supportsInterface() external {
+    function test_supportsInterface() public view {
         assertEq(rebalancer.supportsInterface(type(IERC165).interfaceId), true, "IERC165_ID supported");
         assertEq(
             rebalancer.supportsInterface(type(IOwnershipCallback).interfaceId), true, "IOwnershipCallback_ID supported"

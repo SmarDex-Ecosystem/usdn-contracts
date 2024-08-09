@@ -6,20 +6,37 @@
 
 [profile.default]
 solc_version = "0.8.26"
+evm_version = "cancun"
 optimizer = true
 optimizer_runs = 20_000
-libs = ["node_modules", "lib"]
+libs = ["node_modules", "dependencies"]
 invariant = { fail_on_revert = true }
+gas_reports = ["*"]
+ffi = true
+ast = true
+build_info = true
+extra_output = ["storageLayout"]
+ignored_error_codes = [
+    "code-size",
+    "init-code-size",
+    "license",
+    "too-many-warnings",
+    "transient-storage",
+]
 
 # -------------------------------- Remappings -------------------------------- #
 
+
 remappings = [
-    "@chainlink/=node_modules/@chainlink/",
-    "@openzeppelin/=node_modules/@openzeppelin/",
-    "@pythnetwork=node_modules/@pythnetwork/",
-    "solady/src/=node_modules/solady/src/",
-    "@uniswap/permit2/=node_modules/@uniswap/permit2/",
-    "@redstone-finance/evm-connector/=node_modules/@redstone-finance/evm-connector/",
+    "@chainlink/=dependencies/@chainlink-1.2.0/",
+    "@openzeppelin/contracts-upgradeable/=dependencies/@openzeppelin-contracts-upgradeable-5.0.2/",
+    "@openzeppelin/contracts/=dependencies/@openzeppelin-contracts-5.0.2/",
+    "@pythnetwork/pyth-sdk-solidity/=dependencies/@pythnetwork-pyth-sdk-solidity-3.1.0/",
+    "@redstone-finance/evm-connector/=dependencies/@redstone-finance-evm-connector-0.6.1/",
+    "@uniswap/permit2/=dependencies/@uniswap-permit2-1.0.0/",
+    "forge-std/=dependencies/forge-std-1.9.1/src/",
+    "openzeppelin-foundry-upgrades/=dependencies/openzeppelin-foundry-upgrades-0.3.1/src/",
+    "solady/src/=dependencies/solady-0.0.228/src/",
 ]
 
 # ---------------------------------- Format ---------------------------------- #
@@ -114,3 +131,14 @@ anvil = "${URL_ANVIL}"
 
 [etherscan]
 mainnet = { key = "${ETHERSCAN_API_KEY}" }
+
+[dependencies]
+"@chainlink" = { version = "1.2.0", url = "https://github.com/smartcontractkit/chainlink/archive/c3dc764bba9e1c57b3f7933bcb804a1740fab695.zip" }
+"@openzeppelin-contracts-upgradeable" = "5.0.2"
+"@openzeppelin-contracts" = "5.0.2"
+"@pythnetwork-pyth-sdk-solidity" = "3.1.0"
+"@redstone-finance-evm-connector" = "0.6.1"
+"@uniswap-permit2" = { version = "1.0.0", url = "https://github.com/Uniswap/permit2/archive/cc56ad0f3439c502c246fc5cfcc3db92bb8b7219.zip" }
+forge-std = "1.9.1"
+openzeppelin-foundry-upgrades = "0.3.1"
+solady = "0.0.228"

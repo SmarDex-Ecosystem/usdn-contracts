@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-import { USER_1 } from "../../../utils/Constants.sol";
-import { OracleMiddlewareBaseFixture } from "../utils/Fixtures.sol";
+import { USER_1 } from "../../../../utils/Constants.sol";
+import { OracleMiddlewareWithRedstoneFixture } from "../../utils/Fixtures.sol";
 
 /**
  * @custom:feature The `setPenaltyBps` function of the `OracleMiddleware` contract
  */
-contract TestOracleMiddlewareSetPenaltyBps is OracleMiddlewareBaseFixture {
+contract TestOracleMiddlewareSetPenaltyBps is OracleMiddlewareWithRedstoneFixture {
     /**
      * @custom:scenario A user that is not the owner calls setPenaltyBps
      * @custom:given A user that is not the owner

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { HugeUintFixture } from "./utils/Fixtures.sol";
 
@@ -26,7 +26,7 @@ contract TestHugeUintDiv512 is HugeUintFixture {
      * @custom:then The result is equal to `uint256.max` (note that this is larger than uint256.max, but does not
      * overflow due to rounding down)
      */
-    function test_div() public {
+    function test_div() public view {
         HugeUint.Uint512 memory a = HugeUint.Uint512(0, 69);
         HugeUint.Uint512 memory b = HugeUint.Uint512(0, 42);
         uint256 res = HugeUint.div(a, b);

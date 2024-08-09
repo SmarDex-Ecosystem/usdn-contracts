@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
@@ -70,6 +70,7 @@ library UsdnProtocolLongLibrary {
         bool isPriceRecent;
         int256 tempLongBalance;
         int256 tempVaultBalance;
+        uint128 lastPrice;
         bool rebased;
         bool rebalancerTriggered;
         bytes callbackResult;
@@ -115,18 +116,6 @@ library UsdnProtocolLongLibrary {
         }
         pos_ = s._longPositions[tickHash][posId.index];
         liquidationPenalty_ = s._tickData[tickHash].liquidationPenalty;
-    }
-
-    /// @notice See {IUsdnProtocolLong}
-    function getMinLiquidationPrice(Types.Storage storage s, uint128 price)
-        public
-        view
-        returns (uint128 liquidationPrice_)
-    {
-        liquidationPrice_ = _getLiquidationPrice(price, uint128(s._minLeverage));
-        int24 tick = getEffectiveTickForPrice(s, liquidationPrice_);
-        // slither-disable-next-line write-after-write
-        liquidationPrice_ = getEffectivePriceForTick(s, tick + s._tickSpacing);
     }
 
     /// @notice See {IUsdnProtocolLong}
@@ -220,8 +209,7 @@ library UsdnProtocolLongLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
         }
 
-        int256 ema = Core.calcEMA(s._lastFunding, timestamp - s._lastUpdateTimestamp, s._EMAPeriod, s._EMA);
-        (int256 fundAsset,) = Core._fundingAsset(s, timestamp, ema);
+        (int256 fundAsset,) = Core._fundingAsset(s, timestamp, s._EMA);
 
         if (fundAsset > 0) {
             available_ = Core._longAssetAvailable(s, currentPrice).safeSub(fundAsset);
@@ -229,6 +217,11 @@ library UsdnProtocolLongLibrary {
             int256 fee = fundAsset * Utils.toInt256(s._protocolFeeBps) / int256(Constants.BPS_DIVISOR);
             // fees have the same sign as fundAsset (negative here), so we need to sub them
             available_ = Core._longAssetAvailable(s, currentPrice).safeSub(fundAsset - fee);
+        }
+
+        int256 totalBalance = (s._balanceLong + s._balanceVault).toInt256();
+        if (available_ > totalBalance) {
+            available_ = totalBalance;
         }
     }
 
@@ -278,21 +271,25 @@ library UsdnProtocolLongLibrary {
         bytes calldata priceData
     ) public returns (uint256 liquidatedPositions_, bool isLiquidationPending_) {
         ApplyPnlAndFundingAndLiquidateData memory data;
-        // adjust balances
-        (data.isPriceRecent, data.tempLongBalance, data.tempVaultBalance) =
-            Core._applyPnlAndFunding(s, neutralPrice.toUint128(), timestamp.toUint128());
+        {
+            Types.ApplyPnlAndFundingData memory temporaryData =
+                Core._applyPnlAndFunding(s, neutralPrice.toUint128(), timestamp.toUint128());
+            assembly {
+                mcopy(data, temporaryData, 128)
+            }
+        }
 
         // liquidate if the price was updated or was already the most recent
         if (data.isPriceRecent) {
             Types.LiquidationsEffects memory liquidationEffects =
-                _liquidatePositions(s, s._lastPrice, iterations, data.tempLongBalance, data.tempVaultBalance);
+                _liquidatePositions(s, data.lastPrice, iterations, data.tempLongBalance, data.tempVaultBalance);
 
             isLiquidationPending_ = liquidationEffects.isLiquidationPending;
             if (!isLiquidationPending_ && liquidationEffects.liquidatedTicks > 0) {
                 if (s._closeExpoImbalanceLimitBps > 0) {
                     (liquidationEffects.newLongBalance, liquidationEffects.newVaultBalance) = _triggerRebalancer(
                         s,
-                        s._lastPrice,
+                        data.lastPrice,
                         liquidationEffects.newLongBalance,
                         liquidationEffects.newVaultBalance,
                         liquidationEffects.remainingCollateral
@@ -304,7 +301,7 @@ library UsdnProtocolLongLibrary {
             s._balanceLong = liquidationEffects.newLongBalance;
             s._balanceVault = liquidationEffects.newVaultBalance;
 
-            (data.rebased, data.callbackResult) = Vault._usdnRebase(s, s._lastPrice, ignoreInterval);
+            (data.rebased, data.callbackResult) = Vault._usdnRebase(s, data.lastPrice, ignoreInterval);
 
             if (liquidationEffects.liquidatedTicks > 0) {
                 ActionsUtils._sendRewardsToLiquidator(
@@ -366,6 +363,14 @@ library UsdnProtocolLongLibrary {
 
         cache.tradingExpo = cache.totalExpo - cache.longBalance;
 
+        // calculate the bonus now and update the cache to make sure removing it from the vault doesn't push the
+        // imbalance above the threshold
+        uint128 bonus;
+        if (remainingCollateral > 0) {
+            bonus = (uint256(remainingCollateral) * s._rebalancerBonusBps / Constants.BPS_DIVISOR).toUint128();
+            cache.vaultBalance -= bonus;
+        }
+
         {
             int256 currentImbalance =
                 _calcImbalanceCloseBps(cache.vaultBalance.toInt256(), cache.longBalance.toInt256(), cache.totalExpo);
@@ -388,12 +393,16 @@ library UsdnProtocolLongLibrary {
             // if the position value is less than 0, it should have been liquidated but wasn't
             // interrupt the whole rebalancer process because there are pending liquidations
             if (realPositionValue < 0) {
-                return (cache.longBalance, vaultBalance_);
+                return (longBalance_, vaultBalance_);
             }
 
             // cast is safe as realPositionValue cannot be lower than 0
             data.positionValue = uint256(realPositionValue).toUint128();
             data.positionAmount += data.positionValue;
+            longBalance_ -= data.positionValue;
+        } else if (data.positionAmount == 0) {
+            // avoid to update an empty rebalancer
+            return (longBalance_, vaultBalance_);
         }
 
         // if the amount in the position we wanted to open is below a fraction of the _minLongPosition setting,
@@ -403,18 +412,15 @@ library UsdnProtocolLongLibrary {
             // and inform it that no new position was open so it can start anew
             rebalancer.updatePosition(Types.PositionId(Constants.NO_POSITION_TICK, 0, 0), 0);
             vaultBalance_ += data.positionAmount;
-            return (cache.longBalance, vaultBalance_);
+            return (longBalance_, vaultBalance_);
         }
 
         // transfer the pending assets from the rebalancer to this contract
         // slither-disable-next-line arbitrary-send-erc20
         address(s._asset).safeTransferFrom(address(rebalancer), address(this), data.positionAmount - data.positionValue);
 
-        // if there is enough collateral remaining after liquidations, calculate the bonus and add it to the
-        // new rebalancer position
-        if (remainingCollateral > 0) {
-            uint128 bonus = (uint256(remainingCollateral) * s._rebalancerBonusBps / Constants.BPS_DIVISOR).toUint128();
-            cache.vaultBalance -= bonus;
+        // add the bonus to the new rebalancer position and remove it from the vault
+        if (bonus > 0) {
             vaultBalance_ -= bonus;
             data.positionAmount += bonus;
         }
@@ -619,6 +625,11 @@ library UsdnProtocolLongLibrary {
         _checkOpenPositionLeverage(s, data_.adjustedPrice, liqPriceWithoutPenalty);
 
         data_.positionTotalExpo = _calcPositionTotalExpo(amount, data_.adjustedPrice, liqPriceWithoutPenalty);
+        // the current price is known to be above the liquidation price because we checked the safety margin
+        // the `currentPrice.price` value can safely be cast to uint128 because we already did so above after the
+        // `adjustedPrice` calculation
+        data_.positionValue =
+            Utils.positionValue(data_.positionTotalExpo, uint128(currentPrice.price), liqPriceWithoutPenalty);
         _checkImbalanceLimitOpen(s, data_.positionTotalExpo, amount);
     }
 
@@ -634,7 +645,7 @@ library UsdnProtocolLongLibrary {
     {
         // calculate position leverage
         // reverts if liquidationPrice >= entryPrice
-        uint128 leverage = _getLeverage(adjustedPrice, liqPriceWithoutPenalty);
+        uint256 leverage = _getLeverage(adjustedPrice, liqPriceWithoutPenalty);
         if (leverage < s._minLeverage) {
             revert IUsdnProtocolErrors.UsdnProtocolLeverageTooLow();
         }
@@ -958,15 +969,14 @@ library UsdnProtocolLongLibrary {
      * @param liquidationPrice Liquidation price of the position
      * @return leverage_ The leverage of the position
      */
-    function _getLeverage(uint128 startPrice, uint128 liquidationPrice) public pure returns (uint128 leverage_) {
+    function _getLeverage(uint128 startPrice, uint128 liquidationPrice) public pure returns (uint256 leverage_) {
         if (startPrice <= liquidationPrice) {
             // this situation is not allowed (newly open position must be solvent)
             // also, the calculation below would underflow
             revert IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationPrice(liquidationPrice, startPrice);
         }
 
-        leverage_ =
-            ((10 ** Constants.LEVERAGE_DECIMALS * uint256(startPrice)) / (startPrice - liquidationPrice)).toUint128();
+        leverage_ = (10 ** Constants.LEVERAGE_DECIMALS * uint256(startPrice)) / (startPrice - liquidationPrice);
     }
 
     /**
@@ -1101,15 +1111,18 @@ library UsdnProtocolLongLibrary {
 
         // keep track of the highest populated tick
         if (effects.liquidatedPositions != 0) {
+            int24 highestPopulatedTick;
             if (data.iTick < data.currentTick) {
                 // all ticks above the current tick were liquidated
-                s._highestPopulatedTick = _findHighestPopulatedTick(s, data.currentTick);
+                highestPopulatedTick = _findHighestPopulatedTick(s, data.currentTick);
             } else {
                 // unsure if all ticks above the current tick were liquidated, but some were
-                int24 highestPopulatedTick = _findHighestPopulatedTick(s, data.iTick);
-                s._highestPopulatedTick = highestPopulatedTick;
+                highestPopulatedTick = _findHighestPopulatedTick(s, data.iTick);
                 data.isLiquidationPending = data.currentTick <= highestPopulatedTick;
             }
+
+            s._highestPopulatedTick = highestPopulatedTick;
+            emit IUsdnProtocolEvents.HighestPopulatedTickUpdated(highestPopulatedTick);
         }
 
         // transfer remaining collateral to vault or pay bad debt

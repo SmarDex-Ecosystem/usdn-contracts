@@ -1,6 +1,8 @@
 name: CI with heavy test run
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 env:
   FOUNDRY_PROFILE: heavy_ci
@@ -32,7 +34,7 @@ jobs:
           node-version: 20
 
       - name: Install deps
-        run: npm ci && forge install
+        run: npm ci && forge soldeer install
 
       - name: Build test_utils
         run: cargo build --release
@@ -42,4 +44,4 @@ jobs:
       #  run: npm run snapshot:check
 
       - name: Run tests
-        run: forge test
+        run: forge test --no-match-test "(ForkGasUsage)"

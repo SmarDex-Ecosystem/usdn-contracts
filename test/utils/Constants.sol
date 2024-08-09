@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 /* -------------------------------------------------------------------------- */
 /*                              General Constants                             */
@@ -11,6 +11,18 @@ address payable constant DEPLOYER = payable(address(0x12341234123412341234123412
 
 // proxies contract admin
 address payable constant ADMIN = payable(address(0x1212121212121212121212121212121212121212));
+
+// roles
+address payable constant SET_EXTERNAL_ADMIN = payable(address(0x1313131313131313131313131313131313131313));
+address payable constant CRITICAL_FUNCTIONS_ADMIN = payable(address(0x1414141414141414141414141414141414141414));
+address payable constant SET_PROTOCOL_PARAMS_ADMIN = payable(address(0x1515151515151515151515151515151515151515));
+address payable constant SET_USDN_PARAMS_ADMIN = payable(address(0x1616161616161616161616161616161616161616));
+address payable constant SET_OPTIONS_ADMIN = payable(address(0x1717171717171717171717171717171717171717));
+address payable constant SET_EXTERNAL_ROLE_ADMIN = payable(address(0x1818181818181818181818181818181818181818));
+address payable constant CRITICAL_FUNCTIONS_ROLE_ADMIN = payable(address(0x1919191919191919191919191919191919191919));
+address payable constant SET_PROTOCOL_PARAMS_ROLE_ADMIN = payable(address(0x2020202020202020202020202020202020202020));
+address payable constant SET_USDN_PARAMS_ROLE_ADMIN = payable(address(0x2121212121212121212121212121212121212121));
+address payable constant SET_OPTIONS_ROLE_ADMIN = payable(address(0x2323232323232323232323232323232323232323));
 
 // generic users
 address payable constant USER_1 = payable(address(0x1111111111111111111111111111111111111111));
