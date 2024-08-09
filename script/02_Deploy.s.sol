@@ -84,6 +84,8 @@ contract Deploy is Script {
             chain = ChainId.fork;
         }
 
+        bool isProdEnv = chain != ChainId.fork;
+
         uint256 depositAmount;
         uint256 longAmount;
         if (chain == ChainId.sepolia) {
@@ -108,7 +110,9 @@ contract Deploy is Script {
             inputs[5] = "stEthPerToken()";
             bytes memory result = vm.ffi(inputs);
             uint256 stEthPerToken = abi.decode(result, (uint256));
+            vm.startBroadcast(deployerAddress);
             wsteth.setStEthPerToken(stEthPerToken);
+            vm.stopBroadcast();
 
             Usdn_ = new Usdn(address(0), address(0));
 
@@ -122,44 +126,58 @@ contract Deploy is Script {
             result = vm.ffi(inputs2);
             uint256 ethPrice = abi.decode(result, (uint256));
             ethPrice *= 10_000_000_000;
-            uint256 liqPrice = ethPrice * stEthPerToken / 2;
+            uint256 liqPrice = ethPrice * stEthPerToken / 2_000_000_000_000_000_000;
 
             Sdex_ = Sdex(address(sdex));
             WstETH_ = WstETH(payable(address(wsteth)));
+
+            vm.setEnv("PYTH_ADDRESS", "0xDd24F84d36BF92C65F92307595335bdFab5Bbd21");
+            vm.setEnv("PYTH_ETH_FEED_ID", "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace");
+            vm.setEnv("CHAINLINK_ETH_PRICE_ADDRESS", "0x694AA1769357215DE4FAC081bf1f309aDC325306");
+            vm.setEnv("FEE_COLLECTOR", vm.toString(deployerAddress));
+            vm.setEnv("CHAINLINK_ETH_PRICE_VALIDITY", "3720");
+            vm.setEnv("CHAINLINK_GAS_PRICE_ADDRESS", vm.toString(address(mockFastGasGwei)));
+            vm.setEnv("CHAINLINK_GAS_PRICE_VALIDITY", "7500");
+            vm.setEnv("INIT_LONG_LIQPRICE", vm.toString(liqPrice));
+        } else {
+            vm.startBroadcast(deployerAddress);
+
+            WstETH_ = _deployWstETH(depositAmount, longAmount);
+            Usdn_ = _deployUsdn(isProdEnv);
+            Sdex_ = _deploySdex();
+
+            vm.stopBroadcast();
         }
 
-        // vm.startBroadcast(deployerAddress);
+        vm.startBroadcast(deployerAddress);
 
-        // // deploy contracts
-        // WstETH_ = _deployWstETH(depositAmount, longAmount);
-        // WstEthOracleMiddleware_ = _deployWstEthOracleMiddleware(isProdEnv, address(WstETH_));
-        // LiquidationRewardsManager_ = _deployLiquidationRewardsManager(isProdEnv, address(WstETH_));
-        // Usdn_ = _deployUsdn(isProdEnv);
-        // Sdex_ = _deploySdex();
+        // deploy contracts
+        WstEthOracleMiddleware_ = _deployWstEthOracleMiddleware(isProdEnv, address(WstETH_));
+        LiquidationRewardsManager_ = _deployLiquidationRewardsManager(isProdEnv, address(WstETH_));
 
-        // // deploy the USDN protocol
-        // UsdnProtocol_ = _deployProtocol(Usdn_, Sdex_, WstETH_, WstEthOracleMiddleware_, LiquidationRewardsManager_);
+        // deploy the USDN protocol
+        UsdnProtocol_ = _deployProtocol(Usdn_, Sdex_, WstETH_, WstEthOracleMiddleware_, LiquidationRewardsManager_);
 
-        // // deploy the rebalancer
-        // Rebalancer_ = _deployRebalancer(UsdnProtocol_);
+        // deploy the rebalancer
+        Rebalancer_ = _deployRebalancer(UsdnProtocol_);
 
-        // // set the rebalancer on the USDN protocol
-        // UsdnProtocol_.setRebalancer(Rebalancer_);
+        // set the rebalancer on the USDN protocol
+        UsdnProtocol_.setRebalancer(Rebalancer_);
 
-        // // grant USDN minter and rebaser roles to protocol
-        // Usdn_.grantRole(Usdn_.MINTER_ROLE(), address(UsdnProtocol_));
-        // Usdn_.grantRole(Usdn_.REBASER_ROLE(), address(UsdnProtocol_));
-        // // renounce admin role on the USDN token, no-one can later change roles
-        // Usdn_.renounceRole(Usdn_.DEFAULT_ADMIN_ROLE(), deployerAddress);
+        // grant USDN minter and rebaser roles to protocol
+        Usdn_.grantRole(Usdn_.MINTER_ROLE(), address(UsdnProtocol_));
+        Usdn_.grantRole(Usdn_.REBASER_ROLE(), address(UsdnProtocol_));
+        // renounce admin role on the USDN token, no-one can later change roles
+        Usdn_.renounceRole(Usdn_.DEFAULT_ADMIN_ROLE(), deployerAddress);
 
-        // // approve wstETH spending for initialization
-        // WstETH_.approve(address(UsdnProtocol_), depositAmount + longAmount);
+        // approve wstETH spending for initialization
+        WstETH_.approve(address(UsdnProtocol_), depositAmount + longAmount);
 
-        // if (depositAmount > 0 && longAmount > 0) {
-        //     _initializeUsdnProtocol(isProdEnv, UsdnProtocol_, WstEthOracleMiddleware_, depositAmount, longAmount);
-        // }
+        if (depositAmount > 0 && longAmount > 0) {
+            _initializeUsdnProtocol(isProdEnv, UsdnProtocol_, WstEthOracleMiddleware_, depositAmount, longAmount);
+        }
 
-        // vm.stopBroadcast();
+        vm.stopBroadcast();
     }
 
     function _deployProtocol(
