@@ -26,6 +26,27 @@ contract Utils is Script {
         }
     }
 
+    function cleanAndBuildContracts() external {
+        _cleanOutDir();
+        _buildContracts();
+    }
+
+    function _cleanOutDir() internal {
+        string[] memory inputs = new string[](2);
+        inputs[0] = "forge";
+        inputs[1] = "clean";
+        _runCommand(inputs);
+    }
+
+    function _buildContracts() internal {
+        string[] memory inputs = new string[](4);
+        inputs[0] = "forge";
+        inputs[1] = "build";
+        inputs[2] = "--skip";
+        inputs[3] = "test";
+        _runCommand(inputs);
+    }
+
     /**
      * @notice Build the command to run the functionClashes.ts script
      * @return inputs The command to run the functionClashes.ts script

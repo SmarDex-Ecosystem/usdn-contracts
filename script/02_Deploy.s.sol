@@ -61,6 +61,15 @@ contract Deploy is Script {
         bool success = utils.validateProtocol();
         require(success, "Protocol validation failed");
 
+        ChainId chain;
+        if (block.chainid == 1) {
+            chain = ChainId.mainnet;
+        } else if (block.chainid == 11_155_111) {
+            chain = ChainId.sepolia;
+        } else {
+            chain = ChainId.fork;
+        }
+
         try vm.envAddress("DEPLOYER_ADDRESS") {
             deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
         } catch {
@@ -74,13 +83,15 @@ contract Deploy is Script {
             vm.setEnv("ETHERSCAN_API_KEY", "XXXXXXXXXXXXXXXXX");
         }
 
-        ChainId chain;
-        if (block.chainid == 1) {
-            chain = ChainId.mainnet;
-        } else if (block.chainid == 11_155_111) {
-            chain = ChainId.sepolia;
-        } else {
-            chain = ChainId.fork;
+        try vm.envString("RPC_URL") { }
+        catch {
+            if (chain == ChainId.sepolia) {
+                vm.setEnv("RPC_URL", "https://sepolia.gateway.tenderly.co");
+            } else if (chain == ChainId.mainnet) {
+                vm.setEnv("RPC_URL", "https://eth.llamarpc.com");
+            } else {
+                vm.setEnv("RPC_URL", "http://localhost:8545");
+            }
         }
 
         bool isProdEnv = chain != ChainId.fork;
@@ -145,6 +156,9 @@ contract Deploy is Script {
         WstEthOracleMiddleware wstEthOracleMiddleware,
         LiquidationRewardsManager liquidationRewardsManager
     ) internal returns (IUsdnProtocol usdnProtocol_) {
+        // clean and build contracts for openzeppelin module
+        utils.cleanAndBuildContracts();
+
         // we need to allow external library linking for the openzeppelin module
         Options memory opts;
         // we need to allow constructors for the UsdnProtocolSepolia safeguard mechanism
@@ -359,7 +373,7 @@ contract Deploy is Script {
         inputs[0] = "cast";
         inputs[1] = "call";
         inputs[2] = "-r";
-        inputs[3] = vm.envString("RPC_URL");
+        inputs[3] = "https://ethereum-rpc.publicnode.com";
         inputs[4] = "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0";
         inputs[5] = "stEthPerToken()";
         bytes memory result = vm.ffi(inputs);
@@ -367,9 +381,9 @@ contract Deploy is Script {
 
         vm.startBroadcast(deployerAddress);
         wsteth.setStEthPerToken(stEthPerToken);
-        vm.stopBroadcast();
 
         Usdn_ = new Usdn(address(0), address(0));
+        vm.stopBroadcast();
 
         string[] memory inputs2 = new string[](6);
         inputs2[0] = "cast";
