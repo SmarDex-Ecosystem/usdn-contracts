@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { HugeUintFixture } from "./utils/Fixtures.sol";
 
@@ -25,7 +25,7 @@ contract TestHugeUintSub is HugeUintFixture {
      * @custom:when The `sub` function is called with `uint512.max` and 1
      * @custom:then The result is equal to `uint512.max - 1`
      */
-    function test_sub() public {
+    function test_sub() public pure {
         HugeUint.Uint512 memory a = HugeUint.Uint512(0, 69);
         HugeUint.Uint512 memory b = HugeUint.Uint512(0, 42);
         HugeUint.Uint512 memory res = HugeUint.sub(a, b);

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
@@ -30,7 +30,7 @@ library UsdnProtocolActionsLongLibrary {
      * @param isLiquidationPending Whether a liquidation is pending
      * @param priceWithFees The price of the position with fees
      * @param liquidationPrice The liquidation price of the position
-     * @param positionValue The value of the position
+     * @param positionValue The value of the position. The amount the user will receive when closing the position
      */
     struct ValidateClosePositionWithActionData {
         bool isLiquidationPending;
@@ -233,7 +233,11 @@ library UsdnProtocolActionsLongLibrary {
         });
         (data.posId.tickVersion, data.posId.index,) =
             ActionsUtils._saveNewPosition(s, data.posId.tick, long, data.liquidationPenalty);
-        s._balanceLong += long.amount;
+        // because of the position fee, the position value is smaller than the amount
+        s._balanceLong += data.positionValue;
+        // positionValue must be smaller than or equal to amount, because the adjustedPrice (with fee) is larger than
+        // or equal to the current price
+        s._balanceVault += long.amount - data.positionValue;
         posId_ = data.posId;
 
         amountToRefund_ =
@@ -285,7 +289,7 @@ library UsdnProtocolActionsLongLibrary {
 
         if (isValidated_ || liquidated_) {
             Core._clearPendingAction(s, validator, rawIndex);
-            return (pending.securityDepositValue, isValidated_, liquidated_);
+            securityDepositValue_ = pending.securityDepositValue;
         }
     }
 
@@ -368,7 +372,11 @@ library UsdnProtocolActionsLongLibrary {
             (maxLeverageData.newPosId.tickVersion, maxLeverageData.newPosId.index,) = ActionsUtils._saveNewPosition(
                 s, maxLeverageData.newPosId.tick, data.pos, maxLeverageData.liquidationPenalty
             );
-            // no long balance update is necessary (collateral didn't change)
+
+            // adjust the balances to reflect the new value of the position
+            uint256 updatedPosValue =
+                Utils.positionValue(data.pos.totalExpo, data.currentPrice, data.liqPriceWithoutPenalty);
+            _validateOpenPositionUpdateBalances(s, updatedPosValue, data.oldPosValue);
 
             emit IUsdnProtocolEvents.LiquidationPriceUpdated(
                 Types.PositionId({
@@ -408,6 +416,10 @@ library UsdnProtocolActionsLongLibrary {
                 HugeUint.wrap(expoAfter * unadjustedTickPrice)
             ).sub(HugeUint.wrap(expoBefore * unadjustedTickPrice));
         }
+
+        // adjust the balances to reflect the new value of the position
+        uint256 newPosValue = Utils.positionValue(expoAfter, data.currentPrice, data.liqPriceWithoutPenalty);
+        _validateOpenPositionUpdateBalances(s, newPosValue, data.oldPosValue);
 
         isValidated_ = true;
         emit IUsdnProtocolEvents.ValidatedOpenPosition(
@@ -463,7 +475,7 @@ library UsdnProtocolActionsLongLibrary {
         }
 
         amountToRefund_ =
-            ActionsUtils._createClosePendingAction(s, validator, to, posId, amountToClose, securityDepositValue, data);
+            ActionsUtils._createClosePendingAction(s, to, validator, posId, amountToClose, securityDepositValue, data);
 
         s._balanceLong -= data.tempPositionValue;
 
@@ -511,7 +523,7 @@ library UsdnProtocolActionsLongLibrary {
 
         if (isValidated_ || liquidated_) {
             Core._clearPendingAction(s, validator, rawIndex);
-            return (pending.securityDepositValue, isValidated_, liquidated_);
+            securityDepositValue_ = pending.securityDepositValue;
         }
     }
 
@@ -639,5 +651,33 @@ library UsdnProtocolActionsLongLibrary {
             assetToTransfer,
             assetToTransfer.toInt256() - Utils.toInt256(long.closeAmount)
         );
+    }
+
+    /**
+     * @notice Update the protocol balances during `validateOpenPosition` to reflect the new entry price of the
+     * position
+     * @dev We need to adjust the balances because the position that was created during the `initiateOpenPosition` might
+     * have gained or lost some value, and we need to reflect that the position value is now `newPosValue`
+     * Any potential PnL on that temporary position must be "cancelled" so that it doesn't affect the other positions
+     * and the vault
+     * @param s The storage of the protocol
+     * @param newPosValue The new value of the position
+     * @param oldPosValue The value of the position at the current price, using its old parameters
+     */
+    function _validateOpenPositionUpdateBalances(Types.Storage storage s, uint256 newPosValue, uint256 oldPosValue)
+        private
+    {
+        if (newPosValue > oldPosValue) {
+            // the long side is missing some value, we need to take it from the vault
+            uint256 diff = newPosValue - oldPosValue;
+            s._balanceVault -= diff;
+            s._balanceLong += diff;
+        } else if (newPosValue < oldPosValue) {
+            // the long side has too much value, we need to give it to the vault side
+            uint256 diff = oldPosValue - newPosValue;
+            s._balanceVault += diff;
+            s._balanceLong -= diff;
+        }
+        // if both are equal, no action is needed
     }
 }

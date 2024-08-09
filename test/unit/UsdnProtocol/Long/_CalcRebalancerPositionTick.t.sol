@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
@@ -23,7 +23,7 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
      * @custom:when _calcRebalancerPositionTick is called
      * @custom:then The result is the expected tick
      */
-    function test_calcRebalancerPositionTick() public {
+    function test_calcRebalancerPositionTick() public view {
         uint256 maxLeverage = protocol.getMaxLeverage();
         uint256 totalExpo = 295 ether;
         uint256 missingTradingExpo = vaultBalance + longBalance - totalExpo;
@@ -57,7 +57,7 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
      * @custom:when _calcRebalancerPositionTick is called with too much trading expo to fill
      * @custom:then The result has been capped to the protocol's max leverage
      */
-    function test_calcRebalancerPositionTickCappedByTheProtocolMaxLeverage() public {
+    function test_calcRebalancerPositionTickCappedByTheProtocolMaxLeverage() public view {
         uint256 rebalancerMaxLeverage = protocol.getMaxLeverage() + 1;
         uint256 totalExpo = 200 ether;
         uint128 amount = 1 ether;
@@ -93,7 +93,7 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
      * @custom:when _calcRebalancerPositionTick is called with too little trading expo to fill
      * @custom:then The result is the expected tick capped to the protocol's min leverage
      */
-    function test_calcRebalancerPositionTickCappedByTheMinLeverage() public {
+    function test_calcRebalancerPositionTickCappedByTheMinLeverage() public view {
         uint256 rebalancerMaxLeverage = protocol.getMaxLeverage();
         uint256 totalExpo = vaultBalance + longBalance - 1;
         uint128 amount = 1 ether;
@@ -130,7 +130,7 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
      * @custom:when _calcRebalancerPositionTick is called with too much trading expo to fill
      * @custom:then The result is the expected tick capped to the rebalancer max's leverage
      */
-    function test_calcRebalancerPositionTickCappedByTheRebalancerMaxLeverage() public {
+    function test_calcRebalancerPositionTickCappedByTheRebalancerMaxLeverage() public view {
         uint256 rebalancerMaxLeverage = protocol.getMaxLeverage() / 2;
         uint256 totalExpo = 200 ether;
         uint128 amount = 1 ether;
@@ -167,7 +167,7 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
      * the protocol's min leverage
      * @custom:then The result is the expected tick capped by the protocol's min leverage
      */
-    function test_calcRebalancerPositionTickCappedByTheRebalancerMaxLeverageBelowTheMinLeverage() public {
+    function test_calcRebalancerPositionTickCappedByTheRebalancerMaxLeverageBelowTheMinLeverage() public view {
         uint256 rebalancerMaxLeverage = protocol.getMinLeverage() - 1;
         uint256 totalExpo = vaultBalance + longBalance - 1;
         uint128 amount = 1 ether;
@@ -202,7 +202,7 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
      * @custom:when _calcRebalancerPositionTick is called with no trading expo to fill
      * @custom:then The result is NO_POSITION_TICK sentinel value
      */
-    function test_calcRebalancerPositionTickWithNoTradingExpoToFill() public {
+    function test_calcRebalancerPositionTickWithNoTradingExpoToFill() public view {
         uint256 rebalancerMaxLeverage = protocol.getMaxLeverage() + 1;
         uint256 totalExpo = vaultBalance + longBalance;
         uint128 amount = 1 ether;

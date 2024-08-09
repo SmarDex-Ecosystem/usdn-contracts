@@ -1,6 +1,6 @@
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
-import { basename } from 'path';
-import { AbiError, AbiEvent, AbiFunction, formatAbiItem } from 'abitype';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { basename } from 'node:path';
+import { type AbiError, type AbiEvent, type AbiFunction, formatAbiItem } from 'abitype';
 import { Command } from 'commander';
 import { globSync } from 'glob';
 import { toEventSelector, toEventSignature, toFunctionSelector, toFunctionSignature } from 'viem';
@@ -11,11 +11,49 @@ type EnumMember = {
   name: string;
 };
 
-type EnumNode = {
+type Node = {
   nodeType: string;
+};
+
+type NonterminalNode = Node & {
+  nodes: (NonterminalNode | EnumNode)[];
+};
+
+type EnumNode = Node & {
   canonicalName: string;
   members: EnumMember[];
 };
+
+function isNonterminal(node: Node): node is NonterminalNode {
+  return node.nodeType === 'ContractDefinition'; // can add more types later if necessary
+}
+
+function isEnum(node: Node): node is EnumNode {
+  return node.nodeType === 'EnumDefinition';
+}
+
+function getEnums(parentNode: NonterminalNode) {
+  const enums: Map<string, string> = new Map();
+  for (const node of parentNode.nodes) {
+    if (isNonterminal(node)) {
+      const childrenEnums = getEnums(node);
+      for (const item of childrenEnums) {
+        enums.set(item[0], item[1]);
+      }
+    } else if (isEnum(node)) {
+      const members = node.members.map((member: EnumMember) => `  ${member.name}`);
+      enums.set(
+        node.canonicalName,
+        `export enum ${sanitizeEnumName(node.canonicalName)} {\n${members.join(',\n')}\n};\n`,
+      );
+    }
+  }
+  return enums;
+}
+
+function sanitizeEnumName(canonicalName: string) {
+  return canonicalName.replace('.', '');
+}
 
 const program = new Command();
 
@@ -27,7 +65,7 @@ program
 
 const options = program.opts();
 const glob = options.glob || '**/*.sol';
-const DEBUG: boolean = options.debug ? true : false;
+const DEBUG: boolean = !!options.debug;
 
 const solFiles = globSync(`src/${glob}`);
 if (DEBUG) console.log('files:', solFiles);
@@ -81,19 +119,16 @@ for (const name of solFiles) {
 
 // Get all enums
 const outFiles = globSync('out/**/*.json', { withFileTypes: true });
-if (DEBUG) console.log('artifacts:', outFiles);
 
 const allEnums: Map<string, string> = new Map();
 for (const artifact of outFiles) {
   try {
+    if (DEBUG) console.log('processing file', artifact.fullpath());
     const file = readFileSync(artifact.fullpath());
-    const {
-      ast: { nodes },
-    } = JSON.parse(file.toString());
-    const enums = nodes.filter((node: EnumNode) => node.nodeType === 'EnumDefinition');
-    for (const enum_ of enums) {
-      const members = enum_.members.map((member: EnumMember) => `  ${member.name}`);
-      allEnums.set(enum_.canonicalName, `export enum ${enum_.canonicalName} {\n${members.join(',\n')}\n};\n`);
+    const { ast } = JSON.parse(file.toString());
+    const enums = getEnums(ast as NonterminalNode);
+    for (const item of enums) {
+      allEnums.set(item[0], item[1]);
     }
   } catch {
     console.log(`${artifact.fullpath()} does not exist`);

@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-import { USER_1 } from "../../../utils/Constants.sol";
-import { OracleMiddlewareBaseFixture } from "../utils/Fixtures.sol";
+import { USER_1 } from "../../../../utils/Constants.sol";
+import { OracleMiddlewareWithRedstoneFixture } from "../../utils/Fixtures.sol";
 
-import { IOracleMiddlewareErrors } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
-import { IOracleMiddlewareEvents } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareEvents.sol";
+import { IOracleMiddlewareErrors } from "../../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
+import { IOracleMiddlewareEvents } from "../../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareEvents.sol";
 
 /**
  * @custom:feature The `setRedstoneRecentPriceDelay` function of `RedstoneOracle`
  */
-contract TestSetRedstoneRecentPriceDelay is OracleMiddlewareBaseFixture {
+contract TestSetRedstoneRecentPriceDelay is OracleMiddlewareWithRedstoneFixture {
     function setUp() public override {
         super.setUp();
     }
@@ -23,7 +23,7 @@ contract TestSetRedstoneRecentPriceDelay is OracleMiddlewareBaseFixture {
      * @custom:when Non admin wallet trigger `setRedstoneRecentPriceDelay`
      * @custom:then functions should revert with custom Ownable error
      */
-    function test_RevertWhen_nonAdminWalletCallSetRedstoneRecentPriceDelay() external {
+    function test_RevertWhen_nonAdminWalletCallSetRedstoneRecentPriceDelay() public {
         vm.startPrank(USER_1);
         // Ownable contract custom error
         bytes memory customError = abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, USER_1);
@@ -38,7 +38,7 @@ contract TestSetRedstoneRecentPriceDelay is OracleMiddlewareBaseFixture {
      * @custom:when The result of the function is compared to 45
      * @custom:then It should succeed
      */
-    function test_recentPriceDelay() public {
+    function test_recentPriceDelay() public view {
         assertEq(oracleMiddleware.getRedstoneRecentPriceDelay(), 45);
     }
 

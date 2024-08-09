@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
@@ -42,7 +42,7 @@ contract TestUsdnProtocolLongFlashClosePosition is UsdnProtocolBaseFixture {
      * @custom:then The provided position is closed
      * @custom:and InitiatedClosePosition and ValidatedClosePosition events are emitted
      */
-    function test_flashClosePosition() external {
+    function test_flashClosePosition() public {
         (Position memory pos,) = protocol.getLongPosition(posId);
 
         uint256 longPositionsCountBefore = protocol.getTotalLongPositions();

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
@@ -36,11 +36,10 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
      * @custom:when The `_checkImbalanceLimitOpen` function is called with values above the open limit
      * @custom:then The transaction should not revert
      */
-    function test_checkImbalanceLimitOpenDisabled() public {
+    function test_checkImbalanceLimitOpenDisabled() public adminPrank {
         (, uint256 longAmount, uint256 totalExpoValueToLimit) = _getOpenLimitValues();
 
         // disable open limit
-        vm.prank(ADMIN);
         protocol.setExpoImbalanceLimits(0, 200, 600, 600, 300);
 
         protocol.i_checkImbalanceLimitOpen(totalExpoValueToLimit + 1, longAmount);

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
@@ -18,7 +18,7 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
     PositionId private _posId;
     uint128 private _positionAmount = 1 ether;
 
-    function setUp() external {
+    function setUp() public {
         _setUp(DEFAULT_PARAMS);
 
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
@@ -40,7 +40,7 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
      * @custom:then The position should be deleted from the tick array
      * @custom:and the protocol's state should be updated
      */
-    function test_removeAmountFromPosition_removingEverythingDeletesThePosition() external {
+    function test_removeAmountFromPosition_removingEverythingDeletesThePosition() public {
         (Position memory posBefore,) = protocol.getLongPosition(_posId);
         uint256 bitmapIndexBefore = protocol.findLastSetInTickBitmap(_posId.tick);
         uint256 totalExpoBefore = protocol.getTotalExpo();
@@ -101,7 +101,7 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
      * @custom:then The position should be updated
      * @custom:and the protocol's state should be updated
      */
-    function test_removeAmountFromPosition_removingSomeAmountUpdatesThePosition() external {
+    function test_removeAmountFromPosition_removingSomeAmountUpdatesThePosition() public {
         (Position memory posBefore,) = protocol.getLongPosition(_posId);
         uint256 bitmapIndexBefore = protocol.findLastSetInTickBitmap(_posId.tick);
         uint256 totalExpoBefore = protocol.getTotalExpo();

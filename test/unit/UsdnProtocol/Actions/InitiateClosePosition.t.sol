@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
@@ -47,7 +47,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:when The owner of the position calls initiateClosePosition with an amount too high
      * @custom:then The call reverts
      */
-    function test_RevertWhen_closePartialPositionWithAmountHigherThanPositionAmount() external {
+    function test_RevertWhen_closePartialPositionWithAmountHigherThanPositionAmount() public {
         bytes memory priceData = abi.encode(params.initialPrice);
         uint128 amountToClose = POSITION_AMOUNT + 1;
 
@@ -68,7 +68,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * an amount higher than POSITION_AMOUNT - minLongPosition
      * @custom:then The call reverts with the UsdnProtocolLongPositionTooSmall error
      */
-    function test_RevertWhen_closePartialPositionWithAmountRemainingLowerThanMinLongPosition() external {
+    function test_RevertWhen_closePartialPositionWithAmountRemainingLowerThanMinLongPosition() public {
         vm.prank(ADMIN);
         protocol.setMinLongPosition(POSITION_AMOUNT / 2);
 
@@ -118,10 +118,10 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:when The owner of the position calls initiateClosePosition with 0 as the amount to close
      * @custom:then The call reverts
      */
-    function test_RevertWhen_closePartialPositionWithZeroAmount() external {
+    function test_RevertWhen_closePartialPositionWithZeroAmount() public {
         bytes memory priceData = abi.encode(params.initialPrice);
 
-        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolAmountToCloseIsZero.selector));
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolZeroAmount.selector));
         protocol.i_initiateClosePosition(address(this), address(this), address(this), posId, 0, 0, priceData);
     }
 
@@ -131,14 +131,14 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:when The owner of the position calls initiateClosePosition with half of the amount
      * @custom:then The call reverts because the position is not valid anymore
      */
-    function test_RevertWhen_closePartialPositionWithAnOutdatedTick() external {
+    function test_RevertWhen_closePartialPositionWithAnOutdatedTick() public {
         _waitBeforeLiquidation();
         bytes memory priceData = abi.encode(protocol.getEffectivePriceForTick(posId.tick));
 
         // we need wait delay to make the new price data fresh
         _waitDelay();
         // Liquidate the position
-        protocol.testLiquidate(priceData, 1);
+        protocol.mockLiquidate(priceData, 1);
         (, uint256 version) = protocol.i_tickHash(posId.tick);
         assertGt(version, posId.tickVersion, "The tick should have been liquidated");
 
@@ -163,7 +163,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:when User calls initiateClosePosition with an amount of ether greater than the validation cost
      * @custom:then The protocol refunds the amount sent
      */
-    function test_initiateClosePositionRefundExcessEther() external {
+    function test_initiateClosePositionRefundExcessEther() public {
         bytes memory priceData = abi.encode(params.initialPrice);
         uint256 etherBalanceBefore = address(this).balance;
 
@@ -185,7 +185,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:when User calls initiateClosePosition with valid price data for the pending action
      * @custom:then The user validates the pending action
      */
-    function test_initiateClosePositionValidatePendingAction() external {
+    function test_initiateClosePositionValidatePendingAction() public {
         bytes memory priceData = abi.encode(params.initialPrice);
         // Initiate an open position action for another user
         setUpUserPositionInLong(
@@ -223,7 +223,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:when User calls initiateClosePosition
      * @custom:then The user initiates a close position action for his position
      */
-    function test_initiateClosePosition() external {
+    function test_initiateClosePosition() public {
         bytes memory priceData = abi.encode(params.initialPrice);
 
         vm.expectEmit();
@@ -242,7 +242,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:when The owner tries to close the position
      * @custom:then The transaction reverts with UsdnProtocolPositionNotValidated
      */
-    function test_RevertWhen_initiateClosePendingPosition() external {
+    function test_RevertWhen_initiateClosePendingPosition() public {
         bytes memory priceData = abi.encode(params.initialPrice);
 
         wstETH.mintAndApprove(address(this), POSITION_AMOUNT, address(protocol), type(uint256).max);
@@ -268,7 +268,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:and an InitiatedClosePosition event is emitted
      * @custom:and the position is deleted
      */
-    function test_internalInitiateClosePosition() external {
+    function test_internalInitiateClosePosition() public {
         _internalInitiateClosePositionScenario(address(this), address(this));
     }
 
@@ -281,7 +281,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:and an InitiatedClosePosition event is emitted
      * @custom:and the position is deleted
      */
-    function test_internalInitiateClosePositionForAnotherUser() external {
+    function test_internalInitiateClosePositionForAnotherUser() public {
         _internalInitiateClosePositionScenario(USER_1, address(this));
     }
 
@@ -294,7 +294,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:and an {InitiatedClosePosition} event is emitted
      * @custom:and the position is deleted
      */
-    function test_internalInitiateClosePositionDifferentValidator() external {
+    function test_internalInitiateClosePositionDifferentValidator() public {
         _internalInitiateClosePositionScenario(address(this), USER_1);
     }
 
@@ -309,7 +309,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:and an {InitiatedClosePosition} event is emitted
      * @custom:and the position is deleted
      */
-    function test_internalInitiateClosePositionForAnotherUserDifferentValidator() external {
+    function test_internalInitiateClosePositionForAnotherUserDifferentValidator() public {
         _internalInitiateClosePositionScenario(USER_1, USER_2);
     }
 
@@ -347,7 +347,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:and an InitiatedClosePosition event is emitted
      * @custom:and the position still exists
      */
-    function test_internalInitiateClosePositionPartially() external {
+    function test_internalInitiateClosePositionPartially() public {
         uint128 amountToClose = POSITION_AMOUNT / 2;
         uint256 totalLongPositionBefore = protocol.getTotalLongPositions();
         TickData memory tickData = protocol.getTickData(posId.tick);

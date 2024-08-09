@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
-import { ADMIN } from "../../utils/Constants.sol";
 import { RebalancerFixture } from "./utils/Fixtures.sol";
 
 /**
@@ -49,7 +48,7 @@ contract TestRebalancer is RebalancerFixture {
      * @custom:when The getAsset function is called
      * @custom:then The value of the asset should be equal to the USDN protocol asset contract
      */
-    function test_asset() public {
+    function test_asset() public view {
         assertEq(address(usdnProtocol.getAsset()), address(rebalancer.getAsset()));
     }
 
@@ -59,7 +58,7 @@ contract TestRebalancer is RebalancerFixture {
      * @custom:when The getUsdnProtocol function is called
      * @custom:then The value of the _usdnProtocol should be equal to the protocol contract address
      */
-    function test_usdnProtocol() public {
+    function test_usdnProtocol() public view {
         assertEq(address(usdnProtocol), address(rebalancer.getUsdnProtocol()));
     }
 
@@ -69,7 +68,7 @@ contract TestRebalancer is RebalancerFixture {
      * @custom:when The getPositionVersion function is called
      * @custom:then The value of the _positionVersion should be equal to 0
      */
-    function test_positionVersion() public {
+    function test_positionVersion() public view {
         assertEq(0, rebalancer.getPositionVersion());
     }
 
@@ -79,7 +78,7 @@ contract TestRebalancer is RebalancerFixture {
      * @custom:when The getPositionMaxLeverage function is called
      * @custom:then The value of the _positionMaxLeverage should be equal to the USDN protocol's max leverage
      */
-    function test_getPositionMaxLeverage() public {
+    function test_getPositionMaxLeverage() public view {
         assertEq(rebalancer.getPositionMaxLeverage(), usdnProtocol.getMaxLeverage());
     }
 
@@ -89,7 +88,7 @@ contract TestRebalancer is RebalancerFixture {
      * @custom:when The getPositionMaxLeverage function is called
      * @custom:then The returned value should be equal to the USDN protocol's max leverage
      */
-    function test_getPositionMaxLeverageWhenHigherThanProtocol() public {
+    function test_getPositionMaxLeverageWhenHigherThanProtocol() public adminPrank {
         // Sanity check
         assertEq(
             rebalancer.getPositionMaxLeverage(),
@@ -98,7 +97,6 @@ contract TestRebalancer is RebalancerFixture {
         );
 
         uint256 protocolMaxLeverage = usdnProtocol.getMaxLeverage() - 1;
-        vm.prank(ADMIN);
         usdnProtocol.setMaxLeverage(protocolMaxLeverage);
 
         assertEq(
@@ -114,7 +112,7 @@ contract TestRebalancer is RebalancerFixture {
      * @custom:when The getMinAssetDeposit function is called
      * @custom:then The value of the _minAssetDeposit should be equal to the protocol _minLongPosition
      */
-    function test_minAssetDeposit() public {
+    function test_minAssetDeposit() public view {
         assertEq(usdnProtocol.getMinLongPosition(), rebalancer.getMinAssetDeposit());
     }
 }

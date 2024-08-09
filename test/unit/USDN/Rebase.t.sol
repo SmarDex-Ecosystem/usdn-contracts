@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { Vm } from "forge-std/Vm.sol";
 
@@ -26,7 +26,7 @@ contract TestUsdnRebase is UsdnTokenFixture {
      * @custom:when The `divisor` function is called
      * @custom:then The result is MAX_DIVISOR
      */
-    function test_getDivisor() public {
+    function test_getDivisor() public view {
         assertEq(usdn.divisor(), maxDivisor);
     }
 

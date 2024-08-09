@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { RebalancerFixture } from "../../../test/unit/Rebalancer/utils/Fixtures.sol";
 
@@ -27,9 +27,9 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
      * @custom:when The `initiateClosePosition` function is called with zero amount
      * @custom:then It should revert with `RebalancerInvalidAmount`
      */
-    function test_RevertWhen_rebalancerInvalidAmountZero() external {
+    function test_RevertWhen_rebalancerInvalidAmountZero() public {
         vm.expectRevert(IRebalancerErrors.RebalancerInvalidAmount.selector);
-        rebalancer.initiateClosePosition(0, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA);
+        rebalancer.initiateClosePosition(0, address(this), "", EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -37,9 +37,9 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
      * @custom:when The `initiateClosePosition` function is called with more than the user rebalancer amount
      * @custom:then It should revert with `RebalancerInvalidAmount`
      */
-    function test_RevertWhen_rebalancerInvalidAmountTooLarge() external {
+    function test_RevertWhen_rebalancerInvalidAmountTooLarge() public {
         vm.expectRevert(IRebalancerErrors.RebalancerInvalidAmount.selector);
-        rebalancer.initiateClosePosition(minAsset + 1, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA);
+        rebalancer.initiateClosePosition(minAsset + 1, address(this), "", EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -48,9 +48,9 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
      * lower than the rebalancer minimum amount
      * @custom:then It should revert with `RebalancerInvalidAmount`
      */
-    function test_RevertWhen_rebalancerInvalidAmountTooLow() external {
+    function test_RevertWhen_rebalancerInvalidAmountTooLow() public {
         vm.expectRevert(IRebalancerErrors.RebalancerInvalidAmount.selector);
-        rebalancer.initiateClosePosition(1, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA);
+        rebalancer.initiateClosePosition(1, address(this), "", EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -58,8 +58,8 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
      * @custom:when The `initiateClosePosition` function is called with pending assets
      * @custom:then It should revert with `RebalancerUserPending`
      */
-    function test_RevertWhen_rebalancerUserPending() external {
+    function test_RevertWhen_rebalancerUserPending() public {
         vm.expectRevert(IRebalancerErrors.RebalancerUserPending.selector);
-        rebalancer.initiateClosePosition(minAsset, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA);
+        rebalancer.initiateClosePosition(minAsset, address(this), "", EMPTY_PREVIOUS_DATA);
     }
 }

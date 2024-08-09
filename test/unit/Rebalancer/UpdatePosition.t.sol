@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { USER_1, USER_2 } from "../../utils/Constants.sol";
 import { RebalancerFixture } from "./utils/Fixtures.sol";
@@ -72,18 +72,17 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
         Types.PositionId memory newPosId = Types.PositionId({ tick: 200, tickVersion: 1, index: 3 });
         uint128 pendingAssetsBefore = rebalancer.getPendingAssetsAmount();
         uint128 positionVersionBefore = rebalancer.getPositionVersion();
+        uint256 defaultAccMultiplier = rebalancer.MULTIPLIER_FACTOR();
 
         vm.prank(address(usdnProtocol));
         vm.expectEmit();
-        emit PositionVersionUpdated(positionVersionBefore + 1);
+        emit PositionVersionUpdated(positionVersionBefore + 1, defaultAccMultiplier, pendingAssetsBefore, newPosId);
         rebalancer.updatePosition(newPosId, 0);
 
         // check the position data
         PositionData memory positionData = rebalancer.getPositionData(rebalancer.getPositionVersion());
         assertEq(positionData.amount, pendingAssetsBefore);
-        assertEq(
-            positionData.entryAccMultiplier, rebalancer.MULTIPLIER_FACTOR(), "Entry multiplier accumulator should be 1x"
-        );
+        assertEq(positionData.entryAccMultiplier, defaultAccMultiplier, "Entry multiplier accumulator should be 1x");
         assertEq(positionData.tick, newPosId.tick, "The tick of the position ID should be equal to the provided value");
         assertEq(
             positionData.tickVersion,
@@ -130,8 +129,11 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
 
         // simulate a profit of 10% when closing the position
         uint128 posVersion2Value = (USER_0_DEPOSIT_AMOUNT + USER_1_DEPOSIT_AMOUNT) * 11 / 10;
+        uint256 expectedEntryAccMul = rebalancer.MULTIPLIER_FACTOR() * 11 / 10;
         vm.expectEmit();
-        emit PositionVersionUpdated(positionVersionBefore + 2);
+        emit PositionVersionUpdated(
+            positionVersionBefore + 2, expectedEntryAccMul, posVersion2Value + user2DepositedAmount, posId2
+        );
         vm.prank(address(usdnProtocol));
         rebalancer.updatePosition(posId2, posVersion2Value);
 
@@ -146,7 +148,7 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
         assertEq(positionData.amount, posVersion2Value + user2DepositedAmount);
         assertEq(
             positionData.entryAccMultiplier,
-            rebalancer.MULTIPLIER_FACTOR() + rebalancer.MULTIPLIER_FACTOR() / 10,
+            expectedEntryAccMul,
             "Entry multiplier accumulator of the position should be 1.1x"
         );
         assertEq(positionData.tick, posId2.tick, "Tick mismatch");
@@ -181,7 +183,12 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
         vm.stopPrank();
 
         vm.expectEmit();
-        emit PositionVersionUpdated(positionVersionBefore + 2);
+        emit PositionVersionUpdated(
+            positionVersionBefore + 2,
+            rebalancer.MULTIPLIER_FACTOR(),
+            USER_0_DEPOSIT_AMOUNT + USER_1_DEPOSIT_AMOUNT,
+            posId2
+        );
         vm.prank(address(usdnProtocol));
         // 0 as a value here means there was no collateral left in the closed position
         rebalancer.updatePosition(posId2, 0);
@@ -218,7 +225,9 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
         uint128 positionVersionBefore = rebalancer.getPositionVersion();
 
         vm.expectEmit();
-        emit PositionVersionUpdated(positionVersionBefore + 1);
+        emit PositionVersionUpdated(
+            positionVersionBefore + 1, rebalancer.MULTIPLIER_FACTOR(), 0, Types.PositionId(noPositionTick, 0, 0)
+        );
         rebalancer.updatePosition(Types.PositionId(noPositionTick, 0, 0), 0);
         vm.stopPrank();
 

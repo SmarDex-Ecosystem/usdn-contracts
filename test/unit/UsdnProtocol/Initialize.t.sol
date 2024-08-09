@@ -1,11 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
+
+import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import { ADMIN, DEPLOYER } from "../../utils/Constants.sol";
+import { IUsdnProtocolHandler } from "../../utils/IUsdnProtocolHandler.sol";
 import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
 import { UsdnProtocolHandler } from "./utils/Handler.sol";
 
 import { Usdn } from "../../../src/Usdn/Usdn.sol";
+import { UsdnProtocolFallback } from "../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 
 /**
  * @custom:feature Test the functions linked to initialization of the protocol
@@ -18,24 +22,43 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
-        vm.startPrank(DEPLOYER);
+        vm.startPrank(ADMIN);
         usdn = new Usdn(address(0), address(0));
 
-        protocol = new UsdnProtocolHandler(
-            usdn,
-            sdex,
-            wstETH,
-            oracleMiddleware,
-            liquidationRewardsManager,
-            100, // tick spacing 100 = 1%
-            ADMIN // Fee collector
+        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
+        UsdnProtocolHandler test = new UsdnProtocolHandler();
+        address proxy = UnsafeUpgrades.deployUUPSProxy(
+            address(test),
+            abi.encodeCall(
+                UsdnProtocolHandler.initializeStorageHandler,
+                (
+                    usdn,
+                    sdex,
+                    wstETH,
+                    oracleMiddleware,
+                    liquidationRewardsManager,
+                    100, // tick spacing 100 = 1%
+                    ADMIN, // Fee collector
+                    Roles({
+                        setExternalAdmin: address(this),
+                        criticalFunctionsAdmin: address(this),
+                        setProtocolParamsAdmin: address(this),
+                        setUsdnParamsAdmin: address(this),
+                        setOptionsAdmin: address(this)
+                    }),
+                    protocolFallback
+                )
+            )
         );
+        protocol = IUsdnProtocolHandler(proxy);
+
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
 
-        protocol.transferOwnership(address(this));
+        protocol.beginDefaultAdminTransfer(address(this));
         vm.stopPrank();
-        protocol.acceptOwnership();
+        skip(1);
+        protocol.acceptDefaultAdminTransfer();
         wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
     }
 
@@ -59,7 +82,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
 
         vm.expectEmit();
-        emit InitiatedDeposit(address(this), address(this), INITIAL_DEPOSIT, block.timestamp);
+        emit InitiatedDeposit(address(this), address(this), INITIAL_DEPOSIT, block.timestamp, 0);
         vm.expectEmit();
         emit ValidatedDeposit(
             protocol.DEAD_ADDRESS(), protocol.DEAD_ADDRESS(), 0, protocol.MIN_USDN_SUPPLY(), block.timestamp
@@ -213,7 +236,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
 
         vm.expectEmit();
-        emit InitiatedDeposit(address(this), address(this), INITIAL_DEPOSIT, block.timestamp);
+        emit InitiatedDeposit(address(this), address(this), INITIAL_DEPOSIT, block.timestamp, 0);
         vm.expectEmit();
         emit ValidatedDeposit(
             protocol.DEAD_ADDRESS(), protocol.DEAD_ADDRESS(), 0, protocol.MIN_USDN_SUPPLY(), block.timestamp
