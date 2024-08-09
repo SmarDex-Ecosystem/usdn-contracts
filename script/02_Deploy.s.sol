@@ -2,7 +2,6 @@
 pragma solidity 0.8.26;
 
 import { Script } from "forge-std/Script.sol";
-import { Vm } from "forge-std/Vm.sol";
 
 import { AggregatorInterface } from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorInterface.sol";
 import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
@@ -378,8 +377,8 @@ contract Deploy is Script {
         vm.stopBroadcast();
 
         uint256 ethPrice = uint256(AggregatorInterface(0x694AA1769357215DE4FAC081bf1f309aDC325306).latestAnswer());
-        ethPrice *= 10_000_000_000;
-        uint256 liqPrice = ethPrice * stEthPerToken / 2_000_000_000_000_000_000;
+        ethPrice *= 1e10;
+        uint256 liqPrice = ethPrice * stEthPerToken / 2e18;
 
         sdex_ = Sdex(address(sdex));
         wstETH_ = WstETH(payable(address(wsteth)));
