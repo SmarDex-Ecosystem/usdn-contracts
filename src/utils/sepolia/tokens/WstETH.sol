@@ -64,8 +64,40 @@ contract WstETH is ERC20Permit, Ownable {
      * @param _wstETHAmount amount of wstETH
      * @return Amount of stETH for a given wstETH amount
      */
-    function getStETHByWstETH(uint256 _wstETHAmount) external view returns (uint256) {
+    function getStETHByWstETH(uint256 _wstETHAmount) public view returns (uint256) {
         return _wstETHAmount * _stEthPerToken / 1 ether;
+    }
+
+    /**
+     * @notice Exchanges wstETH to ETH
+     * @param _wstETHAmount amount of wstETH to unwrap in exchange for ETH
+     * @dev LIDO does not allow an instant withdrawal in ETH, this is for test purposes
+     * Requirements:
+     *  - `_wstETHAmount` must be non-zero
+     *  - `address(this).balance` must be superior or equal to getStETHByWstETH(_wstETHAmount)
+     *  - msg.sender must have at least `_wstETHAmount` wstETH.
+     * @return Amount of ETH user receives after unwrap
+     */
+    function withdraw(uint256 _wstETHAmount) external returns (uint256) {
+        require(_wstETHAmount > 0, "wstETH: zero amount unwrap not allowed");
+
+        uint256 ethAmount = getStETHByWstETH(_wstETHAmount);
+        require(address(this).balance >= ethAmount, "wstETH: not enough balance");
+
+        _burn(msg.sender, _wstETHAmount);
+        (bool success,) = msg.sender.call{ value: ethAmount }("");
+        require(success, "wstETH: ETH transfer failed");
+
+        return ethAmount;
+    }
+
+    /**
+     * @notice Withdraw the ether from the contract
+     * @dev To avoid loosing of the ETH after the tests
+     */
+    function sweep() external onlyOwner {
+        (bool success,) = msg.sender.call{ value: address(this).balance }("");
+        require(success, "wstETH: ETH transfer failed");
     }
 
     receive() external payable {

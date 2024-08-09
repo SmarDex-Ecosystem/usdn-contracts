@@ -41,4 +41,31 @@ contract TestSepoliaWstETH is Test {
         assertTrue(success);
         assertEq(wstETH.balanceOf(address(this)), 833_333_333_333_333_333 * 2);
     }
+
+    function test_withdraw() public {
+        uint256 ethAmount = 2 ether;
+        (bool success,) = address(wstETH).call{ value: ethAmount }("");
+        assertTrue(success);
+
+        uint256 balanceBefore = address(this).balance;
+        wstETH.withdraw(wstETH.balanceOf(address(this)));
+
+        assertEq(wstETH.balanceOf(address(this)), 0);
+        assertApproxEqAbs(balanceBefore + 2 ether, address(this).balance, 1);
+    }
+
+    function test_sweep() public {
+        uint256 ethAmount = 2 ether;
+        (bool success,) = address(wstETH).call{ value: ethAmount }("");
+        assertTrue(success);
+
+        uint256 balanceBefore = address(this).balance;
+        wstETH.sweep();
+
+        assertEq(address(wstETH).balance, 0);
+        assertGt(wstETH.balanceOf(address(this)), 0);
+        assertEq(balanceBefore + 2 ether, address(this).balance);
+    }
+
+    receive() external payable { }
 }
