@@ -21,8 +21,6 @@ Environment variables can be used to control the script execution:
 - `USDN_ADDRESS`: required if running `02_Deploy.s.sol` in a production environment (not fork)
 - `INIT_DEPOSIT_AMOUNT`: amount to use for the `initialize` function call (if not provided, then initialization is skipped).
 - `INIT_LONG_AMOUNT`: amount to use for the `initialize` function call (if not provided, then initialization is skipped).
-- `INIT_LONG_LIQPRICE`: desired liquidation price for the initial long position. For fork deployment, this value is
-  ignored and the price is calculated to get a leverage of ~2x.
 - `GET_WSTETH`: whether to get wstETH by sending ether to the wstETH contract or not. Only applicable if `WSTETH_ADDRESS` is given.
 
 Example using the real wstETH and depositing 1 ETH for both vault side and long side (with liquidation
@@ -37,7 +35,6 @@ export SDEX_ADDRESS=0x5de8ab7e27f6e7a1fff3e5b337584aa43961beef
 export WSTETH_ADDRESS=0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0
 export INIT_DEPOSIT_AMOUNT=1000000000000000000
 export INIT_LONG_AMOUNT=1000000000000000000
-export INIT_LONG_LIQPRICE=1000000000000000000
 export PYTH_ADDRESS=0xDd24F84d36BF92C65F92307595335bdFab5Bbd21
 export PYTH_ETH_FEED_ID=0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace
 export REDSTONE_ETH_FEED_ID=0x4554480000000000000000000000000000000000000000000000000000000000

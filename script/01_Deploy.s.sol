@@ -97,7 +97,7 @@ contract Deploy is Script {
 
         _handlePostDeployment(UsdnProtocol_, Usdn_, Rebalancer_);
 
-        _initializeUsdnProtocol(isProdEnv, UsdnProtocol_, WstETH_, WstEthOracleMiddleware_, depositAmount, longAmount);
+        _initializeUsdnProtocol(UsdnProtocol_, WstETH_, WstEthOracleMiddleware_, depositAmount, longAmount);
     }
 
     /**
@@ -248,22 +248,24 @@ contract Deploy is Script {
     /**
      * @notice Deploy the USDN token and the WUSDN token
      * @dev Will return the already deployed ones if an address is in the env variables
-     * On mainet the deployer must have a nonce of 0
+     * On mainnet the deployer must have a nonce of 0
      * @return usdn_ The deployed Usdn contract
      * @return wusdn_ The deployed Wusdn contract
      */
     function _deployUsdnAndWusdn() internal returns (Usdn usdn_, Wusdn wusdn_) {
         if (chainId == ChainId.Mainnet) {
-            uint64 nounce = vm.getNonce(deployerAddress);
-            require(nounce == 0, "Nounce must be 0 on mainnet");
+            try vm.envAddress("USDN_ADDRESS") {
+                usdn_ = Usdn(vm.envAddress("USDN_ADDRESS"));
+            } catch {
+                revert("USDN_ADDRESS is required on mainnet");
+            }
+        } else {
+            vm.broadcast(deployerAddress);
+            usdn_ = new Usdn(address(0), address(0));
         }
 
-        vm.startBroadcast(deployerAddress);
-
-        usdn_ = new Usdn(address(0), address(0));
+        vm.broadcast(deployerAddress);
         wusdn_ = new Wusdn(usdn_);
-
-        vm.stopBroadcast();
     }
 
     /**
@@ -338,7 +340,6 @@ contract Deploy is Script {
 
     /**
      * @notice Initialize the USDN Protocol
-     * @param isProdEnv Env check
      * @param usdnProtocol The USDN protocol
      * @param wstETH The WstETH token
      * @param wstEthOracleMiddleware The WstETH oracle middleware
@@ -346,7 +347,6 @@ contract Deploy is Script {
      * @param longAmount The size of the long to open during the protocol initialization
      */
     function _initializeUsdnProtocol(
-        bool isProdEnv,
         IUsdnProtocol usdnProtocol,
         WstETH wstETH,
         WstEthOracleMiddleware wstEthOracleMiddleware,
@@ -354,8 +354,17 @@ contract Deploy is Script {
         uint256 longAmount
     ) internal {
         uint256 desiredLiqPrice;
-        if (isProdEnv) {
-            desiredLiqPrice = vm.envUint("INIT_LONG_LIQPRICE");
+        if (chainId == ChainId.Mainnet) {
+            uint256 stEthPerToken = wstETH.stEthPerToken();
+            uint256 ethPrice = utils.getLastChainlinkEthPrice();
+            // ~2x leverage
+            desiredLiqPrice = ethPrice * stEthPerToken / 2e18;
+        }
+        if (chainId == ChainId.Sepolia) {
+            uint256 stEthPerToken = wstETH.stEthPerToken();
+            uint256 ethPrice = utils.getLastChainlinkEthPriceSepolia();
+            // ~2x leverage
+            desiredLiqPrice = ethPrice * stEthPerToken / 2e18;
         } else {
             // for forks, we want a leverage of ~2x so we get the current
             // price from the middleware and divide it by two
@@ -434,7 +443,7 @@ contract Deploy is Script {
 
         vm.stopBroadcast();
 
-        uint256 stEthPerToken = utils.getStEthPerTokenMainet();
+        uint256 stEthPerToken = utils.getStEthPerTokenMainnet();
 
         vm.startBroadcast(deployerAddress);
 
@@ -444,10 +453,6 @@ contract Deploy is Script {
 
         vm.stopBroadcast();
 
-        uint256 ethPrice = utils.getLastChailinkEthPriceSepolia();
-        // ~2x leverage
-        uint256 liqPrice = ethPrice * stEthPerToken / 2e18;
-
         sdex_ = Sdex(address(sdex));
         wstETH_ = WstETH(payable(address(wsteth)));
 
@@ -455,7 +460,6 @@ contract Deploy is Script {
         vm.setEnv("PYTH_ETH_FEED_ID", "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace");
         vm.setEnv("CHAINLINK_ETH_PRICE_ADDRESS", "0x694AA1769357215DE4FAC081bf1f309aDC325306");
         vm.setEnv("CHAINLINK_GAS_PRICE_ADDRESS", vm.toString(address(mockFastGasGwei)));
-        vm.setEnv("INIT_LONG_LIQPRICE", vm.toString(liqPrice));
     }
 
     /**

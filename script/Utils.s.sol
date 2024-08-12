@@ -32,7 +32,7 @@ contract Utils is Script {
      * @notice Get the amount of stEth for a one wstEth on mainnet
      * @return stEthPerToken The amount of stEth for 1 wstEth
      */
-    function getStEthPerTokenMainet() public returns (uint256 stEthPerToken) {
+    function getStEthPerTokenMainnet() public returns (uint256 stEthPerToken) {
         string[] memory inputs = new string[](6);
         inputs[0] = "cast";
         inputs[1] = "call";
@@ -49,8 +49,18 @@ contract Utils is Script {
      * @notice Get the last Chainlink price for stEth in Sepolia
      * @return price The amount of stEth for 1 wstEth
      */
-    function getLastChailinkEthPriceSepolia() public view returns (uint256 price) {
+    function getLastChainlinkEthPriceSepolia() public view returns (uint256 price) {
         price = uint256(AggregatorInterface(0x694AA1769357215DE4FAC081bf1f309aDC325306).latestAnswer());
+        // chainlink give the price with 10^8 decimals, so we need to multiply it by 1e10
+        price *= 1e10;
+    }
+
+    /**
+     * @notice Get the last Chainlink price for stEth in Mainnet
+     * @return price The amount of stEth for 1 wstEth
+     */
+    function getLastChainlinkEthPrice() public view returns (uint256 price) {
+        price = uint256(AggregatorInterface(0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419).latestAnswer());
         // chainlink give the price with 10^8 decimals, so we need to multiply it by 1e10
         price *= 1e10;
     }
