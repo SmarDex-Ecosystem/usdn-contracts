@@ -108,7 +108,7 @@ contract Deploy is Script {
      * @param wstEthOracleMiddleware The WstETH oracle middleware
      * @param liquidationRewardsManager The liquidation rewards manager
      * @param chain The chain id
-     * @return usdnProtocol_ The deployed protcol
+     * @return usdnProtocol_ The deployed protocol
      */
     function _deployProtocol(
         Usdn usdn,
@@ -383,7 +383,7 @@ contract Deploy is Script {
     }
 
     /**
-     * @notice Handle post deployment tasks
+     * @notice Handle post-deployment tasks
      * @param usdnProtocol The USDN protocol
      * @param usdn The USDN token
      * @param rebalancer The rebalancer
@@ -397,7 +397,7 @@ contract Deploy is Script {
         // grant USDN minter and rebaser roles to protocol
         usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));
-        // renounce admin role on the USDN token, no-one can later change roles
+        // renounce admin role on the USDN token, no one can later change roles
         usdn.renounceRole(usdn.DEFAULT_ADMIN_ROLE(), deployerAddress);
 
         vm.stopBroadcast();
@@ -423,7 +423,7 @@ contract Deploy is Script {
 
     /**
      * @notice Handle the deployment of the periphery contracts for Sepolia
-     * @param wstEthNeeded The amount of WstETH needed for the initialisation
+     * @param wstEthNeeded The amount of WstETH needed for the initialization
      * @return usdn_ The USDN token
      * @return wusdn_ The WUSDN token
      * @return sdex_ The SDEX token
@@ -438,7 +438,7 @@ contract Deploy is Script {
         SdexSepolia sdex = new SdexSepolia();
         WstETHSepolia wsteth = new WstETHSepolia();
         MockFastGasGwei mockFastGasGwei = new MockFastGasGwei();
-        // mint needed wstETH for the initialisation to the deployer
+        // mint needed wstETH for the initialization to the deployer
         wsteth.mint(deployerAddress, wstEthNeeded);
 
         vm.stopBroadcast();

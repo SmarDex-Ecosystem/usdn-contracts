@@ -84,7 +84,7 @@ The parameters are the RPC URL and the deployed addresses of the 3 main contract
 
 ## Functions clashes
 
-This utility checks that two contracts doesn't have common function selector.
+This utility checks that two contracts don't have common function selector.
 We can specify a common base contract to filter wanted duplications.
 
 It can be used like so:

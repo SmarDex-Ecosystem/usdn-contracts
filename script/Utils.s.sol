@@ -61,7 +61,7 @@ contract Utils is Script {
      */
     function getLastChainlinkEthPrice() public view returns (uint256 price) {
         price = uint256(AggregatorInterface(0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419).latestAnswer());
-        // chainlink give the price with 10^8 decimals, so we need to multiply it by 1e10
+        // chainlink gives the price with 10^8 decimals, so we need to multiply it by 1e10
         price *= 1e10;
     }
 
@@ -76,7 +76,7 @@ contract Utils is Script {
 
     /**
      * @notice Function to run an external command with ffi
-     * @dev This function revert if the command fails
+     * @dev This function reverts if the command fails
      * @param inputs The command to run
      * @return The result of the command, printed to stdout
      */
