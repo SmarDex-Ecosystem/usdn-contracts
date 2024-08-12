@@ -117,12 +117,13 @@ contract Deploy is Script {
                     liquidationRewardsManager,
                     100, // tick spacing 100 = 1%
                     vm.envAddress("FEE_COLLECTOR"),
-                    Types.Roles({
-                        setExternalAdmin: deployerAddress,
-                        criticalFunctionsAdmin: deployerAddress,
-                        setProtocolParamsAdmin: deployerAddress,
-                        setUsdnParamsAdmin: deployerAddress,
-                        setOptionsAdmin: deployerAddress
+                    Types.Managers({
+                        setExternalManager: deployerAddress,
+                        criticalFunctionsManager: deployerAddress,
+                        setProtocolParamsManager: deployerAddress,
+                        setUsdnParamsManager: deployerAddress,
+                        setOptionsManager: deployerAddress,
+                        proxyUpgradeManager: deployerAddress
                     }),
                     protocolFallback
                 )
