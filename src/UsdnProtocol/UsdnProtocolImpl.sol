@@ -4,6 +4,7 @@ pragma solidity 0.8.26;
 import { AccessControlDefaultAdminRulesUpgradeable } from
     "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { UUPSUpgradeable } from "solady/src/utils/UUPSUpgradeable.sol";
 
 import { IBaseLiquidationRewardsManager } from "../interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
@@ -21,7 +22,8 @@ contract UsdnProtocolImpl is
     UsdnProtocolLong,
     UsdnProtocolVault,
     UsdnProtocolCore,
-    UsdnProtocolActions
+    UsdnProtocolActions,
+    UUPSUpgradeable
 {
     /// @inheritdoc IUsdnProtocolImpl
     function initializeStorage(
@@ -110,6 +112,13 @@ contract UsdnProtocolImpl is
         s._minLongPosition = 2 * 10 ** assetDecimals;
         s._protocolFallbackAddr = address(protocolFallback);
     }
+
+    /**
+     * @inheritdoc UUPSUpgradeable
+     * @notice Function to verify that the caller to upgrade the protocol is authorized
+     * @param implementation The address of the new implementation
+     */
+    function _authorizeUpgrade(address implementation) internal override onlyRole(PROXY_UPGRADE_ROLE) { }
 
     /**
      * @notice Delegates the call to the fallback contract

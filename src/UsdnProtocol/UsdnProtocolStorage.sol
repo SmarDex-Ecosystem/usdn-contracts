@@ -3,7 +3,6 @@ pragma solidity 0.8.26;
 
 import { AccessControlDefaultAdminRulesUpgradeable } from
     "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
-import { UUPSUpgradeable } from "solady/src/utils/UUPSUpgradeable.sol";
 
 import { IUsdnProtocolErrors } from "../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolStorage } from "../interfaces/UsdnProtocol/IUsdnProtocolStorage.sol";
@@ -14,8 +13,7 @@ abstract contract UsdnProtocolStorage is
     IUsdnProtocolErrors,
     IUsdnProtocolStorage,
     InitializableReentrancyGuard,
-    AccessControlDefaultAdminRulesUpgradeable,
-    UUPSUpgradeable
+    AccessControlDefaultAdminRulesUpgradeable
 {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
@@ -57,11 +55,4 @@ abstract contract UsdnProtocolStorage is
 
     /// @inheritdoc IUsdnProtocolStorage
     bytes32 public constant ADMIN_PROXY_UPGRADE_ROLE = keccak256("ADMIN_PROXY_UPGRADE_ROLE");
-
-    /**
-     * @inheritdoc UUPSUpgradeable
-     * @notice Function to verify that the caller to upgrade the protocol is authorized
-     * @param implementation The address of the new implementation
-     */
-    function _authorizeUpgrade(address implementation) internal override onlyRole(PROXY_UPGRADE_ROLE) { }
 }
