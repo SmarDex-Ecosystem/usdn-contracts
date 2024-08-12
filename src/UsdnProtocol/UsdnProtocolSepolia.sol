@@ -43,7 +43,7 @@ contract UsdnProtocolSepolia is UsdnProtocolImpl {
 
     constructor() {
         // never deploy on mainnet
-        require(block.chainid == 11_155_111, "only Sepolia");
+        require(block.chainid != 1, "no mainnet");
     }
 
     function sweep_6874531(address token, address to) external {

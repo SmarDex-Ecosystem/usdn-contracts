@@ -20,6 +20,7 @@ import { WstETH } from "../../../utils/WstEth.sol";
 import { MockChainlinkOnChain } from "../../Middlewares/utils/MockChainlinkOnChain.sol";
 import { RebalancerHandler } from "../../Rebalancer/utils/Handler.sol";
 import { UsdnProtocolHandler } from "./Handler.sol";
+import { UsdnProtocolHandlerSepolia } from "./HandlerSepolia.sol";
 import { MockOracleMiddleware } from "./MockOracleMiddleware.sol";
 
 import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
@@ -101,6 +102,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
     PositionId public initialPosition;
     uint256 public usdnInitialTotalSupply;
     address[] public users;
+    bool public sepolia;
 
     int24 internal _tickSpacing = 100; // tick spacing 100 = 1%
     PreviousActionsData internal EMPTY_PREVIOUS_DATA =
@@ -140,10 +142,16 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             });
         }
 
-        UsdnProtocolHandler test = new UsdnProtocolHandler();
+        UsdnProtocolHandler implementation;
+        if (sepolia) {
+            implementation = UsdnProtocolHandler(address(new UsdnProtocolHandlerSepolia()));
+        } else {
+            implementation = new UsdnProtocolHandler();
+        }
+
         UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
         address proxy = UnsafeUpgrades.deployUUPSProxy(
-            address(test),
+            address(implementation),
             abi.encodeCall(
                 UsdnProtocolHandler.initializeStorageHandler,
                 (
