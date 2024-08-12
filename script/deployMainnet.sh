@@ -39,6 +39,19 @@ while true; do
     esac
 done
 
+while true; do
+    read -p $'\n'"Do you wish to continue? (Yy/Nn) : " yn
+    case $yn in
+    [Yy]*)
+        break
+        ;;
+    [Nn]*)
+        exit 1
+        ;;
+    *) printf "\nPlease answer yes (Y/y) or no (N/n).\n" ;;
+    esac
+done
+
 if [ $ledger = true ]; then
     forge script -l --non-interactive -f $URL_ETH_MAINNET script/00_DeployUsdn.s.sol:DeployUsdn --broadcast
 else
