@@ -97,13 +97,7 @@ contract Deploy is Script {
 
         _handlePostDeployment(UsdnProtocol_, Usdn_, Rebalancer_);
 
-        if (depositAmount > 0 && longAmount > 0) {
-            vm.startBroadcast(deployerAddress);
-            _initializeUsdnProtocol(
-                isProdEnv, UsdnProtocol_, WstETH_, WstEthOracleMiddleware_, depositAmount, longAmount
-            );
-            vm.stopBroadcast();
-        }
+        _initializeUsdnProtocol(isProdEnv, UsdnProtocol_, WstETH_, WstEthOracleMiddleware_, depositAmount, longAmount);
     }
 
     function _deployProtocol(
@@ -266,6 +260,10 @@ contract Deploy is Script {
      * @return sdex_ The deployed contract
      */
     function _deploySdex() internal returns (Sdex sdex_) {
+        if (chainId == ChainId.Mainnet) {
+            return Sdex(0x5DE8ab7E27f6E7A1fFf3E5B337584Aa43961BEeF);
+        }
+
         address sdexAddress = payable(vm.envOr("SDEX_ADDRESS", address(0)));
         if (sdexAddress != address(0)) {
             sdex_ = Sdex(sdexAddress);
@@ -284,6 +282,10 @@ contract Deploy is Script {
      * @return wstEth_ The deployed contract
      */
     function _deployWstETH(uint256 depositAmount, uint256 longAmount) internal returns (WstETH wstEth_) {
+        if (chainId == ChainId.Mainnet) {
+            return WstETH(payable(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0));
+        }
+
         address payable wstETHAddress = payable(vm.envOr("WSTETH_ADDRESS", address(0)));
         if (wstETHAddress != address(0)) {
             wstEth_ = WstETH(wstETHAddress);
@@ -348,18 +350,13 @@ contract Deploy is Script {
             ).price / 2;
         }
 
+        vm.startBroadcast(deployerAddress);
+
         // approve wstETH spending for initialization
         wstETH.approve(address(usdnProtocol), depositAmount + longAmount);
         usdnProtocol.initialize(uint128(depositAmount), uint128(longAmount), uint128(desiredLiqPrice), "");
-    }
 
-    function _handlePeripheryDeployment(uint256 depositAmount, uint256 longAmount)
-        internal
-        returns (Usdn usdn_, Wusdn wusdn_, Sdex sdex_, WstETH wstETH_)
-    {
-        (usdn_, wusdn_) = _deployUsdnAndWusdn();
-        wstETH_ = _deployWstETH(depositAmount, longAmount);
-        sdex_ = _deploySdex();
+        vm.stopBroadcast();
     }
 
     function _handlePostDeployment(IUsdnProtocol usdnProtocol, Usdn usdn, Rebalancer rebalancer) internal {
@@ -375,6 +372,15 @@ contract Deploy is Script {
         usdn.renounceRole(usdn.DEFAULT_ADMIN_ROLE(), deployerAddress);
 
         vm.stopBroadcast();
+    }
+
+    function _handlePeripheryDeployment(uint256 depositAmount, uint256 longAmount)
+        internal
+        returns (Usdn usdn_, Wusdn wusdn_, Sdex sdex_, WstETH wstETH_)
+    {
+        (usdn_, wusdn_) = _deployUsdnAndWusdn();
+        wstETH_ = _deployWstETH(depositAmount, longAmount);
+        sdex_ = _deploySdex();
     }
 
     function _handlePeripherySepoliaDeployment(uint256 wstEthNeeded)
@@ -425,6 +431,7 @@ contract Deploy is Script {
         try vm.envAddress("FEE_COLLECTOR") {
             feeCollector = vm.envAddress("FEE_COLLECTOR");
         } catch {
+            // if no fee collector is set, use the deployer
             feeCollector = deployerAddress;
         }
 

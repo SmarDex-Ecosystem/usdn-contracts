@@ -84,3 +84,14 @@ npx ts-node script/logsAnalysis.ts -r https://fork-rpc-url.com/ --protocol 0x24E
 ```
 
 The parameters are the RPC URL and the deployed addresses of the 3 main contracts.
+
+## Functions clashes
+
+This utility checks that two contracts doesn't have common function selector.
+We can specify a common base contract to filter wanted duplications.
+
+It can be used like so:
+
+```
+npx ts-node script/functionClashes.ts UsdnProtocolImpl.sol UsdnProtocolFallback.sol -s UsdnProtocolStorage.sol
+```
