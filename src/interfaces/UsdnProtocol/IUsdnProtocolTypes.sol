@@ -379,19 +379,22 @@ interface IUsdnProtocolTypes {
     }
 
     /**
-     * @notice Structure to hold the roles during deployment
-     * @param setExternalAdmin The role to set the external contracts
-     * @param criticalFunctionsAdmin The role to perform critical functions
-     * @param setProtocolParamsAdmin The role to set the protocol parameters
-     * @param setUsdnParamsAdmin The role to set the USDN parameters
-     * @param setOptionsAdmin The role to set the protocol options that do not impact the usage of the protocol
+     * @notice Structure to hold the addresses of managers during deployment
+     * @param setExternalManager The manager's address to set the external contracts
+     * @param criticalFunctionsManager The manager's address to perform critical functions
+     * @param setProtocolParamsManager The manager's address to set the protocol parameters
+     * @param setUsdnParamsManager The manager's address to set the USDN parameters
+     * @param setOptionsManager The manager's address to set the protocol options that do not impact the usage of the
+     * protocol
+     * @param proxyUpgradeManager The manager's address to upgrade the protocol implementation
      */
-    struct Roles {
-        address setExternalAdmin;
-        address criticalFunctionsAdmin;
-        address setProtocolParamsAdmin;
-        address setUsdnParamsAdmin;
-        address setOptionsAdmin;
+    struct Managers {
+        address setExternalManager;
+        address criticalFunctionsManager;
+        address setProtocolParamsManager;
+        address setUsdnParamsManager;
+        address setOptionsManager;
+        address proxyUpgradeManager;
     }
 
     /**
@@ -412,14 +415,14 @@ interface IUsdnProtocolTypes {
      * @param _maxLeverage The maximum leverage for a position
      * @param _validationDeadline The deadline for a user to confirm their action
      * @param _safetyMarginBps Safety margin for the liquidation price of newly open positions, in basis points
-     * @param _liquidationIteration The number of iterations to perform during user's action (in tick)
+     * @param _liquidationIteration The number of iterations to perform during the user's action (in tick)
      * @param _protocolFeeBps The protocol fee in basis points
      * @param _rebalancerBonusBps Part of the remaining collateral that is given as a bonus to the Rebalancer upon
      * liquidation of a tick, in basis points. The rest is sent to the Vault balance
      * @param _liquidationPenalty The liquidation penalty (in tick spacing units)
      * @param _EMAPeriod The moving average period of the funding rate
      * @param _fundingSF The scaling factor (SF) of the funding rate
-     * @param _feeThreshold The fee threshold above which fee will be sent
+     * @param _feeThreshold The threshold above which the fee will be sent
      * @param _openExpoImbalanceLimitBps The imbalance limit of the long expo for open actions (in basis points)
      * As soon as the difference between the vault expo and the long expo exceeds this basis point limit in favor
      * of long the open rebalancing mechanism is triggered, preventing the opening of a new long position

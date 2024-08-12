@@ -31,11 +31,11 @@ contract BaseFixture is Test {
         /* -------------------------------------------------------------------------- */
         vm.label(constants.DEPLOYER, "Deployer");
         vm.label(constants.ADMIN, "Admin");
-        vm.label(constants.SET_EXTERNAL_ADMIN, "setExternalAdmin");
-        vm.label(constants.CRITICAL_FUNCTIONS_ADMIN, "criticalFunctionsAdmin");
-        vm.label(constants.SET_PROTOCOL_PARAMS_ADMIN, "setProtocolParamsAdmin");
-        vm.label(constants.SET_USDN_PARAMS_ADMIN, "setUsdnParamsAdmin");
-        vm.label(constants.SET_OPTIONS_ADMIN, "setOptionsAdmin");
+        vm.label(constants.SET_EXTERNAL_MANAGER, "setExternalManager");
+        vm.label(constants.CRITICAL_FUNCTIONS_MANAGER, "criticalFunctionsManager");
+        vm.label(constants.SET_PROTOCOL_PARAMS_MANAGER, "setProtocolParamsManager");
+        vm.label(constants.SET_USDN_PARAMS_MANAGER, "setUsdnParamsManager");
+        vm.label(constants.SET_OPTIONS_MANAGER, "setOptionsManager");
         vm.label(constants.SET_EXTERNAL_ROLE_ADMIN, "setExternalRoleAdmin");
         vm.label(constants.CRITICAL_FUNCTIONS_ROLE_ADMIN, "criticalFunctionsRoleAdmin");
         vm.label(constants.SET_PROTOCOL_PARAMS_ROLE_ADMIN, "setProtocolParamsRoleAdmin");
@@ -94,11 +94,11 @@ contract BaseFixture is Test {
         // deal ether
         vm.deal(constants.DEPLOYER, 10_000 ether);
         vm.deal(constants.ADMIN, 10_000 ether);
-        vm.deal(constants.SET_EXTERNAL_ADMIN, 10_000 ether);
-        vm.deal(constants.CRITICAL_FUNCTIONS_ADMIN, 10_000 ether);
-        vm.deal(constants.SET_PROTOCOL_PARAMS_ADMIN, 10_000 ether);
-        vm.deal(constants.SET_USDN_PARAMS_ADMIN, 10_000 ether);
-        vm.deal(constants.SET_OPTIONS_ADMIN, 10_000 ether);
+        vm.deal(constants.SET_EXTERNAL_MANAGER, 10_000 ether);
+        vm.deal(constants.CRITICAL_FUNCTIONS_MANAGER, 10_000 ether);
+        vm.deal(constants.SET_PROTOCOL_PARAMS_MANAGER, 10_000 ether);
+        vm.deal(constants.SET_USDN_PARAMS_MANAGER, 10_000 ether);
+        vm.deal(constants.SET_OPTIONS_MANAGER, 10_000 ether);
         vm.deal(constants.SET_EXTERNAL_ROLE_ADMIN, 10_000 ether);
         vm.deal(constants.CRITICAL_FUNCTIONS_ROLE_ADMIN, 10_000 ether);
         vm.deal(constants.SET_PROTOCOL_PARAMS_ROLE_ADMIN, 10_000 ether);

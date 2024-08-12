@@ -5,12 +5,13 @@ import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import {
     ADMIN,
-    CRITICAL_FUNCTIONS_ADMIN,
+    CRITICAL_FUNCTIONS_MANAGER,
     DEPLOYER,
-    SET_EXTERNAL_ADMIN,
-    SET_OPTIONS_ADMIN,
-    SET_PROTOCOL_PARAMS_ADMIN,
-    SET_USDN_PARAMS_ADMIN
+    PROXY_UPGRADE_MANAGER,
+    SET_EXTERNAL_MANAGER,
+    SET_OPTIONS_MANAGER,
+    SET_PROTOCOL_PARAMS_MANAGER,
+    SET_USDN_PARAMS_MANAGER
 } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { IEventsErrors } from "../../../utils/IEventsErrors.sol";
@@ -123,20 +124,22 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
         feeCollector = new FeeCollector();
 
-        Roles memory roles = Roles({
-            setExternalAdmin: SET_EXTERNAL_ADMIN,
-            criticalFunctionsAdmin: CRITICAL_FUNCTIONS_ADMIN,
-            setProtocolParamsAdmin: SET_PROTOCOL_PARAMS_ADMIN,
-            setUsdnParamsAdmin: SET_USDN_PARAMS_ADMIN,
-            setOptionsAdmin: SET_OPTIONS_ADMIN
+        Managers memory managers = Managers({
+            setExternalManager: SET_EXTERNAL_MANAGER,
+            criticalFunctionsManager: CRITICAL_FUNCTIONS_MANAGER,
+            setProtocolParamsManager: SET_PROTOCOL_PARAMS_MANAGER,
+            setUsdnParamsManager: SET_USDN_PARAMS_MANAGER,
+            setOptionsManager: SET_OPTIONS_MANAGER,
+            proxyUpgradeManager: PROXY_UPGRADE_MANAGER
         });
         if (!testParams.flags.enableRoles) {
-            roles = Roles({
-                setExternalAdmin: ADMIN,
-                criticalFunctionsAdmin: ADMIN,
-                setProtocolParamsAdmin: ADMIN,
-                setUsdnParamsAdmin: ADMIN,
-                setOptionsAdmin: ADMIN
+            managers = Managers({
+                setExternalManager: ADMIN,
+                criticalFunctionsManager: ADMIN,
+                setProtocolParamsManager: ADMIN,
+                setUsdnParamsManager: ADMIN,
+                setOptionsManager: ADMIN,
+                proxyUpgradeManager: ADMIN
             });
         }
 
@@ -154,7 +157,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
                     liquidationRewardsManager,
                     _tickSpacing,
                     address(feeCollector),
-                    roles,
+                    managers,
                     protocolFallback
                 )
             )
@@ -166,7 +169,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         wstETH.approve(address(protocol), type(uint256).max);
 
         vm.stopPrank();
-        vm.startPrank(roles.setProtocolParamsAdmin);
+        vm.startPrank(managers.setProtocolParamsManager);
         if (!testParams.flags.enablePositionFees) {
             protocol.setPositionFeeBps(0);
             protocol.setVaultFeeBps(0);
@@ -198,7 +201,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         }
         vm.stopPrank();
 
-        vm.startPrank(roles.setUsdnParamsAdmin);
+        vm.startPrank(managers.setUsdnParamsManager);
         if (!testParams.flags.enableUsdnRebase) {
             // set a high target price to effectively disable rebases
             protocol.setUsdnRebaseThreshold(type(uint128).max);
@@ -210,7 +213,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         rebalancer = new RebalancerHandler(protocol);
 
         if (testParams.flags.enableRebalancer) {
-            vm.prank(roles.setExternalAdmin);
+            vm.prank(managers.setExternalManager);
             protocol.setRebalancer(rebalancer);
         }
 

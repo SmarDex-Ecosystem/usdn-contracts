@@ -20,9 +20,9 @@ contract TestUsdnAccessControl is UsdnTokenFixture {
     }
 
     /**
-     * @custom:scenario Call all privileged functions with a wallet which does not have the required role.
-     * @custom:when A user without the required role calls all privileged functions.
-     * @custom:then Each functions should revert with the error corresponding to the role.
+     * @custom:scenario Call all privileged functions with a wallet that does not have the required role
+     * @custom:when A user without the required role calls all privileged functions
+     * @custom:then Each function should revert with the error corresponding to the role
      */
     function test_RevertWhen_unauthorized() public {
         bytes memory minterUnauthorizedError = abi.encodeWithSelector(
