@@ -31,9 +31,9 @@ contract Deploy is Script {
     address deployerAddress;
 
     enum ChainId {
-        mainnet,
-        sepolia,
-        fork
+        Mainnet,
+        Sepolia,
+        Fork
     }
 
     /**
@@ -64,11 +64,11 @@ contract Deploy is Script {
 
         ChainId chain;
         if (block.chainid == 1) {
-            chain = ChainId.mainnet;
+            chain = ChainId.Mainnet;
         } else if (block.chainid == 11_155_111) {
-            chain = ChainId.sepolia;
+            chain = ChainId.Sepolia;
         } else {
-            chain = ChainId.fork;
+            chain = ChainId.Fork;
         }
 
         try vm.envAddress("DEPLOYER_ADDRESS") {
@@ -84,11 +84,11 @@ contract Deploy is Script {
             vm.setEnv("ETHERSCAN_API_KEY", "XXXXXXXXXXXXXXXXX");
         }
 
-        bool isProdEnv = chain != ChainId.fork;
+        bool isProdEnv = chain != ChainId.Fork;
 
         uint256 depositAmount;
         uint256 longAmount;
-        if (chain == ChainId.sepolia) {
+        if (chain == ChainId.Sepolia) {
             depositAmount = vm.envOr("INIT_DEPOSIT_AMOUNT", uint256(200 ether));
             longAmount = vm.envOr("INIT_LONG_AMOUNT", uint256(200 ether));
         } else {
@@ -96,7 +96,7 @@ contract Deploy is Script {
             longAmount = vm.envOr("INIT_LONG_AMOUNT", uint256(0));
         }
 
-        if (chain == ChainId.sepolia) {
+        if (chain == ChainId.Sepolia) {
             (Usdn_, Sdex_, WstETH_) = _handleSepoliaDeployment(depositAmount + longAmount);
         } else {
             vm.startBroadcast(deployerAddress);
@@ -115,7 +115,8 @@ contract Deploy is Script {
         LiquidationRewardsManager_ = _deployLiquidationRewardsManager(isProdEnv, address(WstETH_));
 
         // deploy the USDN protocol
-        UsdnProtocol_ = _deployProtocol(Usdn_, Sdex_, WstETH_, WstEthOracleMiddleware_, LiquidationRewardsManager_);
+        UsdnProtocol_ =
+            _deployProtocol(Usdn_, Sdex_, WstETH_, WstEthOracleMiddleware_, LiquidationRewardsManager_, chain);
 
         // deploy the rebalancer
         Rebalancer_ = _deployRebalancer(UsdnProtocol_);
@@ -144,7 +145,8 @@ contract Deploy is Script {
         Sdex sdex,
         WstETH wstETH,
         WstEthOracleMiddleware wstEthOracleMiddleware,
-        LiquidationRewardsManager liquidationRewardsManager
+        LiquidationRewardsManager liquidationRewardsManager,
+        ChainId chain
     ) internal returns (IUsdnProtocol usdnProtocol_) {
         // clean and build contracts for openzeppelin module
         utils.cleanAndBuildContracts();
@@ -152,7 +154,11 @@ contract Deploy is Script {
         // we need to allow external library linking for the openzeppelin module
         Options memory opts;
         // we need to allow constructors for the UsdnProtocolSepolia safeguard mechanism
-        opts.unsafeAllow = "constructor,external-library-linking";
+        if (chain == ChainId.Sepolia) {
+            opts.unsafeAllow = "constructor,external-library-linking";
+        } else {
+            opts.unsafeAllow = "external-library-linking";
+        }
 
         // deploy the protocol fallback
         UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();

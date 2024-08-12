@@ -41,7 +41,7 @@ contract UsdnProtocolSepolia {
 
     constructor() {
         // never deploy on mainnet
-        require(block.chainid != 1, "no mainnet");
+        require(block.chainid == 11_155_111, "only Sepolia");
     }
 
     function sweep_6874531(address token, address to) external {
