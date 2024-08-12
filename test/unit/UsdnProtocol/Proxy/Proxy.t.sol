@@ -31,7 +31,7 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
      * @custom:when {initialize} is called
      * @custom:then The call should revert since the storage is not initialized
      */
-    function test_RevertWhen_InitialezeBeforeInitializeStorage() public {
+    function test_RevertWhen_InitializeBeforeInitializeStorage() public {
         UsdnProtocolImpl freshProtocol = new UsdnProtocolImpl();
         // Deploy a fresh protocol without calling the initializeStorage function
         address freshProxy = UnsafeUpgrades.deployUUPSProxy(address(freshProtocol), "");
