@@ -132,7 +132,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             mockChainlinkOnChain.setLastPublishTime(testParams.initialTimestamp - 10 minutes);
             // this is the stETH/USD oracle, we need to convert the initialPrice
             mockChainlinkOnChain.setLastPrice(
-                int256(wstETH.getStETHByWstETH(uint256(testParams.initialPrice / 10 ** (18 - 8))))
+                int256(wstETH.getWstETHByStETH(uint256(testParams.initialPrice / 10 ** (18 - 8))))
             );
             oracleMiddleware = new WstEthOracleMiddleware(
                 address(mockPyth), PYTH_ETH_USD, address(mockChainlinkOnChain), address(wstETH), 1 hours

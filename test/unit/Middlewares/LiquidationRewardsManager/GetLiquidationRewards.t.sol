@@ -33,14 +33,14 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
     function test_getLiquidationRewardsFor1Tick() public view {
         uint256 rewards =
             liquidationRewardsManager.getLiquidationRewards(1, 0, false, false, Types.ProtocolAction.None, "", "");
-        assertEq(rewards, 2_794_500_000_000_000, "without rebase");
+        assertEq(rewards, wsteth.getWstETHByStETH(2_430_000_000_000_000), "without rebase");
         rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, true, false, Types.ProtocolAction.None, "", "");
-        assertEq(rewards, 3_484_500_000_000_000, "with rebase");
+        assertEq(rewards, wsteth.getWstETHByStETH(3_030_000_000_000_000), "with rebase");
         rewards =
             liquidationRewardsManager.getLiquidationRewards(1, 0, true, false, Types.ProtocolAction.None, "", hex"beef");
-        assertEq(rewards, 3_484_500_000_000_000, "with rebase and price data");
+        assertEq(rewards, wsteth.getWstETHByStETH(3_030_000_000_000_000), "with rebase and price data");
         rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, false, true, Types.ProtocolAction.None, "", "");
-        assertEq(rewards, 3_139_500_000_000_000, "with rebalancer trigger");
+        assertEq(rewards, wsteth.getWstETHByStETH(2_730_000_000_000_000), "with rebalancer trigger");
     }
 
     /**
@@ -70,21 +70,21 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
     function test_getLiquidationRewardsFor3Ticks() public view {
         uint256 rewards =
             liquidationRewardsManager.getLiquidationRewards(3, 0, false, false, Types.ProtocolAction.None, "", "");
-        assertEq(rewards, 4_864_500_000_000_000, "The wrong amount of rewards was given");
+        assertEq(rewards, wsteth.getWstETHByStETH(4_230_000_000_000_000), "The wrong amount of rewards was given");
         assertGt(
             rewards,
             liquidationRewardsManager.getLiquidationRewards(1, 0, false, false, Types.ProtocolAction.None, "", ""),
             "More rewards should be given if more ticks are liquidated"
         );
         rewards = liquidationRewardsManager.getLiquidationRewards(3, 0, true, false, Types.ProtocolAction.None, "", "");
-        assertEq(rewards, 5_554_500_000_000_000, "with rebase - expected rewards");
+        assertEq(rewards, wsteth.getWstETHByStETH(4_830_000_000_000_000), "with rebase - expected rewards");
         assertGt(
             rewards,
             liquidationRewardsManager.getLiquidationRewards(1, 0, true, false, Types.ProtocolAction.None, "", ""),
             "with rebase - greater than fewer ticks"
         );
         rewards = liquidationRewardsManager.getLiquidationRewards(3, 0, false, true, Types.ProtocolAction.None, "", "");
-        assertEq(rewards, 5_209_500_000_000_000, "with rebalancer trigger - expected rewards");
+        assertEq(rewards, wsteth.getWstETHByStETH(4_530_000_000_000_000), "with rebalancer trigger - expected rewards");
         assertGt(
             rewards,
             liquidationRewardsManager.getLiquidationRewards(1, 0, false, true, Types.ProtocolAction.None, "", ""),
@@ -106,13 +106,13 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
 
         uint256 rewards =
             liquidationRewardsManager.getLiquidationRewards(1, 0, false, false, Types.ProtocolAction.None, "", "");
-        assertEq(rewards, 1_397_250_000_000_000, "without rebase");
+        assertEq(rewards, wsteth.getWstETHByStETH(1_215_000_000_000_000), "without rebase");
 
         rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, true, false, Types.ProtocolAction.None, "", "");
-        assertEq(rewards, 1_742_250_000_000_000, "with rebase");
+        assertEq(rewards, wsteth.getWstETHByStETH(1_515_000_000_000_000), "with rebase");
 
         rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, false, true, Types.ProtocolAction.None, "", "");
-        assertEq(rewards, 1_569_750_000_000_000, "with rebalancer trigger");
+        assertEq(rewards, wsteth.getWstETHByStETH(1_365_000_000_000_000), "with rebalancer trigger");
     }
 
     /**
@@ -129,13 +129,13 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
 
         uint256 rewards =
             liquidationRewardsManager.getLiquidationRewards(1, 0, false, false, Types.ProtocolAction.None, "", "");
-        assertEq(rewards, 1_863_000_000_000_000, "without rebase");
+        assertEq(rewards, wsteth.getWstETHByStETH(1_620_000_000_000_000), "without rebase");
 
         rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, true, false, Types.ProtocolAction.None, "", "");
-        assertEq(rewards, 2_323_000_000_000_000, "with rebase");
+        assertEq(rewards, wsteth.getWstETHByStETH(2_020_000_000_000_000), "with rebase");
 
         rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, false, true, Types.ProtocolAction.None, "", "");
-        assertEq(rewards, 2_093_000_000_000_000, "with rebalancer trigger");
+        assertEq(rewards, wsteth.getWstETHByStETH(1_820_000_000_000_000), "with rebalancer trigger");
     }
 
     /**
@@ -153,13 +153,13 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
 
         uint256 rewards =
             liquidationRewardsManager.getLiquidationRewards(1, 0, false, false, Types.ProtocolAction.None, "", "");
-        assertEq(rewards, 93_150_000_000_000_000, "without rebase");
+        assertEq(rewards, wsteth.getWstETHByStETH(81_000_000_000_000_000), "without rebase");
 
         rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, true, false, Types.ProtocolAction.None, "", "");
-        assertEq(rewards, 116_150_000_000_000_000, "with rebase");
+        assertEq(rewards, wsteth.getWstETHByStETH(101_000_000_000_000_000), "with rebase");
 
         rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, false, true, Types.ProtocolAction.None, "", "");
-        assertEq(rewards, 104_650_000_000_000_000, "with rebalancer trigger");
+        assertEq(rewards, wsteth.getWstETHByStETH(91_000_000_000_000_000), "with rebalancer trigger");
     }
 
     /**
@@ -177,13 +177,13 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
 
         uint256 rewards =
             liquidationRewardsManager.getLiquidationRewards(1, 0, false, false, Types.ProtocolAction.None, "", "");
-        assertEq(rewards, 93_150_000_000_000_000, "without rebase");
+        assertEq(rewards, wsteth.getWstETHByStETH(81_000_000_000_000_000), "without rebase");
 
         rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, true, false, Types.ProtocolAction.None, "", "");
-        assertEq(rewards, 116_150_000_000_000_000, "with rebase");
+        assertEq(rewards, wsteth.getWstETHByStETH(101_000_000_000_000_000), "with rebase");
 
         rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, false, true, Types.ProtocolAction.None, "", "");
-        assertEq(rewards, 104_650_000_000_000_000, "with rebalancer trigger");
+        assertEq(rewards, wsteth.getWstETHByStETH(91_000_000_000_000_000), "with rebalancer trigger");
     }
 
     /**
