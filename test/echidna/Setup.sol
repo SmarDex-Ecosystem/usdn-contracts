@@ -1,8 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
+import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
+
+import { RebalancerHandler } from "../unit/Rebalancer/utils/Handler.sol";
 import { UsdnProtocolHandler } from "../unit/UsdnProtocol/utils/Handler.sol";
 import { MockOracleMiddleware } from "../unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
+import { ADMIN } from "../utils/Constants.sol";
+import { IUsdnProtocolHandler } from "../utils/IUsdnProtocolHandler.sol";
 import { Sdex } from "../utils/Sdex.sol";
 import { Weth } from "../utils/WETH.sol";
 import { WstETH } from "../utils/WstEth.sol";
@@ -11,9 +16,11 @@ import { MockLiquidationRewardsManager } from "./mock/MockLiquidationRewardsMana
 
 import { Rebalancer } from "../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../src/Usdn/Usdn.sol";
+import { UsdnProtocolFallback } from "../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { IWstETH } from "../../src/interfaces/IWstETH.sol";
 import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Permit2TokenBitfield } from "../../src/libraries/Permit2TokenBitfield.sol";
+import { FeeCollector } from "../../src/utils/FeeCollector.sol";
 import { InitializableReentrancyGuard } from "../../src/utils/InitializableReentrancyGuard.sol";
 
 contract Setup is ErrorsChecked {
@@ -32,11 +39,13 @@ contract Setup is ErrorsChecked {
     mapping(address => address[]) public destinationsToken;
     address[2] public validators = [DEPLOYER, ATTACKER];
     IUsdnProtocolTypes.PositionId[] public posIds;
+    int24 internal _tickSpacing = 100; // tick spacing 100 = 1%
+    FeeCollector public feeCollector;
 
     MockOracleMiddleware public wstEthOracleMiddleware;
     MockLiquidationRewardsManager public liquidationRewardsManager;
     Usdn public usdn;
-    UsdnProtocolHandler public usdnProtocol;
+    IUsdnProtocolHandler public usdnProtocol;
     Rebalancer public rebalancer;
 
     struct BalancesSnapshot {
@@ -66,12 +75,37 @@ contract Setup is ErrorsChecked {
         bytes32 MINTER_ROLE = usdn.MINTER_ROLE();
         bytes32 REBASER_ROLE = usdn.REBASER_ROLE();
 
-        vm.prank(msg.sender);
-        usdnProtocol = new UsdnProtocolHandler(
-            usdn, sdex, wsteth, wstEthOracleMiddleware, liquidationRewardsManager, 100, FEE_COLLECTOR
+        IUsdnProtocolTypes.Roles memory roles = IUsdnProtocolTypes.Roles({
+            setExternalAdmin: ADMIN,
+            criticalFunctionsAdmin: ADMIN,
+            setProtocolParamsAdmin: ADMIN,
+            setUsdnParamsAdmin: ADMIN,
+            setOptionsAdmin: ADMIN
+        });
+
+        feeCollector = new FeeCollector();
+        UsdnProtocolHandler test = new UsdnProtocolHandler();
+        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
+        address proxy = UnsafeUpgrades.deployUUPSProxy(
+            address(test),
+            abi.encodeCall(
+                UsdnProtocolHandler.initializeStorageHandler,
+                (
+                    usdn,
+                    sdex,
+                    wsteth,
+                    wstEthOracleMiddleware,
+                    liquidationRewardsManager,
+                    _tickSpacing,
+                    address(feeCollector),
+                    roles,
+                    protocolFallback
+                )
+            )
         );
-        rebalancer = new Rebalancer(usdnProtocol);
-        vm.prank(msg.sender);
+        usdnProtocol = IUsdnProtocolHandler(proxy);
+        rebalancer = new RebalancerHandler(usdnProtocol);
+        vm.prank(ADMIN);
         usdnProtocol.setRebalancer(rebalancer);
         usdn.grantRole(MINTER_ROLE, address(usdnProtocol));
         usdn.grantRole(REBASER_ROLE, address(usdnProtocol));

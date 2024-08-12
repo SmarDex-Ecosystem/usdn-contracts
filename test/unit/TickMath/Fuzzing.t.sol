@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { console2 } from "forge-std/Test.sol";
 
@@ -23,7 +23,7 @@ contract TestTickMathFuzzing is TickMathFixture {
      * @custom:and The rounded down tick is within 1 tick of the original tick
      * @param tick The tick to convert to a price and back to a tick
      */
-    function testFuzz_conversion(int24 tick) public {
+    function testFuzz_conversion(int24 tick) public view {
         tick = bound_int24(tick, TickMath.MIN_TICK, TickMath.MAX_TICK);
         uint256 price = handler.getPriceAtTick(tick);
         console2.log("corresponding price", price);
@@ -43,7 +43,7 @@ contract TestTickMathFuzzing is TickMathFixture {
      * @custom:then The price is equal to the original price within 0.01%
      * @param price The price to convert to a tick and back to a price
      */
-    function testFuzz_conversionReverse(uint256 price) public {
+    function testFuzz_conversionReverse(uint256 price) public view {
         price = bound(price, TickMath.MIN_PRICE, TickMath.MAX_PRICE);
         int24 tick = handler.getClosestTickAtPrice(price);
         console2.log("corresponding tick", tick);

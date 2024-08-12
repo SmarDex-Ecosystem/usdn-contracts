@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import {
+    ADMIN,
     DEPLOYER,
     PYTH_ETH_USD,
     PYTH_WSTETH_USD,
-    REDSTONE_ETH_USD,
+    SET_EXTERNAL_ADMIN,
+    SET_PROTOCOL_PARAMS_ADMIN,
+    SET_USDN_PARAMS_ADMIN,
     USER_1,
     USER_2,
     USER_3
@@ -56,7 +59,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
         securityDepositValue = protocol.getSecurityDepositValue();
 
         // reduce minimum size to avoid creating a large imbalance in the tests below
-        vm.prank(DEPLOYER);
+        vm.prank(SET_PROTOCOL_PARAMS_ADMIN);
         protocol.setMinLongPosition(0.01 ether);
 
         // deposit assets in the rebalancer for when we need to trigger it
@@ -78,9 +81,9 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
 
         // use the mock oracle to open positions to avoid hermes calls
         MockWstEthOracleMiddleware mockOracle = new MockWstEthOracleMiddleware(
-            address(mockPyth), PYTH_ETH_USD, REDSTONE_ETH_USD, address(mockChainlinkOnChain), address(wstETH), 1 hours
+            address(mockPyth), PYTH_ETH_USD, address(mockChainlinkOnChain), address(wstETH), 1 hours
         );
-        vm.prank(DEPLOYER);
+        vm.prank(SET_EXTERNAL_ADMIN);
         protocol.setOracleMiddleware(mockOracle);
         mockOracle.setWstethMockedPrice(pythPriceNormalized + 1000 ether);
         // turn off pyth signature verification to avoid updating the price feed
@@ -88,7 +91,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
         mockOracle.setVerifySignature(false);
 
         // disable rebase for setup
-        vm.startPrank(DEPLOYER);
+        vm.startPrank(SET_USDN_PARAMS_ADMIN);
         protocol.setUsdnRebaseThreshold(1000 ether);
         protocol.setTargetUsdnPrice(1000 ether);
         vm.stopPrank();
@@ -117,7 +120,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
         protocol.validateOpenPosition(USER_3, hex"beef", EMPTY_PREVIOUS_DATA);
 
         // put the original oracle back
-        vm.prank(DEPLOYER);
+        vm.prank(SET_EXTERNAL_ADMIN);
         protocol.setOracleMiddleware(oracleMiddleware);
     }
 
@@ -156,7 +159,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
 
         // if required, enable rebase
         if (withRebase) {
-            vm.startPrank(DEPLOYER);
+            vm.startPrank(SET_USDN_PARAMS_ADMIN);
             protocol.setTargetUsdnPrice(1 ether);
             protocol.setUsdnRebaseThreshold(1 ether);
             vm.stopPrank();
@@ -236,12 +239,12 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
             // on the second iteration, enable the rebalancer
             if (i == 1) {
                 // enable rebalancer
-                vm.prank(DEPLOYER);
+                vm.prank(SET_PROTOCOL_PARAMS_ADMIN);
                 protocol.setExpoImbalanceLimits(5000, 0, 10_000, 1, -4900);
 
                 // sanity check, make sure the rebalancer was triggered
                 vm.expectEmit(false, false, false, false);
-                emit PositionVersionUpdated(0);
+                emit PositionVersionUpdated(0, 0, 0, PositionId(0, 0, 0));
             }
 
             uint256 startGas = gasleft();

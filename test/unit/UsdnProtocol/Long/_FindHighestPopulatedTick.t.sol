@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
@@ -56,7 +56,7 @@ contract TestUsdnProtocolLongFindHighestPopulatedTick is UsdnProtocolBaseFixture
      * @custom:when we call _findHighestPopulatedTick from a tick below its liquidation price
      * @custom:then the minimum usable tick is returned
      */
-    function test_findHighestPopulatedTickWhenNothingFound() public {
+    function test_findHighestPopulatedTickWhenNothingFound() public view {
         int24 result = protocol.i_findHighestPopulatedTick(_initialTick - protocol.getTickSpacing());
         assertEq(result, protocol.minTick(), "No tick should have been found (min usable tick returned)");
     }

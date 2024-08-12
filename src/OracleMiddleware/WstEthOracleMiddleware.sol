@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { IWstETH } from "../interfaces/IWstETH.sol";
 import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
@@ -17,7 +17,6 @@ contract WstEthOracleMiddleware is OracleMiddleware {
     /**
      * @param pythContract The address of the Pyth contract
      * @param pythPriceID The ID of the Pyth price feed
-     * @param redstoneFeedId The ID of the Redstone price feed
      * @param chainlinkPriceFeed The address of the Chainlink price feed
      * @param wstETH The address of the wstETH contract
      * @param chainlinkTimeElapsedLimit The duration after which a Chainlink price is considered stale
@@ -25,11 +24,10 @@ contract WstEthOracleMiddleware is OracleMiddleware {
     constructor(
         address pythContract,
         bytes32 pythPriceID,
-        bytes32 redstoneFeedId,
         address chainlinkPriceFeed,
         address wstETH,
         uint256 chainlinkTimeElapsedLimit
-    ) OracleMiddleware(pythContract, pythPriceID, redstoneFeedId, chainlinkPriceFeed, chainlinkTimeElapsedLimit) {
+    ) OracleMiddleware(pythContract, pythPriceID, chainlinkPriceFeed, chainlinkTimeElapsedLimit) {
         _wstEth = IWstETH(wstETH);
     }
 

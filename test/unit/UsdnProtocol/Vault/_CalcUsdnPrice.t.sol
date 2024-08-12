@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
@@ -31,7 +31,7 @@ contract TestUsdnProtocolCalcUsdnPrice is UsdnProtocolBaseFixture {
      * @custom:when The total supply of USDN is 1M
      * @custom:then The price is $2
      */
-    function test_calcUsdnPrice() public {
+    function test_calcUsdnPrice() public view {
         uint8 assetDecimals = 6;
         // 1000 tokens in vault
         uint256 vaultBalance = 1000 * 10 ** assetDecimals;

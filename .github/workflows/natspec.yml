@@ -27,7 +27,10 @@ jobs:
           node-version: 20
 
       - name: Install deps
-        run: npm ci && forge install
+        run: npm ci && forge soldeer install
+
+      - name: Remove unused remappings file
+        run: rm -f remappings.txt
 
       - name: Report natspec smells findings
         uses: SmarDex-Ecosystem/natspec-smells-action@v2

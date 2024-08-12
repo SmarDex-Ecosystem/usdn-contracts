@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { MOCK_PYTH_DATA } from "../../unit/Middlewares/utils/Constants.sol";
-import { DEPLOYER } from "../../utils/Constants.sol";
+import { SET_PROTOCOL_PARAMS_ADMIN } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 
 import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
@@ -36,14 +36,15 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
     function test_rebalancerTrigger() public {
         skip(5 minutes);
 
-        uint128 wstEthPrice = uint128(wstETH.getWstETHByStETH(1280 ether));
-        mockPyth.setPrice(1280 ether / 1e10);
+        uint128 wstEthPrice = uint128(wstETH.getWstETHByStETH(1300 ether));
+        mockPyth.setPrice(1300 ether / 1e10);
         mockPyth.setLastPublishTime(block.timestamp);
 
-        uint128 remainingCollateral =
-            uint128(uint256(protocol.getPositionValue(posToLiquidate, wstEthPrice, uint40(block.timestamp))));
+        int256 positionValue = protocol.getPositionValue(posToLiquidate, wstEthPrice, uint40(block.timestamp));
+        assertGt(positionValue, 0, "position value should be positive");
+        uint128 remainingCollateral = uint128(uint256(positionValue));
 
-        uint128 bonus = uint128(uint256(remainingCollateral)) * protocol.getRebalancerBonusBps() / uint128(BPS_DIVISOR);
+        uint128 bonus = uint128(uint256(remainingCollateral) * protocol.getRebalancerBonusBps() / BPS_DIVISOR);
         uint256 totalExpo = protocol.getTotalExpo() - tickToLiquidateData.totalExpo;
         uint256 vaultAssetAvailable = uint256(protocol.i_vaultAssetAvailable(wstEthPrice)) + remainingCollateral;
         uint256 longAssetAvailable = uint256(protocol.i_longAssetAvailable(wstEthPrice)) - remainingCollateral;
@@ -83,7 +84,7 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
         int24 expectedTick =
             expectedTickWithoutPenalty + (int24(uint24(tickToLiquidateData.liquidationPenalty)) * tickSpacing);
         uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
-        _expectEmits(wstEthPrice, amountInRebalancer + bonus, liqPriceWithoutPenalty, expectedTick, 1);
+        _expectEmits(wstEthPrice, amountInRebalancer, bonus, liqPriceWithoutPenalty, expectedTick, 1);
         protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA, 1);
 
         imbalance = protocol.i_calcImbalanceCloseBps(
@@ -118,7 +119,7 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
      * @custom:then The rebalancer is not triggered
      */
     function test_rebalancerTrigger_zeroLimit() public {
-        vm.startPrank(DEPLOYER);
+        vm.startPrank(SET_PROTOCOL_PARAMS_ADMIN);
         protocol.setExpoImbalanceLimits(
             uint256(protocol.getOpenExpoImbalanceLimitBps()),
             uint256(protocol.getDepositExpoImbalanceLimitBps()),
@@ -130,7 +131,7 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
 
         skip(5 minutes);
 
-        mockPyth.setPrice(1280 ether / 1e10);
+        mockPyth.setPrice(1300 ether / 1e10);
         mockPyth.setLastPublishTime(block.timestamp);
 
         uint256 pendingAssets = rebalancer.getPendingAssetsAmount();
@@ -153,11 +154,14 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
     function _expectEmits(
         uint128 price,
         uint128 amount,
+        uint128 bonus,
         uint128 liqPriceWithoutPenalty,
         int24 tick,
         uint128 newPositionVersion
     ) internal {
-        uint128 positionTotalExpo = protocol.i_calcPositionTotalExpo(amount, price, liqPriceWithoutPenalty);
+        uint128 positionTotalExpo = protocol.i_calcPositionTotalExpo(amount + bonus, price, liqPriceWithoutPenalty);
+        uint256 defaultAccMultiplier = rebalancer.MULTIPLIER_FACTOR();
+        PositionId memory expectedPositionId = PositionId(tick, 0, 0);
 
         vm.expectEmit(false, false, false, false);
         emit LiquidatedTick(0, 0, 0, 0, 0);
@@ -167,16 +171,16 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
             address(rebalancer),
             uint40(block.timestamp),
             positionTotalExpo,
-            amount,
+            amount + bonus,
             price,
-            PositionId(tick, 0, 0)
+            expectedPositionId
         );
         vm.expectEmit(address(protocol));
         emit ValidatedOpenPosition(
-            address(rebalancer), address(rebalancer), positionTotalExpo, price, PositionId(tick, 0, 0)
+            address(rebalancer), address(rebalancer), positionTotalExpo, price, expectedPositionId
         );
         vm.expectEmit(address(rebalancer));
-        emit PositionVersionUpdated(newPositionVersion);
+        emit PositionVersionUpdated(newPositionVersion, defaultAccMultiplier, amount, expectedPositionId);
     }
 
     receive() external payable { }

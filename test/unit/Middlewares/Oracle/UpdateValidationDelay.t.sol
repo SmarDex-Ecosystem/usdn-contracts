@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { OracleMiddlewareBaseFixture } from "../utils/Fixtures.sol";
 
@@ -16,7 +16,7 @@ contract TestOracleMiddlewareUpdateValidationDelay is OracleMiddlewareBaseFixtur
      * @custom:when The result of the result of the function is compared to 24
      * @custom:then It should succeed
      */
-    function test_validationDelay() public {
+    function test_validationDelay() public view {
         assertEq(oracleMiddleware.getValidationDelay(), 24 seconds);
     }
 

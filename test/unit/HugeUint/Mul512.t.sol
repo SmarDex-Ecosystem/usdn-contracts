@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { HugeUintFixture } from "./utils/Fixtures.sol";
 
@@ -29,7 +29,7 @@ contract TestHugeUintMul512 is HugeUintFixture {
      * @custom:when The `mul` function is called with `uint256.max+2` and `uint256.max`
      * @custom:then The result is equal to `uint512.max`
      */
-    function test_mul() public {
+    function test_mul() public view {
         HugeUint.Uint512 memory a = HugeUint.Uint512(0, 69);
         uint256 b = 42;
         HugeUint.Uint512 memory res = handler.mul(a, b);

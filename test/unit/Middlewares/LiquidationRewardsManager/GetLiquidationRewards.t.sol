@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { LiquidationRewardsManagerBaseFixture } from "../utils/Fixtures.sol";
 
@@ -30,7 +30,7 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
      * @custom:then It should return an amount of wstETH based on the gas used by
      * UsdnProtocolActions.liquidate(bytes,uint16)
      */
-    function test_getLiquidationRewardsFor1Tick() public {
+    function test_getLiquidationRewardsFor1Tick() public view {
         uint256 rewards =
             liquidationRewardsManager.getLiquidationRewards(1, 0, false, false, Types.ProtocolAction.None, "", "");
         assertEq(rewards, 2_794_500_000_000_000, "without rebase");
@@ -48,7 +48,7 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
      * @custom:when No ticks were liquidated
      * @custom:then It should return 0 as we only give rewards on successful liquidations
      */
-    function test_getLiquidationRewardsFor0Tick() public {
+    function test_getLiquidationRewardsFor0Tick() public view {
         uint256 rewards =
             liquidationRewardsManager.getLiquidationRewards(0, 0, false, false, Types.ProtocolAction.None, "", "");
         assertEq(rewards, 0, "without rebase");
@@ -67,7 +67,7 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
      * @custom:then It should return more wstETH than for 1 tick as more gas was used by
      * UsdnProtocolActions.liquidate(bytes,uint16)
      */
-    function test_getLiquidationRewardsFor3Ticks() public {
+    function test_getLiquidationRewardsFor3Ticks() public view {
         uint256 rewards =
             liquidationRewardsManager.getLiquidationRewards(3, 0, false, false, Types.ProtocolAction.None, "", "");
         assertEq(rewards, 4_864_500_000_000_000, "The wrong amount of rewards was given");

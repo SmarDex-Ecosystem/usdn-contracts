@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { Permit2TokenBitfieldFixture } from "./utils/Fixtures.sol";
 
@@ -20,7 +20,7 @@ contract TestPermit2TokenBitfield is Permit2TokenBitfieldFixture {
      * @custom:or The bitfield is 0b1111_1110
      * @custom:then The function should return false
      */
-    function test_asset() public {
+    function test_asset() public view {
         assertTrue(handler.useForAsset(Permit2TokenBitfield.Bitfield.wrap(1)), "0b0000_0001");
         assertTrue(handler.useForAsset(Permit2TokenBitfield.Bitfield.wrap(255)), "uint8.max");
         assertFalse(handler.useForAsset(Permit2TokenBitfield.Bitfield.wrap(0)), "0");
@@ -36,7 +36,7 @@ contract TestPermit2TokenBitfield is Permit2TokenBitfieldFixture {
      * @custom:or The bitfield is 0b1111_11101
      * @custom:then The function should return false
      */
-    function test_sdex() public {
+    function test_sdex() public view {
         assertTrue(handler.useForSdex(Permit2TokenBitfield.Bitfield.wrap(1 << 1)), "0b0000_0010");
         assertTrue(handler.useForSdex(Permit2TokenBitfield.Bitfield.wrap(255)), "uint8.max");
         assertFalse(handler.useForSdex(Permit2TokenBitfield.Bitfield.wrap(0)), "0");
@@ -52,7 +52,7 @@ contract TestPermit2TokenBitfield is Permit2TokenBitfieldFixture {
      * @custom:then The function should return false
      * @param bitfield The bitfield
      */
-    function testFuzz_asset(uint8 bitfield) public {
+    function testFuzz_asset(uint8 bitfield) public view {
         bool expectedResult = bitfield & 1 == 1;
         assertEq(handler.useForAsset(Permit2TokenBitfield.Bitfield.wrap(bitfield)), expectedResult);
     }
@@ -66,7 +66,7 @@ contract TestPermit2TokenBitfield is Permit2TokenBitfieldFixture {
      * @custom:then The function should return false
      * @param bitfield The bitfield
      */
-    function testFuzz_sdex(uint8 bitfield) public {
+    function testFuzz_sdex(uint8 bitfield) public view {
         bool expectedResult = bitfield >> 1 & 1 == 1;
         assertEq(handler.useForSdex(Permit2TokenBitfield.Bitfield.wrap(bitfield)), expectedResult);
     }

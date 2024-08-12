@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { Vm } from "forge-std/Vm.sol";
 
@@ -8,13 +8,13 @@ import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 /// @custom:feature The `_checkPendingFee` function
 contract TestUsdnProtocolCheckPendingFee is UsdnProtocolBaseFixture {
     uint256 limit;
-    address feeCollector;
+    address feeCollectorAddr;
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
 
         limit = protocol.getFeeThreshold();
-        feeCollector = protocol.getFeeCollector();
+        feeCollectorAddr = protocol.getFeeCollector();
     }
 
     /**
@@ -27,13 +27,13 @@ contract TestUsdnProtocolCheckPendingFee is UsdnProtocolBaseFixture {
      */
     function test_checkPendingFee() public {
         protocol.setPendingProtocolFee(limit);
-        uint256 balanceBefore = wstETH.balanceOf(feeCollector);
+        uint256 balanceBefore = wstETH.balanceOf(feeCollectorAddr);
 
         vm.expectEmit();
-        emit ProtocolFeeDistributed(feeCollector, limit);
+        emit ProtocolFeeDistributed(feeCollectorAddr, limit);
         protocol.i_checkPendingFee();
 
-        assertEq(wstETH.balanceOf(feeCollector), balanceBefore + limit, "fee collector balance");
+        assertEq(wstETH.balanceOf(feeCollectorAddr), balanceBefore + limit, "fee collector balance");
         assertEq(protocol.getPendingProtocolFee(), 0, "pending fee");
     }
 
@@ -47,14 +47,14 @@ contract TestUsdnProtocolCheckPendingFee is UsdnProtocolBaseFixture {
      */
     function test_checkPendingFeeBelowLimit() public {
         protocol.setPendingProtocolFee(limit - 1);
-        uint256 balanceBefore = wstETH.balanceOf(feeCollector);
+        uint256 balanceBefore = wstETH.balanceOf(feeCollectorAddr);
 
         vm.recordLogs();
         protocol.i_checkPendingFee();
         Vm.Log[] memory logs = vm.getRecordedLogs();
         assertEq(logs.length, 0, "logs length");
 
-        assertEq(wstETH.balanceOf(feeCollector), balanceBefore, "fee collector balance");
+        assertEq(wstETH.balanceOf(feeCollectorAddr), balanceBefore, "fee collector balance");
         assertEq(protocol.getPendingProtocolFee(), limit - 1, "pending fee");
     }
 }

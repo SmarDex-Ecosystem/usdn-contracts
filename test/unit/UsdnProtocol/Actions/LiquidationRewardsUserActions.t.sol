@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
+
+import { Vm } from "forge-std/Vm.sol";
 
 import { USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
@@ -156,7 +158,16 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
+        vm.recordLogs();
         protocol.validateWithdrawal(payable(address(this)), liquidationPriceData, EMPTY_PREVIOUS_DATA);
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        uint256 amountWithdrawn;
+        for (uint256 i = 0; i < logs.length; i++) {
+            if (logs[i].topics[0] == IUsdnProtocolEvents.ValidatedWithdrawal.selector) {
+                (amountWithdrawn,,) = abi.decode(logs[i].data, (uint256, uint256, uint256));
+            }
+        }
+        assertGt(amountWithdrawn, 0, "withdrawn amount");
 
         uint256 balanceSenderAfter = wstETH.balanceOf(address(this));
         uint256 balanceProtocolAfter = wstETH.balanceOf(address(protocol));
@@ -167,8 +178,14 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
             balanceSenderAfter + balanceProtocolAfter,
             "total balance"
         );
-        assertEq(balanceSenderAfter, balanceSenderBefore + expectedLiquidatorRewards + depositAmount, "sender balance");
-        assertEq(balanceProtocolAfter, balanceProtocolBefore - expectedLiquidatorRewards, "protocol balance");
+        assertEq(
+            balanceSenderAfter, balanceSenderBefore + expectedLiquidatorRewards + amountWithdrawn, "sender balance"
+        );
+        assertEq(
+            balanceProtocolAfter,
+            balanceProtocolBefore - expectedLiquidatorRewards + depositAmount - amountWithdrawn,
+            "protocol balance"
+        );
     }
 
     /**
