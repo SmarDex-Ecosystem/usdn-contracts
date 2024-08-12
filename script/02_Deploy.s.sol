@@ -5,8 +5,6 @@ import { Script } from "forge-std/Script.sol";
 
 import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
-import { Sdex as SdexSepolia } from "../src/utils/sepolia/tokens/Sdex.sol";
-import { WstETH as WstETHSepolia } from "../src/utils/sepolia/tokens/WstETH.sol";
 import { Sdex } from "../test/utils/Sdex.sol";
 import { WstETH } from "../test/utils/WstEth.sol";
 
@@ -19,15 +17,20 @@ import { MockLiquidationRewardsManager } from "../src/OracleMiddleware/mock/Mock
 import { MockWstEthOracleMiddleware } from "../src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
 import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../src/Usdn/Usdn.sol";
+import { Wusdn } from "../src/Usdn/Wusdn.sol";
 import { UsdnProtocolFallback } from "../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { IWstETH } from "../src/interfaces/IWstETH.sol";
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Sdex as SdexSepolia } from "../src/utils/sepolia/tokens/Sdex.sol";
+import { WstETH as WstETHSepolia } from "../src/utils/sepolia/tokens/WstETH.sol";
 
 contract Deploy is Script {
     Utils utils = new Utils();
     address deployerAddress;
+    address feeCollector;
+    ChainId chainId;
 
     enum ChainId {
         Mainnet,
@@ -43,6 +46,7 @@ contract Deploy is Script {
      * @return LiquidationRewardsManager_ The liquidation rewards manager
      * @return Rebalancer_ The rebalancer
      * @return Usdn_ The USDN token
+     * @return Wusdn_ The WUSDN token
      * @return UsdnProtocol_ The USDN protocol with fallback
      */
     function run()
@@ -54,60 +58,32 @@ contract Deploy is Script {
             LiquidationRewardsManager LiquidationRewardsManager_,
             Rebalancer Rebalancer_,
             Usdn Usdn_,
+            Wusdn Wusdn_,
             IUsdnProtocol UsdnProtocol_
         )
     {
         // validate the Usdn protocol before deploying it
-        bool success = utils.validateProtocol();
-        require(success, "Protocol validation failed");
+        utils.validateProtocol();
 
-        ChainId chain;
         if (block.chainid == 1) {
-            chain = ChainId.Mainnet;
+            chainId = ChainId.Mainnet;
         } else if (block.chainid == 11_155_111) {
-            chain = ChainId.Sepolia;
+            chainId = ChainId.Sepolia;
         } else {
-            chain = ChainId.Fork;
+            chainId = ChainId.Fork;
         }
 
-        try vm.envAddress("DEPLOYER_ADDRESS") {
-            deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
-        } catch {
-            revert("DEPLOYER_ADDRESS is required");
-        }
+        _handleEnvVariables();
 
-        try vm.envString("ETHERSCAN_API_KEY") { }
-        catch {
-            // TO DO : verify that still needed
-            // not needed but needs to exist
-            vm.setEnv("ETHERSCAN_API_KEY", "XXXXXXXXXXXXXXXXX");
-        }
+        bool isProdEnv = chainId != ChainId.Fork;
 
-        bool isProdEnv = chain != ChainId.Fork;
+        (uint256 depositAmount, uint256 longAmount) = _getInitialAmounts();
 
-        uint256 depositAmount;
-        uint256 longAmount;
-        if (chain == ChainId.Sepolia) {
-            depositAmount = vm.envOr("INIT_DEPOSIT_AMOUNT", uint256(200 ether));
-            longAmount = vm.envOr("INIT_LONG_AMOUNT", uint256(200 ether));
+        if (chainId == ChainId.Sepolia) {
+            (Usdn_, Wusdn_, Sdex_, WstETH_) = _handlePeripherySepoliaDeployment(depositAmount + longAmount);
         } else {
-            depositAmount = vm.envOr("INIT_DEPOSIT_AMOUNT", uint256(0));
-            longAmount = vm.envOr("INIT_LONG_AMOUNT", uint256(0));
+            (Usdn_, Wusdn_, Sdex_, WstETH_) = _handlePeripheryDeployment(depositAmount, longAmount);
         }
-
-        if (chain == ChainId.Sepolia) {
-            (Usdn_, Sdex_, WstETH_) = _handleSepoliaDeployment(depositAmount + longAmount);
-        } else {
-            vm.startBroadcast(deployerAddress);
-
-            WstETH_ = _deployWstETH(depositAmount, longAmount);
-            Usdn_ = _deployUsdn(isProdEnv);
-            Sdex_ = _deploySdex();
-
-            vm.stopBroadcast();
-        }
-
-        vm.startBroadcast(deployerAddress);
 
         // deploy contracts
         WstEthOracleMiddleware_ = _deployWstEthOracleMiddleware(isProdEnv, address(WstETH_));
@@ -115,28 +91,20 @@ contract Deploy is Script {
 
         // deploy the USDN protocol
         UsdnProtocol_ =
-            _deployProtocol(Usdn_, Sdex_, WstETH_, WstEthOracleMiddleware_, LiquidationRewardsManager_, chain);
+            _deployProtocol(Usdn_, Sdex_, WstETH_, WstEthOracleMiddleware_, LiquidationRewardsManager_, chainId);
 
         // deploy the rebalancer
         Rebalancer_ = _deployRebalancer(UsdnProtocol_);
 
-        // set the rebalancer on the USDN protocol
-        UsdnProtocol_.setRebalancer(Rebalancer_);
-
-        // grant USDN minter and rebaser roles to protocol
-        Usdn_.grantRole(Usdn_.MINTER_ROLE(), address(UsdnProtocol_));
-        Usdn_.grantRole(Usdn_.REBASER_ROLE(), address(UsdnProtocol_));
-        // renounce admin role on the USDN token, no-one can later change roles
-        Usdn_.renounceRole(Usdn_.DEFAULT_ADMIN_ROLE(), deployerAddress);
-
-        // approve wstETH spending for initialization
-        WstETH_.approve(address(UsdnProtocol_), depositAmount + longAmount);
+        _handlePostDeployment(UsdnProtocol_, Usdn_, Rebalancer_);
 
         if (depositAmount > 0 && longAmount > 0) {
-            _initializeUsdnProtocol(isProdEnv, UsdnProtocol_, WstEthOracleMiddleware_, depositAmount, longAmount);
+            vm.startBroadcast(deployerAddress);
+            _initializeUsdnProtocol(
+                isProdEnv, UsdnProtocol_, WstETH_, WstEthOracleMiddleware_, depositAmount, longAmount
+            );
+            vm.stopBroadcast();
         }
-
-        vm.stopBroadcast();
     }
 
     function _deployProtocol(
@@ -152,18 +120,23 @@ contract Deploy is Script {
 
         // we need to allow external library linking for the openzeppelin module
         Options memory opts;
+        string memory contractName;
         // we need to allow constructors for the UsdnProtocolSepolia safeguard mechanism
         if (chain == ChainId.Sepolia) {
             opts.unsafeAllow = "constructor,external-library-linking";
+            contractName = "UsdnProtocolSepolia.sol";
         } else {
             opts.unsafeAllow = "external-library-linking";
+            contractName = "UsdnProtocolImpl.sol";
         }
+
+        vm.startBroadcast(deployerAddress);
 
         // deploy the protocol fallback
         UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
 
         address proxy = Upgrades.deployUUPSProxy(
-            "UsdnProtocolImpl.sol",
+            contractName,
             abi.encodeCall(
                 UsdnProtocolImpl.initializeStorage,
                 (
@@ -173,7 +146,7 @@ contract Deploy is Script {
                     wstEthOracleMiddleware,
                     liquidationRewardsManager,
                     100, // tick spacing 100 = 1%
-                    vm.envAddress("FEE_COLLECTOR"),
+                    feeCollector,
                     Types.Roles({
                         setExternalAdmin: deployerAddress,
                         criticalFunctionsAdmin: deployerAddress,
@@ -186,6 +159,8 @@ contract Deploy is Script {
             ),
             opts
         );
+
+        vm.stopBroadcast();
 
         usdnProtocol_ = IUsdnProtocol(proxy);
     }
@@ -214,6 +189,8 @@ contract Deploy is Script {
             address chainlinkPriceAddress = vm.envAddress("CHAINLINK_ETH_PRICE_ADDRESS");
             uint256 chainlinkPriceValidity = vm.envOr("CHAINLINK_ETH_PRICE_VALIDITY", uint256(1 hours + 2 minutes));
 
+            vm.startBroadcast(deployerAddress);
+
             if (isProdEnv) {
                 wstEthOracleMiddleware_ = new WstEthOracleMiddleware(
                     pythAddress, pythFeedId, chainlinkPriceAddress, wstETHAddress, chainlinkPriceValidity
@@ -223,6 +200,8 @@ contract Deploy is Script {
                     pythAddress, pythFeedId, chainlinkPriceAddress, wstETHAddress, chainlinkPriceValidity
                 );
             }
+
+            vm.stopBroadcast();
         }
     }
 
@@ -247,6 +226,9 @@ contract Deploy is Script {
         } else {
             address chainlinkGasPriceFeed = vm.envAddress("CHAINLINK_GAS_PRICE_ADDRESS");
             uint256 chainlinkPriceValidity = vm.envOr("CHAINLINK_GAS_PRICE_VALIDITY", uint256(2 hours + 5 minutes));
+
+            vm.startBroadcast(deployerAddress);
+
             if (isProdEnv) {
                 liquidationRewardsManager_ =
                     new LiquidationRewardsManager(chainlinkGasPriceFeed, IWstETH(wstETHAddress), chainlinkPriceValidity);
@@ -255,6 +237,8 @@ contract Deploy is Script {
                     chainlinkGasPriceFeed, IWstETH(wstETHAddress), chainlinkPriceValidity
                 );
             }
+
+            vm.stopBroadcast();
         }
     }
 
@@ -263,15 +247,18 @@ contract Deploy is Script {
      * @dev Will return the already deployed one if an address is in the env variables
      * @return usdn_ The deployed contract
      */
-    function _deployUsdn(bool isProdEnv) internal returns (Usdn usdn_) {
-        if (isProdEnv) {
-            // in production environment, we want to deploy the USDN token separately via `01_DeployUsdn.s.sol`
-            address usdnAddress = vm.envAddress("USDN_ADDRESS");
-            require(usdnAddress != address(0), "USDN_ADDRESS is required in prod mode");
-            usdn_ = Usdn(usdnAddress);
-        } else {
-            usdn_ = new Usdn(address(0), address(0));
+    function _deployUsdnAndWusdn() internal returns (Usdn usdn_, Wusdn wusdn_) {
+        if (chainId == ChainId.Mainnet) {
+            uint64 nounce = vm.getNonce(deployerAddress);
+            require(nounce == 0, "Nounce must be 0 on mainnet");
         }
+
+        vm.startBroadcast(deployerAddress);
+
+        usdn_ = new Usdn(address(0), address(0));
+        wusdn_ = new Wusdn(usdn_);
+
+        vm.stopBroadcast();
     }
 
     /**
@@ -284,7 +271,9 @@ contract Deploy is Script {
         if (sdexAddress != address(0)) {
             sdex_ = Sdex(sdexAddress);
         } else {
+            vm.startBroadcast(deployerAddress);
             sdex_ = new Sdex();
+            vm.stopBroadcast();
         }
     }
 
@@ -301,11 +290,17 @@ contract Deploy is Script {
             wstEth_ = WstETH(wstETHAddress);
             if (vm.envOr("GET_WSTETH", false) && depositAmount > 0 && longAmount > 0) {
                 uint256 ethAmount = (depositAmount + longAmount + 10_000) * wstEth_.stEthPerToken() / 1 ether;
+
+                vm.startBroadcast(deployerAddress);
                 (bool result,) = wstETHAddress.call{ value: ethAmount }(hex"");
+                vm.stopBroadcast();
+
                 require(result, "Failed to mint wstETH");
             }
         } else {
+            vm.startBroadcast(deployerAddress);
             wstEth_ = new WstETH();
+            vm.stopBroadcast();
         }
     }
 
@@ -320,22 +315,26 @@ contract Deploy is Script {
         if (rebalancerAddress != address(0)) {
             rebalancer_ = Rebalancer(rebalancerAddress);
         } else {
+            vm.startBroadcast(deployerAddress);
             rebalancer_ = new Rebalancer(usdnProtocol);
+            vm.stopBroadcast();
         }
     }
 
     /**
      * @notice Initialize the USDN Protocol
      * @param isProdEnv Env check
-     * @param UsdnProtocol_ The USDN protocol
-     * @param WstEthOracleMiddleware_ The WstETH oracle middleware
+     * @param usdnProtocol The USDN protocol
+     * @param wstETH The WstETH token
+     * @param wstEthOracleMiddleware The WstETH oracle middleware
      * @param depositAmount The amount to deposit during the protocol initialization
      * @param longAmount The size of the long to open during the protocol initialization
      */
     function _initializeUsdnProtocol(
         bool isProdEnv,
-        IUsdnProtocol UsdnProtocol_,
-        WstEthOracleMiddleware WstEthOracleMiddleware_,
+        IUsdnProtocol usdnProtocol,
+        WstETH wstETH,
+        WstEthOracleMiddleware wstEthOracleMiddleware,
         uint256 depositAmount,
         uint256 longAmount
     ) internal {
@@ -345,21 +344,50 @@ contract Deploy is Script {
         } else {
             // for forks, we want a leverage of ~2x so we get the current
             // price from the middleware and divide it by two
-            desiredLiqPrice = WstEthOracleMiddleware_.parseAndValidatePrice(
+            desiredLiqPrice = wstEthOracleMiddleware.parseAndValidatePrice(
                 "", uint128(block.timestamp), Types.ProtocolAction.Initialize, ""
             ).price / 2;
         }
 
-        UsdnProtocol_.initialize(uint128(depositAmount), uint128(longAmount), uint128(desiredLiqPrice), "");
+        // approve wstETH spending for initialization
+        wstETH.approve(address(usdnProtocol), depositAmount + longAmount);
+        usdnProtocol.initialize(uint128(depositAmount), uint128(longAmount), uint128(desiredLiqPrice), "");
     }
 
-    function _handleSepoliaDeployment(uint256 wstEthNeeded) internal returns (Usdn usdn_, Sdex sdex_, WstETH wstETH_) {
+    function _handlePeripheryDeployment(uint256 depositAmount, uint256 longAmount)
+        internal
+        returns (Usdn usdn_, Wusdn wusdn_, Sdex sdex_, WstETH wstETH_)
+    {
+        (usdn_, wusdn_) = _deployUsdnAndWusdn();
+        wstETH_ = _deployWstETH(depositAmount, longAmount);
+        sdex_ = _deploySdex();
+    }
+
+    function _handlePostDeployment(IUsdnProtocol usdnProtocol, Usdn usdn, Rebalancer rebalancer) internal {
+        vm.startBroadcast(deployerAddress);
+
+        // set the rebalancer on the USDN protocol
+        usdnProtocol.setRebalancer(rebalancer);
+
+        // grant USDN minter and rebaser roles to protocol
+        usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
+        usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));
+        // renounce admin role on the USDN token, no-one can later change roles
+        usdn.renounceRole(usdn.DEFAULT_ADMIN_ROLE(), deployerAddress);
+
+        vm.stopBroadcast();
+    }
+
+    function _handlePeripherySepoliaDeployment(uint256 wstEthNeeded)
+        internal
+        returns (Usdn usdn_, Wusdn wusdn_, Sdex sdex_, WstETH wstETH_)
+    {
         vm.startBroadcast(deployerAddress);
 
         SdexSepolia sdex = new SdexSepolia();
         WstETHSepolia wsteth = new WstETHSepolia();
         MockFastGasGwei mockFastGasGwei = new MockFastGasGwei();
-        // mint wstETH to deployer
+        // mint needed wstETH for the initialisation to the deployer
         wsteth.mint(deployerAddress, wstEthNeeded);
 
         vm.stopBroadcast();
@@ -367,9 +395,11 @@ contract Deploy is Script {
         uint256 stEthPerToken = utils.getStEthPerTokenMainet();
 
         vm.startBroadcast(deployerAddress);
-        wsteth.setStEthPerToken(stEthPerToken);
 
+        wsteth.setStEthPerToken(stEthPerToken);
         usdn_ = new Usdn(address(0), address(0));
+        wusdn_ = new Wusdn(usdn_);
+
         vm.stopBroadcast();
 
         uint256 ethPrice = utils.getLastChailinkEthPriceSepolia();
@@ -382,10 +412,45 @@ contract Deploy is Script {
         vm.setEnv("PYTH_ADDRESS", "0xDd24F84d36BF92C65F92307595335bdFab5Bbd21");
         vm.setEnv("PYTH_ETH_FEED_ID", "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace");
         vm.setEnv("CHAINLINK_ETH_PRICE_ADDRESS", "0x694AA1769357215DE4FAC081bf1f309aDC325306");
-        vm.setEnv("FEE_COLLECTOR", vm.toString(deployerAddress));
-        vm.setEnv("CHAINLINK_ETH_PRICE_VALIDITY", "3720");
         vm.setEnv("CHAINLINK_GAS_PRICE_ADDRESS", vm.toString(address(mockFastGasGwei)));
-        vm.setEnv("CHAINLINK_GAS_PRICE_VALIDITY", "7500");
         vm.setEnv("INIT_LONG_LIQPRICE", vm.toString(liqPrice));
+    }
+
+    function _handleEnvVariables() internal {
+        try vm.envAddress("DEPLOYER_ADDRESS") {
+            deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
+        } catch {
+            revert("DEPLOYER_ADDRESS is required");
+        }
+
+        try vm.envAddress("FEE_COLLECTOR") {
+            feeCollector = vm.envAddress("FEE_COLLECTOR");
+        } catch {
+            feeCollector = deployerAddress;
+        }
+
+        try vm.envString("ETHERSCAN_API_KEY") { }
+        catch {
+            // not needed but needs to exist
+            vm.setEnv("ETHERSCAN_API_KEY", "XXXXXXXXXXXXXXXXX");
+        }
+    }
+
+    function _getInitialAmounts() internal view returns (uint256 depositAmount, uint256 longAmount) {
+        if (chainId == ChainId.Sepolia) {
+            depositAmount = vm.envOr("INIT_DEPOSIT_AMOUNT", uint256(200 ether));
+            longAmount = vm.envOr("INIT_LONG_AMOUNT", uint256(200 ether));
+        } else {
+            try vm.envUint("INIT_DEPOSIT_AMOUNT") {
+                depositAmount = vm.envUint("INIT_DEPOSIT_AMOUNT");
+            } catch {
+                revert("INIT_DEPOSIT_AMOUNT is required");
+            }
+            try vm.envUint("INIT_LONG_AMOUNT") {
+                longAmount = vm.envUint("INIT_LONG_AMOUNT");
+            } catch {
+                revert("INIT_DEPOSIT_AMOUNT is required");
+            }
+        }
     }
 }

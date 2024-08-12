@@ -20,11 +20,10 @@ contract Utils is Script {
      * @notice Validate the Usdn protocol
      * @dev Call this function to validate the Usdn protocol before deploying it
      */
-    function validateProtocol() public returns (bool success) {
+    function validateProtocol() public {
         string[] memory inputs = _buildCommandFunctionClashes();
-        try this.runFfiCommand(inputs) {
-            return true;
-        } catch {
+        try this.runFfiCommand(inputs) { }
+        catch {
             revert("function clash detected, run the functionClashes.ts script to see the clashing functions");
         }
     }
