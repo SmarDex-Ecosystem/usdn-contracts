@@ -100,6 +100,16 @@ contract Deploy is Script {
         _initializeUsdnProtocol(isProdEnv, UsdnProtocol_, WstETH_, WstEthOracleMiddleware_, depositAmount, longAmount);
     }
 
+    /**
+     * @notice Deploy the USDN protocol
+     * @param usdn The USDN token
+     * @param sdex The SDEX token
+     * @param wstETH The WstETH token
+     * @param wstEthOracleMiddleware The WstETH oracle middleware
+     * @param liquidationRewardsManager The liquidation rewards manager
+     * @param chain The chain id
+     * @return usdnProtocol_ The deployed protcol
+     */
     function _deployProtocol(
         Usdn usdn,
         Sdex sdex,
@@ -236,9 +246,11 @@ contract Deploy is Script {
     }
 
     /**
-     * @notice Deploy the USDN token
-     * @dev Will return the already deployed one if an address is in the env variables
-     * @return usdn_ The deployed contract
+     * @notice Deploy the USDN token and the WUSDN token
+     * @dev Will return the already deployed ones if an address is in the env variables
+     * On mainet the deployer must have a nonce of 0
+     * @return usdn_ The deployed Usdn contract
+     * @return wusdn_ The deployed Wusdn contract
      */
     function _deployUsdnAndWusdn() internal returns (Usdn usdn_, Wusdn wusdn_) {
         if (chainId == ChainId.Mainnet) {
@@ -257,6 +269,7 @@ contract Deploy is Script {
     /**
      * @notice Deploy the SDEX token
      * @dev Will return the already deployed one if an address is in the env variables
+     * Will use the mainnet address if the chain is mainnet
      * @return sdex_ The deployed contract
      */
     function _deploySdex() internal returns (Sdex sdex_) {
@@ -277,6 +290,7 @@ contract Deploy is Script {
     /**
      * @notice Deploy the WstETH token
      * @dev Will return the already deployed one if an address is in the env variables
+     * Will return the mainnet address if the chain is mainnet
      * @param depositAmount The amount to deposit during the protocol initialization
      * @param longAmount The size of the long to open during the protocol initialization
      * @return wstEth_ The deployed contract
@@ -359,6 +373,12 @@ contract Deploy is Script {
         vm.stopBroadcast();
     }
 
+    /**
+     * @notice Handle post deployment tasks
+     * @param usdnProtocol The USDN protocol
+     * @param usdn The USDN token
+     * @param rebalancer The rebalancer
+     */
     function _handlePostDeployment(IUsdnProtocol usdnProtocol, Usdn usdn, Rebalancer rebalancer) internal {
         vm.startBroadcast(deployerAddress);
 
@@ -374,6 +394,15 @@ contract Deploy is Script {
         vm.stopBroadcast();
     }
 
+    /**
+     * @notice Handle the deployment of the periphery contracts
+     * @param depositAmount The amount to deposit during the protocol initialization
+     * @param longAmount The size of the long to open during the protocol initialization
+     * @return usdn_ The USDN token
+     * @return wusdn_ The WUSDN token
+     * @return sdex_ The SDEX token
+     * @return wstETH_ The WstETH token
+     */
     function _handlePeripheryDeployment(uint256 depositAmount, uint256 longAmount)
         internal
         returns (Usdn usdn_, Wusdn wusdn_, Sdex sdex_, WstETH wstETH_)
@@ -383,6 +412,14 @@ contract Deploy is Script {
         sdex_ = _deploySdex();
     }
 
+    /**
+     * @notice Handle the deployment of the periphery contracts for Sepolia
+     * @param wstEthNeeded The amount of WstETH needed for the initialisation
+     * @return usdn_ The USDN token
+     * @return wusdn_ The WUSDN token
+     * @return sdex_ The SDEX token
+     * @return wstETH_ The WstETH token
+     */
     function _handlePeripherySepoliaDeployment(uint256 wstEthNeeded)
         internal
         returns (Usdn usdn_, Wusdn wusdn_, Sdex sdex_, WstETH wstETH_)
@@ -421,6 +458,9 @@ contract Deploy is Script {
         vm.setEnv("INIT_LONG_LIQPRICE", vm.toString(liqPrice));
     }
 
+    /**
+     * @notice Handle the environment variables
+     */
     function _handleEnvVariables() internal {
         try vm.envAddress("DEPLOYER_ADDRESS") {
             deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
@@ -442,6 +482,11 @@ contract Deploy is Script {
         }
     }
 
+    /**
+     * @notice Get the initial amounts for the protocol initialization
+     * @return depositAmount The amount to deposit
+     * @return longAmount The size of the long
+     */
     function _getInitialAmounts() internal view returns (uint256 depositAmount, uint256 longAmount) {
         if (chainId == ChainId.Sepolia) {
             depositAmount = vm.envOr("INIT_DEPOSIT_AMOUNT", uint256(200 ether));

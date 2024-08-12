@@ -45,9 +45,13 @@ contract Utils is Script {
         stEthPerToken = abi.decode(result, (uint256));
     }
 
+    /**
+     * @notice Get the last Chainlink price for stEth in Sepolia
+     * @return price The amount of stEth for 1 wstEth
+     */
     function getLastChailinkEthPriceSepolia() public view returns (uint256 price) {
         price = uint256(AggregatorInterface(0x694AA1769357215DE4FAC081bf1f309aDC325306).latestAnswer());
-        // chainlink give the price with 10^8 decimals
+        // chainlink give the price with 10^8 decimals, so we need to multiply it by 1e10
         price *= 1e10;
     }
 
