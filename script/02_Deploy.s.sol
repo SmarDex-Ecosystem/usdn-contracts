@@ -3,7 +3,6 @@ pragma solidity 0.8.26;
 
 import { Script } from "forge-std/Script.sol";
 
-import { AggregatorInterface } from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorInterface.sol";
 import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import { Sdex as SdexSepolia } from "../src/utils/sepolia/tokens/Sdex.sol";
@@ -365,16 +364,7 @@ contract Deploy is Script {
 
         vm.stopBroadcast();
 
-        string[] memory inputs = new string[](6);
-        inputs[0] = "cast";
-        inputs[1] = "call";
-        inputs[2] = "-r";
-        inputs[3] = "https://ethereum-rpc.publicnode.com";
-        inputs[4] = "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0";
-        inputs[5] = "stEthPerToken()";
-
-        bytes memory result = utils.runFfiCommand(inputs);
-        uint256 stEthPerToken = abi.decode(result, (uint256));
+        uint256 stEthPerToken = utils.getStEthPerTokenMainet();
 
         vm.startBroadcast(deployerAddress);
         wsteth.setStEthPerToken(stEthPerToken);
@@ -382,8 +372,8 @@ contract Deploy is Script {
         usdn_ = new Usdn(address(0), address(0));
         vm.stopBroadcast();
 
-        uint256 ethPrice = uint256(AggregatorInterface(0x694AA1769357215DE4FAC081bf1f309aDC325306).latestAnswer());
-        ethPrice *= 1e10;
+        uint256 ethPrice = utils.getLastChailinkEthPriceSepolia();
+        // ~2x leverage
         uint256 liqPrice = ethPrice * stEthPerToken / 2e18;
 
         sdex_ = Sdex(address(sdex));

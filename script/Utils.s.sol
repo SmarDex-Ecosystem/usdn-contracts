@@ -4,6 +4,8 @@ pragma solidity 0.8.26;
 import { Script } from "forge-std/Script.sol";
 import { Vm } from "forge-std/Vm.sol";
 
+import { AggregatorInterface } from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorInterface.sol";
+
 import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
 
 contract Utils is Script {
@@ -27,6 +29,33 @@ contract Utils is Script {
         }
     }
 
+    /**
+     * @notice Get the amount of stEth for a one wstEth on mainnet
+     * @return stEthPerToken The amount of stEth for 1 wstEth
+     */
+    function getStEthPerTokenMainet() public returns (uint256 stEthPerToken) {
+        string[] memory inputs = new string[](6);
+        inputs[0] = "cast";
+        inputs[1] = "call";
+        inputs[2] = "-r";
+        inputs[3] = "https://ethereum-rpc.publicnode.com";
+        inputs[4] = "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0";
+        inputs[5] = "stEthPerToken()";
+
+        bytes memory result = runFfiCommand(inputs);
+        stEthPerToken = abi.decode(result, (uint256));
+    }
+
+    function getLastChailinkEthPriceSepolia() public view returns (uint256 price) {
+        price = uint256(AggregatorInterface(0x694AA1769357215DE4FAC081bf1f309aDC325306).latestAnswer());
+        // chainlink give the price with 10^8 decimals
+        price *= 1e10;
+    }
+
+    /**
+     * @notice Clean the `out` directory and build the contracts
+     * @dev Call this function to clean the `out` directory and build the contracts
+     */
     function cleanAndBuildContracts() external {
         _cleanOutDir();
         _buildContracts();
@@ -48,6 +77,10 @@ contract Utils is Script {
         }
     }
 
+    /**
+     * @notice Clean the `out` directory
+     * @dev Call this function to clean the `out` directory
+     */
     function _cleanOutDir() internal {
         string[] memory inputs = new string[](2);
         inputs[0] = "forge";
@@ -55,6 +88,10 @@ contract Utils is Script {
         runFfiCommand(inputs);
     }
 
+    /**
+     * @notice Build the contracts
+     * @dev Call this function to build the contracts
+     */
     function _buildContracts() internal {
         string[] memory inputs = new string[](4);
         inputs[0] = "forge";
