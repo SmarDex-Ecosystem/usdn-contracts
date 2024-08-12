@@ -283,9 +283,8 @@ contract Deploy is Script {
         if (sdexAddress != address(0)) {
             sdex_ = Sdex(sdexAddress);
         } else {
-            vm.startBroadcast(deployerAddress);
+            vm.broadcast(deployerAddress);
             sdex_ = new Sdex();
-            vm.stopBroadcast();
         }
     }
 
@@ -308,16 +307,14 @@ contract Deploy is Script {
             if (vm.envOr("GET_WSTETH", false) && depositAmount > 0 && longAmount > 0) {
                 uint256 ethAmount = (depositAmount + longAmount + 10_000) * wstEth_.stEthPerToken() / 1 ether;
 
-                vm.startBroadcast(deployerAddress);
+                vm.broadcast(deployerAddress);
                 (bool result,) = wstETHAddress.call{ value: ethAmount }(hex"");
-                vm.stopBroadcast();
 
                 require(result, "Failed to mint wstETH");
             }
         } else {
-            vm.startBroadcast(deployerAddress);
+            vm.broadcast(deployerAddress);
             wstEth_ = new WstETH();
-            vm.stopBroadcast();
         }
     }
 
@@ -332,9 +329,8 @@ contract Deploy is Script {
         if (rebalancerAddress != address(0)) {
             rebalancer_ = Rebalancer(rebalancerAddress);
         } else {
-            vm.startBroadcast(deployerAddress);
+            vm.broadcast(deployerAddress);
             rebalancer_ = new Rebalancer(usdnProtocol);
-            vm.stopBroadcast();
         }
     }
 
