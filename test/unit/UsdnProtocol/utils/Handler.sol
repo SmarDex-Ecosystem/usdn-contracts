@@ -778,4 +778,16 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         _tempStorage._fundingSF = fundingStorage.fundingSF;
         return Core._funding(_tempStorage, timestamp, ema);
     }
+
+    function i_fundingAsset(uint128 timestamp, int256 ema)
+        external
+        view
+        returns (int256 fundingAsset, int256 fundingPerDay)
+    {
+        return Core._fundingAsset(s, timestamp, ema);
+    }
+
+    function get_EMA() external view returns (int256) {
+        return s._EMA;
+    }
 }
