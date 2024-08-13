@@ -29,10 +29,10 @@ contract Utils is Script {
     }
 
     /**
-     * @notice Get the amount of stEth for a one wstEth on mainnet
-     * @return stEthPerToken The amount of stEth for 1 wstEth
+     * @notice Get the amount of stEth for one wstEth on mainnet
+     * @return stEthPerToken_ The amount of stEth for 1 wstEth
      */
-    function getStEthPerTokenMainnet() public returns (uint256 stEthPerToken) {
+    function getStEthPerTokenMainnet() public returns (uint256 stEthPerToken_) {
         string[] memory inputs = new string[](6);
         inputs[0] = "cast";
         inputs[1] = "call";
@@ -42,27 +42,7 @@ contract Utils is Script {
         inputs[5] = "stEthPerToken()";
 
         bytes memory result = runFfiCommand(inputs);
-        stEthPerToken = abi.decode(result, (uint256));
-    }
-
-    /**
-     * @notice Get the last Chainlink price for stEth in Sepolia
-     * @return price The amount of stEth for 1 wstEth
-     */
-    function getLastChainlinkEthPriceSepolia() public view returns (uint256 price) {
-        price = uint256(AggregatorInterface(0x694AA1769357215DE4FAC081bf1f309aDC325306).latestAnswer());
-        // chainlink give the price with 10^8 decimals, so we need to multiply it by 1e10
-        price *= 1e10;
-    }
-
-    /**
-     * @notice Get the last Chainlink price for stEth in Mainnet
-     * @return price The amount of stEth for 1 wstEth
-     */
-    function getLastChainlinkEthPrice() public view returns (uint256 price) {
-        price = uint256(AggregatorInterface(0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419).latestAnswer());
-        // chainlink gives the price with 10^8 decimals, so we need to multiply it by 1e10
-        price *= 1e10;
+        stEthPerToken_ = abi.decode(result, (uint256));
     }
 
     /**
@@ -83,7 +63,7 @@ contract Utils is Script {
     function runFfiCommand(string[] memory inputs) public returns (bytes memory) {
         Vm.FfiResult memory result = vm.tryFfi(inputs);
 
-        if (result.exitCode != 0 && result.stdout.length == 0 && result.stderr.length == 0) {
+        if (result.exitCode != 0) {
             revert(string(abi.encodePacked('Failed to run bash command with "', inputs[0], '": ', result.stderr)));
         } else {
             return (result.stdout);
@@ -116,21 +96,21 @@ contract Utils is Script {
 
     /**
      * @notice Build the command to run the functionClashes.ts script
-     * @return inputs The command to run the functionClashes.ts script
+     * @return inputs_ The command to run the functionClashes.ts script
      */
-    function _buildCommandFunctionClashes() internal pure returns (string[] memory inputs) {
-        inputs = new string[](7);
+    function _buildCommandFunctionClashes() internal pure returns (string[] memory inputs_) {
+        inputs_ = new string[](7);
         uint8 i = 0;
 
         // create the command to run the functionClashes.ts script
         // npx ts-node UsdnProtocolImpl.sol UsdnProtocolFallback.sol -s UsdnProtocolStorage.sol
-        inputs[i++] = "npx";
-        inputs[i++] = "ts-node";
-        inputs[i++] = SCRIPT_PATH;
-        inputs[i++] = "UsdnProtocolImpl.sol";
-        inputs[i++] = "UsdnProtocolFallback.sol";
+        inputs_[i++] = "npx";
+        inputs_[i++] = "ts-node";
+        inputs_[i++] = SCRIPT_PATH;
+        inputs_[i++] = "UsdnProtocolImpl.sol";
+        inputs_[i++] = "UsdnProtocolFallback.sol";
         // we need to give the storage contract to remove common functions
-        inputs[i++] = "-s";
-        inputs[i++] = "UsdnProtocolStorage.sol";
+        inputs_[i++] = "-s";
+        inputs_[i++] = "UsdnProtocolStorage.sol";
     }
 }

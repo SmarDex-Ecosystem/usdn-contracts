@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# Path of the script folder (so that the script can be invoked from somewhere else than the project's root)
-SCRIPT_DIR=$(dirname -- "$(readlink -f -- "$BASH_SOURCE")")
 
 red='\033[0;31m'
 green='\033[0;32m'
