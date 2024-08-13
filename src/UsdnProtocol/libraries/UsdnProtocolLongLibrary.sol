@@ -157,14 +157,7 @@ library UsdnProtocolLongLibrary {
         HugeUint.Uint512 memory accumulator,
         int24 tickSpacing
     ) public pure returns (int24 tick_) {
-        // unadjust price with liquidation multiplier
-        uint256 unadjustedPrice = _unadjustPrice(price, assetPrice, longTradingExpo, accumulator);
-
-        if (unadjustedPrice < TickMath.MIN_PRICE) {
-            return TickMath.minUsableTick(tickSpacing);
-        }
-
-        tick_ = TickMath.getTickAtPrice(unadjustedPrice);
+        tick_ = getEffectiveTickForPriceNoRounding(price, assetPrice, longTradingExpo, accumulator);
 
         // round down to the next valid tick according to _tickSpacing (towards negative infinity)
         if (tick_ < 0) {
@@ -183,6 +176,22 @@ library UsdnProtocolLongLibrary {
         }
     }
 
+    function getEffectiveTickForPriceNoRounding(
+        uint128 price,
+        uint256 assetPrice,
+        uint256 longTradingExpo,
+        HugeUint.Uint512 memory accumulator
+    ) public pure returns (int24 tick_) {
+        // unadjust price with liquidation multiplier
+        uint256 unadjustedPrice = _unadjustPrice(price, assetPrice, longTradingExpo, accumulator);
+
+        if (unadjustedPrice < TickMath.MIN_PRICE) {
+            return TickMath.MIN_TICK;
+        }
+
+        tick_ = TickMath.getTickAtPrice(unadjustedPrice);
+    }
+
     /// @notice See {IUsdnProtocolLong}
     function getEffectivePriceForTick(Types.Storage storage s, int24 tick) public view returns (uint128 price_) {
         price_ =
@@ -197,6 +206,37 @@ library UsdnProtocolLongLibrary {
         HugeUint.Uint512 memory accumulator
     ) public pure returns (uint128 price_) {
         price_ = _adjustPrice(TickMath.getPriceAtTick(tick), assetPrice, longTradingExpo, accumulator);
+    }
+
+    function getTickFromLiqPriceWithoutPenalty(
+        uint128 desiredLiqPriceWithoutPenalty,
+        uint256 assetPrice,
+        uint256 longTradingExpo,
+        HugeUint.Uint512 memory accumulator,
+        int24 tickSpacing,
+        uint24 liquidationPenalty
+    ) public pure returns (int24 tickWithPenalty_, uint128 liqPriceWithoutPenalty_) {
+        // get corresponding tick (not necessarily a multiple of tickSpacing)
+        int24 tempTickWithoutPenalty =
+            getEffectiveTickForPriceNoRounding(desiredLiqPriceWithoutPenalty, assetPrice, longTradingExpo, accumulator);
+        // add the penalty to the tick and round down to the nearest multiple of tickSpacing
+        tickWithPenalty_ = tempTickWithoutPenalty + int24(liquidationPenalty);
+        if (tickWithPenalty_ < 0) {
+            // we round up the inverse number (positive) then invert it -> round towards negative infinity
+            tickWithPenalty_ = -int24(int256(FixedPointMathLib.divUp(uint256(int256(-tickWithPenalty_)), uint256(int256(tickSpacing)))))
+                * tickSpacing;
+            // avoid invalid ticks
+            int24 minUsableTick = TickMath.minUsableTick(tickSpacing);
+            if (tickWithPenalty_ < minUsableTick) {
+                tickWithPenalty_ = minUsableTick;
+            }
+        } else {
+            // rounding is desirable here
+            // slither-disable-next-line divide-before-multiply
+            tickWithPenalty_ = (tickWithPenalty_ / tickSpacing) * tickSpacing;
+        }
+        int24 tickWithoutPenalty = tempTickWithoutPenalty - int24(liquidationPenalty);
+        liqPriceWithoutPenalty_ = getEffectivePriceForTick(tickWithoutPenalty, assetPrice, longTradingExpo, accumulator);
     }
 
     /// @notice See {IUsdnProtocolLong}
