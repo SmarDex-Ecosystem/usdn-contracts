@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# Path of the script folder (so that the script can be invoked from somewhere else than the project's root)
+SCRIPT_DIR=$(dirname -- "$(readlink -f -- "$BASH_SOURCE")")
+# Execute in the context of the project's root
+pushd $SCRIPT_DIR/.. >/dev/null
 
 red='\033[0;31m'
 green='\033[0;32m'
@@ -81,3 +85,5 @@ if [ $ledger = true ]; then
 else
     forge script --private-key $deployerPrivateKey -f $rpcUrl script/01_Deploy.s.sol:Deploy --broadcast
 fi
+
+popd >/dev/null
