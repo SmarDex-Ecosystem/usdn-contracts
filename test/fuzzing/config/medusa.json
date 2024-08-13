@@ -32,8 +32,7 @@
 		"platformConfig": {
 			"args": [
 				"--compile-force-framework", "foundry",
-				"--compile-libraries=(DoubleEndedQueue,0xf0),(HugeUint,0xf1),(TickMath,0xf2),(UsdnProtocolActionsLongLibrary,0xf3),(UsdnProtocolActionsUtilsLibrary,0xf4),(UsdnProtocolActionsVaultLibrary,0xf5),(UsdnProtocolVaultLibrary,0xf6),(UsdnProtocolLongLibrary,0xf7),(UsdnProtocolSettersLibrary,0xf8),(SafeCast,0xf9),(UsdnProtocolFallback,0xfa),(UsdnProtocolImpl,0xfb),(LibBitmap,0xfc),(UsdnProtocolCoreLibrary,0xfd),(UsdnProtocolConstantsLibrary,0xfe),(FixedPointMathLib,0xff)",
-				"--foundry-compile-all"
+				"--compile-libraries=(DoubleEndedQueue,0xf0),(HugeUint,0xf1),(TickMath,0xf2),(UsdnProtocolCoreLibrary,0xf3),(UsdnProtocolActionsUtilsLibrary,0xf4),(UsdnProtocolActionsVaultLibrary,0xf5),(UsdnProtocolVaultLibrary,0xf6),(UsdnProtocolLongLibrary,0xf7),(UsdnProtocolActionsLongLibrary,0xf8)"
 			],
 			"exportDirectory": "../../../crytic-export",
 			"solcVersion": "0.8.26",
