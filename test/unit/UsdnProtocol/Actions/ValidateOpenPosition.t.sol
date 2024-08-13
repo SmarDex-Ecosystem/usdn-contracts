@@ -246,7 +246,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
      * @custom:and the price has decreased to 1900$
      * @custom:when The user validates the open position with the new price
      * @custom:then The protocol validates the position and emits the ValidatedOpenPosition event
-     * @custom:and the position is stays in the same tick
+     * @custom:and the position stays in the same tick
      * @custom:and the position's leverage exceeds the max leverage
      */
     function test_validateOpenPositionAboveMaxLeverage() public {
