@@ -311,7 +311,6 @@ interface IUsdnProtocolTypes {
      * @param tickHash The tick hash
      * @param pos The position object
      * @param liqPriceWithoutPenalty The new liquidation price without penalty
-     * @param leverage The new leverage
      * @param oldPosValue The value of the position according to the old entry price and the _lastPrice
      * @param liquidationPenalty The liquidation penalty for the position's tick
      * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
@@ -323,7 +322,6 @@ interface IUsdnProtocolTypes {
         bytes32 tickHash;
         Position pos;
         uint128 liqPriceWithoutPenalty;
-        uint256 leverage;
         uint256 oldPosValue;
         uint8 liquidationPenalty;
         bool isLiquidationPending;

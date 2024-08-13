@@ -142,7 +142,6 @@ contract TestUsdnProtocolActionsPrepareValidateOpenPositionData is UsdnProtocolB
             assertEq(abi.encode(data.pos), abi.encode(defaultPos), "The position should have default values");
             assertEq(data.liquidationPenalty, 0, "The liquidation penalty should be 0");
             assertEq(data.liqPriceWithoutPenalty, 0, "The liquidation price should be 0");
-            assertEq(data.leverage, 0, "The long trading expo should not be set");
         } else {
             assertFalse(data.pos.validated, "The corresponding position should not be validated");
             assertEq(
@@ -163,11 +162,6 @@ contract TestUsdnProtocolActionsPrepareValidateOpenPositionData is UsdnProtocolB
                 data.liqPriceWithoutPenalty,
                 liqPriceWithoutPenalty,
                 "The liquidation price should match the expected value"
-            );
-            assertEq(
-                data.leverage,
-                protocol.i_getLeverage(params.initialPrice, liqPriceWithoutPenalty),
-                "The leverage should match the expected value"
             );
         }
     }

@@ -281,19 +281,23 @@ library UsdnProtocolActionsUtilsLibrary {
 
         // get the position
         data_.pos = s._longPositions[data_.tickHash][data_.action.index];
-        // re-calculate leverage
+        // re-calculate liquidation price
         data_.liquidationPenalty = s._tickData[data_.tickHash].liquidationPenalty;
         data_.liqPriceWithoutPenalty = Long.getEffectivePriceForTick(
             s, Long._calcTickWithoutPenalty(s, data_.action.tick, data_.liquidationPenalty)
         );
-        // reverts if liqPriceWithoutPenalty >= startPrice
-        data_.leverage = Long._getLeverage(data_.startPrice, data_.liqPriceWithoutPenalty);
         // calculate how much the position that was opened in the initiate is now worth (it might be too large or too
         // small considering the new entry price). We will adjust the long and vault balances accordingly
         uint128 lastPrice = s._lastPrice;
+
+        // sanity check: the liquidation price without penalty should be higher than the current price, otherwise
+        // the position would have been liquidated, or `isLiquidationPending` would be true and we would have returned
+        if (data_.liqPriceWithoutPenalty >= lastPrice) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationPrice(data_.liqPriceWithoutPenalty, lastPrice);
+        }
+
         // multiplication cannot overflow because operands are uint128
-        // lastPrice is larger than liqPriceWithoutPenalty because we performed liquidations above and would early
-        // return in case of liquidation of this position
+        // lastPrice is larger than liqPriceWithoutPenalty
         data_.oldPosValue = Utils.positionValue(data_.pos.totalExpo, lastPrice, data_.liqPriceWithoutPenalty);
     }
 
