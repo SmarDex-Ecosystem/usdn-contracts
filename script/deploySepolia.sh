@@ -4,35 +4,44 @@ SCRIPT_DIR=$(dirname -- "$(readlink -f -- "$BASH_SOURCE")")
 
 red='\033[0;31m'
 green='\033[0;32m'
+blue='\033[0;34m'
 nc='\033[0m'
+
 ledger=false
 broadcastMode=""
+rpcUrl=""
+deployerPrivateKey=""
+
+read -p $'\n'"Enter rpc url : " userRpcUrl
+rpcUrl=$userRpcUrl
 
 while true; do
     read -p $'\n'"Do you wish to use a ledger? (Yy/Nn) : " yn
     case $yn in
     [Yy]*)
-        printf "\n$green In Ledger mode, please connect your ledger and set URL_SEPOLIA the .env file before using this script. $nc\n\n"
-        if [[ -z $URL_SEPOLIA ]]; then
-            printf "\n$red URL_SEPOLIA is not set or it holds an empty string $nc\n\n"
-            exit 1
-        fi
+        read -p $'\n'"Enter address : " address
 
+        printf "\n$green Running script in Ledger mode with :\n"
+        printf "\n$blue Address :$nc $address\n"
+        printf "$blue RPC URL :$nc $rpcUrl\n"
         ledger=true
+        export DEPLOYER_ADDRESS=$address
         break
         ;;
     [Nn]*)
-        printf "\n$green In Non-Ledger mode, please set DEPLOYER_PRIVATE_KEY and URL_SEPOLIA in the .env file before using this script.$nc\n\n"
 
-        if [[ -z $DEPLOYER_PRIVATE_KEY ]]; then
-            printf "\n$red DEPLOYER_PRIVATE_KEY is not set or it holds an empty string $nc\n\n"
+        read -s -p $'\n'"Enter private key : " privateKey
+        deployerPrivateKey=$privateKey
+
+        address=$(cast wallet address $deployerPrivateKey)
+        if [[ -z $address ]]; then
+            printf "\n$red The private key is invalid$nc\n\n"
             exit 1
         fi
-        if [[ -z $URL_SEPOLIA ]]; then
-            printf "\n$red URL_SEPOLIA is not set or it holds an empty string $nc\n\n"
-            exit 1
-        fi
 
+        printf "\n$green Running script in Non-Ledger mode with :\n"
+        printf "\n$blue Address :$nc $address"
+        printf "\n$blue RPC URL :$nc $rpcUrl\n"
         ledger=false
         break
         ;;
@@ -55,7 +64,7 @@ while true; do
 done
 
 if [ $ledger = true ]; then
-    forge script -l -f $URL_SEPOLIA script/01_Deploy.s.sol:Deploy $broadcastMode
+    forge script -l -f $rpcUrl script/01_Deploy.s.sol:Deploy $broadcastMode
 else
-    forge script --private-key $DEPLOYER_PRIVATE_KEY -f $URL_SEPOLIA script/01_Deploy.s.sol:Deploy $broadcastMode
+    forge script --private-key $deployerPrivateKey -f $rpcUrl script/01_Deploy.s.sol:Deploy $broadcastMode
 fi
