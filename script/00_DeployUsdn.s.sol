@@ -10,7 +10,7 @@ contract DeployUsdn is Script {
         address deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
         uint64 nonce = vm.getNonce(deployerAddress);
 
-        require(block.chainid == 1, "DeployUsdn: not allowed in test environment, use 02_Deploy.s.sol instead");
+        require(block.chainid == 1, "DeployUsdn: not allowed in test environment, use 01_Deploy.s.sol instead");
         require(nonce == 0, "Nonce must be 0");
 
         vm.broadcast(deployerAddress);

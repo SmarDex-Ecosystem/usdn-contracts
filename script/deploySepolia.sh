@@ -11,6 +11,7 @@ ledger=false
 broadcastMode=""
 rpcUrl=""
 deployerPrivateKey=""
+address=""
 
 read -p $'\n'"Enter rpc url : " userRpcUrl
 rpcUrl=$userRpcUrl
@@ -19,17 +20,14 @@ while true; do
     read -p $'\n'"Do you wish to use a ledger? (Yy/Nn) : " yn
     case $yn in
     [Yy]*)
-        read -p $'\n'"Enter address : " address
+        read -p $'\n'"Enter address : " userAddress
+        address=$userAddress
 
         printf "\n$green Running script in Ledger mode with :\n"
-        printf "\n$blue Address :$nc $address\n"
-        printf "$blue RPC URL :$nc $rpcUrl\n"
         ledger=true
-        export DEPLOYER_ADDRESS=$address
         break
         ;;
     [Nn]*)
-
         read -s -p $'\n'"Enter private key : " privateKey
         deployerPrivateKey=$privateKey
 
@@ -40,14 +38,16 @@ while true; do
         fi
 
         printf "\n$green Running script in Non-Ledger mode with :\n"
-        printf "\n$blue Address :$nc $address"
-        printf "\n$blue RPC URL :$nc $rpcUrl\n"
         ledger=false
         break
         ;;
     *) printf "\nPlease answer yes (Y/y) or no (N/n).\n" ;;
     esac
 done
+
+printf "\n$blue Address :$nc $address"
+printf "\n$blue RPC URL :$nc $rpcUrl\n"
+export DEPLOYER_ADDRESS=$address
 
 while true; do
     read -p $'\n'"Do you wish to broadcast? (Yy/Nn) : " yn

@@ -91,8 +91,7 @@ contract Deploy is Script {
         LiquidationRewardsManager_ = _deployLiquidationRewardsManager(isProdEnv, address(WstETH_));
 
         // deploy the USDN protocol
-        UsdnProtocol_ =
-            _deployProtocol(Usdn_, Sdex_, WstETH_, WstEthOracleMiddleware_, LiquidationRewardsManager_, chainId);
+        UsdnProtocol_ = _deployProtocol(Usdn_, Sdex_, WstETH_, WstEthOracleMiddleware_, LiquidationRewardsManager_);
 
         // deploy the rebalancer
         Rebalancer_ = _deployRebalancer(UsdnProtocol_);
@@ -110,7 +109,6 @@ contract Deploy is Script {
      * @param wstETH The WstETH token
      * @param wstEthOracleMiddleware The WstETH oracle middleware
      * @param liquidationRewardsManager The liquidation rewards manager
-     * @param chain The chain id
      * @return usdnProtocol_ The deployed protocol
      */
     function _deployProtocol(
@@ -118,8 +116,7 @@ contract Deploy is Script {
         Sdex sdex,
         WstETH wstETH,
         WstEthOracleMiddleware wstEthOracleMiddleware,
-        LiquidationRewardsManager liquidationRewardsManager,
-        ChainId chain
+        LiquidationRewardsManager liquidationRewardsManager
     ) internal returns (IUsdnProtocol usdnProtocol_) {
         // clean and build contracts for openzeppelin module
         utils.cleanAndBuildContracts();
@@ -128,7 +125,7 @@ contract Deploy is Script {
         Options memory opts;
         string memory contractName;
         // we need to allow constructors for the UsdnProtocolSepolia safeguard mechanism
-        if (chain == ChainId.Sepolia) {
+        if (chainId == ChainId.Sepolia) {
             opts.unsafeAllow = "constructor,external-library-linking";
             contractName = "UsdnProtocolSepolia.sol";
         } else {
@@ -186,9 +183,12 @@ contract Deploy is Script {
                 wstEthOracleMiddleware_ = MockWstEthOracleMiddleware(middlewareAddress);
             }
         } else {
-            address pythAddress = vm.envAddress("PYTH_ADDRESS");
-            bytes32 pythFeedId = vm.envBytes32("PYTH_ETH_FEED_ID");
-            address chainlinkPriceAddress = vm.envAddress("CHAINLINK_ETH_PRICE_ADDRESS");
+            address pythAddress = vm.envOr("PYTH_ADDRESS", 0x4305FB66699C3B2702D4d05CF36551390A4c69C6);
+            bytes32 pythFeedId = vm.envOr(
+                "PYTH_ETH_FEED_ID", bytes32(0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace)
+            );
+            address chainlinkPriceAddress =
+                vm.envOr("CHAINLINK_ETH_PRICE_ADDRESS", 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
             uint256 chainlinkPriceValidity = vm.envOr("CHAINLINK_ETH_PRICE_VALIDITY", uint256(1 hours + 2 minutes));
 
             if (isProdEnv) {
@@ -222,7 +222,8 @@ contract Deploy is Script {
                 liquidationRewardsManager_ = MockLiquidationRewardsManager(liquidationRewardsManagerAddress);
             }
         } else {
-            address chainlinkGasPriceFeed = vm.envAddress("CHAINLINK_GAS_PRICE_ADDRESS");
+            address chainlinkGasPriceFeed =
+                vm.envOr("CHAINLINK_GAS_PRICE_ADDRESS", 0x169E633A2D1E6c10dD91238Ba11c4A708dfEF37C);
             uint256 chainlinkPriceValidity = vm.envOr("CHAINLINK_GAS_PRICE_VALIDITY", uint256(2 hours + 5 minutes));
 
             if (isProdEnv) {
