@@ -46,14 +46,21 @@ export GET_WSTETH=true
 
 ## Deploy protocol
 
-Initializing the contract (when `INIT_DEPOSIT_AMOUNT` and `INIT_LONG_AMOUNT` are defined) requires enough wstETH to make
-the deposit and open the long position.
+Just run the bash script corresponding to the desired deployment (mainnet, fork or sepolia).
 
-If `WSTETH_ADDRESS` is defined and `GET_WSTETH=true`, then the script will wrap some ether before initializing the
+You will be prompted to enter the `RPC_URL` of the network you want to deploy to (mainnet and sepolia). If you are deploying with a Ledger, you will also be prompted for the deployer address. And without a Ledger, you will be prompted for the deployer private key.\
+The deployment script for the fork mode does not require any input.
+
+Only two env variables are required in mainnet or fork modes: `INIT_DEPOSIT_AMOUNT` and `INIT_LONG_AMOUNT`.
+On sepolia, if no amounts are provided, the default value is used (200 ethers).
+
+If `GET_WSTETH=true`, then the script will wrap some ether before initializing the
 contract so that there is enough balance.
 
 ```
-forge script --non-interactive --private-key 0xac... -f http://localhost:8545 script/02_Deploy.s.sol:Deploy --broadcast
+./script/deployMainnet.sh
+./script/deploySepolia.sh
+./script/deployFork.sh
 ```
 
 ## Anvil fork configuration
