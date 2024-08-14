@@ -113,7 +113,7 @@ contract Deploy is Script {
 
         // we need to allow external library linking for the openzeppelin module
         Options memory opts;
-        opts.unsafeAllow = "external-library-linking";
+        opts.unsafeAllow = "external-library-linking,state-variable-immutable";
 
         // deploy the protocol fallback
         UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();

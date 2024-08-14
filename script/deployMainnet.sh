@@ -74,7 +74,8 @@ if [ $status -ne 0 ]; then
     exit 1
 fi
 
-printf "$green Waiting for USDN contract to be deployed... (24s) $nc\n"
+printf "$green USDN contract have been deployed !\n"
+printf " Waiting for confirmation... (24s) $nc\n"
 sleep 24s
 
 BROADCAST="broadcast/00_DeployUsdn.s.sol/1/run-latest.json"
