@@ -326,7 +326,7 @@ library UsdnProtocolActionsLongLibrary {
             data.liqPriceWithoutPenalty = Long._getLiquidationPrice(data.startPrice, maxLeverage);
             // find corresponding tick and actual liq price with current penalty setting
             maxLeverageData.currentLiqPenalty = s._liquidationPenalty;
-            (maxLeverageData.newPosId.tick, data.liqPriceWithoutPenalty) = Long.getTickFromLiqPriceWithoutPenalty(
+            (maxLeverageData.newPosId.tick, data.liqPriceWithoutPenalty) = Long._getTickFromLiqPriceWithoutPenalty(
                 s, data.liqPriceWithoutPenalty, maxLeverageData.currentLiqPenalty
             );
 

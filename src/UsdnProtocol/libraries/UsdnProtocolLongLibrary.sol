@@ -192,77 +192,6 @@ library UsdnProtocolLongLibrary {
         price_ = _adjustPrice(TickMath.getPriceAtTick(tick), assetPrice, longTradingExpo, accumulator);
     }
 
-    /**
-     * @notice For a desired liquidation price, get the tick number with penalty and liquidation price without penalty
-     * @dev This function first calculates a tick for the desired liq price (no rounding), then adds the penalty to the
-     * tick and rounds down to the nearest tick spacing. Then it subtracts the penalty from the final tick and
-     * calculates the corresponding liquidation price
-     * @param s The storage of the protocol
-     * @param desiredLiqPriceWithoutPenalty The desired liquidation price without penalty
-     * @param liquidationPenalty The liquidation penalty
-     * @return tickWithPenalty_ The tick number with penalty
-     * @return liqPriceWithoutPenalty_ The liquidation price without penalty
-     */
-    function getTickFromLiqPriceWithoutPenalty(
-        Types.Storage storage s,
-        uint128 desiredLiqPriceWithoutPenalty,
-        uint24 liquidationPenalty
-    ) public view returns (int24 tickWithPenalty_, uint128 liqPriceWithoutPenalty_) {
-        return getTickFromLiqPriceWithoutPenalty(
-            desiredLiqPriceWithoutPenalty,
-            s._lastPrice,
-            s._totalExpo - s._balanceLong,
-            s._liqMultiplierAccumulator,
-            s._tickSpacing,
-            liquidationPenalty
-        );
-    }
-
-    /**
-     * @notice For a desired liquidation price, get the tick number with penalty and liquidation price without penalty
-     * @dev This function first calculates a tick for the desired liq price (no rounding), then adds the penalty to the
-     * tick and rounds down to the nearest tick spacing. Then it subtracts the penalty from the final tick and
-     * calculates the corresponding liquidation price
-     * @param desiredLiqPriceWithoutPenalty The desired liquidation price without penalty
-     * @param assetPrice The current price of the asset
-     * @param longTradingExpo The trading expo of the long side (total expo - balance long)
-     * @param accumulator The liquidation multiplier accumulator
-     * @param tickSpacing The tick spacing
-     * @param liquidationPenalty The liquidation penalty
-     * @return tickWithPenalty_ The tick number with penalty
-     * @return liqPriceWithoutPenalty_ The liquidation price without penalty
-     */
-    function getTickFromLiqPriceWithoutPenalty(
-        uint128 desiredLiqPriceWithoutPenalty,
-        uint256 assetPrice,
-        uint256 longTradingExpo,
-        HugeUint.Uint512 memory accumulator,
-        int24 tickSpacing,
-        uint24 liquidationPenalty
-    ) public pure returns (int24 tickWithPenalty_, uint128 liqPriceWithoutPenalty_) {
-        // get corresponding tick (not necessarily a multiple of tickSpacing)
-        int24 tempTickWithoutPenalty =
-            _getEffectiveTickForPriceNoRounding(desiredLiqPriceWithoutPenalty, assetPrice, longTradingExpo, accumulator);
-        // add the penalty to the tick and round down to the nearest multiple of tickSpacing
-        tickWithPenalty_ = tempTickWithoutPenalty + int24(liquidationPenalty);
-        if (tickWithPenalty_ < 0) {
-            // we round up the inverse number (positive) then invert it -> round towards negative infinity
-            tickWithPenalty_ = -int24(int256(FixedPointMathLib.divUp(uint256(int256(-tickWithPenalty_)), uint256(int256(tickSpacing)))))
-                * tickSpacing;
-            // avoid invalid ticks: we should be able to get the price for `tickWithPenalty_ - liquidationPenalty`
-            while (tickWithPenalty_ < TickMath.MIN_TICK + int24(liquidationPenalty)) {
-                tickWithPenalty_ += tickSpacing;
-            }
-        } else {
-            // rounding is desirable here
-            // slither-disable-next-line divide-before-multiply
-            tickWithPenalty_ = (tickWithPenalty_ / tickSpacing) * tickSpacing;
-        }
-        liqPriceWithoutPenalty_ = getEffectivePriceForTick(
-            Utils.calcTickWithoutPenalty(tickWithPenalty_, liquidationPenalty), assetPrice, longTradingExpo, accumulator
-        );
-    }
-
     /// @notice See {IUsdnProtocolLong}
     function longAssetAvailableWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
         public
@@ -334,6 +263,77 @@ library UsdnProtocolLongLibrary {
         }
 
         tick_ = TickMath.getTickAtPrice(unadjustedPrice);
+    }
+
+    /**
+     * @notice For a desired liquidation price, get the tick number with penalty and liquidation price without penalty
+     * @dev This function first calculates a tick for the desired liq price (no rounding), then adds the penalty to the
+     * tick and rounds down to the nearest tick spacing. Then it subtracts the penalty from the final tick and
+     * calculates the corresponding liquidation price
+     * @param s The storage of the protocol
+     * @param desiredLiqPriceWithoutPenalty The desired liquidation price without penalty
+     * @param liquidationPenalty The liquidation penalty
+     * @return tickWithPenalty_ The tick number with penalty
+     * @return liqPriceWithoutPenalty_ The liquidation price without penalty
+     */
+    function _getTickFromLiqPriceWithoutPenalty(
+        Types.Storage storage s,
+        uint128 desiredLiqPriceWithoutPenalty,
+        uint24 liquidationPenalty
+    ) public view returns (int24 tickWithPenalty_, uint128 liqPriceWithoutPenalty_) {
+        return _getTickFromLiqPriceWithoutPenalty(
+            desiredLiqPriceWithoutPenalty,
+            s._lastPrice,
+            s._totalExpo - s._balanceLong,
+            s._liqMultiplierAccumulator,
+            s._tickSpacing,
+            liquidationPenalty
+        );
+    }
+
+    /**
+     * @notice For a desired liquidation price, get the tick number with penalty and liquidation price without penalty
+     * @dev This function first calculates a tick for the desired liq price (no rounding), then adds the penalty to the
+     * tick and rounds down to the nearest tick spacing. Then it subtracts the penalty from the final tick and
+     * calculates the corresponding liquidation price
+     * @param desiredLiqPriceWithoutPenalty The desired liquidation price without penalty
+     * @param assetPrice The current price of the asset
+     * @param longTradingExpo The trading expo of the long side (total expo - balance long)
+     * @param accumulator The liquidation multiplier accumulator
+     * @param tickSpacing The tick spacing
+     * @param liquidationPenalty The liquidation penalty
+     * @return tickWithPenalty_ The tick number with penalty
+     * @return liqPriceWithoutPenalty_ The liquidation price without penalty
+     */
+    function _getTickFromLiqPriceWithoutPenalty(
+        uint128 desiredLiqPriceWithoutPenalty,
+        uint256 assetPrice,
+        uint256 longTradingExpo,
+        HugeUint.Uint512 memory accumulator,
+        int24 tickSpacing,
+        uint24 liquidationPenalty
+    ) public pure returns (int24 tickWithPenalty_, uint128 liqPriceWithoutPenalty_) {
+        // get corresponding tick (not necessarily a multiple of tickSpacing)
+        int24 tempTickWithoutPenalty =
+            _getEffectiveTickForPriceNoRounding(desiredLiqPriceWithoutPenalty, assetPrice, longTradingExpo, accumulator);
+        // add the penalty to the tick and round down to the nearest multiple of tickSpacing
+        tickWithPenalty_ = tempTickWithoutPenalty + int24(liquidationPenalty);
+        if (tickWithPenalty_ < 0) {
+            // we round up the inverse number (positive) then invert it -> round towards negative infinity
+            tickWithPenalty_ = -int24(int256(FixedPointMathLib.divUp(uint256(int256(-tickWithPenalty_)), uint256(int256(tickSpacing)))))
+                * tickSpacing;
+            // avoid invalid ticks: we should be able to get the price for `tickWithPenalty_ - liquidationPenalty`
+            while (tickWithPenalty_ < TickMath.MIN_TICK + int24(liquidationPenalty)) {
+                tickWithPenalty_ += tickSpacing;
+            }
+        } else {
+            // rounding is desirable here
+            // slither-disable-next-line divide-before-multiply
+            tickWithPenalty_ = (tickWithPenalty_ / tickSpacing) * tickSpacing;
+        }
+        liqPriceWithoutPenalty_ = getEffectivePriceForTick(
+            Utils.calcTickWithoutPenalty(tickWithPenalty_, liquidationPenalty), assetPrice, longTradingExpo, accumulator
+        );
     }
 
     /**
@@ -1332,7 +1332,7 @@ library UsdnProtocolLongLibrary {
         data.currentLiqPenalty = s._liquidationPenalty;
         uint128 idealLiqPrice = _calcLiqPriceFromTradingExpo(lastPrice, positionAmount, tradingExpoToFill);
         data.liqPriceWithoutPenalty;
-        (posData_.tick, data.liqPriceWithoutPenalty) = getTickFromLiqPriceWithoutPenalty(
+        (posData_.tick, data.liqPriceWithoutPenalty) = _getTickFromLiqPriceWithoutPenalty(
             idealLiqPrice,
             lastPrice,
             cache.tradingExpo,
