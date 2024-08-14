@@ -41,7 +41,7 @@ library UsdnProtocolCoreLibrary {
         uint128 longAmount,
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData
-    ) public {
+    ) internal {
         if (depositAmount < Constants.MIN_INIT_DEPOSIT) {
             revert IUsdnProtocolErrors.UsdnProtocolMinInitAmount(Constants.MIN_INIT_DEPOSIT);
         }
@@ -74,11 +74,11 @@ library UsdnProtocolCoreLibrary {
         ActionsVault._refundEther(address(this).balance, payable(msg.sender));
     }
 
-    /* -------------------------- public view functions ------------------------- */
+    /* -------------------------- internal view functions ------------------------- */
 
     /// @notice See {IUsdnProtocolCore}
     function calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
-        public
+        internal
         pure
         returns (int256)
     {
@@ -92,11 +92,11 @@ library UsdnProtocolCoreLibrary {
         ) / Utils.toInt256(emaPeriod);
     }
 
-    /* --------------------------  public functions --------------------------- */
+    /* --------------------------  internal functions --------------------------- */
 
     /// @notice See {IUsdnProtocolCore}
     function funding(Types.Storage storage s, uint128 timestamp)
-        public
+        internal
         view
         returns (int256 funding_, int256 fundingPerDay_, int256 oldLongExpo_)
     {
@@ -105,7 +105,7 @@ library UsdnProtocolCoreLibrary {
 
     /// @notice See {IUsdnProtocolCore}
     function vaultTradingExpoWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
-        public
+        internal
         view
         returns (int256 expo_)
     {
@@ -114,7 +114,7 @@ library UsdnProtocolCoreLibrary {
 
     /// @notice See {IUsdnProtocolCore}
     function getActionablePendingActions(Types.Storage storage s, address currentUser)
-        public
+        internal
         view
         returns (Types.PendingAction[] memory actions_, uint128[] memory rawIndices_)
     {
@@ -170,7 +170,7 @@ library UsdnProtocolCoreLibrary {
 
     /// @notice See {IUsdnProtocolCore}
     function getUserPendingAction(Types.Storage storage s, address user)
-        public
+        internal
         view
         returns (Types.PendingAction memory action_)
     {
@@ -178,12 +178,12 @@ library UsdnProtocolCoreLibrary {
     }
 
     /// @notice See {IUsdnProtocolActions}
-    function tickHash(int24 tick, uint256 version) public pure returns (bytes32) {
+    function tickHash(int24 tick, uint256 version) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(tick, version));
     }
 
     /// @notice See {IUsdnProtocolCore}
-    function removeBlockedPendingAction(Types.Storage storage s, address validator, address payable to) public {
+    function removeBlockedPendingAction(Types.Storage storage s, address validator, address payable to) internal {
         uint256 pendingActionIndex = s._pendingActions[validator];
         if (pendingActionIndex == 0) {
             // no pending action
@@ -196,7 +196,7 @@ library UsdnProtocolCoreLibrary {
 
     /// @notice See {IUsdnProtocolCore}
     function removeBlockedPendingActionNoCleanup(Types.Storage storage s, address validator, address payable to)
-        public
+        internal
     {
         uint256 pendingActionIndex = s._pendingActions[validator];
         if (pendingActionIndex == 0) {
@@ -220,7 +220,7 @@ library UsdnProtocolCoreLibrary {
      * @return oldLongExpo_ The old long trading expo
      */
     function _fundingPerDay(Types.Storage storage s, int256 ema)
-        public
+        internal
         view
         returns (int256 fundingPerDay_, int256 oldLongExpo_)
     {
@@ -290,7 +290,7 @@ library UsdnProtocolCoreLibrary {
      * @return oldLongExpo_ The old long trading expo
      */
     function _funding(Types.Storage storage s, uint128 timestamp, int256 ema)
-        public
+        internal
         view
         returns (int256 funding_, int256 fundingPerDay_, int256 oldLongExpo_)
     {
@@ -324,7 +324,7 @@ library UsdnProtocolCoreLibrary {
      * @return fundingPerDay_ The funding rate (per day) with `FUNDING_RATE_DECIMALS` decimals
      */
     function _fundingAsset(Types.Storage storage s, uint128 timestamp, int256 ema)
-        public
+        internal
         view
         returns (int256 fundingAsset_, int256 fundingPerDay_)
     {
@@ -343,7 +343,7 @@ library UsdnProtocolCoreLibrary {
      * @return available_ The available balance on the long side
      */
     function _longAssetAvailable(Types.Storage storage s, uint128 currentPrice)
-        public
+        internal
         view
         returns (int256 available_)
     {
@@ -359,7 +359,7 @@ library UsdnProtocolCoreLibrary {
      * @return available_ The available balance on the long side
      */
     function _longAssetAvailable(uint256 totalExpo, uint256 balanceLong, uint128 newPrice, uint128 oldPrice)
-        public
+        internal
         pure
         returns (int256 available_)
     {
@@ -391,7 +391,7 @@ library UsdnProtocolCoreLibrary {
      * @param fundingPerDay The funding rate per day that was just calculated for the elapsed period
      * @param secondsElapsed The number of seconds elapsed since the last protocol action
      */
-    function _updateEMA(Types.Storage storage s, int256 fundingPerDay, uint128 secondsElapsed) public {
+    function _updateEMA(Types.Storage storage s, int256 fundingPerDay, uint128 secondsElapsed) internal {
         s._EMA = calcEMA(fundingPerDay, secondsElapsed, s._EMAPeriod, s._EMA);
     }
 
@@ -405,7 +405,7 @@ library UsdnProtocolCoreLibrary {
      * @return fundAssetWithFee_ The updated funding asset amount after applying the fee
      */
     function _calculateFee(Types.Storage storage s, int256 fundAsset)
-        public
+        internal
         returns (int256 fee_, int256 fundAssetWithFee_)
     {
         int256 protocolFeeBps = Utils.toInt256(s._protocolFeeBps);
@@ -428,7 +428,7 @@ library UsdnProtocolCoreLibrary {
      * @return usdnShares_ The amount of USDN shares
      */
     function _mergeWithdrawalAmountParts(uint24 sharesLSB, uint128 sharesMSB)
-        public
+        internal
         pure
         returns (uint256 usdnShares_)
     {
@@ -441,7 +441,7 @@ library UsdnProtocolCoreLibrary {
      * @param tick The tick to convert, a multiple of the tick spacing
      * @return index_ The index into the Bitmap
      */
-    function _calcBitmapIndexFromTick(Types.Storage storage s, int24 tick) public view returns (uint256 index_) {
+    function _calcBitmapIndexFromTick(Types.Storage storage s, int24 tick) internal view returns (uint256 index_) {
         index_ = _calcBitmapIndexFromTick(tick, s._tickSpacing);
     }
 
@@ -451,7 +451,7 @@ library UsdnProtocolCoreLibrary {
      * @param tickSpacing The tick spacing to use
      * @return index_ The index into the Bitmap
      */
-    function _calcBitmapIndexFromTick(int24 tick, int24 tickSpacing) public pure returns (uint256 index_) {
+    function _calcBitmapIndexFromTick(int24 tick, int24 tickSpacing) internal pure returns (uint256 index_) {
         index_ = uint256( // cast is safe as the min tick is always above TickMath.MIN_TICK
             (int256(tick) - TickMath.MIN_TICK) // shift into positive
                 / tickSpacing
@@ -470,7 +470,7 @@ library UsdnProtocolCoreLibrary {
      * balance, the last price and a flag indicating if the price is recent
      */
     function _applyPnlAndFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
-        public
+        internal
         returns (Types.ApplyPnlAndFundingData memory data_)
     {
         int256 fundAsset;
@@ -533,7 +533,7 @@ library UsdnProtocolCoreLibrary {
      * @return vaultAction_ The converted deposit pending action
      */
     function _toDepositPendingAction(Types.PendingAction memory action)
-        public
+        internal
         pure
         returns (Types.DepositPendingAction memory vaultAction_)
     {
@@ -548,7 +548,7 @@ library UsdnProtocolCoreLibrary {
      * @return vaultAction_ The converted withdrawal pending action
      */
     function _toWithdrawalPendingAction(Types.PendingAction memory action)
-        public
+        internal
         pure
         returns (Types.WithdrawalPendingAction memory vaultAction_)
     {
@@ -563,7 +563,7 @@ library UsdnProtocolCoreLibrary {
      * @return longAction_ The converted long pending action
      */
     function _toLongPendingAction(Types.PendingAction memory action)
-        public
+        internal
         pure
         returns (Types.LongPendingAction memory longAction_)
     {
@@ -578,7 +578,7 @@ library UsdnProtocolCoreLibrary {
      * @return pendingAction_ The converted untyped pending action
      */
     function _convertDepositPendingAction(Types.DepositPendingAction memory action)
-        public
+        internal
         pure
         returns (Types.PendingAction memory pendingAction_)
     {
@@ -593,7 +593,7 @@ library UsdnProtocolCoreLibrary {
      * @return pendingAction_ The converted untyped pending action
      */
     function _convertWithdrawalPendingAction(Types.WithdrawalPendingAction memory action)
-        public
+        internal
         pure
         returns (Types.PendingAction memory pendingAction_)
     {
@@ -608,7 +608,7 @@ library UsdnProtocolCoreLibrary {
      * @return pendingAction_ The converted untyped pending action
      */
     function _convertLongPendingAction(Types.LongPendingAction memory action)
-        public
+        internal
         pure
         returns (Types.PendingAction memory pendingAction_)
     {
@@ -625,7 +625,7 @@ library UsdnProtocolCoreLibrary {
      * @return rawIndex_ The raw index in the queue for the returned pending action, or zero
      */
     function _getActionablePendingAction(Types.Storage storage s)
-        public
+        internal
         returns (Types.PendingAction memory action_, uint128 rawIndex_)
     {
         uint256 queueLength = s._pendingActionsQueue.length();
@@ -668,7 +668,7 @@ library UsdnProtocolCoreLibrary {
      * @return securityDepositValue_ The security deposit value of the removed stale pending action
      */
     function _removeStalePendingAction(Types.Storage storage s, address user)
-        public
+        internal
         returns (uint256 securityDepositValue_)
     {
         if (s._pendingActions[user] == 0) {
@@ -706,7 +706,7 @@ library UsdnProtocolCoreLibrary {
      * @return amountToRefund_ The security deposit value of the stale pending action
      */
     function _addPendingAction(Types.Storage storage s, address user, Types.PendingAction memory action)
-        public
+        internal
         returns (uint256 amountToRefund_)
     {
         amountToRefund_ = _removeStalePendingAction(s, user); // check if there is a pending action that was
@@ -731,7 +731,7 @@ library UsdnProtocolCoreLibrary {
      * @return rawIndex_ The raw index of the pending action in the queue
      */
     function _getPendingAction(Types.Storage storage s, address user)
-        public
+        internal
         view
         returns (Types.PendingAction memory action_, uint128 rawIndex_)
     {
@@ -754,7 +754,7 @@ library UsdnProtocolCoreLibrary {
      * @return rawIndex_ The raw index of the pending action in the queue
      */
     function _getPendingActionOrRevert(Types.Storage storage s, address user)
-        public
+        internal
         view
         returns (Types.PendingAction memory action_, uint128 rawIndex_)
     {
@@ -770,7 +770,7 @@ library UsdnProtocolCoreLibrary {
      * @param user The user's address
      * @param rawIndex The rawIndex of the pending action in the queue
      */
-    function _clearPendingAction(Types.Storage storage s, address user, uint128 rawIndex) public {
+    function _clearPendingAction(Types.Storage storage s, address user, uint128 rawIndex) internal {
         s._pendingActionsQueue.clearAt(rawIndex);
         delete s._pendingActions[user];
     }
@@ -787,7 +787,7 @@ library UsdnProtocolCoreLibrary {
      * @param cleanup If `true`, will attempt to perform more cleanup at the risk of reverting. Always try `true` first
      */
     function _removeBlockedPendingAction(Types.Storage storage s, uint128 rawIndex, address payable to, bool cleanup)
-        public
+        internal
     {
         Types.PendingAction memory pending = s._pendingActionsQueue.atRaw(rawIndex);
         if (block.timestamp < pending.timestamp + s._validationDeadline + 1 hours) {
@@ -861,7 +861,7 @@ library UsdnProtocolCoreLibrary {
      * @return hash_ The hash of the tick
      * @return version_ The version of the tick
      */
-    function _tickHash(Types.Storage storage s, int24 tick) public view returns (bytes32 hash_, uint256 version_) {
+    function _tickHash(Types.Storage storage s, int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
         version_ = s._tickVersion[tick];
         hash_ = tickHash(tick, version_);
     }

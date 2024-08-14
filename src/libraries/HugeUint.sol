@@ -46,7 +46,7 @@ library HugeUint {
      * @param b The second operand
      * @return res_ The sum of `a` and `b`
      */
-    function add(Uint512 memory a, Uint512 memory b) external pure returns (Uint512 memory res_) {
+    function add(Uint512 memory a, Uint512 memory b) internal pure returns (Uint512 memory res_) {
         (res_.lo, res_.hi) = _add(a.lo, a.hi, b.lo, b.hi);
         // check for overflow, i.e. if the result is less than b
         if (res_.hi < b.hi || (res_.hi == b.hi && res_.lo < b.lo)) {
@@ -61,7 +61,7 @@ library HugeUint {
      * @param b The second operand
      * @return res_ The difference `a - b`
      */
-    function sub(Uint512 memory a, Uint512 memory b) external pure returns (Uint512 memory res_) {
+    function sub(Uint512 memory a, Uint512 memory b) internal pure returns (Uint512 memory res_) {
         // check for underflow
         if (a.hi < b.hi || (a.hi == b.hi && a.lo < b.lo)) {
             revert HugeUintSubUnderflow();
@@ -75,7 +75,7 @@ library HugeUint {
      * @param b The second operand
      * @return res_ The product `a * b` of the operands as an unsigned 512-bit integer
      */
-    function mul(uint256 a, uint256 b) external pure returns (Uint512 memory res_) {
+    function mul(uint256 a, uint256 b) internal pure returns (Uint512 memory res_) {
         (res_.lo, res_.hi) = _mul256(a, b);
     }
 
@@ -86,7 +86,7 @@ library HugeUint {
      * @param b The second operand
      * @return res_ The product `a * b` of the operands as an unsigned 512-bit integer
      */
-    function mul(Uint512 memory a, uint256 b) external pure returns (Uint512 memory res_) {
+    function mul(Uint512 memory a, uint256 b) internal pure returns (Uint512 memory res_) {
         if ((a.hi == 0 && a.lo == 0) || b == 0) {
             return res_;
         }
@@ -110,7 +110,7 @@ library HugeUint {
      * @param b The denominator as a 256-bit unsigned integer
      * @return res_ The division `floor(a / b)` of the operands as an unsigned 256-bit integer
      */
-    function div(Uint512 memory a, uint256 b) external pure returns (uint256 res_) {
+    function div(Uint512 memory a, uint256 b) internal pure returns (uint256 res_) {
         // make sure the output fits inside a uint256, also prevents b == 0
         if (b <= a.hi) {
             revert HugeUintDivisionFailed();
@@ -136,7 +136,7 @@ library HugeUint {
      * @param b The denominator as a 512-bit integer
      * @return res_ The quotient floor(a/b)
      */
-    function div(Uint512 memory a, Uint512 memory b) external pure returns (uint256 res_) {
+    function div(Uint512 memory a, Uint512 memory b) internal pure returns (uint256 res_) {
         res_ = _div(a.lo, a.hi, b.lo, b.hi);
     }
 

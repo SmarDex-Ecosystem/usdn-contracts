@@ -28,7 +28,7 @@ library UsdnProtocolVaultLibrary {
 
     /// @notice See {IUsdnProtocolVault}
     function usdnPrice(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
-        public
+        internal
         view
         returns (uint256 price_)
     {
@@ -41,13 +41,13 @@ library UsdnProtocolVaultLibrary {
     }
 
     /// @notice See {IUsdnProtocolVault}
-    function usdnPrice(Types.Storage storage s, uint128 currentPrice) public view returns (uint256 price_) {
+    function usdnPrice(Types.Storage storage s, uint128 currentPrice) internal view returns (uint256 price_) {
         price_ = usdnPrice(s, currentPrice, uint128(block.timestamp));
     }
 
     /// @notice See {IUsdnProtocolVault}
     function previewDeposit(Types.Storage storage s, uint256 amount, uint128 price, uint128 timestamp)
-        public
+        internal
         view
         returns (uint256 usdnSharesExpected_, uint256 sdexToBurn_)
     {
@@ -66,7 +66,7 @@ library UsdnProtocolVaultLibrary {
 
     /// @notice See {IUsdnProtocolVault}
     function previewWithdraw(Types.Storage storage s, uint256 usdnShares, uint256 price, uint128 timestamp)
-        public
+        internal
         view
         returns (uint256 assetExpected_)
     {
@@ -81,7 +81,7 @@ library UsdnProtocolVaultLibrary {
 
     /// @notice See {IUsdnProtocolVault}
     function vaultAssetAvailableWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
-        public
+        internal
         view
         returns (int256 available_)
     {
@@ -116,7 +116,7 @@ library UsdnProtocolVaultLibrary {
         uint128 positionTotalExpo,
         uint128 longAmount,
         uint128 depositAmount
-    ) public view {
+    ) internal view {
         int256 longTradingExpo = Utils.toInt256(positionTotalExpo - longAmount);
         int256 depositLimit = s._depositExpoImbalanceLimitBps;
         if (depositLimit != 0) {
@@ -143,7 +143,7 @@ library UsdnProtocolVaultLibrary {
      * @param amount The initial deposit amount
      * @param price The current asset price
      */
-    function _createInitialDeposit(Types.Storage storage s, uint128 amount, uint128 price) public {
+    function _createInitialDeposit(Types.Storage storage s, uint128 amount, uint128 price) internal {
         // transfer the wstETH for the deposit
         address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
         s._balanceVault += amount;
@@ -181,7 +181,7 @@ library UsdnProtocolVaultLibrary {
         uint128 price,
         int24 tick,
         uint128 totalExpo
-    ) public {
+    ) internal {
         // transfer the wstETH for the long
         address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
 
@@ -213,7 +213,7 @@ library UsdnProtocolVaultLibrary {
      * @return available_ The available balance in the vault side
      */
     function _vaultAssetAvailable(Types.Storage storage s, uint128 currentPrice)
-        public
+        internal
         view
         returns (int256 available_)
     {
@@ -236,7 +236,7 @@ library UsdnProtocolVaultLibrary {
         uint256 balanceLong,
         uint128 newPrice,
         uint128 oldPrice
-    ) public pure returns (int256 available_) {
+    ) internal pure returns (int256 available_) {
         int256 totalBalance = balanceLong.toInt256().safeAdd(balanceVault.toInt256());
         int256 newLongBalance = Core._longAssetAvailable(totalExpo, balanceLong, newPrice, oldPrice);
 
@@ -251,7 +251,7 @@ library UsdnProtocolVaultLibrary {
      * @return assetExpected_ The expected amount of assets to be received
      */
     function _calcBurnUsdn(uint256 usdnShares, uint256 available, uint256 usdnTotalShares)
-        public
+        internal
         pure
         returns (uint256 assetExpected_)
     {
@@ -270,7 +270,7 @@ library UsdnProtocolVaultLibrary {
      * @return price_ The price of the USDN token
      */
     function _calcUsdnPrice(uint256 vaultBalance, uint128 assetPrice, uint256 usdnTotalSupply, uint8 assetDecimals)
-        public
+        internal
         pure
         returns (uint256 price_)
     {
@@ -285,7 +285,7 @@ library UsdnProtocolVaultLibrary {
      * @param sdexBurnRatio The ratio of SDEX to burn for each minted USDN
      * @return sdexToBurn_ The amount of SDEX to burn for the given USDN amount
      */
-    function _calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) public pure returns (uint256 sdexToBurn_) {
+    function _calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) internal pure returns (uint256 sdexToBurn_) {
         sdexToBurn_ = FixedPointMathLib.fullMulDiv(usdnAmount, sdexBurnRatio, Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR);
     }
 
@@ -298,7 +298,7 @@ library UsdnProtocolVaultLibrary {
      * @return totalSupply_ The required total supply to achieve `targetPrice`
      */
     function _calcRebaseTotalSupply(uint256 vaultBalance, uint128 assetPrice, uint128 targetPrice, uint8 assetDecimals)
-        public
+        internal
         pure
         returns (uint256 totalSupply_)
     {
@@ -319,7 +319,7 @@ library UsdnProtocolVaultLibrary {
      * @return callbackResult_ The rebase callback result, if any
      */
     function _usdnRebase(Types.Storage storage s, uint128 assetPrice, bool ignoreInterval)
-        public
+        internal
         returns (bool rebased_, bytes memory callbackResult_)
     {
         if (!ignoreInterval && block.timestamp - s._lastRebaseCheck < s._usdnRebaseInterval) {
@@ -369,7 +369,7 @@ library UsdnProtocolVaultLibrary {
         uint256 vaultBalance,
         uint256 usdnTotalShares,
         uint256 price
-    ) public view returns (uint256 toMint_) {
+    ) internal view returns (uint256 toMint_) {
         if (vaultBalance == 0) {
             // initialization, we consider the USDN price to be 1 USD
             // the conversion here is necessary since we calculate an amount in tokens and we want the corresponding
@@ -390,7 +390,7 @@ library UsdnProtocolVaultLibrary {
      * @param usdnShares The amount of USDN shares
      * @return sharesLSB_ The 24 least significant bits of the USDN shares
      */
-    function _calcWithdrawalAmountLSB(uint152 usdnShares) public pure returns (uint24 sharesLSB_) {
+    function _calcWithdrawalAmountLSB(uint152 usdnShares) internal pure returns (uint24 sharesLSB_) {
         sharesLSB_ = uint24(usdnShares);
     }
 
@@ -399,7 +399,7 @@ library UsdnProtocolVaultLibrary {
      * @param usdnShares The amount of USDN shares
      * @return sharesMSB_ The 128 most significant bits of the USDN shares
      */
-    function _calcWithdrawalAmountMSB(uint152 usdnShares) public pure returns (uint128 sharesMSB_) {
+    function _calcWithdrawalAmountMSB(uint152 usdnShares) internal pure returns (uint128 sharesMSB_) {
         sharesMSB_ = uint128(usdnShares >> 24);
     }
 }

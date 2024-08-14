@@ -22,27 +22,27 @@ library TickMath {
     error TickMathInvalidPrice();
 
     /// @dev The minimum price we want to resolve is 10_000 wei (1e-14 USD), which equates to 1.0001^-322378
-    int24 public constant MIN_TICK = -322_378;
+    int24 internal constant MIN_TICK = -322_378;
 
     /// @dev The maximum tick is determined by the limits of the libraries used for math and testing
-    int24 public constant MAX_TICK = 980_000;
+    int24 internal constant MAX_TICK = 980_000;
 
     /// @dev The minimum representable values for the price
-    uint256 public constant MIN_PRICE = 10_000;
+    uint256 internal constant MIN_PRICE = 10_000;
 
     /// @dev The maximum representable values for the price
-    uint256 public constant MAX_PRICE =
+    uint256 internal constant MAX_PRICE =
         3_620_189_675_065_328_806_679_850_654_316_367_931_456_599_175_372_999_068_724_197;
 
     /// @dev Pre-computed value for ln(1.0001)
-    int256 public constant LN_BASE = 99_995_000_333_308;
+    int256 internal constant LN_BASE = 99_995_000_333_308;
 
     /**
      * @notice Get the largest usable tick, given a tick spacing
      * @param tickSpacing Only uses ticks that are a multiple of this value
      * @return tick_ The largest tick that can be used
      */
-    function maxUsableTick(int24 tickSpacing) external pure returns (int24 tick_) {
+    function maxUsableTick(int24 tickSpacing) internal pure returns (int24 tick_) {
         if (tickSpacing == 0) {
             revert TickMathInvalidTickSpacing();
         }
@@ -58,7 +58,7 @@ library TickMath {
      * @param tickSpacing Only uses ticks that are a multiple of this value
      * @return tick_ The smallest tick that can be used
      */
-    function minUsableTick(int24 tickSpacing) external pure returns (int24 tick_) {
+    function minUsableTick(int24 tickSpacing) internal pure returns (int24 tick_) {
         if (tickSpacing == 0) {
             revert TickMathInvalidTickSpacing();
         }
@@ -75,7 +75,7 @@ library TickMath {
      * @param tick The tick
      * @return price_ The corresponding price
      */
-    function getPriceAtTick(int24 tick) public pure returns (uint256 price_) {
+    function getPriceAtTick(int24 tick) internal pure returns (uint256 price_) {
         if (tick > MAX_TICK) {
             revert TickMathInvalidTick();
         }
@@ -91,7 +91,7 @@ library TickMath {
      * @param price The price
      * @return tick_ The largest tick whose price is less than or equal to the given price
      */
-    function getTickAtPrice(uint256 price) external pure returns (int24 tick_) {
+    function getTickAtPrice(uint256 price) internal pure returns (int24 tick_) {
         if (price < MIN_PRICE) {
             revert TickMathInvalidPrice();
         }
@@ -121,7 +121,7 @@ library TickMath {
      * @param price The price
      * @return tick_ The closest tick to the given price
      */
-    function getClosestTickAtPrice(uint256 price) external pure returns (int24 tick_) {
+    function getClosestTickAtPrice(uint256 price) internal pure returns (int24 tick_) {
         if (price < MIN_PRICE) {
             revert TickMathInvalidPrice();
         }

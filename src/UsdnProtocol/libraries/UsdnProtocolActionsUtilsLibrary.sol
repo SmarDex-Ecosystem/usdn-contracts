@@ -39,7 +39,7 @@ library UsdnProtocolActionsUtilsLibrary {
 
     /// @notice See {IUsdnProtocolActions}
     function liquidate(Types.Storage storage s, bytes calldata currentPriceData, uint16 iterations)
-        public
+        internal
         returns (uint256 liquidatedPositions_)
     {
         uint256 balanceBefore = address(this).balance;
@@ -65,7 +65,7 @@ library UsdnProtocolActionsUtilsLibrary {
         Types.Storage storage s,
         Types.PreviousActionsData calldata previousActionsData,
         uint256 maxValidations
-    ) public returns (uint256 validatedActions_) {
+    ) internal returns (uint256 validatedActions_) {
         uint256 balanceBefore = address(this).balance;
         uint256 amountToRefund;
 
@@ -89,7 +89,7 @@ library UsdnProtocolActionsUtilsLibrary {
 
     /// @notice See {IUsdnProtocolActions}
     function transferPositionOwnership(Types.Storage storage s, Types.PositionId calldata posId, address newOwner)
-        public
+        internal
     {
         (bytes32 tickHash, uint256 version) = Core._tickHash(s, posId.tick);
         if (posId.tickVersion != version) {
@@ -126,7 +126,7 @@ library UsdnProtocolActionsUtilsLibrary {
      * @param posValueToClose The value to remove from the position
      */
     function _checkImbalanceLimitClose(Types.Storage storage s, uint256 posTotalExpoToClose, uint256 posValueToClose)
-        public
+        internal
         view
     {
         int256 closeExpoImbalanceLimitBps = s._closeExpoImbalanceLimitBps;
@@ -168,7 +168,7 @@ library UsdnProtocolActionsUtilsLibrary {
         Types.ProtocolAction action,
         bytes memory rebaseCallbackResult,
         bytes memory priceData
-    ) public {
+    ) internal {
         // get how much we should give to the liquidator as rewards
         uint256 liquidationRewards = s._liquidationRewardsManager.getLiquidationRewards(
             liquidatedTicks, remainingCollateral, rebased, rebalancerTriggered, action, rebaseCallbackResult, priceData
@@ -205,7 +205,7 @@ library UsdnProtocolActionsUtilsLibrary {
         address validator,
         uint64 securityDepositValue,
         Types.InitiateOpenPositionData memory data
-    ) public returns (uint256 amountToRefund_) {
+    ) internal returns (uint256 amountToRefund_) {
         Types.LongPendingAction memory action = Types.LongPendingAction({
             action: Types.ProtocolAction.ValidateOpenPosition,
             timestamp: uint40(block.timestamp),
@@ -235,7 +235,7 @@ library UsdnProtocolActionsUtilsLibrary {
         Types.Storage storage s,
         Types.PendingAction memory pending,
         bytes calldata priceData
-    ) public returns (Types.ValidateOpenPositionData memory data_, bool liquidated_) {
+    ) internal returns (Types.ValidateOpenPositionData memory data_, bool liquidated_) {
         data_.action = Core._toLongPendingAction(pending);
         PriceInfo memory currentPrice = ActionsVault._getOraclePrice(
             s,
@@ -315,7 +315,7 @@ library UsdnProtocolActionsUtilsLibrary {
         address validator,
         uint128 amountToClose,
         Types.Position memory pos
-    ) public view {
+    ) internal view {
         if (to == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo();
         }
@@ -374,7 +374,7 @@ library UsdnProtocolActionsUtilsLibrary {
         Types.PositionId memory posId,
         uint128 amountToClose,
         bytes calldata currentPriceData
-    ) public returns (Types.ClosePositionData memory data_, bool liquidated_) {
+    ) internal returns (Types.ClosePositionData memory data_, bool liquidated_) {
         (data_.pos, data_.liquidationPenalty) = Long.getLongPosition(s, posId);
 
         _checkInitiateClosePosition(s, owner, to, validator, amountToClose, data_.pos);
@@ -450,7 +450,7 @@ library UsdnProtocolActionsUtilsLibrary {
         uint128 amountToClose,
         uint64 securityDepositValue,
         Types.ClosePositionData memory data
-    ) public returns (uint256 amountToRefund_) {
+    ) internal returns (uint256 amountToRefund_) {
         Types.LongPendingAction memory action = Types.LongPendingAction({
             action: Types.ProtocolAction.ValidateClosePosition,
             timestamp: uint40(block.timestamp),
@@ -483,7 +483,7 @@ library UsdnProtocolActionsUtilsLibrary {
         uint128 priceWithFees,
         uint128 liqPriceWithoutPenalty,
         uint128 posExpo
-    ) public view returns (uint256 boundedPosValue_) {
+    ) internal view returns (uint256 boundedPosValue_) {
         // the available amount of assets on the long side (with the current balance)
         uint256 available = s._balanceLong;
 
@@ -520,7 +520,7 @@ library UsdnProtocolActionsUtilsLibrary {
         Types.Position memory pos,
         uint128 amountToRemove,
         uint128 totalExpoToRemove
-    ) public returns (HugeUint.Uint512 memory liqMultiplierAccumulator_) {
+    ) internal returns (HugeUint.Uint512 memory liqMultiplierAccumulator_) {
         (bytes32 tickHash,) = Core._tickHash(s, tick);
         Types.TickData storage tickData = s._tickData[tickHash];
         uint256 unadjustedTickPrice =
@@ -564,7 +564,7 @@ library UsdnProtocolActionsUtilsLibrary {
      * @return liqMultiplierAccumulator_ The updated liquidation multiplier accumulator
      */
     function _saveNewPosition(Types.Storage storage s, int24 tick, Types.Position memory long, uint8 liquidationPenalty)
-        public
+        internal
         returns (uint256 tickVersion_, uint256 index_, HugeUint.Uint512 memory liqMultiplierAccumulator_)
     {
         bytes32 tickHash;
@@ -617,7 +617,7 @@ library UsdnProtocolActionsUtilsLibrary {
      * @param initiateTimestamp The timestamp of the initiate action
      * @return actionId_ The unique action ID
      */
-    function _calcActionId(address validator, uint128 initiateTimestamp) public pure returns (bytes32 actionId_) {
+    function _calcActionId(address validator, uint128 initiateTimestamp) internal pure returns (bytes32 actionId_) {
         actionId_ = keccak256(abi.encodePacked(validator, initiateTimestamp));
     }
 }
