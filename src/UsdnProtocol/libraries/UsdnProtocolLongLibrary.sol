@@ -226,8 +226,7 @@ library UsdnProtocolLongLibrary {
             tickWithPenalty_ = -int24(int256(FixedPointMathLib.divUp(uint256(int256(-tickWithPenalty_)), uint256(int256(tickSpacing)))))
                 * tickSpacing;
             // avoid invalid ticks: we should be able to get the price for `tickWithPenalty_ - liquidationPenalty`
-            int24 minUsableTick = TickMath.minUsableTick(tickSpacing);
-            while (tickWithPenalty_ < minUsableTick + int24(liquidationPenalty)) {
+            while (tickWithPenalty_ < TickMath.MIN_TICK + int24(liquidationPenalty)) {
                 tickWithPenalty_ += tickSpacing;
             }
         } else {
