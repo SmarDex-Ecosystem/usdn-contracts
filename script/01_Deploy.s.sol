@@ -418,9 +418,9 @@ contract Deploy is Script {
         sdex_ = Sdex(address(sdex));
         wstETH_ = WstETH(payable(address(wsteth)));
 
-        vm.setEnv("PYTH_ADDRESS", PYTH_SEPOLIA);
-        vm.setEnv("PYTH_ETH_FEED_ID", PYTH_ETH_FEED_ID);
-        vm.setEnv("CHAINLINK_ETH_PRICE_ADDRESS", CHAINLINK_ETH_PRICE_SEPOLIA);
+        vm.setEnv("PYTH_ADDRESS", vm.toString(PYTH_SEPOLIA));
+        vm.setEnv("PYTH_ETH_FEED_ID", vm.toString(PYTH_ETH_FEED_ID));
+        vm.setEnv("CHAINLINK_ETH_PRICE_ADDRESS", vm.toString(CHAINLINK_ETH_PRICE_SEPOLIA));
         vm.setEnv("CHAINLINK_GAS_PRICE_ADDRESS", vm.toString(address(mockFastGasGwei)));
     }
 
