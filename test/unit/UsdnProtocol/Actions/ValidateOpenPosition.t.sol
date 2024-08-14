@@ -257,7 +257,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         testData.validatePrice = CURRENT_PRICE - 100 ether;
         testData.longBalanceWithoutPos = protocol.i_longAssetAvailable(testData.validatePrice);
 
-        int24 liqPenalty = int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
+        int24 liqPenalty = int24(protocol.getLiquidationPenalty());
         // leverage approx 10x
         (, PositionId memory posId) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
@@ -350,7 +350,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
             uint256(protocol.getLongTradingExpo(data.validatePrice)),
             protocol.getLiqMultiplierAccumulator(),
             protocol.getTickSpacing()
-        ) + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
+        ) + int24(protocol.getLiquidationPenalty());
 
         data.originalLiqPenalty = protocol.getLiquidationPenalty();
         // open another user position to set the tick's penalty to a lower value in storage

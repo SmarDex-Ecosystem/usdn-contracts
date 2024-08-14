@@ -82,8 +82,7 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
             expectedTickWithoutPenalty, wstEthPrice, totalExpo - longAssetAvailable, expectedAccumulator
         );
 
-        int24 expectedTick =
-            expectedTickWithoutPenalty + (int24(uint24(tickToLiquidateData.liquidationPenalty)) * tickSpacing);
+        int24 expectedTick = expectedTickWithoutPenalty + int24(tickToLiquidateData.liquidationPenalty);
         uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
         _expectEmits(wstEthPrice, amountInRebalancer, bonus, liqPriceWithoutPenalty, expectedTick, 1);
         protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA, 1);

@@ -628,8 +628,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         uint256 longBalanceBefore = protocol.getBalanceLong();
 
         /* ------------------------- Initiate Close Position ------------------------ */
-        posId.tick = protocol.getEffectiveTickForPrice(params.initialPrice / 2)
-            + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
+        posId.tick =
+            protocol.getEffectiveTickForPrice(params.initialPrice / 2) + int24(protocol.getLiquidationPenalty());
         posId.tickVersion = 0;
         posId.index = 0;
         (Position memory pos,) = protocol.getLongPosition(PositionId(posId.tick, 0, 0));

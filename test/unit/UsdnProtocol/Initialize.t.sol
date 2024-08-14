@@ -110,8 +110,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      */
     function test_createInitialPosition() public {
         int24 tickWithoutPenalty = protocol.getEffectiveTickForPrice(INITIAL_PRICE / 2);
-        int24 expectedTick =
-            tickWithoutPenalty + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
+        int24 expectedTick = tickWithoutPenalty + int24(protocol.getLiquidationPenalty());
         uint128 posTotalExpo = 2 * INITIAL_POSITION;
         uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
 
@@ -229,8 +228,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
                 / 10 ** (protocol.getAssetDecimals() + protocol.getPriceFeedDecimals() - protocol.TOKENS_DECIMALS())
         ) - protocol.MIN_USDN_SUPPLY();
         int24 tickWithoutPenalty = protocol.getEffectiveTickForPrice(INITIAL_PRICE / 2);
-        int24 expectedTick =
-            tickWithoutPenalty + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
+        int24 expectedTick = tickWithoutPenalty + int24(protocol.getLiquidationPenalty());
         uint128 liquidationPriceWithoutPenalty = protocol.getEffectivePriceForTick(tickWithoutPenalty);
         uint128 expectedPosTotalExpo =
             protocol.i_calcPositionTotalExpo(INITIAL_DEPOSIT, INITIAL_PRICE, liquidationPriceWithoutPenalty);

@@ -39,7 +39,7 @@ contract TestUsdnProtocolLongFlashOpenPosition is UsdnProtocolBaseFixture {
         uint128 tickPriceWithoutPenalty = protocol.getEffectivePriceForTick(
             tickWithoutPenalty, CURRENT_PRICE, longTradingExpo, liqMultiplierAccumulator
         );
-        int24 tick = tickWithoutPenalty + int24(uint24(protocol.getLiquidationPenalty())) * _tickSpacing;
+        int24 tick = tickWithoutPenalty + int24(protocol.getLiquidationPenalty());
         uint128 positionTotalExpo = protocol.i_calcPositionTotalExpo(AMOUNT, CURRENT_PRICE, tickPriceWithoutPenalty);
         uint256 longPositionsCountBefore = protocol.getTotalLongPositions();
 

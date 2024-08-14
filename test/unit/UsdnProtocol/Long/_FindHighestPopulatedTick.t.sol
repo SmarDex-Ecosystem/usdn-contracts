@@ -14,8 +14,8 @@ contract TestUsdnProtocolLongFindHighestPopulatedTick is UsdnProtocolBaseFixture
         super._setUp(DEFAULT_PARAMS);
 
         // Tick of the position created by the initialization of the protocol
-        _initialTick = protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 2)
-            + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
+        _initialTick =
+            protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 2) + int24(protocol.getLiquidationPenalty());
     }
 
     /**

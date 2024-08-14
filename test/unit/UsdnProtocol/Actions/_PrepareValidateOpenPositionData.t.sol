@@ -4,6 +4,8 @@ pragma solidity 0.8.26;
 import { ADMIN, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolUtils as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtils.sol";
+
 /**
  * @custom:feature Test of the protocol `_prepareValidateOpenPositionData` internal function
  * @custom:background Given a protocol with a long position that needs to be validated
@@ -35,7 +37,7 @@ contract TestUsdnProtocolActionsPrepareValidateOpenPositionData is UsdnProtocolB
 
         uint24 liquidationPenalty = protocol.getLiquidationPenalty();
         liqPriceWithoutPenalty =
-            protocol.getEffectivePriceForTick(posId.tick - (int24(uint24(liquidationPenalty)) * _tickSpacing));
+            protocol.getEffectivePriceForTick(Utils.calcTickWithoutPenalty(posId.tick, liquidationPenalty));
         (pendingAction,) = protocol.i_getPendingAction(address(this));
         timestampAtInitiate = uint40(block.timestamp);
     }
