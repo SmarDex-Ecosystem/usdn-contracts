@@ -32,7 +32,7 @@ while true; do
         read -s -p $'\n'"Enter private key : " privateKey
         deployerPrivateKey=$privateKey
 
-        address=$(cast wallet address $deployerPrivateKey)
+        address="$(cast wallet address $deployerPrivateKey)"
         if [[ -z $address ]]; then
             printf "\n$red The private key is invalid$nc\n\n"
             exit 1
@@ -48,7 +48,7 @@ done
 
 while true; do
     printf "\n$blue Address :$nc $address"
-    printf "\n$blue RPC URL :$nc $rpcUrl\n"
+    printf "\n$blue RPC URL :$nc "$rpcUrl"\n"
     read -p $'\n'"Do you wish to continue? (Yy/Nn) : " yn
     case $yn in
     [Yy]*)
@@ -63,9 +63,9 @@ while true; do
 done
 
 if [ $ledger = true ]; then
-    forge script -l -f $rpcUrl script/00_DeployUsdn.s.sol:DeployUsdn --broadcast
+    forge script -l -f "$rpcUrl" script/00_DeployUsdn.s.sol:DeployUsdn --broadcast
 else
-    forge script --private-key $deployerPrivateKey -f $rpcUrl script/00_DeployUsdn.s.sol:DeployUsdn --broadcast
+    forge script --private-key $deployerPrivateKey -f "$rpcUrl" script/00_DeployUsdn.s.sol:DeployUsdn --broadcast
 fi
 
 status=$?
@@ -78,12 +78,12 @@ printf "$green Waiting for USDN contract to be deployed... (12s) $nc\n"
 sleep 12s
 
 BROADCAST="broadcast/00_DeployUsdn.s.sol/1/run-latest.json"
-export USDN_ADDRESS=$(cat "$BROADCAST" | jq -r '.returns.Usdn_.value')
+export USDN_ADDRESS="$(cat "$BROADCAST" | jq -r '.returns.Usdn_.value')"
 
 if [ $ledger = true ]; then
-    forge script -l -f $rpcUrl script/01_Deploy.s.sol:Deploy --broadcast
+    forge script -l -f "$rpcUrl" script/01_Deploy.s.sol:Deploy --broadcast
 else
-    forge script --private-key $deployerPrivateKey -f $rpcUrl script/01_Deploy.s.sol:Deploy --broadcast
+    forge script --private-key $deployerPrivateKey -f "$rpcUrl" script/01_Deploy.s.sol:Deploy --broadcast
 fi
 
 popd >/dev/null

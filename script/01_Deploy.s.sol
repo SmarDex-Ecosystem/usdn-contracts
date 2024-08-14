@@ -400,12 +400,13 @@ contract Deploy is Script {
         SdexSepolia sdex = new SdexSepolia();
         WstETHSepolia wsteth = new WstETHSepolia();
         MockFastGasGwei mockFastGasGwei = new MockFastGasGwei();
+
         // mint needed wstETH for the initialization to the deployer
         wsteth.mint(_deployerAddress, wstEthNeeded);
 
         wsteth.setStEthPerToken(stEthPerToken);
-        usdn_ = new Usdn(address(0), address(0));
-        wusdn_ = new Wusdn(usdn_);
+
+        (usdn_, wusdn_) = _deployUsdnAndWusdn();
 
         sdex_ = Sdex(address(sdex));
         wstETH_ = WstETH(payable(address(wsteth)));

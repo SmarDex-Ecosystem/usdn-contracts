@@ -33,7 +33,7 @@ while true; do
         read -s -p $'\n'"Enter private key : " privateKey
         deployerPrivateKey=$privateKey
 
-        address=$(cast wallet address $deployerPrivateKey)
+        address="$(cast wallet address $deployerPrivateKey)"
         if [[ -z $address ]]; then
             printf "\n$red The private key is invalid$nc\n\n"
             exit 1
@@ -48,7 +48,7 @@ while true; do
 done
 
 printf "\n$blue Address :$nc $address"
-printf "\n$blue RPC URL :$nc $rpcUrl\n"
+printf "\n$blue RPC URL :$nc "$rpcUrl"\n"
 export DEPLOYER_ADDRESS=$address
 
 while true; do
@@ -66,9 +66,9 @@ while true; do
 done
 
 if [ $ledger = true ]; then
-    forge script -l -f $rpcUrl script/01_Deploy.s.sol:Deploy $broadcastMode
+    forge script -l -f "$rpcUrl" script/01_Deploy.s.sol:Deploy $broadcastMode
 else
-    forge script --private-key $deployerPrivateKey -f $rpcUrl script/01_Deploy.s.sol:Deploy $broadcastMode
+    forge script --private-key $deployerPrivateKey -f "$rpcUrl" script/01_Deploy.s.sol:Deploy $broadcastMode
 fi
 
 popd >/dev/null
