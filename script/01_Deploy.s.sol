@@ -26,10 +26,8 @@ import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsd
 contract Deploy is Script {
     address constant WSTETH_MAINNET = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
     address constant SDEX_MAINNET = 0x5DE8ab7E27f6E7A1fFf3E5B337584Aa43961BEeF;
-    address constant PYTH_SEPOLIA = 0xDd24F84d36BF92C65F92307595335bdFab5Bbd21;
     address constant PYTH_MAINNET = 0x4305FB66699C3B2702D4d05CF36551390A4c69C6;
     bytes32 constant PYTH_ETH_FEED_ID = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;
-    address constant CHAINLINK_ETH_PRICE_SEPOLIA = 0x694AA1769357215DE4FAC081bf1f309aDC325306;
     address constant CHAINLINK_ETH_PRICE_MAINNET = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
     address constant CHAINLINK_GAS_MAINNET = 0x169E633A2D1E6c10dD91238Ba11c4A708dfEF37C;
     uint256 constant CHAINLINK_PRICE_VALIDITY = 1 hours + 2 minutes;
@@ -38,7 +36,7 @@ contract Deploy is Script {
     Utils _utils = new Utils();
     address _deployerAddress;
     address _feeCollector;
-    bool isProdEnv;
+    bool _isProdEnv;
 
     /**
      * @notice Deploy the USDN ecosystem
@@ -64,14 +62,14 @@ contract Deploy is Script {
             IUsdnProtocol UsdnProtocol_
         )
     {
-        // validate the Usdn protocol before deploying it
-        _utils.validateProtocol();
-
         _handleEnvVariables();
 
-        isProdEnv = block.chainid == 1;
-
         (uint256 depositAmount, uint256 longAmount) = _getInitialAmounts();
+
+        _isProdEnv = block.chainid == 1;
+
+        // validate the Usdn protocol before deploying it
+        _utils.validateProtocol();
 
         vm.startBroadcast(_deployerAddress);
 
@@ -89,6 +87,7 @@ contract Deploy is Script {
         _handlePostDeployment(UsdnProtocol_, Usdn_, Rebalancer_);
 
         _initializeUsdnProtocol(UsdnProtocol_, WstETH_, WstEthOracleMiddleware_, depositAmount, longAmount);
+
         vm.stopBroadcast();
     }
 
@@ -158,8 +157,9 @@ contract Deploy is Script {
         returns (WstEthOracleMiddleware wstEthOracleMiddleware_)
     {
         address middlewareAddress = vm.envOr("MIDDLEWARE_ADDRESS", address(0));
+
         if (middlewareAddress != address(0)) {
-            if (isProdEnv) {
+            if (_isProdEnv) {
                 wstEthOracleMiddleware_ = WstEthOracleMiddleware(middlewareAddress);
             } else {
                 wstEthOracleMiddleware_ = MockWstEthOracleMiddleware(middlewareAddress);
@@ -170,7 +170,7 @@ contract Deploy is Script {
             address chainlinkPriceAddress = vm.envOr("CHAINLINK_ETH_PRICE_ADDRESS", CHAINLINK_ETH_PRICE_MAINNET);
             uint256 chainlinkPriceValidity = vm.envOr("CHAINLINK_ETH_PRICE_VALIDITY", CHAINLINK_PRICE_VALIDITY);
 
-            if (isProdEnv) {
+            if (_isProdEnv) {
                 wstEthOracleMiddleware_ = new WstEthOracleMiddleware(
                     pythAddress, pythFeedId, chainlinkPriceAddress, wstETHAddress, chainlinkPriceValidity
                 );
@@ -193,8 +193,9 @@ contract Deploy is Script {
         returns (LiquidationRewardsManager liquidationRewardsManager_)
     {
         address liquidationRewardsManagerAddress = vm.envOr("LIQUIDATION_REWARDS_MANAGER_ADDRESS", address(0));
+
         if (liquidationRewardsManagerAddress != address(0)) {
-            if (isProdEnv) {
+            if (_isProdEnv) {
                 liquidationRewardsManager_ = LiquidationRewardsManager(liquidationRewardsManagerAddress);
             } else {
                 liquidationRewardsManager_ = MockLiquidationRewardsManager(liquidationRewardsManagerAddress);
@@ -203,7 +204,7 @@ contract Deploy is Script {
             address chainlinkGasPriceFeed = vm.envOr("CHAINLINK_GAS_PRICE_ADDRESS", CHAINLINK_GAS_MAINNET);
             uint256 chainlinkPriceValidity = vm.envOr("CHAINLINK_GAS_PRICE_VALIDITY", CHAINLINK_GAS_PRICE_VALIDITY);
 
-            if (isProdEnv) {
+            if (_isProdEnv) {
                 liquidationRewardsManager_ =
                     new LiquidationRewardsManager(chainlinkGasPriceFeed, IWstETH(wstETHAddress), chainlinkPriceValidity);
             } else {
@@ -222,7 +223,7 @@ contract Deploy is Script {
      * @return wusdn_ The deployed Wusdn contract
      */
     function _deployUsdnAndWusdn() internal returns (Usdn usdn_, Wusdn wusdn_) {
-        if (isProdEnv) {
+        if (_isProdEnv) {
             try vm.envAddress("USDN_ADDRESS") {
                 usdn_ = Usdn(vm.envAddress("USDN_ADDRESS"));
             } catch {
@@ -242,7 +243,7 @@ contract Deploy is Script {
      * @return sdex_ The deployed contract
      */
     function _deploySdex() internal returns (Sdex sdex_) {
-        if (isProdEnv) {
+        if (_isProdEnv) {
             return Sdex(SDEX_MAINNET);
         }
 
@@ -264,7 +265,7 @@ contract Deploy is Script {
      */
     function _deployWstETH(uint256 depositAmount, uint256 longAmount) internal returns (WstETH wstEth_) {
         address payable wstETHAddress;
-        if (isProdEnv) {
+        if (_isProdEnv) {
             wstETHAddress = payable(WSTETH_MAINNET);
         } else {
             wstETHAddress = payable(vm.envOr("WSTETH_ADDRESS", address(0)));
@@ -314,14 +315,14 @@ contract Deploy is Script {
         uint256 depositAmount,
         uint256 longAmount
     ) internal {
-        // for forks, we want a leverage of ~2x so we get the current
-        // price from the middleware and divide it by two
+        // we want a leverage of ~2x so we get the current price from the middleware and divide it by two
         uint256 desiredLiqPrice = wstEthOracleMiddleware.parseAndValidatePrice(
             "", uint128(block.timestamp), Types.ProtocolAction.Initialize, ""
         ).price / 2;
 
         // approve wstETH spending for initialization
         wstETH.approve(address(usdnProtocol), depositAmount + longAmount);
+
         usdnProtocol.initialize(uint128(depositAmount), uint128(longAmount), uint128(desiredLiqPrice), "");
     }
 
