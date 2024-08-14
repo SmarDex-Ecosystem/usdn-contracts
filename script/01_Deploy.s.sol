@@ -137,10 +137,10 @@ contract Deploy is Script {
         string memory contractName;
         // we need to allow constructors for the UsdnProtocolSepolia safeguard mechanism
         if (_chainId == ChainId.Sepolia) {
-            opts.unsafeAllow = "constructor,external-library-linking";
+            opts.unsafeAllow = "constructor,external-library-linking,state-variable-immutable";
             contractName = "UsdnProtocolSepolia.sol";
         } else {
-            opts.unsafeAllow = "external-library-linking";
+            opts.unsafeAllow = "external-library-linking,state-variable-immutable";
             contractName = "UsdnProtocolImpl.sol";
         }
 
