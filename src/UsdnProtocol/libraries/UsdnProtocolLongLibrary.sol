@@ -157,7 +157,7 @@ library UsdnProtocolLongLibrary {
         HugeUint.Uint512 memory accumulator,
         int24 tickSpacing
     ) public pure returns (int24 tick_) {
-        tick_ = getEffectiveTickForPriceNoRounding(price, assetPrice, longTradingExpo, accumulator);
+        tick_ = _getEffectiveTickForPriceNoRounding(price, assetPrice, longTradingExpo, accumulator);
 
         // round down to the next valid tick according to _tickSpacing (towards negative infinity)
         if (tick_ < 0) {
@@ -176,22 +176,6 @@ library UsdnProtocolLongLibrary {
         }
     }
 
-    function getEffectiveTickForPriceNoRounding(
-        uint128 price,
-        uint256 assetPrice,
-        uint256 longTradingExpo,
-        HugeUint.Uint512 memory accumulator
-    ) public pure returns (int24 tick_) {
-        // unadjust price with liquidation multiplier
-        uint256 unadjustedPrice = _unadjustPrice(price, assetPrice, longTradingExpo, accumulator);
-
-        if (unadjustedPrice < TickMath.MIN_PRICE) {
-            return TickMath.MIN_TICK;
-        }
-
-        tick_ = TickMath.getTickAtPrice(unadjustedPrice);
-    }
-
     /// @notice See {IUsdnProtocolLong}
     function getEffectivePriceForTick(Types.Storage storage s, int24 tick) public view returns (uint128 price_) {
         price_ =
@@ -208,6 +192,7 @@ library UsdnProtocolLongLibrary {
         price_ = _adjustPrice(TickMath.getPriceAtTick(tick), assetPrice, longTradingExpo, accumulator);
     }
 
+    /// @notice See {IUsdnProtocolLong}
     function getTickFromLiqPriceWithoutPenalty(
         Types.Storage storage s,
         uint128 desiredLiqPriceWithoutPenalty,
@@ -223,6 +208,7 @@ library UsdnProtocolLongLibrary {
         );
     }
 
+    /// @notice See {IUsdnProtocolLong}
     function getTickFromLiqPriceWithoutPenalty(
         uint128 desiredLiqPriceWithoutPenalty,
         uint256 assetPrice,
@@ -233,7 +219,7 @@ library UsdnProtocolLongLibrary {
     ) public pure returns (int24 tickWithPenalty_, uint128 liqPriceWithoutPenalty_) {
         // get corresponding tick (not necessarily a multiple of tickSpacing)
         int24 tempTickWithoutPenalty =
-            getEffectiveTickForPriceNoRounding(desiredLiqPriceWithoutPenalty, assetPrice, longTradingExpo, accumulator);
+            _getEffectiveTickForPriceNoRounding(desiredLiqPriceWithoutPenalty, assetPrice, longTradingExpo, accumulator);
         // add the penalty to the tick and round down to the nearest multiple of tickSpacing
         tickWithPenalty_ = tempTickWithoutPenalty + int24(liquidationPenalty);
         if (tickWithPenalty_ < 0) {
@@ -302,6 +288,30 @@ library UsdnProtocolLongLibrary {
     /* -------------------------------------------------------------------------- */
     /*                             Internal functions                             */
     /* -------------------------------------------------------------------------- */
+
+    /**
+     * @notice Calculate the effective tick for a given price without rounding to the tick spacing
+     * @param price The price to be adjusted
+     * @param assetPrice The current asset price
+     * @param longTradingExpo The long trading expo
+     * @param accumulator The liquidation multiplier accumulator
+     * @return tick_ The tick number
+     */
+    function _getEffectiveTickForPriceNoRounding(
+        uint128 price,
+        uint256 assetPrice,
+        uint256 longTradingExpo,
+        HugeUint.Uint512 memory accumulator
+    ) public pure returns (int24 tick_) {
+        // unadjust price with liquidation multiplier
+        uint256 unadjustedPrice = _unadjustPrice(price, assetPrice, longTradingExpo, accumulator);
+
+        if (unadjustedPrice < TickMath.MIN_PRICE) {
+            return TickMath.MIN_TICK;
+        }
+
+        tick_ = TickMath.getTickAtPrice(unadjustedPrice);
+    }
 
     /**
      * @notice Applies PnL, funding, and liquidates positions if necessary
