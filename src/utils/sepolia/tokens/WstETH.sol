@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -21,6 +21,14 @@ contract WstETH is ERC20Permit, Ownable {
      */
     function mint(address to, uint256 amount) external onlyOwner {
         _mint(to, amount);
+    }
+
+    /**
+     * @notice Needed for router
+     * @return stETH_ The stETH address
+     */
+    function stETH() external pure returns (address stETH_) {
+        return stETH_;
     }
 
     /**
