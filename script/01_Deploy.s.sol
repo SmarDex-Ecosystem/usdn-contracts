@@ -27,6 +27,17 @@ import { Sdex as SdexSepolia } from "../src/utils/sepolia/tokens/Sdex.sol";
 import { WstETH as WstETHSepolia } from "../src/utils/sepolia/tokens/WstETH.sol";
 
 contract Deploy is Script {
+    address constant PYTH_SEPOLIA = 0xDd24F84d36BF92C65F92307595335bdFab5Bbd21;
+    address constant PYTH_MAINNET = 0x4305FB66699C3B2702D4d05CF36551390A4c69C6;
+    bytes32 constant PYTH_ETH_FEED_ID = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;
+    address constant CHAINLINK_ETH_SEPOLIA = 0x694AA1769357215DE4FAC081bf1f309aDC325306;
+    address constant CHAINLINK_ETH_MAINNET = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
+    address constant CHAINLINK_GAS_MAINNET = 0x169E633A2D1E6c10dD91238Ba11c4A708dfEF37C;
+    uint256 constant CHAINLINK_PRICE_VALIDITY = 1 hours + 2 minutes;
+    uint256 constant CHAINLINK_GAS_PRICE_VALIDITY = 2 hours + 5 minutes;
+    address constant WSTETH_MAINNET = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
+    address constant SDEX_MAINNET = 0x5DE8ab7E27f6E7A1fFf3E5B337584Aa43961BEeF;
+
     Utils _utils = new Utils();
     address _deployerAddress;
     address _feeCollector;
@@ -183,13 +194,10 @@ contract Deploy is Script {
                 wstEthOracleMiddleware_ = MockWstEthOracleMiddleware(middlewareAddress);
             }
         } else {
-            address pythAddress = vm.envOr("PYTH_ADDRESS", 0x4305FB66699C3B2702D4d05CF36551390A4c69C6);
-            bytes32 pythFeedId = vm.envOr(
-                "PYTH_ETH_FEED_ID", bytes32(0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace)
-            );
-            address chainlinkPriceAddress =
-                vm.envOr("CHAINLINK_ETH_PRICE_ADDRESS", 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
-            uint256 chainlinkPriceValidity = vm.envOr("CHAINLINK_ETH_PRICE_VALIDITY", uint256(1 hours + 2 minutes));
+            address pythAddress = vm.envOr("PYTH_ADDRESS", PYTH_MAINNET);
+            bytes32 pythFeedId = vm.envOr("PYTH_ETH_FEED_ID", bytes32(PYTH_ETH_FEED_ID));
+            address chainlinkPriceAddress = vm.envOr("CHAINLINK_ETH_PRICE_ADDRESS", CHAINLINK_ETH_MAINNET);
+            uint256 chainlinkPriceValidity = vm.envOr("CHAINLINK_ETH_PRICE_VALIDITY", CHAINLINK_PRICE_VALIDITY);
 
             if (isProdEnv) {
                 wstEthOracleMiddleware_ = new WstEthOracleMiddleware(
@@ -222,9 +230,8 @@ contract Deploy is Script {
                 liquidationRewardsManager_ = MockLiquidationRewardsManager(liquidationRewardsManagerAddress);
             }
         } else {
-            address chainlinkGasPriceFeed =
-                vm.envOr("CHAINLINK_GAS_PRICE_ADDRESS", 0x169E633A2D1E6c10dD91238Ba11c4A708dfEF37C);
-            uint256 chainlinkPriceValidity = vm.envOr("CHAINLINK_GAS_PRICE_VALIDITY", uint256(2 hours + 5 minutes));
+            address chainlinkGasPriceFeed = vm.envOr("CHAINLINK_GAS_PRICE_ADDRESS", CHAINLINK_GAS_MAINNET);
+            uint256 chainlinkPriceValidity = vm.envOr("CHAINLINK_GAS_PRICE_VALIDITY", CHAINLINK_GAS_PRICE_VALIDITY);
 
             if (isProdEnv) {
                 liquidationRewardsManager_ =
@@ -266,7 +273,7 @@ contract Deploy is Script {
      */
     function _deploySdex() internal returns (Sdex sdex_) {
         if (_chainId == ChainId.Mainnet) {
-            return Sdex(0x5DE8ab7E27f6E7A1fFf3E5B337584Aa43961BEeF);
+            return Sdex(SDEX_MAINNET);
         }
 
         address sdexAddress = payable(vm.envOr("SDEX_ADDRESS", address(0)));
@@ -288,7 +295,7 @@ contract Deploy is Script {
     function _deployWstETH(uint256 depositAmount, uint256 longAmount) internal returns (WstETH wstEth_) {
         address payable wstETHAddress;
         if (_chainId == ChainId.Mainnet) {
-            wstETHAddress = payable(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0);
+            wstETHAddress = payable(WSTETH_MAINNET);
         } else {
             wstETHAddress = payable(vm.envOr("WSTETH_ADDRESS", address(0)));
         }
@@ -411,9 +418,9 @@ contract Deploy is Script {
         sdex_ = Sdex(address(sdex));
         wstETH_ = WstETH(payable(address(wsteth)));
 
-        vm.setEnv("PYTH_ADDRESS", "0xDd24F84d36BF92C65F92307595335bdFab5Bbd21");
-        vm.setEnv("PYTH_ETH_FEED_ID", "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace");
-        vm.setEnv("CHAINLINK_ETH_PRICE_ADDRESS", "0x694AA1769357215DE4FAC081bf1f309aDC325306");
+        vm.setEnv("PYTH_ADDRESS", PYTH_SEPOLIA);
+        vm.setEnv("PYTH_ETH_FEED_ID", PYTH_ETH_FEED_ID);
+        vm.setEnv("CHAINLINK_ETH_PRICE_ADDRESS", CHAINLINK_ETH_SEPOLIA);
         vm.setEnv("CHAINLINK_GAS_PRICE_ADDRESS", vm.toString(address(mockFastGasGwei)));
     }
 
