@@ -225,17 +225,17 @@ library UsdnProtocolLongLibrary {
             // we round up the inverse number (positive) then invert it -> round towards negative infinity
             tickWithPenalty_ = -int24(int256(FixedPointMathLib.divUp(uint256(int256(-tickWithPenalty_)), uint256(int256(tickSpacing)))))
                 * tickSpacing;
-            // avoid invalid ticks
+            // avoid invalid ticks: we should be able to get the price for `tickWithPenalty_ - liquidationPenalty`
             int24 minUsableTick = TickMath.minUsableTick(tickSpacing);
-            if (tickWithPenalty_ < minUsableTick) {
-                tickWithPenalty_ = minUsableTick;
+            while (tickWithPenalty_ < minUsableTick + int24(liquidationPenalty)) {
+                tickWithPenalty_ += tickSpacing;
             }
         } else {
             // rounding is desirable here
             // slither-disable-next-line divide-before-multiply
             tickWithPenalty_ = (tickWithPenalty_ / tickSpacing) * tickSpacing;
         }
-        int24 tickWithoutPenalty = tempTickWithoutPenalty - int24(liquidationPenalty);
+        int24 tickWithoutPenalty = tickWithPenalty_ - int24(liquidationPenalty);
         liqPriceWithoutPenalty_ = getEffectivePriceForTick(tickWithoutPenalty, assetPrice, longTradingExpo, accumulator);
     }
 
