@@ -35,7 +35,7 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
             totalExpo - longBalance,
             protocol.getLiqMultiplierAccumulator(),
             _tickSpacing
-        ) + _tickSpacing;
+        ) + int24(protocol.getLiquidationPenalty()) + _tickSpacing;
 
         int24 tick = protocol.i_calcRebalancerPositionTick(
             DEFAULT_PARAMS.initialPrice,
@@ -71,7 +71,7 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
             totalExpo - longBalance,
             protocol.getLiqMultiplierAccumulator(),
             _tickSpacing
-        );
+        ) + int24(protocol.getLiquidationPenalty());
 
         int24 tick = protocol.i_calcRebalancerPositionTick(
             DEFAULT_PARAMS.initialPrice,
@@ -107,7 +107,7 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
             totalExpo - longBalance,
             protocol.getLiqMultiplierAccumulator(),
             _tickSpacing
-        );
+        ) + int24(protocol.getLiquidationPenalty());
 
         int24 tick = protocol.i_calcRebalancerPositionTick(
             DEFAULT_PARAMS.initialPrice,
@@ -143,7 +143,7 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
             totalExpo - longBalance,
             protocol.getLiqMultiplierAccumulator(),
             _tickSpacing
-        );
+        ) + int24(protocol.getLiquidationPenalty());
 
         int24 tick = protocol.i_calcRebalancerPositionTick(
             DEFAULT_PARAMS.initialPrice,
@@ -181,7 +181,7 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
             totalExpo - longBalance,
             protocol.getLiqMultiplierAccumulator(),
             _tickSpacing
-        );
+        ) + int24(protocol.getLiquidationPenalty());
 
         int24 tick = protocol.i_calcRebalancerPositionTick(
             DEFAULT_PARAMS.initialPrice,
