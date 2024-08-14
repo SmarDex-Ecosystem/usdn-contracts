@@ -4,7 +4,7 @@ pragma solidity 0.8.26;
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { MOCK_PYTH_DATA } from "../../unit/Middlewares/utils/Constants.sol";
-import { SET_PROTOCOL_PARAMS_ADMIN } from "../../utils/Constants.sol";
+import { SET_PROTOCOL_PARAMS_MANAGER } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 
 import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
@@ -119,7 +119,7 @@ contract TestRebalancerInitiateClosePosition is
      * @custom:and The user initiate close position is pending in protocol
      */
     function test_rebalancerInitiateClosePosition() public {
-        vm.prank(SET_PROTOCOL_PARAMS_ADMIN);
+        vm.prank(SET_PROTOCOL_PARAMS_MANAGER);
         protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
 
         uint256 amountToCloseWithoutBonus = FixedPointMathLib.fullMulDiv(
@@ -163,7 +163,7 @@ contract TestRebalancerInitiateClosePosition is
      * @custom:then The user gets back the excess ether sent
      */
     function test_rebalancerInitiateClosePositionRefundsExcessEther() public {
-        vm.prank(SET_PROTOCOL_PARAMS_ADMIN);
+        vm.prank(SET_PROTOCOL_PARAMS_MANAGER);
         protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
 
         uint256 securityDeposit = protocol.getSecurityDepositValue();

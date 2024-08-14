@@ -159,12 +159,13 @@ contract Deploy is Script {
                     liquidationRewardsManager,
                     100, // tick spacing 100 = 1%
                     _feeCollector,
-                    Types.Roles({
-                        setExternalAdmin: _deployerAddress,
-                        criticalFunctionsAdmin: _deployerAddress,
-                        setProtocolParamsAdmin: _deployerAddress,
-                        setUsdnParamsAdmin: _deployerAddress,
-                        setOptionsAdmin: _deployerAddress
+                    Types.Managers({
+                        setExternalManager: _deployerAddress,
+                        criticalFunctionsManager: _deployerAddress,
+                        setProtocolParamsManager: _deployerAddress,
+                        setUsdnParamsManager: _deployerAddress,
+                        setOptionsManager: _deployerAddress,
+                        proxyUpgradeManager: _deployerAddress
                     }),
                     protocolFallback
                 )

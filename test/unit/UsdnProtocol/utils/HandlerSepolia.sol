@@ -24,7 +24,7 @@ contract UsdnProtocolHandlerSepolia is UsdnProtocolSepolia, Test {
         ILiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector,
-        Roles memory roles,
+        Managers memory managers,
         IUsdnProtocolFallback protocolFallback
     ) public initializer {
         initializeStorage(
@@ -35,7 +35,7 @@ contract UsdnProtocolHandlerSepolia is UsdnProtocolSepolia, Test {
             liquidationRewardsManager,
             tickSpacing,
             feeCollector,
-            roles,
+            managers,
             protocolFallback
         );
     }

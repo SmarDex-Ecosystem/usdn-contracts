@@ -47,7 +47,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         ILiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector,
-        Roles memory roles,
+        Managers memory managers,
         IUsdnProtocolFallback protocolFallback
     ) public initializer {
         initializeStorage(
@@ -58,7 +58,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
             liquidationRewardsManager,
             tickSpacing,
             feeCollector,
-            roles,
+            managers,
             protocolFallback
         );
     }

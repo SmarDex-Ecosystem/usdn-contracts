@@ -2,7 +2,7 @@
 pragma solidity 0.8.26;
 
 import { MOCK_PYTH_DATA } from "../../unit/Middlewares/utils/Constants.sol";
-import { SET_PROTOCOL_PARAMS_ADMIN } from "../../utils/Constants.sol";
+import { SET_PROTOCOL_PARAMS_MANAGER } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 
 import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
@@ -36,7 +36,7 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
     function test_rebalancerTrigger() public {
         skip(5 minutes);
 
-        uint128 wstEthPrice = uint128(wstETH.getWstETHByStETH(1300 ether));
+        uint128 wstEthPrice = uint128(wstETH.getStETHByWstETH(1300 ether));
         mockPyth.setPrice(1300 ether / 1e10);
         mockPyth.setLastPublishTime(block.timestamp);
 
@@ -119,7 +119,7 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
      * @custom:then The rebalancer is not triggered
      */
     function test_rebalancerTrigger_zeroLimit() public {
-        vm.startPrank(SET_PROTOCOL_PARAMS_ADMIN);
+        vm.startPrank(SET_PROTOCOL_PARAMS_MANAGER);
         protocol.setExpoImbalanceLimits(
             uint256(protocol.getOpenExpoImbalanceLimitBps()),
             uint256(protocol.getDepositExpoImbalanceLimitBps()),
