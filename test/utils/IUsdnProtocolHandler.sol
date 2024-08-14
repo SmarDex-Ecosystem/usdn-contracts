@@ -410,7 +410,7 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
     function i_flashOpenPosition(
         address user,
         uint128 neutralPrice,
-        int24 tickWithoutPenalty,
+        int24 tick,
         uint128 amount,
         uint256 totalExpo,
         uint256 balanceLong,

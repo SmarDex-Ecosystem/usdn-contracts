@@ -47,7 +47,7 @@ contract TestUsdnProtocolLongFlashOpenPosition is UsdnProtocolBaseFixture {
         (PositionId memory posId) = protocol.i_flashOpenPosition(
             address(this),
             CURRENT_PRICE,
-            tickWithoutPenalty,
+            tick,
             AMOUNT,
             TOTAL_EXPO,
             BALANCE_LONG,
@@ -92,7 +92,7 @@ contract TestUsdnProtocolLongFlashOpenPosition is UsdnProtocolBaseFixture {
         (PositionId memory posId) = protocol.i_flashOpenPosition(
             address(this),
             CURRENT_PRICE,
-            tickWithoutNewPenalty,
+            tickWithoutNewPenalty + int24(protocol.getLiquidationPenalty()),
             AMOUNT,
             TOTAL_EXPO,
             BALANCE_LONG,
