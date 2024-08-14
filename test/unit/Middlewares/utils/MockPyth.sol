@@ -121,7 +121,9 @@ contract MockPyth is IMockPythError {
     }
 
     /// @dev Simulate an invalid price so that the cached price is never used in testing
-    function getPriceUnsafe(bytes32) public pure returns (PythStructs.Price memory price_) {
+    function getPriceUnsafe(bytes32) public view returns (PythStructs.Price memory price_) {
+        if (alwaysRevertOnCall) revert MockedPythError();
+
         price_.price = -1;
     }
 }

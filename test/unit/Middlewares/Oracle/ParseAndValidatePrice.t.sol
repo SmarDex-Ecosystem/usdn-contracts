@@ -139,6 +139,33 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
     }
 
     /**
+     * @custom:scenario Call to parseAndValidatePrice for "initiate" actions still works when Pyth reverts
+     * @custom:given Empty data is provided and calls to the Pyth oracle revert
+     * @custom:when Calling parseAndValidatePrice for "initiate" actions
+     * @custom:then It returns the onchain price from chainlink without reverting
+     */
+    function test_getPriceFromChainlinkWhenPythReverts() public {
+        mockPyth.toggleRevert();
+
+        mockChainlinkOnChain.setLatestRoundData(1, int256(ETH_PRICE), TARGET_TIMESTAMP, 1);
+
+        PriceInfo memory priceInfo = oracleMiddleware.parseAndValidatePrice("", 0, Types.ProtocolAction.Initialize, "");
+        assertEq(priceInfo.price, FORMATTED_ETH_PRICE);
+
+        priceInfo = oracleMiddleware.parseAndValidatePrice("", 0, Types.ProtocolAction.InitiateDeposit, "");
+        assertEq(priceInfo.price, FORMATTED_ETH_PRICE);
+
+        priceInfo = oracleMiddleware.parseAndValidatePrice("", 0, Types.ProtocolAction.InitiateWithdrawal, "");
+        assertEq(priceInfo.price, FORMATTED_ETH_PRICE);
+
+        priceInfo = oracleMiddleware.parseAndValidatePrice("", 0, Types.ProtocolAction.InitiateOpenPosition, "");
+        assertEq(priceInfo.price, FORMATTED_ETH_PRICE);
+
+        priceInfo = oracleMiddleware.parseAndValidatePrice("", 0, Types.ProtocolAction.InitiateClosePosition, "");
+        assertEq(priceInfo.price, FORMATTED_ETH_PRICE);
+    }
+
+    /**
      * @custom:scenario Parse and validate price for "validate" actions using chainlink with a roundId data
      * @custom:given The chainlink validate roundId data
      * @custom:and A correct chainlink previous roundId
