@@ -122,4 +122,30 @@ contract TestMockFastGasGwei is Test {
         assertEq(startedAt, timestamp, "Answer should be updated");
         assertEq(updatedAt, timestamp, "Answer should be updated");
     }
+
+    /**
+     * @custom:scenario The `pushAnswerInNewRound` function creates a new round
+     * @custom:when The `pushAnswerInNewRound` function is called
+     * @custom:then The last round ID is incremented
+     * @custom:and The provided answer is set in the last round
+     * @custom:and The timestamps are equal to block.timestamp
+     */
+    function test_pushAnswerInNewRound() external {
+        uint256 lastRoundIdBefore = mock.getLastRoundId();
+        (, int256 answerBefore,,,) = mock.latestRoundData();
+
+        // skip one second to make sure the value of block.timestamp changes
+        skip(1);
+
+        mock.pushAnswerInNewRound(answerBefore + 1);
+
+        (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound) =
+            mock.latestRoundData();
+        assertEq(mock.getLastRoundId(), lastRoundIdBefore + 1);
+        assertEq(answeredInRound, roundId);
+        assertEq(roundId, lastRoundIdBefore + 1);
+        assertEq(answer, answerBefore + 1);
+        assertEq(startedAt, block.timestamp);
+        assertEq(updatedAt, block.timestamp);
+    }
 }
