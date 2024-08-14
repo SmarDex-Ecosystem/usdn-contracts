@@ -69,7 +69,7 @@ interface IUsdnProtocolCore is IUsdnProtocolTypes {
      * of `IBaseOracleMiddleware`
      * @param depositAmount The amount of wstETH for the deposit
      * @param longAmount The amount of wstETH for the long
-     * @param desiredLiqPrice The desired liquidation price for the long
+     * @param desiredLiqPrice The desired liquidation price for the long, without penalty
      * @param currentPriceData The current price data
      */
     function initialize(

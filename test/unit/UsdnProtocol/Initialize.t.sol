@@ -128,7 +128,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         emit ValidatedOpenPosition(
             address(this), address(this), posTotalExpo, INITIAL_PRICE, PositionId(expectedTick, 0, 0)
         );
-        protocol.i_createInitialPosition(INITIAL_POSITION, INITIAL_PRICE, tickWithoutPenalty, posTotalExpo);
+        protocol.i_createInitialPosition(INITIAL_POSITION, INITIAL_PRICE, expectedTick, posTotalExpo);
 
         assertEq(wstETH.balanceOf(address(this)), assetBalanceBefore - INITIAL_POSITION, "deployer wstETH balance");
         assertEq(wstETH.balanceOf(address(protocol)), INITIAL_POSITION, "protocol wstETH balance");

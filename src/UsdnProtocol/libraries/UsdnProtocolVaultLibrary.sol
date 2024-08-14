@@ -172,7 +172,7 @@ library UsdnProtocolVaultLibrary {
      * @param s The storage of the protocol
      * @param amount The initial position amount
      * @param price The current asset price
-     * @param tick The tick corresponding to the liquidation price (with penalty)
+     * @param tick The tick corresponding where the position should be stored
      * @param totalExpo The total expo of the position
      */
     function _createInitialPosition(
@@ -185,8 +185,6 @@ library UsdnProtocolVaultLibrary {
         // transfer the wstETH for the long
         address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
 
-        // apply liquidation penalty to the deployer's liquidationPriceWithoutPenalty
-        uint24 liquidationPenalty = s._liquidationPenalty;
         Types.PositionId memory posId;
         posId.tick = tick;
         Types.Position memory long = Types.Position({
@@ -197,7 +195,7 @@ library UsdnProtocolVaultLibrary {
             timestamp: uint40(block.timestamp)
         });
         // save the position and update the state
-        (posId.tickVersion, posId.index,) = ActionsUtils._saveNewPosition(s, posId.tick, long, liquidationPenalty);
+        (posId.tickVersion, posId.index,) = ActionsUtils._saveNewPosition(s, posId.tick, long, s._liquidationPenalty);
         s._balanceLong += long.amount;
         emit IUsdnProtocolEvents.InitiatedOpenPosition(
             msg.sender, msg.sender, long.timestamp, totalExpo, long.amount, price, posId

@@ -355,7 +355,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         data.originalLiqPenalty = protocol.getLiquidationPenalty();
         // open another user position to set the tick's penalty to a lower value in storage
         vm.prank(ADMIN);
-        protocol.setLiquidationPenalty(data.originalLiqPenalty - 1);
+        protocol.setLiquidationPenalty(data.originalLiqPenalty - 100);
         PositionId memory otherPosId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
@@ -391,7 +391,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         data.expectedLeverage = protocol.i_getLeverage(
             data.validatePrice,
             protocol.getEffectivePriceForTick(
-                protocol.i_calcTickWithoutPenalty(data.validateTick, data.originalLiqPenalty - 1),
+                protocol.i_calcTickWithoutPenalty(data.validateTick, data.originalLiqPenalty - 100),
                 data.validatePrice,
                 uint256(protocol.getLongTradingExpo(data.validatePrice)),
                 protocol.getLiqMultiplierAccumulator()
@@ -399,7 +399,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         );
 
         uint128 expectedLiqPrice = protocol.getEffectivePriceForTick(
-            Utils.calcTickWithoutPenalty(data.validateTick, data.originalLiqPenalty - 1),
+            Utils.calcTickWithoutPenalty(data.validateTick, data.originalLiqPenalty - 100),
             uint256(data.validatePrice),
             uint256(
                 protocol.longTradingExpoWithFunding(
