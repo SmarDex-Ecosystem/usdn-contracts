@@ -123,44 +123,6 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
     ) external view returns (uint128);
 
     /**
-     * @notice For a desired liquidation price, get the tick number with penalty and liquidation price without penalty
-     * @dev This function first calculates a tick for the desired liq price (no rounding), then adds the penalty to the
-     * tick and rounds down to the nearest tick spacing. Then it subtracts the penalty from the final tick and
-     * calculates the corresponding liquidation price
-     * @param desiredLiqPriceWithoutPenalty The desired liquidation price without penalty
-     * @param liquidationPenalty The liquidation penalty
-     * @return tickWithPenalty_ The tick number with penalty
-     * @return liqPriceWithoutPenalty_ The liquidation price without penalty
-     */
-    function getTickFromLiqPriceWithoutPenalty(uint128 desiredLiqPriceWithoutPenalty, uint24 liquidationPenalty)
-        external
-        view
-        returns (int24 tickWithPenalty_, uint128 liqPriceWithoutPenalty_);
-
-    /**
-     * @notice For a desired liquidation price, get the tick number with penalty and liquidation price without penalty
-     * @dev This function first calculates a tick for the desired liq price (no rounding), then adds the penalty to the
-     * tick and rounds down to the nearest tick spacing. Then it subtracts the penalty from the final tick and
-     * calculates the corresponding liquidation price
-     * @param desiredLiqPriceWithoutPenalty The desired liquidation price without penalty
-     * @param assetPrice The current price of the asset
-     * @param longTradingExpo The trading expo of the long side (total expo - balance long)
-     * @param accumulator The liquidation multiplier accumulator
-     * @param tickSpacing The tick spacing
-     * @param liquidationPenalty The liquidation penalty
-     * @return tickWithPenalty_ The tick number with penalty
-     * @return liqPriceWithoutPenalty_ The liquidation price without penalty
-     */
-    function getTickFromLiqPriceWithoutPenalty(
-        uint128 desiredLiqPriceWithoutPenalty,
-        uint256 assetPrice,
-        uint256 longTradingExpo,
-        HugeUint.Uint512 memory accumulator,
-        int24 tickSpacing,
-        uint24 liquidationPenalty
-    ) external pure returns (int24 tickWithPenalty_, uint128 liqPriceWithoutPenalty_);
-
-    /**
      * @notice Retrieve the liquidation penalty assigned to `tick` if there are positions in it, otherwise retrieve the
      * current setting value from storage
      * @param tick The tick number

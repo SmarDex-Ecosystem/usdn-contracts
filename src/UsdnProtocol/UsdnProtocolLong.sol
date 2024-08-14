@@ -67,29 +67,6 @@ abstract contract UsdnProtocolLong is UsdnProtocolStorage, IUsdnProtocolLong {
     }
 
     /// @inheritdoc IUsdnProtocolLong
-    function getTickFromLiqPriceWithoutPenalty(uint128 desiredLiqPriceWithoutPenalty, uint24 liquidationPenalty)
-        external
-        view
-        returns (int24 tickWithPenalty_, uint128 liqPriceWithoutPenalty_)
-    {
-        return Long.getTickFromLiqPriceWithoutPenalty(s, desiredLiqPriceWithoutPenalty, liquidationPenalty);
-    }
-
-    /// @inheritdoc IUsdnProtocolLong
-    function getTickFromLiqPriceWithoutPenalty(
-        uint128 desiredLiqPriceWithoutPenalty,
-        uint256 assetPrice,
-        uint256 longTradingExpo,
-        HugeUint.Uint512 memory accumulator,
-        int24 tickSpacing,
-        uint24 liquidationPenalty
-    ) external pure returns (int24 tickWithPenalty_, uint128 liqPriceWithoutPenalty_) {
-        return Long.getTickFromLiqPriceWithoutPenalty(
-            desiredLiqPriceWithoutPenalty, assetPrice, longTradingExpo, accumulator, tickSpacing, liquidationPenalty
-        );
-    }
-
-    /// @inheritdoc IUsdnProtocolLong
     function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
         external
         view

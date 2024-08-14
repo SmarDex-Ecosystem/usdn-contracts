@@ -192,7 +192,17 @@ library UsdnProtocolLongLibrary {
         price_ = _adjustPrice(TickMath.getPriceAtTick(tick), assetPrice, longTradingExpo, accumulator);
     }
 
-    /// @notice See {IUsdnProtocolLong}
+    /**
+     * @notice For a desired liquidation price, get the tick number with penalty and liquidation price without penalty
+     * @dev This function first calculates a tick for the desired liq price (no rounding), then adds the penalty to the
+     * tick and rounds down to the nearest tick spacing. Then it subtracts the penalty from the final tick and
+     * calculates the corresponding liquidation price
+     * @param s The storage of the protocol
+     * @param desiredLiqPriceWithoutPenalty The desired liquidation price without penalty
+     * @param liquidationPenalty The liquidation penalty
+     * @return tickWithPenalty_ The tick number with penalty
+     * @return liqPriceWithoutPenalty_ The liquidation price without penalty
+     */
     function getTickFromLiqPriceWithoutPenalty(
         Types.Storage storage s,
         uint128 desiredLiqPriceWithoutPenalty,
@@ -208,7 +218,20 @@ library UsdnProtocolLongLibrary {
         );
     }
 
-    /// @notice See {IUsdnProtocolLong}
+    /**
+     * @notice For a desired liquidation price, get the tick number with penalty and liquidation price without penalty
+     * @dev This function first calculates a tick for the desired liq price (no rounding), then adds the penalty to the
+     * tick and rounds down to the nearest tick spacing. Then it subtracts the penalty from the final tick and
+     * calculates the corresponding liquidation price
+     * @param desiredLiqPriceWithoutPenalty The desired liquidation price without penalty
+     * @param assetPrice The current price of the asset
+     * @param longTradingExpo The trading expo of the long side (total expo - balance long)
+     * @param accumulator The liquidation multiplier accumulator
+     * @param tickSpacing The tick spacing
+     * @param liquidationPenalty The liquidation penalty
+     * @return tickWithPenalty_ The tick number with penalty
+     * @return liqPriceWithoutPenalty_ The liquidation price without penalty
+     */
     function getTickFromLiqPriceWithoutPenalty(
         uint128 desiredLiqPriceWithoutPenalty,
         uint256 assetPrice,
