@@ -190,8 +190,8 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
      */
     function test_initiateOpenPositionDifferentPenalty() public {
         uint128 desiredLiqPrice = CURRENT_PRICE * 9 / 10; // leverage approx 10x
-        uint8 originalLiqPenalty = protocol.getLiquidationPenalty();
-        uint8 storedLiqPenalty = originalLiqPenalty - 1;
+        uint24 originalLiqPenalty = protocol.getLiquidationPenalty();
+        uint24 storedLiqPenalty = originalLiqPenalty - 1;
 
         vm.prank(ADMIN);
         protocol.setLiquidationPenalty(storedLiqPenalty); // set a different liquidation penalty
@@ -230,7 +230,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             EMPTY_PREVIOUS_DATA
         );
         assertEq(posId.tick, posId2.tick, "tick is the same");
-        (Position memory pos, uint8 liqPenalty) = protocol.getLongPosition(posId2);
+        (Position memory pos, uint24 liqPenalty) = protocol.getLongPosition(posId2);
         assertEq(pos.totalExpo, expectedTotalExpo, "total expo: stored penalty was used");
         assertEq(liqPenalty, storedLiqPenalty, "pos liquidation penalty");
     }

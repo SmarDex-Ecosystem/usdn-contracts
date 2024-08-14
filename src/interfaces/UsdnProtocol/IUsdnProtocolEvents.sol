@@ -219,7 +219,7 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
      * @notice Emitted when the `liquidationPenalty` is updated
      * @param newLiquidationPenalty The new `liquidationPenalty`
      */
-    event LiquidationPenaltyUpdated(uint8 newLiquidationPenalty);
+    event LiquidationPenaltyUpdated(uint24 newLiquidationPenalty);
 
     /**
      * @notice Emitted when the `safetyMargin` is updated

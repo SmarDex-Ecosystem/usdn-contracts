@@ -3,6 +3,7 @@ pragma solidity 0.8.26;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolUtils as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtils.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { TickMath } from "../../../../src/libraries/TickMath.sol";
 
@@ -55,9 +56,8 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
             keccak256(abi.encode(protocol.getLiqMultiplierAccumulator())),
             "The returned liquidation multiplier accumulator should be equal to the one in storage"
         );
-        uint256 unadjustedTickPrice = TickMath.getPriceAtTick(
-            _posId.tick - int24(uint24(tickData.liquidationPenalty)) * protocol.getTickSpacing()
-        );
+        uint256 unadjustedTickPrice =
+            TickMath.getPriceAtTick(Utils.calcTickWithoutPenalty(_posId.tick, tickData.liquidationPenalty));
         assertEq(
             liqMultiplierAccBefore.lo - (unadjustedTickPrice * posBefore.totalExpo),
             liqMultiplierAcc.lo,
@@ -121,9 +121,8 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
             abi.encode(protocol.getLiqMultiplierAccumulator()),
             "The returned liquidation multiplier accumulator should be equal to the one in storage"
         );
-        uint256 unadjustedTickPrice = TickMath.getPriceAtTick(
-            _posId.tick - int24(uint24(tickData.liquidationPenalty)) * protocol.getTickSpacing()
-        );
+        uint256 unadjustedTickPrice =
+            TickMath.getPriceAtTick(Utils.calcTickWithoutPenalty(_posId.tick, tickData.liquidationPenalty));
         assertEq(
             liqMultiplierAccBefore.lo - (unadjustedTickPrice * totalExpoToRemove),
             liqMultiplierAcc.lo,

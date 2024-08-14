@@ -17,7 +17,7 @@ library UsdnProtocolConstantsLibrary {
     uint256 internal constant MAX_ACTIONABLE_PENDING_ACTIONS = 20;
     uint256 internal constant MIN_VALIDATION_DEADLINE = 60;
     uint256 internal constant MAX_VALIDATION_DEADLINE = 1 days;
-    uint256 internal constant MAX_LIQUIDATION_PENALTY = 15;
+    uint256 internal constant MAX_LIQUIDATION_PENALTY = 1500;
     uint256 internal constant MAX_SAFETY_MARGIN_BPS = 2000;
     uint256 internal constant MAX_EMA_PERIOD = 90 days;
     uint256 internal constant MAX_POSITION_FEE_BPS = 2000;

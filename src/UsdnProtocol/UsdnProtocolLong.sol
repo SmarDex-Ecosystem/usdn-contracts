@@ -21,7 +21,7 @@ abstract contract UsdnProtocolLong is UsdnProtocolStorage, IUsdnProtocolLong {
     function getLongPosition(PositionId memory posId)
         external
         view
-        returns (Position memory pos_, uint8 liquidationPenalty_)
+        returns (Position memory pos_, uint24 liquidationPenalty_)
     {
         return Long.getLongPosition(s, posId);
     }
@@ -81,7 +81,7 @@ abstract contract UsdnProtocolLong is UsdnProtocolStorage, IUsdnProtocolLong {
     }
 
     /// @inheritdoc IUsdnProtocolLong
-    function getTickLiquidationPenalty(int24 tick) external view returns (uint8 liquidationPenalty_) {
+    function getTickLiquidationPenalty(int24 tick) external view returns (uint24 liquidationPenalty_) {
         return Long.getTickLiquidationPenalty(s, tick);
     }
 }

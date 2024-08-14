@@ -55,7 +55,7 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
     function getLongPosition(PositionId calldata posId)
         external
         view
-        returns (Position memory pos_, uint8 liquidationPenalty_);
+        returns (Position memory pos_, uint24 liquidationPenalty_);
 
     /**
      * @notice Get the value of a long position when the asset price is equal to the given price, at the given timestamp
@@ -128,5 +128,5 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
      * @param tick The tick number
      * @return liquidationPenalty_ The liquidation penalty, in tick spacing units
      */
-    function getTickLiquidationPenalty(int24 tick) external view returns (uint8);
+    function getTickLiquidationPenalty(int24 tick) external view returns (uint24);
 }

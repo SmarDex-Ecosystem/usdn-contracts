@@ -353,7 +353,7 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         pure
         returns (uint256 assetExpected_);
 
-    function i_calcTickWithoutPenalty(int24 tick, uint8 liquidationPenalty) external view returns (int24);
+    function i_calcTickWithoutPenalty(int24 tick, uint24 liquidationPenalty) external view returns (int24);
 
     function i_calcTickWithoutPenalty(int24 tick) external view returns (int24);
 
@@ -390,7 +390,7 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         HugeUint.Uint512 memory liqMultiplierAccumulator
     ) external view returns (int24 tickWithoutLiqPenalty_);
 
-    function i_saveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty)
+    function i_saveNewPosition(int24 tick, Position memory long, uint24 liquidationPenalty)
         external
         returns (uint256, uint256, HugeUint.Uint512 memory);
 

@@ -172,7 +172,7 @@ library UsdnProtocolVaultLibrary {
      * @param s The storage of the protocol
      * @param amount The initial position amount
      * @param price The current asset price
-     * @param tick The tick corresponding to the liquidation price (without penalty)
+     * @param tick The tick corresponding to the liquidation price (with penalty)
      * @param totalExpo The total expo of the position
      */
     function _createInitialPosition(
@@ -186,9 +186,9 @@ library UsdnProtocolVaultLibrary {
         address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
 
         // apply liquidation penalty to the deployer's liquidationPriceWithoutPenalty
-        uint8 liquidationPenalty = s._liquidationPenalty;
+        uint24 liquidationPenalty = s._liquidationPenalty;
         Types.PositionId memory posId;
-        posId.tick = tick + int24(uint24(liquidationPenalty)) * s._tickSpacing;
+        posId.tick = tick;
         Types.Position memory long = Types.Position({
             validated: true,
             user: msg.sender,

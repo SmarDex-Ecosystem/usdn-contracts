@@ -17,7 +17,7 @@ contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
      * @custom:then The function should return the current value of the liquidation penalty setting
      */
     function test_getTickLiquidationPenaltyEmpty() public adminPrank {
-        uint8 startPenalty = protocol.getLiquidationPenalty();
+        uint24 startPenalty = protocol.getLiquidationPenalty();
         int24 tick = 69_420;
         TickData memory tickData = protocol.getTickData(tick);
         assertEq(tickData.totalPos, 0, "empty tick");
@@ -39,7 +39,7 @@ contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
      * @custom:then The function should return the initial value as stored in the tick
      */
     function test_getTickLiquidationPenaltyPopulated() public {
-        uint8 startPenalty = protocol.getLiquidationPenalty();
+        uint24 startPenalty = protocol.getLiquidationPenalty();
         PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
@@ -66,7 +66,7 @@ contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
      * @custom:then The function should return the new value for the liquidation penalty
      */
     function test_getTickLiquidationPenaltyLiquidated() public {
-        uint8 startPenalty = protocol.getLiquidationPenalty();
+        uint24 startPenalty = protocol.getLiquidationPenalty();
         PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
@@ -98,7 +98,7 @@ contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
      * @custom:then The function should return the new value for the liquidation penalty
      */
     function test_getTickLiquidationPenaltyWasPopulatedNowEmpty() public {
-        uint8 startPenalty = protocol.getLiquidationPenalty();
+        uint24 startPenalty = protocol.getLiquidationPenalty();
         PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),

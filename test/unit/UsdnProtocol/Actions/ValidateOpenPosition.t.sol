@@ -4,6 +4,7 @@ pragma solidity 0.8.26;
 import { ADMIN, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolUtils as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtils.sol";
 import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
 /**
@@ -25,7 +26,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         int256 longBalanceWithoutPos;
         uint128 validatePrice;
         int24 validateTick;
-        uint8 originalLiqPenalty;
+        uint24 originalLiqPenalty;
         PositionId tempPosId;
         uint256 validateTickVersion;
         uint256 validateIndex;
@@ -398,7 +399,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         );
 
         uint128 expectedLiqPrice = protocol.getEffectivePriceForTick(
-            data.validateTick - int24(uint24(data.originalLiqPenalty - 1)) * protocol.getTickSpacing(),
+            Utils.calcTickWithoutPenalty(data.validateTick, data.originalLiqPenalty - 1),
             uint256(data.validatePrice),
             uint256(
                 protocol.longTradingExpoWithFunding(

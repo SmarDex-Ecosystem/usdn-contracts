@@ -108,7 +108,7 @@ library UsdnProtocolLongLibrary {
     function getLongPosition(Types.Storage storage s, Types.PositionId memory posId)
         public
         view
-        returns (Types.Position memory pos_, uint8 liquidationPenalty_)
+        returns (Types.Position memory pos_, uint24 liquidationPenalty_)
     {
         (bytes32 tickHash, uint256 version) = Core._tickHash(s, posId.tick);
         if (posId.tickVersion != version) {
@@ -125,7 +125,7 @@ library UsdnProtocolLongLibrary {
         uint128 price,
         uint128 timestamp
     ) public view returns (int256 value_) {
-        (Types.Position memory pos, uint8 liquidationPenalty) = getLongPosition(s, posId);
+        (Types.Position memory pos, uint24 liquidationPenalty) = getLongPosition(s, posId);
         int256 longTradingExpo = longTradingExpoWithFunding(s, price, timestamp);
         if (longTradingExpo < 0) {
             // in case the long balance is equal to the total expo (or exceeds it), the trading expo will become zero
@@ -134,7 +134,7 @@ library UsdnProtocolLongLibrary {
             longTradingExpo = 0;
         }
         uint128 liqPrice = getEffectivePriceForTick(
-            _calcTickWithoutPenalty(s, posId.tick, liquidationPenalty),
+            Utils.calcTickWithoutPenalty(posId.tick, liquidationPenalty),
             price,
             uint256(longTradingExpo),
             s._liqMultiplierAccumulator
@@ -209,6 +209,21 @@ library UsdnProtocolLongLibrary {
     }
 
     function getTickFromLiqPriceWithoutPenalty(
+        Types.Storage storage s,
+        uint128 desiredLiqPriceWithoutPenalty,
+        uint24 liquidationPenalty
+    ) public view returns (int24 tickWithPenalty_, uint128 liqPriceWithoutPenalty_) {
+        return getTickFromLiqPriceWithoutPenalty(
+            desiredLiqPriceWithoutPenalty,
+            s._lastPrice,
+            s._totalExpo - s._balanceLong,
+            s._liqMultiplierAccumulator,
+            s._tickSpacing,
+            liquidationPenalty
+        );
+    }
+
+    function getTickFromLiqPriceWithoutPenalty(
         uint128 desiredLiqPriceWithoutPenalty,
         uint256 assetPrice,
         uint256 longTradingExpo,
@@ -234,8 +249,9 @@ library UsdnProtocolLongLibrary {
             // slither-disable-next-line divide-before-multiply
             tickWithPenalty_ = (tickWithPenalty_ / tickSpacing) * tickSpacing;
         }
-        int24 tickWithoutPenalty = tickWithPenalty_ - int24(liquidationPenalty);
-        liqPriceWithoutPenalty_ = getEffectivePriceForTick(tickWithoutPenalty, assetPrice, longTradingExpo, accumulator);
+        liqPriceWithoutPenalty_ = getEffectivePriceForTick(
+            Utils.calcTickWithoutPenalty(tickWithPenalty_, liquidationPenalty), assetPrice, longTradingExpo, accumulator
+        );
     }
 
     /// @notice See {IUsdnProtocolLong}
@@ -277,7 +293,7 @@ library UsdnProtocolLongLibrary {
     function getTickLiquidationPenalty(Types.Storage storage s, int24 tick)
         public
         view
-        returns (uint8 liquidationPenalty_)
+        returns (uint24 liquidationPenalty_)
     {
         (bytes32 tickHash,) = Core._tickHash(s, tick);
         liquidationPenalty_ = _getTickLiquidationPenalty(s, tickHash);
@@ -464,18 +480,25 @@ library UsdnProtocolLongLibrary {
             data.positionAmount += bonus;
         }
 
-        int24 tickWithoutLiqPenalty =
+        Types.RebalancerPositionData memory posData =
             _calcRebalancerPositionTick(s, lastPrice, data.positionAmount, data.rebalancerMaxLeverage, cache);
 
         // make sure that the rebalancer was not triggered without a sufficient imbalance
         // as we check the imbalance above, this should not happen
-        if (tickWithoutLiqPenalty == Constants.NO_POSITION_TICK) {
+        if (posData.tick == Constants.NO_POSITION_TICK) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidRebalancerTick();
         }
 
         // open a new position for the rebalancer
-        Types.PositionId memory posId =
-            _flashOpenPosition(s, address(rebalancer), lastPrice, tickWithoutLiqPenalty, data.positionAmount, cache);
+        Types.PositionId memory posId = _flashOpenPosition(
+            s,
+            address(rebalancer),
+            lastPrice,
+            posData.tick,
+            posData.totalExpo,
+            posData.liquidationPenalty,
+            data.positionAmount
+        );
 
         longBalance_ += data.positionAmount;
 
@@ -489,49 +512,27 @@ library UsdnProtocolLongLibrary {
      * @param s The storage of the protocol
      * @param user The address of the user
      * @param lastPrice The last price used to update the protocol
-     * @param tickWithoutPenalty The tick the position should be opened in
+     * @param tick The tick the position should be opened in
+     * @param posTotalExpo The position total expo
+     * @param liquidationPenalty The liquidation penalty of the tick
      * @param amount The amount of collateral in the position
-     * @param cache The cached state of the protocol
      * @return posId_ The ID of the position that was created
      */
     function _flashOpenPosition(
         Types.Storage storage s,
         address user,
         uint128 lastPrice,
-        int24 tickWithoutPenalty,
-        uint128 amount,
-        Types.CachedProtocolState memory cache
+        int24 tick,
+        uint128 posTotalExpo,
+        uint24 liquidationPenalty,
+        uint128 amount
     ) public returns (Types.PositionId memory posId_) {
-        // we calculate the closest valid tick down for the desired liquidation price with the liquidation penalty
-        uint8 currentLiqPenalty = s._liquidationPenalty;
-
-        posId_.tick = tickWithoutPenalty + int24(uint24(currentLiqPenalty)) * s._tickSpacing;
-
-        uint8 liquidationPenalty = getTickLiquidationPenalty(s, posId_.tick);
-        uint128 liqPriceWithoutPenalty;
-
-        // check if the penalty for that tick is different from the current setting
-        // this can happen if the setting has been changed, but the position is added in a tick that was never empty
-        // after the said change, so the first value is still applied
-        if (liquidationPenalty == currentLiqPenalty) {
-            liqPriceWithoutPenalty = getEffectivePriceForTick(
-                tickWithoutPenalty, lastPrice, cache.tradingExpo, cache.liqMultiplierAccumulator
-            );
-        } else {
-            liqPriceWithoutPenalty = getEffectivePriceForTick(
-                _calcTickWithoutPenalty(s, posId_.tick, liquidationPenalty),
-                lastPrice,
-                cache.tradingExpo,
-                cache.liqMultiplierAccumulator
-            );
-        }
-
-        uint128 totalExpo = _calcPositionTotalExpo(amount, lastPrice, liqPriceWithoutPenalty);
+        posId_.tick = tick;
         Types.Position memory long = Types.Position({
             validated: true,
             user: user,
             amount: amount,
-            totalExpo: totalExpo,
+            totalExpo: posTotalExpo,
             timestamp: uint40(block.timestamp)
         });
 
@@ -541,9 +542,9 @@ library UsdnProtocolLongLibrary {
         // emit both initiate and validate events
         // so the position is considered the same as other positions by event indexers
         emit IUsdnProtocolEvents.InitiatedOpenPosition(
-            user, user, uint40(block.timestamp), totalExpo, long.amount, lastPrice, posId_
+            user, user, uint40(block.timestamp), posTotalExpo, long.amount, lastPrice, posId_
         );
-        emit IUsdnProtocolEvents.ValidatedOpenPosition(user, user, totalExpo, lastPrice, posId_);
+        emit IUsdnProtocolEvents.ValidatedOpenPosition(user, user, posTotalExpo, lastPrice, posId_);
     }
 
     /**
@@ -567,13 +568,13 @@ library UsdnProtocolLongLibrary {
             return positionValue_;
         }
 
-        uint8 liquidationPenalty = s._tickData[tickHash].liquidationPenalty;
+        uint24 liquidationPenalty = s._tickData[tickHash].liquidationPenalty;
         Types.Position memory pos = s._longPositions[tickHash][posId.index];
 
         positionValue_ = _positionValue(
             lastPrice,
             getEffectivePriceForTick(
-                _calcTickWithoutPenalty(s, posId.tick, liquidationPenalty),
+                Utils.calcTickWithoutPenalty(posId.tick, liquidationPenalty),
                 lastPrice,
                 cache.tradingExpo,
                 cache.liqMultiplierAccumulator
@@ -660,7 +661,7 @@ library UsdnProtocolLongLibrary {
 
         // remove liquidation penalty for leverage and total expo calculations
         uint128 liqPriceWithoutPenalty =
-            getEffectivePriceForTick(s, _calcTickWithoutPenalty(s, data_.posId.tick, data_.liquidationPenalty));
+            getEffectivePriceForTick(s, Utils.calcTickWithoutPenalty(data_.posId.tick, data_.liquidationPenalty));
         _checkOpenPositionLeverage(s, data_.adjustedPrice, liqPriceWithoutPenalty);
 
         data_.positionTotalExpo = _calcPositionTotalExpo(amount, data_.adjustedPrice, liqPriceWithoutPenalty);
@@ -784,13 +785,13 @@ library UsdnProtocolLongLibrary {
             // update transient data
             data.totalExpoToRemove += tickData.totalExpo;
             uint256 unadjustedTickPrice =
-                TickMath.getPriceAtTick(data.iTick - int24(uint24(tickData.liquidationPenalty)) * s._tickSpacing);
+                TickMath.getPriceAtTick(Utils.calcTickWithoutPenalty(data.iTick, tickData.liquidationPenalty));
             data.accumulatorValueToRemove += unadjustedTickPrice * tickData.totalExpo;
             // update return values
             effects_.liquidatedPositions += tickData.totalPos;
             ++effects_.liquidatedTicks;
             int256 tickValue =
-                _tickValue(s, data.iTick, data.currentPrice, data.longTradingExpo, data.accumulator, tickData);
+                _tickValue(data.iTick, data.currentPrice, data.longTradingExpo, data.accumulator, tickData);
             effects_.remainingCollateral += tickValue;
 
             // reset tick by incrementing the tick version
@@ -967,7 +968,6 @@ library UsdnProtocolLongLibrary {
 
     /**
      * @notice Calculate the value of a tick, knowing its contained total expo and the current asset price
-     * @param s The storage of the protocol
      * @param tick The tick number
      * @param currentPrice The current price of the asset
      * @param longTradingExpo The trading expo of the long side
@@ -976,15 +976,14 @@ library UsdnProtocolLongLibrary {
      * @return value_ The value of the tick (qty of asset tokens)
      */
     function _tickValue(
-        Types.Storage storage s,
         int24 tick,
         uint256 currentPrice,
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator,
         Types.TickData memory tickData
-    ) public view returns (int256 value_) {
+    ) public pure returns (int256 value_) {
         uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(
-            _calcTickWithoutPenalty(s, tick, tickData.liquidationPenalty), currentPrice, longTradingExpo, accumulator
+            Utils.calcTickWithoutPenalty(tick, tickData.liquidationPenalty), currentPrice, longTradingExpo, accumulator
         );
 
         // value = totalExpo * (currentPrice - liqPriceWithoutPenalty) / currentPrice
@@ -1085,7 +1084,7 @@ library UsdnProtocolLongLibrary {
     function _getTickLiquidationPenalty(Types.Storage storage s, bytes32 tickHash)
         public
         view
-        returns (uint8 liquidationPenalty_)
+        returns (uint24 liquidationPenalty_)
     {
         Types.TickData storage tickData = s._tickData[tickHash];
         liquidationPenalty_ = tickData.totalPos != 0 ? tickData.liquidationPenalty : s._liquidationPenalty;
@@ -1115,21 +1114,6 @@ library UsdnProtocolLongLibrary {
                         / tickSpacing
             ) * tickSpacing
         );
-    }
-
-    /**
-     * @notice Calculate the tick without the liquidation penalty
-     * @param s The storage of the protocol
-     * @param tick The tick that holds the position
-     * @param liquidationPenalty The liquidation penalty of the tick
-     * @return tick_ The tick corresponding to the liquidation price without penalty
-     */
-    function _calcTickWithoutPenalty(Types.Storage storage s, int24 tick, uint8 liquidationPenalty)
-        public
-        view
-        returns (int24 tick_)
-    {
-        tick_ = tick - int24(uint24(liquidationPenalty)) * s._tickSpacing;
     }
 
     /**
@@ -1254,14 +1238,14 @@ library UsdnProtocolLongLibrary {
 
     /**
      * @notice Calculates the tick of the rebalancer position to open
-     * @dev The returned tick must be higher than or equal to the minimum leverage of the protocol
+     * @dev The returned tick must give a leverage higher than or equal to the minimum leverage of the protocol
      * and lower than or equal to the rebalancer and USDN protocol leverages (lower of the 2)
      * @param s The storage of the protocol
      * @param lastPrice The last price used to update the protocol
      * @param positionAmount The amount of assets in the position
      * @param rebalancerMaxLeverage The max leverage supported by the rebalancer
      * @param cache The cached protocol state values
-     * @return tickWithoutLiqPenalty_ The tick where the position will be saved
+     * @return posData_ The tick, total expo and liquidation penalty for the rebalancer position
      */
     function _calcRebalancerPositionTick(
         Types.Storage storage s,
@@ -1269,77 +1253,91 @@ library UsdnProtocolLongLibrary {
         uint128 positionAmount,
         uint256 rebalancerMaxLeverage,
         Types.CachedProtocolState memory cache
-    ) public view returns (int24 tickWithoutLiqPenalty_) {
+    ) public view returns (Types.RebalancerPositionData memory posData_) {
+        Types.CalcRebalancerPositionTickData memory data;
         // use the lowest max leverage above the min leverage
-        uint256 protocolMinLeverage = s._minLeverage;
+        data.protocolMinLeverage = s._minLeverage;
         {
-            uint256 protocolMaxLeverage = s._maxLeverage;
-            if (rebalancerMaxLeverage > protocolMaxLeverage) {
-                rebalancerMaxLeverage = protocolMaxLeverage;
+            data.protocolMaxLeverage = s._maxLeverage;
+            if (rebalancerMaxLeverage > data.protocolMaxLeverage) {
+                rebalancerMaxLeverage = data.protocolMaxLeverage;
             }
-            if (rebalancerMaxLeverage < protocolMinLeverage) {
-                rebalancerMaxLeverage = protocolMinLeverage;
+            if (rebalancerMaxLeverage < data.protocolMinLeverage) {
+                rebalancerMaxLeverage = data.protocolMinLeverage;
             }
         }
 
-        int256 longImbalanceTargetBps = s._longImbalanceTargetBps;
+        data.longImbalanceTargetBps = s._longImbalanceTargetBps;
         // calculate the trading expo missing to reach the imbalance target
         uint256 targetTradingExpo = (
             cache.vaultBalance * Constants.BPS_DIVISOR
-                / (int256(Constants.BPS_DIVISOR) + longImbalanceTargetBps).toUint256()
+                / (int256(Constants.BPS_DIVISOR) + data.longImbalanceTargetBps).toUint256()
         );
 
         // check that the target is not already exceeded
         if (cache.tradingExpo >= targetTradingExpo) {
-            return Constants.NO_POSITION_TICK;
+            posData_.tick = Constants.NO_POSITION_TICK;
+            return posData_;
         }
 
         uint256 tradingExpoToFill = targetTradingExpo - cache.tradingExpo;
 
         // check that the trading expo filled by the position would not exceed the max leverage
-        uint256 highestUsableTradingExpo =
+        data.highestUsableTradingExpo =
             positionAmount * rebalancerMaxLeverage / 10 ** Constants.LEVERAGE_DECIMALS - positionAmount;
-        if (highestUsableTradingExpo < tradingExpoToFill) {
-            tradingExpoToFill = highestUsableTradingExpo;
+        if (data.highestUsableTradingExpo < tradingExpoToFill) {
+            tradingExpoToFill = data.highestUsableTradingExpo;
         }
 
-        {
-            // check that the trading expo filled by the position would not be below the min leverage
-            uint256 lowestUsableTradingExpo =
-                positionAmount * protocolMinLeverage / 10 ** Constants.LEVERAGE_DECIMALS - positionAmount;
-            if (lowestUsableTradingExpo > tradingExpoToFill) {
-                tradingExpoToFill = lowestUsableTradingExpo;
-            }
+        // check that the trading expo filled by the position would not be below the min leverage
+        data.lowestUsableTradingExpo =
+            positionAmount * data.protocolMinLeverage / 10 ** Constants.LEVERAGE_DECIMALS - positionAmount;
+        if (data.lowestUsableTradingExpo > tradingExpoToFill) {
+            tradingExpoToFill = data.lowestUsableTradingExpo;
         }
 
-        tickWithoutLiqPenalty_ = getEffectiveTickForPrice(
-            _calcLiqPriceFromTradingExpo(lastPrice, positionAmount, tradingExpoToFill),
+        data.currentLiqPenalty = s._liquidationPenalty;
+        uint128 idealLiqPrice = _calcLiqPriceFromTradingExpo(lastPrice, positionAmount, tradingExpoToFill);
+        data.liqPriceWithoutPenalty;
+        (posData_.tick, data.liqPriceWithoutPenalty) = getTickFromLiqPriceWithoutPenalty(
+            idealLiqPrice,
             lastPrice,
             cache.tradingExpo,
             cache.liqMultiplierAccumulator,
-            s._tickSpacing
+            s._tickSpacing,
+            data.currentLiqPenalty
         );
 
-        // calculate the total expo of the position that will be created with the tick
-        uint256 positionTotalExpo = _calcPositionTotalExpo(
-            positionAmount,
-            lastPrice,
-            getEffectivePriceForTick(
-                tickWithoutLiqPenalty_, lastPrice, cache.tradingExpo, cache.liqMultiplierAccumulator
-            )
-        );
+        posData_.liquidationPenalty = getTickLiquidationPenalty(s, posData_.tick);
+        if (posData_.liquidationPenalty != data.currentLiqPenalty) {
+            data.liqPriceWithoutPenalty = getEffectivePriceForTick(
+                Utils.calcTickWithoutPenalty(posData_.tick, posData_.liquidationPenalty),
+                lastPrice,
+                cache.tradingExpo,
+                cache.liqMultiplierAccumulator
+            );
+        }
+        posData_.totalExpo = _calcPositionTotalExpo(positionAmount, lastPrice, data.liqPriceWithoutPenalty);
 
         // due to the rounding down, if the imbalance is still greater than the desired imbalance
         // and the position is not at the max leverage, add one tick
         if (
-            highestUsableTradingExpo != tradingExpoToFill
+            data.highestUsableTradingExpo != tradingExpoToFill
                 && _calcImbalanceCloseBps(
                     cache.vaultBalance.toInt256(),
                     (cache.longBalance + positionAmount).toInt256(),
-                    cache.totalExpo + positionTotalExpo
-                ) > longImbalanceTargetBps
+                    cache.totalExpo + posData_.totalExpo
+                ) > data.longImbalanceTargetBps
         ) {
-            tickWithoutLiqPenalty_ += s._tickSpacing;
+            posData_.tick += s._tickSpacing;
+            posData_.liquidationPenalty = getTickLiquidationPenalty(s, posData_.tick);
+            data.liqPriceWithoutPenalty = getEffectivePriceForTick(
+                Utils.calcTickWithoutPenalty(posData_.tick, posData_.liquidationPenalty),
+                lastPrice,
+                cache.tradingExpo,
+                cache.liqMultiplierAccumulator
+            );
+            posData_.totalExpo = _calcPositionTotalExpo(positionAmount, lastPrice, data.liqPriceWithoutPenalty);
         }
     }
 }
