@@ -411,11 +411,9 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         address user,
         uint128 neutralPrice,
         int24 tick,
-        uint128 amount,
-        uint256 totalExpo,
-        uint256 balanceLong,
-        uint256 balanceVault,
-        HugeUint.Uint512 memory liqMultiplierAccumulator
+        uint128 posTotalExpo,
+        uint24 liquidationPenalty,
+        uint128 amount
     ) external returns (PositionId memory posId_);
 
     function i_triggerRebalancer(

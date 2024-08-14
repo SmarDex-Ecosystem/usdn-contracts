@@ -45,14 +45,7 @@ contract TestUsdnProtocolLongFlashOpenPosition is UsdnProtocolBaseFixture {
 
         _expectEmit(positionTotalExpo, PositionId(tick, 0, 0));
         (PositionId memory posId) = protocol.i_flashOpenPosition(
-            address(this),
-            CURRENT_PRICE,
-            tick,
-            AMOUNT,
-            TOTAL_EXPO,
-            BALANCE_LONG,
-            BALANCE_VAULT,
-            liqMultiplierAccumulator
+            address(this), CURRENT_PRICE, tick, positionTotalExpo, protocol.getLiquidationPenalty(), AMOUNT
         );
 
         assertEq(posId.tick, tick, "The tick should be the expected tick");
@@ -86,18 +79,16 @@ contract TestUsdnProtocolLongFlashOpenPosition is UsdnProtocolBaseFixture {
         uint256 longPositionsCountBefore = protocol.getTotalLongPositions();
 
         vm.prank(ADMIN);
-        protocol.setLiquidationPenalty(1);
+        protocol.setLiquidationPenalty(100);
 
         _expectEmit(positionTotalExpo, PositionId(initialPosition.tick, 0, 1));
         (PositionId memory posId) = protocol.i_flashOpenPosition(
             address(this),
             CURRENT_PRICE,
-            tickWithoutNewPenalty + int24(protocol.getLiquidationPenalty()),
-            AMOUNT,
-            TOTAL_EXPO,
-            BALANCE_LONG,
-            BALANCE_VAULT,
-            liqMultiplierAccumulator
+            tickWithoutNewPenalty + 100,
+            positionTotalExpo,
+            protocol.getLiquidationPenalty(),
+            AMOUNT
         );
 
         assertEq(
