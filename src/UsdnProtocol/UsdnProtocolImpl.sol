@@ -13,7 +13,6 @@ import { IUsdnProtocolImpl } from "../interfaces/UsdnProtocol/IUsdnProtocolImpl.
 import { UsdnProtocolActions } from "./UsdnProtocolActions.sol";
 import { UsdnProtocolCore } from "./UsdnProtocolCore.sol";
 import { UsdnProtocolLong } from "./UsdnProtocolLong.sol";
-import { UsdnProtocolSepolia } from "./UsdnProtocolSepolia.sol";
 import { UsdnProtocolVault } from "./UsdnProtocolVault.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./libraries/UsdnProtocolConstantsLibrary.sol";
 
@@ -22,8 +21,7 @@ contract UsdnProtocolImpl is
     UsdnProtocolLong,
     UsdnProtocolVault,
     UsdnProtocolCore,
-    UsdnProtocolActions,
-    UsdnProtocolSepolia
+    UsdnProtocolActions
 {
     /// @inheritdoc IUsdnProtocolImpl
     function initializeStorage(

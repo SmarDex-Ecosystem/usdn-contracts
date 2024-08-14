@@ -37,9 +37,9 @@ checksum = "180e009e8abfc5ed43383418f2593ac790655b58ec18ae52a92a636d5f298ad4"
 
 [[dependencies]]
 name = "forge-std"
-version = "1.9.1"
-source = "https://soldeer-revisions.s3.amazonaws.com/forge-std/v1_9_1_03-07-2024_14:44:59_forge-std-v1.9.1.zip"
-checksum = "110b35ad3604d91a919c521c71206c18cd07b29c750bd90b5cbbaf37288c9636"
+version = "1.9.2"
+source = "https://soldeer-revisions.s3.amazonaws.com/forge-std/1_9_2_06-08-2024_17:31:25_forge-std-1.9.2.zip"
+checksum = "20fd008c7c69b6c737cc0284469d1c76497107bc3e004d8381f6d8781cb27980"
 
 [[dependencies]]
 name = "openzeppelin-foundry-upgrades"

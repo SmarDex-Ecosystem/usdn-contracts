@@ -7,6 +7,7 @@ contract TestUsdnProtocolSepolia is UsdnProtocolBaseFixture {
     address constant SWEEP_ADMIN = 0xFB8A0f060CA1DB2f1D241a3b147aCDA1859901B0;
 
     function setUp() public {
+        sepolia = true;
         super._setUp(DEFAULT_PARAMS);
         vm.deal(address(protocol), 1 ether);
     }
