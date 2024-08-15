@@ -4,7 +4,6 @@ pragma solidity 0.8.26;
 import { USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import { UsdnProtocolUtils as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtils.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { TickMath } from "../../../../src/libraries/TickMath.sol";
 
@@ -44,7 +43,7 @@ contract TestUsdnProtocolLongSaveNewPosition is UsdnProtocolBaseFixture {
         uint24 liquidationPenalty = protocol.getTickLiquidationPenalty(expectedTick);
         HugeUint.Uint512 memory initialLiqMultiplierAccumulator = protocol.getLiqMultiplierAccumulator();
         uint256 unadjustedTickPrice =
-            TickMath.getPriceAtTick(Utils.calcTickWithoutPenalty(expectedTick, liquidationPenalty));
+            TickMath.getPriceAtTick(protocol.i_calcTickWithoutPenalty(expectedTick, liquidationPenalty));
 
         HugeUint.Uint512 memory expectedLiqMultiplierAccumulator =
             initialLiqMultiplierAccumulator.add(HugeUint.wrap(unadjustedTickPrice * long.totalExpo));

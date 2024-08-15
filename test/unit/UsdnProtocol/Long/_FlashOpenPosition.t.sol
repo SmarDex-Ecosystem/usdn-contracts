@@ -4,7 +4,6 @@ pragma solidity 0.8.26;
 import { ADMIN } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import { UsdnProtocolUtils as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtils.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 
 /**
@@ -69,8 +68,7 @@ contract TestUsdnProtocolLongFlashOpenPosition is UsdnProtocolBaseFixture {
      * @custom:and The created position has the same penalty as the positions in the tick
      */
     function test_flashOpenPositionOnTickWithDifferentPenalty() public {
-        int24 tickWithoutOldPenalty =
-            Utils.calcTickWithoutPenalty(initialPosition.tick, protocol.getLiquidationPenalty());
+        int24 tickWithoutOldPenalty = protocol.i_calcTickWithoutPenalty(initialPosition.tick);
         int24 tickWithoutNewPenalty = initialPosition.tick - _tickSpacing;
         uint128 tickPriceWithoutOldPenalty = protocol.getEffectivePriceForTick(
             tickWithoutOldPenalty, CURRENT_PRICE, longTradingExpo, liqMultiplierAccumulator

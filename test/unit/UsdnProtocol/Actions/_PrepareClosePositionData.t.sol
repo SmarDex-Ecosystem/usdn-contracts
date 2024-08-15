@@ -4,8 +4,6 @@ pragma solidity 0.8.26;
 import { ADMIN } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import { UsdnProtocolUtils as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtils.sol";
-
 /**
  * @custom:feature Test of the protocol `_prepareClosePositionData` internal function
  * @custom:background Given a protocol with a long position that can be closed
@@ -121,7 +119,7 @@ contract TestUsdnProtocolActionsPrepareClosePositionData is UsdnProtocolBaseFixt
         uint256 positionTotalExpo = protocol.i_calcPositionTotalExpo(
             POSITION_AMOUNT,
             params.initialPrice,
-            protocol.getEffectivePriceForTick(Utils.calcTickWithoutPenalty(posId.tick, liquidationPenalty))
+            protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(posId.tick))
         );
 
         // asserts that should be done independently from the `isEarlyReturn` param

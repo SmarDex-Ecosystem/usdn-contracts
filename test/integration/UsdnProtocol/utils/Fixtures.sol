@@ -171,7 +171,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
                     wstETH,
                     oracleMiddleware,
                     liquidationRewardsManager,
-                    100, // tick spacing 100 = 1%
+                    100, // tick spacing 100 = ~1.005%
                     ADMIN,
                     managers,
                     protocolFallback

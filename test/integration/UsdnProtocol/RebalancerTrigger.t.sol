@@ -5,7 +5,6 @@ import { MOCK_PYTH_DATA } from "../../unit/Middlewares/utils/Constants.sol";
 import { SET_PROTOCOL_PARAMS_MANAGER } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 
-import { UsdnProtocolUtils as Utils } from "../../../src/UsdnProtocol/libraries/UsdnProtocolUtils.sol";
 import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
 import { HugeUint } from "../../../src/libraries/HugeUint.sol";
 import { TickMath } from "../../../src/libraries/TickMath.sol";
@@ -57,7 +56,7 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
             protocol.getLiqMultiplierAccumulator(),
             HugeUint.wrap(
                 TickMath.getPriceAtTick(
-                    Utils.calcTickWithoutPenalty(posToLiquidate.tick, tickToLiquidateData.liquidationPenalty)
+                    protocol.i_calcTickWithoutPenalty(posToLiquidate.tick, tickToLiquidateData.liquidationPenalty)
                 ) * tickToLiquidateData.totalExpo
             )
         );

@@ -433,8 +433,8 @@ interface IUsdnProtocolTypes {
     /**
      * @notice Structure to hold the state of the protocol
      * @param _tickSpacing The liquidation tick spacing for storing long positions
-     * A tick spacing of 1 is equivalent to a 0.1% increase in liquidation price between ticks. A tick spacing of
-     * 10 is equivalent to a 1% increase in liquidation price between ticks
+     * A tick spacing of 1 is equivalent to a 0.01% increase in liquidation price between ticks. A tick spacing of
+     * 100 is equivalent to a ~1.005% increase in liquidation price between ticks
      * @param _asset The asset ERC20 contract (wstETH)
      * @param _assetDecimals The asset decimals (wstETH => 18)
      * @param _priceFeedDecimals The price feed decimals (wstETH => 18)

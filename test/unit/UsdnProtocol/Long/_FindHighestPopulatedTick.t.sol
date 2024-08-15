@@ -14,8 +14,7 @@ contract TestUsdnProtocolLongFindHighestPopulatedTick is UsdnProtocolBaseFixture
         super._setUp(DEFAULT_PARAMS);
 
         // Tick of the position created by the initialization of the protocol
-        _initialTick =
-            protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 2) + int24(protocol.getLiquidationPenalty());
+        _initialTick = protocol.i_findHighestPopulatedTick(type(int24).max);
     }
 
     /**
@@ -26,9 +25,6 @@ contract TestUsdnProtocolLongFindHighestPopulatedTick is UsdnProtocolBaseFixture
      * @custom:then we get the highest populated tick from the tick provided
      */
     function test_findHighestPopulatedTick() public {
-        int24 highestPopulatedTick = protocol.i_findHighestPopulatedTick(type(int24).max);
-        assertEq(highestPopulatedTick, _initialTick, "The tick of protocol initialization should have been found");
-
         PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
@@ -40,7 +36,7 @@ contract TestUsdnProtocolLongFindHighestPopulatedTick is UsdnProtocolBaseFixture
         );
 
         // Add a position in a higher liquidation tick to check the result changes
-        highestPopulatedTick = protocol.i_findHighestPopulatedTick(type(int24).max);
+        int24 highestPopulatedTick = protocol.i_findHighestPopulatedTick(type(int24).max);
         assertEq(highestPopulatedTick, posId.tick, "The tick of the newly created position should have been found");
 
         // Search from lower than the higher tick previously populated

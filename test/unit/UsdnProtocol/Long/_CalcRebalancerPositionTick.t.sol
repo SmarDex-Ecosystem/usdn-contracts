@@ -29,13 +29,15 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
         uint256 missingTradingExpo = vaultBalance + longBalance - totalExpo;
         uint128 amount = 2 ether;
 
-        int24 expectedTick = protocol.getEffectiveTickForPrice(
+        (int24 expectedTick,) = protocol.i_getTickFromLiqPriceWithoutPenalty(
             protocol.i_calcLiqPriceFromTradingExpo(DEFAULT_PARAMS.initialPrice, amount, missingTradingExpo),
             DEFAULT_PARAMS.initialPrice,
             totalExpo - longBalance,
             protocol.getLiqMultiplierAccumulator(),
-            _tickSpacing
-        ) + int24(protocol.getLiquidationPenalty()) + _tickSpacing;
+            _tickSpacing,
+            protocol.getLiquidationPenalty()
+        );
+        expectedTick += _tickSpacing;
 
         int24 tick = protocol.i_calcRebalancerPositionTick(
             DEFAULT_PARAMS.initialPrice,
@@ -65,13 +67,14 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
         // calculate the highest usable trading expo to stay below the max leverage
         uint256 highestUsableTradingExpo =
             amount * protocol.getMaxLeverage() / 10 ** protocol.LEVERAGE_DECIMALS() - amount;
-        int24 expectedTick = protocol.getEffectiveTickForPrice(
+        (int24 expectedTick,) = protocol.i_getTickFromLiqPriceWithoutPenalty(
             protocol.i_calcLiqPriceFromTradingExpo(DEFAULT_PARAMS.initialPrice, amount, highestUsableTradingExpo),
             DEFAULT_PARAMS.initialPrice,
             totalExpo - longBalance,
             protocol.getLiqMultiplierAccumulator(),
-            _tickSpacing
-        ) + int24(protocol.getLiquidationPenalty());
+            _tickSpacing,
+            protocol.getLiquidationPenalty()
+        );
 
         int24 tick = protocol.i_calcRebalancerPositionTick(
             DEFAULT_PARAMS.initialPrice,
@@ -101,13 +104,14 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
         // calculate the lowest usable trading expo to stay above the min leverage
         uint256 lowestUsableTradingExpo =
             amount * protocol.getMinLeverage() / 10 ** protocol.LEVERAGE_DECIMALS() - amount;
-        int24 expectedTick = protocol.getEffectiveTickForPrice(
+        (int24 expectedTick,) = protocol.i_getTickFromLiqPriceWithoutPenalty(
             protocol.i_calcLiqPriceFromTradingExpo(DEFAULT_PARAMS.initialPrice, amount, lowestUsableTradingExpo),
             DEFAULT_PARAMS.initialPrice,
             totalExpo - longBalance,
             protocol.getLiqMultiplierAccumulator(),
-            _tickSpacing
-        ) + int24(protocol.getLiquidationPenalty());
+            _tickSpacing,
+            protocol.getLiquidationPenalty()
+        );
 
         int24 tick = protocol.i_calcRebalancerPositionTick(
             DEFAULT_PARAMS.initialPrice,
@@ -137,13 +141,14 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
 
         // calculate the highest usable trading expo to stay below the max leverage
         uint256 highestUsableTradingExpo = amount * rebalancerMaxLeverage / 10 ** protocol.LEVERAGE_DECIMALS() - amount;
-        int24 expectedTick = protocol.getEffectiveTickForPrice(
+        (int24 expectedTick,) = protocol.i_getTickFromLiqPriceWithoutPenalty(
             protocol.i_calcLiqPriceFromTradingExpo(DEFAULT_PARAMS.initialPrice, amount, highestUsableTradingExpo),
             DEFAULT_PARAMS.initialPrice,
             totalExpo - longBalance,
             protocol.getLiqMultiplierAccumulator(),
-            _tickSpacing
-        ) + int24(protocol.getLiquidationPenalty());
+            _tickSpacing,
+            protocol.getLiquidationPenalty()
+        );
 
         int24 tick = protocol.i_calcRebalancerPositionTick(
             DEFAULT_PARAMS.initialPrice,
@@ -175,13 +180,14 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
         // calculate the lowest usable trading expo to stay above the min leverage
         uint256 lowestUsableTradingExpo =
             amount * protocol.getMinLeverage() / 10 ** protocol.LEVERAGE_DECIMALS() - amount;
-        int24 expectedTick = protocol.getEffectiveTickForPrice(
+        (int24 expectedTick,) = protocol.i_getTickFromLiqPriceWithoutPenalty(
             protocol.i_calcLiqPriceFromTradingExpo(DEFAULT_PARAMS.initialPrice, amount, lowestUsableTradingExpo),
             DEFAULT_PARAMS.initialPrice,
             totalExpo - longBalance,
             protocol.getLiqMultiplierAccumulator(),
-            _tickSpacing
-        ) + int24(protocol.getLiquidationPenalty());
+            _tickSpacing,
+            protocol.getLiquidationPenalty()
+        );
 
         int24 tick = protocol.i_calcRebalancerPositionTick(
             DEFAULT_PARAMS.initialPrice,

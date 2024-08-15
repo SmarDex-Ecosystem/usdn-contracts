@@ -173,7 +173,7 @@ interface IUsdnProtocolFallback {
     /**
      * @notice The liquidation tick spacing for storing long positions
      * @dev A tick spacing of 1 is equivalent to a 0.01% increase in liquidation price between ticks. A tick spacing of
-     * 100 is equivalent to a 1% increase in liquidation price between ticks
+     * 100 is equivalent to a ~1.005% increase in liquidation price between ticks
      * @return The tick spacing
      */
     function getTickSpacing() external view returns (int24);
