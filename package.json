@@ -24,8 +24,8 @@
     "snapshot:check": "FOUNDRY_PROFILE=ci forge build && FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fork|Fuzz)\" --no-match-contract Fork --check --offline",
     "snapshot": "FOUNDRY_PROFILE=ci forge clean && FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fork|Fuzz)\" --no-match-contract Fork --offline",
     "test": "forge test -vvv",
-    "echidna": "echidna test/fuzzing/FuzzingSuite.sol --contract FuzzingSuite --config test/fuzzing/config/echidnaConfig.yaml",
-    "medusa": "medusa fuzz --config test/fuzzing/config/medusa.json"
+    "echidna": "echidna test/invariants/FuzzingSuite.sol --contract FuzzingSuite --config test/invariants/config/echidnaConfig.yaml",
+    "medusa": "medusa fuzz --config test/invariants/config/medusa.json"
   },
   "main": "dist/index.js",
   "files": [

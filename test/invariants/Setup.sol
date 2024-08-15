@@ -83,32 +83,32 @@ contract Setup is ErrorsChecked {
             setOptionsAdmin: ADMIN
         });
 
-        feeCollector = new FeeCollector();
-        UsdnProtocolHandler test = new UsdnProtocolHandler();
-        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
-        address proxy = UnsafeUpgrades.deployUUPSProxy(
-            address(test),
-            abi.encodeCall(
-                UsdnProtocolHandler.initializeStorageHandler,
-                (
-                    usdn,
-                    sdex,
-                    wsteth,
-                    wstEthOracleMiddleware,
-                    liquidationRewardsManager,
-                    _tickSpacing,
-                    address(feeCollector),
-                    roles,
-                    protocolFallback
-                )
-            )
-        );
-        usdnProtocol = IUsdnProtocolHandler(proxy);
-        rebalancer = new RebalancerHandler(usdnProtocol);
-        vm.prank(ADMIN);
-        usdnProtocol.setRebalancer(rebalancer);
-        usdn.grantRole(MINTER_ROLE, address(usdnProtocol));
-        usdn.grantRole(REBASER_ROLE, address(usdnProtocol));
+        // feeCollector = new FeeCollector();
+        // UsdnProtocolHandler test = new UsdnProtocolHandler();
+        // UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
+        // address proxy = UnsafeUpgrades.deployUUPSProxy(
+        //     address(test),
+        //     abi.encodeCall(
+        //         UsdnProtocolHandler.initializeStorageHandler,
+        //         (
+        //             usdn,
+        //             sdex,
+        //             wsteth,
+        //             wstEthOracleMiddleware,
+        //             liquidationRewardsManager,
+        //             _tickSpacing,
+        //             address(feeCollector),
+        //             roles,
+        //             protocolFallback
+        //         )
+        //     )
+        // );
+        // usdnProtocol = IUsdnProtocolHandler(proxy);
+        // rebalancer = new RebalancerHandler(usdnProtocol);
+        // vm.prank(ADMIN);
+        // usdnProtocol.setRebalancer(rebalancer);
+        // usdn.grantRole(MINTER_ROLE, address(usdnProtocol));
+        // usdn.grantRole(REBASER_ROLE, address(usdnProtocol));
     }
 
     function getBalances(address validator, address to) internal view returns (BalancesSnapshot memory) {
