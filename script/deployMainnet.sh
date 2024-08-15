@@ -9,14 +9,11 @@ green='\033[0;32m'
 blue='\033[0;34m'
 nc='\033[0m'
 
-BROADCAST="broadcast/00_DeployUsdn.s.sol/1/run-latest.json"
+broadcast="broadcast/00_DeployUsdn.s.sol/1/run-latest.json"
 ledger=false
-rpcUrl=""
-deployerPrivateKey=""
-address=""
 
 read -p $'\n'"Enter the RPC URL : " userRpcUrl
-rpcUrl=$userRpcUrl
+rpcUrl="$userRpcUrl"
 
 while true; do
     read -p $'\n'"Do you wish to use a ledger? (Yy/Nn) : " yn
@@ -27,19 +24,21 @@ while true; do
 
         printf "\n\n$green Running script in Ledger mode with :\n"
         ledger=true
+
         break
         ;;
     [Nn]*)
         read -s -p $'\n'"Enter the private key : " privateKey
         deployerPrivateKey=$privateKey
 
-        address="$(cast wallet address $deployerPrivateKey)"
+        address=$(cast wallet address $deployerPrivateKey)
         if [[ -z $address ]]; then
             printf "\n$red The private key is invalid$nc\n\n"
             exit 1
         fi
 
         printf "\n\n$green Running script in Non-Ledger mode with :\n"
+
         break
         ;;
     *) printf "\nPlease answer yes (Y/y) or no (N/n).\n" ;;
@@ -50,6 +49,7 @@ while true; do
     printf "\n$blue Address :$nc $address"
     printf "\n$blue RPC URL :$nc "$rpcUrl"\n"
     read -p $'\n'"Do you wish to continue? (Yy/Nn) : " yn
+
     case $yn in
     [Yy]*)
         export DEPLOYER_ADDRESS=$address
@@ -80,12 +80,12 @@ sleep 12s
 
 for i in {1..15}; do
     printf "$green Trying to fetch USDN address... (attempt $i/15)$nc\n"
-    USDN_ADDRESS="$(cat "$BROADCAST" | jq -r '.returns.Usdn_.value')"
-    usdnCode="$(cast code "$USDN_ADDRESS")"
+    USDN_ADDRESS="$(cat $broadcast | jq -r '.returns.Usdn_.value')"
+    usdnCode=$(cast code -r "$rpcUrl" "$USDN_ADDRESS")
 
     if [[ ! -z $usdnCode ]]; then
         printf "\n$green USDN contract found on blockchain$nc\n\n"
-        export USDN_ADDRESS="$USDN_ADDRESS"
+        export USDN_ADDRESS=$USDN_ADDRESS
         break
     fi
 
