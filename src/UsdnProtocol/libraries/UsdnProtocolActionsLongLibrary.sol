@@ -321,11 +321,10 @@ library UsdnProtocolActionsLongLibrary {
         // even if it drops below _minLeverage between the initiate and validate actions, we still allow it
         // however, if the leverage exceeds max leverage, then we adjust the liquidation price (tick) to have a leverage
         // of _maxLeverage
-        uint128 maxLeverage = uint128(s._maxLeverage);
-        if (data.leverage > maxLeverage) {
+        if (data.leverage > s._maxLeverage) {
             MaxLeverageData memory maxLeverageData;
             // theoretical liquidation price for _maxLeverage
-            data.liqPriceWithoutPenalty = Long._getLiquidationPrice(data.startPrice, maxLeverage);
+            data.liqPriceWithoutPenalty = Long._getLiquidationPrice(data.startPrice, uint128(s._maxLeverage));
             // adjust to the closest valid tick down
             maxLeverageData.tickWithoutPenalty = Long.getEffectiveTickForPrice(s, data.liqPriceWithoutPenalty);
 
@@ -392,22 +391,23 @@ library UsdnProtocolActionsLongLibrary {
 
             return (true, false);
         }
+
         // calculate the new total expo
-        uint128 expoBefore = data.pos.totalExpo;
         uint128 expoAfter = Long._calcPositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenalty);
-
-        // update the total expo of the position
-        data.pos.totalExpo = expoAfter;
-        // mark the position as validated
-        data.pos.validated = true;
-        // SSTORE
-        s._longPositions[data.tickHash][data.action.index] = data.pos;
-        // update the total expo by adding the position's new expo and removing the old one
-        // do not use += or it will underflow
-        s._totalExpo = s._totalExpo + expoAfter - expoBefore;
-
-        // update the tick data and the liqMultiplierAccumulator
         {
+            uint128 expoBefore = data.pos.totalExpo;
+
+            // update the total expo of the position
+            data.pos.totalExpo = expoAfter;
+            // mark the position as validated
+            data.pos.validated = true;
+            // SSTORE
+            s._longPositions[data.tickHash][data.action.index] = data.pos;
+            // update the total expo by adding the position's new expo and removing the old one
+            // do not use += or it will underflow
+            s._totalExpo = s._totalExpo + expoAfter - expoBefore;
+
+            // update the tick data and the liqMultiplierAccumulator
             Types.TickData storage tickData = s._tickData[data.tickHash];
             uint256 unadjustedTickPrice =
                 TickMath.getPriceAtTick(data.action.tick - int24(uint24(data.liquidationPenalty)) * s._tickSpacing);
