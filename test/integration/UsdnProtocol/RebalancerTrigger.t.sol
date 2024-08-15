@@ -141,8 +141,13 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
 
         skip(5 minutes);
 
-        mockPyth.setPrice(1300 ether / 1e10);
-        mockPyth.setLastPublishTime(block.timestamp);
+        uint128 wstEthPrice = 1490 ether;
+        {
+            uint128 ethPrice = uint128(wstETH.getWstETHByStETH(wstEthPrice)) / 1e10;
+            mockPyth.setPrice(int64(uint64(ethPrice)));
+            mockPyth.setLastPublishTime(block.timestamp);
+            wstEthPrice = uint128(wstETH.getStETHByWstETH(ethPrice * 1e10));
+        }
 
         uint256 pendingAssets = rebalancer.getPendingAssetsAmount();
         uint256 posVersion = rebalancer.getPositionVersion();
