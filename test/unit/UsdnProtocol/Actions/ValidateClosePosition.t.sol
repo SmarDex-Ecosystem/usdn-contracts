@@ -36,12 +36,14 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
     }
 
     uint128 private constant POSITION_AMOUNT = 1 ether;
+    int24 private initialTick;
     PositionId private posId;
     /// @notice Trigger a reentrancy after receiving ether
     bool internal _reenter;
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
+        initialTick = protocol.getHighestPopulatedTick();
 
         posId = setUpUserPositionInLong(
             OpenParams({
@@ -628,8 +630,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         uint256 longBalanceBefore = protocol.getBalanceLong();
 
         /* ------------------------- Initiate Close Position ------------------------ */
-        posId.tick =
-            protocol.getEffectiveTickForPrice(params.initialPrice / 2) + int24(protocol.getLiquidationPenalty());
+        posId.tick = initialTick;
         posId.tickVersion = 0;
         posId.index = 0;
         (Position memory pos,) = protocol.getLongPosition(PositionId(posId.tick, 0, 0));
