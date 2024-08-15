@@ -10,7 +10,7 @@ Environment variables can be used to control the script execution:
 
 #### Optional
 - `DEPLOYER_ADDRESS`: required only for fork deployment, the address of the deployer
-- `FEE_COLLECTOR` : set to `DEPLOYER_ADDRESS` if not set, the receiver of all protocol fees
+- `FEE_COLLECTOR`: set to `DEPLOYER_ADDRESS` if not set, the receiver of all protocol fees
 - `SDEX_ADDRESS`: if provided, skips deployment of the SDEX token
 - `WSTETH_ADDRESS`: if provided, skips deployment of the wstETH token
 - `MIDDLEWARE_ADDRESS`: if provided, skips deployment of the oracle middleware
@@ -41,7 +41,7 @@ Just run the bash script corresponding to the desired deployment (mainnet or for
 You will be prompted to enter the `RPC_URL` of the network you want to deploy to (mainnet and sepolia). If you are deploying with a Ledger, you will also be prompted for the deployer address. And without a Ledger, you will be prompted for the deployer private key.  
 The deployment script for the fork mode does not require any input.
 
-Only two env variables are required in mainnet or fork modes: `INIT_DEPOSIT_AMOUNT` and `INIT_LONG_AMOUNT`.
+Only two env variables are required : `INIT_DEPOSIT_AMOUNT` and `INIT_LONG_AMOUNT`.
 
 If `GET_WSTETH=true`, then the script will wrap some ether before initializing the
 contract so that there is enough balance.
@@ -79,8 +79,8 @@ The parameters are the RPC URL and the deployed addresses of the 3 main contract
 
 ## Functions clashes
 
-This utility checks that two contracts don't have common function selector.
-We can specify a common base contract to filter wanted duplications.
+This utility checks that two contracts don't have a common function selector.
+We can specify a common base contract to filter wanted duplications with the `-s` flag.
 
 It can be used like so:
 

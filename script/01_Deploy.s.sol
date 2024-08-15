@@ -239,7 +239,7 @@ contract Deploy is Script {
     /**
      * @notice Deploy the SDEX token
      * @dev Will return the already deployed one if an address is in the env variables
-     * Will use the mainnet address if the chain is mainnet
+     * Will use the mainnet address if the chainId is 1
      * @return sdex_ The deployed contract
      */
     function _deploySdex() internal returns (Sdex sdex_) {

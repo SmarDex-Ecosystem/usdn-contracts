@@ -15,14 +15,14 @@ rpcUrl=""
 deployerPrivateKey=""
 address=""
 
-read -p $'\n'"Enter rpc url : " userRpcUrl
+read -p $'\n'"Enter the RPC URL : " userRpcUrl
 rpcUrl=$userRpcUrl
 
 while true; do
     read -p $'\n'"Do you wish to use a ledger? (Yy/Nn) : " yn
     case $yn in
     [Yy]*)
-        read -p $'\n'"Enter deployer address : " deployerAddress
+        read -p $'\n'"Enter the deployer address : " deployerAddress
         address=$deployerAddress
 
         printf "\n\n$green Running script in Ledger mode with :\n"
@@ -30,7 +30,7 @@ while true; do
         break
         ;;
     [Nn]*)
-        read -s -p $'\n'"Enter private key : " privateKey
+        read -s -p $'\n'"Enter the private key : " privateKey
         deployerPrivateKey=$privateKey
 
         address="$(cast wallet address $deployerPrivateKey)"
@@ -75,7 +75,7 @@ if [ $status -ne 0 ]; then
     exit 1
 fi
 
-printf "$green USDN contract have been deployed !\n"
+printf "$green USDN contract has been deployed !\n"
 printf " Waiting for confirmation... (12s) $nc\n"
 sleep 12s
 
