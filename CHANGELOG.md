@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.17.2](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v0.17.1...v0.17.2) (2024-08-15)
+
+
+### Features
+
+* deployment script refactor ([#517](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/517)) ([2c083e9](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/2c083e96512e9fc33d417229171f14461e835df6))
+* upgradable protocol ([#493](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/493)) ([f0e3e7a](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/f0e3e7a33672345439be60cf7d59054a6f20ce22))
+
+
+### Bug Fixes
+
+* call to cast with rpc url ([#522](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/522)) ([21cf039](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/21cf039fada0c2e5f0cc03ce41664ad5a19b2e3e))
+* deployment script ([#504](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/504)) ([bc4f65e](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/bc4f65e40b42514aeb2db35e94e083dc9c433e94))
+* **wsteth:** fix the conversion formulas ([#511](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/511)) ([c36a427](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/c36a4276c3a91aa0c3fbb8f73e9e432e4b38ab4a))
+
 ## [0.17.1](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v0.17.0...v0.17.1) (2024-08-08)
 
 
