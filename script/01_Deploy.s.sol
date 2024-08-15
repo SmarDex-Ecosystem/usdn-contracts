@@ -166,7 +166,7 @@ contract Deploy is Script {
             }
         } else {
             address pythAddress = vm.envOr("PYTH_ADDRESS", PYTH_MAINNET);
-            bytes32 pythFeedId = vm.envOr("PYTH_ETH_FEED_ID", bytes32(PYTH_ETH_FEED_ID));
+            bytes32 pythFeedId = vm.envOr("PYTH_ETH_FEED_ID", PYTH_ETH_FEED_ID);
             address chainlinkPriceAddress = vm.envOr("CHAINLINK_ETH_PRICE_ADDRESS", CHAINLINK_ETH_PRICE_MAINNET);
             uint256 chainlinkPriceValidity = vm.envOr("CHAINLINK_ETH_PRICE_VALIDITY", CHAINLINK_PRICE_VALIDITY);
 

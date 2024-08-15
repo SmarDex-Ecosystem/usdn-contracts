@@ -40,7 +40,6 @@ while true; do
         fi
 
         printf "\n\n$green Running script in Non-Ledger mode with :\n"
-        ledger=false
         break
         ;;
     *) printf "\nPlease answer yes (Y/y) or no (N/n).\n" ;;
@@ -88,6 +87,11 @@ for i in {1..15}; do
         printf "\n$green USDN contract found on blockchain$nc\n\n"
         export USDN_ADDRESS="$USDN_ADDRESS"
         break
+    fi
+
+    if [ $i -eq 15 ]; then
+        printf "\n$red Failed to fetch USDN address$nc\n\n"
+        exit 1
     fi
 
     sleep 2s
