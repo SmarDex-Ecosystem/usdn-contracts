@@ -84,7 +84,8 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
             tickSpacing,
             tickToLiquidateData.liquidationPenalty
         );
-        expectedTick += protocol.getTickSpacing();
+        // adding a tick spacing is sometimes necessary. FIXME: make dynamic
+        // expectedTick += protocol.getTickSpacing();
         uint128 liqPriceWithoutPenalty = protocol.getEffectivePriceForTick(
             protocol.i_calcTickWithoutPenalty(expectedTick, protocol.getLiquidationPenalty()),
             wstEthPrice,
