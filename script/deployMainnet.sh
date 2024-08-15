@@ -10,7 +10,6 @@ blue='\033[0;34m'
 nc='\033[0m'
 
 ledger=false
-broadcastMode=""
 rpcUrl=""
 deployerPrivateKey=""
 address=""
@@ -25,7 +24,7 @@ while true; do
         read -p $'\n'"Enter address : " userAddress
         address=$userAddress
 
-        printf "\n$green Running script in Ledger mode with :\n"
+        printf "\n\n$green Running script in Ledger mode with :\n"
         ledger=true
         break
         ;;
@@ -39,7 +38,7 @@ while true; do
             exit 1
         fi
 
-        printf "\n$green Running script in Non-Ledger mode with :\n"
+        printf "\n\n$green Running script in Non-Ledger mode with :\n"
         ledger=false
         break
         ;;
@@ -47,28 +46,44 @@ while true; do
     esac
 done
 
-printf "\n$blue Address :$nc $address"
-printf "\n$blue RPC URL :$nc "$rpcUrl"\n"
-export DEPLOYER_ADDRESS=$address
-
 while true; do
-    read -p $'\n'"Do you wish to broadcast? (Yy/Nn) : " yn
+    printf "\n$blue Address :$nc $address"
+    printf "\n$blue RPC URL :$nc "$rpcUrl"\n"
+    read -p $'\n'"Do you wish to continue? (Yy/Nn) : " yn
     case $yn in
     [Yy]*)
-        broadcastMode="--broadcast"
+        export DEPLOYER_ADDRESS=$address
         break
         ;;
     [Nn]*)
-        break
+        exit 1
         ;;
     *) printf "\nPlease answer yes (Y/y) or no (N/n).\n" ;;
     esac
 done
 
 if [ $ledger = true ]; then
-    forge script -l -f "$rpcUrl" script/01_Deploy.s.sol:Deploy $broadcastMode
+    forge script -l -f "$rpcUrl" script/00_DeployUsdn.s.sol:DeployUsdn --broadcast
 else
-    forge script --private-key $deployerPrivateKey -f "$rpcUrl" script/01_Deploy.s.sol:Deploy $broadcastMode
+    forge script --private-key $deployerPrivateKey -f "$rpcUrl" script/00_DeployUsdn.s.sol:DeployUsdn --broadcast
+fi
+
+status=$?
+if [ $status -ne 0 ]; then
+    echo "Failed to deploy USDN contract"
+    exit 1
+fi
+
+printf "$green Waiting for USDN contract to be deployed... (12s) $nc\n"
+sleep 12s
+
+BROADCAST="broadcast/00_DeployUsdn.s.sol/1/run-latest.json"
+export USDN_ADDRESS="$(cat "$BROADCAST" | jq -r '.returns.Usdn_.value')"
+
+if [ $ledger = true ]; then
+    forge script -l -f "$rpcUrl" script/01_Deploy.s.sol:Deploy --broadcast
+else
+    forge script --private-key $deployerPrivateKey -f "$rpcUrl" script/01_Deploy.s.sol:Deploy --broadcast
 fi
 
 popd >/dev/null

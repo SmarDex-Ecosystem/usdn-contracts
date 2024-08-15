@@ -35,7 +35,7 @@ interface IUsdnProtocolImpl is
      * @param liquidationRewardsManager The liquidation rewards manager contract
      * @param tickSpacing The positions tick spacing
      * @param feeCollector The address of the fee collector
-     * @param roles The protocol roles
+     * @param managers The protocol managers
      * @param protocolFallback The protocol fallback contract
      */
     function initializeStorage(
@@ -46,7 +46,7 @@ interface IUsdnProtocolImpl is
         IBaseLiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector,
-        Roles memory roles,
+        Managers memory managers,
         IUsdnProtocolFallback protocolFallback
     ) external;
 }

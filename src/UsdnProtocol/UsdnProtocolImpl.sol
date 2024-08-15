@@ -4,6 +4,7 @@ pragma solidity 0.8.26;
 import { AccessControlDefaultAdminRulesUpgradeable } from
     "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { UUPSUpgradeable } from "solady/src/utils/UUPSUpgradeable.sol";
 
 import { IBaseLiquidationRewardsManager } from "../interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
@@ -13,7 +14,6 @@ import { IUsdnProtocolImpl } from "../interfaces/UsdnProtocol/IUsdnProtocolImpl.
 import { UsdnProtocolActions } from "./UsdnProtocolActions.sol";
 import { UsdnProtocolCore } from "./UsdnProtocolCore.sol";
 import { UsdnProtocolLong } from "./UsdnProtocolLong.sol";
-import { UsdnProtocolSepolia } from "./UsdnProtocolSepolia.sol";
 import { UsdnProtocolVault } from "./UsdnProtocolVault.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./libraries/UsdnProtocolConstantsLibrary.sol";
 
@@ -23,7 +23,7 @@ contract UsdnProtocolImpl is
     UsdnProtocolVault,
     UsdnProtocolCore,
     UsdnProtocolActions,
-    UsdnProtocolSepolia
+    UUPSUpgradeable
 {
     /// @inheritdoc IUsdnProtocolImpl
     function initializeStorage(
@@ -34,7 +34,7 @@ contract UsdnProtocolImpl is
         IBaseLiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector,
-        Roles memory roles,
+        Managers memory managers,
         IUsdnProtocolFallback protocolFallback
     ) public initializer {
         __AccessControlDefaultAdminRules_init(0, msg.sender);
@@ -45,11 +45,13 @@ contract UsdnProtocolImpl is
         _setRoleAdmin(SET_PROTOCOL_PARAMS_ROLE, ADMIN_SET_PROTOCOL_PARAMS_ROLE);
         _setRoleAdmin(SET_USDN_PARAMS_ROLE, ADMIN_SET_USDN_PARAMS_ROLE);
         _setRoleAdmin(SET_OPTIONS_ROLE, ADMIN_SET_OPTIONS_ROLE);
-        _grantRole(SET_EXTERNAL_ROLE, roles.setExternalAdmin);
-        _grantRole(CRITICAL_FUNCTIONS_ROLE, roles.criticalFunctionsAdmin);
-        _grantRole(SET_PROTOCOL_PARAMS_ROLE, roles.setProtocolParamsAdmin);
-        _grantRole(SET_USDN_PARAMS_ROLE, roles.setUsdnParamsAdmin);
-        _grantRole(SET_OPTIONS_ROLE, roles.setOptionsAdmin);
+        _setRoleAdmin(PROXY_UPGRADE_ROLE, ADMIN_PROXY_UPGRADE_ROLE);
+        _grantRole(SET_EXTERNAL_ROLE, managers.setExternalManager);
+        _grantRole(CRITICAL_FUNCTIONS_ROLE, managers.criticalFunctionsManager);
+        _grantRole(SET_PROTOCOL_PARAMS_ROLE, managers.setProtocolParamsManager);
+        _grantRole(SET_USDN_PARAMS_ROLE, managers.setUsdnParamsManager);
+        _grantRole(SET_OPTIONS_ROLE, managers.setOptionsManager);
+        _grantRole(PROXY_UPGRADE_ROLE, managers.proxyUpgradeManager);
 
         // parameters
         s._minLeverage = 10 ** Constants.LEVERAGE_DECIMALS + 10 ** 12;
@@ -110,6 +112,13 @@ contract UsdnProtocolImpl is
         s._minLongPosition = 2 * 10 ** assetDecimals;
         s._protocolFallbackAddr = address(protocolFallback);
     }
+
+    /**
+     * @inheritdoc UUPSUpgradeable
+     * @notice Function to verify that the caller to upgrade the protocol is authorized
+     * @param implementation The address of the new implementation
+     */
+    function _authorizeUpgrade(address implementation) internal override onlyRole(PROXY_UPGRADE_ROLE) { }
 
     /**
      * @notice Delegates the call to the fallback contract

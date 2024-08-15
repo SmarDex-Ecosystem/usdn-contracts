@@ -4,59 +4,53 @@
 
 Environment variables can be used to control the script execution:
 
-- `FORK_CHAIN_ID`: the chain ID of the anvil fork. If deploying on mainnet (production), this variable can be omitted.
-- `DEPLOYER_ADDRESS`: required, the address that is used for simulating the transactions on the network fork (needs to have a sufficient balance).
-- `FEE_COLLECTOR` : required, the receiver of all protocol fees
-- `SDEX_ADDRESS`: if provided, skips deployment of the mock SDEX token
-- `WSTETH_ADDRESS`: if provided, skips deployment of the mock wstETH token
+#### Required (for mainnet and fork)
+- `INIT_DEPOSIT_AMOUNT`: amount to use for the `initialize` function call, default value is 200 ethers for sepolia
+- `INIT_LONG_AMOUNT`: amount to use for the `initialize` function call, default value is 200 ethers for sepolia
+
+#### Optional
+- `DEPLOYER_ADDRESS`: required only for fork deployment, the address of the deployer
+- `FEE_COLLECTOR` : set to `DEPLOYER_ADDRESS` if not set, the receiver of all protocol fees
+- `SDEX_ADDRESS`: if provided, skips deployment of the SDEX token
+- `WSTETH_ADDRESS`: if provided, skips deployment of the wstETH token
 - `MIDDLEWARE_ADDRESS`: if provided, skips deployment of the oracle middleware
-- `PYTH_ADDRESS`: required if middleware address not provided, the contract address of the pyth oracle
-- `PYTH_ETH_FEED_ID`: required if middleware address not provided, the price ID of the ETH pyth oracle
-- `REDSTONE_ETH_FEED_ID`: required if middleware address not provided, the feed ID of the ETH Redstone oracle
-- `CHAINLINK_ETH_PRICE_ADDRESS`: required if middleware address not provided, the address of the ETH chainlink oracle
+- `PYTH_ADDRESS`: the contract address of the pyth oracle
+- `PYTH_ETH_FEED_ID`: the price ID of the ETH pyth oracle
+- `REDSTONE_ETH_FEED_ID`: the feed ID of the ETH Redstone oracle
+- `CHAINLINK_ETH_PRICE_ADDRESS`: the address of the ETH chainlink oracle
 - `CHAINLINK_ETH_PRICE_VALIDITY`: the amount of time (in seconds) we consider the price valid. A tolerance should be added to avoid reverting if chainlink misses the heartbeat by a few minutes
 - `LIQUIDATION_REWARDS_MANAGER_ADDRESS`: if provided, skips deployment of the liquidation rewards manager
 - `REBALANCER_ADDRESS`: if provided, skips deployment of the rebalancer
 - `CHAINLINK_GAS_PRICE_VALIDITY`: the amount of time (in seconds) we consider the price valid. A tolerance should be added to avoid reverting if chainlink misses the heartbeat by a few minutes
-- `USDN_ADDRESS`: required if running `02_Deploy.s.sol` in a production environment (not fork)
-- `INIT_DEPOSIT_AMOUNT`: amount to use for the `initialize` function call (if not provided, then initialization is skipped).
-- `INIT_LONG_AMOUNT`: amount to use for the `initialize` function call (if not provided, then initialization is skipped).
-- `INIT_LONG_LIQPRICE`: desired liquidation price for the initial long position. For fork deployment, this value is
-  ignored and the price is calculated to get a leverage of ~2x.
+- `USDN_ADDRESS`: required if running `01_Deploy.s.sol` in a production environment (not fork)
 - `GET_WSTETH`: whether to get wstETH by sending ether to the wstETH contract or not. Only applicable if `WSTETH_ADDRESS` is given.
 
-Example using the real wstETH and depositing 1 ETH for both vault side and long side (with liquidation
+Example using the real wstETH and depositing 10 ETH for both vault side and long side for mainnet deployment (with liquidation
 at 1 USD so a leverage close to 1x):
-Will also link oracles to mainnet instances:
 
 ```
-export FORK_CHAIN_ID=31337
-export DEPLOYER_ADDRESS=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
-export FEE_COLLECTOR=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
-export SDEX_ADDRESS=0x5de8ab7e27f6e7a1fff3e5b337584aa43961beef
-export WSTETH_ADDRESS=0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0
-export INIT_DEPOSIT_AMOUNT=1000000000000000000
-export INIT_LONG_AMOUNT=1000000000000000000
-export INIT_LONG_LIQPRICE=1000000000000000000
-export PYTH_ADDRESS=0xDd24F84d36BF92C65F92307595335bdFab5Bbd21
-export PYTH_ETH_FEED_ID=0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace
-export REDSTONE_ETH_FEED_ID=0x4554480000000000000000000000000000000000000000000000000000000000
-export CHAINLINK_ETH_PRICE_ADDRESS=0x694AA1769357215DE4FAC081bf1f309aDC325306
-export CHAINLINK_ETH_PRICE_VALIDITY=3720
-export CHAINLINK_GAS_PRICE_VALIDITY=7500
+export INIT_DEPOSIT_AMOUNT=10000000000000000000
+export INIT_LONG_AMOUNT=10000000000000000000
 export GET_WSTETH=true
 ```
 
 ## Deploy protocol
 
-Initializing the contract (when `INIT_DEPOSIT_AMOUNT` and `INIT_LONG_AMOUNT` are defined) requires enough wstETH to make
-the deposit and open the long position.
+Just run the bash script corresponding to the desired deployment (mainnet, fork or sepolia).
 
-If `WSTETH_ADDRESS` is defined and `GET_WSTETH=true`, then the script will wrap some ether before initializing the
+You will be prompted to enter the `RPC_URL` of the network you want to deploy to (mainnet and sepolia). If you are deploying with a Ledger, you will also be prompted for the deployer address. And without a Ledger, you will be prompted for the deployer private key.  
+The deployment script for the fork mode does not require any input.
+
+Only two env variables are required in mainnet or fork modes: `INIT_DEPOSIT_AMOUNT` and `INIT_LONG_AMOUNT`.
+On sepolia, if no amounts are provided, the default value is used (200 ethers).
+
+If `GET_WSTETH=true`, then the script will wrap some ether before initializing the
 contract so that there is enough balance.
 
 ```
-forge script --non-interactive --private-key 0xac... -f http://localhost:8545 script/02_Deploy.s.sol:Deploy --broadcast
+./script/deployMainnet.sh
+./script/deploySepolia.sh
+./script/deployFork.sh
 ```
 
 ## Anvil fork configuration
@@ -84,3 +78,14 @@ npx ts-node script/logsAnalysis.ts -r https://fork-rpc-url.com/ --protocol 0x24E
 ```
 
 The parameters are the RPC URL and the deployed addresses of the 3 main contracts.
+
+## Functions clashes
+
+This utility checks that two contracts don't have common function selector.
+We can specify a common base contract to filter wanted duplications.
+
+It can be used like so:
+
+```
+npx ts-node script/functionClashes.ts UsdnProtocolImpl.sol UsdnProtocolFallback.sol -s UsdnProtocolStorage.sol
+```
