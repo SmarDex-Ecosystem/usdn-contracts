@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
-import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { UUPSUpgradeable } from "solady/src/utils/UUPSUpgradeable.sol";
 
@@ -22,8 +21,7 @@ contract UsdnProtocolImpl is
     UsdnProtocolVault,
     UsdnProtocolCore,
     UsdnProtocolActions,
-    UUPSUpgradeable,
-    PausableUpgradeable
+    UUPSUpgradeable
 {
     /// @inheritdoc IUsdnProtocolImpl
     function initializeStorage(
@@ -39,7 +37,6 @@ contract UsdnProtocolImpl is
     ) public initializer {
         __AccessControlDefaultAdminRules_init_unchained(0, msg.sender);
         __initializeReentrancyGuard_init();
-        __Pausable_init_unchained();
         // roles
         _setRoleAdmin(SET_EXTERNAL_ROLE, ADMIN_SET_EXTERNAL_ROLE);
         _setRoleAdmin(CRITICAL_FUNCTIONS_ROLE, ADMIN_CRITICAL_FUNCTIONS_ROLE);
