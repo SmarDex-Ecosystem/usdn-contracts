@@ -1,4 +1,0 @@
-{
-  "recommendations": ["nomicfoundation.hardhat-solidity", "stackbreak.comment-divider", "biomejs.biome"],
-  "unwantedRecommendations": []
-}
