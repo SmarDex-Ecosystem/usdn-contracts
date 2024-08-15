@@ -63,7 +63,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
 
     SetUpParams public params;
     SetUpParams public DEFAULT_PARAMS = SetUpParams({
-        initialDeposit: 4.919970269703463156 ether,
+        initialDeposit: 0, // 0 = auto-calculate to reach equilibrium
         initialLong: 5 ether,
         initialPrice: 2000 ether, // 2000 USD per wstETH
         initialTimestamp: 1_704_092_400, // 2024-01-01 07:00:00 UTC,
@@ -215,6 +215,22 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         if (testParams.flags.enableRebalancer) {
             vm.prank(managers.setExternalManager);
             protocol.setRebalancer(rebalancer);
+        }
+
+        if (testParams.initialDeposit == 0) {
+            (, uint128 liqPriceWithoutPenalty) = protocol.i_getTickFromLiqPriceWithoutPenalty(
+                testParams.initialPrice / 2,
+                testParams.initialPrice,
+                0,
+                HugeUint.wrap(0),
+                protocol.getTickSpacing(),
+                protocol.getLiquidationPenalty()
+            );
+            uint128 positionTotalExpo = protocol.i_calcPositionTotalExpo(
+                testParams.initialLong, testParams.initialPrice, liqPriceWithoutPenalty
+            );
+            testParams.initialDeposit = positionTotalExpo - testParams.initialLong;
+            emit log_named_decimal_uint("initial deposit", testParams.initialDeposit, 18);
         }
 
         vm.startPrank(DEPLOYER);
