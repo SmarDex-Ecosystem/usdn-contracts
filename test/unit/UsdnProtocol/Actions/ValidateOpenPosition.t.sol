@@ -256,7 +256,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         testData.validatePrice = CURRENT_PRICE - 100 ether;
         testData.longBalanceWithoutPos = protocol.i_longAssetAvailable(testData.validatePrice);
 
-        int24 liqPenalty = int24(protocol.getLiquidationPenalty());
+        uint24 liqPenalty = protocol.getLiquidationPenalty();
         // leverage approx 10x
         (, PositionId memory posId) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
@@ -272,28 +272,20 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         _waitDelay();
 
         uint128 newLiqPrice = protocol.i_getLiquidationPrice(testData.validatePrice, uint128(protocol.getMaxLeverage()));
-        testData.validateTick = protocol.getEffectiveTickForPrice(
+        uint128 expectedLiqPrice;
+        (testData.validateTick, expectedLiqPrice) = protocol.i_getTickFromLiqPriceWithoutPenalty(
             newLiqPrice,
             testData.validatePrice,
             uint256(protocol.getLongTradingExpo(testData.validatePrice)),
             protocol.getLiqMultiplierAccumulator(),
-            protocol.getTickSpacing()
-        ) + liqPenalty;
+            protocol.getTickSpacing(),
+            liqPenalty
+        );
         testData.validateTickVersion = protocol.getTickVersion(testData.validateTick);
 
         TickData memory tickData = protocol.getTickData(testData.validateTick);
         testData.validateIndex = tickData.totalPos;
 
-        uint128 expectedLiqPrice = protocol.getEffectivePriceForTick(
-            testData.validateTick - liqPenalty,
-            uint256(testData.validatePrice),
-            uint256(
-                protocol.longTradingExpoWithFunding(
-                    testData.validatePrice, tempPos.timestamp + uint128(oracleMiddleware.getValidationDelay())
-                )
-            ),
-            protocol.getLiqMultiplierAccumulator()
-        );
         uint128 expectedPosTotalExpo =
             protocol.i_calcPositionTotalExpo(tempPos.amount, testData.validatePrice, expectedLiqPrice);
         testData.expectedPosValue =
@@ -343,15 +335,16 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         TestData memory data;
         // calculate the future expected tick for the position we will validate later
         data.validatePrice = CURRENT_PRICE - 100 ether;
-        data.validateTick = protocol.getEffectiveTickForPrice(
+        data.originalLiqPenalty = protocol.getLiquidationPenalty();
+        (data.validateTick,) = protocol.i_getTickFromLiqPriceWithoutPenalty(
             protocol.i_getLiquidationPrice(data.validatePrice, uint128(protocol.getMaxLeverage())),
             data.validatePrice,
             uint256(protocol.getLongTradingExpo(data.validatePrice)),
             protocol.getLiqMultiplierAccumulator(),
-            protocol.getTickSpacing()
-        ) + int24(protocol.getLiquidationPenalty());
+            protocol.getTickSpacing(),
+            data.originalLiqPenalty
+        );
 
-        data.originalLiqPenalty = protocol.getLiquidationPenalty();
         // open another user position to set the tick's penalty to a lower value in storage
         vm.prank(ADMIN);
         protocol.setLiquidationPenalty(data.originalLiqPenalty - 100);

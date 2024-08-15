@@ -53,12 +53,11 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      */
     function test_longAssetAvailable() public view {
         // calculate the value of the deployer's long position
+        int24 tick = protocol.getHighestPopulatedTick();
         uint128 longLiqPrice =
-            protocol.getEffectivePriceForTick(protocol.getEffectiveTickForPrice(params.initialPrice / 2));
+            protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(tick, protocol.getLiquidationPenalty()));
 
-        (Position memory firstPos,) = protocol.getLongPosition(
-            PositionId(protocol.getEffectiveTickForPrice(longLiqPrice) + int24(protocol.getLiquidationPenalty()), 0, 0)
-        );
+        (Position memory firstPos,) = protocol.getLongPosition(PositionId(tick, 0, 0));
 
         int256 longPosValue = protocol.i_positionValue(params.initialPrice, longLiqPrice, firstPos.totalExpo);
 
