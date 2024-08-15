@@ -6,7 +6,6 @@
 
 [profile.default]
 solc_version = "0.8.26"
-via_ir = true
 evm_version = "cancun"
 optimizer = true
 optimizer_runs = 20_000
