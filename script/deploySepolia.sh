@@ -66,9 +66,9 @@ while true; do
 done
 
 if [ $ledger = true ]; then
-    forge script -l -f "$rpcUrl" script/01_Deploy.s.sol:Deploy $broadcastMode
+    forge script --via-ir -l -f "$rpcUrl" script/01_Deploy.s.sol:Deploy $broadcastMode
 else
-    forge script --private-key $deployerPrivateKey -f "$rpcUrl" script/01_Deploy.s.sol:Deploy $broadcastMode
+    forge script --via-ir --private-key $deployerPrivateKey -f "$rpcUrl" script/01_Deploy.s.sol:Deploy $broadcastMode
 fi
 
 popd >/dev/null
