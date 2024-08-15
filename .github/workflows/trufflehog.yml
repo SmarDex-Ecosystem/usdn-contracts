@@ -39,7 +39,7 @@ jobs:
             BASE=${{ github.event.before }}
           fi
           docker run --rm -v .:/tmp -w /tmp \
-          ghcr.io/trufflesecurity/trufflehog:${VERSION} \
+          ghcr.io/trufflesecurity/trufflehog:latest \
           git file:///tmp/ \
           --since-commit \
           $BASE \
@@ -53,7 +53,7 @@ jobs:
         shell: bash
         run: |
           docker run --rm -v .:/tmp -w /tmp \
-          ghcr.io/trufflesecurity/trufflehog:${VERSION} \
+          ghcr.io/trufflesecurity/trufflehog:latest \
           git file:///tmp/ \
           --since-commit \
           ${{ github.event.pull_request.base.sha }} \
