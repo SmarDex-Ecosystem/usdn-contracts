@@ -69,6 +69,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         public
         payable
         virtual
+        whenNotPaused
         returns (PriceInfo memory price_)
     {
         if (action == Types.ProtocolAction.None) {
