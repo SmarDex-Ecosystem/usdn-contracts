@@ -43,6 +43,7 @@ jobs:
           git file:///tmp/ \
           --since-commit \
           $BASE \
+          --branch HEAD \
           --fail \
           --no-update \
           --github-actions \
@@ -57,6 +58,7 @@ jobs:
           git file:///tmp/ \
           --since-commit \
           ${{ github.event.pull_request.base.sha }} \
+          --branch HEAD \
           --fail \
           --no-update \
           --github-actions \
