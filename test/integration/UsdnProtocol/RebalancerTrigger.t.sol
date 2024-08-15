@@ -36,9 +36,13 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
     function test_rebalancerTrigger() public {
         skip(5 minutes);
 
-        uint128 wstEthPrice = uint128(wstETH.getStETHByWstETH(1300 ether));
-        mockPyth.setPrice(1300 ether / 1e10);
-        mockPyth.setLastPublishTime(block.timestamp);
+        uint128 wstEthPrice = 1490 ether;
+        {
+            uint128 ethPrice = uint128(wstETH.getWstETHByStETH(wstEthPrice)) / 1e10;
+            mockPyth.setPrice(int64(uint64(ethPrice)));
+            mockPyth.setLastPublishTime(block.timestamp);
+            wstEthPrice = uint128(wstETH.getStETHByWstETH(ethPrice * 1e10));
+        }
 
         int256 positionValue = protocol.getPositionValue(posToLiquidate, wstEthPrice, uint40(block.timestamp));
         assertGt(positionValue, 0, "position value should be positive");
@@ -46,8 +50,10 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
 
         uint128 bonus = uint128(uint256(remainingCollateral) * protocol.getRebalancerBonusBps() / BPS_DIVISOR);
         uint256 totalExpo = protocol.getTotalExpo() - tickToLiquidateData.totalExpo;
-        uint256 vaultAssetAvailable = uint256(protocol.i_vaultAssetAvailable(wstEthPrice)) + remainingCollateral;
-        uint256 longAssetAvailable = uint256(protocol.i_longAssetAvailable(wstEthPrice)) - remainingCollateral;
+        uint256 vaultAssetAvailable =
+            uint256(protocol.vaultAssetAvailableWithFunding(wstEthPrice, uint40(block.timestamp))) + remainingCollateral;
+        uint256 longAssetAvailable =
+            uint256(protocol.longAssetAvailableWithFunding(wstEthPrice, uint40(block.timestamp))) - remainingCollateral;
         uint256 tradingExpoToFill = vaultAssetAvailable * BPS_DIVISOR
             / uint256(int256(BPS_DIVISOR) + protocol.getLongImbalanceTargetBps()) - (totalExpo - longAssetAvailable);
 
@@ -70,18 +76,21 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
             "The imbalance is not high enough to trigger the rebalancer, adjust the long positions in the setup"
         );
 
-        int24 expectedTickWithoutPenalty = protocol.getEffectiveTickForPrice(
+        (int24 expectedTick,) = protocol.i_getTickFromLiqPriceWithoutPenalty(
             protocol.i_calcLiqPriceFromTradingExpo(wstEthPrice, amountInRebalancer + bonus, tradingExpoToFill),
             wstEthPrice,
             totalExpo - longAssetAvailable,
             expectedAccumulator,
-            tickSpacing
-        ) + tickSpacing;
-        uint128 liqPriceWithoutPenalty = protocol.getEffectivePriceForTick(
-            expectedTickWithoutPenalty, wstEthPrice, totalExpo - longAssetAvailable, expectedAccumulator
+            tickSpacing,
+            tickToLiquidateData.liquidationPenalty
         );
-
-        int24 expectedTick = expectedTickWithoutPenalty + int24(tickToLiquidateData.liquidationPenalty);
+        expectedTick += protocol.getTickSpacing();
+        uint128 liqPriceWithoutPenalty = protocol.getEffectivePriceForTick(
+            protocol.i_calcTickWithoutPenalty(expectedTick, protocol.getLiquidationPenalty()),
+            wstEthPrice,
+            totalExpo - longAssetAvailable,
+            expectedAccumulator
+        );
         uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
         _expectEmits(wstEthPrice, amountInRebalancer, bonus, liqPriceWithoutPenalty, expectedTick, 1);
         protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA, 1);
@@ -98,7 +107,9 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
         (Position memory pos,) = protocol.getLongPosition(PositionId(expectedTick, 0, 0));
 
         // update the expected liquidation accumulator
-        uint256 unadjustedTickPrice = TickMath.getPriceAtTick(expectedTickWithoutPenalty);
+        uint256 unadjustedTickPrice = TickMath.getPriceAtTick(
+            protocol.i_calcTickWithoutPenalty(expectedTick, tickToLiquidateData.liquidationPenalty)
+        );
         expectedAccumulator = expectedAccumulator.add(HugeUint.wrap(unadjustedTickPrice * pos.totalExpo));
 
         HugeUint.Uint512 memory liqAcc = protocol.getLiqMultiplierAccumulator();
