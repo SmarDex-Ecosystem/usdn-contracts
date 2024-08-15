@@ -34,7 +34,7 @@ remappings = [
     "@pythnetwork/pyth-sdk-solidity/=dependencies/@pythnetwork-pyth-sdk-solidity-3.1.0/",
     "@redstone-finance/evm-connector/=dependencies/@redstone-finance-evm-connector-0.6.1/",
     "@uniswap/permit2/=dependencies/@uniswap-permit2-1.0.0/",
-    "forge-std/=dependencies/forge-std-1.9.1/src/",
+    "forge-std/=dependencies/forge-std-1.9.2/src/",
     "openzeppelin-foundry-upgrades/=dependencies/openzeppelin-foundry-upgrades-0.3.1/src/",
     "solady/src/=dependencies/solady-0.0.228/src/",
 ]
@@ -139,6 +139,6 @@ mainnet = { key = "${ETHERSCAN_API_KEY}" }
 "@pythnetwork-pyth-sdk-solidity" = "3.1.0"
 "@redstone-finance-evm-connector" = "0.6.1"
 "@uniswap-permit2" = { version = "1.0.0", url = "https://github.com/Uniswap/permit2/archive/cc56ad0f3439c502c246fc5cfcc3db92bb8b7219.zip" }
-forge-std = "1.9.1"
+forge-std = "1.9.2"
 openzeppelin-foundry-upgrades = "0.3.1"
 solady = "0.0.228"
