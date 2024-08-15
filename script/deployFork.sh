@@ -15,6 +15,6 @@ export INIT_DEPOSIT_AMOUNT=1000000000000000000000
 export INIT_LONG_AMOUNT=1000000000000000000000
 export GET_WSTETH=true
 
-forge script --non-interactive --private-key $DEPLOYER_PRIVATE_KEY -f $RPC_URL script/01_Deploy.s.sol:Deploy --broadcast
+forge script --via-ir --non-interactive --private-key $DEPLOYER_PRIVATE_KEY -f $RPC_URL script/01_Deploy.s.sol:Deploy --broadcast
 
 popd >/dev/null
