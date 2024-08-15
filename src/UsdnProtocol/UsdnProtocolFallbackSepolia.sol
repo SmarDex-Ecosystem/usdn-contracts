@@ -3,9 +3,9 @@ pragma solidity ^0.8.25;
 
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
-import { UsdnProtocolImpl } from "./UsdnProtocolImpl.sol";
+import { UsdnProtocolFallback } from "./UsdnProtocolFallback.sol";
 
-contract UsdnProtocolSepolia is UsdnProtocolImpl {
+contract UsdnProtocolFallbackSepolia is UsdnProtocolFallback {
     using SafeTransferLib for address;
 
     bytes32 private constant _sweepSalt = keccak256("sweep sweep baby");

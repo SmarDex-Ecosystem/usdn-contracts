@@ -84,12 +84,11 @@ contract Utils is Script {
      * @dev Call this function to build the contracts
      */
     function _buildContracts() internal {
-        string[] memory inputs = new string[](5);
+        string[] memory inputs = new string[](4);
         inputs[0] = "forge";
         inputs[1] = "build";
-        inputs[2] = "--via-ir";
-        inputs[3] = "--skip";
-        inputs[4] = "test";
+        inputs[2] = "--skip";
+        inputs[3] = "test";
         runFfiCommand(inputs);
     }
 

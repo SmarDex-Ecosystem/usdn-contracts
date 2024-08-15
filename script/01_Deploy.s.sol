@@ -19,6 +19,7 @@ import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../src/Usdn/Usdn.sol";
 import { Wusdn } from "../src/Usdn/Wusdn.sol";
 import { UsdnProtocolFallback } from "../src/UsdnProtocol/UsdnProtocolFallback.sol";
+import { UsdnProtocolFallbackSepolia } from "../src/UsdnProtocol/UsdnProtocolFallbackSepolia.sol";
 import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { IWstETH } from "../src/interfaces/IWstETH.sol";
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
@@ -134,21 +135,19 @@ contract Deploy is Script {
 
         // we need to allow external library linking for the openzeppelin module
         Options memory opts;
-        string memory contractName;
-        // we need to allow constructors for the UsdnProtocolSepolia safeguard mechanism
+        opts.unsafeAllow = "external-library-linking,state-variable-immutable";
+
+        UsdnProtocolFallback protocolFallback;
         if (_chainId == ChainId.Sepolia) {
-            opts.unsafeAllow = "constructor,external-library-linking,state-variable-immutable";
-            contractName = "UsdnProtocolSepolia.sol";
+            protocolFallback = new UsdnProtocolFallbackSepolia();
         } else {
-            opts.unsafeAllow = "external-library-linking,state-variable-immutable";
-            contractName = "UsdnProtocolImpl.sol";
+            protocolFallback = new UsdnProtocolFallback();
         }
 
         // deploy the protocol fallback
-        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
 
         address proxy = Upgrades.deployUUPSProxy(
-            contractName,
+            "UsdnProtocolImpl.sol",
             abi.encodeCall(
                 UsdnProtocolImpl.initializeStorage,
                 (

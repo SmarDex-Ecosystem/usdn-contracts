@@ -81,9 +81,9 @@ BROADCAST="broadcast/00_DeployUsdn.s.sol/1/run-latest.json"
 export USDN_ADDRESS="$(cat "$BROADCAST" | jq -r '.returns.Usdn_.value')"
 
 if [ $ledger = true ]; then
-    forge script --via-ir -l -f "$rpcUrl" script/01_Deploy.s.sol:Deploy --broadcast
+    forge script -l -f "$rpcUrl" script/01_Deploy.s.sol:Deploy --broadcast
 else
-    forge script --via-ir --private-key $deployerPrivateKey -f "$rpcUrl" script/01_Deploy.s.sol:Deploy --broadcast
+    forge script --private-key $deployerPrivateKey -f "$rpcUrl" script/01_Deploy.s.sol:Deploy --broadcast
 fi
 
 popd >/dev/null

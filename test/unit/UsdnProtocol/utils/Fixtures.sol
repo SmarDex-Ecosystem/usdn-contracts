@@ -21,12 +21,12 @@ import { WstETH } from "../../../utils/WstEth.sol";
 import { MockChainlinkOnChain } from "../../Middlewares/utils/MockChainlinkOnChain.sol";
 import { RebalancerHandler } from "../../Rebalancer/utils/Handler.sol";
 import { UsdnProtocolHandler } from "./Handler.sol";
-import { UsdnProtocolHandlerSepolia } from "./HandlerSepolia.sol";
 import { MockOracleMiddleware } from "./MockOracleMiddleware.sol";
 
 import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
+import { UsdnProtocolFallbackSepolia } from "../../../../src/UsdnProtocol/UsdnProtocolFallbackSepolia.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
@@ -145,14 +145,14 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             });
         }
 
-        UsdnProtocolHandler implementation;
+        UsdnProtocolFallback protocolFallback;
         if (sepolia) {
-            implementation = UsdnProtocolHandler(address(new UsdnProtocolHandlerSepolia()));
+            protocolFallback = new UsdnProtocolFallbackSepolia();
         } else {
-            implementation = new UsdnProtocolHandler();
+            protocolFallback = new UsdnProtocolFallback();
         }
 
-        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
+        UsdnProtocolHandler implementation = new UsdnProtocolHandler();
         address proxy = UnsafeUpgrades.deployUUPSProxy(
             address(implementation),
             abi.encodeCall(
