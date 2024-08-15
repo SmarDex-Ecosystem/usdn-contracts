@@ -93,6 +93,20 @@ contract MockFastGasGwei is Ownable, AggregatorV3Interface {
     }
 
     /**
+     * @notice Increment the lastRoundId and set its data
+     * @param gasPrice The price of the gas for the new round
+     */
+    function pushAnswerInNewRound(int256 gasPrice) external onlyOwner {
+        ++lastRoundId;
+        roundData[lastRoundId] = RoundData({
+            answeredInRound: lastRoundId,
+            answer: gasPrice,
+            startedAt: block.timestamp,
+            updatedAt: block.timestamp
+        });
+    }
+
+    /**
      * @notice Set the data of the roundId
      * @param roundId The roundId value
      * @param data The roundId data
