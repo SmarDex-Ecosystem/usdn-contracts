@@ -22,7 +22,42 @@ jobs:
           TRUFFLEHOG_URL: ${{ secrets.TRUFFLEHOG_URL }}
         run: just trufflehog-config
 
-      - name: TruffleHog
-        uses: trufflesecurity/trufflehog@main
-        with:
-          extra_args: --only-verified --config .trufflehog.yml --exclude-paths=.trufflehog-ignore
+      - name: TruffleHog Push
+        if: ${{ github.event_name == 'push' }}
+        shell: bash
+        env:
+          COMMITS: ${{ toJson(github.event.commits) }}
+        run: |
+          COMMIT_LENGTH=$(printenv COMMITS | jq length)
+          if [ $COMMIT_LENGTH == "0" ]; then
+            echo "No commits to scan"
+            exit 0
+          fi
+          if [ ${{ github.event.before }} == "0000000000000000000000000000000000000000" ]; then
+            BASE=$(git rev-parse HEAD~$COMMIT_LENGTH)
+          else
+            BASE=${{ github.event.before }}
+          fi
+          docker run --rm -v .:/tmp -w /tmp \
+          ghcr.io/trufflesecurity/trufflehog:${VERSION} \
+          git file:///tmp/ \
+          --since-commit \
+          $BASE \
+          --fail \
+          --no-update \
+          --github-actions \
+          --only-verified --config .trufflehog.yml --exclude-paths=.trufflehog-ignore
+
+      - name: TruffleHog PR
+        if: ${{ github.event_name == 'pull_request' }}
+        shell: bash
+        run: |
+          docker run --rm -v .:/tmp -w /tmp \
+          ghcr.io/trufflesecurity/trufflehog:${VERSION} \
+          git file:///tmp/ \
+          --since-commit \
+          ${{ github.event.pull_request.base.sha }} \
+          --fail \
+          --no-update \
+          --github-actions \
+          --only-verified --config .trufflehog.yml --exclude-paths=.trufflehog-ignore
