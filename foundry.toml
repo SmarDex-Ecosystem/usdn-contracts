@@ -16,6 +16,7 @@ ffi = true
 ast = true
 build_info = true
 extra_output = ["storageLayout"]
+gas_limit = "12000000"
 ignored_error_codes = [
     "code-size",
     "init-code-size",

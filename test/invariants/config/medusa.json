@@ -3,8 +3,11 @@
 		"workers": 8,
 		"shrinkLimit": 5000,
 		"callSequenceLength": 30,
-		"corpusDirectory": "medusa_assert_corpus",
+		"corpusDirectory": "../../../medusa_assert_corpus",
 		"targetContracts": ["FuzzingSuite"],
+		"predeployedContracts": {
+			"UsdnProtocolHandler": "0x1f9090AAE28B8a4DCeADF281B0F12828e676C325"
+		},
 		"deployerAddress": "0x10000",
 		"senderAddresses": [
 			"0x20000"

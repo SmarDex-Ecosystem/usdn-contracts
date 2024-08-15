@@ -65,8 +65,8 @@ contract Setup is ErrorsChecked {
     }
 
     constructor() payable {
-        vm.warp(1_709_251_200);
-        wstEthOracleMiddleware = new MockOracleMiddleware();
+        // vm.warp(1_709_251_200);
+        wstEthOracleMiddleware = new MockOracleMiddleware(); // todo
         destinationsToken[address(wsteth)] = [DEPLOYER, ATTACKER];
         // todo: see if we want to fuzz chainlinkElapsedTimeLimit
         liquidationRewardsManager = new MockLiquidationRewardsManager(IWstETH(wsteth), uint256(2 hours + 5 minutes));
@@ -83,28 +83,27 @@ contract Setup is ErrorsChecked {
             setOptionsAdmin: ADMIN
         });
 
-        // feeCollector = new FeeCollector();
-        // UsdnProtocolHandler test = new UsdnProtocolHandler();
-        // UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
-        // address proxy = UnsafeUpgrades.deployUUPSProxy(
-        //     address(test),
-        //     abi.encodeCall(
-        //         UsdnProtocolHandler.initializeStorageHandler,
-        //         (
-        //             usdn,
-        //             sdex,
-        //             wsteth,
-        //             wstEthOracleMiddleware,
-        //             liquidationRewardsManager,
-        //             _tickSpacing,
-        //             address(feeCollector),
-        //             roles,
-        //             protocolFallback
-        //         )
-        //     )
-        // );
-        // usdnProtocol = IUsdnProtocolHandler(proxy);
-        // rebalancer = new RebalancerHandler(usdnProtocol);
+        feeCollector = new FeeCollector(); // todo
+        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
+        address proxy = UnsafeUpgrades.deployUUPSProxy(
+            0x1f9090AAE28B8a4DCeADF281B0F12828e676C325,
+            abi.encodeCall(
+                UsdnProtocolHandler.initializeStorageHandler,
+                (
+                    usdn,
+                    sdex,
+                    wsteth,
+                    wstEthOracleMiddleware,
+                    liquidationRewardsManager,
+                    _tickSpacing,
+                    address(feeCollector),
+                    roles,
+                    protocolFallback
+                )
+            )
+        );
+        usdnProtocol = IUsdnProtocolHandler(proxy);
+        rebalancer = new RebalancerHandler(usdnProtocol);
         // vm.prank(ADMIN);
         // usdnProtocol.setRebalancer(rebalancer);
         // usdn.grantRole(MINTER_ROLE, address(usdnProtocol));

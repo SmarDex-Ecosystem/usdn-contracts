@@ -40,6 +40,7 @@ target/
 # TruffleHog config file
 .trufflehog.yml
 
-# Echidna
+# Invariants
 echidna_assert_corpus/
+medusa_assert_corpus/
 crytic-export/
