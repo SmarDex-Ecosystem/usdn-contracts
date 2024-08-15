@@ -9,6 +9,7 @@ green='\033[0;32m'
 blue='\033[0;34m'
 nc='\033[0m'
 
+BROADCAST="broadcast/00_DeployUsdn.s.sol/1/run-latest.json"
 ledger=false
 rpcUrl=""
 deployerPrivateKey=""
@@ -75,11 +76,22 @@ if [ $status -ne 0 ]; then
 fi
 
 printf "$green USDN contract have been deployed !\n"
-printf " Waiting for confirmation... (24s) $nc\n"
-sleep 24s
+printf " Waiting for confirmation... (12s) $nc\n"
+sleep 12s
 
-BROADCAST="broadcast/00_DeployUsdn.s.sol/1/run-latest.json"
-export USDN_ADDRESS="$(cat "$BROADCAST" | jq -r '.returns.Usdn_.value')"
+for i in {1..15}; do
+    printf "$green Trying to fetch USDN address... (attempt $i/15)$nc\n"
+    USDN_ADDRESS="$(cat "$BROADCAST" | jq -r '.returns.Usdn_.value')"
+    usdnCode="$(cast code "$USDN_ADDRESS")"
+
+    if [[ ! -z $usdnCode ]]; then
+        printf "\n$green USDN contract found on blockchain$nc\n\n"
+        export USDN_ADDRESS="$USDN_ADDRESS"
+        break
+    fi
+
+    sleep 2s
+done
 
 if [ $ledger = true ]; then
     forge script -l -f "$rpcUrl" script/01_Deploy.s.sol:Deploy --broadcast

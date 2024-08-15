@@ -273,7 +273,7 @@ contract Deploy is Script {
 
         if (wstETHAddress != address(0)) {
             wstEth_ = WstETH(wstETHAddress);
-            if (vm.envOr("GET_WSTETH", false) && depositAmount > 0 && longAmount > 0) {
+            if (vm.envOr("GET_WSTETH", false)) {
                 uint256 ethAmount = (depositAmount + longAmount + 10_000) * wstEth_.stEthPerToken() / 1 ether;
 
                 (bool result,) = wstETHAddress.call{ value: ethAmount }(hex"");
