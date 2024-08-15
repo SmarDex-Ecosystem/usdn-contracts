@@ -401,4 +401,14 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
             revert OracleMiddlewareTransferFailed(to);
         }
     }
+
+    /// @inheritdoc IOracleMiddleware
+    function pausePriceValidation() external onlyOwner {
+        _pause();
+    }
+
+    /// @inheritdoc IOracleMiddleware
+    function unpausePriceValidation() external onlyOwner {
+        _unpause();
+    }
 }
