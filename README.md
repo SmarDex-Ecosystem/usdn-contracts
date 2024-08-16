@@ -87,13 +87,7 @@ which records gas usage for all tests. When tests have changed, a new snapshot s
 
 Deployment for anvil forks should be done with a custom bash script at `script/deployFork.sh` which can be run without
 arguments. It must set up any environment variable required by the foundry deployment script.
-
-Common arguments to `forge script` are described in
-[the documentation](https://book.getfoundry.sh/reference/forge/forge-script#forge-script).
-
-Notably, the `--rpc-url` argument allows to choose which RPC will receive the transactions. The available shorthand
-names are defined in [`foundry.toml`](https://github.com/SmarDex-Ecosystem/usdn-contracts/blob/main/foundry.toml),
-(e.g. `mainnet`, `goerli`) and use URLs defined as environment variables (see `.env.example`).
+Deployment for mainnet should be done with a custom bash script at `script/deployMainnet.sh` which can be run without arguments. You will be prompted to enter the `RPC_URL` of the network you want to deploy to. If you are deploying with a Ledger, you will also be prompted for the deployer address. And without a Ledger, you will be prompted for the deployer private key.
 
 ## Foundry Documentation
 

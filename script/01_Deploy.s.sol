@@ -111,6 +111,7 @@ contract Deploy is Script {
         _handlePostDeployment(UsdnProtocol_, Usdn_, Rebalancer_);
 
         _initializeUsdnProtocol(UsdnProtocol_, WstETH_, WstEthOracleMiddleware_, depositAmount, longAmount);
+
         vm.stopBroadcast();
     }
 
