@@ -1,31 +1,61 @@
 {
 	"fuzzing": {
 		"workers": 8,
-		"shrinkLimit": 5000,
+		"workerResetLimit": 5000,
+		"timeout": 0,
+		"testLimit": 0,
 		"callSequenceLength": 30,
 		"corpusDirectory": "../../../medusa_assert_corpus",
+		"coverageEnabled": true,
 		"targetContracts": ["FuzzingSuite"],
+		"targetContractsBalances": ["0xffff"],
 		"predeployedContracts": {
-			"UsdnProtocolHandler": "0x1f9090AAE28B8a4DCeADF281B0F12828e676C325"
+			"UsdnProtocolHandler": "0x1234567890123456789012345678901234567890",
+			"FeeCollector": "0x4675c7e5bAafbfFbca748158bEcBA61eF3B0A529",
+			"UsdnProtocolFallback": "0x91D4c6c09C77fE5629f1Fec2e94c2eEEBC225c2F"
 		},
-		"deployerAddress": "0x10000",
-		"senderAddresses": [
-			"0x20000"
-		],
+		"constructorArgs": {},
+		"deployerAddress": "0x1234123412341234123412341234123412341234",
+		"senderAddresses": ["0x20000"],
+		"blockNumberDelayMax": 60480,
+		"blockTimestampDelayMax": 604800,
+		"blockGasLimit": 125000000,
+		"transactionGasLimit": 12500000,
 		"testing": {
+			"stopOnFailedTest": true,
+			"stopOnFailedContractMatching": false,
+			"stopOnNoTests": true,
+			"testAllContracts": false,
+			"traceAll": false,
 			"assertionTesting": {
-				"enabled": true
+				"enabled": true,
+				"testViewMethods": false,
+				"panicCodeConfig": {
+					"failOnCompilerInsertedPanic": false,
+					"failOnAssertion": true,
+					"failOnArithmeticUnderflow": false,
+					"failOnDivideByZero": false,
+					"failOnEnumTypeConversionOutOfBounds": false,
+					"failOnIncorrectStorageAccess": false,
+					"failOnPopEmptyArray": false,
+					"failOnOutOfBoundsArrayAccess": false,
+					"failOnAllocateTooMuchMemory": false,
+					"failOnCallUninitializedVariable": false
+				}
 			},
 			"propertyTesting": {
-				"enabled": false
+			"enabled": false,
+			"testPrefixes": ["property_"]
 			},
 			"optimizationTesting": {
-				"enabled": false
+			"enabled": false,
+			"testPrefixes": ["optimize_"]
 			}
 		},
 		"chainConfig": {
 			"codeSizeCheckDisabled": true,
 			"cheatCodes": {
+				"cheatCodesEnabled": true,
 				"enableFFI": true
 			}
 		}
@@ -34,9 +64,9 @@
 		"platform": "crytic-compile",
 		"platformConfig": {
 			"args": [
-				"--compile-force-framework", "foundry",
-				"--compile-libraries=(DoubleEndedQueue,0xf0),(HugeUint,0xf1),(TickMath,0xf2),(UsdnProtocolCoreLibrary,0xf3),(UsdnProtocolActionsUtilsLibrary,0xf4),(UsdnProtocolActionsVaultLibrary,0xf5),(UsdnProtocolVaultLibrary,0xf6),(UsdnProtocolLongLibrary,0xf7),(UsdnProtocolActionsLongLibrary,0xf8)",
-				"--foundry-compile-all"
+			"--compile-force-framework", "foundry",
+			"--compile-libraries=(DoubleEndedQueue,0xf0),(HugeUint,0xf1),(TickMath,0xf2),(UsdnProtocolCoreLibrary,0xf3),(UsdnProtocolActionsUtilsLibrary,0xf4),(UsdnProtocolActionsVaultLibrary,0xf5),(UsdnProtocolVaultLibrary,0xf6),(UsdnProtocolLongLibrary,0xf7),(UsdnProtocolActionsLongLibrary,0xf8)",
+			"--foundry-compile-all"
 			],
 			"exportDirectory": "../../../crytic-export",
 			"solcVersion": "0.8.26",
@@ -45,6 +75,7 @@
 	},
 	"logging": {
 		"level": "info",
-		"logDirectory": ""
+		"logDirectory": "",
+		"noColor": false
 	}
 }

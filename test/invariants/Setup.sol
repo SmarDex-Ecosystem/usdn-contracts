@@ -6,12 +6,14 @@ import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { RebalancerHandler } from "../unit/Rebalancer/utils/Handler.sol";
 import { UsdnProtocolHandler } from "../unit/UsdnProtocol/utils/Handler.sol";
 import { MockOracleMiddleware } from "../unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
-import { ADMIN } from "../utils/Constants.sol";
+import { ADMIN, DEPLOYER } from "../utils/Constants.sol";
 import { IUsdnProtocolHandler } from "../utils/IUsdnProtocolHandler.sol";
 import { Sdex } from "../utils/Sdex.sol";
 import { Weth } from "../utils/WETH.sol";
 import { WstETH } from "../utils/WstEth.sol";
 import { ErrorsChecked } from "./helpers/ErrorsChecked.sol";
+
+import { IStdCheats } from "./interfaces/IStdCheats.sol";
 import { MockLiquidationRewardsManager } from "./mock/MockLiquidationRewardsManager.sol";
 
 import { Rebalancer } from "../../src/Rebalancer/Rebalancer.sol";
@@ -24,9 +26,9 @@ import { FeeCollector } from "../../src/utils/FeeCollector.sol";
 import { InitializableReentrancyGuard } from "../../src/utils/InitializableReentrancyGuard.sol";
 
 contract Setup is ErrorsChecked {
-    address public constant DEPLOYER = address(0x10000);
     address public constant ATTACKER = address(0x20000);
     address public constant FEE_COLLECTOR = address(0x00fee);
+    IStdCheats internal constant CHEATS = IStdCheats(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
     Permit2TokenBitfield.Bitfield public constant NO_PERMIT2 = Permit2TokenBitfield.Bitfield.wrap(0);
 
     Sdex public sdex = new Sdex();
@@ -65,8 +67,10 @@ contract Setup is ErrorsChecked {
     }
 
     constructor() payable {
-        // vm.warp(1_709_251_200);
-        wstEthOracleMiddleware = new MockOracleMiddleware(); // todo
+        vm.warp(1_709_251_200);
+        vm.deal(ADMIN, 10_000 ether);
+        vm.deal(ATTACKER, 10_000 ether);
+        wstEthOracleMiddleware = new MockOracleMiddleware();
         destinationsToken[address(wsteth)] = [DEPLOYER, ATTACKER];
         // todo: see if we want to fuzz chainlinkElapsedTimeLimit
         liquidationRewardsManager = new MockLiquidationRewardsManager(IWstETH(wsteth), uint256(2 hours + 5 minutes));
@@ -83,10 +87,10 @@ contract Setup is ErrorsChecked {
             setOptionsAdmin: ADMIN
         });
 
-        feeCollector = new FeeCollector(); // todo
-        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
+        feeCollector = FeeCollector(0x4675c7e5bAafbfFbca748158bEcBA61eF3B0A529);
+        UsdnProtocolFallback protocolFallback = UsdnProtocolFallback(0x91D4c6c09C77fE5629f1Fec2e94c2eEEBC225c2F);
         address proxy = UnsafeUpgrades.deployUUPSProxy(
-            0x1f9090AAE28B8a4DCeADF281B0F12828e676C325,
+            0x1234567890123456789012345678901234567890,
             abi.encodeCall(
                 UsdnProtocolHandler.initializeStorageHandler,
                 (
@@ -104,10 +108,10 @@ contract Setup is ErrorsChecked {
         );
         usdnProtocol = IUsdnProtocolHandler(proxy);
         rebalancer = new RebalancerHandler(usdnProtocol);
-        // vm.prank(ADMIN);
-        // usdnProtocol.setRebalancer(rebalancer);
-        // usdn.grantRole(MINTER_ROLE, address(usdnProtocol));
-        // usdn.grantRole(REBASER_ROLE, address(usdnProtocol));
+        vm.prank(ADMIN);
+        usdnProtocol.setRebalancer(rebalancer);
+        usdn.grantRole(MINTER_ROLE, address(usdnProtocol));
+        usdn.grantRole(REBASER_ROLE, address(usdnProtocol));
     }
 
     function getBalances(address validator, address to) internal view returns (BalancesSnapshot memory) {
