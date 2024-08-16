@@ -12,8 +12,6 @@ import { Sdex } from "../utils/Sdex.sol";
 import { Weth } from "../utils/WETH.sol";
 import { WstETH } from "../utils/WstEth.sol";
 import { ErrorsChecked } from "./helpers/ErrorsChecked.sol";
-
-import { IStdCheats } from "./interfaces/IStdCheats.sol";
 import { MockLiquidationRewardsManager } from "./mock/MockLiquidationRewardsManager.sol";
 
 import { Rebalancer } from "../../src/Rebalancer/Rebalancer.sol";
@@ -28,7 +26,6 @@ import { InitializableReentrancyGuard } from "../../src/utils/InitializableReent
 contract Setup is ErrorsChecked {
     address public constant ATTACKER = address(0x20000);
     address public constant FEE_COLLECTOR = address(0x00fee);
-    IStdCheats internal constant CHEATS = IStdCheats(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
     Permit2TokenBitfield.Bitfield public constant NO_PERMIT2 = Permit2TokenBitfield.Bitfield.wrap(0);
 
     Sdex public sdex = new Sdex();

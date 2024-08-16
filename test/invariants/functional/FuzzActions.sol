@@ -23,7 +23,7 @@ contract FuzzActions is Setup {
     ) public {
         wsteth.mintAndApprove(msg.sender, amountWstETHRand, address(usdnProtocol), amountWstETHRand);
         sdex.mintAndApprove(msg.sender, amountSdexRand, address(usdnProtocol), amountSdexRand);
-        CHEATS.deal(msg.sender, ethRand);
+        vm.deal(msg.sender, ethRand);
 
         destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
         address dest = destinationsToken[address(wsteth)][destRand];
@@ -39,7 +39,7 @@ contract FuzzActions is Setup {
         ) = getPreviousActionsData(msg.sender, priceData);
         (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceData);
 
-        CHEATS.prank(msg.sender);
+        vm.prank(msg.sender);
         try usdnProtocol.initiateDeposit{ value: ethRand }(
             amountWstETHRand, dest, validator, NO_PERMIT2, abi.encode(priceData), previousActionsData
         ) {
@@ -74,9 +74,9 @@ contract FuzzActions is Setup {
         uint256 validatorRand,
         uint256 priceRand
     ) public {
-        CHEATS.prank(msg.sender);
+        vm.prank(msg.sender);
         usdn.approve(address(usdnProtocol), usdnShares);
-        CHEATS.deal(msg.sender, ethRand);
+        vm.deal(msg.sender, ethRand);
 
         destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
         address dest = destinationsToken[address(wsteth)][destRand];
@@ -92,7 +92,7 @@ contract FuzzActions is Setup {
         ) = getPreviousActionsData(msg.sender, priceData);
         (int256 usdnPendingActions,) = getTokenFromPendingAction(lastAction, priceData);
 
-        CHEATS.prank(msg.sender);
+        vm.prank(msg.sender);
         try usdnProtocol.initiateWithdrawal{ value: ethRand }(
             usdnShares, dest, validator, abi.encode(priceData), previousActionsData
         ) {
@@ -127,7 +127,7 @@ contract FuzzActions is Setup {
     ) public {
         wsteth.mintAndApprove(msg.sender, amountRand, address(usdnProtocol), amountRand);
         uint256 destRandBounded = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
-        CHEATS.deal(msg.sender, ethRand);
+        vm.deal(msg.sender, ethRand);
 
         validatorRand = bound(validatorRand, 0, validators.length - 1);
         address dest = destinationsToken[address(wsteth)][destRandBounded];
@@ -142,7 +142,7 @@ contract FuzzActions is Setup {
         ) = getPreviousActionsData(msg.sender, priceRand);
         (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceRand);
 
-        CHEATS.prank(msg.sender);
+        vm.prank(msg.sender);
         try usdnProtocol.initiateOpenPosition{ value: ethRand }(
             amountRand,
             liquidationPriceRand,
@@ -184,7 +184,7 @@ contract FuzzActions is Setup {
         uint256 amountToClose,
         uint256 posIdsIndexRand
     ) public {
-        CHEATS.deal(msg.sender, ethRand);
+        vm.deal(msg.sender, ethRand);
         destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
         address dest = destinationsToken[address(wsteth)][destRand];
         validatorRand = bound(validatorRand, 0, validators.length - 1);
@@ -202,7 +202,7 @@ contract FuzzActions is Setup {
 
         BalancesSnapshot memory balancesBefore = getBalances(validator, dest);
 
-        CHEATS.prank(msg.sender);
+        vm.prank(msg.sender);
         try usdnProtocol.initiateClosePosition{ value: ethRand }(
             posId, uint128(amountToClose), dest, validator, priceData, EMPTY_PREVIOUS_DATA
         ) returns (bool success_) {
@@ -248,7 +248,7 @@ contract FuzzActions is Setup {
         ) = getPreviousActionsData(msg.sender, priceData);
         (int256 usdnPendingActions, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceData);
 
-        CHEATS.prank(msg.sender);
+        vm.prank(msg.sender);
         try usdnProtocol.validateDeposit(validator, abi.encode(priceData), previousActionsData) returns (bool success_)
         {
             uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
@@ -301,7 +301,7 @@ contract FuzzActions is Setup {
         ) = getPreviousActionsData(msg.sender, priceData);
         (int256 usdnPendingActions, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceData);
 
-        CHEATS.prank(msg.sender);
+        vm.prank(msg.sender);
         try usdnProtocol.validateWithdrawal(validator, abi.encode(priceData), previousActionsData) returns (
             bool success_
         ) {
@@ -346,7 +346,7 @@ contract FuzzActions is Setup {
         ) = getPreviousActionsData(msg.sender, priceData);
         (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceData);
 
-        CHEATS.prank(msg.sender);
+        vm.prank(msg.sender);
         try usdnProtocol.validateOpenPosition(validator, abi.encode(priceData), previousActionsData) returns (
             bool success
         ) {
@@ -394,7 +394,7 @@ contract FuzzActions is Setup {
 
         BalancesSnapshot memory balancesBefore = getBalances(validator, msg.sender);
 
-        CHEATS.prank(msg.sender);
+        vm.prank(msg.sender);
         try usdnProtocol.validateClosePosition(validator, abi.encode(priceData), previousActionsData) returns (
             bool success
         ) {
@@ -449,7 +449,7 @@ contract FuzzActions is Setup {
             uint256 actionsLength
         ) = getPreviousActionsData(msg.sender, priceRand);
 
-        CHEATS.prank(msg.sender);
+        vm.prank(msg.sender);
         try usdnProtocol.validateActionablePendingActions(previousActionsData, maxValidations) returns (
             uint256 validatedActions
         ) {

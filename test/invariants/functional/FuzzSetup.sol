@@ -26,7 +26,7 @@ contract FuzzSetup is Setup {
             msg.sender, depositAmountRand + longAmountRand, address(usdnProtocol), depositAmountRand + longAmountRand
         );
 
-        CHEATS.prank(msg.sender);
+        vm.prank(msg.sender);
         try usdnProtocol.initialize(
             uint128(depositAmountRand), uint128(longAmountRand), uint128(desiredLiqPriceRand), abi.encode(priceRand)
         ) {

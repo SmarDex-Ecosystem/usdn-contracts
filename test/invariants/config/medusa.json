@@ -8,7 +8,6 @@
 		"corpusDirectory": "../../../medusa_assert_corpus",
 		"coverageEnabled": true,
 		"targetContracts": ["FuzzingSuite"],
-		"targetContractsBalances": ["0xffff"],
 		"predeployedContracts": {
 			"UsdnProtocolHandler": "0x1234567890123456789012345678901234567890",
 			"FeeCollector": "0x4675c7e5bAafbfFbca748158bEcBA61eF3B0A529",
