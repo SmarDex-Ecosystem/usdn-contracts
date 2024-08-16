@@ -3,6 +3,7 @@ pragma solidity 0.8.26;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IOracleMiddleware } from "../interfaces/OracleMiddleware/IOracleMiddleware.sol";
@@ -22,7 +23,7 @@ import { PythOracle } from "./oracles/PythOracle.sol";
  * It is used by the USDN protocol to get the price of the USDN underlying asset
  * @dev This contract is a middleware between the USDN protocol and the price oracles
  */
-contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Ownable2Step {
+contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Ownable2Step, Pausable {
     /// @inheritdoc IOracleMiddleware
     uint16 public constant BPS_DIVISOR = 10_000;
 
@@ -68,6 +69,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         public
         payable
         virtual
+        whenNotPaused
         returns (PriceInfo memory price_)
     {
         if (action == Types.ProtocolAction.None) {
@@ -399,5 +401,15 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         if (!success) {
             revert OracleMiddlewareTransferFailed(to);
         }
+    }
+
+    /// @inheritdoc IOracleMiddleware
+    function pausePriceValidation() external onlyOwner {
+        _pause();
+    }
+
+    /// @inheritdoc IOracleMiddleware
+    function unpausePriceValidation() external onlyOwner {
+        _unpause();
     }
 }
