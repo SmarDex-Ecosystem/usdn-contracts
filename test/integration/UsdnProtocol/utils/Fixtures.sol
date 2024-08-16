@@ -13,15 +13,16 @@ import {
     ADMIN,
     CHAINLINK_ORACLE_ETH,
     CHAINLINK_ORACLE_GAS,
-    CRITICAL_FUNCTIONS_ADMIN,
+    CRITICAL_FUNCTIONS_MANAGER,
     DEPLOYER,
+    PROXY_UPGRADE_MANAGER,
     PYTH_ETH_USD,
     PYTH_ORACLE,
     SDEX,
-    SET_EXTERNAL_ADMIN,
-    SET_OPTIONS_ADMIN,
-    SET_PROTOCOL_PARAMS_ADMIN,
-    SET_USDN_PARAMS_ADMIN,
+    SET_EXTERNAL_MANAGER,
+    SET_OPTIONS_MANAGER,
+    SET_PROTOCOL_PARAMS_MANAGER,
+    SET_USDN_PARAMS_MANAGER,
     WSTETH
 } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
@@ -80,12 +81,13 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         enableRoles: true
     });
 
-    Roles roles = Roles({
-        setExternalAdmin: SET_EXTERNAL_ADMIN,
-        criticalFunctionsAdmin: CRITICAL_FUNCTIONS_ADMIN,
-        setProtocolParamsAdmin: SET_PROTOCOL_PARAMS_ADMIN,
-        setUsdnParamsAdmin: SET_USDN_PARAMS_ADMIN,
-        setOptionsAdmin: SET_OPTIONS_ADMIN
+    Managers managers = Managers({
+        setExternalManager: SET_EXTERNAL_MANAGER,
+        criticalFunctionsManager: CRITICAL_FUNCTIONS_MANAGER,
+        setProtocolParamsManager: SET_PROTOCOL_PARAMS_MANAGER,
+        setUsdnParamsManager: SET_USDN_PARAMS_MANAGER,
+        setOptionsManager: SET_OPTIONS_MANAGER,
+        proxyUpgradeManager: PROXY_UPGRADE_MANAGER
     });
 
     Usdn public usdn;
@@ -133,7 +135,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             mockChainlinkOnChain.setLastPublishTime(testParams.initialTimestamp - 10 minutes);
             // this is the stETH/USD oracle, we need to convert the initialPrice
             mockChainlinkOnChain.setLastPrice(
-                int256(wstETH.getStETHByWstETH(uint256(testParams.initialPrice / 10 ** (18 - 8))))
+                int256(wstETH.getWstETHByStETH(uint256(testParams.initialPrice / 10 ** (18 - 8))))
             );
             oracleMiddleware = new WstEthOracleMiddleware(
                 address(mockPyth), PYTH_ETH_USD, address(mockChainlinkOnChain), address(wstETH), 1 hours
@@ -148,12 +150,13 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         usdn = new Usdn(address(0), address(0));
 
         if (!testParams.enableRoles) {
-            roles = Roles({
-                setExternalAdmin: ADMIN,
-                criticalFunctionsAdmin: ADMIN,
-                setProtocolParamsAdmin: ADMIN,
-                setUsdnParamsAdmin: ADMIN,
-                setOptionsAdmin: ADMIN
+            managers = Managers({
+                setExternalManager: ADMIN,
+                criticalFunctionsManager: ADMIN,
+                setProtocolParamsManager: ADMIN,
+                setUsdnParamsManager: ADMIN,
+                setOptionsManager: ADMIN,
+                proxyUpgradeManager: ADMIN
             });
         }
 
@@ -171,7 +174,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
                     liquidationRewardsManager,
                     100, // tick spacing 100 = 1%
                     ADMIN,
-                    roles,
+                    managers,
                     protocolFallback
                 )
             )
@@ -187,7 +190,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             testParams.initialDeposit, testParams.initialLong, testParams.initialLiqPrice, ""
         );
         vm.stopPrank();
-        vm.prank(roles.setExternalAdmin);
+        vm.prank(managers.setExternalManager);
         protocol.setRebalancer(rebalancer);
         params = testParams;
     }
@@ -229,7 +232,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
         tickSpacing_ = protocol.getTickSpacing();
 
-        vm.startPrank(roles.setProtocolParamsAdmin);
+        vm.startPrank(managers.setProtocolParamsManager);
         protocol.setFundingSF(0);
         protocol.resetEMA();
 
@@ -291,7 +294,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
         tickToLiquidateData_ = protocol.getTickData(posToLiquidate_.tick);
 
-        vm.prank(roles.setProtocolParamsAdmin);
+        vm.prank(managers.setProtocolParamsManager);
         protocol.setExpoImbalanceLimits(
             uint256(defaultLimits.depositExpoImbalanceLimitBps),
             uint256(defaultLimits.withdrawalExpoImbalanceLimitBps),

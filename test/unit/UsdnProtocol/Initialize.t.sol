@@ -39,12 +39,13 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
                     liquidationRewardsManager,
                     100, // tick spacing 100 = 1%
                     ADMIN, // Fee collector
-                    Roles({
-                        setExternalAdmin: address(this),
-                        criticalFunctionsAdmin: address(this),
-                        setProtocolParamsAdmin: address(this),
-                        setUsdnParamsAdmin: address(this),
-                        setOptionsAdmin: address(this)
+                    Managers({
+                        setExternalManager: address(this),
+                        criticalFunctionsManager: address(this),
+                        setProtocolParamsManager: address(this),
+                        setUsdnParamsManager: address(this),
+                        setOptionsManager: address(this),
+                        proxyUpgradeManager: address(this)
                     }),
                     protocolFallback
                 )

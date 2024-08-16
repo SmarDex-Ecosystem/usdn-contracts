@@ -18,41 +18,80 @@ contract Utils is Script {
      * @notice Validate the Usdn protocol
      * @dev Call this function to validate the Usdn protocol before deploying it
      */
-    function validateProtocol() public returns (bool success) {
+    function validateProtocol() public {
         string[] memory inputs = _buildCommandFunctionClashes();
-        success = _runCommand(inputs);
-        if (!success) {
+        try this.runFfiCommand(inputs) { }
+        catch {
             revert("function clash detected, run the functionClashes.ts script to see the clashing functions");
         }
     }
 
     /**
-     * @notice Build the command to run the functionClashes.ts script
-     * @return inputs The command to run the functionClashes.ts script
+     * @notice Clean the `out` directory and build the contracts
+     * @dev Call this function to clean the `out` directory and build the contracts
      */
-    function _buildCommandFunctionClashes() internal pure returns (string[] memory inputs) {
-        inputs = new string[](7);
-        uint8 i = 0;
-
-        // create the command to run the functionClashes.ts script
-        // npx ts-node UsdnProtocolImpl.sol UsdnProtocolFallback.sol -s UsdnProtocolStorage.sol
-        inputs[i++] = "npx";
-        inputs[i++] = "ts-node";
-        inputs[i++] = SCRIPT_PATH;
-        inputs[i++] = "UsdnProtocolImpl.sol";
-        inputs[i++] = "UsdnProtocolFallback.sol";
-        // we need to give the storage contract to remove common functions
-        inputs[i++] = "-s";
-        inputs[i++] = "UsdnProtocolStorage.sol";
+    function cleanAndBuildContracts() external {
+        _cleanOutDir();
+        _buildContracts();
     }
 
     /**
      * @notice Function to run an external command with ffi
+     * @dev This function reverts if the command fails
      * @param inputs The command to run
-     * @return success True if the command was successful, false otherwise
+     * @return The result of the command, printed to stdout
      */
-    function _runCommand(string[] memory inputs) internal returns (bool success) {
-        bytes memory result = vm.ffi(inputs);
-        return (result.length == 0);
+    function runFfiCommand(string[] memory inputs) public returns (bytes memory) {
+        Vm.FfiResult memory result = vm.tryFfi(inputs);
+
+        if (result.exitCode != 0) {
+            revert(string(abi.encodePacked('Failed to run bash command with "', inputs[0], '": ', result.stderr)));
+        } else {
+            return (result.stdout);
+        }
+    }
+
+    /**
+     * @notice Clean the `out` directory
+     * @dev Call this function to clean the `out` directory
+     */
+    function _cleanOutDir() internal {
+        string[] memory inputs = new string[](2);
+        inputs[0] = "forge";
+        inputs[1] = "clean";
+        runFfiCommand(inputs);
+    }
+
+    /**
+     * @notice Build the contracts
+     * @dev Call this function to build the contracts
+     */
+    function _buildContracts() internal {
+        string[] memory inputs = new string[](4);
+        inputs[0] = "forge";
+        inputs[1] = "build";
+        inputs[2] = "--skip";
+        inputs[3] = "test";
+        runFfiCommand(inputs);
+    }
+
+    /**
+     * @notice Build the command to run the functionClashes.ts script
+     * @return inputs_ The command to run the functionClashes.ts script
+     */
+    function _buildCommandFunctionClashes() internal pure returns (string[] memory inputs_) {
+        inputs_ = new string[](7);
+        uint8 i = 0;
+
+        // create the command to run the functionClashes.ts script
+        // npx ts-node UsdnProtocolImpl.sol UsdnProtocolFallback.sol -s UsdnProtocolStorage.sol
+        inputs_[i++] = "npx";
+        inputs_[i++] = "ts-node";
+        inputs_[i++] = SCRIPT_PATH;
+        inputs_[i++] = "UsdnProtocolImpl.sol";
+        inputs_[i++] = "UsdnProtocolFallback.sol";
+        // we need to give the storage contract to remove common functions
+        inputs_[i++] = "-s";
+        inputs_[i++] = "UsdnProtocolStorage.sol";
     }
 }

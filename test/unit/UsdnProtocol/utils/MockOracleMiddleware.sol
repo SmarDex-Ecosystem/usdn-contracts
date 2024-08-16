@@ -121,4 +121,8 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable2Step {
     }
 
     function setLowLatencyDelay(uint16) external { }
+
+    function pausePriceValidation() external { }
+
+    function unpausePriceValidation() external { }
 }
