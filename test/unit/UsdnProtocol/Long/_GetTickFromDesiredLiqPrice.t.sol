@@ -160,7 +160,7 @@ contract TestUsdnProtocolLongGetTickFromDesiredLiqPrice is UsdnProtocolBaseFixtu
     /**
      * @custom:scenario Fuzzing the function _getTickFromDesiredLiqPrice
      * @param penalty The liquidation penalty to use (bound to [0, MAX_LIQUIDATION_PENALTY])
-     * @param tickSpacing The tick spacing to use (bound to [1, 1000])
+     * @param tickSpacing The tick spacing to use (bound to [1, 10000])
      * @param desiredLiqPrice The desired liquidation price (bound to [MIN_PRICE, uint128 max])
      * @custom:when The function is called with the given parameters
      * @custom:then The tick is a multiple of the tick spacing
@@ -170,7 +170,7 @@ contract TestUsdnProtocolLongGetTickFromDesiredLiqPrice is UsdnProtocolBaseFixtu
      */
     function testFuzz_getTickFromLiqPrice(uint24 penalty, int24 tickSpacing, uint128 desiredLiqPrice) public view {
         penalty = uint24(bound(uint256(penalty), 0, Constants.MAX_LIQUIDATION_PENALTY));
-        tickSpacing = int24(bound(tickSpacing, 1, 1000));
+        tickSpacing = int24(bound(tickSpacing, 1, 10_000));
         desiredLiqPrice = uint128(bound(desiredLiqPrice, TickMath.MIN_PRICE, type(uint128).max));
         (int24 tick, uint128 liqPrice) =
             protocol.i_getTickFromDesiredLiqPrice(desiredLiqPrice, 0, 0, HugeUint.wrap(0), tickSpacing, penalty);
