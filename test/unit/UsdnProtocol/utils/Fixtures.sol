@@ -230,7 +230,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
                 testParams.initialLong, testParams.initialPrice, liqPriceWithoutPenalty
             );
             testParams.initialDeposit = positionTotalExpo - testParams.initialLong;
-            emit log_named_decimal_uint("initial deposit", testParams.initialDeposit, 18);
         }
 
         vm.startPrank(DEPLOYER);

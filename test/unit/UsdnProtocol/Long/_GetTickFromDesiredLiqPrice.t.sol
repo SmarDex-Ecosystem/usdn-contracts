@@ -3,7 +3,10 @@ pragma solidity 0.8.26;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
+import { TickMath } from "../../../../src/libraries/TickMath.sol";
 
 /// @custom:feature Test the _getTickFromDesiredLiqPrice internal function of the long layer
 contract TestUsdnProtocolLongGetTickFromDesiredLiqPrice is UsdnProtocolBaseFixture {
@@ -122,5 +125,22 @@ contract TestUsdnProtocolLongGetTickFromDesiredLiqPrice is UsdnProtocolBaseFixtu
         assertEq(tick, -100, "tick -200");
         assertApproxEqRel(liqPrice, desiredLiqPrice, 0.01 ether, "price 0.99");
         assertLe(liqPrice, desiredLiqPrice, "liq price <= 0.99");
+    }
+
+    function testFuzz_getTickFromLiqPrice(uint24 penalty, int24 tickSpacing, uint128 desiredLiqPrice) public view {
+        penalty = uint24(bound(uint256(penalty), 0, Constants.MAX_LIQUIDATION_PENALTY));
+        tickSpacing = int24(bound(tickSpacing, 1, 1000));
+        desiredLiqPrice = uint128(bound(desiredLiqPrice, TickMath.MIN_PRICE, type(uint128).max));
+        (int24 tick, uint128 liqPrice) =
+            protocol.i_getTickFromDesiredLiqPrice(desiredLiqPrice, 0, 0, HugeUint.wrap(0), tickSpacing, penalty);
+        assertEq(tick % tickSpacing, 0, "tick is multiple of tickSpacing");
+        // for most cases, the final liq price will be less than or equal to the desired liq price
+        // exception if the tick is close to the MIN_TICK, in which case that's not necessarily true
+        // due to rounding down in the price->tick conversion, we set the min tick bound for this check to be
+        // minUsableTick + tickSpacing + penalty
+        if (tick >= TickMath.minUsableTick(tickSpacing) + tickSpacing + int24(penalty)) {
+            assertLe(liqPrice, desiredLiqPrice, "liq price <= desired");
+        }
+        assertGe(TickMath.getPriceAtTick(tick + tickSpacing), desiredLiqPrice, "next tick price >= desired");
     }
 }
