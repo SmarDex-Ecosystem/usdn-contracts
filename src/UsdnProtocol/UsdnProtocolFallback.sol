@@ -19,7 +19,7 @@ import { UsdnProtocolCoreLibrary as Core } from "./libraries/UsdnProtocolCoreLib
 import { UsdnProtocolUtils as Utils } from "./libraries/UsdnProtocolUtils.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "./libraries/UsdnProtocolVaultLibrary.sol";
 
-contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
+abstract contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     using SafeCast for uint256;
 
     /// @inheritdoc IUsdnProtocolFallback
