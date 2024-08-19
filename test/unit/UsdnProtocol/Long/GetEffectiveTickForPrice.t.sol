@@ -19,14 +19,12 @@ contract TestUsdnProtocolLongGetEffectiveTickForPrice is UsdnProtocolBaseFixture
 
     /**
      * @custom:scenario Fuzzing the `getEffectiveTickForPrice` function and return expected minTick
-     * @custom:given A price, assetPrice, longTradingExpo and accumulator
-     * @custom:when getEffectiveTickForPrice is called
+     * @custom:given A tickSpacing between 1 and 10_000
+     * @custom:when getEffectiveTickForPrice is called (ignoring funding)
      * @custom:then The function should return expected minTick
      */
     function testFuzz_getEffectiveTickForPriceExpectedMinTick(int24 tickSpacing) public view {
-        if (tickSpacing == 0) {
-            return;
-        }
+        tickSpacing = int24(bound(tickSpacing, 1, 10_000));
         int24 expectedMinTick = TickMath.minUsableTick(tickSpacing);
 
         /* ------------------ unadjustedPrice < TickMath.MIN_PRICE ------------------ */
