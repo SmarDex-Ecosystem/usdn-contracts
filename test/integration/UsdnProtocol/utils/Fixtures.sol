@@ -187,7 +187,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         wstETH.approve(address(protocol), type(uint256).max);
 
         if (testParams.initialDeposit == 0) {
-            (, uint128 liqPriceWithoutPenalty) = protocol.i_getTickFromLiqPriceWithoutPenalty(
+            (, uint128 liqPriceWithoutPenalty) = protocol.i_getTickFromDesiredLiqPrice(
                 testParams.initialPrice / 2,
                 testParams.initialPrice,
                 0,

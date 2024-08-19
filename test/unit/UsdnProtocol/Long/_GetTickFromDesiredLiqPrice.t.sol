@@ -5,8 +5,8 @@ import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 
-/// @custom:feature Test the _calcBitmapIndexFromTick internal function of the long layer
-contract TestUsdnProtocolLongGetTickFromLiqPriceWithoutPenalty is UsdnProtocolBaseFixture {
+/// @custom:feature Test the _getTickFromDesiredLiqPrice internal function of the long layer
+contract TestUsdnProtocolLongGetTickFromDesiredLiqPrice is UsdnProtocolBaseFixture {
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
     }
@@ -17,13 +17,13 @@ contract TestUsdnProtocolLongGetTickFromLiqPriceWithoutPenalty is UsdnProtocolBa
         int24 tickSpacing = 1;
         uint128 desiredLiqPrice = 1 ether;
         (int24 tick, uint128 liqPrice) =
-            protocol.i_getTickFromLiqPriceWithoutPenalty(desiredLiqPrice, 0, 0, HugeUint.wrap(0), tickSpacing, penalty);
+            protocol.i_getTickFromDesiredLiqPrice(desiredLiqPrice, 0, 0, HugeUint.wrap(0), tickSpacing, penalty);
         assertEq(tick, 0, "tick 0");
         assertEq(liqPrice, desiredLiqPrice, "price 1");
 
         desiredLiqPrice = 1000 ether;
         (tick, liqPrice) =
-            protocol.i_getTickFromLiqPriceWithoutPenalty(desiredLiqPrice, 0, 0, HugeUint.wrap(0), tickSpacing, penalty);
+            protocol.i_getTickFromDesiredLiqPrice(desiredLiqPrice, 0, 0, HugeUint.wrap(0), tickSpacing, penalty);
         assertEq(tick, 69_081, "tick 69081");
         // not identical to desired liq price because
         // of rounding down in the price->tick conversion
@@ -33,7 +33,7 @@ contract TestUsdnProtocolLongGetTickFromLiqPriceWithoutPenalty is UsdnProtocolBa
         // negative tick
         desiredLiqPrice = 0.99 ether;
         (tick, liqPrice) =
-            protocol.i_getTickFromLiqPriceWithoutPenalty(desiredLiqPrice, 0, 0, HugeUint.wrap(0), tickSpacing, penalty);
+            protocol.i_getTickFromDesiredLiqPrice(desiredLiqPrice, 0, 0, HugeUint.wrap(0), tickSpacing, penalty);
         assertEq(tick, -101, "tick -101");
         assertApproxEqRel(liqPrice, desiredLiqPrice, 0.0001 ether, "price 0.99");
         assertLe(liqPrice, desiredLiqPrice, "liq price <= 0.99");
@@ -45,7 +45,7 @@ contract TestUsdnProtocolLongGetTickFromLiqPriceWithoutPenalty is UsdnProtocolBa
         int24 tickSpacing = 100;
         uint128 desiredLiqPrice = 1000 ether;
         (int24 tick, uint128 liqPrice) =
-            protocol.i_getTickFromLiqPriceWithoutPenalty(desiredLiqPrice, 0, 0, HugeUint.wrap(0), tickSpacing, penalty);
+            protocol.i_getTickFromDesiredLiqPrice(desiredLiqPrice, 0, 0, HugeUint.wrap(0), tickSpacing, penalty);
         assertEq(tick, 69_000, "tick 69000");
         // not identical to desired liq price because
         // of rounding down in the price->tick conversion
@@ -55,7 +55,7 @@ contract TestUsdnProtocolLongGetTickFromLiqPriceWithoutPenalty is UsdnProtocolBa
         // negative tick
         desiredLiqPrice = 0.99 ether;
         (tick, liqPrice) =
-            protocol.i_getTickFromLiqPriceWithoutPenalty(desiredLiqPrice, 0, 0, HugeUint.wrap(0), tickSpacing, penalty);
+            protocol.i_getTickFromDesiredLiqPrice(desiredLiqPrice, 0, 0, HugeUint.wrap(0), tickSpacing, penalty);
         assertEq(tick, -200, "tick -200");
         assertApproxEqRel(liqPrice, desiredLiqPrice, 0.01 ether, "price 0.99");
         assertLe(liqPrice, desiredLiqPrice, "liq price <= 0.99");
@@ -66,7 +66,7 @@ contract TestUsdnProtocolLongGetTickFromLiqPriceWithoutPenalty is UsdnProtocolBa
         int24 tickSpacing = 1;
         uint128 desiredLiqPrice = 1000 ether;
         (int24 tick, uint128 liqPrice) =
-            protocol.i_getTickFromLiqPriceWithoutPenalty(desiredLiqPrice, 0, 0, HugeUint.wrap(0), tickSpacing, penalty);
+            protocol.i_getTickFromDesiredLiqPrice(desiredLiqPrice, 0, 0, HugeUint.wrap(0), tickSpacing, penalty);
         assertEq(tick, 69_181, "tick 69181");
         // not identical to desired liq price because
         // of rounding down in the price->tick conversion
@@ -76,7 +76,7 @@ contract TestUsdnProtocolLongGetTickFromLiqPriceWithoutPenalty is UsdnProtocolBa
         // negative tick
         desiredLiqPrice = 0.99 ether;
         (tick, liqPrice) =
-            protocol.i_getTickFromLiqPriceWithoutPenalty(desiredLiqPrice, 0, 0, HugeUint.wrap(0), tickSpacing, penalty);
+            protocol.i_getTickFromDesiredLiqPrice(desiredLiqPrice, 0, 0, HugeUint.wrap(0), tickSpacing, penalty);
         assertEq(tick, -1, "tick -1");
         assertApproxEqRel(liqPrice, desiredLiqPrice, 0.0001 ether, "price 0.99");
         assertLe(liqPrice, desiredLiqPrice, "liq price <= 0.99");
@@ -87,7 +87,7 @@ contract TestUsdnProtocolLongGetTickFromLiqPriceWithoutPenalty is UsdnProtocolBa
         int24 tickSpacing = 100;
         uint128 desiredLiqPrice = 1000 ether;
         (int24 tick, uint128 liqPrice) =
-            protocol.i_getTickFromLiqPriceWithoutPenalty(desiredLiqPrice, 0, 0, HugeUint.wrap(0), tickSpacing, penalty);
+            protocol.i_getTickFromDesiredLiqPrice(desiredLiqPrice, 0, 0, HugeUint.wrap(0), tickSpacing, penalty);
         assertEq(tick, 69_100, "tick 69100");
         // not identical to desired liq price because
         // of rounding down in the price->tick conversion
@@ -97,7 +97,7 @@ contract TestUsdnProtocolLongGetTickFromLiqPriceWithoutPenalty is UsdnProtocolBa
         // negative tick
         desiredLiqPrice = 0.99 ether;
         (tick, liqPrice) =
-            protocol.i_getTickFromLiqPriceWithoutPenalty(desiredLiqPrice, 0, 0, HugeUint.wrap(0), tickSpacing, penalty);
+            protocol.i_getTickFromDesiredLiqPrice(desiredLiqPrice, 0, 0, HugeUint.wrap(0), tickSpacing, penalty);
         assertEq(tick, -100, "tick -100");
         assertApproxEqRel(liqPrice, desiredLiqPrice, 0.01 ether, "price 0.99");
         assertLe(liqPrice, desiredLiqPrice, "liq price <= 0.99");
@@ -108,7 +108,7 @@ contract TestUsdnProtocolLongGetTickFromLiqPriceWithoutPenalty is UsdnProtocolBa
         int24 tickSpacing = 100;
         uint128 desiredLiqPrice = 1000 ether;
         (int24 tick, uint128 liqPrice) =
-            protocol.i_getTickFromLiqPriceWithoutPenalty(desiredLiqPrice, 0, 0, HugeUint.wrap(0), tickSpacing, penalty);
+            protocol.i_getTickFromDesiredLiqPrice(desiredLiqPrice, 0, 0, HugeUint.wrap(0), tickSpacing, penalty);
         assertEq(tick, 69_000, "tick 69000");
         // not identical to desired liq price because
         // of rounding down in the price->tick conversion
@@ -118,7 +118,7 @@ contract TestUsdnProtocolLongGetTickFromLiqPriceWithoutPenalty is UsdnProtocolBa
         // negative tick
         desiredLiqPrice = 0.99 ether;
         (tick, liqPrice) =
-            protocol.i_getTickFromLiqPriceWithoutPenalty(desiredLiqPrice, 0, 0, HugeUint.wrap(0), tickSpacing, penalty);
+            protocol.i_getTickFromDesiredLiqPrice(desiredLiqPrice, 0, 0, HugeUint.wrap(0), tickSpacing, penalty);
         assertEq(tick, -100, "tick -200");
         assertApproxEqRel(liqPrice, desiredLiqPrice, 0.01 ether, "price 0.99");
         assertLe(liqPrice, desiredLiqPrice, "liq price <= 0.99");

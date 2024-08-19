@@ -774,7 +774,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         return Core._funding(_tempStorage, timestamp, ema);
     }
 
-    function i_getTickFromLiqPriceWithoutPenalty(
+    function i_getTickFromDesiredLiqPrice(
         uint128 desiredLiqPriceWithoutPenalty,
         uint256 assetPrice,
         uint256 longTradingExpo,
@@ -782,7 +782,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         int24 tickSpacing,
         uint24 liquidationPenalty
     ) external pure returns (int24 tickWithPenalty_, uint128 liqPriceWithoutPenalty_) {
-        return Long._getTickFromLiqPriceWithoutPenalty(
+        return Long._getTickFromDesiredLiqPrice(
             desiredLiqPriceWithoutPenalty, assetPrice, longTradingExpo, accumulator, tickSpacing, liquidationPenalty
         );
     }

@@ -61,7 +61,7 @@ library UsdnProtocolCoreLibrary {
         s._lastPrice = currentPrice.price.toUint128();
 
         (int24 tickWithPenalty, uint128 liqPriceWithoutPenalty) =
-            Long._getTickFromLiqPriceWithoutPenalty(s, desiredLiqPrice, s._liquidationPenalty);
+            Long._getTickFromDesiredLiqPrice(s, desiredLiqPrice, s._liquidationPenalty);
         uint128 positionTotalExpo =
             Long._calcPositionTotalExpo(longAmount, currentPrice.price.toUint128(), liqPriceWithoutPenalty);
 

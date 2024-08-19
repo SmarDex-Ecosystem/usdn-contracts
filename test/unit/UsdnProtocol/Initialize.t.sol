@@ -228,7 +228,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
             uint256(INITIAL_DEPOSIT) * INITIAL_PRICE
                 / 10 ** (protocol.getAssetDecimals() + protocol.getPriceFeedDecimals() - protocol.TOKENS_DECIMALS())
         ) - protocol.MIN_USDN_SUPPLY();
-        (int24 expectedTick, uint128 liquidationPriceWithoutPenalty) = protocol.i_getTickFromLiqPriceWithoutPenalty(
+        (int24 expectedTick, uint128 liquidationPriceWithoutPenalty) = protocol.i_getTickFromDesiredLiqPrice(
             INITIAL_PRICE / 2,
             INITIAL_PRICE,
             0,

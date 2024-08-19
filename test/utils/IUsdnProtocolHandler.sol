@@ -423,7 +423,7 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         int256 remainingCollateral
     ) external returns (uint256 longBalance_, uint256 vaultBalance_);
 
-    function i_getTickFromLiqPriceWithoutPenalty(
+    function i_getTickFromDesiredLiqPrice(
         uint128 desiredLiqPriceWithoutPenalty,
         uint256 assetPrice,
         uint256 longTradingExpo,

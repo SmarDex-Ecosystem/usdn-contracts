@@ -273,7 +273,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
 
         uint128 newLiqPrice = protocol.i_getLiquidationPrice(testData.validatePrice, uint128(protocol.getMaxLeverage()));
         uint128 expectedLiqPrice;
-        (testData.validateTick, expectedLiqPrice) = protocol.i_getTickFromLiqPriceWithoutPenalty(
+        (testData.validateTick, expectedLiqPrice) = protocol.i_getTickFromDesiredLiqPrice(
             newLiqPrice,
             testData.validatePrice,
             uint256(protocol.getLongTradingExpo(testData.validatePrice)),
@@ -336,7 +336,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         // calculate the future expected tick for the position we will validate later
         data.validatePrice = CURRENT_PRICE - 100 ether;
         data.originalLiqPenalty = protocol.getLiquidationPenalty();
-        (data.validateTick,) = protocol.i_getTickFromLiqPriceWithoutPenalty(
+        (data.validateTick,) = protocol.i_getTickFromDesiredLiqPrice(
             protocol.i_getLiquidationPrice(data.validatePrice, uint128(protocol.getMaxLeverage())),
             data.validatePrice,
             uint256(protocol.getLongTradingExpo(data.validatePrice)),

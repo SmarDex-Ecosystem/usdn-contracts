@@ -76,7 +76,7 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
             "The imbalance is not high enough to trigger the rebalancer, adjust the long positions in the setup"
         );
 
-        (int24 expectedTick,) = protocol.i_getTickFromLiqPriceWithoutPenalty(
+        (int24 expectedTick,) = protocol.i_getTickFromDesiredLiqPrice(
             protocol.i_calcLiqPriceFromTradingExpo(wstEthPrice, amountInRebalancer + bonus, tradingExpoToFill),
             wstEthPrice,
             totalExpo - longAssetAvailable,

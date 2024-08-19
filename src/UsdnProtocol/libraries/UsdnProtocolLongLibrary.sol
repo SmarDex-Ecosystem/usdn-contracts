@@ -276,12 +276,12 @@ library UsdnProtocolLongLibrary {
      * @return tickWithPenalty_ The tick number with penalty
      * @return liqPriceWithoutPenalty_ The liquidation price without penalty
      */
-    function _getTickFromLiqPriceWithoutPenalty(
+    function _getTickFromDesiredLiqPrice(
         Types.Storage storage s,
         uint128 desiredLiqPriceWithoutPenalty,
         uint24 liquidationPenalty
     ) public view returns (int24 tickWithPenalty_, uint128 liqPriceWithoutPenalty_) {
-        return _getTickFromLiqPriceWithoutPenalty(
+        return _getTickFromDesiredLiqPrice(
             desiredLiqPriceWithoutPenalty,
             s._lastPrice,
             s._totalExpo - s._balanceLong,
@@ -305,7 +305,7 @@ library UsdnProtocolLongLibrary {
      * @return tickWithPenalty_ The tick number with penalty
      * @return liqPriceWithoutPenalty_ The liquidation price without penalty
      */
-    function _getTickFromLiqPriceWithoutPenalty(
+    function _getTickFromDesiredLiqPrice(
         uint128 desiredLiqPriceWithoutPenalty,
         uint256 assetPrice,
         uint256 longTradingExpo,
@@ -1332,7 +1332,7 @@ library UsdnProtocolLongLibrary {
         data.currentLiqPenalty = s._liquidationPenalty;
         uint128 idealLiqPrice = _calcLiqPriceFromTradingExpo(lastPrice, positionAmount, tradingExpoToFill);
         data.liqPriceWithoutPenalty;
-        (posData_.tick, data.liqPriceWithoutPenalty) = _getTickFromLiqPriceWithoutPenalty(
+        (posData_.tick, data.liqPriceWithoutPenalty) = _getTickFromDesiredLiqPrice(
             idealLiqPrice,
             lastPrice,
             cache.tradingExpo,
