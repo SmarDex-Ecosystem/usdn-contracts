@@ -6,7 +6,7 @@ import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { RebalancerHandler } from "../unit/Rebalancer/utils/Handler.sol";
 import { UsdnProtocolHandler } from "../unit/UsdnProtocol/utils/Handler.sol";
 import { MockOracleMiddleware } from "../unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
-import { ADMIN } from "../utils/Constants.sol";
+import { ADMIN, USER_1, USER_2, USER_3 } from "../utils/Constants.sol";
 import { IUsdnProtocolHandler } from "../utils/IUsdnProtocolHandler.sol";
 import { Sdex } from "../utils/Sdex.sol";
 import { Weth } from "../utils/WETH.sol";
@@ -24,8 +24,8 @@ import { FeeCollector } from "../../src/utils/FeeCollector.sol";
 import { InitializableReentrancyGuard } from "../../src/utils/InitializableReentrancyGuard.sol";
 
 contract Setup is ErrorsChecked {
-    address public constant DEPLOYER = address(0x10000);
-    address public constant ATTACKER = address(0x20000);
+    address public constant DEPLOYER = USER_1;
+    address public constant ATTACKER = USER_2;
     address public constant FEE_COLLECTOR = address(0x00fee);
     Permit2TokenBitfield.Bitfield public constant NO_PERMIT2 = Permit2TokenBitfield.Bitfield.wrap(0);
 
