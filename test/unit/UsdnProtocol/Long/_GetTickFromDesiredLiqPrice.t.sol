@@ -135,12 +135,18 @@ contract TestUsdnProtocolLongGetTickFromDesiredLiqPrice is UsdnProtocolBaseFixtu
             protocol.i_getTickFromDesiredLiqPrice(desiredLiqPrice, 0, 0, HugeUint.wrap(0), tickSpacing, penalty);
         assertEq(tick % tickSpacing, 0, "tick is multiple of tickSpacing");
         // for most cases, the final liq price will be less than or equal to the desired liq price
-        // exception if the tick is close to the MIN_TICK, in which case that's not necessarily true
-        // due to rounding down in the price->tick conversion, we set the min tick bound for this check to be
-        // minUsableTick + tickSpacing + penalty
+        // exception if the tick is close to the MIN_TICK, in which case that's not necessarily true (because the
+        // min usable tick is effectively then `minUsableTick + penalty`)
+        // we set the min tick bound for this check to be minUsableTick + tickSpacing + penalty (due to rounding)
         if (tick >= TickMath.minUsableTick(tickSpacing) + tickSpacing + int24(penalty)) {
             assertLe(liqPrice, desiredLiqPrice, "liq price <= desired");
         }
-        assertGe(TickMath.getPriceAtTick(tick + tickSpacing), desiredLiqPrice, "next tick price >= desired");
+        // for most cases, the next tick would yield a liquidation price greater than the desired liq price
+        // in some cases, due to rounding, the next tick would actually yield exactly the desired liq price and would
+        // be a slightly better fit, but we always err towards the side of caution (do not impose a risk greater than
+        // the user intended)
+        assertGe(
+            TickMath.getPriceAtTick(tick + tickSpacing - int24(penalty)), desiredLiqPrice, "next tick price >= desired"
+        );
     }
 }
