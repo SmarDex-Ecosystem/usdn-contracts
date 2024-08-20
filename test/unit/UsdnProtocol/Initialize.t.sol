@@ -327,6 +327,12 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         assertEq(address(this).balance, balanceBefore, "balance");
     }
 
+    /**
+     * @custom:scenario Frontrun the protocol initialization by calling the `initialize` function with a non-admin
+     * address
+     * @custom:when The attacker calls the `initialize` function
+     * @custom:then The transaction reverts with the error `AccessControlUnauthorizedAccount`
+     */
     function test_RevertWhen_Frontrun() public {
         bytes32 DEFAULT_ADMIN_ROLE = 0x00;
         vm.prank(address(0));
