@@ -15,7 +15,7 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
 
         // we enable only deposit limit
         vm.prank(ADMIN);
-        protocol.setExpoImbalanceLimits(0, 200, 0, 0, 0);
+        protocol.setExpoImbalanceLimits(0, 200, 0, 0, 0, 0);
     }
 
     /**
@@ -41,7 +41,7 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
     function test_RevertWhen_checkImbalanceLimitDepositZeroLongExpo() public {
         // disable close limit
         vm.prank(ADMIN);
-        protocol.setExpoImbalanceLimits(200, 200, 600, 0, 0);
+        protocol.setExpoImbalanceLimits(200, 200, 600, 0, 0, 0);
 
         // the initial tick
         int24 tick = protocol.getHighestPopulatedTick();
@@ -84,7 +84,7 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
         (, uint256 vaultExpoValueToLimit) = _getDepositLimitValues();
 
         // disable deposit limit
-        protocol.setExpoImbalanceLimits(200, 0, 600, 600, 300);
+        protocol.setExpoImbalanceLimits(200, 0, 600, 600, 500, 300);
 
         protocol.i_checkImbalanceLimitDeposit(vaultExpoValueToLimit + 1);
     }
@@ -115,12 +115,12 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
 
         // temporarily disable limits to put the protocol in an unbalanced state
         vm.prank(ADMIN);
-        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
+        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0, 0);
         // this action will affect the vault trading expo once it's validated
         setUpUserPositionInVault(USER_1, ProtocolAction.InitiateDeposit, params.initialDeposit, params.initialPrice);
         // restore limits
         vm.prank(ADMIN);
-        protocol.setExpoImbalanceLimits(0, 200, 0, 0, 0);
+        protocol.setExpoImbalanceLimits(0, 200, 0, 0, 0, 0);
 
         int256 newVaultExpo =
             int256(protocol.getBalanceVault() + vaultExpoValueToLimit) + protocol.getPendingBalanceVault();

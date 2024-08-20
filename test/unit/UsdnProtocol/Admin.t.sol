@@ -77,7 +77,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         protocol.setSecurityDepositValue(0);
 
         vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ROLE"));
-        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
+        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0, 0);
 
         vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ROLE"));
         protocol.setMinLongPosition(100 ether);
@@ -632,19 +632,19 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
 
         vm.expectRevert(safecastError);
         // set open expo  imbalance limit above max int
-        protocol.setExpoImbalanceLimits(aboveSignedMax, 0, 0, 0, 0);
+        protocol.setExpoImbalanceLimits(aboveSignedMax, 0, 0, 0, 0, 0);
 
         vm.expectRevert(safecastError);
         // set deposit expo imbalance limit above max int
-        protocol.setExpoImbalanceLimits(0, aboveSignedMax, 0, 0, 0);
+        protocol.setExpoImbalanceLimits(0, aboveSignedMax, 0, 0, 0, 0);
 
         vm.expectRevert(safecastError);
         // set withdrawal expo imbalance limit above max int
-        protocol.setExpoImbalanceLimits(0, 0, aboveSignedMax, 0, 0);
+        protocol.setExpoImbalanceLimits(0, 0, aboveSignedMax, 0, 0, 0);
 
         vm.expectRevert(safecastError);
         // set close expo imbalance limit above max int
-        protocol.setExpoImbalanceLimits(0, 0, 0, aboveSignedMax, 0);
+        protocol.setExpoImbalanceLimits(0, 0, 0, aboveSignedMax, 0, 0);
     }
 
     /**
@@ -667,11 +667,13 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
             expectedNewLimitBps,
             expectedNewLimitBps,
             expectedNewLimitBps,
+            expectedNewLimitBps,
             expectedLongImbalanceTarget
         );
 
         // set expo imbalance limits basis point
         protocol.setExpoImbalanceLimits(
+            expectedNewLimitBps,
             expectedNewLimitBps,
             expectedNewLimitBps,
             expectedNewLimitBps,
@@ -684,6 +686,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         assertEq(protocol.getWithdrawalExpoImbalanceLimitBps(), expectedSignedLimitBps, "deposit limit");
         assertEq(protocol.getOpenExpoImbalanceLimitBps(), expectedSignedLimitBps, "withdrawal limit");
         assertEq(protocol.getCloseExpoImbalanceLimitBps(), expectedSignedLimitBps, "close limit");
+        assertEq(protocol.getRebalancerCloseExpoImbalanceLimitBps(), expectedSignedLimitBps, "close limit");
         assertEq(protocol.getLongImbalanceTargetBps(), expectedLongImbalanceTarget, "long imbalance target");
     }
 
@@ -694,7 +697,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      * @custom:then The transaction should revert
      */
     function test_RevertWhen_setExpoImbalanceLimitsLow() public adminPrank {
-        protocol.setExpoImbalanceLimits(2, 2, 0, 0, 0);
+        protocol.setExpoImbalanceLimits(2, 2, 0, 0, 0, 0);
 
         // open and deposit limits basis point
         int256 openLimitBps = protocol.getOpenExpoImbalanceLimitBps();
@@ -705,7 +708,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         vm.expectRevert(UsdnProtocolInvalidExpoImbalanceLimit.selector);
         // set expo imbalance limits basis point
         protocol.setExpoImbalanceLimits(
-            uint256(openLimitBps), uint256(depositLimitBps), withdrawalLimitBpsBelowOpen, 0, 0
+            uint256(openLimitBps), uint256(depositLimitBps), withdrawalLimitBpsBelowOpen, 0, 0, 0
         );
 
         uint256 closeLimitBpsBelowDeposit = uint256(depositLimitBps - 1);
@@ -717,6 +720,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
             uint256(depositLimitBps),
             0,
             closeLimitBpsBelowDeposit,
+            0,
             int256(closeLimitBpsBelowDeposit)
         );
     }
@@ -731,6 +735,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         int256 openLimitBps = protocol.getOpenExpoImbalanceLimitBps();
         int256 depositLimitBps = protocol.getDepositExpoImbalanceLimitBps();
         int256 closeLimitBps = protocol.getCloseExpoImbalanceLimitBps();
+        int256 rebalancerCloseLimitBps = protocol.getRebalancerCloseExpoImbalanceLimitBps();
         int256 withdrawalLimitBps = protocol.getWithdrawalExpoImbalanceLimitBps();
 
         vm.expectRevert(UsdnProtocolInvalidLongImbalanceTarget.selector);
@@ -740,7 +745,33 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
             uint256(depositLimitBps),
             uint256(withdrawalLimitBps),
             uint256(closeLimitBps),
+            uint256(rebalancerCloseLimitBps),
             closeLimitBps + 1
+        );
+    }
+
+    /**
+     * @custom:scenario Call "setExpoImbalanceLimits" from admin with a rebalancer close imbalance limit higher
+     * than the close imbalance limit
+     * @custom:given The initial usdnProtocol state from admin wallet
+     * @custom:when The rebalancer close imbalance is greater than the close imbalance
+     * @custom:then The transaction should revert with an UsdnProtocolInvalidExpoImbalanceLimit error
+     */
+    function test_RevertWhen_setExpoImbalanceLimitsWithRebalancerCloseImbalanceTooHigh() public adminPrank {
+        int256 openLimitBps = protocol.getOpenExpoImbalanceLimitBps();
+        int256 depositLimitBps = protocol.getDepositExpoImbalanceLimitBps();
+        int256 closeLimitBps = protocol.getCloseExpoImbalanceLimitBps();
+        int256 withdrawalLimitBps = protocol.getWithdrawalExpoImbalanceLimitBps();
+
+        vm.expectRevert(UsdnProtocolInvalidExpoImbalanceLimit.selector);
+        // call with rebalancer close imbalance limit > closeLimitBps
+        protocol.setExpoImbalanceLimits(
+            uint256(openLimitBps),
+            uint256(depositLimitBps),
+            uint256(withdrawalLimitBps),
+            uint256(closeLimitBps),
+            uint256(closeLimitBps + 1),
+            closeLimitBps
         );
     }
 
@@ -758,6 +789,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         int256 openLimitBps = protocol.getOpenExpoImbalanceLimitBps();
         int256 depositLimitBps = protocol.getDepositExpoImbalanceLimitBps();
         int256 closeLimitBps = protocol.getCloseExpoImbalanceLimitBps();
+        int256 rebalancerCloseLimitBps = protocol.getRebalancerCloseExpoImbalanceLimitBps();
         int256 withdrawalLimitBps = protocol.getWithdrawalExpoImbalanceLimitBps();
 
         vm.expectRevert(UsdnProtocolInvalidLongImbalanceTarget.selector);
@@ -767,6 +799,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
             uint256(depositLimitBps),
             uint256(withdrawalLimitBps),
             uint256(closeLimitBps),
+            uint256(rebalancerCloseLimitBps),
             -withdrawalLimitBps - 1
         );
     }
@@ -781,11 +814,17 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         int256 openLimitBps = protocol.getOpenExpoImbalanceLimitBps();
         int256 depositLimitBps = protocol.getDepositExpoImbalanceLimitBps();
         int256 closeLimitBps = protocol.getCloseExpoImbalanceLimitBps();
+        int256 rebalancerCloseLimitBps = protocol.getRebalancerCloseExpoImbalanceLimitBps();
         int256 withdrawalLimitBps = 10_000;
 
         vm.expectRevert(UsdnProtocolInvalidLongImbalanceTarget.selector);
         protocol.setExpoImbalanceLimits(
-            uint256(openLimitBps), uint256(depositLimitBps), uint256(withdrawalLimitBps), uint256(closeLimitBps), -5001
+            uint256(openLimitBps),
+            uint256(depositLimitBps),
+            uint256(withdrawalLimitBps),
+            uint256(closeLimitBps),
+            uint256(rebalancerCloseLimitBps),
+            -5001
         );
     }
 

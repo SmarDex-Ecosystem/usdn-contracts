@@ -63,6 +63,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         int256 withdrawalExpoImbalanceLimitBps;
         int256 openExpoImbalanceLimitBps;
         int256 closeExpoImbalanceLimitBps;
+        int256 rebalancerCloseExpoImbalanceLimitBps;
         int256 longImbalanceTargetBps;
     }
 
@@ -240,10 +241,11 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             withdrawalExpoImbalanceLimitBps: protocol.getWithdrawalExpoImbalanceLimitBps(),
             openExpoImbalanceLimitBps: protocol.getOpenExpoImbalanceLimitBps(),
             closeExpoImbalanceLimitBps: protocol.getCloseExpoImbalanceLimitBps(),
+            rebalancerCloseExpoImbalanceLimitBps: protocol.getRebalancerCloseExpoImbalanceLimitBps(),
             longImbalanceTargetBps: protocol.getLongImbalanceTargetBps()
         });
 
-        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
+        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0, 0);
 
         vm.stopPrank();
 
@@ -298,6 +300,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             uint256(defaultLimits.withdrawalExpoImbalanceLimitBps),
             uint256(defaultLimits.openExpoImbalanceLimitBps),
             uint256(defaultLimits.closeExpoImbalanceLimitBps),
+            uint256(defaultLimits.rebalancerCloseExpoImbalanceLimitBps),
             defaultLimits.longImbalanceTargetBps
         );
     }

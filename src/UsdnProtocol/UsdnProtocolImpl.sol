@@ -67,6 +67,7 @@ contract UsdnProtocolImpl is
         s._withdrawalExpoImbalanceLimitBps = 600;
         s._depositExpoImbalanceLimitBps = 500;
         s._closeExpoImbalanceLimitBps = 600;
+        s._rebalancerCloseExpoImbalanceLimitBps = 500;
         s._longImbalanceTargetBps = 550;
         s._positionFeeBps = 4; // 0.04%
         s._vaultFeeBps = 4; // 0.04%
