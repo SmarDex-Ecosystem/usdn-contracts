@@ -69,17 +69,17 @@ contract TestOracleMiddlewarePythFeedId is OracleMiddlewareBaseFixture, Pausable
      * @custom:then It should revert with `OwnableUnauthorizedAccount`
      */
     function test_RevertWhen_PauseAndUnpauseByNonAdmin() public {
-        bytes memory customError_ = abi.encodeWithSelector(
+        bytes memory customError = abi.encodeWithSelector(
             IAccessControl.AccessControlUnauthorizedAccount.selector, USER_1, oracleMiddleware.PAUSABLE_ROLE()
         );
         vm.prank(USER_1);
-        vm.expectRevert(customError_);
+        vm.expectRevert(customError);
         oracleMiddleware.pausePriceValidation();
 
         oracleMiddleware.pausePriceValidation();
 
         vm.prank(USER_1);
-        vm.expectRevert(customError_);
+        vm.expectRevert(customError);
         oracleMiddleware.unpausePriceValidation();
     }
 }
