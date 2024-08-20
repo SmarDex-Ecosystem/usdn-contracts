@@ -159,7 +159,7 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
      */
     function _removeBlockedLongScenario(ProtocolAction untilAction, uint128 amount, bool cleanup)
         internal
-        returns (PositionId memory posId_)
+        returns (PositionId memory posId_, int256 positionValue_)
     {
         posId_ = setUpUserPositionInLong(
             OpenParams({
@@ -171,6 +171,8 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
             })
         );
         _wait();
+
+        positionValue_ = protocol.getPositionValue(posId_, protocol.getLastPrice(), protocol.getLastUpdateTimestamp());
 
         (, uint128 rawIndex) = protocol.i_getPendingAction(USER_1);
 
@@ -199,9 +201,14 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         uint256 totalPosBefore = protocol.getTotalLongPositions();
         HugeUint.Uint512 memory accBefore = protocol.getLiqMultiplierAccumulator();
         uint256 totalExpoBefore = protocol.getTotalExpo();
+        uint256 protocolBalanceBefore = wstETH.balanceOf(address(protocol));
+        uint256 totalBalance = protocol.getBalanceLong() + protocol.getBalanceVault();
 
-        PositionId memory posId = _removeBlockedLongScenario(ProtocolAction.InitiateOpenPosition, 10 ether, true);
+        uint128 amount = 10 ether;
+        (PositionId memory posId, int256 posValue) =
+            _removeBlockedLongScenario(ProtocolAction.InitiateOpenPosition, amount, true);
         assertEq(posId.tick, expectedTick, "expected tick");
+        assertGt(posValue, 0, "pos value");
 
         TickData memory tickDataAfter = protocol.getTickData(posId.tick);
         assertEq(tickDataAfter.totalExpo, tickDataBefore.totalExpo, "tick total expo");
@@ -216,6 +223,14 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         assertEq(accAfter.lo, accBefore.lo, "accumulator lo");
 
         assertEq(protocol.getTotalExpo(), totalExpoBefore, "total expo");
+        assertEq(
+            wstETH.balanceOf(address(protocol)), protocolBalanceBefore + amount - uint256(posValue), "protocol balance"
+        );
+        assertEq(
+            protocol.getBalanceLong() + protocol.getBalanceVault(),
+            totalBalance + amount - uint256(posValue),
+            "total balance"
+        );
 
         assertEq(address(this).balance, balanceBefore + protocol.getSecurityDepositValue(), "balance after");
     }
