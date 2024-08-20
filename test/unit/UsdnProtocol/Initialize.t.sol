@@ -309,7 +309,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         vm.prank(address(protocol));
         usdn.mint(address(this), 100 ether);
 
-        vm.expectRevert(abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, address(0)));
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidUsdn.selector, address(usdn)));
         protocol.initialize(INITIAL_DEPOSIT, INITIAL_POSITION, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE));
     }
 
