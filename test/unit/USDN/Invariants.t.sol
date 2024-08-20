@@ -85,6 +85,4 @@ contract TestUsdnInvariants is UsdnTokenFixture {
         console2.log("USER_4 shares ", usdn.sharesOf(USER_4));
         _;
     }
-
-    function test() public override { }
 }

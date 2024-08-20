@@ -40,8 +40,4 @@ contract DequeFixture is BaseFixture {
         assertEq(a.var5, b.var5, string.concat(err, " - action var5"));
         assertEq(a.var6, b.var6, string.concat(err, " - action var6"));
     }
-
-    // force ignore from coverage report
-    // until https://github.com/foundry-rs/foundry/issues/2988 is fixed
-    function test() public override { }
 }
