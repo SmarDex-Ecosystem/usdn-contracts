@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 
 import { USER_1 } from "../../../utils/Constants.sol";
 import { OracleMiddlewareBaseFixture } from "../utils/Fixtures.sol";
@@ -49,8 +49,12 @@ contract TestOracleMiddlewareUpdateChainlinkTimeElapsedLimit is OracleMiddleware
     function test_RevertWhen_NonOwnerCallsUpdateChainlinkTimeElapsedLimit() public {
         uint256 newValue = chainlinkTimeElapsedLimit + 1 hours;
 
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector, USER_1, oracleMiddleware.ADMIN_ROLE()
+            )
+        );
         vm.prank(USER_1);
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, USER_1));
         oracleMiddleware.setChainlinkTimeElapsedLimit(newValue);
     }
 }

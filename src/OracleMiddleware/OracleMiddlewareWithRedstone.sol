@@ -128,7 +128,7 @@ contract OracleMiddlewareWithRedstone is IOracleMiddlewareWithRedstone, OracleMi
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IOracleMiddlewareWithRedstone
-    function setRedstoneRecentPriceDelay(uint48 newDelay) external onlyOwner {
+    function setRedstoneRecentPriceDelay(uint48 newDelay) external onlyRole(ADMIN_ROLE) {
         if (newDelay < 10 seconds) {
             revert OracleMiddlewareInvalidRecentPriceDelay(newDelay);
         }
@@ -141,7 +141,7 @@ contract OracleMiddlewareWithRedstone is IOracleMiddlewareWithRedstone, OracleMi
     }
 
     /// @inheritdoc IOracleMiddlewareWithRedstone
-    function setPenaltyBps(uint16 newPenaltyBps) external onlyOwner {
+    function setPenaltyBps(uint16 newPenaltyBps) external onlyRole(ADMIN_ROLE) {
         // penalty greater than max 10%
         if (newPenaltyBps > 1000) {
             revert OracleMiddlewareInvalidPenaltyBps();

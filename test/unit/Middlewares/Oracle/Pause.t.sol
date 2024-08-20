@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 
 import { USER_1 } from "../../../utils/Constants.sol";
@@ -69,14 +69,17 @@ contract TestOracleMiddlewarePythFeedId is OracleMiddlewareBaseFixture, Pausable
      * @custom:then It should revert with `OwnableUnauthorizedAccount`
      */
     function test_RevertWhen_PauseAndUnpauseByNonAdmin() public {
+        bytes memory customError_ = abi.encodeWithSelector(
+            IAccessControl.AccessControlUnauthorizedAccount.selector, USER_1, oracleMiddleware.PAUSABLE_ROLE()
+        );
         vm.prank(USER_1);
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, USER_1));
+        vm.expectRevert(customError_);
         oracleMiddleware.pausePriceValidation();
 
         oracleMiddleware.pausePriceValidation();
 
         vm.prank(USER_1);
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, USER_1));
+        vm.expectRevert(customError_);
         oracleMiddleware.unpausePriceValidation();
     }
 }
