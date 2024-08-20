@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import { ADMIN, DEPLOYER } from "../../utils/Constants.sol";
@@ -308,7 +309,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         vm.prank(address(protocol));
         usdn.mint(address(this), 100 ether);
 
-        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidUsdn.selector, address(usdn)));
+        vm.expectRevert(abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, address(0)));
         protocol.initialize(INITIAL_DEPOSIT, INITIAL_POSITION, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE));
     }
 
@@ -324,6 +325,17 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
             INITIAL_DEPOSIT, INITIAL_POSITION, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE)
         );
         assertEq(address(this).balance, balanceBefore, "balance");
+    }
+
+    function test_RevertWhen_Frontrun() public {
+        bytes32 DEFAULT_ADMIN_ROLE = 0x00;
+        vm.prank(address(0));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector, address(0), DEFAULT_ADMIN_ROLE
+            )
+        );
+        protocol.initialize(INITIAL_DEPOSIT, INITIAL_POSITION, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE));
     }
 
     receive() external payable { }
