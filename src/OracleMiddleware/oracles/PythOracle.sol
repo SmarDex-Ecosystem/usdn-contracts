@@ -168,7 +168,12 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
         returns (FormattedPythPrice memory price_)
     {
         // we use getPriceUnsafe to get the latest price without reverting, no matter how old
-        PythStructs.Price memory pythPrice = _pyth.getPriceUnsafe(_pythFeedId);
+        PythStructs.Price memory pythPrice;
+        // if the proxy implementation changes, this can revert
+        try _pyth.getPriceUnsafe(_pythFeedId) returns (PythStructs.Price memory unsafePrice_) {
+            pythPrice = unsafePrice_;
+        } catch { }
+
         // negative or zero prices are considered invalid, we return zero
         if (pythPrice.price <= 0) {
             return price_;

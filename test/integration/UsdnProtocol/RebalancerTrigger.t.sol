@@ -125,6 +125,7 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
             uint256(protocol.getDepositExpoImbalanceLimitBps()),
             uint256(protocol.getWithdrawalExpoImbalanceLimitBps()),
             0,
+            0,
             0
         );
         vm.stopPrank();

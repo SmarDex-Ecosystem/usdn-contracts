@@ -436,8 +436,11 @@ interface IUsdnProtocolTypes {
      * position
      * @param _closeExpoImbalanceLimitBps The imbalance limit of the vault expo for close actions (in basis points)
      * As soon as the difference between the vault expo and the long expo exceeds this basis point limit in favor
-     * of the vault, the withdrawal vault rebalancing mechanism is triggered, preventing the close of an existing long
-     * position
+     * of the vault, the close rebalancing mechanism is triggered, preventing the close of an existing long position
+     * @param _rebalancerCloseExpoImbalanceLimitBps The imbalance limit of the vault expo for close actions from the
+     * rebalancer (in basis points). As soon as the difference between the vault expo and the long expo exceeds this
+     * basis point limit in favor of the vault, the close rebalancing mechanism is triggered, preventing the close of an
+     * existing long position from the rebalancer contract
      * @param _longImbalanceTargetBps The target imbalance on the long side (in basis points)
      * This value will be used to calculate how much of the missing trading expo the rebalancer position will try to
      * compensate
@@ -507,6 +510,7 @@ interface IUsdnProtocolTypes {
         int256 _withdrawalExpoImbalanceLimitBps;
         int256 _depositExpoImbalanceLimitBps;
         int256 _closeExpoImbalanceLimitBps;
+        int256 _rebalancerCloseExpoImbalanceLimitBps;
         int256 _longImbalanceTargetBps;
         uint16 _positionFeeBps;
         uint16 _vaultFeeBps;

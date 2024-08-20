@@ -370,6 +370,15 @@ interface IUsdnProtocolFallback {
     function getCloseExpoImbalanceLimitBps() external view returns (int256 closeExpoImbalanceLimitBps_);
 
     /**
+     * @notice Returns the limit of the imbalance in bps to close the rebalancer position
+     * @return rebalancerCloseExpoImbalanceLimitBps_ The limit of the imbalance in bps to close the rebalancer position
+     */
+    function getRebalancerCloseExpoImbalanceLimitBps()
+        external
+        view
+        returns (int256 rebalancerCloseExpoImbalanceLimitBps_);
+
+    /**
      * @notice Returns the target imbalance to have on the long side after the creation of a rebalancer position
      * @dev The creation of the rebalancer position aims for this target but does not guarantee to hit it
      * @return targetLongImbalance_ The target long imbalance
@@ -633,6 +642,7 @@ interface IUsdnProtocolFallback {
      * @param newDepositLimitBps The new deposit limit
      * @param newWithdrawalLimitBps The new withdrawal limit
      * @param newCloseLimitBps The new close limit
+     * @param newRebalancerCloseLimitBps The new rebalancer close limit
      * @param newLongImbalanceTargetBps The new target imbalance limit for the long side
      * A positive value will target below equilibrium, a negative one will target above equilibrium
      */
@@ -641,6 +651,7 @@ interface IUsdnProtocolFallback {
         uint256 newDepositLimitBps,
         uint256 newWithdrawalLimitBps,
         uint256 newCloseLimitBps,
+        uint256 newRebalancerCloseLimitBps,
         int256 newLongImbalanceTargetBps
     ) external;
 
