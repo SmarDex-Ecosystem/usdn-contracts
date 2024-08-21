@@ -422,6 +422,30 @@ contract FuzzingSuiteTest is Test {
         );
     }
 
+    function test_canTransfer() public {
+        uint256 amount = 10 ether;
+        Sdex sdex = echidna.sdex();
+        vm.deal(DEPLOYER, amount);
+        sdex.mintAndApprove(DEPLOYER, amount, address(this), amount);
+        wsteth.mintAndApprove(DEPLOYER, amount, address(this), amount);
+        uint256 balanceBefore = DEPLOYER.balance;
+        uint256 balanceBeforeProtocol = ATTACKER.balance;
+
+        vm.prank(DEPLOYER);
+        echidna.transfer(0, amount, 1);
+        vm.prank(DEPLOYER);
+        echidna.transfer(1, amount, 1);
+        vm.prank(DEPLOYER);
+        echidna.transfer(3, amount, 1);
+
+        assertEq(DEPLOYER.balance, balanceBefore - amount, "DEPLOYER balance");
+        assertEq(sdex.balanceOf(DEPLOYER), balanceBefore - amount, "DEPLOYER sdex balance");
+        assertEq(wsteth.balanceOf(DEPLOYER), balanceBefore - amount, "DEPLOYER wsteth balance");
+        assertEq(ATTACKER.balance, balanceBeforeProtocol + amount, "protocol balance");
+        assertEq(sdex.balanceOf(ATTACKER), balanceBeforeProtocol + amount, "protocol sdex balance");
+        assertEq(wsteth.balanceOf(ATTACKER), balanceBeforeProtocol + amount, "protocol wsteth balance");
+    }
+
     function _validateCloseAndAssert(
         uint256 securityDeposit,
         uint128 wstethOpenPositionAmount,
