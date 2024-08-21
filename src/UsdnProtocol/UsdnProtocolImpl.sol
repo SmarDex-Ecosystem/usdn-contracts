@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
-import { AccessControlDefaultAdminRulesUpgradeable } from
-    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { UUPSUpgradeable } from "solady/src/utils/UUPSUpgradeable.sol";
 
@@ -37,7 +35,7 @@ contract UsdnProtocolImpl is
         Managers memory managers,
         IUsdnProtocolFallback protocolFallback
     ) public initializer {
-        __AccessControlDefaultAdminRules_init(0, msg.sender);
+        __AccessControlDefaultAdminRules_init_unchained(0, msg.sender);
         __initializeReentrancyGuard_init();
         // roles
         _setRoleAdmin(SET_EXTERNAL_ROLE, ADMIN_SET_EXTERNAL_ROLE);
@@ -69,6 +67,7 @@ contract UsdnProtocolImpl is
         s._withdrawalExpoImbalanceLimitBps = 600;
         s._depositExpoImbalanceLimitBps = 500;
         s._closeExpoImbalanceLimitBps = 600;
+        s._rebalancerCloseExpoImbalanceLimitBps = 500;
         s._longImbalanceTargetBps = 550;
         s._positionFeeBps = 4; // 0.04%
         s._vaultFeeBps = 4; // 0.04%

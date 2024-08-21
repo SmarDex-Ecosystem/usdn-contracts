@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import { ADMIN, DEPLOYER } from "../../utils/Constants.sol";
@@ -149,7 +150,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      * @custom:then The transaction completes successfully
      */
     function test_checkInitImbalance() public {
-        protocol.setExpoImbalanceLimits(200, 200, 0, 0, 0); // 2%
+        protocol.setExpoImbalanceLimits(200, 200, 0, 0, 0, 0); // 2%
 
         uint128 depositAmount = 100 ether;
         uint128 longAmount = 100 ether;
@@ -170,7 +171,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      * @custom:then The transaction completes successfully
      */
     function test_checkInitImbalanceDisabled() public {
-        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0); // disabled
+        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0, 0); // disabled
 
         uint128 depositAmount = 1000 ether;
         uint128 longAmount = 100 ether;
@@ -188,7 +189,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      * @custom:then The transaction reverts with the error `UsdnProtocolImbalanceLimitReached`
      */
     function test_RevertWhen_checkInitImbalanceDepositTooBig() public {
-        protocol.setExpoImbalanceLimits(0, 200, 0, 0, 0); // 2% for deposit
+        protocol.setExpoImbalanceLimits(0, 200, 0, 0, 0, 0); // 2% for deposit
 
         uint128 depositAmount = 102.01 ether;
         uint128 longAmount = 100 ether;
@@ -204,7 +205,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      * @custom:then The transaction reverts with the error `UsdnProtocolImbalanceLimitReached`
      */
     function test_RevertWhen_checkInitImbalanceLongTooBig() public {
-        protocol.setExpoImbalanceLimits(200, 0, 0, 0, 0); // 2% for open
+        protocol.setExpoImbalanceLimits(200, 0, 0, 0, 0, 0); // 2% for open
 
         uint128 depositAmount = 100 ether;
         uint128 longAmount = 102.01 ether;
@@ -328,6 +329,23 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
             INITIAL_DEPOSIT, INITIAL_POSITION, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE)
         );
         assertEq(address(this).balance, balanceBefore, "balance");
+    }
+
+    /**
+     * @custom:scenario Frontrun the protocol initialization by calling the `initialize` function with a non-admin
+     * address
+     * @custom:when The attacker calls the `initialize` function
+     * @custom:then The transaction reverts with the error `AccessControlUnauthorizedAccount`
+     */
+    function test_RevertWhen_Frontrun() public {
+        bytes32 DEFAULT_ADMIN_ROLE = 0x00;
+        vm.prank(address(0));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector, address(0), DEFAULT_ADMIN_ROLE
+            )
+        );
+        protocol.initialize(INITIAL_DEPOSIT, INITIAL_POSITION, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE));
     }
 
     receive() external payable { }

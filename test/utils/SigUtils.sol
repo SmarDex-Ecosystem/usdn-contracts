@@ -30,8 +30,4 @@ contract SigUtils {
     function getTypedDataHash(Permit memory _permit) public view returns (bytes32) {
         return keccak256(abi.encodePacked("\x19\x01", _domainSeparator, getStructHash(_permit)));
     }
-
-    // force ignore from coverage report
-    // until https://github.com/foundry-rs/foundry/issues/2988 is fixed
-    function test() public { }
 }

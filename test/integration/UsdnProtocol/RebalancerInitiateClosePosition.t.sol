@@ -23,15 +23,17 @@ contract TestRebalancerInitiateClosePosition is
     uint256 constant BASE_AMOUNT = 1000 ether;
     uint88 internal amountInRebalancer;
     uint128 internal version;
-    uint256 internal posAmount;
     PositionData internal previousPositionData;
+    PositionId internal prevPosId;
+    Position internal protocolPosition;
+    uint128 internal wstEthPrice;
 
     function setUp() public {
-        (, amountInRebalancer,,) = _setUpImbalanced();
+        (, amountInRebalancer,,) = _setUpImbalanced(15 ether);
         skip(5 minutes);
 
-        uint128 wstEthPrice = 1490 ether;
         {
+            wstEthPrice = 1490 ether;
             uint128 ethPrice = uint128(wstETH.getWstETHByStETH(wstEthPrice)) / 1e10;
             mockPyth.setPrice(int64(uint64(ethPrice)));
             mockPyth.setLastPublishTime(block.timestamp);
@@ -43,19 +45,17 @@ contract TestRebalancerInitiateClosePosition is
 
         version = rebalancer.getPositionVersion();
         previousPositionData = rebalancer.getPositionData(version);
-        (Position memory protocolPosition,) = protocol.getLongPosition(
-            PositionId({
-                tick: previousPositionData.tick,
-                tickVersion: previousPositionData.tickVersion,
-                index: previousPositionData.index
-            })
-        );
-        posAmount = protocolPosition.amount;
+        prevPosId = PositionId({
+            tick: previousPositionData.tick,
+            tickVersion: previousPositionData.tickVersion,
+            index: previousPositionData.index
+        });
+        (protocolPosition,) = protocol.getLongPosition(prevPosId);
     }
 
     function test_setUp() public view {
         assertGt(rebalancer.getPositionVersion(), 0, "The rebalancer version should be updated");
-        assertGt(posAmount - previousPositionData.amount, 0, "The protocol bonus should be positive");
+        assertGt(protocolPosition.amount - previousPositionData.amount, 0, "The protocol bonus should be positive");
     }
 
     /**
@@ -68,7 +68,8 @@ contract TestRebalancerInitiateClosePosition is
      * @custom:and The user action is pending in protocol
      */
     function test_rebalancerInitiateClosePositionPartial() public {
-        uint88 amount = amountInRebalancer / 20;
+        // choose an amount small enough to not trigger imbalance limits
+        uint88 amount = amountInRebalancer / 100;
 
         uint256 amountToCloseWithoutBonus = FixedPointMathLib.fullMulDiv(
             amount,
@@ -78,7 +79,8 @@ contract TestRebalancerInitiateClosePosition is
         );
 
         uint256 amountToClose = amountToCloseWithoutBonus
-            + amountToCloseWithoutBonus * (posAmount - previousPositionData.amount) / previousPositionData.amount;
+            + amountToCloseWithoutBonus * (protocolPosition.amount - previousPositionData.amount)
+                / previousPositionData.amount;
 
         vm.expectEmit();
         emit ClosePositionInitiated(address(this), amount, amountToClose, amountInRebalancer - amount);
@@ -116,6 +118,29 @@ contract TestRebalancerInitiateClosePosition is
     }
 
     /**
+     * @custom:scenario The close would push the imbalance above the limit for the rebalancer
+     * @custom:when The user wants to close with an amount that imbalance the protocol too much
+     * @custom:then The call reverts with a UsdnProtocolImbalanceLimitReached error
+     */
+    function test_RevertWhen_rebalancerInitiateClosePositionPartialTriggerImbalanceLimit() public {
+        // choose an amount big enough to trigger imbalance limits
+        uint88 amount = amountInRebalancer / 20;
+        uint256 securityDeposit = protocol.getSecurityDepositValue();
+
+        int256 currentVaultExpo = int256(protocol.getBalanceVault()) + protocol.getPendingBalanceVault();
+        int256 newLongExpo = int256(protocol.getTotalExpo() - protocolPosition.totalExpo / 20)
+            - (
+                int256(protocol.getBalanceLong())
+                    - protocol.getPositionValue(prevPosId, wstEthPrice, uint128(block.timestamp)) / 20
+            );
+        int256 expectedImbalance = (currentVaultExpo - newLongExpo) * 10_000 / newLongExpo;
+        emit log_named_int("expectedImbalance", expectedImbalance);
+
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolImbalanceLimitReached.selector, expectedImbalance));
+        rebalancer.initiateClosePosition{ value: securityDeposit }(amount, address(this), "", EMPTY_PREVIOUS_DATA);
+    }
+
+    /**
      * @custom:scenario Closes entirely a rebalancer amount
      * @custom:when The user calls the rebalancer's `initiateClosePosition` function with his entire rebalancer amount
      * @custom:then A ClosePositionInitiated event is emitted
@@ -125,7 +150,7 @@ contract TestRebalancerInitiateClosePosition is
      */
     function test_rebalancerInitiateClosePosition() public {
         vm.prank(SET_PROTOCOL_PARAMS_MANAGER);
-        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
+        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0, 0);
 
         uint256 amountToCloseWithoutBonus = FixedPointMathLib.fullMulDiv(
             amountInRebalancer,
@@ -135,7 +160,8 @@ contract TestRebalancerInitiateClosePosition is
         );
 
         uint256 amountToClose = amountToCloseWithoutBonus
-            + amountToCloseWithoutBonus * (posAmount - previousPositionData.amount) / previousPositionData.amount;
+            + amountToCloseWithoutBonus * (protocolPosition.amount - previousPositionData.amount)
+                / previousPositionData.amount;
 
         vm.expectEmit();
         emit ClosePositionInitiated(address(this), amountInRebalancer, amountToClose, 0);
@@ -169,7 +195,7 @@ contract TestRebalancerInitiateClosePosition is
      */
     function test_rebalancerInitiateClosePositionRefundsExcessEther() public {
         vm.prank(SET_PROTOCOL_PARAMS_MANAGER);
-        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
+        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0, 0);
 
         uint256 securityDeposit = protocol.getSecurityDepositValue();
         uint256 userBalanceBefore = address(this).balance;

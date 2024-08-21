@@ -22,7 +22,7 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
     int24 public tickSpacing;
 
     function setUp() public {
-        (tickSpacing, amountInRebalancer, posToLiquidate, tickToLiquidateData) = _setUpImbalanced();
+        (tickSpacing, amountInRebalancer, posToLiquidate, tickToLiquidateData) = _setUpImbalanced(10 ether);
     }
 
     /**
@@ -133,6 +133,7 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
             uint256(protocol.getOpenExpoImbalanceLimitBps()),
             uint256(protocol.getDepositExpoImbalanceLimitBps()),
             uint256(protocol.getWithdrawalExpoImbalanceLimitBps()),
+            0,
             0,
             0
         );

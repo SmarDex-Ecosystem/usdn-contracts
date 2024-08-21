@@ -64,6 +64,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         int256 withdrawalExpoImbalanceLimitBps;
         int256 openExpoImbalanceLimitBps;
         int256 closeExpoImbalanceLimitBps;
+        int256 rebalancerCloseExpoImbalanceLimitBps;
         int256 longImbalanceTargetBps;
     }
 
@@ -199,7 +200,6 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
                 testParams.initialLong, testParams.initialPrice, liqPriceWithoutPenalty
             );
             testParams.initialDeposit = positionTotalExpo - testParams.initialLong;
-            emit log_named_decimal_uint("initial deposit", testParams.initialDeposit, 18);
         }
 
         // leverage approx 2x
@@ -231,7 +231,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         skip(oracleMiddleware.getValidationDelay() + 1);
     }
 
-    function _setUpImbalanced()
+    function _setUpImbalanced(uint128 additionalLongAmount)
         internal
         returns (
             int24 tickSpacing_,
@@ -257,10 +257,11 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             withdrawalExpoImbalanceLimitBps: protocol.getWithdrawalExpoImbalanceLimitBps(),
             openExpoImbalanceLimitBps: protocol.getOpenExpoImbalanceLimitBps(),
             closeExpoImbalanceLimitBps: protocol.getCloseExpoImbalanceLimitBps(),
+            rebalancerCloseExpoImbalanceLimitBps: protocol.getRebalancerCloseExpoImbalanceLimitBps(),
             longImbalanceTargetBps: protocol.getLongImbalanceTargetBps()
         });
 
-        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
+        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0, 0);
 
         vm.stopPrank();
 
@@ -291,7 +292,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             uint128 wstEthPrice = 2000 ether;
             uint128 ethPrice = uint128(wstETH.getWstETHByStETH(wstEthPrice));
             mockPyth.setPrice(int64(uint64(ethPrice / 1e10)));
-            mockPyth.setLastPublishTime(block.timestamp);
+            mockPyth.setLastPublishTime(block.timestamp - 1);
         }
 
         uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.ValidateDeposit);
@@ -300,7 +301,13 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
         // open a position to liquidate and trigger the rebalancer
         (, posToLiquidate_) = protocol.initiateOpenPosition{ value: messageValue }(
-            10 ether, 1500 ether, payable(address(this)), payable(address(this)), NO_PERMIT2, "", EMPTY_PREVIOUS_DATA
+            additionalLongAmount,
+            1500 ether,
+            payable(address(this)),
+            payable(address(this)),
+            NO_PERMIT2,
+            "",
+            EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
@@ -318,6 +325,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             uint256(defaultLimits.withdrawalExpoImbalanceLimitBps),
             uint256(defaultLimits.openExpoImbalanceLimitBps),
             uint256(defaultLimits.closeExpoImbalanceLimitBps),
+            uint256(defaultLimits.rebalancerCloseExpoImbalanceLimitBps),
             defaultLimits.longImbalanceTargetBps
         );
     }

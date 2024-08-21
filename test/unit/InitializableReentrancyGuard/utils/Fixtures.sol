@@ -18,8 +18,4 @@ contract InitializableReentrancyGuardFixtures is BaseFixture {
         // To have ether to send for reentrancy tests
         vm.deal(address(handler), 1);
     }
-
-    // force ignore from coverage report
-    // until https://github.com/foundry-rs/foundry/issues/2988 is fixed
-    function test() public override { }
 }
