@@ -403,7 +403,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         assertEq(longAction.closePosTotalExpo, action.var3, "action pos total expo");
         assertEq(longAction.tickVersion, action.var4, "action version");
         assertEq(longAction.index, action.var5, "action index");
-        assertEq(longAction.closeLiqMultiplier, action.var6, "action liq multiplier");
+        assertEq(longAction.liqMultiplier, action.var6, "action liq multiplier");
         assertEq(longAction.closeBoundedPositionValue, action.var7, "action pos value");
         PendingAction memory result = protocol.i_convertLongPendingAction(longAction);
         _assertActionsEqual(action, result, "long pending action conversion");

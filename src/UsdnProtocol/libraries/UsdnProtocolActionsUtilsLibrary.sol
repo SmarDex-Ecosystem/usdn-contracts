@@ -222,7 +222,7 @@ library UsdnProtocolActionsUtilsLibrary {
             closePosTotalExpo: 0,
             tickVersion: data.posId.tickVersion,
             index: data.posId.index,
-            closeLiqMultiplier: 0,
+            liqMultiplier: data.liqMultiplier,
             closeBoundedPositionValue: 0
         });
         amountToRefund_ = Core._addPendingAction(s, validator, Core._convertLongPendingAction(action));
@@ -467,7 +467,7 @@ library UsdnProtocolActionsUtilsLibrary {
             closePosTotalExpo: data.totalExpoToClose,
             tickVersion: posId.tickVersion,
             index: posId.index,
-            closeLiqMultiplier: Long._calcFixedPrecisionMultiplier(data.lastPrice, data.longTradingExpo, data.liqMulAcc),
+            liqMultiplier: Long._calcFixedPrecisionMultiplier(data.lastPrice, data.longTradingExpo, data.liqMulAcc),
             closeBoundedPositionValue: data.tempPositionValue
         });
         amountToRefund_ = Core._addPendingAction(s, validator, Core._convertLongPendingAction(action));

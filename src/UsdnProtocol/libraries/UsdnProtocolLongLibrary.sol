@@ -609,19 +609,38 @@ library UsdnProtocolLongLibrary {
             return data_;
         }
 
+        // gas savings, we only load the data once and use it for all conversions below
+        Types.TickPriceConversionData memory conversionData = Types.TickPriceConversionData({
+            assetPrice: s._lastPrice,
+            tradingExpo: s._totalExpo - s._balanceLong,
+            accumulator: s._liqMultiplierAccumulator,
+            tickSpacing: s._tickSpacing
+        });
         // we calculate the closest valid tick down for the desired liq price with liquidation penalty
-        data_.posId.tick = getEffectiveTickForPrice(s, desiredLiqPrice);
+        data_.posId.tick = getEffectiveTickForPrice(
+            desiredLiqPrice,
+            conversionData.assetPrice,
+            conversionData.tradingExpo,
+            conversionData.accumulator,
+            conversionData.tickSpacing
+        );
         data_.liquidationPenalty = getTickLiquidationPenalty(s, data_.posId.tick);
 
         // calculate effective liquidation price
-        uint128 liqPrice = getEffectivePriceForTick(s, data_.posId.tick);
+        uint128 liqPrice = getEffectivePriceForTick(
+            data_.posId.tick, conversionData.assetPrice, conversionData.tradingExpo, conversionData.accumulator
+        );
 
         // liquidation price must be at least x% below the current price
         _checkSafetyMargin(s, neutralPrice, liqPrice);
 
         // remove liquidation penalty for leverage and total expo calculations
-        uint128 liqPriceWithoutPenalty =
-            getEffectivePriceForTick(s, _calcTickWithoutPenalty(s, data_.posId.tick, data_.liquidationPenalty));
+        uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(
+            _calcTickWithoutPenalty(s, data_.posId.tick, data_.liquidationPenalty),
+            conversionData.assetPrice,
+            conversionData.tradingExpo,
+            conversionData.accumulator
+        );
         _checkOpenPositionLeverage(s, data_.adjustedPrice, liqPriceWithoutPenalty);
 
         data_.positionTotalExpo = _calcPositionTotalExpo(amount, data_.adjustedPrice, liqPriceWithoutPenalty);
@@ -631,6 +650,10 @@ library UsdnProtocolLongLibrary {
         data_.positionValue =
             Utils.positionValue(data_.positionTotalExpo, uint128(currentPrice.price), liqPriceWithoutPenalty);
         _checkImbalanceLimitOpen(s, data_.positionTotalExpo, amount);
+
+        data_.liqMultiplier = _calcFixedPrecisionMultiplier(
+            conversionData.assetPrice, conversionData.tradingExpo, conversionData.accumulator
+        );
     }
 
     /**

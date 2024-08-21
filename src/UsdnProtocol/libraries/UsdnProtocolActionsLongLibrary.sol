@@ -566,7 +566,7 @@ library UsdnProtocolActionsLongLibrary {
             (currentPrice.price - currentPrice.price * s._positionFeeBps / Constants.BPS_DIVISOR).toUint128();
 
         // get liquidation price (with liq penalty) to check if the position was valid at `timestamp + validationDelay`
-        data.liquidationPrice = Long._getEffectivePriceForTick(long.tick, long.closeLiqMultiplier);
+        data.liquidationPrice = Long._getEffectivePriceForTick(long.tick, long.liqMultiplier);
 
         if (currentPrice.neutralPrice <= data.liquidationPrice) {
             // position should be liquidated, we don't transfer assets to the user
@@ -588,7 +588,7 @@ library UsdnProtocolActionsLongLibrary {
 
         int24 tick = Long._calcTickWithoutPenalty(s, long.tick, Long.getTickLiquidationPenalty(s, long.tick));
         data.positionValue = Long._positionValue(
-            data.priceWithFees, Long._getEffectivePriceForTick(tick, long.closeLiqMultiplier), long.closePosTotalExpo
+            data.priceWithFees, Long._getEffectivePriceForTick(tick, long.liqMultiplier), long.closePosTotalExpo
         );
 
         uint256 assetToTransfer;

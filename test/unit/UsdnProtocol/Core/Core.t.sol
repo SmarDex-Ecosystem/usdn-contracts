@@ -605,7 +605,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
             closePosTotalExpo: 0,
             tickVersion: protocol.getTickVersion(1),
             index: 0,
-            closeLiqMultiplier: 0,
+            liqMultiplier: 0,
             closeBoundedPositionValue: 0
         });
         protocol.i_addPendingAction(USER_1, protocol.i_convertLongPendingAction(longPendingAction));
@@ -633,7 +633,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
             closePosTotalExpo: 0,
             tickVersion: protocol.getTickVersion(1) - 1,
             index: 0,
-            closeLiqMultiplier: 0,
+            liqMultiplier: 0,
             closeBoundedPositionValue: 0
         });
         protocol.i_addPendingAction(USER_1, protocol.i_convertLongPendingAction(longPendingAction));

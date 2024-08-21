@@ -161,10 +161,8 @@ interface IUsdnProtocolTypes {
      * @param closePosTotalExpo The total expo of the position (only used when closing a position)
      * @param tickVersion The version of the tick
      * @param index The index of the position in the tick list
-     * @param closeLiqMultiplier A fixed precision representation of the liquidation multiplier (with
-     * `LIQUIDATION_MULTIPLIER_DECIMALS` decimals) used to calculate the effective price for a given tick number (only
-     * used
-     * when closing a position)
+     * @param liqMultiplier A fixed precision representation of the liquidation multiplier (with
+     * `LIQUIDATION_MULTIPLIER_DECIMALS` decimals) used to calculate the effective price for a given tick number
      * @param closeBoundedPositionValue The amount that was removed from the long balance on `initiateClosePosition`
      * (only
      * used when closing a position)
@@ -180,7 +178,7 @@ interface IUsdnProtocolTypes {
         uint128 closePosTotalExpo; // 16 bytes
         uint256 tickVersion; // 32 bytes
         uint256 index; // 32 bytes
-        uint256 closeLiqMultiplier; // 32 bytes
+        uint256 liqMultiplier; // 32 bytes
         uint256 closeBoundedPositionValue; // 32 bytes
     }
 
@@ -337,6 +335,7 @@ interface IUsdnProtocolTypes {
      * @param positionTotalExpo The total expo of the position. The product of the initial collateral and the initial
      * leverage
      * @param positionValue The value of the position, taking into account the position fee
+     * @param liqMultiplier The liquidation multiplier represented with fixed precision
      * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
      */
     struct InitiateOpenPositionData {
@@ -345,6 +344,7 @@ interface IUsdnProtocolTypes {
         uint8 liquidationPenalty;
         uint128 positionTotalExpo;
         uint256 positionValue;
+        uint256 liqMultiplier;
         bool isLiquidationPending;
     }
 
@@ -376,6 +376,20 @@ interface IUsdnProtocolTypes {
         int256 tempLongBalance;
         int256 tempVaultBalance;
         uint128 lastPrice;
+    }
+
+    /**
+     * @notice Data structure for tick to price conversion functions
+     * @param assetPrice The asset price
+     * @param tradingExpo The long side trading expo
+     * @param accumulator The liquidation multiplier accumulator
+     * @param tickSpacing The tick spacing
+     */
+    struct TickPriceConversionData {
+        uint128 assetPrice;
+        uint256 tradingExpo;
+        HugeUint.Uint512 accumulator;
+        int24 tickSpacing;
     }
 
     /**
