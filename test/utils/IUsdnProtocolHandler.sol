@@ -281,6 +281,11 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
 
     function i_getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) external pure returns (uint128);
 
+    function i_getEffectiveTickForPrice(uint128 price, uint256 liqMultiplier, int24 tickSpacing)
+        external
+        pure
+        returns (int24);
+
     function i_calcFixedPrecisionMultiplier(
         uint256 assetPrice,
         uint256 longTradingExpo,

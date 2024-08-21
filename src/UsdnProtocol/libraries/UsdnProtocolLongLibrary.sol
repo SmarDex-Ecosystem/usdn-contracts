@@ -809,6 +809,44 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
+     * @notice Variant of `getEffectiveTickForPrice` when a fixed precision representation of the liquidation multiplier
+     * is known
+     * @param price The price
+     * @param liqMultiplier The liquidation price multiplier, with LIQUIDATION_MULTIPLIER_DECIMALS decimals
+     * @return tick_ The corresponding tick
+     */
+    function _getEffectiveTickForPrice(uint128 price, uint256 liqMultiplier, int24 tickSpacing)
+        public
+        pure
+        returns (int24 tick_)
+    {
+        // unadjust price with liquidation multiplier
+        uint256 unadjustedPrice = _unadjustPrice(price, liqMultiplier);
+
+        if (unadjustedPrice < TickMath.MIN_PRICE) {
+            return TickMath.minUsableTick(tickSpacing);
+        }
+
+        tick_ = TickMath.getTickAtPrice(unadjustedPrice);
+
+        // round down to the next valid tick according to _tickSpacing (towards negative infinity)
+        if (tick_ < 0) {
+            // we round up the inverse number (positive) then invert it -> round towards negative infinity
+            tick_ = -int24(int256(FixedPointMathLib.divUp(uint256(int256(-tick_)), uint256(int256(tickSpacing)))))
+                * tickSpacing;
+            // avoid invalid ticks
+            int24 minUsableTick = TickMath.minUsableTick(tickSpacing);
+            if (tick_ < minUsableTick) {
+                tick_ = minUsableTick;
+            }
+        } else {
+            // rounding is desirable here
+            // slither-disable-next-line divide-before-multiply
+            tick_ = (tick_ / tickSpacing) * tickSpacing;
+        }
+    }
+
+    /**
      * @notice Knowing the liquidation price of a position, get the corresponding unadjusted price, which can be used
      * to find the corresponding tick
      * @param price An adjusted liquidation price (taking into account the effects of funding)
@@ -836,6 +874,19 @@ library UsdnProtocolLongLibrary {
         // unadjustedPrice = price * accumulator / (assetPrice * (totalExpo - balanceLong))
         HugeUint.Uint512 memory numerator = accumulator.mul(price);
         unadjustedPrice_ = numerator.div(assetPrice * longTradingExpo);
+    }
+
+    /**
+     * @notice Variant of _unadjustPrice when a fixed precision representation of the liquidation multiplier is known
+     * @param price An adjusted liquidation price (taking into account the effects of funding)
+     * @param liqMultiplier The liquidation price multiplier, with LIQUIDATION_MULTIPLIER_DECIMALS decimals
+     * @return unadjustedPrice_ The unadjusted price for the liquidation price
+     */
+    function _unadjustPrice(uint256 price, uint256 liqMultiplier) public pure returns (uint256 unadjustedPrice_) {
+        // unadjustedPrice = price / M
+        // unadjustedPrice = price * 10^LIQUIDATION_MULTIPLIER_DECIMALS / liqMultiplier
+        unadjustedPrice_ =
+            FixedPointMathLib.fullMulDiv(price, 10 ** Constants.LIQUIDATION_MULTIPLIER_DECIMALS, liqMultiplier);
     }
 
     /**

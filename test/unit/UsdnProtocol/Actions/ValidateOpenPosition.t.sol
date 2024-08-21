@@ -31,6 +31,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         uint256 validateIndex;
         uint256 expectedLeverage;
         uint256 expectedPosValue;
+        LongPendingAction pendingAction;
     }
 
     struct InitialData {
@@ -268,31 +269,22 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
             EMPTY_PREVIOUS_DATA
         );
         (Position memory tempPos,) = protocol.getLongPosition(posId);
+        (PendingAction memory pendingAction,) = protocol.i_getPendingAction(address(this));
+        testData.pendingAction = protocol.i_toLongPendingAction(pendingAction);
 
         _waitDelay();
 
         uint128 newLiqPrice = protocol.i_getLiquidationPrice(testData.validatePrice, uint128(protocol.getMaxLeverage()));
-        testData.validateTick = protocol.getEffectiveTickForPrice(
-            newLiqPrice,
-            testData.validatePrice,
-            uint256(protocol.getLongTradingExpo(testData.validatePrice)),
-            protocol.getLiqMultiplierAccumulator(),
-            protocol.getTickSpacing()
+        testData.validateTick = protocol.i_getEffectiveTickForPrice(
+            newLiqPrice, testData.pendingAction.liqMultiplier, protocol.getTickSpacing()
         ) + liqPenalty;
         testData.validateTickVersion = protocol.getTickVersion(testData.validateTick);
 
         TickData memory tickData = protocol.getTickData(testData.validateTick);
         testData.validateIndex = tickData.totalPos;
 
-        uint128 expectedLiqPrice = protocol.getEffectivePriceForTick(
-            testData.validateTick - liqPenalty,
-            uint256(testData.validatePrice),
-            uint256(
-                protocol.longTradingExpoWithFunding(
-                    testData.validatePrice, tempPos.timestamp + uint128(oracleMiddleware.getValidationDelay())
-                )
-            ),
-            protocol.getLiqMultiplierAccumulator()
+        uint128 expectedLiqPrice = protocol.i_getEffectivePriceForTick(
+            testData.validateTick - liqPenalty, testData.pendingAction.liqMultiplier
         );
         uint128 expectedPosTotalExpo =
             protocol.i_calcPositionTotalExpo(tempPos.amount, testData.validatePrice, expectedLiqPrice);
@@ -370,7 +362,6 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         vm.prank(ADMIN);
         protocol.setLiquidationPenalty(data.originalLiqPenalty);
 
-        uint128 initiateTimeStamp = uint128(block.timestamp);
         // initiate deposit with leverage close to 10x
         (, data.tempPosId) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
@@ -381,6 +372,8 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
+        (PendingAction memory pendingAction,) = protocol.i_getPendingAction(address(this));
+        data.pendingAction = protocol.i_toLongPendingAction(pendingAction);
 
         _waitDelay();
 
@@ -389,23 +382,15 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         data.validateIndex = protocol.getTickData(data.validateTick).totalPos;
         data.expectedLeverage = protocol.i_getLeverage(
             data.validatePrice,
-            protocol.getEffectivePriceForTick(
+            protocol.i_getEffectivePriceForTick(
                 protocol.i_calcTickWithoutPenalty(data.validateTick, data.originalLiqPenalty - 1),
-                data.validatePrice,
-                uint256(protocol.getLongTradingExpo(data.validatePrice)),
-                protocol.getLiqMultiplierAccumulator()
+                data.pendingAction.liqMultiplier
             )
         );
 
-        uint128 expectedLiqPrice = protocol.getEffectivePriceForTick(
+        uint128 expectedLiqPrice = protocol.i_getEffectivePriceForTick(
             data.validateTick - int24(uint24(data.originalLiqPenalty - 1)) * protocol.getTickSpacing(),
-            uint256(data.validatePrice),
-            uint256(
-                protocol.longTradingExpoWithFunding(
-                    data.validatePrice, initiateTimeStamp + uint128(oracleMiddleware.getValidationDelay())
-                )
-            ),
-            protocol.getLiqMultiplierAccumulator()
+            data.pendingAction.liqMultiplier
         );
         uint128 expectedPosTotalExpo =
             protocol.i_calcPositionTotalExpo(uint128(LONG_AMOUNT), data.validatePrice, expectedLiqPrice);
