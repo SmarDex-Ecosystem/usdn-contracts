@@ -59,7 +59,7 @@ contract UsdnProtocolImpl is
         s._liquidationIteration = 1;
         s._protocolFeeBps = 800;
         s._rebalancerBonusBps = 8000; // 80%
-        s._liquidationPenalty = 2; // 200 ticks -> ~2.02%
+        s._liquidationPenalty = 200; // 200 ticks -> ~2.02%
         s._EMAPeriod = 5 days;
         s._fundingSF = 12 * 10 ** (Constants.FUNDING_SF_DECIMALS - 2);
         s._feeThreshold = 1 ether;

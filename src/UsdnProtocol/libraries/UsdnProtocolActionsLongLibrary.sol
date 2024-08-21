@@ -41,17 +41,15 @@ library UsdnProtocolActionsLongLibrary {
 
     /**
      * @notice Data structure for the `_validateOpenPositionWithAction` function
-     * @param tickWithoutPenalty The tick without penalty
-     * @param currentLiqPenalty The current liquidation penalty
+     * @param currentLiqPenalty The current liquidation penalty parameter value
      * @param newPosId The new position id
-     * @param liquidationPenalty The liquidation penalty
+     * @param liquidationPenalty The liquidation penalty of the tick we are considering
      * @param tickSpacing The tick spacing
      */
     struct MaxLeverageData {
-        int24 tickWithoutPenalty;
-        uint8 currentLiqPenalty;
+        uint24 currentLiqPenalty;
         Types.PositionId newPosId;
-        uint8 liquidationPenalty;
+        uint24 liquidationPenalty;
         int24 tickSpacing;
     }
 
@@ -329,34 +327,25 @@ library UsdnProtocolActionsLongLibrary {
             maxLeverageData.tickSpacing = s._tickSpacing;
             // theoretical liquidation price for _maxLeverage
             data.liqPriceWithoutPenalty = Long._getLiquidationPrice(data.startPrice, maxLeverage);
-            // adjust to the closest valid tick down
-            // we consider the liquidation multiplier as it was during the initiation, to account for any funding that
-            // was due between the initiation and the validation
-            maxLeverageData.tickWithoutPenalty = Long._getEffectiveTickForPrice(
-                data.liqPriceWithoutPenalty, data.action.liqMultiplier, maxLeverageData.tickSpacing
+            // find corresponding tick and actual liq price with current penalty setting
+            maxLeverageData.currentLiqPenalty = s._liquidationPenalty;
+            (maxLeverageData.newPosId.tick, data.liqPriceWithoutPenalty) = Long._getTickFromDesiredLiqPrice(
+                data.liqPriceWithoutPenalty,
+                data.action.liqMultiplier,
+                maxLeverageData.tickSpacing,
+                maxLeverageData.currentLiqPenalty
             );
 
-            // apply liquidation penalty with the current penalty setting
-            maxLeverageData.currentLiqPenalty = s._liquidationPenalty;
-            maxLeverageData.newPosId;
-            maxLeverageData.newPosId.tick = maxLeverageData.tickWithoutPenalty
-                + int24(uint24(maxLeverageData.currentLiqPenalty)) * maxLeverageData.tickSpacing;
             // retrieve the actual penalty for this tick we want to use
             maxLeverageData.liquidationPenalty = Long.getTickLiquidationPenalty(s, maxLeverageData.newPosId.tick);
             // check if the penalty for that tick is different from the current setting
-            if (maxLeverageData.liquidationPenalty == maxLeverageData.currentLiqPenalty) {
-                // since the tick's penalty is the same as what we assumed, we can use the `tickWithoutPenalty` from
-                // above
-                // retrieve the exact liquidation price without penalty
-                // we consider the liquidation multiplier as it was during the initiation, to account for any funding
-                // that was due between the initiation and the validation
-                data.liqPriceWithoutPenalty =
-                    Long._getEffectivePriceForTick(maxLeverageData.tickWithoutPenalty, data.action.liqMultiplier);
-            } else {
-                // the tick's imposed penalty is different from the current setting, so the `tickWithoutPenalty` we
-                // calculated above can't be used to calculate the leverage
+            // if the penalty is the same, then the `data.liqPriceWithoutPenalty` is the correct liquidation price
+            // already
+            if (maxLeverageData.liquidationPenalty != maxLeverageData.currentLiqPenalty) {
+                // the tick's imposed penalty is different from the current setting, so the `liqPriceWithoutPenalty` we
+                // got above can't be used to calculate the leverage
                 // we must instead use the tick's penalty to find the new `liqPriceWithoutPenalty` and calculate the
-                // leverage
+                // total expo
 
                 // note: In case the tick liquidation penalty is lower than the current setting, it might lead to a
                 // leverage that exceeds the max leverage slightly. We allow this behavior in this rare occurrence
@@ -365,7 +354,7 @@ library UsdnProtocolActionsLongLibrary {
                 // we consider the liquidation multiplier as it was during the initiation, to account for any funding
                 // that was due between the initiation and the validation
                 data.liqPriceWithoutPenalty = Long._getEffectivePriceForTick(
-                    Long._calcTickWithoutPenalty(s, maxLeverageData.newPosId.tick, maxLeverageData.liquidationPenalty),
+                    Utils.calcTickWithoutPenalty(maxLeverageData.newPosId.tick, maxLeverageData.liquidationPenalty),
                     data.action.liqMultiplier
                 );
             }
@@ -422,7 +411,7 @@ library UsdnProtocolActionsLongLibrary {
         {
             Types.TickData storage tickData = s._tickData[data.tickHash];
             uint256 unadjustedTickPrice =
-                TickMath.getPriceAtTick(data.action.tick - int24(uint24(data.liquidationPenalty)) * s._tickSpacing);
+                TickMath.getPriceAtTick(Utils.calcTickWithoutPenalty(data.action.tick, data.liquidationPenalty));
             tickData.totalExpo = tickData.totalExpo + expoAfter - expoBefore;
             s._liqMultiplierAccumulator = s._liqMultiplierAccumulator.add(
                 HugeUint.wrap(expoAfter * unadjustedTickPrice)
@@ -598,7 +587,7 @@ library UsdnProtocolActionsLongLibrary {
             return (false, false);
         }
 
-        int24 tick = Long._calcTickWithoutPenalty(s, long.tick, Long.getTickLiquidationPenalty(s, long.tick));
+        int24 tick = Utils.calcTickWithoutPenalty(long.tick, Long.getTickLiquidationPenalty(s, long.tick));
         data.positionValue = Long._positionValue(
             data.priceWithFees, Long._getEffectivePriceForTick(tick, long.liqMultiplier), long.closePosTotalExpo
         );

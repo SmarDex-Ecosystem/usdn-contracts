@@ -173,7 +173,7 @@ interface IUsdnProtocolFallback {
     /**
      * @notice The liquidation tick spacing for storing long positions
      * @dev A tick spacing of 1 is equivalent to a 0.01% increase in liquidation price between ticks. A tick spacing of
-     * 100 is equivalent to a 1% increase in liquidation price between ticks
+     * 100 is equivalent to a ~1.005% increase in liquidation price between ticks
      * @return The tick spacing
      */
     function getTickSpacing() external view returns (int24);
@@ -260,9 +260,9 @@ interface IUsdnProtocolFallback {
 
     /**
      * @notice Get the liquidation penalty applied to the liquidation price when opening a position
-     * @return The liquidation penalty (in tick spacing units)
+     * @return The liquidation penalty (in ticks)
      */
-    function getLiquidationPenalty() external view returns (uint8);
+    function getLiquidationPenalty() external view returns (uint24);
 
     /**
      * @notice Get the safety margin for the liquidation price of newly open positions
@@ -578,10 +578,10 @@ interface IUsdnProtocolFallback {
     function setMaxLeverage(uint256 newMaxLeverage) external;
 
     /**
-     * @notice Set the new liquidation penalty (in tick spacing units)
+     * @notice Set the new liquidation penalty (in ticks)
      * @param newLiquidationPenalty The new liquidation penalty
      */
-    function setLiquidationPenalty(uint8 newLiquidationPenalty) external;
+    function setLiquidationPenalty(uint24 newLiquidationPenalty) external;
 
     /**
      * @notice Set the new exponential moving average period of the funding rate

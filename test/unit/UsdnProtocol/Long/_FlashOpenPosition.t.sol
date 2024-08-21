@@ -38,20 +38,13 @@ contract TestUsdnProtocolLongFlashOpenPosition is UsdnProtocolBaseFixture {
         uint128 tickPriceWithoutPenalty = protocol.getEffectivePriceForTick(
             tickWithoutPenalty, CURRENT_PRICE, longTradingExpo, liqMultiplierAccumulator
         );
-        int24 tick = tickWithoutPenalty + int24(uint24(protocol.getLiquidationPenalty())) * _tickSpacing;
+        int24 tick = tickWithoutPenalty + int24(protocol.getLiquidationPenalty());
         uint128 positionTotalExpo = protocol.i_calcPositionTotalExpo(AMOUNT, CURRENT_PRICE, tickPriceWithoutPenalty);
         uint256 longPositionsCountBefore = protocol.getTotalLongPositions();
 
         _expectEmit(positionTotalExpo, PositionId(tick, 0, 0));
         (PositionId memory posId) = protocol.i_flashOpenPosition(
-            address(this),
-            CURRENT_PRICE,
-            tickWithoutPenalty,
-            AMOUNT,
-            TOTAL_EXPO,
-            BALANCE_LONG,
-            BALANCE_VAULT,
-            liqMultiplierAccumulator
+            address(this), CURRENT_PRICE, tick, positionTotalExpo, protocol.getLiquidationPenalty(), AMOUNT
         );
 
         assertEq(posId.tick, tick, "The tick should be the expected tick");
@@ -75,8 +68,7 @@ contract TestUsdnProtocolLongFlashOpenPosition is UsdnProtocolBaseFixture {
      * @custom:and The created position has the same penalty as the positions in the tick
      */
     function test_flashOpenPositionOnTickWithDifferentPenalty() public {
-        int24 tickWithoutOldPenalty =
-            initialPosition.tick - int24(uint24(protocol.getLiquidationPenalty())) * _tickSpacing;
+        int24 tickWithoutOldPenalty = protocol.i_calcTickWithoutPenalty(initialPosition.tick);
         int24 tickWithoutNewPenalty = initialPosition.tick - _tickSpacing;
         uint128 tickPriceWithoutOldPenalty = protocol.getEffectivePriceForTick(
             tickWithoutOldPenalty, CURRENT_PRICE, longTradingExpo, liqMultiplierAccumulator
@@ -85,18 +77,16 @@ contract TestUsdnProtocolLongFlashOpenPosition is UsdnProtocolBaseFixture {
         uint256 longPositionsCountBefore = protocol.getTotalLongPositions();
 
         vm.prank(ADMIN);
-        protocol.setLiquidationPenalty(1);
+        protocol.setLiquidationPenalty(100);
 
         _expectEmit(positionTotalExpo, PositionId(initialPosition.tick, 0, 1));
         (PositionId memory posId) = protocol.i_flashOpenPosition(
             address(this),
             CURRENT_PRICE,
-            tickWithoutNewPenalty,
-            AMOUNT,
-            TOTAL_EXPO,
-            BALANCE_LONG,
-            BALANCE_VAULT,
-            liqMultiplierAccumulator
+            tickWithoutNewPenalty + 100,
+            positionTotalExpo,
+            protocol.getLiquidationPenalty(),
+            AMOUNT
         );
 
         assertEq(

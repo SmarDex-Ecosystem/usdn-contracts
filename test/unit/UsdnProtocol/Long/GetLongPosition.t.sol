@@ -66,7 +66,7 @@ contract TestGetLongPosition is UsdnProtocolBaseFixture {
         int24 expectedTick = protocol.getEffectiveTickForPrice(params.initialPrice / 2);
         uint128 adjustedPrice =
             uint128(params.initialPrice + (params.initialPrice * protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR());
-        uint8 liqPenalty = protocol.getTickLiquidationPenalty(expectedTick);
+        uint24 liqPenalty = protocol.getTickLiquidationPenalty(expectedTick);
 
         uint128 liqPriceWithoutPenalty =
             protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(expectedTick, liqPenalty));
@@ -83,7 +83,7 @@ contract TestGetLongPosition is UsdnProtocolBaseFixture {
             })
         );
 
-        (Position memory position, uint8 liquidationPenalty) = protocol.getLongPosition(posId);
+        (Position memory position, uint24 liquidationPenalty) = protocol.getLongPosition(posId);
 
         uint256 expectedTimestamp = block.timestamp - oracleMiddleware.getValidationDelay() - 1;
         assertEq(position.timestamp, expectedTimestamp, "initiate position timestamp");
