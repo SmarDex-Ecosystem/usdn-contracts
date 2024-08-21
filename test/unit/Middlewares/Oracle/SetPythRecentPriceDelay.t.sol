@@ -18,10 +18,10 @@ contract TestOracleMiddlewareSetPythRecentPriceDelay is OracleMiddlewareBaseFixt
     }
 
     /**
-     * @custom:scenario Call `setPythRecentPriceDelay` functions from non contract admin
+     * @custom:scenario Call `setPythRecentPriceDelay` functions from a wallet without the right role
      * @custom:given The initial oracle middleware state
-     * @custom:when Non admin wallet trigger `setPythRecentPriceDelay`
-     * @custom:then functions should revert with custom Ownable error
+     * @custom:when A wallet without right role trigger `setPythRecentPriceDelay`
+     * @custom:then functions should revert with custom "AccessControlUnauthorizedAccount" error
      */
     function test_RevertWhen_nonAdminWalletCallSetPythRecentPriceDelay() public {
         vm.expectRevert(

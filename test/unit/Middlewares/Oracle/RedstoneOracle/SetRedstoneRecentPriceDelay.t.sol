@@ -18,10 +18,10 @@ contract TestSetRedstoneRecentPriceDelay is OracleMiddlewareWithRedstoneFixture 
     }
 
     /**
-     * @custom:scenario Call `setRedstoneRecentPriceDelay` functions from non contract admin
+     * @custom:scenario Call `setRedstoneRecentPriceDelay` functions from a wallet without the right role
      * @custom:given The initial oracle middleware state
-     * @custom:when Non admin wallet trigger `setRedstoneRecentPriceDelay`
-     * @custom:then functions should revert with custom Ownable error
+     * @custom:when A wallet without right role trigger `setRedstoneRecentPriceDelay`
+     * @custom:then functions should revert with custom "AccessControlUnauthorizedAccount" error
      */
     function test_RevertWhen_nonAdminWalletCallSetRedstoneRecentPriceDelay() public {
         vm.expectRevert(

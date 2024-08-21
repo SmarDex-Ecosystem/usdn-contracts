@@ -27,8 +27,8 @@ contract TestOracleMiddlewareSetLowLatencyDelay is OracleMiddlewareBaseFixture {
     }
 
     /**
-     * @custom:scenario Call `setLowLatencyDelay` from non admin
-     * @custom:when The function is called from an account that is not the owner
+     * @custom:scenario Call `setLowLatencyDelay` from an account that does not have the right role
+     * @custom:when The function is called from an account that does not have the right role
      * @custom:then It should revert
      */
     function test_RevertWhen_setLowLatencyDelayNonAdmin() public {

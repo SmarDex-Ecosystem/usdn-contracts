@@ -11,12 +11,12 @@ import { OracleMiddlewareWithRedstoneFixture } from "../../utils/Fixtures.sol";
  */
 contract TestOracleMiddlewareSetPenaltyBps is OracleMiddlewareWithRedstoneFixture {
     /**
-     * @custom:scenario A user that is not the owner calls setPenaltyBps
-     * @custom:given A user that is not the owner
+     * @custom:scenario A user that without the right role calls setPenaltyBps
+     * @custom:given A user without the right role
      * @custom:when setPenaltyBps is called
      * @custom:then the transaction reverts with an OwnableUnauthorizedAccount error
      */
-    function test_RevertWhen_setPenaltyBpsByNonOwner() public {
+    function test_RevertWhen_setPenaltyBpsWithoutTheRightRole() public {
         vm.expectRevert(
             abi.encodeWithSelector(
                 IAccessControl.AccessControlUnauthorizedAccount.selector, USER_1, oracleMiddleware.ADMIN_ROLE()

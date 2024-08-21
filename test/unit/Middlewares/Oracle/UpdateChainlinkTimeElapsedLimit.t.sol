@@ -42,11 +42,11 @@ contract TestOracleMiddlewareUpdateChainlinkTimeElapsedLimit is OracleMiddleware
     }
 
     /**
-     * @custom:scenario Call the `updateChainlinkTimeElapsedLimit` function with an address that is not the owner.
-     * @custom:when An address that is not the owner calls the updateChainlinkTimeElapsedLimit function.
-     * @custom:then It reverts with a OwnableUnauthorizedAccount error from Ownable
+     * @custom:scenario Call the `updateChainlinkTimeElapsedLimit` function with a wallet without the right role.
+     * @custom:when An address doesn't have the right rol calls the updateChainlinkTimeElapsedLimit function.
+     * @custom:then It reverts with a AccessControlUnauthorizedAccount error
      */
-    function test_RevertWhen_NonOwnerCallsUpdateChainlinkTimeElapsedLimit() public {
+    function test_RevertWhen_WalletWithoutRightRoleCallsUpdateChainlinkTimeElapsedLimit() public {
         uint256 newValue = chainlinkTimeElapsedLimit + 1 hours;
 
         vm.expectRevert(
