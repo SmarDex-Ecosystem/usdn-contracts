@@ -121,11 +121,12 @@ contract FuzzActionsAdmin is Setup, Bound {
         newDepositLimitBps = bound(newDepositLimitBps, 1, type(uint256).max);
         newCloseLimitBps = bound(newCloseLimitBps, newDepositLimitBps, type(uint256).max);
         if (newWithdrawalLimitBps < Constants.BPS_DIVISOR / 2) {
-            newLongImbalanceTargetBps =
-                int256Bound(uint256(newLongImbalanceTargetBps), Constants.BPS_DIVISOR / 2, newCloseLimitBps);
+            newLongImbalanceTargetBps = int256Bound(
+                uint256(newLongImbalanceTargetBps), int256(Constants.BPS_DIVISOR / 2), int256(newCloseLimitBps)
+            );
         } else {
             newLongImbalanceTargetBps =
-                int256Bound(uint256(newLongImbalanceTargetBps), newWithdrawalLimitBps, newCloseLimitBps);
+                int256Bound(uint256(newLongImbalanceTargetBps), int256(newWithdrawalLimitBps), int256(newCloseLimitBps));
         }
         vm.prank(ADMIN);
         usdnProtocol.setExpoImbalanceLimits(
