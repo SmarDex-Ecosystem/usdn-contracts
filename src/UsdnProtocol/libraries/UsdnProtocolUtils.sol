@@ -36,7 +36,7 @@ library UsdnProtocolUtils {
     /**
      * @notice Calculate the tick without the liquidation penalty
      * @param tick The tick that holds the position
-     * @param liquidationPenalty The liquidation penalty of the tick
+     * @param liquidationPenalty The liquidation penalty of the tick, in number of ticks
      * @return tick_ The tick corresponding to the liquidation price without penalty
      */
     function calcTickWithoutPenalty(int24 tick, uint24 liquidationPenalty) internal pure returns (int24 tick_) {

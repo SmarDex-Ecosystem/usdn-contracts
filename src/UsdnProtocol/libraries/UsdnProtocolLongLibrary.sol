@@ -1331,7 +1331,7 @@ library UsdnProtocolLongLibrary {
 
         data.currentLiqPenalty = s._liquidationPenalty;
         uint128 idealLiqPrice = _calcLiqPriceFromTradingExpo(lastPrice, positionAmount, tradingExpoToFill);
-        data.liqPriceWithoutPenalty;
+
         (posData_.tick, data.liqPriceWithoutPenalty) = _getTickFromDesiredLiqPrice(
             idealLiqPrice,
             lastPrice,

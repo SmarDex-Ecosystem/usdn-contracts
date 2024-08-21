@@ -387,7 +387,7 @@ interface IUsdnProtocolTypes {
 
     /**
      * @notice Structure to hold the return values of the `_calcRebalancerPositionTick` function
-     * @param tick The tick of the rebalancer position
+     * @param tick The tick of the rebalancer position, includes liquidation penalty
      * @param totalExpo The total expo of the rebalancer position
      * @param liquidationPenalty The liquidation penalty of the tick
      */

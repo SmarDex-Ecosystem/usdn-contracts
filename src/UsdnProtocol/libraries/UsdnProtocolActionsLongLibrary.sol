@@ -41,9 +41,9 @@ library UsdnProtocolActionsLongLibrary {
 
     /**
      * @notice Data structure for the `_validateOpenPositionWithAction` function
-     * @param currentLiqPenalty The current liquidation penalty
+     * @param currentLiqPenalty The current liquidation penalty parameter value
      * @param newPosId The new position id
-     * @param liquidationPenalty The liquidation penalty
+     * @param liquidationPenalty The liquidation penalty of the tick we are considering
      */
     struct MaxLeverageData {
         uint24 currentLiqPenalty;
