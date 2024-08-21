@@ -14,7 +14,6 @@ import { IUsdnProtocolFallback } from "../interfaces/UsdnProtocol/IUsdnProtocolF
 import { HugeUint } from "../libraries/HugeUint.sol";
 import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./libraries/UsdnProtocolConstantsLibrary.sol";
-import { UsdnProtocolConstantsLibrary as Constants } from "./libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./libraries/UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolUtils as Utils } from "./libraries/UsdnProtocolUtils.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "./libraries/UsdnProtocolVaultLibrary.sol";
