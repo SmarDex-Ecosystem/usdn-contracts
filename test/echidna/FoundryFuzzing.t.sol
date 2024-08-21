@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
+import { Test } from "forge-std/Test.sol";
+
 import { USER_1, USER_2, USER_3 } from "../utils/Constants.sol";
 import { FuzzingSuite } from "./FuzzingSuite.sol";
-import { Test } from "forge-std/Test.sol";
 
 contract FoundryFuzzingTest is Test {
     FuzzingSuite public fuzzingSuite;
