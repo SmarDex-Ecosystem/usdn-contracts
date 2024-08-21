@@ -63,7 +63,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
 
     SetUpParams public params;
     SetUpParams public DEFAULT_PARAMS = SetUpParams({
-        initialDeposit: 4.919970269703463156 ether,
+        initialDeposit: 0, // 0 = auto-calculate to reach equilibrium
         initialLong: 5 ether,
         initialPrice: 2000 ether, // 2000 USD per wstETH
         initialTimestamp: 1_704_092_400, // 2024-01-01 07:00:00 UTC,
@@ -103,7 +103,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
     uint256 public usdnInitialTotalSupply;
     address[] public users;
 
-    int24 internal _tickSpacing = 100; // tick spacing 100 = 1%
+    int24 internal _tickSpacing = 100; // tick spacing 100 = ~1.005%
     PreviousActionsData internal EMPTY_PREVIOUS_DATA =
         PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
 
@@ -217,6 +217,21 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             protocol.setRebalancer(rebalancer);
         }
 
+        if (testParams.initialDeposit == 0) {
+            (, uint128 liqPriceWithoutPenalty) = protocol.i_getTickFromDesiredLiqPrice(
+                testParams.initialPrice / 2,
+                testParams.initialPrice,
+                0,
+                HugeUint.wrap(0),
+                protocol.getTickSpacing(),
+                protocol.getLiquidationPenalty()
+            );
+            uint128 positionTotalExpo = protocol.i_calcPositionTotalExpo(
+                testParams.initialLong, testParams.initialPrice, liqPriceWithoutPenalty
+            );
+            testParams.initialDeposit = positionTotalExpo - testParams.initialLong;
+        }
+
         vm.startPrank(DEPLOYER);
         // leverage approx 2x
         protocol.initialize(
@@ -256,8 +271,12 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         assertEq(usdn.balanceOf(DEPLOYER), usdnTotalSupply - protocol.MIN_USDN_SUPPLY(), "usdn deployer balance");
         int24 firstPosTick = protocol.getHighestPopulatedTick();
         (Position memory firstPos,) = protocol.getLongPosition(PositionId(firstPosTick, 0, 0));
+        uint128 liquidationPriceWithoutPenalty =
+            protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(firstPosTick), 0, 0, HugeUint.wrap(0));
+        uint128 posTotalExpo =
+            protocol.i_calcPositionTotalExpo(params.initialLong, params.initialPrice, liquidationPriceWithoutPenalty);
 
-        assertEq(firstPos.totalExpo, 9_919_970_269_703_463_156, "first position total expo");
+        assertEq(firstPos.totalExpo, posTotalExpo, "first position total expo");
         assertEq(firstPos.timestamp + 1, block.timestamp, "first pos timestamp");
         assertEq(firstPos.user, DEPLOYER, "first pos user");
         assertEq(firstPos.amount, params.initialLong, "first pos amount");

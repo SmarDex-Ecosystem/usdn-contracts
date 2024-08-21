@@ -45,7 +45,7 @@ contract TestUsdnProtocolLongCalcTickFromBitmapIndex is UsdnProtocolBaseFixture 
     /**
      * @custom:scenario Check the calculations of _calcTickFromBitmapIndex with different indexes and tick spacing
      * @custom:given an index between 0 and the highest calculable index
-     * @custom:and a tick spacing between 1 (0.01%) and 1000 (10%)
+     * @custom:and a tick spacing between 1 (0.01%) and 1000 (10.52%)
      * @custom:when _calcTickFromBitmapIndex is called
      * @custom:then The expected tick is returned
      * @custom:and The returned tick can be transformed back into the original index

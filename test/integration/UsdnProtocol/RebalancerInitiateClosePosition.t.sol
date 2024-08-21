@@ -24,27 +24,33 @@ contract TestRebalancerInitiateClosePosition is
     uint88 internal amountInRebalancer;
     uint128 internal version;
     PositionData internal previousPositionData;
+    PositionId internal prevPosId;
     Position internal protocolPosition;
+    uint128 internal wstEthPrice;
 
     function setUp() public {
-        (, amountInRebalancer,,) = _setUpImbalanced();
+        (, amountInRebalancer,,) = _setUpImbalanced(15 ether);
         skip(5 minutes);
 
-        mockPyth.setPrice(1300 ether / 1e10);
-        mockPyth.setLastPublishTime(block.timestamp);
+        {
+            wstEthPrice = 1490 ether;
+            uint128 ethPrice = uint128(wstETH.getWstETHByStETH(wstEthPrice)) / 1e10;
+            mockPyth.setPrice(int64(uint64(ethPrice)));
+            mockPyth.setLastPublishTime(block.timestamp);
+            wstEthPrice = uint128(wstETH.getStETHByWstETH(ethPrice * 1e10));
+        }
 
         uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
         protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA, 1);
 
         version = rebalancer.getPositionVersion();
         previousPositionData = rebalancer.getPositionData(version);
-        (protocolPosition,) = protocol.getLongPosition(
-            PositionId({
-                tick: previousPositionData.tick,
-                tickVersion: previousPositionData.tickVersion,
-                index: previousPositionData.index
-            })
-        );
+        prevPosId = PositionId({
+            tick: previousPositionData.tick,
+            tickVersion: previousPositionData.tickVersion,
+            index: previousPositionData.index
+        });
+        (protocolPosition,) = protocol.getLongPosition(prevPosId);
     }
 
     function test_setUp() public view {
@@ -123,8 +129,12 @@ contract TestRebalancerInitiateClosePosition is
 
         int256 currentVaultExpo = int256(protocol.getBalanceVault()) + protocol.getPendingBalanceVault();
         int256 newLongExpo = int256(protocol.getTotalExpo() - protocolPosition.totalExpo / 20)
-            - int256(protocol.getBalanceLong() - amount);
-        int256 expectedImbalance = (currentVaultExpo - newLongExpo) * 10_000 / newLongExpo - 1;
+            - (
+                int256(protocol.getBalanceLong())
+                    - protocol.getPositionValue(prevPosId, wstEthPrice, uint128(block.timestamp)) / 20
+            );
+        int256 expectedImbalance = (currentVaultExpo - newLongExpo) * 10_000 / newLongExpo;
+        emit log_named_int("expectedImbalance", expectedImbalance);
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolImbalanceLimitReached.selector, expectedImbalance));
         rebalancer.initiateClosePosition{ value: securityDeposit }(amount, address(this), "", EMPTY_PREVIOUS_DATA);

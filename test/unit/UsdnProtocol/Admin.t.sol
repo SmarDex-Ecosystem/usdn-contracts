@@ -267,7 +267,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         // liquidationPenalty greater than max disallowed
         vm.expectRevert(UsdnProtocolInvalidLiquidationPenalty.selector);
         // set liquidationPenalty
-        protocol.setLiquidationPenalty(16);
+        protocol.setLiquidationPenalty(1501);
     }
 
     /**

@@ -206,7 +206,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getLiquidationPenalty() external view returns (uint8) {
+    function getLiquidationPenalty() external view returns (uint24) {
         return s._liquidationPenalty;
     }
 
@@ -517,7 +517,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function setLiquidationPenalty(uint8 newLiquidationPenalty) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
+    function setLiquidationPenalty(uint24 newLiquidationPenalty) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
         if (newLiquidationPenalty > Constants.MAX_LIQUIDATION_PENALTY) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationPenalty();
         }

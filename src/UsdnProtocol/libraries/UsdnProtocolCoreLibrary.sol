@@ -60,16 +60,16 @@ library UsdnProtocolCoreLibrary {
         s._lastUpdateTimestamp = uint128(block.timestamp);
         s._lastPrice = currentPrice.price.toUint128();
 
-        int24 tick = Long.getEffectiveTickForPrice(s, desiredLiqPrice); // without penalty
-        uint128 liquidationPriceWithoutPenalty = Long.getEffectivePriceForTick(s, tick);
+        (int24 tickWithPenalty, uint128 liqPriceWithoutPenalty) =
+            Long._getTickFromDesiredLiqPrice(s, desiredLiqPrice, s._liquidationPenalty);
         uint128 positionTotalExpo =
-            Long._calcPositionTotalExpo(longAmount, currentPrice.price.toUint128(), liquidationPriceWithoutPenalty);
+            Long._calcPositionTotalExpo(longAmount, currentPrice.price.toUint128(), liqPriceWithoutPenalty);
 
         Vault._checkInitImbalance(s, positionTotalExpo, longAmount, depositAmount);
 
         Vault._createInitialDeposit(s, depositAmount, currentPrice.price.toUint128());
 
-        Vault._createInitialPosition(s, longAmount, currentPrice.price.toUint128(), tick, positionTotalExpo);
+        Vault._createInitialPosition(s, longAmount, currentPrice.price.toUint128(), tickWithPenalty, positionTotalExpo);
 
         ActionsVault._refundEther(address(this).balance, payable(msg.sender));
     }
@@ -830,7 +830,7 @@ library UsdnProtocolCoreLibrary {
                         s._tickBitmap.unset(_calcBitmapIndexFromTick(s, open.tick));
                     }
                     uint256 unadjustedTickPrice =
-                        TickMath.getPriceAtTick(open.tick - int24(uint24(tickData.liquidationPenalty)) * s._tickSpacing);
+                        TickMath.getPriceAtTick(Utils.calcTickWithoutPenalty(open.tick, tickData.liquidationPenalty));
                     s._totalExpo -= pos.totalExpo;
                     tickData.totalExpo -= pos.totalExpo;
                     s._liqMultiplierAccumulator =
