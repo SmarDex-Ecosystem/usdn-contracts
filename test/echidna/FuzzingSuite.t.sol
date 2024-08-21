@@ -461,4 +461,73 @@ contract FuzzingSuiteTest is Test {
         assertGt(wsteth.balanceOf(DEPLOYER), balanceWstEthBefore, "wstETH balance");
         assertLt(wsteth.balanceOf(DEPLOYER), balanceWstEthBefore + wstethOpenPositionAmount, "wstETH balance");
     }
+
+    function test_adminFunctions() public {
+        echidna.setMinLeverage(10 ** 21 * 2);
+        assertEq(usdnProtocol.getMinLeverage(), 10 ** 21 * 2, "minLeverage");
+
+        echidna.setMaxLeverage(10 ** 21 * 9);
+        assertEq(usdnProtocol.getMaxLeverage(), 10 ** 21 * 9, "maxLeverage");
+
+        echidna.setValidationDeadline(0.5 days);
+        assertEq(usdnProtocol.getValidationDeadline(), 0.5 days, "validationDeadline");
+
+        echidna.setLiquidationPenalty(10);
+        assertEq(usdnProtocol.getLiquidationPenalty(), 10, "liquidationPenalty");
+
+        echidna.setSafetyMarginBps(10);
+        assertEq(usdnProtocol.getSafetyMarginBps(), 10, "safetyMarginBps");
+
+        echidna.setLiquidationIteration(8);
+        assertEq(usdnProtocol.getLiquidationIteration(), 8, "liquidationIteration");
+
+        echidna.setEMAPeriod(1 days);
+        assertEq(usdnProtocol.getEMAPeriod(), 1 days, "emaPeriod");
+
+        echidna.setFundingSF(500);
+        assertEq(usdnProtocol.getFundingSF(), 500, "fundingSF");
+
+        echidna.setProtocolFeeBps(5000);
+        assertEq(usdnProtocol.getProtocolFeeBps(), 5000, "protocolFeeBps");
+
+        echidna.setPositionFeeBps(1000);
+        assertEq(usdnProtocol.getPositionFeeBps(), 1000, "positionFeeBps");
+
+        echidna.setVaultFeeBps(1000);
+        assertEq(usdnProtocol.getVaultFeeBps(), 1000, "vaultFeeBps");
+
+        echidna.setRebalancerBonusBps(1000);
+        assertEq(usdnProtocol.getRebalancerBonusBps(), 1000, "rebalancerBonusBps");
+
+        echidna.setSdexBurnOnDepositRatio(1e4);
+        assertEq(usdnProtocol.getSdexBurnOnDepositRatio(), 1e4, "sdexBurnOnDepositRatio");
+
+        echidna.setSecurityDepositValue(1e19);
+        assertEq(usdnProtocol.getSecurityDepositValue(), 1e19, "securityDepositValue");
+
+        echidna.setFeeThreshold(1e30);
+        assertEq(usdnProtocol.getFeeThreshold(), 1e30, "feeThreshold");
+
+        echidna.setFeeCollector(DEPLOYER);
+        assertEq(usdnProtocol.getFeeCollector(), DEPLOYER, "feeCollector");
+
+        echidna.setExpoImbalanceLimits(5000, 0, 10_000, 1, -4900);
+        assertEq(usdnProtocol.getOpenExpoImbalanceLimitBps(), 5000, "openExpoImbalanceLimitBps");
+        assertEq(usdnProtocol.getDepositExpoImbalanceLimitBps(), 1, "depositExpoImbalanceLimitBps");
+        assertEq(usdnProtocol.getWithdrawalExpoImbalanceLimitBps(), 10_000, "withdrawalExpoImbalanceLimitBps");
+        assertEq(usdnProtocol.getCloseExpoImbalanceLimitBps(), 1, "closeExpoImbalanceLimitBps");
+        assertEq(usdnProtocol.getLongImbalanceTargetBps(), -4388, "longImbalanceTargetBps");
+
+        echidna.setTargetUsdnPrice(1e18);
+        assertEq(usdnProtocol.getTargetUsdnPrice(), 1e18, "targetUsdnPrice");
+
+        echidna.setUsdnRebaseThreshold(1e30);
+        assertEq(usdnProtocol.getUsdnRebaseThreshold(), 1e30, "usdnRebaseThreshold");
+
+        echidna.setUsdnRebaseInterval(1e20);
+        assertEq(usdnProtocol.getUsdnRebaseInterval(), 1e20, "usdnRebaseInterval");
+
+        echidna.setMinLongPosition(1e24);
+        assertEq(usdnProtocol.getMinLongPosition(), 1e24, "minLongPosition");
+    }
 }

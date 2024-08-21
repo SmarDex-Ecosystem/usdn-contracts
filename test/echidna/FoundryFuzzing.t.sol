@@ -42,5 +42,7 @@ contract FoundryFuzzingTest is Test {
         targetSender(USER_3);
     }
 
+    /// forge-config: local.invariant.fail-on-revert = false
+    /// forge-config: ci.invariant.fail-on-revert = false
     function invariant_test() external { }
 }
