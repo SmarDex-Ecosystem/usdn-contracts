@@ -8,7 +8,7 @@ import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { TickMath } from "../../../../src/libraries/TickMath.sol";
 
 /**
- * @custom:feature The the `getEffectiveTickForPrice` and `getEffectiveTickForPriceNoRounding` functions
+ * @custom:feature The `getEffectiveTickForPrice` and `getEffectiveTickForPriceNoRounding` functions
  * @custom:background Given a protocol initialized with default parameters
  */
 contract TestUsdnProtocolLongGetEffectiveTickForPrice is UsdnProtocolBaseFixture {
