@@ -17,7 +17,7 @@ import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProto
 import { Permit2TokenBitfield } from "../../src/libraries/Permit2TokenBitfield.sol";
 
 contract FuzzingSuiteTest is Test {
-    FuzzingSuite public echidna;
+    FuzzingSuite public fuzzingSuite;
     IUsdnProtocolHandler public usdnProtocol;
     MockOracleMiddleware public wstEthOracleMiddleware;
     WstETH public wsteth;
@@ -30,13 +30,13 @@ contract FuzzingSuiteTest is Test {
     uint152 internal usdnShares = 100_000 ether;
 
     function setUp() public {
-        echidna = new FuzzingSuite();
-        DEPLOYER = echidna.DEPLOYER();
-        ATTACKER = echidna.ATTACKER();
-        usdnProtocol = echidna.usdnProtocol();
-        wstEthOracleMiddleware = echidna.wstEthOracleMiddleware();
-        wsteth = echidna.wsteth();
-        usdn = echidna.usdn();
+        fuzzingSuite = new FuzzingSuite();
+        DEPLOYER = fuzzingSuite.DEPLOYER();
+        ATTACKER = fuzzingSuite.ATTACKER();
+        usdnProtocol = fuzzingSuite.usdnProtocol();
+        wstEthOracleMiddleware = fuzzingSuite.wstEthOracleMiddleware();
+        wsteth = fuzzingSuite.wsteth();
+        usdn = fuzzingSuite.usdn();
         uint256 usdnBalanceBeforeInit = usdn.balanceOf(DEPLOYER);
         uint256 DEPOSIT_AMOUNT = 300 ether;
         uint256 LONG_AMOUNT = 300 ether;
@@ -44,7 +44,7 @@ contract FuzzingSuiteTest is Test {
         uint256 LIQUIDATION_PRICE = 1000 ether;
 
         vm.prank(DEPLOYER);
-        echidna.initializeUsdnProtocol(DEPOSIT_AMOUNT, LONG_AMOUNT, PRICE, LIQUIDATION_PRICE);
+        fuzzingSuite.initializeUsdnProtocol(DEPOSIT_AMOUNT, LONG_AMOUNT, PRICE, LIQUIDATION_PRICE);
         assertEq(address(usdnProtocol).balance, 0, "protocol balance");
         assertEq(
             usdn.balanceOf(DEPLOYER), usdnBalanceBeforeInit + (DEPOSIT_AMOUNT * PRICE) / 10 ** 18 - 1000, "usdn balance"
@@ -57,7 +57,7 @@ contract FuzzingSuiteTest is Test {
 
     function test_canInitiateDeposit() public {
         vm.prank(DEPLOYER);
-        echidna.initiateDeposit(0.1 ether, 10 ether, 0.5 ether, 0, 0, 1000 ether);
+        fuzzingSuite.initiateDeposit(0.1 ether, 10 ether, 0.5 ether, 0, 0, 1000 ether);
 
         IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(DEPLOYER);
         assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, "action type");
@@ -68,7 +68,7 @@ contract FuzzingSuiteTest is Test {
 
     function test_canInitiateOpenPosition() public {
         vm.prank(DEPLOYER);
-        echidna.initiateOpenPosition(5 ether, 1000 ether, 10 ether, 0, 0, 2000 ether);
+        fuzzingSuite.initiateOpenPosition(5 ether, 1000 ether, 10 ether, 0, 0, 2000 ether);
         IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(DEPLOYER);
         assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition, "action type");
         assertEq(action.to, DEPLOYER, "action to");
@@ -77,7 +77,7 @@ contract FuzzingSuiteTest is Test {
 
     function test_canInitiateWithdrawal() public {
         vm.prank(DEPLOYER);
-        echidna.initiateWithdrawal(usdnShares, 10 ether, 0, 0, 1000 ether);
+        fuzzingSuite.initiateWithdrawal(usdnShares, 10 ether, 0, 0, 1000 ether);
 
         IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(DEPLOYER);
         assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.ValidateWithdrawal, "action type");
@@ -88,7 +88,7 @@ contract FuzzingSuiteTest is Test {
     }
 
     function test_canValidateDeposit() public {
-        Sdex sdex = echidna.sdex();
+        Sdex sdex = fuzzingSuite.sdex();
         uint128 amountWstETH = 0.1 ether;
         uint256 price = 1000 ether;
 
@@ -99,7 +99,7 @@ contract FuzzingSuiteTest is Test {
         uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
         vm.deal(DEPLOYER, securityDeposit);
 
-        Permit2TokenBitfield.Bitfield NO_PERMIT2 = echidna.NO_PERMIT2();
+        Permit2TokenBitfield.Bitfield NO_PERMIT2 = fuzzingSuite.NO_PERMIT2();
 
         vm.prank(DEPLOYER);
         usdnProtocol.initiateDeposit{ value: securityDeposit }(
@@ -113,7 +113,7 @@ contract FuzzingSuiteTest is Test {
 
         skip(wstEthOracleMiddleware.getValidationDelay() + 1);
         vm.prank(DEPLOYER);
-        echidna.validateDeposit(0, price);
+        fuzzingSuite.validateDeposit(0, price);
 
         assertGt(usdn.balanceOf(DEPLOYER), balanceDeployer, "balance usdn");
     }
@@ -134,7 +134,7 @@ contract FuzzingSuiteTest is Test {
 
         skip(usdnProtocol.getValidationDeadline() + 1);
         vm.prank(DEPLOYER);
-        echidna.initiateDeposit(0.1 ether, 10 ether, 0.5 ether, 0, 0, 4000 ether);
+        fuzzingSuite.initiateDeposit(0.1 ether, 10 ether, 0.5 ether, 0, 0, 4000 ether);
 
         IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(DEPLOYER);
         assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.ValidateDeposit, "action type");
@@ -160,7 +160,7 @@ contract FuzzingSuiteTest is Test {
             liquidationPrice,
             DEPLOYER,
             payable(DEPLOYER),
-            echidna.NO_PERMIT2(),
+            fuzzingSuite.NO_PERMIT2(),
             abi.encode(etherPrice),
             EMPTY_PREVIOUS_DATA
         );
@@ -171,7 +171,7 @@ contract FuzzingSuiteTest is Test {
         uint256 balanceWstEthBefore = wsteth.balanceOf(DEPLOYER);
 
         skip(wstEthOracleMiddleware.getValidationDelay() + 1);
-        echidna.validateOpenPosition(0, etherPrice);
+        fuzzingSuite.validateOpenPosition(0, etherPrice);
 
         IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(DEPLOYER);
         assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.None, "action type");
@@ -182,7 +182,7 @@ contract FuzzingSuiteTest is Test {
 
     function test_canValidateOpenAndPendingActions() public {
         uint128 wstethOpenPositionAmount = 5 ether;
-        Sdex sdex = echidna.sdex();
+        Sdex sdex = fuzzingSuite.sdex();
         uint128 amountWstETH = 0.1 ether;
         uint128 liquidationPrice = 1000 ether;
         uint256 etherPrice = 4000 ether;
@@ -200,17 +200,27 @@ contract FuzzingSuiteTest is Test {
 
         vm.startPrank(DEPLOYER);
         usdnProtocol.initiateDeposit{ value: securityDeposit }(
-            amountWstETH / 2, USER_3, payable(USER_3), echidna.NO_PERMIT2(), abi.encode(etherPrice), EMPTY_PREVIOUS_DATA
+            amountWstETH / 2,
+            USER_3,
+            payable(USER_3),
+            fuzzingSuite.NO_PERMIT2(),
+            abi.encode(etherPrice),
+            EMPTY_PREVIOUS_DATA
         );
         usdnProtocol.initiateDeposit{ value: securityDeposit }(
-            amountWstETH / 2, USER_4, payable(USER_4), echidna.NO_PERMIT2(), abi.encode(etherPrice), EMPTY_PREVIOUS_DATA
+            amountWstETH / 2,
+            USER_4,
+            payable(USER_4),
+            fuzzingSuite.NO_PERMIT2(),
+            abi.encode(etherPrice),
+            EMPTY_PREVIOUS_DATA
         );
         usdnProtocol.initiateOpenPosition{ value: securityDeposit }(
             wstethOpenPositionAmount,
             liquidationPrice,
             DEPLOYER,
             payable(DEPLOYER),
-            echidna.NO_PERMIT2(),
+            fuzzingSuite.NO_PERMIT2(),
             abi.encode(etherPrice),
             EMPTY_PREVIOUS_DATA
         );
@@ -222,7 +232,7 @@ contract FuzzingSuiteTest is Test {
 
         skip(usdnProtocol.getValidationDeadline() + 1);
         vm.prank(DEPLOYER);
-        echidna.validateOpenPosition(0, etherPrice);
+        fuzzingSuite.validateOpenPosition(0, etherPrice);
 
         IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(DEPLOYER);
         assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.None, "action type");
@@ -249,7 +259,7 @@ contract FuzzingSuiteTest is Test {
 
         skip(wstEthOracleMiddleware.getValidationDelay() + 1);
         vm.prank(DEPLOYER);
-        echidna.validateWithdrawal(0, 4000 ether);
+        fuzzingSuite.validateWithdrawal(0, 4000 ether);
 
         IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(DEPLOYER);
         assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.None, "action type");
@@ -288,7 +298,7 @@ contract FuzzingSuiteTest is Test {
         priceData[0] = abi.encode(etherPrice);
         uint128[] memory rawIndices = new uint128[](1);
         rawIndices[0] = 0;
-        Sdex sdex = echidna.sdex();
+        Sdex sdex = fuzzingSuite.sdex();
 
         vm.deal(DEPLOYER, 10 ether);
         wsteth.mintAndApprove(
@@ -304,7 +314,7 @@ contract FuzzingSuiteTest is Test {
             amountWstETHPending / 2,
             USER_3,
             payable(USER_3),
-            echidna.NO_PERMIT2(),
+            fuzzingSuite.NO_PERMIT2(),
             abi.encode(etherPrice),
             EMPTY_PREVIOUS_DATA
         );
@@ -312,7 +322,7 @@ contract FuzzingSuiteTest is Test {
             amountWstETHPending / 2,
             USER_4,
             payable(USER_4),
-            echidna.NO_PERMIT2(),
+            fuzzingSuite.NO_PERMIT2(),
             abi.encode(etherPrice),
             EMPTY_PREVIOUS_DATA
         );
@@ -342,7 +352,7 @@ contract FuzzingSuiteTest is Test {
         skip(usdnProtocol.getValidationDeadline() + 1);
 
         vm.prank(DEPLOYER);
-        echidna.validatePendingActions(10, 4000 ether);
+        fuzzingSuite.validatePendingActions(10, 4000 ether);
 
         assertEq(DEPLOYER.balance, balanceBefore + securityDeposit * 2, "DEPLOYER balance");
         assertEq(address(usdnProtocol).balance, balanceBeforeProtocol - securityDeposit * 2, "protocol balance");
@@ -354,7 +364,7 @@ contract FuzzingSuiteTest is Test {
         uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
 
         vm.prank(DEPLOYER);
-        echidna.initiateClosePosition(securityDeposit, 0, 0, 4000 ether, 1 ether, 0);
+        fuzzingSuite.initiateClosePosition(securityDeposit, 0, 0, 4000 ether, 1 ether, 0);
 
         assertEq(
             uint8(usdnProtocol.getUserPendingAction(DEPLOYER).action),
@@ -368,7 +378,7 @@ contract FuzzingSuiteTest is Test {
         uint256 balanceProtocol = address(usdnProtocol).balance;
 
         vm.prank(DEPLOYER);
-        echidna.fullDeposit(0.1 ether, 10 ether, 0.5 ether, 0, 0, 1000 ether);
+        fuzzingSuite.fullDeposit(0.1 ether, 10 ether, 0.5 ether, 0, 0, 1000 ether);
 
         assertGt(usdn.balanceOf(DEPLOYER), balanceDeployer, "balance usdn");
         assertEq(address(usdnProtocol).balance, balanceProtocol, "protocol balance");
@@ -380,7 +390,7 @@ contract FuzzingSuiteTest is Test {
         uint256 usdnSharesBefore = usdn.sharesOf(DEPLOYER);
 
         vm.prank(DEPLOYER);
-        echidna.fullWithdrawal(usdnShares, 10 ether, 0, 0, 1000 ether);
+        fuzzingSuite.fullWithdrawal(usdnShares, 10 ether, 0, 0, 1000 ether);
 
         assertEq(usdn.sharesOf(DEPLOYER), usdnSharesBefore - usdnShares, "usdn shares balance after withdrawal");
         assertEq(address(usdnProtocol).balance, balanceProtocol, "protocol balance");
@@ -391,7 +401,7 @@ contract FuzzingSuiteTest is Test {
         uint256 balanceWstEthBefore = wsteth.balanceOf(DEPLOYER);
 
         vm.prank(DEPLOYER);
-        echidna.fullOpenPosition(5 ether, 1000 ether, 10 ether, 0, 0, 2000 ether);
+        fuzzingSuite.fullOpenPosition(5 ether, 1000 ether, 10 ether, 0, 0, 2000 ether);
 
         assertEq(address(usdnProtocol).balance, balanceBeforeProtocol, "protocol balance");
         assertEq(wsteth.balanceOf(DEPLOYER), balanceWstEthBefore, "wstETH balance");
@@ -411,7 +421,7 @@ contract FuzzingSuiteTest is Test {
         uint256 balanceBeforeWsteth = wsteth.balanceOf(DEPLOYER);
 
         vm.prank(DEPLOYER);
-        echidna.fullClosePosition(securityDeposit, 0, 0, 2000 ether, 5 ether, 0);
+        fuzzingSuite.fullClosePosition(securityDeposit, 0, 0, 2000 ether, 5 ether, 0);
 
         // the protocol fees are collected during all skip. So, wee have a delta of 1.05e15(0.105%)
         assertApproxEqRel(wsteth.balanceOf(DEPLOYER), balanceBeforeWsteth + 5 ether, 1.05e15, "wstETH balance");
@@ -435,7 +445,7 @@ contract FuzzingSuiteTest is Test {
             liquidationPrice,
             DEPLOYER,
             payable(DEPLOYER),
-            echidna.NO_PERMIT2(),
+            fuzzingSuite.NO_PERMIT2(),
             abi.encode(etherPrice),
             IUsdnProtocolTypes.PreviousActionsData(priceData, rawIndices)
         );
@@ -452,7 +462,7 @@ contract FuzzingSuiteTest is Test {
 
         skip(wstEthOracleMiddleware.getValidationDelay() + 1);
         vm.prank(DEPLOYER);
-        echidna.validateClosePosition(0, etherPrice);
+        fuzzingSuite.validateClosePosition(0, etherPrice);
 
         IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(DEPLOYER);
         assertTrue(action.action == IUsdnProtocolTypes.ProtocolAction.None, "action type");
@@ -463,71 +473,71 @@ contract FuzzingSuiteTest is Test {
     }
 
     function test_adminFunctions() public {
-        echidna.setMinLeverage(10 ** 21 * 2);
+        fuzzingSuite.setMinLeverage(10 ** 21 * 2);
         assertEq(usdnProtocol.getMinLeverage(), 10 ** 21 * 2, "minLeverage");
 
-        echidna.setMaxLeverage(10 ** 21 * 9);
+        fuzzingSuite.setMaxLeverage(10 ** 21 * 9);
         assertEq(usdnProtocol.getMaxLeverage(), 10 ** 21 * 9, "maxLeverage");
 
-        echidna.setValidationDeadline(0.5 days);
+        fuzzingSuite.setValidationDeadline(0.5 days);
         assertEq(usdnProtocol.getValidationDeadline(), 0.5 days, "validationDeadline");
 
-        echidna.setLiquidationPenalty(10);
+        fuzzingSuite.setLiquidationPenalty(10);
         assertEq(usdnProtocol.getLiquidationPenalty(), 10, "liquidationPenalty");
 
-        echidna.setSafetyMarginBps(10);
+        fuzzingSuite.setSafetyMarginBps(10);
         assertEq(usdnProtocol.getSafetyMarginBps(), 10, "safetyMarginBps");
 
-        echidna.setLiquidationIteration(8);
+        fuzzingSuite.setLiquidationIteration(8);
         assertEq(usdnProtocol.getLiquidationIteration(), 8, "liquidationIteration");
 
-        echidna.setEMAPeriod(1 days);
+        fuzzingSuite.setEMAPeriod(1 days);
         assertEq(usdnProtocol.getEMAPeriod(), 1 days, "emaPeriod");
 
-        echidna.setFundingSF(500);
+        fuzzingSuite.setFundingSF(500);
         assertEq(usdnProtocol.getFundingSF(), 500, "fundingSF");
 
-        echidna.setProtocolFeeBps(5000);
+        fuzzingSuite.setProtocolFeeBps(5000);
         assertEq(usdnProtocol.getProtocolFeeBps(), 5000, "protocolFeeBps");
 
-        echidna.setPositionFeeBps(1000);
+        fuzzingSuite.setPositionFeeBps(1000);
         assertEq(usdnProtocol.getPositionFeeBps(), 1000, "positionFeeBps");
 
-        echidna.setVaultFeeBps(1000);
+        fuzzingSuite.setVaultFeeBps(1000);
         assertEq(usdnProtocol.getVaultFeeBps(), 1000, "vaultFeeBps");
 
-        echidna.setRebalancerBonusBps(1000);
+        fuzzingSuite.setRebalancerBonusBps(1000);
         assertEq(usdnProtocol.getRebalancerBonusBps(), 1000, "rebalancerBonusBps");
 
-        echidna.setSdexBurnOnDepositRatio(1e4);
+        fuzzingSuite.setSdexBurnOnDepositRatio(1e4);
         assertEq(usdnProtocol.getSdexBurnOnDepositRatio(), 1e4, "sdexBurnOnDepositRatio");
 
-        echidna.setSecurityDepositValue(1e19);
+        fuzzingSuite.setSecurityDepositValue(1e19);
         assertEq(usdnProtocol.getSecurityDepositValue(), 1e19, "securityDepositValue");
 
-        echidna.setFeeThreshold(1e30);
+        fuzzingSuite.setFeeThreshold(1e30);
         assertEq(usdnProtocol.getFeeThreshold(), 1e30, "feeThreshold");
 
-        echidna.setFeeCollector(DEPLOYER);
+        fuzzingSuite.setFeeCollector(DEPLOYER);
         assertEq(usdnProtocol.getFeeCollector(), DEPLOYER, "feeCollector");
 
-        echidna.setExpoImbalanceLimits(5000, 0, 10_000, 1, -4900);
+        fuzzingSuite.setExpoImbalanceLimits(5000, 0, 10_000, 1, -4900);
         assertEq(usdnProtocol.getOpenExpoImbalanceLimitBps(), 5000, "openExpoImbalanceLimitBps");
         assertEq(usdnProtocol.getDepositExpoImbalanceLimitBps(), 1, "depositExpoImbalanceLimitBps");
         assertEq(usdnProtocol.getWithdrawalExpoImbalanceLimitBps(), 10_000, "withdrawalExpoImbalanceLimitBps");
         assertEq(usdnProtocol.getCloseExpoImbalanceLimitBps(), 1, "closeExpoImbalanceLimitBps");
         assertEq(usdnProtocol.getLongImbalanceTargetBps(), -4388, "longImbalanceTargetBps");
 
-        echidna.setTargetUsdnPrice(1e18);
+        fuzzingSuite.setTargetUsdnPrice(1e18);
         assertEq(usdnProtocol.getTargetUsdnPrice(), 1e18, "targetUsdnPrice");
 
-        echidna.setUsdnRebaseThreshold(1e30);
+        fuzzingSuite.setUsdnRebaseThreshold(1e30);
         assertEq(usdnProtocol.getUsdnRebaseThreshold(), 1e30, "usdnRebaseThreshold");
 
-        echidna.setUsdnRebaseInterval(1e20);
+        fuzzingSuite.setUsdnRebaseInterval(1e20);
         assertEq(usdnProtocol.getUsdnRebaseInterval(), 1e20, "usdnRebaseInterval");
 
-        echidna.setMinLongPosition(1e24);
+        fuzzingSuite.setMinLongPosition(1e24);
         assertEq(usdnProtocol.getMinLongPosition(), 1e24, "minLongPosition");
     }
 }
