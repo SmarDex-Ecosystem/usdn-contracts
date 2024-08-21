@@ -790,4 +790,8 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     function get_EMA() external view returns (int256) {
         return s._EMA;
     }
+
+    function i_fundingPerDay(int256 ema) external view returns (int256 fundingPerDay_, int256 oldLongExpo_) {
+        return Core._fundingPerDay(s, ema);
+    }
 }

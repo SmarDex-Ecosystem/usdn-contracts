@@ -22,6 +22,8 @@ contract TestUsdnProtocolCoreApplyPnlAndFunding is UsdnProtocolBaseFixture {
     function test_applyPnlAndFunding() external {
         super._setUp(params);
 
+        vm.warp(block.timestamp + 24 hours); // be consistant with funding tests
+
         ApplyPnlAndFundingData memory datas =
             protocol.i_applyPnlAndFunding(DEFAULT_PARAMS.initialPrice, uint128(block.timestamp));
         int256 fundingBefore = protocol.getLastFundingPerDay();
@@ -60,33 +62,9 @@ contract TestUsdnProtocolCoreApplyPnlAndFunding is UsdnProtocolBaseFixture {
         super._setUp(params);
 
         uint128 newPrice = protocol.getLastPrice();
+        uint128 oldPrice = newPrice;
 
-        int256 fundingPerDayBefore;
-        int256 fundAsset;
-        (fundAsset, fundingPerDayBefore) = protocol.i_fundingAsset(uint128(block.timestamp), protocol.get_EMA());
-        (, int256 fundAssetWithFee) = protocol.i_calculateFee(fundAsset);
-
-        vm.warp(block.timestamp + 24 hours); // be consistant with funding tests
-
-        ApplyPnlAndFundingData memory datas = protocol.i_applyPnlAndFunding(newPrice, uint128(block.timestamp));
-
-        // Testing state values
-        assertEq(protocol.getLastPrice(), newPrice, "_lastPrice should be equal to i_applyPnlAndFunding new price");
-        assertEq(protocol.getLastUpdateTimestamp(), block.timestamp, "last update timestamp should be updated");
-        assertEq(
-            protocol.getLastFundingPerDay(),
-            fundingPerDayBefore,
-            "price didn't change so funding should not change" // todo it should change because protocol is imbalanced
-        );
-        assertEq(protocol.get_EMA(), 3 ether * 10 ** -4, "funding skew should be 0.0003");
-
-        // Testing returned values
-        assertEq(datas.lastPrice, newPrice, "last price should be updated to newPrice");
-        assertEq(datas.isPriceRecent, true, "price is recent");
-        // assertEq(datas.tempLongBalance, int256(protocol.i_longAssetAvailable(newPrice).safeSub(fundAssetWithFee)),
-        // "long balance should be updated to count funding");
-        // assertEq(datas.tempVaultBalance, protocol.i_vaultAssetAvailable(newPrice).safeAdd(fundAssetWithFee), "vault
-        // balance should be updated to count funding");
+        _applyPnlAndFundingScenarioAndAssertsUtil(oldPrice, newPrice);
     }
 
     /**
@@ -100,30 +78,8 @@ contract TestUsdnProtocolCoreApplyPnlAndFunding is UsdnProtocolBaseFixture {
 
         uint128 oldPrice = protocol.getLastPrice();
         uint128 newPrice = 2500 ether;
-        (, int256 fundingPerDayBefore) = protocol.i_fundingAsset(uint128(block.timestamp), protocol.get_EMA());
-        int256 expectedPnl = protocol.getLongTradingExpo(oldPrice)
-            * (int256(int128(newPrice)) - int256(int128(oldPrice))) / int256(int128(newPrice));
-        int256 longBalanceBefore = int256(protocol.getBalanceLong());
-        int256 vaultBalanceBefore = int256(protocol.getBalanceVault());
 
-        vm.warp(block.timestamp + 24 hours); // be consistant with funding tests
-
-        ApplyPnlAndFundingData memory datas = protocol.i_applyPnlAndFunding(newPrice, uint128(block.timestamp));
-
-        // Testing state values
-        assertEq(protocol.getLastPrice(), newPrice, "_lastPrice should be equal to i_applyPnlAndFunding new price");
-        assertEq(protocol.getLastUpdateTimestamp(), block.timestamp, "last update timestamp should be updated");
-        assertEq(
-            protocol.getLastFundingPerDay(), fundingPerDayBefore, "funding are disabled and therefore should not change"
-        );
-
-        // Testing returned values
-        assertEq(datas.lastPrice, newPrice, "last price should be updated to newPrice");
-        assertEq(datas.isPriceRecent, true, "price is recent");
-        assertEq(datas.tempLongBalance, expectedPnl + longBalanceBefore, "long balance should be updated to count pnl");
-        assertEq(
-            datas.tempVaultBalance, vaultBalanceBefore - expectedPnl, "vault balance should be updated to count pnl"
-        );
+        _applyPnlAndFundingScenarioAndAssertsUtil(oldPrice, newPrice);
     }
 
     /**
@@ -133,35 +89,80 @@ contract TestUsdnProtocolCoreApplyPnlAndFunding is UsdnProtocolBaseFixture {
      */
     function test_applyPnlAndFundingDifferentPriceWithFunding() external {
         params.flags.enableFunding = true;
-        params.initialDeposit = 4 ether; // making the protocol imbalanced
+        // params.initialDeposit = 4 ether; // making the protocol imbalanced
         super._setUp(params);
 
         uint128 oldPrice = protocol.getLastPrice();
         uint128 newPrice = 2500 ether;
-        int256 fundingPerDayBefore;
-        int256 fundAsset;
-        (fundAsset, fundingPerDayBefore) = protocol.i_fundingAsset(uint128(block.timestamp), protocol.get_EMA());
-        (, int256 fundAssetWithFee) = protocol.i_calculateFee(fundAsset);
-        int256 expectedPnl = protocol.getLongTradingExpo(oldPrice)
-            * (int256(int128(newPrice)) - int256(int128(oldPrice))) / int256(int128(newPrice));
+
+        _applyPnlAndFundingScenarioAndAssertsUtil(oldPrice, newPrice);
+    }
+
+    function _applyPnlAndFundingScenarioAndAssertsUtil(uint128 oldPrice, uint128 newPrice) internal {
+        // Opening a long and wait 24 hours to make the protocol imbalanced and have funding
+        bytes memory priceData = abi.encode(newPrice);
+        uint128 amount = 10 ether;
+        wstETH.mintAndApprove(address(this), amount, address(protocol), type(uint256).max);
+        protocol.initiateOpenPosition{ value: protocol.getSecurityDepositValue() }(
+            amount,
+            oldPrice / 2,
+            payable(address(this)),
+            payable(address(this)),
+            NO_PERMIT2,
+            priceData,
+            EMPTY_PREVIOUS_DATA
+        );
+        vm.warp(block.timestamp + 12 hours - 1 seconds); // be consistant with funding tests
+
+        // Taking snapshot of the state and expected values
         int256 longBalanceBefore = int256(protocol.getBalanceLong());
         int256 vaultBalanceBefore = int256(protocol.getBalanceVault());
+        int256 fundingPerDayBefore = protocol.getLastFundingPerDay(); // no funding yet
+        int256 expectedFee;
+        int256 expectedFundingAsset;
+        {
+            int256 emaBefore = protocol.get_EMA();
+            (int256 expectedFundingPerDay,) = protocol.i_fundingPerDay(emaBefore);
+            int256 expectedFunding = expectedFundingPerDay / 2; // 24/2 hours passed
+            expectedFundingAsset =
+                expectedFunding * protocol.getLongTradingExpo(newPrice) / int256(10) ** protocol.FUNDING_RATE_DECIMALS();
+            (expectedFee,) = protocol.i_calculateFee(expectedFundingAsset);
+        }
+        int256 expectedPnl = protocol.getLongTradingExpo(oldPrice)
+            * (int256(int128(newPrice)) - int256(int128(oldPrice))) / int256(int128(newPrice));
 
-        vm.warp(block.timestamp + 24 hours); // let funding happen
-
+        // Calling the function
         ApplyPnlAndFundingData memory datas = protocol.i_applyPnlAndFunding(newPrice, uint128(block.timestamp));
 
         // Testing state values
         assertEq(protocol.getLastPrice(), newPrice, "_lastPrice should be equal to i_applyPnlAndFunding new price");
         assertEq(protocol.getLastUpdateTimestamp(), block.timestamp, "last update timestamp should be updated");
-        assertEq(protocol.getLastFundingPerDay(), fundingPerDayBefore, "funding should be updated"); // todo
+        if (params.flags.enableFunding) {
+            assertGt(
+                protocol.getLastFundingPerDay(),
+                fundingPerDayBefore,
+                "After the long, the funding should increase and be updated"
+            );
+        } else {
+            assertEq(
+                protocol.getLastFundingPerDay(),
+                fundingPerDayBefore,
+                "Funding is disabled, the funding should not change"
+            );
+        }
 
         // Testing returned values
         assertEq(datas.lastPrice, newPrice, "last price should be updated to newPrice");
         assertEq(datas.isPriceRecent, true, "price is recent");
-        // assertEq(datas.tempLongBalance, longBalanceBefore + expectedPnl - fundAssetWithFee, "long balance should be
-        // updated to count pnl and funding");
-        // assertEq(datas.tempVaultBalance, vaultBalanceBefore - expectedPnl + fundAssetWithFee, "vault balance should
-        // be updated to count pnl and funding");
+        assertEq(
+            datas.tempLongBalance,
+            longBalanceBefore - (expectedFundingAsset - expectedFee) + expectedPnl,
+            "long balance should be updated to count funding"
+        );
+        assertEq(
+            datas.tempVaultBalance,
+            vaultBalanceBefore + (expectedFundingAsset - expectedFee) - expectedPnl,
+            "vault balance should be updated to count funding"
+        );
     }
 }
