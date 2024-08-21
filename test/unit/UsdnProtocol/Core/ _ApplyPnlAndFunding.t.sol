@@ -12,6 +12,7 @@ contract TestUsdnProtocolCoreApplyPnlAndFunding is UsdnProtocolBaseFixture {
 
     function setUp() public {
         params = DEFAULT_PARAMS;
+        // params.flags.enableProtocolFees = true;
     }
 
     /**
@@ -154,6 +155,16 @@ contract TestUsdnProtocolCoreApplyPnlAndFunding is UsdnProtocolBaseFixture {
         // Testing returned values
         assertEq(datas.lastPrice, newPrice, "last price should be updated to newPrice");
         assertEq(datas.isPriceRecent, true, "price is recent");
+
+        console2.log("longBalanceBefore", longBalanceBefore);
+        console2.log("expectedFundingAsset", expectedFundingAsset);
+        console2.log("expectedFee", expectedFee);
+        console2.log("expectedPnl", expectedPnl);
+        console2.log("expectedFundingAsset - expectedFee", expectedFundingAsset - expectedFee);
+        console2.log(
+            "longBalanceBefore - (expectedFundingAsset - expectedFee)",
+            longBalanceBefore - (expectedFundingAsset - expectedFee)
+        );
         assertEq(
             datas.tempLongBalance,
             longBalanceBefore - (expectedFundingAsset - expectedFee) + expectedPnl,
