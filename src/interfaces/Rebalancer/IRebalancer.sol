@@ -63,12 +63,6 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
     function getPositionData(uint128 version) external view returns (PositionData memory positionData_);
 
     /**
-     * @notice Returns the limit of the imbalance in bps to close the position
-     * @return The limit of the imbalance in bps to close the position
-     */
-    function getCloseImbalanceLimitBps() external view returns (uint256);
-
-    /**
      * @notice Get the time limits for the action validation process
      * @return The time limits
      */
@@ -160,15 +154,6 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
      * @param newMaxLeverage The new max leverage
      */
     function setPositionMaxLeverage(uint256 newMaxLeverage) external;
-
-    /**
-     * @notice Sets the limit of the imbalance in bps to close the position
-     * @dev This function can only be called by the owner
-     * If the new limit is greater than the `_closeExpoImbalanceLimitBps` setting in the USDN protocol,
-     * this new limit will be ineffective
-     * @param closeImbalanceLimitBps The new limit of the imbalance in bps to close the position
-     */
-    function setCloseImbalanceLimitBps(uint256 closeImbalanceLimitBps) external;
 
     /**
      * @notice Set the various time limits in seconds
