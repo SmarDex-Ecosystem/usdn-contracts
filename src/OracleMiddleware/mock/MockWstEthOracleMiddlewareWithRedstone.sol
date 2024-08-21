@@ -115,11 +115,6 @@ contract MockWstEthOracleMiddlewareWithRedstone is WstEthOracleMiddlewareWithRed
         return _wstethMockedConfBps;
     }
 
-    /// @notice Get the signature verification flag
-    function getVerifySignature() external view returns (bool) {
-        return _verifySignature;
-    }
-
     /// @notice Set the signature verification flag
     function setVerifySignature(bool verify) external {
         _verifySignature = verify;
