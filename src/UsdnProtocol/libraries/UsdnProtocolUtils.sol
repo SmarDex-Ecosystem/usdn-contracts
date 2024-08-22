@@ -32,4 +32,14 @@ library UsdnProtocolUtils {
         // the multiplication cannot overflow because both operands are uint128
         posValue_ = uint256(posTotalExpo) * (currentPrice - liqPriceWithoutPenalty) / currentPrice;
     }
+
+    /**
+     * @notice Calculate the tick without the liquidation penalty
+     * @param tick The tick that holds the position
+     * @param liquidationPenalty The liquidation penalty of the tick, in number of ticks
+     * @return tick_ The tick corresponding to the liquidation price without penalty
+     */
+    function calcTickWithoutPenalty(int24 tick, uint24 liquidationPenalty) internal pure returns (int24 tick_) {
+        tick_ = tick - int24(liquidationPenalty);
+    }
 }

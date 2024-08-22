@@ -44,6 +44,7 @@ import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolF
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
+import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { Permit2TokenBitfield } from "../../../../src/libraries/Permit2TokenBitfield.sol";
 
 contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProtocolEvents {
@@ -71,7 +72,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
     SetUpParams public params;
     SetUpParams public DEFAULT_PARAMS = SetUpParams({
-        initialDeposit: 99.474794733414559008 ether,
+        initialDeposit: 0,
         initialLong: 100 ether,
         initialLiqPrice: 1000 ether, // leverage approx 2x, recalculated if forking (to ensure leverage approx 2x)
         initialPrice: 2000 ether, // 2000 USD per wstETH, ignored if forking
@@ -172,7 +173,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
                     wstETH,
                     oracleMiddleware,
                     liquidationRewardsManager,
-                    100, // tick spacing 100 = 1%
+                    100, // tick spacing 100 = ~1.005%
                     ADMIN,
                     managers,
                     protocolFallback
@@ -185,6 +186,22 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
+
+        if (testParams.initialDeposit == 0) {
+            (, uint128 liqPriceWithoutPenalty) = protocol.i_getTickFromDesiredLiqPrice(
+                testParams.initialPrice / 2,
+                testParams.initialPrice,
+                0,
+                HugeUint.wrap(0),
+                protocol.getTickSpacing(),
+                protocol.getLiquidationPenalty()
+            );
+            uint128 positionTotalExpo = protocol.i_calcPositionTotalExpo(
+                testParams.initialLong, testParams.initialPrice, liqPriceWithoutPenalty
+            );
+            testParams.initialDeposit = positionTotalExpo - testParams.initialLong;
+        }
+
         // leverage approx 2x
         protocol.initialize{ value: oracleMiddleware.validationCost("", ProtocolAction.Initialize) }(
             testParams.initialDeposit, testParams.initialLong, testParams.initialLiqPrice, ""
@@ -214,7 +231,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         skip(oracleMiddleware.getValidationDelay() + 1);
     }
 
-    function _setUpImbalanced()
+    function _setUpImbalanced(uint128 additionalLongAmount)
         internal
         returns (
             int24 tickSpacing_,
@@ -224,8 +241,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         )
     {
         params = DEFAULT_PARAMS;
-        params.initialDeposit += 100 ether;
-        params.initialLong += 100 ether;
+        params.initialLong = 200 ether;
         _setUp(params);
 
         sdex.mintAndApprove(address(this), 50_000 ether, address(protocol), type(uint256).max);
@@ -272,8 +288,12 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
         _waitDelay();
 
-        mockPyth.setPrice(2000e8);
-        mockPyth.setLastPublishTime(block.timestamp);
+        {
+            uint128 wstEthPrice = 2000 ether;
+            uint128 ethPrice = uint128(wstETH.getWstETHByStETH(wstEthPrice));
+            mockPyth.setPrice(int64(uint64(ethPrice / 1e10)));
+            mockPyth.setLastPublishTime(block.timestamp - 1);
+        }
 
         uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.ValidateDeposit);
 
@@ -281,12 +301,17 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
         // open a position to liquidate and trigger the rebalancer
         (, posToLiquidate_) = protocol.initiateOpenPosition{ value: messageValue }(
-            10 ether, 1500 ether, payable(address(this)), payable(address(this)), NO_PERMIT2, "", EMPTY_PREVIOUS_DATA
+            additionalLongAmount,
+            1500 ether,
+            payable(address(this)),
+            payable(address(this)),
+            NO_PERMIT2,
+            "",
+            EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
 
-        mockPyth.setPrice(2000e8);
         mockPyth.setLastPublishTime(block.timestamp);
 
         oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.ValidateOpenPosition);

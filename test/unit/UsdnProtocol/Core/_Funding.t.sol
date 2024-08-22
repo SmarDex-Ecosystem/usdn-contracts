@@ -37,7 +37,7 @@ contract TestUsdnProtocolCoreFunding is UsdnProtocolBaseFixture {
     function test_fundingNoTimeElapsed() public {
         (int256 funding, int256 fundingPerDay, int256 longExpo) = protocol.i_funding(s, s.lastUpdateTimestamp, EMA);
         assertEq(funding, 0, "funding");
-        assertEq(fundingPerDay, protocol.getEMA(), "funding rate is unaffected time");
+        assertEq(fundingPerDay, protocol.getEMA(), "funding rate should be unaffected by time");
         assertEq(longExpo, int256(s.totalExpo - s.balanceLong), "longExpo");
     }
 

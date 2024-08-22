@@ -21,7 +21,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
     struct TestData {
         bytes priceData;
         Position pos;
-        uint8 liquidationPenalty;
+        uint24 liquidationPenalty;
         uint256 assetBalanceBefore;
         uint256 longBalanceStart;
         uint128 amountToClose;
@@ -36,12 +36,14 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
     }
 
     uint128 private constant POSITION_AMOUNT = 1 ether;
+    int24 private initialTick;
     PositionId private posId;
     /// @notice Trigger a reentrancy after receiving ether
     bool internal _reenter;
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
+        initialTick = protocol.getHighestPopulatedTick();
 
         posId = setUpUserPositionInLong(
             OpenParams({
@@ -250,7 +252,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         bytes memory priceData = abi.encode(price);
 
         /* ------------------------- Initiate Close Position ------------------------ */
-        (Position memory pos, uint8 liquidationPenalty) = protocol.getLongPosition(posId);
+        (Position memory pos, uint24 liquidationPenalty) = protocol.getLongPosition(posId);
         uint256 assetBalanceBefore = protocol.getAsset().balanceOf(to);
         protocol.initiateClosePosition(posId, POSITION_AMOUNT, to, payable(validator), priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
@@ -287,7 +289,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         uint256 assetBalanceBefore;
         uint128 amountToClose;
         Position posBefore;
-        uint8 liquidationPenalty;
+        uint24 liquidationPenalty;
         LongPendingAction action;
         uint128 totalExpoToClose;
         uint256 expectedAmountReceived;
@@ -415,7 +417,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         bytes memory priceData = abi.encode(params.initialPrice);
 
         /* ------------------------- Initiate Close Position ------------------------ */
-        (Position memory pos, uint8 liquidationPenalty) = protocol.getLongPosition(posId);
+        (Position memory pos, uint24 liquidationPenalty) = protocol.getLongPosition(posId);
         uint256 assetBalanceBefore = protocol.getAsset().balanceOf(address(this));
 
         uint128 amountToClose = pos.amount / 2;
@@ -477,7 +479,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         bytes memory priceData = abi.encode(params.initialPrice);
 
         /* ------------------------- Initiate Close Position ------------------------ */
-        (Position memory pos, uint8 liquidationPenalty) = protocol.getLongPosition(posId);
+        (Position memory pos, uint24 liquidationPenalty) = protocol.getLongPosition(posId);
         uint256 assetBalanceBefore = protocol.getAsset().balanceOf(address(this));
 
         uint128 amountToClose = pos.amount / 2;
@@ -628,8 +630,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         uint256 longBalanceBefore = protocol.getBalanceLong();
 
         /* ------------------------- Initiate Close Position ------------------------ */
-        posId.tick = protocol.getEffectiveTickForPrice(params.initialPrice / 2)
-            + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
+        posId.tick = initialTick;
         posId.tickVersion = 0;
         posId.index = 0;
         (Position memory pos,) = protocol.getLongPosition(PositionId(posId.tick, 0, 0));

@@ -17,12 +17,14 @@ import { UsdnProtocolActionsVaultLibrary as ActionsVault } from
     "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsVaultLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolLongLibrary.sol";
+import { UsdnProtocolUtils as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtils.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 import { IBaseOracleMiddleware } from "../../../../src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { ILiquidationRewardsManager } from "../../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../../../../src/interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolFallback } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
+import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "../../../../src/libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
@@ -110,7 +112,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         }
         bytes32 tickHash = Core.tickHash(tick, s._tickVersion[tick]);
         return Long._tickValue(
-            s, tick, currentPrice, uint256(longTradingExpo), s._liqMultiplierAccumulator, s._tickData[tickHash]
+            tick, currentPrice, uint256(longTradingExpo), s._liqMultiplierAccumulator, s._tickData[tickHash]
         );
     }
 
@@ -349,8 +351,8 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator,
         TickData memory tickData
-    ) external view returns (int256) {
-        return Long._tickValue(s, tick, currentPrice, longTradingExpo, accumulator, tickData);
+    ) external pure returns (int256) {
+        return Long._tickValue(tick, currentPrice, longTradingExpo, accumulator, tickData);
     }
 
     function i_getOraclePrice(ProtocolAction action, uint256 timestamp, bytes32 actionId, bytes calldata priceData)
@@ -530,7 +532,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         Vault._createInitialPosition(s, amount, price, tick, positionTotalExpo);
     }
 
-    function i_saveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty)
+    function i_saveNewPosition(int24 tick, Position memory long, uint24 liquidationPenalty)
         external
         returns (uint256, uint256, HugeUint.Uint512 memory)
     {
@@ -561,12 +563,12 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         return Vault._calcBurnUsdn(usdnShares, available, usdnTotalShares);
     }
 
-    function i_calcTickWithoutPenalty(int24 tick, uint8 liquidationPenalty) external view returns (int24) {
-        return Long._calcTickWithoutPenalty(s, tick, liquidationPenalty);
+    function i_calcTickWithoutPenalty(int24 tick, uint24 liquidationPenalty) external pure returns (int24) {
+        return Utils.calcTickWithoutPenalty(tick, liquidationPenalty);
     }
 
     function i_calcTickWithoutPenalty(int24 tick) external view returns (int24) {
-        return Long._calcTickWithoutPenalty(s, tick, s._liquidationPenalty);
+        return Utils.calcTickWithoutPenalty(tick, s._liquidationPenalty);
     }
 
     function i_unadjustPrice(
@@ -590,7 +592,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint256 balanceLong,
         uint256 balanceVault,
         HugeUint.Uint512 memory liqMultiplierAccumulator
-    ) external view returns (int24 tickWithoutLiqPenalty_) {
+    ) external view returns (int24 tick_, uint128 totalExpo_, uint24 liquidationPenalty_) {
         CachedProtocolState memory cache = CachedProtocolState({
             totalExpo: totalExpo,
             longBalance: balanceLong,
@@ -599,7 +601,10 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
             liqMultiplierAccumulator: liqMultiplierAccumulator
         });
 
-        return Long._calcRebalancerPositionTick(s, neutralPrice, positionAmount, rebalancerMaxLeverage, cache);
+        Types.RebalancerPositionData memory position =
+            Long._calcRebalancerPositionTick(s, neutralPrice, positionAmount, rebalancerMaxLeverage, cache);
+
+        return (position.tick, position.totalExpo, position.liquidationPenalty);
     }
 
     function i_calcImbalanceCloseBps(int256 vaultBalance, int256 longBalance, uint256 longTotalExpo)
@@ -665,22 +670,12 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     function i_flashOpenPosition(
         address user,
         uint128 neutralPrice,
-        int24 tickWithoutPenalty,
-        uint128 amount,
-        uint256 totalExpo,
-        uint256 balanceLong,
-        uint256 balanceVault,
-        HugeUint.Uint512 memory liqMultiplierAccumulator
+        int24 tick,
+        uint128 posTotalExpo,
+        uint24 liquidationPenalty,
+        uint128 amount
     ) external returns (PositionId memory posId_) {
-        CachedProtocolState memory cache = CachedProtocolState({
-            totalExpo: totalExpo,
-            longBalance: balanceLong,
-            vaultBalance: balanceVault,
-            tradingExpo: totalExpo - balanceLong,
-            liqMultiplierAccumulator: liqMultiplierAccumulator
-        });
-
-        return Long._flashOpenPosition(s, user, neutralPrice, tickWithoutPenalty, amount, cache);
+        return Long._flashOpenPosition(s, user, neutralPrice, tick, posTotalExpo, liquidationPenalty, amount);
     }
 
     function i_checkPendingFee() external {
@@ -777,5 +772,18 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         _tempStorage._lastUpdateTimestamp = fundingStorage.lastUpdateTimestamp;
         _tempStorage._fundingSF = fundingStorage.fundingSF;
         return Core._funding(_tempStorage, timestamp, ema);
+    }
+
+    function i_getTickFromDesiredLiqPrice(
+        uint128 desiredLiqPriceWithoutPenalty,
+        uint256 assetPrice,
+        uint256 longTradingExpo,
+        HugeUint.Uint512 memory accumulator,
+        int24 tickSpacing,
+        uint24 liquidationPenalty
+    ) external pure returns (int24 tickWithPenalty_, uint128 liqPriceWithoutPenalty_) {
+        return Long._getTickFromDesiredLiqPrice(
+            desiredLiqPriceWithoutPenalty, assetPrice, longTradingExpo, accumulator, tickSpacing, liquidationPenalty
+        );
     }
 }
