@@ -12,7 +12,7 @@ contract TestUsdnProtocolCoreApplyPnlAndFunding is UsdnProtocolBaseFixture {
 
     function setUp() public {
         params = DEFAULT_PARAMS;
-        // params.flags.enableProtocolFees = true;
+        params.flags.enableProtocolFees = true;
     }
 
     /**
@@ -119,7 +119,7 @@ contract TestUsdnProtocolCoreApplyPnlAndFunding is UsdnProtocolBaseFixture {
         int256 longBalanceBefore = int256(protocol.getBalanceLong());
         int256 vaultBalanceBefore = int256(protocol.getBalanceVault());
         int256 fundingPerDayBefore = protocol.getLastFundingPerDay(); // no funding yet
-        int256 expectedFee;
+        int256 expectedFeeAsset;
         int256 expectedFundingAsset;
         {
             int256 emaBefore = protocol.get_EMA();
@@ -127,7 +127,8 @@ contract TestUsdnProtocolCoreApplyPnlAndFunding is UsdnProtocolBaseFixture {
             int256 expectedFunding = expectedFundingPerDay / 2; // 24/2 hours passed
             expectedFundingAsset =
                 expectedFunding * protocol.getLongTradingExpo(newPrice) / int256(10) ** protocol.FUNDING_RATE_DECIMALS();
-            (expectedFee,) = protocol.i_calculateFee(expectedFundingAsset);
+            int256 protocolFeeBps = int256(protocol.i_protocolFeeBps());
+            expectedFeeAsset = expectedFundingAsset * protocolFeeBps / int256(protocol.BPS_DIVISOR());
         }
         int256 expectedPnl = protocol.getLongTradingExpo(oldPrice)
             * (int256(int128(newPrice)) - int256(int128(oldPrice))) / int256(int128(newPrice));
@@ -139,7 +140,7 @@ contract TestUsdnProtocolCoreApplyPnlAndFunding is UsdnProtocolBaseFixture {
         assertEq(protocol.getLastPrice(), newPrice, "_lastPrice should be equal to i_applyPnlAndFunding new price");
         assertEq(protocol.getLastUpdateTimestamp(), block.timestamp, "last update timestamp should be updated");
         if (params.flags.enableFunding) {
-            assertGt(
+            assertGt( // todo: have the precise value
                 protocol.getLastFundingPerDay(),
                 fundingPerDayBefore,
                 "After the long, the funding should increase and be updated"
@@ -156,24 +157,38 @@ contract TestUsdnProtocolCoreApplyPnlAndFunding is UsdnProtocolBaseFixture {
         assertEq(datas.lastPrice, newPrice, "last price should be updated to newPrice");
         assertEq(datas.isPriceRecent, true, "price is recent");
 
+        console2.log("datas.tempLongBalance", datas.tempLongBalance);
         console2.log("longBalanceBefore", longBalanceBefore);
         console2.log("expectedFundingAsset", expectedFundingAsset);
-        console2.log("expectedFee", expectedFee);
+        console2.log("expectedFeeAsset", expectedFeeAsset);
         console2.log("expectedPnl", expectedPnl);
-        console2.log("expectedFundingAsset - expectedFee", expectedFundingAsset - expectedFee);
+        console2.log("expectedFundingAsset - expectedFeeAsset", expectedFundingAsset - expectedFeeAsset);
         console2.log(
-            "longBalanceBefore - (expectedFundingAsset - expectedFee)",
-            longBalanceBefore - (expectedFundingAsset - expectedFee)
+            "longBalanceBefore - (expectedFundingAsset - expectedFeeAsset)",
+            longBalanceBefore - (expectedFundingAsset - expectedFeeAsset)
         );
-        assertEq(
-            datas.tempLongBalance,
-            longBalanceBefore - (expectedFundingAsset - expectedFee) + expectedPnl,
-            "long balance should be updated to count funding"
-        );
-        assertEq(
-            datas.tempVaultBalance,
-            vaultBalanceBefore + (expectedFundingAsset - expectedFee) - expectedPnl,
-            "vault balance should be updated to count funding"
-        );
+        if (expectedFundingAsset > 0) {
+            assertEq(
+                datas.tempLongBalance,
+                longBalanceBefore + expectedPnl - expectedFundingAsset,
+                "long balance should be updated to count funding"
+            );
+            assertEq(
+                datas.tempVaultBalance,
+                vaultBalanceBefore - expectedPnl + (expectedFundingAsset - expectedFeeAsset),
+                "vault balance should be updated to count funding"
+            );
+        } else {
+            assertEq(
+                datas.tempLongBalance,
+                longBalanceBefore + expectedPnl - (expectedFundingAsset - expectedFeeAsset),
+                "long balance should be updated to count funding"
+            );
+            assertEq(
+                datas.tempVaultBalance,
+                vaultBalanceBefore - expectedPnl + expectedFundingAsset,
+                "vault balance should be updated to count funding"
+            );
+        }
     }
 }

@@ -433,4 +433,6 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
     function get_EMA() external view returns (int256);
 
     function i_fundingPerDay(int256 ema) external view returns (int256 fundingPerDay_, int256 oldLongExpo_);
+
+    function i_protocolFeeBps() external view returns (int256);
 }
