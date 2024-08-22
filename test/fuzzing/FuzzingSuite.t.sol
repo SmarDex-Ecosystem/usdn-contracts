@@ -432,6 +432,31 @@ contract FuzzingSuiteTest is Test {
         );
     }
 
+    function test_canTransfer() public {
+        uint256 amount = 10 ether;
+        vm.deal(DEPLOYER, amount);
+        vm.prank(address(usdnProtocol));
+        usdn.mintShares(DEPLOYER, amount);
+        wsteth.mintAndApprove(DEPLOYER, amount, address(this), amount);
+        uint256 balanceBefore = DEPLOYER.balance;
+        uint256 balanceBeforeProtocol = ATTACKER.balance;
+        uint256 balanceBeforeWstEth = wsteth.balanceOf(DEPLOYER);
+        uint256 sharesBeforeUsdn = usdn.sharesOf(DEPLOYER);
+
+        vm.prank(DEPLOYER);
+        fuzzingSuite.transfer(0, amount, 0);
+        vm.prank(DEPLOYER);
+        fuzzingSuite.transfer(1, amount, 0);
+        vm.prank(DEPLOYER);
+        fuzzingSuite.transfer(2, amount, 0);
+        assertEq(DEPLOYER.balance, balanceBefore - amount, "DEPLOYER balance");
+        assertEq(usdn.sharesOf(DEPLOYER), sharesBeforeUsdn - amount, "DEPLOYER usdn shares");
+        assertEq(wsteth.balanceOf(DEPLOYER), balanceBeforeWstEth - amount, "DEPLOYER wsteth balance");
+        assertEq(ATTACKER.balance, balanceBeforeProtocol + amount, "protocol balance");
+        assertEq(usdn.sharesOf(ATTACKER), amount, "protocol usdn shares");
+        assertEq(wsteth.balanceOf(ATTACKER), amount, "protocol wsteth balance");
+    }
+
     function _validateCloseAndAssert(
         uint256 securityDeposit,
         uint128 wstethOpenPositionAmount,
