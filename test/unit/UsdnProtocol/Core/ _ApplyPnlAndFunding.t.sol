@@ -10,7 +10,7 @@ contract TestUsdnProtocolCoreApplyPnlAndFunding is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:given A USDN protocol initialized with an `initialPrice` at 2000$ and funding disabled
+     * @custom:given A USDN protocol initialized with an `initialPrice` at $2000 and funding disabled
      * @custom:when The `_applyPnlAndFunding` function is called with the same price
      * @custom:then The state values are updated but remain unchanged
      */
@@ -24,7 +24,7 @@ contract TestUsdnProtocolCoreApplyPnlAndFunding is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:given A USDN protocol initialized with an `initialPrice` at 2000$ and funding enabled
+     * @custom:given A USDN protocol initialized with an `initialPrice` at $2000 and funding enabled
      * @custom:when The `_applyPnlAndFunding` function is called with the same price
      * @custom:then The state values are updated to take into account the funding
      */
@@ -39,7 +39,7 @@ contract TestUsdnProtocolCoreApplyPnlAndFunding is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:given A USDN protocol initialized with an `initialPrice` at 2000$ and funding disabled
+     * @custom:given A USDN protocol initialized with an `initialPrice` at $2000 and funding disabled
      * @custom:when The `_applyPnlAndFunding` function is called with a new price at 2500$
      * @custom:then The state values are updated to take into account the pnl
      */
@@ -54,7 +54,7 @@ contract TestUsdnProtocolCoreApplyPnlAndFunding is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:given A USDN protocol initialized with an `initialPrice` at 2000$ and funding enabled
+     * @custom:given A USDN protocol initialized with an `initialPrice` at $2000 and funding enabled
      * @custom:when The `_applyPnlAndFunding` function is called with a new price at 2500$
      * @custom:then The state values are updated to take into account the pnl and funding
      */
@@ -71,8 +71,8 @@ contract TestUsdnProtocolCoreApplyPnlAndFunding is UsdnProtocolBaseFixture {
     /**
      * @custom:given A USDN protocol initialized with an `initialPrice` at `oldPrice` and a long position opened. Call
      * the `_applyPnlAndFunding` function with a new price at `newPrice`
-     * @param oldPrice The old price (initial price)
-     * @param newPrice The new price (new price to apply when calling `_applyPnlAndFunding`)
+     * @param oldPrice The initial price
+     * @param newPrice The new price to apply when calling `_applyPnlAndFunding`
      */
     function _applyPnlAndFundingScenarioAndAssertsUtil(uint128 oldPrice, uint128 newPrice) internal {
         // Opening a long and wait 12 hours to make the protocol imbalanced and have funding
@@ -87,7 +87,7 @@ contract TestUsdnProtocolCoreApplyPnlAndFunding is UsdnProtocolBaseFixture {
             abi.encode(oldPrice),
             EMPTY_PREVIOUS_DATA
         );
-        vm.warp(protocol.getLastUpdateTimestamp() + 12 hours); // be consistant with funding tests
+        vm.warp(protocol.getLastUpdateTimestamp() + 12 hours); // be consistent with funding tests
 
         // Taking snapshot of the state and expected values
         int256 longBalanceBefore = int256(protocol.getBalanceLong());
