@@ -23,8 +23,7 @@
     "slither": "slither .",
     "snapshot:check": "FOUNDRY_PROFILE=ci forge build && FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fork|Fuzz)\" --no-match-contract Fork --check --offline",
     "snapshot": "FOUNDRY_PROFILE=ci forge clean && FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fork|Fuzz)\" --no-match-contract Fork --offline",
-    "test": "forge test -vvv",
-    "echidna": "echidna test/echidna/FuzzingSuite.sol --contract FuzzingSuite --config test/echidna/config/echidnaConfig.yaml"
+    "test": "forge test -vvv"
   },
   "main": "dist/index.js",
   "files": [

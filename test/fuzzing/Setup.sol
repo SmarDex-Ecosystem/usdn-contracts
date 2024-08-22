@@ -6,7 +6,7 @@ import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { RebalancerHandler } from "../unit/Rebalancer/utils/Handler.sol";
 import { UsdnProtocolHandler } from "../unit/UsdnProtocol/utils/Handler.sol";
 import { MockOracleMiddleware } from "../unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
-import { ADMIN, USER_1, USER_2, USER_3 } from "../utils/Constants.sol";
+import { ADMIN, USER_1, USER_2 } from "../utils/Constants.sol";
 import { IUsdnProtocolHandler } from "../utils/IUsdnProtocolHandler.sol";
 import { Sdex } from "../utils/Sdex.sol";
 import { Weth } from "../utils/WETH.sol";

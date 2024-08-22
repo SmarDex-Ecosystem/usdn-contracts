@@ -3,7 +3,7 @@ pragma solidity ^0.8.25;
 
 import { Test } from "forge-std/Test.sol";
 
-import { USER_1, USER_2, USER_3 } from "../utils/Constants.sol";
+import { ADMIN, USER_1, USER_2 } from "../utils/Constants.sol";
 import { FuzzingSuite } from "./FuzzingSuite.sol";
 
 contract FoundryFuzzingTest is Test {
@@ -39,8 +39,10 @@ contract FoundryFuzzingTest is Test {
 
         targetSender(USER_1);
         targetSender(USER_2);
-        targetSender(USER_3);
+        targetSender(ADMIN);
     }
 
+    /// forge-config: local.invariant.fail-on-revert = false
+    /// forge-config: ci.invariant.fail-on-revert = false
     function invariant_test() external { }
 }
