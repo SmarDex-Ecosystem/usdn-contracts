@@ -36,7 +36,6 @@ contract Setup is ErrorsChecked {
         IUsdnProtocolTypes.PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
 
     mapping(address => address[]) public destinationsToken;
-    address[2] public validators = [USER_1, USER_2];
     IUsdnProtocolTypes.PositionId[] public posIds;
     int24 internal _tickSpacing = 100; // tick spacing 100 = 1%
     FeeCollector public feeCollector;
@@ -126,6 +125,10 @@ contract Setup is ErrorsChecked {
             toUsdnShares: usdn.sharesOf(to),
             toWsteth: wsteth.balanceOf(to)
         });
+    }
+
+    function getUsers() public view returns (address[3] memory) {
+        return users;
     }
 
     function _checkErrors(bytes memory err, bytes4[][] memory errorsArrays) internal virtual override {

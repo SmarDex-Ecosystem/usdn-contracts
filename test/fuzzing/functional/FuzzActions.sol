@@ -27,8 +27,8 @@ contract FuzzActions is Setup {
 
         destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
         address dest = destinationsToken[address(wsteth)][destRand];
-        validatorRand = bound(validatorRand, 0, validators.length - 1);
-        address payable validator = payable(validators[validatorRand]);
+        validatorRand = bound(validatorRand, 0, users.length - 1);
+        address payable validator = payable(users[validatorRand]);
         uint256 priceData = bound(priceRand, 0, type(uint128).max);
 
         BalancesSnapshot memory balancesBefore = getBalances(validator, dest);
@@ -80,8 +80,8 @@ contract FuzzActions is Setup {
 
         destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
         address dest = destinationsToken[address(wsteth)][destRand];
-        validatorRand = bound(validatorRand, 0, validators.length - 1);
-        address payable validator = payable(validators[validatorRand]);
+        validatorRand = bound(validatorRand, 0, users.length - 1);
+        address payable validator = payable(users[validatorRand]);
         uint256 priceData = bound(priceRand, 0, type(uint128).max);
 
         BalancesSnapshot memory balancesBefore = getBalances(validator, msg.sender);
@@ -130,9 +130,9 @@ contract FuzzActions is Setup {
         uint256 destRandBounded = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
         vm.deal(msg.sender, ethRand);
 
-        validatorRand = bound(validatorRand, 0, validators.length - 1);
+        validatorRand = bound(validatorRand, 0, users.length - 1);
         address dest = destinationsToken[address(wsteth)][destRandBounded];
-        address validator = validators[validatorRand];
+        address validator = users[validatorRand];
         priceRand = bound(priceRand, 0, type(uint128).max);
 
         BalancesSnapshot memory balancesBefore = getBalances(validator, dest);
@@ -190,8 +190,8 @@ contract FuzzActions is Setup {
         vm.deal(msg.sender, ethRand);
         destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
         address dest = destinationsToken[address(wsteth)][destRand];
-        validatorRand = bound(validatorRand, 0, validators.length - 1);
-        address payable validator = payable(validators[validatorRand]);
+        validatorRand = bound(validatorRand, 0, users.length - 1);
+        address payable validator = payable(users[validatorRand]);
         priceRand = bound(priceRand, 0, type(uint128).max);
         bytes memory priceData = abi.encode(uint128(priceRand));
         amountToClose = bound(amountToClose, 0, type(uint128).max);
@@ -237,8 +237,8 @@ contract FuzzActions is Setup {
      * @notice PROTCL-4
      */
     function validateDeposit(uint256 validatorRand, uint256 priceRand) public {
-        validatorRand = bound(validatorRand, 0, validators.length - 1);
-        address payable validator = payable(validators[validatorRand]);
+        validatorRand = bound(validatorRand, 0, users.length - 1);
+        address payable validator = payable(users[validatorRand]);
         uint256 priceData = bound(priceRand, 0, type(uint128).max);
 
         BalancesSnapshot memory balancesBefore = getBalances(validator, msg.sender);
@@ -292,8 +292,8 @@ contract FuzzActions is Setup {
      * @notice PROTCL-5
      */
     function validateWithdrawal(uint256 validatorRand, uint256 priceRand) public {
-        validatorRand = bound(validatorRand, 0, validators.length - 1);
-        address payable validator = payable(validators[validatorRand]);
+        validatorRand = bound(validatorRand, 0, users.length - 1);
+        address payable validator = payable(users[validatorRand]);
         uint256 priceData = bound(priceRand, 0, type(uint128).max);
 
         BalancesSnapshot memory balancesBefore = getBalances(validator, msg.sender);
@@ -339,8 +339,8 @@ contract FuzzActions is Setup {
      * @notice PROTCL-6
      */
     function validateOpenPosition(uint256 validatorRand, uint256 priceRand) public {
-        validatorRand = bound(validatorRand, 0, validators.length - 1);
-        address payable validator = payable(validators[validatorRand]);
+        validatorRand = bound(validatorRand, 0, users.length - 1);
+        address payable validator = payable(users[validatorRand]);
         uint256 priceData = bound(priceRand, 0, type(uint128).max);
         uint64 securityDeposit = usdnProtocol.getUserPendingAction(validator).securityDepositValue;
 
@@ -384,8 +384,8 @@ contract FuzzActions is Setup {
      * @notice PROTCL-7
      */
     function validateClosePosition(uint256 validatorRand, uint256 priceRand) public {
-        validatorRand = bound(validatorRand, 0, validators.length - 1);
-        address payable validator = payable(validators[validatorRand]);
+        validatorRand = bound(validatorRand, 0, users.length - 1);
+        address payable validator = payable(users[validatorRand]);
         uint256 priceData = bound(priceRand, 0, type(uint128).max);
 
         IUsdnProtocolTypes.LongPendingAction memory longAction =
