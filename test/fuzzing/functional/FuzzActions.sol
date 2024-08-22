@@ -25,8 +25,8 @@ contract FuzzActions is Setup {
         sdex.mintAndApprove(msg.sender, amountSdexRand, address(usdnProtocol), amountSdexRand);
         vm.deal(msg.sender, ethRand);
 
-        destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
-        address dest = destinationsToken[address(wsteth)][destRand];
+        destRand = bound(destRand, 0, users.length - 1);
+        address dest = users[destRand];
         validatorRand = bound(validatorRand, 0, users.length - 1);
         address payable validator = payable(users[validatorRand]);
         uint256 priceData = bound(priceRand, 0, type(uint128).max);
@@ -78,8 +78,8 @@ contract FuzzActions is Setup {
         usdn.approve(address(usdnProtocol), usdnShares);
         vm.deal(msg.sender, ethRand);
 
-        destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
-        address dest = destinationsToken[address(wsteth)][destRand];
+        destRand = bound(destRand, 0, users.length - 1);
+        address dest = users[destRand];
         validatorRand = bound(validatorRand, 0, users.length - 1);
         address payable validator = payable(users[validatorRand]);
         uint256 priceData = bound(priceRand, 0, type(uint128).max);
@@ -127,11 +127,11 @@ contract FuzzActions is Setup {
         uint256 priceRand
     ) public {
         wsteth.mintAndApprove(msg.sender, amountRand, address(usdnProtocol), amountRand);
-        uint256 destRandBounded = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
+        uint256 destRandBounded = bound(destRand, 0, users.length - 1);
         vm.deal(msg.sender, ethRand);
 
         validatorRand = bound(validatorRand, 0, users.length - 1);
-        address dest = destinationsToken[address(wsteth)][destRandBounded];
+        address dest = users[destRandBounded];
         address validator = users[validatorRand];
         priceRand = bound(priceRand, 0, type(uint128).max);
 
@@ -188,8 +188,8 @@ contract FuzzActions is Setup {
         uint256 posIdsIndexRand
     ) public {
         vm.deal(msg.sender, ethRand);
-        destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
-        address dest = destinationsToken[address(wsteth)][destRand];
+        destRand = bound(destRand, 0, users.length - 1);
+        address dest = users[destRand];
         validatorRand = bound(validatorRand, 0, users.length - 1);
         address payable validator = payable(users[validatorRand]);
         priceRand = bound(priceRand, 0, type(uint128).max);

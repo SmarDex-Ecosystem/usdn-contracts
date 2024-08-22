@@ -35,7 +35,6 @@ contract Setup is ErrorsChecked {
     IUsdnProtocolTypes.PreviousActionsData internal EMPTY_PREVIOUS_DATA =
         IUsdnProtocolTypes.PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
 
-    mapping(address => address[]) public destinationsToken;
     IUsdnProtocolTypes.PositionId[] public posIds;
     int24 internal _tickSpacing = 100; // tick spacing 100 = 1%
     FeeCollector public feeCollector;
@@ -65,7 +64,6 @@ contract Setup is ErrorsChecked {
     constructor() payable {
         vm.warp(1_709_251_200);
         wstEthOracleMiddleware = new MockOracleMiddleware();
-        destinationsToken[address(wsteth)] = [USER_1, USER_2];
         // todo: see if we want to fuzz chainlinkElapsedTimeLimit
         liquidationRewardsManager = new MockLiquidationRewardsManager(IWstETH(wsteth), uint256(2 hours + 5 minutes));
         usdn = new Usdn(address(0), address(0));
