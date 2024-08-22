@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
@@ -23,7 +23,7 @@ contract TestOracleMiddlewareSetPythRecentPriceDelay is OracleMiddlewareBaseFixt
      * @custom:when Non admin wallet trigger `setPythRecentPriceDelay`
      * @custom:then functions should revert with custom Ownable error
      */
-    function test_RevertWhen_nonAdminWalletCallSetPythRecentPriceDelay() external {
+    function test_RevertWhen_nonAdminWalletCallSetPythRecentPriceDelay() public {
         vm.startPrank(USER_1);
         // Ownable contract custom error
         bytes memory customError = abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, USER_1);
@@ -38,7 +38,7 @@ contract TestOracleMiddlewareSetPythRecentPriceDelay is OracleMiddlewareBaseFixt
      * @custom:when The result of the function is compared to 45
      * @custom:then It should succeed
      */
-    function test_recentPriceDelay() public {
+    function test_recentPriceDelay() public view {
         assertEq(oracleMiddleware.getPythRecentPriceDelay(), 45);
     }
 

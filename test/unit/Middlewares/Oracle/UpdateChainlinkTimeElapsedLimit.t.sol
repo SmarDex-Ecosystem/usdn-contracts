@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
@@ -22,7 +22,7 @@ contract TestOracleMiddlewareUpdateChainlinkTimeElapsedLimit is OracleMiddleware
      * @custom:when The value returned by the function is compared to the value used in the ChainlinkOracle constructor.
      * @custom:then It should succeed.
      */
-    function test_chainlinkTimeElapsedLimit() public {
+    function test_chainlinkTimeElapsedLimit() public view {
         assertEq(oracleMiddleware.getChainlinkTimeElapsedLimit(), chainlinkTimeElapsedLimit);
     }
 

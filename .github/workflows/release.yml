@@ -40,7 +40,7 @@ jobs:
         if: ${{ steps.release.outputs.release_created }}
 
       - name: Install dependencies
-        run: npm ci && forge install
+        run: npm ci && forge soldeer install
         if: ${{ steps.release.outputs.release_created }}
 
       - name: Export ABI

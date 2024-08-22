@@ -27,7 +27,7 @@ jobs:
           node-version: 20
 
       - name: Install deps
-        run: npm ci && forge install
+        run: npm ci && forge soldeer install
 
       - name: Generate coverage report
         run: npm run coverage

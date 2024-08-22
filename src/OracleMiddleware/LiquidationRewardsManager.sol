@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
@@ -27,6 +27,21 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
 
     /// @inheritdoc ILiquidationRewardsManager
     uint256 public constant BASE_GAS_COST = 21_000;
+
+    /// @inheritdoc ILiquidationRewardsManager
+    uint256 public constant MAX_GAS_USED_PER_TICK = 500_000;
+
+    /// @inheritdoc ILiquidationRewardsManager
+    uint256 public constant MAX_OTHER_GAS_USED = 1_000_000;
+
+    /// @inheritdoc ILiquidationRewardsManager
+    uint256 public constant MAX_REBASE_GAS_USED = 200_000;
+
+    /// @inheritdoc ILiquidationRewardsManager
+    uint256 public constant MAX_REBALANCER_GAS_USED = 300_000;
+
+    /// @inheritdoc ILiquidationRewardsManager
+    uint256 public constant MAX_GAS_PRICE_LIMIT = 8000 gwei;
 
     /* -------------------------------------------------------------------------- */
     /*                              Storage Variables                             */
@@ -110,15 +125,15 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         uint64 gasPriceLimit,
         uint32 multiplierBps
     ) external onlyOwner {
-        if (gasUsedPerTick > 500_000) {
+        if (gasUsedPerTick > MAX_GAS_USED_PER_TICK) {
             revert LiquidationRewardsManagerGasUsedPerTickTooHigh(gasUsedPerTick);
-        } else if (otherGasUsed > 1_000_000) {
+        } else if (otherGasUsed > MAX_OTHER_GAS_USED) {
             revert LiquidationRewardsManagerOtherGasUsedTooHigh(otherGasUsed);
-        } else if (rebaseGasUsed > 200_000) {
+        } else if (rebaseGasUsed > MAX_REBASE_GAS_USED) {
             revert LiquidationRewardsManagerRebaseGasUsedTooHigh(rebaseGasUsed);
-        } else if (rebalancerGasUsed > 300_000) {
+        } else if (rebalancerGasUsed > MAX_REBALANCER_GAS_USED) {
             revert LiquidationRewardsManagerRebalancerGasUsedTooHigh(rebalancerGasUsed);
-        } else if (gasPriceLimit > 8000 gwei) {
+        } else if (gasPriceLimit > MAX_GAS_PRICE_LIMIT) {
             revert LiquidationRewardsManagerGasPriceLimitTooHigh(gasPriceLimit);
         } else if (multiplierBps > 10 * BPS_DIVISOR) {
             revert LiquidationRewardsManagerMultiplierBpsTooHigh(multiplierBps);

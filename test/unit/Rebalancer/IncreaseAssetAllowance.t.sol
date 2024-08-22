@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { RebalancerFixture } from "./utils/Fixtures.sol";
 
@@ -17,7 +17,7 @@ contract TestRebalancerIncreaseAssetAllowance is RebalancerFixture {
      * @custom:when The allowance is increased further by (uint256.max - 2 ether)
      * @custom:then The final allowance is uint256.max
      */
-    function test_increaseAssetAllowance() external {
+    function test_increaseAssetAllowance() public {
         vm.prank(address(rebalancer));
         wstETH.approve(address(usdnProtocol), 1 ether);
 

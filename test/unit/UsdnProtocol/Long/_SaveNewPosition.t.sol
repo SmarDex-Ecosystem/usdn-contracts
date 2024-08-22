@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
@@ -95,13 +95,13 @@ contract TestUsdnProtocolLongSaveNewPosition is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Test that the function save new position and modify the
-     * state in conditions(tickBitmap and maxInitializedTick)
+     * @custom:scenario Save a new position at a higher tick than the current highest populated tick
      * @custom:given A validated long position
      * @custom:when The function is called with the new position
-     * @custom:then The state in conditions should be modified
+     * @custom:then The highest populated tick is updated
+     * @custom:and The new position is the first one in the tick bitmap
      */
-    function test_saveNewPositionConditions() public {
+    function test_saveNewPositionAtHigherThanHighestTick() public {
         uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
         int24 expectedTick = protocol.getEffectiveTickForPrice(desiredLiqPrice);
 
@@ -109,20 +109,22 @@ contract TestUsdnProtocolLongSaveNewPosition is UsdnProtocolBaseFixture {
         uint256 tickBitmapIndexBefore = protocol.findLastSetInTickBitmap(expectedTick);
         int24 highestPopulatedTickBefore = protocol.getHighestPopulatedTick();
 
+        vm.expectEmit();
+        emit HighestPopulatedTickUpdated(expectedTick);
         protocol.i_saveNewPosition(expectedTick, long, protocol.getTickLiquidationPenalty(expectedTick));
         uint256 tickBitmapIndexAfter = protocol.findLastSetInTickBitmap(expectedTick);
         int24 highestPopulatedTickAfter = protocol.getHighestPopulatedTick();
 
         // check state modified by condition after opening the position
         assertLt(tickBitmapIndexBefore, tickBitmapIndexAfter, "first position in this tick");
-        assertLt(highestPopulatedTickBefore, highestPopulatedTickAfter, "highest populated tick");
+        assertLt(
+            highestPopulatedTickBefore, highestPopulatedTickAfter, "highest populated tick should be higher than before"
+        );
+        assertEq(highestPopulatedTickAfter, expectedTick, "highest populated tick should be the expected tick");
 
         protocol.i_saveNewPosition(expectedTick, long, protocol.getTickLiquidationPenalty(expectedTick));
 
         // state not modified by condition after opening the position
         assertEq(tickBitmapIndexAfter, protocol.findLastSetInTickBitmap(expectedTick), "second position in this tick");
-        assertEq(
-            highestPopulatedTickAfter, protocol.getHighestPopulatedTick(), "second position highest populated tick"
-        );
     }
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // based on the OpenZeppelin implementation
 
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 /**
  * @title InitializableReentrancyGuard
@@ -30,7 +30,8 @@ abstract contract InitializableReentrancyGuard {
     /// @dev Contract was already initialized
     error InitializableReentrancyGuardInvalidInitialization();
 
-    constructor() {
+    /// @notice Initializes the contract in the uninitialized state
+    function __initializeReentrancyGuard_init() internal {
         _status = UNINITIALIZED;
     }
 
@@ -49,7 +50,7 @@ abstract contract InitializableReentrancyGuard {
     }
 
     /// @notice Reverts if the contract is initialized, or set it as initialized
-    modifier initializer() {
+    modifier protocolInitializer() {
         _checkUninitialized();
         _;
         _status = NOT_ENTERED; // mark initialized

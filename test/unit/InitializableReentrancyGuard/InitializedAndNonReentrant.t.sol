@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { InitializableReentrancyGuardFixtures } from "./utils/Fixtures.sol";
 
@@ -64,7 +64,7 @@ contract TestInitializableReentrancyGuardInitializedAndNonReentrant is
      * @custom:when The user calls a function with the modifier
      * @custom:then The call does not revert and there is no reentrancy
      */
-    function test_initializedAndNonReentrant() external {
+    function test_initializedAndNonReentrant() public {
         handler.initialize();
 
         // Make sure no reentrancy happened

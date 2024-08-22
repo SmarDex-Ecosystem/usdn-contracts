@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { USER_1, USER_2, USER_3, USER_4 } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
@@ -147,7 +147,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      * @custom:when The actionable pending actions are requested
      * @custom:then No actionable pending action is returned
      */
-    function test_getActionablePendingActionEmpty() public {
+    function test_getActionablePendingActionEmpty() public view {
         (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 0, "empty list");
     }
@@ -301,7 +301,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      * @custom:when The action is converted to a `DepositPendingAction` and back into a `PendingAction`
      * @custom:then The original and the converted `PendingAction` are equal
      */
-    function test_internalConvertDepositPendingAction() public {
+    function test_internalConvertDepositPendingAction() public view {
         PendingAction memory action = PendingAction({
             action: ProtocolAction.ValidateDeposit,
             timestamp: uint40(block.timestamp),
@@ -339,7 +339,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      * @custom:when The action is converted to a `WithdrawalPendingAction` and back into a `PendingAction`
      * @custom:then The original and the converted `PendingAction` are equal
      */
-    function test_internalConvertWithdrawalPendingAction() public {
+    function test_internalConvertWithdrawalPendingAction() public view {
         PendingAction memory action = PendingAction({
             action: ProtocolAction.ValidateWithdrawal,
             timestamp: uint40(block.timestamp),
@@ -377,7 +377,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      * @custom:when The action is converted to a `LongPendingAction` and back into a `PendingAction`
      * @custom:then The original and the converted `PendingAction` are equal
      */
-    function test_internalConvertLongPendingAction() public {
+    function test_internalConvertLongPendingAction() public view {
         PendingAction memory action = PendingAction({
             action: ProtocolAction.ValidateOpenPosition,
             timestamp: uint40(block.timestamp),

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
@@ -17,7 +17,7 @@ contract TestUsdnProtocolVaultCalcRebaseTotalSupply is UsdnProtocolBaseFixture {
      * @custom:when The function "_calcRebaseTotalSupply" is called with some parameters
      * @custom:then The total supply is calculated correctly
      */
-    function test_calcRebaseTotalSupply() public {
+    function test_calcRebaseTotalSupply() public view {
         uint256 vaultBalance = 1000;
         uint128 assetPrice = 1000;
         uint128 targetPrice = 500;

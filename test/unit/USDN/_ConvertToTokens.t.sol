@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
@@ -32,7 +32,7 @@ contract TestUsdnConvertToTokens is UsdnTokenFixture {
      * @custom:when We convert a random amount of shares to tokens rounding down
      * @custom:then The result is the integer quotient of shares divided by the divisor
      */
-    function testFuzz_convertToTokensDown(uint256 divisor, uint256 shares) public {
+    function testFuzz_convertToTokensDown(uint256 divisor, uint256 shares) public view {
         divisor = bound(divisor, usdn.MIN_DIVISOR(), usdn.MAX_DIVISOR());
 
         uint256 tokens = usdn.i_convertToTokens(shares, Usdn.Rounding.Down, divisor);
@@ -46,7 +46,7 @@ contract TestUsdnConvertToTokens is UsdnTokenFixture {
      * @custom:then The resulting amount of tokens is the result of dividing shares by the divisor and rounding up
      * @custom:but If the amount of corresponding shares would exceed uint256.max we round down
      */
-    function testFuzz_convertToTokensUp(uint256 divisor, uint256 shares) public {
+    function testFuzz_convertToTokensUp(uint256 divisor, uint256 shares) public view {
         divisor = bound(divisor, usdn.MIN_DIVISOR(), usdn.MAX_DIVISOR());
 
         uint256 tokens = usdn.i_convertToTokens(shares, Usdn.Rounding.Up, divisor);
@@ -67,7 +67,7 @@ contract TestUsdnConvertToTokens is UsdnTokenFixture {
      * closest integer
      * @custom:but If the amount of corresponding shares would exceed uint256.max we round down
      */
-    function testFuzz_convertToTokensClosest(uint256 divisor, uint256 shares) public {
+    function testFuzz_convertToTokensClosest(uint256 divisor, uint256 shares) public view {
         divisor = bound(divisor, usdn.MIN_DIVISOR(), usdn.MAX_DIVISOR());
 
         uint256 tokens = usdn.i_convertToTokens(shares, Usdn.Rounding.Closest, divisor);
@@ -92,7 +92,7 @@ contract TestUsdnConvertToTokens is UsdnTokenFixture {
      * @custom:then The resulting amount of tokens is the integer quotient of shares divided by the divisor, regardless
      * of the rounding mode
      */
-    function testFuzz_convertToTokensNoRemainder(uint256 divisor, uint256 multiple) public {
+    function testFuzz_convertToTokensNoRemainder(uint256 divisor, uint256 multiple) public view {
         divisor = bound(divisor, usdn.MIN_DIVISOR(), usdn.MAX_DIVISOR());
         multiple = bound(multiple, 0, type(uint256).max / divisor);
 

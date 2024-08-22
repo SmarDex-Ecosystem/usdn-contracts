@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IBaseRebalancer } from "../../../../src/interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IRebalancerTypes } from "../../../../src/interfaces/Rebalancer/IRebalancerTypes.sol";
 import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -23,6 +25,11 @@ contract MockRebalancer is IBaseRebalancer, IRebalancerTypes {
     uint128 internal _lastLiquidatedVersion;
     mapping(address => UserDeposit) internal _userDeposit;
     mapping(uint256 => PositionData) internal _positionData;
+
+    constructor() {
+        // indicate that there are no position for version 0
+        _positionData[0].tick = Constants.NO_POSITION_TICK;
+    }
 
     function setCurrentStateData(uint128 pendingAssets, uint256 maxLeverage, Types.PositionId memory currentPosId)
         external
@@ -71,5 +78,9 @@ contract MockRebalancer is IBaseRebalancer, IRebalancerTypes {
 
     function setMinAssetDeposit(uint256 minAssetDeposit) external {
         _minAssetDeposit = minAssetDeposit;
+    }
+
+    function getPositionVersion() external view returns (uint128) {
+        return _positionVersion;
     }
 }

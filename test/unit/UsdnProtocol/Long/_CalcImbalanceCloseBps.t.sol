@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
@@ -19,7 +19,7 @@ contract TestUsdnProtocolLongCalcImbalanceCloseBps is UsdnProtocolBaseFixture {
      * @custom:then The imbalance is infinite
      * @custom:then int256.max is returned
      */
-    function test_calcImbalanceCloseBpsWith0TradingExpo() public {
+    function test_calcImbalanceCloseBpsWith0TradingExpo() public view {
         int256 vaultBalance = 200 ether;
         int256 longBalance = 0;
         uint256 totalExpo = 0;
@@ -38,7 +38,7 @@ contract TestUsdnProtocolLongCalcImbalanceCloseBps is UsdnProtocolBaseFixture {
      * @custom:or The total expo is 400 ether
      * @custom:then The imbalance is -33.33%
      */
-    function test_calcImbalanceCloseBps() public {
+    function test_calcImbalanceCloseBps() public view {
         int256 vaultBalance = 200 ether;
         int256 longBalance = 100 ether;
         uint256 totalExpo = 300 ether;
@@ -64,7 +64,7 @@ contract TestUsdnProtocolLongCalcImbalanceCloseBps is UsdnProtocolBaseFixture {
      * @param longBalance The long balance
      * @param totalExpo The total expo
      */
-    function testFuzz_calcImbalanceCloseBps(uint256 vaultBalance, uint256 longBalance, uint256 totalExpo) public {
+    function testFuzz_calcImbalanceCloseBps(uint256 vaultBalance, uint256 longBalance, uint256 totalExpo) public view {
         vaultBalance = bound(vaultBalance, 0, uint256(type(int256).max) / BPS_DIVISOR);
         longBalance = bound(longBalance, 0, uint256(type(int256).max) / BPS_DIVISOR - 1);
         totalExpo = bound(totalExpo, longBalance + 1, uint256(type(int256).max) / BPS_DIVISOR);

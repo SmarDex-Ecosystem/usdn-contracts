@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { IUsdnProtocolCore } from "../interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
 import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
@@ -12,21 +12,16 @@ abstract contract UsdnProtocolCore is UsdnProtocolStorage, IUsdnProtocolCore {
         uint128 longAmount,
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData
-    ) external payable initializer {
+    ) external payable protocolInitializer {
         return Core.initialize(s, depositAmount, longAmount, desiredLiqPrice, currentPriceData);
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
+    function funding(uint128 timestamp)
         external
-        pure
-        returns (int256)
+        view
+        returns (int256 funding_, int256 fundingPerDay_, int256 oldLongExpo_)
     {
-        return Core.calcEMA(lastFunding, secondsElapsed, emaPeriod, previousEMA);
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
-    function funding(uint128 timestamp) external view returns (int256 fund_, int256 oldLongExpo_) {
         return Core.funding(s, timestamp);
     }
 
@@ -51,25 +46,5 @@ abstract contract UsdnProtocolCore is UsdnProtocolStorage, IUsdnProtocolCore {
     /// @inheritdoc IUsdnProtocolCore
     function getUserPendingAction(address user) external view returns (PendingAction memory action_) {
         return Core.getUserPendingAction(s, user);
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
-    function removeBlockedPendingAction(address validator, address payable to) external onlyOwner {
-        Core.removeBlockedPendingAction(s, validator, to);
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
-    function removeBlockedPendingActionNoCleanup(address validator, address payable to) external onlyOwner {
-        Core.removeBlockedPendingActionNoCleanup(s, validator, to);
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
-    function removeBlockedPendingAction(uint128 rawIndex, address payable to) external onlyOwner {
-        Core._removeBlockedPendingAction(s, rawIndex, to, true);
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
-    function removeBlockedPendingActionNoCleanup(uint128 rawIndex, address payable to) external onlyOwner {
-        Core._removeBlockedPendingAction(s, rawIndex, to, false);
     }
 }

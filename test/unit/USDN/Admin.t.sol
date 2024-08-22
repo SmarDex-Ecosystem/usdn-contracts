@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { ADMIN } from "../../utils/Constants.sol";
 import { UsdnTokenFixture } from "./utils/Fixtures.sol";
@@ -24,12 +24,11 @@ contract TestUsdnAdmin is UsdnTokenFixture {
      * @custom:then The value of the rebase handler address is updated to the new value
      * @custom:and The `RebaseHandlerUpdated` event is emitted with the correct parameter
      */
-    function test_setRebaseHandler() public {
+    function test_setRebaseHandler() public adminPrank {
         address newValue = address(1);
         IRebaseCallback handler = IRebaseCallback(newValue);
         vm.expectEmit();
         emit RebaseHandlerUpdated(handler);
-        vm.prank(ADMIN);
         usdn.setRebaseHandler(handler);
         assertEq(address(usdn.rebaseHandler()), newValue);
     }

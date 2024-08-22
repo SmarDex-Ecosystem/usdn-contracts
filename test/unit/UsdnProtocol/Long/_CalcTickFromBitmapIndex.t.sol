@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
@@ -23,7 +23,7 @@ contract TestUsdnProtocolLongCalcTickFromBitmapIndex is UsdnProtocolBaseFixture 
      * @custom:when _calcTickFromBitmapIndex is called
      * @custom:then The minimum usable tick is returned
      */
-    function test_calcTickFromBitmapIndexWithMinIndex() public {
+    function test_calcTickFromBitmapIndexWithMinIndex() public view {
         int24 tick = protocol.i_calcTickFromBitmapIndex(0);
 
         assertEq(tick, _minTick, "The result should be the minimum usable tick");
@@ -35,7 +35,7 @@ contract TestUsdnProtocolLongCalcTickFromBitmapIndex is UsdnProtocolBaseFixture 
      * @custom:when _calcTickFromBitmapIndex is called
      * @custom:then The maximum usable tick is returned
      */
-    function test_calcTickFromBitmapIndexWithMaxIndex() public {
+    function test_calcTickFromBitmapIndexWithMaxIndex() public view {
         uint256 maxIndex = uint256(int256(_maxTick - _minTick) / protocol.getTickSpacing());
         int24 tick = protocol.i_calcTickFromBitmapIndex(maxIndex);
 
@@ -53,7 +53,7 @@ contract TestUsdnProtocolLongCalcTickFromBitmapIndex is UsdnProtocolBaseFixture 
      * @param index The index of the tick in the bitmap
      * @param tickSpacing The tick spacing to use for the calculations
      */
-    function testFuzz_calcTickFromBitmapIndex(uint256 index, int24 tickSpacing) public {
+    function testFuzz_calcTickFromBitmapIndex(uint256 index, int24 tickSpacing) public view {
         tickSpacing = int24(bound(tickSpacing, 1, 1000));
         // Bound the tick to values that are multiples of the tick spacing
         index = bound(index, 0, uint256((int256(_maxTick) - _minTick) / tickSpacing));

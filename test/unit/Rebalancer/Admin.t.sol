@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
@@ -58,10 +58,9 @@ contract TestRebalancerAdmin is RebalancerFixture {
      * @custom:when The setter is called with a valid new value
      * @custom:then The value should have changed
      */
-    function test_setMinAssetDeposit() public {
+    function test_setMinAssetDeposit() public adminPrank {
         uint256 newValue = usdnProtocol.getMinLongPosition() + 1 ether;
 
-        vm.prank(ADMIN);
         vm.expectEmit();
         emit MinAssetDepositUpdated(newValue);
         rebalancer.setMinAssetDeposit(newValue);
@@ -75,11 +74,10 @@ contract TestRebalancerAdmin is RebalancerFixture {
      * @custom:when The setter is called with a value lower than `protocol.getMinLongPosition()`
      * @custom:then The transaction reverts
      */
-    function test_RevertWhen_setMinAssetDeposit_Invalid() public {
+    function test_RevertWhen_setMinAssetDeposit_Invalid() public adminPrank {
         uint256 minLimit = usdnProtocol.getMinLongPosition();
         assertGt(minLimit, 0, "the minimum of the protocol should be greater than 0");
 
-        vm.prank(ADMIN);
         vm.expectRevert(RebalancerInvalidMinAssetDeposit.selector);
         rebalancer.setMinAssetDeposit(minLimit - 1);
     }

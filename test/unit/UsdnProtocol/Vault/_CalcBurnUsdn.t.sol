@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
@@ -18,7 +18,7 @@ contract TestUsdnProtocolVaultCalcBurnUsdn is UsdnProtocolBaseFixture {
      * @custom:when The function "_calcBurnUsdn" is called with some parameters
      * @custom:then The asset amount is calculated correctly
      */
-    function test_calcBurnUsdn() public {
+    function test_calcBurnUsdn() public view {
         uint256 usdnShares = 10 ether;
         uint256 available = 10 ether;
         uint256 usdnTotalShares = 10 ether;

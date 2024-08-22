@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { Test, console2 } from "forge-std/Test.sol";
 
@@ -105,10 +105,10 @@ contract WusdnHandler is Wusdn, Test {
         (, uint256 lastTokens) = _tokensHandle.tryGet(_actors[to]);
         _tokensHandle.set(_actors[to], lastTokens + wrappedAmount);
 
-        uint256 theoriticalShares = usdnShares / SHARES_RATIO * SHARES_RATIO;
+        uint256 theoreticalShares = usdnShares / SHARES_RATIO * SHARES_RATIO;
         assertEq(wrappedAmount, wrappedAmountPreview, "wrap : wrapped amount");
-        assertEq(totalUsdnShares + theoriticalShares, this.totalUsdnShares(), "wrap : total USDN shares in WUSDN");
-        assertEq(usdnSharesUser - theoriticalShares, _usdn.sharesOf(msg.sender), "wrap : USDN shares of the user");
+        assertEq(totalUsdnShares + theoreticalShares, this.totalUsdnShares(), "wrap : total USDN shares in WUSDN");
+        assertEq(usdnSharesUser - theoreticalShares, _usdn.sharesOf(msg.sender), "wrap : USDN shares of the user");
         assertEq(wusdnBalanceTo + wrappedAmount, balanceOf(_actors[to]), "wrap : WUSDN balance of the recipient");
     }
 
@@ -132,13 +132,13 @@ contract WusdnHandler is Wusdn, Test {
         _tokensHandle.set(msg.sender, lastTokens - wusdnAmount);
 
         assertEq(
-            totalUsdnShares - wusdnAmount * SHARES_RATIO, this.totalUsdnShares(), "uwwrap : total USDN shares in WUSDN"
+            totalUsdnShares - wusdnAmount * SHARES_RATIO, this.totalUsdnShares(), "unwrap : total USDN shares in WUSDN"
         );
-        assertEq(wusdnBalanceUser - wusdnAmount, balanceOf(msg.sender), "uwwrap : WUSDN balance of the user");
+        assertEq(wusdnBalanceUser - wusdnAmount, balanceOf(msg.sender), "unwrap : WUSDN balance of the user");
         assertEq(
             usdnSharesTo + wusdnAmount * SHARES_RATIO,
             _usdn.sharesOf(_actors[to]),
-            "uwwrap : USDN balance of the recipient"
+            "unwrap : USDN balance of the recipient"
         );
     }
 

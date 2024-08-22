@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { REDSTONE_ETH_DATA, REDSTONE_ETH_TIMESTAMP } from "../../utils/Constants.sol";
-import { OracleMiddlewareBaseFixture } from "../../utils/Fixtures.sol";
+import { OracleMiddlewareWithRedstoneFixture } from "../../utils/Fixtures.sol";
 
 /// @custom:feature The `extractPriceUpdateTimestamp` function of `RedstoneOracle`
-contract TestRedstoneOracleExtractPriceUpdateTimestamp is OracleMiddlewareBaseFixture {
+contract TestRedstoneOracleExtractPriceUpdateTimestamp is OracleMiddlewareWithRedstoneFixture {
     function setUp() public override {
         super.setUp();
     }
@@ -16,7 +16,7 @@ contract TestRedstoneOracleExtractPriceUpdateTimestamp is OracleMiddlewareBaseFi
      * @custom:when The `extractPriceUpdateTimestamp` function is called with the Redstone message
      * @custom:then It should return the correct timestamp
      */
-    function test_extractPriceUpdateTimestamp() public {
+    function test_extractPriceUpdateTimestamp() public view {
         assertEq(
             oracleMiddleware.i_extractPriceUpdateTimestamp(REDSTONE_ETH_DATA),
             REDSTONE_ETH_TIMESTAMP,

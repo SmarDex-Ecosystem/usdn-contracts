@@ -14,8 +14,11 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
      * @param validator The address of the validator that will validate the deposit
      * @param amount The amount of assets that were deposited
      * @param timestamp The timestamp of the action
+     * @param sdexBurned The amount of SDEX tokens burned
      */
-    event InitiatedDeposit(address indexed to, address indexed validator, uint256 amount, uint256 timestamp);
+    event InitiatedDeposit(
+        address indexed to, address indexed validator, uint256 amount, uint256 timestamp, uint256 sdexBurned
+    );
 
     /**
      * @notice Emitted when a user validates a deposit
@@ -327,6 +330,12 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     event MinLongPositionUpdated(uint256 minLongPosition);
 
     /**
+     * @notice Emitted when the highest populated tick is updated
+     * @param tick The new highest populated tick
+     */
+    event HighestPopulatedTickUpdated(int24 tick);
+
+    /**
      * @notice Emitted when a security deposit is refunded
      * @param pendingActionValidator Address of the validator
      * @param receivedBy Address of the user who received the security deposit
@@ -341,4 +350,11 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
      * @param newOwner The new owner
      */
     event PositionOwnershipTransferred(PositionId indexed posId, address indexed oldOwner, address indexed newOwner);
+
+    /**
+     * @notice Emitted when the last funding per day is updated
+     * @param lastFundingPerDay The new funding per day
+     * @param lastUpdateTimestamp The timestamp for which the funding per day was calculated
+     */
+    event LastFundingPerDayUpdated(int256 lastFundingPerDay, uint256 lastUpdateTimestamp);
 }

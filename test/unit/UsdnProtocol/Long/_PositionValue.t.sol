@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
@@ -9,7 +9,7 @@ import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
  * leverage of ~2x
  */
 contract TestUsdnProtocolLongPositionValue is UsdnProtocolBaseFixture {
-    function setUp() external {
+    function setUp() public {
         _setUp(DEFAULT_PARAMS);
     }
 
@@ -29,7 +29,7 @@ contract TestUsdnProtocolLongPositionValue is UsdnProtocolBaseFixture {
      * @custom:when the current price is $2000 and the leverage is 4x
      * @custom:then the position value is 2.5 wstETH
      */
-    function test_positionValue() public {
+    function test_positionValue() public view {
         uint128 positionTotalExpo = 2 ether;
         int256 value = protocol.i_positionValue(2000 ether, 500 ether, positionTotalExpo);
         assertEq(value, 1.5 ether, "Position value should be 1.5 ether");

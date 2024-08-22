@@ -20,21 +20,23 @@ foundryup
 To install existing dependencies, run the following commands:
 
 ```bash
-forge install
+forge soldeer install
 npm install
 ```
 
-The `forge install` command is only used to add the forge standard library. Other dependencies should be managed with
+The `forge soldeer install` command is only used to add libraries for the smart contracts. Other dependencies should be managed with
 npm.
 
-In order to add a new dependency, use the `npm i [packagename]` command with any package from the
-[npm registry](https://www.npmjs.com/).
+In order to add a new dependency, use the `forge soldeer install [packagename]~[version]` command with any package from the
+[soldeer registry](https://soldeer.xyz/).
 
-For instance, to add the latest [OpenZeppelin library](https://github.com/OpenZeppelin/openzeppelin-contracts):
+For instance, to add [OpenZeppelin library](https://github.com/OpenZeppelin/openzeppelin-contracts) version 5.0.2:
 
 ```bash
-npm i @openzeppelin/contracts
+forge soldeer install @openzeppelin-contracts~5.0.2
 ```
+
+The last step is to update the remappings array in the `foundry.toml` config file.
 
 ### Nix
 

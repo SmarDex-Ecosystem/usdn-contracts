@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
-import { UsdnProtocol } from "../../../../src/UsdnProtocol/UsdnProtocol.sol";
+import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from
     "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from
@@ -21,6 +22,7 @@ import { IBaseOracleMiddleware } from "../../../../src/interfaces/OracleMiddlewa
 import { ILiquidationRewardsManager } from "../../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../../../../src/interfaces/Usdn/IUsdn.sol";
+import { IUsdnProtocolFallback } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
 import { DoubleEndedQueue } from "../../../../src/libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
@@ -30,22 +32,38 @@ import { SignedMath } from "../../../../src/libraries/SignedMath.sol";
  * @title UsdnProtocolHandler
  * @dev Wrapper to aid in testing the protocol
  */
-contract UsdnProtocolHandler is UsdnProtocol, Test {
+contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
     using LibBitmap for LibBitmap.Bitmap;
     using SafeCast for int256;
     using SafeCast for uint256;
     using SignedMath for int256;
 
-    constructor(
+    Storage _tempStorage;
+
+    function initializeStorageHandler(
         IUsdn usdn,
         IERC20Metadata sdex,
         IERC20Metadata asset,
         IBaseOracleMiddleware oracleMiddleware,
         ILiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
-        address feeCollector
-    ) UsdnProtocol(usdn, sdex, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector) { }
+        address feeCollector,
+        Roles memory roles,
+        IUsdnProtocolFallback protocolFallback
+    ) public initializer {
+        initializeStorage(
+            usdn,
+            sdex,
+            asset,
+            oracleMiddleware,
+            liquidationRewardsManager,
+            tickSpacing,
+            feeCollector,
+            roles,
+            protocolFallback
+        );
+    }
 
     /// @dev Useful to completely disable funding, which is normally initialized with a positive bias value
     function resetEMA() external {
@@ -73,7 +91,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
      * update. Call `_waitBeforeLiquidation()` before calling this function to make sure enough time has passed.
      * Do not use this function in contexts where ether needs to be refunded.
      */
-    function testLiquidate(bytes calldata currentPriceData, uint16 iterations)
+    function mockLiquidate(bytes calldata currentPriceData, uint16 iterations)
         external
         payable
         returns (uint256 liquidatedPositions_)
@@ -106,18 +124,58 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     }
 
     function updateBalances(uint128 currentPrice) external {
-        (bool priceUpdated, int256 tempLongBalance, int256 tempVaultBalance) =
-            Core._applyPnlAndFunding(s, currentPrice, uint128(block.timestamp));
-        if (!priceUpdated) {
+        ApplyPnlAndFundingData memory data = Core._applyPnlAndFunding(s, currentPrice, uint128(block.timestamp));
+        if (!data.isPriceRecent) {
             revert("price was not updated");
         }
-        s._balanceLong = tempLongBalance.toUint256();
-        s._balanceVault = tempVaultBalance.toUint256();
+        s._balanceLong = data.tempLongBalance.toUint256();
+        s._balanceVault = data.tempVaultBalance.toUint256();
     }
 
     function removePendingAction(uint128 rawIndex, address user) external {
         s._pendingActionsQueue.clearAt(rawIndex);
         delete s._pendingActions[user];
+    }
+
+    function i_createWithdrawalPendingAction(
+        address to,
+        address validator,
+        uint152 usdnShares,
+        uint64 securityDepositValue,
+        ActionsVault.WithdrawalData memory data
+    ) public returns (uint256 amountToRefund_) {
+        return ActionsVault._createWithdrawalPendingAction(s, to, validator, usdnShares, securityDepositValue, data);
+    }
+
+    function i_createDepositPendingAction(
+        address validator,
+        address to,
+        uint64 securityDepositValue,
+        uint128 amount,
+        ActionsVault.InitiateDepositData memory data
+    ) external returns (uint256 amountToRefund_) {
+        return ActionsVault._createDepositPendingAction(s, validator, to, securityDepositValue, amount, data);
+    }
+
+    function i_createOpenPendingAction(
+        address to,
+        address validator,
+        uint64 securityDepositValue,
+        InitiateOpenPositionData memory data
+    ) public returns (uint256 amountToRefund_) {
+        return ActionsUtils._createOpenPendingAction(s, to, validator, securityDepositValue, data);
+    }
+
+    function i_createClosePendingAction(
+        address to,
+        address validator,
+        PositionId memory posId,
+        uint128 amountToClose,
+        uint64 securityDepositValue,
+        ClosePositionData memory data
+    ) external returns (uint256 amountToRefund_) {
+        return
+            ActionsUtils._createClosePendingAction(s, to, validator, posId, amountToClose, securityDepositValue, data);
     }
 
     function findLastSetInTickBitmap(int24 searchFrom) external view returns (uint256 index) {
@@ -158,8 +216,32 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         );
     }
 
-    function i_validateClosePosition(address user, bytes calldata priceData) external {
-        ActionsLong._validateClosePosition(s, user, priceData);
+    function i_validateOpenPosition(address user, bytes calldata priceData)
+        external
+        returns (uint256 securityDepositValue_, bool isValidated_, bool liquidated_)
+    {
+        return ActionsLong._validateOpenPosition(s, user, priceData);
+    }
+
+    function i_validateClosePosition(address user, bytes calldata priceData)
+        external
+        returns (uint256 securityDepositValue_, bool isValidated_, bool liquidated_)
+    {
+        return ActionsLong._validateClosePosition(s, user, priceData);
+    }
+
+    function i_validateWithdrawal(address user, bytes calldata priceData)
+        external
+        returns (uint256 securityDepositValue_, bool isValidated_)
+    {
+        return ActionsVault._validateWithdrawal(s, user, priceData);
+    }
+
+    function i_validateDeposit(address user, bytes calldata priceData)
+        external
+        returns (uint256 securityDepositValue_, bool isValidated_)
+    {
+        return ActionsVault._validateDeposit(s, user, priceData);
     }
 
     function i_removeAmountFromPosition(
@@ -193,13 +275,13 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return Core._getActionablePendingAction(s);
     }
 
-    function i_lastFunding() external view returns (int256) {
-        return s._lastFunding;
+    function i_lastFundingPerDay() external view returns (int256) {
+        return s._lastFundingPerDay;
     }
 
     function i_applyPnlAndFunding(uint128 currentPrice, uint128 timestamp)
         external
-        returns (bool priceUpdated_, int256 tempLongBalance_, int256 tempVaultBalance_)
+        returns (ApplyPnlAndFundingData memory data_)
     {
         return Core._applyPnlAndFunding(s, currentPrice, timestamp);
     }
@@ -341,7 +423,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         ActionsUtils._checkImbalanceLimitClose(s, posTotalExpoToClose, posValueToClose);
     }
 
-    function i_getLeverage(uint128 price, uint128 liqPrice) external pure returns (uint128) {
+    function i_getLeverage(uint128 price, uint128 liqPrice) external pure returns (uint256) {
         return Long._getLeverage(price, liqPrice);
     }
 
@@ -373,8 +455,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return Long._findHighestPopulatedTick(s, searchStart);
     }
 
-    function i_updateEMA(uint128 secondsElapsed) external returns (int256) {
-        return Core._updateEMA(s, secondsElapsed);
+    function i_updateEMA(int256 fundingPerDay, uint128 secondsElapsed) external {
+        Core._updateEMA(s, fundingPerDay, secondsElapsed);
     }
 
     function i_usdnRebase(uint128 assetPrice, bool ignoreInterval) external returns (bool, bytes memory) {
@@ -557,11 +639,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return Long._triggerRebalancer(s, lastPrice, longBalance, vaultBalance, remainingCollateral);
     }
 
-    function i_calculateFee(int256 fund, int256 fundAsset)
-        external
-        returns (int256 fee_, int256 fundWithFee_, int256 fundAssetWithFee_)
-    {
-        return Core._calculateFee(s, fund, fundAsset);
+    function i_calculateFee(int256 fundAsset) external returns (int256 fee_, int256 fundAssetWithFee_) {
+        return Core._calculateFee(s, fundAsset);
     }
 
     function i_flashClosePosition(
@@ -606,5 +685,101 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
 
     function i_checkPendingFee() external {
         ActionsVault._checkPendingFee(s);
+    }
+
+    function i_sendRewardsToLiquidator(
+        uint16 liquidatedTicks,
+        int256 remainingCollateral,
+        bool rebased,
+        bool rebalancerTriggered,
+        ProtocolAction action,
+        bytes memory rebaseCallbackResult,
+        bytes memory priceData
+    ) external {
+        ActionsUtils._sendRewardsToLiquidator(
+            s,
+            liquidatedTicks,
+            remainingCollateral,
+            rebased,
+            rebalancerTriggered,
+            action,
+            rebaseCallbackResult,
+            priceData
+        );
+    }
+
+    function i_prepareInitiateDepositData(address validator, uint128 amount, bytes calldata currentPriceData)
+        public
+        returns (ActionsVault.InitiateDepositData memory data_)
+    {
+        return ActionsVault._prepareInitiateDepositData(s, validator, amount, currentPriceData);
+    }
+
+    function i_prepareWithdrawalData(address validator, uint152 usdnShares, bytes calldata currentPriceData)
+        public
+        returns (ActionsVault.WithdrawalData memory data_)
+    {
+        return ActionsVault._prepareWithdrawalData(s, validator, usdnShares, currentPriceData);
+    }
+
+    function i_prepareClosePositionData(
+        address owner,
+        address to,
+        address validator,
+        PositionId memory posId,
+        uint128 amountToClose,
+        bytes calldata currentPriceData
+    ) external returns (ClosePositionData memory data_, bool liquidated_) {
+        return ActionsUtils._prepareClosePositionData(s, owner, to, validator, posId, amountToClose, currentPriceData);
+    }
+
+    function i_prepareValidateOpenPositionData(PendingAction memory pending, bytes calldata priceData)
+        external
+        returns (ValidateOpenPositionData memory data_, bool liquidated_)
+    {
+        return ActionsUtils._prepareValidateOpenPositionData(s, pending, priceData);
+    }
+
+    function i_checkInitiateClosePosition(
+        address owner,
+        address to,
+        address validator,
+        uint128 amountToClose,
+        Position memory pos
+    ) external view {
+        ActionsUtils._checkInitiateClosePosition(s, owner, to, validator, amountToClose, pos);
+    }
+
+    /**
+     * @notice These are the storage fields that are used by the `_funding` function
+     * @dev We can pass these to `i_funding` to effectively make the function "pure", by controlling all variables
+     * manually
+     */
+    struct FundingStorage {
+        uint256 totalExpo;
+        uint256 balanceLong;
+        uint256 balanceVault;
+        uint128 lastUpdateTimestamp;
+        uint256 fundingSF;
+    }
+
+    /**
+     * @dev The first argument contains all the storage variables accessed by `_funding`, so that they can be
+     * controlled manually in the tests
+     */
+    function i_funding(FundingStorage memory fundingStorage, uint128 timestamp, int256 ema)
+        external
+        returns (int256 funding_, int256 fundingPerDay_, int256 oldLongExpo_)
+    {
+        _tempStorage._totalExpo = fundingStorage.totalExpo;
+        _tempStorage._balanceVault = fundingStorage.balanceVault;
+        _tempStorage._balanceLong = fundingStorage.balanceLong;
+        _tempStorage._lastUpdateTimestamp = fundingStorage.lastUpdateTimestamp;
+        _tempStorage._fundingSF = fundingStorage.fundingSF;
+        return Core._funding(_tempStorage, timestamp, ema);
+    }
+
+    function isInitialized() external view returns (bool) {
+        return s._lastUpdateTimestamp > 0;
     }
 }

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
@@ -8,7 +8,7 @@ import { InitializableReentrancyGuard } from "../../../../src/utils/Initializabl
  * @dev Wrapper to help test InitializableReentrancyGuard
  */
 contract InitializableReentrancyGuardHandler is InitializableReentrancyGuard {
-    function initialize() external initializer { }
+    function initialize() external protocolInitializer { }
 
     function func_initializedAndNonReentrant() external initializedAndNonReentrant {
         // gives a reentrancy opportunity

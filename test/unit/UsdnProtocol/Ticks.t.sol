@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
@@ -22,7 +22,7 @@ contract TestUsdnProtocolTicks is UsdnProtocolBaseFixture {
      * higher than the input price
      * @param price The price to convert to a tick
      */
-    function testFuzz_liqPrice(uint128 price) public {
+    function testFuzz_liqPrice(uint128 price) public view {
         price = uint128(bound(uint256(price), TickMath.MIN_PRICE, type(uint128).max));
         int24 closestTickDown = TickMath.getTickAtPrice(price);
         int24 tick = protocol.getEffectiveTickForPrice(price); // next valid tick towards infinity

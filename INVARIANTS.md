@@ -19,10 +19,11 @@ Assuming you have Echidna installed
 | PROTCL-6  | Validate a long position with WSTETH.                        | Unknown revert |
 | PROTCL-7  | Validate a WSTETH long position closing.                     | Unknown revert |
 | PROTCL-8  | Validates pending actions.                                   | Unknown revert |
-| PROTCL-9  | Initiate and validate a deposit action without test          | Passing        |
-| PROTCL-10 | Initiate and validate a withdrawal action without test       | Passing        |
-| PROTCL-11 | Initiate and validate a long action without test             | Passing        |
-| PROTCL-12 | Initiate and validate a close action without test            | Passing        |
+| PROTCL-9  | Initiate and validate a deposit action without test.         | Passing        |
+| PROTCL-10 | Initiate and validate a withdrawal action without test.      | Passing        |
+| PROTCL-11 | Initiate and validate a long action without test.            | Passing        |
+| PROTCL-12 | Initiate and validate a close action without test.           | Passing        |
+| PROTCL-13 | Initialize USDN protocol.                                    | Unknown revert |
 
 ## Rebalancer tests
 
