@@ -434,26 +434,28 @@ contract FuzzingSuiteTest is Test {
 
     function test_canTransfer() public {
         uint256 amount = 10 ether;
-        Sdex sdex = fuzzingSuite.sdex();
         vm.deal(DEPLOYER, amount);
-        sdex.mintAndApprove(DEPLOYER, amount, address(this), amount);
+        vm.prank(address(usdnProtocol));
+        usdn.mintShares(DEPLOYER, amount);
         wsteth.mintAndApprove(DEPLOYER, amount, address(this), amount);
         uint256 balanceBefore = DEPLOYER.balance;
         uint256 balanceBeforeProtocol = ATTACKER.balance;
+        uint256 balanceBeforeWstEth = wsteth.balanceOf(DEPLOYER);
+        uint256 sharesBeforeUsdn = usdn.sharesOf(DEPLOYER);
 
         vm.prank(DEPLOYER);
         fuzzingSuite.transfer(0, amount, 1);
         vm.prank(DEPLOYER);
         fuzzingSuite.transfer(1, amount, 1);
         vm.prank(DEPLOYER);
-        fuzzingSuite.transfer(3, amount, 1);
+        fuzzingSuite.transfer(2, amount, 1);
 
         assertEq(DEPLOYER.balance, balanceBefore - amount, "DEPLOYER balance");
-        assertEq(sdex.balanceOf(DEPLOYER), balanceBefore - amount, "DEPLOYER sdex balance");
-        assertEq(wsteth.balanceOf(DEPLOYER), balanceBefore - amount, "DEPLOYER wsteth balance");
+        assertEq(usdn.sharesOf(DEPLOYER), sharesBeforeUsdn - amount, "DEPLOYER usdn shares");
+        assertEq(wsteth.balanceOf(DEPLOYER), balanceBeforeWstEth - amount, "DEPLOYER wsteth balance");
         assertEq(ATTACKER.balance, balanceBeforeProtocol + amount, "protocol balance");
-        assertEq(sdex.balanceOf(ATTACKER), balanceBeforeProtocol + amount, "protocol sdex balance");
-        assertEq(wsteth.balanceOf(ATTACKER), balanceBeforeProtocol + amount, "protocol wsteth balance");
+        assertEq(usdn.sharesOf(ATTACKER), amount, "protocol usdn shares");
+        assertEq(wsteth.balanceOf(ATTACKER), amount, "protocol wsteth balance");
     }
 
     function _validateCloseAndAssert(
