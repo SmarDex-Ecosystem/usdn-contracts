@@ -444,12 +444,11 @@ contract FuzzingSuiteTest is Test {
         uint256 sharesBeforeUsdn = usdn.sharesOf(DEPLOYER);
 
         vm.prank(DEPLOYER);
-        fuzzingSuite.transfer(0, amount, 1);
+        fuzzingSuite.transfer(0, amount, 0);
         vm.prank(DEPLOYER);
-        fuzzingSuite.transfer(1, amount, 1);
+        fuzzingSuite.transfer(1, amount, 0);
         vm.prank(DEPLOYER);
-        fuzzingSuite.transfer(2, amount, 1);
-
+        fuzzingSuite.transfer(2, amount, 0);
         assertEq(DEPLOYER.balance, balanceBefore - amount, "DEPLOYER balance");
         assertEq(usdn.sharesOf(DEPLOYER), sharesBeforeUsdn - amount, "DEPLOYER usdn shares");
         assertEq(wsteth.balanceOf(DEPLOYER), balanceBeforeWstEth - amount, "DEPLOYER wsteth balance");
