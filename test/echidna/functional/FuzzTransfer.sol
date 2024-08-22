@@ -3,7 +3,6 @@ pragma solidity ^0.8.25;
 
 import { Setup } from "../Setup.sol";
 
-import { IUsdnProtocolTypes } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract FuzzTransfer is Setup {
@@ -11,13 +10,11 @@ contract FuzzTransfer is Setup {
         address[2] memory users = [DEPLOYER, ATTACKER];
         address[4] memory tokens = [address(0), address(sdex), address(weth), address(wsteth)];
 
-        destRand = bound(destRand, 0, users.length - 1);
-        address payable dest = payable(users[destRand]);
-
-        while (dest == msg.sender) {
+        do {
             destRand = bound(destRand, 0, users.length - 1);
-            dest = payable(users[destRand]);
-        }
+        } while (users[destRand] == msg.sender);
+
+        address payable dest = payable(users[destRand]);
 
         tokenRand = bound(tokenRand, 0, tokens.length - 1);
         address token = tokens[tokenRand];
