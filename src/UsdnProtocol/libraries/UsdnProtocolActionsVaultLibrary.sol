@@ -798,10 +798,11 @@ library UsdnProtocolActionsVaultLibrary {
             }
 
             // we will use the lowest of the two amounts to redeem the underlying asset share
-            if (vaultBalance <= vaultAssetAvailable.toUint256()) {
+            // cast is safe because vaultAssetAvailable cannot be negative
+            if (vaultBalance <= uint256(vaultAssetAvailable)) {
                 available = vaultBalance;
             } else {
-                available = vaultAssetAvailable.toUint256();
+                available = uint256(vaultAssetAvailable);
             }
         }
 
