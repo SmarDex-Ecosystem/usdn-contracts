@@ -38,10 +38,10 @@ contract FuzzingSuiteTest is Test {
         wsteth = fuzzingSuite.wsteth();
         usdn = fuzzingSuite.usdn();
         uint256 usdnBalanceBeforeInit = usdn.balanceOf(DEPLOYER);
-        uint256 DEPOSIT_AMOUNT = 300 ether;
-        uint256 LONG_AMOUNT = 300 ether;
+        uint128 DEPOSIT_AMOUNT = 300 ether;
+        uint128 LONG_AMOUNT = 300 ether;
         uint256 PRICE = 2000 ether;
-        uint256 LIQUIDATION_PRICE = 1000 ether;
+        uint128 LIQUIDATION_PRICE = 1000 ether;
 
         vm.prank(DEPLOYER);
         fuzzingSuite.initializeUsdnProtocol(DEPOSIT_AMOUNT, LONG_AMOUNT, PRICE, LIQUIDATION_PRICE);

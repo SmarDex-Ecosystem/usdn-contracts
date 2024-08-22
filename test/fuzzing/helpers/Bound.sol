@@ -9,4 +9,15 @@ contract Bound is Test {
         diff = bound(value, 0, diff);
         return min + int256(diff);
     }
+
+    function doesOverflow(uint128 a, uint128 b) public returns (bool) {
+        uint128 result;
+        unchecked {
+            result = a + b;
+        }
+        if (result < a) {
+            return true;
+        }
+        return false;
+    }
 }
