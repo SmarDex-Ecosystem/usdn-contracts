@@ -129,7 +129,12 @@ library UsdnProtocolActionsUtilsLibrary {
         public
         view
     {
-        int256 closeExpoImbalanceLimitBps = s._closeExpoImbalanceLimitBps;
+        int256 closeExpoImbalanceLimitBps;
+        if (msg.sender == address(s._rebalancer)) {
+            closeExpoImbalanceLimitBps = s._rebalancerCloseExpoImbalanceLimitBps;
+        } else {
+            closeExpoImbalanceLimitBps = s._closeExpoImbalanceLimitBps;
+        }
 
         // early return in case limit is disabled
         if (closeExpoImbalanceLimitBps == 0) {
@@ -283,9 +288,8 @@ library UsdnProtocolActionsUtilsLibrary {
         data_.pos = s._longPositions[data_.tickHash][data_.action.index];
         // re-calculate leverage
         data_.liquidationPenalty = s._tickData[data_.tickHash].liquidationPenalty;
-        data_.liqPriceWithoutPenalty = Long.getEffectivePriceForTick(
-            s, Long._calcTickWithoutPenalty(s, data_.action.tick, data_.liquidationPenalty)
-        );
+        data_.liqPriceWithoutPenalty =
+            Long.getEffectivePriceForTick(s, Utils.calcTickWithoutPenalty(data_.action.tick, data_.liquidationPenalty));
         // reverts if liqPriceWithoutPenalty >= startPrice
         data_.leverage = Long._getLeverage(data_.startPrice, data_.liqPriceWithoutPenalty);
         // calculate how much the position that was opened in the initiate is now worth (it might be too large or too
@@ -419,7 +423,7 @@ library UsdnProtocolActionsUtilsLibrary {
 
         // to have maximum precision, we do not pre-compute the liquidation multiplier with a fixed
         // precision just now, we will store it in the pending action later, to be used in the validate action
-        int24 tick = Long._calcTickWithoutPenalty(s, posId.tick, data_.liquidationPenalty);
+        int24 tick = Utils.calcTickWithoutPenalty(posId.tick, data_.liquidationPenalty);
         data_.tempPositionValue = _assetToRemove(
             s,
             data_.lastPrice,
@@ -524,7 +528,7 @@ library UsdnProtocolActionsUtilsLibrary {
         (bytes32 tickHash,) = Core._tickHash(s, tick);
         Types.TickData storage tickData = s._tickData[tickHash];
         uint256 unadjustedTickPrice =
-            TickMath.getPriceAtTick(tick - int24(uint24(tickData.liquidationPenalty)) * s._tickSpacing);
+            TickMath.getPriceAtTick(Utils.calcTickWithoutPenalty(tick, tickData.liquidationPenalty));
         if (amountToRemove < pos.amount) {
             Types.Position storage position = s._longPositions[tickHash][index];
             position.totalExpo = pos.totalExpo - totalExpoToRemove;
@@ -563,10 +567,12 @@ library UsdnProtocolActionsUtilsLibrary {
      * @return index_ The index of the position in the tick array
      * @return liqMultiplierAccumulator_ The updated liquidation multiplier accumulator
      */
-    function _saveNewPosition(Types.Storage storage s, int24 tick, Types.Position memory long, uint8 liquidationPenalty)
-        public
-        returns (uint256 tickVersion_, uint256 index_, HugeUint.Uint512 memory liqMultiplierAccumulator_)
-    {
+    function _saveNewPosition(
+        Types.Storage storage s,
+        int24 tick,
+        Types.Position memory long,
+        uint24 liquidationPenalty
+    ) public returns (uint256 tickVersion_, uint256 index_, HugeUint.Uint512 memory liqMultiplierAccumulator_) {
         bytes32 tickHash;
         (tickHash, tickVersion_) = Core._tickHash(s, tick);
 
@@ -597,13 +603,13 @@ library UsdnProtocolActionsUtilsLibrary {
             tickData.totalExpo = long.totalExpo;
             tickData.totalPos = 1;
             tickData.liquidationPenalty = liquidationPenalty;
-            unadjustedTickPrice = TickMath.getPriceAtTick(tick - int24(uint24(liquidationPenalty)) * s._tickSpacing);
+            unadjustedTickPrice = TickMath.getPriceAtTick(Utils.calcTickWithoutPenalty(tick, liquidationPenalty));
         } else {
             tickData.totalExpo += long.totalExpo;
             tickData.totalPos += 1;
             // we do not need to adjust the tick's `liquidationPenalty` since it remains constant
             unadjustedTickPrice =
-                TickMath.getPriceAtTick(tick - int24(uint24(tickData.liquidationPenalty)) * s._tickSpacing);
+                TickMath.getPriceAtTick(Utils.calcTickWithoutPenalty(tick, tickData.liquidationPenalty));
         }
         // update the accumulator with the correct tick price (depending on the liquidation penalty value)
         liqMultiplierAccumulator_ = s._liqMultiplierAccumulator.add(HugeUint.wrap(unadjustedTickPrice * long.totalExpo));

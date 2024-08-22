@@ -14,15 +14,18 @@ import { IBaseRebalancer } from "../../../../src/interfaces/Rebalancer/IBaseReba
 contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
     MockRebalancer mockedRebalancer;
 
-    uint256 longBalance = DEFAULT_PARAMS.initialLong;
-    uint256 vaultBalance = DEFAULT_PARAMS.initialDeposit;
-    uint128 lastPrice = DEFAULT_PARAMS.initialPrice;
+    uint256 longBalance;
+    uint256 vaultBalance;
+    uint128 lastPrice;
     int256 remainingCollateral = 1 ether;
 
     function setUp() public {
         params = DEFAULT_PARAMS;
         params.flags.enableRebalancer = true;
         super._setUp(params);
+        longBalance = params.initialLong;
+        vaultBalance = params.initialDeposit;
+        lastPrice = params.initialPrice;
 
         mockedRebalancer = new MockRebalancer();
 

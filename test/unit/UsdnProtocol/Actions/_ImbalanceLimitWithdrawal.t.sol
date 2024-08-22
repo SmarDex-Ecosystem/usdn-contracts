@@ -17,7 +17,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
 
         // we enable only open limit
         vm.prank(ADMIN);
-        protocol.setExpoImbalanceLimits(0, 0, 600, 0, 0);
+        protocol.setExpoImbalanceLimits(0, 0, 600, 0, 0, 0);
     }
 
     /**
@@ -57,7 +57,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
         (, uint256 withdrawalValueToLimit) = _getWithdrawalLimitValues();
 
         // disable withdrawal limit
-        protocol.setExpoImbalanceLimits(200, 200, 0, 600, 300);
+        protocol.setExpoImbalanceLimits(200, 200, 0, 600, 500, 300);
 
         protocol.i_checkImbalanceLimitWithdrawal(withdrawalValueToLimit + 1, protocol.getTotalExpo());
     }
@@ -90,7 +90,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
 
         // temporarily disable limits to put the protocol in an unbalanced state
         vm.prank(ADMIN);
-        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
+        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0, 0);
 
         // this action will affect the vault trading expo once it's validated
         vm.startPrank(DEPLOYER);
@@ -106,7 +106,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
 
         // restore limits
         vm.prank(ADMIN);
-        protocol.setExpoImbalanceLimits(0, 0, 600, 0, 0);
+        protocol.setExpoImbalanceLimits(0, 0, 600, 0, 0, 0);
 
         uint256 totalExpo = protocol.getTotalExpo();
         int256 newVaultExpo =

@@ -173,7 +173,7 @@ interface IUsdnProtocolFallback {
     /**
      * @notice The liquidation tick spacing for storing long positions
      * @dev A tick spacing of 1 is equivalent to a 0.01% increase in liquidation price between ticks. A tick spacing of
-     * 100 is equivalent to a 1% increase in liquidation price between ticks
+     * 100 is equivalent to a ~1.005% increase in liquidation price between ticks
      * @return The tick spacing
      */
     function getTickSpacing() external view returns (int24);
@@ -260,9 +260,9 @@ interface IUsdnProtocolFallback {
 
     /**
      * @notice Get the liquidation penalty applied to the liquidation price when opening a position
-     * @return The liquidation penalty (in tick spacing units)
+     * @return The liquidation penalty (in ticks)
      */
-    function getLiquidationPenalty() external view returns (uint8);
+    function getLiquidationPenalty() external view returns (uint24);
 
     /**
      * @notice Get the safety margin for the liquidation price of newly open positions
@@ -368,6 +368,15 @@ interface IUsdnProtocolFallback {
      * @return closeExpoImbalanceLimitBps_ The close expo imbalance limit
      */
     function getCloseExpoImbalanceLimitBps() external view returns (int256 closeExpoImbalanceLimitBps_);
+
+    /**
+     * @notice Returns the limit of the imbalance in bps to close the rebalancer position
+     * @return rebalancerCloseExpoImbalanceLimitBps_ The limit of the imbalance in bps to close the rebalancer position
+     */
+    function getRebalancerCloseExpoImbalanceLimitBps()
+        external
+        view
+        returns (int256 rebalancerCloseExpoImbalanceLimitBps_);
 
     /**
      * @notice Returns the target imbalance to have on the long side after the creation of a rebalancer position
@@ -569,10 +578,10 @@ interface IUsdnProtocolFallback {
     function setMaxLeverage(uint256 newMaxLeverage) external;
 
     /**
-     * @notice Set the new liquidation penalty (in tick spacing units)
+     * @notice Set the new liquidation penalty (in ticks)
      * @param newLiquidationPenalty The new liquidation penalty
      */
-    function setLiquidationPenalty(uint8 newLiquidationPenalty) external;
+    function setLiquidationPenalty(uint24 newLiquidationPenalty) external;
 
     /**
      * @notice Set the new exponential moving average period of the funding rate
@@ -633,6 +642,7 @@ interface IUsdnProtocolFallback {
      * @param newDepositLimitBps The new deposit limit
      * @param newWithdrawalLimitBps The new withdrawal limit
      * @param newCloseLimitBps The new close limit
+     * @param newRebalancerCloseLimitBps The new rebalancer close limit
      * @param newLongImbalanceTargetBps The new target imbalance limit for the long side
      * A positive value will target below equilibrium, a negative one will target above equilibrium
      */
@@ -641,6 +651,7 @@ interface IUsdnProtocolFallback {
         uint256 newDepositLimitBps,
         uint256 newWithdrawalLimitBps,
         uint256 newCloseLimitBps,
+        uint256 newRebalancerCloseLimitBps,
         int256 newLongImbalanceTargetBps
     ) external;
 

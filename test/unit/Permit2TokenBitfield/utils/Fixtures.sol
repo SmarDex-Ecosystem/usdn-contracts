@@ -14,8 +14,4 @@ contract Permit2TokenBitfieldFixture is BaseFixture {
     function setUp() public virtual {
         handler = new Permit2TokenBitfieldHandler();
     }
-
-    // force ignore from coverage report
-    // until https://github.com/foundry-rs/foundry/issues/2988 is fixed
-    function test() public override { }
 }

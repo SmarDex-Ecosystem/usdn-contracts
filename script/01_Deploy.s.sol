@@ -127,7 +127,7 @@ contract Deploy is Script {
                     wstETH,
                     wstEthOracleMiddleware,
                     liquidationRewardsManager,
-                    100, // tick spacing 100 = 1%
+                    100, // tick spacing 100 = 1.05%
                     _feeCollector,
                     Types.Managers({
                         setExternalManager: _deployerAddress,

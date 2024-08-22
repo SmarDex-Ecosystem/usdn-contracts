@@ -59,7 +59,7 @@ contract UsdnProtocolImpl is
         s._liquidationIteration = 1;
         s._protocolFeeBps = 800;
         s._rebalancerBonusBps = 8000; // 80%
-        s._liquidationPenalty = 2; // 200 ticks -> ~2.02%
+        s._liquidationPenalty = 200; // 200 ticks -> ~2.02%
         s._EMAPeriod = 5 days;
         s._fundingSF = 12 * 10 ** (Constants.FUNDING_SF_DECIMALS - 2);
         s._feeThreshold = 1 ether;
@@ -67,6 +67,7 @@ contract UsdnProtocolImpl is
         s._withdrawalExpoImbalanceLimitBps = 600;
         s._depositExpoImbalanceLimitBps = 500;
         s._closeExpoImbalanceLimitBps = 600;
+        s._rebalancerCloseExpoImbalanceLimitBps = 500;
         s._longImbalanceTargetBps = 550;
         s._positionFeeBps = 4; // 0.04%
         s._vaultFeeBps = 4; // 0.04%

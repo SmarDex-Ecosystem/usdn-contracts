@@ -240,7 +240,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
             if (i == 1) {
                 // enable rebalancer
                 vm.prank(SET_PROTOCOL_PARAMS_MANAGER);
-                protocol.setExpoImbalanceLimits(5000, 0, 10_000, 1, -4900);
+                protocol.setExpoImbalanceLimits(5000, 0, 10_000, 1, 1, -4900);
 
                 // sanity check, make sure the rebalancer was triggered
                 vm.expectEmit(false, false, false, false);

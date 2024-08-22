@@ -223,13 +223,12 @@ interface IUsdnProtocolTypes {
      * @dev Since the liquidation penalty is a parameter that can be updated, we need to ensure that positions that get
      * created with a given penalty, use this penalty throughout their lifecycle. As such, once a tick gets populated by
      * a first position, it gets assigned the current liquidation penalty parameter value and can't use another value
-     * until
-     * it gets liquidated
+     * until it gets liquidated or all positions exit the tick
      */
     struct TickData {
         uint256 totalExpo;
         uint248 totalPos;
-        uint8 liquidationPenalty;
+        uint24 liquidationPenalty;
     }
 
     /**
@@ -293,7 +292,7 @@ interface IUsdnProtocolTypes {
      */
     struct ClosePositionData {
         Position pos;
-        uint8 liquidationPenalty;
+        uint24 liquidationPenalty;
         uint128 totalExpoToClose;
         uint128 lastPrice;
         uint256 tempPositionValue;
@@ -325,7 +324,7 @@ interface IUsdnProtocolTypes {
         uint128 liqPriceWithoutPenalty;
         uint256 leverage;
         uint256 oldPosValue;
-        uint8 liquidationPenalty;
+        uint24 liquidationPenalty;
         bool isLiquidationPending;
     }
 
@@ -342,7 +341,7 @@ interface IUsdnProtocolTypes {
     struct InitiateOpenPositionData {
         uint128 adjustedPrice;
         PositionId posId;
-        uint8 liquidationPenalty;
+        uint24 liquidationPenalty;
         uint128 positionTotalExpo;
         uint256 positionValue;
         bool isLiquidationPending;
@@ -362,6 +361,40 @@ interface IUsdnProtocolTypes {
         uint256 longBalance;
         uint256 vaultBalance;
         HugeUint.Uint512 liqMultiplierAccumulator;
+    }
+
+    /**
+     * @notice Structure to hold transient data during the `_calcRebalancerPositionTick` function
+     * @param protocolMinLeverage The protocol minimum leverage
+     * @param protocolMaxLeverage The protocol maximum leverage
+     * @param longImbalanceTargetBps The long imbalance target in basis points
+     * @param tradingExpoToFill The trading expo to fill
+     * @param highestUsableTradingExpo The highest usable trading expo
+     * @param lowestUsableTradingExpo The lowest usable trading expo
+     * @param currentLiqPenalty The current liquidation penalty
+     * @param liqPriceWithoutPenalty The liquidation price without penalty
+     */
+    struct CalcRebalancerPositionTickData {
+        uint256 protocolMinLeverage;
+        uint256 protocolMaxLeverage;
+        int256 longImbalanceTargetBps;
+        uint256 tradingExpoToFill;
+        uint256 highestUsableTradingExpo;
+        uint256 lowestUsableTradingExpo;
+        uint24 currentLiqPenalty;
+        uint128 liqPriceWithoutPenalty;
+    }
+
+    /**
+     * @notice Structure to hold the return values of the `_calcRebalancerPositionTick` function
+     * @param tick The tick of the rebalancer position, includes liquidation penalty
+     * @param totalExpo The total expo of the rebalancer position
+     * @param liquidationPenalty The liquidation penalty of the tick
+     */
+    struct RebalancerPositionData {
+        int24 tick;
+        uint128 totalExpo;
+        uint24 liquidationPenalty;
     }
 
     /**
@@ -400,8 +433,8 @@ interface IUsdnProtocolTypes {
     /**
      * @notice Structure to hold the state of the protocol
      * @param _tickSpacing The liquidation tick spacing for storing long positions
-     * A tick spacing of 1 is equivalent to a 0.1% increase in liquidation price between ticks. A tick spacing of
-     * 10 is equivalent to a 1% increase in liquidation price between ticks
+     * A tick spacing of 1 is equivalent to a 0.01% increase in liquidation price between ticks. A tick spacing of
+     * 100 is equivalent to a ~1.005% increase in liquidation price between ticks
      * @param _asset The asset ERC20 contract (wstETH)
      * @param _assetDecimals The asset decimals (wstETH => 18)
      * @param _priceFeedDecimals The price feed decimals (wstETH => 18)
@@ -419,7 +452,7 @@ interface IUsdnProtocolTypes {
      * @param _protocolFeeBps The protocol fee in basis points
      * @param _rebalancerBonusBps Part of the remaining collateral that is given as a bonus to the Rebalancer upon
      * liquidation of a tick, in basis points. The rest is sent to the Vault balance
-     * @param _liquidationPenalty The liquidation penalty (in tick spacing units)
+     * @param _liquidationPenalty The liquidation penalty (in ticks)
      * @param _EMAPeriod The moving average period of the funding rate
      * @param _fundingSF The scaling factor (SF) of the funding rate
      * @param _feeThreshold The threshold above which the fee will be sent
@@ -436,8 +469,11 @@ interface IUsdnProtocolTypes {
      * position
      * @param _closeExpoImbalanceLimitBps The imbalance limit of the vault expo for close actions (in basis points)
      * As soon as the difference between the vault expo and the long expo exceeds this basis point limit in favor
-     * of the vault, the withdrawal vault rebalancing mechanism is triggered, preventing the close of an existing long
-     * position
+     * of the vault, the close rebalancing mechanism is triggered, preventing the close of an existing long position
+     * @param _rebalancerCloseExpoImbalanceLimitBps The imbalance limit of the vault expo for close actions from the
+     * rebalancer (in basis points). As soon as the difference between the vault expo and the long expo exceeds this
+     * basis point limit in favor of the vault, the close rebalancing mechanism is triggered, preventing the close of an
+     * existing long position from the rebalancer contract
      * @param _longImbalanceTargetBps The target imbalance on the long side (in basis points)
      * This value will be used to calculate how much of the missing trading expo the rebalancer position will try to
      * compensate
@@ -469,7 +505,7 @@ interface IUsdnProtocolTypes {
      * @param _totalExpo The total exposure of the long positions (with asset decimals)
      * @param _liqMultiplierAccumulator The accumulator used to calculate the liquidation multiplier
      * This is the sum, for all ticks, of the total expo of positions inside the tick, multiplied by the
-     * unadjusted price of the tick which is `_tickData[tickHash].liquidationPenalty * _tickSpacing` below
+     * unadjusted price of the tick which is `_tickData[tickHash].liquidationPenalty` below
      * The unadjusted price is obtained with `TickMath.getPriceAtTick
      * @param _tickVersion The liquidation tick version
      * @param _longPositions The long positions per versioned tick (liquidation price)
@@ -499,7 +535,7 @@ interface IUsdnProtocolTypes {
         uint16 _liquidationIteration;
         uint16 _protocolFeeBps;
         uint16 _rebalancerBonusBps;
-        uint8 _liquidationPenalty;
+        uint24 _liquidationPenalty;
         uint128 _EMAPeriod;
         uint256 _fundingSF;
         uint256 _feeThreshold;
@@ -507,6 +543,7 @@ interface IUsdnProtocolTypes {
         int256 _withdrawalExpoImbalanceLimitBps;
         int256 _depositExpoImbalanceLimitBps;
         int256 _closeExpoImbalanceLimitBps;
+        int256 _rebalancerCloseExpoImbalanceLimitBps;
         int256 _longImbalanceTargetBps;
         uint16 _positionFeeBps;
         uint16 _vaultFeeBps;

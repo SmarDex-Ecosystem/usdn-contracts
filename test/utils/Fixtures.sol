@@ -198,8 +198,4 @@ contract BaseFixture is Test {
 
         return vm.ffi(cmds);
     }
-
-    // force ignore from coverage report
-    // until https://github.com/foundry-rs/foundry/issues/2988 is fixed
-    function test() public virtual { }
 }

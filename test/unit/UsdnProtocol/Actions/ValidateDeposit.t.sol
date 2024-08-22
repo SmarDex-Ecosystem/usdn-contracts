@@ -19,7 +19,6 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
 
     function setUp() public {
         params = DEFAULT_PARAMS;
-        params.initialDeposit = 4.919970269703463156 ether; // same as long trading expo
         params.flags.enableSdexBurnOnDeposit = true;
         super._setUp(params);
 
@@ -177,8 +176,8 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
             protocol.i_calcSdexToBurn(usdn.convertToTokens(usdnSharesToMint), protocol.getSdexBurnOnDepositRatio());
         uint256 initiateDepositTimestamp = block.timestamp;
         vm.expectEmit();
-        emit InitiatedDeposit(to, address(this), DEPOSIT_AMOUNT, initiateDepositTimestamp, expectedSdexBurnAmount); // expected
-            // event
+        // expected event
+        emit InitiatedDeposit(to, address(this), DEPOSIT_AMOUNT, initiateDepositTimestamp, expectedSdexBurnAmount);
         protocol.initiateDeposit(
             DEPOSIT_AMOUNT, to, payable(address(this)), NO_PERMIT2, currentPrice, EMPTY_PREVIOUS_DATA
         );
