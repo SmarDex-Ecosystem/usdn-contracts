@@ -6,6 +6,7 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { UsdnProtocolVaultLibrary as Vault } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
+import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
 /**
  * @custom:feature The _calcMintUsdnShares internal function of the UsdnProtocolVault contract.
@@ -96,5 +97,16 @@ contract TestUsdnProtocolCalcMintUsdnShares is UsdnProtocolBaseFixture {
             calcMintUsdnSharesRust,
             "The rust and solidity implementations should return the same value"
         );
+    }
+
+    /**
+     * @custom:scenario Revert when the vault balance is zero
+     * @custom:given A vault balance equal to zero
+     * @custom:when The `_calcMintUsdnShares` function is called
+     * @custom:then The transaction reverts with `UsdnProtocolEmptyVault`
+     */
+    function test_RevertWhen_calcMintUsdnSharesBalanceZero() public {
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolEmptyVault.selector);
+        Vault._calcMintUsdnShares(1, 0, 1);
     }
 }
