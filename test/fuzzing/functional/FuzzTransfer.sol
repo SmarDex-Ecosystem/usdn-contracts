@@ -9,17 +9,22 @@ import { IUsdn } from "../../../src/interfaces/Usdn/IUsdn.sol";
 
 contract FuzzTransfer is Setup {
     function transfer(uint256 tokenRand, uint256 amountRand, uint256 destRand) public {
-        address[5] memory users =
-            [DEPLOYER, ATTACKER, address(wstEthOracleMiddleware), address(usdnProtocol), address(rebalancer)];
+        address[2] memory users = [DEPLOYER, ATTACKER];
+        address[3] memory recipients = [address(wstEthOracleMiddleware), address(usdnProtocol), address(rebalancer)];
         address[3] memory tokens = [address(0), address(usdn), address(wsteth)];
 
-        address[] memory filteredUsers = new address[](users.length - 1);
+        address[] memory filteredUsers = new address[](recipients.length + users.length - 1);
         uint256 index = 0;
+
         for (uint256 i = 0; i < users.length; i++) {
             if (users[i] != msg.sender) {
                 filteredUsers[index] = users[i];
                 index++;
             }
+        }
+
+        for (uint256 i = 0; i < recipients.length; i++) {
+            filteredUsers[index + i] = recipients[i];
         }
 
         destRand = bound(destRand, 0, filteredUsers.length - 1);
