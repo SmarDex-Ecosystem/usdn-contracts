@@ -3,6 +3,7 @@ pragma solidity 0.8.26;
 
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { console2 } from "forge-std/Test.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
@@ -505,32 +506,27 @@ library UsdnProtocolActionsVaultLibrary {
         }
 
         // we calculate the amount of USDN to mint, either considering the asset price at the time of the initiate
-        // action, or the current price provided for validation. We will use the lower of the two amounts to mint
+        // action, or the current price provided for validation. We will use the lower of the two to mint
         // apply fees on price
         uint128 priceWithFees =
             (currentPrice.price - currentPrice.price * s._vaultFeeBps / Constants.BPS_DIVISOR).toUint128();
 
-        uint256 usdnSharesToMint1 = Vault._calcMintUsdnShares(
-            s, deposit.amount, deposit.balanceVault, deposit.usdnTotalShares, deposit.assetPrice
-        );
-
-        uint256 usdnSharesToMint2 = Vault._calcMintUsdnShares(
-            s,
-            deposit.amount,
-            // calculate the available balance in the vault side if the price moves to `priceWithFees`
-            Vault._vaultAssetAvailable(
-                deposit.totalExpo, deposit.balanceVault, deposit.balanceLong, priceWithFees, deposit.assetPrice
-            ).toUint256(),
-            deposit.usdnTotalShares,
-            priceWithFees
-        );
-
         uint256 usdnSharesToMint;
-        // we use the lower of the two amounts to mint
-        if (usdnSharesToMint1 <= usdnSharesToMint2) {
-            usdnSharesToMint = usdnSharesToMint1;
+        // we use the lower of the two prices to mint
+        if (deposit.assetPrice <= priceWithFees) {
+            usdnSharesToMint = Vault._calcMintUsdnShares(
+                s, deposit.amount, deposit.balanceVault, deposit.usdnTotalShares, deposit.assetPrice
+            );
         } else {
-            usdnSharesToMint = usdnSharesToMint2;
+            usdnSharesToMint = Vault._calcMintUsdnShares(
+                s,
+                deposit.amount,
+                Vault._vaultAssetAvailable(
+                    deposit.totalExpo, deposit.balanceVault, deposit.balanceLong, priceWithFees, deposit.assetPrice
+                ).toUint256(),
+                deposit.usdnTotalShares,
+                priceWithFees
+            );
         }
 
         s._balanceVault += deposit.amount;
