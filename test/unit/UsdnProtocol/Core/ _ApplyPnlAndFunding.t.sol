@@ -77,7 +77,6 @@ contract TestUsdnProtocolCoreApplyPnlAndFunding is UsdnProtocolBaseFixture {
     function _applyPnlAndFundingScenarioAndAssertsUtil(uint128 oldPrice, uint128 newPrice) internal {
         // Opening a long and wait 12 hours to make the protocol imbalanced and have funding
         uint128 amount = 10 ether;
-        bytes memory priceData = abi.encode(oldPrice);
         wstETH.mintAndApprove(address(this), amount, address(protocol), type(uint256).max);
         protocol.initiateOpenPosition{ value: protocol.getSecurityDepositValue() }(
             amount,
@@ -85,7 +84,7 @@ contract TestUsdnProtocolCoreApplyPnlAndFunding is UsdnProtocolBaseFixture {
             payable(address(this)),
             payable(address(this)),
             NO_PERMIT2,
-            priceData,
+            abi.encode(oldPrice),
             EMPTY_PREVIOUS_DATA
         );
         vm.warp(protocol.getLastUpdateTimestamp() + 12 hours); // be consistant with funding tests
