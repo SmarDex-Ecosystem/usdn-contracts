@@ -787,15 +787,15 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         return Core._fundingAsset(s, timestamp, ema);
     }
 
-    function get_EMA() external view returns (int256) {
-        return s._EMA;
-    }
-
     function i_fundingPerDay(int256 ema) external view returns (int256 fundingPerDay_, int256 oldLongExpo_) {
         return Core._fundingPerDay(s, ema);
     }
 
     function i_protocolFeeBps() external view returns (uint16) {
         return s._protocolFeeBps;
+    }
+
+    function calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed) external view returns (int256) {
+        return Core.calcEMA(lastFundingPerDay, secondsElapsed, s._EMAPeriod, s._EMA);
     }
 }
