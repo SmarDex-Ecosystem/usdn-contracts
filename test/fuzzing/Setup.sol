@@ -84,10 +84,10 @@ contract Setup is ErrorsChecked {
         });
 
         feeCollector = new FeeCollector();
-        UsdnProtocolHandler test = new UsdnProtocolHandler();
+        UsdnProtocolHandler usdnProtocolImplementation = new UsdnProtocolHandler();
         UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
         address proxy = UnsafeUpgrades.deployUUPSProxy(
-            address(test),
+            address(usdnProtocolImplementation),
             abi.encodeCall(
                 UsdnProtocolHandler.initializeStorageHandler,
                 (
