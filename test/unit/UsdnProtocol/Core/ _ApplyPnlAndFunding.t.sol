@@ -48,7 +48,7 @@ contract TestUsdnProtocolCoreApplyPnlAndFunding is UsdnProtocolBaseFixture {
         super._setUp(params);
 
         uint128 oldPrice = protocol.getLastPrice();
-        uint128 newPrice = 2500 ether;
+        uint128 newPrice = oldPrice;
 
         _applyPnlAndFundingScenarioAndAssertsUtil(oldPrice, newPrice);
     }
