@@ -14,7 +14,7 @@ contract TestOracleMiddlewareSetPenaltyBps is OracleMiddlewareWithRedstoneFixtur
      * @custom:scenario A user that without the right role calls setPenaltyBps
      * @custom:given A user without the right role
      * @custom:when setPenaltyBps is called
-     * @custom:then the transaction reverts with an OwnableUnauthorizedAccount error
+     * @custom:then the transaction reverts with an AccessControlUnauthorizedAccount error
      */
     function test_RevertWhen_setPenaltyBpsWithoutTheRightRole() public {
         vm.expectRevert(
