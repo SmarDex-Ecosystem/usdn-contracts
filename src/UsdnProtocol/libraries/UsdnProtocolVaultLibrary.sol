@@ -55,11 +55,7 @@ library UsdnProtocolVaultLibrary {
         uint128 depositPriceWithFees = price - price * s._vaultFeeBps / uint128(Constants.BPS_DIVISOR);
         IUsdn usdn = s._usdn;
         usdnSharesExpected_ = _calcMintUsdnShares(
-            s,
-            amount,
-            vaultAssetAvailableWithFunding(s, depositPriceWithFees, timestamp).toUint256(),
-            usdn.totalShares(),
-            depositPriceWithFees
+            amount, vaultAssetAvailableWithFunding(s, depositPriceWithFees, timestamp).toUint256(), usdn.totalShares()
         );
         sdexToBurn_ = _calcSdexToBurn(usdn.convertToTokens(usdnSharesExpected_), s._sdexBurnOnDepositRatio);
     }
@@ -151,7 +147,13 @@ library UsdnProtocolVaultLibrary {
 
         // calculate the total minted amount of USDN shares (vault balance and total supply are zero for now, we assume
         // the USDN price to be $1 per token)
-        uint256 usdnSharesToMint = _calcMintUsdnShares(s, amount, 0, 0, price);
+        // the decimals conversion here is necessary since we calculate an amount in tokens and we want the
+        // corresponding amount of shares
+        uint256 usdnSharesToMint = s._usdn.convertToShares(
+            FixedPointMathLib.fullMulDiv(
+                amount, price, 10 ** (s._assetDecimals + s._priceFeedDecimals - Constants.TOKENS_DECIMALS)
+            )
+        );
         IUsdn usdn = s._usdn;
         uint256 minUsdnSharesSupply = usdn.convertToShares(Constants.MIN_USDN_SUPPLY);
         // mint the minimum amount and send it to the dead address so it can never be removed from the total supply
@@ -349,11 +351,9 @@ library UsdnProtocolVaultLibrary {
 
     /**
      * @notice Calculates the amount of USDN shares to mint for a given amount of asset
-     * @param s The storage of the protocol
      * @param amount The amount of asset to be converted into USDN
-     * @param vaultBalance The balance of the vault (not used for initialization)
-     * @param usdnTotalShares The total supply of USDN (not used for initialization)
-     * @param price The price of the asset (only used for initialization)
+     * @param vaultBalance The balance of the vault
+     * @param usdnTotalShares The total supply of USDN
      * @return toMint_ The amount of USDN to mint
      * @dev The amount of USDN shares to mint is calculated as follows:
      * amountUsdn = amountAsset * priceAsset / priceUsdn,
@@ -361,25 +361,15 @@ library UsdnProtocolVaultLibrary {
      * amountUsdn = amountAsset * totalSupply / vaultBalance, and
      * sharesUsdn = amountAsset * totalShares / vaultBalance
      */
-    function _calcMintUsdnShares(
-        Types.Storage storage s,
-        uint256 amount,
-        uint256 vaultBalance,
-        uint256 usdnTotalShares,
-        uint256 price
-    ) public view returns (uint256 toMint_) {
+    function _calcMintUsdnShares(uint256 amount, uint256 vaultBalance, uint256 usdnTotalShares)
+        public
+        pure
+        returns (uint256 toMint_)
+    {
         if (vaultBalance == 0) {
-            // initialization, we consider the USDN price to be 1 USD
-            // the conversion here is necessary since we calculate an amount in tokens and we want the corresponding
-            // amount of shares
-            return s._usdn.convertToShares(
-                FixedPointMathLib.fullMulDiv(
-                    amount, price, 10 ** (s._assetDecimals + s._priceFeedDecimals - Constants.TOKENS_DECIMALS)
-                )
-            );
+            revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
         }
-        // for subsequent calculations, we can simply mint a proportional number of shares corresponding to the new
-        // assets deposited into the vault
+        // we simply mint a proportional number of shares corresponding to the new assets deposited into the vault
         toMint_ = FixedPointMathLib.fullMulDiv(amount, usdnTotalShares, vaultBalance);
     }
 

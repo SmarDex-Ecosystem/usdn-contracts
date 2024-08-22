@@ -313,8 +313,7 @@ library UsdnProtocolActionsVaultLibrary {
         data_.usdnTotalShares = usdn.totalShares();
 
         // calculate the amount of SDEX tokens to burn
-        uint256 usdnSharesToMintEstimated =
-            Vault._calcMintUsdnShares(s, amount, data_.balanceVault, data_.usdnTotalShares, data_.pendingActionPrice);
+        uint256 usdnSharesToMintEstimated = Vault._calcMintUsdnShares(amount, data_.balanceVault, data_.usdnTotalShares);
         uint256 usdnToMintEstimated = usdn.convertToTokens(usdnSharesToMintEstimated);
         // we want to at least mint 1 wei of USDN
         if (usdnToMintEstimated == 0) {
@@ -510,19 +509,16 @@ library UsdnProtocolActionsVaultLibrary {
         uint128 priceWithFees =
             (currentPrice.price - currentPrice.price * s._vaultFeeBps / Constants.BPS_DIVISOR).toUint128();
 
-        uint256 usdnSharesToMint1 = Vault._calcMintUsdnShares(
-            s, deposit.amount, deposit.balanceVault, deposit.usdnTotalShares, deposit.assetPrice
-        );
+        uint256 usdnSharesToMint1 =
+            Vault._calcMintUsdnShares(deposit.amount, deposit.balanceVault, deposit.usdnTotalShares);
 
         uint256 usdnSharesToMint2 = Vault._calcMintUsdnShares(
-            s,
             deposit.amount,
             // calculate the available balance in the vault side if the price moves to `priceWithFees`
             Vault._vaultAssetAvailable(
                 deposit.totalExpo, deposit.balanceVault, deposit.balanceLong, priceWithFees, deposit.assetPrice
             ).toUint256(),
-            deposit.usdnTotalShares,
-            priceWithFees
+            deposit.usdnTotalShares
         );
 
         uint256 usdnSharesToMint;

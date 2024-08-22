@@ -192,4 +192,7 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the long trading expo is zero, we can't get the effective tick for a liquidation price
     error UsdnProtocolZeroLongTradingExpo();
+
+    /// @dev Indicates that the vault balance is zero, we can't calculate the amount of USDN to mint
+    error UsdnProtocolEmptyVault();
 }

@@ -4,6 +4,7 @@ pragma solidity 0.8.26;
 import { USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolVaultLibrary as Vault } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
 /**
@@ -73,9 +74,8 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         uint128 depositAmount = 1 ether;
         uint128 price = 2000 ether;
         bytes memory currentPrice = abi.encode(price); // only used to apply PnL + funding
-        uint256 usdnSharesToMint = protocol.i_calcMintUsdnShares(
-            depositAmount, protocol.getBalanceVault(), protocol.getUsdn().totalShares(), price
-        );
+        uint256 usdnSharesToMint =
+            Vault._calcMintUsdnShares(depositAmount, protocol.getBalanceVault(), protocol.getUsdn().totalShares());
         uint256 expectedSdexBurnAmount =
             protocol.i_calcSdexToBurn(usdn.convertToTokens(usdnSharesToMint), protocol.getSdexBurnOnDepositRatio());
         uint256 sdexBalanceBefore = sdex.balanceOf(address(this));
@@ -189,9 +189,8 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
 
         uint128 deposited = 4;
 
-        uint256 usdnSharesToMintEstimated = protocol.i_calcMintUsdnShares(
-            deposited, protocol.getBalanceVault(), usdn.totalShares(), params.initialPrice
-        );
+        uint256 usdnSharesToMintEstimated =
+            Vault._calcMintUsdnShares(deposited, protocol.getBalanceVault(), usdn.totalShares());
         assertEq(usdn.convertToTokens(usdnSharesToMintEstimated), 0, "usdn minted");
 
         vm.expectRevert(UsdnProtocolDepositTooSmall.selector);
@@ -224,9 +223,8 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
 
         uint128 deposited = 99;
 
-        uint256 usdnSharesToMintEstimated = protocol.i_calcMintUsdnShares(
-            deposited, protocol.getBalanceVault(), usdn.totalShares(), params.initialPrice
-        );
+        uint256 usdnSharesToMintEstimated =
+            Vault._calcMintUsdnShares(deposited, protocol.getBalanceVault(), usdn.totalShares());
         assertGt(usdnSharesToMintEstimated, 0, "usdn minted");
 
         uint256 sdexToBurn = protocol.i_calcSdexToBurn(
@@ -261,9 +259,8 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
 
         uint128 deposited = 99;
 
-        uint256 usdnSharesToMintEstimated = protocol.i_calcMintUsdnShares(
-            deposited, protocol.getBalanceVault(), usdn.totalShares(), params.initialPrice
-        );
+        uint256 usdnSharesToMintEstimated =
+            Vault._calcMintUsdnShares(deposited, protocol.getBalanceVault(), usdn.totalShares());
         assertGt(usdnSharesToMintEstimated, 0, "usdn minted");
 
         protocol.initiateDeposit(
