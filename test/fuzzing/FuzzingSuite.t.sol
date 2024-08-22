@@ -434,7 +434,7 @@ contract FuzzingSuiteTest is Test {
 
     function test_canTransfer() public {
         uint256 amount = 10 ether;
-        Sdex sdex = echidna.sdex();
+        Sdex sdex = fuzzingSuite.sdex();
         vm.deal(DEPLOYER, amount);
         sdex.mintAndApprove(DEPLOYER, amount, address(this), amount);
         wsteth.mintAndApprove(DEPLOYER, amount, address(this), amount);
@@ -442,11 +442,11 @@ contract FuzzingSuiteTest is Test {
         uint256 balanceBeforeProtocol = ATTACKER.balance;
 
         vm.prank(DEPLOYER);
-        echidna.transfer(0, amount, 1);
+        fuzzingSuite.transfer(0, amount, 1);
         vm.prank(DEPLOYER);
-        echidna.transfer(1, amount, 1);
+        fuzzingSuite.transfer(1, amount, 1);
         vm.prank(DEPLOYER);
-        echidna.transfer(3, amount, 1);
+        fuzzingSuite.transfer(3, amount, 1);
 
         assertEq(DEPLOYER.balance, balanceBefore - amount, "DEPLOYER balance");
         assertEq(sdex.balanceOf(DEPLOYER), balanceBefore - amount, "DEPLOYER sdex balance");
