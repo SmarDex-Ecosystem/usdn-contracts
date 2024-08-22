@@ -1,91 +1,103 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { ADMIN, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 contract TestUsdnProtocolCoreApplyPnlAndFunding is UsdnProtocolBaseFixture {
     function setUp() public {
         params = DEFAULT_PARAMS;
         params.flags.enableProtocolFees = true;
+        params.flags.enableFunding = true;
+        super._setUp(params);
+    }
+
+    function test_applyPnlAndFundingWithTooOldPrice() external {
+        uint128 oldPrice = protocol.getLastPrice();
+        uint128 newPrice = oldPrice;
+
+        _applyPnlAndFundingScenarioAndAssertsUtil(oldPrice, newPrice, false);
     }
 
     /**
+     * @custom:scenario Calling the `_applyPnlAndFunding` function with a new price at $2500
      * @custom:given A USDN protocol initialized with an `initialPrice` at $2000 and funding disabled
      * @custom:when The `_applyPnlAndFunding` function is called with the same price
      * @custom:then The state values are updated but remain unchanged
      */
     function test_applyPnlAndFunding() external {
-        super._setUp(params);
+        vm.startPrank(ADMIN);
+        protocol.setFundingSF(0);
+        protocol.resetEMA();
+        vm.stopPrank();
 
         uint128 oldPrice = protocol.getLastPrice();
         uint128 newPrice = 2500 ether;
 
-        _applyPnlAndFundingScenarioAndAssertsUtil(oldPrice, newPrice);
+        _applyPnlAndFundingScenarioAndAssertsUtil(oldPrice, newPrice, true);
     }
 
     /**
+     * @custom:scenario Calling the `_applyPnlAndFunding` function with a new price at $2000
      * @custom:given A USDN protocol initialized with an `initialPrice` at $2000 and funding enabled
      * @custom:when The `_applyPnlAndFunding` function is called with the same price
      * @custom:then The state values are updated to take into account the funding
      */
     function test_applyPnlAndFundingWithFunding() external {
-        params.flags.enableFunding = true;
-        super._setUp(params);
-
         uint128 newPrice = protocol.getLastPrice();
         uint128 oldPrice = newPrice;
 
-        _applyPnlAndFundingScenarioAndAssertsUtil(oldPrice, newPrice);
+        _applyPnlAndFundingScenarioAndAssertsUtil(oldPrice, newPrice, true);
     }
 
     /**
+     * @custom:scenario Calling the `_applyPnlAndFunding` function with a new price at $2500
      * @custom:given A USDN protocol initialized with an `initialPrice` at $2000 and funding disabled
      * @custom:when The `_applyPnlAndFunding` function is called with a new price at 2500$
      * @custom:then The state values are updated to take into account the pnl
      */
     function test_applyPnlAndFundingDifferentPrice() external {
-        params.flags.enableFunding = false;
-        super._setUp(params);
+        vm.startPrank(ADMIN);
+        protocol.setFundingSF(0);
+        protocol.resetEMA();
+        vm.stopPrank();
 
         uint128 oldPrice = protocol.getLastPrice();
         uint128 newPrice = oldPrice;
 
-        _applyPnlAndFundingScenarioAndAssertsUtil(oldPrice, newPrice);
+        _applyPnlAndFundingScenarioAndAssertsUtil(oldPrice, newPrice, true);
     }
 
     /**
+     * @custom:scenario Calling the `_applyPnlAndFunding` function with a new price at $2500
      * @custom:given A USDN protocol initialized with an `initialPrice` at $2000 and funding enabled
      * @custom:when The `_applyPnlAndFunding` function is called with a new price at 2500$
      * @custom:then The state values are updated to take into account the pnl and funding
      */
     function test_applyPnlAndFundingDifferentPriceWithFunding() external {
-        params.flags.enableFunding = true;
-        super._setUp(params);
-
         uint128 oldPrice = protocol.getLastPrice();
         uint128 newPrice = 2500 ether;
 
-        _applyPnlAndFundingScenarioAndAssertsUtil(oldPrice, newPrice);
+        _applyPnlAndFundingScenarioAndAssertsUtil(oldPrice, newPrice, true);
     }
 
     /**
-     * @custom:given A USDN protocol initialized with an `initialPrice` at `oldPrice` and a long position opened. Call
-     * the `_applyPnlAndFunding` function with a new price at `newPrice`
+     * @custom:scenario Calling the `_applyPnlAndFunding` function with a new price at `newPrice`
+     * @custom:given A USDN protocol initialized with an `initialPrice` at `oldPrice` and a long position opened.
      * @param oldPrice The initial price
      * @param newPrice The new price to apply when calling `_applyPnlAndFunding`
+     * @param priceRecent The flag to indicate if the price is recent or not
      */
-    function _applyPnlAndFundingScenarioAndAssertsUtil(uint128 oldPrice, uint128 newPrice) internal {
+    function _applyPnlAndFundingScenarioAndAssertsUtil(uint128 oldPrice, uint128 newPrice, bool priceRecent) internal {
         // Opening a long and wait 12 hours to make the protocol imbalanced and have funding
-        uint128 amount = 10 ether;
-        wstETH.mintAndApprove(address(this), amount, address(protocol), type(uint256).max);
-        protocol.initiateOpenPosition{ value: protocol.getSecurityDepositValue() }(
-            amount,
-            oldPrice / 2,
-            payable(address(this)),
-            payable(address(this)),
-            NO_PERMIT2,
-            abi.encode(oldPrice),
-            EMPTY_PREVIOUS_DATA
+        setUpUserPositionInLong(
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: 10 ether,
+                desiredLiqPrice: oldPrice / 2,
+                price: oldPrice
+            })
         );
         vm.warp(protocol.getLastUpdateTimestamp() + 12 hours); // be consistent with funding tests
 
@@ -110,51 +122,77 @@ contract TestUsdnProtocolCoreApplyPnlAndFunding is UsdnProtocolBaseFixture {
         int256 expectedPnl = protocol.getLongTradingExpo(oldPrice)
             * (int256(int128(newPrice)) - int256(int128(oldPrice))) / int256(int128(newPrice));
 
-        // Calling the function
-        ApplyPnlAndFundingData memory datas = protocol.i_applyPnlAndFunding(newPrice, uint128(block.timestamp));
+        if (priceRecent) {
+            // Calling the function
+            vm.expectEmit();
+            emit LastFundingPerDayUpdated(expectedFundingPerDay, block.timestamp);
+            ApplyPnlAndFundingData memory data = protocol.i_applyPnlAndFunding(newPrice, uint128(block.timestamp));
 
-        // Testing state values
-        assertEq(protocol.getLastPrice(), newPrice, "_lastPrice should be equal to i_applyPnlAndFunding new price");
-        assertEq(protocol.getLastUpdateTimestamp(), block.timestamp, "last update timestamp should be updated");
-        assertEq(protocol.getEMA(), expectedEma, "EMA should be updated");
-        if (params.flags.enableFunding) {
-            assertEq(
-                protocol.getLastFundingPerDay(), expectedFundingPerDay, "After the long, the funding should increase"
-            );
+            // Testing lastFundingPerDay
+            if (params.flags.enableFunding) {
+                assertEq(
+                    protocol.getLastFundingPerDay(),
+                    expectedFundingPerDay,
+                    "After the long, the funding should increase"
+                );
+            } else {
+                assertEq(
+                    protocol.getLastFundingPerDay(),
+                    fundingPerDayBefore,
+                    "Funding is disabled, the funding should not change"
+                );
+            }
+
+            // Testing state values
+            assertEq(protocol.getLastPrice(), newPrice, "_lastPrice should be equal to i_applyPnlAndFunding new price");
+            assertEq(protocol.getLastUpdateTimestamp(), block.timestamp, "last update timestamp should be updated");
+            assertEq(protocol.getEMA(), expectedEma, "EMA should be updated");
+
+            // Testing returned values
+            assertEq(data.lastPrice, newPrice, "last price should be updated to newPrice");
+            assertEq(data.isPriceRecent, true, "price is recent");
+
+            if (expectedFundingAsset > 0) {
+                assertEq(
+                    data.tempLongBalance,
+                    longBalanceBefore + expectedPnl - expectedFundingAsset,
+                    "funding positive: long balance"
+                );
+                assertEq(
+                    data.tempVaultBalance,
+                    vaultBalanceBefore - expectedPnl + (expectedFundingAsset - expectedFeeAsset),
+                    "funding positive: vault balance"
+                );
+            } else {
+                assertEq(
+                    data.tempLongBalance,
+                    longBalanceBefore + expectedPnl - (expectedFundingAsset - expectedFeeAsset),
+                    "funding <= 0: long balance"
+                );
+                assertEq(
+                    data.tempVaultBalance,
+                    vaultBalanceBefore - expectedPnl + expectedFundingAsset,
+                    "funding <= 0: vault balance"
+                );
+            }
         } else {
-            assertEq(
-                protocol.getLastFundingPerDay(),
-                fundingPerDayBefore,
-                "Funding is disabled, the funding should not change"
-            );
-        }
+            // Calling the function
+            ApplyPnlAndFundingData memory data = protocol.i_applyPnlAndFunding(newPrice, 0);
 
-        // Testing returned values
-        assertEq(datas.lastPrice, newPrice, "last price should be updated to newPrice");
-        assertEq(datas.isPriceRecent, true, "price is recent");
+            // Testing state values
+            assertEq(protocol.getLastPrice(), oldPrice, "PriceOld: _lastPrice should not be updated");
+            assertEq(
+                protocol.getLastUpdateTimestamp(),
+                protocol.getLastUpdateTimestamp(),
+                "PriceOld: last update timestamp should not be updated"
+            );
+            assertEq(protocol.getEMA(), protocol.getEMA(), "PriceOld: EMA should not be updated");
 
-        if (expectedFundingAsset > 0) {
-            assertEq(
-                datas.tempLongBalance,
-                longBalanceBefore + expectedPnl - expectedFundingAsset,
-                "funding positive: long balance"
-            );
-            assertEq(
-                datas.tempVaultBalance,
-                vaultBalanceBefore - expectedPnl + (expectedFundingAsset - expectedFeeAsset),
-                "funding positive: vault balance"
-            );
-        } else {
-            assertEq(
-                datas.tempLongBalance,
-                longBalanceBefore + expectedPnl - (expectedFundingAsset - expectedFeeAsset),
-                "funding <= 0: long balance"
-            );
-            assertEq(
-                datas.tempVaultBalance,
-                vaultBalanceBefore - expectedPnl + expectedFundingAsset,
-                "funding <= 0: vault balance"
-            );
+            // Testing returned values
+            assertEq(data.lastPrice, oldPrice, "PriceOld: last price should not be updated");
+            assertEq(data.isPriceRecent, false, "PriceOld: price is not recent");
+            assertEq(data.tempLongBalance, longBalanceBefore, "PriceOld: long balance should not be updated");
+            assertEq(data.tempVaultBalance, vaultBalanceBefore, "PriceOld: vault balance should not be updated");
         }
     }
 }
