@@ -216,6 +216,10 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         );
     }
 
+    function calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed) external view returns (int256) {
+        return Core.calcEMA(lastFundingPerDay, secondsElapsed, s._EMAPeriod, s._EMA);
+    }
+
     function i_validateOpenPosition(address user, bytes calldata priceData)
         external
         returns (uint256 securityDepositValue_, bool isValidated_, bool liquidated_)
@@ -793,9 +797,5 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
 
     function i_protocolFeeBps() external view returns (uint16) {
         return s._protocolFeeBps;
-    }
-
-    function calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed) external view returns (int256) {
-        return Core.calcEMA(lastFundingPerDay, secondsElapsed, s._EMAPeriod, s._EMA);
     }
 }

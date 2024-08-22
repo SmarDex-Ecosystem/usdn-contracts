@@ -76,6 +76,8 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
 
     function getLongTradingExpo(uint128 currentPrice) external view returns (int256 expo_);
 
+    function calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed) external view returns (int256);
+
     function i_initiateClosePosition(
         address owner,
         address to,
@@ -433,6 +435,4 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
     function i_fundingPerDay(int256 ema) external view returns (int256 fundingPerDay_, int256 oldLongExpo_);
 
     function i_protocolFeeBps() external view returns (int256);
-
-    function calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed) external view returns (int256);
 }
