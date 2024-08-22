@@ -9,7 +9,6 @@ import { IUsdn } from "../../../src/interfaces/Usdn/IUsdn.sol";
 
 contract FuzzTransfer is Setup {
     function transfer(uint256 tokenRand, uint256 amountRand, uint256 destRand) public {
-        address[2] memory users = [DEPLOYER, ATTACKER];
         address[3] memory recipients = [address(wstEthOracleMiddleware), address(usdnProtocol), address(rebalancer)];
         address[3] memory tokens = [address(0), address(usdn), address(wsteth)];
 
