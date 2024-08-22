@@ -10,6 +10,7 @@ import { IWstETH } from "../../src/interfaces/IWstETH.sol";
 
 contract WstETH is ERC20, ERC20Permit, IWstETH {
     uint8 private testDecimals;
+    uint256 private _stEthPerToken = 1.15 ether;
 
     constructor() ERC20("Wrapped liquid staked Ether 2.0", "wstETH") ERC20Permit("Wrapped liquid staked Ether 2.0") {
         uint8 tokenDecimals = super.decimals();
@@ -28,28 +29,43 @@ contract WstETH is ERC20, ERC20Permit, IWstETH {
         _approve(to, spender, value);
     }
 
-    /// @dev Returns the amount of ETH per stETH (mock value)
-    function stEthPerToken() public pure returns (uint256) {
-        return 1.15 ether;
+    /**
+     * @notice Get amount of stETH for a one wstETH
+     * @return Amount of stETH for 1 wstETH
+     */
+    function stEthPerToken() external view returns (uint256) {
+        return _stEthPerToken;
     }
 
-    function tokensPerStEth() public pure returns (uint256) {
-        return 1 ether / stEthPerToken();
+    /**
+     * @notice Get the amount of wstETH for one stETH token
+     * @return Amount of wstETH for one stETH token
+     */
+    function tokensPerStEth() external view returns (uint256) {
+        return 1e36 / _stEthPerToken;
     }
 
-    /// @dev Returns the amount of wstETH per stETH (mock value)
-    function getWstETHByStETH(uint256 _stETHAmount) external pure returns (uint256) {
-        return _stETHAmount * stEthPerToken() / 1 ether;
+    /**
+     * @notice Get amount of wstETH for a given amount of stETH
+     * @param _stETHAmount amount of stETH
+     * @return Amount of wstETH for a given stETH amount
+     */
+    function getWstETHByStETH(uint256 _stETHAmount) public view returns (uint256) {
+        return _stETHAmount * 1 ether / _stEthPerToken;
     }
 
-    /// @dev Returns the amount of stETH per wstETH (mock value)
-    function getStETHByWstETH(uint256 _wstETHAmount) external pure returns (uint256) {
-        return _wstETHAmount * 1 ether / stEthPerToken();
+    /**
+     * @notice Get amount of stETH for a given amount of wstETH
+     * @param _wstETHAmount amount of wstETH
+     * @return Amount of stETH for a given wstETH amount
+     */
+    function getStETHByWstETH(uint256 _wstETHAmount) public view returns (uint256) {
+        return _wstETHAmount * _stEthPerToken / 1 ether;
     }
 
     /// @dev Receive ETH and mint wstETH
     receive() external payable {
-        _mint(msg.sender, msg.value * 1 ether / stEthPerToken());
+        _mint(msg.sender, getWstETHByStETH(msg.value));
     }
 
     /// @dev Needed for interface compatibility
