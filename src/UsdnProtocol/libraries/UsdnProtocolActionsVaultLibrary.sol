@@ -783,7 +783,6 @@ library UsdnProtocolActionsVaultLibrary {
 
             // we calculate the available balance of the vault side, either considering the asset price at the time of
             // the initiate action, or the current price provided for validation
-            uint256 vaultBalance = withdrawal.balanceVault;
             int256 vaultAssetAvailable = Vault._vaultAssetAvailable(
                 withdrawal.totalExpo,
                 withdrawal.balanceVault,
@@ -798,8 +797,8 @@ library UsdnProtocolActionsVaultLibrary {
 
             // we will use the lowest of the two amounts to redeem the underlying asset share
             // cast is safe because vaultAssetAvailable cannot be negative
-            if (vaultBalance <= uint256(vaultAssetAvailable)) {
-                available = vaultBalance;
+            if (withdrawal.balanceVault <= uint256(vaultAssetAvailable)) {
+                available = withdrawal.balanceVault;
             } else {
                 available = uint256(vaultAssetAvailable);
             }
