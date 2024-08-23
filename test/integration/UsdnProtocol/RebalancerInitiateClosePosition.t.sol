@@ -230,10 +230,10 @@ contract TestRebalancerInitiateClosePosition is
         );
         _waitDelay();
         protocol.validateOpenPosition{ value: securityDeposit }(payable(this), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
-        // Wait 1 minute to provide a fresh price
+        // wait 1 minute to provide a fresh price
         skip(1 minutes);
 
-        // Set the wstETH price to liquidate the rebalancer position
+        // set the wstETH price to liquidate the rebalancer position
         {
             wstEthPrice = 1200 ether;
             uint128 ethPrice = uint128(wstETH.getWstETHByStETH(wstEthPrice)) / 1e10;
@@ -245,7 +245,7 @@ contract TestRebalancerInitiateClosePosition is
         // liquidate the rebalancer's tick
         uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
         protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA, 1);
-        // Sanity check
+        // sanity check
         assertEq(
             prevPosId.tickVersion + 1, protocol.getTickVersion(prevPosId.tick), "Rebalancer tick was not liquidated"
         );
@@ -258,17 +258,17 @@ contract TestRebalancerInitiateClosePosition is
         rebalancer.validateDepositAssets();
         vm.stopPrank();
 
-        // Revert with a protocol error as the tick should not be accessible anymore
+        // revert with a protocol error as the tick should not be accessible anymore
         // but the _lastLiquidatedVersion has not been updated yet
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolOutdatedTick.selector, 1, 0));
         rebalancer.initiateClosePosition{ value: securityDeposit }(
             1 ether, address(this), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA
         );
 
-        // Wait 1 minute to provide a fresh price
+        // wait 1 minute to provide a fresh price
         skip(1 minutes);
 
-        // Set the wstETH price to liquidate the rebalancer position
+        // set the wstETH price to liquidate the rebalancer position
         {
             wstEthPrice = 1000 ether;
             uint128 ethPrice = uint128(wstETH.getWstETHByStETH(wstEthPrice)) / 1e10;
@@ -281,7 +281,7 @@ contract TestRebalancerInitiateClosePosition is
         vm.expectEmit(false, false, false, false);
         emit PositionVersionUpdated(0, 0, 0, PositionId(0, 0, 0));
         protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA, 1);
-        // Sanity checks
+        // sanity checks
         assertEq(newPosId.tickVersion + 1, protocol.getTickVersion(newPosId.tick), "Position tick was not liquidated");
         assertEq(rebalancer.getLastLiquidatedVersion(), version, "Liquidated version should have been updated");
 
@@ -292,10 +292,10 @@ contract TestRebalancerInitiateClosePosition is
         _waitDelay();
         protocol.validateOpenPosition{ value: securityDeposit }(payable(this), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
 
-        // Wait 1 minute to provide a fresh price
+        // wait 1 minute to provide a fresh price
         skip(1 minutes);
 
-        // Try to withdraw from the rebalancer again
+        // try to withdraw from the rebalancer again
         vm.expectRevert(IRebalancerErrors.RebalancerUserLiquidated.selector);
         rebalancer.initiateClosePosition{ value: securityDeposit + 1 ether }(
             amountInRebalancer, address(this), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA
