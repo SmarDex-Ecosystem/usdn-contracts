@@ -12,9 +12,15 @@ contract TestUsdnProtocolCoreApplyPnlAndFunding is UsdnProtocolBaseFixture {
         super._setUp(params);
     }
 
+    /**
+     * @custom:scenario Calling the `_applyPnlAndFunding` function with a new price at $3000
+     * @custom:given A USDN protocol initialized with an `initialPrice` at $2000 and funding enabled
+     * @custom:when The `_applyPnlAndFunding` function is called with a new price at 3000$ and a timestamp too old
+     * @custom:then The state values are not updated and returned values are the same as before
+     */
     function test_applyPnlAndFundingWithTooOldPrice() external {
         uint128 oldPrice = protocol.getLastPrice();
-        uint128 newPrice = oldPrice;
+        uint128 newPrice = 3000 ether;
 
         vm.warp(protocol.getLastUpdateTimestamp() + 12 hours); // be consistent with funding tests
 
