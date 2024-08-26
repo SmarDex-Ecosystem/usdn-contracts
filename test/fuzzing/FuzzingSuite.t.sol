@@ -482,7 +482,7 @@ contract FuzzingSuiteTest is Test {
         vm.stopPrank();
 
         // price drops under a valid liquidation price
-        uint256 priceDecrease = 1000 ether;
+        uint256 priceDecrease = 1700 ether;
         priceData = abi.encode(priceDecrease);
 
         // liquidate
@@ -491,10 +491,11 @@ contract FuzzingSuiteTest is Test {
             wstEthOracleMiddleware.validationCost(priceData, IUsdnProtocolTypes.ProtocolAction.Liquidation);
         uint256 initialTotalPos = usdnProtocol.getTotalLongPositions();
 
+        skip(30 seconds);
         vm.prank(DEPLOYER);
         fuzzingSuite.liquidate(priceDecrease, 10, validationCost);
-        // assertEq(usdnProtocol.getTotalLongPositions(), initialTotalPos - 1, "total positions after liquidate");
-        // assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
+        assertEq(usdnProtocol.getTotalLongPositions(), initialTotalPos - 1, "total positions after liquidate");
+        assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
 
     function _validateCloseAndAssert(
