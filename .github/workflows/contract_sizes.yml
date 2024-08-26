@@ -51,3 +51,6 @@ jobs:
               "sizes": ${{ toJSON(steps.contract-sizes.outputs.SIZES) }},
               "filesHash": ${{ toJSON(hashFiles('src/**/*.sol')) }}
             }
+
+      - name: Fail on negative margin (contract too big)
+        run: echo "${{ steps.contract-sizes.outputs.SIZES }}" | tail -n +6 | grep -q '-' && exit 1
