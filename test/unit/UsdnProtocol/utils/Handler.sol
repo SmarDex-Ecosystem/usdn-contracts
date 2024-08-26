@@ -406,7 +406,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_getLiquidationPrice(uint128 startPrice, uint128 leverage) external pure returns (uint128) {
-        return Long._getLiquidationPrice(startPrice, leverage);
+        return Utils._getLiquidationPrice(startPrice, leverage);
     }
 
     function i_checkImbalanceLimitDeposit(uint256 depositValue) external view {
@@ -426,7 +426,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_getLeverage(uint128 price, uint128 liqPrice) external pure returns (uint256) {
-        return Long._getLeverage(price, liqPrice);
+        return ActionsUtils._getLeverage(price, liqPrice);
     }
 
     function i_calcTickFromBitmapIndex(uint256 index) external view returns (int24) {
