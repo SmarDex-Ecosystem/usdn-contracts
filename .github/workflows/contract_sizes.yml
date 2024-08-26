@@ -1,4 +1,4 @@
-name: Natspec report
+name: Contract sizes report
 on:
   pull_request:
 
@@ -6,11 +6,8 @@ env:
   FOUNDRY_PROFILE: ci
 
 jobs:
-  natspec-smells:
+  run-ci:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
     steps:
       - uses: actions/create-github-app-token@v1
         id: app-token
@@ -35,12 +32,21 @@ jobs:
       - name: Install deps
         run: npm ci && forge soldeer install
 
-      - name: Remove unused remappings file
-        run: rm -f remappings.txt
+      - name: Get contract sizes
+        id: contract-sizes
+        run: |
+          {
+            echo 'SIZES<<EOF'
+            forge build --sizes src
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
 
-      - name: Report natspec smells findings
-        uses: SmarDex-Ecosystem/natspec-smells-action@v2
+      - name: Comment on PR
+        uses: exercism/pr-commenter-action@v1.5.1
         with:
           github-token: ${{ steps.app-token.outputs.token }}
-          working-directory: ./
-          update-comment: true
+          config-file: ".github/pr-commenter.yml"
+          template-variables: |
+            {
+              "content": "${{ toJSON(steps.contract-sizes.outputs.SIZES) }}"
+            }
