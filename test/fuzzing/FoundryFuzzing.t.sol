@@ -70,5 +70,6 @@ contract FoundryFuzzingTest is Test {
     }
 
     /// forge-config: ci.invariant.fail-on-revert = false
+    /// forge-config: local.invariant.fail-on-revert = false
     function invariant_test() external { }
 }
