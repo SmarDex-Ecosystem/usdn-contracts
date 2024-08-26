@@ -2,10 +2,11 @@
 pragma solidity ^0.8.25;
 
 import { Setup } from "../Setup.sol";
+import { Utils } from "../helpers/Utils.sol";
 
 import { IUsdnProtocolTypes } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
-contract FuzzActions is Setup {
+contract FuzzActions is Setup, Utils {
     /* -------------------------------------------------------------------------- */
     /*                             USDN Protocol                                  */
     /* -------------------------------------------------------------------------- */
@@ -25,8 +26,13 @@ contract FuzzActions is Setup {
         sdex.mintAndApprove(msg.sender, amountSdexRand, address(usdnProtocol), amountSdexRand);
         vm.deal(msg.sender, ethRand);
 
-        destRand = bound(destRand, 0, users.length - 1);
-        address dest = users[destRand];
+        address payable dest;
+        {
+            address[] memory filteredArray = mergeTwoArray(destinationsToken[address(usdn)], users);
+            destRand = bound(destRand, 0, filteredArray.length - 1);
+            dest = payable(filteredArray[destRand]);
+        }
+
         validatorRand = bound(validatorRand, 0, users.length - 1);
         address payable validator = payable(users[validatorRand]);
         uint256 priceData = bound(priceRand, 0, type(uint128).max);
@@ -78,8 +84,9 @@ contract FuzzActions is Setup {
         usdn.approve(address(usdnProtocol), usdnShares);
         vm.deal(msg.sender, ethRand);
 
-        destRand = bound(destRand, 0, users.length - 1);
-        address dest = users[destRand];
+        address[] memory filteredArray = mergeTwoArray(destinationsToken[address(wsteth)], users);
+        destRand = bound(destRand, 0, filteredArray.length - 1);
+        address payable dest = payable(filteredArray[destRand]);
         validatorRand = bound(validatorRand, 0, users.length - 1);
         address payable validator = payable(users[validatorRand]);
         uint256 priceData = bound(priceRand, 0, type(uint128).max);
@@ -127,11 +134,12 @@ contract FuzzActions is Setup {
         uint256 priceRand
     ) public {
         wsteth.mintAndApprove(msg.sender, amountRand, address(usdnProtocol), amountRand);
-        uint256 destRandBounded = bound(destRand, 0, users.length - 1);
         vm.deal(msg.sender, ethRand);
 
+        address[] memory filteredArray = mergeTwoArray(destinationsToken[address(0)], users);
+        destRand = bound(destRand, 0, filteredArray.length - 1);
+        address payable dest = payable(filteredArray[destRand]);
         validatorRand = bound(validatorRand, 0, users.length - 1);
-        address dest = users[destRandBounded];
         address validator = users[validatorRand];
         priceRand = bound(priceRand, 0, type(uint128).max);
 
@@ -188,8 +196,10 @@ contract FuzzActions is Setup {
         uint256 posIdsIndexRand
     ) public {
         vm.deal(msg.sender, ethRand);
-        destRand = bound(destRand, 0, users.length - 1);
-        address dest = users[destRand];
+
+        address[] memory filteredArray = mergeTwoArray(destinationsToken[address(wsteth)], users);
+        destRand = bound(destRand, 0, filteredArray.length - 1);
+        address payable dest = payable(filteredArray[destRand]);
         validatorRand = bound(validatorRand, 0, users.length - 1);
         address payable validator = payable(users[validatorRand]);
         priceRand = bound(priceRand, 0, type(uint128).max);

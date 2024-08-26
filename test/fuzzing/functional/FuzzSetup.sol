@@ -6,9 +6,9 @@ import { WstETH } from "../../utils/WstEth.sol";
 import { Setup } from "../Setup.sol";
 
 import { Usdn } from "../../../src/Usdn/Usdn.sol";
-import { Bound } from "../helpers/Bound.sol";
+import { Utils } from "../helpers/Utils.sol";
 
-contract FuzzSetup is Setup, Bound {
+contract FuzzSetup is Setup, Utils {
     /* -------------------------------------------------------------------------- */
     /*                             USDN Protocol                                  */
     /* -------------------------------------------------------------------------- */

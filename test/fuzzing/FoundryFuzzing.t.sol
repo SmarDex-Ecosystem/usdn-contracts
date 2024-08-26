@@ -61,7 +61,7 @@ contract FoundryFuzzingTest is Test {
 
         targetSelector(FuzzSelector({ addr: address(fuzzingSuite), selectors: fuzzingSuiteSelectors }));
 
-        address[3] memory users = fuzzingSuite.getUsers();
+        address[] memory users = fuzzingSuite.getUsers();
         for (uint256 i = 0; i < users.length; i++) {
             targetSender(users[i]);
         }

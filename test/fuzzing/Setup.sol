@@ -24,7 +24,7 @@ import { FeeCollector } from "../../src/utils/FeeCollector.sol";
 import { InitializableReentrancyGuard } from "../../src/utils/InitializableReentrancyGuard.sol";
 
 contract Setup is ErrorsChecked {
-    address[3] public users = [USER_1, USER_2, ADMIN];
+    address[] public users = [USER_1, USER_2, ADMIN];
     address public constant FEE_COLLECTOR = address(0x00fee);
     Permit2TokenBitfield.Bitfield public constant NO_PERMIT2 = Permit2TokenBitfield.Bitfield.wrap(0);
 
@@ -35,6 +35,7 @@ contract Setup is ErrorsChecked {
     IUsdnProtocolTypes.PreviousActionsData internal EMPTY_PREVIOUS_DATA =
         IUsdnProtocolTypes.PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
 
+    mapping(address => address[]) public destinationsToken;
     IUsdnProtocolTypes.PositionId[] public posIds;
     int24 internal _tickSpacing = 100; // tick spacing 100 = 1%
     FeeCollector public feeCollector;
@@ -105,6 +106,11 @@ contract Setup is ErrorsChecked {
         usdnProtocol.setRebalancer(rebalancer);
         usdn.grantRole(MINTER_ROLE, address(usdnProtocol));
         usdn.grantRole(REBASER_ROLE, address(usdnProtocol));
+
+        destinationsToken[address(wsteth)] = [address(usdnProtocol), address(rebalancer)];
+        destinationsToken[address(usdn)] = [address(usdn), address(usdnProtocol)];
+        destinationsToken[address(0)] =
+            [address(wsteth), address(usdnProtocol), address(rebalancer), address(wstEthOracleMiddleware)];
     }
 
     function getBalances(address validator, address to) internal view returns (BalancesSnapshot memory) {
@@ -125,7 +131,7 @@ contract Setup is ErrorsChecked {
         });
     }
 
-    function getUsers() public view returns (address[3] memory) {
+    function getUsers() public view returns (address[] memory) {
         return users;
     }
 
