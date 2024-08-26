@@ -326,7 +326,7 @@ library UsdnProtocolActionsLongLibrary {
             MaxLeverageData memory maxLeverageData;
             maxLeverageData.tickSpacing = s._tickSpacing;
             // theoretical liquidation price for _maxLeverage
-            data.liqPriceWithoutPenalty = Long._getLiquidationPrice(data.startPrice, maxLeverage);
+            data.liqPriceWithoutPenalty = Utils._getLiquidationPrice(data.startPrice, maxLeverage);
             // find corresponding tick and actual liq price with current penalty setting
             maxLeverageData.currentLiqPenalty = s._liquidationPenalty;
             (maxLeverageData.newPosId.tick, data.liqPriceWithoutPenalty) = Long._getTickFromDesiredLiqPrice(

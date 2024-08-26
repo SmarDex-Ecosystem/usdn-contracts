@@ -1007,16 +1007,6 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Calculate the theoretical liquidation price of a position knowing its start price and leverage
-     * @param startPrice Entry price of the position
-     * @param leverage Leverage of the position
-     * @return price_ The liquidation price of the position
-     */
-    function _getLiquidationPrice(uint128 startPrice, uint128 leverage) public pure returns (uint128 price_) {
-        price_ = (startPrice - ((uint256(10) ** Constants.LEVERAGE_DECIMALS * startPrice) / leverage)).toUint128();
-    }
-
-    /**
      * @notice Calculate the value of a position, knowing its liquidation price and the current asset price
      * @param currentPrice The current price of the asset
      * @param liqPriceWithoutPenalty The liquidation price of the position without the liquidation penalty
