@@ -13,6 +13,6 @@ comment:
       files:
         - "src/**/*.sol"
       body: |
-      ```
-      {{ content }}
-      ```
+        ```
+        {{ content }}
+        ```
