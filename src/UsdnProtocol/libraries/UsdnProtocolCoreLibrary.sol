@@ -865,4 +865,39 @@ library UsdnProtocolCoreLibrary {
         version_ = s._tickVersion[tick];
         hash_ = tickHash(tick, version_);
     }
+
+    /// @notice See {IUsdnProtocolLong}
+    function longAssetAvailableWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
+        public
+        view
+        returns (int256 available_)
+    {
+        if (timestamp < s._lastUpdateTimestamp) {
+            revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
+        }
+
+        (int256 fundAsset,) = _fundingAsset(s, timestamp, s._EMA);
+
+        if (fundAsset > 0) {
+            available_ = _longAssetAvailable(s, currentPrice).safeSub(fundAsset);
+        } else {
+            int256 fee = fundAsset * Utils.toInt256(s._protocolFeeBps) / int256(Constants.BPS_DIVISOR);
+            // fees have the same sign as fundAsset (negative here), so we need to sub them
+            available_ = _longAssetAvailable(s, currentPrice).safeSub(fundAsset - fee);
+        }
+
+        int256 totalBalance = (s._balanceLong + s._balanceVault).toInt256();
+        if (available_ > totalBalance) {
+            available_ = totalBalance;
+        }
+    }
+
+    /// @notice See {IUsdnProtocolLong}
+    function longTradingExpoWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
+        public
+        view
+        returns (int256 expo_)
+    {
+        expo_ = s._totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(s, currentPrice, timestamp));
+    }
 }

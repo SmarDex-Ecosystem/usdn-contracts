@@ -126,7 +126,7 @@ library UsdnProtocolLongLibrary {
         uint128 timestamp
     ) public view returns (int256 value_) {
         (Types.Position memory pos, uint24 liquidationPenalty) = getLongPosition(s, posId);
-        int256 longTradingExpo = longTradingExpoWithFunding(s, price, timestamp);
+        int256 longTradingExpo = Core.longTradingExpoWithFunding(s, price, timestamp);
         if (longTradingExpo < 0) {
             // in case the long balance is equal to the total expo (or exceeds it), the trading expo will become zero
             // in this case, the liquidation price will fall to zero, and the position value will be equal to its
@@ -177,41 +177,6 @@ library UsdnProtocolLongLibrary {
         HugeUint.Uint512 memory accumulator
     ) public pure returns (uint128 price_) {
         price_ = _adjustPrice(TickMath.getPriceAtTick(tick), assetPrice, longTradingExpo, accumulator);
-    }
-
-    /// @notice See {IUsdnProtocolLong}
-    function longAssetAvailableWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
-        public
-        view
-        returns (int256 available_)
-    {
-        if (timestamp < s._lastUpdateTimestamp) {
-            revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
-        }
-
-        (int256 fundAsset,) = Core._fundingAsset(s, timestamp, s._EMA);
-
-        if (fundAsset > 0) {
-            available_ = Core._longAssetAvailable(s, currentPrice).safeSub(fundAsset);
-        } else {
-            int256 fee = fundAsset * Utils.toInt256(s._protocolFeeBps) / int256(Constants.BPS_DIVISOR);
-            // fees have the same sign as fundAsset (negative here), so we need to sub them
-            available_ = Core._longAssetAvailable(s, currentPrice).safeSub(fundAsset - fee);
-        }
-
-        int256 totalBalance = (s._balanceLong + s._balanceVault).toInt256();
-        if (available_ > totalBalance) {
-            available_ = totalBalance;
-        }
-    }
-
-    /// @notice See {IUsdnProtocolLong}
-    function longTradingExpoWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
-        public
-        view
-        returns (int256 expo_)
-    {
-        expo_ = s._totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(s, currentPrice, timestamp));
     }
 
     /// @notice See {IUsdnProtocolLong}
