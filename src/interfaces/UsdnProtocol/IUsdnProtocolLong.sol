@@ -18,14 +18,6 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
     function minTick() external view returns (int24);
 
     /**
-     * @notice Get the value of the highest usable tick, taking into account the tick spacing
-     * @dev Note that the effective maximum tick of a newly open long position also depends on the maximum allowed
-     * leverage value and the current value of the liquidation price multiplier
-     * @return The highest usable tick
-     */
-    function maxTick() external view returns (int24);
-
-    /**
      * @notice Get a long position identified by its tick, tickVersion and index
      * @param posId The unique position identifier
      * @return pos_ The position data

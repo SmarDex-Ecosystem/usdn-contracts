@@ -100,11 +100,6 @@ library UsdnProtocolLongLibrary {
     }
 
     /// @notice See {IUsdnProtocolLong}
-    function maxTick(Types.Storage storage s) public view returns (int24 tick_) {
-        tick_ = TickMath.maxUsableTick(s._tickSpacing);
-    }
-
-    /// @notice See {IUsdnProtocolLong}
     function getLongPosition(Types.Storage storage s, Types.PositionId memory posId)
         public
         view

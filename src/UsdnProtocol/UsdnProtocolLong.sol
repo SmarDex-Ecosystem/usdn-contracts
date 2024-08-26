@@ -13,11 +13,6 @@ abstract contract UsdnProtocolLong is UsdnProtocolStorage, IUsdnProtocolLong {
     }
 
     /// @inheritdoc IUsdnProtocolLong
-    function maxTick() external view returns (int24 tick_) {
-        return Long.maxTick(s);
-    }
-
-    /// @inheritdoc IUsdnProtocolLong
     function getLongPosition(PositionId memory posId)
         external
         view
