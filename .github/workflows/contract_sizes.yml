@@ -48,5 +48,5 @@ jobs:
           config-file: ".github/pr-commenter.yml"
           template-variables: |
             {
-              "content": "${{ toJSON(steps.contract-sizes.outputs.SIZES) }}"
+              "content": "${{ steps.contract-sizes.outputs.SIZES }}"
             }
