@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 
 import { USER_1 } from "../../../utils/Constants.sol";
 import { OracleMiddlewareBaseFixture } from "../utils/Fixtures.sol";
@@ -27,13 +27,17 @@ contract TestOracleMiddlewareSetLowLatencyDelay is OracleMiddlewareBaseFixture {
     }
 
     /**
-     * @custom:scenario Call `setLowLatencyDelay` from non admin
-     * @custom:when The function is called from an account that is not the owner
+     * @custom:scenario Call `setLowLatencyDelay` from an account that does not have the right role
+     * @custom:when The function is called from an account that does not have the right role
      * @custom:then It should revert
      */
     function test_RevertWhen_setLowLatencyDelayNonAdmin() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector, USER_1, oracleMiddleware.ADMIN_ROLE()
+            )
+        );
         vm.prank(USER_1);
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, USER_1));
         oracleMiddleware.setLowLatencyDelay(DEFAULT_LOW_LATENCY_DELAY);
     }
 

@@ -12,6 +12,22 @@ import { IOracleMiddlewareEvents } from "./IOracleMiddlewareEvents.sol";
  */
 interface IOracleMiddleware is IBaseOracleMiddleware, IOracleMiddlewareErrors, IOracleMiddlewareEvents {
     /* -------------------------------------------------------------------------- */
+    /*                                    Roles                                   */
+    /* -------------------------------------------------------------------------- */
+
+    /**
+     * @notice The admin role's signature
+     * @return Get the role signature
+     */
+    function ADMIN_ROLE() external pure returns (bytes32);
+
+    /**
+     * @notice The pausable role's signature
+     * @return Get the role signature
+     */
+    function PAUSABLE_ROLE() external pure returns (bytes32);
+
+    /* -------------------------------------------------------------------------- */
     /*                                  Constants                                 */
     /* -------------------------------------------------------------------------- */
 

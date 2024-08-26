@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 
 import { USER_1 } from "../../../utils/Constants.sol";
 import { OracleMiddlewareBaseFixture } from "../utils/Fixtures.sol";
@@ -42,15 +42,19 @@ contract TestOracleMiddlewareUpdateChainlinkTimeElapsedLimit is OracleMiddleware
     }
 
     /**
-     * @custom:scenario Call the `updateChainlinkTimeElapsedLimit` function with an address that is not the owner.
-     * @custom:when An address that is not the owner calls the updateChainlinkTimeElapsedLimit function.
-     * @custom:then It reverts with a OwnableUnauthorizedAccount error from Ownable
+     * @custom:scenario Call the `updateChainlinkTimeElapsedLimit` function with a wallet without the right role.
+     * @custom:when An address doesn't have the right rol calls the updateChainlinkTimeElapsedLimit function.
+     * @custom:then It reverts with a AccessControlUnauthorizedAccount error
      */
-    function test_RevertWhen_NonOwnerCallsUpdateChainlinkTimeElapsedLimit() public {
+    function test_RevertWhen_WalletWithoutRightRoleCallsUpdateChainlinkTimeElapsedLimit() public {
         uint256 newValue = chainlinkTimeElapsedLimit + 1 hours;
 
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector, USER_1, oracleMiddleware.ADMIN_ROLE()
+            )
+        );
         vm.prank(USER_1);
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, USER_1));
         oracleMiddleware.setChainlinkTimeElapsedLimit(newValue);
     }
 }
