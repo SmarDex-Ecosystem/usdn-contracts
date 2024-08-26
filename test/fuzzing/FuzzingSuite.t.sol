@@ -575,7 +575,7 @@ contract FuzzingSuiteTest is Test {
         vm.prank(DEPLOYER);
         fuzzingSuite.initiateDepositRebalancer(wstethDepositAmount, 0);
 
-        assertEq(wsteth.balanceOf(DEPLOYER), balanceWstethBefore - wstethDepositAmount, "deployer wsteth balance");
+        assertEq(wsteth.balanceOf(DEPLOYER), balanceWstethBefore, "deployer wsteth balance");
         assertEq(wsteth.balanceOf(address(rebalancer)), wstethDepositAmount, "rebalancer wsteth balance");
     }
 }

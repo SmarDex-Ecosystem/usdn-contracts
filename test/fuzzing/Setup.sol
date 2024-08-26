@@ -75,6 +75,7 @@ contract Setup is ErrorsChecked {
 
     constructor() payable {
         vm.warp(1_709_251_200);
+        vm.startPrank(ADMIN);
         wstEthOracleMiddleware = new MockOracleMiddleware();
         destinationsToken[address(wsteth)] = [DEPLOYER, ATTACKER];
         // todo: see if we want to fuzz chainlinkElapsedTimeLimit
@@ -114,10 +115,10 @@ contract Setup is ErrorsChecked {
         );
         usdnProtocol = IUsdnProtocolHandler(proxy);
         rebalancer = new RebalancerHandler(usdnProtocol);
-        vm.prank(ADMIN);
         usdnProtocol.setRebalancer(rebalancer);
         usdn.grantRole(MINTER_ROLE, address(usdnProtocol));
         usdn.grantRole(REBASER_ROLE, address(usdnProtocol));
+        vm.stopPrank();
     }
 
     function getProtocolSnapshot(address validator, address to)

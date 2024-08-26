@@ -16,7 +16,6 @@ contract FuzzActionsRebalancer is Setup {
         destRand = bound(destRand, 0, destinationsToken[address(wsteth)].length - 1);
         amountRand = bound(amountRand, 0, type(uint88).max);
         address dest = destinationsToken[address(wsteth)][destRand];
-
         RebalancerSnapshot memory balancesBefore = getRebalancerSnapshot(dest);
 
         vm.prank(msg.sender);
