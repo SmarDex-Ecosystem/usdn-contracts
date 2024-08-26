@@ -14,7 +14,7 @@ contract FoundryFuzzingTest is Test {
 
         targetContract(address(fuzzingSuite));
 
-        bytes4[] memory fuzzingSuiteSelectors = new bytes4[](35);
+        bytes4[] memory fuzzingSuiteSelectors = new bytes4[](36);
         //FuzzAction.sol
         fuzzingSuiteSelectors[0] = fuzzingSuite.initiateDeposit.selector;
         fuzzingSuiteSelectors[1] = fuzzingSuite.initiateWithdrawal.selector;
@@ -55,6 +55,9 @@ contract FoundryFuzzingTest is Test {
         fuzzingSuiteSelectors[32] = fuzzingSuite.setUsdnRebaseThreshold.selector;
         fuzzingSuiteSelectors[33] = fuzzingSuite.setUsdnRebaseInterval.selector;
         fuzzingSuiteSelectors[34] = fuzzingSuite.setMinLongPosition.selector;
+
+        //FuzzTransfer.sol
+        fuzzingSuiteSelectors[35] = fuzzingSuite.transfer.selector;
 
         targetSelector(FuzzSelector({ addr: address(fuzzingSuite), selectors: fuzzingSuiteSelectors }));
 
