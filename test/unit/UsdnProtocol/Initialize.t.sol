@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import { ADMIN, DEPLOYER } from "../../utils/Constants.sol";
@@ -10,6 +11,7 @@ import { UsdnProtocolHandler } from "./utils/Handler.sol";
 
 import { Usdn } from "../../../src/Usdn/Usdn.sol";
 import { UsdnProtocolFallback } from "../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
+import { HugeUint } from "../../../src/libraries/HugeUint.sol";
 
 /**
  * @custom:feature Test the functions linked to initialization of the protocol
@@ -37,7 +39,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
                     wstETH,
                     oracleMiddleware,
                     liquidationRewardsManager,
-                    100, // tick spacing 100 = 1%
+                    100, // tick spacing 100 = ~1.005%
                     ADMIN, // Fee collector
                     Managers({
                         setExternalManager: address(this),
@@ -110,8 +112,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      */
     function test_createInitialPosition() public {
         int24 tickWithoutPenalty = protocol.getEffectiveTickForPrice(INITIAL_PRICE / 2);
-        int24 expectedTick =
-            tickWithoutPenalty + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
+        int24 expectedTick = tickWithoutPenalty + int24(protocol.getLiquidationPenalty());
         uint128 posTotalExpo = 2 * INITIAL_POSITION;
         uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
 
@@ -129,7 +130,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         emit ValidatedOpenPosition(
             address(this), address(this), posTotalExpo, INITIAL_PRICE, PositionId(expectedTick, 0, 0)
         );
-        protocol.i_createInitialPosition(INITIAL_POSITION, INITIAL_PRICE, tickWithoutPenalty, posTotalExpo);
+        protocol.i_createInitialPosition(INITIAL_POSITION, INITIAL_PRICE, expectedTick, posTotalExpo);
 
         assertEq(wstETH.balanceOf(address(this)), assetBalanceBefore - INITIAL_POSITION, "deployer wstETH balance");
         assertEq(wstETH.balanceOf(address(protocol)), INITIAL_POSITION, "protocol wstETH balance");
@@ -228,10 +229,14 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
             uint256(INITIAL_DEPOSIT) * INITIAL_PRICE
                 / 10 ** (protocol.getAssetDecimals() + protocol.getPriceFeedDecimals() - protocol.TOKENS_DECIMALS())
         ) - protocol.MIN_USDN_SUPPLY();
-        int24 tickWithoutPenalty = protocol.getEffectiveTickForPrice(INITIAL_PRICE / 2);
-        int24 expectedTick =
-            tickWithoutPenalty + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
-        uint128 liquidationPriceWithoutPenalty = protocol.getEffectivePriceForTick(tickWithoutPenalty);
+        (int24 expectedTick, uint128 liquidationPriceWithoutPenalty) = protocol.i_getTickFromDesiredLiqPrice(
+            INITIAL_PRICE / 2,
+            INITIAL_PRICE,
+            0,
+            HugeUint.wrap(0),
+            protocol.getTickSpacing(),
+            protocol.getLiquidationPenalty()
+        );
         uint128 expectedPosTotalExpo =
             protocol.i_calcPositionTotalExpo(INITIAL_DEPOSIT, INITIAL_PRICE, liquidationPriceWithoutPenalty);
         uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
@@ -324,6 +329,23 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
             INITIAL_DEPOSIT, INITIAL_POSITION, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE)
         );
         assertEq(address(this).balance, balanceBefore, "balance");
+    }
+
+    /**
+     * @custom:scenario Frontrun the protocol initialization by calling the `initialize` function with a non-admin
+     * address
+     * @custom:when The attacker calls the `initialize` function
+     * @custom:then The transaction reverts with the error `AccessControlUnauthorizedAccount`
+     */
+    function test_RevertWhen_Frontrun() public {
+        bytes32 DEFAULT_ADMIN_ROLE = 0x00;
+        vm.prank(address(0));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector, address(0), DEFAULT_ADMIN_ROLE
+            )
+        );
+        protocol.initialize(INITIAL_DEPOSIT, INITIAL_POSITION, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE));
     }
 
     receive() external payable { }

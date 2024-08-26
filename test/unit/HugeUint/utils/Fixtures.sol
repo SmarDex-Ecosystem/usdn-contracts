@@ -14,8 +14,4 @@ contract HugeUintFixture is BaseFixture {
     function setUp() public virtual {
         handler = new HugeUintHandler();
     }
-
-    // force ignore from coverage report
-    // until https://github.com/foundry-rs/foundry/issues/2988 is fixed
-    function test() public override { }
 }

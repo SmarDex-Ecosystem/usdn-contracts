@@ -107,11 +107,6 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
 
         longPosValue += uint256(protocol.i_positionValue(finalPrice, liqPrice, data.firstPos.totalExpo));
 
-        emit log_named_decimal_uint("longPosValue", longPosValue, wstETH.decimals());
-        emit log_named_decimal_uint(
-            "long balance", uint256(protocol.i_longAssetAvailable(finalPrice)), wstETH.decimals()
-        );
-
         // The available balance should always be able to cover the value of all long positions
         assertGe(uint256(protocol.i_longAssetAvailable(finalPrice)), longPosValue, "long balance");
     }

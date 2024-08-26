@@ -41,16 +41,14 @@ library UsdnProtocolActionsLongLibrary {
 
     /**
      * @notice Data structure for the `_validateOpenPositionWithAction` function
-     * @param tickWithoutPenalty The tick without penalty
-     * @param currentLiqPenalty The current liquidation penalty
+     * @param currentLiqPenalty The current liquidation penalty parameter value
      * @param newPosId The new position id
-     * @param liquidationPenalty The liquidation penalty
+     * @param liquidationPenalty The liquidation penalty of the tick we are considering
      */
     struct MaxLeverageData {
-        int24 tickWithoutPenalty;
-        uint8 currentLiqPenalty;
+        uint24 currentLiqPenalty;
         Types.PositionId newPosId;
-        uint8 liquidationPenalty;
+        uint24 liquidationPenalty;
     }
 
     /* -------------------------------------------------------------------------- */
@@ -326,35 +324,28 @@ library UsdnProtocolActionsLongLibrary {
             MaxLeverageData memory maxLeverageData;
             // theoretical liquidation price for _maxLeverage
             data.liqPriceWithoutPenalty = Long._getLiquidationPrice(data.startPrice, maxLeverage);
-            // adjust to the closest valid tick down
-            maxLeverageData.tickWithoutPenalty = Long.getEffectiveTickForPrice(s, data.liqPriceWithoutPenalty);
-
-            // apply liquidation penalty with the current penalty setting
+            // find corresponding tick and actual liq price with current penalty setting
             maxLeverageData.currentLiqPenalty = s._liquidationPenalty;
-            maxLeverageData.newPosId;
-            maxLeverageData.newPosId.tick =
-                maxLeverageData.tickWithoutPenalty + int24(uint24(maxLeverageData.currentLiqPenalty)) * s._tickSpacing;
+            (maxLeverageData.newPosId.tick, data.liqPriceWithoutPenalty) =
+                Long._getTickFromDesiredLiqPrice(s, data.liqPriceWithoutPenalty, maxLeverageData.currentLiqPenalty);
+
             // retrieve the actual penalty for this tick we want to use
             maxLeverageData.liquidationPenalty = Long.getTickLiquidationPenalty(s, maxLeverageData.newPosId.tick);
             // check if the penalty for that tick is different from the current setting
-            if (maxLeverageData.liquidationPenalty == maxLeverageData.currentLiqPenalty) {
-                // since the tick's penalty is the same as what we assumed, we can use the `tickWithoutPenalty` from
-                // above
-                // retrieve the exact liquidation price without penalty
-                data.liqPriceWithoutPenalty = Long.getEffectivePriceForTick(s, maxLeverageData.tickWithoutPenalty);
-            } else {
-                // the tick's imposed penalty is different from the current setting, so the `tickWithoutPenalty` we
-                // calculated above can't be used to calculate the leverage
+            // if the penalty is the same, then the `data.liqPriceWithoutPenalty` is the correct liquidation price
+            // already
+            if (maxLeverageData.liquidationPenalty != maxLeverageData.currentLiqPenalty) {
+                // the tick's imposed penalty is different from the current setting, so the `liqPriceWithoutPenalty` we
+                // got above can't be used to calculate the leverage
                 // we must instead use the tick's penalty to find the new `liqPriceWithoutPenalty` and calculate the
-                // leverage
+                // total expo
 
                 // note: In case the tick liquidation penalty is lower than the current setting, it might lead to a
                 // leverage that exceeds the max leverage slightly. We allow this behavior in this rare occurrence
 
                 // retrieve exact liquidation price without penalty
                 data.liqPriceWithoutPenalty = Long.getEffectivePriceForTick(
-                    s,
-                    Long._calcTickWithoutPenalty(s, maxLeverageData.newPosId.tick, maxLeverageData.liquidationPenalty)
+                    s, Utils.calcTickWithoutPenalty(maxLeverageData.newPosId.tick, maxLeverageData.liquidationPenalty)
                 );
             }
 
@@ -410,7 +401,7 @@ library UsdnProtocolActionsLongLibrary {
         {
             Types.TickData storage tickData = s._tickData[data.tickHash];
             uint256 unadjustedTickPrice =
-                TickMath.getPriceAtTick(data.action.tick - int24(uint24(data.liquidationPenalty)) * s._tickSpacing);
+                TickMath.getPriceAtTick(Utils.calcTickWithoutPenalty(data.action.tick, data.liquidationPenalty));
             tickData.totalExpo = tickData.totalExpo + expoAfter - expoBefore;
             s._liqMultiplierAccumulator = s._liqMultiplierAccumulator.add(
                 HugeUint.wrap(expoAfter * unadjustedTickPrice)
@@ -586,7 +577,7 @@ library UsdnProtocolActionsLongLibrary {
             return (false, false);
         }
 
-        int24 tick = Long._calcTickWithoutPenalty(s, long.tick, Long.getTickLiquidationPenalty(s, long.tick));
+        int24 tick = Utils.calcTickWithoutPenalty(long.tick, Long.getTickLiquidationPenalty(s, long.tick));
         data.positionValue = Long._positionValue(
             data.priceWithFees, Long._getEffectivePriceForTick(tick, long.closeLiqMultiplier), long.closePosTotalExpo
         );

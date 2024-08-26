@@ -76,6 +76,8 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
 
     function getLongTradingExpo(uint128 currentPrice) external view returns (int256 expo_);
 
+    function calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed) external view returns (int256);
+
     function i_initiateClosePosition(
         address owner,
         address to,
@@ -353,7 +355,7 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         pure
         returns (uint256 assetExpected_);
 
-    function i_calcTickWithoutPenalty(int24 tick, uint8 liquidationPenalty) external view returns (int24);
+    function i_calcTickWithoutPenalty(int24 tick, uint24 liquidationPenalty) external view returns (int24);
 
     function i_calcTickWithoutPenalty(int24 tick) external view returns (int24);
 
@@ -390,7 +392,7 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         HugeUint.Uint512 memory liqMultiplierAccumulator
     ) external view returns (int24 tickWithoutLiqPenalty_);
 
-    function i_saveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty)
+    function i_saveNewPosition(int24 tick, Position memory long, uint24 liquidationPenalty)
         external
         returns (uint256, uint256, HugeUint.Uint512 memory);
 
@@ -410,12 +412,10 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
     function i_flashOpenPosition(
         address user,
         uint128 neutralPrice,
-        int24 tickWithoutPenalty,
-        uint128 amount,
-        uint256 totalExpo,
-        uint256 balanceLong,
-        uint256 balanceVault,
-        HugeUint.Uint512 memory liqMultiplierAccumulator
+        int24 tick,
+        uint128 posTotalExpo,
+        uint24 liquidationPenalty,
+        uint128 amount
     ) external returns (PositionId memory posId_);
 
     function i_triggerRebalancer(
@@ -424,4 +424,22 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         uint256 vaultBalance,
         int256 remainingCollateral
     ) external returns (uint256 longBalance_, uint256 vaultBalance_);
+
+    function i_fundingAsset(uint128 timestamp, int256 ema)
+        external
+        view
+        returns (int256 fundingAsset, int256 fundingPerDay);
+
+    function i_fundingPerDay(int256 ema) external view returns (int256 fundingPerDay_, int256 oldLongExpo_);
+
+    function i_protocolFeeBps() external view returns (int256);
+
+    function i_getTickFromDesiredLiqPrice(
+        uint128 desiredLiqPriceWithoutPenalty,
+        uint256 assetPrice,
+        uint256 longTradingExpo,
+        HugeUint.Uint512 memory accumulator,
+        int24 tickSpacing,
+        uint24 liquidationPenalty
+    ) external pure returns (int24 tickWithPenalty_, uint128 liqPriceWithoutPenalty_);
 }

@@ -96,9 +96,6 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     /// @notice The minimum amount of assets to be deposited by a user
     uint256 internal _minAssetDeposit;
 
-    /// @notice The limit of the imbalance in bps to close the position
-    uint256 internal _closeImbalanceLimitBps = 500;
-
     /**
      * @notice The time limits for the initiate/validate process of deposits and withdrawals
      * @dev The user must wait `validationDelay` after the initiate action to perform the corresponding validate
@@ -208,11 +205,6 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     /// @inheritdoc IRebalancer
     function getPositionData(uint128 version) external view returns (PositionData memory positionData_) {
         positionData_ = _positionData[version];
-    }
-
-    /// @inheritdoc IRebalancer
-    function getCloseImbalanceLimitBps() external view returns (uint256) {
-        return _closeImbalanceLimitBps;
     }
 
     /// @inheritdoc IRebalancer
@@ -445,6 +437,10 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
             revert RebalancerUserPending();
         }
 
+        if (data.userDepositData.entryPositionVersion <= _lastLiquidatedVersion) {
+            revert RebalancerUserLiquidated();
+        }
+
         data.positionVersion = _positionVersion;
 
         if (data.userDepositData.entryPositionVersion > data.positionVersion) {
@@ -593,13 +589,6 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
         _minAssetDeposit = minAssetDeposit;
         emit MinAssetDepositUpdated(minAssetDeposit);
-    }
-
-    /// @inheritdoc IRebalancer
-    function setCloseImbalanceLimitBps(uint256 closeImbalanceLimitBps) external onlyOwner {
-        _closeImbalanceLimitBps = closeImbalanceLimitBps;
-
-        emit CloseImbalanceLimitBpsUpdated(closeImbalanceLimitBps);
     }
 
     /// @inheritdoc IRebalancer
