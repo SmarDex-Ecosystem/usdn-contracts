@@ -52,11 +52,13 @@ library UsdnProtocolVaultLibrary {
         returns (uint256 usdnSharesExpected_, uint256 sdexToBurn_)
     {
         // apply fees on price
-        uint128 depositPriceWithFees = price - price * s._vaultFeeBps / uint128(Constants.BPS_DIVISOR);
+        uint128 depositPriceWithFees = uint128(price - uint256(price) * s._vaultFeeBps / Constants.BPS_DIVISOR);
+        int256 vaultBalance = vaultAssetAvailableWithFunding(s, depositPriceWithFees, timestamp);
+        if (vaultBalance <= 0) {
+            revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
+        }
         IUsdn usdn = s._usdn;
-        usdnSharesExpected_ = _calcMintUsdnShares(
-            amount, vaultAssetAvailableWithFunding(s, depositPriceWithFees, timestamp).toUint256(), usdn.totalShares()
-        );
+        usdnSharesExpected_ = _calcMintUsdnShares(amount, uint256(vaultBalance), usdn.totalShares());
         sdexToBurn_ = _calcSdexToBurn(usdn.convertToTokens(usdnSharesExpected_), s._sdexBurnOnDepositRatio);
     }
 
