@@ -13,6 +13,4 @@ comment:
       files:
         - "src/**/*.sol"
       body: |
-        ```
-        {{ content }}
-        ```
+        <pre>{{ sizes }}</pre>
