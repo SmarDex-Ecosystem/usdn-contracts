@@ -21,6 +21,14 @@ contract Utils is Test {
         return false;
     }
 
+    function boundToIntCast(uint256 value) public returns (uint256) {
+        uint256 uint255MaxValue = 2 ** 255 - 1;
+        if (value > uint255MaxValue) {
+            return value - uint255MaxValue;
+        }
+        return value;
+    }
+
     function mergeTwoArray(address[] memory a, address[] memory b)
         public
         pure

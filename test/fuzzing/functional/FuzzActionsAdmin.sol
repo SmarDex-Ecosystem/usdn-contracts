@@ -116,18 +116,16 @@ contract FuzzActionsAdmin is Setup, Utils {
         uint256 newCloseLimitBps,
         int256 newLongImbalanceTargetBps
     ) public {
-        newOpenLimitBps = bound(newOpenLimitBps, 1, type(uint256).max);
-        newWithdrawalLimitBps = bound(newWithdrawalLimitBps, newOpenLimitBps, type(uint256).max);
-        newDepositLimitBps = bound(newDepositLimitBps, 1, type(uint256).max);
-        newCloseLimitBps = bound(newCloseLimitBps, newDepositLimitBps, type(uint256).max);
+        newOpenLimitBps = boundToIntCast(bound(newOpenLimitBps, 1, type(uint256).max));
+        newWithdrawalLimitBps = boundToIntCast(bound(newWithdrawalLimitBps, newOpenLimitBps, type(uint256).max));
+        newDepositLimitBps = boundToIntCast(bound(newDepositLimitBps, 1, type(uint256).max));
+        newCloseLimitBps = boundToIntCast(bound(newCloseLimitBps, newDepositLimitBps, type(uint256).max));
         if (newWithdrawalLimitBps > Constants.BPS_DIVISOR / 2) {
-            newLongImbalanceTargetBps = int256Bound(
-                uint256(newLongImbalanceTargetBps), -int256(Constants.BPS_DIVISOR / 2), int256(newCloseLimitBps)
-            );
+            newLongImbalanceTargetBps =
+                bound(newLongImbalanceTargetBps, -int256(Constants.BPS_DIVISOR / 2), int256(newCloseLimitBps));
         } else {
-            newLongImbalanceTargetBps = int256Bound(
-                uint256(newLongImbalanceTargetBps), -int256(newWithdrawalLimitBps), int256(newCloseLimitBps)
-            );
+            newLongImbalanceTargetBps =
+                bound(newLongImbalanceTargetBps, -int256(newWithdrawalLimitBps), int256(newCloseLimitBps));
         }
         vm.prank(ADMIN);
         usdnProtocol.setExpoImbalanceLimits(
