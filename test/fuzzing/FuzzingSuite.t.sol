@@ -3,9 +3,8 @@ pragma solidity ^0.8.0;
 
 import { Test } from "forge-std/Test.sol";
 
-import { UsdnProtocolHandler } from "../unit/UsdnProtocol/utils/Handler.sol";
 import { MockOracleMiddleware } from "../unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
-import { USER_1, USER_2, USER_3, USER_4 } from "../utils/Constants.sol";
+import { ADMIN, USER_3, USER_4 } from "../utils/Constants.sol";
 import { IUsdnProtocolHandler } from "../utils/IUsdnProtocolHandler.sol";
 import { Sdex } from "../utils/Sdex.sol";
 import { WstETH } from "../utils/WstEth.sol";
@@ -464,8 +463,9 @@ contract FuzzingSuiteTest is Test {
         wsteth.mintAndApprove(DEPLOYER, 1_000_000 ether, address(usdnProtocol), type(uint256).max);
         vm.deal(DEPLOYER, 1_000_000 ether);
 
-        vm.startPrank(DEPLOYER);
+        vm.prank(ADMIN);
         usdnProtocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
+        vm.startPrank(DEPLOYER);
         // create high risk position (10% of the liquidation price)
         usdnProtocol.initiateOpenPosition{ value: securityDeposit }(
             5 ether,
@@ -491,7 +491,7 @@ contract FuzzingSuiteTest is Test {
             wstEthOracleMiddleware.validationCost(priceData, IUsdnProtocolTypes.ProtocolAction.Liquidation);
         uint256 initialTotalPos = usdnProtocol.getTotalLongPositions();
 
-        vm.prank(USER_2);
+        vm.prank(DEPLOYER);
         fuzzingSuite.liquidate(priceDecrease, 10, validationCost);
         // assertEq(usdnProtocol.getTotalLongPositions(), initialTotalPos - 1, "total positions after liquidate");
         // assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
