@@ -39,7 +39,7 @@ jobs:
             echo 'SIZES<<EOF'
             forge build --sizes src
             echo EOF
-          } >> "$GITHUB_OUTPUT"
+          } >> "$GITHUB_OUTPUT" 2>&1
 
       - name: Comment on PR
         uses: exercism/pr-commenter-action@v1.5.1
