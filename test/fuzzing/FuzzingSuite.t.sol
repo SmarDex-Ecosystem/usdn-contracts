@@ -551,7 +551,7 @@ contract FuzzingSuiteTest is Test {
         assertEq(usdnProtocol.getDepositExpoImbalanceLimitBps(), 1, "depositExpoImbalanceLimitBps");
         assertEq(usdnProtocol.getWithdrawalExpoImbalanceLimitBps(), 10_000, "withdrawalExpoImbalanceLimitBps");
         assertEq(usdnProtocol.getCloseExpoImbalanceLimitBps(), 1, "closeExpoImbalanceLimitBps");
-        assertEq(usdnProtocol.getLongImbalanceTargetBps(), -4388, "longImbalanceTargetBps");
+        assertEq(usdnProtocol.getLongImbalanceTargetBps(), -4900, "longImbalanceTargetBps");
 
         fuzzingSuite.setTargetUsdnPrice(1e18);
         assertEq(usdnProtocol.getTargetUsdnPrice(), 1e18, "targetUsdnPrice");
