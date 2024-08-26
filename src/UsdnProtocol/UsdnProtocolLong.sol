@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { IUsdnProtocolLong } from "../interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
@@ -24,11 +24,6 @@ abstract contract UsdnProtocolLong is UsdnProtocolStorage, IUsdnProtocolLong {
         returns (Position memory pos_, uint8 liquidationPenalty_)
     {
         return Long.getLongPosition(s, posId);
-    }
-
-    /// @inheritdoc IUsdnProtocolLong
-    function getMinLiquidationPrice(uint128 price) external view returns (uint128 liquidationPrice_) {
-        return Long.getMinLiquidationPrice(s, price);
     }
 
     /// @inheritdoc IUsdnProtocolLong

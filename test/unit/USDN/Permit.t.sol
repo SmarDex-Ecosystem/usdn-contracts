@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { USER_1 } from "../../utils/Constants.sol";
 import { SigUtils } from "../../utils/SigUtils.sol";
@@ -28,8 +28,21 @@ contract TestUsdnPermit is UsdnTokenFixture {
      * @custom:when The domain separator is retrieved
      * @custom:then The domain separator is equal to the expected value
      */
-    function test_domainSeparator() public {
-        assertEq(usdn.DOMAIN_SEPARATOR(), hex"788006238c8d8eb7589a46d342d5e773630b340060ab348e6e4f155e72c651de");
+    function test_domainSeparator() public view {
+        bytes32 typeHash =
+            keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
+        assertEq(
+            usdn.DOMAIN_SEPARATOR(),
+            keccak256(
+                abi.encode(
+                    typeHash,
+                    keccak256(bytes("Ultimate Synthetic Delta Neutral")),
+                    keccak256(bytes("1")),
+                    block.chainid,
+                    address(usdn)
+                )
+            )
+        );
     }
 
     /**

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
@@ -30,20 +30,10 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
     constructor(
         address pythContract,
         bytes32 pythFeedId,
-        bytes32 redstoneFeedId,
         address chainlinkPriceFeed,
         address wsteth,
         uint256 chainlinkTimeElapsedLimit
-    )
-        WstEthOracleMiddleware(
-            pythContract,
-            pythFeedId,
-            redstoneFeedId,
-            chainlinkPriceFeed,
-            wsteth,
-            chainlinkTimeElapsedLimit
-        )
-    { }
+    ) WstEthOracleMiddleware(pythContract, pythFeedId, chainlinkPriceFeed, wsteth, chainlinkTimeElapsedLimit) { }
 
     /// @inheritdoc OracleMiddleware
     function parseAndValidatePrice(
@@ -57,7 +47,7 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
         if (_verifySignature || _wstethMockedPrice == 0) {
             price_ = super.parseAndValidatePrice(actionId, targetTimestamp, action, data);
         } else {
-            price_.timestamp = targetTimestamp;
+            price_.timestamp = targetTimestamp == 0 ? block.timestamp : targetTimestamp;
         }
 
         // if the mocked price is not set, return

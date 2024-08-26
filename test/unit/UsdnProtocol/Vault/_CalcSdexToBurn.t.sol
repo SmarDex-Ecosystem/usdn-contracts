@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
@@ -18,7 +18,7 @@ contract TestUsdnProtocolCalcUsdnPrice is UsdnProtocolBaseFixture {
      * @custom:when The function is called with this amount
      * @custom:then The correct amount of SDEX to burn is returned
      */
-    function test_calcSdexToBurn() public {
+    function test_calcSdexToBurn() public view {
         uint32 burnRatio = protocol.getSdexBurnOnDepositRatio();
         uint256 burnRatioDivisor = protocol.SDEX_BURN_ON_DEPOSIT_DIVISOR();
         uint8 usdnDecimals = protocol.TOKENS_DECIMALS();

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 
@@ -24,7 +24,7 @@ contract TestUsdnAccessControl is UsdnTokenFixture {
      * @custom:when A user without the required role calls all privileged functions.
      * @custom:then Each functions should revert with the error corresponding to the role.
      */
-    function test_RevertWhen_unauthorized() external {
+    function test_RevertWhen_unauthorized() public {
         bytes memory minterUnauthorizedError = abi.encodeWithSelector(
             IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), usdn.MINTER_ROLE()
         );

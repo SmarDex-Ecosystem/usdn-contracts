@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
@@ -24,7 +24,7 @@ contract TestUsdnProtocolLongTickValue is UsdnProtocolBaseFixture {
      * @custom:or the tick value is 0.198003465594229687 wstETH if the price is equal to the liquidation price with
      * penalty
      */
-    function test_tickValue() public {
+    function test_tickValue() public view {
         int24 tick = protocol.getEffectiveTickForPrice(500 ether);
         uint128 liqPriceWithoutPenalty = protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(tick));
         TickData memory tickData =

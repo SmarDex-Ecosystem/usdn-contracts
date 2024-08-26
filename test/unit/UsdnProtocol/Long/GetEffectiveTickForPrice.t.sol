@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
@@ -23,7 +23,7 @@ contract TestUsdnProtocolLongGetEffectiveTickForPrice is UsdnProtocolBaseFixture
      * @custom:when getEffectiveTickForPrice is called
      * @custom:then The function should return expected minTick
      */
-    function testFuzz_getEffectiveTickForPriceExpectedMinTick(int24 tickSpacing) external {
+    function testFuzz_getEffectiveTickForPriceExpectedMinTick(int24 tickSpacing) public view {
         if (tickSpacing == 0) {
             return;
         }
@@ -48,7 +48,7 @@ contract TestUsdnProtocolLongGetEffectiveTickForPrice is UsdnProtocolBaseFixture
      * @custom:when getEffectiveTickForPrice is called with price 10_000
      * @custom:then The function should return tick_ = minTick
      */
-    function test_getEffectiveTickForPriceTickLowerThanZero() external {
+    function test_getEffectiveTickForPriceTickLowerThanZero() public view {
         /* ------------------------ minUsableTick < tick_ < 0 ----------------------- */
         int24 tickSpacing = 100;
         uint128 price = 60_000 ether;
@@ -83,7 +83,7 @@ contract TestUsdnProtocolLongGetEffectiveTickForPrice is UsdnProtocolBaseFixture
      * @custom:when getEffectiveTickForPrice is called with price 5_000_000_000 ether
      * @custom:then The function should return tick_ > 0
      */
-    function test_getEffectiveTickForPriceTickGreaterThanOrEqualZero() external {
+    function test_getEffectiveTickForPriceTickGreaterThanOrEqualZero() public view {
         /* -------------------------------- tick_ = 0 ------------------------------- */
         int24 tickSpacing = 100;
         uint128 price = 1 ether;

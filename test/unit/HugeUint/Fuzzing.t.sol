@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { HugeUintFixture } from "./utils/Fixtures.sol";
 
@@ -336,7 +336,7 @@ contract TestHugeUintFuzzing is HugeUintFixture {
      * @param a the first operand
      * @param b the second operand
      */
-    function testFuzz_mulThenDiv(uint256 a, uint256 b) public {
+    function testFuzz_mulThenDiv(uint256 a, uint256 b) public view {
         vm.assume(a > 0 && b > 0);
         HugeUint.Uint512 memory m = handler.mul(a, b);
         uint256 res = handler.div(m, b);

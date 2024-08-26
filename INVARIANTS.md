@@ -23,6 +23,7 @@ Assuming you have Echidna installed
 | PROTCL-10 | Initiate and validate a withdrawal action without test.      | Passing        |
 | PROTCL-11 | Initiate and validate a long action without test.            | Passing        |
 | PROTCL-12 | Initiate and validate a close action without test.           | Passing        |
+| PROTCL-13 | Initialize USDN protocol.                                    | Unknown revert |
 | PROTCL-14 | Liquidate using USDN protocol.                               | Passing        |
 
 ## Admin tests

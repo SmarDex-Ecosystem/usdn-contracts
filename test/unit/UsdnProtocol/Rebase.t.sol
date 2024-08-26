@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { ADMIN } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
@@ -43,7 +43,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         uint128 assetPrice,
         uint128 targetPrice,
         uint8 assetDecimals
-    ) public {
+    ) public view {
         assetDecimals = uint8(bound(assetDecimals, 6, 18));
         // when the balance becomes really small, the error on the final price becomes larger
         vaultBalance = uint128(bound(vaultBalance, 10 ** assetDecimals, type(uint128).max));
@@ -92,7 +92,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         // rebase (no liquidation happens)
         vm.expectEmit();
         emit Rebase(usdn.MAX_DIVISOR(), expectedDivisor);
-        protocol.testLiquidate(abi.encode(newPrice), 0);
+        protocol.mockLiquidate(abi.encode(newPrice), 0);
 
         assertApproxEqAbs(
             protocol.usdnPrice(newPrice, uint128(block.timestamp - 30)),

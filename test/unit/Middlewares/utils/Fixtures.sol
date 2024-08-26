@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 
@@ -7,6 +7,7 @@ import { PYTH_ETH_USD, REDSTONE_ETH_USD } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
 import { OracleMiddlewareHandler } from "../utils/Handler.sol";
+import { OracleMiddlewareWithRedstoneHandler } from "../utils/HandlerWithRedstone.sol";
 import { MockChainlinkOnChain } from "../utils/MockChainlinkOnChain.sol";
 import { MockPyth } from "../utils/MockPyth.sol";
 
@@ -54,6 +55,53 @@ contract OracleMiddlewareBaseFixture is BaseFixture, ActionsFixture {
         mockPyth = new MockPyth();
         mockChainlinkOnChain = new MockChainlinkOnChain();
         oracleMiddleware = new OracleMiddlewareHandler(
+            address(mockPyth), PYTH_ETH_USD, address(mockChainlinkOnChain), chainlinkTimeElapsedLimit
+        );
+    }
+
+    function test_setUp() public {
+        assertEq(address(oracleMiddleware.getPyth()), address(mockPyth));
+        assertEq(address(oracleMiddleware.getPriceFeed()), address(mockChainlinkOnChain));
+
+        assertEq(mockPyth.lastPublishTime(), block.timestamp);
+        assertEq(mockChainlinkOnChain.latestTimestamp(), block.timestamp);
+
+        /* ----------------------------- Test pyth mock ----------------------------- */
+        bytes[] memory updateData = new bytes[](1);
+        bytes32[] memory priceIds = new bytes32[](1);
+        PythStructs.PriceFeed[] memory priceFeeds = mockPyth.parsePriceFeedUpdatesUnique{
+            value: mockPyth.getUpdateFee(updateData)
+        }(updateData, priceIds, 1000, 0);
+
+        assertEq(priceFeeds.length, 1);
+        assertEq(priceFeeds[0].price.price, 2000e8);
+        assertEq(priceFeeds[0].price.conf, 20e8);
+        assertEq(priceFeeds[0].price.expo, -8);
+        assertEq(priceFeeds[0].price.publishTime, 1000);
+
+        /* ---------------------- Test chainlink on chain mock ---------------------- */
+        (, int256 price,, uint256 updatedAt,) = mockChainlinkOnChain.latestRoundData();
+        assertEq(price, 2000e8);
+        assertEq(updatedAt, block.timestamp);
+    }
+}
+
+/**
+ * @title OracleMiddlewareWithRedstoneFixture
+ * @dev Utils for testing the oracle middleware with redstone support
+ */
+contract OracleMiddlewareWithRedstoneFixture is BaseFixture, ActionsFixture {
+    MockPyth internal mockPyth;
+    MockChainlinkOnChain internal mockChainlinkOnChain;
+    OracleMiddlewareWithRedstoneHandler public oracleMiddleware;
+    uint256 internal chainlinkTimeElapsedLimit = 1 hours;
+
+    function setUp() public virtual {
+        vm.warp(1_704_063_600); // 01/01/2024 @ 12:00am (UTC+2)
+
+        mockPyth = new MockPyth();
+        mockChainlinkOnChain = new MockChainlinkOnChain();
+        oracleMiddleware = new OracleMiddlewareWithRedstoneHandler(
             address(mockPyth), PYTH_ETH_USD, REDSTONE_ETH_USD, address(mockChainlinkOnChain), chainlinkTimeElapsedLimit
         );
     }
@@ -120,9 +168,8 @@ contract WstethBaseFixture is BaseFixture, ActionsFixture {
         mockPyth = new MockPyth();
         mockChainlinkOnChain = new MockChainlinkOnChain();
         wsteth = new WstETH();
-        wstethOracle = new WstEthOracleMiddleware(
-            address(mockPyth), 0, REDSTONE_ETH_USD, address(mockChainlinkOnChain), address(wsteth), 1 hours
-        );
+        wstethOracle =
+            new WstEthOracleMiddleware(address(mockPyth), 0, address(mockChainlinkOnChain), address(wsteth), 1 hours);
     }
 
     function test_setUp() public {

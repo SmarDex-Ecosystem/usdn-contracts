@@ -19,7 +19,7 @@ Environment variables can be used to control the script execution:
 - `REBALANCER_ADDRESS`: if provided, skips deployment of the rebalancer
 - `CHAINLINK_GAS_PRICE_ADDRESS`: required if liquidation rewards manager address is not provided, the address of the gas price chainlink oracle
 - `CHAINLINK_GAS_PRICE_VALIDITY`: the amount of time (in seconds) we consider the price valid. A tolerance should be added to avoid reverting if chainlink misses the heartbeat by a few minutes
-- `USDN_ADDRESS`: if provided, skips deployment of the USDN token
+- `USDN_ADDRESS`: required if running `02_Deploy.s.sol` in a production environment (not fork)
 - `INIT_DEPOSIT_AMOUNT`: amount to use for the `initialize` function call (if not provided, then initialization is skipped).
 - `INIT_LONG_AMOUNT`: amount to use for the `initialize` function call (if not provided, then initialization is skipped).
 - `INIT_LONG_LIQPRICE`: desired liquidation price for the initial long position. For fork deployment, this value is
@@ -58,7 +58,7 @@ If `WSTETH_ADDRESS` is defined and `GET_WSTETH=true`, then the script will wrap 
 contract so that there is enough balance.
 
 ```
-forge script --non-interactive --private-key 0xac... -f http://localhost:8545 script/Deploy.s.sol:Deploy --broadcast
+forge script --non-interactive --private-key 0xac... -f http://localhost:8545 script/02_Deploy.s.sol:Deploy --broadcast
 ```
 
 ## Anvil fork configuration
@@ -68,10 +68,9 @@ The `anvil` fork should be launched with at least the following parameters:
 - `-a 100` to fund 100 addresses with 10'000 Ξ
 - `-f https://..` to fork mainnet at the latest height
 - `--chain-id $FORK_CHAIN_ID` to change from the default (1) forked chain ID
-- `--code-size-limit 50000` to support larger contracts (50kB) since we are still in the process of optimizing code size
 
 ```
-anvil -a 100 -f [Mainnet RPC] --chain-id $FORK_CHAIN_ID --code-size-limit 50000
+anvil -a 100 -f [Mainnet RPC] --chain-id $FORK_CHAIN_ID
 ```
 
 ## Logs analysis command

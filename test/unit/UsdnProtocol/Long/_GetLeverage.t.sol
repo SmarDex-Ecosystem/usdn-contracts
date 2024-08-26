@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
@@ -44,15 +44,23 @@ contract TestUsdnProtocolLongGetLeverage is UsdnProtocolBaseFixture {
      * @custom:when The function "_getLeverage" is called with some parameters
      * @custom:then The leverage is calculated correctly
      */
-    function test_getLeverageWithExpectedValue() public {
+    function test_getLeverageWithExpectedValue() public view {
         uint8 leverageDecimals = protocol.LEVERAGE_DECIMALS();
-        uint128 leverage = protocol.i_getLeverage(1000, 1000 - 1);
-        assertEq(leverage, 1000 * 10 ** leverageDecimals, "Position total expo should be 1000e21");
+        uint256 leverage = protocol.i_getLeverage(1000, 1000 - 1);
+        assertEq(leverage, 1000 * 10 ** leverageDecimals, "leverage should be 1000e21");
 
         leverage = protocol.i_getLeverage(10_389 ether, 10_158 ether);
-        assertEq(leverage, 44_974_025_974_025_974_025_974, "Position total expo should be 44_974...");
+        assertEq(leverage, 44_974_025_974_025_974_025_974, "leverage should be 44_974...");
 
         leverage = protocol.i_getLeverage(2000 ether, 1000 ether);
-        assertEq(leverage, 2 * 10 ** leverageDecimals, "Position total expo should be 2e21");
+        assertEq(leverage, 2 * 10 ** leverageDecimals, "leverage should be 2e21");
+
+        // worst case scenario
+        leverage = protocol.i_getLeverage(type(uint128).max, type(uint128).max - 1);
+        assertEq(
+            leverage,
+            340_282_366_920_938_463_463_374_607_431_768_211_455_000_000_000_000_000_000_000,
+            "leverage should be 340_282..."
+        );
     }
 }

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { console2 } from "forge-std/Test.sol";
 
@@ -34,7 +34,7 @@ contract TestUsdnInvariants is UsdnTokenFixture {
     /**
      * @custom:scenario Check that the contract returns the expected number of shares for each user
      */
-    function invariant_shares() public displayBalancesAndShares {
+    function invariant_shares() public view displayBalancesAndShares {
         assertEq(usdn.sharesOf(USER_1), usdn.getSharesOfAddress(USER_1), "shares of user 1");
         assertEq(usdn.sharesOf(USER_2), usdn.getSharesOfAddress(USER_2), "shares of user 2");
         assertEq(usdn.sharesOf(USER_3), usdn.getSharesOfAddress(USER_3), "shares of user 3");
@@ -44,14 +44,14 @@ contract TestUsdnInvariants is UsdnTokenFixture {
     /**
      * @custom:scenario Check that the contract returns the expected number of total shares
      */
-    function invariant_totalShares() public displayBalancesAndShares {
+    function invariant_totalShares() public view displayBalancesAndShares {
         assertEq(usdn.totalShares(), usdn.totalSharesSum(), "total shares");
     }
 
     /**
      * @custom:scenario Check that the sum of the user shares is equal to the total shares
      */
-    function invariant_sumOfSharesBalances() public displayBalancesAndShares {
+    function invariant_sumOfSharesBalances() public view displayBalancesAndShares {
         uint256 sum;
         for (uint256 i = 0; i < usdn.getLengthOfShares(); i++) {
             (, uint256 value) = usdn.getElementOfIndex(i);
@@ -65,13 +65,13 @@ contract TestUsdnInvariants is UsdnTokenFixture {
      * @dev The sum of all user balances is not exactly equal to the total supply because of the rounding errors that
      * can stack up.
      */
-    function invariant_totalSupply() public displayBalancesAndShares {
+    function invariant_totalSupply() public view displayBalancesAndShares {
         uint256 sum;
         for (uint256 i = 0; i < usdn.getLengthOfShares(); i++) {
             (address user,) = usdn.getElementOfIndex(i);
             sum += usdn.balanceOf(user);
         }
-        assertApproxEqAbs(sum, usdn.totalSupply(), 2, "sum of user balances vs total supply");
+        assertApproxEqAbs(sum, usdn.totalSupply(), usdn.getLengthOfShares(), "sum of user balances vs total supply");
     }
 
     modifier displayBalancesAndShares() {

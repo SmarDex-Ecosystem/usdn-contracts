@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { ADMIN } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
+
+import { FeeCollector } from "../../../src/utils/FeeCollector.sol";
 
 /**
  * @custom:feature All fees functionality of the USDN Protocol
@@ -22,12 +24,10 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
      * @custom:given The fee value is > BPS_DIVISOR
      * @custom:then The protocol reverts with `UsdnProtocolInvalidProtocolFeeBps`
      */
-    function test_RevertWhen_setFeeBps_tooBig() public {
+    function test_RevertWhen_setFeeBps_tooBig() public adminPrank {
         uint16 bpsDivisor = uint16(protocol.BPS_DIVISOR());
-        vm.startPrank(ADMIN);
         vm.expectRevert(UsdnProtocolInvalidProtocolFeeBps.selector);
         protocol.setProtocolFeeBps(bpsDivisor + 1);
-        vm.stopPrank();
     }
 
     /**
@@ -44,7 +44,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         protocol.setProtocolFeeBps(0);
 
         _waitBeforeLiquidation();
-        protocol.testLiquidate(abi.encode(DEFAULT_PARAMS.initialPrice), 0);
+        protocol.mockLiquidate(abi.encode(DEFAULT_PARAMS.initialPrice), 0);
 
         assertEq(protocol.getPendingProtocolFee(), 0, "initial pending protocol fee");
     }
@@ -111,22 +111,83 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         setUpUserPositionInVault(
             address(this), ProtocolAction.ValidateDeposit, 10_000 ether, DEFAULT_PARAMS.initialPrice
         );
-        skip(4 days);
+        skip(30 days);
 
-        setUpUserPositionInLong(
-            OpenParams({
-                user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
-                positionSize: 5000 ether,
-                desiredLiqPrice: DEFAULT_PARAMS.initialPrice / 2,
-                price: DEFAULT_PARAMS.initialPrice
-            })
+        assertEq(wstETH.balanceOf(address(feeCollector)), 0, "fee collector balance before collect");
+        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 1 ether, DEFAULT_PARAMS.initialPrice);
+
+        assertGe(
+            wstETH.balanceOf(address(feeCollector)), protocol.getFeeThreshold(), "fee collector balance after collect"
         );
-        skip(8 days);
-        assertEq(wstETH.balanceOf(ADMIN), 0, "fee collector balance before collect");
+    }
+
+    /**
+     * @custom:scenario Check that the transaction does not revert when the fee collector does not have a callback
+     * @custom:given The pending protocol fee is 0
+     * @custom:when Multiple actions are performed to reach the fee threshold
+     * @custom:then The fees are collected by the fee collector and the transaction does not revert
+     */
+    function test_noRevertWhen_noErc165() public {
+        address feeCollectorNoCallback = address(new FeeCollectorNoCallback());
+        vm.prank(ADMIN);
+        protocol.setFeeCollector(feeCollectorNoCallback);
+        assertEq(protocol.getFeeCollector(), feeCollectorNoCallback);
+
         setUpUserPositionInVault(
-            address(this), ProtocolAction.InitiateDeposit, 10_000 ether, DEFAULT_PARAMS.initialPrice
+            address(this), ProtocolAction.ValidateDeposit, 10_000 ether, DEFAULT_PARAMS.initialPrice
         );
-        assertGe(wstETH.balanceOf(ADMIN), protocol.getFeeThreshold(), "fee collector balance after collect");
+        skip(30 days);
+
+        assertEq(wstETH.balanceOf(address(feeCollectorNoCallback)), 0, "fee collector balance before collect");
+        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 1 ether, DEFAULT_PARAMS.initialPrice);
+
+        assertGe(
+            wstETH.balanceOf(address(feeCollectorNoCallback)),
+            protocol.getFeeThreshold(),
+            "fee collector balance after collect"
+        );
+    }
+
+    /**
+     * @custom:scenario Check that the transaction reverts when the fee collector callback reverts
+     * @custom:given The pending protocol fee is 0
+     * @custom:when Multiple actions are performed to reach the fee threshold
+     * @custom:then The fees are collected by the fee collector and the transaction does revert
+     */
+    function test_RevertWhen_callbackReverts() public {
+        address feeCollectorRevertCallback = address(new FeeCollectorRevertCallback());
+        vm.prank(ADMIN);
+        protocol.setFeeCollector(feeCollectorRevertCallback);
+        assertEq(protocol.getFeeCollector(), feeCollectorRevertCallback);
+
+        setUpUserPositionInVault(
+            address(this), ProtocolAction.ValidateDeposit, 10_000 ether, DEFAULT_PARAMS.initialPrice
+        );
+        skip(30 days);
+
+        assertEq(wstETH.balanceOf(address(feeCollectorRevertCallback)), 0, "fee collector balance before collect");
+        usdn.approve(address(protocol), 1);
+        vm.expectRevert("FeeCollectorRevertCallback");
+        protocol.initiateWithdrawal(
+            1, address(this), payable(address(this)), abi.encode(DEFAULT_PARAMS.initialPrice), EMPTY_PREVIOUS_DATA
+        );
+
+        assertEq(
+            FeeCollectorRevertCallback(feeCollectorRevertCallback).totFeeAmount(),
+            0,
+            "fee collector variable after collect"
+        );
+        assertGe(wstETH.balanceOf(address(feeCollectorRevertCallback)), 0, "fee collector balance after collect");
+    }
+}
+
+contract FeeCollectorNoCallback { }
+
+contract FeeCollectorRevertCallback is FeeCollector {
+    uint256 public totFeeAmount;
+
+    function feeCollectorCallback(uint256 feeAmount) external override {
+        totFeeAmount += feeAmount;
+        revert("FeeCollectorRevertCallback");
     }
 }

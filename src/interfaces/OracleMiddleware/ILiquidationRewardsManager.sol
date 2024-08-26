@@ -22,6 +22,36 @@ interface ILiquidationRewardsManager is IBaseLiquidationRewardsManager, ILiquida
      */
     function BASE_GAS_COST() external pure returns (uint256);
 
+    /**
+     * @notice Maximum gas used per tick liquidated
+     * @return The maximum gas used per tick
+     */
+    function MAX_GAS_USED_PER_TICK() external pure returns (uint256);
+
+    /**
+     * @notice Maximum gas used for the rest of the computation
+     * @return The maximum gas used for the rest of the computation
+     */
+    function MAX_OTHER_GAS_USED() external pure returns (uint256);
+
+    /**
+     * @notice Maximum gas used for the rebase
+     * @return The maximum gas used for the rebase
+     */
+    function MAX_REBASE_GAS_USED() external pure returns (uint256);
+
+    /**
+     * @notice Maximum gas used for the optional rebalancer trigger
+     * @return The maximum gas used for the optional rebalancer trigger
+     */
+    function MAX_REBALANCER_GAS_USED() external pure returns (uint256);
+
+    /**
+     * @notice Maximum upper limit for the gas price
+     * @return The maximum upper limit for the gas price
+     */
+    function MAX_GAS_PRICE_LIMIT() external pure returns (uint256);
+
     /* -------------------------------------------------------------------------- */
     /*                                  Getters Setters                           */
     /* -------------------------------------------------------------------------- */

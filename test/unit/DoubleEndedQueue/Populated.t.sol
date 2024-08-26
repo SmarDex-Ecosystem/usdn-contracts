@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { USER_1, USER_2 } from "../../utils/Constants.sol";
 import { DequeFixture } from "./utils/Fixtures.sol";
@@ -59,7 +59,7 @@ contract TestDequePopulated is DequeFixture {
      * @custom:when Calling `empty` and `length`
      * @custom:then Returns `false` and `3`
      */
-    function test_view() public {
+    function test_view() public view {
         assertEq(handler.empty(), false, "empty");
         assertEq(handler.length(), 3, "length");
     }
@@ -69,7 +69,7 @@ contract TestDequePopulated is DequeFixture {
      * @custom:when Calling `front`
      * @custom:then Returns the front item
      */
-    function test_accessFront() public {
+    function test_accessFront() public view {
         (Types.PendingAction memory front, uint128 rawIndex) = handler.front();
         _assertActionsEqual(front, action1, "front");
         assertEq(rawIndex, rawIndex1, "raw index");
@@ -80,7 +80,7 @@ contract TestDequePopulated is DequeFixture {
      * @custom:when Calling `back`
      * @custom:then Returns the back item
      */
-    function test_accessBack() public {
+    function test_accessBack() public view {
         (Types.PendingAction memory back, uint128 rawIndex) = handler.back();
         _assertActionsEqual(back, action3, "back");
         assertEq(rawIndex, rawIndex3, "raw index");
@@ -91,7 +91,7 @@ contract TestDequePopulated is DequeFixture {
      * @custom:when Calling `at` with one of the indices
      * @custom:then Returns the item at the given index
      */
-    function test_accessAt() public {
+    function test_accessAt() public view {
         (Types.PendingAction memory at, uint128 rawIndex) = handler.at(0);
         _assertActionsEqual(at, action1, "action 1");
         assertEq(rawIndex, rawIndex1, "raw index 1");
@@ -108,7 +108,7 @@ contract TestDequePopulated is DequeFixture {
      * @custom:when Calling `atRaw` with one of the raw indices
      * @custom:then Returns the item at the given raw index
      */
-    function test_accessAtRaw() public {
+    function test_accessAtRaw() public view {
         _assertActionsEqual(handler.atRaw(rawIndex1), action1, "action 1");
         _assertActionsEqual(handler.atRaw(rawIndex2), action2, "action 2");
         _assertActionsEqual(handler.atRaw(rawIndex3), action3, "action 3");

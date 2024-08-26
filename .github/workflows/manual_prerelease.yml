@@ -25,10 +25,10 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        run: npm ci && forge install
+        run: npm ci && forge soldeer install
 
       - name: Update package version
-        run: npm version prerelease --no-git-tag-version --preid "${{github.ref_name}}.${{ github.sha }}"
+        run: npm version prerelease --no-git-tag-version --preid "$(echo ${{ github.ref_name }} | sed 's/[[:alnum:]]\{1,\}\///').${{ github.sha }}"
 
       - name: Export ABI
         run: npm run exportAbi

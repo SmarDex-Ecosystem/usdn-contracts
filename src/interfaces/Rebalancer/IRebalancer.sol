@@ -19,6 +19,12 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
     function MULTIPLIER_FACTOR() external view returns (uint256);
 
     /**
+     * @notice The minimum cooldown time between actions
+     * @return The minimum cooldown time between actions
+     */
+    function MAX_ACTION_COOLDOWN() external view returns (uint256);
+
+    /**
      * @notice Returns the address of the asset used by the USDN protocol
      * @return The address of the asset used by the USDN protocol
      */
@@ -126,9 +132,10 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
      * @notice Closes a user deposited amount of the current UsdnProtocol rebalancer position
      * @dev The rebalancer allows partially closing its position to withdraw the user's assets + PnL
      * The remaining amount needs to be above `_minAssetDeposit` and `_minLongPosition` on the USDN protocol side
+     * The validator is always the msg.sender, which means the user must call `validateClosePosition` on the protocol
+     * side after calling this function
      * @param amount The amount to close relative to the amount deposited
-     * @param to The to address
-     * @param validator The validator address
+     * @param to The address that will receive the assets
      * @param currentPriceData The current price data
      * @param previousActionsData The previous action price data
      * @return success_ If the UsdnProtocol's `initiateClosePosition` was successful
@@ -138,7 +145,6 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
     function initiateClosePosition(
         uint88 amount,
         address to,
-        address payable validator,
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_);

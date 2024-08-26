@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
+import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../../interfaces/Usdn/IUsdn.sol";
+import { IFeeCollectorCallback } from "../../interfaces/UsdnProtocol/IFeeCollectorCallback.sol";
 import { IUsdnProtocolActions } from "../../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
@@ -428,7 +430,7 @@ library UsdnProtocolActionsVaultLibrary {
 
         isInitiated_ = true;
 
-        emit IUsdnProtocolEvents.InitiatedDeposit(to, validator, amount, block.timestamp);
+        emit IUsdnProtocolEvents.InitiatedDeposit(to, validator, amount, block.timestamp, data.sdexToBurn);
     }
 
     /**
@@ -458,7 +460,7 @@ library UsdnProtocolActionsVaultLibrary {
 
         if (isValidated_) {
             Core._clearPendingAction(s, validator, rawIndex);
-            return (pending.securityDepositValue, true);
+            securityDepositValue_ = pending.securityDepositValue;
         }
     }
 
@@ -737,7 +739,7 @@ library UsdnProtocolActionsVaultLibrary {
 
         if (isValidated_) {
             Core._clearPendingAction(s, validator, rawIndex);
-            return (pending.securityDepositValue, true);
+            securityDepositValue_ = pending.securityDepositValue;
         }
     }
 
@@ -785,10 +787,7 @@ library UsdnProtocolActionsVaultLibrary {
                 (currentPrice.price + currentPrice.price * s._vaultFeeBps / Constants.BPS_DIVISOR).toUint128();
 
             // we calculate the available balance of the vault side, either considering the asset price at the time of
-            // the
-            // initiate action, or the current price provided for validation. We will use the lower of the two amounts
-            // to
-            // redeem the underlying asset share
+            // the initiate action, or the current price provided for validation
             uint256 available1 = withdrawal.balanceVault;
             uint256 available2 = Vault._vaultAssetAvailable(
                 withdrawal.totalExpo,
@@ -797,6 +796,8 @@ library UsdnProtocolActionsVaultLibrary {
                 withdrawalPriceWithFees,
                 withdrawal.assetPrice
             ).toUint256();
+
+            // we will use the lowest of the two amounts to redeem the underlying asset share
             if (available1 <= available2) {
                 available = available1;
             } else {
@@ -942,14 +943,22 @@ library UsdnProtocolActionsVaultLibrary {
     /**
      * @notice Distribute the protocol fee to the fee collector if it exceeds the threshold
      * @dev This function is called after every action that changes the protocol fee balance
+     * Try to call the function `feeCollectorCallback` on the fee collector if it supports the interface (non reverting
+     * if it fails)
+     * @param s The storage of the protocol
      */
     function _checkPendingFee(Types.Storage storage s) public {
         uint256 pendingFee = s._pendingProtocolFee;
         if (pendingFee >= s._feeThreshold) {
             address feeCollector = s._feeCollector;
-            address(s._asset).safeTransfer(feeCollector, pendingFee);
+
             emit IUsdnProtocolEvents.ProtocolFeeDistributed(feeCollector, pendingFee);
             s._pendingProtocolFee = 0;
+            address(s._asset).safeTransfer(feeCollector, pendingFee);
+
+            if (ERC165Checker.supportsInterface(feeCollector, type(IFeeCollectorCallback).interfaceId)) {
+                IFeeCollectorCallback(feeCollector).feeCollectorCallback(pendingFee);
+            }
         }
     }
 }

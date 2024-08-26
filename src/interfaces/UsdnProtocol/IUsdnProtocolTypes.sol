@@ -18,8 +18,9 @@ interface IUsdnProtocolTypes {
      * @param validated Whether the position was validated
      * @param timestamp The timestamp of the position start
      * @param user The user's address
-     * @param totalExpo The total expo of the position (0 for vault deposits)
-     * @param amount The amount of the position
+     * @param totalExpo The total exposition of the position (0 for vault deposits). The product of the initial
+     * collateral and the initial leverage
+     * @param amount The amount of initial collateral in the position
      */
     struct Position {
         bool validated; // 1 byte
@@ -305,20 +306,25 @@ interface IUsdnProtocolTypes {
      * @dev Structure to hold the transient data during `_validateOpenPosition`
      * @param action The long pending action
      * @param startPrice The new entry price of the position
+     * @param currentPrice The current price of the asset as reported by the oracle, potentially biased in favor of the
+     * protocol
      * @param tickHash The tick hash
      * @param pos The position object
      * @param liqPriceWithoutPenalty The new liquidation price without penalty
      * @param leverage The new leverage
+     * @param oldPosValue The value of the position according to the old entry price and the _lastPrice
      * @param liquidationPenalty The liquidation penalty for the position's tick
      * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
      */
     struct ValidateOpenPositionData {
         LongPendingAction action;
         uint128 startPrice;
+        uint128 currentPrice;
         bytes32 tickHash;
         Position pos;
         uint128 liqPriceWithoutPenalty;
-        uint128 leverage;
+        uint256 leverage;
+        uint256 oldPosValue;
         uint8 liquidationPenalty;
         bool isLiquidationPending;
     }
@@ -328,7 +334,9 @@ interface IUsdnProtocolTypes {
      * @param adjustedPrice The adjusted price with position fees applied
      * @param posId The new position id
      * @param liquidationPenalty The liquidation penalty
-     * @param positionTotalExpo The total expo of the position
+     * @param positionTotalExpo The total expo of the position. The product of the initial collateral and the initial
+     * leverage
+     * @param positionValue The value of the position, taking into account the position fee
      * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
      */
     struct InitiateOpenPositionData {
@@ -336,6 +344,7 @@ interface IUsdnProtocolTypes {
         PositionId posId;
         uint8 liquidationPenalty;
         uint128 positionTotalExpo;
+        uint256 positionValue;
         bool isLiquidationPending;
     }
 
@@ -353,6 +362,36 @@ interface IUsdnProtocolTypes {
         uint256 longBalance;
         uint256 vaultBalance;
         HugeUint.Uint512 liqMultiplierAccumulator;
+    }
+
+    /**
+     * @notice Data structure for the `_applyPnlAndFunding` function
+     * @param isPriceRecent Whether the price was updated or was already the most recent price
+     * @param tempLongBalance The new balance of the long side, could be negative (temporarily)
+     * @param tempVaultBalance The new balance of the vault side, could be negative (temporarily)
+     * @param lastPrice The last price
+     */
+    struct ApplyPnlAndFundingData {
+        bool isPriceRecent;
+        int256 tempLongBalance;
+        int256 tempVaultBalance;
+        uint128 lastPrice;
+    }
+
+    /**
+     * @notice Structure to hold the roles during deployment
+     * @param setExternalAdmin The role to set the external contracts
+     * @param criticalFunctionsAdmin The role to perform critical functions
+     * @param setProtocolParamsAdmin The role to set the protocol parameters
+     * @param setUsdnParamsAdmin The role to set the USDN parameters
+     * @param setOptionsAdmin The role to set the protocol options that do not impact the usage of the protocol
+     */
+    struct Roles {
+        address setExternalAdmin;
+        address criticalFunctionsAdmin;
+        address setProtocolParamsAdmin;
+        address setUsdnParamsAdmin;
+        address setOptionsAdmin;
     }
 
     /**
@@ -411,7 +450,7 @@ interface IUsdnProtocolTypes {
      * @param _usdnRebaseInterval The interval between two automatic rebase checks. Disabled by default
      * A rebase can be forced (if the `_usdnRebaseThreshold` is exceeded) by calling the `liquidate` function
      * @param _minLongPosition The minimum long position size (with `_assetDecimals`)
-     * @param _lastFunding The funding corresponding to the last update timestamp
+     * @param _lastFundingPerDay The funding rate calculated at the last update timestamp
      * @param _lastPrice The price of the asset during the last balances update (with price feed decimals)
      * @param _lastUpdateTimestamp The timestamp of the last balances update
      * @param _pendingProtocolFee The pending protocol fee accumulator
@@ -435,6 +474,7 @@ interface IUsdnProtocolTypes {
      * @param _highestPopulatedTick The highest tick with a position
      * @param _totalLongPositions Cache of the total long positions count
      * @param _tickBitmap The bitmap used to quickly find populated ticks
+     * @param _protocolFallbackAddr The address of the fallback contract
      */
     struct Storage {
         // immutable
@@ -475,7 +515,7 @@ interface IUsdnProtocolTypes {
         uint256 _usdnRebaseInterval;
         uint256 _minLongPosition;
         // State
-        int256 _lastFunding;
+        int256 _lastFundingPerDay;
         uint128 _lastPrice;
         uint128 _lastUpdateTimestamp;
         uint256 _pendingProtocolFee;
@@ -497,5 +537,6 @@ interface IUsdnProtocolTypes {
         int24 _highestPopulatedTick;
         uint256 _totalLongPositions;
         LibBitmap.Bitmap _tickBitmap;
+        address _protocolFallbackAddr;
     }
 }

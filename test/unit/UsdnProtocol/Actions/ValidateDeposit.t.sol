@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { ADMIN, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
@@ -106,7 +106,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
      * @custom:and The deposit action isn't validated
      * @custom:and The user's usdn balance should not change
      */
-    function test_validateDepositIsPendingLiquidation() public {
+    function test_validateDepositWithPendingLiquidation() public {
         PositionId memory userPosId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
@@ -170,10 +170,15 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         protocol.setPositionFeeBps(0); // 0% fees
 
         bytes memory currentPrice = abi.encode(initialPrice); // only used to apply PnL + funding
-
+        uint256 usdnSharesToMint = protocol.i_calcMintUsdnShares(
+            DEPOSIT_AMOUNT, protocol.getBalanceVault(), protocol.getUsdn().totalShares(), initialPrice
+        );
+        uint256 expectedSdexBurnAmount =
+            protocol.i_calcSdexToBurn(usdn.convertToTokens(usdnSharesToMint), protocol.getSdexBurnOnDepositRatio());
         uint256 initiateDepositTimestamp = block.timestamp;
         vm.expectEmit();
-        emit InitiatedDeposit(to, address(this), DEPOSIT_AMOUNT, initiateDepositTimestamp); // expected event
+        emit InitiatedDeposit(to, address(this), DEPOSIT_AMOUNT, initiateDepositTimestamp, expectedSdexBurnAmount); // expected
+            // event
         protocol.initiateDeposit(
             DEPOSIT_AMOUNT, to, payable(address(this)), NO_PERMIT2, currentPrice, EMPTY_PREVIOUS_DATA
         );
@@ -207,6 +212,52 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         }
         assertEq(usdn.totalSupply(), usdnInitialTotalSupply + mintedAmount, "USDN total supply");
         assertEq(oracleMiddleware.lastActionId(), actionId, "middleware action ID");
+    }
+
+    /**
+     * @custom:scenario A user tries to validate a deposit action with the wrong pending action
+     * @custom:given An initiated open position
+     * @custom:when The owner of the position calls _validateDeposit
+     * @custom:then The call reverts because the pending action is not of type ValidateDeposit
+     */
+    function test_RevertWhen_validateDepositWithTheWrongPendingAction() public {
+        // Setup an initiate action to have a pending validate action for this user
+        setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: DEFAULT_PARAMS.initialPrice / 2,
+                price: DEFAULT_PARAMS.initialPrice
+            })
+        );
+
+        bytes memory currentPrice = abi.encode(DEFAULT_PARAMS.initialPrice);
+
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidPendingAction.selector));
+        protocol.i_validateDeposit(payable(address(this)), currentPrice);
+    }
+
+    /**
+     * @custom:scenario The user validates a deposit pending action that has a different validator
+     * @custom:given A pending action of type ValidateDeposit
+     * @custom:and With a validator that is not the caller saved at the caller's address
+     * @custom:when The user calls validateDeposit
+     * @custom:then The protocol reverts with a UsdnProtocolInvalidPendingAction error
+     */
+    function test_RevertWhen_validateDepositWithWrongValidator() public {
+        bytes memory currentPrice = abi.encode(uint128(2000 ether));
+        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, DEPOSIT_AMOUNT, 2000 ether);
+
+        // update the pending action to put another validator
+        (PendingAction memory pendingAction, uint128 rawIndex) = protocol.i_getPendingAction(address(this));
+        pendingAction.validator = address(1);
+
+        protocol.i_clearPendingAction(address(this), rawIndex);
+        protocol.i_addPendingAction(address(this), pendingAction);
+
+        vm.expectRevert(UsdnProtocolInvalidPendingAction.selector);
+        protocol.i_validateDeposit(payable(address(this)), currentPrice);
     }
 
     /**

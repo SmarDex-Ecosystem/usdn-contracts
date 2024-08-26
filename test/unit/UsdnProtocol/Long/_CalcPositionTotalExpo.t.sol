@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
@@ -74,7 +74,7 @@ contract TestUsdnProtocolLongCalcPositionTotalExpo is UsdnProtocolBaseFixture {
      * @custom:when The function `_calcPositionTotalExpo` is called with some parameters
      * @custom:then Expo is calculated correctly
      */
-    function test_calcPositionTotalExpo() public {
+    function test_calcPositionTotalExpo() public view {
         uint256 expo = protocol.i_calcPositionTotalExpo(1 ether, 2000 ether, 1500 ether);
         assertEq(expo, 4 ether, "Position total expo should be 4 ether");
 

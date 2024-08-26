@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
@@ -21,6 +21,7 @@ import { UsdnProtocolActionsVaultLibrary as ActionsVault } from "./UsdnProtocolA
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "./UsdnProtocolLongLibrary.sol";
+import { UsdnProtocolUtils as Utils } from "./UsdnProtocolUtils.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.sol";
 
 library UsdnProtocolActionsUtilsLibrary {
@@ -243,6 +244,7 @@ library UsdnProtocolActionsUtilsLibrary {
             _calcActionId(data_.action.validator, data_.action.timestamp),
             priceData
         );
+        data_.currentPrice = (currentPrice.price).toUint128();
         // apply fees on price
         data_.startPrice =
             (currentPrice.price + currentPrice.price * s._positionFeeBps / Constants.BPS_DIVISOR).toUint128();
@@ -286,6 +288,13 @@ library UsdnProtocolActionsUtilsLibrary {
         );
         // reverts if liqPriceWithoutPenalty >= startPrice
         data_.leverage = Long._getLeverage(data_.startPrice, data_.liqPriceWithoutPenalty);
+        // calculate how much the position that was opened in the initiate is now worth (it might be too large or too
+        // small considering the new entry price). We will adjust the long and vault balances accordingly
+        uint128 lastPrice = s._lastPrice;
+        // multiplication cannot overflow because operands are uint128
+        // lastPrice is larger than liqPriceWithoutPenalty because we performed liquidations above and would early
+        // return in case of liquidation of this position
+        data_.oldPosValue = Utils.positionValue(data_.pos.totalExpo, lastPrice, data_.liqPriceWithoutPenalty);
     }
 
     /**
@@ -319,6 +328,9 @@ library UsdnProtocolActionsUtilsLibrary {
         if (!pos.validated) {
             revert IUsdnProtocolErrors.UsdnProtocolPositionNotValidated();
         }
+        if (amountToClose == 0) {
+            revert IUsdnProtocolErrors.UsdnProtocolZeroAmount();
+        }
         if (amountToClose > pos.amount) {
             revert IUsdnProtocolErrors.UsdnProtocolAmountToCloseHigherThanPositionAmount(amountToClose, pos.amount);
         }
@@ -329,16 +341,14 @@ library UsdnProtocolActionsUtilsLibrary {
         if (remainingAmount > 0 && remainingAmount < s._minLongPosition) {
             IBaseRebalancer rebalancer = s._rebalancer;
             if (owner == address(rebalancer)) {
-                uint128 userPosAmount = rebalancer.getUserDepositData(to).amount;
+                // note: the rebalancer always indicates the rebalancer user's address as validator
+                uint128 userPosAmount = rebalancer.getUserDepositData(validator).amount;
                 if (amountToClose != userPosAmount) {
                     revert IUsdnProtocolErrors.UsdnProtocolLongPositionTooSmall();
                 }
             } else {
                 revert IUsdnProtocolErrors.UsdnProtocolLongPositionTooSmall();
             }
-        }
-        if (amountToClose == 0) {
-            revert IUsdnProtocolErrors.UsdnProtocolAmountToCloseIsZero();
         }
     }
 
@@ -424,8 +434,8 @@ library UsdnProtocolActionsUtilsLibrary {
     /**
      * @notice Prepare the pending action struct for the close position action and add it to the queue
      * @param s The storage of the protocol
-     * @param validator The validator for the pending action
      * @param to The address that will receive the assets
+     * @param validator The validator for the pending action
      * @param posId The unique identifier of the position
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param securityDepositValue The value of the security deposit for the newly created pending action
@@ -434,8 +444,8 @@ library UsdnProtocolActionsUtilsLibrary {
      */
     function _createClosePendingAction(
         Types.Storage storage s,
-        address validator,
         address to,
+        address validator,
         Types.PositionId memory posId,
         uint128 amountToClose,
         uint64 securityDepositValue,
@@ -566,6 +576,8 @@ library UsdnProtocolActionsUtilsLibrary {
         if (tick > s._highestPopulatedTick) {
             // keep track of the highest populated tick
             s._highestPopulatedTick = tick;
+
+            emit IUsdnProtocolEvents.HighestPopulatedTickUpdated(tick);
         }
         tickArray.push(long);
 

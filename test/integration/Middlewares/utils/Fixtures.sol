@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 
-import { CHAINLINK_ORACLE_ETH, PYTH_ETH_USD, PYTH_ORACLE, REDSTONE_ETH_USD, WSTETH } from "../../../utils/Constants.sol";
+import { CHAINLINK_ORACLE_ETH, PYTH_ETH_USD, PYTH_ORACLE, WSTETH } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import {
     PYTH_DATA_ETH,
@@ -104,8 +104,7 @@ contract OracleMiddlewareBaseIntegrationFixture is CommonBaseIntegrationFixture,
     function setUp() public virtual {
         pyth = IPyth(PYTH_ORACLE);
         chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE_ETH);
-        oracleMiddleware =
-            new OracleMiddleware(address(pyth), PYTH_ETH_USD, REDSTONE_ETH_USD, address(chainlinkOnChain), 1 hours);
+        oracleMiddleware = new OracleMiddleware(address(pyth), PYTH_ETH_USD, address(chainlinkOnChain), 1 hours);
     }
 
     function getMockedPythSignatureETH()
@@ -134,9 +133,8 @@ contract WstethIntegrationFixture is CommonBaseIntegrationFixture, ActionsIntegr
     function setUp() public virtual {
         pyth = IPyth(PYTH_ORACLE);
         chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE_ETH);
-        wstethMiddleware = new WstEthOracleMiddleware(
-            address(pyth), PYTH_ETH_USD, REDSTONE_ETH_USD, address(chainlinkOnChain), WSTETH, 1 hours
-        );
+        wstethMiddleware =
+            new WstEthOracleMiddleware(address(pyth), PYTH_ETH_USD, address(chainlinkOnChain), WSTETH, 1 hours);
     }
 
     function getMockedPythSignatureETH()

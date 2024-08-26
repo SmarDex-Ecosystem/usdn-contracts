@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity 0.8.26;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
@@ -22,7 +22,7 @@ contract TestUsdnProtocolActionsAssetToRemove is UsdnProtocolBaseFixture {
      * @custom:then Asset to transfer and position value are equal
      * @custom:and The asset to transfer is slightly above 1.5 wstETH
      */
-    function test_assetToRemove() public {
+    function test_assetToRemove() public view {
         int24 tick = protocol.getEffectiveTickForPrice(params.initialPrice / 4);
         uint128 liqPrice = protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(tick));
         int256 value = protocol.i_positionValue(params.initialPrice, liqPrice, 2 ether);
@@ -41,7 +41,7 @@ contract TestUsdnProtocolActionsAssetToRemove is UsdnProtocolBaseFixture {
      * @custom:then Position value is greater than asset to transfer
      * @custom:and The asset to transfer is equal to the long available balance (because we don't have 150 wstETH)
      */
-    function test_assetToRemoveNotEnoughBalance() public {
+    function test_assetToRemoveNotEnoughBalance() public view {
         int24 tick = protocol.getEffectiveTickForPrice(params.initialPrice / 4);
         uint256 longAvailable = uint256(protocol.i_longAssetAvailable(params.initialPrice)); // 5 ether
         uint128 liqPrice = protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(tick));
@@ -61,7 +61,7 @@ contract TestUsdnProtocolActionsAssetToRemove is UsdnProtocolBaseFixture {
         uint128 price = 500 ether;
         skip(1 weeks);
         // liquidate the default position
-        protocol.testLiquidate(abi.encode(price), 10);
+        protocol.mockLiquidate(abi.encode(price), 10);
 
         assertEq(protocol.getTotalLongPositions(), 0, "total long positions");
         assertEq(protocol.getLongTradingExpo(price), 0, "long trading expo with funding");
