@@ -32,6 +32,7 @@ contract Setup is ErrorsChecked {
     Sdex public sdex = new Sdex();
     Weth public weth = new Weth();
     WstETH public wsteth = new WstETH();
+    Rebalancer public rebalancer;
 
     IUsdnProtocolTypes.PreviousActionsData internal EMPTY_PREVIOUS_DATA =
         IUsdnProtocolTypes.PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
@@ -46,7 +47,6 @@ contract Setup is ErrorsChecked {
     MockLiquidationRewardsManager public liquidationRewardsManager;
     Usdn public usdn;
     IUsdnProtocolHandler public usdnProtocol;
-    Rebalancer public rebalancer;
 
     struct ProtocolSnapshot {
         uint256 validatorEth;

@@ -59,6 +59,9 @@ contract FoundryFuzzingTest is Test {
         //FuzzTransfer.sol
         fuzzingSuiteSelectors[35] = fuzzingSuite.transfer.selector;
 
+        //FuzzActionsRebalancer.sol
+        fuzzingSuiteSelectors[36] = fuzzingSuite.initiateDepositRebalancer.selector;
+
         targetSelector(FuzzSelector({ addr: address(fuzzingSuite), selectors: fuzzingSuiteSelectors }));
 
         targetSender(USER_1);

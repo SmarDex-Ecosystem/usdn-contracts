@@ -3,14 +3,14 @@ pragma solidity ^0.8.0;
 
 import { Test } from "forge-std/Test.sol";
 
-import { UsdnProtocolHandler } from "../unit/UsdnProtocol/utils/Handler.sol";
 import { MockOracleMiddleware } from "../unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
-import { USER_1, USER_2, USER_3, USER_4 } from "../utils/Constants.sol";
+import { USER_3, USER_4 } from "../utils/Constants.sol";
 import { IUsdnProtocolHandler } from "../utils/IUsdnProtocolHandler.sol";
 import { Sdex } from "../utils/Sdex.sol";
 import { WstETH } from "../utils/WstEth.sol";
 import { FuzzingSuite } from "./FuzzingSuite.sol";
 
+import { Rebalancer } from "../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../src/Usdn/Usdn.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -19,6 +19,7 @@ import { Permit2TokenBitfield } from "../../src/libraries/Permit2TokenBitfield.s
 contract FuzzingSuiteTest is Test {
     FuzzingSuite public fuzzingSuite;
     IUsdnProtocolHandler public usdnProtocol;
+    Rebalancer public rebalancer;
     MockOracleMiddleware public wstEthOracleMiddleware;
     WstETH public wsteth;
     Usdn public usdn;
@@ -37,6 +38,7 @@ contract FuzzingSuiteTest is Test {
         wstEthOracleMiddleware = fuzzingSuite.wstEthOracleMiddleware();
         wsteth = fuzzingSuite.wsteth();
         usdn = fuzzingSuite.usdn();
+        rebalancer = fuzzingSuite.rebalancer();
         uint256 usdnBalanceBeforeInit = usdn.balanceOf(DEPLOYER);
         uint128 DEPOSIT_AMOUNT = 300 ether;
         uint128 LONG_AMOUNT = 300 ether;
@@ -564,5 +566,17 @@ contract FuzzingSuiteTest is Test {
 
         fuzzingSuite.setMinLongPosition(1e24);
         assertEq(usdnProtocol.getMinLongPosition(), 1e24, "minLongPosition");
+    }
+
+    function test_canInitiateDepositRebalancer() public {
+        uint256 wstethDepositAmount = 5 ether;
+        wsteth.mintAndApprove(DEPLOYER, wstethDepositAmount, address(rebalancer), wstethDepositAmount);
+        uint256 balanceWstethBefore = wsteth.balanceOf(DEPLOYER);
+
+        vm.prank(DEPLOYER);
+        fuzzingSuite.initiateDepositRebalancer(wstethDepositAmount, 0);
+
+        assertEq(wsteth.balanceOf(DEPLOYER), balanceWstethBefore - wstethDepositAmount, "deployer wsteth balance");
+        assertEq(wsteth.balanceOf(address(rebalancer)), wstethDepositAmount, "rebalancer wsteth balance");
     }
 }
