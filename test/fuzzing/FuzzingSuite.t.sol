@@ -570,7 +570,6 @@ contract FuzzingSuiteTest is Test {
 
     function test_canInitiateDepositRebalancer() public {
         uint256 wstethDepositAmount = 5 ether;
-        wsteth.mintAndApprove(DEPLOYER, wstethDepositAmount, address(rebalancer), wstethDepositAmount);
         uint256 balanceWstethBefore = wsteth.balanceOf(DEPLOYER);
 
         vm.prank(DEPLOYER);

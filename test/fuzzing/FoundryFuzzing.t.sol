@@ -14,7 +14,7 @@ contract FoundryFuzzingTest is Test {
 
         targetContract(address(fuzzingSuite));
 
-        bytes4[] memory fuzzingSuiteSelectors = new bytes4[](36);
+        bytes4[] memory fuzzingSuiteSelectors = new bytes4[](37);
         //FuzzAction.sol
         fuzzingSuiteSelectors[0] = fuzzingSuite.initiateDeposit.selector;
         fuzzingSuiteSelectors[1] = fuzzingSuite.initiateWithdrawal.selector;
