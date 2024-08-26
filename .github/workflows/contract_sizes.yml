@@ -48,5 +48,6 @@ jobs:
           config-file: ".github/pr-commenter.yml"
           template-variables: |
             {
-              "sizes": ${{ toJSON(steps.contract-sizes.outputs.SIZES) }}
+              "sizes": ${{ toJSON(steps.contract-sizes.outputs.SIZES) }},
+              "filesHash": ${{ toJSON(hashFiles('src/**/*.sol')) }}
             }

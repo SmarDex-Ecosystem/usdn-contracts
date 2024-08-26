@@ -9,7 +9,7 @@ comment:
     This is an automated comment :robot:.
 
   snippets:
-    - id: any-source-file-changed
+    - id: any-source-file-changed-{{ filesHash }}
       files:
         - "src/**/*.sol"
       body: |
