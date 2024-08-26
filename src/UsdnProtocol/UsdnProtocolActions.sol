@@ -2,6 +2,7 @@
 pragma solidity 0.8.26;
 
 import { IUsdnProtocolActions } from "../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
+import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Permit2TokenBitfield } from "../libraries/Permit2TokenBitfield.sol";
 import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./libraries/UsdnProtocolActionsLongLibrary.sol";
@@ -135,6 +136,16 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
         initializedAndNonReentrant
     {
         return ActionsUtils.transferPositionOwnership(s, posId, newOwner);
+    }
+
+    /// @inheritdoc IUsdnProtocolActions
+    function refundSecurityDeposit() external initializedAndNonReentrant {
+        (Types.PendingAction memory action,) = Core._getPendingAction(s, msg.sender);
+        uint256 securityDepositValue = action.securityDepositValue;
+        uint256 positionValut = Core._removeStalePendingAction(s, msg.sender);
+        if (positionValut > 0) {
+            ActionsVault._refundEther(securityDepositValue, payable(msg.sender));
+        }
     }
 
     /// @inheritdoc IUsdnProtocolActions
