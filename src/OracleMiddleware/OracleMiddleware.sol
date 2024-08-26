@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import { AccessControlDefaultAdminRules } from
+    "@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol";
 import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
@@ -23,7 +23,13 @@ import { PythOracle } from "./oracles/PythOracle.sol";
  * It is used by the USDN protocol to get the price of the USDN underlying asset
  * @dev This contract is a middleware between the USDN protocol and the price oracles
  */
-contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Ownable2Step, Pausable {
+contract OracleMiddleware is
+    IOracleMiddleware,
+    PythOracle,
+    ChainlinkOracle,
+    Pausable,
+    AccessControlDefaultAdminRules
+{
     /// @inheritdoc IOracleMiddleware
     uint16 public constant BPS_DIVISOR = 10_000;
 
@@ -32,6 +38,12 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
 
     /// @notice The number of decimals for the returned price
     uint8 internal constant MIDDLEWARE_DECIMALS = 18;
+
+    /// @inheritdoc IOracleMiddleware
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+
+    /// @inheritdoc IOracleMiddleware
+    bytes32 public constant PAUSABLE_ROLE = keccak256("PAUSABLE_ROLE");
 
     /**
      * @notice The delay (in seconds) between the moment an action is initiated and the timestamp of the
@@ -54,8 +66,11 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     constructor(address pythContract, bytes32 pythFeedId, address chainlinkPriceFeed, uint256 chainlinkTimeElapsedLimit)
         PythOracle(pythContract, pythFeedId)
         ChainlinkOracle(chainlinkPriceFeed, chainlinkTimeElapsedLimit)
-        Ownable(msg.sender)
-    { }
+        AccessControlDefaultAdminRules(0, msg.sender)
+    {
+        _grantRole(ADMIN_ROLE, msg.sender);
+        _grantRole(PAUSABLE_ROLE, msg.sender);
+    }
 
     /* -------------------------------------------------------------------------- */
     /*                           Public view functions                            */
@@ -340,21 +355,21 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IOracleMiddleware
-    function setValidationDelay(uint256 newValidationDelay) external onlyOwner {
+    function setValidationDelay(uint256 newValidationDelay) external onlyRole(ADMIN_ROLE) {
         _validationDelay = newValidationDelay;
 
         emit ValidationDelayUpdated(newValidationDelay);
     }
 
     /// @inheritdoc IOracleMiddleware
-    function setChainlinkTimeElapsedLimit(uint256 newTimeElapsedLimit) external onlyOwner {
+    function setChainlinkTimeElapsedLimit(uint256 newTimeElapsedLimit) external onlyRole(ADMIN_ROLE) {
         _timeElapsedLimit = newTimeElapsedLimit;
 
         emit TimeElapsedLimitUpdated(newTimeElapsedLimit);
     }
 
     /// @inheritdoc IOracleMiddleware
-    function setPythRecentPriceDelay(uint64 newDelay) external onlyOwner {
+    function setPythRecentPriceDelay(uint64 newDelay) external onlyRole(ADMIN_ROLE) {
         if (newDelay < 10 seconds) {
             revert OracleMiddlewareInvalidRecentPriceDelay(newDelay);
         }
@@ -367,7 +382,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     }
 
     /// @inheritdoc IOracleMiddleware
-    function setConfRatio(uint16 newConfRatio) external onlyOwner {
+    function setConfRatio(uint16 newConfRatio) external onlyRole(ADMIN_ROLE) {
         // confidence ratio limit check
         if (newConfRatio > MAX_CONF_RATIO) {
             revert OracleMiddlewareConfRatioTooHigh();
@@ -379,7 +394,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     }
 
     /// @inheritdoc IOracleMiddleware
-    function setLowLatencyDelay(uint16 newLowLatencyDelay) external onlyOwner {
+    function setLowLatencyDelay(uint16 newLowLatencyDelay) external onlyRole(ADMIN_ROLE) {
         if (newLowLatencyDelay < 15 minutes) {
             revert OracleMiddlewareInvalidLowLatencyDelay();
         }
@@ -392,7 +407,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     }
 
     /// @inheritdoc IOracleMiddleware
-    function withdrawEther(address to) external onlyOwner {
+    function withdrawEther(address to) external onlyRole(ADMIN_ROLE) {
         if (to == address(0)) {
             revert OracleMiddlewareTransferToZeroAddress();
         }
@@ -404,12 +419,12 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     }
 
     /// @inheritdoc IOracleMiddleware
-    function pausePriceValidation() external onlyOwner {
+    function pausePriceValidation() external onlyRole(PAUSABLE_ROLE) {
         _pause();
     }
 
     /// @inheritdoc IOracleMiddleware
-    function unpausePriceValidation() external onlyOwner {
+    function unpausePriceValidation() external onlyRole(PAUSABLE_ROLE) {
         _unpause();
     }
 }
