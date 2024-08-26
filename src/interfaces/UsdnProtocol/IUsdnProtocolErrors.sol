@@ -159,9 +159,6 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the tick of the rebalancer position is invalid
     error UsdnProtocolInvalidRebalancerTick();
 
-    /// @dev Indicates that the protocol vault expo is invalid
-    error UsdnProtocolInvalidVaultExpo();
-
     /// @dev Indicates that the protocol long expo is invalid
     error UsdnProtocolInvalidLongExpo();
 
@@ -193,6 +190,6 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the long trading expo is zero, we can't get the effective tick for a liquidation price
     error UsdnProtocolZeroLongTradingExpo();
 
-    /// @dev Indicates that the vault balance is zero, we can't calculate the amount of USDN to mint
+    /// @dev Indicates that the vault balance is zero, and the calculation cannot be performed
     error UsdnProtocolEmptyVault();
 }

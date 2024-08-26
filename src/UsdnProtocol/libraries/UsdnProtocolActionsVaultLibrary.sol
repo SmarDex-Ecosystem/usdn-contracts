@@ -250,7 +250,7 @@ library UsdnProtocolActionsVaultLibrary {
 
         // cannot be calculated if equal to zero
         if (newVaultExpo == 0) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidVaultExpo();
+            revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
         }
 
         int256 imbalanceBps = (totalExpo - s._balanceLong).toInt256().safeSub(newVaultExpo).safeMul(
