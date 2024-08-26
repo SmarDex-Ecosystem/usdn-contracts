@@ -546,21 +546,21 @@ contract FuzzActions is Setup {
     /**
      * @notice PROTCL-14
      */
-    // function liquidate(uint256 priceRand, uint16 iterations, uint256 validationCost) public {
-    //     priceRand = bound(priceRand, 0, type(uint128).max);
-    //     iterations = uint16(bound(iterations, 1, type(uint16).max));
-    //     bytes memory priceData = abi.encode(uint128(priceRand));
-    //     uint256 wstethBeforeLiquidateProtocol = wsteth.balanceOf(address(usdnProtocol));
-    //     uint256 ethBeforeLiquidateProtocol = address(usdnProtocol).balance;
+    function liquidate(uint256 priceRand, uint16 iterations, uint256 validationCost) public {
+        priceRand = bound(priceRand, 0, type(uint128).max);
+        iterations = uint16(bound(iterations, 1, type(uint16).max));
+        bytes memory priceData = abi.encode(uint128(priceRand));
+        uint256 wstethBeforeLiquidateProtocol = wsteth.balanceOf(address(usdnProtocol));
+        uint256 ethBeforeLiquidateProtocol = address(usdnProtocol).balance;
 
-    //     vm.prank(msg.sender);
-    //     try usdnProtocol.liquidate{ value: validationCost }(priceData, iterations) {
-    //         assert(wsteth.balanceOf(address(usdnProtocol)) == wstethBeforeLiquidateProtocol);
-    //         assert(address(usdnProtocol).balance == ethBeforeLiquidateProtocol);
-    //     } catch (bytes memory err) {
-    //         _checkErrors(err, LIQUIDATE_ERRORS);
-    //     }
-    // }
+        vm.prank(msg.sender);
+        try usdnProtocol.liquidate{ value: validationCost }(priceData, iterations) {
+            assert(wsteth.balanceOf(address(usdnProtocol)) == wstethBeforeLiquidateProtocol);
+            assert(address(usdnProtocol).balance == ethBeforeLiquidateProtocol);
+        } catch (bytes memory err) {
+            _checkErrors(err, LIQUIDATE_ERRORS);
+        }
+    }
 
     function _getPreviousActionsData(address user, uint256 currentPrice)
         internal
