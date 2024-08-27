@@ -7,9 +7,8 @@ import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
 /**
- * @custom:feature The security deposit of the USDN Protocol
- * @custom:background Given a protocol initialized with default params
- * @custom:and A security deposit of 0.5 ether
+ * @custom:feature The security deposit refund of a not validated and liquidated position into USDN Protocol
+ * @custom:background Given a protocol initialized with default params and a security deposit enabled
  */
 contract TestUsdnProtocolRefundSecurityDeposit is UsdnProtocolBaseFixture {
     uint64 internal SECURITY_DEPOSIT_VALUE;
@@ -27,16 +26,14 @@ contract TestUsdnProtocolRefundSecurityDeposit is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario Refund security deposit after a position has been initiated and liquidated
-     * @custom:given A deployed USDN protocol
-     * @custom:when A long is initiated at a price of $2000 with a security deposit of 0.5 ether and a leverage of 10x
-     * @custom:and The price drops to $1000 and the position is liquidated
-     * @custom:then The validator calls `refundSecurityDeposit` for the position to get back the security deposit
+     * @custom:given A deployed USDN protocol and a liquidated and not validated position with the caller as validator
+     * @custom:when refundSecurityDeposit is called by the validator of the liquidated position
      * @custom:and The security deposit is refunded
      */
     function test_refundSecurityDepositAfterLiquidation() public {
         _initiateAndLiquidate();
 
-        // snapshot balances
+        // snapshot balance
         uint256 balanceBefore = address(this).balance;
 
         // refund the security deposit
@@ -46,11 +43,11 @@ contract TestUsdnProtocolRefundSecurityDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario A user tries to refund the security deposit without having a position liquidated
-     * @custom:given A deployed USDN protocol
-     * @custom:when A long is initiated at a price of $2000 with a security deposit of 0.5 ether and a leverage of 10x
-     * @custom:then The user tries to call `refundSecurityDeposit` for the position
-     * @custom:and The user gets an error
+     * @custom:scenario A user tries to get a security deposit refund without having a liquidated position
+     * @custom:given A deployed USDN protocol and a liquidated and not validated position with another user as validator
+     * @custom:when refundSecurityDeposit is called by a user that is not the validator of the liquidated position
+     * @custom:then The user doesn't get a refund
+     * @custom:and The user gets the error `UsdnProtocolNotEligibleForRefund`
      */
     function test_failRefundSecurityDepositWithoutLiquidation() public {
         _initiateAndLiquidate();

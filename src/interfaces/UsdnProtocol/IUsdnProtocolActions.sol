@@ -273,8 +273,8 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
     function tickHash(int24 tick, uint256 version) external pure returns (bytes32);
 
     /**
-     * @notice Refund the security deposit of the validator in case he has a liquidated pending action
-     * @dev This function can only be called by the validator that has a pending action
+     * @notice Refund the security deposit to a validator of a liquidated initiated long position
+     * @dev This function can only be called by the validator in charge of a liquidated initiated long position
      */
     function refundSecurityDeposit() external;
 }
