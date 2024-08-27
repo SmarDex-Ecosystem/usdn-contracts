@@ -7,8 +7,8 @@ import { LiquidationRewardsManager } from "../LiquidationRewardsManager.sol";
 import { ChainlinkOracle } from "../oracles/ChainlinkOracle.sol";
 
 /**
- * @title Contract to change liquidator rewards by setting a mocked gas price
- * @notice This contract is used to calculate the rewards given on liquidation and manipulate the reported gas price
+ * @title Contract to change the liquidator rewards by setting a mocked gas price
+ * @notice This contract is used to calculate the rewards given upon liquidation and manipulate the reported gas price
  */
 contract MockLiquidationRewardsManager is LiquidationRewardsManager {
     /**
