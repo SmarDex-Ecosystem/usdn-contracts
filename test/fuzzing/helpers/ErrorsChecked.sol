@@ -97,6 +97,9 @@ contract ErrorsChecked is Test {
         ]
     ];
 
+    bytes4[][] public LIQUIDATE_ERRORS =
+        [[TickMath.TickMathInvalidPrice.selector, SignedMath.SignedMathDivideByZero.selector]];
+
     constructor() {
         INITIATE_DEPOSIT_ERRORS.push(INITIATE_ERRORS);
         INITIATE_OPEN_ERRORS.push(INITIATE_ERRORS);
@@ -112,6 +115,7 @@ contract ErrorsChecked is Test {
         VALIDATE_OPEN_ERRORS.push(INITIALIZABLE_ERRORS);
         VALIDATE_PENDING_ACTIONS_ERRORS.push(INITIALIZABLE_ERRORS);
         INITIALIZE_ERRORS.push(INITIALIZABLE_ERRORS);
+        LIQUIDATE_ERRORS.push(INITIALIZABLE_ERRORS);
     }
 
     function _checkErrors(bytes memory err, bytes4[][] memory errorsArrays) internal virtual {

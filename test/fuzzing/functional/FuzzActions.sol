@@ -36,7 +36,7 @@ contract FuzzActions is Setup {
             IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
             ,
             IUsdnProtocolTypes.PendingAction memory lastAction,
-        ) = getPreviousActionsData(msg.sender, priceData);
+        ) = _getPreviousActionsData(msg.sender, priceData);
         (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceData);
 
         vm.prank(msg.sender);
@@ -89,7 +89,7 @@ contract FuzzActions is Setup {
             IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
             ,
             IUsdnProtocolTypes.PendingAction memory lastAction,
-        ) = getPreviousActionsData(msg.sender, priceData);
+        ) = _getPreviousActionsData(msg.sender, priceData);
         (int256 usdnPendingActions,) = getTokenFromPendingAction(lastAction, priceData);
 
         vm.prank(msg.sender);
@@ -140,7 +140,7 @@ contract FuzzActions is Setup {
             IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
             ,
             IUsdnProtocolTypes.PendingAction memory lastAction,
-        ) = getPreviousActionsData(msg.sender, priceRand);
+        ) = _getPreviousActionsData(msg.sender, priceRand);
         (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceRand);
 
         vm.prank(msg.sender);
@@ -248,7 +248,7 @@ contract FuzzActions is Setup {
             IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
             ,
             IUsdnProtocolTypes.PendingAction memory lastAction,
-        ) = getPreviousActionsData(msg.sender, priceData);
+        ) = _getPreviousActionsData(msg.sender, priceData);
         (int256 usdnPendingActions, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceData);
 
         vm.prank(msg.sender);
@@ -303,7 +303,7 @@ contract FuzzActions is Setup {
             IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
             ,
             IUsdnProtocolTypes.PendingAction memory lastAction,
-        ) = getPreviousActionsData(msg.sender, priceData);
+        ) = _getPreviousActionsData(msg.sender, priceData);
         (int256 usdnPendingActions, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceData);
 
         vm.prank(msg.sender);
@@ -352,7 +352,7 @@ contract FuzzActions is Setup {
             IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
             ,
             IUsdnProtocolTypes.PendingAction memory lastAction,
-        ) = getPreviousActionsData(msg.sender, priceData);
+        ) = _getPreviousActionsData(msg.sender, priceData);
         (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceData);
 
         vm.prank(msg.sender);
@@ -398,7 +398,7 @@ contract FuzzActions is Setup {
             IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
             ,
             IUsdnProtocolTypes.PendingAction memory lastAction,
-        ) = getPreviousActionsData(msg.sender, priceData);
+        ) = _getPreviousActionsData(msg.sender, priceData);
         (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceData);
 
         uint256 securityDeposit = longAction.securityDepositValue;
@@ -463,7 +463,7 @@ contract FuzzActions is Setup {
             uint256 securityDeposit,
             ,
             uint256 actionsLength
-        ) = getPreviousActionsData(msg.sender, priceRand);
+        ) = _getPreviousActionsData(msg.sender, priceRand);
 
         vm.prank(msg.sender);
         try usdnProtocol.validateActionablePendingActions(previousActionsData, maxValidations) returns (
@@ -543,8 +543,27 @@ contract FuzzActions is Setup {
         validateClosePosition(validatorRand, priceRand);
     }
 
-    function getPreviousActionsData(address user, uint256 currentPrice)
-        public
+    /**
+     * @notice PROTCL-14
+     */
+    function liquidate(uint256 priceRand, uint256 iterationsRand, uint256 validationCost) public {
+        priceRand = bound(priceRand, 0, type(uint128).max);
+        uint16 iterations = uint16(bound(iterationsRand, 1, type(uint16).max));
+        bytes memory priceData = abi.encode(uint128(priceRand));
+        uint256 wstethBeforeLiquidateProtocol = wsteth.balanceOf(address(usdnProtocol));
+        uint256 ethBeforeLiquidateProtocol = address(usdnProtocol).balance;
+
+        vm.prank(msg.sender);
+        try usdnProtocol.liquidate{ value: validationCost }(priceData, iterations) {
+            // assert(wsteth.balanceOf(address(usdnProtocol)) == wstethBeforeLiquidateProtocol);
+            // assert(address(usdnProtocol).balance == ethBeforeLiquidateProtocol);
+        } catch (bytes memory err) {
+            _checkErrors(err, LIQUIDATE_ERRORS);
+        }
+    }
+
+    function _getPreviousActionsData(address user, uint256 currentPrice)
+        internal
         view
         returns (
             IUsdnProtocolTypes.PreviousActionsData memory previousActionsData_,

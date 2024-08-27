@@ -14,7 +14,7 @@ contract FoundryFuzzingTest is Test {
 
         targetContract(address(fuzzingSuite));
 
-        bytes4[] memory fuzzingSuiteSelectors = new bytes4[](37);
+        bytes4[] memory fuzzingSuiteSelectors = new bytes4[](38);
         //FuzzAction.sol
         fuzzingSuiteSelectors[0] = fuzzingSuite.initiateDeposit.selector;
         fuzzingSuiteSelectors[1] = fuzzingSuite.initiateWithdrawal.selector;
@@ -29,38 +29,39 @@ contract FoundryFuzzingTest is Test {
         fuzzingSuiteSelectors[10] = fuzzingSuite.fullWithdrawal.selector;
         fuzzingSuiteSelectors[11] = fuzzingSuite.fullOpenPosition.selector;
         fuzzingSuiteSelectors[12] = fuzzingSuite.fullClosePosition.selector;
+        fuzzingSuiteSelectors[13] = fuzzingSuite.liquidate.selector;
 
         //FuzzSetup.sol
-        fuzzingSuiteSelectors[13] = fuzzingSuite.initializeUsdnProtocol.selector;
+        fuzzingSuiteSelectors[14] = fuzzingSuite.initializeUsdnProtocol.selector;
 
         //FuzzActionsAdmin.sol
-        fuzzingSuiteSelectors[14] = fuzzingSuite.setMinLeverage.selector;
-        fuzzingSuiteSelectors[15] = fuzzingSuite.setMaxLeverage.selector;
-        fuzzingSuiteSelectors[16] = fuzzingSuite.setValidationDeadline.selector;
-        fuzzingSuiteSelectors[17] = fuzzingSuite.setLiquidationPenalty.selector;
-        fuzzingSuiteSelectors[18] = fuzzingSuite.setSafetyMarginBps.selector;
-        fuzzingSuiteSelectors[19] = fuzzingSuite.setLiquidationIteration.selector;
-        fuzzingSuiteSelectors[20] = fuzzingSuite.setEMAPeriod.selector;
-        fuzzingSuiteSelectors[21] = fuzzingSuite.setFundingSF.selector;
-        fuzzingSuiteSelectors[22] = fuzzingSuite.setProtocolFeeBps.selector;
-        fuzzingSuiteSelectors[23] = fuzzingSuite.setPositionFeeBps.selector;
-        fuzzingSuiteSelectors[24] = fuzzingSuite.setVaultFeeBps.selector;
-        fuzzingSuiteSelectors[25] = fuzzingSuite.setRebalancerBonusBps.selector;
-        fuzzingSuiteSelectors[26] = fuzzingSuite.setSdexBurnOnDepositRatio.selector;
-        fuzzingSuiteSelectors[27] = fuzzingSuite.setSecurityDepositValue.selector;
-        fuzzingSuiteSelectors[28] = fuzzingSuite.setFeeThreshold.selector;
-        fuzzingSuiteSelectors[29] = fuzzingSuite.setFeeCollector.selector;
-        fuzzingSuiteSelectors[30] = fuzzingSuite.setExpoImbalanceLimits.selector;
-        fuzzingSuiteSelectors[31] = fuzzingSuite.setTargetUsdnPrice.selector;
-        fuzzingSuiteSelectors[32] = fuzzingSuite.setUsdnRebaseThreshold.selector;
-        fuzzingSuiteSelectors[33] = fuzzingSuite.setUsdnRebaseInterval.selector;
-        fuzzingSuiteSelectors[34] = fuzzingSuite.setMinLongPosition.selector;
+        fuzzingSuiteSelectors[15] = fuzzingSuite.setMinLeverage.selector;
+        fuzzingSuiteSelectors[16] = fuzzingSuite.setMaxLeverage.selector;
+        fuzzingSuiteSelectors[17] = fuzzingSuite.setValidationDeadline.selector;
+        fuzzingSuiteSelectors[18] = fuzzingSuite.setLiquidationPenalty.selector;
+        fuzzingSuiteSelectors[19] = fuzzingSuite.setSafetyMarginBps.selector;
+        fuzzingSuiteSelectors[20] = fuzzingSuite.setLiquidationIteration.selector;
+        fuzzingSuiteSelectors[21] = fuzzingSuite.setEMAPeriod.selector;
+        fuzzingSuiteSelectors[22] = fuzzingSuite.setFundingSF.selector;
+        fuzzingSuiteSelectors[23] = fuzzingSuite.setProtocolFeeBps.selector;
+        fuzzingSuiteSelectors[24] = fuzzingSuite.setPositionFeeBps.selector;
+        fuzzingSuiteSelectors[25] = fuzzingSuite.setVaultFeeBps.selector;
+        fuzzingSuiteSelectors[26] = fuzzingSuite.setRebalancerBonusBps.selector;
+        fuzzingSuiteSelectors[27] = fuzzingSuite.setSdexBurnOnDepositRatio.selector;
+        fuzzingSuiteSelectors[28] = fuzzingSuite.setSecurityDepositValue.selector;
+        fuzzingSuiteSelectors[29] = fuzzingSuite.setFeeThreshold.selector;
+        fuzzingSuiteSelectors[30] = fuzzingSuite.setFeeCollector.selector;
+        fuzzingSuiteSelectors[31] = fuzzingSuite.setExpoImbalanceLimits.selector;
+        fuzzingSuiteSelectors[32] = fuzzingSuite.setTargetUsdnPrice.selector;
+        fuzzingSuiteSelectors[33] = fuzzingSuite.setUsdnRebaseThreshold.selector;
+        fuzzingSuiteSelectors[34] = fuzzingSuite.setUsdnRebaseInterval.selector;
+        fuzzingSuiteSelectors[35] = fuzzingSuite.setMinLongPosition.selector;
 
         //FuzzTransfer.sol
-        fuzzingSuiteSelectors[35] = fuzzingSuite.transfer.selector;
+        fuzzingSuiteSelectors[36] = fuzzingSuite.transfer.selector;
 
         //FuzzActionsRebalancer.sol
-        fuzzingSuiteSelectors[36] = fuzzingSuite.initiateDepositRebalancer.selector;
+        fuzzingSuiteSelectors[37] = fuzzingSuite.initiateDepositRebalancer.selector;
 
         targetSelector(FuzzSelector({ addr: address(fuzzingSuite), selectors: fuzzingSuiteSelectors }));
 
