@@ -12,14 +12,12 @@ import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUs
  */
 contract TestUsdnProtocolRefundSecurityDeposit is UsdnProtocolBaseFixture {
     uint64 internal SECURITY_DEPOSIT_VALUE;
-    bytes priceData;
 
     function setUp() public {
         params = DEFAULT_PARAMS;
         params.flags.enableSecurityDeposit = true;
         super._setUp(params);
         wstETH.mintAndApprove(address(this), 1000 ether, address(protocol), type(uint256).max);
-        priceData = abi.encode(params.initialPrice);
 
         SECURITY_DEPOSIT_VALUE = protocol.getSecurityDepositValue();
     }
@@ -52,9 +50,6 @@ contract TestUsdnProtocolRefundSecurityDeposit is UsdnProtocolBaseFixture {
     function test_RevertWhen_RefundSecurityDepositWithoutLiquidation() public {
         _initiateAndLiquidate();
 
-        // snapshot balances
-        uint256 balanceBefore = address(this).balance;
-
         // another user try to get a refund for his security deposit
         vm.prank(USER_1);
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolNotEligibleForRefund.selector);
@@ -66,22 +61,19 @@ contract TestUsdnProtocolRefundSecurityDeposit is UsdnProtocolBaseFixture {
      */
     function _initiateAndLiquidate() internal {
         // initiate a long position
-        protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
-            5 ether,
-            params.initialPrice * 9 / 10,
-            address(this),
-            payable(address(this)),
-            NO_PERMIT2,
-            priceData,
-            EMPTY_PREVIOUS_DATA
+        setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: 5 ether,
+                desiredLiqPrice: params.initialPrice * 9 / 10,
+                price: params.initialPrice
+            })
         );
         skip(30 seconds);
 
-        // price drops to $1000
-        priceData = abi.encode(1000 ether);
-
-        // liquidate the position
-        protocol.liquidate(priceData, 1);
+        // liquidate the position with a price drop to $1000
+        protocol.liquidate(abi.encode(1000 ether), 1);
     }
 
     receive() external payable { }
