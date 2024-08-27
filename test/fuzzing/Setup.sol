@@ -106,6 +106,7 @@ contract Setup is ErrorsChecked {
         usdnProtocol.setRebalancer(rebalancer);
         usdn.grantRole(MINTER_ROLE, address(usdnProtocol));
         usdn.grantRole(REBASER_ROLE, address(usdnProtocol));
+        vm.stopPrank();
 
         destinationsToken[address(wsteth)] = [address(usdnProtocol), address(rebalancer)];
         destinationsToken[address(usdn)] = [address(usdn), address(usdnProtocol)];

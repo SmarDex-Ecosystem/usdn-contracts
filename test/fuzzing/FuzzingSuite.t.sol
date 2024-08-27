@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import { Test } from "forge-std/Test.sol";
 
 import { MockOracleMiddleware } from "../unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
-import { ADMIN, USER_3, USER_4 } from "../utils/Constants.sol";
+import { ADMIN, USER_1, USER_2, USER_3, USER_4 } from "../utils/Constants.sol";
 import { IUsdnProtocolHandler } from "../utils/IUsdnProtocolHandler.sol";
 import { Sdex } from "../utils/Sdex.sol";
 import { WstETH } from "../utils/WstEth.sol";
@@ -456,25 +456,25 @@ contract FuzzingSuiteTest is Test {
         uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
         uint128 currentPrice = 2000 ether;
         bytes memory priceData = abi.encode(currentPrice);
-        wsteth.mintAndApprove(DEPLOYER, 1_000_000 ether, address(usdnProtocol), type(uint256).max);
-        vm.deal(DEPLOYER, 1_000_000 ether);
+        wsteth.mintAndApprove(USER_1, 1_000_000 ether, address(usdnProtocol), type(uint256).max);
+        vm.deal(USER_1, 1_000_000 ether);
 
         vm.prank(ADMIN);
         usdnProtocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
-        vm.startPrank(DEPLOYER);
+        vm.startPrank(USER_1);
         // create high risk position (10% of the liquidation price)
         usdnProtocol.initiateOpenPosition{ value: securityDeposit }(
             5 ether,
             9 * currentPrice / 10,
-            DEPLOYER,
-            payable(DEPLOYER),
+            USER_1,
+            payable(USER_1),
             fuzzingSuite.NO_PERMIT2(),
             abi.encode(currentPrice),
             EMPTY_PREVIOUS_DATA
         );
 
         skip(wstEthOracleMiddleware.getValidationDelay() + 1);
-        usdnProtocol.validateOpenPosition(payable(DEPLOYER), abi.encode(currentPrice), EMPTY_PREVIOUS_DATA);
+        usdnProtocol.validateOpenPosition(payable(USER_1), abi.encode(currentPrice), EMPTY_PREVIOUS_DATA);
         vm.stopPrank();
 
         // price drops under a valid liquidation price
@@ -488,7 +488,7 @@ contract FuzzingSuiteTest is Test {
         uint256 initialTotalPos = usdnProtocol.getTotalLongPositions();
 
         skip(30 seconds);
-        vm.prank(DEPLOYER);
+        vm.prank(USER_1);
         fuzzingSuite.liquidate(priceDecrease, 10, validationCost);
         assertEq(usdnProtocol.getTotalLongPositions(), initialTotalPos - 1, "total positions after liquidate");
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
