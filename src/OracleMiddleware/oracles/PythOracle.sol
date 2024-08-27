@@ -139,7 +139,7 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
         uint256 pythDecimals = uint32(-pythPrice.expo);
 
         price_ = FormattedPythPrice({
-            price: uint256(uint64(pythPrice.price)) * 10 ** middlewareDecimals / 10 ** pythDecimals,
+            price: uint256(int256(pythPrice.price)) * 10 ** middlewareDecimals / 10 ** pythDecimals,
             conf: uint256(pythPrice.conf) * 10 ** middlewareDecimals / 10 ** pythDecimals,
             publishTime: pythPrice.publishTime
         });
