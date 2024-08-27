@@ -78,7 +78,6 @@ contract TestUsdnProtocolRefundSecurityDeposit is UsdnProtocolBaseFixture {
 
         // price drops to $1000
         priceData = abi.encode(1000 ether);
-        uint256 initialTotalPos = protocol.getTotalLongPositions();
 
         // liquidate the position
         protocol.liquidate(priceData, 1);
