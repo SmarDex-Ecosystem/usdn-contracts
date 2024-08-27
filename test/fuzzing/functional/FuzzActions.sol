@@ -135,10 +135,14 @@ contract FuzzActions is Setup, Utils {
     ) public {
         wsteth.mintAndApprove(msg.sender, amountRand, address(usdnProtocol), amountRand);
         vm.deal(msg.sender, ethRand);
-
-        address[] memory filteredArray = mergeTwoArray(destinationsToken[address(0)], users);
-        destRand = bound(destRand, 0, filteredArray.length - 1);
-        address payable dest = payable(filteredArray[destRand]);
+        address payable dest;
+        {
+            address[] memory contractRecipients = new address[](1);
+            contractRecipients[0] = address(usdnProtocol);
+            address[] memory filteredArray = mergeTwoArray(contractRecipients, users);
+            destRand = bound(destRand, 0, filteredArray.length - 1);
+            dest = payable(filteredArray[destRand]);
+        }
         validatorRand = bound(validatorRand, 0, users.length - 1);
         address validator = users[validatorRand];
         priceRand = bound(priceRand, 0, type(uint128).max);
