@@ -49,7 +49,7 @@ contract TestUsdnProtocolRefundSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:then The user doesn't get a refund
      * @custom:and The user gets the error `UsdnProtocolNotEligibleForRefund`
      */
-    function test_failRefundSecurityDepositWithoutLiquidation() public {
+    function test_RevertWhen_RefundSecurityDepositWithoutLiquidation() public {
         _initiateAndLiquidate();
 
         // snapshot balances
