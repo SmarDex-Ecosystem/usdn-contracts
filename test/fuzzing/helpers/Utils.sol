@@ -29,17 +29,31 @@ contract Utils is Test {
         return value;
     }
 
-    function mergeTwoArray(address[] memory a, address[] memory b)
+    function mergeAndFilter(address[] memory a, address[] memory b, bool removeMsgSender)
         public
-        pure
+        view
         returns (address[] memory filteredArray)
     {
-        filteredArray = new address[](a.length + b.length);
-        for (uint256 i = 0; i < b.length; i++) {
-            filteredArray[i] = b[i];
+        address[] memory filteredUsers;
+        if (removeMsgSender) {
+            filteredUsers = new address[](b.length - 1);
+            uint256 index = 0;
+            for (uint256 i = 0; i < b.length; i++) {
+                if (b[i] != msg.sender) {
+                    filteredUsers[index] = b[i];
+                    index++;
+                }
+            }
+        } else {
+            filteredUsers = b;
+        }
+
+        filteredArray = new address[](a.length + filteredUsers.length);
+        for (uint256 i = 0; i < filteredUsers.length; i++) {
+            filteredArray[i] = filteredUsers[i];
         }
         for (uint256 i = 0; i < a.length; i++) {
-            filteredArray[b.length + i] = a[i];
+            filteredArray[filteredUsers.length + i] = a[i];
         }
     }
 }

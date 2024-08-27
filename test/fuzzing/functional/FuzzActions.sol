@@ -28,7 +28,7 @@ contract FuzzActions is Setup, Utils {
 
         address payable dest;
         {
-            address[] memory filteredArray = mergeTwoArray(destinationsToken[address(usdn)], users);
+            address[] memory filteredArray = mergeAndFilter(destinationsToken[address(usdn)], users, false);
             destRand = bound(destRand, 0, filteredArray.length - 1);
             dest = payable(filteredArray[destRand]);
         }
@@ -84,7 +84,7 @@ contract FuzzActions is Setup, Utils {
         usdn.approve(address(usdnProtocol), usdnShares);
         vm.deal(msg.sender, ethRand);
 
-        address[] memory filteredArray = mergeTwoArray(destinationsToken[address(wsteth)], users);
+        address[] memory filteredArray = mergeAndFilter(destinationsToken[address(wsteth)], users, false);
         destRand = bound(destRand, 0, filteredArray.length - 1);
         address payable dest = payable(filteredArray[destRand]);
         validatorRand = bound(validatorRand, 0, users.length - 1);
@@ -139,7 +139,7 @@ contract FuzzActions is Setup, Utils {
         {
             address[] memory contractRecipients = new address[](1);
             contractRecipients[0] = address(usdnProtocol);
-            address[] memory filteredArray = mergeTwoArray(contractRecipients, users);
+            address[] memory filteredArray = mergeAndFilter(contractRecipients, users, false);
             destRand = bound(destRand, 0, filteredArray.length - 1);
             dest = payable(filteredArray[destRand]);
         }
@@ -201,7 +201,7 @@ contract FuzzActions is Setup, Utils {
     ) public {
         vm.deal(msg.sender, ethRand);
 
-        address[] memory filteredArray = mergeTwoArray(destinationsToken[address(wsteth)], users);
+        address[] memory filteredArray = mergeAndFilter(destinationsToken[address(wsteth)], users, false);
         destRand = bound(destRand, 0, filteredArray.length - 1);
         address payable dest = payable(filteredArray[destRand]);
         validatorRand = bound(validatorRand, 0, users.length - 1);

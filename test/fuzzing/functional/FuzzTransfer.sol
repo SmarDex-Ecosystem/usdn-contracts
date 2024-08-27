@@ -15,15 +15,7 @@ contract FuzzTransfer is Setup, Utils {
         tokenRand = bound(tokenRand, 0, tokens.length - 1);
         address token = tokens[tokenRand];
 
-        address[] memory filteredUsers = new address[](users.length - 1);
-        uint256 index = 0;
-        for (uint256 i = 0; i < users.length; i++) {
-            if (users[i] != msg.sender) {
-                filteredUsers[index] = users[i];
-                index++;
-            }
-        }
-        address[] memory recipients = mergeTwoArray(destinationsToken[token], filteredUsers);
+        address[] memory recipients = mergeAndFilter(destinationsToken[token], users, true);
 
         destRand = bound(destRand, 0, recipients.length - 1);
         address payable dest = payable(recipients[destRand]);
