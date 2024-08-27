@@ -12,6 +12,9 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the sender could not accept the ether refund
     error UsdnProtocolEtherRefundFailed();
 
+    /// @dev Indicates that the validator is not eligible for a refund
+    error UsdnProtocolNotEligibleForRefund();
+
     /// @dev Indicates that the provided amount is zero
     error UsdnProtocolZeroAmount();
 

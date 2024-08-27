@@ -172,6 +172,16 @@ library UsdnProtocolActionsLongLibrary {
         ActionsVault._checkPendingFee(s);
     }
 
+    /// @notice See {IUsdnProtocolActions}
+    function refundSecurityDeposit(Types.Storage storage s) public {
+        uint256 securityDepositValue = Core._removeStalePendingAction(s, msg.sender);
+        if (securityDepositValue > 0) {
+            ActionsVault._refundEther(securityDepositValue, payable(msg.sender));
+        } else {
+            revert IUsdnProtocolErrors.UsdnProtocolNotEligibleForRefund();
+        }
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                             Internal functions                             */
     /* -------------------------------------------------------------------------- */
