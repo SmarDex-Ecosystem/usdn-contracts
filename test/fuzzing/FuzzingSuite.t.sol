@@ -3,9 +3,8 @@ pragma solidity ^0.8.0;
 
 import { Test } from "forge-std/Test.sol";
 
-import { UsdnProtocolHandler } from "../unit/UsdnProtocol/utils/Handler.sol";
 import { MockOracleMiddleware } from "../unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
-import { USER_1, USER_2, USER_3, USER_4 } from "../utils/Constants.sol";
+import { ADMIN, USER_3, USER_4 } from "../utils/Constants.sol";
 import { IUsdnProtocolHandler } from "../utils/IUsdnProtocolHandler.sol";
 import { Sdex } from "../utils/Sdex.sol";
 import { WstETH } from "../utils/WstEth.sol";
@@ -455,6 +454,48 @@ contract FuzzingSuiteTest is Test {
         assertEq(ATTACKER.balance, balanceBeforeProtocol + amount, "protocol balance");
         assertEq(usdn.sharesOf(ATTACKER), amount, "protocol usdn shares");
         assertEq(wsteth.balanceOf(ATTACKER), amount, "protocol wsteth balance");
+    }
+
+    function test_canLiquidate() public {
+        uint256 securityDeposit = usdnProtocol.getSecurityDepositValue();
+        uint128 currentPrice = 2000 ether;
+        bytes memory priceData = abi.encode(currentPrice);
+        wsteth.mintAndApprove(DEPLOYER, 1_000_000 ether, address(usdnProtocol), type(uint256).max);
+        vm.deal(DEPLOYER, 1_000_000 ether);
+
+        vm.prank(ADMIN);
+        usdnProtocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
+        vm.startPrank(DEPLOYER);
+        // create high risk position (10% of the liquidation price)
+        usdnProtocol.initiateOpenPosition{ value: securityDeposit }(
+            5 ether,
+            9 * currentPrice / 10,
+            DEPLOYER,
+            payable(DEPLOYER),
+            fuzzingSuite.NO_PERMIT2(),
+            abi.encode(currentPrice),
+            EMPTY_PREVIOUS_DATA
+        );
+
+        skip(wstEthOracleMiddleware.getValidationDelay() + 1);
+        usdnProtocol.validateOpenPosition(payable(DEPLOYER), abi.encode(currentPrice), EMPTY_PREVIOUS_DATA);
+        vm.stopPrank();
+
+        // price drops under a valid liquidation price
+        uint256 priceDecrease = 1700 ether;
+        priceData = abi.encode(priceDecrease);
+
+        // liquidate
+        uint256 balanceBefore = address(this).balance;
+        uint256 validationCost =
+            wstEthOracleMiddleware.validationCost(priceData, IUsdnProtocolTypes.ProtocolAction.Liquidation);
+        uint256 initialTotalPos = usdnProtocol.getTotalLongPositions();
+
+        skip(30 seconds);
+        vm.prank(DEPLOYER);
+        fuzzingSuite.liquidate(priceDecrease, 10, validationCost);
+        assertEq(usdnProtocol.getTotalLongPositions(), initialTotalPos - 1, "total positions after liquidate");
+        assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
 
     function _validateCloseAndAssert(

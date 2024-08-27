@@ -10,7 +10,7 @@ contract Bound is Test {
         return min + int256(diff);
     }
 
-    function doesOverflow(uint128 a, uint128 b) public returns (bool) {
+    function doesOverflow(uint128 a, uint128 b) public pure returns (bool) {
         uint128 result;
         unchecked {
             result = a + b;
@@ -21,7 +21,7 @@ contract Bound is Test {
         return false;
     }
 
-    function boundToIntCast(uint256 value) public returns (uint256) {
+    function boundToIntCast(uint256 value) public pure returns (uint256) {
         uint256 uint255MaxValue = 2 ** 255 - 1;
         if (value > uint255MaxValue) {
             return value - uint255MaxValue;
