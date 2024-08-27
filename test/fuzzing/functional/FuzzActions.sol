@@ -26,12 +26,7 @@ contract FuzzActions is Setup, Utils {
         sdex.mintAndApprove(msg.sender, amountSdexRand, address(usdnProtocol), amountSdexRand);
         vm.deal(msg.sender, ethRand);
 
-        address payable dest;
-        {
-            address[] memory filteredArray = mergeAndFilter(destinationsToken[address(usdn)], users, false);
-            destRand = bound(destRand, 0, filteredArray.length - 1);
-            dest = payable(filteredArray[destRand]);
-        }
+        address payable dest = addressFromArraysFiltered(destinationsToken[address(usdn)], users, false, destRand);
 
         validatorRand = bound(validatorRand, 0, users.length - 1);
         address payable validator = payable(users[validatorRand]);
@@ -84,9 +79,7 @@ contract FuzzActions is Setup, Utils {
         usdn.approve(address(usdnProtocol), usdnShares);
         vm.deal(msg.sender, ethRand);
 
-        address[] memory filteredArray = mergeAndFilter(destinationsToken[address(wsteth)], users, false);
-        destRand = bound(destRand, 0, filteredArray.length - 1);
-        address payable dest = payable(filteredArray[destRand]);
+        address payable dest = addressFromArraysFiltered(destinationsToken[address(wsteth)], users, false, destRand);
         validatorRand = bound(validatorRand, 0, users.length - 1);
         address payable validator = payable(users[validatorRand]);
         uint256 priceData = bound(priceRand, 0, type(uint128).max);
@@ -135,14 +128,9 @@ contract FuzzActions is Setup, Utils {
     ) public {
         wsteth.mintAndApprove(msg.sender, amountRand, address(usdnProtocol), amountRand);
         vm.deal(msg.sender, ethRand);
-        address payable dest;
-        {
-            address[] memory contractRecipients = new address[](1);
-            contractRecipients[0] = address(usdnProtocol);
-            address[] memory filteredArray = mergeAndFilter(contractRecipients, users, false);
-            destRand = bound(destRand, 0, filteredArray.length - 1);
-            dest = payable(filteredArray[destRand]);
-        }
+        address[] memory contractRecipients = new address[](1);
+        contractRecipients[0] = address(usdnProtocol);
+        address payable dest = addressFromArraysFiltered(contractRecipients, users, false, destRand);
         validatorRand = bound(validatorRand, 0, users.length - 1);
         address validator = users[validatorRand];
         priceRand = bound(priceRand, 0, type(uint128).max);
@@ -201,9 +189,7 @@ contract FuzzActions is Setup, Utils {
     ) public {
         vm.deal(msg.sender, ethRand);
 
-        address[] memory filteredArray = mergeAndFilter(destinationsToken[address(wsteth)], users, false);
-        destRand = bound(destRand, 0, filteredArray.length - 1);
-        address payable dest = payable(filteredArray[destRand]);
+        address payable dest = addressFromArraysFiltered(destinationsToken[address(wsteth)], users, false, destRand);
         validatorRand = bound(validatorRand, 0, users.length - 1);
         address payable validator = payable(users[validatorRand]);
         priceRand = bound(priceRand, 0, type(uint128).max);

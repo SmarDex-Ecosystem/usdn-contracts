@@ -29,10 +29,10 @@ contract Utils is Test {
         return value;
     }
 
-    function mergeAndFilter(address[] memory a, address[] memory b, bool removeMsgSender)
+    function addressFromArraysFiltered(address[] memory a, address[] memory b, bool removeMsgSender, uint256 destRand)
         public
         view
-        returns (address[] memory filteredArray)
+        returns (address payable dest)
     {
         address[] memory filteredUsers;
         if (removeMsgSender) {
@@ -48,12 +48,15 @@ contract Utils is Test {
             filteredUsers = b;
         }
 
-        filteredArray = new address[](a.length + filteredUsers.length);
+        address[] memory filteredArray = new address[](a.length + filteredUsers.length);
         for (uint256 i = 0; i < filteredUsers.length; i++) {
             filteredArray[i] = filteredUsers[i];
         }
         for (uint256 i = 0; i < a.length; i++) {
             filteredArray[filteredUsers.length + i] = a[i];
         }
+
+        destRand = bound(destRand, 0, filteredArray.length - 1);
+        dest = payable(filteredArray[destRand]);
     }
 }
