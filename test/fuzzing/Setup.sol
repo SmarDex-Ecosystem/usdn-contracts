@@ -64,6 +64,7 @@ contract Setup is ErrorsChecked {
 
     constructor() payable {
         vm.warp(1_709_251_200);
+        vm.startPrank(ADMIN);
         wstEthOracleMiddleware = new MockOracleMiddleware();
         // todo: see if we want to fuzz chainlinkElapsedTimeLimit
         liquidationRewardsManager = new MockLiquidationRewardsManager(IWstETH(wsteth), uint256(2 hours + 5 minutes));
@@ -102,7 +103,6 @@ contract Setup is ErrorsChecked {
         );
         usdnProtocol = IUsdnProtocolHandler(proxy);
         rebalancer = new RebalancerHandler(usdnProtocol);
-        vm.prank(ADMIN);
         usdnProtocol.setRebalancer(rebalancer);
         usdn.grantRole(MINTER_ROLE, address(usdnProtocol));
         usdn.grantRole(REBASER_ROLE, address(usdnProtocol));
