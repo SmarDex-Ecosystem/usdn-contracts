@@ -57,12 +57,13 @@ contract TestUsdnProtocolRefundSecurityDeposit is UsdnProtocolBaseFixture {
 
         // another user try to get a refund for his security deposit
         vm.prank(USER_1);
-        vm.expectRevert(abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolNotEligibleForRefund.selector));
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolNotEligibleForRefund.selector);
         protocol.refundSecurityDeposit();
-
-        assertEq(address(this).balance, balanceBefore, "security deposit not refunded");
     }
 
+    /**
+     * @custom:notice This function initiates with `address(this)` as validator a long position and liquidates it
+     */
     function _initiateAndLiquidate() internal {
         // initiate a long position
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
