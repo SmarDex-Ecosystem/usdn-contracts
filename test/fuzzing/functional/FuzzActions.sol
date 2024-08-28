@@ -38,7 +38,7 @@ contract FuzzActions is Setup, Utils {
             ,
             IUsdnProtocolTypes.PendingAction memory lastAction,
         ) = _getPreviousActionsData(msg.sender, priceData);
-        (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceData);
+        (, uint256 wstethPendingActions) = _getTokenFromPendingAction(lastAction, priceData);
 
         vm.prank(msg.sender);
         try usdnProtocol.initiateDeposit{ value: ethRand }(
@@ -90,7 +90,7 @@ contract FuzzActions is Setup, Utils {
             ,
             IUsdnProtocolTypes.PendingAction memory lastAction,
         ) = _getPreviousActionsData(msg.sender, priceData);
-        (int256 usdnPendingActions,) = getTokenFromPendingAction(lastAction, priceData);
+        (int256 usdnPendingActions,) = _getTokenFromPendingAction(lastAction, priceData);
 
         vm.prank(msg.sender);
         try usdnProtocol.initiateWithdrawal{ value: ethRand }(
@@ -141,7 +141,7 @@ contract FuzzActions is Setup, Utils {
             ,
             IUsdnProtocolTypes.PendingAction memory lastAction,
         ) = _getPreviousActionsData(msg.sender, priceRand);
-        (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceRand);
+        (, uint256 wstethPendingActions) = _getTokenFromPendingAction(lastAction, priceRand);
 
         vm.prank(msg.sender);
         try usdnProtocol.initiateOpenPosition{ value: ethRand }(
@@ -249,7 +249,7 @@ contract FuzzActions is Setup, Utils {
             ,
             IUsdnProtocolTypes.PendingAction memory lastAction,
         ) = _getPreviousActionsData(msg.sender, priceData);
-        (int256 usdnPendingActions, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceData);
+        (int256 usdnPendingActions, uint256 wstethPendingActions) = _getTokenFromPendingAction(lastAction, priceData);
 
         vm.prank(msg.sender);
         try usdnProtocol.validateDeposit(validator, abi.encode(priceData), previousActionsData) returns (bool success_)
@@ -303,7 +303,7 @@ contract FuzzActions is Setup, Utils {
             ,
             IUsdnProtocolTypes.PendingAction memory lastAction,
         ) = _getPreviousActionsData(msg.sender, priceData);
-        (int256 usdnPendingActions, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceData);
+        (int256 usdnPendingActions, uint256 wstethPendingActions) = _getTokenFromPendingAction(lastAction, priceData);
 
         vm.prank(msg.sender);
         try usdnProtocol.validateWithdrawal(validator, abi.encode(priceData), previousActionsData) returns (
@@ -351,7 +351,7 @@ contract FuzzActions is Setup, Utils {
             ,
             IUsdnProtocolTypes.PendingAction memory lastAction,
         ) = _getPreviousActionsData(msg.sender, priceData);
-        (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceData);
+        (, uint256 wstethPendingActions) = _getTokenFromPendingAction(lastAction, priceData);
 
         vm.prank(msg.sender);
         try usdnProtocol.validateOpenPosition(validator, abi.encode(priceData), previousActionsData) returns (
@@ -396,7 +396,7 @@ contract FuzzActions is Setup, Utils {
             ,
             IUsdnProtocolTypes.PendingAction memory lastAction,
         ) = _getPreviousActionsData(msg.sender, priceData);
-        (, uint256 wstethPendingActions) = getTokenFromPendingAction(lastAction, priceData);
+        (, uint256 wstethPendingActions) = _getTokenFromPendingAction(lastAction, priceData);
 
         uint256 securityDeposit = longAction.securityDepositValue;
         uint256 closeAmount = longAction.closeAmount;
@@ -590,8 +590,8 @@ contract FuzzActions is Setup, Utils {
      * @return usdn_ The amount of USDN shares
      * @return wsteth_ The amount of WstETH
      */
-    function getTokenFromPendingAction(IUsdnProtocolTypes.PendingAction memory action, uint256 price)
-        public
+    function _getTokenFromPendingAction(IUsdnProtocolTypes.PendingAction memory action, uint256 price)
+        internal
         view
         returns (int256 usdn_, uint256 wsteth_)
     {
