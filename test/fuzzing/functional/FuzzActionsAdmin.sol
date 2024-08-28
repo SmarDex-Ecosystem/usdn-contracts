@@ -3,12 +3,12 @@ pragma solidity ^0.8.25;
 
 import { ADMIN } from "../../utils/Constants.sol";
 import { Setup } from "../Setup.sol";
-import { Bound } from "../helpers/Bound.sol";
+import { Utils } from "../helpers/Utils.sol";
 
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 
-contract FuzzActionsAdmin is Setup, Bound {
+contract FuzzActionsAdmin is Setup, Utils {
     /* -------------------------------------------------------------------------- */
     /*                               ADMIN functions                              */
     /* -------------------------------------------------------------------------- */

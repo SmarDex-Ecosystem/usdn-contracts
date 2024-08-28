@@ -4,11 +4,11 @@ pragma solidity ^0.8.25;
 import { Weth } from "../../utils/WETH.sol";
 import { WstETH } from "../../utils/WstEth.sol";
 import { Setup } from "../Setup.sol";
-import { Bound } from "../helpers/Bound.sol";
+import { Utils } from "../helpers/Utils.sol";
 
 import { Usdn } from "../../../src/Usdn/Usdn.sol";
 
-contract FuzzSetup is Setup, Bound {
+contract FuzzSetup is Setup, Utils {
     /* -------------------------------------------------------------------------- */
     /*                             USDN Protocol                                  */
     /* -------------------------------------------------------------------------- */
