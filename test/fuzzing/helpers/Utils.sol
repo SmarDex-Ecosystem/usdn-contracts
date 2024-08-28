@@ -29,31 +29,32 @@ contract Utils is Test {
         return value;
     }
 
-    function addressFromArraysFiltered(address[] memory a, address[] memory b, bool removeMsgSender, uint256 destRand)
-        public
-        view
-        returns (address payable dest)
-    {
+    function boundDestination(
+        address[] memory contracts,
+        address[] memory users,
+        bool removeMsgSender,
+        uint256 destRand
+    ) public view returns (address payable dest) {
         address[] memory filteredUsers;
         if (removeMsgSender) {
-            filteredUsers = new address[](b.length - 1);
+            filteredUsers = new address[](users.length - 1);
             uint256 index = 0;
-            for (uint256 i = 0; i < b.length; i++) {
-                if (b[i] != msg.sender) {
-                    filteredUsers[index] = b[i];
+            for (uint256 i = 0; i < users.length; i++) {
+                if (users[i] != msg.sender) {
+                    filteredUsers[index] = users[i];
                     index++;
                 }
             }
         } else {
-            filteredUsers = b;
+            filteredUsers = users;
         }
 
-        address[] memory filteredArray = new address[](a.length + filteredUsers.length);
+        address[] memory filteredArray = new address[](contracts.length + filteredUsers.length);
         for (uint256 i = 0; i < filteredUsers.length; i++) {
             filteredArray[i] = filteredUsers[i];
         }
-        for (uint256 i = 0; i < a.length; i++) {
-            filteredArray[filteredUsers.length + i] = a[i];
+        for (uint256 i = 0; i < contracts.length; i++) {
+            filteredArray[filteredUsers.length + i] = contracts[i];
         }
 
         destRand = bound(destRand, 0, filteredArray.length - 1);
