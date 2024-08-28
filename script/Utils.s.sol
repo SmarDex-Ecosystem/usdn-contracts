@@ -11,15 +11,15 @@ contract Utils is Script {
 
     // to run the script in standalone mode
     function run() external {
-        validateProtocol();
+        validateProtocol("UsdnProtocolImpl.sol", "UsdnProtocolFallback.sol");
     }
 
     /**
      * @notice Validate the Usdn protocol
      * @dev Call this function to validate the Usdn protocol before deploying it
      */
-    function validateProtocol() public {
-        string[] memory inputs = _buildCommandFunctionClashes();
+    function validateProtocol(string memory contract1, string memory contract2) public {
+        string[] memory inputs = _buildCommandFunctionClashes(contract1, contract2);
         try this.runFfiCommand(inputs) { }
         catch {
             revert("function clash detected, run the functionClashes.ts script to see the clashing functions");
@@ -79,7 +79,11 @@ contract Utils is Script {
      * @notice Build the command to run the functionClashes.ts script
      * @return inputs_ The command to run the functionClashes.ts script
      */
-    function _buildCommandFunctionClashes() internal pure returns (string[] memory inputs_) {
+    function _buildCommandFunctionClashes(string memory contract1, string memory contract2)
+        internal
+        pure
+        returns (string[] memory inputs_)
+    {
         inputs_ = new string[](7);
         uint8 i = 0;
 
@@ -88,8 +92,8 @@ contract Utils is Script {
         inputs_[i++] = "npx";
         inputs_[i++] = "ts-node";
         inputs_[i++] = SCRIPT_PATH;
-        inputs_[i++] = "UsdnProtocolImpl.sol";
-        inputs_[i++] = "UsdnProtocolFallback.sol";
+        inputs_[i++] = contract1;
+        inputs_[i++] = contract2;
         // we need to give the storage contract to remove common functions
         inputs_[i++] = "-s";
         inputs_[i++] = "UsdnProtocolStorage.sol";
