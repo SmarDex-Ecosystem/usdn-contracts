@@ -14,7 +14,7 @@ import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol"
 contract Upgrade is Script {
     Utils _utils = new Utils();
     address _deployerAddress;
-    IUsdnProtocol _currentImplementation;
+    IUsdnProtocol _usdnProtocol;
 
     function run() external {
         // Check and save the required environment variables
@@ -22,7 +22,7 @@ contract Upgrade is Script {
 
         // Make sure the address used has the permission to upgrade the protocol
         require(
-            _currentImplementation.hasRole(_currentImplementation.PROXY_UPGRADE_ROLE(), _deployerAddress),
+            _usdnProtocol.hasRole(_usdnProtocol.PROXY_UPGRADE_ROLE(), _deployerAddress),
             "DEPLOYER_ADDRESS does not have the permission to upgrade the protocol"
         );
 
@@ -30,7 +30,7 @@ contract Upgrade is Script {
         _utils.cleanAndBuildContracts();
 
         // validate the Usdn protocol before deploying it
-        _utils.validateProtocol();
+        _utils.validateProtocol("UsdnProtocolImpl.sol", "UsdnProtocolFallback.sol");
 
         vm.startBroadcast(_deployerAddress);
 
@@ -43,7 +43,7 @@ contract Upgrade is Script {
         UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
 
         Upgrades.upgradeProxy(
-            address(_currentImplementation),
+            address(_usdnProtocol),
             "UsdnProtocolImpl.sol",
             // call the initialize function of the new implementation to upgrade the fallback contract
             // if this function does not exist, you will need to implement it
@@ -65,7 +65,7 @@ contract Upgrade is Script {
         }
 
         try vm.envAddress("USDN_PROTOCOL") {
-            _currentImplementation = IUsdnProtocol(vm.envAddress("USDN_PROTOCOL"));
+            _usdnProtocol = IUsdnProtocol(vm.envAddress("USDN_PROTOCOL"));
         } catch {
             revert("USDN_PROTOCOL is required, otherwise launch 01_Deploy");
         }
