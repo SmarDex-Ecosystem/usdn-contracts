@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.25;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
 import { Setup } from "../Setup.sol";
 import { Utils } from "../helpers/Utils.sol";
 
@@ -18,16 +16,19 @@ contract FuzzTransfer is Setup, Utils {
 
         if (token == address(0)) {
             amountRand = bound(amountRand, 0, address(msg.sender).balance);
+            vm.deal(msg.sender, amountRand);
             vm.prank(msg.sender);
             dest.transfer(amountRand);
         } else if (token == address(usdn)) {
-            amountRand = bound(amountRand, 0, IUsdn(token).sharesOf(msg.sender));
+            amountRand = bound(amountRand, 0, usdn.sharesOf(msg.sender));
+            usdn.mintShares(msg.sender, amountRand);
             vm.prank(msg.sender);
-            IUsdn(token).transferShares(dest, amountRand);
+            usdn.transferShares(dest, amountRand);
         } else {
-            amountRand = bound(amountRand, 0, IERC20(token).balanceOf(msg.sender));
+            amountRand = bound(amountRand, 0, wsteth.balanceOf(msg.sender));
+            wsteth.mint(msg.sender, amountRand);
             vm.prank(msg.sender);
-            IERC20(token).transfer(dest, amountRand);
+            wsteth.transfer(dest, amountRand);
         }
     }
 }
