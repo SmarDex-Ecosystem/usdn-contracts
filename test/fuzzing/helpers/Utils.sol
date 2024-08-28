@@ -34,7 +34,7 @@ contract Utils is Test {
         address[] memory users,
         bool removeMsgSender,
         uint256 destRand
-    ) public view returns (address payable dest) {
+    ) public returns (address payable dest) {
         address[] memory filteredUsers;
 
         if (removeMsgSender) {
@@ -59,5 +59,6 @@ contract Utils is Test {
 
         destRand = bound(destRand, 0, filteredUsers.length - 1);
         dest = payable(filteredUsers[destRand]);
+        emit log_named_address("destination bound result ", dest);
     }
 }

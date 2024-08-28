@@ -21,6 +21,7 @@ contract FuzzTransfer is Setup, Utils {
             dest.transfer(amountRand);
         } else if (token == address(usdn)) {
             amountRand = bound(amountRand, 0, usdn.sharesOf(msg.sender));
+            vm.prank(address(usdnProtocol));
             usdn.mintShares(msg.sender, amountRand);
             vm.prank(msg.sender);
             usdn.transferShares(dest, amountRand);

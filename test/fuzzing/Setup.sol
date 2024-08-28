@@ -110,8 +110,7 @@ contract Setup is ErrorsChecked {
 
         destinationsToken[address(wsteth)] = [address(usdnProtocol), address(rebalancer)];
         destinationsToken[address(usdn)] = [address(usdn), address(usdnProtocol)];
-        destinationsToken[address(0)] =
-            [address(wsteth), address(usdnProtocol), address(rebalancer), address(wstEthOracleMiddleware)];
+        destinationsToken[address(0)] = [address(wsteth), address(usdnProtocol), address(rebalancer)];
     }
 
     function getBalances(address validator, address to) internal view returns (BalancesSnapshot memory) {
