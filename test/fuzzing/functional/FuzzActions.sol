@@ -543,6 +543,8 @@ contract FuzzActions is Setup, Utils {
      * @notice PROTCL-14
      */
     function liquidate(uint256 priceRand, uint256 iterationsRand, uint256 validationCost) public {
+        vm.deal(msg.sender, validationCost);
+
         priceRand = bound(priceRand, 0, type(uint128).max);
         uint16 iterations = uint16(bound(iterationsRand, 1, type(uint16).max));
         bytes memory priceData = abi.encode(uint128(priceRand));
