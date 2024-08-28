@@ -69,7 +69,7 @@ contract Deploy is Script {
         _isProdEnv = block.chainid == 1;
 
         // validate the Usdn protocol before deploying it
-        _utils.validateProtocol();
+        _utils.validateProtocol("UsdnProtocolImpl.sol", "UsdnProtocolFallback.sol");
 
         vm.startBroadcast(_deployerAddress);
 

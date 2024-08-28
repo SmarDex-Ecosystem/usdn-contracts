@@ -1,9 +1,9 @@
 @chainlink-1.2.0=dependencies/@chainlink-1.2.0
-@forge-std-1.9.2=dependencies/forge-std-1.9.2
-@openzeppelin-contracts-5.0.2=dependencies/@openzeppelin-contracts-5.0.2
 @openzeppelin-contracts-upgradeable-5.0.2=dependencies/@openzeppelin-contracts-upgradeable-5.0.2
-@openzeppelin-foundry-upgrades-0.3.1=dependencies/openzeppelin-foundry-upgrades-0.3.1
+@openzeppelin-contracts-5.0.2=dependencies/@openzeppelin-contracts-5.0.2
 @pythnetwork-pyth-sdk-solidity-3.1.0=dependencies/@pythnetwork-pyth-sdk-solidity-3.1.0
 @redstone-finance-evm-connector-0.6.1=dependencies/@redstone-finance-evm-connector-0.6.1
-@solady-0.0.228=dependencies/solady-0.0.228
 @uniswap-permit2-1.0.0=dependencies/@uniswap-permit2-1.0.0
+@forge-std-1.9.2=dependencies/forge-std-1.9.2
+@openzeppelin-foundry-upgrades-0.3.3=dependencies/openzeppelin-foundry-upgrades-0.3.3
+@solady-0.0.228=dependencies/solady-0.0.228
