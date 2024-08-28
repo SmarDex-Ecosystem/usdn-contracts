@@ -51,6 +51,18 @@ contract so that there is enough balance.
 ./script/deployFork.sh
 ```
 
+## Upgrade protocol
+
+Before you launch the upgrade script, there are a few things you need to do:
+* Implement the reinitialization function (ex: `initializeStorageV2`) with the required parameters
+  * Make sure it is only callable by the PROXY_UPGRADE_ROLE addresses
+  * Make sure it has the `reinitialize` modifier with the correct version
+* Change the artifacts' names in `50_Upgrade.s.sol`
+  * If needed, change the `opts.referenceContract` option with the correct previous implementation
+  * If needed, comment the line that re-deploy the fallback contract
+
+If you are ready to upgrade the protocol, then you can launch the bash script `script/upgrade.sh`. It will prompt you to enter a RPC url, the address of the deployed USDN protocol, and a private key.
+
 ## Anvil fork configuration
 
 The `anvil` fork should be launched with at least the following parameters:
