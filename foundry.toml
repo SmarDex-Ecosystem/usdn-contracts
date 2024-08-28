@@ -26,7 +26,6 @@ ignored_error_codes = [
 
 # -------------------------------- Remappings -------------------------------- #
 
-
 remappings = [
     "@chainlink/=dependencies/@chainlink-1.2.0/",
     "@openzeppelin/contracts-upgradeable/=dependencies/@openzeppelin-contracts-upgradeable-5.0.2/",
@@ -131,6 +130,13 @@ anvil = "${URL_ANVIL}"
 
 [etherscan]
 mainnet = { key = "${ETHERSCAN_API_KEY}" }
+
+# ---------------------------------------------------------------------------- #
+#                                 Dependencies                                 #
+# ---------------------------------------------------------------------------- #
+
+[soldeer]
+remappings_generate = false
 
 [dependencies]
 "@chainlink" = { version = "1.2.0", url = "https://github.com/smartcontractkit/chainlink/archive/c3dc764bba9e1c57b3f7933bcb804a1740fab695.zip" }

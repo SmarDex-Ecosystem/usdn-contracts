@@ -1,54 +1,62 @@
-
 [[dependencies]]
 name = "@chainlink"
 version = "1.2.0"
 source = "https://github.com/smartcontractkit/chainlink/archive/c3dc764bba9e1c57b3f7933bcb804a1740fab695.zip"
 checksum = "7050515ce90fd3dbac7cb958e960dd22ac85f6d0093bfdec87acc12560edbe3a"
-
-[[dependencies]]
-name = "@openzeppelin-contracts-upgradeable"
-version = "5.0.2"
-source = "https://soldeer-revisions.s3.amazonaws.com/@openzeppelin-contracts-upgradeable/5_0_2_14-03-2024_06:12:07_contracts-upgradeable.zip"
-checksum = "fb3f8db8541fc01636f91b0e7d9dd6f450f1bf7e2b4a17e96caf6e779ace8f5b"
+integrity = "a8168279a1ef77458fae26b842b5212f71f8c0317cb932024a4938e88e1babf2"
 
 [[dependencies]]
 name = "@openzeppelin-contracts"
 version = "5.0.2"
 source = "https://soldeer-revisions.s3.amazonaws.com/@openzeppelin-contracts/5_0_2_14-03-2024_06:11:59_contracts.zip"
 checksum = "8bc4f0acc7c187771b878d46f7de4bfad1acad2eb5d096d9d05d34035853f5c3"
+integrity = "99799195c41282fd90173ac4791c5ab0f93d7dd828d65448f1275a251c8bc095"
+
+[[dependencies]]
+name = "@openzeppelin-contracts-upgradeable"
+version = "5.0.2"
+source = "https://soldeer-revisions.s3.amazonaws.com/@openzeppelin-contracts-upgradeable/5_0_2_14-03-2024_06:12:07_contracts-upgradeable.zip"
+checksum = "fb3f8db8541fc01636f91b0e7d9dd6f450f1bf7e2b4a17e96caf6e779ace8f5b"
+integrity = "d83569f4a5be819ffff2700726d9381934ceea6e2aade728dcdcba4bd99e0f5f"
 
 [[dependencies]]
 name = "@pythnetwork-pyth-sdk-solidity"
 version = "3.1.0"
 source = "https://soldeer-revisions.s3.amazonaws.com/@pythnetwork-pyth-sdk-solidity/3_1_0_15-04-2024_18:51:28_pyth-sdk-solidity.zip"
 checksum = "f71446fe21a725f3f95d4b2e981936313dae05b78621a0d2ab2dba20c59a87cb"
+integrity = "472b1377f983b93ba6f782587d41a76cc205848e2927dc50f1c73cfa0d173d69"
 
 [[dependencies]]
 name = "@redstone-finance-evm-connector"
 version = "0.6.1"
 source = "https://soldeer-revisions.s3.amazonaws.com/@redstone-finance-evm-connector/0_6_1_25-07-2024_06:26:58_evm-connector.zip"
 checksum = "7532d8972be86e4df8b902205333c4760fe1eda7ca1ee073b1be06c4b4523863"
+integrity = "a0df2c79a19f1eab15c10d929818a68de0aef6cd6d02efb08e61cca02ed2a48e"
 
 [[dependencies]]
 name = "@uniswap-permit2"
 version = "1.0.0"
 source = "https://github.com/Uniswap/permit2/archive/cc56ad0f3439c502c246fc5cfcc3db92bb8b7219.zip"
 checksum = "180e009e8abfc5ed43383418f2593ac790655b58ec18ae52a92a636d5f298ad4"
+integrity = "948ef3c8ebc018a85b2e0382d2f8fb244d0831d0dacabdbdb21083b2d8c86c54"
 
 [[dependencies]]
 name = "forge-std"
 version = "1.9.2"
 source = "https://soldeer-revisions.s3.amazonaws.com/forge-std/1_9_2_06-08-2024_17:31:25_forge-std-1.9.2.zip"
 checksum = "20fd008c7c69b6c737cc0284469d1c76497107bc3e004d8381f6d8781cb27980"
+integrity = "ae2b5422f63614b68dcd2456921655bf223d5e95741741cccbe2e0dff1b8c74e"
 
 [[dependencies]]
 name = "openzeppelin-foundry-upgrades"
 version = "0.3.1"
 source = "https://soldeer-revisions.s3.amazonaws.com/openzeppelin-foundry-upgrades/0_3_1_25-06-2024_18:12:33_openzeppelin-foundry-upgrades.zip"
 checksum = "16a43c67b7c62e4a638b669b35f7b19c98a37278811fe910750b62b6e6fdffa7"
+integrity = "e47cfad47f7daccb9aad24aaf9b7b4f5e1531bf4801f8b20dcbbf8e83e705930"
 
 [[dependencies]]
 name = "solady"
 version = "0.0.228"
 source = "https://soldeer-revisions.s3.amazonaws.com/solady/0_0_228_28-07-2024_08:37:28_solady.zip"
 checksum = "fa66187898039b91958e962e49db3e31ca920e48599c62eec43cf03156335210"
+integrity = "94992343818de21c6d43a2e146878eb87d397788948eb139827de117722e2a6f"
