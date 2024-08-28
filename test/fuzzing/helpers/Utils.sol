@@ -36,9 +36,11 @@ contract Utils is Test {
         uint256 destRand
     ) public view returns (address payable dest) {
         address[] memory filteredUsers;
+
         if (removeMsgSender) {
-            filteredUsers = new address[](users.length - 1);
+            filteredUsers = new address[](users.length + contracts.length - 1);
             uint256 index = 0;
+
             for (uint256 i = 0; i < users.length; i++) {
                 if (users[i] != msg.sender) {
                     filteredUsers[index] = users[i];
@@ -46,18 +48,16 @@ contract Utils is Test {
                 }
             }
         } else {
-            filteredUsers = users;
-        }
-
-        address[] memory filteredArray = new address[](contracts.length + filteredUsers.length);
-        for (uint256 i = 0; i < filteredUsers.length; i++) {
-            filteredArray[i] = filteredUsers[i];
+            filteredUsers = new address[](users.length + contracts.length);
+            for (uint256 i = 0; i < users.length; i++) {
+                filteredUsers[i] = users[i];
+            }
         }
         for (uint256 i = 0; i < contracts.length; i++) {
-            filteredArray[filteredUsers.length + i] = contracts[i];
+            filteredUsers[filteredUsers.length - contracts.length + i] = contracts[i];
         }
 
-        destRand = bound(destRand, 0, filteredArray.length - 1);
-        dest = payable(filteredArray[destRand]);
+        destRand = bound(destRand, 0, filteredUsers.length - 1);
+        dest = payable(filteredUsers[destRand]);
     }
 }
