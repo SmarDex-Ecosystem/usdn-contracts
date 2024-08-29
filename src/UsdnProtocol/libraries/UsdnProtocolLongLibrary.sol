@@ -499,7 +499,7 @@ library UsdnProtocolLongLibrary {
             // make the rebalancer believe that the previous position was liquidated,
             // and inform it that no new position was open so it can start anew
             rebalancer.updatePosition(Types.PositionId(Constants.NO_POSITION_TICK, 0, 0), 0);
-            vaultBalance_ += data.positionAmount;
+            vaultBalance_ += data.positionValue;
             return (longBalance_, vaultBalance_);
         }
 
