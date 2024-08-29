@@ -44,7 +44,7 @@ contract TestUsdnProtocolLongCheckSafetyMargin is UsdnProtocolBaseFixture {
         int24 tick = Long._roundTickDownWithPenalty(tickWithPenalty, tickSpacing, liqPenalty);
         assertGe(tick, minTickWithPenalty, "at least min tick with penalty");
         assertEq(tick % tickSpacing, 0, "multiple of tickSpacing");
-        assertGe(tick + tickSpacing, tickWithPenalty, "rounded to nearest multiple");
+        assertGt(tick + tickSpacing, tickWithPenalty, "rounded to nearest multiple");
         if (tickWithPenalty < 0) {
             int24 roundedTick = -int24(int256(FixedPointMathLib.divUp(uint256(int256(-tickWithPenalty)), uint256(int256(tickSpacing)))))
                 * tickSpacing;
