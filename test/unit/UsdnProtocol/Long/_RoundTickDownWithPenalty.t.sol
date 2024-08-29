@@ -31,6 +31,7 @@ contract TestUsdnProtocolLongCheckSafetyMargin is UsdnProtocolBaseFixture {
      * @custom:and The rounded tick is a multiple of tickSpacing
      * @custom:and The rounded tick is smaller than or equal to the original tick, except if it was bounded by
      * MIN_TICK+liqPenalty
+     * @custom:and The rounded tick is the largest tick which is a multiple of tickSpacing below the original tick
      */
     function testFuzz_roundTickDownWithPenalty(int24 tickWithPenalty, int24 tickSpacing, uint24 liqPenalty)
         public
@@ -43,6 +44,7 @@ contract TestUsdnProtocolLongCheckSafetyMargin is UsdnProtocolBaseFixture {
         int24 tick = Long._roundTickDownWithPenalty(tickWithPenalty, tickSpacing, liqPenalty);
         assertGe(tick, minTickWithPenalty, "at least min tick with penalty");
         assertEq(tick % tickSpacing, 0, "multiple of tickSpacing");
+        assertGe(tick + tickSpacing, tickWithPenalty, "rounded to nearest multiple");
         if (tickWithPenalty < 0) {
             int24 roundedTick = -int24(int256(FixedPointMathLib.divUp(uint256(int256(-tickWithPenalty)), uint256(int256(tickSpacing)))))
                 * tickSpacing;
