@@ -65,9 +65,10 @@ contract FoundryFuzzingTest is Test {
 
         targetSelector(FuzzSelector({ addr: address(fuzzingSuite), selectors: fuzzingSuiteSelectors }));
 
-        targetSender(USER_1);
-        targetSender(USER_2);
-        targetSender(ADMIN);
+        address[] memory users = fuzzingSuite.getUsers();
+        for (uint256 i = 0; i < users.length; i++) {
+            targetSender(users[i]);
+        }
     }
 
     /// forge-config: ci.invariant.fail-on-revert = false

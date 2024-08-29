@@ -3,12 +3,12 @@ pragma solidity ^0.8.25;
 
 import { ADMIN } from "../../utils/Constants.sol";
 import { Setup } from "../Setup.sol";
-import { Bound } from "../helpers/Bound.sol";
+import { Utils } from "../helpers/Utils.sol";
 
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 
-contract FuzzActionsAdmin is Setup, Bound {
+contract FuzzActionsAdmin is Setup, Utils {
     /* -------------------------------------------------------------------------- */
     /*                               ADMIN functions                              */
     /* -------------------------------------------------------------------------- */
@@ -116,10 +116,10 @@ contract FuzzActionsAdmin is Setup, Bound {
         uint256 newCloseLimitBps,
         int256 newLongImbalanceTargetBps
     ) public {
-        newOpenLimitBps = boundToIntCast(bound(newOpenLimitBps, 1, type(uint256).max));
-        newWithdrawalLimitBps = boundToIntCast(bound(newWithdrawalLimitBps, newOpenLimitBps, type(uint256).max));
-        newDepositLimitBps = boundToIntCast(bound(newDepositLimitBps, 1, type(uint256).max));
-        newCloseLimitBps = boundToIntCast(bound(newCloseLimitBps, newDepositLimitBps, type(uint256).max));
+        newOpenLimitBps = bound(newOpenLimitBps, 1, uint256(type(int256).max));
+        newWithdrawalLimitBps = bound(newWithdrawalLimitBps, newOpenLimitBps, uint256(type(int256).max));
+        newDepositLimitBps = bound(newDepositLimitBps, 1, uint256(type(int256).max));
+        newCloseLimitBps = bound(newCloseLimitBps, newDepositLimitBps, uint256(type(int256).max));
         if (newWithdrawalLimitBps > Constants.BPS_DIVISOR / 2) {
             newLongImbalanceTargetBps =
                 bound(newLongImbalanceTargetBps, -int256(Constants.BPS_DIVISOR / 2), int256(newCloseLimitBps));
