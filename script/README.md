@@ -60,7 +60,7 @@ Before you launch the upgrade script, there are a few things you need to do:
 * Add the previous tag of the contract as a dependency in the `foundry.toml` file as well as in the remapping
   * Example: If we deployed tag 0.17.2 and released a new tag 0.17.3, we would need to add 0.17.2 in the `[dependencies]` section, 
     like so: `usdn-protocol-previous = { version = "0.17.2", git = "git@github.com:SmarDex-Ecosystem/usdn-contracts.git", tag = "v0.17.2" }`
-    and `"usdn-protocol-previous/src/=dependencies/usdn-protocol-previous-0.17.2/src/"` in the `remappings` variable
+    and `"usdn-protocol-previous/=dependencies/usdn-protocol-previous-0.17.2/src/"` in the `remappings` variable
   * By doing so, the previous version will be compiled and available for the upgrade script to do a proper validation. You can find the `UsdnProtocolImpl.sol` file at `out/UsdnProtocol/UsdnProtocolImpl.sol/UsdnProtocolImpl.json`
 * Change the artifacts' names in `50_Upgrade.s.sol`
   * If needed, change the `opts.referenceContract` option with the correct previous implementation's path
