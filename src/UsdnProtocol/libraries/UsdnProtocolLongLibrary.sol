@@ -1442,8 +1442,11 @@ library UsdnProtocolLongLibrary {
             roundedTick_ = -int24(int256(FixedPointMathLib.divUp(uint256(int256(-tickWithPenalty)), uint256(int256(tickSpacing)))))
                 * tickSpacing;
             // avoid invalid ticks: we should be able to get the price for `tickWithPenalty_ - liquidationPenalty`
-            while (roundedTick_ < TickMath.MIN_TICK + int24(liqPenalty)) {
-                roundedTick_ += tickSpacing;
+            int24 minTickWithPenalty = TickMath.MIN_TICK + int24(liqPenalty);
+            if (roundedTick_ < minTickWithPenalty) {
+                roundedTick_ += int24(
+                    int256(FixedPointMathLib.divUp(uint24(minTickWithPenalty - roundedTick_), uint24(tickSpacing)))
+                ) * tickSpacing;
             }
         } else {
             // rounding is desirable here
