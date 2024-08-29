@@ -1391,7 +1391,7 @@ library UsdnProtocolLongLibrary {
      * @param unadjustedPrice The unadjusted price
      * @return tick_ The tick number, bound by MIN_TICK
      */
-    function _unadjustedPriceToTick(uint256 unadjustedPrice) private pure returns (int24 tick_) {
+    function _unadjustedPriceToTick(uint256 unadjustedPrice) internal pure returns (int24 tick_) {
         if (unadjustedPrice < TickMath.MIN_PRICE) {
             return TickMath.MIN_TICK;
         }
@@ -1407,7 +1407,7 @@ library UsdnProtocolLongLibrary {
      * @param tickSpacing The tick spacing
      * @return roundedTick_ The rounded tick number
      */
-    function _roundTickDown(int24 tick, int24 tickSpacing) private pure returns (int24 roundedTick_) {
+    function _roundTickDown(int24 tick, int24 tickSpacing) internal pure returns (int24 roundedTick_) {
         // round down to the next valid tick according to _tickSpacing (towards negative infinity)
         if (tick < 0) {
             // we round up the inverse number (positive) then invert it -> round towards negative infinity
@@ -1433,7 +1433,7 @@ library UsdnProtocolLongLibrary {
      * @return roundedTick_ The rounded tick number
      */
     function _roundTickDownWithPenalty(int24 tickWithPenalty, int24 tickSpacing, uint24 liqPenalty)
-        private
+        internal
         pure
         returns (int24 roundedTick_)
     {
