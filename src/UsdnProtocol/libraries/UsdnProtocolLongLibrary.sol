@@ -1444,9 +1444,7 @@ library UsdnProtocolLongLibrary {
             // avoid invalid ticks: we should be able to get the price for `tickWithPenalty_ - liquidationPenalty`
             int24 minTickWithPenalty = TickMath.MIN_TICK + int24(liqPenalty);
             if (roundedTick_ < minTickWithPenalty) {
-                roundedTick_ += int24(
-                    int256(FixedPointMathLib.divUp(uint24(minTickWithPenalty - roundedTick_), uint24(tickSpacing)))
-                ) * tickSpacing;
+                roundedTick_ = minTickWithPenalty - (minTickWithPenalty % tickSpacing);
             }
         } else {
             // rounding is desirable here
