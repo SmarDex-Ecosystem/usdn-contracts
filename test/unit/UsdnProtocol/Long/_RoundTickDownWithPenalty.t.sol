@@ -46,7 +46,7 @@ contract TestUsdnProtocolLongCheckSafetyMargin is UsdnProtocolBaseFixture {
         if (tickWithPenalty < 0) {
             int24 roundedTick = -int24(int256(FixedPointMathLib.divUp(uint256(int256(-tickWithPenalty)), uint256(int256(tickSpacing)))))
                 * tickSpacing;
-            // we can only assert that the result is lte to the minimum bound if the rounded tick was at least
+            // we can only assert that the result is lte to the original if the rounded tick was at least
             // equal to the minimum bound. If the simple rounding brought the tick below the min bound, then the
             // final result will be necessarily higher than the original
             if (roundedTick >= minTickWithPenalty) {
