@@ -446,7 +446,11 @@ interface IUsdnProtocolTypes {
      * @param _rebalancer The rebalancer contract
      * @param _minLeverage The minimum leverage for a position (1.000000001)
      * @param _maxLeverage The maximum leverage for a position
-     * @param _validationDeadline The deadline for a user to confirm their action
+     * @param _lowLatencyValidationDeadline The deadline for a user to confirm their action with a low-latency oracle
+     * After this deadline, any user can validate the action with the low-latency oracle until the OracleMiddleware's
+     * _lowLatencyDelay
+     * @param _onChainValidationDeadline The deadline for a user to confirm their action with an on-chain oracle
+     * After this deadline, any user can validate the action with the on-chain oracle
      * @param _safetyMarginBps Safety margin for the liquidation price of newly open positions, in basis points
      * @param _liquidationIteration The number of iterations to perform during the user's action (in tick)
      * @param _protocolFeeBps The protocol fee in basis points
@@ -530,7 +534,8 @@ interface IUsdnProtocolTypes {
         IBaseRebalancer _rebalancer;
         uint256 _minLeverage;
         uint256 _maxLeverage;
-        uint256 _validationDeadline;
+        uint128 _lowLatencyValidationDeadline;
+        uint128 _onChainValidationDeadline;
         uint256 _safetyMarginBps;
         uint16 _liquidationIteration;
         uint16 _protocolFeeBps;

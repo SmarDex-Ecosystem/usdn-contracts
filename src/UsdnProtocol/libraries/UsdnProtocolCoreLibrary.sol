@@ -145,7 +145,7 @@ library UsdnProtocolCoreLibrary {
                 unchecked {
                     i++;
                 }
-            } else if (candidate.timestamp + s._validationDeadline < block.timestamp) {
+            } else if (candidate.timestamp + s._lowLatencyValidationDeadline < block.timestamp) {
                 // we found an actionable pending action
                 actions_[i] = candidate;
                 rawIndices_[i] = rawIndex;
@@ -651,7 +651,7 @@ library UsdnProtocolCoreLibrary {
                 s._pendingActionsQueue.popFront();
                 // try the next one
                 continue;
-            } else if (candidate.timestamp + s._validationDeadline < block.timestamp) {
+            } else if (candidate.timestamp + s._lowLatencyValidationDeadline < block.timestamp) {
                 // we found an actionable pending action
                 return (candidate, rawIndex);
             }
@@ -790,7 +790,7 @@ library UsdnProtocolCoreLibrary {
         public
     {
         Types.PendingAction memory pending = s._pendingActionsQueue.atRaw(rawIndex);
-        if (block.timestamp < pending.timestamp + s._validationDeadline + 1 hours) {
+        if (block.timestamp < pending.timestamp + s._lowLatencyValidationDeadline + 1 hours) {
             revert IUsdnProtocolErrors.UsdnProtocolUnauthorized();
         }
         delete s._pendingActions[pending.validator];

@@ -30,7 +30,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         (actions, rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 0, "pending action after initiate");
         // the pending action is actionable after the validation deadline
-        skip(protocol.getValidationDeadline() + 1);
+        _waitBeforeActionablePendingAction();
         (actions, rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 1, "actions length");
         assertEq(actions[0].to, address(this), "action to");
@@ -55,7 +55,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         (action, rawIndex) = protocol.i_getActionablePendingAction();
         assertTrue(action.action == ProtocolAction.None, "pending action after initiate");
         // the pending action is actionable after the validation deadline
-        skip(protocol.getValidationDeadline() + 1);
+        _waitBeforeActionablePendingAction();
         (action, rawIndex) = protocol.i_getActionablePendingAction();
         assertEq(action.to, address(this), "action to");
         assertEq(action.validator, address(this), "action validator");
@@ -113,7 +113,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         _setupSparsePendingActionsQueue();
 
         // Wait
-        skip(protocol.getValidationDeadline() + 1);
+        _waitBeforeActionablePendingAction();
 
         (PendingAction[] memory actions, uint128[] memory rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 2, "actions length");
@@ -133,7 +133,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         _setupSparsePendingActionsQueue();
 
         // Wait
-        skip(protocol.getValidationDeadline() + 1);
+        _waitBeforeActionablePendingAction();
 
         (PendingAction memory action, uint128 rawIndex) = protocol.i_getActionablePendingAction();
         assertTrue(action.to == USER_3, "to");
@@ -188,7 +188,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
             })
         );
         // the pending action is actionable after the validation deadline
-        skip(protocol.getValidationDeadline() + 1);
+        _waitBeforeActionablePendingAction();
         (PendingAction[] memory actions, uint128[] memory rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 1, "actions length");
         assertEq(actions[0].to, address(this), "action to");
@@ -231,7 +231,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         );
 
         // Wait
-        skip(protocol.getValidationDeadline() + 1);
+        _waitBeforeActionablePendingAction();
 
         // Second user tries to validate their action
         vm.prank(USER_2);
@@ -265,7 +265,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         setUpUserPositionInVault(USER_2, ProtocolAction.InitiateDeposit, 1 ether, price2);
 
         // Wait
-        skip(protocol.getValidationDeadline() + 1);
+        _waitBeforeActionablePendingAction();
 
         // Two other users want to now enter the protocol
         wstETH.mintAndApprove(USER_3, 100_000 ether, address(protocol), type(uint256).max);

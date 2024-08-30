@@ -160,7 +160,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             posId, POSITION_AMOUNT, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
 
-        skip(protocol.getValidationDeadline());
+        skip(protocol.getLowLatencyValidationDeadline());
 
         bytes[] memory previousData = new bytes[](1);
         previousData[0] = priceData;

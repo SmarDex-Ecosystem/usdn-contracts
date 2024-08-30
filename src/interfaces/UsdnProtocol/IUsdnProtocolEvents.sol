@@ -210,10 +210,11 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     event MaxLeverageUpdated(uint256 newMaxLeverage);
 
     /**
-     * @notice Emitted when the `validationDeadline` is updated
-     * @param newValidationDeadline The new `validationDeadline`
+     * @notice Emitted when the `lowLatencyValidationDeadline` and `onChainValidationDeadline` are updated
+     * @param newLowLatencyValidationDeadline The new deadline for low-latency validation
+     * @param newOnChainValidationDeadline The new deadline for on-chain validation
      */
-    event ValidationDeadlineUpdated(uint256 newValidationDeadline);
+    event ValidationDeadlinesUpdated(uint128 newLowLatencyValidationDeadline, uint128 newOnChainValidationDeadline);
 
     /**
      * @notice Emitted when the `liquidationPenalty` is updated

@@ -142,7 +142,7 @@ contract OracleMiddleware is
         return _confRatioBps;
     }
 
-    /// @inheritdoc IOracleMiddleware
+    /// @inheritdoc IBaseOracleMiddleware
     function getLowLatencyDelay() external view returns (uint16) {
         return _lowLatencyDelay;
     }

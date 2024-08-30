@@ -84,7 +84,7 @@ contract TestUsdnProtocolActionsExecutePendingActionOrRevert is UsdnProtocolBase
         pending.action = ProtocolAction.ValidateDeposit;
         pending.to = USER_1;
         pending.validator = USER_1;
-        pending.timestamp = uint40(block.timestamp - protocol.getValidationDeadline() - 1);
+        pending.timestamp = uint40(block.timestamp - protocol.getLowLatencyValidationDeadline() - 1);
         uint128 rawIndex1 = protocol.queuePushFront(pending);
         assertEq(rawIndex1, type(uint128).max, "raw index 1");
 
@@ -115,7 +115,7 @@ contract TestUsdnProtocolActionsExecutePendingActionOrRevert is UsdnProtocolBase
         pending.action = ProtocolAction.ValidateDeposit;
         pending.to = address(this);
         pending.validator = address(this);
-        pending.timestamp = uint40(block.timestamp - protocol.getValidationDeadline() - 1);
+        pending.timestamp = uint40(block.timestamp - protocol.getLowLatencyValidationDeadline() - 1);
         protocol.i_addPendingAction(address(this), pending);
         (, rawIndex_) = protocol.i_getPendingAction(address(this));
     }
