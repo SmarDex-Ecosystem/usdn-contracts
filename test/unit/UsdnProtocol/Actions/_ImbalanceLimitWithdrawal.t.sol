@@ -43,7 +43,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
         uint256 totalExpo = protocol.getTotalExpo();
 
         // should revert
-        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidVaultExpo.selector);
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolEmptyVault.selector);
         protocol.i_checkImbalanceLimitWithdrawal(0, totalExpo);
     }
 
