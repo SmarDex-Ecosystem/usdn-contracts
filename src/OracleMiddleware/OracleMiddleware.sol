@@ -279,7 +279,7 @@ contract OracleMiddleware is
      * Else, get the specified roundId on-chain price from Chainlink. In case of chainlink price,
      * we don't have a confidence interval and so both `neutralPrice` and `price` are equal
      * @param data An optional VAA from Pyth or a chainlink roundId (abi-encoded uint80)
-     * @param targetTimestamp The target timestamp
+     * @param targetTimestamp The timestamp of the initiate action
      * @param dir The direction for applying the confidence interval (in case we use a Pyth price)
      * @return price_ The price to use for the user action
      */
@@ -300,36 +300,69 @@ contract OracleMiddleware is
         uint80 validateRoundId = abi.decode(data, (uint80));
 
         // previous round id
-        ChainlinkPriceInfo memory chainlinkOnChainPrice =
-            _getFormattedChainlinkPrice(MIDDLEWARE_DECIMALS, validateRoundId - 1);
+        ChainlinkPriceInfo memory chainlinkOnChainPrice = _validateChainlinkRoundId(targetLimit, validateRoundId);
 
-        // if the price is negative or zero, revert
-        if (chainlinkOnChainPrice.price <= 0) {
-            revert OracleMiddlewareWrongPrice(chainlinkOnChainPrice.price);
-        }
-
-        // if previous price is higher than targetLimit
-        if (chainlinkOnChainPrice.timestamp > targetLimit) {
-            revert OracleMiddlewareInvalidRoundId();
-        }
-
-        // validate round id
-        chainlinkOnChainPrice = _getFormattedChainlinkPrice(MIDDLEWARE_DECIMALS, validateRoundId);
-
-        // if the price is negative or zero, revert
-        if (chainlinkOnChainPrice.price <= 0) {
-            revert OracleMiddlewareWrongPrice(chainlinkOnChainPrice.price);
-        }
-
-        // if validate price is lower or equal than targetLimit
-        if (chainlinkOnChainPrice.timestamp <= targetLimit) {
-            revert OracleMiddlewareInvalidRoundId();
-        }
         price_ = PriceInfo({
             price: uint256(chainlinkOnChainPrice.price),
             neutralPrice: uint256(chainlinkOnChainPrice.price),
             timestamp: chainlinkOnChainPrice.timestamp
         });
+    }
+
+    /**
+     * @notice Make sure that the given round ID matches with the validation constraints
+     * @param targetLimit The timestamp of the initiate action + _lowLatencyDelay
+     * @param roundId The round ID to validate
+     * @return providedRoundPrice_ Th price data of the provided round ID
+     */
+    function _validateChainlinkRoundId(uint128 targetLimit, uint80 roundId)
+        internal
+        view
+        returns (ChainlinkPriceInfo memory providedRoundPrice_)
+    {
+        uint80 previousRoundId = roundId - 1;
+        providedRoundPrice_ = _getFormattedChainlinkPrice(MIDDLEWARE_DECIMALS, roundId);
+
+        if (providedRoundPrice_.price <= 0) {
+            revert OracleMiddlewareWrongPrice(providedRoundPrice_.price);
+        }
+
+        (, int256 previousRoundPrice,, uint256 previousRoundTimestamp,) = _priceFeed.getRoundData(previousRoundId);
+
+        if (previousRoundPrice > 0) {
+            // if previous price is higher than targetLimit
+            if (previousRoundTimestamp > targetLimit) {
+                revert OracleMiddlewareInvalidRoundId();
+            }
+        } else {
+            // if the provided round's price is 0, it's possible the aggregator recently changed and there is no data
+            // available for the previous round ID in the aggregator. In that case, we accept the given round ID as the
+            // sole reference with additional checks to make sure it is not too far from the target timestamp
+
+            // calculate the provided round's phase ID
+            uint80 roundPhaseId = roundId >> 64;
+            // calculate the first valid round ID for this phase
+            uint80 firstRoundId = (roundPhaseId << 64) + 1;
+            // the provided round ID must be the first round ID of the phase, if not, revert
+            if (firstRoundId != roundId) {
+                revert OracleMiddlewareInvalidRoundId();
+            }
+
+            (uint80 latestRoundId,,,,) = _priceFeed.latestRoundData();
+            // if the provided round ID does not belong to the latest phase, revert
+            if (latestRoundId >> 64 != roundPhaseId) {
+                revert OracleMiddlewareInvalidRoundId();
+            }
+
+            // make sure that the provided round ID is not newer than it should be
+            if (providedRoundPrice_.timestamp > targetLimit + _timeElapsedLimit) {
+                revert OracleMiddlewareInvalidRoundId();
+            }
+        }
+
+        if (providedRoundPrice_.timestamp <= targetLimit) {
+            revert OracleMiddlewareInvalidRoundId();
+        }
     }
 
     /**
