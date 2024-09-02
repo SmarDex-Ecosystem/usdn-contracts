@@ -677,7 +677,7 @@ library UsdnProtocolCoreLibrary {
             ) {
                 // we found an actionable pending action
                 return (candidate, rawIndex);
-            } else if (candidate.timestamp + middlewareLowLatencyDelay > block.timestamp) {
+            } else if (block.timestamp > candidate.timestamp + middlewareLowLatencyDelay) {
                 // the pending action is not actionable but some more recent ones might be (with low-latency oracle)
                 // continue looking
                 unchecked {
@@ -931,11 +931,11 @@ library UsdnProtocolCoreLibrary {
         uint16 lowLatencyDelay,
         uint128 onChainDeadline
     ) public view returns (bool actionable_) {
-        bool isLowLatency = initiateTimestamp + lowLatencyDelay <= block.timestamp;
+        bool isLowLatency = block.timestamp <= initiateTimestamp + lowLatencyDelay;
         if (isLowLatency) {
-            actionable_ = initiateTimestamp + lowLatencyDeadline > block.timestamp;
+            actionable_ = block.timestamp > initiateTimestamp + lowLatencyDeadline;
         } else {
-            actionable_ = initiateTimestamp + lowLatencyDelay + onChainDeadline > block.timestamp;
+            actionable_ = block.timestamp > initiateTimestamp + lowLatencyDelay + onChainDeadline;
         }
     }
 }
