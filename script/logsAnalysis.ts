@@ -2,7 +2,7 @@
 import { Command } from 'commander';
 import { DateTime } from 'luxon';
 import pc from 'picocolors';
-import { http, createPublicClient, formatEther, isAddressEqual, publicActions, createTestClient, defineChain, webSocket } from 'viem';
+import { http, createPublicClient, formatEther, isAddressEqual, publicActions, createTestClient, webSocket } from 'viem';
 import { IRebalancerAbi, IUsdnAbi, IUsdnProtocolAbi } from '../dist/abi';
 
 function parseArgs() {
