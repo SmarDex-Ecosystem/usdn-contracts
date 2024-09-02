@@ -54,7 +54,10 @@ contract OracleMiddleware is
     /// @notice confidence ratio in basis points: default 40%
     uint16 internal _confRatioBps = 4000; // to divide by BPS_DIVISOR
 
-    /// @notice The delay during which a low latency oracle price validation is available
+    /**
+     * @notice The delay during which a low latency oracle price validation is available
+     * @dev This value should be greater than or equal to `_lowLatencyValidationDeadline` of the USDN protocol
+     */
     uint16 internal _lowLatencyDelay = 20 minutes;
 
     /**

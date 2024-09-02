@@ -222,8 +222,6 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
     function test_RevertWhen_setValidationDeadlinesWithMin() public adminPrank {
         vm.expectRevert(UsdnProtocolInvalidValidationDeadline.selector);
         protocol.setValidationDeadlines(59, 59);
-        vm.expectRevert(UsdnProtocolInvalidValidationDeadline.selector);
-        protocol.setValidationDeadlines(60, 59);
     }
 
     /**
@@ -233,10 +231,11 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      * @custom:then Revert because greater than max
      */
     function test_RevertWhen_setValidationDeadlineWithMax() public adminPrank {
-        // validationDeadline greater than max disallowed
         vm.expectRevert(UsdnProtocolInvalidValidationDeadline.selector);
-        // set validationDeadline
-        protocol.setValidationDeadlines(365 days + 1, 365 days + 1);
+        protocol.setValidationDeadlines(60, 1 days + 1);
+
+        vm.expectRevert(UsdnProtocolInvalidValidationDeadline.selector);
+        protocol.setValidationDeadlines(20 minutes + 1, 0);
     }
 
     /**
@@ -247,7 +246,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      */
     function test_setValidationDeadlines() public adminPrank {
         uint128 expectedLowLatencyNewValue = 61;
-        uint128 expectedOnChainNewValue = 20 minutes;
+        uint128 expectedOnChainNewValue = 0;
         // expected event
         vm.expectEmit();
         emit ValidationDeadlinesUpdated(expectedLowLatencyNewValue, expectedOnChainNewValue);

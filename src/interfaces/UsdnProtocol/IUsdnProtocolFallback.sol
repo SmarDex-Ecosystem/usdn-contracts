@@ -563,8 +563,10 @@ interface IUsdnProtocolFallback {
 
     /**
      * @notice Set the new deadlines for a user to confirm their action
-     * @param newLowLatencyValidationDeadline The new deadline for low-latency validation
-     * @param newOnChainValidationDeadline The new deadline for on-chain validation
+     * @param newLowLatencyValidationDeadline The new deadline for low-latency validation (offset from initiate
+     * timestamp)
+     * @param newOnChainValidationDeadline The new deadline for on-chain validation (offset from initiate timestamp +
+     * oracle middleware's low latency delay)
      */
     function setValidationDeadlines(uint128 newLowLatencyValidationDeadline, uint128 newOnChainValidationDeadline)
         external;

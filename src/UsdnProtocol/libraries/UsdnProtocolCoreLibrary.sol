@@ -130,6 +130,9 @@ library UsdnProtocolCoreLibrary {
             maxIter = queueLength;
         }
 
+        uint16 middlewareLowLatencyDelay = s._oracleMiddleware.getLowLatencyDelay();
+        uint128 lowLatencyDeadline = s._lowLatencyValidationDeadline;
+        uint128 onChainDeadline = s._onChainValidationDeadline;
         uint256 i = 0;
         uint256 arrayLen = 0;
         do {
@@ -145,7 +148,9 @@ library UsdnProtocolCoreLibrary {
                 unchecked {
                     i++;
                 }
-            } else if (candidate.timestamp + s._lowLatencyValidationDeadline < block.timestamp) {
+            } else if (
+                _isActionable(candidate.timestamp, lowLatencyDeadline, middlewareLowLatencyDelay, onChainDeadline)
+            ) {
                 // we found an actionable pending action
                 actions_[i] = candidate;
                 rawIndices_[i] = rawIndex;
@@ -881,5 +886,31 @@ library UsdnProtocolCoreLibrary {
     function _tickHash(Types.Storage storage s, int24 tick) public view returns (bytes32 hash_, uint256 version_) {
         version_ = s._tickVersion[tick];
         hash_ = tickHash(tick, version_);
+    }
+
+    /**
+     * @notice Check whether a pending action is actionable, i.e any user can validate it and retrieve the security
+     * deposit
+     * @dev Between `initiateTimestamp` and `initiateTimestamp + lowLatencyDeadline`,
+     * the validator receives the security deposit
+     * Between `initiateTimestamp + lowLatencyDelay` and `initiateTimestamp + lowLatencyDelay + onChainDeadline`,
+     * the validator also receives the security deposit
+     * Outside of those periods, the security deposit goes to the user validating the pending action
+     * @param initiateTimestamp The timestamp at which the action was initiated
+     * @param lowLatencyDelay The low latency delay of the oracle middleware
+     * @return actionable_ Whether the pending action is actionable
+     */
+    function _isActionable(
+        uint128 initiateTimestamp,
+        uint128 lowLatencyDeadline,
+        uint16 lowLatencyDelay,
+        uint128 onChainDeadline
+    ) public view returns (bool actionable_) {
+        bool isLowLatency = initiateTimestamp + lowLatencyDelay <= block.timestamp;
+        if (isLowLatency) {
+            actionable_ = initiateTimestamp + lowLatencyDeadline > block.timestamp;
+        } else {
+            actionable_ = initiateTimestamp + lowLatencyDelay + onChainDeadline > block.timestamp;
+        }
     }
 }

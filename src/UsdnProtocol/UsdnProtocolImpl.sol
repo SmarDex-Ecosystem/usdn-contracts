@@ -55,7 +55,7 @@ contract UsdnProtocolImpl is
         s._minLeverage = 10 ** Constants.LEVERAGE_DECIMALS + 10 ** 12;
         s._maxLeverage = 10 * 10 ** Constants.LEVERAGE_DECIMALS;
         s._lowLatencyValidationDeadline = 15 minutes;
-        s._onChainValidationDeadline = 85 minutes;
+        s._onChainValidationDeadline = 65 minutes;
         s._safetyMarginBps = 200; // 2%
         s._liquidationIteration = 1;
         s._protocolFeeBps = 800;

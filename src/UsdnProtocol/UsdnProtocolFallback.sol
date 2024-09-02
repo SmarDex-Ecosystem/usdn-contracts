@@ -478,19 +478,14 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
         external
         onlyRole(CRITICAL_FUNCTIONS_ROLE)
     {
+        uint16 lowLatencyDelay = s._oracleMiddleware.getLowLatencyDelay();
+
         if (newLowLatencyValidationDeadline < Constants.MIN_VALIDATION_DEADLINE) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidValidationDeadline();
         }
-
-        uint16 lowLatencyDelay = s._oracleMiddleware.getLowLatencyDelay();
         if (newLowLatencyValidationDeadline > lowLatencyDelay) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidValidationDeadline();
         }
-
-        if (newOnChainValidationDeadline < lowLatencyDelay) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidValidationDeadline();
-        }
-
         if (newOnChainValidationDeadline > Constants.MAX_VALIDATION_DEADLINE) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidValidationDeadline();
         }

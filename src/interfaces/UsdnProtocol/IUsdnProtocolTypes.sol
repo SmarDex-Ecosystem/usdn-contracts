@@ -448,9 +448,10 @@ interface IUsdnProtocolTypes {
      * @param _maxLeverage The maximum leverage for a position
      * @param _lowLatencyValidationDeadline The deadline for a user to confirm their action with a low-latency oracle
      * After this deadline, any user can validate the action with the low-latency oracle until the OracleMiddleware's
-     * _lowLatencyDelay
+     * _lowLatencyDelay. This is an offset compared to the timestamp of the initiate action
      * @param _onChainValidationDeadline The deadline for a user to confirm their action with an on-chain oracle
-     * After this deadline, any user can validate the action with the on-chain oracle
+     * After this deadline, any user can validate the action with the on-chain oracle. This is an offset compared to the
+     * timestamp of the initiate action + the oracle middleware's _lowLatencyDelay
      * @param _safetyMarginBps Safety margin for the liquidation price of newly open positions, in basis points
      * @param _liquidationIteration The number of iterations to perform during the user's action (in tick)
      * @param _protocolFeeBps The protocol fee in basis points
