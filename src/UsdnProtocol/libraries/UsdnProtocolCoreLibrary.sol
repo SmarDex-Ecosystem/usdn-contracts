@@ -130,8 +130,8 @@ library UsdnProtocolCoreLibrary {
             maxIter = queueLength;
         }
 
-        uint16 middlewareLowLatencyDelay = s._oracleMiddleware.getLowLatencyDelay();
         uint128 lowLatencyDeadline = s._lowLatencyValidationDeadline;
+        uint16 middlewareLowLatencyDelay = s._oracleMiddleware.getLowLatencyDelay();
         uint128 onChainDeadline = s._onChainValidationDeadline;
         uint256 i = 0;
         uint256 arrayLen = 0;
@@ -643,6 +643,9 @@ library UsdnProtocolCoreLibrary {
             maxIter = queueLength;
         }
 
+        uint128 lowLatencyDeadline = s._lowLatencyValidationDeadline;
+        uint16 middlewareLowLatencyDelay = s._oracleMiddleware.getLowLatencyDelay();
+        uint128 onChainDeadline = s._onChainValidationDeadline;
         uint256 i = 0;
         do {
             // since we will never call `front` more than `queueLength` times, there is no risk of reverting
@@ -656,7 +659,9 @@ library UsdnProtocolCoreLibrary {
                 s._pendingActionsQueue.popFront();
                 // try the next one
                 continue;
-            } else if (candidate.timestamp + s._lowLatencyValidationDeadline < block.timestamp) {
+            } else if (
+                _isActionable(candidate.timestamp, lowLatencyDeadline, middlewareLowLatencyDelay, onChainDeadline)
+            ) {
                 // we found an actionable pending action
                 return (candidate, rawIndex);
             }
