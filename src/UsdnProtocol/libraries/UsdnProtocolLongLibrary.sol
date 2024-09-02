@@ -795,7 +795,7 @@ library UsdnProtocolLongLibrary {
 
         uint256 unadjustedPrice =
             _unadjustPrice(data.currentPrice, data.currentPrice, data.longTradingExpo, data.accumulator);
-        data.currentTick = TickMath.getClosestTickAtPrice(unadjustedPrice);
+        data.currentTick = TickMath.getTickAtPrice(unadjustedPrice);
         data.iTick = s._highestPopulatedTick;
 
         do {
