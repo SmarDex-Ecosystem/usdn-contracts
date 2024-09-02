@@ -138,7 +138,7 @@ library UsdnProtocolCoreLibrary {
         do {
             // since `i` cannot be greater or equal to `queueLength`, there is no risk of reverting
             (Types.PendingAction memory candidate, uint128 rawIndex) = s._pendingActionsQueue.at(i);
-            // if the msg.sender is equal to the validator of the pending action, then the pending action is not
+            // if the currentUser is equal to the validator of the pending action, then the pending action is not
             // actionable by this user (it will get validated automatically by their action)
             // and so we need to return the next item in the queue so that they can validate a third-party pending
             // action (if any)
@@ -159,6 +159,12 @@ library UsdnProtocolCoreLibrary {
                 unchecked {
                     i++;
                     arrayLen = i;
+                }
+            } else if (candidate.timestamp + middlewareLowLatencyDelay > block.timestamp) {
+                // the pending action is not actionable but some more recent ones might be (with low-latency oracle)
+                // continue looking
+                unchecked {
+                    i++;
                 }
             } else {
                 // the pending action is not actionable (it is too recent),
@@ -647,16 +653,23 @@ library UsdnProtocolCoreLibrary {
         uint16 middlewareLowLatencyDelay = s._oracleMiddleware.getLowLatencyDelay();
         uint128 onChainDeadline = s._onChainValidationDeadline;
         uint256 i = 0;
+        uint256 j = 0;
         do {
-            // since we will never call `front` more than `queueLength` times, there is no risk of reverting
-            (Types.PendingAction memory candidate, uint128 rawIndex) = s._pendingActionsQueue.front();
-            // gas optimization
+            // since we will never loop more than `queueLength` times, there is no risk of reverting
+            (Types.PendingAction memory candidate, uint128 rawIndex) = s._pendingActionsQueue.at(j);
             unchecked {
                 i++;
             }
             if (candidate.timestamp == 0) {
                 // remove the stale pending action
-                s._pendingActionsQueue.popFront();
+                s._pendingActionsQueue.clearAt(rawIndex);
+                // if we were removing another item than the first one, we increment j (otherwise we keep looking at the
+                // first item because it was shifted to the front)
+                if (j > 0) {
+                    unchecked {
+                        j++;
+                    }
+                }
                 // try the next one
                 continue;
             } else if (
@@ -664,8 +677,15 @@ library UsdnProtocolCoreLibrary {
             ) {
                 // we found an actionable pending action
                 return (candidate, rawIndex);
+            } else if (candidate.timestamp + middlewareLowLatencyDelay > block.timestamp) {
+                // the pending action is not actionable but some more recent ones might be (with low-latency oracle)
+                // continue looking
+                unchecked {
+                    j++;
+                }
+                continue;
             }
-            // the first pending action is not actionable
+            // the first pending action is not actionable, none of the following ones will be either
             return (action_, rawIndex_);
         } while (i < maxIter);
     }
