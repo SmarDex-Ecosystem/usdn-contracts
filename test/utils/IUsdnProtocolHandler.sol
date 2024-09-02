@@ -179,11 +179,6 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         payable
         returns (PriceInfo memory);
 
-    function i_calcMintUsdnShares(uint256 amount, uint256 vaultBalance, uint256 usdnTotalShares, uint256 price)
-        external
-        view
-        returns (uint256 toMint_);
-
     function i_calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) external pure returns (uint256);
 
     function i_vaultAssetAvailable(

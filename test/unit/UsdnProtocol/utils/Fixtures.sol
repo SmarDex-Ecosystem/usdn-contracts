@@ -26,6 +26,7 @@ import { MockOracleMiddleware } from "./MockOracleMiddleware.sol";
 import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
+import { UsdnProtocolVaultLibrary as Vault } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
@@ -301,8 +302,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         sdex.mintAndApprove(
             user,
             usdn.convertToTokens(
-                protocol.i_calcMintUsdnShares(
-                    positionSize, uint256(protocol.i_vaultAssetAvailable(uint128(price))), usdn.totalShares(), price
+                Vault._calcMintUsdnShares(
+                    positionSize, uint256(protocol.i_vaultAssetAvailable(uint128(price))), usdn.totalShares()
                 )
             ) * protocol.getSdexBurnOnDepositRatio() / protocol.SDEX_BURN_ON_DEPOSIT_DIVISOR(),
             address(protocol),

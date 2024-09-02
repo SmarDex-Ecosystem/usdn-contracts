@@ -815,6 +815,16 @@ library UsdnProtocolCoreLibrary {
             if (tickVersion == open.tickVersion) {
                 // we only need to modify storage if the pos was not liquidated already
 
+                int256 posValue;
+                if (cleanup) {
+                    posValue = Long.getPositionValue(
+                        s,
+                        Types.PositionId(open.tick, open.tickVersion, open.index),
+                        s._lastPrice,
+                        s._lastUpdateTimestamp
+                    );
+                }
+
                 // safe cleanup operations
                 Types.Position[] storage tickArray = s._longPositions[tHash];
                 Types.Position memory pos = tickArray[open.index];
@@ -835,6 +845,13 @@ library UsdnProtocolCoreLibrary {
                     tickData.totalExpo -= pos.totalExpo;
                     s._liqMultiplierAccumulator =
                         s._liqMultiplierAccumulator.sub(HugeUint.wrap(unadjustedTickPrice * pos.totalExpo));
+                    if (posValue > 0) {
+                        s._balanceLong -= uint256(posValue);
+                        address(s._asset).safeTransfer(to, uint256(posValue));
+                    } else if (posValue < 0) {
+                        s._balanceLong += uint256(-posValue);
+                        s._balanceVault -= uint256(-posValue);
+                    }
                 }
             }
         } else if (pending.action == Types.ProtocolAction.ValidateClosePosition && cleanup) {

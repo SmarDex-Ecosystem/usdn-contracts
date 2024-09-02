@@ -80,11 +80,8 @@ contract TestUsdnProtocolActionsExecutePendingActionOrRevert is UsdnProtocolBase
         uint128 rawIndex2 = _addDummyPendingAction();
         assertEq(rawIndex2, 0, "raw index 2");
 
-        PendingAction memory pending;
-        pending.action = ProtocolAction.ValidateDeposit;
-        pending.to = USER_1;
-        pending.validator = USER_1;
-        pending.timestamp = uint40(block.timestamp - protocol.getLowLatencyValidationDeadline() - 1);
+        PendingAction memory pending =
+            _getDummyPendingAction(USER_1, block.timestamp - protocol.getLowLatencyValidationDeadline() - 1);
         uint128 rawIndex1 = protocol.queuePushFront(pending);
         assertEq(rawIndex1, type(uint128).max, "raw index 1");
 
@@ -107,15 +104,40 @@ contract TestUsdnProtocolActionsExecutePendingActionOrRevert is UsdnProtocolBase
     }
 
     /**
+     * @notice Get a dummy pending action for a user
+     * @param user The user address
+     * @param timestamp The timestamp of the pending action
+     * @return pendingAction_ The dummy pending action
+     */
+    function _getDummyPendingAction(address user, uint256 timestamp)
+        internal
+        view
+        returns (PendingAction memory pendingAction_)
+    {
+        DepositPendingAction memory pendingDeposit = DepositPendingAction({
+            action: ProtocolAction.ValidateDeposit,
+            timestamp: uint40(timestamp),
+            to: user,
+            validator: user,
+            securityDepositValue: 0,
+            _unused: 0,
+            amount: 1 ether,
+            assetPrice: 2000 ether,
+            totalExpo: 20 ether,
+            balanceVault: 20 ether,
+            balanceLong: 20 ether,
+            usdnTotalShares: 100e36
+        });
+        pendingAction_ = protocol.i_convertDepositPendingAction(pendingDeposit);
+    }
+
+    /**
      * @dev Add a dummy pending action to the queue with this contract as the user.
      * @return rawIndex_ The raw index of the added pending action.
      */
     function _addDummyPendingAction() internal returns (uint128 rawIndex_) {
-        PendingAction memory pending;
-        pending.action = ProtocolAction.ValidateDeposit;
-        pending.to = address(this);
-        pending.validator = address(this);
-        pending.timestamp = uint40(block.timestamp - protocol.getLowLatencyValidationDeadline() - 1);
+        PendingAction memory pending =
+            _getDummyPendingAction(address(this), block.timestamp - protocol.getLowLatencyValidationDeadline() - 1);
         protocol.i_addPendingAction(address(this), pending);
         (, rawIndex_) = protocol.i_getPendingAction(address(this));
     }
