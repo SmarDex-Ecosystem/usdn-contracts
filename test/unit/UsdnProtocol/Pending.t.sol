@@ -315,6 +315,17 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         );
     }
 
+    /**
+     * @custom:scenario There is a pending action in the queue but the first ones are not actionable
+     * @custom:given A queue with three pending actions which are not actionable (low-latency period has elapsed)
+     * @custom:and A fourth pending action which is actionable with low-latency oracle
+     * @custom:when The first actionable pending action is retrieved
+     * @custom:then The fourth pending action is returned
+     * @custom:when The list of actionable pending actions is retrieved
+     * @custom:then The fourth pending action is the only one returned
+     * @custom:when We wait until all actions are actionable again
+     * @custom:then All four pending actions are returned
+     */
     function test_actionablePendingActionInSecondPeriod() public {
         // low latency oracle is down and 3 pending actions are created
         uint40 timestamp = uint40(block.timestamp);
@@ -373,6 +384,53 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         );
         (actions,) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 4, "actions length when all are actionable");
+    }
+
+    /**
+     * @custom:scenario There are two pending actions in the queue but they are disjoint
+     * @custom:given A queue with one pending action which is actionable with on-chain oracle
+     * @custom:and A second pending action which is not actionable
+     * @custom:and A third pending action which is actionable with low-latency oracle
+     * @custom:when The first actionable pending action is retrieved
+     * @custom:then The first pending action is returned
+     * @custom:when The list of actionable pending actions is retrieved
+     * @custom:then The first and third pending actions are returned, with an empty element in the middle
+     */
+    function test_actionablePendingActionsInBothPeriods() public {
+        uint40 timestamp = uint40(block.timestamp);
+        DepositPendingAction memory pendingDeposit = DepositPendingAction({
+            action: ProtocolAction.ValidateDeposit,
+            timestamp: timestamp,
+            to: USER_1,
+            validator: USER_1,
+            securityDepositValue: 0,
+            _unused: 0,
+            amount: 1 ether,
+            assetPrice: 2000 ether,
+            totalExpo: 20 ether,
+            balanceVault: 20 ether,
+            balanceLong: 20 ether,
+            usdnTotalShares: 100e36
+        });
+        protocol.i_addPendingAction(USER_1, protocol.i_convertDepositPendingAction(pendingDeposit));
+        pendingDeposit.to = USER_2;
+        pendingDeposit.validator = USER_2;
+        pendingDeposit.timestamp = uint40(timestamp + protocol.getOnChainValidationDeadline() / 2);
+        protocol.i_addPendingAction(USER_2, protocol.i_convertDepositPendingAction(pendingDeposit));
+        pendingDeposit.to = USER_3;
+        pendingDeposit.validator = USER_3;
+        pendingDeposit.timestamp = uint40(timestamp + protocol.getOnChainValidationDeadline() + 1);
+        protocol.i_addPendingAction(USER_3, protocol.i_convertDepositPendingAction(pendingDeposit));
+        // wait until the first and third are actionable
+        vm.warp(timestamp + oracleMiddleware.getLowLatencyDelay() + protocol.getOnChainValidationDeadline() + 1);
+        // the first and third actions are now actionable
+        (PendingAction memory action,) = protocol.i_getActionablePendingAction();
+        assertEq(action.validator, USER_1, "first action");
+        (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0));
+        assertEq(actions.length, 3, "actions length after two actions are actionable");
+        assertEq(actions[0].validator, USER_1, "first action");
+        assertEq(actions[1].validator, address(0), "second action (empty)");
+        assertEq(actions[2].validator, USER_3, "third action");
     }
 
     /**
