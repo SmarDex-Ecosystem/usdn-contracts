@@ -136,10 +136,10 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         _waitBeforeActionablePendingAction();
 
         (PendingAction[] memory actions, uint128[] memory rawIndices) = protocol.getActionablePendingActions(address(0));
-        assertEq(actions.length, 2, "actions length");
-        assertEq(actions[1].to, USER_3, "to");
-        assertEq(actions[1].validator, USER_3, "validator");
-        assertEq(rawIndices[1], 2, "raw index");
+        assertEq(actions.length, 1, "actions length");
+        assertEq(actions[0].to, USER_3, "to");
+        assertEq(actions[0].validator, USER_3, "validator");
+        assertEq(rawIndices[0], 2, "raw index");
     }
 
     /**
