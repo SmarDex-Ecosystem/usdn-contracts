@@ -134,16 +134,23 @@ library UsdnProtocolCoreLibrary {
         uint16 middlewareLowLatencyDelay = s._oracleMiddleware.getLowLatencyDelay();
         uint128 onChainDeadline = s._onChainValidationDeadline;
         uint256 i = 0;
+        uint256 j = 0;
         uint256 arrayLen = 0;
         do {
             // since `i` cannot be greater or equal to `queueLength`, there is no risk of reverting
             (Types.PendingAction memory candidate, uint128 rawIndex) = s._pendingActionsQueue.at(i);
-            // if the currentUser is equal to the validator of the pending action, then the pending action is not
-            // actionable by this user (it will get validated automatically by their action)
-            // and so we need to return the next item in the queue so that they can validate a third-party pending
-            // action (if any)
+
             if (candidate.timestamp == 0 || candidate.validator == currentUser) {
-                rawIndices_[i] = rawIndex;
+                // if the currentUser is equal to the validator of the pending action, then the pending action is not
+                // actionable by this user (it will get validated automatically by their action)
+                // and so we need to return the next item in the queue so that they can validate a third-party pending
+                // action (if any)
+                if (arrayLen > 0) {
+                    rawIndices_[j] = rawIndex;
+                    unchecked {
+                        j++;
+                    }
+                }
                 // try the next one
                 unchecked {
                     i++;
@@ -152,17 +159,24 @@ library UsdnProtocolCoreLibrary {
                 _isActionable(candidate.timestamp, lowLatencyDeadline, middlewareLowLatencyDelay, onChainDeadline)
             ) {
                 // we found an actionable pending action
-                actions_[i] = candidate;
-                rawIndices_[i] = rawIndex;
+                actions_[j] = candidate;
+                rawIndices_[j] = rawIndex;
 
                 // continue looking
                 unchecked {
                     i++;
-                    arrayLen = i;
+                    j++;
+                    arrayLen = j;
                 }
-            } else if (candidate.timestamp + middlewareLowLatencyDelay > block.timestamp) {
+            } else if (block.timestamp > candidate.timestamp + middlewareLowLatencyDelay) {
                 // the pending action is not actionable but some more recent ones might be (with low-latency oracle)
                 // continue looking
+                if (arrayLen > 0) {
+                    rawIndices_[j] = rawIndex;
+                    unchecked {
+                        j++;
+                    }
+                }
                 unchecked {
                     i++;
                 }
