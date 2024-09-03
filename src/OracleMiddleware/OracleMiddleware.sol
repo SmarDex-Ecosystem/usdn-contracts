@@ -299,7 +299,7 @@ contract OracleMiddleware is
 
         uint80 validateRoundId = abi.decode(data, (uint80));
 
-        // previous round id
+        // check that the round ID is valid and get its price data
         ChainlinkPriceInfo memory chainlinkOnChainPrice = _validateChainlinkRoundId(targetLimit, validateRoundId);
 
         price_ = PriceInfo({
@@ -313,7 +313,7 @@ contract OracleMiddleware is
      * @notice Make sure that the given round ID matches with the validation constraints
      * @param targetLimit The timestamp of the initiate action + _lowLatencyDelay
      * @param roundId The round ID to validate
-     * @return providedRoundPrice_ Th price data of the provided round ID
+     * @return providedRoundPrice_ The price data of the provided round ID
      */
     function _validateChainlinkRoundId(uint128 targetLimit, uint80 roundId)
         internal
