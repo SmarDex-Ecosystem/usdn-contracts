@@ -51,18 +51,6 @@ contract TestTickMathConcrete is TickMathFixture {
     }
 
     /**
-     * @custom:scenario Converting a price to a tick (some values, rest is fuzzed)
-     * @custom:given A price of 904_841_941_932_768_878, 1 ether or 1.0001 ether
-     * @custom:when The closest tick for the price is retrieved
-     * @custom:then The closest tick is -1000, 0 or 1
-     */
-    function test_priceToTick() public view {
-        assertEq(handler.getClosestTickAtPrice(904_841_941_932_768_878), -1000, "at tick -1000");
-        assertEq(handler.getClosestTickAtPrice(1 ether), 0, "at tick 0");
-        assertEq(handler.getClosestTickAtPrice(1.0001 ether), 1, "at tick 1");
-    }
-
-    /**
      * @custom:scenario An invalid ticks is provided to `getPriceAtTick`
      * @custom:given A tick of MIN_TICK - 1 or MAX_TICK + 1
      * @custom:when The price at the tick is retrieved
@@ -86,19 +74,6 @@ contract TestTickMathConcrete is TickMathFixture {
         handler.getTickAtPrice(TickMath.MIN_PRICE - 1);
         vm.expectRevert(TickMath.TickMathInvalidPrice.selector);
         handler.getTickAtPrice(TickMath.MAX_PRICE + 1);
-    }
-
-    /**
-     * @custom:scenario An invalid price is provided to `getClosestTickAtPrice`
-     * @custom:given A price of MIN_PRICE - 1 or MAX_PRICE + 1
-     * @custom:when The tick for the price is retrieved with `getClosestTickAtPrice`
-     * @custom:then The call reverts with `TickMathInvalidPrice()`
-     */
-    function test_RevertWhen_priceIsOutOfBoundsClosest() public {
-        vm.expectRevert(TickMath.TickMathInvalidPrice.selector);
-        handler.getClosestTickAtPrice(TickMath.MIN_PRICE - 1);
-        vm.expectRevert(TickMath.TickMathInvalidPrice.selector);
-        handler.getClosestTickAtPrice(TickMath.MAX_PRICE + 1);
     }
 
     /**

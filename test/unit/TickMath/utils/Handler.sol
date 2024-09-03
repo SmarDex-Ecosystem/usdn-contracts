@@ -23,8 +23,4 @@ contract TickMathHandler {
     function getTickAtPrice(uint256 price) external pure returns (int24) {
         return TickMath.getTickAtPrice(price);
     }
-
-    function getClosestTickAtPrice(uint256 price) external pure returns (int24) {
-        return TickMath.getClosestTickAtPrice(price);
-    }
 }
