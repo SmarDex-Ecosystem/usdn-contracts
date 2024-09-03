@@ -16,9 +16,9 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Get the actionable pending actions
      * @custom:given The user has initiated a deposit
-     * @custom:and The validation deadline has elapsed
+     * @custom:and The validation deadlines have elapsed
      * @custom:when The actionable pending actions are requested
-     * @custom:then The pending actions are returned
+     * @custom:then The pending actions are returned for both periods
      */
     function test_getActionablePendingActions() public {
         // there should be no pending action at this stage
@@ -26,24 +26,34 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         assertEq(actions.length, 0, "pending action before initiate");
         // initiate deposit
         setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 1 ether, 2000 ether);
-        // the pending action is not yet actionable
+        PendingAction memory pending = protocol.getUserPendingAction(address(this));
+        // the pending action is not yet actionable until the low latency validation deadline
+        vm.warp(pending.timestamp + protocol.getLowLatencyValidationDeadline());
         (actions, rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 0, "pending action after initiate");
-        // the pending action is actionable after the validation deadline
-        _waitBeforeActionablePendingAction();
+        // the pending action is actionable after the low latency validation deadline
+        vm.warp(pending.timestamp + protocol.getLowLatencyValidationDeadline() + 1);
         (actions, rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 1, "actions length");
         assertEq(actions[0].to, address(this), "action to");
         assertEq(actions[0].validator, address(this), "action validator");
         assertEq(rawIndices[0], 0, "raw index");
+        // the pending action is not actionable anymore after the low latency delay
+        vm.warp(pending.timestamp + oracleMiddleware.getLowLatencyDelay() + 1);
+        (actions, rawIndices) = protocol.getActionablePendingActions(address(0));
+        assertEq(actions.length, 0, "pending action after low latency delay");
+        // the pending action is again actionable after the on-chain validation deadline
+        vm.warp(pending.timestamp + oracleMiddleware.getLowLatencyDelay() + protocol.getOnChainValidationDeadline() + 1);
+        (actions, rawIndices) = protocol.getActionablePendingActions(address(0));
+        assertEq(actions.length, 1, "actions length");
     }
 
     /**
      * @custom:scenario Get the first actionable pending action
      * @custom:given The user has initiated a deposit
-     * @custom:and The validation deadline has elapsed
+     * @custom:and The validation deadlines have elapsed
      * @custom:when The first actionable pending action is requested
-     * @custom:then The pending action is returned
+     * @custom:then The pending action is returned for both periods
      */
     function test_internalGetActionablePendingAction() public {
         // there should be no pending action at this stage
@@ -51,15 +61,25 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         assertTrue(action.action == ProtocolAction.None, "pending action before initiate");
         // initiate long
         setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 1 ether, 2000 ether);
-        // the pending action is not yet actionable
+        PendingAction memory pending = protocol.getUserPendingAction(address(this));
+        // the pending action is not yet actionable until the low latency validation deadline
+        vm.warp(pending.timestamp + protocol.getLowLatencyValidationDeadline());
         (action, rawIndex) = protocol.i_getActionablePendingAction();
         assertTrue(action.action == ProtocolAction.None, "pending action after initiate");
-        // the pending action is actionable after the validation deadline
-        _waitBeforeActionablePendingAction();
+        // the pending action is actionable after the low latency validation deadline
+        vm.warp(pending.timestamp + protocol.getLowLatencyValidationDeadline() + 1);
         (action, rawIndex) = protocol.i_getActionablePendingAction();
         assertEq(action.to, address(this), "action to");
         assertEq(action.validator, address(this), "action validator");
         assertEq(rawIndex, 0, "raw index");
+        // the pending action is not actionable anymore after the low latency delay
+        vm.warp(pending.timestamp + oracleMiddleware.getLowLatencyDelay() + 1);
+        (action, rawIndex) = protocol.i_getActionablePendingAction();
+        assertTrue(action.action == ProtocolAction.None, "pending action after low latency delay");
+        // the pending action is again actionable after the on-chain validation deadline
+        vm.warp(pending.timestamp + oracleMiddleware.getLowLatencyDelay() + protocol.getOnChainValidationDeadline() + 1);
+        (action, rawIndex) = protocol.i_getActionablePendingAction();
+        assertEq(action.to, address(this), "action to");
     }
 
     /**
@@ -166,7 +186,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario User who didn't validate their tx after 1 hour and call `getActionablePendingAction`
+     * @custom:scenario User who didn't validate their tx after their exclusivity and call `getActionablePendingAction`
      * @custom:background When a user have their own action in the first position in the queue and it's actionable by
      * someone else, they should retrieve the next item in the queue at the moment of validating their own action.
      * This is because they will remove their own action from the queue before attempting to validate the next item in
