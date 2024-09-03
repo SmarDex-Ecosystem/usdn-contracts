@@ -44,13 +44,11 @@ library UsdnProtocolActionsLongLibrary {
      * @param currentLiqPenalty The current liquidation penalty parameter value
      * @param newPosId The new position id
      * @param liquidationPenalty The liquidation penalty of the tick we are considering
-     * @param tickSpacing The tick spacing
      */
     struct MaxLeverageData {
         uint24 currentLiqPenalty;
         Types.PositionId newPosId;
         uint24 liquidationPenalty;
-        int24 tickSpacing;
     }
 
     /* -------------------------------------------------------------------------- */
@@ -324,7 +322,6 @@ library UsdnProtocolActionsLongLibrary {
         uint128 maxLeverage = uint128(s._maxLeverage);
         if (data.leverage > maxLeverage) {
             MaxLeverageData memory maxLeverageData;
-            maxLeverageData.tickSpacing = s._tickSpacing;
             // theoretical liquidation price for _maxLeverage
             data.liqPriceWithoutPenalty = Utils._getLiquidationPrice(data.startPrice, maxLeverage);
             // find corresponding tick and actual liq price with current penalty setting
@@ -332,7 +329,7 @@ library UsdnProtocolActionsLongLibrary {
             (maxLeverageData.newPosId.tick, data.liqPriceWithoutPenalty) = Long._getTickFromDesiredLiqPrice(
                 data.liqPriceWithoutPenalty,
                 data.action.liqMultiplier,
-                maxLeverageData.tickSpacing,
+                s._tickSpacing,
                 maxLeverageData.currentLiqPenalty
             );
 
