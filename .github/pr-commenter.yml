@@ -1,0 +1,16 @@
+comment:
+  on-update: edit
+
+  header: |
+    Contract sizes
+
+  footer: |
+    ---
+    This is an automated comment :robot:.
+
+  snippets:
+    - id: any-source-file-changed-{{ filesHash }}
+      files:
+        - "src/**/*.sol"
+      body: |
+        <pre>{{ sizes }}</pre>

@@ -437,6 +437,10 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
             revert RebalancerUserPending();
         }
 
+        if (data.userDepositData.entryPositionVersion <= _lastLiquidatedVersion) {
+            revert RebalancerUserLiquidated();
+        }
+
         data.positionVersion = _positionVersion;
 
         if (data.userDepositData.entryPositionVersion > data.positionVersion) {

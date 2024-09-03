@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { ADMIN, USER_1 } from "../../../utils/Constants.sol";
+import { USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolVaultLibrary as Vault } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
 /**
@@ -41,6 +42,37 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
      */
     function test_validateDepositPriceIncrease() public {
         _checkValidateDepositWithPrice(2000 ether, 2100 ether, 2000 ether, address(this));
+    }
+
+    /**
+     * @custom:scenario The user initiates and validates a deposit while the price of the asset increases so much it
+     * empties the vault
+     * @custom:given The user deposits 1 wstETH
+     * @custom:and The price of the asset is $2000 at the moment of initiation
+     * @custom:and The price of the asset is $4000 at the moment of validation
+     * @custom:and Another user opened a long position
+     * @custom:when The user validates the deposit
+     * @custom:then The user's USDN balance increases by 2000 USDN
+     * @custom:and The USDN total supply increases by 2000 USDN
+     * @custom:and The protocol emits a `ValidatedDeposit` event with the minted amount of 2000 USDN
+     */
+    function test_validateDepositPriceIncreaseEmptyingVault() public {
+        setUpUserPositionInLong(
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 10 ether,
+                desiredLiqPrice: 1000 ether,
+                price: params.initialPrice
+            })
+        );
+
+        uint128 newPrice = 4000 ether;
+        int256 vaultBalance = protocol.i_vaultAssetAvailable(newPrice);
+        assertLt(vaultBalance, 0, "The assets available in the vault should be less than 0, try increasing `newPrice`");
+
+        // - 407 because the previous long increased the vault balance by 1 wei
+        _checkValidateDepositWithPrice(params.initialPrice, newPrice, 2000 ether - 407, address(this));
     }
 
     /**
@@ -165,18 +197,14 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         uint256 expectedUsdnAmount,
         address to
     ) internal {
-        vm.prank(ADMIN);
-        protocol.setPositionFeeBps(0); // 0% fees
-
         bytes memory currentPrice = abi.encode(initialPrice); // only used to apply PnL + funding
-        uint256 usdnSharesToMint = protocol.i_calcMintUsdnShares(
-            DEPOSIT_AMOUNT, protocol.getBalanceVault(), protocol.getUsdn().totalShares(), initialPrice
-        );
+        uint256 usdnSharesToMint =
+            Vault._calcMintUsdnShares(DEPOSIT_AMOUNT, protocol.getBalanceVault(), protocol.getUsdn().totalShares());
         uint256 expectedSdexBurnAmount =
             protocol.i_calcSdexToBurn(usdn.convertToTokens(usdnSharesToMint), protocol.getSdexBurnOnDepositRatio());
         uint256 initiateDepositTimestamp = block.timestamp;
+
         vm.expectEmit();
-        // expected event
         emit InitiatedDeposit(to, address(this), DEPOSIT_AMOUNT, initiateDepositTimestamp, expectedSdexBurnAmount);
         protocol.initiateDeposit(
             DEPOSIT_AMOUNT, to, payable(address(this)), NO_PERMIT2, currentPrice, EMPTY_PREVIOUS_DATA
@@ -200,8 +228,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         assertEq(mintedAmount, expectedUsdnAmount, "minted amount");
 
         vm.expectEmit();
-        emit ValidatedDeposit(to, address(this), DEPOSIT_AMOUNT, mintedAmount, initiateDepositTimestamp); // expected
-            // event
+        emit ValidatedDeposit(to, address(this), DEPOSIT_AMOUNT, mintedAmount, initiateDepositTimestamp);
         bool success = protocol.validateDeposit(payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
         assertTrue(success, "success");
 
@@ -293,11 +320,6 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
      * @custom:then The security deposit is refunded to the validator
      */
     function test_validateDepositEtherRefundToValidator() public {
-        vm.startPrank(ADMIN);
-        protocol.setPositionFeeBps(0); // 0% fees
-        protocol.setSecurityDepositValue(0.5 ether);
-        vm.stopPrank();
-
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
 
         uint64 securityDepositValue = protocol.getSecurityDepositValue();

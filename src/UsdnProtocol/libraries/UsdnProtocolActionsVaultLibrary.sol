@@ -250,7 +250,7 @@ library UsdnProtocolActionsVaultLibrary {
 
         // cannot be calculated if equal to zero
         if (newVaultExpo == 0) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidVaultExpo();
+            revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
         }
 
         int256 imbalanceBps = (totalExpo - s._balanceLong).toInt256().safeSub(newVaultExpo).safeMul(
@@ -313,8 +313,7 @@ library UsdnProtocolActionsVaultLibrary {
         data_.usdnTotalShares = usdn.totalShares();
 
         // calculate the amount of SDEX tokens to burn
-        uint256 usdnSharesToMintEstimated =
-            Vault._calcMintUsdnShares(s, amount, data_.balanceVault, data_.usdnTotalShares, data_.pendingActionPrice);
+        uint256 usdnSharesToMintEstimated = Vault._calcMintUsdnShares(amount, data_.balanceVault, data_.usdnTotalShares);
         uint256 usdnToMintEstimated = usdn.convertToTokens(usdnSharesToMintEstimated);
         // we want to at least mint 1 wei of USDN
         if (usdnToMintEstimated == 0) {
@@ -505,32 +504,23 @@ library UsdnProtocolActionsVaultLibrary {
         }
 
         // we calculate the amount of USDN to mint, either considering the asset price at the time of the initiate
-        // action, or the current price provided for validation. We will use the lower of the two amounts to mint
+        // action, or the current price provided for validation. We will use the lower of the two to mint
         // apply fees on price
         uint128 priceWithFees =
             (currentPrice.price - currentPrice.price * s._vaultFeeBps / Constants.BPS_DIVISOR).toUint128();
 
-        uint256 usdnSharesToMint1 = Vault._calcMintUsdnShares(
-            s, deposit.amount, deposit.balanceVault, deposit.usdnTotalShares, deposit.assetPrice
-        );
-
-        uint256 usdnSharesToMint2 = Vault._calcMintUsdnShares(
-            s,
-            deposit.amount,
-            // calculate the available balance in the vault side if the price moves to `priceWithFees`
-            Vault._vaultAssetAvailable(
-                deposit.totalExpo, deposit.balanceVault, deposit.balanceLong, priceWithFees, deposit.assetPrice
-            ).toUint256(),
-            deposit.usdnTotalShares,
-            priceWithFees
-        );
-
         uint256 usdnSharesToMint;
-        // we use the lower of the two amounts to mint
-        if (usdnSharesToMint1 <= usdnSharesToMint2) {
-            usdnSharesToMint = usdnSharesToMint1;
+        // we use the lower of the two prices to mint
+        if (deposit.assetPrice <= priceWithFees) {
+            usdnSharesToMint = Vault._calcMintUsdnShares(deposit.amount, deposit.balanceVault, deposit.usdnTotalShares);
         } else {
-            usdnSharesToMint = usdnSharesToMint2;
+            usdnSharesToMint = Vault._calcMintUsdnShares(
+                deposit.amount,
+                Vault._vaultAssetAvailable(
+                    deposit.totalExpo, deposit.balanceVault, deposit.balanceLong, priceWithFees, deposit.assetPrice
+                ).toUint256(),
+                deposit.usdnTotalShares
+            );
         }
 
         s._balanceVault += deposit.amount;
@@ -788,20 +778,24 @@ library UsdnProtocolActionsVaultLibrary {
 
             // we calculate the available balance of the vault side, either considering the asset price at the time of
             // the initiate action, or the current price provided for validation
-            uint256 available1 = withdrawal.balanceVault;
-            uint256 available2 = Vault._vaultAssetAvailable(
+            int256 vaultAssetAvailable = Vault._vaultAssetAvailable(
                 withdrawal.totalExpo,
                 withdrawal.balanceVault,
                 withdrawal.balanceLong,
                 withdrawalPriceWithFees,
                 withdrawal.assetPrice
-            ).toUint256();
+            );
+
+            if (vaultAssetAvailable < 0) {
+                vaultAssetAvailable = 0;
+            }
 
             // we will use the lowest of the two amounts to redeem the underlying asset share
-            if (available1 <= available2) {
-                available = available1;
+            // cast is safe because vaultAssetAvailable cannot be negative
+            if (withdrawal.balanceVault <= uint256(vaultAssetAvailable)) {
+                available = withdrawal.balanceVault;
             } else {
-                available = available2;
+                available = uint256(vaultAssetAvailable);
             }
         }
 

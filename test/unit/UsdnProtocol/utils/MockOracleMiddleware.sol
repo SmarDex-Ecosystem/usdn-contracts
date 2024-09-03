@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import { AccessControlDefaultAdminRules } from
+    "@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol";
 
 import { IBaseOracleMiddleware } from "../../../../src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import {
@@ -12,7 +12,7 @@ import {
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
-contract MockOracleMiddleware is IOracleMiddleware, Ownable2Step {
+contract MockOracleMiddleware is IOracleMiddleware, AccessControlDefaultAdminRules {
     uint16 public constant BPS_DIVISOR = 10_000;
     uint16 public constant MAX_CONF_RATIO = BPS_DIVISOR * 2;
     uint8 internal constant DECIMALS = 18;
@@ -25,7 +25,16 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable2Step {
 
     bytes32 public lastActionId;
 
-    constructor() Ownable(msg.sender) { }
+    /// @inheritdoc IOracleMiddleware
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+
+    /// @inheritdoc IOracleMiddleware
+    bytes32 public constant PAUSABLE_ROLE = keccak256("PAUSABLE_ROLE");
+
+    constructor() AccessControlDefaultAdminRules(0, msg.sender) {
+        _grantRole(ADMIN_ROLE, msg.sender);
+        _grantRole(PAUSABLE_ROLE, msg.sender);
+    }
 
     /// @inheritdoc IBaseOracleMiddleware
     function parseAndValidatePrice(
@@ -86,7 +95,7 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable2Step {
     }
 
     /// @inheritdoc IOracleMiddleware
-    function setConfRatio(uint16 newConfRatio) external onlyOwner {
+    function setConfRatio(uint16 newConfRatio) external onlyRole(ADMIN_ROLE) {
         // confidence ratio limit check
         if (newConfRatio > MAX_CONF_RATIO) {
             revert IOracleMiddlewareErrors.OracleMiddlewareConfRatioTooHigh();

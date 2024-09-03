@@ -76,6 +76,8 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
 
     function getLongTradingExpo(uint128 currentPrice) external view returns (int256 expo_);
 
+    function calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed) external view returns (int256);
+
     function i_initiateClosePosition(
         address owner,
         address to,
@@ -176,11 +178,6 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         external
         payable
         returns (PriceInfo memory);
-
-    function i_calcMintUsdnShares(uint256 amount, uint256 vaultBalance, uint256 usdnTotalShares, uint256 price)
-        external
-        view
-        returns (uint256 toMint_);
 
     function i_calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) external pure returns (uint256);
 
@@ -427,6 +424,15 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         uint256 vaultBalance,
         int256 remainingCollateral
     ) external returns (uint256 longBalance_, uint256 vaultBalance_);
+
+    function i_fundingAsset(uint128 timestamp, int256 ema)
+        external
+        view
+        returns (int256 fundingAsset, int256 fundingPerDay);
+
+    function i_fundingPerDay(int256 ema) external view returns (int256 fundingPerDay_, int256 oldLongExpo_);
+
+    function i_protocolFeeBps() external view returns (int256);
 
     function i_getTickFromDesiredLiqPrice(
         uint128 desiredLiqPriceWithoutPenalty,

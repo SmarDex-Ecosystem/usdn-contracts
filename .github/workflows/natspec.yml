@@ -12,6 +12,12 @@ jobs:
       contents: read
       pull-requests: write
     steps:
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - uses: actions/checkout@v4
         with:
           submodules: recursive
@@ -35,6 +41,6 @@ jobs:
       - name: Report natspec smells findings
         uses: SmarDex-Ecosystem/natspec-smells-action@v2
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ steps.app-token.outputs.token }}
           working-directory: ./
           update-comment: true

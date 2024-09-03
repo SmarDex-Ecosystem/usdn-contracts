@@ -20,7 +20,7 @@ contract TestUsdnProtocolPreviewDeposit is UsdnProtocolBaseFixture {
         params.flags.enableSdexBurnOnDeposit = true;
         super._setUp(params);
         wstETH.mintAndApprove(address(this), 1e9 ether, address(protocol), type(uint256).max);
-        sdex.mintAndApprove(address(this), type(uint256).max, address(protocol), type(uint256).max);
+        sdex.mintAndApprove(address(this), type(uint256).max / 10, address(protocol), type(uint256).max);
     }
 
     /**
@@ -49,5 +49,25 @@ contract TestUsdnProtocolPreviewDeposit is UsdnProtocolBaseFixture {
 
         assertEq(usdn.sharesOf(address(this)), usdnSharesExpected, "usdn user balance after deposit");
         assertEq(sdex.balanceOf(address(this)), sdexBalanceBefore - sdexToBurn, "sdex user balance after deposit");
+    }
+
+    /**
+     * @custom:scenario Revert when previewing a deposit with an empty vault
+     * @custom:given A negative vault balance (due to a large long position with big profits)
+     * @custom:when The user tries to preview a deposit
+     * @custom:then The transaction should revert with the `UsdnProtocolEmptyVault` error
+     */
+    function test_RevertWhen_previewDepositEmptyVault() public {
+        setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 10 ether,
+                desiredLiqPrice: 1000 ether,
+                price: params.initialPrice
+            })
+        );
+        vm.expectRevert(UsdnProtocolEmptyVault.selector);
+        protocol.previewDeposit(1, type(uint128).max, uint128(block.timestamp));
     }
 }

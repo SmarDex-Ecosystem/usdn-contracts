@@ -218,6 +218,10 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         );
     }
 
+    function calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed) external view returns (int256) {
+        return Core.calcEMA(lastFundingPerDay, secondsElapsed, s._EMAPeriod, s._EMA);
+    }
+
     function i_validateOpenPosition(address user, bytes calldata priceData)
         external
         returns (uint256 securityDepositValue_, bool isValidated_, bool liquidated_)
@@ -361,14 +365,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         returns (PriceInfo memory)
     {
         return ActionsVault._getOraclePrice(s, action, timestamp, actionId, priceData);
-    }
-
-    function i_calcMintUsdnShares(uint256 amount, uint256 vaultBalance, uint256 usdnTotalShares, uint256 price)
-        external
-        view
-        returns (uint256 toMint_)
-    {
-        return Vault._calcMintUsdnShares(s, amount, vaultBalance, usdnTotalShares, price);
     }
 
     function i_calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) external pure returns (uint256) {
@@ -780,6 +776,22 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         _tempStorage._lastUpdateTimestamp = fundingStorage.lastUpdateTimestamp;
         _tempStorage._fundingSF = fundingStorage.fundingSF;
         return Core._funding(_tempStorage, timestamp, ema);
+    }
+
+    function i_fundingAsset(uint128 timestamp, int256 ema)
+        external
+        view
+        returns (int256 fundingAsset, int256 fundingPerDay)
+    {
+        return Core._fundingAsset(s, timestamp, ema);
+    }
+
+    function i_fundingPerDay(int256 ema) external view returns (int256 fundingPerDay_, int256 oldLongExpo_) {
+        return Core._fundingPerDay(s, ema);
+    }
+
+    function i_protocolFeeBps() external view returns (uint16) {
+        return s._protocolFeeBps;
     }
 
     function i_getTickFromDesiredLiqPrice(

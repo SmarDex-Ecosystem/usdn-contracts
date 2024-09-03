@@ -143,6 +143,32 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario The user validates a withdrawal for 1000 USDN while the price increases so much the vault
+     * balance becomes negative
+     * @custom:given The user initiated a withdrawal for 1000 USDN
+     * @custom:and The price of the asset is $2500 at the moment of initiation
+     * @custom:and The price of the asset is $10 000 at the moment of validation
+     * @custom:and A user opened a long position of 10ETH with a 2.5x leverage
+     * @custom:when The user validates the withdrawal
+     * @custom:then The user's wstETH balance increases by 0
+     * @custom:and The USDN total supply decreases by 1000
+     * @custom:and The protocol emits a `ValidatedWithdrawal` event with the withdrawn amount of 00
+     */
+    function test_validateWithdrawalPriceUpEmptyingVault() public {
+        setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 10 ether,
+                desiredLiqPrice: 1000 ether,
+                price: 2500 ether
+            })
+        );
+
+        _checkValidateWithdrawalWithPrice(uint128(2500 ether), uint128(10_000 ether), 0, address(this));
+    }
+
+    /**
      * @custom:scenario The user validates a withdrawal for 1000 USDN while the price decreases
      * @custom:given The user initiated a withdrawal for 1000 USDN
      * @custom:and The price of the asset is $2500 at the moment of initiation
@@ -223,7 +249,8 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
 
         // if price increases, we need to use the new balance to calculate the withdrawn amount
         if (assetPrice > initialPrice) {
-            data.vaultBalance = uint256(protocol.i_vaultAssetAvailable(assetPrice));
+            int256 assetAvailable = protocol.i_vaultAssetAvailable(assetPrice);
+            data.vaultBalance = assetAvailable < 0 ? 0 : uint256(assetAvailable);
         }
 
         PriceInfo memory withdrawalPrice = protocol.i_getOraclePrice(
@@ -238,20 +265,23 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         // initiate action, or the current price provided for validation. We will use the lower of the two amounts to
         // redeem the underlying asset share.
         uint256 available1 = data.withdrawal.balanceVault;
-        uint256 available2 = uint256(
-            protocol.i_vaultAssetAvailable(
-                data.withdrawal.totalExpo,
-                data.withdrawal.balanceVault,
-                data.withdrawal.balanceLong,
-                withdrawalPriceWithFees.toUint128(), // new price
-                data.withdrawal.assetPrice // old price
-            )
+        int256 available2 = protocol.i_vaultAssetAvailable(
+            data.withdrawal.totalExpo,
+            data.withdrawal.balanceVault,
+            data.withdrawal.balanceLong,
+            withdrawalPriceWithFees.toUint128(), // new price
+            data.withdrawal.assetPrice // old price
         );
+
+        if (available2 < 0) {
+            available2 = 0;
+        }
+
         uint256 available;
-        if (available1 <= available2) {
+        if (available1 <= uint256(available2)) {
             available = available1;
         } else {
-            available = available2;
+            available = uint256(available2);
         }
 
         uint256 shares = protocol.i_mergeWithdrawalAmountParts(data.withdrawal.sharesLSB, data.withdrawal.sharesMSB);
