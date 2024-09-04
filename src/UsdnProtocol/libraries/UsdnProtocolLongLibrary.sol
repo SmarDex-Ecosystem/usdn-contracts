@@ -100,11 +100,6 @@ library UsdnProtocolLongLibrary {
     }
 
     /// @notice See {IUsdnProtocolLong}
-    function maxTick(Types.Storage storage s) public view returns (int24 tick_) {
-        tick_ = TickMath.maxUsableTick(s._tickSpacing);
-    }
-
-    /// @notice See {IUsdnProtocolLong}
     function getLongPosition(Types.Storage storage s, Types.PositionId memory posId)
         public
         view
@@ -126,7 +121,7 @@ library UsdnProtocolLongLibrary {
         uint128 timestamp
     ) public view returns (int256 value_) {
         (Types.Position memory pos, uint24 liquidationPenalty) = getLongPosition(s, posId);
-        int256 longTradingExpo = longTradingExpoWithFunding(s, price, timestamp);
+        int256 longTradingExpo = Core.longTradingExpoWithFunding(s, price, timestamp);
         if (longTradingExpo < 0) {
             // in case the long balance is equal to the total expo (or exceeds it), the trading expo will become zero
             // in this case, the liquidation price will fall to zero, and the position value will be equal to its
@@ -160,20 +155,7 @@ library UsdnProtocolLongLibrary {
         tick_ = _getEffectiveTickForPriceNoRounding(price, assetPrice, longTradingExpo, accumulator);
 
         // round down to the next valid tick according to _tickSpacing (towards negative infinity)
-        if (tick_ < 0) {
-            // we round up the inverse number (positive) then invert it -> round towards negative infinity
-            tick_ = -int24(int256(FixedPointMathLib.divUp(uint256(int256(-tick_)), uint256(int256(tickSpacing)))))
-                * tickSpacing;
-            // avoid invalid ticks
-            int24 minUsableTick = TickMath.minUsableTick(tickSpacing);
-            if (tick_ < minUsableTick) {
-                tick_ = minUsableTick;
-            }
-        } else {
-            // rounding is desirable here
-            // slither-disable-next-line divide-before-multiply
-            tick_ = (tick_ / tickSpacing) * tickSpacing;
-        }
+        tick_ = _roundTickDown(tick_, tickSpacing);
     }
 
     /// @notice See {IUsdnProtocolLong}
@@ -190,41 +172,6 @@ library UsdnProtocolLongLibrary {
         HugeUint.Uint512 memory accumulator
     ) public pure returns (uint128 price_) {
         price_ = _adjustPrice(TickMath.getPriceAtTick(tick), assetPrice, longTradingExpo, accumulator);
-    }
-
-    /// @notice See {IUsdnProtocolLong}
-    function longAssetAvailableWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
-        public
-        view
-        returns (int256 available_)
-    {
-        if (timestamp < s._lastUpdateTimestamp) {
-            revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
-        }
-
-        (int256 fundAsset,) = Core._fundingAsset(s, timestamp, s._EMA);
-
-        if (fundAsset > 0) {
-            available_ = Core._longAssetAvailable(s, currentPrice).safeSub(fundAsset);
-        } else {
-            int256 fee = fundAsset * Utils.toInt256(s._protocolFeeBps) / int256(Constants.BPS_DIVISOR);
-            // fees have the same sign as fundAsset (negative here), so we need to sub them
-            available_ = Core._longAssetAvailable(s, currentPrice).safeSub(fundAsset - fee);
-        }
-
-        int256 totalBalance = (s._balanceLong + s._balanceVault).toInt256();
-        if (available_ > totalBalance) {
-            available_ = totalBalance;
-        }
-    }
-
-    /// @notice See {IUsdnProtocolLong}
-    function longTradingExpoWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
-        public
-        view
-        returns (int256 expo_)
-    {
-        expo_ = s._totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(s, currentPrice, timestamp));
     }
 
     /// @notice See {IUsdnProtocolLong}
@@ -257,12 +204,24 @@ library UsdnProtocolLongLibrary {
     ) public pure returns (int24 tick_) {
         // unadjust price with liquidation multiplier
         uint256 unadjustedPrice = _unadjustPrice(price, assetPrice, longTradingExpo, accumulator);
+        tick_ = _unadjustedPriceToTick(unadjustedPrice);
+    }
 
-        if (unadjustedPrice < TickMath.MIN_PRICE) {
-            return TickMath.MIN_TICK;
-        }
-
-        tick_ = TickMath.getTickAtPrice(unadjustedPrice);
+    /**
+     * @notice Variant of `_getEffectiveTickForPriceNoRounding` when a fixed precision representation of the liquidation
+     * multiplier is known
+     * @param price The price to be adjusted
+     * @param liqMultiplier The liquidation price multiplier, with LIQUIDATION_MULTIPLIER_DECIMALS decimals
+     * @return tick_ The tick number
+     */
+    function _getEffectiveTickForPriceNoRounding(uint128 price, uint256 liqMultiplier)
+        public
+        pure
+        returns (int24 tick_)
+    {
+        // unadjust price with liquidation multiplier
+        uint256 unadjustedPrice = _unadjustPrice(price, liqMultiplier);
+        tick_ = _unadjustedPriceToTick(unadjustedPrice);
     }
 
     /**
@@ -318,22 +277,37 @@ library UsdnProtocolLongLibrary {
             _getEffectiveTickForPriceNoRounding(desiredLiqPriceWithoutPenalty, assetPrice, longTradingExpo, accumulator);
         // add the penalty to the tick and round down to the nearest multiple of tickSpacing
         tickWithPenalty_ = tempTickWithoutPenalty + int24(liquidationPenalty);
-        if (tickWithPenalty_ < 0) {
-            // we round up the inverse number (positive) then invert it -> round towards negative infinity
-            tickWithPenalty_ = -int24(int256(FixedPointMathLib.divUp(uint256(int256(-tickWithPenalty_)), uint256(int256(tickSpacing)))))
-                * tickSpacing;
-            // avoid invalid ticks: we should be able to get the price for `tickWithPenalty_ - liquidationPenalty`
-            while (tickWithPenalty_ < TickMath.MIN_TICK + int24(liquidationPenalty)) {
-                tickWithPenalty_ += tickSpacing;
-            }
-        } else {
-            // rounding is desirable here
-            // slither-disable-next-line divide-before-multiply
-            tickWithPenalty_ = (tickWithPenalty_ / tickSpacing) * tickSpacing;
-        }
+        tickWithPenalty_ = _roundTickDownWithPenalty(tickWithPenalty_, tickSpacing, liquidationPenalty);
         liqPriceWithoutPenalty_ = getEffectivePriceForTick(
             Utils.calcTickWithoutPenalty(tickWithPenalty_, liquidationPenalty), assetPrice, longTradingExpo, accumulator
         );
+    }
+
+    /**
+     * @notice For a desired liquidation price, get the tick number with penalty and liquidation price without penalty
+     * @dev This function first calculates a tick for the desired liq price (no rounding), then adds the penalty to the
+     * tick and rounds down to the nearest tick spacing. Then it subtracts the penalty from the final tick and
+     * calculates the corresponding liquidation price
+     * @param desiredLiqPriceWithoutPenalty The desired liquidation price without penalty
+     * @param liqMultiplier The liquidation price multiplier, with LIQUIDATION_MULTIPLIER_DECIMALS decimals
+     * @param tickSpacing The tick spacing
+     * @param liquidationPenalty The liquidation penalty
+     * @return tickWithPenalty_ The tick number with penalty
+     * @return liqPriceWithoutPenalty_ The liquidation price without penalty
+     */
+    function _getTickFromDesiredLiqPrice(
+        uint128 desiredLiqPriceWithoutPenalty,
+        uint256 liqMultiplier,
+        int24 tickSpacing,
+        uint24 liquidationPenalty
+    ) public pure returns (int24 tickWithPenalty_, uint128 liqPriceWithoutPenalty_) {
+        // get corresponding tick (not necessarily a multiple of tickSpacing)
+        int24 tempTickWithoutPenalty = _getEffectiveTickForPriceNoRounding(desiredLiqPriceWithoutPenalty, liqMultiplier);
+        // add the penalty to the tick and round down to the nearest multiple of tickSpacing
+        tickWithPenalty_ = tempTickWithoutPenalty + int24(liquidationPenalty);
+        tickWithPenalty_ = _roundTickDownWithPenalty(tickWithPenalty_, tickSpacing, liquidationPenalty);
+        liqPriceWithoutPenalty_ =
+            _getEffectivePriceForTick(Utils.calcTickWithoutPenalty(tickWithPenalty_, liquidationPenalty), liqMultiplier);
     }
 
     /**
@@ -682,19 +656,38 @@ library UsdnProtocolLongLibrary {
             return data_;
         }
 
+        // gas savings, we only load the data once and use it for all conversions below
+        Types.TickPriceConversionData memory conversionData = Types.TickPriceConversionData({
+            assetPrice: s._lastPrice,
+            tradingExpo: s._totalExpo - s._balanceLong,
+            accumulator: s._liqMultiplierAccumulator,
+            tickSpacing: s._tickSpacing
+        });
         // we calculate the closest valid tick down for the desired liq price with liquidation penalty
-        data_.posId.tick = getEffectiveTickForPrice(s, desiredLiqPrice);
+        data_.posId.tick = getEffectiveTickForPrice(
+            desiredLiqPrice,
+            conversionData.assetPrice,
+            conversionData.tradingExpo,
+            conversionData.accumulator,
+            conversionData.tickSpacing
+        );
         data_.liquidationPenalty = getTickLiquidationPenalty(s, data_.posId.tick);
 
         // calculate effective liquidation price
-        uint128 liqPrice = getEffectivePriceForTick(s, data_.posId.tick);
+        uint128 liqPrice = getEffectivePriceForTick(
+            data_.posId.tick, conversionData.assetPrice, conversionData.tradingExpo, conversionData.accumulator
+        );
 
         // liquidation price must be at least x% below the current price
         _checkSafetyMargin(s, neutralPrice, liqPrice);
 
         // remove liquidation penalty for leverage and total expo calculations
-        uint128 liqPriceWithoutPenalty =
-            getEffectivePriceForTick(s, Utils.calcTickWithoutPenalty(data_.posId.tick, data_.liquidationPenalty));
+        uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(
+            Utils.calcTickWithoutPenalty(data_.posId.tick, data_.liquidationPenalty),
+            conversionData.assetPrice,
+            conversionData.tradingExpo,
+            conversionData.accumulator
+        );
         _checkOpenPositionLeverage(s, data_.adjustedPrice, liqPriceWithoutPenalty);
 
         data_.positionTotalExpo = _calcPositionTotalExpo(amount, data_.adjustedPrice, liqPriceWithoutPenalty);
@@ -704,6 +697,10 @@ library UsdnProtocolLongLibrary {
         data_.positionValue =
             Utils.positionValue(data_.positionTotalExpo, uint128(currentPrice.price), liqPriceWithoutPenalty);
         _checkImbalanceLimitOpen(s, data_.positionTotalExpo, amount);
+
+        data_.liqMultiplier = _calcFixedPrecisionMultiplier(
+            conversionData.assetPrice, conversionData.tradingExpo, conversionData.accumulator
+        );
     }
 
     /**
@@ -718,7 +715,7 @@ library UsdnProtocolLongLibrary {
     {
         // calculate position leverage
         // reverts if liquidationPrice >= entryPrice
-        uint256 leverage = _getLeverage(adjustedPrice, liqPriceWithoutPenalty);
+        uint256 leverage = ActionsUtils._getLeverage(adjustedPrice, liqPriceWithoutPenalty);
         if (leverage < s._minLeverage) {
             revert IUsdnProtocolErrors.UsdnProtocolLeverageTooLow();
         }
@@ -859,6 +856,31 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
+     * @notice Variant of `getEffectiveTickForPrice` when a fixed precision representation of the liquidation multiplier
+     * is known
+     * @param price The price
+     * @param liqMultiplier The liquidation price multiplier, with LIQUIDATION_MULTIPLIER_DECIMALS decimals
+     * @return tick_ The corresponding tick
+     */
+    function _getEffectiveTickForPrice(uint128 price, uint256 liqMultiplier, int24 tickSpacing)
+        public
+        pure
+        returns (int24 tick_)
+    {
+        // unadjust price with liquidation multiplier
+        uint256 unadjustedPrice = _unadjustPrice(price, liqMultiplier);
+
+        if (unadjustedPrice < TickMath.MIN_PRICE) {
+            return TickMath.minUsableTick(tickSpacing);
+        }
+
+        tick_ = TickMath.getTickAtPrice(unadjustedPrice);
+
+        // round down to the next valid tick according to _tickSpacing (towards negative infinity)
+        tick_ = _roundTickDown(tick_, tickSpacing);
+    }
+
+    /**
      * @notice Knowing the liquidation price of a position, get the corresponding unadjusted price, which can be used
      * to find the corresponding tick
      * @param price An adjusted liquidation price (taking into account the effects of funding)
@@ -886,6 +908,19 @@ library UsdnProtocolLongLibrary {
         // unadjustedPrice = price * accumulator / (assetPrice * (totalExpo - balanceLong))
         HugeUint.Uint512 memory numerator = accumulator.mul(price);
         unadjustedPrice_ = numerator.div(assetPrice * longTradingExpo);
+    }
+
+    /**
+     * @notice Variant of _unadjustPrice when a fixed precision representation of the liquidation multiplier is known
+     * @param price An adjusted liquidation price (taking into account the effects of funding)
+     * @param liqMultiplier The liquidation price multiplier, with LIQUIDATION_MULTIPLIER_DECIMALS decimals
+     * @return unadjustedPrice_ The unadjusted price for the liquidation price
+     */
+    function _unadjustPrice(uint256 price, uint256 liqMultiplier) public pure returns (uint256 unadjustedPrice_) {
+        // unadjustedPrice = price / M
+        // unadjustedPrice = price * 10^LIQUIDATION_MULTIPLIER_DECIMALS / liqMultiplier
+        unadjustedPrice_ =
+            FixedPointMathLib.fullMulDiv(price, 10 ** Constants.LIQUIDATION_MULTIPLIER_DECIMALS, liqMultiplier);
     }
 
     /**
@@ -967,16 +1002,6 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Calculate the theoretical liquidation price of a position knowing its start price and leverage
-     * @param startPrice Entry price of the position
-     * @param leverage Leverage of the position
-     * @return price_ The liquidation price of the position
-     */
-    function _getLiquidationPrice(uint128 startPrice, uint128 leverage) public pure returns (uint128 price_) {
-        price_ = (startPrice - ((uint256(10) ** Constants.LEVERAGE_DECIMALS * startPrice) / leverage)).toUint128();
-    }
-
-    /**
      * @notice Calculate the value of a position, knowing its liquidation price and the current asset price
      * @param currentPrice The current price of the asset
      * @param liqPriceWithoutPenalty The liquidation price of the position without the liquidation penalty
@@ -1031,23 +1056,6 @@ library UsdnProtocolLongLibrary {
                 FixedPointMathLib.fullMulDiv(tickData.totalExpo, currentPrice - liqPriceWithoutPenalty, currentPrice)
             );
         }
-    }
-
-    /**
-     * @notice Calculate the leverage of a position, knowing its start price and liquidation price
-     * @dev This does not take into account the liquidation penalty
-     * @param startPrice Entry price of the position
-     * @param liquidationPrice Liquidation price of the position
-     * @return leverage_ The leverage of the position
-     */
-    function _getLeverage(uint128 startPrice, uint128 liquidationPrice) public pure returns (uint256 leverage_) {
-        if (startPrice <= liquidationPrice) {
-            // this situation is not allowed (newly open position must be solvent)
-            // also, the calculation below would underflow
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationPrice(liquidationPrice, startPrice);
-        }
-
-        leverage_ = (10 ** Constants.LEVERAGE_DECIMALS * uint256(startPrice)) / (startPrice - liquidationPrice);
     }
 
     /**
@@ -1371,6 +1379,77 @@ library UsdnProtocolLongLibrary {
                 cache.liqMultiplierAccumulator
             );
             posData_.totalExpo = _calcPositionTotalExpo(positionAmount, lastPrice, data.liqPriceWithoutPenalty);
+        }
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                              Private functions                             */
+    /* -------------------------------------------------------------------------- */
+
+    /**
+     * @notice Calculate the tick corresponding to an unadjusted price, without rounding to the tick spacing
+     * @param unadjustedPrice The unadjusted price
+     * @return tick_ The tick number, bound by MIN_TICK
+     */
+    function _unadjustedPriceToTick(uint256 unadjustedPrice) internal pure returns (int24 tick_) {
+        if (unadjustedPrice < TickMath.MIN_PRICE) {
+            return TickMath.MIN_TICK;
+        }
+
+        tick_ = TickMath.getTickAtPrice(unadjustedPrice);
+    }
+
+    /**
+     * @notice Round a tick down to a multiple of the tick spacing
+     * @dev The function is bound by the minimum usable tick, so the first tick which is a multiple of the tick spacing
+     * and greater than or equal to MIN_TICK
+     * @param tick The tick number
+     * @param tickSpacing The tick spacing
+     * @return roundedTick_ The rounded tick number
+     */
+    function _roundTickDown(int24 tick, int24 tickSpacing) internal pure returns (int24 roundedTick_) {
+        // round down to the next valid tick according to _tickSpacing (towards negative infinity)
+        if (tick < 0) {
+            // we round up the inverse number (positive) then invert it -> round towards negative infinity
+            roundedTick_ = -int24(int256(FixedPointMathLib.divUp(uint256(int256(-tick)), uint256(int256(tickSpacing)))))
+                * tickSpacing;
+            // avoid invalid ticks
+            int24 minUsableTick = TickMath.minUsableTick(tickSpacing);
+            if (roundedTick_ < minUsableTick) {
+                roundedTick_ = minUsableTick;
+            }
+        } else {
+            // rounding is desirable here
+            // slither-disable-next-line divide-before-multiply
+            roundedTick_ = (tick / tickSpacing) * tickSpacing;
+        }
+    }
+
+    /**
+     * @notice Round a tick down to a multiple of the tick spacing while remaining above MIN_TICK + liquidationPenalty
+     * @param tickWithPenalty The tick number with the liquidation penalty
+     * @param tickSpacing The tick spacing
+     * @param liqPenalty The liquidation penalty
+     * @return roundedTick_ The rounded tick number
+     */
+    function _roundTickDownWithPenalty(int24 tickWithPenalty, int24 tickSpacing, uint24 liqPenalty)
+        internal
+        pure
+        returns (int24 roundedTick_)
+    {
+        if (tickWithPenalty < 0) {
+            // we round up the inverse number (positive) then invert it -> round towards negative infinity
+            roundedTick_ = -int24(int256(FixedPointMathLib.divUp(uint256(int256(-tickWithPenalty)), uint256(int256(tickSpacing)))))
+                * tickSpacing;
+            // avoid invalid ticks: we should be able to get the price for `tickWithPenalty_ - liquidationPenalty`
+            int24 minTickWithPenalty = TickMath.MIN_TICK + int24(liqPenalty);
+            if (roundedTick_ < minTickWithPenalty) {
+                roundedTick_ = minTickWithPenalty - (minTickWithPenalty % tickSpacing);
+            }
+        } else {
+            // rounding is desirable here
+            // slither-disable-next-line divide-before-multiply
+            roundedTick_ = (tickWithPenalty / tickSpacing) * tickSpacing;
         }
     }
 }

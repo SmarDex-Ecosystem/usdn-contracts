@@ -264,7 +264,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         uint256 expectedAmountReceived = protocol.i_assetToRemove(
             price,
             protocol.i_getEffectivePriceForTick(
-                protocol.i_calcTickWithoutPenalty(posId.tick, liquidationPenalty), action.closeLiqMultiplier
+                protocol.i_calcTickWithoutPenalty(posId.tick, liquidationPenalty), action.liqMultiplier
             ),
             totalExpoToClose
         );
@@ -328,7 +328,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         data.expectedAmountReceived = protocol.i_assetToRemove(
             params.initialPrice,
             protocol.i_getEffectivePriceForTick(
-                protocol.i_calcTickWithoutPenalty(posId.tick, data.liquidationPenalty), data.action.closeLiqMultiplier
+                protocol.i_calcTickWithoutPenalty(posId.tick, data.liquidationPenalty), data.action.liqMultiplier
             ),
             data.totalExpoToClose
         );
@@ -379,7 +379,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         data.expectedAmountReceived = protocol.i_assetToRemove(
             params.initialPrice,
             protocol.i_getEffectivePriceForTick(
-                protocol.i_calcTickWithoutPenalty(posId.tick, data.liquidationPenalty), data.action.closeLiqMultiplier
+                protocol.i_calcTickWithoutPenalty(posId.tick, data.liquidationPenalty), data.action.liqMultiplier
             ),
             data.pos.totalExpo - data.totalExpoToClose
         );
@@ -436,7 +436,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         uint256 assetToTransfer = protocol.i_assetToRemove(
             priceAfterInit,
             protocol.i_getEffectivePriceForTick(
-                protocol.i_calcTickWithoutPenalty(action.tick, liquidationPenalty), action.closeLiqMultiplier
+                protocol.i_calcTickWithoutPenalty(action.tick, liquidationPenalty), action.liqMultiplier
             ),
             action.closePosTotalExpo
         );
@@ -496,7 +496,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         uint256 assetToTransfer = protocol.i_assetToRemove(
             price,
             protocol.i_getEffectivePriceForTick(
-                protocol.i_calcTickWithoutPenalty(action.tick, liquidationPenalty), action.closeLiqMultiplier
+                protocol.i_calcTickWithoutPenalty(action.tick, liquidationPenalty), action.liqMultiplier
             ),
             action.closePosTotalExpo
         );

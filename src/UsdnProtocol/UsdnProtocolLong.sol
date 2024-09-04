@@ -13,11 +13,6 @@ abstract contract UsdnProtocolLong is UsdnProtocolStorage, IUsdnProtocolLong {
     }
 
     /// @inheritdoc IUsdnProtocolLong
-    function maxTick() external view returns (int24 tick_) {
-        return Long.maxTick(s);
-    }
-
-    /// @inheritdoc IUsdnProtocolLong
     function getLongPosition(PositionId memory posId)
         external
         view
@@ -64,20 +59,6 @@ abstract contract UsdnProtocolLong is UsdnProtocolStorage, IUsdnProtocolLong {
         HugeUint.Uint512 memory accumulator
     ) external pure returns (uint128 price_) {
         return Long.getEffectivePriceForTick(tick, assetPrice, longTradingExpo, accumulator);
-    }
-
-    /// @inheritdoc IUsdnProtocolLong
-    function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
-        external
-        view
-        returns (int256 available_)
-    {
-        return Long.longAssetAvailableWithFunding(s, currentPrice, timestamp);
-    }
-
-    /// @inheritdoc IUsdnProtocolLong
-    function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256 expo_) {
-        return Long.longTradingExpoWithFunding(s, currentPrice, timestamp);
     }
 
     /// @inheritdoc IUsdnProtocolLong

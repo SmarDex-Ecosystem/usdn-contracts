@@ -323,9 +323,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
 
         int256 positionValue = protocol.i_positionValue(
             uint128(priceWithFees),
-            protocol.i_getEffectivePriceForTick(
-                protocol.i_calcTickWithoutPenalty(posId.tick), longAction.closeLiqMultiplier
-            ),
+            protocol.i_getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(posId.tick), longAction.liqMultiplier),
             longAction.closePosTotalExpo
         );
 
