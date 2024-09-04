@@ -145,7 +145,7 @@ library UsdnProtocolVaultLibrary {
         // transfer the wstETH for the deposit
         address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
         s._balanceVault += amount;
-        emit IUsdnProtocolEvents.InitiatedDeposit(msg.sender, msg.sender, amount, block.timestamp, 0);
+        emit IUsdnProtocolEvents.InitiatedDeposit(msg.sender, msg.sender, amount, 0, block.timestamp, 0);
 
         // calculate the total minted amount of USDN shares (vault balance and total supply are zero for now, we assume
         // the USDN price to be $1 per token)

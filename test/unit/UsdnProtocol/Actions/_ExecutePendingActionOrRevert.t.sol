@@ -120,7 +120,7 @@ contract TestUsdnProtocolActionsExecutePendingActionOrRevert is UsdnProtocolBase
             to: user,
             validator: user,
             securityDepositValue: 0,
-            _unused: 0,
+            feeBps: 0,
             amount: 1 ether,
             assetPrice: 2000 ether,
             totalExpo: 20 ether,

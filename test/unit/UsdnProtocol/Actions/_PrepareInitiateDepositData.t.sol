@@ -17,6 +17,7 @@ contract TestUsdnProtocolActionsPrepareInitiateDepositData is UsdnProtocolBaseFi
 
     function setUp() public {
         params = DEFAULT_PARAMS;
+        params.initialPrice = 1 ether;
         params.flags.enableSdexBurnOnDeposit = true;
         super._setUp(params);
 
@@ -29,18 +30,19 @@ contract TestUsdnProtocolActionsPrepareInitiateDepositData is UsdnProtocolBaseFi
 
     /**
      * @custom:scenario Call _prepareInitiateDepositData with an amount so low that it would mint 0 USDN
-     * @custom:given The price of the asset is 0.99..99 USD
+     * @custom:given There is a vault fee
      * @custom:when _prepareInitiateDepositData is called with a deposit of 1 wei
      * @custom:then The call reverts with an UsdnProtocolDepositTooSmall error
      */
     function test_RevertWhen_prepareInitiateDepositDataWithUSDNAmountMintedTooSmall() public {
+        vm.prank(ADMIN);
+        protocol.setVaultFeeBps(1);
         vm.expectRevert(UsdnProtocolDepositTooSmall.selector);
-        protocol.i_prepareInitiateDepositData(address(this), 1, abi.encode(1 ether - 1));
+        protocol.i_prepareInitiateDepositData(address(this), 1, abi.encode(1 ether));
     }
 
     /**
      * @custom:scenario Call _prepareInitiateDepositData with an amount so low that it would burn 0 SDEX
-     * @custom:given The price of the asset is 1 USD
      * @custom:when _prepareInitiateDepositData is called with amount = (burnRatioDivisor / burnRatio - 1)
      * @custom:then The call reverts with an UsdnProtocolDepositTooSmall error
      */
@@ -123,7 +125,7 @@ contract TestUsdnProtocolActionsPrepareInitiateDepositData is UsdnProtocolBaseFi
         uint128 currentPrice = abi.decode(currentPriceData, (uint128));
 
         if (isEarlyReturn) {
-            assertEq(data.pendingActionPrice, 0, "The pending action price should not be set");
+            assertEq(data.feeBps, 0, "The fee should not be set");
             assertEq(data.totalExpo, 0, "The total expo should not be set");
             assertEq(data.balanceLong, 0, "The balance long should not be set");
             assertEq(data.balanceVault, 0, "The balance vault should not be set");
@@ -131,7 +133,7 @@ contract TestUsdnProtocolActionsPrepareInitiateDepositData is UsdnProtocolBaseFi
         } else {
             (, uint256 sdexToBurn_) = protocol.previewDeposit(POSITION_AMOUNT, currentPrice, uint40(block.timestamp));
 
-            assertEq(data.pendingActionPrice, currentPrice, "The pending action price should be the current price");
+            assertEq(data.feeBps, protocol.getVaultFeeBps(), "The fee should be the one in the protocol");
             assertEq(data.totalExpo, protocol.getTotalExpo(), "The total expo should be the one in the protocol");
             assertEq(data.balanceLong, protocol.getBalanceLong(), "The balance long should be the one in the protocol");
             assertEq(

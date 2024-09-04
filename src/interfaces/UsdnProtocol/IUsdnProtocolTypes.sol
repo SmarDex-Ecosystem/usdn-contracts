@@ -96,7 +96,7 @@ interface IUsdnProtocolTypes {
      * @param to The `to` address
      * @param validator The `validator` address
      * @param securityDepositValue The security deposit of the pending action
-     * @param _unused Unused field to align the struct to `PendingAction`
+     * @param feeBps Fee for the deposit, in BPS
      * @param amount The amount of assets of the pending deposit
      * @param assetPrice The price of the asset at the time of the last update
      * @param totalExpo The total exposure at the time of the last update
@@ -110,7 +110,7 @@ interface IUsdnProtocolTypes {
         address to; // 20 bytes
         address validator; // 20 bytes
         uint64 securityDepositValue; // 8 bytes
-        int24 _unused; // 3 bytes
+        uint24 feeBps; // 3 bytes
         uint128 amount; // 16 bytes
         uint128 assetPrice; // 16 bytes
         uint256 totalExpo; // 32 bytes

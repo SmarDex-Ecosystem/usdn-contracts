@@ -214,9 +214,9 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario The user initiates a deposit of 1 wstETH
-     * @custom:given The price of the asset is $2000
      * @custom:when The user initiates a deposit of 1 wstETH
-     * @custom:then The user's position should have a start price according to the fees
+     * @custom:then The user's position should have an amount corresponding to the deposited amount
+     * @custom:and The fee should match the vault fee
      */
     function test_initiateDepositPositionFees() public {
         skip(1 hours);
@@ -226,26 +226,30 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         DepositPendingAction memory action =
             protocol.i_toDepositPendingAction(protocol.getUserPendingAction(address(this)));
 
-        uint256 priceWithoutFees = 2000 ether - 2000 ether * uint256(protocol.getVaultFeeBps()) / protocol.BPS_DIVISOR();
-        assertEq(action.assetPrice, priceWithoutFees, "assetPrice");
+        assertEq(action.amount, depositAmount, "amount");
+        assertEq(action.feeBps, protocol.getVaultFeeBps(), "fee");
     }
 
     /**
      * @custom:scenario The user validate a deposit of 1 wstETH
      * @custom:given The price of the asset is $2000
      * @custom:when The user deposit 1 wstETH
-     * @custom:then The user's position should have a start price according to the fees
-     * @custom:and The minted USDN should be updated according to the fees
+     * @custom:and The minted USDN should match the amount with fees
      */
     function test_validateDepositPositionFees() public {
         skip(1 hours);
         uint128 depositAmount = 1 ether;
-        bytes memory currentPrice = abi.encode(uint128(2000 ether)); // only used to apply funding
+        uint128 price = 2000 ether;
+        bytes memory priceData = abi.encode(price); // only used to apply funding
 
-        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, depositAmount, 2000 ether);
+        uint128 initialBlock = uint128(block.timestamp);
+        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, depositAmount, price);
 
-        uint256 expectedSharesBalanceA =
-            Vault._calcMintUsdnShares(depositAmount, protocol.getBalanceVault(), usdn.totalShares());
+        uint128 amountWithFees =
+            uint128(depositAmount - uint256(depositAmount) * protocol.getVaultFeeBps() / protocol.BPS_DIVISOR());
+        uint256 expectedSharesBalanceA = Vault._calcMintUsdnShares(
+            amountWithFees, uint256(protocol.vaultAssetAvailableWithFunding(price, initialBlock)), usdn.totalShares()
+        );
 
         _waitDelay();
 
@@ -254,14 +258,10 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         // Check stored position asset price
         uint256 expectedSharesBalanceB = Vault._calcMintUsdnShares(
-            depositAmount,
+            amountWithFees,
             uint256(
                 protocol.i_vaultAssetAvailable(
-                    deposit.totalExpo,
-                    deposit.balanceVault,
-                    deposit.balanceLong,
-                    uint128(2000 ether - 2000 ether * uint256(protocol.getVaultFeeBps()) / protocol.BPS_DIVISOR()),
-                    deposit.assetPrice
+                    deposit.totalExpo, deposit.balanceVault, deposit.balanceLong, price, deposit.assetPrice
                 )
             ),
             deposit.usdnTotalShares
@@ -273,7 +273,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
         uint256 usdnSharesBefore = usdn.sharesOf(address(this));
-        protocol.validateDeposit(payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit(payable(address(this)), priceData, EMPTY_PREVIOUS_DATA);
         uint256 usdnBalanceAfter = usdn.balanceOf(address(this));
         uint256 usdnSharesAfter = usdn.sharesOf(address(this));
         uint256 mintedUsdn = usdnBalanceAfter - usdnBalanceBefore;

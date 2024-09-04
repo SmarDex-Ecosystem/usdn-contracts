@@ -13,23 +13,29 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
      * @param to The address that will receive the USDN tokens
      * @param validator The address of the validator that will validate the deposit
      * @param amount The amount of assets that were deposited
+     * @param feeBps The fee in basis points
      * @param timestamp The timestamp of the action
      * @param sdexBurned The amount of SDEX tokens burned
      */
     event InitiatedDeposit(
-        address indexed to, address indexed validator, uint256 amount, uint256 timestamp, uint256 sdexBurned
+        address indexed to,
+        address indexed validator,
+        uint256 amount,
+        uint256 feeBps,
+        uint256 timestamp,
+        uint256 sdexBurned
     );
 
     /**
      * @notice Emitted when a user validates a deposit
      * @param to The address that received the USDN tokens
      * @param validator The address of the validator that validated the deposit
-     * @param amountDeposited The amount of assets that were deposited
+     * @param amountWithFees The amount of assets that were deposited after fees
      * @param usdnMinted The amount of USDN that was minted
      * @param timestamp The timestamp of the InitiatedDeposit action
      */
     event ValidatedDeposit(
-        address indexed to, address indexed validator, uint256 amountDeposited, uint256 usdnMinted, uint256 timestamp
+        address indexed to, address indexed validator, uint256 amountWithFees, uint256 usdnMinted, uint256 timestamp
     );
 
     /**
