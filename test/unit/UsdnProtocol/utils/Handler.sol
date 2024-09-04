@@ -402,7 +402,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_getLiquidationPrice(uint128 startPrice, uint128 leverage) external pure returns (uint128) {
-        return Long._getLiquidationPrice(startPrice, leverage);
+        return Utils._getLiquidationPrice(startPrice, leverage);
     }
 
     function i_checkImbalanceLimitDeposit(uint256 depositValue) external view {
@@ -422,7 +422,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_getLeverage(uint128 price, uint128 liqPrice) external pure returns (uint256) {
-        return Long._getLeverage(price, liqPrice);
+        return ActionsUtils._getLeverage(price, liqPrice);
     }
 
     function i_calcTickFromBitmapIndex(uint256 index) external view returns (int24) {
@@ -541,6 +541,14 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
 
     function i_getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) external pure returns (uint128) {
         return Long._getEffectivePriceForTick(tick, liqMultiplier);
+    }
+
+    function i_getEffectiveTickForPrice(uint128 price, uint256 liqMultiplier, int24 tickSpacing)
+        external
+        pure
+        returns (int24)
+    {
+        return Long._getEffectiveTickForPrice(price, liqMultiplier, tickSpacing);
     }
 
     function i_calcFixedPrecisionMultiplier(
@@ -796,6 +804,17 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     ) external pure returns (int24 tickWithPenalty_, uint128 liqPriceWithoutPenalty_) {
         return Long._getTickFromDesiredLiqPrice(
             desiredLiqPriceWithoutPenalty, assetPrice, longTradingExpo, accumulator, tickSpacing, liquidationPenalty
+        );
+    }
+
+    function i_getTickFromDesiredLiqPrice(
+        uint128 desiredLiqPriceWithoutPenalty,
+        uint256 liqMultiplier,
+        int24 tickSpacing,
+        uint24 liquidationPenalty
+    ) external pure returns (int24 tickWithPenalty_, uint128 liqPriceWithoutPenalty_) {
+        return Long._getTickFromDesiredLiqPrice(
+            desiredLiqPriceWithoutPenalty, liqMultiplier, tickSpacing, liquidationPenalty
         );
     }
 }

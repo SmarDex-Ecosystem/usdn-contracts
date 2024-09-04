@@ -226,7 +226,7 @@ library UsdnProtocolActionsUtilsLibrary {
             closePosTotalExpo: 0,
             tickVersion: data.posId.tickVersion,
             index: data.posId.index,
-            closeLiqMultiplier: 0,
+            liqMultiplier: data.liqMultiplier,
             closeBoundedPositionValue: 0
         });
         amountToRefund_ = Core._addPendingAction(s, validator, Core._convertLongPendingAction(action));
@@ -295,7 +295,7 @@ library UsdnProtocolActionsUtilsLibrary {
         data_.liqPriceWithoutPenalty =
             Long.getEffectivePriceForTick(s, Utils.calcTickWithoutPenalty(data_.action.tick, data_.liquidationPenalty));
         // reverts if liqPriceWithoutPenalty >= startPrice
-        data_.leverage = Long._getLeverage(data_.startPrice, data_.liqPriceWithoutPenalty);
+        data_.leverage = _getLeverage(data_.startPrice, data_.liqPriceWithoutPenalty);
         // calculate how much the position that was opened in the initiate is now worth (it might be too large or too
         // small considering the new entry price). We will adjust the long and vault balances accordingly
         uint128 lastPrice = s._lastPrice;
@@ -470,7 +470,7 @@ library UsdnProtocolActionsUtilsLibrary {
             closePosTotalExpo: data.totalExpoToClose,
             tickVersion: posId.tickVersion,
             index: posId.index,
-            closeLiqMultiplier: Long._calcFixedPrecisionMultiplier(data.lastPrice, data.longTradingExpo, data.liqMulAcc),
+            liqMultiplier: Long._calcFixedPrecisionMultiplier(data.lastPrice, data.longTradingExpo, data.liqMulAcc),
             closeBoundedPositionValue: data.tempPositionValue
         });
         amountToRefund_ = Core._addPendingAction(s, validator, Core._convertLongPendingAction(action));
@@ -629,5 +629,22 @@ library UsdnProtocolActionsUtilsLibrary {
      */
     function _calcActionId(address validator, uint128 initiateTimestamp) public pure returns (bytes32 actionId_) {
         actionId_ = keccak256(abi.encodePacked(validator, initiateTimestamp));
+    }
+
+    /**
+     * @notice Calculate the leverage of a position, knowing its start price and liquidation price
+     * @dev This does not take into account the liquidation penalty
+     * @param startPrice Entry price of the position
+     * @param liquidationPrice Liquidation price of the position
+     * @return leverage_ The leverage of the position
+     */
+    function _getLeverage(uint128 startPrice, uint128 liquidationPrice) public pure returns (uint256 leverage_) {
+        if (startPrice <= liquidationPrice) {
+            // this situation is not allowed (newly open position must be solvent)
+            // also, the calculation below would underflow
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationPrice(liquidationPrice, startPrice);
+        }
+
+        leverage_ = (10 ** Constants.LEVERAGE_DECIMALS * uint256(startPrice)) / (startPrice - liquidationPrice);
     }
 }

@@ -323,11 +323,15 @@ library UsdnProtocolActionsLongLibrary {
         if (data.leverage > maxLeverage) {
             MaxLeverageData memory maxLeverageData;
             // theoretical liquidation price for _maxLeverage
-            data.liqPriceWithoutPenalty = Long._getLiquidationPrice(data.startPrice, maxLeverage);
+            data.liqPriceWithoutPenalty = Utils._getLiquidationPrice(data.startPrice, maxLeverage);
             // find corresponding tick and actual liq price with current penalty setting
             maxLeverageData.currentLiqPenalty = s._liquidationPenalty;
-            (maxLeverageData.newPosId.tick, data.liqPriceWithoutPenalty) =
-                Long._getTickFromDesiredLiqPrice(s, data.liqPriceWithoutPenalty, maxLeverageData.currentLiqPenalty);
+            (maxLeverageData.newPosId.tick, data.liqPriceWithoutPenalty) = Long._getTickFromDesiredLiqPrice(
+                data.liqPriceWithoutPenalty,
+                data.action.liqMultiplier,
+                s._tickSpacing,
+                maxLeverageData.currentLiqPenalty
+            );
 
             // retrieve the actual penalty for this tick we want to use
             maxLeverageData.liquidationPenalty = Long.getTickLiquidationPenalty(s, maxLeverageData.newPosId.tick);
@@ -344,8 +348,11 @@ library UsdnProtocolActionsLongLibrary {
                 // leverage that exceeds the max leverage slightly. We allow this behavior in this rare occurrence
 
                 // retrieve exact liquidation price without penalty
-                data.liqPriceWithoutPenalty = Long.getEffectivePriceForTick(
-                    s, Utils.calcTickWithoutPenalty(maxLeverageData.newPosId.tick, maxLeverageData.liquidationPenalty)
+                // we consider the liquidation multiplier as it was during the initiation, to account for any funding
+                // that was due between the initiation and the validation
+                data.liqPriceWithoutPenalty = Long._getEffectivePriceForTick(
+                    Utils.calcTickWithoutPenalty(maxLeverageData.newPosId.tick, maxLeverageData.liquidationPenalty),
+                    data.action.liqMultiplier
                 );
             }
 
@@ -557,7 +564,7 @@ library UsdnProtocolActionsLongLibrary {
             (currentPrice.price - currentPrice.price * s._positionFeeBps / Constants.BPS_DIVISOR).toUint128();
 
         // get liquidation price (with liq penalty) to check if the position was valid at `timestamp + validationDelay`
-        data.liquidationPrice = Long._getEffectivePriceForTick(long.tick, long.closeLiqMultiplier);
+        data.liquidationPrice = Long._getEffectivePriceForTick(long.tick, long.liqMultiplier);
 
         if (currentPrice.neutralPrice <= data.liquidationPrice) {
             // position should be liquidated, we don't transfer assets to the user
@@ -579,7 +586,7 @@ library UsdnProtocolActionsLongLibrary {
 
         int24 tick = Utils.calcTickWithoutPenalty(long.tick, Long.getTickLiquidationPenalty(s, long.tick));
         data.positionValue = Long._positionValue(
-            data.priceWithFees, Long._getEffectivePriceForTick(tick, long.closeLiqMultiplier), long.closePosTotalExpo
+            data.priceWithFees, Long._getEffectivePriceForTick(tick, long.liqMultiplier), long.closePosTotalExpo
         );
 
         uint256 assetToTransfer;
