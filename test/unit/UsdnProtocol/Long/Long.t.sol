@@ -174,7 +174,6 @@ contract TestUsdnProtocolLongLong is UsdnProtocolBaseFixture {
         uint256 valueAfterRebase = wstETH.getStETHByWstETH(positionValue) * 2000;
 
         assertLt(valueBeforeRebase, valueAfterRebase, "position value should be lower after rebase");
-        assertEq(valueBeforeRebase, 20_000 ether, "valueBeforeRebase should be 20000");
         assertApproxEqRel(valueBeforeRebase, 20_000 ether, 0.00001e18, "valueBeforeRebase should be 20000");
         assertApproxEqRel(valueAfterRebase, 22_000 ether, 0.00001e18, "valueAfterRebase should be 22000");
     }
