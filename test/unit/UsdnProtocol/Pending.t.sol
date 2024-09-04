@@ -400,7 +400,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         LongPendingAction memory longAction = protocol.i_toLongPendingAction(action);
         assertTrue(longAction.action == action.action, "action action");
         assertEq(longAction.timestamp, action.timestamp, "action timestamp");
-        assertEq(longAction.liqPenalty, action.var0, "action liqPenalty");
+        assertEq(longAction.closeLiqPenalty, action.var0, "action liqPenalty");
         assertEq(longAction.to, action.to, "action to");
         assertEq(longAction.validator, action.validator, "action validator");
         assertEq(longAction.securityDepositValue, action.securityDepositValue, "action security deposit value");

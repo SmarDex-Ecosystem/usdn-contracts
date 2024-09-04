@@ -214,7 +214,7 @@ library UsdnProtocolActionsUtilsLibrary {
         Types.LongPendingAction memory action = Types.LongPendingAction({
             action: Types.ProtocolAction.ValidateOpenPosition,
             timestamp: uint40(block.timestamp),
-            liqPenalty: data.liquidationPenalty,
+            closeLiqPenalty: 0,
             to: to,
             validator: validator,
             securityDepositValue: securityDepositValue,
@@ -459,7 +459,7 @@ library UsdnProtocolActionsUtilsLibrary {
         Types.LongPendingAction memory action = Types.LongPendingAction({
             action: Types.ProtocolAction.ValidateClosePosition,
             timestamp: uint40(block.timestamp),
-            liqPenalty: data.liquidationPenalty,
+            closeLiqPenalty: data.liquidationPenalty,
             to: to,
             validator: validator,
             securityDepositValue: securityDepositValue,

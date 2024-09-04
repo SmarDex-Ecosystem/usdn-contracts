@@ -595,7 +595,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         LongPendingAction memory longPendingAction = LongPendingAction({
             action: ProtocolAction.ValidateOpenPosition,
             timestamp: uint40(block.timestamp - 1 days),
-            liqPenalty: 0,
+            closeLiqPenalty: 0,
             to: address(this),
             validator: USER_1,
             securityDepositValue: 0.01 ether,
@@ -624,7 +624,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         LongPendingAction memory longPendingAction = LongPendingAction({
             action: ProtocolAction.ValidateOpenPosition,
             timestamp: uint40(block.timestamp - 1 days),
-            liqPenalty: 0,
+            closeLiqPenalty: 0,
             to: address(this),
             validator: USER_1,
             securityDepositValue: 0.01 ether,
