@@ -656,13 +656,16 @@ library UsdnProtocolLongLibrary {
             return data_;
         }
 
+        uint128 lastPrice = s._lastPrice;
+
         // gas savings, we only load the data once and use it for all conversions below
         Types.TickPriceConversionData memory conversionData = Types.TickPriceConversionData({
-            assetPrice: s._lastPrice,
-            tradingExpo: s._totalExpo - s._balanceLong,
+            assetPrice: lastPrice,
+            tradingExpo: Core.longTradingExpoWithFunding(s, lastPrice, uint128(block.timestamp)).toUint256(),
             accumulator: s._liqMultiplierAccumulator,
             tickSpacing: s._tickSpacing
         });
+
         // we calculate the closest valid tick down for the desired liq price with liquidation penalty
         data_.posId.tick = getEffectiveTickForPrice(
             desiredLiqPrice,
