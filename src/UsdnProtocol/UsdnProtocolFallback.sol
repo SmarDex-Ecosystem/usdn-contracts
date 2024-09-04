@@ -474,25 +474,25 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdnProtocolFallback
-    function setValidatorDeadlines(uint128 newlowLatencyValidatorDeadline, uint128 newonChainValidatorDeadline)
+    function setValidatorDeadlines(uint128 newLowLatencyValidatorDeadline, uint128 newOnChainValidatorDeadline)
         external
         onlyRole(CRITICAL_FUNCTIONS_ROLE)
     {
         uint16 lowLatencyDelay = s._oracleMiddleware.getLowLatencyDelay();
 
-        if (newlowLatencyValidatorDeadline < Constants.MIN_VALIDATION_DEADLINE) {
+        if (newLowLatencyValidatorDeadline < Constants.MIN_VALIDATION_DEADLINE) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidValidatorDeadline();
         }
-        if (newlowLatencyValidatorDeadline > lowLatencyDelay) {
+        if (newLowLatencyValidatorDeadline > lowLatencyDelay) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidValidatorDeadline();
         }
-        if (newonChainValidatorDeadline > Constants.MAX_VALIDATION_DEADLINE) {
+        if (newOnChainValidatorDeadline > Constants.MAX_VALIDATION_DEADLINE) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidValidatorDeadline();
         }
 
-        s._lowLatencyValidatorDeadline = newlowLatencyValidatorDeadline;
-        s._onChainValidatorDeadline = newonChainValidatorDeadline;
-        emit IUsdnProtocolEvents.ValidatorDeadlinesUpdated(newlowLatencyValidatorDeadline, newonChainValidatorDeadline);
+        s._lowLatencyValidatorDeadline = newLowLatencyValidatorDeadline;
+        s._onChainValidatorDeadline = newOnChainValidatorDeadline;
+        emit IUsdnProtocolEvents.ValidatorDeadlinesUpdated(newLowLatencyValidatorDeadline, newOnChainValidatorDeadline);
     }
 
     /* -------------------------------------------------------------------------- */

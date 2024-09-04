@@ -211,12 +211,12 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
 
     /**
      * @notice Emitted when the `lowLatencyValidatorDeadline` and `onChainValidatorDeadline` are updated
-     * @param newlowLatencyValidatorDeadline The new deadline for low-latency validation (offset from the initiate
+     * @param newLowLatencyValidatorDeadline The new deadline for low-latency validation (offset from the initiate
      * action timestamp)
-     * @param newonChainValidatorDeadline The new deadline for on-chain validation (offset from the initiate action
+     * @param newOnChainValidatorDeadline The new deadline for on-chain validation (offset from the initiate action
      * timestamp + the oracle middleware's low-latency delay)
      */
-    event ValidatorDeadlinesUpdated(uint128 newlowLatencyValidatorDeadline, uint128 newonChainValidatorDeadline);
+    event ValidatorDeadlinesUpdated(uint128 newLowLatencyValidatorDeadline, uint128 newOnChainValidatorDeadline);
 
     /**
      * @notice Emitted when the `liquidationPenalty` is updated
