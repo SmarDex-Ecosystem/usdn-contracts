@@ -260,7 +260,7 @@ interface IUsdnProtocolFallback {
     function getLowLatencyValidatorDeadline() external view returns (uint128);
 
     /**
-     * @notice  The deadline for a user to confirm their action with the on-chain oracle
+     * @notice The deadline for a user to confirm their action with the on-chain oracle
      * @dev After this deadline, any user can validate the action with the on-chain oracle and retrieve the security
      * deposit for the pending action
      * @return The on-chain validation deadline (in seconds)
