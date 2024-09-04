@@ -142,4 +142,37 @@ contract TestUsdnProtocolLongLong is UsdnProtocolBaseFixture {
         );
         assertEq(tickData.totalExpo, position.totalExpo, "Total expo on tick is not the expected value");
     }
+
+    /**
+     * @custom:scenario Check the position value increases after a rebase
+     * @custom:given A long position
+     * @custom:when The price of the asset no changes
+     * @custom:and The wsteth/steth ratio changes
+     * @custom:then The position value in dollars should change
+     */
+    function test_positionValueIncreaseAfterRebase() public {
+        uint128 price = 2000 ether;
+        uint128 amount = 10 ether;
+        uint128 desiredLiqPrice = 1800 ether;
+        PositionId memory posId = setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: amount,
+                desiredLiqPrice: desiredLiqPrice,
+                price: 2000 ether
+            })
+        );
+        uint256 positionValue = uint256(protocol.getPositionValue(posId, price, uint128(block.timestamp)));
+
+        // simulate rebase from lido
+        wstETH.setStEthPerToken(10);
+        uint256 valueBeforeRebase = wstETH.getStETHByWstETH(positionValue) * price;
+
+        // simulate rebase from lido
+        wstETH.setStEthPerToken(11);
+        uint256 valueAfterRebase = wstETH.getStETHByWstETH(positionValue) * price;
+
+        assertLt(valueBeforeRebase, valueAfterRebase, "position value should be lower after rebase");
+    }
 }
