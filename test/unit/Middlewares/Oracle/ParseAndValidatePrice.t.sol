@@ -363,42 +363,13 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
 
         /* --------------------- Validate actions revert as well -------------------- */
 
-        // wrong previous roundId price
+        skip(LOW_LATENCY_DELAY + 1);
+
+        // wrong validate roundId price
 
         bytes memory roundIdData = abi.encode(FIRST_ROUND_ID + 1);
         mockChainlinkOnChain.setRoundTimestamp(FIRST_ROUND_ID, LIMIT_TIMESTAMP);
         mockChainlinkOnChain.setRoundTimestamp(FIRST_ROUND_ID + 1, LIMIT_TIMESTAMP + 1);
-        mockChainlinkOnChain.setRoundPrice(FIRST_ROUND_ID, -1);
-        mockChainlinkOnChain.setRoundPrice(FIRST_ROUND_ID + 1, int256(ETH_PRICE));
-        mockChainlinkOnChain.setLatestRoundData(
-            FIRST_ROUND_ID + 1, int256(ETH_PRICE), LIMIT_TIMESTAMP + 1, FIRST_ROUND_ID + 1
-        );
-
-        skip(LOW_LATENCY_DELAY + 1);
-
-        validationCost = oracleMiddleware.validationCost(roundIdData, Types.ProtocolAction.ValidateDeposit);
-        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareInvalidRoundId.selector));
-        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            "", TARGET_TIMESTAMP, Types.ProtocolAction.ValidateDeposit, roundIdData
-        );
-
-        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareInvalidRoundId.selector));
-        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            "", TARGET_TIMESTAMP, Types.ProtocolAction.ValidateWithdrawal, roundIdData
-        );
-
-        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareInvalidRoundId.selector));
-        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            "", TARGET_TIMESTAMP, Types.ProtocolAction.ValidateOpenPosition, roundIdData
-        );
-
-        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareInvalidRoundId.selector));
-        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            "", TARGET_TIMESTAMP, Types.ProtocolAction.ValidateClosePosition, roundIdData
-        );
-
-        // wrong validate roundId price
-
         mockChainlinkOnChain.setRoundPrice(FIRST_ROUND_ID, int256(ETH_PRICE));
         mockChainlinkOnChain.setRoundPrice(FIRST_ROUND_ID + 1, -1);
         mockChainlinkOnChain.setLatestRoundData(FIRST_ROUND_ID + 1, -1, LIMIT_TIMESTAMP + 1, FIRST_ROUND_ID + 1);

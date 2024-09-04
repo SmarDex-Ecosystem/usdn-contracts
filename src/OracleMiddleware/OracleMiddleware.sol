@@ -320,14 +320,13 @@ contract OracleMiddleware is
         view
         returns (ChainlinkPriceInfo memory providedRoundPrice_)
     {
-        uint80 previousRoundId = roundId - 1;
         providedRoundPrice_ = _getFormattedChainlinkPrice(MIDDLEWARE_DECIMALS, roundId);
 
         if (providedRoundPrice_.price <= 0) {
             revert OracleMiddlewareWrongPrice(providedRoundPrice_.price);
         }
 
-        (,,, uint256 previousRoundTimestamp,) = _priceFeed.getRoundData(previousRoundId);
+        (,,, uint256 previousRoundTimestamp,) = _priceFeed.getRoundData(roundId - 1);
 
         // if the provided round's timestamp is 0, it's possible the aggregator recently changed and there is no data
         // available for the previous round ID in the aggregator. In that case, we accept the given round ID as the
