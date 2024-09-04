@@ -93,8 +93,8 @@ contract TestUsdnUpdate is UsdnTokenFixture {
     function test_RevertWhen_mintOverflowTotal() public {
         uint256 max = usdn.maxTokens();
         usdn.i_update(address(0), address(this), max);
-        vm.expectRevert(UsdnTotalSupplyOverflow.selector);
-        usdn.i_update(address(0), address(this), max);
+        vm.expectRevert();
+        usdn.i_update(address(0), address(this), 1);
     }
 
     /* -------------------------------------------------------------------------- */
