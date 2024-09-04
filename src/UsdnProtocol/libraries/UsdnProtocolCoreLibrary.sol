@@ -130,9 +130,9 @@ library UsdnProtocolCoreLibrary {
             maxIter = queueLength;
         }
 
-        uint128 lowLatencyDeadline = s._lowLatencyValidationDeadline;
+        uint128 lowLatencyDeadline = s._lowLatencyValidatorDeadline;
         uint16 middlewareLowLatencyDelay = s._oracleMiddleware.getLowLatencyDelay();
-        uint128 onChainDeadline = s._onChainValidationDeadline;
+        uint128 onChainDeadline = s._onChainValidatorDeadline;
         uint256 i = 0;
         uint256 j = 0;
         uint256 arrayLen = 0;
@@ -698,9 +698,9 @@ library UsdnProtocolCoreLibrary {
             maxIter = queueLength;
         }
 
-        uint128 lowLatencyDeadline = s._lowLatencyValidationDeadline;
+        uint128 lowLatencyDeadline = s._lowLatencyValidatorDeadline;
         uint16 middlewareLowLatencyDelay = s._oracleMiddleware.getLowLatencyDelay();
-        uint128 onChainDeadline = s._onChainValidationDeadline;
+        uint128 onChainDeadline = s._onChainValidatorDeadline;
         uint256 i = 0;
         uint256 j = 0;
         do {
@@ -869,7 +869,7 @@ library UsdnProtocolCoreLibrary {
         public
     {
         Types.PendingAction memory pending = s._pendingActionsQueue.atRaw(rawIndex);
-        if (block.timestamp < pending.timestamp + s._lowLatencyValidationDeadline + 1 hours) {
+        if (block.timestamp < pending.timestamp + s._lowLatencyValidatorDeadline + 1 hours) {
             revert IUsdnProtocolErrors.UsdnProtocolUnauthorized();
         }
         delete s._pendingActions[pending.validator];

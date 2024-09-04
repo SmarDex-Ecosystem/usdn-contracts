@@ -85,14 +85,14 @@ contract TestUsdnProtocolActionablePendingActions is UsdnProtocolBaseIntegration
         vm.prank(USER_1);
         protocol.initiateDeposit{ value: securityDeposit }(2 ether, USER_1, USER_1, NO_PERMIT2, "", EMPTY_PREVIOUS_DATA);
         // create a pending open position a bit later
-        skip(protocol.getOnChainValidationDeadline() / 2);
+        skip(protocol.getOnChainValidatorDeadline() / 2);
         mockChainlinkOnChain.setLastPublishTime(block.timestamp);
         vm.prank(USER_2);
         protocol.initiateOpenPosition{ value: securityDeposit }(
             2 ether, params.initialPrice / 2, USER_2, USER_2, NO_PERMIT2, "", EMPTY_PREVIOUS_DATA
         );
         // create a pending deposit a bit later
-        vm.warp(initialTimestamp + protocol.getOnChainValidationDeadline() + 1);
+        vm.warp(initialTimestamp + protocol.getOnChainValidatorDeadline() + 1);
         mockChainlinkOnChain.setLastPublishTime(block.timestamp);
         // prepare pyth for validation
         (, int256 ethPrice,,,) = mockChainlinkOnChain.latestRoundData();
@@ -101,7 +101,7 @@ contract TestUsdnProtocolActionablePendingActions is UsdnProtocolBaseIntegration
         vm.prank(USER_3);
         protocol.initiateDeposit{ value: securityDeposit }(2 ether, USER_3, USER_3, NO_PERMIT2, "", EMPTY_PREVIOUS_DATA);
         // wait until the first and third are actionable
-        vm.warp(initialTimestamp + oracleMiddleware.getLowLatencyDelay() + protocol.getOnChainValidationDeadline() + 1);
+        vm.warp(initialTimestamp + oracleMiddleware.getLowLatencyDelay() + protocol.getOnChainValidatorDeadline() + 1);
         mockChainlinkOnChain.setLatestRoundData(10, ethPrice, block.timestamp, 10);
         uint256 prevRoundTimestamp = initialTimestamp + oracleMiddleware.getLowLatencyDelay() - 10 minutes;
         mockChainlinkOnChain.setRoundData(8, ethPrice, prevRoundTimestamp, prevRoundTimestamp, 8);

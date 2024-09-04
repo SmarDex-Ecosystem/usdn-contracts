@@ -198,7 +198,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             })
         );
 
-        skip(protocol.getLowLatencyValidationDeadline());
+        skip(protocol.getLowLatencyValidatorDeadline());
 
         bytes[] memory previousData = new bytes[](1);
         previousData[0] = priceData;

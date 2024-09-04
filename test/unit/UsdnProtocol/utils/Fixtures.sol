@@ -432,7 +432,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
     }
 
     function _waitBeforeActionablePendingAction() internal {
-        skip(protocol.getLowLatencyValidationDeadline() + 1);
+        skip(protocol.getLowLatencyValidatorDeadline() + 1);
     }
 
     /// @dev Calculate proper initial values from randoms to initialize a balanced protocol

@@ -160,7 +160,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             posId, POSITION_AMOUNT, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
 
-        skip(protocol.getLowLatencyValidationDeadline());
+        skip(protocol.getLowLatencyValidatorDeadline());
 
         bytes[] memory previousData = new bytes[](1);
         previousData[0] = priceData;
@@ -733,7 +733,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
     }
 
     /**
-     * @custom:scenario The user initiates and validates (after the validationDeadline)
+     * @custom:scenario The user initiates and validates (after the validator deadline)
      * a close position action with another msg.sender
      * @custom:given The user initiated a closePosition
      * @custom:when The another user validates the closePosition

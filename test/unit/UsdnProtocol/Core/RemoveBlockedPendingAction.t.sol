@@ -373,7 +373,7 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         vm.expectRevert(UsdnProtocolUnauthorized.selector);
         protocol.i_removeBlockedPendingAction(rawIndex, payable(this), true);
 
-        vm.warp(action.timestamp + protocol.getLowLatencyValidationDeadline() + 3599 seconds);
+        vm.warp(action.timestamp + protocol.getLowLatencyValidatorDeadline() + 3599 seconds);
 
         vm.expectRevert(UsdnProtocolUnauthorized.selector);
         protocol.i_removeBlockedPendingAction(rawIndex, payable(this), true);

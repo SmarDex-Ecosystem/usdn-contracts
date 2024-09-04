@@ -257,7 +257,7 @@ interface IUsdnProtocolFallback {
      * OracleMiddleware's `_lowLatencyDelay`, and retrieve the security deposit for the pending action
      * @return The low-latency validation deadline (in seconds)
      */
-    function getLowLatencyValidationDeadline() external view returns (uint128);
+    function getLowLatencyValidatorDeadline() external view returns (uint128);
 
     /**
      * @notice  The deadline for a user to confirm their action with the on-chain oracle
@@ -265,7 +265,7 @@ interface IUsdnProtocolFallback {
      * deposit for the pending action
      * @return The on-chain validation deadline (in seconds)
      */
-    function getOnChainValidationDeadline() external view returns (uint128);
+    function getOnChainValidatorDeadline() external view returns (uint128);
 
     /**
      * @notice Get the liquidation penalty applied to the liquidation price when opening a position
@@ -563,12 +563,12 @@ interface IUsdnProtocolFallback {
 
     /**
      * @notice Set the new deadlines for a user to confirm their action
-     * @param newLowLatencyValidationDeadline The new deadline for low-latency validation (offset from initiate
+     * @param newlowLatencyValidatorDeadline The new deadline for low-latency validation (offset from initiate
      * timestamp)
-     * @param newOnChainValidationDeadline The new deadline for on-chain validation (offset from initiate timestamp +
+     * @param newonChainValidatorDeadline The new deadline for on-chain validation (offset from initiate timestamp +
      * oracle middleware's low latency delay)
      */
-    function setValidationDeadlines(uint128 newLowLatencyValidationDeadline, uint128 newOnChainValidationDeadline)
+    function setValidatorDeadlines(uint128 newlowLatencyValidatorDeadline, uint128 newonChainValidatorDeadline)
         external;
 
     /**
