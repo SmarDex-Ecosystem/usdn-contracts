@@ -133,9 +133,9 @@ library UsdnProtocolCoreLibrary {
         uint128 lowLatencyDeadline = s._lowLatencyValidatorDeadline;
         uint16 middlewareLowLatencyDelay = s._oracleMiddleware.getLowLatencyDelay();
         uint128 onChainDeadline = s._onChainValidatorDeadline;
-        uint256 i = 0;
-        uint256 j = 0;
-        uint256 arrayLen = 0;
+        uint256 i;
+        uint256 j;
+        uint256 arrayLen;
         do {
             // since `i` cannot be greater or equal to `queueLength`, there is no risk of reverting
             (Types.PendingAction memory candidate, uint128 rawIndex) = s._pendingActionsQueue.at(i);
@@ -701,8 +701,8 @@ library UsdnProtocolCoreLibrary {
         uint128 lowLatencyDeadline = s._lowLatencyValidatorDeadline;
         uint16 middlewareLowLatencyDelay = s._oracleMiddleware.getLowLatencyDelay();
         uint128 onChainDeadline = s._onChainValidatorDeadline;
-        uint256 i = 0;
-        uint256 j = 0;
+        uint256 i;
+        uint256 j;
         do {
             // since we will never loop more than `queueLength` times, there is no risk of reverting
             (Types.PendingAction memory candidate, uint128 rawIndex) = s._pendingActionsQueue.at(j);
@@ -975,15 +975,16 @@ library UsdnProtocolCoreLibrary {
      * @return actionable_ Whether the pending action is actionable
      */
     function _isActionable(
-        uint128 initiateTimestamp,
-        uint128 lowLatencyDeadline,
-        uint16 lowLatencyDelay,
-        uint128 onChainDeadline
+        uint256 initiateTimestamp,
+        uint256 lowLatencyDeadline,
+        uint256 lowLatencyDelay,
+        uint256 onChainDeadline
     ) public view returns (bool actionable_) {
-        bool isLowLatency = block.timestamp <= initiateTimestamp + lowLatencyDelay;
-        if (isLowLatency) {
+        if (block.timestamp <= initiateTimestamp + lowLatencyDelay) {
+            // the validation must happen with a low-latency oracle
             actionable_ = block.timestamp > initiateTimestamp + lowLatencyDeadline;
         } else {
+            // the validation must happen with an on-chain oracle
             actionable_ = block.timestamp > initiateTimestamp + lowLatencyDelay + onChainDeadline;
         }
     }
