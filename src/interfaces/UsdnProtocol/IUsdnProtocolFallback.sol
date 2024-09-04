@@ -252,7 +252,7 @@ interface IUsdnProtocolFallback {
     function getMaxLeverage() external view returns (uint256);
 
     /**
-     * @notice  The deadline for a user to confirm their action with a low-latency oracle
+     * @notice The deadline for a user to confirm their action with a low-latency oracle
      * @dev After this deadline, any user can validate the action with the low-latency oracle until the
      * OracleMiddleware's `_lowLatencyDelay`, and retrieve the security deposit for the pending action
      * @return The low-latency validation deadline (in seconds)
