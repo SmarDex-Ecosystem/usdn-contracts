@@ -321,8 +321,8 @@ library UsdnProtocolActionsVaultLibrary {
         }
         uint32 burnRatio = s._sdexBurnOnDepositRatio;
         data_.sdexToBurn = Vault._calcSdexToBurn(usdnToMintEstimated, burnRatio);
-        // we want to at least burn 1 wei of SDEX if SDEX burning is enabled
-        if (burnRatio != 0 && data_.sdexToBurn == 0) {
+        // we want to at least burn 2 wei of SDEX if SDEX burning is enabled
+        if (burnRatio != 0 && data_.sdexToBurn <= 1) {
             revert IUsdnProtocolErrors.UsdnProtocolDepositTooSmall();
         }
     }

@@ -210,7 +210,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
      * @custom:and The SDEX burn on deposit is enabled at 1% of the minted USDN
      * @custom:when The user initiates a deposit of 99 wei of wstETH
      * @custom:then The protocol would mint more than 0 USDN
-     * @custom:and The protocol would burn 0 SDEX
+     * @custom:and The protocol would burn 1 SDEX
      * @custom:and The protocol reverts with `UsdnProtocolDepositTooSmall`
      */
     function test_RevertWhen_depositTooSmallNoSDEXBurned() public {
@@ -230,7 +230,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         uint256 sdexToBurn = protocol.i_calcSdexToBurn(
             usdn.convertToTokens(usdnSharesToMintEstimated), protocol.getSdexBurnOnDepositRatio()
         );
-        assertEq(sdexToBurn, 0, "sdex burned");
+        assertEq(sdexToBurn, 1, "sdex burned");
 
         vm.expectRevert(UsdnProtocolDepositTooSmall.selector);
         protocol.initiateDeposit(
