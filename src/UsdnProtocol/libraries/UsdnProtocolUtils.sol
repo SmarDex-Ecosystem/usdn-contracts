@@ -55,7 +55,7 @@ library UsdnProtocolUtils {
      * @param leverage Leverage of the position
      * @return price_ The liquidation price of the position
      */
-    function _getLiquidationPrice(uint128 startPrice, uint128 leverage) public pure returns (uint128 price_) {
+    function _getLiquidationPrice(uint128 startPrice, uint128 leverage) internal pure returns (uint128 price_) {
         price_ = (startPrice - ((uint256(10) ** Constants.LEVERAGE_DECIMALS * startPrice) / leverage)).toUint128();
     }
 }
