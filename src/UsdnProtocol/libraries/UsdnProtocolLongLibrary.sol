@@ -661,6 +661,7 @@ library UsdnProtocolLongLibrary {
         // gas savings, we only load the data once and use it for all conversions below
         Types.TickPriceConversionData memory conversionData = Types.TickPriceConversionData({
             assetPrice: lastPrice,
+            // we need to take into account the funding for the trading expo between the last price timestamp and now
             tradingExpo: Core.longTradingExpoWithFunding(s, lastPrice, uint128(block.timestamp)).toUint256(),
             accumulator: s._liqMultiplierAccumulator,
             tickSpacing: s._tickSpacing
