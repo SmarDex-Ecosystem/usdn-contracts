@@ -166,13 +166,16 @@ contract TestUsdnProtocolLongLong is UsdnProtocolBaseFixture {
         uint256 positionValue = uint256(protocol.getPositionValue(posId, price, uint128(block.timestamp)));
 
         // simulate rebase from lido
-        wstETH.setStEthPerToken(10);
-        uint256 valueBeforeRebase = wstETH.getStETHByWstETH(positionValue) * price;
+        wstETH.setStEthPerToken(1 ether);
+        uint256 valueBeforeRebase = wstETH.getStETHByWstETH(positionValue) * 2000;
 
         // simulate rebase from lido
-        wstETH.setStEthPerToken(11);
-        uint256 valueAfterRebase = wstETH.getStETHByWstETH(positionValue) * price;
+        wstETH.setStEthPerToken(1.1 ether);
+        uint256 valueAfterRebase = wstETH.getStETHByWstETH(positionValue) * 2000;
 
         assertLt(valueBeforeRebase, valueAfterRebase, "position value should be lower after rebase");
+        assertEq(valueBeforeRebase, 20_000 ether, "valueBeforeRebase should be 20000");
+        assertApproxEqRel(valueBeforeRebase, 20_000 ether, 0.00001e18, "valueBeforeRebase should be 20000");
+        assertApproxEqRel(valueAfterRebase, 22_000 ether, 0.00001e18, "valueAfterRebase should be 22000");
     }
 }
