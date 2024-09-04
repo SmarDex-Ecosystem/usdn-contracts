@@ -327,18 +327,12 @@ contract OracleMiddleware is
             revert OracleMiddlewareWrongPrice(providedRoundPrice_.price);
         }
 
-        (, int256 previousRoundPrice,, uint256 previousRoundTimestamp,) = _priceFeed.getRoundData(previousRoundId);
+        (,,, uint256 previousRoundTimestamp,) = _priceFeed.getRoundData(previousRoundId);
 
-        if (previousRoundPrice > 0) {
-            // if previous price is higher than targetLimit
-            if (previousRoundTimestamp > targetLimit) {
-                revert OracleMiddlewareInvalidRoundId();
-            }
-        } else {
-            // if the provided round's price is 0, it's possible the aggregator recently changed and there is no data
-            // available for the previous round ID in the aggregator. In that case, we accept the given round ID as the
-            // sole reference with additional checks to make sure it is not too far from the target timestamp
-
+        // if the provided round's timestamp is 0, it's possible the aggregator recently changed and there is no data
+        // available for the previous round ID in the aggregator. In that case, we accept the given round ID as the
+        // sole reference with additional checks to make sure it is not too far from the target timestamp
+        if (previousRoundTimestamp == 0) {
             // calculate the provided round's phase ID
             uint80 roundPhaseId = roundId >> 64;
             // calculate the first valid round ID for this phase
@@ -358,6 +352,9 @@ contract OracleMiddleware is
             if (providedRoundPrice_.timestamp > targetLimit + _timeElapsedLimit) {
                 revert OracleMiddlewareInvalidRoundId();
             }
+        } else if (previousRoundTimestamp > targetLimit) {
+            // previous round should precede targetLimit
+            revert OracleMiddlewareInvalidRoundId();
         }
 
         if (providedRoundPrice_.timestamp <= targetLimit) {
