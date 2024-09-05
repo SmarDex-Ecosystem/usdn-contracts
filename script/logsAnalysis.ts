@@ -2,7 +2,15 @@
 import { Command } from 'commander';
 import { DateTime } from 'luxon';
 import pc from 'picocolors';
-import { http, createPublicClient, formatEther, isAddressEqual, publicActions, createTestClient, webSocket } from 'viem';
+import {
+  http,
+  createPublicClient,
+  createTestClient,
+  formatEther,
+  isAddressEqual,
+  publicActions,
+  webSocket,
+} from 'viem';
 import { IRebalancerAbi, IUsdnAbi, IUsdnProtocolAbi } from '../dist/abi';
 
 function parseArgs() {
@@ -33,7 +41,7 @@ function getClient(rpcUrl: string) {
   if (url.hostname === 'localhost') {
     return createTestClient({
       mode: 'anvil',
-      transport: http(rpcUrl),
+      transport: url.protocol === 'http:' ? http(rpcUrl) : webSocket(rpcUrl),
     }).extend(publicActions);
   }
   if (url.protocol === 'ws:' || url.protocol === 'wss:') {
@@ -60,7 +68,7 @@ async function main() {
   const usdnEvents = IUsdnAbi.filter((item) => item.type === 'event');
   const rebalancerEvents = IRebalancerAbi.filter((item) => item.type === 'event');
 
-  const startBlock = await client.getBlockNumber() - BigInt(options.blocks);
+  const startBlock = (await client.getBlockNumber()) - BigInt(options.blocks);
 
   const protocolLogs = await client.getLogs({
     address: options.protocol,
@@ -108,11 +116,10 @@ async function main() {
     console.log('Args:');
     for (const arg of Object.entries(log.args)) {
       // if value is an object, we stringify it
-      const value = typeof arg[1] === 'object' ? JSON.stringify(arg[1], (_, value) =>
-        typeof value === 'bigint'
-            ? value.toString()
-            : value
-      ) : arg[1];
+      const value =
+        typeof arg[1] === 'object'
+          ? JSON.stringify(arg[1], (_, value) => (typeof value === 'bigint' ? value.toString() : value))
+          : arg[1];
       // if value is a bigint, we add the value in ether
       const formattedValue = typeof arg[1] === 'bigint' && arg[1] !== 0n ? pc.dim(` (${formatEther(arg[1])})`) : '';
       console.log(pc.cyan(`  ${arg[0]}:`), `${value}${formattedValue}`);
