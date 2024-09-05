@@ -2,7 +2,6 @@
 pragma solidity 0.8.26;
 
 import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
-
 import { IUsdnProtocolImplV2 } from "./IUsdnProtocolImplV2.sol";
 
 /// @custom:oz-upgrades-from UsdnProtocolImpl
