@@ -619,6 +619,7 @@ library UsdnProtocolLongLibrary {
      * @param validator The address of the validator
      * @param amount The amount of wstETH to deposit
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
+     * @param userMaxLeverage The maximum leverage for the newly created pending action
      * @param currentPriceData The current price data
      * @return data_ The temporary data for the open position action
      */
@@ -627,6 +628,7 @@ library UsdnProtocolLongLibrary {
         address validator,
         uint128 amount,
         uint128 desiredLiqPrice,
+        uint256 userMaxLeverage,
         bytes calldata currentPriceData
     ) public returns (Types.InitiateOpenPositionData memory data_) {
         PriceInfo memory currentPrice = ActionsVault._getOraclePrice(
@@ -688,7 +690,7 @@ library UsdnProtocolLongLibrary {
             conversionData.tradingExpo,
             conversionData.accumulator
         );
-        _checkOpenPositionLeverage(s, data_.adjustedPrice, liqPriceWithoutPenalty);
+        _checkOpenPositionLeverage(s, data_.adjustedPrice, liqPriceWithoutPenalty, userMaxLeverage);
 
         data_.positionTotalExpo = _calcPositionTotalExpo(amount, data_.adjustedPrice, liqPriceWithoutPenalty);
         // the current price is known to be above the liquidation price because we checked the safety margin
@@ -708,18 +710,27 @@ library UsdnProtocolLongLibrary {
      * @param s The storage of the protocol
      * @param adjustedPrice The adjusted price of the asset
      * @param liqPriceWithoutPenalty The liquidation price of the position without the liquidation penalty
+     * @param userMaxLeverage The maximum leverage for the newly created pending action
      */
-    function _checkOpenPositionLeverage(Types.Storage storage s, uint128 adjustedPrice, uint128 liqPriceWithoutPenalty)
-        public
-        view
-    {
+    function _checkOpenPositionLeverage(
+        Types.Storage storage s,
+        uint128 adjustedPrice,
+        uint128 liqPriceWithoutPenalty,
+        uint256 userMaxLeverage
+    ) public view {
         // calculate position leverage
         // reverts if liquidationPrice >= entryPrice
         uint256 leverage = ActionsUtils._getLeverage(adjustedPrice, liqPriceWithoutPenalty);
         if (leverage < s._minLeverage) {
             revert IUsdnProtocolErrors.UsdnProtocolLeverageTooLow();
         }
-        if (leverage > s._maxLeverage) {
+
+        uint256 protocolMaxLeverage = s._maxLeverage;
+        if (userMaxLeverage > protocolMaxLeverage) {
+            userMaxLeverage = protocolMaxLeverage;
+        }
+
+        if (leverage > userMaxLeverage) {
             revert IUsdnProtocolErrors.UsdnProtocolLeverageTooHigh();
         }
     }
