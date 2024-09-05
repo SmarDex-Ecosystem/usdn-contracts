@@ -305,6 +305,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         PendingAction memory action = PendingAction({
             action: ProtocolAction.ValidateDeposit,
             timestamp: uint40(block.timestamp),
+            var0: 0, // must be zero because unused
             to: address(this),
             validator: address(this),
             securityDepositValue: 2424,
@@ -319,10 +320,11 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         DepositPendingAction memory depositAction = protocol.i_toDepositPendingAction(action);
         assertTrue(depositAction.action == action.action, "action action");
         assertEq(depositAction.timestamp, action.timestamp, "action timestamp");
+        assertEq(depositAction.__unused, action.var0, "action var0");
         assertEq(depositAction.to, action.to, "action to");
         assertEq(depositAction.validator, action.validator, "action validator");
         assertEq(depositAction.securityDepositValue, action.securityDepositValue, "action security deposit value");
-        assertEq(depositAction._unused, action.var1, "action amount");
+        assertEq(depositAction._unused, action.var1, "action var1");
         assertEq(depositAction.amount, action.var2, "action amount");
         assertEq(depositAction.assetPrice, action.var3, "action price");
         assertEq(depositAction.totalExpo, action.var4, "action expo");
@@ -343,6 +345,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         PendingAction memory action = PendingAction({
             action: ProtocolAction.ValidateWithdrawal,
             timestamp: uint40(block.timestamp),
+            var0: 0, // must be zero because unused
             to: address(this),
             validator: address(this),
             securityDepositValue: 2424,
@@ -357,6 +360,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         WithdrawalPendingAction memory withdrawalAction = protocol.i_toWithdrawalPendingAction(action);
         assertTrue(withdrawalAction.action == action.action, "action action");
         assertEq(withdrawalAction.timestamp, action.timestamp, "action timestamp");
+        assertEq(withdrawalAction._unused, action.var0, "action var0");
         assertEq(withdrawalAction.to, action.to, "action to");
         assertEq(withdrawalAction.validator, action.validator, "action validator");
         assertEq(withdrawalAction.securityDepositValue, action.securityDepositValue, "action security deposit value");
@@ -381,6 +385,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         PendingAction memory action = PendingAction({
             action: ProtocolAction.ValidateOpenPosition,
             timestamp: uint40(block.timestamp),
+            var0: 0, // must be zero because unused
             to: address(this),
             validator: address(this),
             securityDepositValue: 2424,
@@ -395,6 +400,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         LongPendingAction memory longAction = protocol.i_toLongPendingAction(action);
         assertTrue(longAction.action == action.action, "action action");
         assertEq(longAction.timestamp, action.timestamp, "action timestamp");
+        assertEq(longAction.closeLiqPenalty, action.var0, "action liqPenalty");
         assertEq(longAction.to, action.to, "action to");
         assertEq(longAction.validator, action.validator, "action validator");
         assertEq(longAction.securityDepositValue, action.securityDepositValue, "action security deposit value");
