@@ -16,9 +16,9 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Get the actionable pending actions
      * @custom:given The user has initiated a deposit
-     * @custom:and The validation deadline has elapsed
+     * @custom:and The validation deadlines have elapsed
      * @custom:when The actionable pending actions are requested
-     * @custom:then The pending actions are returned
+     * @custom:then The pending actions are returned for both periods
      */
     function test_getActionablePendingActions() public {
         // there should be no pending action at this stage
@@ -26,40 +26,60 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         assertEq(actions.length, 0, "pending action before initiate");
         // initiate deposit
         setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 1 ether, 2000 ether);
-        // the pending action is not yet actionable
+        PendingAction memory pending = protocol.getUserPendingAction(address(this));
+        // the pending action is not yet actionable until the low latency validation deadline
+        vm.warp(pending.timestamp + protocol.getLowLatencyValidatorDeadline());
         (actions, rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 0, "pending action after initiate");
-        // the pending action is actionable after the validation deadline
-        skip(protocol.getValidationDeadline() + 1);
+        // the pending action is actionable after the low latency validation deadline
+        vm.warp(pending.timestamp + protocol.getLowLatencyValidatorDeadline() + 1);
         (actions, rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 1, "actions length");
         assertEq(actions[0].to, address(this), "action to");
         assertEq(actions[0].validator, address(this), "action validator");
         assertEq(rawIndices[0], 0, "raw index");
+        // the pending action is not actionable anymore after the low latency delay
+        vm.warp(pending.timestamp + oracleMiddleware.getLowLatencyDelay() + 1);
+        (actions, rawIndices) = protocol.getActionablePendingActions(address(0));
+        assertEq(actions.length, 0, "pending action after low latency delay");
+        // the pending action is again actionable after the on-chain validation deadline
+        vm.warp(pending.timestamp + oracleMiddleware.getLowLatencyDelay() + protocol.getOnChainValidatorDeadline() + 1);
+        (actions, rawIndices) = protocol.getActionablePendingActions(address(0));
+        assertEq(actions.length, 1, "actions length");
     }
 
     /**
      * @custom:scenario Get the first actionable pending action
      * @custom:given The user has initiated a deposit
-     * @custom:and The validation deadline has elapsed
+     * @custom:and The validation deadlines have elapsed
      * @custom:when The first actionable pending action is requested
-     * @custom:then The pending action is returned
+     * @custom:then The pending action is returned for both periods
      */
     function test_internalGetActionablePendingAction() public {
         // there should be no pending action at this stage
         (PendingAction memory action, uint128 rawIndex) = protocol.i_getActionablePendingAction();
         assertTrue(action.action == ProtocolAction.None, "pending action before initiate");
-        // initiate long
+        // initiate deposit
         setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 1 ether, 2000 ether);
-        // the pending action is not yet actionable
+        PendingAction memory pending = protocol.getUserPendingAction(address(this));
+        // the pending action is not yet actionable until the low latency validation deadline
+        vm.warp(pending.timestamp + protocol.getLowLatencyValidatorDeadline());
         (action, rawIndex) = protocol.i_getActionablePendingAction();
         assertTrue(action.action == ProtocolAction.None, "pending action after initiate");
-        // the pending action is actionable after the validation deadline
-        skip(protocol.getValidationDeadline() + 1);
+        // the pending action is actionable after the low latency validation deadline
+        vm.warp(pending.timestamp + protocol.getLowLatencyValidatorDeadline() + 1);
         (action, rawIndex) = protocol.i_getActionablePendingAction();
         assertEq(action.to, address(this), "action to");
         assertEq(action.validator, address(this), "action validator");
         assertEq(rawIndex, 0, "raw index");
+        // the pending action is not actionable anymore after the low latency delay
+        vm.warp(pending.timestamp + oracleMiddleware.getLowLatencyDelay() + 1);
+        (action, rawIndex) = protocol.i_getActionablePendingAction();
+        assertTrue(action.action == ProtocolAction.None, "pending action after low latency delay");
+        // the pending action is again actionable after the on-chain validation deadline
+        vm.warp(pending.timestamp + oracleMiddleware.getLowLatencyDelay() + protocol.getOnChainValidatorDeadline() + 1);
+        (action, rawIndex) = protocol.i_getActionablePendingAction();
+        assertEq(action.to, address(this), "action to");
     }
 
     /**
@@ -113,13 +133,13 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         _setupSparsePendingActionsQueue();
 
         // Wait
-        skip(protocol.getValidationDeadline() + 1);
+        _waitBeforeActionablePendingAction();
 
         (PendingAction[] memory actions, uint128[] memory rawIndices) = protocol.getActionablePendingActions(address(0));
-        assertEq(actions.length, 2, "actions length");
-        assertEq(actions[1].to, USER_3, "to");
-        assertEq(actions[1].validator, USER_3, "validator");
-        assertEq(rawIndices[1], 2, "raw index");
+        assertEq(actions.length, 1, "actions length");
+        assertEq(actions[0].to, USER_3, "to");
+        assertEq(actions[0].validator, USER_3, "validator");
+        assertEq(rawIndices[0], 2, "raw index");
     }
 
     /**
@@ -133,7 +153,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         _setupSparsePendingActionsQueue();
 
         // Wait
-        skip(protocol.getValidationDeadline() + 1);
+        _waitBeforeActionablePendingAction();
 
         (PendingAction memory action, uint128 rawIndex) = protocol.i_getActionablePendingAction();
         assertTrue(action.to == USER_3, "to");
@@ -166,7 +186,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario User who didn't validate their tx after 1 hour and call `getActionablePendingAction`
+     * @custom:scenario User who didn't validate their tx after their exclusivity and call `getActionablePendingAction`
      * @custom:background When a user have their own action in the first position in the queue and it's actionable by
      * someone else, they should retrieve the next item in the queue at the moment of validating their own action.
      * This is because they will remove their own action from the queue before attempting to validate the next item in
@@ -188,7 +208,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
             })
         );
         // the pending action is actionable after the validation deadline
-        skip(protocol.getValidationDeadline() + 1);
+        _waitBeforeActionablePendingAction();
         (PendingAction[] memory actions, uint128[] memory rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 1, "actions length");
         assertEq(actions[0].to, address(this), "action to");
@@ -231,7 +251,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         );
 
         // Wait
-        skip(protocol.getValidationDeadline() + 1);
+        _waitBeforeActionablePendingAction();
 
         // Second user tries to validate their action
         vm.prank(USER_2);
@@ -262,7 +282,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         setUpUserPositionInVault(USER_2, ProtocolAction.InitiateDeposit, 1 ether, price2);
 
         // Wait
-        skip(protocol.getValidationDeadline() + 1);
+        _waitBeforeActionablePendingAction();
 
         // Two other users want to now enter the protocol
         wstETH.mintAndApprove(USER_3, 100_000 ether, address(protocol), type(uint256).max);
@@ -284,6 +304,124 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         // They should have validated both pending actions
         (actions, rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 0, "final actions length");
+    }
+
+    /**
+     * @custom:scenario There is a pending action in the queue but the first ones are not actionable
+     * @custom:given A queue with three pending actions which are not actionable (low-latency period has elapsed)
+     * @custom:and A fourth pending action which is actionable with low-latency oracle
+     * @custom:when The first actionable pending action is retrieved
+     * @custom:then The fourth pending action is returned
+     * @custom:when The list of actionable pending actions is retrieved
+     * @custom:then The fourth pending action is the only one returned
+     * @custom:when We wait until all actions are actionable again
+     * @custom:then All four pending actions are returned
+     */
+    function test_actionablePendingActionInSecondPeriod() public {
+        // low latency oracle is down and 3 pending actions are created
+        uint40 timestamp = uint40(block.timestamp);
+        DepositPendingAction memory pendingDeposit = DepositPendingAction({
+            action: ProtocolAction.ValidateDeposit,
+            timestamp: timestamp,
+            to: USER_1,
+            validator: USER_1,
+            securityDepositValue: 0,
+            _unused: 0,
+            amount: 1 ether,
+            assetPrice: 2000 ether,
+            totalExpo: 20 ether,
+            balanceVault: 20 ether,
+            balanceLong: 20 ether,
+            usdnTotalShares: 100e36
+        });
+        protocol.i_addPendingAction(USER_1, protocol.i_convertDepositPendingAction(pendingDeposit));
+        pendingDeposit.to = USER_2;
+        pendingDeposit.validator = USER_2;
+        pendingDeposit.timestamp = timestamp + 1 minutes;
+        protocol.i_addPendingAction(USER_2, protocol.i_convertDepositPendingAction(pendingDeposit));
+        pendingDeposit.to = USER_3;
+        pendingDeposit.validator = USER_3;
+        pendingDeposit.timestamp = timestamp + 2 minutes;
+        protocol.i_addPendingAction(USER_3, protocol.i_convertDepositPendingAction(pendingDeposit));
+        // wait for the low latency period to end for all 3 actions, they are not actionable anymore
+        vm.warp(pendingDeposit.timestamp + oracleMiddleware.getLowLatencyDelay() + 1);
+        (PendingAction memory action,) = protocol.i_getActionablePendingAction();
+        assertTrue(action.action == ProtocolAction.None, "no action");
+        (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0));
+        assertEq(actions.length, 0, "actions length after 3 actions exceed low latency period");
+        // add a fourth pending action
+        pendingDeposit.to = USER_4;
+        pendingDeposit.validator = USER_4;
+        pendingDeposit.timestamp = uint40(block.timestamp);
+        protocol.i_addPendingAction(USER_4, protocol.i_convertDepositPendingAction(pendingDeposit));
+        // wait until it is actionable
+        vm.warp(pendingDeposit.timestamp + protocol.getLowLatencyValidatorDeadline() + 1);
+        // the fourth pending action is now actionable (the others are not yet)
+        (action,) = protocol.i_getActionablePendingAction();
+        assertEq(action.validator, USER_4, "fourth action");
+        (actions,) = protocol.getActionablePendingActions(address(0));
+        assertEq(actions.length, 1, "actions length after fourth action becomes actionable");
+        // wait for the first action to become actionable again
+        vm.warp(timestamp + oracleMiddleware.getLowLatencyDelay() + protocol.getOnChainValidatorDeadline() + 1);
+        // the first action is now actionable
+        (action,) = protocol.i_getActionablePendingAction();
+        assertEq(action.validator, USER_1, "first action");
+        (actions,) = protocol.getActionablePendingActions(address(0));
+        assertEq(actions.length, 1, "actions length after first action becomes actionable again");
+        // wait until all actions are actionable
+        vm.warp(
+            pendingDeposit.timestamp + oracleMiddleware.getLowLatencyDelay() + protocol.getOnChainValidatorDeadline()
+                + 1
+        );
+        (actions,) = protocol.getActionablePendingActions(address(0));
+        assertEq(actions.length, 4, "actions length when all are actionable");
+    }
+
+    /**
+     * @custom:scenario There are two pending actions in the queue but they are disjoint
+     * @custom:given A queue with one pending action which is actionable with on-chain oracle
+     * @custom:and A second pending action which is not actionable
+     * @custom:and A third pending action which is actionable with low-latency oracle
+     * @custom:when The first actionable pending action is retrieved
+     * @custom:then The first pending action is returned
+     * @custom:when The list of actionable pending actions is retrieved
+     * @custom:then The first and third pending actions are returned, with an empty element in the middle
+     */
+    function test_actionablePendingActionsInBothPeriods() public {
+        uint40 timestamp = uint40(block.timestamp);
+        DepositPendingAction memory pendingDeposit = DepositPendingAction({
+            action: ProtocolAction.ValidateDeposit,
+            timestamp: timestamp,
+            to: USER_1,
+            validator: USER_1,
+            securityDepositValue: 0,
+            _unused: 0,
+            amount: 1 ether,
+            assetPrice: 2000 ether,
+            totalExpo: 20 ether,
+            balanceVault: 20 ether,
+            balanceLong: 20 ether,
+            usdnTotalShares: 100e36
+        });
+        protocol.i_addPendingAction(USER_1, protocol.i_convertDepositPendingAction(pendingDeposit));
+        pendingDeposit.to = USER_2;
+        pendingDeposit.validator = USER_2;
+        pendingDeposit.timestamp = uint40(timestamp + protocol.getOnChainValidatorDeadline() / 2);
+        protocol.i_addPendingAction(USER_2, protocol.i_convertDepositPendingAction(pendingDeposit));
+        pendingDeposit.to = USER_3;
+        pendingDeposit.validator = USER_3;
+        pendingDeposit.timestamp = uint40(timestamp + protocol.getOnChainValidatorDeadline() + 1);
+        protocol.i_addPendingAction(USER_3, protocol.i_convertDepositPendingAction(pendingDeposit));
+        // wait until the first and third are actionable
+        vm.warp(timestamp + oracleMiddleware.getLowLatencyDelay() + protocol.getOnChainValidatorDeadline() + 1);
+        // the first and third actions are now actionable
+        (PendingAction memory action,) = protocol.i_getActionablePendingAction();
+        assertEq(action.validator, USER_1, "first action");
+        (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0));
+        assertEq(actions.length, 3, "actions length after two actions are actionable");
+        assertEq(actions[0].validator, USER_1, "first action");
+        assertEq(actions[1].validator, address(0), "second action (empty)");
+        assertEq(actions[2].validator, USER_3, "third action");
     }
 
     /**

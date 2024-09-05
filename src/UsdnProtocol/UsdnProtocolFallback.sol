@@ -201,8 +201,13 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getValidationDeadline() external view returns (uint256) {
-        return s._validationDeadline;
+    function getLowLatencyValidatorDeadline() external view returns (uint128) {
+        return s._lowLatencyValidatorDeadline;
+    }
+
+    /// @inheritdoc IUsdnProtocolFallback
+    function getOnChainValidatorDeadline() external view returns (uint128) {
+        return s._onChainValidatorDeadline;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
@@ -469,17 +474,25 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdnProtocolFallback
-    function setValidationDeadline(uint256 newValidationDeadline) external onlyRole(CRITICAL_FUNCTIONS_ROLE) {
-        if (newValidationDeadline < Constants.MIN_VALIDATION_DEADLINE) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidValidationDeadline();
+    function setValidatorDeadlines(uint128 newLowLatencyValidatorDeadline, uint128 newOnChainValidatorDeadline)
+        external
+        onlyRole(CRITICAL_FUNCTIONS_ROLE)
+    {
+        uint16 lowLatencyDelay = s._oracleMiddleware.getLowLatencyDelay();
+
+        if (newLowLatencyValidatorDeadline < Constants.MIN_VALIDATION_DEADLINE) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidValidatorDeadline();
+        }
+        if (newLowLatencyValidatorDeadline > lowLatencyDelay) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidValidatorDeadline();
+        }
+        if (newOnChainValidatorDeadline > Constants.MAX_VALIDATION_DEADLINE) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidValidatorDeadline();
         }
 
-        if (newValidationDeadline > Constants.MAX_VALIDATION_DEADLINE) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidValidationDeadline();
-        }
-
-        s._validationDeadline = newValidationDeadline;
-        emit IUsdnProtocolEvents.ValidationDeadlineUpdated(newValidationDeadline);
+        s._lowLatencyValidatorDeadline = newLowLatencyValidatorDeadline;
+        s._onChainValidatorDeadline = newOnChainValidatorDeadline;
+        emit IUsdnProtocolEvents.ValidatorDeadlinesUpdated(newLowLatencyValidatorDeadline, newOnChainValidatorDeadline);
     }
 
     /* -------------------------------------------------------------------------- */

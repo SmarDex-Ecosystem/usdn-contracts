@@ -124,7 +124,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         assertEq(action.var2, depositAmount, "action amount");
 
         // the pending action should be actionable after the validation deadline
-        skip(protocol.getValidationDeadline() + 1);
+        _waitBeforeActionablePendingAction();
         (actions,) = protocol.getActionablePendingActions(address(0));
         assertEq(actions[0].to, to, "pending action to");
         assertEq(actions[0].validator, validator, "pending action validator");
