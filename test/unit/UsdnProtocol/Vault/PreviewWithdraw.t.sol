@@ -87,7 +87,7 @@ contract TestUsdnProtocolPreviewWithdraw is UsdnProtocolBaseFixture {
 
         protocol.initiateWithdrawal(shares, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
         // calculate the expected asset to be received
-        uint256 assetExpected = protocol.previewWithdraw(shares, 2000 ether, protocol.getLastUpdateTimestamp());
+        uint256 assetExpected = protocol.previewWithdraw(shares, 2000 ether, uint128(block.timestamp));
         // wait the required delay between initiation and validation
         _waitDelay();
         protocol.validateWithdrawal(payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
