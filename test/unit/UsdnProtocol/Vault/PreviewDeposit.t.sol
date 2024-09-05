@@ -30,6 +30,7 @@ contract TestUsdnProtocolPreviewDeposit is UsdnProtocolBaseFixture {
      * @custom:then The amount of USDN and SDEX tokens should be calculated correctly
      */
     function testFuzz_comparePreviewDepositAndDeposit(uint256 amount) public {
+        skip(1 hours);
         bytes memory currentPrice = abi.encode(uint128(params.initialPrice));
         amount = bound(amount, 1, wstETH.balanceOf(address(this)));
 
@@ -41,7 +42,7 @@ contract TestUsdnProtocolPreviewDeposit is UsdnProtocolBaseFixture {
 
         // calculate the expected USDN and SDEX tokens to be minted and burned
         (uint256 usdnSharesExpected, uint256 sdexToBurn) =
-            protocol.previewDeposit(amount, params.initialPrice, protocol.getLastUpdateTimestamp());
+            protocol.previewDeposit(amount, params.initialPrice, uint128(block.timestamp));
 
         // wait the required delay between initiation and validation
         _waitDelay();
