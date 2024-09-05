@@ -438,7 +438,7 @@ library UsdnProtocolLongLibrary {
                 _calcImbalanceCloseBps(cache.vaultBalance.toInt256(), cache.longBalance.toInt256(), cache.totalExpo);
 
             // if the imbalance is lower than the threshold, return
-            if (currentImbalance < s._closeExpoImbalanceLimitBps) {
+            if (currentImbalance <= s._closeExpoImbalanceLimitBps) {
                 return (longBalance_, vaultBalance_);
             }
         }
@@ -748,7 +748,7 @@ library UsdnProtocolLongLibrary {
             currentVaultExpo, (s._balanceLong + openCollatValue).toInt256(), s._totalExpo + openTotalExpoValue
         );
 
-        if (imbalanceBps >= openExpoImbalanceLimitBps) {
+        if (imbalanceBps > openExpoImbalanceLimitBps) {
             revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
         }
     }

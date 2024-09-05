@@ -151,7 +151,7 @@ library UsdnProtocolActionsUtilsLibrary {
 
         int256 imbalanceBps = Long._calcImbalanceCloseBps(currentVaultExpo, newLongBalance, newTotalExpo);
 
-        if (imbalanceBps >= closeExpoImbalanceLimitBps) {
+        if (imbalanceBps > closeExpoImbalanceLimitBps) {
             revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
         }
     }

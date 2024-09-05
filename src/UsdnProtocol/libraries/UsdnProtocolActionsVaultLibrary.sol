@@ -221,7 +221,7 @@ library UsdnProtocolActionsVaultLibrary {
         int256 imbalanceBps =
             newVaultExpo.safeSub(currentLongExpo).safeMul(int256(Constants.BPS_DIVISOR)).safeDiv(currentLongExpo);
 
-        if (imbalanceBps >= depositExpoImbalanceLimitBps) {
+        if (imbalanceBps > depositExpoImbalanceLimitBps) {
             revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
         }
     }
@@ -257,7 +257,7 @@ library UsdnProtocolActionsVaultLibrary {
             int256(Constants.BPS_DIVISOR)
         ).safeDiv(newVaultExpo);
 
-        if (imbalanceBps >= withdrawalExpoImbalanceLimitBps) {
+        if (imbalanceBps > withdrawalExpoImbalanceLimitBps) {
             revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
         }
     }
