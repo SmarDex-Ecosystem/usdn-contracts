@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
-import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
+import { UsdnProtocolImpl } from "../UsdnProtocol/UsdnProtocolImpl.sol";
 
-import { TickMath } from "../../../../src/libraries/TickMath.sol";
 import { IUsdnProtocolImplV2 } from "../../test/unit/UsdnProtocol/utils/IUsdnProtocolImplV2.sol";
+import { TickMath } from "../libraries/TickMath.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 /// @custom:oz-upgrades-from UsdnProtocolImpl
