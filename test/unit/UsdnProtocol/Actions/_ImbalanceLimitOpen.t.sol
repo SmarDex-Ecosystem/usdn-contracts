@@ -122,6 +122,12 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
         protocol.i_checkImbalanceLimitOpen(totalExpoValueToLimit, longAmount);
     }
 
+    /**
+     * @notice Get the open limit values at with the protocol revert
+     * @return openLimitBps_ The open limit bps
+     * @return longAmount_ The long amount
+     * @return totalExpoValueToLimit_ The total expo value to imbalance the protocol
+     */
     function _getOpenLimitValues()
         private
         view

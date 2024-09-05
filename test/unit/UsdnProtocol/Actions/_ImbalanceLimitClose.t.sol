@@ -170,6 +170,13 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
         protocol.i_checkImbalanceLimitClose(totalExpoValueToLimit, longAmount);
     }
 
+    /**
+     * @notice Get close limit values at with the protocol revert
+     * @param isRebalancer Flag to check if the caller is a rebalancer
+     * @return closeLimitBps_ The close limit bps
+     * @return longAmount_ The long amount
+     * @return totalExpoValueToLimit_ The total expo value to imbalance the protocol
+     */
     function _getCloseLimitValues(bool isRebalancer)
         private
         view

@@ -134,6 +134,11 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
         protocol.i_checkImbalanceLimitWithdrawal(withdrawalValueToLimit, totalExpo);
     }
 
+    /**
+     * @notice Get withdrawal limit values at with the protocol revert
+     * @return withdrawalLimitBps_ The withdrawal limit in bps
+     * @return withdrawalValueToLimit_ The withdrawal value to imbalance the protocol
+     */
     function _getWithdrawalLimitValues()
         private
         view
