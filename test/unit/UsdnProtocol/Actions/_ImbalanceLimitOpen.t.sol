@@ -34,7 +34,7 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
      * @custom:scenario The `_checkImbalanceLimitOpen` function should not revert when the imballance is equal to the
      * limit
      * @custom:given The protocol is in a balanced state
-     * @custom:when The `_checkImbalanceLimitOpen` function is called with values on the close limit
+     * @custom:when The `_checkImbalanceLimitOpen` function is called with values on the open limit
      * @custom:then The transaction should not revert
      */
     function test_checkImbalanceLimitOpenOnLimit() public view {
