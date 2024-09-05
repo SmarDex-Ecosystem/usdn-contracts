@@ -113,7 +113,7 @@ contract TestUsdnProtocolActionsExecutePendingAction is UsdnProtocolBaseFixture 
             })
         );
         // make actionable
-        skip(protocol.getValidationDeadline() + 1);
+        _waitBeforeActionablePendingAction();
 
         (PendingAction[] memory actions, uint128[] memory rawIndices) =
             protocol.getActionablePendingActions(address(this));

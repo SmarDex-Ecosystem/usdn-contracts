@@ -112,7 +112,7 @@ interface IUsdnProtocolErrors {
     error UsdnProtocolInvalidMaxLeverage();
 
     /// @dev Indicates that the new validation deadline value is invalid
-    error UsdnProtocolInvalidValidationDeadline();
+    error UsdnProtocolInvalidValidatorDeadline();
 
     /// @dev Indicates that the new `liquidationPenalty` value is invalid
     error UsdnProtocolInvalidLiquidationPenalty();

@@ -164,7 +164,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         assertEq(action.index, 0, "action index");
 
         // the pending action should be actionable after the validation deadline
-        skip(protocol.getValidationDeadline() + 1);
+        _waitBeforeActionablePendingAction();
         (pendingActions,) = protocol.getActionablePendingActions(address(0));
         action = protocol.i_toLongPendingAction(pendingActions[0]);
         assertEq(action.to, to, "pending action to");
