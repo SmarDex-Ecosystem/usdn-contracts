@@ -63,18 +63,16 @@ library UsdnProtocolVaultLibrary {
     }
 
     /// @notice See {IUsdnProtocolVault}
-    function previewWithdraw(Types.Storage storage s, uint256 usdnShares, uint256 price, uint128 timestamp)
+    function previewWithdraw(Types.Storage storage s, uint256 usdnShares, uint128 price, uint128 timestamp)
         public
         view
         returns (uint256 assetExpected_)
     {
-        // apply fees on price
-        uint128 withdrawalPriceWithFees = (price + price * s._vaultFeeBps / Constants.BPS_DIVISOR).toUint128();
-        int256 available = vaultAssetAvailableWithFunding(s, withdrawalPriceWithFees, timestamp);
+        int256 available = vaultAssetAvailableWithFunding(s, price, timestamp);
         if (available < 0) {
             return 0;
         }
-        assetExpected_ = _calcBurnUsdn(usdnShares, uint256(available), s._usdn.totalShares());
+        assetExpected_ = _calcBurnUsdn(usdnShares, uint256(available), s._usdn.totalShares(), s._vaultFeeBps);
     }
 
     /// @notice See {IUsdnProtocolVault}
@@ -246,20 +244,26 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
-     * @notice Calculate the amount of assets received when burning USDN shares
+     * @notice Calculate the amount of assets received when burning USDN shares (after fees)
      * @param usdnShares The amount of USDN shares
      * @param available The available asset in the vault
      * @param usdnTotalShares The total supply of USDN shares
-     * @return assetExpected_ The expected amount of assets to be received
+     * @param feeBps The fee in basis points
+     * @return assetExpected_ The expected amount of assets to be received, after fees
      */
-    function _calcBurnUsdn(uint256 usdnShares, uint256 available, uint256 usdnTotalShares)
+    function _calcBurnUsdn(uint256 usdnShares, uint256 available, uint256 usdnTotalShares, uint256 feeBps)
         public
         pure
         returns (uint256 assetExpected_)
     {
-        // assetExpected = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
+        // amount = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
         //                 = shares * assetAvailable / usdnTotalShares
-        assetExpected_ = FixedPointMathLib.fullMulDiv(usdnShares, available, usdnTotalShares);
+        uint256 amount = FixedPointMathLib.fullMulDiv(usdnShares, available, usdnTotalShares);
+        // note: here it is preferable to perform the fee calculation on the result of the muldiv above, even though
+        // precision is slightly worse. The reason is that the combined formula would have `usdnTotalShares *
+        // BPS_DIVISOR` in the denominator, which would always overflow without recourse/workaround if the total number
+        // of shares is close to uint.max.
+        assetExpected_ = amount - FixedPointMathLib.fullMulDiv(amount, feeBps, Constants.BPS_DIVISOR);
     }
 
     /**

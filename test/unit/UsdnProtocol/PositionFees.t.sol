@@ -286,37 +286,28 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario The user initiates a withdraw of 1 wstETH
      * @custom:given The price of the asset is $2000
-     * @custom:when The user deposit 1 wstETH
-     * @custom:and Withdraw the all minted USDN
-     * @custom:then The user's position should have a start price according to the fees
-     * @custom:and The minted USDN should be updated according to the fees
-     * @custom:and The user's withdrawal pending position should have a start price according to the fees
+     * @custom:and The user deposited 1 wstETH
+     * @custom:when The user initiates a withdrawal
+     * @custom:then The pending action fee matches the vault fee
      */
     function test_initiateWithdrawalPositionFees() public {
         skip(1 hours);
         uint128 depositAmount = 1 ether;
-        bytes memory currentPrice = abi.encode(uint128(2000 ether)); // only used to apply PnL + funding
-
-        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, depositAmount, 2000 ether);
-
-        _waitDelay();
+        uint128 price = 2000 ether;
 
         uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
-        protocol.validateDeposit(payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
-        uint256 usdnBalanceAfter = usdn.balanceOf(address(this));
-        uint256 mintedUsdn = usdnBalanceAfter - usdnBalanceBefore;
+        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, depositAmount, price);
+        uint256 mintedUsdn = usdn.balanceOf(address(this)) - usdnBalanceBefore;
 
         usdn.approve(address(protocol), type(uint256).max);
         protocol.initiateWithdrawal(
-            uint128(mintedUsdn), address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
+            uint128(mintedUsdn), address(this), payable(address(this)), abi.encode(price), EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         PendingAction memory action = protocol.getUserPendingAction(address(this));
         WithdrawalPendingAction memory withdraw = protocol.i_toWithdrawalPendingAction(action);
 
-        // Check stored position asset price
-        uint256 expectedPrice = 2000 ether + 2000 ether * uint256(protocol.getVaultFeeBps()) / protocol.BPS_DIVISOR();
-        assertEq(withdraw.assetPrice, expectedPrice, "assetPrice validate");
+        assertEq(withdraw.feeBps, protocol.getVaultFeeBps(), "feeBps");
     }
 
     /**
@@ -412,9 +403,10 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         usdn.approve(address(protocol), type(uint256).max);
 
         uint128 depositAmount = 1 ether;
-        bytes memory currentPrice = abi.encode(uint128(2000 ether)); // only used to apply PnL + funding
+        uint128 price = 2000 ether;
+        bytes memory currentPrice = abi.encode(price); // only used to apply PnL + funding
 
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, depositAmount, 2000 ether);
+        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, depositAmount, price);
 
         // Store the snapshot id to revert to this point after the next test
         uint256 snapshotId = vm.snapshot();
@@ -425,7 +417,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         protocol.setVaultFeeBps(100); // 1% fees
 
         protocol.initiateWithdrawal(
-            uint128(usdn.balanceOf(address(this))),
+            uint128(usdn.sharesOf(address(this))),
             address(this),
             payable(address(this)),
             currentPrice,
@@ -441,7 +433,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         vm.revertTo(snapshotId);
 
         protocol.initiateWithdrawal(
-            uint128(usdn.balanceOf(address(this))),
+            uint128(usdn.sharesOf(address(this))),
             address(this),
             payable(address(this)),
             currentPrice,

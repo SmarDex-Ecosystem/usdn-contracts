@@ -22,7 +22,7 @@ interface IUsdnProtocolFallback {
      * @param timestamp The timestamp of the operation
      * @return assetExpected_ The expected amount of assets to be received
      */
-    function previewWithdraw(uint256 usdnShares, uint256 price, uint128 timestamp)
+    function previewWithdraw(uint256 usdnShares, uint128 price, uint128 timestamp)
         external
         view
         returns (uint256 assetExpected_);

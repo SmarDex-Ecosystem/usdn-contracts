@@ -491,7 +491,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         WithdrawalPendingAction memory withdrawalAction = protocol.i_toWithdrawalPendingAction(action);
         assertTrue(withdrawalAction.action == action.action, "action action");
         assertEq(withdrawalAction.timestamp, action.timestamp, "action timestamp");
-        assertEq(withdrawalAction._unused, action.var0, "action var0");
+        assertEq(withdrawalAction.feeBps, action.var0, "action feeBps");
         assertEq(withdrawalAction.to, action.to, "action to");
         assertEq(withdrawalAction.validator, action.validator, "action validator");
         assertEq(withdrawalAction.securityDepositValue, action.securityDepositValue, "action security deposit value");

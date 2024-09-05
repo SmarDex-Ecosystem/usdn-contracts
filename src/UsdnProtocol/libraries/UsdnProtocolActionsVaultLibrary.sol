@@ -42,6 +42,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @param balanceVault The vault side balance, calculated according to the pendingActionPrice
      * @param usdnTotalShares Total minted shares of USDN
      * @param sdexToBurn The amount of SDEX to burn for the deposit
+     * @param lastPrice The last price of the asset
      */
     struct InitiateDepositData {
         bool isLiquidationPending;
@@ -51,25 +52,28 @@ library UsdnProtocolActionsVaultLibrary {
         uint256 balanceVault;
         uint256 usdnTotalShares;
         uint256 sdexToBurn;
+        uint128 lastPrice;
     }
 
     /**
      * @dev Structure to hold the transient data during `_initiateWithdrawal`
-     * @param pendingActionPrice The adjusted price with position fees applied
      * @param usdnTotalShares The total shares supply of USDN
      * @param totalExpo The current total expo
      * @param balanceLong The current long balance
      * @param balanceVault The vault balance, adjusted according to the pendingActionPrice
-     * @param withdrawalAmount The predicted amount of assets that will be withdrawn
+     * @param withdrawalAmountWithFees The predicted amount of assets that will be withdrawn after fees
+     * @param lastPrice The last price of the asset
+     * @param feeBps The vault deposit fee in basis points
      * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
      */
     struct WithdrawalData {
-        uint128 pendingActionPrice;
         uint256 usdnTotalShares;
         uint256 totalExpo;
         uint256 balanceLong;
         uint256 balanceVault;
-        uint256 withdrawalAmount;
+        uint256 withdrawalAmountWithFees;
+        uint128 lastPrice;
+        uint16 feeBps;
         bool isLiquidationPending;
     }
 
@@ -306,7 +310,9 @@ library UsdnProtocolActionsVaultLibrary {
 
         data_.totalExpo = s._totalExpo;
         data_.balanceLong = s._balanceLong;
-        data_.balanceVault = Vault.vaultAssetAvailableWithFunding(s, s._lastPrice, uint128(block.timestamp)).toUint256();
+        data_.lastPrice = s._lastPrice;
+        data_.balanceVault =
+            Vault.vaultAssetAvailableWithFunding(s, data_.lastPrice, uint128(block.timestamp)).toUint256();
         IUsdn usdn = s._usdn;
         data_.usdnTotalShares = usdn.totalShares();
 
@@ -353,7 +359,7 @@ library UsdnProtocolActionsVaultLibrary {
             securityDepositValue: securityDepositValue,
             feeBps: data.feeBps,
             amount: amount,
-            assetPrice: s._lastPrice,
+            assetPrice: data.lastPrice,
             totalExpo: data.totalExpo,
             balanceVault: data.balanceVault,
             balanceLong: data.balanceLong,
@@ -503,29 +509,28 @@ library UsdnProtocolActionsVaultLibrary {
             }
         }
 
-        // we calculate the amount of USDN to mint, either considering the asset price at the time of the initiate
-        // action, or the current price provided for validation. We will use the lower of the two to mint
+        // we calculate the amount of USDN to mint, either considering the vault balance at the time of the initiate
+        // action, or the current balance with the new price. We will use the higher of the two to mint. Funding between
+        // the initiate and validate actions is ignored
         uint128 amountWithFees =
             (deposit.amount - uint256(deposit.amount) * deposit.feeBps / Constants.BPS_DIVISOR).toUint128();
-        uint256 usdnSharesToMint;
-        // we use the lower of the two prices to mint
-        if (deposit.assetPrice <= currentPrice.price) {
-            usdnSharesToMint = Vault._calcMintUsdnShares(amountWithFees, deposit.balanceVault, deposit.usdnTotalShares);
-        } else {
-            usdnSharesToMint = Vault._calcMintUsdnShares(
-                amountWithFees,
-                Vault._vaultAssetAvailable(
-                    deposit.totalExpo,
-                    deposit.balanceVault,
-                    deposit.balanceLong,
-                    currentPrice.price.toUint128(),
-                    deposit.assetPrice
-                ).toUint256(),
-                deposit.usdnTotalShares
-            );
+        int256 available = Vault._vaultAssetAvailable(
+            deposit.totalExpo,
+            deposit.balanceVault,
+            deposit.balanceLong,
+            currentPrice.price.toUint128(),
+            deposit.assetPrice
+        );
+        if (available < 0) {
+            available = 0;
         }
+        uint256 balanceVault = uint256(available);
+        if (deposit.balanceVault > balanceVault) {
+            balanceVault = deposit.balanceVault;
+        }
+        uint256 usdnSharesToMint = Vault._calcMintUsdnShares(amountWithFees, balanceVault, deposit.usdnTotalShares);
 
-        s._balanceVault += deposit.amount;
+        s._balanceVault += deposit.amount; // we credit the full deposit amount
         s._pendingBalanceVault -= Utils.toInt256(deposit.amount);
 
         uint256 mintedTokens = s._usdn.mintShares(deposit.to, usdnSharesToMint);
@@ -573,19 +578,20 @@ library UsdnProtocolActionsVaultLibrary {
             return data_;
         }
 
-        // apply fees on price
-        data_.pendingActionPrice =
-            (currentPrice.price + currentPrice.price * s._vaultFeeBps / Constants.BPS_DIVISOR).toUint128();
-
         data_.totalExpo = s._totalExpo;
         data_.balanceLong = s._balanceLong;
-        data_.balanceVault = Vault._vaultAssetAvailable(
-            data_.totalExpo, s._balanceVault, data_.balanceLong, data_.pendingActionPrice, s._lastPrice
-        ).toUint256();
+        data_.lastPrice = s._lastPrice;
+        int256 available = Vault.vaultAssetAvailableWithFunding(s, data_.lastPrice, uint128(block.timestamp));
+        if (available < 0) {
+            available = 0;
+        }
+        data_.balanceVault = uint256(available); // cast is safe, amount is positive
         data_.usdnTotalShares = s._usdn.totalShares();
-        data_.withdrawalAmount = Vault._calcBurnUsdn(usdnShares, data_.balanceVault, data_.usdnTotalShares);
+        data_.feeBps = s._vaultFeeBps;
+        data_.withdrawalAmountWithFees =
+            Vault._calcBurnUsdn(usdnShares, data_.balanceVault, data_.usdnTotalShares, data_.feeBps);
 
-        _checkImbalanceLimitWithdrawal(s, data_.withdrawalAmount, data_.totalExpo);
+        _checkImbalanceLimitWithdrawal(s, data_.withdrawalAmountWithFees, data_.totalExpo);
     }
 
     /**
@@ -610,13 +616,13 @@ library UsdnProtocolActionsVaultLibrary {
             Types.WithdrawalPendingAction({
                 action: Types.ProtocolAction.ValidateWithdrawal,
                 timestamp: uint40(block.timestamp),
-                _unused: 0,
+                feeBps: data.feeBps,
                 to: to,
                 validator: validator,
                 securityDepositValue: securityDepositValue,
                 sharesLSB: Vault._calcWithdrawalAmountLSB(usdnShares),
                 sharesMSB: Vault._calcWithdrawalAmountMSB(usdnShares),
-                assetPrice: data.pendingActionPrice,
+                assetPrice: data.lastPrice,
                 totalExpo: data.totalExpo,
                 balanceVault: data.balanceVault,
                 balanceLong: data.balanceLong,
@@ -699,10 +705,13 @@ library UsdnProtocolActionsVaultLibrary {
         // retrieve the USDN tokens, check that the balance is sufficient
         IUsdn usdn = s._usdn;
         usdn.transferSharesFrom(user, address(this), usdnShares);
-        s._pendingBalanceVault -= data.withdrawalAmount.toInt256();
+        // register the pending withdrawal for imbalance checks of future actions
+        s._pendingBalanceVault -= data.withdrawalAmountWithFees.toInt256();
 
         isInitiated_ = true;
-        emit IUsdnProtocolEvents.InitiatedWithdrawal(to, validator, usdn.convertToTokens(usdnShares), block.timestamp);
+        emit IUsdnProtocolEvents.InitiatedWithdrawal(
+            to, validator, usdn.convertToTokens(usdnShares), data.feeBps, block.timestamp
+        );
     }
 
     /**
@@ -772,57 +781,59 @@ library UsdnProtocolActionsVaultLibrary {
         if (isLiquidationPending) {
             return false;
         }
+        // no early return past this point, we know that the position will be validated
+        isValidated_ = true;
 
         uint256 available;
         {
-            // apply fees on price
-            uint128 withdrawalPriceWithFees =
-                (currentPrice.price + currentPrice.price * s._vaultFeeBps / Constants.BPS_DIVISOR).toUint128();
-
-            // we calculate the available balance of the vault side, either considering the asset price at the time of
-            // the initiate action, or the current price provided for validation
+            // we calculate the available balance of the vault side at the price of the validate action (ignoring any
+            // funding between the initiate and validate)
             int256 vaultAssetAvailable = Vault._vaultAssetAvailable(
                 withdrawal.totalExpo,
                 withdrawal.balanceVault,
                 withdrawal.balanceLong,
-                withdrawalPriceWithFees,
+                currentPrice.price.toUint128(),
                 withdrawal.assetPrice
             );
 
             if (vaultAssetAvailable < 0) {
                 vaultAssetAvailable = 0;
             }
+            available = uint256(vaultAssetAvailable);
 
+            // we compare it to the available balance from the initiate action
             // we will use the lowest of the two amounts to redeem the underlying asset share
             // cast is safe because vaultAssetAvailable cannot be negative
             if (withdrawal.balanceVault <= uint256(vaultAssetAvailable)) {
                 available = withdrawal.balanceVault;
-            } else {
-                available = uint256(vaultAssetAvailable);
             }
         }
 
         uint256 shares = Core._mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
 
         // we can add back the _pendingBalanceVault we subtracted in the initiate action
-        uint256 tempWithdrawal = Vault._calcBurnUsdn(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares);
-        s._pendingBalanceVault += tempWithdrawal.toInt256();
+        uint256 tempWithdrawalWithFees =
+            Vault._calcBurnUsdn(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares, withdrawal.feeBps);
+        s._pendingBalanceVault += tempWithdrawalWithFees.toInt256();
 
         IUsdn usdn = s._usdn;
-        uint256 assetToTransfer = Vault._calcBurnUsdn(shares, available, usdn.totalShares());
+        // calculate the amount of asset to transfer with the same fees as recorded during the initiate action
+        uint256 assetToTransferWithFees = Vault._calcBurnUsdn(shares, available, usdn.totalShares(), withdrawal.feeBps);
 
         usdn.burnShares(shares);
 
         // send the asset to the user
-        if (assetToTransfer > 0) {
-            s._balanceVault -= assetToTransfer;
-            address(s._asset).safeTransfer(withdrawal.to, assetToTransfer);
+        if (assetToTransferWithFees > 0) {
+            s._balanceVault -= assetToTransferWithFees;
+            address(s._asset).safeTransfer(withdrawal.to, assetToTransferWithFees);
         }
 
-        isValidated_ = true;
-
         emit IUsdnProtocolEvents.ValidatedWithdrawal(
-            withdrawal.to, withdrawal.validator, assetToTransfer, usdn.convertToTokens(shares), withdrawal.timestamp
+            withdrawal.to,
+            withdrawal.validator,
+            assetToTransferWithFees,
+            usdn.convertToTokens(shares),
+            withdrawal.timestamp
         );
     }
 

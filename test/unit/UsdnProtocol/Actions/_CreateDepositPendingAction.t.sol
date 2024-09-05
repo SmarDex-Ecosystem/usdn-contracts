@@ -23,6 +23,7 @@ contract TestUsdnProtocolActionsCreateDepositPendingAction is UsdnProtocolBaseFi
         params.flags.enableSecurityDeposit = true;
         _setUp(params);
 
+        data.lastPrice = params.initialPrice;
         data.totalExpo = 420 ether;
         data.balanceVault = 41 ether;
         data.balanceLong = 42 ether;
@@ -54,9 +55,9 @@ contract TestUsdnProtocolActionsCreateDepositPendingAction is UsdnProtocolBaseFi
         assertEq(
             pendingAction.securityDepositValue, securityDeposit, "securityDepositValue should be the provided amount"
         );
-        assertEq(uint24(pendingAction.var1), protocol.getVaultFeeBps(), "var1 should be the vault fee");
+        assertEq(pendingAction.var0, protocol.getVaultFeeBps(), "var0 should be the vault fee");
         assertEq(pendingAction.var2, amount, "var2 should be the amount");
-        assertEq(pendingAction.var3, params.initialPrice, "var3 should be the last price");
+        assertEq(pendingAction.var3, data.lastPrice, "var3 should be the last price");
         assertEq(pendingAction.var4, data.totalExpo, "var4 should be the totalExpo attribute of `data`");
         assertEq(pendingAction.var5, data.balanceVault, "var5 should be the balanceVault attribute of `data`");
         assertEq(pendingAction.var6, data.balanceLong, "var6 should be the balanceLong attribute of `data`");
