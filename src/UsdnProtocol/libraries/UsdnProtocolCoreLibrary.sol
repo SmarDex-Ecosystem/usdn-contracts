@@ -130,30 +130,55 @@ library UsdnProtocolCoreLibrary {
             maxIter = queueLength;
         }
 
-        uint256 i = 0;
-        uint256 arrayLen = 0;
+        uint128 lowLatencyDeadline = s._lowLatencyValidatorDeadline;
+        uint16 middlewareLowLatencyDelay = s._oracleMiddleware.getLowLatencyDelay();
+        uint128 onChainDeadline = s._onChainValidatorDeadline;
+        uint256 i;
+        uint256 j;
+        uint256 arrayLen;
         do {
             // since `i` cannot be greater or equal to `queueLength`, there is no risk of reverting
             (Types.PendingAction memory candidate, uint128 rawIndex) = s._pendingActionsQueue.at(i);
-            // if the msg.sender is equal to the validator of the pending action, then the pending action is not
-            // actionable by this user (it will get validated automatically by their action)
-            // and so we need to return the next item in the queue so that they can validate a third-party pending
-            // action (if any)
+
             if (candidate.timestamp == 0 || candidate.validator == currentUser) {
-                rawIndices_[i] = rawIndex;
+                // if the currentUser is equal to the validator of the pending action, then the pending action is not
+                // actionable by this user (it will get validated automatically by their action)
+                // and so we need to return the next item in the queue so that they can validate a third-party pending
+                // action (if any)
+                if (arrayLen > 0) {
+                    rawIndices_[j] = rawIndex;
+                    unchecked {
+                        j++;
+                    }
+                }
                 // try the next one
                 unchecked {
                     i++;
                 }
-            } else if (candidate.timestamp + s._validationDeadline < block.timestamp) {
+            } else if (
+                _isActionable(candidate.timestamp, lowLatencyDeadline, middlewareLowLatencyDelay, onChainDeadline)
+            ) {
                 // we found an actionable pending action
-                actions_[i] = candidate;
-                rawIndices_[i] = rawIndex;
+                actions_[j] = candidate;
+                rawIndices_[j] = rawIndex;
 
                 // continue looking
                 unchecked {
                     i++;
-                    arrayLen = i;
+                    j++;
+                    arrayLen = j;
+                }
+            } else if (block.timestamp > candidate.timestamp + middlewareLowLatencyDelay) {
+                // the pending action is not actionable but some more recent ones might be (with low-latency oracle)
+                // continue looking
+                if (arrayLen > 0) {
+                    rawIndices_[j] = rawIndex;
+                    unchecked {
+                        j++;
+                    }
+                }
+                unchecked {
+                    i++;
                 }
             } else {
                 // the pending action is not actionable (it is too recent),
@@ -206,6 +231,41 @@ library UsdnProtocolCoreLibrary {
         }
         uint128 rawIndex = uint128(pendingActionIndex - 1);
         _removeBlockedPendingAction(s, rawIndex, to, false);
+    }
+
+    /// @notice See {IUsdnProtocolLong}
+    function longAssetAvailableWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
+        public
+        view
+        returns (int256 available_)
+    {
+        if (timestamp < s._lastUpdateTimestamp) {
+            revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
+        }
+
+        (int256 fundAsset,) = _fundingAsset(s, timestamp, s._EMA);
+
+        if (fundAsset > 0) {
+            available_ = _longAssetAvailable(s, currentPrice).safeSub(fundAsset);
+        } else {
+            int256 fee = fundAsset * Utils.toInt256(s._protocolFeeBps) / int256(Constants.BPS_DIVISOR);
+            // fees have the same sign as fundAsset (negative here), so we need to sub them
+            available_ = _longAssetAvailable(s, currentPrice).safeSub(fundAsset - fee);
+        }
+
+        int256 totalBalance = (s._balanceLong + s._balanceVault).toInt256();
+        if (available_ > totalBalance) {
+            available_ = totalBalance;
+        }
+    }
+
+    /// @notice See {IUsdnProtocolLong}
+    function longTradingExpoWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
+        public
+        view
+        returns (int256 expo_)
+    {
+        expo_ = s._totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(s, currentPrice, timestamp));
     }
 
     /* -------------------------------------------------------------------------- */
@@ -638,24 +698,43 @@ library UsdnProtocolCoreLibrary {
             maxIter = queueLength;
         }
 
-        uint256 i = 0;
+        uint128 lowLatencyDeadline = s._lowLatencyValidatorDeadline;
+        uint16 middlewareLowLatencyDelay = s._oracleMiddleware.getLowLatencyDelay();
+        uint128 onChainDeadline = s._onChainValidatorDeadline;
+        uint256 i;
+        uint256 j;
         do {
-            // since we will never call `front` more than `queueLength` times, there is no risk of reverting
-            (Types.PendingAction memory candidate, uint128 rawIndex) = s._pendingActionsQueue.front();
-            // gas optimization
+            // since we will never loop more than `queueLength` times, there is no risk of reverting
+            (Types.PendingAction memory candidate, uint128 rawIndex) = s._pendingActionsQueue.at(j);
             unchecked {
                 i++;
             }
             if (candidate.timestamp == 0) {
                 // remove the stale pending action
-                s._pendingActionsQueue.popFront();
+                s._pendingActionsQueue.clearAt(rawIndex);
+                // if we were removing another item than the first one, we increment j (otherwise we keep looking at the
+                // first item because it was shifted to the front)
+                if (j > 0) {
+                    unchecked {
+                        j++;
+                    }
+                }
                 // try the next one
                 continue;
-            } else if (candidate.timestamp + s._validationDeadline < block.timestamp) {
+            } else if (
+                _isActionable(candidate.timestamp, lowLatencyDeadline, middlewareLowLatencyDelay, onChainDeadline)
+            ) {
                 // we found an actionable pending action
                 return (candidate, rawIndex);
+            } else if (block.timestamp > candidate.timestamp + middlewareLowLatencyDelay) {
+                // the pending action is not actionable but some more recent ones might be (with low-latency oracle)
+                // continue looking
+                unchecked {
+                    j++;
+                }
+                continue;
             }
-            // the first pending action is not actionable
+            // the first pending action is not actionable, none of the following ones will be either
             return (action_, rawIndex_);
         } while (i < maxIter);
     }
@@ -790,7 +869,7 @@ library UsdnProtocolCoreLibrary {
         public
     {
         Types.PendingAction memory pending = s._pendingActionsQueue.atRaw(rawIndex);
-        if (block.timestamp < pending.timestamp + s._validationDeadline + 1 hours) {
+        if (block.timestamp < pending.timestamp + s._lowLatencyValidatorDeadline + 1 hours) {
             revert IUsdnProtocolErrors.UsdnProtocolUnauthorized();
         }
         delete s._pendingActions[pending.validator];
@@ -883,38 +962,30 @@ library UsdnProtocolCoreLibrary {
         hash_ = tickHash(tick, version_);
     }
 
-    /// @notice See {IUsdnProtocolLong}
-    function longAssetAvailableWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
-        public
-        view
-        returns (int256 available_)
-    {
-        if (timestamp < s._lastUpdateTimestamp) {
-            revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
-        }
-
-        (int256 fundAsset,) = _fundingAsset(s, timestamp, s._EMA);
-
-        if (fundAsset > 0) {
-            available_ = _longAssetAvailable(s, currentPrice).safeSub(fundAsset);
+    /**
+     * @notice Check whether a pending action is actionable, i.e any user can validate it and retrieve the security
+     * deposit
+     * @dev Between `initiateTimestamp` and `initiateTimestamp + lowLatencyDeadline`,
+     * the validator receives the security deposit
+     * Between `initiateTimestamp + lowLatencyDelay` and `initiateTimestamp + lowLatencyDelay + onChainDeadline`,
+     * the validator also receives the security deposit
+     * Outside of those periods, the security deposit goes to the user validating the pending action
+     * @param initiateTimestamp The timestamp at which the action was initiated
+     * @param lowLatencyDelay The low latency delay of the oracle middleware
+     * @return actionable_ Whether the pending action is actionable
+     */
+    function _isActionable(
+        uint256 initiateTimestamp,
+        uint256 lowLatencyDeadline,
+        uint256 lowLatencyDelay,
+        uint256 onChainDeadline
+    ) public view returns (bool actionable_) {
+        if (block.timestamp <= initiateTimestamp + lowLatencyDelay) {
+            // the validation must happen with a low-latency oracle
+            actionable_ = block.timestamp > initiateTimestamp + lowLatencyDeadline;
         } else {
-            int256 fee = fundAsset * Utils.toInt256(s._protocolFeeBps) / int256(Constants.BPS_DIVISOR);
-            // fees have the same sign as fundAsset (negative here), so we need to sub them
-            available_ = _longAssetAvailable(s, currentPrice).safeSub(fundAsset - fee);
+            // the validation must happen with an on-chain oracle
+            actionable_ = block.timestamp > initiateTimestamp + lowLatencyDelay + onChainDeadline;
         }
-
-        int256 totalBalance = (s._balanceLong + s._balanceVault).toInt256();
-        if (available_ > totalBalance) {
-            available_ = totalBalance;
-        }
-    }
-
-    /// @notice See {IUsdnProtocolLong}
-    function longTradingExpoWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
-        public
-        view
-        returns (int256 expo_)
-    {
-        expo_ = s._totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(s, currentPrice, timestamp));
     }
 }

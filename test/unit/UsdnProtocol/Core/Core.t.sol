@@ -447,6 +447,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.ValidateDeposit,
             timestamp: uint40(block.timestamp),
+            var0: 0,
             to: address(this),
             validator: address(this),
             securityDepositValue: 0.1 ether,
@@ -474,6 +475,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.ValidateOpenPosition,
             timestamp: uint40(block.timestamp),
+            var0: 0,
             to: address(this),
             validator: address(this),
             securityDepositValue: 0.01 ether,
@@ -533,6 +535,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.ValidateOpenPosition,
             timestamp: uint40(block.timestamp),
+            var0: 0,
             to: address(this),
             validator: address(this),
             securityDepositValue: 0.01 ether,
@@ -570,6 +573,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.InitiateWithdrawal,
             timestamp: uint40(block.timestamp - 1 days),
+            var0: 0,
             to: address(this),
             validator: address(this),
             securityDepositValue: 0.01 ether,
@@ -591,6 +595,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         LongPendingAction memory longPendingAction = LongPendingAction({
             action: ProtocolAction.ValidateOpenPosition,
             timestamp: uint40(block.timestamp - 1 days),
+            closeLiqPenalty: 0,
             to: address(this),
             validator: USER_1,
             securityDepositValue: 0.01 ether,
@@ -619,6 +624,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         LongPendingAction memory longPendingAction = LongPendingAction({
             action: ProtocolAction.ValidateOpenPosition,
             timestamp: uint40(block.timestamp - 1 days),
+            closeLiqPenalty: 0,
             to: address(this),
             validator: USER_1,
             securityDepositValue: 0.01 ether,

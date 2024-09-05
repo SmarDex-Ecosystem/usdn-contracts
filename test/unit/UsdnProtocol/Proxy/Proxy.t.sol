@@ -143,7 +143,8 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
         sV1._rebalancer = protocol.getRebalancer();
         sV1._minLeverage = protocol.getMinLeverage();
         sV1._maxLeverage = protocol.getMaxLeverage();
-        sV1._validationDeadline = protocol.getValidationDeadline();
+        sV1._lowLatencyValidatorDeadline = protocol.getLowLatencyValidatorDeadline();
+        sV1._onChainValidatorDeadline = protocol.getOnChainValidatorDeadline();
         sV1._liquidationPenalty = protocol.getLiquidationPenalty();
         sV1._safetyMarginBps = protocol.getSafetyMarginBps();
         sV1._liquidationIteration = protocol.getLiquidationIteration();
@@ -195,7 +196,8 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
         assertEq(address(sV1._rebalancer), address(protocol.getRebalancer()));
         assertEq(sV1._minLeverage, protocol.getMinLeverage());
         assertEq(sV1._maxLeverage, protocol.getMaxLeverage());
-        assertEq(sV1._validationDeadline, protocol.getValidationDeadline());
+        assertEq(sV1._lowLatencyValidatorDeadline, protocol.getLowLatencyValidatorDeadline());
+        assertEq(sV1._onChainValidatorDeadline, protocol.getOnChainValidatorDeadline());
         assertEq(sV1._liquidationPenalty, protocol.getLiquidationPenalty());
         assertEq(sV1._safetyMarginBps, protocol.getSafetyMarginBps());
         assertEq(sV1._liquidationIteration, protocol.getLiquidationIteration());

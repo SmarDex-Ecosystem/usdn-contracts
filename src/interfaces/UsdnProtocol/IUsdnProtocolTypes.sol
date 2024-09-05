@@ -63,6 +63,7 @@ interface IUsdnProtocolTypes {
      * @notice A pending action in the queue
      * @param action The action type
      * @param timestamp The timestamp of the initiate action
+     * @param var0 See `DepositPendingAction`, `WithdrawalPendingAction` and `LongPendingAction`
      * @param to The `to` address
      * @param validator The `validator` address
      * @param securityDepositValue The security deposit of the pending action
@@ -77,6 +78,7 @@ interface IUsdnProtocolTypes {
     struct PendingAction {
         ProtocolAction action; // 1 byte
         uint40 timestamp; // 5 bytes
+        uint24 var0; // 3 bytes
         address to; // 20 bytes
         address validator; // 20 bytes
         uint64 securityDepositValue; // 8 bytes
@@ -93,6 +95,7 @@ interface IUsdnProtocolTypes {
      * @notice A pending action in the queue for a vault deposit
      * @param action The action type
      * @param timestamp The timestamp of the initiate action
+     * @param __unused Unused field to align the struct to `PendingAction`
      * @param to The `to` address
      * @param validator The `validator` address
      * @param securityDepositValue The security deposit of the pending action
@@ -107,6 +110,7 @@ interface IUsdnProtocolTypes {
     struct DepositPendingAction {
         ProtocolAction action; // 1 byte
         uint40 timestamp; // 5 bytes
+        uint24 __unused; // 3 bytes
         address to; // 20 bytes
         address validator; // 20 bytes
         uint64 securityDepositValue; // 8 bytes
@@ -123,6 +127,7 @@ interface IUsdnProtocolTypes {
      * @notice A pending action in the queue for a vault withdrawal
      * @param action The action type
      * @param timestamp The timestamp of the initiate action
+     * @param _unused Unused field to align the struct to `PendingAction`
      * @param to The `to` address
      * @param validator The `validator` address
      * @param securityDepositValue The security deposit of the pending action
@@ -137,6 +142,7 @@ interface IUsdnProtocolTypes {
     struct WithdrawalPendingAction {
         ProtocolAction action; // 1 byte
         uint40 timestamp; // 5 bytes
+        uint24 _unused; // 3 bytes
         address to; // 20 bytes
         address validator; // 20 bytes
         uint64 securityDepositValue; // 8 bytes
@@ -153,6 +159,7 @@ interface IUsdnProtocolTypes {
      * @notice A pending action in the queue for a long position
      * @param action The action type
      * @param timestamp The timestamp of the initiate action
+     * @param closeLiqPenalty The liquidation penalty of the tick (only used when closing a position)
      * @param to The `to` address
      * @param validator The `validator` address
      * @param securityDepositValue The security deposit of the pending action
@@ -170,6 +177,7 @@ interface IUsdnProtocolTypes {
     struct LongPendingAction {
         ProtocolAction action; // 1 byte
         uint40 timestamp; // 5 bytes
+        uint24 closeLiqPenalty; // 3 bytes
         address to; // 20 bytes
         address validator; // 20 bytes
         uint64 securityDepositValue; // 8 bytes
@@ -460,7 +468,12 @@ interface IUsdnProtocolTypes {
      * @param _rebalancer The rebalancer contract
      * @param _minLeverage The minimum leverage for a position (1.000000001)
      * @param _maxLeverage The maximum leverage for a position
-     * @param _validationDeadline The deadline for a user to confirm their action
+     * @param _lowLatencyValidatorDeadline The deadline for a user to confirm their action with a low-latency oracle
+     * After this deadline, any user can validate the action with the low-latency oracle until the OracleMiddleware's
+     * _lowLatencyDelay. This is an offset compared to the timestamp of the initiate action
+     * @param _onChainValidatorDeadline The deadline for a user to confirm their action with an on-chain oracle
+     * After this deadline, any user can validate the action with the on-chain oracle. This is an offset compared to the
+     * timestamp of the initiate action + the oracle middleware's _lowLatencyDelay
      * @param _safetyMarginBps Safety margin for the liquidation price of newly open positions, in basis points
      * @param _liquidationIteration The number of iterations to perform during the user's action (in tick)
      * @param _protocolFeeBps The protocol fee in basis points
@@ -544,7 +557,8 @@ interface IUsdnProtocolTypes {
         IBaseRebalancer _rebalancer;
         uint256 _minLeverage;
         uint256 _maxLeverage;
-        uint256 _validationDeadline;
+        uint128 _lowLatencyValidatorDeadline;
+        uint128 _onChainValidatorDeadline;
         uint256 _safetyMarginBps;
         uint16 _liquidationIteration;
         uint16 _protocolFeeBps;

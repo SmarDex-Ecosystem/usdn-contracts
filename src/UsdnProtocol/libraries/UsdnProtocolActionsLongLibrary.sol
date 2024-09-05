@@ -584,9 +584,11 @@ library UsdnProtocolActionsLongLibrary {
             return (false, false);
         }
 
-        int24 tick = Utils.calcTickWithoutPenalty(long.tick, Long.getTickLiquidationPenalty(s, long.tick));
+        int24 tickWithoutPenalty = Utils.calcTickWithoutPenalty(long.tick, long.closeLiqPenalty);
         data.positionValue = Long._positionValue(
-            data.priceWithFees, Long._getEffectivePriceForTick(tick, long.liqMultiplier), long.closePosTotalExpo
+            data.priceWithFees,
+            Long._getEffectivePriceForTick(tickWithoutPenalty, long.liqMultiplier),
+            long.closePosTotalExpo
         );
 
         uint256 assetToTransfer;

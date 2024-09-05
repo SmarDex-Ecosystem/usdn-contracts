@@ -60,7 +60,11 @@ library UsdnProtocolActionsUtilsLibrary {
         ActionsVault._checkPendingFee(s);
     }
 
-    /// @notice See {IUsdnProtocolActions}
+    /**
+     * @notice See {IUsdnProtocolActions}
+     * @dev TODO: refactor to loop on the queue and then index into `previousActionsData` when an actionable pending
+     * action has been found, to avoid loop multiple times over the unactionable items in the queue
+     */
     function validateActionablePendingActions(
         Types.Storage storage s,
         Types.PreviousActionsData calldata previousActionsData,
@@ -214,6 +218,7 @@ library UsdnProtocolActionsUtilsLibrary {
         Types.LongPendingAction memory action = Types.LongPendingAction({
             action: Types.ProtocolAction.ValidateOpenPosition,
             timestamp: uint40(block.timestamp),
+            closeLiqPenalty: 0,
             to: to,
             validator: validator,
             securityDepositValue: securityDepositValue,
@@ -458,6 +463,7 @@ library UsdnProtocolActionsUtilsLibrary {
         Types.LongPendingAction memory action = Types.LongPendingAction({
             action: Types.ProtocolAction.ValidateClosePosition,
             timestamp: uint40(block.timestamp),
+            closeLiqPenalty: data.liquidationPenalty,
             to: to,
             validator: validator,
             securityDepositValue: securityDepositValue,
