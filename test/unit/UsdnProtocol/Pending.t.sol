@@ -449,7 +449,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         DepositPendingAction memory depositAction = protocol.i_toDepositPendingAction(action);
         assertTrue(depositAction.action == action.action, "action action");
         assertEq(depositAction.timestamp, action.timestamp, "action timestamp");
-        assertEq(depositAction.__unused, action.var0, "action var0");
+        assertEq(depositAction._unused, action.var0, "action var0");
         assertEq(depositAction.to, action.to, "action to");
         assertEq(depositAction.validator, action.validator, "action validator");
         assertEq(depositAction.securityDepositValue, action.securityDepositValue, "action security deposit value");

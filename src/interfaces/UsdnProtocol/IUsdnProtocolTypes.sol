@@ -95,7 +95,7 @@ interface IUsdnProtocolTypes {
      * @notice A pending action in the queue for a vault deposit
      * @param action The action type
      * @param timestamp The timestamp of the initiate action
-     * @param __unused Unused field to align the struct to `PendingAction`
+     * @param _unused Unused field to align the struct to `PendingAction`
      * @param to The `to` address
      * @param validator The `validator` address
      * @param securityDepositValue The security deposit of the pending action
@@ -110,7 +110,7 @@ interface IUsdnProtocolTypes {
     struct DepositPendingAction {
         ProtocolAction action; // 1 byte
         uint40 timestamp; // 5 bytes
-        uint24 __unused; // 3 bytes
+        uint24 _unused; // 3 bytes
         address to; // 20 bytes
         address validator; // 20 bytes
         uint64 securityDepositValue; // 8 bytes
