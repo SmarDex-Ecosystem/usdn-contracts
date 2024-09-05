@@ -283,7 +283,7 @@ library UsdnProtocolVaultLibrary {
 
     /**
      * @notice Calculate the amount of SDEX to burn when minting USDN tokens (rounding up)
-     * @dev we round up to make sure we burn SDEX during the minting process
+     * @dev We round up to make sure we burn SDEX during the minting process
      * @param usdnAmount The amount of USDN to be minted
      * @param sdexBurnRatio The ratio of SDEX to burn for each minted USDN
      * @return sdexToBurn_ The amount of SDEX to burn for the given USDN amount
