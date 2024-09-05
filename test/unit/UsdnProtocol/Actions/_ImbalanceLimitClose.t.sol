@@ -21,7 +21,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario The `_checkImbalanceLimitClose` function should not revert when contract is balanced
-     * and position is less than the limit
+     * and the wanted close position does not imbalance the protocol
      * @custom:given The protocol is in a balanced state
      * @custom:when The `_checkImbalanceLimitClose` function is called with a value below the close limit
      * @custom:then The transaction should not revert

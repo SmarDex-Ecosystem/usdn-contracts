@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
-
 import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
@@ -22,7 +20,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario The `_checkImbalanceLimitWithdrawal` function should not revert when contract is balanced
-     * and position is within limit
+     * and the wanted withdrawal does not imbalance the protocol
      * @custom:given The protocol is in a balanced state
      * @custom:when The `_checkImbalanceLimitWithdrawal` function is called with a value below the withdrawal limit
      * @custom:then The transaction should not revert

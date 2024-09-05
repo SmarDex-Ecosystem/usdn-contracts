@@ -19,9 +19,8 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `_checkImbalanceLimitDeposit` function should not revert when contract is balanced and
-     * position
-     * is within limit
+     * @custom:scenario The `_checkImbalanceLimitDeposit` function should not revert when contract is balanced and the
+     * wanted deposit does not imbalance the protocol
      * @custom:given The protocol is in a balanced state
      * @custom:when The `_checkImbalanceLimitDeposit` function is called with a value below the deposit limit
      * @custom:then The transaction should not revert
