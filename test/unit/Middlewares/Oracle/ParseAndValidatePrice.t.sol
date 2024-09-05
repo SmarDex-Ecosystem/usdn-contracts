@@ -23,6 +23,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
     uint128 internal immutable LOW_LATENCY_DELAY;
     uint128 internal immutable TARGET_TIMESTAMP;
     uint128 internal immutable LIMIT_TIMESTAMP;
+    uint80 internal immutable FIRST_ROUND_ID = (1 << 64) + 1;
 
     constructor() {
         super.setUp();
@@ -362,40 +363,16 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
 
         /* --------------------- Validate actions revert as well -------------------- */
 
-        bytes memory roundIdData = abi.encode(1);
-        mockChainlinkOnChain.setRoundTimestamp(0, LIMIT_TIMESTAMP);
-        mockChainlinkOnChain.setRoundTimestamp(1, LIMIT_TIMESTAMP + 1);
-        mockChainlinkOnChain.setRoundPrice(0, -1);
-
         skip(LOW_LATENCY_DELAY + 1);
-
-        // wrong previous roundId price
-
-        validationCost = oracleMiddleware.validationCost(roundIdData, Types.ProtocolAction.ValidateDeposit);
-        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
-        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            "", TARGET_TIMESTAMP, Types.ProtocolAction.ValidateDeposit, roundIdData
-        );
-
-        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
-        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            "", TARGET_TIMESTAMP, Types.ProtocolAction.ValidateWithdrawal, roundIdData
-        );
-
-        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
-        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            "", TARGET_TIMESTAMP, Types.ProtocolAction.ValidateOpenPosition, roundIdData
-        );
-
-        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
-        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            "", TARGET_TIMESTAMP, Types.ProtocolAction.ValidateClosePosition, roundIdData
-        );
 
         // wrong validate roundId price
 
-        mockChainlinkOnChain.setRoundPrice(0, int256(ETH_PRICE));
-        mockChainlinkOnChain.setRoundPrice(1, -1);
+        bytes memory roundIdData = abi.encode(FIRST_ROUND_ID + 1);
+        mockChainlinkOnChain.setRoundTimestamp(FIRST_ROUND_ID, LIMIT_TIMESTAMP);
+        mockChainlinkOnChain.setRoundTimestamp(FIRST_ROUND_ID + 1, LIMIT_TIMESTAMP + 1);
+        mockChainlinkOnChain.setRoundPrice(FIRST_ROUND_ID, int256(ETH_PRICE));
+        mockChainlinkOnChain.setRoundPrice(FIRST_ROUND_ID + 1, -1);
+        mockChainlinkOnChain.setLatestRoundData(FIRST_ROUND_ID + 1, -1, LIMIT_TIMESTAMP + 1, FIRST_ROUND_ID + 1);
 
         validationCost = oracleMiddleware.validationCost(roundIdData, Types.ProtocolAction.ValidateDeposit);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
@@ -417,6 +394,92 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
             "", TARGET_TIMESTAMP, Types.ProtocolAction.ValidateClosePosition, roundIdData
         );
+    }
+
+    /**
+     * @custom:scenario Parse and validate price using Chainlink that recently changed aggregator
+     * @custom:given Enough time has passed that Chainlink is used to validate the pending action
+     * @custom:and The latest round ID is the first ID of the phase
+     * @custom:and The validation delay is respected
+     * @custom:and The price timestamp is below the time elapsed limit
+     * @custom:then It returns the price data of the provided round ID
+     */
+    function test_parseAndValidatePriceWithFirstRoundIdOfPhase() public {
+        bytes memory roundIdData = abi.encode(FIRST_ROUND_ID);
+
+        mockChainlinkOnChain.setRoundData(
+            FIRST_ROUND_ID, int256(ETH_PRICE), LIMIT_TIMESTAMP + 1, LIMIT_TIMESTAMP + 1, FIRST_ROUND_ID
+        );
+        mockChainlinkOnChain.setLatestRoundData(FIRST_ROUND_ID, int256(ETH_PRICE), LIMIT_TIMESTAMP + 1, FIRST_ROUND_ID);
+        uint256 mockedChainlinkFormattedPrice =
+            ETH_PRICE * 10 ** (oracleMiddleware.getDecimals() - mockChainlinkOnChain.decimals());
+
+        skip(LOW_LATENCY_DELAY + 1);
+
+        // sanity check
+        assertEq(FIRST_ROUND_ID, (1 << 64) + 1, "The first round ID should be the first valid round of the phase");
+
+        PriceInfo memory priceInfo = oracleMiddleware.parseAndValidatePrice(
+            "", TARGET_TIMESTAMP, Types.ProtocolAction.ValidateDeposit, roundIdData
+        );
+        assertEq(priceInfo.price, mockedChainlinkFormattedPrice, "Price should be equal to the provided round's price");
+    }
+
+    /**
+     * @custom:scenario Parse and validate price using Chainlink with the first round ID of a previous phase
+     * @custom:given Enough time has passed that Chainlink is used to validate the pending action
+     * @custom:and The latest round ID is in a newer phase than the provided round ID
+     * @custom:and The validation delay is respected
+     * @custom:and The price timestamp is below the time elapsed limit
+     * @custom:then It reverts with a OracleMiddlewareInvalidRoundId error
+     */
+    function test_RevertWhen_parseAndValidatePriceWithFirstRoundIdOfPreviousPhase() public {
+        bytes memory roundIdData = abi.encode(FIRST_ROUND_ID);
+
+        mockChainlinkOnChain.setRoundData(
+            FIRST_ROUND_ID, int256(ETH_PRICE), LIMIT_TIMESTAMP + 1, LIMIT_TIMESTAMP + 1, FIRST_ROUND_ID
+        );
+        // set the latest round data with a round ID from a newer phase
+        mockChainlinkOnChain.setLatestRoundData((2 << 64) + 1, int256(ETH_PRICE), LIMIT_TIMESTAMP + 2, FIRST_ROUND_ID);
+
+        skip(LOW_LATENCY_DELAY + 1);
+
+        // sanity check
+        assertEq(FIRST_ROUND_ID, (1 << 64) + 1, "The first round ID should be the first valid round of the phase");
+
+        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareInvalidRoundId.selector));
+        oracleMiddleware.parseAndValidatePrice("", TARGET_TIMESTAMP, Types.ProtocolAction.ValidateDeposit, roundIdData);
+    }
+
+    /**
+     * @custom:scenario Parse and validate price using Chainlink with the first round ID of a new, too recent phase
+     * @custom:given Enough time has passed that Chainlink is used to validate the pending action
+     * @custom:and The latest round ID is the first ID of the phase
+     * @custom:and The validation delay is respected
+     * @custom:and The price is above the time elapsed limit
+     * @custom:then It reverts with a OracleMiddlewareInvalidRoundId error
+     */
+    function test_RevertWhen_parseAndValidatePriceWithFirstRoundIdOfPhaseTooNew() public {
+        bytes memory roundIdData = abi.encode(FIRST_ROUND_ID);
+
+        mockChainlinkOnChain.setRoundData(
+            FIRST_ROUND_ID,
+            int256(ETH_PRICE),
+            LIMIT_TIMESTAMP + chainlinkTimeElapsedLimit + 1,
+            LIMIT_TIMESTAMP + chainlinkTimeElapsedLimit + 1,
+            FIRST_ROUND_ID
+        );
+        mockChainlinkOnChain.setLatestRoundData(
+            FIRST_ROUND_ID, int256(ETH_PRICE), LIMIT_TIMESTAMP + chainlinkTimeElapsedLimit + 1, FIRST_ROUND_ID
+        );
+
+        skip(LOW_LATENCY_DELAY + 1);
+
+        // sanity check
+        assertEq(FIRST_ROUND_ID, (1 << 64) + 1, "The first round ID should be the first valid round of the phase");
+
+        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareInvalidRoundId.selector));
+        oracleMiddleware.parseAndValidatePrice("", TARGET_TIMESTAMP, Types.ProtocolAction.ValidateDeposit, roundIdData);
     }
 
     /**

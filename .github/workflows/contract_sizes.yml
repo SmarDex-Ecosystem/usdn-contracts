@@ -34,6 +34,7 @@ jobs:
 
       - name: Get contract sizes
         id: contract-sizes
+        shell: bash {0} # default github config uses `-e` flag which fails the step on command exit code != 0
         run: |
           {
             echo 'SIZES<<EOF'
