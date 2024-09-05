@@ -47,7 +47,7 @@ contract TestImbalanceLimitCloseFuzzing is UsdnProtocolBaseFixture {
             vm.expectRevert(
                 abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, type(int256).max)
             );
-        } else if (newLongExpo == 0 || imbalanceBps >= initialCloseLimit) {
+        } else if (newLongExpo == 0 || imbalanceBps > initialCloseLimit) {
             // should revert with `imbalanceBps` close imbalance limit
             vm.expectRevert(
                 abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, imbalanceBps)
