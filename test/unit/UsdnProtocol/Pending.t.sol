@@ -323,6 +323,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         DepositPendingAction memory pendingDeposit = DepositPendingAction({
             action: ProtocolAction.ValidateDeposit,
             timestamp: timestamp,
+            __unused: 0,
             to: USER_1,
             validator: USER_1,
             securityDepositValue: 0,
@@ -392,6 +393,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         DepositPendingAction memory pendingDeposit = DepositPendingAction({
             action: ProtocolAction.ValidateDeposit,
             timestamp: timestamp,
+            __unused: 0,
             to: USER_1,
             validator: USER_1,
             securityDepositValue: 0,
