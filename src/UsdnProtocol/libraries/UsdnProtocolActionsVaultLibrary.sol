@@ -35,6 +35,7 @@ library UsdnProtocolActionsVaultLibrary {
 
     /**
      * @dev Structure to hold the transient data during `_initiateDeposit`
+     * @param lastPrice The last price of the asset
      * @param isLiquidationPending Whether some liquidations still need to be performed
      * @param feeBps The vault deposit fee in basis points
      * @param totalExpo The total expo of the long side
@@ -42,9 +43,9 @@ library UsdnProtocolActionsVaultLibrary {
      * @param balanceVault The vault side balance, calculated according to the pendingActionPrice
      * @param usdnTotalShares Total minted shares of USDN
      * @param sdexToBurn The amount of SDEX to burn for the deposit
-     * @param lastPrice The last price of the asset
      */
     struct InitiateDepositData {
+        uint128 lastPrice;
         bool isLiquidationPending;
         uint16 feeBps;
         uint256 totalExpo;
@@ -52,7 +53,6 @@ library UsdnProtocolActionsVaultLibrary {
         uint256 balanceVault;
         uint256 usdnTotalShares;
         uint256 sdexToBurn;
-        uint128 lastPrice;
     }
 
     /**
