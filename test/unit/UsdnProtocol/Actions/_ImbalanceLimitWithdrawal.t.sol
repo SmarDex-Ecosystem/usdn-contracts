@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
-
 import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
@@ -22,14 +20,26 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario The `_checkImbalanceLimitWithdrawal` function should not revert when contract is balanced
-     * and position is within limit
+     * and the wanted withdrawal does not imbalance the protocol
      * @custom:given The protocol is in a balanced state
      * @custom:when The `_checkImbalanceLimitWithdrawal` function is called with a value below the withdrawal limit
      * @custom:then The transaction should not revert
      */
     function test_checkImbalanceLimitWithdrawal() public view {
         (, uint256 withdrawalValueToLimit) = _getWithdrawalLimitValues();
-        protocol.i_checkImbalanceLimitWithdrawal(withdrawalValueToLimit, protocol.getTotalExpo());
+        protocol.i_checkImbalanceLimitWithdrawal(withdrawalValueToLimit / 2, protocol.getTotalExpo());
+    }
+
+    /**
+     * @custom:scenario The `_checkImbalanceLimitWithdrawal` function should not revert when the imballance is equal to
+     * the limit
+     * @custom:given The protocol is in a balanced state
+     * @custom:when The `_checkImbalanceLimitWithdrawal` function is called with values on the withdrawal limit
+     * @custom:then The transaction should not revert
+     */
+    function test_checkImbalanceLimitWithdrawalOnLimit() public view {
+        (, uint256 withdrawalValueToLimit) = _getWithdrawalLimitValues();
+        protocol.i_checkImbalanceLimitWithdrawal(withdrawalValueToLimit - 1, protocol.getTotalExpo());
     }
 
     /**
@@ -122,6 +132,11 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
         protocol.i_checkImbalanceLimitWithdrawal(withdrawalValueToLimit, totalExpo);
     }
 
+    /**
+     * @notice Get withdrawal limit values at with the protocol revert
+     * @return withdrawalLimitBps_ The withdrawal limit in bps
+     * @return withdrawalValueToLimit_ The withdrawal value to imbalance the protocol
+     */
     function _getWithdrawalLimitValues()
         private
         view
@@ -129,17 +144,10 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
     {
         uint256 longExpo = protocol.getTotalExpo() - protocol.getBalanceLong();
 
-        // withdrawal limit bps
-        withdrawalLimitBps_ = protocol.getWithdrawalExpoImbalanceLimitBps();
+        withdrawalLimitBps_ = protocol.getWithdrawalExpoImbalanceLimitBps() + 1;
 
-        // the imbalance ratio: must be scaled for calculation
-        uint256 scaledWithdrawalImbalanceRatio =
-            FixedPointMathLib.divWad(uint256(withdrawalLimitBps_), protocol.BPS_DIVISOR());
-
-        // vault expo value limit from current long expo: numerator and denominator
-        // are at the same scale and result is rounded up
         uint256 vaultExpoValueLimit =
-            FixedPointMathLib.divWadUp(longExpo, FixedPointMathLib.WAD + scaledWithdrawalImbalanceRatio);
+            longExpo * protocol.BPS_DIVISOR() / (protocol.BPS_DIVISOR() + uint256(withdrawalLimitBps_));
 
         // withdrawal value to reach limit
         int256 withdrawalValueToLimit =

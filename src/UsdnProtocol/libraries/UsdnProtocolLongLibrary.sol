@@ -15,6 +15,7 @@ import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdn
 import { HugeUint } from "../../libraries/HugeUint.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
 import { TickMath } from "../../libraries/TickMath.sol";
+import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolActionsVaultLibrary as ActionsVault } from "./UsdnProtocolActionsVaultLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
@@ -100,27 +101,13 @@ library UsdnProtocolLongLibrary {
     }
 
     /// @notice See {IUsdnProtocolLong}
-    function getLongPosition(Types.Storage storage s, Types.PositionId memory posId)
-        public
-        view
-        returns (Types.Position memory pos_, uint24 liquidationPenalty_)
-    {
-        (bytes32 tickHash, uint256 version) = Core._tickHash(s, posId.tick);
-        if (posId.tickVersion != version) {
-            revert IUsdnProtocolErrors.UsdnProtocolOutdatedTick(version, posId.tickVersion);
-        }
-        pos_ = s._longPositions[tickHash][posId.index];
-        liquidationPenalty_ = s._tickData[tickHash].liquidationPenalty;
-    }
-
-    /// @notice See {IUsdnProtocolLong}
     function getPositionValue(
         Types.Storage storage s,
         Types.PositionId calldata posId,
         uint128 price,
         uint128 timestamp
     ) public view returns (int256 value_) {
-        (Types.Position memory pos, uint24 liquidationPenalty) = getLongPosition(s, posId);
+        (Types.Position memory pos, uint24 liquidationPenalty) = ActionsLong.getLongPosition(s, posId);
         int256 longTradingExpo = Core.longTradingExpoWithFunding(s, price, timestamp);
         if (longTradingExpo < 0) {
             // in case the long balance is equal to the total expo (or exceeds it), the trading expo will become zero
@@ -438,7 +425,7 @@ library UsdnProtocolLongLibrary {
                 _calcImbalanceCloseBps(cache.vaultBalance.toInt256(), cache.longBalance.toInt256(), cache.totalExpo);
 
             // if the imbalance is lower than the threshold, return
-            if (currentImbalance < s._closeExpoImbalanceLimitBps) {
+            if (currentImbalance <= s._closeExpoImbalanceLimitBps) {
                 return (longBalance_, vaultBalance_);
             }
         }
@@ -656,13 +643,17 @@ library UsdnProtocolLongLibrary {
             return data_;
         }
 
+        uint128 lastPrice = s._lastPrice;
+
         // gas savings, we only load the data once and use it for all conversions below
         Types.TickPriceConversionData memory conversionData = Types.TickPriceConversionData({
-            assetPrice: s._lastPrice,
-            tradingExpo: s._totalExpo - s._balanceLong,
+            assetPrice: lastPrice,
+            // we need to take into account the funding for the trading expo between the last price timestamp and now
+            tradingExpo: Core.longTradingExpoWithFunding(s, lastPrice, uint128(block.timestamp)).toUint256(),
             accumulator: s._liqMultiplierAccumulator,
             tickSpacing: s._tickSpacing
         });
+
         // we calculate the closest valid tick down for the desired liq price with liquidation penalty
         data_.posId.tick = getEffectiveTickForPrice(
             desiredLiqPrice,
@@ -748,7 +739,7 @@ library UsdnProtocolLongLibrary {
             currentVaultExpo, (s._balanceLong + openCollatValue).toInt256(), s._totalExpo + openTotalExpoValue
         );
 
-        if (imbalanceBps >= openExpoImbalanceLimitBps) {
+        if (imbalanceBps > openExpoImbalanceLimitBps) {
             revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
         }
     }
