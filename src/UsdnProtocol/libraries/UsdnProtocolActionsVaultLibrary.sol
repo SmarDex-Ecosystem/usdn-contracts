@@ -353,11 +353,11 @@ library UsdnProtocolActionsVaultLibrary {
         Types.DepositPendingAction memory pendingAction = Types.DepositPendingAction({
             action: Types.ProtocolAction.ValidateDeposit,
             timestamp: uint40(block.timestamp),
-            _unused: 0,
+            feeBps: data.feeBps,
             to: to,
             validator: validator,
             securityDepositValue: securityDepositValue,
-            feeBps: data.feeBps,
+            _unused: 0,
             amount: amount,
             assetPrice: data.lastPrice,
             totalExpo: data.totalExpo,
