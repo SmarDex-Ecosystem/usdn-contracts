@@ -127,12 +127,15 @@ library UsdnProtocolActionsUtilsLibrary {
      * the close limit on the vault side, otherwise revert
      * @param s The storage of the protocol
      * @param posTotalExpoToClose The total expo to remove position
-     * @param posValueToClose The value to remove from the position
+     * @param posValueToCloseWithFees The value to remove from the position
+     * @param fees The fees to remove from the position
      */
-    function _checkImbalanceLimitClose(Types.Storage storage s, uint256 posTotalExpoToClose, uint256 posValueToClose)
-        public
-        view
-    {
+    function _checkImbalanceLimitClose(
+        Types.Storage storage s,
+        uint256 posTotalExpoToClose,
+        uint256 posValueToCloseWithFees,
+        uint256 fees
+    ) public view {
         int256 closeExpoImbalanceLimitBps;
         if (msg.sender == address(s._rebalancer)) {
             closeExpoImbalanceLimitBps = s._rebalancerCloseExpoImbalanceLimitBps;
@@ -145,7 +148,7 @@ library UsdnProtocolActionsUtilsLibrary {
             return;
         }
 
-        int256 newLongBalance = s._balanceLong.toInt256().safeSub(posValueToClose.toInt256());
+        int256 newLongBalance = s._balanceLong.toInt256().safeSub(posValueToCloseWithFees.toInt256());
         uint256 newTotalExpo = s._totalExpo - posTotalExpoToClose;
         int256 currentVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault);
 
@@ -429,15 +432,24 @@ library UsdnProtocolActionsUtilsLibrary {
         // to have maximum precision, we do not pre-compute the liquidation multiplier with a fixed
         // precision just now, we will store it in the pending action later, to be used in the validate action
         int24 tick = Utils.calcTickWithoutPenalty(posId.tick, data_.liquidationPenalty);
-        data_.tempPositionValue = _assetToRemove(
-            s,
-            data_.lastPrice,
-            Long.getEffectivePriceForTick(tick, data_.lastPrice, data_.longTradingExpo, data_.liqMulAcc),
-            data_.totalExpoToClose
-        );
+        uint128 liqPriceWithoutPenalty =
+            Long.getEffectivePriceForTick(tick, data_.lastPrice, data_.longTradingExpo, data_.liqMulAcc);
+
+        uint256 balanceLong = s._balanceLong;
+
+        data_.tempPositionValue =
+            _assetToRemove(balanceLong, data_.lastPrice, liqPriceWithoutPenalty, data_.totalExpoToClose);
+
+        // uint128 priceWithFees =
+        //     (data_.lastPrice - data_.lastPrice * s._positionFeeBps / Constants.BPS_DIVISOR).toUint128();
+
+        // uint256 posValueWithFees =
+        //     _assetToRemove(balanceLong, priceWithFees, liqPriceWithoutPenalty, data_.totalExpoToClose);
 
         // we perform the imbalance check based on the estimated balance change since that's the best we have right now
-        _checkImbalanceLimitClose(s, data_.totalExpoToClose, data_.tempPositionValue);
+        _checkImbalanceLimitClose(s, data_.totalExpoToClose, data_.lastPrice, data_.tempPositionValue);
+        // _checkImbalanceLimitClose(s, data_.totalExpoToClose, priceWithFees, data_.tempPositionValue -
+        // posValueWithFees);
     }
 
     /**
@@ -481,22 +493,18 @@ library UsdnProtocolActionsUtilsLibrary {
     /**
      * @notice Calculate how much wstETH must be removed from the long balance due to a position closing
      * @dev The amount is bound by the amount of wstETH available on the long side
-     * @param s The storage of the protocol
+     * @param balanceLong The available amount of assets on the long side (with the current balance)
      * @param priceWithFees The current price of the asset, adjusted with fees
      * @param liqPriceWithoutPenalty The liquidation price without penalty
      * @param posExpo The total expo of the position
      * @return boundedPosValue_ The amount of assets to remove from the long balance, bound by zero and the available
      * long balance
      */
-    function _assetToRemove(
-        Types.Storage storage s,
-        uint128 priceWithFees,
-        uint128 liqPriceWithoutPenalty,
-        uint128 posExpo
-    ) public view returns (uint256 boundedPosValue_) {
-        // the available amount of assets on the long side (with the current balance)
-        uint256 available = s._balanceLong;
-
+    function _assetToRemove(uint256 balanceLong, uint128 priceWithFees, uint128 liqPriceWithoutPenalty, uint128 posExpo)
+        public
+        view
+        returns (uint256 boundedPosValue_)
+    {
         // calculate position value
         int256 positionValue = Long._positionValue(priceWithFees, liqPriceWithoutPenalty, posExpo);
 
@@ -504,8 +512,8 @@ library UsdnProtocolActionsUtilsLibrary {
             // should not happen, unless we did not manage to liquidate all ticks that needed to be liquidated during
             // the initiateClosePosition
             boundedPosValue_ = 0;
-        } else if (uint256(positionValue) > available) {
-            boundedPosValue_ = available;
+        } else if (uint256(positionValue) > balanceLong) {
+            boundedPosValue_ = balanceLong;
         } else {
             boundedPosValue_ = uint256(positionValue);
         }
