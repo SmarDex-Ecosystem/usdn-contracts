@@ -516,20 +516,25 @@ library UsdnProtocolActionsVaultLibrary {
         // the initiate and validate actions is ignored
         uint128 amountWithFees =
             (deposit.amount - uint256(deposit.amount) * deposit.feeBps / Constants.BPS_DIVISOR).toUint128();
-        int256 available = Vault._vaultAssetAvailable(
-            deposit.totalExpo,
-            deposit.balanceVault,
-            deposit.balanceLong,
-            currentPrice.price.toUint128(),
-            deposit.assetPrice
-        );
-        if (available < 0) {
-            available = 0;
+
+        uint256 balanceVault = deposit.balanceVault;
+        if (currentPrice.price < deposit.assetPrice) {
+            // price decreased: balance of the vault increased
+            int256 available = Vault._vaultAssetAvailable(
+                deposit.totalExpo,
+                deposit.balanceVault,
+                deposit.balanceLong,
+                currentPrice.price.toUint128(),
+                deposit.assetPrice
+            );
+            if (available < 0) {
+                // sanity check, should not happen
+                balanceVault = 0;
+            } else {
+                balanceVault = uint256(available);
+            }
         }
-        uint256 balanceVault = uint256(available);
-        if (deposit.balanceVault > balanceVault) {
-            balanceVault = deposit.balanceVault;
-        }
+
         uint256 usdnSharesToMint = Vault._calcMintUsdnShares(amountWithFees, balanceVault, deposit.usdnTotalShares);
 
         s._balanceVault += deposit.amount; // we credit the full deposit amount
