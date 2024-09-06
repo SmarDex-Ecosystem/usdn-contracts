@@ -423,7 +423,7 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         uint256 longBalance,
         uint256 vaultBalance,
         int256 remainingCollateral
-    ) external returns (uint256 longBalance_, uint256 vaultBalance_);
+    ) external returns (uint256 longBalance_, uint256 vaultBalance_, bool isRebalancerTriggered_);
 
     function i_fundingAsset(uint128 timestamp, int256 ema)
         external

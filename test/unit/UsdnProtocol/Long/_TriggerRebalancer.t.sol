@@ -57,11 +57,12 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
         vm.prank(ADMIN);
         protocol.setRebalancer(IBaseRebalancer(address(0)));
 
-        (uint256 newLongBalance, uint256 newVaultBalance) =
+        (uint256 newLongBalance, uint256 newVaultBalance, bool isRebalancerTriggered) =
             protocol.i_triggerRebalancer(lastPrice, longBalance, vaultBalance, remainingCollateral);
 
         assertEq(newLongBalance, longBalance, "The long balance should not have changed");
         assertEq(newVaultBalance, vaultBalance, "The long balance should not have changed");
+        assertFalse(isRebalancerTriggered, "The rebalancer should not be triggered");
     }
 
     /**
@@ -85,11 +86,12 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
             imbalanceLimit - 1, protocol.i_calcImbalanceCloseBps(int256(vaultBalance), int256(longBalance), totalExpo)
         );
 
-        (uint256 newLongBalance, uint256 newVaultBalance) =
+        (uint256 newLongBalance, uint256 newVaultBalance, bool isRebalancerTriggered) =
             protocol.i_triggerRebalancer(lastPrice, longBalance, vaultBalance, remainingCollateral);
 
         assertEq(newLongBalance, longBalance, "The long balance should not have changed");
         assertEq(newVaultBalance, vaultBalance, "The long balance should not have changed");
+        assertFalse(isRebalancerTriggered, "The rebalancer should not be triggered");
     }
 
     /**
@@ -124,7 +126,7 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
         vm.prank(ADMIN);
         protocol.setMinLongPosition(10 ** assetDecimals);
 
-        (uint256 newLongBalance, uint256 newVaultBalance) =
+        (uint256 newLongBalance, uint256 newVaultBalance, bool isRebalancerTriggered) =
             protocol.i_triggerRebalancer(lastPrice, longBalance, vaultBalance, remainingCollateral);
 
         assertEq(
@@ -137,6 +139,8 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
             vaultBalance + amount - 1,
             "The value of the closed position should have been transferred to the vault"
         );
+
+        assertTrue(isRebalancerTriggered, "The rebalancer should be triggered");
     }
 
     /**
@@ -165,11 +169,12 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
 
         mockedRebalancer.setCurrentStateData(0, protocol.getMaxLeverage(), posId);
 
-        (uint256 newLongBalance, uint256 newVaultBalance) =
+        (uint256 newLongBalance, uint256 newVaultBalance, bool isRebalancerTriggered) =
             protocol.i_triggerRebalancer(DEFAULT_PARAMS.initialPrice, longBalance, vaultBalance, remainingCollateral);
 
         assertEq(newLongBalance, longBalance, "The long balance should not have changed");
         assertEq(newVaultBalance, vaultBalance, "The vault balance should not have changed");
+        assertFalse(isRebalancerTriggered, "The rebalancer should not be triggered");
     }
 
     /**
@@ -195,7 +200,7 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
             pendingAssets, protocol.getMaxLeverage(), PositionId(Constants.NO_POSITION_TICK, 0, 0)
         );
 
-        (uint256 newLongBalance, uint256 newVaultBalance) =
+        (uint256 newLongBalance, uint256 newVaultBalance, bool isRebalancerTriggered) =
             protocol.i_triggerRebalancer(lastPrice, longBalance, vaultBalance, remainingCollateral);
 
         assertEq(
@@ -206,6 +211,8 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
         assertEq(
             newVaultBalance, vaultBalance - bonus, "The bonus should have been subtracted from the vault's balance"
         );
+
+        assertTrue(isRebalancerTriggered, "The rebalancer should be triggered");
     }
 
     /**
@@ -242,7 +249,7 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
 
         mockedRebalancer.setCurrentStateData(pendingAssets, protocol.getMaxLeverage(), posId);
 
-        (uint256 newLongBalance, uint256 newVaultBalance) =
+        (uint256 newLongBalance, uint256 newVaultBalance, bool isRebalancerTriggered) =
             protocol.i_triggerRebalancer(lastPrice, longBalance, vaultBalance, remainingCollateral);
 
         assertEq(
@@ -253,6 +260,8 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
         assertEq(
             newVaultBalance, vaultBalance - bonus, "The bonus should have been subtracted from the vault's balance"
         );
+
+        assertTrue(isRebalancerTriggered, "The rebalancer should be triggered");
     }
 
     /**
@@ -263,7 +272,8 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
      */
     function test_triggerEmptyRebalancer() public {
         uint256 totalExpo = protocol.getTotalExpo();
-        protocol.i_triggerRebalancer(lastPrice, totalExpo - 1, totalExpo * 10, 0);
+        (,, bool isRebalancerTriggered) = protocol.i_triggerRebalancer(lastPrice, totalExpo - 1, totalExpo * 10, 0);
         assertEq(rebalancer.getPositionVersion(), 0, "Version should not be incremented");
+        assertFalse(isRebalancerTriggered, "The rebalancer should not be triggered");
     }
 }
