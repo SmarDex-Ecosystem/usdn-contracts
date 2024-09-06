@@ -91,7 +91,7 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
      * @param oldPosId The old position identifier
      * @param newPosId The new position identifier
      */
-    event LiquidationPriceUpdated(PositionId indexed oldPosId, PositionId newPosId);
+    event LiquidationPriceUpdated(PositionId oldPosId, PositionId newPosId);
 
     /**
      * @notice Emitted when a user initiates the closing of all or part of a long position
@@ -354,7 +354,7 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
      * @param oldOwner The old owner
      * @param newOwner The new owner
      */
-    event PositionOwnershipTransferred(PositionId indexed posId, address indexed oldOwner, address indexed newOwner);
+    event PositionOwnershipTransferred(PositionId posId, address indexed oldOwner, address indexed newOwner);
 
     /**
      * @notice Emitted when the last funding per day is updated
