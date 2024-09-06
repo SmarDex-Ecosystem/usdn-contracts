@@ -421,6 +421,7 @@ library UsdnProtocolActionsVaultLibrary {
             if (permit2TokenBitfield.useForSdex()) {
                 address(s._sdex).permit2TransferFrom(user, Constants.DEAD_ADDRESS, data.sdexToBurn);
             } else {
+                // slither-disable-next-line arbitrary-send-erc20
                 address(s._sdex).safeTransferFrom(user, Constants.DEAD_ADDRESS, data.sdexToBurn);
             }
         }
@@ -429,6 +430,7 @@ library UsdnProtocolActionsVaultLibrary {
         if (permit2TokenBitfield.useForAsset()) {
             address(s._asset).permit2TransferFrom(user, address(this), amount);
         } else {
+            // slither-disable-next-line arbitrary-send-erc20
             address(s._asset).safeTransferFrom(user, address(this), amount);
         }
         s._pendingBalanceVault += Utils.toInt256(amount);
