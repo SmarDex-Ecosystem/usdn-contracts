@@ -417,7 +417,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         protocol.setVaultFeeBps(100); // 1% fees
 
         protocol.initiateWithdrawal(
-            uint128(usdn.sharesOf(address(this))),
+            uint152(usdn.sharesOf(address(this))),
             address(this),
             payable(address(this)),
             currentPrice,
@@ -433,7 +433,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         vm.revertTo(snapshotId);
 
         protocol.initiateWithdrawal(
-            uint128(usdn.sharesOf(address(this))),
+            uint152(usdn.sharesOf(address(this))),
             address(this),
             payable(address(this)),
             currentPrice,
