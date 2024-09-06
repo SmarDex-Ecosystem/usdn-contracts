@@ -13,15 +13,6 @@ abstract contract UsdnProtocolLong is UsdnProtocolStorage, IUsdnProtocolLong {
     }
 
     /// @inheritdoc IUsdnProtocolLong
-    function getLongPosition(PositionId memory posId)
-        external
-        view
-        returns (Position memory pos_, uint24 liquidationPenalty_)
-    {
-        return Long.getLongPosition(s, posId);
-    }
-
-    /// @inheritdoc IUsdnProtocolLong
     function getPositionValue(PositionId calldata posId, uint128 price, uint128 timestamp)
         external
         view

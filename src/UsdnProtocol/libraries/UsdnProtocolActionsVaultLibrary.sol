@@ -221,7 +221,7 @@ library UsdnProtocolActionsVaultLibrary {
         int256 imbalanceBps =
             newVaultExpo.safeSub(currentLongExpo).safeMul(int256(Constants.BPS_DIVISOR)).safeDiv(currentLongExpo);
 
-        if (imbalanceBps >= depositExpoImbalanceLimitBps) {
+        if (imbalanceBps > depositExpoImbalanceLimitBps) {
             revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
         }
     }
@@ -257,7 +257,7 @@ library UsdnProtocolActionsVaultLibrary {
             int256(Constants.BPS_DIVISOR)
         ).safeDiv(newVaultExpo);
 
-        if (imbalanceBps >= withdrawalExpoImbalanceLimitBps) {
+        if (imbalanceBps > withdrawalExpoImbalanceLimitBps) {
             revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
         }
     }
@@ -321,10 +321,6 @@ library UsdnProtocolActionsVaultLibrary {
         }
         uint32 burnRatio = s._sdexBurnOnDepositRatio;
         data_.sdexToBurn = Vault._calcSdexToBurn(usdnToMintEstimated, burnRatio);
-        // we want to at least burn 1 wei of SDEX if SDEX burning is enabled
-        if (burnRatio != 0 && data_.sdexToBurn == 0) {
-            revert IUsdnProtocolErrors.UsdnProtocolDepositTooSmall();
-        }
     }
 
     /**
