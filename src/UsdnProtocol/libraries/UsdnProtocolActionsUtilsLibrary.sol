@@ -17,6 +17,7 @@ import { HugeUint } from "../../libraries/HugeUint.sol";
 import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
 import { TickMath } from "../../libraries/TickMath.sol";
+import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsVaultLibrary as ActionsVault } from "./UsdnProtocolActionsVaultLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./UsdnProtocolCoreLibrary.sol";
@@ -384,7 +385,7 @@ library UsdnProtocolActionsUtilsLibrary {
         uint128 amountToClose,
         bytes calldata currentPriceData
     ) public returns (Types.ClosePositionData memory data_, bool liquidated_) {
-        (data_.pos, data_.liquidationPenalty) = Long.getLongPosition(s, posId);
+        (data_.pos, data_.liquidationPenalty) = ActionsLong.getLongPosition(s, posId);
 
         _checkInitiateClosePosition(s, owner, to, validator, amountToClose, data_.pos);
 
