@@ -311,8 +311,12 @@ library UsdnProtocolActionsVaultLibrary {
         data_.totalExpo = s._totalExpo;
         data_.balanceLong = s._balanceLong;
         data_.lastPrice = s._lastPrice;
-        data_.balanceVault =
-            Vault.vaultAssetAvailableWithFunding(s, data_.lastPrice, uint128(block.timestamp)).toUint256();
+        int256 available = Vault.vaultAssetAvailableWithFunding(s, data_.lastPrice, uint128(block.timestamp));
+        if (available <= 0) {
+            // can't mint USDN if the vault is empty
+            revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
+        }
+        data_.balanceVault = uint256(available); // cast is safe, amount is positive
         IUsdn usdn = s._usdn;
         data_.usdnTotalShares = usdn.totalShares();
 
