@@ -265,7 +265,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         pure
         returns (int256 value_)
     {
-        return Long._positionValue(currentPrice, liqPriceWithoutPenalty, positionTotalExpo);
+        return Utils._positionValue(currentPrice, liqPriceWithoutPenalty, positionTotalExpo);
     }
 
     function i_calcPositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
@@ -273,7 +273,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         pure
         returns (uint128 totalExpo_)
     {
-        return Long._calcPositionTotalExpo(amount, startPrice, liquidationPrice);
+        return Utils._calcPositionTotalExpo(amount, startPrice, liquidationPrice);
     }
 
     function i_getActionablePendingAction() external returns (PendingAction memory, uint128) {
@@ -615,7 +615,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         pure
         returns (int256 imbalanceBps_)
     {
-        return Long._calcImbalanceCloseBps(vaultBalance, longBalance, longTotalExpo);
+        return Utils._calcImbalanceCloseBps(vaultBalance, longBalance, longTotalExpo);
     }
 
     function i_calcImbalanceOpenBps(int256 vaultBalance, int256 longBalance, uint256 longTotalExpo)

@@ -471,7 +471,7 @@ library UsdnProtocolActionsLongLibrary {
             );
             // update position total expo (because of new leverage / liq price)
             data.pos.totalExpo =
-                Long._calcPositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenalty);
+                Utils._calcPositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenalty);
             // mark the position as validated
             data.pos.validated = true;
             // insert position into new tick
@@ -499,7 +499,7 @@ library UsdnProtocolActionsLongLibrary {
         }
         // calculate the new total expo
         uint128 expoBefore = data.pos.totalExpo;
-        uint128 expoAfter = Long._calcPositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenalty);
+        uint128 expoAfter = Utils._calcPositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenalty);
 
         // update the total expo of the position
         data.pos.totalExpo = expoAfter;
@@ -727,7 +727,7 @@ library UsdnProtocolActionsLongLibrary {
         }
 
         int24 tickWithoutPenalty = Utils.calcTickWithoutPenalty(long.tick, long.closeLiqPenalty);
-        data.positionValue = Long._positionValue(
+        data.positionValue = Utils._positionValue(
             data.priceWithFees,
             Long._getEffectivePriceForTick(tickWithoutPenalty, long.liqMultiplier),
             long.closePosTotalExpo

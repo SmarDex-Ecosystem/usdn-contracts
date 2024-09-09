@@ -63,7 +63,7 @@ library UsdnProtocolCoreLibrary {
         (int24 tickWithPenalty, uint128 liqPriceWithoutPenalty) =
             Long._getTickFromDesiredLiqPrice(s, desiredLiqPrice, s._liquidationPenalty);
         uint128 positionTotalExpo =
-            Long._calcPositionTotalExpo(longAmount, currentPrice.price.toUint128(), liqPriceWithoutPenalty);
+            Utils._calcPositionTotalExpo(longAmount, currentPrice.price.toUint128(), liqPriceWithoutPenalty);
 
         Vault._checkInitImbalance(s, positionTotalExpo, longAmount, depositAmount);
 

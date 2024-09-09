@@ -163,7 +163,7 @@ library UsdnProtocolActionsUtilsLibrary {
         uint256 newTotalExpo = s._totalExpo - posTotalExpoToClose;
         int256 currentVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault);
 
-        int256 imbalanceBps = Long._calcImbalanceCloseBps(currentVaultExpo, newLongBalance, newTotalExpo);
+        int256 imbalanceBps = Utils._calcImbalanceCloseBps(currentVaultExpo, newLongBalance, newTotalExpo);
 
         if (imbalanceBps > closeExpoImbalanceLimitBps) {
             revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
@@ -367,7 +367,7 @@ library UsdnProtocolActionsUtilsLibrary {
         uint256 available = s._balanceLong;
 
         // calculate position value
-        int256 positionValue = Long._positionValue(priceWithFees, liqPriceWithoutPenalty, posExpo);
+        int256 positionValue = Utils._positionValue(priceWithFees, liqPriceWithoutPenalty, posExpo);
 
         if (positionValue <= 0) {
             // should not happen, unless we did not manage to liquidate all ticks that needed to be liquidated during

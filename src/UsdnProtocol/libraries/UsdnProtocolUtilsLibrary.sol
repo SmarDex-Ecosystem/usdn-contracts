@@ -2,6 +2,7 @@
 pragma solidity 0.8.26;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -270,5 +271,71 @@ library UsdnProtocolUtilsLibrary {
     function _tickHash(Types.Storage storage s, int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
         version_ = s._tickVersion[tick];
         hash_ = tickHash(tick, version_);
+    }
+
+    /**
+     * @notice Calculates the current imbalance between the vault and long sides
+     * @dev If the value is positive, the long trading expo is smaller than the vault trading expo
+     * If the trading expo is equal to 0, the imbalance is infinite and int256.max is returned
+     * @param vaultBalance The balance of the vault
+     * @param longBalance The balance of the long side
+     * @param totalExpo The total expo of the long side
+     * @return imbalanceBps_ The imbalance in basis points
+     */
+    function _calcImbalanceCloseBps(int256 vaultBalance, int256 longBalance, uint256 totalExpo)
+        internal
+        pure
+        returns (int256 imbalanceBps_)
+    {
+        int256 tradingExpo = totalExpo.toInt256().safeSub(longBalance);
+        if (tradingExpo == 0) {
+            return type(int256).max;
+        }
+
+        // imbalanceBps_ = (vaultBalance - (totalExpo - longBalance)) *s. (totalExpo - longBalance);
+        imbalanceBps_ = (vaultBalance.safeSub(tradingExpo)).safeMul(int256(Constants.BPS_DIVISOR)).safeDiv(tradingExpo);
+    }
+
+    /**
+     * @notice Calculate the total exposure of a position
+     * @dev Reverts when startPrice <= liquidationPrice
+     * @param amount The amount of asset used as collateral
+     * @param startPrice The price of the asset when the position was created
+     * @param liquidationPrice The liquidation price of the position
+     * @return totalExpo_ The total exposure of a position
+     */
+    function _calcPositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
+        internal
+        pure
+        returns (uint128 totalExpo_)
+    {
+        if (startPrice <= liquidationPrice) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationPrice(liquidationPrice, startPrice);
+        }
+
+        totalExpo_ = FixedPointMathLib.fullMulDiv(amount, startPrice, startPrice - liquidationPrice).toUint128();
+    }
+
+    /**
+     * @notice Calculate the value of a position, knowing its liquidation price and the current asset price
+     * @param currentPrice The current price of the asset
+     * @param liqPriceWithoutPenalty The liquidation price of the position without the liquidation penalty
+     * @param positionTotalExpo The total expo of the position
+     * @return value_ The value of the position. If the current price is smaller than the liquidation price without
+     * penalty, then the position value is negative (bad debt)
+     */
+    function _positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)
+        internal
+        pure
+        returns (int256 value_)
+    {
+        if (currentPrice < liqPriceWithoutPenalty) {
+            value_ = -FixedPointMathLib.fullMulDiv(positionTotalExpo, liqPriceWithoutPenalty - currentPrice, currentPrice)
+                .toInt256();
+        } else {
+            value_ = FixedPointMathLib.fullMulDiv(
+                positionTotalExpo, currentPrice - liqPriceWithoutPenalty, currentPrice
+            ).toInt256();
+        }
     }
 }

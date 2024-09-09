@@ -121,7 +121,7 @@ library UsdnProtocolLongLibrary {
             uint256(longTradingExpo),
             s._liqMultiplierAccumulator
         );
-        value_ = _positionValue(price, liqPrice, pos.totalExpo);
+        value_ = Utils._positionValue(price, liqPrice, pos.totalExpo);
     }
 
     /// @notice See {IUsdnProtocolLong}
@@ -421,8 +421,9 @@ library UsdnProtocolLongLibrary {
         }
 
         {
-            int256 currentImbalance =
-                _calcImbalanceCloseBps(cache.vaultBalance.toInt256(), cache.longBalance.toInt256(), cache.totalExpo);
+            int256 currentImbalance = Utils._calcImbalanceCloseBps(
+                cache.vaultBalance.toInt256(), cache.longBalance.toInt256(), cache.totalExpo
+            );
 
             // if the imbalance is lower than the threshold, return
             if (currentImbalance <= s._closeExpoImbalanceLimitBps) {
@@ -565,7 +566,7 @@ library UsdnProtocolLongLibrary {
         uint24 liquidationPenalty = s._tickData[tickHash].liquidationPenalty;
         Types.Position memory pos = s._longPositions[tickHash][posId.index];
 
-        positionValue_ = _positionValue(
+        positionValue_ = Utils._positionValue(
             lastPrice,
             getEffectivePriceForTick(
                 Utils.calcTickWithoutPenalty(posId.tick, liquidationPenalty),
@@ -681,7 +682,7 @@ library UsdnProtocolLongLibrary {
         );
         _checkOpenPositionLeverage(s, data_.adjustedPrice, liqPriceWithoutPenalty);
 
-        data_.positionTotalExpo = _calcPositionTotalExpo(amount, data_.adjustedPrice, liqPriceWithoutPenalty);
+        data_.positionTotalExpo = Utils._calcPositionTotalExpo(amount, data_.adjustedPrice, liqPriceWithoutPenalty);
         // the current price is known to be above the liquidation price because we checked the safety margin
         // the `currentPrice.price` value can safely be cast to uint128 because we already did so above after the
         // `adjustedPrice` calculation
@@ -994,29 +995,6 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Calculate the value of a position, knowing its liquidation price and the current asset price
-     * @param currentPrice The current price of the asset
-     * @param liqPriceWithoutPenalty The liquidation price of the position without the liquidation penalty
-     * @param positionTotalExpo The total expo of the position
-     * @return value_ The value of the position. If the current price is smaller than the liquidation price without
-     * penalty, then the position value is negative (bad debt)
-     */
-    function _positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)
-        public
-        pure
-        returns (int256 value_)
-    {
-        if (currentPrice < liqPriceWithoutPenalty) {
-            value_ = -FixedPointMathLib.fullMulDiv(positionTotalExpo, liqPriceWithoutPenalty - currentPrice, currentPrice)
-                .toInt256();
-        } else {
-            value_ = FixedPointMathLib.fullMulDiv(
-                positionTotalExpo, currentPrice - liqPriceWithoutPenalty, currentPrice
-            ).toInt256();
-        }
-    }
-
-    /**
      * @notice Calculate the value of a tick, knowing its contained total expo and the current asset price
      * @param tick The tick number
      * @param currentPrice The current price of the asset
@@ -1048,26 +1026,6 @@ library UsdnProtocolLongLibrary {
                 FixedPointMathLib.fullMulDiv(tickData.totalExpo, currentPrice - liqPriceWithoutPenalty, currentPrice)
             );
         }
-    }
-
-    /**
-     * @notice Calculate the total exposure of a position
-     * @dev Reverts when startPrice <= liquidationPrice
-     * @param amount The amount of asset used as collateral
-     * @param startPrice The price of the asset when the position was created
-     * @param liquidationPrice The liquidation price of the position
-     * @return totalExpo_ The total exposure of a position
-     */
-    function _calcPositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
-        public
-        pure
-        returns (uint128 totalExpo_)
-    {
-        if (startPrice <= liquidationPrice) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationPrice(liquidationPrice, startPrice);
-        }
-
-        totalExpo_ = FixedPointMathLib.fullMulDiv(amount, startPrice, startPrice - liquidationPrice).toUint128();
     }
 
     /**
@@ -1223,29 +1181,6 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Calculates the current imbalance between the vault and long sides
-     * @dev If the value is positive, the long trading expo is smaller than the vault trading expo
-     * If the trading expo is equal to 0, the imbalance is infinite and int256.max is returned
-     * @param vaultBalance The balance of the vault
-     * @param longBalance The balance of the long side
-     * @param totalExpo The total expo of the long side
-     * @return imbalanceBps_ The imbalance in basis points
-     */
-    function _calcImbalanceCloseBps(int256 vaultBalance, int256 longBalance, uint256 totalExpo)
-        public
-        pure
-        returns (int256 imbalanceBps_)
-    {
-        int256 tradingExpo = totalExpo.toInt256().safeSub(longBalance);
-        if (tradingExpo == 0) {
-            return type(int256).max;
-        }
-
-        // imbalanceBps_ = (vaultBalance - (totalExpo - longBalance)) *s. (totalExpo - longBalance);
-        imbalanceBps_ = (vaultBalance.safeSub(tradingExpo)).safeMul(int256(Constants.BPS_DIVISOR)).safeDiv(tradingExpo);
-    }
-
-    /**
      * @notice Calculates the current imbalance for the open action checks
      * @dev If the value is positive, the long trading expo is larger than the vault trading expo
      * In case of zero vault balance, the function returns `int256.max` since the resulting imbalance would be infinity
@@ -1350,13 +1285,13 @@ library UsdnProtocolLongLibrary {
                 cache.liqMultiplierAccumulator
             );
         }
-        posData_.totalExpo = _calcPositionTotalExpo(positionAmount, lastPrice, data.liqPriceWithoutPenalty);
+        posData_.totalExpo = Utils._calcPositionTotalExpo(positionAmount, lastPrice, data.liqPriceWithoutPenalty);
 
         // due to the rounding down, if the imbalance is still greater than the desired imbalance
         // and the position is not at the max leverage, add one tick
         if (
             data.highestUsableTradingExpo != tradingExpoToFill
-                && _calcImbalanceCloseBps(
+                && Utils._calcImbalanceCloseBps(
                     cache.vaultBalance.toInt256(),
                     (cache.longBalance + positionAmount).toInt256(),
                     cache.totalExpo + posData_.totalExpo
@@ -1370,7 +1305,7 @@ library UsdnProtocolLongLibrary {
                 cache.tradingExpo,
                 cache.liqMultiplierAccumulator
             );
-            posData_.totalExpo = _calcPositionTotalExpo(positionAmount, lastPrice, data.liqPriceWithoutPenalty);
+            posData_.totalExpo = Utils._calcPositionTotalExpo(positionAmount, lastPrice, data.liqPriceWithoutPenalty);
         }
     }
 
