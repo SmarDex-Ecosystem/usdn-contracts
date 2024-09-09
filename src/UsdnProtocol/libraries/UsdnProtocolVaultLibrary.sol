@@ -285,13 +285,14 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
-     * @notice Calculate the amount of SDEX to burn when minting USDN tokens
+     * @notice Calculate the amount of SDEX to burn when minting USDN tokens (rounding up)
+     * @dev We round up to make sure we burn at least 1 wei SDEX during the minting process
      * @param usdnAmount The amount of USDN to be minted
      * @param sdexBurnRatio The ratio of SDEX to burn for each minted USDN
      * @return sdexToBurn_ The amount of SDEX to burn for the given USDN amount
      */
     function _calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) public pure returns (uint256 sdexToBurn_) {
-        sdexToBurn_ = FixedPointMathLib.fullMulDiv(usdnAmount, sdexBurnRatio, Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR);
+        sdexToBurn_ = FixedPointMathLib.fullMulDivUp(usdnAmount, sdexBurnRatio, Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR);
     }
 
     /**

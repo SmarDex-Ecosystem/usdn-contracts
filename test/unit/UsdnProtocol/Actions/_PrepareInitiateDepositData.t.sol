@@ -25,39 +25,6 @@ contract TestUsdnProtocolActionsPrepareInitiateDepositData is UsdnProtocolBaseFi
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                                   Reverts                                  */
-    /* -------------------------------------------------------------------------- */
-
-    /**
-     * @custom:scenario Call _prepareInitiateDepositData with an amount so low that it would mint 0 USDN
-     * @custom:given There is a vault fee
-     * @custom:when _prepareInitiateDepositData is called with a deposit of 1 wei
-     * @custom:then The call reverts with an UsdnProtocolDepositTooSmall error
-     */
-    function test_RevertWhen_prepareInitiateDepositDataWithUSDNAmountMintedTooSmall() public {
-        vm.prank(ADMIN);
-        protocol.setVaultFeeBps(1);
-        vm.expectRevert(UsdnProtocolDepositTooSmall.selector);
-        protocol.i_prepareInitiateDepositData(address(this), 1, abi.encode(1 ether));
-    }
-
-    /**
-     * @custom:scenario Call _prepareInitiateDepositData with an amount so low that it would burn 0 SDEX
-     * @custom:when _prepareInitiateDepositData is called with amount = (burnRatioDivisor / burnRatio - 1)
-     * @custom:then The call reverts with an UsdnProtocolDepositTooSmall error
-     */
-    function test_RevertWhen_prepareInitiateDepositDataWithSDEXAmountBurnedTooSmall() public {
-        uint32 burnRatio = protocol.getSdexBurnOnDepositRatio();
-        uint256 burnRatioDivisor = protocol.SDEX_BURN_ON_DEPOSIT_DIVISOR();
-
-        // calculate the amount of usdn to mint to burn 1 wei of SDEX
-        uint128 usdnAmountToMint = uint128(burnRatioDivisor / burnRatio);
-
-        vm.expectRevert(UsdnProtocolDepositTooSmall.selector);
-        protocol.i_prepareInitiateDepositData(address(this), usdnAmountToMint - 1, abi.encode(1 ether));
-    }
-
-    /* -------------------------------------------------------------------------- */
     /*                         _prepareInitiateDepositData                        */
     /* -------------------------------------------------------------------------- */
 
