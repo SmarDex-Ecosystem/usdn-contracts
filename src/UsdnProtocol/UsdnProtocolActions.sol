@@ -148,6 +148,6 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
         view
         returns (Position memory pos_, uint24 liquidationPenalty_)
     {
-        return ActionsLong.getLongPosition(s, posId);
+        return ActionsUtils.getLongPosition(s, posId);
     }
 }

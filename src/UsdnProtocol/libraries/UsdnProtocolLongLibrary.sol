@@ -107,7 +107,7 @@ library UsdnProtocolLongLibrary {
         uint128 price,
         uint128 timestamp
     ) public view returns (int256 value_) {
-        (Types.Position memory pos, uint24 liquidationPenalty) = ActionsLong.getLongPosition(s, posId);
+        (Types.Position memory pos, uint24 liquidationPenalty) = ActionsUtils.getLongPosition(s, posId);
         int256 longTradingExpo = Core.longTradingExpoWithFunding(s, price, timestamp);
         if (longTradingExpo < 0) {
             // in case the long balance is equal to the total expo (or exceeds it), the trading expo will become zero
@@ -706,7 +706,8 @@ library UsdnProtocolLongLibrary {
     {
         // calculate position leverage
         // reverts if liquidationPrice >= entryPrice
-        uint256 leverage = ActionsUtils._getLeverage(adjustedPrice, liqPriceWithoutPenalty);
+        uint256 leverage = Utils._getLeverage(adjustedPrice, liqPriceWithoutPenalty);
+
         if (leverage < s._minLeverage) {
             revert IUsdnProtocolErrors.UsdnProtocolLeverageTooLow();
         }

@@ -3,6 +3,7 @@ pragma solidity 0.8.26;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
+import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 
 /**
@@ -57,5 +58,22 @@ library UsdnProtocolUtils {
      */
     function _getLiquidationPrice(uint128 startPrice, uint128 leverage) internal pure returns (uint128 price_) {
         price_ = (startPrice - ((uint256(10) ** Constants.LEVERAGE_DECIMALS * startPrice) / leverage)).toUint128();
+    }
+
+    /**
+     * @notice Calculate the leverage of a position, knowing its start price and liquidation price
+     * @dev This does not take into account the liquidation penalty
+     * @param startPrice Entry price of the position
+     * @param liquidationPrice Liquidation price of the position
+     * @return leverage_ The leverage of the position
+     */
+    function _getLeverage(uint128 startPrice, uint128 liquidationPrice) internal pure returns (uint256 leverage_) {
+        if (startPrice <= liquidationPrice) {
+            // this situation is not allowed (newly open position must be solvent)
+            // also, the calculation below would underflow
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationPrice(liquidationPrice, startPrice);
+        }
+
+        leverage_ = (10 ** Constants.LEVERAGE_DECIMALS * uint256(startPrice)) / (startPrice - liquidationPrice);
     }
 }

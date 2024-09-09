@@ -422,7 +422,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_getLeverage(uint128 price, uint128 liqPrice) external pure returns (uint256) {
-        return ActionsUtils._getLeverage(price, liqPrice);
+        return Utils._getLeverage(price, liqPrice);
     }
 
     function i_calcTickFromBitmapIndex(uint256 index) external view returns (int24) {

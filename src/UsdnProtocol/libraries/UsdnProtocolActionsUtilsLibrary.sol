@@ -39,6 +39,20 @@ library UsdnProtocolActionsUtilsLibrary {
     /* -------------------------------------------------------------------------- */
 
     /// @notice See {IUsdnProtocolActions}
+    function getLongPosition(Types.Storage storage s, Types.PositionId memory posId)
+        public
+        view
+        returns (Types.Position memory pos_, uint24 liquidationPenalty_)
+    {
+        (bytes32 tickHash, uint256 version) = Core._tickHash(s, posId.tick);
+        if (posId.tickVersion != version) {
+            revert IUsdnProtocolErrors.UsdnProtocolOutdatedTick(version, posId.tickVersion);
+        }
+        pos_ = s._longPositions[tickHash][posId.index];
+        liquidationPenalty_ = s._tickData[tickHash].liquidationPenalty;
+    }
+
+    /// @notice See {IUsdnProtocolActions}
     function liquidate(Types.Storage storage s, bytes calldata currentPriceData, uint16 iterations)
         public
         returns (uint256 liquidatedPositions_)
@@ -297,7 +311,7 @@ library UsdnProtocolActionsUtilsLibrary {
         data_.liqPriceWithoutPenalty =
             Long.getEffectivePriceForTick(s, Utils.calcTickWithoutPenalty(data_.action.tick, data_.liquidationPenalty));
         // reverts if liqPriceWithoutPenalty >= startPrice
-        data_.leverage = _getLeverage(data_.startPrice, data_.liqPriceWithoutPenalty);
+        data_.leverage = Utils._getLeverage(data_.startPrice, data_.liqPriceWithoutPenalty);
         // calculate how much the position that was opened in the initiate is now worth (it might be too large or too
         // small considering the new entry price). We will adjust the long and vault balances accordingly
         uint128 lastPrice = s._lastPrice;
@@ -385,7 +399,7 @@ library UsdnProtocolActionsUtilsLibrary {
         uint128 amountToClose,
         bytes calldata currentPriceData
     ) public returns (Types.ClosePositionData memory data_, bool liquidated_) {
-        (data_.pos, data_.liquidationPenalty) = ActionsLong.getLongPosition(s, posId);
+        (data_.pos, data_.liquidationPenalty) = getLongPosition(s, posId);
 
         _checkInitiateClosePosition(s, owner, to, validator, amountToClose, data_.pos);
 
@@ -632,22 +646,5 @@ library UsdnProtocolActionsUtilsLibrary {
      */
     function _calcActionId(address validator, uint128 initiateTimestamp) public pure returns (bytes32 actionId_) {
         actionId_ = keccak256(abi.encodePacked(validator, initiateTimestamp));
-    }
-
-    /**
-     * @notice Calculate the leverage of a position, knowing its start price and liquidation price
-     * @dev This does not take into account the liquidation penalty
-     * @param startPrice Entry price of the position
-     * @param liquidationPrice Liquidation price of the position
-     * @return leverage_ The leverage of the position
-     */
-    function _getLeverage(uint128 startPrice, uint128 liquidationPrice) public pure returns (uint256 leverage_) {
-        if (startPrice <= liquidationPrice) {
-            // this situation is not allowed (newly open position must be solvent)
-            // also, the calculation below would underflow
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationPrice(liquidationPrice, startPrice);
-        }
-
-        leverage_ = (10 ** Constants.LEVERAGE_DECIMALS * uint256(startPrice)) / (startPrice - liquidationPrice);
     }
 }
