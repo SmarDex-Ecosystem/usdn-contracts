@@ -933,6 +933,126 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertBalancesEnd();
     }
 
+    /**
+     * @custom:scenario The user initiates a `deposit` with a stale pending action
+     * @custom:given The validator is different than the user
+     * @custom:when The action is initiated
+     * @custom:then The protocol takes the security deposit from the user
+     * @custom:and The protocol returns the security deposit of the stale pending action to the validator
+     */
+    function test_refundStaleToValidatorInDeposit() public {
+        PositionId memory posId = _createStalePendingActionHelper();
+
+        wstETH.mintAndApprove(USER_1, 1000 ether, address(protocol), type(uint256).max);
+
+        (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
+
+        vm.prank(USER_1);
+        vm.expectEmit();
+        emit StalePendingActionRemoved(address(this), posId);
+        protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
+            1 ether, USER_1, payable(this), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
+        );
+
+        assertStaleRefundValues();
+    }
+
+    /**
+     * @custom:scenario The user initiates a `open` with a stale pending action
+     * @custom:given The validator is different than the user
+     * @custom:when The action is initiated
+     * @custom:then The protocol takes the security deposit from the user
+     * @custom:and The protocol returns the security deposit of the stale pending action to the validator
+     */
+    function test_refundStaleToValidatorInOpen() public {
+        PositionId memory posId = _createStalePendingActionHelper();
+
+        wstETH.mintAndApprove(USER_1, 1000 ether, address(protocol), type(uint256).max);
+
+        (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
+
+        vm.prank(USER_1);
+        vm.expectEmit();
+        emit StalePendingActionRemoved(address(this), posId);
+        protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
+            1 ether, params.initialPrice / 2, USER_1, payable(this), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
+        );
+
+        assertStaleRefundValues();
+    }
+
+    /**
+     * @custom:scenario The user initiates a `withdrawal` with a stale pending action
+     * @custom:given The validator is different than the user
+     * @custom:when The action is initiated
+     * @custom:then The protocol takes the security deposit from the user
+     * @custom:and The protocol returns the security deposit of the stale pending action to the validator
+     */
+    function test_refundStaleToValidatorInWithdrawal() public {
+        PositionId memory posId = _createStalePendingActionHelper();
+
+        wstETH.mintAndApprove(USER_1, 1000 ether, address(protocol), type(uint256).max);
+
+        vm.startPrank(USER_1);
+
+        protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
+            1 ether, USER_1, USER_1, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
+        );
+        _waitDelay();
+        protocol.validateDeposit(payable(USER_1), priceData, EMPTY_PREVIOUS_DATA);
+        _waitDelay();
+
+        (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
+
+        usdn.approve(address(protocol), type(uint256).max);
+        vm.expectEmit();
+        emit StalePendingActionRemoved(address(this), posId);
+        protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(
+            uint128(usdn.balanceOf(USER_1)), USER_1, payable(this), priceData, EMPTY_PREVIOUS_DATA
+        );
+
+        vm.stopPrank();
+
+        assertStaleRefundValues();
+    }
+
+    /**
+     * @custom:scenario The user initiates a `close` with a stale pending action
+     * @custom:given The validator is different than the user
+     * @custom:when The action is initiated
+     * @custom:then The protocol takes the security deposit from the user
+     * @custom:and The protocol returns the security deposit of the stale pending action to the validator
+     */
+    function test_refundStaleToValidatorInClose() public {
+        PositionId memory posId = _createStalePendingActionHelper();
+
+        wstETH.mintAndApprove(USER_1, 1000 ether, address(protocol), type(uint256).max);
+
+        vm.startPrank(USER_1);
+
+        (, PositionId memory user1PosId) = protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
+            1 ether, params.initialPrice / 2, USER_1, USER_1, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
+        );
+
+        _waitDelay();
+
+        protocol.validateOpenPosition(payable(USER_1), priceData, EMPTY_PREVIOUS_DATA);
+
+        _waitDelay();
+
+        (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
+
+        vm.expectEmit();
+        emit StalePendingActionRemoved(address(this), posId);
+        protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(
+            user1PosId, 1 ether, USER_1, payable(this), priceData, EMPTY_PREVIOUS_DATA
+        );
+
+        vm.stopPrank();
+
+        assertStaleRefundValues();
+    }
+
     /* -------------------------------------------------------------------------- */
     /*           validator is a contract with no receive function tests           */
     /* -------------------------------------------------------------------------- */
@@ -1122,6 +1242,25 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     /* -------------------------------------------------------------------------- */
     /*                                test helpers                                */
     /* -------------------------------------------------------------------------- */
+
+    function assertStaleRefundValues() public view {
+        assertEq(
+            address(this).balance,
+            balanceUser0Before + SECURITY_DEPOSIT_VALUE,
+            "the user 0 should have retrieved his first security deposit from the stale pending action"
+        );
+
+        assertEq(
+            USER_1.balance,
+            balanceUser1Before - SECURITY_DEPOSIT_VALUE,
+            "the user 1 shouldn't have retrieved the security deposit from the stale pending action"
+        );
+        assertEq(
+            address(protocol).balance,
+            balanceProtocolBefore,
+            "the balance of the protocol after the second initialization should be equal"
+        );
+    }
 
     function assertSecurityDepositPaid() public view {
         assertEq(
