@@ -303,6 +303,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         (, posToLiquidate_) = protocol.initiateOpenPosition{ value: messageValue }(
             additionalLongAmount,
             1500 ether,
+            type(uint128).max,
             payable(address(this)),
             payable(address(this)),
             NO_PERMIT2,

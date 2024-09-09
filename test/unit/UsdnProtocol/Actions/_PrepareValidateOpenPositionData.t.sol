@@ -26,6 +26,7 @@ contract TestUsdnProtocolActionsPrepareValidateOpenPositionData is UsdnProtocolB
         (, posId) = protocol.initiateOpenPosition(
             POSITION_AMOUNT,
             params.initialPrice * 2 / 3,
+            type(uint128).max,
             address(this),
             payable(address(this)),
             NO_PERMIT2,
@@ -98,6 +99,7 @@ contract TestUsdnProtocolActionsPrepareValidateOpenPositionData is UsdnProtocolB
         protocol.initiateOpenPosition(
             POSITION_AMOUNT,
             params.initialPrice * 9 / 10,
+            type(uint128).max,
             USER_1,
             USER_1,
             NO_PERMIT2,

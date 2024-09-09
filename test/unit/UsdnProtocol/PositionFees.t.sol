@@ -63,7 +63,14 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         bytes memory priceData = abi.encode(currentPrice);
         (, PositionId memory posId) = protocol.initiateOpenPosition(
-            amount, desiredLiqPrice, address(this), payable(address(this)), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
+            amount,
+            desiredLiqPrice,
+            type(uint128).max,
+            address(this),
+            payable(address(this)),
+            NO_PERMIT2,
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
 
         Vm.Log[] memory logs = vm.getRecordedLogs();

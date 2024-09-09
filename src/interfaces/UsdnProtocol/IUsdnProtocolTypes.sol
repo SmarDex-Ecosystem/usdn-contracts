@@ -256,6 +256,7 @@ interface IUsdnProtocolTypes {
      * @param validator The address that will validate the open position
      * @param amount The amount of wstETH to deposit
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
+     * @param userMaxPrice The maximum price at which the position can be opened
      * @param securityDepositValue The value of the security deposit for the newly created pending action
      * @param permit2TokenBitfield The permit2 bitfield
      * @param currentPriceData The current price data (used to calculate the temporary leverage and entry price,
@@ -267,8 +268,25 @@ interface IUsdnProtocolTypes {
         address validator;
         uint128 amount;
         uint128 desiredLiqPrice;
+        uint128 userMaxPrice;
         uint64 securityDepositValue;
         Permit2TokenBitfield.Bitfield permit2TokenBitfield;
+    }
+
+    /**
+     * @notice Parameters for the internal `_prepareInitiateOpenPosition` function
+     * @param validator The address of the validator
+     * @param amount The amount of wstETH to deposit
+     * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
+     * @param userMaxPrice The maximum price at which the position can be opened
+     * @param currentPriceData The current price data
+     */
+    struct PrepareInitiateOpenPositionParams {
+        address validator;
+        uint128 amount;
+        uint128 desiredLiqPrice;
+        uint256 userMaxPrice;
+        bytes currentPriceData;
     }
 
     /**

@@ -603,26 +603,23 @@ library UsdnProtocolLongLibrary {
      * @notice Update protocol balances, then prepare the data for the initiate open position action
      * @dev Reverts if the imbalance limit is reached, or if the safety margin is not respected
      * @param s The storage of the protocol
-     * @param validator The address of the validator
-     * @param amount The amount of wstETH to deposit
-     * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
-     * @param currentPriceData The current price data
+     * @param params The parameters for the _prepareInitiateOpenPositionData function
      * @return data_ The temporary data for the open position action
      */
     function _prepareInitiateOpenPositionData(
         Types.Storage storage s,
-        address validator,
-        uint128 amount,
-        uint128 desiredLiqPrice,
-        bytes calldata currentPriceData
+        Types.PrepareInitiateOpenPositionParams calldata params
     ) public returns (Types.InitiateOpenPositionData memory data_) {
         PriceInfo memory currentPrice = ActionsVault._getOraclePrice(
             s,
             Types.ProtocolAction.InitiateOpenPosition,
             block.timestamp,
-            ActionsUtils._calcActionId(validator, uint128(block.timestamp)),
-            currentPriceData
+            ActionsUtils._calcActionId(params.validator, uint128(block.timestamp)),
+            params.currentPriceData
         );
+        if (currentPrice.price > params.userMaxPrice) {
+            revert IUsdnProtocolErrors.UsdnProtocolSlippageMaxPriceExceeded();
+        }
         data_.adjustedPrice =
             (currentPrice.price + currentPrice.price * s._positionFeeBps / Constants.BPS_DIVISOR).toUint128();
 
@@ -635,7 +632,7 @@ library UsdnProtocolLongLibrary {
             s._liquidationIteration,
             false,
             Types.ProtocolAction.InitiateOpenPosition,
-            currentPriceData
+            params.currentPriceData
         );
 
         // early return in case there are still pending liquidations
@@ -656,7 +653,7 @@ library UsdnProtocolLongLibrary {
 
         // we calculate the closest valid tick down for the desired liq price with liquidation penalty
         data_.posId.tick = getEffectiveTickForPrice(
-            desiredLiqPrice,
+            params.desiredLiqPrice,
             conversionData.assetPrice,
             conversionData.tradingExpo,
             conversionData.accumulator,
@@ -681,13 +678,13 @@ library UsdnProtocolLongLibrary {
         );
         _checkOpenPositionLeverage(s, data_.adjustedPrice, liqPriceWithoutPenalty);
 
-        data_.positionTotalExpo = _calcPositionTotalExpo(amount, data_.adjustedPrice, liqPriceWithoutPenalty);
+        data_.positionTotalExpo = _calcPositionTotalExpo(params.amount, data_.adjustedPrice, liqPriceWithoutPenalty);
         // the current price is known to be above the liquidation price because we checked the safety margin
         // the `currentPrice.price` value can safely be cast to uint128 because we already did so above after the
         // `adjustedPrice` calculation
         data_.positionValue =
             Utils.positionValue(data_.positionTotalExpo, uint128(currentPrice.price), liqPriceWithoutPenalty);
-        _checkImbalanceLimitOpen(s, data_.positionTotalExpo, amount);
+        _checkImbalanceLimitOpen(s, data_.positionTotalExpo, params.amount);
 
         data_.liqMultiplier = _calcFixedPrecisionMultiplier(
             conversionData.assetPrice, conversionData.tradingExpo, conversionData.accumulator
