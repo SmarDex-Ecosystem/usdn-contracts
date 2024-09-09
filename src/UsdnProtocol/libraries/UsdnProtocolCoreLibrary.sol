@@ -246,11 +246,11 @@ library UsdnProtocolCoreLibrary {
         (int256 fundAsset,) = _fundingAsset(s, timestamp, s._EMA);
 
         if (fundAsset > 0) {
-            available_ = _longAssetAvailable(s, currentPrice).safeSub(fundAsset);
+            available_ = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAsset);
         } else {
             int256 fee = fundAsset * Utils.toInt256(s._protocolFeeBps) / int256(Constants.BPS_DIVISOR);
             // fees have the same sign as fundAsset (negative here), so we need to sub them
-            available_ = _longAssetAvailable(s, currentPrice).safeSub(fundAsset - fee);
+            available_ = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAsset - fee);
         }
 
         int256 totalBalance = (s._balanceLong + s._balanceVault).toInt256();
@@ -395,53 +395,6 @@ library UsdnProtocolCoreLibrary {
     }
 
     /**
-     * @notice Calculate the long balance taking into account unreflected PnL (but not funding)
-     * @dev This function uses the latest total expo, balance and stored price as the reference values, and adds the PnL
-     * due to the price change to `currentPrice`
-     * @param s The storage of the protocol
-     * @param currentPrice The current price
-     * @return available_ The available balance on the long side
-     */
-    function _longAssetAvailable(Types.Storage storage s, uint128 currentPrice)
-        public
-        view
-        returns (int256 available_)
-    {
-        available_ = _longAssetAvailable(s._totalExpo, s._balanceLong, currentPrice, s._lastPrice);
-    }
-
-    /**
-     * @notice Calculate the long balance taking into account unreflected PnL (but not funding)
-     * @param totalExpo The total exposure of the long side
-     * @param balanceLong The (old) balance of the long side
-     * @param newPrice The new price
-     * @param oldPrice The old price when the old balance was updated
-     * @return available_ The available balance on the long side
-     */
-    function _longAssetAvailable(uint256 totalExpo, uint256 balanceLong, uint128 newPrice, uint128 oldPrice)
-        public
-        pure
-        returns (int256 available_)
-    {
-        // if balanceLong == totalExpo or the long trading expo is negative (theoretically impossible), the PnL is
-        // zero
-        // we can't calculate a proper PnL value if the long trading expo is negative because it would invert the
-        // sign of the amount
-        if (balanceLong >= totalExpo) {
-            return balanceLong.toInt256();
-        }
-        int256 priceDiff = Utils.toInt256(newPrice) - Utils.toInt256(oldPrice);
-        uint256 tradingExpo;
-        // `balanceLong` is strictly inferior to `totalExpo`
-        unchecked {
-            tradingExpo = totalExpo - balanceLong;
-        }
-        int256 pnl = tradingExpo.toInt256().safeMul(priceDiff).safeDiv(Utils.toInt256(newPrice));
-
-        available_ = balanceLong.toInt256().safeAdd(pnl);
-    }
-
-    /**
      * @notice Update the Exponential Moving Average (EMA) of the funding rate (per day)
      * @dev This function is called every time the protocol state is updated
      * @dev All required checks are done in the caller function (_applyPnlAndFunding)
@@ -451,7 +404,7 @@ library UsdnProtocolCoreLibrary {
      * @param fundingPerDay The funding rate per day that was just calculated for the elapsed period
      * @param secondsElapsed The number of seconds elapsed since the last protocol action
      */
-    function _updateEMA(Types.Storage storage s, int256 fundingPerDay, uint128 secondsElapsed) public {
+    function _updateEMA(Types.Storage storage s, int256 fundingPerDay, uint128 secondsElapsed) internal {
         s._EMA = calcEMA(fundingPerDay, secondsElapsed, s._EMAPeriod, s._EMA);
     }
 
@@ -465,7 +418,7 @@ library UsdnProtocolCoreLibrary {
      * @return fundAssetWithFee_ The updated funding asset amount after applying the fee
      */
     function _calculateFee(Types.Storage storage s, int256 fundAsset)
-        public
+        internal
         returns (int256 fee_, int256 fundAssetWithFee_)
     {
         int256 protocolFeeBps = Utils.toInt256(s._protocolFeeBps);
@@ -533,12 +486,12 @@ library UsdnProtocolCoreLibrary {
             // in case of positive funding, the vault balance must be decremented by the totality of the funding amount
             // however, since we deducted the fee amount from the total balance, the vault balance will be incremented
             // only by the funding amount minus the fee amount
-            data_.tempLongBalance = _longAssetAvailable(s, currentPrice).safeSub(fundAsset);
+            data_.tempLongBalance = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAsset);
         } else {
             // in case of negative funding, the vault balance must be decremented by the totality of the funding amount
             // however, since we deducted the fee amount from the total balance, the long balance will be incremented
             // only by the funding amount minus the fee amount
-            data_.tempLongBalance = _longAssetAvailable(s, currentPrice).safeSub(fundAssetWithFee);
+            data_.tempLongBalance = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAssetWithFee);
         }
         data_.tempVaultBalance = totalBalance.safeSub(data_.tempLongBalance);
 

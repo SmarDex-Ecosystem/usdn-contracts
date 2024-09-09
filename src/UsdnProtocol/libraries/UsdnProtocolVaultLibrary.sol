@@ -240,7 +240,7 @@ library UsdnProtocolVaultLibrary {
         uint128 oldPrice
     ) public pure returns (int256 available_) {
         int256 totalBalance = balanceLong.toInt256().safeAdd(balanceVault.toInt256());
-        int256 newLongBalance = Core._longAssetAvailable(totalExpo, balanceLong, newPrice, oldPrice);
+        int256 newLongBalance = Utils._longAssetAvailable(totalExpo, balanceLong, newPrice, oldPrice);
 
         available_ = totalBalance.safeSub(newLongBalance);
     }

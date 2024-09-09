@@ -200,7 +200,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
      * currentPrice
      */
     function getLongTradingExpo(uint128 currentPrice) external view returns (int256 expo_) {
-        expo_ = s._totalExpo.toInt256().safeSub(Core._longAssetAvailable(s, currentPrice));
+        expo_ = s._totalExpo.toInt256().safeSub(Utils._longAssetAvailable(s, currentPrice));
     }
 
     function i_initiateClosePosition(
@@ -393,11 +393,11 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         pure
         returns (int256 available_)
     {
-        return Core._longAssetAvailable(totalExpo, balanceLong, newPrice, oldPrice);
+        return Utils._longAssetAvailable(totalExpo, balanceLong, newPrice, oldPrice);
     }
 
     function i_longAssetAvailable(uint128 currentPrice) external view returns (int256) {
-        return Core._longAssetAvailable(s, currentPrice);
+        return Utils._longAssetAvailable(s, currentPrice);
     }
 
     function i_getLiquidationPrice(uint128 startPrice, uint128 leverage) external pure returns (uint128) {

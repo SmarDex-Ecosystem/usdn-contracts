@@ -5,6 +5,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { SignedMath } from "../../libraries/SignedMath.sol";
 import { TickMath } from "../../libraries/TickMath.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 
@@ -15,6 +16,7 @@ import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstan
  */
 library UsdnProtocolUtils {
     using SafeCast for uint256;
+    using SignedMath for int256;
 
     /**
      * @notice Convert a uint128 to an int256
@@ -204,5 +206,52 @@ library UsdnProtocolUtils {
         returns (uint256 usdnShares_)
     {
         usdnShares_ = sharesLSB | uint256(sharesMSB) << 24;
+    }
+
+    /**
+     * @notice Calculate the long balance taking into account unreflected PnL (but not funding)
+     * @param totalExpo The total exposure of the long side
+     * @param balanceLong The (old) balance of the long side
+     * @param newPrice The new price
+     * @param oldPrice The old price when the old balance was updated
+     * @return available_ The available balance on the long side
+     */
+    function _longAssetAvailable(uint256 totalExpo, uint256 balanceLong, uint128 newPrice, uint128 oldPrice)
+        internal
+        pure
+        returns (int256 available_)
+    {
+        // if balanceLong == totalExpo or the long trading expo is negative (theoretically impossible), the PnL is
+        // zero
+        // we can't calculate a proper PnL value if the long trading expo is negative because it would invert the
+        // sign of the amount
+        if (balanceLong >= totalExpo) {
+            return balanceLong.toInt256();
+        }
+        int256 priceDiff = toInt256(newPrice) - toInt256(oldPrice);
+        uint256 tradingExpo;
+        // `balanceLong` is strictly inferior to `totalExpo`
+        unchecked {
+            tradingExpo = totalExpo - balanceLong;
+        }
+        int256 pnl = tradingExpo.toInt256().safeMul(priceDiff).safeDiv(toInt256(newPrice));
+
+        available_ = balanceLong.toInt256().safeAdd(pnl);
+    }
+
+    /**
+     * @notice Calculate the long balance taking into account unreflected PnL (but not funding)
+     * @dev This function uses the latest total expo, balance and stored price as the reference values, and adds the PnL
+     * due to the price change to `currentPrice`
+     * @param s The storage of the protocol
+     * @param currentPrice The current price
+     * @return available_ The available balance on the long side
+     */
+    function _longAssetAvailable(Types.Storage storage s, uint128 currentPrice)
+        internal
+        view
+        returns (int256 available_)
+    {
+        available_ = _longAssetAvailable(s._totalExpo, s._balanceLong, currentPrice, s._lastPrice);
     }
 }
