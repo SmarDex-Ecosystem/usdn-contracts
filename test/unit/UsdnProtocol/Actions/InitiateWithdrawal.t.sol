@@ -147,7 +147,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
         assertEq(shares, withdrawShares, "action shares");
 
         // the pending action should be actionable after the validation deadline
-        skip(protocol.getValidationDeadline() + 1);
+        _waitBeforeActionablePendingAction();
         (actions, rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions[0].to, to, "pending action user");
         assertEq(actions[0].validator, address(this), "pending action validator");

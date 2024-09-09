@@ -384,7 +384,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user initiates and validates (after the validationDeadline)
+     * @custom:scenario The user initiates and validates (after the validator deadline)
      * a withdraw with another validator
      * @custom:given The user initiated a withdraw of 1000 usdn and validates it
      * @custom:and we wait until the validation deadline is passed

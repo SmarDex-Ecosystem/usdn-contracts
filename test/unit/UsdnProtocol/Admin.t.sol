@@ -38,7 +38,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         protocol.setMaxLeverage(0);
 
         vm.expectRevert(customError("CRITICAL_FUNCTIONS_ROLE"));
-        protocol.setValidationDeadline(0);
+        protocol.setValidatorDeadlines(0, 0);
 
         vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ROLE"));
         protocol.setLiquidationPenalty(0);
@@ -214,47 +214,45 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
     }
 
     /**
-     * @custom:scenario Call "setValidationDeadline" from admin
+     * @custom:scenario Call "setValidatorDeadlines" from admin
      * @custom:given The initial usdnProtocol state from admin wallet
      * @custom:when Admin wallet triggers admin contract function
      * @custom:then Revert because lower than min disallowed
      */
-    function test_RevertWhen_setValidationDeadlineWithMin() public adminPrank {
-        // validationDeadline lower than min disallowed
-        vm.expectRevert(UsdnProtocolInvalidValidationDeadline.selector);
-        // set validationDeadline
-        protocol.setValidationDeadline(59);
+    function test_RevertWhen_setValidatorDeadlinesWithMin() public adminPrank {
+        vm.expectRevert(UsdnProtocolInvalidValidatorDeadline.selector);
+        protocol.setValidatorDeadlines(59, 59);
     }
 
     /**
-     * @custom:scenario Call "setValidationDeadline" from admin
+     * @custom:scenario Call "setValidatorDeadlines" from admin
      * @custom:given The initial usdnProtocol state from admin wallet
      * @custom:when Admin wallet triggers admin contract function
      * @custom:then Revert because greater than max
      */
-    function test_RevertWhen_setValidationDeadlineWithMax() public adminPrank {
-        // validationDeadline greater than max disallowed
-        vm.expectRevert(UsdnProtocolInvalidValidationDeadline.selector);
-        // set validationDeadline
-        protocol.setValidationDeadline(365 days + 1);
+    function test_RevertWhen_setValidatorDeadlineWithMax() public adminPrank {
+        vm.expectRevert(UsdnProtocolInvalidValidatorDeadline.selector);
+        protocol.setValidatorDeadlines(60, 1 days + 1);
+
+        vm.expectRevert(UsdnProtocolInvalidValidatorDeadline.selector);
+        protocol.setValidatorDeadlines(20 minutes + 1, 0);
     }
 
     /**
-     * @custom:scenario Call "setValidationDeadline" from admin
+     * @custom:scenario Call "setValidatorDeadlines" from admin
      * @custom:given The initial usdnProtocol state from admin wallet
      * @custom:when Admin wallet triggers admin contract function
      * @custom:then The value should be updated
      */
-    function test_setValidationDeadline() public adminPrank {
-        // cache the new validationDeadline value to assign
-        uint256 expectedNewValue = 61;
+    function test_setValidatorDeadlines() public adminPrank {
+        uint128 expectedLowLatencyNewValue = 61;
+        uint128 expectedOnChainNewValue = 0;
         // expected event
         vm.expectEmit();
-        emit ValidationDeadlineUpdated(expectedNewValue);
-        // assign new validationDeadline value
-        protocol.setValidationDeadline(expectedNewValue);
-        // check new value is equal to the expected value
-        assertEq(protocol.getValidationDeadline(), expectedNewValue);
+        emit ValidatorDeadlinesUpdated(expectedLowLatencyNewValue, expectedOnChainNewValue);
+        protocol.setValidatorDeadlines(expectedLowLatencyNewValue, expectedOnChainNewValue);
+        assertEq(protocol.getLowLatencyValidatorDeadline(), expectedLowLatencyNewValue);
+        assertEq(protocol.getOnChainValidatorDeadline(), expectedOnChainNewValue);
     }
 
     /**

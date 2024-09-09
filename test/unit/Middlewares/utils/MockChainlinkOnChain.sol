@@ -41,7 +41,7 @@ contract MockChainlinkOnChain {
     }
 
     function setLatestRoundData(uint80 roundId, int256 answer, uint256 startedAt, uint80 answeredInRound) external {
-        _latestRoundData = RoundData(roundId, answer, startedAt, 0, answeredInRound);
+        _latestRoundData = RoundData(roundId, answer, startedAt, startedAt, answeredInRound);
     }
 
     /**

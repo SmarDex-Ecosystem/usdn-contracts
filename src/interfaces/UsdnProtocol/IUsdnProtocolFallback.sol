@@ -252,11 +252,20 @@ interface IUsdnProtocolFallback {
     function getMaxLeverage() external view returns (uint256);
 
     /**
-     * @notice Get the amount of time a user can validate its action, after which other users can do it
-     * and will claim the security deposit
-     * @return The validation deadline (in seconds)
+     * @notice The deadline for a user to confirm their action with a low-latency oracle
+     * @dev After this deadline, any user can validate the action with the low-latency oracle until the
+     * OracleMiddleware's `_lowLatencyDelay`, and retrieve the security deposit for the pending action
+     * @return The low-latency validation deadline (in seconds)
      */
-    function getValidationDeadline() external view returns (uint256);
+    function getLowLatencyValidatorDeadline() external view returns (uint128);
+
+    /**
+     * @notice The deadline for a user to confirm their action with the on-chain oracle
+     * @dev After this deadline, any user can validate the action with the on-chain oracle and retrieve the security
+     * deposit for the pending action
+     * @return The on-chain validation deadline (in seconds)
+     */
+    function getOnChainValidatorDeadline() external view returns (uint128);
 
     /**
      * @notice Get the liquidation penalty applied to the liquidation price when opening a position
@@ -553,10 +562,14 @@ interface IUsdnProtocolFallback {
     function setRebalancer(IBaseRebalancer newRebalancer) external;
 
     /**
-     * @notice Set the new deadline for a user to confirm their action
-     * @param newValidationDeadline The new deadline
+     * @notice Set the new deadlines for a user to confirm their action
+     * @param newLowLatencyValidatorDeadline The new deadline for low-latency validation (offset from initiate
+     * timestamp)
+     * @param newOnChainValidatorDeadline The new deadline for on-chain validation (offset from initiate timestamp +
+     * oracle middleware's low latency delay)
      */
-    function setValidationDeadline(uint256 newValidationDeadline) external;
+    function setValidatorDeadlines(uint128 newLowLatencyValidatorDeadline, uint128 newOnChainValidatorDeadline)
+        external;
 
     /**
      * @notice Set the minimum long position size

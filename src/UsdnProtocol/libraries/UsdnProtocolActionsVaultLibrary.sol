@@ -221,7 +221,7 @@ library UsdnProtocolActionsVaultLibrary {
         int256 imbalanceBps =
             newVaultExpo.safeSub(currentLongExpo).safeMul(int256(Constants.BPS_DIVISOR)).safeDiv(currentLongExpo);
 
-        if (imbalanceBps >= depositExpoImbalanceLimitBps) {
+        if (imbalanceBps > depositExpoImbalanceLimitBps) {
             revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
         }
     }
@@ -250,14 +250,14 @@ library UsdnProtocolActionsVaultLibrary {
 
         // cannot be calculated if equal to zero
         if (newVaultExpo == 0) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidVaultExpo();
+            revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
         }
 
         int256 imbalanceBps = (totalExpo - s._balanceLong).toInt256().safeSub(newVaultExpo).safeMul(
             int256(Constants.BPS_DIVISOR)
         ).safeDiv(newVaultExpo);
 
-        if (imbalanceBps >= withdrawalExpoImbalanceLimitBps) {
+        if (imbalanceBps > withdrawalExpoImbalanceLimitBps) {
             revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
         }
     }
@@ -313,8 +313,7 @@ library UsdnProtocolActionsVaultLibrary {
         data_.usdnTotalShares = usdn.totalShares();
 
         // calculate the amount of SDEX tokens to burn
-        uint256 usdnSharesToMintEstimated =
-            Vault._calcMintUsdnShares(s, amount, data_.balanceVault, data_.usdnTotalShares, data_.pendingActionPrice);
+        uint256 usdnSharesToMintEstimated = Vault._calcMintUsdnShares(amount, data_.balanceVault, data_.usdnTotalShares);
         uint256 usdnToMintEstimated = usdn.convertToTokens(usdnSharesToMintEstimated);
         // we want to at least mint 1 wei of USDN
         if (usdnToMintEstimated == 0) {
@@ -322,10 +321,6 @@ library UsdnProtocolActionsVaultLibrary {
         }
         uint32 burnRatio = s._sdexBurnOnDepositRatio;
         data_.sdexToBurn = Vault._calcSdexToBurn(usdnToMintEstimated, burnRatio);
-        // we want to at least burn 1 wei of SDEX if SDEX burning is enabled
-        if (burnRatio != 0 && data_.sdexToBurn == 0) {
-            revert IUsdnProtocolErrors.UsdnProtocolDepositTooSmall();
-        }
     }
 
     /**
@@ -349,6 +344,7 @@ library UsdnProtocolActionsVaultLibrary {
         Types.DepositPendingAction memory pendingAction = Types.DepositPendingAction({
             action: Types.ProtocolAction.ValidateDeposit,
             timestamp: uint40(block.timestamp),
+            __unused: 0,
             to: to,
             validator: validator,
             securityDepositValue: securityDepositValue,
@@ -513,18 +509,14 @@ library UsdnProtocolActionsVaultLibrary {
         uint256 usdnSharesToMint;
         // we use the lower of the two prices to mint
         if (deposit.assetPrice <= priceWithFees) {
-            usdnSharesToMint = Vault._calcMintUsdnShares(
-                s, deposit.amount, deposit.balanceVault, deposit.usdnTotalShares, deposit.assetPrice
-            );
+            usdnSharesToMint = Vault._calcMintUsdnShares(deposit.amount, deposit.balanceVault, deposit.usdnTotalShares);
         } else {
             usdnSharesToMint = Vault._calcMintUsdnShares(
-                s,
                 deposit.amount,
                 Vault._vaultAssetAvailable(
                     deposit.totalExpo, deposit.balanceVault, deposit.balanceLong, priceWithFees, deposit.assetPrice
                 ).toUint256(),
-                deposit.usdnTotalShares,
-                priceWithFees
+                deposit.usdnTotalShares
             );
         }
 
@@ -613,6 +605,7 @@ library UsdnProtocolActionsVaultLibrary {
             Types.WithdrawalPendingAction({
                 action: Types.ProtocolAction.ValidateWithdrawal,
                 timestamp: uint40(block.timestamp),
+                _unused: 0,
                 to: to,
                 validator: validator,
                 securityDepositValue: securityDepositValue,

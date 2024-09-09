@@ -8,8 +8,9 @@ import { IUsdnProtocolImplV2 } from "./IUsdnProtocolImplV2.sol";
 contract UsdnProtocolImplV2 is UsdnProtocolImpl, IUsdnProtocolImplV2 {
     uint256 public newVariable;
 
-    function initializeV2() public reinitializer(2) {
+    function initializeV2(address newFallback) public reinitializer(2) {
         newVariable = 1;
+        s._protocolFallbackAddr = newFallback;
     }
 
     function retBool() public pure returns (bool) {

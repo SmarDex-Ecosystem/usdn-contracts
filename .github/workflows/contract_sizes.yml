@@ -1,0 +1,57 @@
+name: Contract sizes report
+on:
+  pull_request:
+
+env:
+  FOUNDRY_PROFILE: ci
+
+jobs:
+  run-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps
+        run: npm ci && forge soldeer install
+
+      - name: Get contract sizes
+        id: contract-sizes
+        shell: bash {0} # default github config uses `-e` flag which fails the step on command exit code != 0
+        run: |
+          {
+            echo 'SIZES<<EOF'
+            forge build --sizes src
+            echo EOF
+          } >> "$GITHUB_OUTPUT" 2>&1
+
+      - name: Comment on PR
+        uses: exercism/pr-commenter-action@v1.5.1
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          config-file: ".github/pr-commenter.yml"
+          template-variables: |
+            {
+              "sizes": ${{ toJSON(steps.contract-sizes.outputs.SIZES) }},
+              "filesHash": ${{ toJSON(hashFiles('src/**/*.sol')) }}
+            }
+
+      - name: Fail on negative margin (contract too big)
+        run: if echo "${{ steps.contract-sizes.outputs.SIZES }}" | sed -n '6,${/[^-]*-.*/q1}'; then exit 0; else exit 1; fi

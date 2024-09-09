@@ -17,6 +17,7 @@ import { HugeUint } from "../../libraries/HugeUint.sol";
 import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
 import { TickMath } from "../../libraries/TickMath.sol";
+import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsVaultLibrary as ActionsVault } from "./UsdnProtocolActionsVaultLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./UsdnProtocolCoreLibrary.sol";
@@ -60,7 +61,11 @@ library UsdnProtocolActionsUtilsLibrary {
         ActionsVault._checkPendingFee(s);
     }
 
-    /// @notice See {IUsdnProtocolActions}
+    /**
+     * @notice See {IUsdnProtocolActions}
+     * @dev TODO: refactor to loop on the queue and then index into `previousActionsData` when an actionable pending
+     * action has been found, to avoid loop multiple times over the unactionable items in the queue
+     */
     function validateActionablePendingActions(
         Types.Storage storage s,
         Types.PreviousActionsData calldata previousActionsData,
@@ -147,7 +152,7 @@ library UsdnProtocolActionsUtilsLibrary {
 
         int256 imbalanceBps = Long._calcImbalanceCloseBps(currentVaultExpo, newLongBalance, newTotalExpo);
 
-        if (imbalanceBps >= closeExpoImbalanceLimitBps) {
+        if (imbalanceBps > closeExpoImbalanceLimitBps) {
             revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
         }
     }
@@ -214,6 +219,7 @@ library UsdnProtocolActionsUtilsLibrary {
         Types.LongPendingAction memory action = Types.LongPendingAction({
             action: Types.ProtocolAction.ValidateOpenPosition,
             timestamp: uint40(block.timestamp),
+            closeLiqPenalty: 0,
             to: to,
             validator: validator,
             securityDepositValue: securityDepositValue,
@@ -222,7 +228,7 @@ library UsdnProtocolActionsUtilsLibrary {
             closePosTotalExpo: 0,
             tickVersion: data.posId.tickVersion,
             index: data.posId.index,
-            closeLiqMultiplier: 0,
+            liqMultiplier: data.liqMultiplier,
             closeBoundedPositionValue: 0
         });
         amountToRefund_ = Core._addPendingAction(s, validator, Core._convertLongPendingAction(action));
@@ -291,7 +297,7 @@ library UsdnProtocolActionsUtilsLibrary {
         data_.liqPriceWithoutPenalty =
             Long.getEffectivePriceForTick(s, Utils.calcTickWithoutPenalty(data_.action.tick, data_.liquidationPenalty));
         // reverts if liqPriceWithoutPenalty >= startPrice
-        data_.leverage = Long._getLeverage(data_.startPrice, data_.liqPriceWithoutPenalty);
+        data_.leverage = _getLeverage(data_.startPrice, data_.liqPriceWithoutPenalty);
         // calculate how much the position that was opened in the initiate is now worth (it might be too large or too
         // small considering the new entry price). We will adjust the long and vault balances accordingly
         uint128 lastPrice = s._lastPrice;
@@ -379,7 +385,7 @@ library UsdnProtocolActionsUtilsLibrary {
         uint128 amountToClose,
         bytes calldata currentPriceData
     ) public returns (Types.ClosePositionData memory data_, bool liquidated_) {
-        (data_.pos, data_.liquidationPenalty) = Long.getLongPosition(s, posId);
+        (data_.pos, data_.liquidationPenalty) = ActionsLong.getLongPosition(s, posId);
 
         _checkInitiateClosePosition(s, owner, to, validator, amountToClose, data_.pos);
 
@@ -458,6 +464,7 @@ library UsdnProtocolActionsUtilsLibrary {
         Types.LongPendingAction memory action = Types.LongPendingAction({
             action: Types.ProtocolAction.ValidateClosePosition,
             timestamp: uint40(block.timestamp),
+            closeLiqPenalty: data.liquidationPenalty,
             to: to,
             validator: validator,
             securityDepositValue: securityDepositValue,
@@ -466,7 +473,7 @@ library UsdnProtocolActionsUtilsLibrary {
             closePosTotalExpo: data.totalExpoToClose,
             tickVersion: posId.tickVersion,
             index: posId.index,
-            closeLiqMultiplier: Long._calcFixedPrecisionMultiplier(data.lastPrice, data.longTradingExpo, data.liqMulAcc),
+            liqMultiplier: Long._calcFixedPrecisionMultiplier(data.lastPrice, data.longTradingExpo, data.liqMulAcc),
             closeBoundedPositionValue: data.tempPositionValue
         });
         amountToRefund_ = Core._addPendingAction(s, validator, Core._convertLongPendingAction(action));
@@ -625,5 +632,22 @@ library UsdnProtocolActionsUtilsLibrary {
      */
     function _calcActionId(address validator, uint128 initiateTimestamp) public pure returns (bytes32 actionId_) {
         actionId_ = keccak256(abi.encodePacked(validator, initiateTimestamp));
+    }
+
+    /**
+     * @notice Calculate the leverage of a position, knowing its start price and liquidation price
+     * @dev This does not take into account the liquidation penalty
+     * @param startPrice Entry price of the position
+     * @param liquidationPrice Liquidation price of the position
+     * @return leverage_ The leverage of the position
+     */
+    function _getLeverage(uint128 startPrice, uint128 liquidationPrice) public pure returns (uint256 leverage_) {
+        if (startPrice <= liquidationPrice) {
+            // this situation is not allowed (newly open position must be solvent)
+            // also, the calculation below would underflow
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationPrice(liquidationPrice, startPrice);
+        }
+
+        leverage_ = (10 ** Constants.LEVERAGE_DECIMALS * uint256(startPrice)) / (startPrice - liquidationPrice);
     }
 }

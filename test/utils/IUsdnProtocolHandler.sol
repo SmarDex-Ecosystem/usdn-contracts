@@ -179,11 +179,6 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         payable
         returns (PriceInfo memory);
 
-    function i_calcMintUsdnShares(uint256 amount, uint256 vaultBalance, uint256 usdnTotalShares, uint256 price)
-        external
-        view
-        returns (uint256 toMint_);
-
     function i_calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) external pure returns (uint256);
 
     function i_vaultAssetAvailable(
@@ -282,6 +277,11 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
     function i_mergeWithdrawalAmountParts(uint24 sharesLSB, uint128 sharesMSB) external pure returns (uint256);
 
     function i_getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) external pure returns (uint128);
+
+    function i_getEffectiveTickForPrice(uint128 price, uint256 liqMultiplier, int24 tickSpacing)
+        external
+        pure
+        returns (int24);
 
     function i_calcFixedPrecisionMultiplier(
         uint256 assetPrice,
@@ -439,6 +439,13 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         uint256 assetPrice,
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator,
+        int24 tickSpacing,
+        uint24 liquidationPenalty
+    ) external pure returns (int24 tickWithPenalty_, uint128 liqPriceWithoutPenalty_);
+
+    function i_getTickFromDesiredLiqPrice(
+        uint128 desiredLiqPriceWithoutPenalty,
+        uint256 liqMultiplier,
         int24 tickSpacing,
         uint24 liquidationPenalty
     ) external pure returns (int24 tickWithPenalty_, uint128 liqPriceWithoutPenalty_);

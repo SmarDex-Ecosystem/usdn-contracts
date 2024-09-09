@@ -10,6 +10,7 @@ import { ADMIN } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 import { UsdnProtocolImplV2 } from "../utils/UsdnProtocolImplV2.sol";
 
+import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { IUsdnProtocolFallback } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
 import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -104,6 +105,7 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
         _storageSnapshot();
 
         vm.startPrank(ADMIN);
+        UsdnProtocolFallback newProtocolFallback = new UsdnProtocolFallback();
         UsdnProtocolImplV2 newImplementation = new UsdnProtocolImplV2();
 
         vm.expectEmit();
@@ -111,12 +113,19 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit Initializable.Initialized(2);
         UnsafeUpgrades.upgradeProxy(
-            address(protocol), address(newImplementation), abi.encodeCall(UsdnProtocolImplV2.initializeV2, ())
+            address(protocol),
+            address(newImplementation),
+            abi.encodeWithSignature("initializeV2(address)", (newProtocolFallback))
         );
         UsdnProtocolImplV2 protocol = UsdnProtocolImplV2(address(protocol));
 
         _assertIdenticalStorage();
 
+        assertEq(
+            UsdnProtocolFallback(address(protocol)).getFallbackAddress(),
+            address(newProtocolFallback),
+            "The new fallback address should have been saved"
+        );
         assertEq(protocol.newVariable(), 1, "initializeV2 should set newVariable to 1");
         assertEq(protocol.retBool(), true, "retBool should return true");
     }
@@ -134,7 +143,8 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
         sV1._rebalancer = protocol.getRebalancer();
         sV1._minLeverage = protocol.getMinLeverage();
         sV1._maxLeverage = protocol.getMaxLeverage();
-        sV1._validationDeadline = protocol.getValidationDeadline();
+        sV1._lowLatencyValidatorDeadline = protocol.getLowLatencyValidatorDeadline();
+        sV1._onChainValidatorDeadline = protocol.getOnChainValidatorDeadline();
         sV1._liquidationPenalty = protocol.getLiquidationPenalty();
         sV1._safetyMarginBps = protocol.getSafetyMarginBps();
         sV1._liquidationIteration = protocol.getLiquidationIteration();
@@ -186,7 +196,8 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
         assertEq(address(sV1._rebalancer), address(protocol.getRebalancer()));
         assertEq(sV1._minLeverage, protocol.getMinLeverage());
         assertEq(sV1._maxLeverage, protocol.getMaxLeverage());
-        assertEq(sV1._validationDeadline, protocol.getValidationDeadline());
+        assertEq(sV1._lowLatencyValidatorDeadline, protocol.getLowLatencyValidatorDeadline());
+        assertEq(sV1._onChainValidatorDeadline, protocol.getOnChainValidatorDeadline());
         assertEq(sV1._liquidationPenalty, protocol.getLiquidationPenalty());
         assertEq(sV1._safetyMarginBps, protocol.getSafetyMarginBps());
         assertEq(sV1._liquidationIteration, protocol.getLiquidationIteration());
@@ -225,6 +236,5 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
         assertEq(sV1._openExpoImbalanceLimitBps, protocol.getOpenExpoImbalanceLimitBps());
         assertEq(sV1._closeExpoImbalanceLimitBps, protocol.getCloseExpoImbalanceLimitBps());
         assertEq(sV1._longImbalanceTargetBps, protocol.getLongImbalanceTargetBps());
-        assertEq(sV1._protocolFallbackAddr, protocol.getFallbackAddress());
     }
 }

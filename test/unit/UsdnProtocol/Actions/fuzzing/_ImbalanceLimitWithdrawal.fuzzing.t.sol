@@ -40,7 +40,7 @@ contract TestImbalanceLimitWithdrawalFuzzing is UsdnProtocolBaseFixture {
         uint256 totalExpo = protocol.getTotalExpo();
         if (newVaultExpo == 0) {
             // should revert because calculation is not possible
-            vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidVaultExpo.selector);
+            vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolEmptyVault.selector);
         } else if (imbalanceBps >= withdrawalLimit) {
             // should revert with `imbalanceBps` withdrawal imbalance limit
             vm.expectRevert(

@@ -18,46 +18,6 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
     function minTick() external view returns (int24);
 
     /**
-     * @notice Get the value of the highest usable tick, taking into account the tick spacing
-     * @dev Note that the effective maximum tick of a newly open long position also depends on the maximum allowed
-     * leverage value and the current value of the liquidation price multiplier
-     * @return The highest usable tick
-     */
-    function maxTick() external view returns (int24);
-
-    /**
-     * @notice Get the predicted value of the long trading exposure for the given asset price and timestamp
-     * @dev The effects of the funding and any profit or loss of the long positions since the last contract state
-     * update is taken into account
-     * @param currentPrice The current or predicted asset price
-     * @param timestamp The timestamp corresponding to `currentPrice`
-     * @return The long trading exposure
-     */
-    function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256);
-
-    /**
-     * @notice Get the predicted value of the long balance for the given asset price and timestamp
-     * @dev The effects of the funding and any profit or loss of the long positions since the last contract state
-     * update is taken into account, as well as the fees. If the provided timestamp is older than the last state
-     * update, the function reverts with `UsdnProtocolTimestampTooOld`
-     * @param currentPrice The current or predicted asset price
-     * @param timestamp The timestamp corresponding to `currentPrice`
-     * @return The long balance
-     */
-    function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256);
-
-    /**
-     * @notice Get a long position identified by its tick, tickVersion and index
-     * @param posId The unique position identifier
-     * @return pos_ The position data
-     * @return liquidationPenalty_ The liquidation penalty for that position (and associated tick)
-     */
-    function getLongPosition(PositionId calldata posId)
-        external
-        view
-        returns (Position memory pos_, uint24 liquidationPenalty_);
-
-    /**
      * @notice Get the value of a long position when the asset price is equal to the given price, at the given timestamp
      * @dev If the current price is smaller than the liquidation price of the position without a liquidation penalty,
      * then the value of the position is negative

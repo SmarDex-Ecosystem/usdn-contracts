@@ -26,6 +26,7 @@ import { MockOracleMiddleware } from "./MockOracleMiddleware.sol";
 import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
+import { UsdnProtocolVaultLibrary as Vault } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
@@ -301,8 +302,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         sdex.mintAndApprove(
             user,
             usdn.convertToTokens(
-                protocol.i_calcMintUsdnShares(
-                    positionSize, uint256(protocol.i_vaultAssetAvailable(uint128(price))), usdn.totalShares(), price
+                Vault._calcMintUsdnShares(
+                    positionSize, uint256(protocol.i_vaultAssetAvailable(uint128(price))), usdn.totalShares()
                 )
             ) * protocol.getSdexBurnOnDepositRatio() / protocol.SDEX_BURN_ON_DEPOSIT_DIVISOR(),
             address(protocol),
@@ -411,6 +412,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
     function _assertActionsEqual(PendingAction memory a, PendingAction memory b, string memory err) internal pure {
         assertTrue(a.action == b.action, string.concat(err, " - action type"));
         assertEq(a.timestamp, b.timestamp, string.concat(err, " - action timestamp"));
+        assertEq(a.var0, b.var0, string.concat(err, " - action var0"));
         assertEq(a.to, b.to, string.concat(err, " - action to"));
         assertEq(a.validator, b.validator, string.concat(err, " - action validator"));
         assertEq(a.securityDepositValue, b.securityDepositValue, string.concat(err, " - action security deposit"));
@@ -431,7 +433,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
     }
 
     function _waitBeforeActionablePendingAction() internal {
-        skip(protocol.getValidationDeadline() + 1);
+        skip(protocol.getLowLatencyValidatorDeadline() + 1);
     }
 
     /// @dev Calculate proper initial values from randoms to initialize a balanced protocol
