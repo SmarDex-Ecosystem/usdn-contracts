@@ -479,6 +479,26 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
     }
 
     /**
+     * @custom:scenario The user initiates an open position action with an entry price less than the user's max price
+     * @custom:given The current price is $2000
+     * @custom:when The user initiates an open position with an entry price of $1999
+     * @custom:then The protocol reverts with UsdnProtocolSlippageMaxPriceExceeded
+     */
+    function test_RevertWhen_initiateOpenPositionWithEntryPriceLessThanUserMaxPrice() public {
+        vm.expectRevert(UsdnProtocolSlippageMaxPriceExceeded.selector);
+        protocol.initiateOpenPosition(
+            1 ether,
+            2000 ether,
+            CURRENT_PRICE - 1,
+            address(this),
+            payable(address(this)),
+            NO_PERMIT2,
+            abi.encode(CURRENT_PRICE),
+            EMPTY_PREVIOUS_DATA
+        );
+    }
+
+    /**
      * @custom:scenario The user initiates an open position action with a reentrancy attempt
      * @custom:given A user being a smart contract that calls initiateOpenPosition with too much ether
      * @custom:and A receive() function that calls initiateOpenPosition again
