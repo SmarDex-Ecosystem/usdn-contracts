@@ -735,7 +735,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         external
         returns (ValidateOpenPositionData memory data_, bool liquidated_)
     {
-        return ActionsUtils._prepareValidateOpenPositionData(s, pending, priceData);
+        return ActionsLong._prepareValidateOpenPositionData(s, pending, priceData);
     }
 
     function i_checkInitiateClosePosition(

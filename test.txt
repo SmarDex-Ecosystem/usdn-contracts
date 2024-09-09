@@ -1,12 +1,3 @@
-| initiateClosePosition                                                                | 1327            | 324087 | 329862 | 509870 | 65      |
-| initiateDeposit                                                                      | 1361            | 371443 | 372294 | 507434 | 147     |
-| initiateOpenPosition                                                                 | 1520            | 460822 | 479227 | 618824 | 281     |
-| initiateWithdrawal                                                                   | 1282            | 325946 | 348091 | 526414 | 52      |
-| validateClosePosition                                                                | 1088            | 255249 | 248093 | 362776 | 20      |
-| validateDeposit                                                                      | 1086            | 264800 | 259588 | 386366 | 95      |
-| validateOpenPosition                                                                 | 1107            | 272382 | 270446 | 484445 | 207     |
-| validateWithdrawal                                                                   | 1086            | 256048 | 262286 | 367772 | 21      |
-
 | initiateClosePosition                                                                | 1327            | 321068 | 326480 | 506444 | 65      |
 | initiateDeposit                                                                      | 1361            | 371397 | 372249 | 507367 | 147     |
 | initiateOpenPosition                                                                 | 1520            | 460847 | 479254 | 618806 | 281     |
@@ -14,4 +5,13 @@
 | validateClosePosition                                                                | 1088            | 255203 | 248048 | 362785 | 20      |
 | validateDeposit                                                                      | 1086            | 264754 | 259543 | 386276 | 95      |
 | validateOpenPosition                                                                 | 1107            | 272435 | 270500 | 484499 | 207     |
+| validateWithdrawal                                                                   | 1086            | 256000 | 262241 | 367705 | 21      |
+
+| initiateClosePosition                                                                | 1327            | 320920 | 326426 | 506390 | 65      |
+| initiateDeposit                                                                      | 1361            | 371397 | 372249 | 507367 | 147     |
+| initiateOpenPosition                                                                 | 1520            | 460705 | 479131 | 618683 | 281     |
+| initiateWithdrawal                                                                   | 1282            | 325903 | 348046 | 526347 | 52      |
+| validateClosePosition                                                                | 1088            | 254880 | 248048 | 356328 | 20      |
+| validateDeposit                                                                      | 1086            | 264754 | 259543 | 386276 | 95      |
+| validateOpenPosition                                                                 | 1107            | 265949 | 264044 | 478044 | 207     |
 | validateWithdrawal                                                                   | 1086            | 256000 | 262241 | 367705 | 21      |
