@@ -58,8 +58,8 @@ library UsdnProtocolVaultLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
         }
         IUsdn usdn = s._usdn;
-        usdnSharesExpected_ = _calcMintUsdnShares(amount, uint256(vaultBalance), usdn.totalShares());
-        sdexToBurn_ = _calcSdexToBurn(usdn.convertToTokens(usdnSharesExpected_), s._sdexBurnOnDepositRatio);
+        usdnSharesExpected_ = Utils._calcMintUsdnShares(amount, uint256(vaultBalance), usdn.totalShares());
+        sdexToBurn_ = Utils._calcSdexToBurn(usdn.convertToTokens(usdnSharesExpected_), s._sdexBurnOnDepositRatio);
     }
 
     /// @notice See {IUsdnProtocolVault}
@@ -282,17 +282,6 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
-     * @notice Calculate the amount of SDEX to burn when minting USDN tokens (rounding up)
-     * @dev We round up to make sure we burn at least 1 wei SDEX during the minting process
-     * @param usdnAmount The amount of USDN to be minted
-     * @param sdexBurnRatio The ratio of SDEX to burn for each minted USDN
-     * @return sdexToBurn_ The amount of SDEX to burn for the given USDN amount
-     */
-    function _calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) public pure returns (uint256 sdexToBurn_) {
-        sdexToBurn_ = FixedPointMathLib.fullMulDivUp(usdnAmount, sdexBurnRatio, Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR);
-    }
-
-    /**
      * @notice Calculate the required USDN total supply to reach `targetPrice`
      * @param vaultBalance The balance of the vault
      * @param assetPrice The price of the underlying asset
@@ -350,47 +339,5 @@ library UsdnProtocolVaultLibrary {
             rebased_ = rebased;
             callbackResult_ = callbackResult;
         } catch { }
-    }
-
-    /**
-     * @notice Calculates the amount of USDN shares to mint for a given amount of asset
-     * @param amount The amount of asset to be converted into USDN
-     * @param vaultBalance The balance of the vault
-     * @param usdnTotalShares The total supply of USDN
-     * @return toMint_ The amount of USDN to mint
-     * @dev The amount of USDN shares to mint is calculated as follows:
-     * amountUsdn = amountAsset * priceAsset / priceUsdn,
-     * but since priceUsdn = vaultBalance * priceAsset / totalSupply, we can simplify to
-     * amountUsdn = amountAsset * totalSupply / vaultBalance, and
-     * sharesUsdn = amountAsset * totalShares / vaultBalance
-     */
-    function _calcMintUsdnShares(uint256 amount, uint256 vaultBalance, uint256 usdnTotalShares)
-        public
-        pure
-        returns (uint256 toMint_)
-    {
-        if (vaultBalance == 0) {
-            revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
-        }
-        // we simply mint a proportional number of shares corresponding to the new assets deposited into the vault
-        toMint_ = FixedPointMathLib.fullMulDiv(amount, usdnTotalShares, vaultBalance);
-    }
-
-    /**
-     * @notice Get the lower 24 bits of the withdrawal amount (USDN shares)
-     * @param usdnShares The amount of USDN shares
-     * @return sharesLSB_ The 24 least significant bits of the USDN shares
-     */
-    function _calcWithdrawalAmountLSB(uint152 usdnShares) public pure returns (uint24 sharesLSB_) {
-        sharesLSB_ = uint24(usdnShares);
-    }
-
-    /**
-     * @notice Get the higher 128 bits of the withdrawal amount (USDN shares)
-     * @param usdnShares The amount of USDN shares
-     * @return sharesMSB_ The 128 most significant bits of the USDN shares
-     */
-    function _calcWithdrawalAmountMSB(uint152 usdnShares) public pure returns (uint128 sharesMSB_) {
-        sharesMSB_ = uint128(usdnShares >> 24);
     }
 }

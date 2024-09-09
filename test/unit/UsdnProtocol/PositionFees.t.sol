@@ -6,7 +6,7 @@ import { Vm } from "forge-std/Vm.sol";
 import { ADMIN } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
 
-import { UsdnProtocolVaultLibrary as Vault } from "../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
+import { UsdnProtocolUtilsLibrary as Utils } from "../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
 
 /**
  * @custom:feature The entry/exit position fees mechanism of the protocol
@@ -245,7 +245,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, depositAmount, 2000 ether);
 
         uint256 expectedSharesBalanceA =
-            Vault._calcMintUsdnShares(depositAmount, protocol.getBalanceVault(), usdn.totalShares());
+            Utils._calcMintUsdnShares(depositAmount, protocol.getBalanceVault(), usdn.totalShares());
 
         _waitDelay();
 
@@ -253,7 +253,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         DepositPendingAction memory deposit = protocol.i_toDepositPendingAction(action);
 
         // Check stored position asset price
-        uint256 expectedSharesBalanceB = Vault._calcMintUsdnShares(
+        uint256 expectedSharesBalanceB = Utils._calcMintUsdnShares(
             depositAmount,
             uint256(
                 protocol.i_vaultAssetAvailable(

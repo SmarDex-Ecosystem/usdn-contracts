@@ -367,7 +367,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) external pure returns (uint256) {
-        return Vault._calcSdexToBurn(usdnAmount, sdexBurnRatio);
+        return Utils._calcSdexToBurn(usdnAmount, sdexBurnRatio);
     }
 
     function i_vaultAssetAvailable(
@@ -512,11 +512,11 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_calcWithdrawalAmountLSB(uint152 usdnShares) external pure returns (uint24) {
-        return Vault._calcWithdrawalAmountLSB(usdnShares);
+        return ActionsVault._calcWithdrawalAmountLSB(usdnShares);
     }
 
     function i_calcWithdrawalAmountMSB(uint152 usdnShares) external pure returns (uint128) {
-        return Vault._calcWithdrawalAmountMSB(usdnShares);
+        return ActionsVault._calcWithdrawalAmountMSB(usdnShares);
     }
 
     function i_createInitialDeposit(uint128 amount, uint128 price) external {

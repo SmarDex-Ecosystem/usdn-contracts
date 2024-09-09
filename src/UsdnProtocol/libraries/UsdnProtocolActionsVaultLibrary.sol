@@ -315,14 +315,14 @@ library UsdnProtocolActionsVaultLibrary {
         data_.usdnTotalShares = usdn.totalShares();
 
         // calculate the amount of SDEX tokens to burn
-        uint256 usdnSharesToMintEstimated = Vault._calcMintUsdnShares(amount, data_.balanceVault, data_.usdnTotalShares);
+        uint256 usdnSharesToMintEstimated = Utils._calcMintUsdnShares(amount, data_.balanceVault, data_.usdnTotalShares);
         uint256 usdnToMintEstimated = usdn.convertToTokens(usdnSharesToMintEstimated);
         // we want to at least mint 1 wei of USDN
         if (usdnToMintEstimated == 0) {
             revert IUsdnProtocolErrors.UsdnProtocolDepositTooSmall();
         }
         uint32 burnRatio = s._sdexBurnOnDepositRatio;
-        data_.sdexToBurn = Vault._calcSdexToBurn(usdnToMintEstimated, burnRatio);
+        data_.sdexToBurn = Utils._calcSdexToBurn(usdnToMintEstimated, burnRatio);
     }
 
     /**
@@ -511,9 +511,9 @@ library UsdnProtocolActionsVaultLibrary {
         uint256 usdnSharesToMint;
         // we use the lower of the two prices to mint
         if (deposit.assetPrice <= priceWithFees) {
-            usdnSharesToMint = Vault._calcMintUsdnShares(deposit.amount, deposit.balanceVault, deposit.usdnTotalShares);
+            usdnSharesToMint = Utils._calcMintUsdnShares(deposit.amount, deposit.balanceVault, deposit.usdnTotalShares);
         } else {
-            usdnSharesToMint = Vault._calcMintUsdnShares(
+            usdnSharesToMint = Utils._calcMintUsdnShares(
                 deposit.amount,
                 Vault._vaultAssetAvailable(
                     deposit.totalExpo, deposit.balanceVault, deposit.balanceLong, priceWithFees, deposit.assetPrice
@@ -611,8 +611,8 @@ library UsdnProtocolActionsVaultLibrary {
                 to: to,
                 validator: validator,
                 securityDepositValue: securityDepositValue,
-                sharesLSB: Vault._calcWithdrawalAmountLSB(usdnShares),
-                sharesMSB: Vault._calcWithdrawalAmountMSB(usdnShares),
+                sharesLSB: _calcWithdrawalAmountLSB(usdnShares),
+                sharesMSB: _calcWithdrawalAmountMSB(usdnShares),
                 assetPrice: data.pendingActionPrice,
                 totalExpo: data.totalExpo,
                 balanceVault: data.balanceVault,
@@ -965,5 +965,23 @@ library UsdnProtocolActionsVaultLibrary {
     function _clearPendingAction(Types.Storage storage s, address user, uint128 rawIndex) public {
         s._pendingActionsQueue.clearAt(rawIndex);
         delete s._pendingActions[user];
+    }
+
+    /**
+     * @notice Get the lower 24 bits of the withdrawal amount (USDN shares)
+     * @param usdnShares The amount of USDN shares
+     * @return sharesLSB_ The 24 least significant bits of the USDN shares
+     */
+    function _calcWithdrawalAmountLSB(uint152 usdnShares) public pure returns (uint24 sharesLSB_) {
+        sharesLSB_ = uint24(usdnShares);
+    }
+
+    /**
+     * @notice Get the higher 128 bits of the withdrawal amount (USDN shares)
+     * @param usdnShares The amount of USDN shares
+     * @return sharesMSB_ The 128 most significant bits of the USDN shares
+     */
+    function _calcWithdrawalAmountMSB(uint152 usdnShares) public pure returns (uint128 sharesMSB_) {
+        sharesMSB_ = uint128(usdnShares >> 24);
     }
 }

@@ -386,4 +386,39 @@ library UsdnProtocolUtilsLibrary {
             unadjustedPrice, liqMultiplier, 10 ** Constants.LIQUIDATION_MULTIPLIER_DECIMALS
         ).toUint128();
     }
+
+    /**
+     * @notice Calculates the amount of USDN shares to mint for a given amount of asset
+     * @param amount The amount of asset to be converted into USDN
+     * @param vaultBalance The balance of the vault
+     * @param usdnTotalShares The total supply of USDN
+     * @return toMint_ The amount of USDN to mint
+     * @dev The amount of USDN shares to mint is calculated as follows:
+     * amountUsdn = amountAsset * priceAsset / priceUsdn,
+     * but since priceUsdn = vaultBalance * priceAsset / totalSupply, we can simplify to
+     * amountUsdn = amountAsset * totalSupply / vaultBalance, and
+     * sharesUsdn = amountAsset * totalShares / vaultBalance
+     */
+    function _calcMintUsdnShares(uint256 amount, uint256 vaultBalance, uint256 usdnTotalShares)
+        internal
+        pure
+        returns (uint256 toMint_)
+    {
+        if (vaultBalance == 0) {
+            revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
+        }
+        // we simply mint a proportional number of shares corresponding to the new assets deposited into the vault
+        toMint_ = FixedPointMathLib.fullMulDiv(amount, usdnTotalShares, vaultBalance);
+    }
+
+    /**
+     * @notice Calculate the amount of SDEX to burn when minting USDN tokens (rounding up)
+     * @dev We round up to make sure we burn at least 1 wei SDEX during the minting process
+     * @param usdnAmount The amount of USDN to be minted
+     * @param sdexBurnRatio The ratio of SDEX to burn for each minted USDN
+     * @return sdexToBurn_ The amount of SDEX to burn for the given USDN amount
+     */
+    function _calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) internal pure returns (uint256 sdexToBurn_) {
+        sdexToBurn_ = FixedPointMathLib.fullMulDivUp(usdnAmount, sdexBurnRatio, Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR);
+    }
 }
