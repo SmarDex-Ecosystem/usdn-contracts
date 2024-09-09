@@ -54,14 +54,14 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
      * @notice Emitted when a user validates a withdrawal
      * @param to The address that received the assets
      * @param validator The address of the validator that validated the withdrawal
-     * @param amountWithdrawnWithFees The amount of assets that were withdrawn after fees
+     * @param amountWithdrawnAfterFees The amount of assets that were withdrawn after fees
      * @param usdnBurned The amount of USDN that was burned
      * @param timestamp The timestamp of the InitiatedWithdrawal action
      */
     event ValidatedWithdrawal(
         address indexed to,
         address indexed validator,
-        uint256 amountWithdrawnWithFees,
+        uint256 amountWithdrawnAfterFees,
         uint256 usdnBurned,
         uint256 timestamp
     );
