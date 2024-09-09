@@ -136,7 +136,6 @@ contract TestRebalancerInitiateClosePosition is
                     - protocol.getPositionValue(prevPosId, wstEthPrice, uint128(block.timestamp)) / 10
             );
         int256 expectedImbalance = (currentVaultExpo - newLongExpo) * int256(BPS_DIVISOR) / newLongExpo;
-        emit log_int(expectedImbalance);
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolImbalanceLimitReached.selector, expectedImbalance));
         rebalancer.initiateClosePosition{ value: securityDeposit }(amount, address(this), "", EMPTY_PREVIOUS_DATA);

@@ -25,8 +25,6 @@ import { UsdnProtocolLongLibrary as Long } from "./UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolUtils as Utils } from "./UsdnProtocolUtils.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.sol";
 
-import { console2 } from "forge-std/Test.sol";
-
 library UsdnProtocolActionsUtilsLibrary {
     using SafeTransferLib for address;
     using SafeCast for uint256;
@@ -130,14 +128,14 @@ library UsdnProtocolActionsUtilsLibrary {
      * the close limit on the vault side, otherwise revert
      * @param s The storage of the protocol
      * @param posTotalExpoToClose The total expo to remove position
-     * @param posValueToCloseWithFees The value to remove from the position
-     * @param fees The fees to remove from the position
+     * @param posValueToCloseAfterFees The value to remove from the position after the fees are applied
+     * @param fees The fees applied to the position, going to the vault
      */
     function _checkImbalanceLimitClose(
         Types.Storage storage s,
         uint256 posTotalExpoToClose,
-        uint256 posValueToCloseWithFees,
-        uint256 fees
+        uint256 posValueToCloseAfterFees,
+        int256 fees
     ) public view {
         int256 closeExpoImbalanceLimitBps;
         if (msg.sender == address(s._rebalancer)) {
@@ -151,9 +149,9 @@ library UsdnProtocolActionsUtilsLibrary {
             return;
         }
 
-        int256 newLongBalance = s._balanceLong.toInt256().safeSub(posValueToCloseWithFees.toInt256());
+        int256 newLongBalance = s._balanceLong.toInt256().safeSub(posValueToCloseAfterFees.toInt256());
         uint256 newTotalExpo = s._totalExpo - posTotalExpoToClose;
-        int256 currentVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault).safeAdd(fees.toInt256());
+        int256 currentVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault + fees);
 
         int256 imbalanceBps = Long._calcImbalanceCloseBps(currentVaultExpo, newLongBalance, newTotalExpo);
 
@@ -448,12 +446,12 @@ library UsdnProtocolActionsUtilsLibrary {
         uint128 priceAfterFees =
             (data_.lastPrice - data_.lastPrice * s._positionFeeBps / Constants.BPS_DIVISOR).toUint128();
 
-        uint256 posValueWithFees =
+        uint256 posValueAfterFees =
             _assetToRemove(balanceLong, priceAfterFees, liqPriceWithoutPenalty, data_.totalExpoToClose);
 
         // we perform the imbalance check based on the estimated balance change since that's the best we have right now
         _checkImbalanceLimitClose(
-            s, data_.totalExpoToClose, posValueWithFees, data_.tempPositionValue - posValueWithFees
+            s, data_.totalExpoToClose, posValueAfterFees, int256(data_.tempPositionValue - posValueAfterFees)
         );
     }
 
@@ -498,7 +496,7 @@ library UsdnProtocolActionsUtilsLibrary {
     /**
      * @notice Calculate how much wstETH must be removed from the long balance due to a position closing
      * @dev The amount is bound by the amount of wstETH available on the long side
-     * @param balanceLong The available amount of assets on the long side (with the current balance)
+     * @param balanceLong The balance of long positions (with asset decimals)
      * @param priceWithFees The current price of the asset, adjusted with fees
      * @param liqPriceWithoutPenalty The liquidation price without penalty
      * @param posExpo The total expo of the position
