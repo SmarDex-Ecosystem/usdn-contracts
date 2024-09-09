@@ -985,12 +985,20 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
 
-        vm.prank(USER_1);
+        vm.startPrank(USER_1);
         vm.expectEmit();
         emit StalePendingActionRemoved(address(this), posId);
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
-            1 ether, params.initialPrice / 2, USER_1, payable(this), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
+            1 ether,
+            params.initialPrice / 2,
+            protocol.getMaxLeverage(),
+            USER_1,
+            payable(this),
+            NO_PERMIT2,
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
+        vm.stopPrank();
 
         assertStaleRefundValues();
     }
@@ -1045,7 +1053,14 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         vm.startPrank(USER_1);
 
         (, PositionId memory user1PosId) = protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
-            1 ether, params.initialPrice / 2, USER_1, USER_1, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
+            1 ether,
+            params.initialPrice / 2,
+            protocol.getMaxLeverage(),
+            USER_1,
+            USER_1,
+            NO_PERMIT2,
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
