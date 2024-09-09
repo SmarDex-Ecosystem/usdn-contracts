@@ -13,6 +13,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
     /// @inheritdoc IUsdnProtocolActions
     function initiateDeposit(
         uint128 amount,
+        uint128 amountMinOut,
         address to,
         address payable validator,
         Permit2TokenBitfield.Bitfield permit2TokenBitfield,
@@ -20,7 +21,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (bool success_) {
         return ActionsVault.initiateDeposit(
-            s, amount, to, validator, permit2TokenBitfield, currentPriceData, previousActionsData
+            s, amount, amountMinOut, to, validator, permit2TokenBitfield, currentPriceData, previousActionsData
         );
     }
 

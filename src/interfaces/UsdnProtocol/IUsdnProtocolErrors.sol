@@ -192,4 +192,7 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the vault balance is zero, and the calculation cannot be performed
     error UsdnProtocolEmptyVault();
+
+    /// @dev Indicates that user dosn't receive enough tokens
+    error UsdnProtocolReceivedTooLowAmount();
 }

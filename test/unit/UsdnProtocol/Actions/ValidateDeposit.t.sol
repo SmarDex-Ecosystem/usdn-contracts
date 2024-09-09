@@ -115,7 +115,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateDeposit);
         assertEq(validationCost, 1);
         protocol.initiateDeposit{ value: validationCost }(
-            DEPOSIT_AMOUNT, address(this), payable(address(this)), NO_PERMIT2, currentPrice, EMPTY_PREVIOUS_DATA
+            DEPOSIT_AMOUNT, 0, address(this), payable(address(this)), NO_PERMIT2, currentPrice, EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
@@ -154,6 +154,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
 
         protocol.initiateDeposit(
             DEPOSIT_AMOUNT,
+            0,
             address(this),
             payable(address(this)),
             NO_PERMIT2,
@@ -207,7 +208,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit InitiatedDeposit(to, address(this), DEPOSIT_AMOUNT, initiateDepositTimestamp, expectedSdexBurnAmount);
         protocol.initiateDeposit(
-            DEPOSIT_AMOUNT, to, payable(address(this)), NO_PERMIT2, currentPrice, EMPTY_PREVIOUS_DATA
+            DEPOSIT_AMOUNT, 0, to, payable(address(this)), NO_PERMIT2, currentPrice, EMPTY_PREVIOUS_DATA
         );
         uint256 vaultBalance = protocol.getBalanceVault(); // save for mint amount calculation in case price increases
         bytes32 actionId = oracleMiddleware.lastActionId();
@@ -327,7 +328,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         uint256 balanceContractBefore = address(this).balance;
 
         protocol.initiateDeposit{ value: 0.5 ether }(
-            DEPOSIT_AMOUNT, address(this), USER_1, NO_PERMIT2, currentPrice, EMPTY_PREVIOUS_DATA
+            DEPOSIT_AMOUNT, 0, address(this), USER_1, NO_PERMIT2, currentPrice, EMPTY_PREVIOUS_DATA
         );
         _waitBeforeActionablePendingAction();
         protocol.validateDeposit(USER_1, currentPrice, EMPTY_PREVIOUS_DATA);

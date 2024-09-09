@@ -35,7 +35,7 @@ contract TestUsdnProtocolActionsPrepareInitiateDepositData is UsdnProtocolBaseFi
      */
     function test_prepareInitiateDepositData() public {
         ActionsVault.InitiateDepositData memory data =
-            protocol.i_prepareInitiateDepositData(address(this), POSITION_AMOUNT, currentPriceData);
+            protocol.i_prepareInitiateDepositData(address(this), POSITION_AMOUNT, 0, currentPriceData);
 
         assertFalse(data.isLiquidationPending, "There should be no pending liquidations");
         _assertData(data, false);
@@ -80,7 +80,7 @@ contract TestUsdnProtocolActionsPrepareInitiateDepositData is UsdnProtocolBaseFi
         currentPriceData = abi.encode(params.initialPrice * 7 / 10);
 
         ActionsVault.InitiateDepositData memory data =
-            protocol.i_prepareInitiateDepositData(address(this), POSITION_AMOUNT, currentPriceData);
+            protocol.i_prepareInitiateDepositData(address(this), POSITION_AMOUNT, 0, currentPriceData);
 
         assertTrue(data.isLiquidationPending, "There should be pending liquidations");
         _assertData(data, true);
