@@ -340,11 +340,11 @@ library UsdnProtocolActionsLongLibrary {
         // even if it drops below _minLeverage between the initiate and validate actions, we still allow it
         // however, if the leverage exceeds max leverage, then we adjust the liquidation price (tick) to have a leverage
         // of _maxLeverage
-        uint128 userMaxLeverage = uint128(s._maxLeverage);
-        if (data.leverage > userMaxLeverage) {
+        uint128 maxLeverage = uint128(s._maxLeverage);
+        if (data.leverage > maxLeverage) {
             MaxLeverageData memory maxLeverageData;
             // theoretical liquidation price for _maxLeverage
-            data.liqPriceWithoutPenalty = Utils._getLiquidationPrice(data.startPrice, userMaxLeverage);
+            data.liqPriceWithoutPenalty = Utils._getLiquidationPrice(data.startPrice, maxLeverage);
             // find corresponding tick and actual liq price with current penalty setting
             maxLeverageData.currentLiqPenalty = s._liquidationPenalty;
             (maxLeverageData.newPosId.tick, data.liqPriceWithoutPenalty) = Long._getTickFromDesiredLiqPrice(

@@ -693,7 +693,7 @@ library UsdnProtocolLongLibrary {
      * @param s The storage of the protocol
      * @param adjustedPrice The adjusted price of the asset
      * @param liqPriceWithoutPenalty The liquidation price of the position without the liquidation penalty
-     * @param userMaxLeverage The maximum leverage for the newly created pending action
+     * @param userMaxLeverage The maximum leverage for the newly created position
      */
     function _checkOpenPositionLeverage(
         Types.Storage storage s,
