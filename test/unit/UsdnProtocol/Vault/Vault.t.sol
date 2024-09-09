@@ -27,8 +27,8 @@ contract TestUsdnProtocolVault is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Check the inherent loss of the vault position after a rebase compared to inherent gain of the
-     * long position
+     * @custom:scenario Check the inherent loss of the vault position after a rebase compared to the inherent gain of
+     * the long position
      * @custom:given A vault position and a long position
      * @custom:when The price of the asset changes after a rebase of stETH/wstETH
      * @custom:then The vault position should have an inherent loss and the long position should have an inherent gain
