@@ -274,6 +274,22 @@ interface IUsdnProtocolTypes {
     }
 
     /**
+     * @notice Parameters for the internal `_prepareInitiateOpenPosition` function
+     * @param validator The address of the validator
+     * @param amount The amount of wstETH to deposit
+     * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
+     * @param userMaxLeverage The maximum leverage for the newly created pending action
+     * @param currentPriceData The current price data
+     */
+    struct PrepareInitiateOpenPositionParams {
+        address validator;
+        uint128 amount;
+        uint128 desiredLiqPrice;
+        uint256 userMaxLeverage;
+        bytes currentPriceData;
+    }
+
+    /**
      * @notice Parameters for the internal `_initiateClosePosition` function
      * @param posId The position id
      * @param amountToClose The amount to close
