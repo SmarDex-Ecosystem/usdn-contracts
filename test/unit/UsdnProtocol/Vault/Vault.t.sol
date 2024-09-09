@@ -2,7 +2,6 @@
 pragma solidity 0.8.26;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
-import { console2 } from "forge-std/Test.sol";
 
 /**
  * @custom:feature Test the functions in the vault contract
@@ -39,17 +38,15 @@ contract TestUsdnProtocolVault is UsdnProtocolBaseFixture {
         uint128 newPrice = 2200 ether;
 
         uint256 longAssetAvailableAfterRebase = uint256(protocol.i_longAssetAvailable(newPrice));
-        uint256 VaultAssetAvailableAfterRebase = uint256(protocol.i_vaultAssetAvailable(newPrice));
+        uint256 vaultAssetAvailableAfterRebase = uint256(protocol.i_vaultAssetAvailable(newPrice));
 
-        uint256 balanceLongAfterRebase = longAssetAvailableAfterRebase * newPrice;
-        uint256 balanceVaultAfterRebase = VaultAssetAvailableAfterRebase * newPrice;
-        uint256 balanceUserAfterRebase = balanceUserOutsideProtocol * newPrice;
+        uint256 valueLongAfterRebase = longAssetAvailableAfterRebase * newPrice;
+        uint256 valueVaultAfterRebase = vaultAssetAvailableAfterRebase * newPrice;
+        uint256 valueUserAfterRebase = balanceUserOutsideProtocol * newPrice;
 
-        assertGt(
-            balanceLongAfterRebase, balanceUserAfterRebase, "User outside protocol is a loser over the long position"
-        );
+        assertGt(valueLongAfterRebase, valueUserAfterRebase, "User outside protocol is a loser over the long position");
         assertLt(
-            balanceVaultAfterRebase, balanceUserAfterRebase, "User outside protocol is a winner over the vault position"
+            valueVaultAfterRebase, valueUserAfterRebase, "User outside protocol is a winner over the vault position"
         );
         // Long positions are inherently profitable due to the stETh/wstETH rebase and the vault positions are
         // inherently lossy due to the same rebase
