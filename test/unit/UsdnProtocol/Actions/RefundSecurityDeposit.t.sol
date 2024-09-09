@@ -62,7 +62,10 @@ contract TestUsdnProtocolRefundSecurityDeposit is UsdnProtocolBaseFixture {
                 price: params.initialPrice
             })
         );
-        _waitDelay();
+
+        // make sure the liquidation below uses a fresh price (mock oracle middleware gives price a few seconds in the
+        // past)
+        skip(1 minutes);
 
         // liquidate the position with a price drop to $1000
         protocol.liquidate(abi.encode(1000 ether), 1);
