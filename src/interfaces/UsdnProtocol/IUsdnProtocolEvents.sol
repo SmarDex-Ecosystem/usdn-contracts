@@ -91,7 +91,7 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
      * @param oldPosId The old position identifier
      * @param newPosId The new position identifier
      */
-    event LiquidationPriceUpdated(PositionId indexed oldPosId, PositionId newPosId);
+    event LiquidationPriceUpdated(PositionId oldPosId, PositionId newPosId);
 
     /**
      * @notice Emitted when a user initiates the closing of all or part of a long position
@@ -210,10 +210,13 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     event MaxLeverageUpdated(uint256 newMaxLeverage);
 
     /**
-     * @notice Emitted when the `validationDeadline` is updated
-     * @param newValidationDeadline The new `validationDeadline`
+     * @notice Emitted when the `lowLatencyValidatorDeadline` and `onChainValidatorDeadline` are updated
+     * @param newLowLatencyValidatorDeadline The new deadline for low-latency validation (offset from the initiate
+     * action timestamp)
+     * @param newOnChainValidatorDeadline The new deadline for on-chain validation (offset from the initiate action
+     * timestamp + the oracle middleware's low-latency delay)
      */
-    event ValidationDeadlineUpdated(uint256 newValidationDeadline);
+    event ValidatorDeadlinesUpdated(uint128 newLowLatencyValidatorDeadline, uint128 newOnChainValidatorDeadline);
 
     /**
      * @notice Emitted when the `liquidationPenalty` is updated
@@ -351,7 +354,7 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
      * @param oldOwner The old owner
      * @param newOwner The new owner
      */
-    event PositionOwnershipTransferred(PositionId indexed posId, address indexed oldOwner, address indexed newOwner);
+    event PositionOwnershipTransferred(PositionId posId, address indexed oldOwner, address indexed newOwner);
 
     /**
      * @notice Emitted when the last funding per day is updated

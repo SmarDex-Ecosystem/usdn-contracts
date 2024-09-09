@@ -17,6 +17,7 @@ import { HugeUint } from "../../libraries/HugeUint.sol";
 import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
 import { TickMath } from "../../libraries/TickMath.sol";
+import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsVaultLibrary as ActionsVault } from "./UsdnProtocolActionsVaultLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./UsdnProtocolCoreLibrary.sol";
@@ -60,7 +61,11 @@ library UsdnProtocolActionsUtilsLibrary {
         ActionsVault._checkPendingFee(s);
     }
 
-    /// @notice See {IUsdnProtocolActions}
+    /**
+     * @notice See {IUsdnProtocolActions}
+     * @dev TODO: refactor to loop on the queue and then index into `previousActionsData` when an actionable pending
+     * action has been found, to avoid loop multiple times over the unactionable items in the queue
+     */
     function validateActionablePendingActions(
         Types.Storage storage s,
         Types.PreviousActionsData calldata previousActionsData,
@@ -147,7 +152,7 @@ library UsdnProtocolActionsUtilsLibrary {
 
         int256 imbalanceBps = Long._calcImbalanceCloseBps(currentVaultExpo, newLongBalance, newTotalExpo);
 
-        if (imbalanceBps >= closeExpoImbalanceLimitBps) {
+        if (imbalanceBps > closeExpoImbalanceLimitBps) {
             revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
         }
     }
@@ -214,6 +219,7 @@ library UsdnProtocolActionsUtilsLibrary {
         Types.LongPendingAction memory action = Types.LongPendingAction({
             action: Types.ProtocolAction.ValidateOpenPosition,
             timestamp: uint40(block.timestamp),
+            closeLiqPenalty: 0,
             to: to,
             validator: validator,
             securityDepositValue: securityDepositValue,
@@ -379,7 +385,7 @@ library UsdnProtocolActionsUtilsLibrary {
         uint128 amountToClose,
         bytes calldata currentPriceData
     ) public returns (Types.ClosePositionData memory data_, bool liquidated_) {
-        (data_.pos, data_.liquidationPenalty) = Long.getLongPosition(s, posId);
+        (data_.pos, data_.liquidationPenalty) = ActionsLong.getLongPosition(s, posId);
 
         _checkInitiateClosePosition(s, owner, to, validator, amountToClose, data_.pos);
 
@@ -458,6 +464,7 @@ library UsdnProtocolActionsUtilsLibrary {
         Types.LongPendingAction memory action = Types.LongPendingAction({
             action: Types.ProtocolAction.ValidateClosePosition,
             timestamp: uint40(block.timestamp),
+            closeLiqPenalty: data.liquidationPenalty,
             to: to,
             validator: validator,
             securityDepositValue: securityDepositValue,

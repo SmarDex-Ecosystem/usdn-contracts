@@ -72,7 +72,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
     SetUpParams public params;
     SetUpParams public DEFAULT_PARAMS = SetUpParams({
-        initialDeposit: 0,
+        initialDeposit: 0, // 0 = auto-calculate to initialize a balanced protocol
         initialLong: 100 ether,
         initialLiqPrice: 1000 ether, // leverage approx 2x, recalculated if forking (to ensure leverage approx 2x)
         initialPrice: 2000 ether, // 2000 USD per wstETH, ignored if forking
@@ -303,6 +303,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         (, posToLiquidate_) = protocol.initiateOpenPosition{ value: messageValue }(
             additionalLongAmount,
             1500 ether,
+            protocol.getMaxLeverage(),
             payable(address(this)),
             payable(address(this)),
             NO_PERMIT2,

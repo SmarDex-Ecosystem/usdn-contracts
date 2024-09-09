@@ -124,6 +124,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
             1 ether,
             params.initialPrice / 2,
+            protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
             NO_PERMIT2,
@@ -161,7 +162,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
                 price: params.initialPrice
             })
         );
-        skip(protocol.getValidationDeadline() + 1);
+        _waitBeforeActionablePendingAction();
 
         assertEq(
             address(protocol).balance,
@@ -250,10 +251,12 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:then The protocol reverts with {UsdnProtocolSecurityDepositTooLow}
      */
     function test_RevertWhen_securityDeposit_lt_openPosition() public {
+        uint256 leverage = protocol.getMaxLeverage();
         vm.expectRevert(UsdnProtocolSecurityDepositTooLow.selector);
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE - 1 }(
             1 ether,
             params.initialPrice / 2,
+            leverage,
             address(this),
             payable(address(this)),
             NO_PERMIT2,
@@ -333,6 +336,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE + 100 }(
             1 ether,
             params.initialPrice / 2,
+            protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
             NO_PERMIT2,
@@ -388,7 +392,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
             1 ether, address(this), payable(address(this)), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         );
-        skip(protocol.getValidationDeadline() + 1);
+        _waitBeforeActionablePendingAction();
 
         assertSecurityDepositPaid();
 
@@ -437,7 +441,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
             1 ether, USER_1, USER_1, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         );
-        skip(protocol.getValidationDeadline() + 1);
+        _waitBeforeActionablePendingAction();
 
         assertSecurityDepositPaidTwoUsers();
 
@@ -477,7 +481,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(
             1e18, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
-        skip(protocol.getValidationDeadline() + 1);
+        _waitBeforeActionablePendingAction();
 
         assertSecurityDepositPaid();
 
@@ -537,7 +541,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(
             1e18, USER_1, USER_1, priceData, EMPTY_PREVIOUS_DATA
         );
-        skip(protocol.getValidationDeadline() + 1);
+        _waitBeforeActionablePendingAction();
 
         assertSecurityDepositPaidTwoUsers();
 
@@ -570,23 +574,25 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
             1 ether,
             params.initialPrice / 2,
+            protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
             NO_PERMIT2,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
-        skip(protocol.getValidationDeadline() + 1);
+        _waitBeforeActionablePendingAction();
 
         assertSecurityDepositPaid();
 
         PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
 
+        uint256 leverage = protocol.getMaxLeverage();
         vm.expectEmit();
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
         vm.prank(USER_1);
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
-            1 ether, params.initialPrice / 2, USER_1, USER_1, NO_PERMIT2, priceData, previousActionsData
+            1 ether, params.initialPrice / 2, leverage, USER_1, USER_1, NO_PERMIT2, priceData, previousActionsData
         );
         _waitDelay();
 
@@ -613,6 +619,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
             1 ether,
             params.initialPrice / 2,
+            protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
             NO_PERMIT2,
@@ -621,12 +628,19 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
 
         assertSecurityDepositPaid();
-
+        uint256 leverage = protocol.getMaxLeverage();
         vm.prank(USER_1);
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
-            1 ether, params.initialPrice / 2, address(this), USER_1, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
+            1 ether,
+            params.initialPrice / 2,
+            leverage,
+            address(this),
+            USER_1,
+            NO_PERMIT2,
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
-        skip(protocol.getValidationDeadline() + 1);
+        _waitBeforeActionablePendingAction();
 
         assertSecurityDepositPaidTwoUsers();
 
@@ -673,7 +687,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(
             posId, 1 ether, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
-        skip(protocol.getValidationDeadline() + 1);
+        _waitBeforeActionablePendingAction();
 
         assertSecurityDepositPaid();
 
@@ -736,7 +750,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(
             posId1, 1 ether, USER_1, USER_1, priceData, EMPTY_PREVIOUS_DATA
         );
-        skip(protocol.getValidationDeadline() + 1);
+        _waitBeforeActionablePendingAction();
 
         assertSecurityDepositPaidTwoUsers();
 
@@ -844,7 +858,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
             1 ether, address(this), payable(address(this)), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         );
-        skip(protocol.getValidationDeadline() + 1);
+        _waitBeforeActionablePendingAction();
 
         assertSecurityDepositPaid();
 
@@ -1045,6 +1059,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
             1 ether,
             params.initialPrice / 2,
+            protocol.getMaxLeverage(),
             USER_1,
             payable(address(receiverContract)),
             NO_PERMIT2,

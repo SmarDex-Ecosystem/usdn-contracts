@@ -10,6 +10,10 @@ import { DoubleEndedQueue } from "../../../src/libraries/DoubleEndedQueue.sol";
  * @custom:background Given the deque is empty
  */
 contract TestDequeEmpty is DequeFixture {
+    using DoubleEndedQueue for DoubleEndedQueue.Deque;
+
+    DoubleEndedQueue.Deque internal queue;
+
     function setUp() public override {
         super.setUp();
     }
@@ -20,8 +24,8 @@ contract TestDequeEmpty is DequeFixture {
      * @custom:then Returns `true` and `0`
      */
     function test_view() public view {
-        assertEq(handler.empty(), true, "empty");
-        assertEq(handler.length(), 0, "length");
+        assertEq(queue.empty(), true, "empty");
+        assertEq(queue.length(), 0, "length");
     }
 
     /**
@@ -31,16 +35,16 @@ contract TestDequeEmpty is DequeFixture {
      */
     function test_RevertWhen_access() public {
         vm.expectRevert(DoubleEndedQueue.QueueEmpty.selector);
-        handler.popBack();
+        queue.popBack();
         vm.expectRevert(DoubleEndedQueue.QueueEmpty.selector);
-        handler.popFront();
+        queue.popFront();
         vm.expectRevert(DoubleEndedQueue.QueueEmpty.selector);
-        handler.back();
+        queue.back();
         vm.expectRevert(DoubleEndedQueue.QueueEmpty.selector);
-        handler.front();
+        queue.front();
         vm.expectRevert(DoubleEndedQueue.QueueOutOfBounds.selector);
-        handler.at(0);
+        queue.at(0);
         vm.expectRevert(DoubleEndedQueue.QueueOutOfBounds.selector);
-        handler.atRaw(0);
+        queue.atRaw(0);
     }
 }

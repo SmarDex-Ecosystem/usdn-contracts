@@ -198,7 +198,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             })
         );
 
-        skip(protocol.getValidationDeadline());
+        skip(protocol.getLowLatencyValidatorDeadline());
 
         bytes[] memory previousData = new bytes[](1);
         previousData[0] = priceData;
@@ -247,7 +247,14 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
 
         wstETH.mintAndApprove(address(this), POSITION_AMOUNT, address(protocol), type(uint256).max);
         (, posId) = protocol.initiateOpenPosition(
-            POSITION_AMOUNT, params.initialPrice / 2, address(this), USER_1, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
+            POSITION_AMOUNT,
+            params.initialPrice / 2,
+            protocol.getMaxLeverage(),
+            address(this),
+            USER_1,
+            NO_PERMIT2,
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
 
         vm.expectRevert(UsdnProtocolPositionNotValidated.selector);
@@ -544,6 +551,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         (, rebalancerPos_) = protocol.initiateOpenPosition(
             2 * userDeposit,
             params.initialPrice / 2,
+            protocol.getMaxLeverage(),
             address(rebalancer),
             payable(address(rebalancer)),
             NO_PERMIT2,

@@ -57,6 +57,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
     function initiateOpenPosition(
         uint128 amount,
         uint128 desiredLiqPrice,
+        uint256 userMaxLeverage,
         address to,
         address payable validator,
         Permit2TokenBitfield.Bitfield permit2TokenBitfield,
@@ -69,6 +70,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
             validator: validator,
             amount: amount,
             desiredLiqPrice: desiredLiqPrice,
+            userMaxLeverage: userMaxLeverage,
             securityDepositValue: s._securityDepositValue,
             permit2TokenBitfield: permit2TokenBitfield
         });
@@ -140,5 +142,14 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
     /// @inheritdoc IUsdnProtocolActions
     function tickHash(int24 tick, uint256 version) external pure returns (bytes32) {
         return Core.tickHash(tick, version);
+    }
+
+    /// @inheritdoc IUsdnProtocolActions
+    function getLongPosition(PositionId memory posId)
+        external
+        view
+        returns (Position memory pos_, uint24 liquidationPenalty_)
+    {
+        return ActionsLong.getLongPosition(s, posId);
     }
 }

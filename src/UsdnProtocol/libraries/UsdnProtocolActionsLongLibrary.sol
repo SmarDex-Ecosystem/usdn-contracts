@@ -56,6 +56,20 @@ library UsdnProtocolActionsLongLibrary {
     /* -------------------------------------------------------------------------- */
 
     /// @notice See {IUsdnProtocolActions}
+    function getLongPosition(Types.Storage storage s, Types.PositionId memory posId)
+        public
+        view
+        returns (Types.Position memory pos_, uint24 liquidationPenalty_)
+    {
+        (bytes32 tickHash, uint256 version) = Core._tickHash(s, posId.tick);
+        if (posId.tickVersion != version) {
+            revert IUsdnProtocolErrors.UsdnProtocolOutdatedTick(version, posId.tickVersion);
+        }
+        pos_ = s._longPositions[tickHash][posId.index];
+        liquidationPenalty_ = s._tickData[tickHash].liquidationPenalty;
+    }
+
+    /// @notice See {IUsdnProtocolActions}
     function initiateOpenPosition(
         Types.Storage storage s,
         Types.InitiateOpenPositionParams memory params,
@@ -212,7 +226,14 @@ library UsdnProtocolActionsLongLibrary {
         }
 
         Types.InitiateOpenPositionData memory data = Long._prepareInitiateOpenPositionData(
-            s, params.validator, params.amount, params.desiredLiqPrice, currentPriceData
+            s,
+            Types.PrepareInitiateOpenPositionParams({
+                validator: params.validator,
+                amount: params.amount,
+                desiredLiqPrice: params.desiredLiqPrice,
+                userMaxLeverage: params.userMaxLeverage,
+                currentPriceData: currentPriceData
+            })
         );
 
         if (data.isLiquidationPending) {
@@ -584,9 +605,11 @@ library UsdnProtocolActionsLongLibrary {
             return (false, false);
         }
 
-        int24 tick = Utils.calcTickWithoutPenalty(long.tick, Long.getTickLiquidationPenalty(s, long.tick));
+        int24 tickWithoutPenalty = Utils.calcTickWithoutPenalty(long.tick, long.closeLiqPenalty);
         data.positionValue = Long._positionValue(
-            data.priceWithFees, Long._getEffectivePriceForTick(tick, long.liqMultiplier), long.closePosTotalExpo
+            data.priceWithFees,
+            Long._getEffectivePriceForTick(tickWithoutPenalty, long.liqMultiplier),
+            long.closePosTotalExpo
         );
 
         uint256 assetToTransfer;

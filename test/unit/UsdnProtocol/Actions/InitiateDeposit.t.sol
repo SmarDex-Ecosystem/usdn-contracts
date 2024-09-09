@@ -120,7 +120,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         assertEq(action.var2, depositAmount, "action amount");
 
         // the pending action should be actionable after the validation deadline
-        skip(protocol.getValidationDeadline() + 1);
+        _waitBeforeActionablePendingAction();
         (actions,) = protocol.getActionablePendingActions(address(0));
         assertEq(actions[0].to, to, "pending action to");
         assertEq(actions[0].validator, validator, "pending action validator");
@@ -192,45 +192,6 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         uint256 usdnSharesToMintEstimated =
             Vault._calcMintUsdnShares(deposited, protocol.getBalanceVault(), usdn.totalShares());
         assertEq(usdn.convertToTokens(usdnSharesToMintEstimated), 0, "usdn minted");
-
-        vm.expectRevert(UsdnProtocolDepositTooSmall.selector);
-        protocol.initiateDeposit(
-            deposited,
-            address(this),
-            payable(address(this)),
-            NO_PERMIT2,
-            abi.encode(params.initialPrice),
-            EMPTY_PREVIOUS_DATA
-        );
-    }
-
-    /**
-     * @custom:scenario The user initiates a small deposit and no SDEX would be burned
-     * @custom:given The price of wstETH is $1
-     * @custom:and The SDEX burn on deposit is enabled at 1% of the minted USDN
-     * @custom:when The user initiates a deposit of 99 wei of wstETH
-     * @custom:then The protocol would mint more than 0 USDN
-     * @custom:and The protocol would burn 0 SDEX
-     * @custom:and The protocol reverts with `UsdnProtocolDepositTooSmall`
-     */
-    function test_RevertWhen_depositTooSmallNoSDEXBurned() public {
-        params = DEFAULT_PARAMS;
-        params.initialPrice = 1 ether;
-        params.flags.enableSdexBurnOnDeposit = true;
-        super._setUp(params);
-        wstETH.mintAndApprove(address(this), INITIAL_WSTETH_BALANCE, address(protocol), type(uint256).max);
-        sdex.mintAndApprove(address(this), 200_000_000 ether, address(protocol), type(uint256).max);
-
-        uint128 deposited = 99;
-
-        uint256 usdnSharesToMintEstimated =
-            Vault._calcMintUsdnShares(deposited, protocol.getBalanceVault(), usdn.totalShares());
-        assertGt(usdnSharesToMintEstimated, 0, "usdn minted");
-
-        uint256 sdexToBurn = protocol.i_calcSdexToBurn(
-            usdn.convertToTokens(usdnSharesToMintEstimated), protocol.getSdexBurnOnDepositRatio()
-        );
-        assertEq(sdexToBurn, 0, "sdex burned");
 
         vm.expectRevert(UsdnProtocolDepositTooSmall.selector);
         protocol.initiateDeposit(

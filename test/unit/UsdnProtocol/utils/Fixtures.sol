@@ -357,6 +357,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         (success, posId_) = protocol.initiateOpenPosition{ value: securityDepositValue }(
             openParams.positionSize,
             openParams.desiredLiqPrice,
+            protocol.getMaxLeverage(),
             openParams.user,
             payable(openParams.user),
             NO_PERMIT2,
@@ -412,6 +413,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
     function _assertActionsEqual(PendingAction memory a, PendingAction memory b, string memory err) internal pure {
         assertTrue(a.action == b.action, string.concat(err, " - action type"));
         assertEq(a.timestamp, b.timestamp, string.concat(err, " - action timestamp"));
+        assertEq(a.var0, b.var0, string.concat(err, " - action var0"));
         assertEq(a.to, b.to, string.concat(err, " - action to"));
         assertEq(a.validator, b.validator, string.concat(err, " - action validator"));
         assertEq(a.securityDepositValue, b.securityDepositValue, string.concat(err, " - action security deposit"));
@@ -432,7 +434,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
     }
 
     function _waitBeforeActionablePendingAction() internal {
-        skip(protocol.getValidationDeadline() + 1);
+        skip(protocol.getLowLatencyValidatorDeadline() + 1);
     }
 
     /// @dev Calculate proper initial values from randoms to initialize a balanced protocol

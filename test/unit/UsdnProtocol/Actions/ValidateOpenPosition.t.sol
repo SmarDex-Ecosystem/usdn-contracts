@@ -178,6 +178,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         (, PositionId memory posId) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
             desiredLiqPrice,
+            protocol.getMaxLeverage(),
             to,
             payable(validator),
             NO_PERMIT2,
@@ -259,6 +260,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         (, PositionId memory posId) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
             CURRENT_PRICE * 9 / 10,
+            protocol.getMaxLeverage(),
             address(this),
             payable(this),
             NO_PERMIT2,
@@ -335,6 +337,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         (, PositionId memory posId) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
             CURRENT_PRICE * 9 / 10,
+            protocol.getMaxLeverage(),
             address(this),
             payable(this),
             NO_PERMIT2,
@@ -407,6 +410,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         (, data.tempPosId) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
             CURRENT_PRICE * 9 / 10,
+            protocol.getMaxLeverage(),
             address(this),
             payable(this),
             NO_PERMIT2,
@@ -562,7 +566,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
     }
 
     /**
-     * @custom:scenario The user initiates and validates (after the validationDeadline)
+     * @custom:scenario The user initiates and validates (after the validator deadline)
      * an openPosition action with another validator
      * @custom:given The user initiated an openPosition with 1 wstETH and a desired liquidation price of ~1333$
      * @custom:and we wait until the validation deadline is passed
@@ -584,6 +588,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         protocol.initiateOpenPosition{ value: 0.5 ether }(
             uint128(LONG_AMOUNT),
             desiredLiqPrice,
+            protocol.getMaxLeverage(),
             address(this),
             USER_1,
             NO_PERMIT2,
