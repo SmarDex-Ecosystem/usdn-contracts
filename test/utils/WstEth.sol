@@ -89,9 +89,4 @@ contract WstETH is ERC20, ERC20Permit, IWstETH {
 
     /// @dev Needed for interface compatibility
     function stETH() external pure returns (address) { }
-
-    /// @dev Needed for rebase testing
-    function setStEthPerToken(uint256 newStEthPerToken) external {
-        _stEthPerToken = newStEthPerToken;
-    }
 }
