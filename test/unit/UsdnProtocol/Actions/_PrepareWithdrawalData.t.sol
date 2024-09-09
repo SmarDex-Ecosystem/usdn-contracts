@@ -96,7 +96,7 @@ contract TestUsdnProtocolActionsPrepareWithdrawalData is UsdnProtocolBaseFixture
             assertEq(data.totalExpo, 0, "The total expo should not be set");
             assertEq(data.balanceLong, 0, "The balance long should not be set");
             assertEq(data.balanceVault, 0, "The balance vault should not be set");
-            assertEq(data.withdrawalAmountWithFees, 0, "The amount withdrawn should not be set");
+            assertEq(data.withdrawalAmountAfterFees, 0, "The amount withdrawn should not be set");
         } else {
             assertEq(data.feeBps, protocol.getVaultFeeBps(), "The fee should be the vault fee");
             assertEq(
@@ -107,7 +107,7 @@ contract TestUsdnProtocolActionsPrepareWithdrawalData is UsdnProtocolBaseFixture
             assertEq(
                 data.balanceVault, protocol.getBalanceVault(), "The balance vault should be the one in the protocol"
             );
-            assertEq(data.withdrawalAmountWithFees, amountAfterFees, "The amount withdrawn includes fees");
+            assertEq(data.withdrawalAmountAfterFees, amountAfterFees, "The amount withdrawn includes fees");
         }
     }
 }

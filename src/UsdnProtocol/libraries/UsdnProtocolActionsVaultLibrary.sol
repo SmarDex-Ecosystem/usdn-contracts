@@ -61,7 +61,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @param totalExpo The current total expo
      * @param balanceLong The current long balance
      * @param balanceVault The vault balance, adjusted according to the pendingActionPrice
-     * @param withdrawalAmountWithFees The predicted amount of assets that will be withdrawn after fees
+     * @param withdrawalAmountAfterFees The predicted amount of assets that will be withdrawn after fees
      * @param lastPrice The last price of the asset
      * @param feeBps The vault deposit fee in basis points
      * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
@@ -71,7 +71,7 @@ library UsdnProtocolActionsVaultLibrary {
         uint256 totalExpo;
         uint256 balanceLong;
         uint256 balanceVault;
-        uint256 withdrawalAmountWithFees;
+        uint256 withdrawalAmountAfterFees;
         uint128 lastPrice;
         uint16 feeBps;
         bool isLiquidationPending;
@@ -595,10 +595,10 @@ library UsdnProtocolActionsVaultLibrary {
         data_.balanceVault = uint256(available); // cast is safe, amount is positive
         data_.usdnTotalShares = s._usdn.totalShares();
         data_.feeBps = s._vaultFeeBps;
-        data_.withdrawalAmountWithFees =
+        data_.withdrawalAmountAfterFees =
             Vault._calcBurnUsdn(usdnShares, data_.balanceVault, data_.usdnTotalShares, data_.feeBps);
 
-        _checkImbalanceLimitWithdrawal(s, data_.withdrawalAmountWithFees, data_.totalExpo);
+        _checkImbalanceLimitWithdrawal(s, data_.withdrawalAmountAfterFees, data_.totalExpo);
     }
 
     /**
@@ -713,7 +713,7 @@ library UsdnProtocolActionsVaultLibrary {
         IUsdn usdn = s._usdn;
         usdn.transferSharesFrom(user, address(this), usdnShares);
         // register the pending withdrawal for imbalance checks of future actions
-        s._pendingBalanceVault -= data.withdrawalAmountWithFees.toInt256();
+        s._pendingBalanceVault -= data.withdrawalAmountAfterFees.toInt256();
 
         isInitiated_ = true;
         emit IUsdnProtocolEvents.InitiatedWithdrawal(
