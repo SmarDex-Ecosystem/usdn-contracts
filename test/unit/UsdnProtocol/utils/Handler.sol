@@ -385,7 +385,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_tickHash(int24 tick) external view returns (bytes32, uint256) {
-        return Core._tickHash(s, tick);
+        return Utils._tickHash(s, tick);
     }
 
     function i_longAssetAvailable(uint256 totalExpo, uint256 balanceLong, uint128 newPrice, uint128 oldPrice)

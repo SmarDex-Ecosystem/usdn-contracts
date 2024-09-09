@@ -702,7 +702,7 @@ library UsdnProtocolCoreLibrary {
         } else if (pending.action == Types.ProtocolAction.ValidateOpenPosition) {
             // for pending opens, we need to remove the position
             Types.LongPendingAction memory open = Utils._toLongPendingAction(pending);
-            (bytes32 tHash, uint256 tickVersion) = _tickHash(s, open.tick);
+            (bytes32 tHash, uint256 tickVersion) = Utils._tickHash(s, open.tick);
             if (tickVersion == open.tickVersion) {
                 // we only need to modify storage if the pos was not liquidated already
 
@@ -760,18 +760,6 @@ library UsdnProtocolCoreLibrary {
                 revert IUsdnProtocolErrors.UsdnProtocolEtherRefundFailed();
             }
         }
-    }
-
-    /**
-     * @notice Function to calculate the hash and version of a given tick
-     * @param s The storage of the protocol
-     * @param tick The tick
-     * @return hash_ The hash of the tick
-     * @return version_ The version of the tick
-     */
-    function _tickHash(Types.Storage storage s, int24 tick) public view returns (bytes32 hash_, uint256 version_) {
-        version_ = s._tickVersion[tick];
-        hash_ = Utils.tickHash(tick, version_);
     }
 
     /**

@@ -363,7 +363,7 @@ library UsdnProtocolActionsLongLibrary {
         );
 
         uint256 version;
-        (data_.tickHash, version) = Core._tickHash(s, data_.action.tick);
+        (data_.tickHash, version) = Utils._tickHash(s, data_.action.tick);
         if (version != data_.action.tickVersion) {
             // the current tick version doesn't match the version from the pending action
             // this means the position has been liquidated in the meantime
@@ -841,7 +841,7 @@ library UsdnProtocolActionsLongLibrary {
         uint24 liquidationPenalty
     ) public returns (uint256 tickVersion_, uint256 index_, HugeUint.Uint512 memory liqMultiplierAccumulator_) {
         bytes32 tickHash;
-        (tickHash, tickVersion_) = Core._tickHash(s, tick);
+        (tickHash, tickVersion_) = Utils._tickHash(s, tick);
 
         // add to tick array
         Types.Position[] storage tickArray = s._longPositions[tickHash];
@@ -903,7 +903,7 @@ library UsdnProtocolActionsLongLibrary {
         uint128 amountToRemove,
         uint128 totalExpoToRemove
     ) public returns (HugeUint.Uint512 memory liqMultiplierAccumulator_) {
-        (bytes32 tickHash,) = Core._tickHash(s, tick);
+        (bytes32 tickHash,) = Utils._tickHash(s, tick);
         Types.TickData storage tickData = s._tickData[tickHash];
         uint256 unadjustedTickPrice =
             TickMath.getPriceAtTick(Utils.calcTickWithoutPenalty(tick, tickData.liquidationPenalty));

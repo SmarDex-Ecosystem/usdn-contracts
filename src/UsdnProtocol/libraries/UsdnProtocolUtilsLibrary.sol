@@ -259,4 +259,16 @@ library UsdnProtocolUtilsLibrary {
     function tickHash(int24 tick, uint256 version) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(tick, version));
     }
+
+    /**
+     * @notice Function to calculate the hash and version of a given tick
+     * @param s The storage of the protocol
+     * @param tick The tick
+     * @return hash_ The hash of the tick
+     * @return version_ The version of the tick
+     */
+    function _tickHash(Types.Storage storage s, int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
+        version_ = s._tickVersion[tick];
+        hash_ = tickHash(tick, version_);
+    }
 }

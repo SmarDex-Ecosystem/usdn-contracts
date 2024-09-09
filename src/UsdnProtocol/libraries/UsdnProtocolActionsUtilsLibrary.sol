@@ -43,7 +43,7 @@ library UsdnProtocolActionsUtilsLibrary {
         view
         returns (Types.Position memory pos_, uint24 liquidationPenalty_)
     {
-        (bytes32 tickHash, uint256 version) = Core._tickHash(s, posId.tick);
+        (bytes32 tickHash, uint256 version) = Utils._tickHash(s, posId.tick);
         if (posId.tickVersion != version) {
             revert IUsdnProtocolErrors.UsdnProtocolOutdatedTick(version, posId.tickVersion);
         }
@@ -109,7 +109,7 @@ library UsdnProtocolActionsUtilsLibrary {
     function transferPositionOwnership(Types.Storage storage s, Types.PositionId calldata posId, address newOwner)
         public
     {
-        (bytes32 tickHash, uint256 version) = Core._tickHash(s, posId.tick);
+        (bytes32 tickHash, uint256 version) = Utils._tickHash(s, posId.tick);
         if (posId.tickVersion != version) {
             revert IUsdnProtocolErrors.UsdnProtocolOutdatedTick(version, posId.tickVersion);
         }
