@@ -169,6 +169,7 @@ library UsdnProtocolActionsVaultLibrary {
     function initiateWithdrawal(
         Types.Storage storage s,
         uint152 usdnShares,
+        uint256 amountMinOut,
         address to,
         address payable validator,
         bytes calldata currentPriceData,
@@ -182,8 +183,9 @@ library UsdnProtocolActionsVaultLibrary {
         uint256 balanceBefore = address(this).balance;
 
         uint256 amountToRefund;
-        (amountToRefund, success_) =
-            _initiateWithdrawal(s, msg.sender, to, validator, usdnShares, securityDepositValue, currentPriceData);
+        (amountToRefund, success_) = _initiateWithdrawal(
+            s, msg.sender, to, validator, usdnShares, amountMinOut, securityDepositValue, currentPriceData
+        );
 
         if (success_) {
             unchecked {
@@ -701,6 +703,7 @@ library UsdnProtocolActionsVaultLibrary {
         address to,
         address validator,
         uint152 usdnShares,
+        uint256 amountMinOut,
         uint64 securityDepositValue,
         bytes calldata currentPriceData
     ) public returns (uint256 amountToRefund_, bool isInitiated_) {
@@ -714,6 +717,11 @@ library UsdnProtocolActionsVaultLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolZeroAmount();
         }
 
+        IUsdn usdn = s._usdn;
+        if (Vault._calcBurnUsdn(usdnShares, s._balanceVault, usdn.totalShares()) < amountMinOut) {
+            revert IUsdnProtocolErrors.UsdnProtocolAmountReceivedTooSmall();
+        }
+
         WithdrawalData memory data = _prepareWithdrawalData(s, validator, usdnShares, currentPriceData);
 
         if (data.isLiquidationPending) {
@@ -723,7 +731,6 @@ library UsdnProtocolActionsVaultLibrary {
         amountToRefund_ = _createWithdrawalPendingAction(s, to, validator, usdnShares, securityDepositValue, data);
 
         // retrieve the USDN tokens, check that the balance is sufficient
-        IUsdn usdn = s._usdn;
         usdn.transferSharesFrom(user, address(this), usdnShares);
         s._pendingBalanceVault -= data.withdrawalAmount.toInt256();
 
