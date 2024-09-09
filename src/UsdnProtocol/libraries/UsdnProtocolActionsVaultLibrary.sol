@@ -819,9 +819,9 @@ library UsdnProtocolActionsVaultLibrary {
         uint256 shares = Core._mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
 
         // we can add back the _pendingBalanceVault we subtracted in the initiate action
-        uint256 tempWithdrawalWithFees =
+        uint256 tempWithdrawalAfterFees =
             Vault._calcBurnUsdn(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares, withdrawal.feeBps);
-        s._pendingBalanceVault += tempWithdrawalWithFees.toInt256();
+        s._pendingBalanceVault += tempWithdrawalAfterFees.toInt256();
 
         IUsdn usdn = s._usdn;
         // calculate the amount of asset to transfer with the same fees as recorded during the initiate action
