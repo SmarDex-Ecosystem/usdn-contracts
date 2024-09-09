@@ -583,7 +583,7 @@ library UsdnProtocolLongLibrary {
 
         // fully close the position and update the cache
         cache.liqMultiplierAccumulator =
-            ActionsUtils._removeAmountFromPosition(s, posId.tick, posId.index, pos, pos.amount, pos.totalExpo);
+            ActionsLong._removeAmountFromPosition(s, posId.tick, posId.index, pos, pos.amount, pos.totalExpo);
 
         // update the cache
         cache.totalExpo -= pos.totalExpo;

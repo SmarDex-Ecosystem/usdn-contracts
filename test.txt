@@ -1,0 +1,9 @@
+| initiateClosePosition                                                                | 1327            | 325978 | 331979 | 511974 | 65      |
+| initiateDeposit                                                                      | 1361            | 371443 | 372294 | 507434 | 147     |
+| initiateOpenPosition                                                                 | 1520            | 460822 | 479227 | 618824 | 281     |
+| initiateWithdrawal                                                                   | 1282            | 325946 | 348091 | 526414 | 52      |
+| validateClosePosition                                                                | 1088            | 255207 | 248049 | 362732 | 20      |
+| validateDeposit                                                                      | 1086            | 264800 | 259588 | 386366 | 95      |
+| validateOpenPosition                                                                 | 1107            | 272411 | 270446 | 486464 | 207     |
+| validateWithdrawal                                                                   | 1086            | 256048 | 262286 | 367772 | 21      |
+
