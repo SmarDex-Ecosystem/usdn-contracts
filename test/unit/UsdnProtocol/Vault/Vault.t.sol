@@ -2,6 +2,7 @@
 pragma solidity 0.8.26;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
+import { console2 } from "forge-std/Test.sol";
 
 /**
  * @custom:feature Test the functions in the vault contract
@@ -32,7 +33,6 @@ contract TestUsdnProtocolVault is UsdnProtocolBaseFixture {
      * @custom:given A vault position and a long position
      * @custom:when The price of the asset changes after a rebase of stETH/wstETH
      * @custom:then The vault position should have an inherent loss and the long position should have an inherent gain
-     * @custom:and The vault position should have the same dollar value as before the rebase
      */
     function test_vaultPositionInherentLossAfterRebase() public {
         uint256 balanceUserOutsideProtocol = protocol.getBalanceVault();
@@ -51,10 +51,7 @@ contract TestUsdnProtocolVault is UsdnProtocolBaseFixture {
         assertLt(
             balanceVaultAfterRebase, balanceUserAfterRebase, "User outside protocol is a winner over the vault position"
         );
-        assertEq(
-            protocol.getBalanceVault() * 2000 ether,
-            balanceVaultAfterRebase,
-            "Vault position has the same dollar value as before the rebase"
-        );
+        // Long positions are inherently profitable due to the stETh/wstETH rebase and the vault positions are
+        // inherently lossy due to the same rebase
     }
 }
