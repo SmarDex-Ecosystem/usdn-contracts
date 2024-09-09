@@ -535,12 +535,12 @@ library UsdnProtocolActionsVaultLibrary {
             }
         }
 
-        uint256 usdnSharesToMint = Vault._calcMintUsdnShares(amountAfterFees, balanceVault, deposit.usdnTotalShares);
-
         s._balanceVault += deposit.amount; // we credit the full deposit amount
         s._pendingBalanceVault -= Utils.toInt256(deposit.amount);
 
-        uint256 mintedTokens = s._usdn.mintShares(deposit.to, usdnSharesToMint);
+        uint256 mintedTokens = s._usdn.mintShares(
+            deposit.to, Vault._calcMintUsdnShares(amountAfterFees, balanceVault, deposit.usdnTotalShares)
+        );
         isValidated_ = true;
         emit IUsdnProtocolEvents.ValidatedDeposit(
             deposit.to, deposit.validator, amountAfterFees, mintedTokens, deposit.timestamp
