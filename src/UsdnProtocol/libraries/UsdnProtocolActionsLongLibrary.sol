@@ -18,7 +18,7 @@ import { UsdnProtocolActionsVaultLibrary as ActionsVault } from "./UsdnProtocolA
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "./UsdnProtocolLongLibrary.sol";
-import { UsdnProtocolUtils as Utils } from "./UsdnProtocolUtils.sol";
+import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.sol";
 
 library UsdnProtocolActionsLongLibrary {
     using SafeTransferLib for address;

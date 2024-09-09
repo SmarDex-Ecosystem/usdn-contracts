@@ -14,7 +14,7 @@ import { SignedMath } from "../../libraries/SignedMath.sol";
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./UsdnProtocolCoreLibrary.sol";
-import { UsdnProtocolUtils as Utils } from "./UsdnProtocolUtils.sol";
+import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.sol";
 
 library UsdnProtocolVaultLibrary {
     using SafeCast for int256;

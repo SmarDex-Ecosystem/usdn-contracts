@@ -17,7 +17,7 @@ import { UsdnProtocolActionsVaultLibrary as ActionsVault } from
     "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsVaultLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolLongLibrary.sol";
-import { UsdnProtocolUtils as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtils.sol";
+import { UsdnProtocolUtilsLibrary as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 import { IBaseOracleMiddleware } from "../../../../src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { ILiquidationRewardsManager } from "../../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
@@ -110,7 +110,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         if (longTradingExpo < 0) {
             longTradingExpo = 0;
         }
-        bytes32 tickHash = Core.tickHash(tick, s._tickVersion[tick]);
+        bytes32 tickHash = Utils.tickHash(tick, s._tickVersion[tick]);
         return Long._tickValue(
             tick, currentPrice, uint256(longTradingExpo), s._liqMultiplierAccumulator, s._tickData[tickHash]
         );

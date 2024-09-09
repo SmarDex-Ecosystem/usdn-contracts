@@ -19,7 +19,7 @@ import { TickMath } from "../../libraries/TickMath.sol";
 import { UsdnProtocolActionsVaultLibrary as ActionsVault } from "./UsdnProtocolActionsVaultLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "./UsdnProtocolLongLibrary.sol";
-import { UsdnProtocolUtils as Utils } from "./UsdnProtocolUtils.sol";
+import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.sol";
 
 library UsdnProtocolCoreLibrary {
@@ -202,11 +202,6 @@ library UsdnProtocolCoreLibrary {
         (action_,) = _getPendingAction(s, user);
     }
 
-    /// @notice See {IUsdnProtocolActions}
-    function tickHash(int24 tick, uint256 version) public pure returns (bytes32) {
-        return keccak256(abi.encodePacked(tick, version));
-    }
-
     /// @notice See {IUsdnProtocolCore}
     function removeBlockedPendingAction(Types.Storage storage s, address validator, address payable to) public {
         uint256 pendingActionIndex = s._pendingActions[validator];
@@ -373,6 +368,7 @@ library UsdnProtocolCoreLibrary {
         funding_ = fundingPerDay_.safeMul(elapsedSeconds).safeDiv(1 days);
     }
 
+    // TO DO : optimize this function
     /**
      * @notice Get the predicted value of the funding (in asset units) since the last state update for the given
      * timestamp
@@ -775,7 +771,7 @@ library UsdnProtocolCoreLibrary {
      */
     function _tickHash(Types.Storage storage s, int24 tick) public view returns (bytes32 hash_, uint256 version_) {
         version_ = s._tickVersion[tick];
-        hash_ = tickHash(tick, version_);
+        hash_ = Utils.tickHash(tick, version_);
     }
 
     /**

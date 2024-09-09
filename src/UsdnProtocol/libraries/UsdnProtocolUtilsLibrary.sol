@@ -14,7 +14,7 @@ import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstan
  * @notice This library contains utility functions for the USDN protocol, and will not be deployed as an external lib
  * @dev All functions should be marked as "internal"
  */
-library UsdnProtocolUtils {
+library UsdnProtocolUtilsLibrary {
     using SafeCast for uint256;
     using SignedMath for int256;
 
@@ -253,5 +253,10 @@ library UsdnProtocolUtils {
         returns (int256 available_)
     {
         available_ = _longAssetAvailable(s._totalExpo, s._balanceLong, currentPrice, s._lastPrice);
+    }
+
+    /// @notice See {IUsdnProtocolActions}
+    function tickHash(int24 tick, uint256 version) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(tick, version));
     }
 }
