@@ -825,20 +825,20 @@ library UsdnProtocolActionsVaultLibrary {
 
         IUsdn usdn = s._usdn;
         // calculate the amount of asset to transfer with the same fees as recorded during the initiate action
-        uint256 assetToTransferWithFees = Vault._calcBurnUsdn(shares, available, usdn.totalShares(), withdrawal.feeBps);
+        uint256 assetToTransferAfterFees = Vault._calcBurnUsdn(shares, available, usdn.totalShares(), withdrawal.feeBps);
 
         usdn.burnShares(shares);
 
         // send the asset to the user
-        if (assetToTransferWithFees > 0) {
-            s._balanceVault -= assetToTransferWithFees;
-            address(s._asset).safeTransfer(withdrawal.to, assetToTransferWithFees);
+        if (assetToTransferAfterFees > 0) {
+            s._balanceVault -= assetToTransferAfterFees;
+            address(s._asset).safeTransfer(withdrawal.to, assetToTransferAfterFees);
         }
 
         emit IUsdnProtocolEvents.ValidatedWithdrawal(
             withdrawal.to,
             withdrawal.validator,
-            assetToTransferWithFees,
+            assetToTransferAfterFees,
             usdn.convertToTokens(shares),
             withdrawal.timestamp
         );

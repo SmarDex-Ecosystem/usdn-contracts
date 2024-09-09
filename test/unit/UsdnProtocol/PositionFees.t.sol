@@ -598,14 +598,14 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         protocol.validateClosePosition(payable(address(this)), priceData, EMPTY_PREVIOUS_DATA);
         logs = vm.getRecordedLogs();
 
-        (,,, uint256 assetToTransferWithFees,) = abi.decode(logs[2].data, (int24, uint256, uint256, uint256, int256));
+        (,,, uint256 assetToTransferAfterFees,) = abi.decode(logs[2].data, (int24, uint256, uint256, uint256, int256));
         uint256 assetTransferredWithFees = wstETH.balanceOf(address(this)) - balanceBeforeValidateWithFees;
         assertEq(logs[2].topics[0], ValidatedClosePosition.selector);
 
         /* --------------------------------- Checks --------------------------------- */
 
         // Check if the transferred asset with fees is less than the transferred asset without fees
-        assertLt(assetToTransferWithFees, assetToTransferWithoutFees, "Transferred asset");
+        assertLt(assetToTransferAfterFees, assetToTransferWithoutFees, "Transferred asset");
 
         // Same check for the emitted event
         assertLt(assetTransferredWithFees, assetTransferredWithoutFees, "Transferred asset");
