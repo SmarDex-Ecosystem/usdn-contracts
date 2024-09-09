@@ -359,7 +359,7 @@ library UsdnProtocolActionsVaultLibrary {
             usdnTotalShares: data.usdnTotalShares
         });
 
-        amountToRefund_ = Core._addPendingAction(s, validator, Core._convertDepositPendingAction(pendingAction));
+        amountToRefund_ = Core._addPendingAction(s, validator, Utils._convertDepositPendingAction(pendingAction));
     }
 
     /**
@@ -474,7 +474,7 @@ library UsdnProtocolActionsVaultLibrary {
         Types.PendingAction memory pending,
         bytes calldata priceData
     ) public returns (bool isValidated_) {
-        Types.DepositPendingAction memory deposit = Core._toDepositPendingAction(pending);
+        Types.DepositPendingAction memory deposit = Utils._toDepositPendingAction(pending);
 
         PriceInfo memory currentPrice = _getOraclePrice(
             s,
@@ -745,7 +745,7 @@ library UsdnProtocolActionsVaultLibrary {
         Types.PendingAction memory pending,
         bytes calldata priceData
     ) public returns (bool isValidated_) {
-        Types.WithdrawalPendingAction memory withdrawal = Core._toWithdrawalPendingAction(pending);
+        Types.WithdrawalPendingAction memory withdrawal = Utils._toWithdrawalPendingAction(pending);
 
         PriceInfo memory currentPrice = _getOraclePrice(
             s,

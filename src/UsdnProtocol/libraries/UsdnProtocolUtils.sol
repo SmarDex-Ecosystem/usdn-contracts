@@ -107,4 +107,64 @@ library UsdnProtocolUtils {
             pendingAction_ := action
         }
     }
+
+    /**
+     * @notice Convert a `Types.DepositPendingAction` to a `Types.PendingAction`
+     * @param action A deposit pending action
+     * @return pendingAction_ The converted untyped pending action
+     */
+    function _convertDepositPendingAction(Types.DepositPendingAction memory action)
+        internal
+        pure
+        returns (Types.PendingAction memory pendingAction_)
+    {
+        assembly {
+            pendingAction_ := action
+        }
+    }
+
+    /**
+     * @notice Convert a `Types.PendingAction` to a `Types.LongPendingAction`
+     * @param action An untyped pending action
+     * @return longAction_ The converted long pending action
+     */
+    function _toLongPendingAction(Types.PendingAction memory action)
+        internal
+        pure
+        returns (Types.LongPendingAction memory longAction_)
+    {
+        assembly {
+            longAction_ := action
+        }
+    }
+
+    /**
+     * @notice Convert a `Types.PendingAction` to a `Types.DepositPendingAction`
+     * @param action An untyped pending action
+     * @return vaultAction_ The converted deposit pending action
+     */
+    function _toDepositPendingAction(Types.PendingAction memory action)
+        internal
+        pure
+        returns (Types.DepositPendingAction memory vaultAction_)
+    {
+        assembly {
+            vaultAction_ := action
+        }
+    }
+
+    /**
+     * @notice Convert a `Types.PendingAction` to a `Types.WithdrawalPendingAction`
+     * @param action An untyped pending action
+     * @return vaultAction_ The converted withdrawal pending action
+     */
+    function _toWithdrawalPendingAction(Types.PendingAction memory action)
+        internal
+        pure
+        returns (Types.WithdrawalPendingAction memory vaultAction_)
+    {
+        assembly {
+            vaultAction_ := action
+        }
+    }
 }

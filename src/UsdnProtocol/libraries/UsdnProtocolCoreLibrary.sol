@@ -587,66 +587,6 @@ library UsdnProtocolCoreLibrary {
         data_.isPriceRecent = true;
     }
 
-    /**
-     * @notice Convert a `Types.PendingAction` to a `Types.DepositPendingAction`
-     * @param action An untyped pending action
-     * @return vaultAction_ The converted deposit pending action
-     */
-    function _toDepositPendingAction(Types.PendingAction memory action)
-        public
-        pure
-        returns (Types.DepositPendingAction memory vaultAction_)
-    {
-        assembly {
-            vaultAction_ := action
-        }
-    }
-
-    /**
-     * @notice Convert a `Types.PendingAction` to a `Types.WithdrawalPendingAction`
-     * @param action An untyped pending action
-     * @return vaultAction_ The converted withdrawal pending action
-     */
-    function _toWithdrawalPendingAction(Types.PendingAction memory action)
-        public
-        pure
-        returns (Types.WithdrawalPendingAction memory vaultAction_)
-    {
-        assembly {
-            vaultAction_ := action
-        }
-    }
-
-    /**
-     * @notice Convert a `Types.PendingAction` to a `Types.LongPendingAction`
-     * @param action An untyped pending action
-     * @return longAction_ The converted long pending action
-     */
-    function _toLongPendingAction(Types.PendingAction memory action)
-        public
-        pure
-        returns (Types.LongPendingAction memory longAction_)
-    {
-        assembly {
-            longAction_ := action
-        }
-    }
-
-    /**
-     * @notice Convert a `Types.DepositPendingAction` to a `Types.PendingAction`
-     * @param action A deposit pending action
-     * @return pendingAction_ The converted untyped pending action
-     */
-    function _convertDepositPendingAction(Types.DepositPendingAction memory action)
-        public
-        pure
-        returns (Types.PendingAction memory pendingAction_)
-    {
-        assembly {
-            pendingAction_ := action
-        }
-    }
-
     // TO DO : optimize this function
     /**
      * @notice This is the mutating version of `getActionablePendingAction`, where empty items at the front of the list
@@ -727,7 +667,7 @@ library UsdnProtocolCoreLibrary {
         (Types.PendingAction memory action, uint128 rawIndex) = _getPendingAction(s, user);
         // the position is only at risk of being liquidated while pending if it is an open position action
         if (action.action == Types.ProtocolAction.ValidateOpenPosition) {
-            Types.LongPendingAction memory openAction = _toLongPendingAction(action);
+            Types.LongPendingAction memory openAction = Utils._toLongPendingAction(action);
             uint256 version = s._tickVersion[openAction.tick];
             if (version != openAction.tickVersion) {
                 securityDepositValue_ = openAction.securityDepositValue;
@@ -836,12 +776,12 @@ library UsdnProtocolCoreLibrary {
         s._pendingActionsQueue.clearAt(rawIndex);
         if (pending.action == Types.ProtocolAction.ValidateDeposit && cleanup) {
             // for pending deposits, we send back the locked assets
-            Types.DepositPendingAction memory deposit = _toDepositPendingAction(pending);
+            Types.DepositPendingAction memory deposit = Utils._toDepositPendingAction(pending);
             s._pendingBalanceVault -= Utils.toInt256(deposit.amount);
             address(s._asset).safeTransfer(to, deposit.amount);
         } else if (pending.action == Types.ProtocolAction.ValidateWithdrawal && cleanup) {
             // for pending withdrawals, we send the locked USDN
-            Types.WithdrawalPendingAction memory withdrawal = _toWithdrawalPendingAction(pending);
+            Types.WithdrawalPendingAction memory withdrawal = Utils._toWithdrawalPendingAction(pending);
             uint256 shares = _mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
             uint256 pendingAmount =
                 FixedPointMathLib.fullMulDiv(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares);
@@ -849,7 +789,7 @@ library UsdnProtocolCoreLibrary {
             s._usdn.transferShares(to, shares);
         } else if (pending.action == Types.ProtocolAction.ValidateOpenPosition) {
             // for pending opens, we need to remove the position
-            Types.LongPendingAction memory open = _toLongPendingAction(pending);
+            Types.LongPendingAction memory open = Utils._toLongPendingAction(pending);
             (bytes32 tHash, uint256 tickVersion) = _tickHash(s, open.tick);
             if (tickVersion == open.tickVersion) {
                 // we only need to modify storage if the pos was not liquidated already
@@ -895,7 +835,7 @@ library UsdnProtocolCoreLibrary {
             }
         } else if (pending.action == Types.ProtocolAction.ValidateClosePosition && cleanup) {
             // for pending closes, the position is already out of the protocol
-            Types.LongPendingAction memory close = _toLongPendingAction(pending);
+            Types.LongPendingAction memory close = Utils._toLongPendingAction(pending);
             // credit the full amount to the vault to preserve the total balance invariant (like a liquidation)
             s._balanceVault += close.closeBoundedPositionValue;
         }

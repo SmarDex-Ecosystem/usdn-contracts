@@ -305,7 +305,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         pure
         returns (DepositPendingAction memory)
     {
-        return Core._toDepositPendingAction(action);
+        return Utils._toDepositPendingAction(action);
     }
 
     function i_toWithdrawalPendingAction(PendingAction memory action)
@@ -313,11 +313,11 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         pure
         returns (WithdrawalPendingAction memory)
     {
-        return Core._toWithdrawalPendingAction(action);
+        return Utils._toWithdrawalPendingAction(action);
     }
 
     function i_toLongPendingAction(PendingAction memory action) external pure returns (LongPendingAction memory) {
-        return Core._toLongPendingAction(action);
+        return Utils._toLongPendingAction(action);
     }
 
     function i_convertDepositPendingAction(DepositPendingAction memory action)
@@ -325,7 +325,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         pure
         returns (PendingAction memory)
     {
-        return Core._convertDepositPendingAction(action);
+        return Utils._convertDepositPendingAction(action);
     }
 
     function i_convertWithdrawalPendingAction(WithdrawalPendingAction memory action)
