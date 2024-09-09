@@ -561,6 +561,29 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         );
     }
 
+    /**
+     * @custom:scenario The user initiates an open position action with a calculated leverage greater than expected
+     * leverage
+     * @custom:given The user initiates an open position with a calculated leverage of 4 but he want a expected leverage
+     * of 2
+     * @custom:when The user initiates an open position with a calculated leverage of 4 and gives inputs
+     * @custom:then The protocol reverts with UsdnProtocolLeverageTooHigh
+     */
+    function test_RevertWhen_initiateOpenPositionLeverageLowerThanExpected() public {
+        vm.expectRevert(UsdnProtocolLeverageTooHigh.selector);
+        protocol.initiateOpenPosition(
+            1 ether,
+            1500 ether,
+            type(uint128).max,
+            2 * 10 ** Constants.LEVERAGE_DECIMALS,
+            address(this),
+            payable(address(this)),
+            NO_PERMIT2,
+            abi.encode(CURRENT_PRICE),
+            EMPTY_PREVIOUS_DATA
+        );
+    }
+
     // test refunds
     receive() external payable {
         // test reentrancy
