@@ -329,6 +329,12 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         assertEq(wstethBalanceBefore, wstETH.balanceOf(address(this)), "user 1 should not have spent wstETH");
     }
 
+    /**
+     * @custom:scenario The user initiates a deposit action with calculated wstETh less than expected
+     * @custom:given The user has 1 wstETH
+     * @custom:when The user initiates a deposit with 1 wstETH and wants to receive max USDN
+     * @custom:then The protocol reverts with `UsdnProtocolAmountReceivedTooSmall`
+     */
     function test_RevertWhen_initiateDepositWithEnoughExpectedAmountOut() public {
         vm.expectRevert(UsdnProtocolAmountReceivedTooSmall.selector);
         protocol.initiateDeposit(

@@ -40,7 +40,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @param validator The address that will validate the deposit
      * @param amount The amount of wstETH to deposit
      * @param amountMinOut The minimum amount of USDN tokens to receive
-     * @param securityDepositValue The value of the security deposit for the newly created pending action
+     * @param securityDepositValue The value of the security deposit for the newly created deposit
      * @param permit2TokenBitfield The permit2 bitfield
      */
     struct InitiateDepositParams {
@@ -691,6 +691,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @param to The address that will receive the assets
      * @param validator The address that will validate the withdrawal
      * @param usdnShares The amount of USDN shares to burn
+     * @param amountMinOut The minimum amount of assets to receive
      * @param securityDepositValue The value of the security deposit for the newly created pending action
      * @param currentPriceData The current price data
      * @return amountToRefund_ If there are pending liquidations we'll refund the `securityDepositValue`,
