@@ -496,29 +496,6 @@ library UsdnProtocolCoreLibrary {
     }
 
     /**
-     * @dev Convert a signed tick to an unsigned index into the Bitmap using the tick spacing in storage
-     * @param s The storage of the protocol
-     * @param tick The tick to convert, a multiple of the tick spacing
-     * @return index_ The index into the Bitmap
-     */
-    function _calcBitmapIndexFromTick(Types.Storage storage s, int24 tick) public view returns (uint256 index_) {
-        index_ = _calcBitmapIndexFromTick(tick, s._tickSpacing);
-    }
-
-    /**
-     * @dev Convert a signed tick to an unsigned index into the Bitmap using the provided tick spacing
-     * @param tick The tick to convert, a multiple of `tickSpacing`
-     * @param tickSpacing The tick spacing to use
-     * @return index_ The index into the Bitmap
-     */
-    function _calcBitmapIndexFromTick(int24 tick, int24 tickSpacing) public pure returns (uint256 index_) {
-        index_ = uint256( // cast is safe as the min tick is always above TickMath.MIN_TICK
-            (int256(tick) - TickMath.MIN_TICK) // shift into positive
-                / tickSpacing
-        );
-    }
-
-    /**
      * @notice Calculate the profits and losses of the long side, calculate the funding and apply protocol fees,
      * calculate the new liquidation multiplier and the temporary new balances for each side
      * @dev This function updates the state of `_lastPrice`, `_lastUpdateTimestamp`, `_lastFunding`, but does not
@@ -816,7 +793,7 @@ library UsdnProtocolCoreLibrary {
                     tickData.totalPos -= 1;
                     if (tickData.totalPos == 0) {
                         // we removed the last position in the tick
-                        s._tickBitmap.unset(_calcBitmapIndexFromTick(s, open.tick));
+                        s._tickBitmap.unset(Utils._calcBitmapIndexFromTick(s, open.tick));
                     }
                     uint256 unadjustedTickPrice =
                         TickMath.getPriceAtTick(Utils.calcTickWithoutPenalty(open.tick, tickData.liquidationPenalty));

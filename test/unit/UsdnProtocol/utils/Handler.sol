@@ -180,11 +180,11 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function findLastSetInTickBitmap(int24 searchFrom) external view returns (uint256 index) {
-        return s._tickBitmap.findLastSet(Core._calcBitmapIndexFromTick(s, searchFrom));
+        return s._tickBitmap.findLastSet(Utils._calcBitmapIndexFromTick(s, searchFrom));
     }
 
     function tickBitmapStatus(int24 tick) external view returns (bool isSet_) {
-        return s._tickBitmap.get(Core._calcBitmapIndexFromTick(s, tick));
+        return s._tickBitmap.get(Utils._calcBitmapIndexFromTick(s, tick));
     }
 
     function setTickVersion(int24 tick, uint256 version) external {
@@ -433,11 +433,11 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_calcBitmapIndexFromTick(int24 tick) external view returns (uint256) {
-        return Core._calcBitmapIndexFromTick(s, tick);
+        return Utils._calcBitmapIndexFromTick(s, tick);
     }
 
     function i_calcBitmapIndexFromTick(int24 tick, int24 tickSpacing) external pure returns (uint256) {
-        return Core._calcBitmapIndexFromTick(tick, tickSpacing);
+        return Utils._calcBitmapIndexFromTick(tick, tickSpacing);
     }
 
     function i_calcLiqPriceFromTradingExpo(uint128 currentPrice, uint128 amount, uint256 tradingExpo)

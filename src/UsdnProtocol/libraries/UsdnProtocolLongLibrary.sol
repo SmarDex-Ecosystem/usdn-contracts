@@ -788,7 +788,7 @@ library UsdnProtocolLongLibrary {
         data.iTick = s._highestPopulatedTick;
 
         do {
-            uint256 index = s._tickBitmap.findLastSet(Core._calcBitmapIndexFromTick(s, data.iTick));
+            uint256 index = s._tickBitmap.findLastSet(Utils._calcBitmapIndexFromTick(s, data.iTick));
             if (index == LibBitmap.NOT_FOUND) {
                 // no populated ticks left
                 break;
@@ -985,7 +985,7 @@ library UsdnProtocolLongLibrary {
      * @return tick_ The next highest tick below `searchStart`
      */
     function _findHighestPopulatedTick(Types.Storage storage s, int24 searchStart) public view returns (int24 tick_) {
-        uint256 index = s._tickBitmap.findLastSet(Core._calcBitmapIndexFromTick(s, searchStart));
+        uint256 index = s._tickBitmap.findLastSet(Utils._calcBitmapIndexFromTick(s, searchStart));
         if (index == LibBitmap.NOT_FOUND) {
             tick_ = minTick(s);
         } else {

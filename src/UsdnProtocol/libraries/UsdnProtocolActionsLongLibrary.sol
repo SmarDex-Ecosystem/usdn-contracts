@@ -865,7 +865,7 @@ library UsdnProtocolActionsLongLibrary {
         uint256 unadjustedTickPrice;
         if (tickData.totalPos == 0) {
             // first position in this tick, we need to reflect that it is populated
-            s._tickBitmap.set(Core._calcBitmapIndexFromTick(s, tick));
+            s._tickBitmap.set(Utils._calcBitmapIndexFromTick(s, tick));
             // we store the data for this tick
             tickData.totalExpo = long.totalExpo;
             tickData.totalPos = 1;
@@ -923,7 +923,7 @@ library UsdnProtocolActionsLongLibrary {
             delete s._longPositions[tickHash][index];
             if (tickData.totalPos == 0) {
                 // we removed the last position in the tick
-                s._tickBitmap.unset(Core._calcBitmapIndexFromTick(s, tick));
+                s._tickBitmap.unset(Utils._calcBitmapIndexFromTick(s, tick));
             }
         }
 
