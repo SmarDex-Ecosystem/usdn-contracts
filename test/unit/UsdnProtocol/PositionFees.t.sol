@@ -245,10 +245,10 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint128 initialBlock = uint128(block.timestamp);
         setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, depositAmount, price);
 
-        uint128 amountWithFees =
+        uint128 amountAfterFees =
             uint128(depositAmount - uint256(depositAmount) * protocol.getVaultFeeBps() / protocol.BPS_DIVISOR());
         uint256 expectedSharesBalanceA = Vault._calcMintUsdnShares(
-            amountWithFees, uint256(protocol.vaultAssetAvailableWithFunding(price, initialBlock)), usdn.totalShares()
+            amountAfterFees, uint256(protocol.vaultAssetAvailableWithFunding(price, initialBlock)), usdn.totalShares()
         );
 
         _waitDelay();
@@ -258,7 +258,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         // Check stored position asset price
         uint256 expectedSharesBalanceB = Vault._calcMintUsdnShares(
-            amountWithFees,
+            amountAfterFees,
             uint256(
                 protocol.i_vaultAssetAvailable(
                     deposit.totalExpo, deposit.balanceVault, deposit.balanceLong, price, deposit.assetPrice

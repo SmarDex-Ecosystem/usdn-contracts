@@ -306,7 +306,7 @@ library UsdnProtocolActionsVaultLibrary {
 
         // apply fees on amount
         data_.feeBps = s._vaultFeeBps;
-        uint128 amountWithFees = (amount - uint256(amount) * data_.feeBps / Constants.BPS_DIVISOR).toUint128();
+        uint128 amountAfterFees = (amount - uint256(amount) * data_.feeBps / Constants.BPS_DIVISOR).toUint128();
 
         data_.totalExpo = s._totalExpo;
         data_.balanceLong = s._balanceLong;
@@ -322,7 +322,7 @@ library UsdnProtocolActionsVaultLibrary {
 
         // calculate the amount of SDEX tokens to burn
         uint256 usdnSharesToMintEstimated =
-            Vault._calcMintUsdnShares(amountWithFees, data_.balanceVault, data_.usdnTotalShares);
+            Vault._calcMintUsdnShares(amountAfterFees, data_.balanceVault, data_.usdnTotalShares);
         uint256 usdnToMintEstimated = usdn.convertToTokens(usdnSharesToMintEstimated);
         // we want to at least mint 1 wei of USDN
         if (usdnToMintEstimated == 0) {
@@ -514,7 +514,7 @@ library UsdnProtocolActionsVaultLibrary {
         // we calculate the amount of USDN to mint, either considering the vault balance at the time of the initiate
         // action, or the current balance with the new price. We will use the higher of the two to mint. Funding between
         // the initiate and validate actions is ignored
-        uint128 amountWithFees =
+        uint128 amountAfterFees =
             (deposit.amount - uint256(deposit.amount) * deposit.feeBps / Constants.BPS_DIVISOR).toUint128();
 
         uint256 balanceVault = deposit.balanceVault;
@@ -535,7 +535,7 @@ library UsdnProtocolActionsVaultLibrary {
             }
         }
 
-        uint256 usdnSharesToMint = Vault._calcMintUsdnShares(amountWithFees, balanceVault, deposit.usdnTotalShares);
+        uint256 usdnSharesToMint = Vault._calcMintUsdnShares(amountAfterFees, balanceVault, deposit.usdnTotalShares);
 
         s._balanceVault += deposit.amount; // we credit the full deposit amount
         s._pendingBalanceVault -= Utils.toInt256(deposit.amount);
@@ -543,7 +543,7 @@ library UsdnProtocolActionsVaultLibrary {
         uint256 mintedTokens = s._usdn.mintShares(deposit.to, usdnSharesToMint);
         isValidated_ = true;
         emit IUsdnProtocolEvents.ValidatedDeposit(
-            deposit.to, deposit.validator, amountWithFees, mintedTokens, deposit.timestamp
+            deposit.to, deposit.validator, amountAfterFees, mintedTokens, deposit.timestamp
         );
     }
 

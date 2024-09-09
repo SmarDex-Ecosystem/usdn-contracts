@@ -56,8 +56,8 @@ library UsdnProtocolVaultLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
         }
         IUsdn usdn = s._usdn;
-        uint256 amountWithFees = amount - FixedPointMathLib.fullMulDiv(amount, s._vaultFeeBps, Constants.BPS_DIVISOR);
-        usdnSharesExpected_ = _calcMintUsdnShares(amountWithFees, uint256(vaultBalance), usdn.totalShares());
+        uint256 amountAfterFees = amount - FixedPointMathLib.fullMulDiv(amount, s._vaultFeeBps, Constants.BPS_DIVISOR);
+        usdnSharesExpected_ = _calcMintUsdnShares(amountAfterFees, uint256(vaultBalance), usdn.totalShares());
         sdexToBurn_ = _calcSdexToBurn(usdn.convertToTokens(usdnSharesExpected_), s._sdexBurnOnDepositRatio);
     }
 

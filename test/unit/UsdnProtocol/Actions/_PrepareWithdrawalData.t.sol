@@ -88,7 +88,7 @@ contract TestUsdnProtocolActionsPrepareWithdrawalData is UsdnProtocolBaseFixture
 
     /// @notice Assert the data in WithdrawalData depending on `isEarlyReturn`
     function _assertData(ActionsVault.WithdrawalData memory data, bool isEarlyReturn) private view {
-        uint256 amountWithFees = DEPOSITED_AMOUNT - (DEPOSITED_AMOUNT * protocol.getVaultFeeBps()) / BPS_DIVISOR;
+        uint256 amountAfterFees = DEPOSITED_AMOUNT - (DEPOSITED_AMOUNT * protocol.getVaultFeeBps()) / BPS_DIVISOR;
 
         if (isEarlyReturn) {
             assertEq(data.feeBps, 0, "The fee should not be set");
@@ -107,7 +107,7 @@ contract TestUsdnProtocolActionsPrepareWithdrawalData is UsdnProtocolBaseFixture
             assertEq(
                 data.balanceVault, protocol.getBalanceVault(), "The balance vault should be the one in the protocol"
             );
-            assertEq(data.withdrawalAmountWithFees, amountWithFees, "The amount withdrawn includes fees");
+            assertEq(data.withdrawalAmountWithFees, amountAfterFees, "The amount withdrawn includes fees");
         }
     }
 }
