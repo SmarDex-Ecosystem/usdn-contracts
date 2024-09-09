@@ -647,36 +647,7 @@ library UsdnProtocolCoreLibrary {
         }
     }
 
-    /**
-     * @notice Convert a `Types.WithdrawalPendingAction` to a `Types.PendingAction`
-     * @param action A withdrawal pending action
-     * @return pendingAction_ The converted untyped pending action
-     */
-    function _convertWithdrawalPendingAction(Types.WithdrawalPendingAction memory action)
-        public
-        pure
-        returns (Types.PendingAction memory pendingAction_)
-    {
-        assembly {
-            pendingAction_ := action
-        }
-    }
-
-    /**
-     * @notice Convert a `Types.LongPendingAction` to a `Types.PendingAction`
-     * @param action A long pending action
-     * @return pendingAction_ The converted untyped pending action
-     */
-    function _convertLongPendingAction(Types.LongPendingAction memory action)
-        public
-        pure
-        returns (Types.PendingAction memory pendingAction_)
-    {
-        assembly {
-            pendingAction_ := action
-        }
-    }
-
+    // TO DO : optimize this function
     /**
      * @notice This is the mutating version of `getActionablePendingAction`, where empty items at the front of the list
      * are removed

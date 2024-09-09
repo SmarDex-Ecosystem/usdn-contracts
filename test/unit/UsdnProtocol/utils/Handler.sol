@@ -333,11 +333,11 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         pure
         returns (PendingAction memory)
     {
-        return Core._convertWithdrawalPendingAction(action);
+        return Utils._convertWithdrawalPendingAction(action);
     }
 
     function i_convertLongPendingAction(LongPendingAction memory action) external pure returns (PendingAction memory) {
-        return Core._convertLongPendingAction(action);
+        return Utils._convertLongPendingAction(action);
     }
 
     function i_assetToRemove(uint128 priceWithFees, uint128 liqPriceWithoutPenalty, uint128 posExpo)

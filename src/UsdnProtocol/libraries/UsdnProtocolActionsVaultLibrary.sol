@@ -603,7 +603,7 @@ library UsdnProtocolActionsVaultLibrary {
         uint64 securityDepositValue,
         WithdrawalData memory data
     ) public returns (uint256 amountToRefund_) {
-        Types.PendingAction memory action = Core._convertWithdrawalPendingAction(
+        Types.PendingAction memory action = Utils._convertWithdrawalPendingAction(
             Types.WithdrawalPendingAction({
                 action: Types.ProtocolAction.ValidateWithdrawal,
                 timestamp: uint40(block.timestamp),

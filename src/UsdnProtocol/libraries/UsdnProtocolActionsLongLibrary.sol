@@ -292,7 +292,7 @@ library UsdnProtocolActionsLongLibrary {
             liqMultiplier: data.liqMultiplier,
             closeBoundedPositionValue: 0
         });
-        amountToRefund_ = Core._addPendingAction(s, validator, Core._convertLongPendingAction(action));
+        amountToRefund_ = Core._addPendingAction(s, validator, Utils._convertLongPendingAction(action));
     }
 
     /**
@@ -632,7 +632,7 @@ library UsdnProtocolActionsLongLibrary {
             liqMultiplier: Long._calcFixedPrecisionMultiplier(data.lastPrice, data.longTradingExpo, data.liqMulAcc),
             closeBoundedPositionValue: data.tempPositionValue
         });
-        amountToRefund_ = Core._addPendingAction(s, validator, Core._convertLongPendingAction(action));
+        amountToRefund_ = Core._addPendingAction(s, validator, Utils._convertLongPendingAction(action));
     }
 
     /**

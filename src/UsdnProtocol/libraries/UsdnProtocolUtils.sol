@@ -4,6 +4,7 @@ pragma solidity 0.8.26;
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 
 /**
@@ -75,5 +76,35 @@ library UsdnProtocolUtils {
         }
 
         leverage_ = (10 ** Constants.LEVERAGE_DECIMALS * uint256(startPrice)) / (startPrice - liquidationPrice);
+    }
+
+    /**
+     * @notice Convert a `Types.LongPendingAction` to a `Types.PendingAction`
+     * @param action A long pending action
+     * @return pendingAction_ The converted untyped pending action
+     */
+    function _convertLongPendingAction(Types.LongPendingAction memory action)
+        internal
+        pure
+        returns (Types.PendingAction memory pendingAction_)
+    {
+        assembly {
+            pendingAction_ := action
+        }
+    }
+
+    /**
+     * @notice Convert a `Types.WithdrawalPendingAction` to a `Types.PendingAction`
+     * @param action A withdrawal pending action
+     * @return pendingAction_ The converted untyped pending action
+     */
+    function _convertWithdrawalPendingAction(Types.WithdrawalPendingAction memory action)
+        internal
+        pure
+        returns (Types.PendingAction memory pendingAction_)
+    {
+        assembly {
+            pendingAction_ := action
+        }
     }
 }
