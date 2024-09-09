@@ -33,7 +33,15 @@ contract TestForkUsdnProtocolValidateTwoPos is UsdnProtocolBaseIntegrationFixtur
             + protocol.getSecurityDepositValue();
 
         protocol.initiateOpenPosition{ value: ethValue }(
-            2.5 ether, 1000 ether, type(uint128).max, address(this), USER_1, NO_PERMIT2, "", EMPTY_PREVIOUS_DATA
+            2.5 ether,
+            1000 ether,
+            type(uint128).max,
+            protocol.getMaxLeverage(),
+            address(this),
+            USER_1,
+            NO_PERMIT2,
+            "",
+            EMPTY_PREVIOUS_DATA
         );
         vm.stopPrank();
         skip(80 minutes);
@@ -42,7 +50,15 @@ contract TestForkUsdnProtocolValidateTwoPos is UsdnProtocolBaseIntegrationFixtur
         require(success, "USER_2 wstETH mint failed");
         wstETH.approve(address(protocol), type(uint256).max);
         protocol.initiateOpenPosition{ value: ethValue }(
-            2.5 ether, 1000 ether, type(uint128).max, address(this), USER_2, NO_PERMIT2, "", EMPTY_PREVIOUS_DATA
+            2.5 ether,
+            1000 ether,
+            type(uint128).max,
+            protocol.getMaxLeverage(),
+            address(this),
+            USER_2,
+            NO_PERMIT2,
+            "",
+            EMPTY_PREVIOUS_DATA
         );
         uint256 ts2 = block.timestamp;
         vm.stopPrank();

@@ -66,6 +66,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
             amount,
             desiredLiqPrice,
             type(uint128).max,
+            protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
             NO_PERMIT2,

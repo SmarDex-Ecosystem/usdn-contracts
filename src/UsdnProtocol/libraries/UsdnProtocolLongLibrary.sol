@@ -676,7 +676,7 @@ library UsdnProtocolLongLibrary {
             conversionData.tradingExpo,
             conversionData.accumulator
         );
-        _checkOpenPositionLeverage(s, data_.adjustedPrice, liqPriceWithoutPenalty);
+        _checkOpenPositionLeverage(s, data_.adjustedPrice, liqPriceWithoutPenalty, params.userMaxLeverage);
 
         data_.positionTotalExpo = _calcPositionTotalExpo(params.amount, data_.adjustedPrice, liqPriceWithoutPenalty);
         // the current price is known to be above the liquidation price because we checked the safety margin
@@ -696,18 +696,27 @@ library UsdnProtocolLongLibrary {
      * @param s The storage of the protocol
      * @param adjustedPrice The adjusted price of the asset
      * @param liqPriceWithoutPenalty The liquidation price of the position without the liquidation penalty
+     * @param userMaxLeverage The maximum leverage for the newly created position
      */
-    function _checkOpenPositionLeverage(Types.Storage storage s, uint128 adjustedPrice, uint128 liqPriceWithoutPenalty)
-        public
-        view
-    {
+    function _checkOpenPositionLeverage(
+        Types.Storage storage s,
+        uint128 adjustedPrice,
+        uint128 liqPriceWithoutPenalty,
+        uint256 userMaxLeverage
+    ) public view {
         // calculate position leverage
         // reverts if liquidationPrice >= entryPrice
         uint256 leverage = ActionsUtils._getLeverage(adjustedPrice, liqPriceWithoutPenalty);
         if (leverage < s._minLeverage) {
             revert IUsdnProtocolErrors.UsdnProtocolLeverageTooLow();
         }
-        if (leverage > s._maxLeverage) {
+
+        uint256 protocolMaxLeverage = s._maxLeverage;
+        if (userMaxLeverage > protocolMaxLeverage) {
+            userMaxLeverage = protocolMaxLeverage;
+        }
+
+        if (leverage > userMaxLeverage) {
             revert IUsdnProtocolErrors.UsdnProtocolLeverageTooHigh();
         }
     }

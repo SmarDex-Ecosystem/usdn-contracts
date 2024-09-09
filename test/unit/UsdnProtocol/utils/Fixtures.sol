@@ -358,6 +358,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             openParams.positionSize,
             openParams.desiredLiqPrice,
             type(uint128).max,
+            protocol.getMaxLeverage(),
             openParams.user,
             payable(openParams.user),
             NO_PERMIT2,

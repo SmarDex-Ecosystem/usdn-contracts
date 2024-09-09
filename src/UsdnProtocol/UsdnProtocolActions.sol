@@ -58,6 +58,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
         uint128 amount,
         uint128 desiredLiqPrice,
         uint128 userMaxPrice,
+        uint256 userMaxLeverage,
         address to,
         address payable validator,
         Permit2TokenBitfield.Bitfield permit2TokenBitfield,
@@ -71,6 +72,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
             amount: amount,
             desiredLiqPrice: desiredLiqPrice,
             userMaxPrice: userMaxPrice,
+            userMaxLeverage: userMaxLeverage,
             securityDepositValue: s._securityDepositValue,
             permit2TokenBitfield: permit2TokenBitfield
         });

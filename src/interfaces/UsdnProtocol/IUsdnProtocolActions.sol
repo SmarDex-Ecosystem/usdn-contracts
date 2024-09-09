@@ -115,6 +115,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * @param amount The amount of wstETH to deposit
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
      * @param userMaxPrice The maximum price at which the position can be opened
+     * @param userMaxLeverage The maximum leverage for the newly created position
      * @param to The address that will be the owner of the position
      * @param validator The address that will validate the open position
      * @param permit2TokenBitfield Whether to use permit2 for transferring assets (first bit)
@@ -129,6 +130,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
         uint128 amount,
         uint128 desiredLiqPrice,
         uint128 userMaxPrice,
+        uint256 userMaxLeverage,
         address to,
         address payable validator,
         Permit2TokenBitfield.Bitfield permit2TokenBitfield,

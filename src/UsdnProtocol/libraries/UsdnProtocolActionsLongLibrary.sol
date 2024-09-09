@@ -232,6 +232,7 @@ library UsdnProtocolActionsLongLibrary {
                 amount: params.amount,
                 desiredLiqPrice: params.desiredLiqPrice,
                 userMaxPrice: params.userMaxPrice,
+                userMaxLeverage: params.userMaxLeverage,
                 currentPriceData: currentPriceData
             })
         );

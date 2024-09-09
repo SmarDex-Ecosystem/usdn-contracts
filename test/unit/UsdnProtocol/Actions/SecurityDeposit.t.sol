@@ -125,6 +125,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             1 ether,
             params.initialPrice / 2,
             type(uint128).max,
+            protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
             NO_PERMIT2,
@@ -251,11 +252,13 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:then The protocol reverts with {UsdnProtocolSecurityDepositTooLow}
      */
     function test_RevertWhen_securityDeposit_lt_openPosition() public {
+        uint256 leverage = protocol.getMaxLeverage();
         vm.expectRevert(UsdnProtocolSecurityDepositTooLow.selector);
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE - 1 }(
             1 ether,
             params.initialPrice / 2,
             type(uint128).max,
+            leverage,
             address(this),
             payable(address(this)),
             NO_PERMIT2,
@@ -336,6 +339,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             1 ether,
             params.initialPrice / 2,
             type(uint128).max,
+            protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
             NO_PERMIT2,
@@ -574,6 +578,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             1 ether,
             params.initialPrice / 2,
             type(uint128).max,
+            protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
             NO_PERMIT2,
@@ -586,6 +591,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         PreviousActionsData memory previousActionsData = _createPrevActionDataStruct(USER_1, false);
 
+        uint256 leverage = protocol.getMaxLeverage();
         vm.expectEmit();
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
         vm.prank(USER_1);
@@ -593,6 +599,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             1 ether,
             params.initialPrice / 2,
             type(uint128).max,
+            leverage,
             USER_1,
             USER_1,
             NO_PERMIT2,
@@ -625,6 +632,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             1 ether,
             params.initialPrice / 2,
             type(uint128).max,
+            protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
             NO_PERMIT2,
@@ -633,12 +641,13 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
 
         assertSecurityDepositPaid();
-
+        uint256 leverage = protocol.getMaxLeverage();
         vm.prank(USER_1);
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
             1 ether,
             params.initialPrice / 2,
             type(uint128).max,
+            leverage,
             address(this),
             USER_1,
             NO_PERMIT2,
@@ -1065,6 +1074,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             1 ether,
             params.initialPrice / 2,
             type(uint128).max,
+            protocol.getMaxLeverage(),
             USER_1,
             payable(address(receiverContract)),
             NO_PERMIT2,

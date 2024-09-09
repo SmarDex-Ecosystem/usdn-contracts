@@ -52,6 +52,7 @@ contract TestUsdnProtocolActionablePendingActions is UsdnProtocolBaseIntegration
             2 ether,
             params.initialPrice / 2,
             type(uint128).max,
+            protocol.getMaxLeverage(),
             address(this),
             payable(this),
             NO_PERMIT2,
@@ -96,7 +97,15 @@ contract TestUsdnProtocolActionablePendingActions is UsdnProtocolBaseIntegration
         mockChainlinkOnChain.setLastPublishTime(block.timestamp);
         vm.prank(USER_2);
         protocol.initiateOpenPosition{ value: securityDeposit }(
-            2 ether, params.initialPrice / 2, type(uint128).max, USER_2, USER_2, NO_PERMIT2, "", EMPTY_PREVIOUS_DATA
+            2 ether,
+            params.initialPrice / 2,
+            type(uint128).max,
+            protocol.getMaxLeverage(),
+            USER_2,
+            USER_2,
+            NO_PERMIT2,
+            "",
+            EMPTY_PREVIOUS_DATA
         );
         // create a pending deposit a bit later
         vm.warp(initialTimestamp + protocol.getOnChainValidatorDeadline() + 1);
