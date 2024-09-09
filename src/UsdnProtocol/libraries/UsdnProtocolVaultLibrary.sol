@@ -11,7 +11,7 @@ import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocol
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IUsdnProtocolVault } from "../../interfaces/UsdnProtocol/IUsdnProtocolVault.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
-import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./UsdnProtocolActionsUtilsLibrary.sol";
+import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolUtils as Utils } from "./UsdnProtocolUtils.sol";
@@ -199,7 +199,7 @@ library UsdnProtocolVaultLibrary {
             timestamp: uint40(block.timestamp)
         });
         // save the position and update the state
-        (posId.tickVersion, posId.index,) = ActionsUtils._saveNewPosition(s, posId.tick, long, s._liquidationPenalty);
+        (posId.tickVersion, posId.index,) = ActionsLong._saveNewPosition(s, posId.tick, long, s._liquidationPenalty);
         s._balanceLong += long.amount;
         emit IUsdnProtocolEvents.InitiatedOpenPosition(
             msg.sender, msg.sender, long.timestamp, totalExpo, long.amount, price, posId
