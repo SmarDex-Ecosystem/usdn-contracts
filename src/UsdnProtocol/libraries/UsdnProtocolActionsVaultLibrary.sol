@@ -48,7 +48,7 @@ library UsdnProtocolActionsVaultLibrary {
         address to;
         address validator;
         uint128 amount;
-        uint128 amountMinOut;
+        uint256 amountMinOut;
         uint64 securityDepositValue;
         Permit2TokenBitfield.Bitfield permit2TokenBitfield;
     }
@@ -101,7 +101,7 @@ library UsdnProtocolActionsVaultLibrary {
     function initiateDeposit(
         Types.Storage storage s,
         uint128 amount,
-        uint128 amountMinOut,
+        uint256 amountMinOut,
         address to,
         address payable validator,
         Permit2TokenBitfield.Bitfield permit2TokenBitfield,
@@ -306,7 +306,7 @@ library UsdnProtocolActionsVaultLibrary {
         Types.Storage storage s,
         address validator,
         uint128 amount,
-        uint128 amountMinOut,
+        uint256 amountMinOut,
         bytes calldata currentPriceData
     ) public returns (InitiateDepositData memory data_) {
         PriceInfo memory currentPrice = _getOraclePrice(
@@ -348,7 +348,7 @@ library UsdnProtocolActionsVaultLibrary {
         // calculate the amount of SDEX tokens to burn
         uint256 usdnSharesToMintEstimated = Vault._calcMintUsdnShares(amount, data_.balanceVault, data_.usdnTotalShares);
         if (usdnSharesToMintEstimated < amountMinOut) {
-            revert IUsdnProtocolErrors.UsdnProtocolReceivedTooLowAmount();
+            revert IUsdnProtocolErrors.UsdnProtocolAmountReceivedTooSmall();
         }
         uint256 usdnToMintEstimated = usdn.convertToTokens(usdnSharesToMintEstimated);
         // we want to at least mint 1 wei of USDN

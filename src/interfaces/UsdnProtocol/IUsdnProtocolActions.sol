@@ -24,7 +24,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      */
     function initiateDeposit(
         uint128 amount,
-        uint128 amountMinOut,
+        uint256 amountMinOut,
         address to,
         address payable validator,
         Permit2TokenBitfield.Bitfield permit2TokenBitfield,

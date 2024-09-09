@@ -329,6 +329,19 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         assertEq(wstethBalanceBefore, wstETH.balanceOf(address(this)), "user 1 should not have spent wstETH");
     }
 
+    function test_RevertWhen_initiateDepositWithEnoughExpectedAmountOut() public {
+        vm.expectRevert(UsdnProtocolAmountReceivedTooSmall.selector);
+        protocol.initiateDeposit(
+            1 ether,
+            type(uint256).max,
+            address(this),
+            payable(address(this)),
+            NO_PERMIT2,
+            abi.encode(uint128(2000 ether)),
+            EMPTY_PREVIOUS_DATA
+        );
+    }
+
     // test refunds
     receive() external payable {
         // test reentrancy
