@@ -458,7 +458,7 @@ library UsdnProtocolActionsLongLibrary {
                 // retrieve exact liquidation price without penalty
                 // we consider the liquidation multiplier as it was during the initiation, to account for any funding
                 // that was due between the initiation and the validation
-                data.liqPriceWithoutPenalty = Long._getEffectivePriceForTick(
+                data.liqPriceWithoutPenalty = Utils._getEffectivePriceForTick(
                     Utils.calcTickWithoutPenalty(maxLeverageData.newPosId.tick, maxLeverageData.liquidationPenalty),
                     data.action.liqMultiplier
                 );
@@ -629,7 +629,7 @@ library UsdnProtocolActionsLongLibrary {
             closePosTotalExpo: data.totalExpoToClose,
             tickVersion: posId.tickVersion,
             index: posId.index,
-            liqMultiplier: Long._calcFixedPrecisionMultiplier(data.lastPrice, data.longTradingExpo, data.liqMulAcc),
+            liqMultiplier: Utils._calcFixedPrecisionMultiplier(data.lastPrice, data.longTradingExpo, data.liqMulAcc),
             closeBoundedPositionValue: data.tempPositionValue
         });
         amountToRefund_ = Core._addPendingAction(s, validator, Utils._convertLongPendingAction(action));
@@ -706,7 +706,7 @@ library UsdnProtocolActionsLongLibrary {
             (currentPrice.price - currentPrice.price * s._positionFeeBps / Constants.BPS_DIVISOR).toUint128();
 
         // get liquidation price (with liq penalty) to check if the position was valid at `timestamp + validationDelay`
-        data.liquidationPrice = Long._getEffectivePriceForTick(long.tick, long.liqMultiplier);
+        data.liquidationPrice = Utils._getEffectivePriceForTick(long.tick, long.liqMultiplier);
 
         if (currentPrice.neutralPrice <= data.liquidationPrice) {
             // position should be liquidated, we don't transfer assets to the user
@@ -729,7 +729,7 @@ library UsdnProtocolActionsLongLibrary {
         int24 tickWithoutPenalty = Utils.calcTickWithoutPenalty(long.tick, long.closeLiqPenalty);
         data.positionValue = Utils._positionValue(
             data.priceWithFees,
-            Long._getEffectivePriceForTick(tickWithoutPenalty, long.liqMultiplier),
+            Utils._getEffectivePriceForTick(tickWithoutPenalty, long.liqMultiplier),
             long.closePosTotalExpo
         );
 

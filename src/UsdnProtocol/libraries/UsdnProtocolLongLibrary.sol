@@ -161,6 +161,7 @@ library UsdnProtocolLongLibrary {
         price_ = _adjustPrice(TickMath.getPriceAtTick(tick), assetPrice, longTradingExpo, accumulator);
     }
 
+    // TO DO : optimize the code below
     /// @notice See {IUsdnProtocolLong}
     function getTickLiquidationPenalty(Types.Storage storage s, int24 tick)
         public
@@ -293,8 +294,9 @@ library UsdnProtocolLongLibrary {
         // add the penalty to the tick and round down to the nearest multiple of tickSpacing
         tickWithPenalty_ = tempTickWithoutPenalty + int24(liquidationPenalty);
         tickWithPenalty_ = _roundTickDownWithPenalty(tickWithPenalty_, tickSpacing, liquidationPenalty);
-        liqPriceWithoutPenalty_ =
-            _getEffectivePriceForTick(Utils.calcTickWithoutPenalty(tickWithPenalty_, liquidationPenalty), liqMultiplier);
+        liqPriceWithoutPenalty_ = Utils._getEffectivePriceForTick(
+            Utils.calcTickWithoutPenalty(tickWithPenalty_, liquidationPenalty), liqMultiplier
+        );
     }
 
     /**
@@ -501,6 +503,7 @@ library UsdnProtocolLongLibrary {
         rebalancer.updatePosition(posId, data.positionValue);
     }
 
+    // TO DO : optimize the code below
     /**
      * @notice Immediately open a position with the given price
      * @dev Should only be used to open the rebalancer position
@@ -542,6 +545,7 @@ library UsdnProtocolLongLibrary {
         emit IUsdnProtocolEvents.ValidatedOpenPosition(user, user, posTotalExpo, lastPrice, posId_);
     }
 
+    // TO DO : optimize the code below
     /**
      * @notice Immediately close a position with the given price
      * @dev Should only be used to close the rebalancer position
@@ -690,7 +694,7 @@ library UsdnProtocolLongLibrary {
             Utils.positionValue(data_.positionTotalExpo, uint128(currentPrice.price), liqPriceWithoutPenalty);
         _checkImbalanceLimitOpen(s, data_.positionTotalExpo, amount);
 
-        data_.liqMultiplier = _calcFixedPrecisionMultiplier(
+        data_.liqMultiplier = Utils._calcFixedPrecisionMultiplier(
             conversionData.assetPrice, conversionData.tradingExpo, conversionData.accumulator
         );
     }
@@ -838,42 +842,6 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Variant of `getEffectivePriceForTick` when a fixed precision representation of the liquidation multiplier
-     * is known
-     * @param tick The tick number
-     * @param liqMultiplier The liquidation price multiplier, with LIQUIDATION_MULTIPLIER_DECIMALS decimals
-     * @return price_ The adjusted price for the tick
-     */
-    function _getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) public pure returns (uint128 price_) {
-        price_ = _adjustPrice(TickMath.getPriceAtTick(tick), liqMultiplier);
-    }
-
-    /**
-     * @notice Variant of `getEffectiveTickForPrice` when a fixed precision representation of the liquidation multiplier
-     * is known
-     * @param price The price
-     * @param liqMultiplier The liquidation price multiplier, with LIQUIDATION_MULTIPLIER_DECIMALS decimals
-     * @return tick_ The corresponding tick
-     */
-    function _getEffectiveTickForPrice(uint128 price, uint256 liqMultiplier, int24 tickSpacing)
-        public
-        pure
-        returns (int24 tick_)
-    {
-        // unadjust price with liquidation multiplier
-        uint256 unadjustedPrice = _unadjustPrice(price, liqMultiplier);
-
-        if (unadjustedPrice < TickMath.MIN_PRICE) {
-            return TickMath.minUsableTick(tickSpacing);
-        }
-
-        tick_ = TickMath.getTickAtPrice(unadjustedPrice);
-
-        // round down to the next valid tick according to _tickSpacing (towards negative infinity)
-        tick_ = _roundTickDown(tick_, tickSpacing);
-    }
-
-    /**
      * @notice Knowing the liquidation price of a position, get the corresponding unadjusted price, which can be used
      * to find the corresponding tick
      * @param price An adjusted liquidation price (taking into account the effects of funding)
@@ -941,41 +909,6 @@ library UsdnProtocolLongLibrary {
         // price = unadjustedPrice * assetPrice * (totalExpo - balanceLong) / accumulator
         HugeUint.Uint512 memory numerator = HugeUint.mul(unadjustedPrice, assetPrice * longTradingExpo);
         price_ = numerator.div(accumulator).toUint128();
-    }
-
-    /**
-     * @notice Variant of _adjustPrice when a fixed precision representation of the liquidation multiplier is known
-     * @param unadjustedPrice The unadjusted price for the tick
-     * @param liqMultiplier The liquidation price multiplier, with LIQUIDATION_MULTIPLIER_DECIMALS decimals
-     * @return price_ The adjusted price for the tick
-     */
-    function _adjustPrice(uint256 unadjustedPrice, uint256 liqMultiplier) public pure returns (uint128 price_) {
-        // price = unadjustedPrice * M
-        price_ = FixedPointMathLib.fullMulDiv(
-            unadjustedPrice, liqMultiplier, 10 ** Constants.LIQUIDATION_MULTIPLIER_DECIMALS
-        ).toUint128();
-    }
-
-    /**
-     * @notice Calculate a fixed-precision representation of the liquidation price multiplier
-     * @param assetPrice The current price of the asset
-     * @param longTradingExpo The trading expo of the long side (total expo - balance long)
-     * @param accumulator The liquidation multiplier accumulator
-     * @return multiplier_ The liquidation price multiplier, with LIQUIDATION_MULTIPLIER_DECIMALS decimals
-     */
-    function _calcFixedPrecisionMultiplier(
-        uint256 assetPrice,
-        uint256 longTradingExpo,
-        HugeUint.Uint512 memory accumulator
-    ) public pure returns (uint256 multiplier_) {
-        if (accumulator.hi == 0 && accumulator.lo == 0) {
-            // no position in long, we assume a liquidation multiplier of 1.0
-            return 10 ** Constants.LIQUIDATION_MULTIPLIER_DECIMALS;
-        }
-        // M = assetPrice * (totalExpo - balanceLong) / accumulator
-        HugeUint.Uint512 memory numerator =
-            HugeUint.mul(10 ** Constants.LIQUIDATION_MULTIPLIER_DECIMALS, assetPrice * longTradingExpo);
-        multiplier_ = numerator.div(accumulator);
     }
 
     /**

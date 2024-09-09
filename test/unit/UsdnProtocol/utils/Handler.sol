@@ -539,15 +539,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) external pure returns (uint128) {
-        return Long._getEffectivePriceForTick(tick, liqMultiplier);
-    }
-
-    function i_getEffectiveTickForPrice(uint128 price, uint256 liqMultiplier, int24 tickSpacing)
-        external
-        pure
-        returns (int24)
-    {
-        return Long._getEffectiveTickForPrice(price, liqMultiplier, tickSpacing);
+        return Utils._getEffectivePriceForTick(tick, liqMultiplier);
     }
 
     function i_calcFixedPrecisionMultiplier(
@@ -555,7 +547,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator
     ) external pure returns (uint256) {
-        return Long._calcFixedPrecisionMultiplier(assetPrice, longTradingExpo, accumulator);
+        return Utils._calcFixedPrecisionMultiplier(assetPrice, longTradingExpo, accumulator);
     }
 
     function i_calcBurnUsdn(uint256 usdnShares, uint256 available, uint256 usdnTotalShares)

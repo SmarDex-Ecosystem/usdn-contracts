@@ -6,6 +6,7 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { HugeUint } from "../../libraries/HugeUint.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
 import { TickMath } from "../../libraries/TickMath.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
@@ -18,6 +19,7 @@ import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstan
 library UsdnProtocolUtilsLibrary {
     using SafeCast for uint256;
     using SignedMath for int256;
+    using HugeUint for HugeUint.Uint512;
 
     /**
      * @notice Convert a uint128 to an int256
@@ -337,5 +339,51 @@ library UsdnProtocolUtilsLibrary {
                 positionTotalExpo, currentPrice - liqPriceWithoutPenalty, currentPrice
             ).toInt256();
         }
+    }
+
+    /**
+     * @notice Calculate a fixed-precision representation of the liquidation price multiplier
+     * @param assetPrice The current price of the asset
+     * @param longTradingExpo The trading expo of the long side (total expo - balance long)
+     * @param accumulator The liquidation multiplier accumulator
+     * @return multiplier_ The liquidation price multiplier, with LIQUIDATION_MULTIPLIER_DECIMALS decimals
+     */
+    function _calcFixedPrecisionMultiplier(
+        uint256 assetPrice,
+        uint256 longTradingExpo,
+        HugeUint.Uint512 memory accumulator
+    ) internal pure returns (uint256 multiplier_) {
+        if (accumulator.hi == 0 && accumulator.lo == 0) {
+            // no position in long, we assume a liquidation multiplier of 1.0
+            return 10 ** Constants.LIQUIDATION_MULTIPLIER_DECIMALS;
+        }
+        // M = assetPrice * (totalExpo - balanceLong) / accumulator
+        HugeUint.Uint512 memory numerator =
+            HugeUint.mul(10 ** Constants.LIQUIDATION_MULTIPLIER_DECIMALS, assetPrice * longTradingExpo);
+        multiplier_ = numerator.div(accumulator);
+    }
+
+    /**
+     * @notice Variant of `getEffectivePriceForTick` when a fixed precision representation of the liquidation multiplier
+     * is known
+     * @param tick The tick number
+     * @param liqMultiplier The liquidation price multiplier, with LIQUIDATION_MULTIPLIER_DECIMALS decimals
+     * @return price_ The adjusted price for the tick
+     */
+    function _getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) internal pure returns (uint128 price_) {
+        price_ = _adjustPrice(TickMath.getPriceAtTick(tick), liqMultiplier);
+    }
+
+    /**
+     * @notice Variant of _adjustPrice when a fixed precision representation of the liquidation multiplier is known
+     * @param unadjustedPrice The unadjusted price for the tick
+     * @param liqMultiplier The liquidation price multiplier, with LIQUIDATION_MULTIPLIER_DECIMALS decimals
+     * @return price_ The adjusted price for the tick
+     */
+    function _adjustPrice(uint256 unadjustedPrice, uint256 liqMultiplier) internal pure returns (uint128 price_) {
+        // price = unadjustedPrice * M
+        price_ = FixedPointMathLib.fullMulDiv(
+            unadjustedPrice, liqMultiplier, 10 ** Constants.LIQUIDATION_MULTIPLIER_DECIMALS
+        ).toUint128();
     }
 }
