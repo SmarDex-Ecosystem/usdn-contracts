@@ -104,15 +104,6 @@ library UsdnProtocolCoreLibrary {
     }
 
     /// @notice See {IUsdnProtocolCore}
-    function vaultTradingExpoWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
-        public
-        view
-        returns (int256 expo_)
-    {
-        expo_ = Vault.vaultAssetAvailableWithFunding(s, currentPrice, timestamp);
-    }
-
-    /// @notice See {IUsdnProtocolCore}
     function getActionablePendingActions(Types.Storage storage s, address currentUser)
         public
         view
