@@ -226,7 +226,14 @@ contract TestRebalancerInitiateClosePosition is
         uint256 securityDeposit = protocol.getSecurityDepositValue();
         // compensate imbalance to allow rebalancer users to close
         (, PositionId memory newPosId) = protocol.initiateOpenPosition{ value: securityDeposit }(
-            20 ether, 1100 ether, payable(address(this)), payable(address(this)), NO_PERMIT2, "", EMPTY_PREVIOUS_DATA
+            20 ether,
+            1100 ether,
+            protocol.getMaxLeverage(),
+            payable(address(this)),
+            payable(address(this)),
+            NO_PERMIT2,
+            "",
+            EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         protocol.validateOpenPosition{ value: securityDeposit }(payable(this), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
@@ -287,7 +294,14 @@ contract TestRebalancerInitiateClosePosition is
 
         // compensate imbalance to allow rebalancer users to close
         protocol.initiateOpenPosition{ value: securityDeposit }(
-            20 ether, 800 ether, payable(address(this)), payable(address(this)), NO_PERMIT2, "", EMPTY_PREVIOUS_DATA
+            20 ether,
+            800 ether,
+            protocol.getMaxLeverage(),
+            payable(address(this)),
+            payable(address(this)),
+            NO_PERMIT2,
+            "",
+            EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         protocol.validateOpenPosition{ value: securityDeposit }(payable(this), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);

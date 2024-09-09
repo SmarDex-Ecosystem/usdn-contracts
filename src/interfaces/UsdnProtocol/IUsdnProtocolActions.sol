@@ -118,6 +118,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * In case liquidations are pending, this function might not initiate the position (and `success_` would be false)
      * @param amount The amount of wstETH to deposit
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
+     * @param userMaxLeverage The maximum leverage for the newly created position
      * @param to The address that will be the owner of the position
      * @param validator The address that will validate the open position
      * @param permit2TokenBitfield Whether to use permit2 for transferring assets (first bit)
@@ -131,6 +132,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
     function initiateOpenPosition(
         uint128 amount,
         uint128 desiredLiqPrice,
+        uint256 userMaxLeverage,
         address to,
         address payable validator,
         Permit2TokenBitfield.Bitfield permit2TokenBitfield,
