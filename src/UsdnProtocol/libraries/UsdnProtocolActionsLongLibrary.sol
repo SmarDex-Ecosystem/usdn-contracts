@@ -241,8 +241,7 @@ library UsdnProtocolActionsLongLibrary {
         s._balanceVault += long.amount - data.positionValue;
         posId_ = data.posId;
 
-        amountToRefund_ =
-            ActionsUtils._createOpenPendingAction(s, params.to, params.validator, params.securityDepositValue, data);
+        amountToRefund_ = _createOpenPendingAction(s, params.to, params.validator, params.securityDepositValue, data);
 
         if (params.permit2TokenBitfield.useForAsset()) {
             address(s._asset).permit2TransferFrom(params.user, address(this), params.amount);
@@ -261,6 +260,40 @@ library UsdnProtocolActionsLongLibrary {
             data.adjustedPrice,
             posId_
         );
+    }
+
+    /**
+     * @notice Prepare the pending action struct for an open position and add it to the queue
+     * @param s The storage of the protocol
+     * @param to The address that will be the owner of the position
+     * @param validator The address that will validate the open position
+     * @param securityDepositValue The value of the security deposit for the newly created pending action
+     * @param data The open position action data
+     * @return amountToRefund_ Refund The security deposit value of a stale pending action
+     */
+    function _createOpenPendingAction(
+        Types.Storage storage s,
+        address to,
+        address validator,
+        uint64 securityDepositValue,
+        Types.InitiateOpenPositionData memory data
+    ) internal returns (uint256 amountToRefund_) {
+        Types.LongPendingAction memory action = Types.LongPendingAction({
+            action: Types.ProtocolAction.ValidateOpenPosition,
+            timestamp: uint40(block.timestamp),
+            closeLiqPenalty: 0,
+            to: to,
+            validator: validator,
+            securityDepositValue: securityDepositValue,
+            tick: data.posId.tick,
+            closeAmount: 0,
+            closePosTotalExpo: 0,
+            tickVersion: data.posId.tickVersion,
+            index: data.posId.index,
+            liqMultiplier: data.liqMultiplier,
+            closeBoundedPositionValue: 0
+        });
+        amountToRefund_ = Core._addPendingAction(s, validator, Core._convertLongPendingAction(action));
     }
 
     /**

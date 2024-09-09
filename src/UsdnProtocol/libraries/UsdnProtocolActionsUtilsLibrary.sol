@@ -214,40 +214,6 @@ library UsdnProtocolActionsUtilsLibrary {
     }
 
     /**
-     * @notice Prepare the pending action struct for an open position and add it to the queue
-     * @param s The storage of the protocol
-     * @param to The address that will be the owner of the position
-     * @param validator The address that will validate the open position
-     * @param securityDepositValue The value of the security deposit for the newly created pending action
-     * @param data The open position action data
-     * @return amountToRefund_ Refund The security deposit value of a stale pending action
-     */
-    function _createOpenPendingAction(
-        Types.Storage storage s,
-        address to,
-        address validator,
-        uint64 securityDepositValue,
-        Types.InitiateOpenPositionData memory data
-    ) public returns (uint256 amountToRefund_) {
-        Types.LongPendingAction memory action = Types.LongPendingAction({
-            action: Types.ProtocolAction.ValidateOpenPosition,
-            timestamp: uint40(block.timestamp),
-            closeLiqPenalty: 0,
-            to: to,
-            validator: validator,
-            securityDepositValue: securityDepositValue,
-            tick: data.posId.tick,
-            closeAmount: 0,
-            closePosTotalExpo: 0,
-            tickVersion: data.posId.tickVersion,
-            index: data.posId.index,
-            liqMultiplier: data.liqMultiplier,
-            closeBoundedPositionValue: 0
-        });
-        amountToRefund_ = Core._addPendingAction(s, validator, Core._convertLongPendingAction(action));
-    }
-
-    /**
      * @notice Perform checks for the initiate close position action
      * @dev Reverts if the to address is zero, the position was not validated yet, the position is not owned by the
      * user, the amount to close is higher than the position amount, or the amount to close is zero

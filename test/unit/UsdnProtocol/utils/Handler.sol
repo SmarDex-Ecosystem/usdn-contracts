@@ -165,7 +165,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint64 securityDepositValue,
         InitiateOpenPositionData memory data
     ) public returns (uint256 amountToRefund_) {
-        return ActionsUtils._createOpenPendingAction(s, to, validator, securityDepositValue, data);
+        return ActionsLong._createOpenPendingAction(s, to, validator, securityDepositValue, data);
     }
 
     function i_createClosePendingAction(
