@@ -277,4 +277,15 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * @dev This function can only be called by the validator in charge of a liquidated initiated long position
      */
     function refundSecurityDeposit() external;
+
+    /**
+     * @notice Get a long position identified by its tick, tickVersion and index
+     * @param posId The unique position identifier
+     * @return pos_ The position data
+     * @return liquidationPenalty_ The liquidation penalty for that position (and associated tick)
+     */
+    function getLongPosition(PositionId calldata posId)
+        external
+        view
+        returns (Position memory pos_, uint24 liquidationPenalty_);
 }
