@@ -844,17 +844,6 @@ library UsdnProtocolCoreLibrary {
     }
 
     /**
-     * @notice Clear the pending action for a user
-     * @param s The storage of the protocol
-     * @param user The user's address
-     * @param rawIndex The rawIndex of the pending action in the queue
-     */
-    function _clearPendingAction(Types.Storage storage s, address user, uint128 rawIndex) public {
-        s._pendingActionsQueue.clearAt(rawIndex);
-        delete s._pendingActions[user];
-    }
-
-    /**
      * @notice Remove a stuck pending action and perform the minimal amount of cleanup necessary
      * @dev This function should only be called by the owner of the protocol, it serves as an escape hatch if a
      * pending action ever gets stuck due to something reverting unexpectedly

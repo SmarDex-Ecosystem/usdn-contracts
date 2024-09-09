@@ -13,6 +13,7 @@ import { IUsdnProtocolActions } from "../../interfaces/UsdnProtocol/IUsdnProtoco
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { DoubleEndedQueue } from "../../libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../../libraries/HugeUint.sol";
 import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
@@ -32,6 +33,7 @@ library UsdnProtocolActionsVaultLibrary {
     using SignedMath for int256;
     using HugeUint for HugeUint.Uint512;
     using Permit2TokenBitfield for Permit2TokenBitfield.Bitfield;
+    using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
     /**
      * @dev Structure to hold the transient data during `_initiateDeposit`
@@ -455,7 +457,7 @@ library UsdnProtocolActionsVaultLibrary {
         isValidated_ = _validateDepositWithAction(s, pending, priceData);
 
         if (isValidated_) {
-            Core._clearPendingAction(s, validator, rawIndex);
+            _clearPendingAction(s, validator, rawIndex);
             securityDepositValue_ = pending.securityDepositValue;
         }
     }
@@ -726,7 +728,7 @@ library UsdnProtocolActionsVaultLibrary {
         isValidated_ = _validateWithdrawalWithAction(s, pending, priceData);
 
         if (isValidated_) {
-            Core._clearPendingAction(s, validator, rawIndex);
+            _clearPendingAction(s, validator, rawIndex);
             securityDepositValue_ = pending.securityDepositValue;
         }
     }
@@ -883,7 +885,7 @@ library UsdnProtocolActionsVaultLibrary {
         success_ = true;
 
         if (executed_ || liquidated_) {
-            Core._clearPendingAction(s, pending.validator, rawIndex);
+            _clearPendingAction(s, pending.validator, rawIndex);
             securityDepositValue_ = pending.securityDepositValue;
             emit IUsdnProtocolEvents.SecurityDepositRefunded(pending.validator, msg.sender, securityDepositValue_);
         }
@@ -952,5 +954,16 @@ library UsdnProtocolActionsVaultLibrary {
                 IFeeCollectorCallback(feeCollector).feeCollectorCallback(pendingFee);
             }
         }
+    }
+
+    /**
+     * @notice Clear the pending action for a user
+     * @param s The storage of the protocol
+     * @param user The user's address
+     * @param rawIndex The rawIndex of the pending action in the queue
+     */
+    function _clearPendingAction(Types.Storage storage s, address user, uint128 rawIndex) public {
+        s._pendingActionsQueue.clearAt(rawIndex);
+        delete s._pendingActions[user];
     }
 }

@@ -13,7 +13,6 @@ import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdn
 import { HugeUint } from "../../libraries/HugeUint.sol";
 import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 import { TickMath } from "../../libraries/TickMath.sol";
-import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolActionsVaultLibrary as ActionsVault } from "./UsdnProtocolActionsVaultLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
@@ -322,7 +321,7 @@ library UsdnProtocolActionsLongLibrary {
         (isValidated_, liquidated_) = _validateOpenPositionWithAction(s, pending, priceData);
 
         if (isValidated_ || liquidated_) {
-            Core._clearPendingAction(s, validator, rawIndex);
+            ActionsVault._clearPendingAction(s, validator, rawIndex);
             securityDepositValue_ = pending.securityDepositValue;
         }
     }
@@ -663,7 +662,7 @@ library UsdnProtocolActionsLongLibrary {
         (isValidated_, liquidated_) = _validateClosePositionWithAction(s, pending, priceData);
 
         if (isValidated_ || liquidated_) {
-            Core._clearPendingAction(s, validator, rawIndex);
+            ActionsVault._clearPendingAction(s, validator, rawIndex);
             securityDepositValue_ = pending.securityDepositValue;
         }
     }
