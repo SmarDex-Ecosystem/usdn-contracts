@@ -4,6 +4,8 @@ pragma solidity 0.8.26;
 import { ADMIN, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
 /**
@@ -537,7 +539,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         protocol.initiateOpenPosition(
             1 ether,
             1500 ether,
-            2,
+            2 * 10 ** Constants.LEVERAGE_DECIMALS,
             address(this),
             payable(address(this)),
             NO_PERMIT2,
