@@ -508,7 +508,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_mergeWithdrawalAmountParts(uint24 sharesLSB, uint128 sharesMSB) external pure returns (uint256) {
-        return Core._mergeWithdrawalAmountParts(sharesLSB, sharesMSB);
+        return Utils._mergeWithdrawalAmountParts(sharesLSB, sharesMSB);
     }
 
     function i_calcWithdrawalAmountLSB(uint152 usdnShares) external pure returns (uint24) {

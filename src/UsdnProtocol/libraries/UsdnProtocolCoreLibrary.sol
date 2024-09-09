@@ -482,20 +482,6 @@ library UsdnProtocolCoreLibrary {
     }
 
     /**
-     * @notice Merge the two parts of the withdrawal amount (USDN shares) stored in the `Types.WithdrawalPendingAction`
-     * @param sharesLSB The lower 24 bits of the USDN shares
-     * @param sharesMSB The higher bits of the USDN shares
-     * @return usdnShares_ The amount of USDN shares
-     */
-    function _mergeWithdrawalAmountParts(uint24 sharesLSB, uint128 sharesMSB)
-        public
-        pure
-        returns (uint256 usdnShares_)
-    {
-        usdnShares_ = sharesLSB | uint256(sharesMSB) << 24;
-    }
-
-    /**
      * @notice Calculate the profits and losses of the long side, calculate the funding and apply protocol fees,
      * calculate the new liquidation multiplier and the temporary new balances for each side
      * @dev This function updates the state of `_lastPrice`, `_lastUpdateTimestamp`, `_lastFunding`, but does not
@@ -759,7 +745,7 @@ library UsdnProtocolCoreLibrary {
         } else if (pending.action == Types.ProtocolAction.ValidateWithdrawal && cleanup) {
             // for pending withdrawals, we send the locked USDN
             Types.WithdrawalPendingAction memory withdrawal = Utils._toWithdrawalPendingAction(pending);
-            uint256 shares = _mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
+            uint256 shares = Utils._mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
             uint256 pendingAmount =
                 FixedPointMathLib.fullMulDiv(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares);
             s._pendingBalanceVault += pendingAmount.toInt256();

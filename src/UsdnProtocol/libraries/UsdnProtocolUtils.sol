@@ -191,4 +191,18 @@ library UsdnProtocolUtils {
                 / tickSpacing
         );
     }
+
+    /**
+     * @notice Merge the two parts of the withdrawal amount (USDN shares) stored in the `Types.WithdrawalPendingAction`
+     * @param sharesLSB The lower 24 bits of the USDN shares
+     * @param sharesMSB The higher bits of the USDN shares
+     * @return usdnShares_ The amount of USDN shares
+     */
+    function _mergeWithdrawalAmountParts(uint24 sharesLSB, uint128 sharesMSB)
+        internal
+        pure
+        returns (uint256 usdnShares_)
+    {
+        usdnShares_ = sharesLSB | uint256(sharesMSB) << 24;
+    }
 }
