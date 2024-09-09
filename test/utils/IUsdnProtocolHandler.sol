@@ -161,10 +161,12 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
 
     function i_convertLongPendingAction(LongPendingAction memory action) external pure returns (PendingAction memory);
 
-    function i_assetToRemove(uint128 priceWithFees, uint128 liqPriceWithoutPenalty, uint128 posExpo)
-        external
-        view
-        returns (uint256);
+    function i_assetToRemove(
+        uint256 balanceLong,
+        uint128 priceWithFees,
+        uint128 liqPriceWithoutPenalty,
+        uint128 posExpo
+    ) external view returns (uint256);
 
     function i_tickValue(
         int24 tick,
@@ -208,7 +210,9 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
 
     function i_checkImbalanceLimitOpen(uint256 openTotalExpoValue, uint256 openCollatValue) external view;
 
-    function i_checkImbalanceLimitClose(uint256 posTotalExpoToClose, uint256 posValueToClose) external view;
+    function i_checkImbalanceLimitClose(uint256 posTotalExpoToClose, uint256 posValueToClose, uint256 fees)
+        external
+        view;
 
     function i_getLeverage(uint128 price, uint128 liqPrice) external pure returns (uint256);
 

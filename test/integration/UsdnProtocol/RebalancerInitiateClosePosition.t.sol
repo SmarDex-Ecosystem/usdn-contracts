@@ -126,17 +126,17 @@ contract TestRebalancerInitiateClosePosition is
      */
     function test_RevertWhen_rebalancerInitiateClosePositionPartialTriggerImbalanceLimit() public {
         // choose an amount big enough to trigger imbalance limits
-        uint88 amount = amountInRebalancer / 20;
+        uint88 amount = amountInRebalancer / 10;
         uint256 securityDeposit = protocol.getSecurityDepositValue();
 
         int256 currentVaultExpo = int256(protocol.getBalanceVault()) + protocol.getPendingBalanceVault();
-        int256 newLongExpo = int256(protocol.getTotalExpo() - protocolPosition.totalExpo / 20)
+        int256 newLongExpo = int256(protocol.getTotalExpo() - protocolPosition.totalExpo / 10)
             - (
                 int256(protocol.getBalanceLong())
-                    - protocol.getPositionValue(prevPosId, wstEthPrice, uint128(block.timestamp)) / 20
+                    - protocol.getPositionValue(prevPosId, wstEthPrice, uint128(block.timestamp)) / 10
             );
-        int256 expectedImbalance = (currentVaultExpo - newLongExpo) * 10_000 / newLongExpo;
-        emit log_named_int("expectedImbalance", expectedImbalance);
+        int256 expectedImbalance = (currentVaultExpo - newLongExpo) * int256(BPS_DIVISOR) / newLongExpo;
+        emit log_int(expectedImbalance);
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolImbalanceLimitReached.selector, expectedImbalance));
         rebalancer.initiateClosePosition{ value: securityDeposit }(amount, address(this), "", EMPTY_PREVIOUS_DATA);

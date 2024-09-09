@@ -25,6 +25,8 @@ import { UsdnProtocolLongLibrary as Long } from "./UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolUtils as Utils } from "./UsdnProtocolUtils.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.sol";
 
+import { console2 } from "forge-std/Test.sol";
+
 library UsdnProtocolActionsUtilsLibrary {
     using SafeTransferLib for address;
     using SafeCast for uint256;
@@ -151,7 +153,7 @@ library UsdnProtocolActionsUtilsLibrary {
 
         int256 newLongBalance = s._balanceLong.toInt256().safeSub(posValueToCloseWithFees.toInt256());
         uint256 newTotalExpo = s._totalExpo - posTotalExpoToClose;
-        int256 currentVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault);
+        int256 currentVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault).safeAdd(fees.toInt256());
 
         int256 imbalanceBps = Long._calcImbalanceCloseBps(currentVaultExpo, newLongBalance, newTotalExpo);
 
@@ -392,29 +394,31 @@ library UsdnProtocolActionsUtilsLibrary {
 
         _checkInitiateClosePosition(s, owner, to, validator, amountToClose, data_.pos);
 
-        PriceInfo memory currentPrice = ActionsVault._getOraclePrice(
-            s,
-            Types.ProtocolAction.InitiateClosePosition,
-            block.timestamp,
-            _calcActionId(owner, uint128(block.timestamp)),
-            currentPriceData
-        );
+        {
+            PriceInfo memory currentPrice = ActionsVault._getOraclePrice(
+                s,
+                Types.ProtocolAction.InitiateClosePosition,
+                block.timestamp,
+                _calcActionId(owner, uint128(block.timestamp)),
+                currentPriceData
+            );
 
-        (, data_.isLiquidationPending) = Long._applyPnlAndFundingAndLiquidate(
-            s,
-            currentPrice.neutralPrice,
-            currentPrice.timestamp,
-            s._liquidationIteration,
-            false,
-            Types.ProtocolAction.InitiateClosePosition,
-            currentPriceData
-        );
+            (, data_.isLiquidationPending) = Long._applyPnlAndFundingAndLiquidate(
+                s,
+                currentPrice.neutralPrice,
+                currentPrice.timestamp,
+                s._liquidationIteration,
+                false,
+                Types.ProtocolAction.InitiateClosePosition,
+                currentPriceData
+            );
 
-        uint256 version = s._tickVersion[posId.tick];
-        if (version != posId.tickVersion) {
-            // the current tick version doesn't match the version from the position,
-            // that means that the position has been liquidated in this transaction
-            return (data_, true);
+            uint256 version = s._tickVersion[posId.tick];
+            if (version != posId.tickVersion) {
+                // the current tick version doesn't match the version from the position,
+                // that means that the position has been liquidated in this transaction
+                return (data_, true);
+            }
         }
 
         if (data_.isLiquidationPending) {
@@ -441,16 +445,16 @@ library UsdnProtocolActionsUtilsLibrary {
         data_.tempPositionValue =
             _assetToRemove(balanceLong, data_.lastPrice, liqPriceWithoutPenalty, data_.totalExpoToClose);
 
-        // uint128 priceWithFees =
-        //     (data_.lastPrice - data_.lastPrice * s._positionFeeBps / Constants.BPS_DIVISOR).toUint128();
+        uint128 priceAfterFees =
+            (data_.lastPrice - data_.lastPrice * s._positionFeeBps / Constants.BPS_DIVISOR).toUint128();
 
-        // uint256 posValueWithFees =
-        //     _assetToRemove(balanceLong, priceWithFees, liqPriceWithoutPenalty, data_.totalExpoToClose);
+        uint256 posValueWithFees =
+            _assetToRemove(balanceLong, priceAfterFees, liqPriceWithoutPenalty, data_.totalExpoToClose);
 
         // we perform the imbalance check based on the estimated balance change since that's the best we have right now
-        _checkImbalanceLimitClose(s, data_.totalExpoToClose, data_.lastPrice, data_.tempPositionValue);
-        // _checkImbalanceLimitClose(s, data_.totalExpoToClose, priceWithFees, data_.tempPositionValue -
-        // posValueWithFees);
+        _checkImbalanceLimitClose(
+            s, data_.totalExpoToClose, posValueWithFees, data_.tempPositionValue - posValueWithFees
+        );
     }
 
     /**
@@ -503,7 +507,7 @@ library UsdnProtocolActionsUtilsLibrary {
      */
     function _assetToRemove(uint256 balanceLong, uint128 priceWithFees, uint128 liqPriceWithoutPenalty, uint128 posExpo)
         public
-        view
+        pure
         returns (uint256 boundedPosValue_)
     {
         // calculate position value
