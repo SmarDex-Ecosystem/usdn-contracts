@@ -455,44 +455,6 @@ library UsdnProtocolActionsUtilsLibrary {
     }
 
     /**
-     * @notice Prepare the pending action struct for the close position action and add it to the queue
-     * @param s The storage of the protocol
-     * @param to The address that will receive the assets
-     * @param validator The validator for the pending action
-     * @param posId The unique identifier of the position
-     * @param amountToClose The amount of collateral to remove from the position's amount
-     * @param securityDepositValue The value of the security deposit for the newly created pending action
-     * @param data The close position data
-     * @return amountToRefund_ Refund The security deposit value of a stale pending action
-     */
-    function _createClosePendingAction(
-        Types.Storage storage s,
-        address to,
-        address validator,
-        Types.PositionId memory posId,
-        uint128 amountToClose,
-        uint64 securityDepositValue,
-        Types.ClosePositionData memory data
-    ) public returns (uint256 amountToRefund_) {
-        Types.LongPendingAction memory action = Types.LongPendingAction({
-            action: Types.ProtocolAction.ValidateClosePosition,
-            timestamp: uint40(block.timestamp),
-            closeLiqPenalty: data.liquidationPenalty,
-            to: to,
-            validator: validator,
-            securityDepositValue: securityDepositValue,
-            tick: posId.tick,
-            closeAmount: amountToClose,
-            closePosTotalExpo: data.totalExpoToClose,
-            tickVersion: posId.tickVersion,
-            index: posId.index,
-            liqMultiplier: Long._calcFixedPrecisionMultiplier(data.lastPrice, data.longTradingExpo, data.liqMulAcc),
-            closeBoundedPositionValue: data.tempPositionValue
-        });
-        amountToRefund_ = Core._addPendingAction(s, validator, Core._convertLongPendingAction(action));
-    }
-
-    /**
      * @notice Calculate how much wstETH must be removed from the long balance due to a position closing
      * @dev The amount is bound by the amount of wstETH available on the long side
      * @param s The storage of the protocol
@@ -507,7 +469,7 @@ library UsdnProtocolActionsUtilsLibrary {
         uint128 priceWithFees,
         uint128 liqPriceWithoutPenalty,
         uint128 posExpo
-    ) public view returns (uint256 boundedPosValue_) {
+    ) internal view returns (uint256 boundedPosValue_) {
         // the available amount of assets on the long side (with the current balance)
         uint256 available = s._balanceLong;
 

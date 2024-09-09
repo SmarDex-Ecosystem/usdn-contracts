@@ -176,8 +176,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint64 securityDepositValue,
         ClosePositionData memory data
     ) external returns (uint256 amountToRefund_) {
-        return
-            ActionsUtils._createClosePendingAction(s, to, validator, posId, amountToClose, securityDepositValue, data);
+        return ActionsLong._createClosePendingAction(s, to, validator, posId, amountToClose, securityDepositValue, data);
     }
 
     function findLastSetInTickBitmap(int24 searchFrom) external view returns (uint256 index) {
