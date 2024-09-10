@@ -214,7 +214,14 @@ library UsdnProtocolActionsLongLibrary {
         }
 
         Types.InitiateOpenPositionData memory data = Long._prepareInitiateOpenPositionData(
-            s, params.validator, params.amount, params.desiredLiqPrice, currentPriceData
+            s,
+            Types.PrepareInitiateOpenPositionParams({
+                validator: params.validator,
+                amount: params.amount,
+                desiredLiqPrice: params.desiredLiqPrice,
+                userMaxLeverage: params.userMaxLeverage,
+                currentPriceData: currentPriceData
+            })
         );
 
         if (data.isLiquidationPending) {

@@ -201,6 +201,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition(
             depositAmount,
             initialPrice / 2,
+            protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
             NO_PERMIT2,
@@ -231,6 +232,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition(
             depositAmount,
             initialPrice / 2,
+            protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
             NO_PERMIT2,
