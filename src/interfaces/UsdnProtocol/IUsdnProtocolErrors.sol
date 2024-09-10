@@ -12,7 +12,10 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the sender could not accept the ether refund
     error UsdnProtocolEtherRefundFailed();
 
-    /// @dev Indicates that the validator is not eligible for a security deposit refund
+    /**
+     * @dev Indicates that the validator is not eligible for a security deposit refund
+     * @param validator The address of the validator
+     */
     error UsdnProtocolNotEligibleForRefund(address validator);
 
     /// @dev Indicates that the provided amount is zero
