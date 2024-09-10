@@ -79,8 +79,8 @@ library UsdnProtocolActionsLongLibrary {
                 amountToRefund += ActionsVault._executePendingActionOrRevert(s, previousActionsData);
             }
         }
-        ActionsVault._refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
-        ActionsVault._checkPendingFee(s);
+        Utils._refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
+        Utils._checkPendingFee(s);
     }
 
     /// @notice See {IUsdnProtocolActions}
@@ -96,7 +96,7 @@ library UsdnProtocolActionsLongLibrary {
         bool liquidated;
         (amountToRefund, success_, liquidated) = _validateOpenPosition(s, validator, openPriceData);
         if (msg.sender != validator) {
-            ActionsVault._refundEther(amountToRefund, validator);
+            Utils._refundEther(amountToRefund, validator);
             balanceBefore -= amountToRefund;
             amountToRefund = 0;
         }
@@ -106,8 +106,8 @@ library UsdnProtocolActionsLongLibrary {
             }
         }
 
-        ActionsVault._refundExcessEther(0, amountToRefund, balanceBefore);
-        ActionsVault._checkPendingFee(s);
+        Utils._refundExcessEther(0, amountToRefund, balanceBefore);
+        Utils._checkPendingFee(s);
     }
 
     /// @notice See {IUsdnProtocolActions}
@@ -143,8 +143,8 @@ library UsdnProtocolActionsLongLibrary {
             }
         }
 
-        ActionsVault._refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
-        ActionsVault._checkPendingFee(s);
+        Utils._refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
+        Utils._checkPendingFee(s);
     }
 
     /// @notice See {IUsdnProtocolActions}
@@ -160,7 +160,7 @@ library UsdnProtocolActionsLongLibrary {
         bool liq;
         (amountToRefund, success_, liq) = _validateClosePosition(s, validator, closePriceData);
         if (msg.sender != validator) {
-            ActionsVault._refundEther(amountToRefund, validator);
+            Utils._refundEther(amountToRefund, validator);
             balanceBefore -= amountToRefund;
             amountToRefund = 0;
         }
@@ -170,8 +170,8 @@ library UsdnProtocolActionsLongLibrary {
             }
         }
 
-        ActionsVault._refundExcessEther(0, amountToRefund, balanceBefore);
-        ActionsVault._checkPendingFee(s);
+        Utils._refundExcessEther(0, amountToRefund, balanceBefore);
+        Utils._checkPendingFee(s);
     }
 
     /* -------------------------------------------------------------------------- */

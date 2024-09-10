@@ -70,8 +70,8 @@ library UsdnProtocolActionsUtilsLibrary {
             currentPriceData
         );
 
-        ActionsVault._refundExcessEther(0, 0, balanceBefore);
-        ActionsVault._checkPendingFee(s);
+        Utils._refundExcessEther(0, 0, balanceBefore);
+        Utils._checkPendingFee(s);
     }
 
     /**
@@ -101,8 +101,8 @@ library UsdnProtocolActionsUtilsLibrary {
                 amountToRefund += securityDepositValue;
             }
         } while (validatedActions_ < maxValidations);
-        ActionsVault._refundExcessEther(0, amountToRefund, balanceBefore);
-        ActionsVault._checkPendingFee(s);
+        Utils._refundExcessEther(0, amountToRefund, balanceBefore);
+        Utils._checkPendingFee(s);
     }
 
     /// @notice See {IUsdnProtocolActions}

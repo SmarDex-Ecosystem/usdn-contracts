@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
+import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
+import { IFeeCollectorCallback } from "../../interfaces/UsdnProtocol/IFeeCollectorCallback.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
 import { DoubleEndedQueue } from "../../libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../../libraries/HugeUint.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
@@ -23,6 +26,7 @@ library UsdnProtocolUtilsLibrary {
     using SignedMath for int256;
     using HugeUint for HugeUint.Uint512;
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
+    using SafeTransferLib for address;
 
     /**
      * @notice Convert a uint128 to an int256
@@ -445,5 +449,70 @@ library UsdnProtocolUtilsLibrary {
     function _clearPendingAction(Types.Storage storage s, address user, uint128 rawIndex) internal {
         s._pendingActionsQueue.clearAt(rawIndex);
         delete s._pendingActions[user];
+    }
+
+    /**
+     * @notice Refunds any excess ether to the user to prevent locking ETH in the contract
+     * @param securityDepositValue The security deposit value of the action (zero for a validation action)
+     * @param amountToRefund The amount to refund to the user:
+     *      - the security deposit if executing an action for another user,
+     *      - the initialization security deposit in case of a validation action
+     * @param balanceBefore The balance of the contract before the action
+     */
+    function _refundExcessEther(uint256 securityDepositValue, uint256 amountToRefund, uint256 balanceBefore) internal {
+        uint256 positive = amountToRefund + address(this).balance + msg.value;
+        uint256 negative = balanceBefore + securityDepositValue;
+
+        if (negative > positive) {
+            revert IUsdnProtocolErrors.UsdnProtocolUnexpectedBalance();
+        }
+
+        uint256 amount;
+        unchecked {
+            // we know that positive >= negative, so this subtraction is safe
+            amount = positive - negative;
+        }
+
+        _refundEther(amount, payable(msg.sender));
+    }
+
+    /**
+     * @notice Refunds an amount of ether to the given address
+     * @param amount The amount of ether to refund
+     * @param to The address that should receive the refund
+     */
+    function _refundEther(uint256 amount, address payable to) internal {
+        if (to == address(0)) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo();
+        }
+        if (amount != 0) {
+            // slither-disable-next-line arbitrary-send-eth
+            (bool success,) = to.call{ value: amount }("");
+            if (!success) {
+                revert IUsdnProtocolErrors.UsdnProtocolEtherRefundFailed();
+            }
+        }
+    }
+
+    /**
+     * @notice Distribute the protocol fee to the fee collector if it exceeds the threshold
+     * @dev This function is called after every action that changes the protocol fee balance
+     * Try to call the function `feeCollectorCallback` on the fee collector if it supports the interface (non reverting
+     * if it fails)
+     * @param s The storage of the protocol
+     */
+    function _checkPendingFee(Types.Storage storage s) internal {
+        uint256 pendingFee = s._pendingProtocolFee;
+        if (pendingFee >= s._feeThreshold) {
+            address feeCollector = s._feeCollector;
+
+            emit IUsdnProtocolEvents.ProtocolFeeDistributed(feeCollector, pendingFee);
+            s._pendingProtocolFee = 0;
+            address(s._asset).safeTransfer(feeCollector, pendingFee);
+
+            if (ERC165Checker.supportsInterface(feeCollector, type(IFeeCollectorCallback).interfaceId)) {
+                IFeeCollectorCallback(feeCollector).feeCollectorCallback(pendingFee);
+            }
+        }
     }
 }

@@ -71,7 +71,7 @@ library UsdnProtocolCoreLibrary {
 
         Vault._createInitialPosition(s, longAmount, currentPrice.price.toUint128(), tickWithPenalty, positionTotalExpo);
 
-        ActionsVault._refundEther(address(this).balance, payable(msg.sender));
+        Utils._refundEther(address(this).balance, payable(msg.sender));
     }
 
     /* -------------------------- public view functions ------------------------- */

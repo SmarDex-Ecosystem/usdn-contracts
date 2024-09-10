@@ -500,11 +500,11 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         external
         payable
     {
-        ActionsVault._refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
+        Utils._refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
     }
 
     function i_refundEther(uint256 amount, address payable to) external payable {
-        ActionsVault._refundEther(amount, to);
+        Utils._refundEther(amount, to);
     }
 
     function i_mergeWithdrawalAmountParts(uint24 sharesLSB, uint128 sharesMSB) external pure returns (uint256) {
@@ -674,7 +674,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_checkPendingFee() external {
-        ActionsVault._checkPendingFee(s);
+        Utils._checkPendingFee(s);
     }
 
     function i_sendRewardsToLiquidator(
