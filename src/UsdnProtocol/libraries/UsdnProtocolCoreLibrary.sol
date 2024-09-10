@@ -107,7 +107,6 @@ library UsdnProtocolCoreLibrary {
         }
     }
 
-    // TO DO : move in Core
     /**
      * @notice Create initial deposit
      * @dev To be called from `initialize`
@@ -144,7 +143,6 @@ library UsdnProtocolCoreLibrary {
         emit IUsdnProtocolEvents.ValidatedDeposit(msg.sender, msg.sender, amount, mintedTokens, block.timestamp);
     }
 
-    // TO DO : move in Core
     /**
      * @notice Create initial long position
      * @dev To be called from `initialize`
@@ -476,7 +474,6 @@ library UsdnProtocolCoreLibrary {
         funding_ = fundingPerDay_.safeMul(elapsedSeconds).safeDiv(1 days);
     }
 
-    // TO DO : optimize this function
     /**
      * @notice Get the predicted value of the funding (in asset units) since the last state update for the given
      * timestamp
@@ -607,7 +604,6 @@ library UsdnProtocolCoreLibrary {
         data_.isPriceRecent = true;
     }
 
-    // TO DO : optimize this function
     /**
      * @notice This is the mutating version of `getActionablePendingAction`, where empty items at the front of the list
      * are removed

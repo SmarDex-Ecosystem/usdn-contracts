@@ -17,7 +17,6 @@ import { SignedMath } from "../../libraries/SignedMath.sol";
 import { TickMath } from "../../libraries/TickMath.sol";
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./UsdnProtocolActionsUtilsLibrary.sol";
-import { UsdnProtocolActionsVaultLibrary as ActionsVault } from "./UsdnProtocolActionsVaultLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.sol";
@@ -145,7 +144,6 @@ library UsdnProtocolLongLibrary {
         tick_ = _roundTickDown(tick_, tickSpacing);
     }
 
-    // TO DO : optimize the code below
     /// @notice See {IUsdnProtocolLong}
     function getTickLiquidationPenalty(Types.Storage storage s, int24 tick)
         public
@@ -530,7 +528,6 @@ library UsdnProtocolLongLibrary {
         rebalancer.updatePosition(posId, data.positionValue);
     }
 
-    // TO DO : optimize the code below
     /**
      * @notice Immediately open a position with the given price
      * @dev Should only be used to open the rebalancer position
