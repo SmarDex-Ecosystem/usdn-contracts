@@ -187,12 +187,12 @@ library UsdnProtocolActionsLongLibrary {
     }
 
     /// @notice See {IUsdnProtocolActions}
-    function refundSecurityDeposit(Types.Storage storage s) public {
-        uint256 securityDepositValue = Core._removeStalePendingAction(s, msg.sender);
+    function refundSecurityDeposit(Types.Storage storage s, address payable validator) public {
+        uint256 securityDepositValue = Core._removeStalePendingAction(s, validator);
         if (securityDepositValue > 0) {
-            ActionsVault._refundEther(securityDepositValue, payable(msg.sender));
+            ActionsVault._refundEther(securityDepositValue, validator);
         } else {
-            revert IUsdnProtocolErrors.UsdnProtocolNotEligibleForRefund();
+            revert IUsdnProtocolErrors.UsdnProtocolNotEligibleForRefund(validator);
         }
     }
 

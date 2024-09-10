@@ -274,9 +274,10 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
 
     /**
      * @notice Refund the security deposit to a validator of a liquidated initiated long position
-     * @dev This function can only be called by the validator in charge of a liquidated initiated long position
+     * @param validator The address of the validator
+     * @dev The security deposit is always sent to the validator
      */
-    function refundSecurityDeposit() external;
+    function refundSecurityDeposit(address payable validator) external;
 
     /**
      * @notice Get a long position identified by its tick, tickVersion and index

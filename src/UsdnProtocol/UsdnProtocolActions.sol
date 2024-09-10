@@ -110,8 +110,8 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
     }
 
     /// @inheritdoc IUsdnProtocolActions
-    function refundSecurityDeposit() external initializedAndNonReentrant {
-        ActionsLong.refundSecurityDeposit(s);
+    function refundSecurityDeposit(address payable validator) external initializedAndNonReentrant {
+        ActionsLong.refundSecurityDeposit(s, validator);
     }
 
     /// @inheritdoc IUsdnProtocolActions

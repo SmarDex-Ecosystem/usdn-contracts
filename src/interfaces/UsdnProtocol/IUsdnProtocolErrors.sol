@@ -13,7 +13,7 @@ interface IUsdnProtocolErrors {
     error UsdnProtocolEtherRefundFailed();
 
     /// @dev Indicates that the validator is not eligible for a security deposit refund
-    error UsdnProtocolNotEligibleForRefund();
+    error UsdnProtocolNotEligibleForRefund(address validator);
 
     /// @dev Indicates that the provided amount is zero
     error UsdnProtocolZeroAmount();

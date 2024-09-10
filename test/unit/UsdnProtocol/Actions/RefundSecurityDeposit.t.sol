@@ -32,22 +32,21 @@ contract TestUsdnProtocolRefundSecurityDeposit is UsdnProtocolBaseFixture {
         _initiateAndLiquidate();
 
         uint256 balanceBefore = address(this).balance;
-        protocol.refundSecurityDeposit();
+        protocol.refundSecurityDeposit(payable(this));
         assertEq(address(this).balance, balanceBefore + _securityDepositValue, "security deposit refunded");
     }
 
     /**
-     * @custom:scenario A user tries to get a security deposit refund without having a liquidated position
+     * @custom:scenario Try to refund a security deposit for a user without a stale pending action
      * @custom:given A position that was liquidated before being validated
-     * @custom:when refundSecurityDeposit is called by a user that is not the validator of the liquidated position
+     * @custom:when refundSecurityDeposit is called with a validator that has no stale pending action
      * @custom:then The transaction reverts with `UsdnProtocolNotEligibleForRefund`
      */
     function test_RevertWhen_RefundSecurityDepositWithoutLiquidation() public {
         _initiateAndLiquidate();
 
-        vm.prank(USER_1);
-        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolNotEligibleForRefund.selector);
-        protocol.refundSecurityDeposit();
+        vm.expectRevert(abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolNotEligibleForRefund.selector, USER_1));
+        protocol.refundSecurityDeposit(USER_1);
     }
 
     /// @notice Helper function to initiate a long position and liquidate it before it gets validated
