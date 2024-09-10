@@ -686,7 +686,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         bytes memory rebaseCallbackResult,
         bytes memory priceData
     ) external {
-        ActionsUtils._sendRewardsToLiquidator(
+        Long._sendRewardsToLiquidator(
             s,
             liquidatedTicks,
             remainingCollateral,

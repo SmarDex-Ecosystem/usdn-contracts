@@ -171,49 +171,6 @@ library UsdnProtocolActionsUtilsLibrary {
     }
 
     /**
-     * @notice Send rewards to the liquidator
-     * @dev Should still emit an event if liquidationRewards = 0 to better keep track of those anomalies as rewards for
-     * those will be managed off-chain
-     * @param s The storage of the protocol
-     * @param liquidatedTicks The number of ticks that were liquidated
-     * @param remainingCollateral The amount of collateral remaining after liquidations
-     * @param rebased Whether a USDN rebase was performed
-     * @param action The protocol action that triggered liquidations
-     * @param rebaseCallbackResult The rebase callback result, if any
-     * @param priceData The price oracle update data
-     */
-    function _sendRewardsToLiquidator(
-        Types.Storage storage s,
-        uint16 liquidatedTicks,
-        int256 remainingCollateral,
-        bool rebased,
-        bool rebalancerTriggered,
-        Types.ProtocolAction action,
-        bytes memory rebaseCallbackResult,
-        bytes memory priceData
-    ) public {
-        // get how much we should give to the liquidator as rewards
-        uint256 liquidationRewards = s._liquidationRewardsManager.getLiquidationRewards(
-            liquidatedTicks, remainingCollateral, rebased, rebalancerTriggered, action, rebaseCallbackResult, priceData
-        );
-
-        // avoid underflows in the situation of extreme bad debt
-        if (s._balanceVault < liquidationRewards) {
-            liquidationRewards = s._balanceVault;
-        }
-
-        // update the vault's balance
-        unchecked {
-            s._balanceVault -= liquidationRewards;
-        }
-
-        // transfer rewards (assets) to the liquidator
-        address(s._asset).safeTransfer(msg.sender, liquidationRewards);
-
-        emit IUsdnProtocolEvents.LiquidatorRewarded(msg.sender, liquidationRewards);
-    }
-
-    /**
      * @notice Perform checks for the initiate close position action
      * @dev Reverts if the to address is zero, the position was not validated yet, the position is not owned by the
      * user, the amount to close is higher than the position amount, or the amount to close is zero
