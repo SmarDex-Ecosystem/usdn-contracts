@@ -135,7 +135,7 @@ library UsdnProtocolActionsUtilsLibrary {
         Types.Storage storage s,
         uint256 posTotalExpoToClose,
         uint256 posValueToCloseAfterFees,
-        int256 fees
+        uint256 fees
     ) public view {
         int256 closeExpoImbalanceLimitBps;
         if (msg.sender == address(s._rebalancer)) {
@@ -151,7 +151,7 @@ library UsdnProtocolActionsUtilsLibrary {
 
         int256 newLongBalance = s._balanceLong.toInt256().safeSub(posValueToCloseAfterFees.toInt256());
         uint256 newTotalExpo = s._totalExpo - posTotalExpoToClose;
-        int256 currentVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault + fees);
+        int256 currentVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault + fees.toInt256());
 
         int256 imbalanceBps = Long._calcImbalanceCloseBps(currentVaultExpo, newLongBalance, newTotalExpo);
 
@@ -449,9 +449,10 @@ library UsdnProtocolActionsUtilsLibrary {
         uint256 posValueAfterFees =
             _assetToRemove(balanceLong, priceAfterFees, liqPriceWithoutPenalty, data_.totalExpoToClose);
 
-        // we perform the imbalance check based on the estimated balance change since that's the best we have right now
+        // we perform the imbalance check with the position value after fees
+        // the position value after fees is smaller than the position value before fees so the subtraction is safe
         _checkImbalanceLimitClose(
-            s, data_.totalExpoToClose, posValueAfterFees, int256(data_.tempPositionValue - posValueAfterFees)
+            s, data_.totalExpoToClose, posValueAfterFees, data_.tempPositionValue - posValueAfterFees
         );
     }
 
@@ -497,19 +498,19 @@ library UsdnProtocolActionsUtilsLibrary {
      * @notice Calculate how much wstETH must be removed from the long balance due to a position closing
      * @dev The amount is bound by the amount of wstETH available on the long side
      * @param balanceLong The balance of long positions (with asset decimals)
-     * @param priceWithFees The current price of the asset, adjusted with fees
+     * @param price The price to use for the position value calculation
      * @param liqPriceWithoutPenalty The liquidation price without penalty
      * @param posExpo The total expo of the position
      * @return boundedPosValue_ The amount of assets to remove from the long balance, bound by zero and the available
      * long balance
      */
-    function _assetToRemove(uint256 balanceLong, uint128 priceWithFees, uint128 liqPriceWithoutPenalty, uint128 posExpo)
+    function _assetToRemove(uint256 balanceLong, uint128 price, uint128 liqPriceWithoutPenalty, uint128 posExpo)
         public
         pure
         returns (uint256 boundedPosValue_)
     {
         // calculate position value
-        int256 positionValue = Long._positionValue(priceWithFees, liqPriceWithoutPenalty, posExpo);
+        int256 positionValue = Long._positionValue(price, liqPriceWithoutPenalty, posExpo);
 
         if (positionValue <= 0) {
             // should not happen, unless we did not manage to liquidate all ticks that needed to be liquidated during

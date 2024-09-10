@@ -418,7 +418,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         Long._checkImbalanceLimitOpen(s, openTotalExpoValue, openCollatValue);
     }
 
-    function i_checkImbalanceLimitClose(uint256 posTotalExpoToClose, uint256 posValueToClose, int256 fees)
+    function i_checkImbalanceLimitClose(uint256 posTotalExpoToClose, uint256 posValueToClose, uint256 fees)
         external
         view
     {
