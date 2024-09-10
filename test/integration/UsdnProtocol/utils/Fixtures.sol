@@ -339,8 +339,8 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         );
     }
 
+    // @dev this function aims to persist the contracts when use vm.rollFork in tests
     function persistContracts() internal {
-        // persist contracts
         vm.makePersistent(address(protocol));
         vm.makePersistent(address(implementation));
         vm.makePersistent(address(protocolFallback));

@@ -110,8 +110,8 @@ contract BaseFixture is Test {
         vm.deal(constants.USER_4, 10_000 ether);
     }
 
+    // @dev this function aims to persist users when use vm.rollFork in tests
     function persistAccounts() internal {
-        // persist accounts
         vm.makePersistent(constants.USER_1);
         vm.makePersistent(constants.USER_2);
         vm.makePersistent(constants.USER_3);
