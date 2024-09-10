@@ -582,4 +582,47 @@ library UsdnProtocolUtilsLibrary {
 
         available_ = totalBalance.safeSub(newLongBalance);
     }
+
+    /**
+     * @notice Knowing the unadjusted price for a tick, get the adjusted price taking into account the effects of the
+     * funding
+     * @param unadjustedPrice The unadjusted price for the tick
+     * @param assetPrice The current price of the asset
+     * @param longTradingExpo The trading expo of the long side (total expo - balance long)
+     * @param accumulator The liquidation multiplier accumulator
+     * @return price_ The adjusted price for the tick
+     */
+    function _adjustPrice(
+        uint256 unadjustedPrice,
+        uint256 assetPrice,
+        uint256 longTradingExpo,
+        HugeUint.Uint512 memory accumulator
+    ) internal pure returns (uint128 price_) {
+        if (accumulator.hi == 0 && accumulator.lo == 0) {
+            // no position in long, we assume a liquidation multiplier of 1.0
+            return unadjustedPrice.toUint128();
+        }
+
+        // M = assetPrice * (totalExpo - balanceLong) / accumulator
+        // price = unadjustedPrice * M
+        // price = unadjustedPrice * assetPrice * (totalExpo - balanceLong) / accumulator
+        HugeUint.Uint512 memory numerator = HugeUint.mul(unadjustedPrice, assetPrice * longTradingExpo);
+        price_ = numerator.div(accumulator).toUint128();
+    }
+
+    /// @notice See {IUsdnProtocolLong}
+    function getEffectivePriceForTick(Types.Storage storage s, int24 tick) internal view returns (uint128 price_) {
+        price_ =
+            getEffectivePriceForTick(tick, s._lastPrice, s._totalExpo - s._balanceLong, s._liqMultiplierAccumulator);
+    }
+
+    /// @notice See {IUsdnProtocolLong}
+    function getEffectivePriceForTick(
+        int24 tick,
+        uint256 assetPrice,
+        uint256 longTradingExpo,
+        HugeUint.Uint512 memory accumulator
+    ) internal pure returns (uint128 price_) {
+        price_ = _adjustPrice(TickMath.getPriceAtTick(tick), assetPrice, longTradingExpo, accumulator);
+    }
 }
