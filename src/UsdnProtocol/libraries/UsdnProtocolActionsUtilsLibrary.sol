@@ -58,7 +58,7 @@ library UsdnProtocolActionsUtilsLibrary {
     {
         uint256 balanceBefore = address(this).balance;
         PriceInfo memory currentPrice =
-            ActionsVault._getOraclePrice(s, Types.ProtocolAction.Liquidation, 0, "", currentPriceData);
+            Utils._getOraclePrice(s, Types.ProtocolAction.Liquidation, 0, "", currentPriceData);
 
         (liquidatedPositions_,) = Long._applyPnlAndFundingAndLiquidate(
             s,
@@ -252,7 +252,7 @@ library UsdnProtocolActionsUtilsLibrary {
 
         _checkInitiateClosePosition(s, owner, to, validator, amountToClose, data_.pos);
 
-        PriceInfo memory currentPrice = ActionsVault._getOraclePrice(
+        PriceInfo memory currentPrice = Utils._getOraclePrice(
             s,
             Types.ProtocolAction.InitiateClosePosition,
             block.timestamp,

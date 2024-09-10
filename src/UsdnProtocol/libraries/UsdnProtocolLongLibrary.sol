@@ -664,7 +664,7 @@ library UsdnProtocolLongLibrary {
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData
     ) public returns (Types.InitiateOpenPositionData memory data_) {
-        PriceInfo memory currentPrice = ActionsVault._getOraclePrice(
+        PriceInfo memory currentPrice = Utils._getOraclePrice(
             s,
             Types.ProtocolAction.InitiateOpenPosition,
             block.timestamp,

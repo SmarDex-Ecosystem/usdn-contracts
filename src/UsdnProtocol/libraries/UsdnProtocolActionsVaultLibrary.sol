@@ -275,7 +275,7 @@ library UsdnProtocolActionsVaultLibrary {
         uint128 amount,
         bytes calldata currentPriceData
     ) public returns (InitiateDepositData memory data_) {
-        PriceInfo memory currentPrice = _getOraclePrice(
+        PriceInfo memory currentPrice = Utils._getOraclePrice(
             s,
             Types.ProtocolAction.InitiateDeposit,
             block.timestamp,
@@ -473,7 +473,7 @@ library UsdnProtocolActionsVaultLibrary {
     ) public returns (bool isValidated_) {
         Types.DepositPendingAction memory deposit = Utils._toDepositPendingAction(pending);
 
-        PriceInfo memory currentPrice = _getOraclePrice(
+        PriceInfo memory currentPrice = Utils._getOraclePrice(
             s,
             Types.ProtocolAction.ValidateDeposit,
             deposit.timestamp,
@@ -544,7 +544,7 @@ library UsdnProtocolActionsVaultLibrary {
         uint152 usdnShares,
         bytes calldata currentPriceData
     ) public returns (WithdrawalData memory data_) {
-        PriceInfo memory currentPrice = _getOraclePrice(
+        PriceInfo memory currentPrice = Utils._getOraclePrice(
             s,
             Types.ProtocolAction.InitiateWithdrawal,
             block.timestamp,
@@ -618,32 +618,6 @@ library UsdnProtocolActionsVaultLibrary {
             })
         );
         amountToRefund_ = Core._addPendingAction(s, validator, action);
-    }
-
-    /**
-     * @notice Get the oracle price for the given action and timestamp then validate it
-     * @param s The storage of the protocol
-     * @param action The type of action that is being performed by the user
-     * @param timestamp The timestamp at which the wanted price was recorded
-     * @param actionId The unique identifier of the action
-     * @param priceData The price oracle data
-     * @return price_ The validated price
-     */
-    function _getOraclePrice(
-        Types.Storage storage s,
-        Types.ProtocolAction action,
-        uint256 timestamp,
-        bytes32 actionId,
-        bytes calldata priceData
-    ) public returns (PriceInfo memory price_) {
-        uint256 validationCost = s._oracleMiddleware.validationCost(priceData, action);
-        if (address(this).balance < validationCost) {
-            revert IUsdnProtocolErrors.UsdnProtocolInsufficientOracleFee();
-        }
-        // slither-disable-next-line arbitrary-send-eth
-        price_ = s._oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            actionId, uint128(timestamp), action, priceData
-        );
     }
 
     /**
@@ -744,7 +718,7 @@ library UsdnProtocolActionsVaultLibrary {
     ) public returns (bool isValidated_) {
         Types.WithdrawalPendingAction memory withdrawal = Utils._toWithdrawalPendingAction(pending);
 
-        PriceInfo memory currentPrice = _getOraclePrice(
+        PriceInfo memory currentPrice = Utils._getOraclePrice(
             s,
             Types.ProtocolAction.ValidateWithdrawal,
             withdrawal.timestamp,

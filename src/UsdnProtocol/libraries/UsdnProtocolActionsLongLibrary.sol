@@ -340,7 +340,7 @@ library UsdnProtocolActionsLongLibrary {
         bytes calldata priceData
     ) internal returns (Types.ValidateOpenPositionData memory data_, bool liquidated_) {
         data_.action = Utils._toLongPendingAction(pending);
-        PriceInfo memory currentPrice = ActionsVault._getOraclePrice(
+        PriceInfo memory currentPrice = Utils._getOraclePrice(
             s,
             Types.ProtocolAction.ValidateOpenPosition,
             data_.action.timestamp,
@@ -683,7 +683,7 @@ library UsdnProtocolActionsLongLibrary {
         ValidateClosePositionWithActionData memory data;
         Types.LongPendingAction memory long = Utils._toLongPendingAction(pending);
 
-        PriceInfo memory currentPrice = ActionsVault._getOraclePrice(
+        PriceInfo memory currentPrice = Utils._getOraclePrice(
             s,
             Types.ProtocolAction.ValidateClosePosition,
             long.timestamp,

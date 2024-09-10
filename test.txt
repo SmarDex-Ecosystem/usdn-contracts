@@ -1,8 +1,8 @@
-| initiateClosePosition                                                                | 1361            | 311245 | 316067 | 486348 | 65      |
+| initiateClosePosition                                                                | 1361            | 309615 | 314463 | 483163 | 65      |
 | initiateDeposit                                                                      | 1373            | 361243 | 362051 | 492656 | 147     |
-| initiateOpenPosition                                                                 | 1544            | 447157 | 465218 | 597850 | 281     |
-| initiateWithdrawal                                                                   | 1240            | 316215 | 337692 | 511480 | 52      |
-| validateClosePosition                                                                | 1088            | 240855 | 234536 | 335471 | 20      |
+| initiateOpenPosition                                                                 | 1544            | 445593 | 463662 | 596298 | 281     |
+| initiateWithdrawal                                                                   | 1240            | 316237 | 337714 | 511502 | 52      |
+| validateClosePosition                                                                | 1088            | 239050 | 232932 | 333867 | 20      |
 | validateDeposit                                                                      | 1086            | 254168 | 249142 | 368105 | 95      |
-| validateOpenPosition                                                                 | 1107            | 253187 | 251415 | 461316 | 207     |
+| validateOpenPosition                                                                 | 1107            | 251561 | 249809 | 459710 | 207     |
 | validateWithdrawal                                                                   | 1108            | 244548 | 251032 | 352807 | 21      |

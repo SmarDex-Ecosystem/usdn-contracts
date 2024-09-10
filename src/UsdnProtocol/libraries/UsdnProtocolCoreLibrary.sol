@@ -55,7 +55,7 @@ library UsdnProtocolCoreLibrary {
         }
 
         PriceInfo memory currentPrice =
-            ActionsVault._getOraclePrice(s, Types.ProtocolAction.Initialize, block.timestamp, "", currentPriceData);
+            Utils._getOraclePrice(s, Types.ProtocolAction.Initialize, block.timestamp, "", currentPriceData);
 
         s._lastUpdateTimestamp = uint128(block.timestamp);
         s._lastPrice = currentPrice.price.toUint128();

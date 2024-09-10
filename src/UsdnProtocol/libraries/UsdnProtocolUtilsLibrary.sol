@@ -6,6 +6,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
+import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IFeeCollectorCallback } from "../../interfaces/UsdnProtocol/IFeeCollectorCallback.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
@@ -514,5 +515,31 @@ library UsdnProtocolUtilsLibrary {
                 IFeeCollectorCallback(feeCollector).feeCollectorCallback(pendingFee);
             }
         }
+    }
+
+    /**
+     * @notice Get the oracle price for the given action and timestamp then validate it
+     * @param s The storage of the protocol
+     * @param action The type of action that is being performed by the user
+     * @param timestamp The timestamp at which the wanted price was recorded
+     * @param actionId The unique identifier of the action
+     * @param priceData The price oracle data
+     * @return price_ The validated price
+     */
+    function _getOraclePrice(
+        Types.Storage storage s,
+        Types.ProtocolAction action,
+        uint256 timestamp,
+        bytes32 actionId,
+        bytes calldata priceData
+    ) internal returns (PriceInfo memory price_) {
+        uint256 validationCost = s._oracleMiddleware.validationCost(priceData, action);
+        if (address(this).balance < validationCost) {
+            revert IUsdnProtocolErrors.UsdnProtocolInsufficientOracleFee();
+        }
+        // slither-disable-next-line arbitrary-send-eth
+        price_ = s._oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
+            actionId, uint128(timestamp), action, priceData
+        );
     }
 }
