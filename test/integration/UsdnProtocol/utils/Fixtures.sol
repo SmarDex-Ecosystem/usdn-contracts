@@ -56,6 +56,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         uint256 initialTimestamp; // ignored if `fork` is true
         bool fork;
         uint256 forkWarp; // warp to this timestamp after forking, before deploying protocol. Zero to disable
+        uint256 forkBlock;
         bool enableRoles;
     }
 
@@ -79,6 +80,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         initialTimestamp: 1_704_092_400, // 2024-01-01 07:00:00 UTC
         fork: false,
         forkWarp: 0,
+        forkBlock: 0,
         enableRoles: true
     });
 
@@ -94,6 +96,8 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
     Usdn public usdn;
     Sdex public sdex;
     IUsdnProtocolHandler public protocol;
+    UsdnProtocolHandler public implementation;
+    UsdnProtocolFallback public protocolFallback;
     WstETH public wstETH;
     MockPyth public mockPyth;
     MockChainlinkOnChain public mockChainlinkOnChain;
@@ -110,8 +114,11 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         if (testParams.fork) {
             string memory url = vm.rpcUrl("mainnet");
             vm.createSelectFork(url);
-            uint256 initBlock = block.number - 1000;
-            vm.rollFork(initBlock);
+            if (testParams.forkBlock > 0) {
+                vm.rollFork(testParams.forkBlock);
+            } else {
+                vm.rollFork(block.number - 1000);
+            }
             if (testParams.forkWarp > 0) {
                 vm.warp(testParams.forkWarp);
             }
@@ -161,8 +168,8 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             });
         }
 
-        UsdnProtocolHandler implementation = new UsdnProtocolHandler();
-        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
+        implementation = new UsdnProtocolHandler();
+        protocolFallback = new UsdnProtocolFallback();
         address proxy = UnsafeUpgrades.deployUUPSProxy(
             address(implementation),
             abi.encodeCall(
@@ -210,6 +217,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         vm.prank(managers.setExternalManager);
         protocol.setRebalancer(rebalancer);
         params = testParams;
+        persistContracts();
     }
 
     function getHermesApiSignature(bytes32 feed, uint256 timestamp)
@@ -329,5 +337,15 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             uint256(defaultLimits.rebalancerCloseExpoImbalanceLimitBps),
             defaultLimits.longImbalanceTargetBps
         );
+    }
+
+    function persistContracts() internal {
+        // persist contracts
+        vm.makePersistent(address(protocol));
+        vm.makePersistent(address(implementation));
+        vm.makePersistent(address(protocolFallback));
+        vm.makePersistent(address(oracleMiddleware));
+        vm.makePersistent(address(usdn));
+        vm.makePersistent(address(wstETH));
     }
 }

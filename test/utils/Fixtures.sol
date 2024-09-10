@@ -46,6 +46,7 @@ contract BaseFixture is Test {
         vm.label(constants.USER_3, "User3");
         vm.label(constants.USER_4, "User4");
         dealAccounts();
+        persistAccounts();
 
         /* -------------------------------------------------------------------------- */
         /*                              Ethereum mainnet                              */
@@ -107,6 +108,14 @@ contract BaseFixture is Test {
         vm.deal(constants.USER_2, 10_000 ether);
         vm.deal(constants.USER_3, 10_000 ether);
         vm.deal(constants.USER_4, 10_000 ether);
+    }
+
+    function persistAccounts() internal {
+        // persist accounts
+        vm.makePersistent(constants.USER_1);
+        vm.makePersistent(constants.USER_2);
+        vm.makePersistent(constants.USER_3);
+        vm.makePersistent(constants.USER_4);
     }
 
     /**
