@@ -16,6 +16,7 @@ import { DoubleEndedQueue } from "../../libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../../libraries/HugeUint.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
 import { TickMath } from "../../libraries/TickMath.sol";
+import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "./UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.sol";
@@ -64,13 +65,121 @@ library UsdnProtocolCoreLibrary {
         uint128 positionTotalExpo =
             Utils._calcPositionTotalExpo(longAmount, currentPrice.price.toUint128(), liqPriceWithoutPenalty);
 
-        Vault._checkInitImbalance(s, positionTotalExpo, longAmount, depositAmount);
+        _checkInitImbalance(s, positionTotalExpo, longAmount, depositAmount);
 
-        Vault._createInitialDeposit(s, depositAmount, currentPrice.price.toUint128());
+        _createInitialDeposit(s, depositAmount, currentPrice.price.toUint128());
 
-        Vault._createInitialPosition(s, longAmount, currentPrice.price.toUint128(), tickWithPenalty, positionTotalExpo);
+        _createInitialPosition(s, longAmount, currentPrice.price.toUint128(), tickWithPenalty, positionTotalExpo);
 
         Utils._refundEther(address(this).balance, payable(msg.sender));
+    }
+
+    /**
+     * @notice Check if the initialize parameters lead to a balanced protocol
+     * @param s The storage of the protocol
+     * @dev This function reverts if the imbalance is exceeded for the deposit or open long action
+     * @param positionTotalExpo The total expo of the deployer's long position
+     * @param longAmount The amount (collateral) of the deployer's long position
+     * @param depositAmount The amount of assets for the deployer's deposit
+     */
+    function _checkInitImbalance(
+        Types.Storage storage s,
+        uint128 positionTotalExpo,
+        uint128 longAmount,
+        uint128 depositAmount
+    ) public view {
+        int256 longTradingExpo = Utils.toInt256(positionTotalExpo - longAmount);
+        int256 depositLimit = s._depositExpoImbalanceLimitBps;
+        if (depositLimit != 0) {
+            int256 imbalanceBps =
+                (Utils.toInt256(depositAmount) - longTradingExpo) * int256(Constants.BPS_DIVISOR) / longTradingExpo;
+            if (imbalanceBps > depositLimit) {
+                revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
+            }
+        }
+        int256 openLimit = s._openExpoImbalanceLimitBps;
+        if (openLimit != 0) {
+            int256 imbalanceBps = (longTradingExpo - Utils.toInt256(depositAmount)) * int256(Constants.BPS_DIVISOR)
+                / Utils.toInt256(depositAmount);
+            if (imbalanceBps > openLimit) {
+                revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
+            }
+        }
+    }
+
+    // TO DO : move in Core
+    /**
+     * @notice Create initial deposit
+     * @dev To be called from `initialize`
+     * @param s The storage of the protocol
+     * @param amount The initial deposit amount
+     * @param price The current asset price
+     */
+    function _createInitialDeposit(Types.Storage storage s, uint128 amount, uint128 price) public {
+        // transfer the wstETH for the deposit
+        address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
+        s._balanceVault += amount;
+        emit IUsdnProtocolEvents.InitiatedDeposit(msg.sender, msg.sender, amount, block.timestamp, 0);
+
+        // calculate the total minted amount of USDN shares (vault balance and total supply are zero for now, we assume
+        // the USDN price to be $1 per token)
+        // the decimals conversion here is necessary since we calculate an amount in tokens and we want the
+        // corresponding amount of shares
+        uint256 usdnSharesToMint = s._usdn.convertToShares(
+            FixedPointMathLib.fullMulDiv(
+                amount, price, 10 ** (s._assetDecimals + s._priceFeedDecimals - Constants.TOKENS_DECIMALS)
+            )
+        );
+        IUsdn usdn = s._usdn;
+        uint256 minUsdnSharesSupply = usdn.convertToShares(Constants.MIN_USDN_SUPPLY);
+        // mint the minimum amount and send it to the dead address so it can never be removed from the total supply
+        usdn.mintShares(Constants.DEAD_ADDRESS, minUsdnSharesSupply);
+        // mint the user's share
+        uint256 mintSharesToUser = usdnSharesToMint - minUsdnSharesSupply;
+        uint256 mintedTokens = usdn.mintShares(msg.sender, mintSharesToUser);
+
+        emit IUsdnProtocolEvents.ValidatedDeposit(
+            Constants.DEAD_ADDRESS, Constants.DEAD_ADDRESS, 0, Constants.MIN_USDN_SUPPLY, block.timestamp
+        );
+        emit IUsdnProtocolEvents.ValidatedDeposit(msg.sender, msg.sender, amount, mintedTokens, block.timestamp);
+    }
+
+    // TO DO : move in Core
+    /**
+     * @notice Create initial long position
+     * @dev To be called from `initialize`
+     * @param s The storage of the protocol
+     * @param amount The initial position amount
+     * @param price The current asset price
+     * @param tick The tick corresponding where the position should be stored
+     * @param totalExpo The total expo of the position
+     */
+    function _createInitialPosition(
+        Types.Storage storage s,
+        uint128 amount,
+        uint128 price,
+        int24 tick,
+        uint128 totalExpo
+    ) public {
+        // transfer the wstETH for the long
+        address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
+
+        Types.PositionId memory posId;
+        posId.tick = tick;
+        Types.Position memory long = Types.Position({
+            validated: true,
+            user: msg.sender,
+            amount: amount,
+            totalExpo: totalExpo,
+            timestamp: uint40(block.timestamp)
+        });
+        // save the position and update the state
+        (posId.tickVersion, posId.index,) = ActionsLong._saveNewPosition(s, posId.tick, long, s._liquidationPenalty);
+        s._balanceLong += long.amount;
+        emit IUsdnProtocolEvents.InitiatedOpenPosition(
+            msg.sender, msg.sender, long.timestamp, totalExpo, long.amount, price, posId
+        );
+        emit IUsdnProtocolEvents.ValidatedOpenPosition(msg.sender, msg.sender, totalExpo, price, posId);
     }
 
     /* -------------------------- public view functions ------------------------- */

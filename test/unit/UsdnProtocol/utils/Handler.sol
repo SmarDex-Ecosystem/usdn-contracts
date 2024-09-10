@@ -377,7 +377,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint128 newPrice,
         uint128 oldPrice
     ) external pure returns (int256 available_) {
-        return Vault._vaultAssetAvailable(totalExpo, balanceVault, balanceLong, newPrice, oldPrice);
+        return Utils._vaultAssetAvailable(totalExpo, balanceVault, balanceLong, newPrice, oldPrice);
     }
 
     function i_vaultAssetAvailable(uint128 currentPrice) external view returns (int256) {
@@ -520,11 +520,11 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_createInitialDeposit(uint128 amount, uint128 price) external {
-        Vault._createInitialDeposit(s, amount, price);
+        Core._createInitialDeposit(s, amount, price);
     }
 
     function i_createInitialPosition(uint128 amount, uint128 price, int24 tick, uint128 positionTotalExpo) external {
-        Vault._createInitialPosition(s, amount, price, tick, positionTotalExpo);
+        Core._createInitialPosition(s, amount, price, tick, positionTotalExpo);
     }
 
     function i_saveNewPosition(int24 tick, Position memory long, uint24 liquidationPenalty)
@@ -623,7 +623,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_checkInitImbalance(uint128 positionTotalExpo, uint128 longAmount, uint128 depositAmount) external view {
-        Vault._checkInitImbalance(s, positionTotalExpo, longAmount, depositAmount);
+        Core._checkInitImbalance(s, positionTotalExpo, longAmount, depositAmount);
     }
 
     function i_removeStalePendingAction(address user) external returns (uint256) {

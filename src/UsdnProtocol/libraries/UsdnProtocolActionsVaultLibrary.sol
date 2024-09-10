@@ -305,7 +305,7 @@ library UsdnProtocolActionsVaultLibrary {
 
         data_.totalExpo = s._totalExpo;
         data_.balanceLong = s._balanceLong;
-        data_.balanceVault = Vault._vaultAssetAvailable(
+        data_.balanceVault = Utils._vaultAssetAvailable(
             data_.totalExpo, s._balanceVault, data_.balanceLong, data_.pendingActionPrice, s._lastPrice
         ).toUint256();
         IUsdn usdn = s._usdn;
@@ -512,7 +512,7 @@ library UsdnProtocolActionsVaultLibrary {
         } else {
             usdnSharesToMint = Utils._calcMintUsdnShares(
                 deposit.amount,
-                Vault._vaultAssetAvailable(
+                Utils._vaultAssetAvailable(
                     deposit.totalExpo, deposit.balanceVault, deposit.balanceLong, priceWithFees, deposit.assetPrice
                 ).toUint256(),
                 deposit.usdnTotalShares
@@ -573,7 +573,7 @@ library UsdnProtocolActionsVaultLibrary {
 
         data_.totalExpo = s._totalExpo;
         data_.balanceLong = s._balanceLong;
-        data_.balanceVault = Vault._vaultAssetAvailable(
+        data_.balanceVault = Utils._vaultAssetAvailable(
             data_.totalExpo, s._balanceVault, data_.balanceLong, data_.pendingActionPrice, s._lastPrice
         ).toUint256();
         data_.usdnTotalShares = s._usdn.totalShares();
@@ -749,7 +749,7 @@ library UsdnProtocolActionsVaultLibrary {
 
             // we calculate the available balance of the vault side, either considering the asset price at the time of
             // the initiate action, or the current price provided for validation
-            int256 vaultAssetAvailable = Vault._vaultAssetAvailable(
+            int256 vaultAssetAvailable = Utils._vaultAssetAvailable(
                 withdrawal.totalExpo,
                 withdrawal.balanceVault,
                 withdrawal.balanceLong,

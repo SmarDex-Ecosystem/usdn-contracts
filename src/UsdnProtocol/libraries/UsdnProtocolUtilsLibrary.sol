@@ -559,4 +559,27 @@ library UsdnProtocolUtilsLibrary {
         //                 = shares * assetAvailable / usdnTotalShares
         assetExpected_ = FixedPointMathLib.fullMulDiv(usdnShares, available, usdnTotalShares);
     }
+
+    /**
+     * @notice Available balance in the vault side if the price moves to `currentPrice` (without taking funding into
+     * account)
+     * @param totalExpo The total expo
+     * @param balanceVault The (old) balance of the vault
+     * @param balanceLong The (old) balance of the long side
+     * @param newPrice The new price
+     * @param oldPrice The old price when the old balances were updated
+     * @return available_ The available balance in the vault side
+     */
+    function _vaultAssetAvailable(
+        uint256 totalExpo,
+        uint256 balanceVault,
+        uint256 balanceLong,
+        uint128 newPrice,
+        uint128 oldPrice
+    ) internal pure returns (int256 available_) {
+        int256 totalBalance = balanceLong.toInt256().safeAdd(balanceVault.toInt256());
+        int256 newLongBalance = _longAssetAvailable(totalExpo, balanceLong, newPrice, oldPrice);
+
+        available_ = totalBalance.safeSub(newLongBalance);
+    }
 }
