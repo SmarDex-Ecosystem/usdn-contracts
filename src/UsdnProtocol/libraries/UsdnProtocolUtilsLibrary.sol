@@ -542,4 +542,21 @@ library UsdnProtocolUtilsLibrary {
             actionId, uint128(timestamp), action, priceData
         );
     }
+
+    /**
+     * @notice Calculate the amount of assets received when burning USDN shares
+     * @param usdnShares The amount of USDN shares
+     * @param available The available asset in the vault
+     * @param usdnTotalShares The total supply of USDN shares
+     * @return assetExpected_ The expected amount of assets to be received
+     */
+    function _calcBurnUsdn(uint256 usdnShares, uint256 available, uint256 usdnTotalShares)
+        internal
+        pure
+        returns (uint256 assetExpected_)
+    {
+        // assetExpected = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
+        //                 = shares * assetAvailable / usdnTotalShares
+        assetExpected_ = FixedPointMathLib.fullMulDiv(usdnShares, available, usdnTotalShares);
+    }
 }

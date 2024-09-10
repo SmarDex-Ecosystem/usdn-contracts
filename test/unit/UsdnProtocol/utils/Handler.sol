@@ -555,7 +555,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         pure
         returns (uint256 assetExpected_)
     {
-        return Vault._calcBurnUsdn(usdnShares, available, usdnTotalShares);
+        return Utils._calcBurnUsdn(usdnShares, available, usdnTotalShares);
     }
 
     function i_calcTickWithoutPenalty(int24 tick, uint24 liquidationPenalty) external pure returns (int24) {

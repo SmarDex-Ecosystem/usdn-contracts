@@ -16,7 +16,6 @@ import { DoubleEndedQueue } from "../../libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../../libraries/HugeUint.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
 import { TickMath } from "../../libraries/TickMath.sol";
-import { UsdnProtocolActionsVaultLibrary as ActionsVault } from "./UsdnProtocolActionsVaultLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "./UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.sol";
@@ -779,7 +778,7 @@ library UsdnProtocolCoreLibrary {
         uint256 lowLatencyDeadline,
         uint256 lowLatencyDelay,
         uint256 onChainDeadline
-    ) public view returns (bool actionable_) {
+    ) internal view returns (bool actionable_) {
         if (block.timestamp <= initiateTimestamp + lowLatencyDelay) {
             // the validation must happen with a low-latency oracle
             actionable_ = block.timestamp > initiateTimestamp + lowLatencyDeadline;

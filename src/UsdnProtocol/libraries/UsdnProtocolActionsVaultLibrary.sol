@@ -577,7 +577,7 @@ library UsdnProtocolActionsVaultLibrary {
             data_.totalExpo, s._balanceVault, data_.balanceLong, data_.pendingActionPrice, s._lastPrice
         ).toUint256();
         data_.usdnTotalShares = s._usdn.totalShares();
-        data_.withdrawalAmount = Vault._calcBurnUsdn(usdnShares, data_.balanceVault, data_.usdnTotalShares);
+        data_.withdrawalAmount = Utils._calcBurnUsdn(usdnShares, data_.balanceVault, data_.usdnTotalShares);
 
         _checkImbalanceLimitWithdrawal(s, data_.withdrawalAmount, data_.totalExpo);
     }
@@ -773,11 +773,11 @@ library UsdnProtocolActionsVaultLibrary {
         uint256 shares = Utils._mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
 
         // we can add back the _pendingBalanceVault we subtracted in the initiate action
-        uint256 tempWithdrawal = Vault._calcBurnUsdn(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares);
+        uint256 tempWithdrawal = Utils._calcBurnUsdn(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares);
         s._pendingBalanceVault += tempWithdrawal.toInt256();
 
         IUsdn usdn = s._usdn;
-        uint256 assetToTransfer = Vault._calcBurnUsdn(shares, available, usdn.totalShares());
+        uint256 assetToTransfer = Utils._calcBurnUsdn(shares, available, usdn.totalShares());
 
         usdn.burnShares(shares);
 

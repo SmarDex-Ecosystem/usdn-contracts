@@ -74,7 +74,7 @@ library UsdnProtocolVaultLibrary {
         if (available < 0) {
             return 0;
         }
-        assetExpected_ = _calcBurnUsdn(usdnShares, uint256(available), s._usdn.totalShares());
+        assetExpected_ = Utils._calcBurnUsdn(usdnShares, uint256(available), s._usdn.totalShares());
     }
 
     /// @notice See {IUsdnProtocolVault}
@@ -243,23 +243,6 @@ library UsdnProtocolVaultLibrary {
         int256 newLongBalance = Utils._longAssetAvailable(totalExpo, balanceLong, newPrice, oldPrice);
 
         available_ = totalBalance.safeSub(newLongBalance);
-    }
-
-    /**
-     * @notice Calculate the amount of assets received when burning USDN shares
-     * @param usdnShares The amount of USDN shares
-     * @param available The available asset in the vault
-     * @param usdnTotalShares The total supply of USDN shares
-     * @return assetExpected_ The expected amount of assets to be received
-     */
-    function _calcBurnUsdn(uint256 usdnShares, uint256 available, uint256 usdnTotalShares)
-        public
-        pure
-        returns (uint256 assetExpected_)
-    {
-        // assetExpected = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
-        //                 = shares * assetAvailable / usdnTotalShares
-        assetExpected_ = FixedPointMathLib.fullMulDiv(usdnShares, available, usdnTotalShares);
     }
 
     /**
