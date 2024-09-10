@@ -14,7 +14,10 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * The transaction must have `_securityDepositValue` in value
      * In case liquidations are pending, this function might not initiate the deposit (and `success_` would be false)
      * @param amount The amount of wstETH to deposit
-     * @param sharesOutMin The minimum amount of USDN tokens to receive
+     * @param sharesOutMin The minimum amount of USDN shares to receive. Note that there is no guarantee that the
+     * effective minted amount at validation will exceed this value. Price changes during the interval could negatively
+     * affect the minted amount. However, if the predicted amount is below this threshold, the initiate action will
+     * revert
      * @param to The address that will receive the USDN tokens
      * @param validator The address that will validate the deposit
      * @param permit2TokenBitfield Whether to use permit2 for transferring assets (first bit) and SDEX (second bit)
