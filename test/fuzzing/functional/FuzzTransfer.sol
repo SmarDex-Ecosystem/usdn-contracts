@@ -15,21 +15,24 @@ contract FuzzTransfer is Setup, Utils {
         address payable dest = boundDestination(destinationsToken[token], users, true, destRand);
 
         if (token == address(0)) {
-            amountRand = bound(amountRand, 0, address(msg.sender).balance);
+            //            amountRand = bound(amountRand, 0, address(msg.sender).balance);
             vm.deal(msg.sender, amountRand);
             vm.prank(msg.sender);
             dest.transfer(amountRand);
+            emit log_named_uint("amount eth send : ", amountRand);
         } else if (token == address(usdn)) {
-            amountRand = bound(amountRand, 0, usdn.sharesOf(msg.sender));
+            //            amountRand = bound(amountRand, 0, usdn.sharesOf(msg.sender));
             vm.prank(address(usdnProtocol));
             usdn.mintShares(msg.sender, amountRand);
             vm.prank(msg.sender);
             usdn.transferShares(dest, amountRand);
+            emit log_named_uint("amount usdn send : ", amountRand);
         } else {
-            amountRand = bound(amountRand, 0, wsteth.balanceOf(msg.sender));
+            //            amountRand = bound(amountRand, 0, wsteth.balanceOf(msg.sender));
             wsteth.mint(msg.sender, amountRand);
             vm.prank(msg.sender);
             wsteth.transfer(dest, amountRand);
+            emit log_named_uint("amount wsteth send : ", amountRand);
         }
     }
 }

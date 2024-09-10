@@ -429,14 +429,17 @@ contract FuzzingSuiteTest is Test {
 
     function test_canTransfer() public {
         uint256 amount = 10 ether;
-        vm.deal(USER_1, amount);
-        vm.prank(address(usdnProtocol));
-        usdn.mintShares(USER_1, amount);
-        wsteth.mintAndApprove(USER_1, amount, address(this), amount);
+        //        vm.deal(USER_1, amount);
+        //        emit log_named_uint("usdn.sharesOf(USER_1) : ", usdn.sharesOf(USER_1));
+        //        vm.prank(address(usdnProtocol));
+        //        usdn.mintShares(USER_1, amount);
+        //        emit log_named_uint("usdn.sharesOf(USER_1) after mint : ", usdn.sharesOf(USER_1));
+        //        wsteth.mintAndApprove(USER_1, amount, address(this), amount);
         uint256 balanceBefore = USER_1.balance;
-        uint256 balanceBeforeProtocol = USER_2.balance;
         uint256 balanceBeforeWstEth = wsteth.balanceOf(USER_1);
         uint256 sharesBeforeUsdn = usdn.sharesOf(USER_1);
+        uint256 sharesBeforeUsdnUser2 = usdn.sharesOf(USER_2);
+        uint256 balanceBeforeUser2 = USER_2.balance;
 
         vm.prank(USER_1);
         fuzzingSuite.transfer(0, amount, 0);
@@ -444,12 +447,12 @@ contract FuzzingSuiteTest is Test {
         fuzzingSuite.transfer(1, amount, 0);
         vm.prank(USER_1);
         fuzzingSuite.transfer(2, amount, 0);
-        assertEq(USER_1.balance, balanceBefore - amount, "USER_1 balance");
-        assertEq(usdn.sharesOf(USER_1), sharesBeforeUsdn - amount, "USER_1 usdn shares");
-        assertEq(wsteth.balanceOf(USER_1), balanceBeforeWstEth - amount, "USER_1 wsteth balance");
-        assertEq(USER_2.balance, balanceBeforeProtocol + amount, "protocol balance");
-        assertEq(usdn.sharesOf(USER_2), amount, "protocol usdn shares");
-        assertEq(wsteth.balanceOf(USER_2), amount, "protocol wsteth balance");
+        assertEq(USER_1.balance, balanceBefore, "USER_1 balance");
+        assertEq(usdn.sharesOf(USER_1), sharesBeforeUsdn, "USER_1 usdn shares");
+        assertEq(wsteth.balanceOf(USER_1), balanceBeforeWstEth, "USER_1 wsteth balance");
+        assertEq(USER_2.balance, balanceBeforeUser2 + amount, "USER_2 balance");
+        assertEq(usdn.sharesOf(USER_2), sharesBeforeUsdnUser2 + amount, "USER_2 usdn shares");
+        assertEq(wsteth.balanceOf(USER_2), amount, "USER_2 wsteth balance");
     }
 
     function test_canLiquidate() public {
