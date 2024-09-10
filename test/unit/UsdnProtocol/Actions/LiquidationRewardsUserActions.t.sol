@@ -7,6 +7,7 @@ import { USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
+import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The reward when a user action performs a liquidation during an action
@@ -52,8 +53,9 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         liquidationPrice = protocol.getEffectivePriceForTick(posId.tick);
         liquidationPriceData = abi.encode(liquidationPrice);
         initialPriceData = abi.encode(initialPrice);
-        expectedLiquidatorRewards =
-            liquidationRewardsManager.getLiquidationRewards(1, 0, false, false, ProtocolAction.None, "", "");
+        expectedLiquidatorRewards = liquidationRewardsManager.getLiquidationRewards(
+            1, 0, false, Types.TriggerRebalancerChecks.None, ProtocolAction.None, "", ""
+        );
 
         assertGt(expectedLiquidatorRewards, 0, "The expected liquidation rewards should be greater than 0");
     }
