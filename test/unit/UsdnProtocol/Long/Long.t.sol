@@ -90,10 +90,12 @@ contract TestUsdnProtocolLongLong is UsdnProtocolBaseFixture {
         vm.prank(ADMIN);
         protocol.setMinLongPosition(minLongPositionSize);
 
+        uint256 leverage = protocol.getMaxLeverage();
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolLongPositionTooSmall.selector));
         protocol.initiateOpenPosition(
             uint128(minLongPositionSize) - 1,
             1000 ether,
+            leverage,
             address(this),
             payable(address(this)),
             NO_PERMIT2,

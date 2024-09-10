@@ -357,6 +357,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         (success, posId_) = protocol.initiateOpenPosition{ value: securityDepositValue }(
             openParams.positionSize,
             openParams.desiredLiqPrice,
+            protocol.getMaxLeverage(),
             openParams.user,
             payable(openParams.user),
             NO_PERMIT2,

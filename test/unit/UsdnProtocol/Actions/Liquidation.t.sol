@@ -223,6 +223,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition(
             1 ether,
             desiredLiqPrice - 200 ether,
+            protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
             NO_PERMIT2,
@@ -593,6 +594,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         }(
             5 ether,
             9 * currentPrice / 10,
+            protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
             NO_PERMIT2,
