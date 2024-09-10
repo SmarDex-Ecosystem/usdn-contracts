@@ -4,7 +4,7 @@ pragma solidity 0.8.26;
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { MOCK_PYTH_DATA } from "../../unit/Middlewares/utils/Constants.sol";
-import { USER_1 } from "../../utils/Constants.sol";
+import { DEPLOYER, USER_1 } from "../../utils/Constants.sol";
 import { SET_PROTOCOL_PARAMS_MANAGER } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 
@@ -32,6 +32,9 @@ contract TestRebalancerInitiateClosePosition is
 
     function setUp() public {
         (, amountInRebalancer,,) = _setUpImbalanced(15 ether);
+        uint256 maxLeverage = protocol.getMaxLeverage();
+        vm.prank(DEPLOYER);
+        rebalancer.setPositionMaxLeverage(maxLeverage);
         skip(5 minutes);
 
         {
