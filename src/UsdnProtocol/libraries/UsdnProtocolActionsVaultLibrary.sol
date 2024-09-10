@@ -18,7 +18,6 @@ import { HugeUint } from "../../libraries/HugeUint.sol";
 import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./UsdnProtocolActionsLongLibrary.sol";
-import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "./UsdnProtocolLongLibrary.sol";
@@ -457,7 +456,7 @@ library UsdnProtocolActionsVaultLibrary {
         isValidated_ = _validateDepositWithAction(s, pending, priceData);
 
         if (isValidated_) {
-            _clearPendingAction(s, validator, rawIndex);
+            Utils._clearPendingAction(s, validator, rawIndex);
             securityDepositValue_ = pending.securityDepositValue;
         }
     }
@@ -728,7 +727,7 @@ library UsdnProtocolActionsVaultLibrary {
         isValidated_ = _validateWithdrawalWithAction(s, pending, priceData);
 
         if (isValidated_) {
-            _clearPendingAction(s, validator, rawIndex);
+            Utils._clearPendingAction(s, validator, rawIndex);
             securityDepositValue_ = pending.securityDepositValue;
         }
     }
@@ -885,7 +884,7 @@ library UsdnProtocolActionsVaultLibrary {
         success_ = true;
 
         if (executed_ || liquidated_) {
-            _clearPendingAction(s, pending.validator, rawIndex);
+            Utils._clearPendingAction(s, pending.validator, rawIndex);
             securityDepositValue_ = pending.securityDepositValue;
             emit IUsdnProtocolEvents.SecurityDepositRefunded(pending.validator, msg.sender, securityDepositValue_);
         }
@@ -957,22 +956,11 @@ library UsdnProtocolActionsVaultLibrary {
     }
 
     /**
-     * @notice Clear the pending action for a user
-     * @param s The storage of the protocol
-     * @param user The user's address
-     * @param rawIndex The rawIndex of the pending action in the queue
-     */
-    function _clearPendingAction(Types.Storage storage s, address user, uint128 rawIndex) public {
-        s._pendingActionsQueue.clearAt(rawIndex);
-        delete s._pendingActions[user];
-    }
-
-    /**
      * @notice Get the lower 24 bits of the withdrawal amount (USDN shares)
      * @param usdnShares The amount of USDN shares
      * @return sharesLSB_ The 24 least significant bits of the USDN shares
      */
-    function _calcWithdrawalAmountLSB(uint152 usdnShares) public pure returns (uint24 sharesLSB_) {
+    function _calcWithdrawalAmountLSB(uint152 usdnShares) internal pure returns (uint24 sharesLSB_) {
         sharesLSB_ = uint24(usdnShares);
     }
 
@@ -981,7 +969,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @param usdnShares The amount of USDN shares
      * @return sharesMSB_ The 128 most significant bits of the USDN shares
      */
-    function _calcWithdrawalAmountMSB(uint152 usdnShares) public pure returns (uint128 sharesMSB_) {
+    function _calcWithdrawalAmountMSB(uint152 usdnShares) internal pure returns (uint128 sharesMSB_) {
         sharesMSB_ = uint128(usdnShares >> 24);
     }
 }

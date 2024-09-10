@@ -321,7 +321,7 @@ library UsdnProtocolActionsLongLibrary {
         (isValidated_, liquidated_) = _validateOpenPositionWithAction(s, pending, priceData);
 
         if (isValidated_ || liquidated_) {
-            ActionsVault._clearPendingAction(s, validator, rawIndex);
+            Utils._clearPendingAction(s, validator, rawIndex);
             securityDepositValue_ = pending.securityDepositValue;
         }
     }
@@ -662,7 +662,7 @@ library UsdnProtocolActionsLongLibrary {
         (isValidated_, liquidated_) = _validateClosePositionWithAction(s, pending, priceData);
 
         if (isValidated_ || liquidated_) {
-            ActionsVault._clearPendingAction(s, validator, rawIndex);
+            Utils._clearPendingAction(s, validator, rawIndex);
             securityDepositValue_ = pending.securityDepositValue;
         }
     }

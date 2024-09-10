@@ -1,8 +1,8 @@
-| initiateClosePosition                                                                | 1349            | 312334 | 317253 | 487466 | 65      |
-| initiateDeposit                                                                      | 1361            | 361241 | 362050 | 492655 | 147     |
-| initiateOpenPosition                                                                 | 1520            | 448270 | 466371 | 598931 | 281     |
-| initiateWithdrawal                                                                   | 1240            | 316237 | 337715 | 511503 | 52      |
-| validateClosePosition                                                                | 1088            | 242767 | 236593 | 337528 | 20      |
-| validateDeposit                                                                      | 1086            | 254202 | 249176 | 368115 | 95      |
-| validateOpenPosition                                                                 | 1107            | 255236 | 253471 | 463372 | 207     |
-| validateWithdrawal                                                                   | 1108            | 244569 | 251055 | 352830 | 21      |
+| initiateClosePosition                                                                | 1361            | 312351 | 317266 | 487525 | 65      |
+| initiateDeposit                                                                      | 1373            | 361266 | 362074 | 492679 | 147     |
+| initiateOpenPosition                                                                 | 1544            | 448308 | 466408 | 599040 | 281     |
+| initiateWithdrawal                                                                   | 1240            | 316238 | 337715 | 511503 | 52      |
+| validateClosePosition                                                                | 1088            | 241992 | 235726 | 336661 | 20      |
+| validateDeposit                                                                      | 1086            | 254202 | 249176 | 368139 | 95      |
+| validateOpenPosition                                                                 | 1107            | 254378 | 252604 | 462505 | 207     |
+| validateWithdrawal                                                                   | 1108            | 244570 | 251055 | 352830 | 21      |

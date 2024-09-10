@@ -576,7 +576,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_clearPendingAction(address user, uint128 rawIndex) external {
-        ActionsVault._clearPendingAction(s, user, rawIndex);
+        Utils._clearPendingAction(s, user, rawIndex);
     }
 
     function i_calcRebalancerPositionTick(

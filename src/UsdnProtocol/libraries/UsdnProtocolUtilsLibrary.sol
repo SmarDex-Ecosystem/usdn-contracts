@@ -6,6 +6,8 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+
+import { DoubleEndedQueue } from "../../libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../../libraries/HugeUint.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
 import { TickMath } from "../../libraries/TickMath.sol";
@@ -20,6 +22,7 @@ library UsdnProtocolUtilsLibrary {
     using SafeCast for uint256;
     using SignedMath for int256;
     using HugeUint for HugeUint.Uint512;
+    using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
     /**
      * @notice Convert a uint128 to an int256
@@ -431,5 +434,16 @@ library UsdnProtocolUtilsLibrary {
      */
     function _calcActionId(address validator, uint128 initiateTimestamp) internal pure returns (bytes32 actionId_) {
         actionId_ = keccak256(abi.encodePacked(validator, initiateTimestamp));
+    }
+
+    /**
+     * @notice Clear the pending action for a user
+     * @param s The storage of the protocol
+     * @param user The user's address
+     * @param rawIndex The rawIndex of the pending action in the queue
+     */
+    function _clearPendingAction(Types.Storage storage s, address user, uint128 rawIndex) internal {
+        s._pendingActionsQueue.clearAt(rawIndex);
+        delete s._pendingActions[user];
     }
 }
