@@ -37,6 +37,21 @@ contract TestUsdnProtocolRefundSecurityDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario Refund security deposit for a validator that is not the msg.sender
+     * @custom:given A position that was liquidated before being validated
+     * @custom:when refundSecurityDeposit is called by a third party user
+     * @custom:and The security deposit is refunded to the validator
+     */
+    function test_refundSecurityDepositFromAnyone() public {
+        _initiateAndLiquidate();
+
+        uint256 balanceBefore = address(this).balance;
+        vm.prank(USER_1);
+        protocol.refundSecurityDeposit(payable(this));
+        assertEq(address(this).balance, balanceBefore + _securityDepositValue, "security deposit refunded");
+    }
+
+    /**
      * @custom:scenario Try to refund a security deposit for a user without a stale pending action
      * @custom:given A position that was liquidated before being validated
      * @custom:when refundSecurityDeposit is called with a validator that has no stale pending action
