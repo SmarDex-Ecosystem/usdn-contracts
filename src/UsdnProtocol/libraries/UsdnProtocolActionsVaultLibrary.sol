@@ -39,7 +39,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @param to The address to receive the USDN tokens
      * @param validator The address that will validate the deposit
      * @param amount The amount of wstETH to deposit
-     * @param amountMinOut The minimum amount of USDN tokens to receive
+     * @param sharesOutMin The minimum amount of USDN tokens to receive
      * @param securityDepositValue The value of the security deposit for the newly created deposit
      * @param permit2TokenBitfield The permit2 bitfield
      */
@@ -48,7 +48,7 @@ library UsdnProtocolActionsVaultLibrary {
         address to;
         address validator;
         uint128 amount;
-        uint256 amountMinOut;
+        uint256 sharesOutMin;
         uint64 securityDepositValue;
         Permit2TokenBitfield.Bitfield permit2TokenBitfield;
     }
@@ -101,7 +101,7 @@ library UsdnProtocolActionsVaultLibrary {
     function initiateDeposit(
         Types.Storage storage s,
         uint128 amount,
-        uint256 amountMinOut,
+        uint256 sharesOutMin,
         address to,
         address payable validator,
         Permit2TokenBitfield.Bitfield permit2TokenBitfield,
@@ -122,7 +122,7 @@ library UsdnProtocolActionsVaultLibrary {
                 to: to,
                 validator: validator,
                 amount: amount,
-                amountMinOut: amountMinOut,
+                sharesOutMin: sharesOutMin,
                 securityDepositValue: securityDepositValue,
                 permit2TokenBitfield: permit2TokenBitfield
             }),
@@ -300,7 +300,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @param s The storage of the protocol
      * @param validator The validator address
      * @param amount The amount of asset to deposit
-     * @param amountMinOut The minimum amount of USDN tokens to receive
+     * @param sharesOutMin The minimum amount of USDN tokens to receive
      * @param currentPriceData The price data for the initiate action
      * @return data_ The transient data for the `deposit` action
      */
@@ -308,7 +308,7 @@ library UsdnProtocolActionsVaultLibrary {
         Types.Storage storage s,
         address validator,
         uint128 amount,
-        uint256 amountMinOut,
+        uint256 sharesOutMin,
         bytes calldata currentPriceData
     ) public returns (InitiateDepositData memory data_) {
         PriceInfo memory currentPrice = _getOraclePrice(
@@ -349,7 +349,7 @@ library UsdnProtocolActionsVaultLibrary {
 
         // calculate the amount of SDEX tokens to burn
         uint256 usdnSharesToMintEstimated = Vault._calcMintUsdnShares(amount, data_.balanceVault, data_.usdnTotalShares);
-        if (usdnSharesToMintEstimated < amountMinOut) {
+        if (usdnSharesToMintEstimated < sharesOutMin) {
             revert IUsdnProtocolErrors.UsdnProtocolAmountReceivedTooSmall();
         }
         uint256 usdnToMintEstimated = usdn.convertToTokens(usdnSharesToMintEstimated);
@@ -427,7 +427,7 @@ library UsdnProtocolActionsVaultLibrary {
         }
 
         InitiateDepositData memory data =
-            _prepareInitiateDepositData(s, params.validator, params.amount, params.amountMinOut, currentPriceData);
+            _prepareInitiateDepositData(s, params.validator, params.amount, params.sharesOutMin, currentPriceData);
 
         // early return in case there are still pending liquidations
         if (data.isLiquidationPending) {

@@ -14,7 +14,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * The transaction must have `_securityDepositValue` in value
      * In case liquidations are pending, this function might not initiate the deposit (and `success_` would be false)
      * @param amount The amount of wstETH to deposit
-     * @param amountMinOut The minimum amount of USDN tokens to receive
+     * @param sharesOutMin The minimum amount of USDN tokens to receive
      * @param to The address that will receive the USDN tokens
      * @param validator The address that will validate the deposit
      * @param permit2TokenBitfield Whether to use permit2 for transferring assets (first bit) and SDEX (second bit)
@@ -24,7 +24,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      */
     function initiateDeposit(
         uint128 amount,
-        uint256 amountMinOut,
+        uint256 sharesOutMin,
         address to,
         address payable validator,
         Permit2TokenBitfield.Bitfield permit2TokenBitfield,

@@ -298,7 +298,7 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
     function i_prepareInitiateDepositData(
         address validator,
         uint128 amount,
-        uint256 amountMinOut,
+        uint256 sharesOutMin,
         bytes calldata currentPriceData
     ) external returns (ActionsVault.InitiateDepositData memory data_);
 
