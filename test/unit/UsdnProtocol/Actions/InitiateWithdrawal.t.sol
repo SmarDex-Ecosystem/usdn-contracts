@@ -209,7 +209,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user initiates a withdrawal action with with calculated USDN less than expected
+     * @custom:scenario The user initiates a withdrawal action with a predicted wstETH output smaller than the parameter
      * @custom:given The user has 1000 USDN
      * @custom:when The user initiates a withdrawal action with 2000 USDN and wants to receive max wstETH
      * @custom:then The protocol reverts with `UsdnProtocolAmountReceivedTooSmall`

@@ -330,7 +330,8 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user initiates a deposit action with calculated wstETh less than expected
+     * @custom:scenario The user initiates a deposit action with a predicted mint of USDN shares lower than the
+     * parameter
      * @custom:given The user has 1 wstETH
      * @custom:when The user initiates a deposit with 1 wstETH and wants to receive max USDN
      * @custom:then The protocol reverts with `UsdnProtocolAmountReceivedTooSmall`
