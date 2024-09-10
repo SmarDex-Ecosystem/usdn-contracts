@@ -282,7 +282,7 @@ library UsdnProtocolActionsVaultLibrary {
             s,
             Types.ProtocolAction.InitiateDeposit,
             block.timestamp,
-            ActionsUtils._calcActionId(validator, uint128(block.timestamp)),
+            Utils._calcActionId(validator, uint128(block.timestamp)),
             currentPriceData
         );
 
@@ -480,7 +480,7 @@ library UsdnProtocolActionsVaultLibrary {
             s,
             Types.ProtocolAction.ValidateDeposit,
             deposit.timestamp,
-            ActionsUtils._calcActionId(deposit.validator, deposit.timestamp),
+            Utils._calcActionId(deposit.validator, deposit.timestamp),
             priceData
         );
 
@@ -551,7 +551,7 @@ library UsdnProtocolActionsVaultLibrary {
             s,
             Types.ProtocolAction.InitiateWithdrawal,
             block.timestamp,
-            ActionsUtils._calcActionId(validator, uint128(block.timestamp)),
+            Utils._calcActionId(validator, uint128(block.timestamp)),
             currentPriceData
         );
 
@@ -751,7 +751,7 @@ library UsdnProtocolActionsVaultLibrary {
             s,
             Types.ProtocolAction.ValidateWithdrawal,
             withdrawal.timestamp,
-            ActionsUtils._calcActionId(withdrawal.validator, withdrawal.timestamp),
+            Utils._calcActionId(withdrawal.validator, withdrawal.timestamp),
             priceData
         );
 

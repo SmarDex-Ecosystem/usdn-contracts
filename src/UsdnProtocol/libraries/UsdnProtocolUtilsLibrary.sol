@@ -421,4 +421,15 @@ library UsdnProtocolUtilsLibrary {
     function _calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) internal pure returns (uint256 sdexToBurn_) {
         sdexToBurn_ = FixedPointMathLib.fullMulDivUp(usdnAmount, sdexBurnRatio, Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR);
     }
+
+    /**
+     * @notice Calculate a unique identifier for a pending action, that can be used by the oracle middleware to link
+     * a `Initiate` call with the corresponding `Validate` call
+     * @param validator The address of the validator
+     * @param initiateTimestamp The timestamp of the initiate action
+     * @return actionId_ The unique action ID
+     */
+    function _calcActionId(address validator, uint128 initiateTimestamp) internal pure returns (bytes32 actionId_) {
+        actionId_ = keccak256(abi.encodePacked(validator, initiateTimestamp));
+    }
 }

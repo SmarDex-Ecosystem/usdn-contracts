@@ -344,7 +344,7 @@ library UsdnProtocolActionsLongLibrary {
             s,
             Types.ProtocolAction.ValidateOpenPosition,
             data_.action.timestamp,
-            ActionsUtils._calcActionId(data_.action.validator, data_.action.timestamp),
+            Utils._calcActionId(data_.action.validator, data_.action.timestamp),
             priceData
         );
         data_.currentPrice = (currentPrice.price).toUint128();
@@ -687,7 +687,7 @@ library UsdnProtocolActionsLongLibrary {
             s,
             Types.ProtocolAction.ValidateClosePosition,
             long.timestamp,
-            ActionsUtils._calcActionId(long.validator, long.timestamp),
+            Utils._calcActionId(long.validator, long.timestamp),
             priceData
         );
 

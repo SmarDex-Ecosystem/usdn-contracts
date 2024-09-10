@@ -625,7 +625,7 @@ library UsdnProtocolLongLibrary {
             s,
             Types.ProtocolAction.InitiateOpenPosition,
             block.timestamp,
-            ActionsUtils._calcActionId(validator, uint128(block.timestamp)),
+            Utils._calcActionId(validator, uint128(block.timestamp)),
             currentPriceData
         );
         data_.adjustedPrice =
