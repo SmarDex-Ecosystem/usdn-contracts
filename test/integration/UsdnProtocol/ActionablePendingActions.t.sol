@@ -49,7 +49,14 @@ contract TestUsdnProtocolActionablePendingActions is UsdnProtocolBaseIntegration
             oracleMiddleware.validationCost(previousData.priceData[2], Types.ProtocolAction.ValidateDeposit);
         assertEq(validationCost, 1, "validation cost");
         protocol.initiateOpenPosition{ value: securityDeposit + validationCost }(
-            2 ether, params.initialPrice / 2, address(this), payable(this), NO_PERMIT2, "", previousData
+            2 ether,
+            params.initialPrice / 2,
+            protocol.getMaxLeverage(),
+            address(this),
+            payable(this),
+            NO_PERMIT2,
+            "",
+            previousData
         );
         // check that one pending action was validated, only one should remain
         (Types.PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(this));
@@ -89,7 +96,14 @@ contract TestUsdnProtocolActionablePendingActions is UsdnProtocolBaseIntegration
         mockChainlinkOnChain.setLastPublishTime(block.timestamp);
         vm.prank(USER_2);
         protocol.initiateOpenPosition{ value: securityDeposit }(
-            2 ether, params.initialPrice / 2, USER_2, USER_2, NO_PERMIT2, "", EMPTY_PREVIOUS_DATA
+            2 ether,
+            params.initialPrice / 2,
+            protocol.getMaxLeverage(),
+            USER_2,
+            USER_2,
+            NO_PERMIT2,
+            "",
+            EMPTY_PREVIOUS_DATA
         );
         // create a pending deposit a bit later
         vm.warp(initialTimestamp + protocol.getOnChainValidatorDeadline() + 1);

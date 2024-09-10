@@ -101,15 +101,36 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
         uint128 minLongPosition = uint128(protocol.getMinLongPosition());
         vm.prank(USER_1);
         protocol.initiateOpenPosition{ value: securityDepositValue }(
-            minLongPosition, pythPriceNormalized + 200 ether, USER_1, USER_1, NO_PERMIT2, hex"beef", EMPTY_PREVIOUS_DATA
+            minLongPosition,
+            pythPriceNormalized + 200 ether,
+            protocol.getMaxLeverage(),
+            USER_1,
+            USER_1,
+            NO_PERMIT2,
+            hex"beef",
+            EMPTY_PREVIOUS_DATA
         );
         vm.prank(USER_2);
         protocol.initiateOpenPosition{ value: securityDepositValue }(
-            minLongPosition, pythPriceNormalized + 150 ether, USER_2, USER_2, NO_PERMIT2, hex"beef", EMPTY_PREVIOUS_DATA
+            minLongPosition,
+            pythPriceNormalized + 150 ether,
+            protocol.getMaxLeverage(),
+            USER_2,
+            USER_2,
+            NO_PERMIT2,
+            hex"beef",
+            EMPTY_PREVIOUS_DATA
         );
         vm.prank(USER_3);
         protocol.initiateOpenPosition{ value: securityDepositValue }(
-            minLongPosition, pythPriceNormalized + 100 ether, USER_3, USER_3, NO_PERMIT2, hex"beef", EMPTY_PREVIOUS_DATA
+            minLongPosition,
+            pythPriceNormalized + 100 ether,
+            protocol.getMaxLeverage(),
+            USER_3,
+            USER_3,
+            NO_PERMIT2,
+            hex"beef",
+            EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         vm.prank(USER_1);

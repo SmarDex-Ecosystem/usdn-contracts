@@ -4,7 +4,7 @@ pragma solidity 0.8.26;
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { MOCK_PYTH_DATA } from "../../unit/Middlewares/utils/Constants.sol";
-import { USER_1 } from "../../utils/Constants.sol";
+import { DEPLOYER, USER_1 } from "../../utils/Constants.sol";
 import { SET_PROTOCOL_PARAMS_MANAGER } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 
@@ -32,6 +32,9 @@ contract TestRebalancerInitiateClosePosition is
 
     function setUp() public {
         (, amountInRebalancer,,) = _setUpImbalanced(15 ether);
+        uint256 maxLeverage = protocol.getMaxLeverage();
+        vm.prank(DEPLOYER);
+        rebalancer.setPositionMaxLeverage(maxLeverage);
         skip(5 minutes);
 
         {
@@ -226,7 +229,14 @@ contract TestRebalancerInitiateClosePosition is
         uint256 securityDeposit = protocol.getSecurityDepositValue();
         // compensate imbalance to allow rebalancer users to close
         (, PositionId memory newPosId) = protocol.initiateOpenPosition{ value: securityDeposit }(
-            20 ether, 1100 ether, payable(address(this)), payable(address(this)), NO_PERMIT2, "", EMPTY_PREVIOUS_DATA
+            20 ether,
+            1100 ether,
+            protocol.getMaxLeverage(),
+            payable(address(this)),
+            payable(address(this)),
+            NO_PERMIT2,
+            "",
+            EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         protocol.validateOpenPosition{ value: securityDeposit }(payable(this), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
@@ -287,7 +297,14 @@ contract TestRebalancerInitiateClosePosition is
 
         // compensate imbalance to allow rebalancer users to close
         protocol.initiateOpenPosition{ value: securityDeposit }(
-            20 ether, 800 ether, payable(address(this)), payable(address(this)), NO_PERMIT2, "", EMPTY_PREVIOUS_DATA
+            20 ether,
+            800 ether,
+            protocol.getMaxLeverage(),
+            payable(address(this)),
+            payable(address(this)),
+            NO_PERMIT2,
+            "",
+            EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         protocol.validateOpenPosition{ value: securityDeposit }(payable(this), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
