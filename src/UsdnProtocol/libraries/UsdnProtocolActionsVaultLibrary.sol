@@ -169,7 +169,7 @@ library UsdnProtocolActionsVaultLibrary {
     function initiateWithdrawal(
         Types.Storage storage s,
         uint152 usdnShares,
-        uint256 amountMinOut,
+        uint256 amountOutMin,
         address to,
         address payable validator,
         bytes calldata currentPriceData,
@@ -184,7 +184,7 @@ library UsdnProtocolActionsVaultLibrary {
 
         uint256 amountToRefund;
         (amountToRefund, success_) = _initiateWithdrawal(
-            s, msg.sender, to, validator, usdnShares, amountMinOut, securityDepositValue, currentPriceData
+            s, msg.sender, to, validator, usdnShares, amountOutMin, securityDepositValue, currentPriceData
         );
 
         if (success_) {
@@ -691,7 +691,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @param to The address that will receive the assets
      * @param validator The address that will validate the withdrawal
      * @param usdnShares The amount of USDN shares to burn
-     * @param amountMinOut The minimum amount of assets to receive
+     * @param amountOutMin The minimum amount of assets to receive
      * @param securityDepositValue The value of the security deposit for the newly created pending action
      * @param currentPriceData The current price data
      * @return amountToRefund_ If there are pending liquidations we'll refund the `securityDepositValue`,
@@ -704,7 +704,7 @@ library UsdnProtocolActionsVaultLibrary {
         address to,
         address validator,
         uint152 usdnShares,
-        uint256 amountMinOut,
+        uint256 amountOutMin,
         uint64 securityDepositValue,
         bytes calldata currentPriceData
     ) public returns (uint256 amountToRefund_, bool isInitiated_) {
@@ -719,7 +719,7 @@ library UsdnProtocolActionsVaultLibrary {
         }
 
         IUsdn usdn = s._usdn;
-        if (Vault._calcBurnUsdn(usdnShares, s._balanceVault, usdn.totalShares()) < amountMinOut) {
+        if (Vault._calcBurnUsdn(usdnShares, s._balanceVault, usdn.totalShares()) < amountOutMin) {
             revert IUsdnProtocolErrors.UsdnProtocolAmountReceivedTooSmall();
         }
 

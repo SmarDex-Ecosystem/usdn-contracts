@@ -37,14 +37,14 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
     /// @inheritdoc IUsdnProtocolActions
     function initiateWithdrawal(
         uint152 usdnShares,
-        uint256 amountMinOut,
+        uint256 amountOutMin,
         address to,
         address payable validator,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (bool success_) {
         return ActionsVault.initiateWithdrawal(
-            s, usdnShares, amountMinOut, to, validator, currentPriceData, previousActionsData
+            s, usdnShares, amountOutMin, to, validator, currentPriceData, previousActionsData
         );
     }
 

@@ -66,7 +66,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * @param usdnShares The amount of USDN shares to burn (Max 5708990770823839524233143877797980545530986495 which is
      * equivalent to 5.7B USDN token before any rebase. The token amount limit increases with each rebase)
      * In case liquidations are pending, this function might not initiate the withdrawal (and `success_` would be false)
-     * @param amountMinOut The minimum amount of wstETH to receive
+     * @param amountOutMin The minimum amount of wstETH to receive
      * @param to The address that will receive the assets
      * @param validator The address that will validate the withdrawal
      * @param currentPriceData The current price data
@@ -75,7 +75,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      */
     function initiateWithdrawal(
         uint152 usdnShares,
-        uint256 amountMinOut,
+        uint256 amountOutMin,
         address to,
         address payable validator,
         bytes calldata currentPriceData,
