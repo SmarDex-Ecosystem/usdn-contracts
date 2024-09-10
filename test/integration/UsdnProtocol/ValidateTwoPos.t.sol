@@ -37,7 +37,7 @@ contract TestForkUsdnProtocolValidateTwoPos is UsdnProtocolBaseIntegrationFixtur
             2.5 ether, 1000 ether, protocol.getMaxLeverage(), address(this), USER_1, NO_PERMIT2, "", EMPTY_PREVIOUS_DATA
         );
         vm.stopPrank();
-        vm.rollFork(block.number + 80 * 60 / 12);
+        vm.rollFork(block.number + 80 minutes / 12);
         vm.startPrank(USER_2);
         (success,) = address(wstETH).call{ value: 10 ether }("");
         require(success, "USER_2 wstETH mint failed");
