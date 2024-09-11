@@ -304,9 +304,12 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         bytes calldata currentPriceData
     ) external returns (ActionsVault.InitiateDepositData memory data_);
 
-    function i_prepareWithdrawalData(address validator, uint152 usdnShares, bytes calldata currentPriceData)
-        external
-        returns (ActionsVault.WithdrawalData memory data_);
+    function i_prepareWithdrawalData(
+        address validator,
+        uint152 usdnShares,
+        uint256 amountOutMin,
+        bytes calldata currentPriceData
+    ) external returns (ActionsVault.WithdrawalData memory data_);
 
     function i_refundEther(uint256 amount, address payable to) external payable;
 

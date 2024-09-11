@@ -490,7 +490,7 @@ library UsdnProtocolActionsVaultLibrary {
         isInitiated_ = true;
 
         emit IUsdnProtocolEvents.InitiatedDeposit(
-            params.to, params.validator, params.amount, block.timestamp, data.sdexToBurn
+            params.to, params.validator, params.amount, data.feeBps, block.timestamp, data.sdexToBurn
         );
     }
 
@@ -607,6 +607,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @param s The storage of the protocol
      * @param validator The validator address
      * @param usdnShares The amount of USDN shares to burn
+     * @param amountOutMin The predicted minimum amount of wstETH to receive.
      * @param currentPriceData The current price data
      * @return data_ The withdrawal data struct
      */
@@ -614,6 +615,7 @@ library UsdnProtocolActionsVaultLibrary {
         Types.Storage storage s,
         address validator,
         uint152 usdnShares,
+        uint256 amountOutMin,
         bytes calldata currentPriceData
     ) public returns (WithdrawalData memory data_) {
         PriceInfo memory currentPrice = _getOraclePrice(
@@ -651,6 +653,10 @@ library UsdnProtocolActionsVaultLibrary {
         data_.feeBps = s._vaultFeeBps;
         data_.withdrawalAmountAfterFees =
             Vault._calcBurnUsdn(usdnShares, data_.balanceVault, data_.usdnTotalShares, data_.feeBps);
+
+        if (data_.withdrawalAmountAfterFees < amountOutMin) {
+            revert IUsdnProtocolErrors.UsdnProtocolAmountReceivedTooSmall();
+        }
 
         _checkImbalanceLimitWithdrawal(s, data_.withdrawalAmountAfterFees, data_.totalExpo);
     }
@@ -757,12 +763,7 @@ library UsdnProtocolActionsVaultLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolZeroAmount();
         }
 
-        IUsdn usdn = s._usdn;
-        if (Vault._calcBurnUsdn(usdnShares, s._balanceVault, usdn.totalShares()) < amountOutMin) {
-            revert IUsdnProtocolErrors.UsdnProtocolAmountReceivedTooSmall();
-        }
-
-        WithdrawalData memory data = _prepareWithdrawalData(s, validator, usdnShares, currentPriceData);
+        WithdrawalData memory data = _prepareWithdrawalData(s, validator, usdnShares, amountOutMin, currentPriceData);
 
         if (data.isLiquidationPending) {
             return (securityDepositValue, false);
@@ -770,6 +771,7 @@ library UsdnProtocolActionsVaultLibrary {
 
         amountToRefund_ = _createWithdrawalPendingAction(s, to, validator, usdnShares, securityDepositValue, data);
 
+        IUsdn usdn = s._usdn;
         // retrieve the USDN tokens, check that the balance is sufficient
         usdn.transferSharesFrom(user, address(this), usdnShares);
         // register the pending withdrawal for imbalance checks of future actions
