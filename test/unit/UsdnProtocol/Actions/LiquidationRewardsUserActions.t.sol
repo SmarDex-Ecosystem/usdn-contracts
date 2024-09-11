@@ -138,7 +138,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
         protocol.initiateWithdrawal(
             uint152(usdn.balanceOf(address(this))),
-            0,
+            disableAmountOutMin,
             address(this),
             payable(address(this)),
             liquidationPriceData,

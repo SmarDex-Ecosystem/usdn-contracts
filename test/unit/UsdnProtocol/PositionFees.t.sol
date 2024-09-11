@@ -315,7 +315,12 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         usdn.approve(address(protocol), type(uint256).max);
         protocol.initiateWithdrawal(
-            uint128(mintedUsdn), 0, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
+            uint128(mintedUsdn),
+            disableAmountOutMin,
+            address(this),
+            payable(address(this)),
+            currentPrice,
+            EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         PendingAction memory action = protocol.getUserPendingAction(address(this));
@@ -348,7 +353,12 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         usdn.approve(address(protocol), type(uint256).max);
         protocol.initiateWithdrawal(
-            uint128(mintedUsdn), 0, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
+            uint128(mintedUsdn),
+            disableAmountOutMin,
+            address(this),
+            payable(address(this)),
+            currentPrice,
+            EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -433,7 +443,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         protocol.initiateWithdrawal(
             uint128(usdn.balanceOf(address(this))),
-            0,
+            disableAmountOutMin,
             address(this),
             payable(address(this)),
             currentPrice,
@@ -450,7 +460,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         protocol.initiateWithdrawal(
             uint128(usdn.balanceOf(address(this))),
-            0,
+            disableAmountOutMin,
             address(this),
             payable(address(this)),
             currentPrice,

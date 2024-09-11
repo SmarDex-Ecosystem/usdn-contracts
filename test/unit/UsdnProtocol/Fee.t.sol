@@ -169,7 +169,12 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         usdn.approve(address(protocol), 1);
         vm.expectRevert("FeeCollectorRevertCallback");
         protocol.initiateWithdrawal(
-            1, 0, address(this), payable(address(this)), abi.encode(DEFAULT_PARAMS.initialPrice), EMPTY_PREVIOUS_DATA
+            1,
+            disableAmountOutMin,
+            address(this),
+            payable(address(this)),
+            abi.encode(DEFAULT_PARAMS.initialPrice),
+            EMPTY_PREVIOUS_DATA
         );
 
         assertEq(

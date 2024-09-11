@@ -97,7 +97,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
 
         protocol.initiateWithdrawal(
             uint128(usdn.balanceOf(address(this))),
-            0,
+            disableAmountOutMin,
             address(this),
             payable(address(this)),
             abi.encode(params.initialPrice),
@@ -236,7 +236,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
 
         data.currentPrice = abi.encode(initialPrice);
         protocol.initiateWithdrawal(
-            withdrawShares, 0, to, payable(address(this)), data.currentPrice, EMPTY_PREVIOUS_DATA
+            withdrawShares, disableAmountOutMin, to, payable(address(this)), data.currentPrice, EMPTY_PREVIOUS_DATA
         );
 
         data.actionId = oracleMiddleware.lastActionId();
@@ -372,7 +372,12 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
     function test_RevertWhen_validateWithdrawalWithWrongValidator() public {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         protocol.initiateWithdrawal(
-            withdrawShares, 0, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
+            withdrawShares,
+            disableAmountOutMin,
+            address(this),
+            payable(address(this)),
+            currentPrice,
+            EMPTY_PREVIOUS_DATA
         );
 
         // update the pending action to put another validator

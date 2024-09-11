@@ -13,6 +13,7 @@ contract BaseFixture is Test {
     uint256 constant BPS_DIVISOR = 10_000;
 
     uint256 internal constant disableSharesOutMin = 0;
+    uint256 internal constant disableAmountOutMin = 0;
 
     modifier ethMainnetFork() {
         string memory url = vm.rpcUrl("mainnet");

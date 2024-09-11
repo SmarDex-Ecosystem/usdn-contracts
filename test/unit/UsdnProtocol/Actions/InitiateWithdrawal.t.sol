@@ -100,7 +100,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
 
         bool success = protocol.initiateWithdrawal(
             uint128(usdn.balanceOf(address(this))),
-            0,
+            disableAmountOutMin,
             address(this),
             payable(address(this)),
             abi.encode(params.initialPrice / 3),
@@ -125,7 +125,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit InitiatedWithdrawal(to, address(this), USDN_AMOUNT, block.timestamp); // expected event
         bool success = protocol.initiateWithdrawal(
-            withdrawShares, 0, to, payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
+            withdrawShares, disableAmountOutMin, to, payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
         );
         assertTrue(success, "success");
 
@@ -164,7 +164,9 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
     function test_RevertWhen_zeroAmount() public {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         vm.expectRevert(UsdnProtocolZeroAmount.selector);
-        protocol.initiateWithdrawal(0, 0, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.initiateWithdrawal(
+            0, disableAmountOutMin, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
+        );
     }
 
     /**
@@ -176,7 +178,9 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
     function test_RevertWhen_zeroAddressTo() public {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         vm.expectRevert(UsdnProtocolInvalidAddressTo.selector);
-        protocol.initiateWithdrawal(1 ether, 0, address(0), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.initiateWithdrawal(
+            1 ether, disableAmountOutMin, address(0), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
+        );
     }
 
     /**
@@ -188,7 +192,9 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
     function test_RevertWhen_zeroAddressValidator() public {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         vm.expectRevert(UsdnProtocolInvalidAddressValidator.selector);
-        protocol.initiateWithdrawal(1 ether, 0, address(this), payable(address(0)), currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.initiateWithdrawal(
+            1 ether, disableAmountOutMin, address(this), payable(address(0)), currentPrice, EMPTY_PREVIOUS_DATA
+        );
     }
 
     /**
@@ -235,7 +241,12 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
         if (_reenter) {
             vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
             protocol.initiateWithdrawal(
-                USDN_AMOUNT, 0, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
+                USDN_AMOUNT,
+                disableAmountOutMin,
+                address(this),
+                payable(address(this)),
+                currentPrice,
+                EMPTY_PREVIOUS_DATA
             );
             return;
         }

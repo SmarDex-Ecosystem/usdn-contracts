@@ -140,7 +140,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         protocol.initiateWithdrawal(
             uint128(usdn.balanceOf(address(this))),
-            0,
+            disableAmountOutMin,
             address(this),
             payable(address(this)),
             abi.encode(effectivePriceForTick),

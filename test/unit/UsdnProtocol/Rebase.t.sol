@@ -179,7 +179,12 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         vm.expectEmit(false, false, false, false);
         emit Rebase(0, 0);
         protocol.initiateWithdrawal(
-            100 ether, 0, address(this), payable(address(this)), abi.encode(newPrice), EMPTY_PREVIOUS_DATA
+            100 ether,
+            disableAmountOutMin,
+            address(this),
+            payable(address(this)),
+            abi.encode(newPrice),
+            EMPTY_PREVIOUS_DATA
         );
     }
 
