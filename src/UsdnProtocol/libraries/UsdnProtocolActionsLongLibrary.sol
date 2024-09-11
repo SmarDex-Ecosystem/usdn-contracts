@@ -83,14 +83,26 @@ library UsdnProtocolActionsLongLibrary {
 
         uint256 balanceBefore = address(this).balance;
         params.securityDepositValue = securityDepositValue;
-        uint256 amountToRefund;
-        (posId_, amountToRefund, success_) = _initiateOpenPosition(s, params, currentPriceData);
+        uint256 validatorAmount;
+        (posId_, validatorAmount, success_) = _initiateOpenPosition(s, params, currentPriceData);
 
+        uint256 amountToRefund;
         if (success_) {
             unchecked {
                 amountToRefund += ActionsVault._executePendingActionOrRevert(s, previousActionsData);
             }
         }
+
+        // refund any securityDeposit from a stale pending action to the validator
+        if (validatorAmount > 0) {
+            if (params.validator != msg.sender) {
+                balanceBefore -= validatorAmount;
+                ActionsVault._refundEther(validatorAmount, payable(params.validator));
+            } else {
+                amountToRefund += validatorAmount;
+            }
+        }
+
         ActionsVault._refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
         ActionsVault._checkPendingFee(s);
     }
@@ -135,10 +147,10 @@ library UsdnProtocolActionsLongLibrary {
         }
 
         uint256 balanceBefore = address(this).balance;
-
-        uint256 amountToRefund;
         bool liq;
-        (amountToRefund, success_, liq) = _initiateClosePosition(
+        uint256 validatorAmount;
+
+        (validatorAmount, success_, liq) = _initiateClosePosition(
             s,
             msg.sender,
             params.to,
@@ -149,9 +161,20 @@ library UsdnProtocolActionsLongLibrary {
             currentPriceData
         );
 
+        uint256 amountToRefund;
         if (success_ || liq) {
             unchecked {
                 amountToRefund += ActionsVault._executePendingActionOrRevert(s, previousActionsData);
+            }
+        }
+
+        // refund any securityDeposit from a stale pending action to the validator
+        if (validatorAmount > 0) {
+            if (params.validator != msg.sender) {
+                balanceBefore -= validatorAmount;
+                ActionsVault._refundEther(validatorAmount, payable(params.validator));
+            } else {
+                amountToRefund += validatorAmount;
             }
         }
 

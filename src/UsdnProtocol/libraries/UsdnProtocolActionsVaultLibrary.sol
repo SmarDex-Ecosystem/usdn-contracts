@@ -97,14 +97,25 @@ library UsdnProtocolActionsVaultLibrary {
         }
         uint256 balanceBefore = address(this).balance;
 
-        uint256 amountToRefund;
-        (amountToRefund, success_) = _initiateDeposit(
+        uint256 validatorAmount;
+        (validatorAmount, success_) = _initiateDeposit(
             s, msg.sender, to, validator, amount, securityDepositValue, permit2TokenBitfield, currentPriceData
         );
 
+        uint256 amountToRefund;
         if (success_) {
             unchecked {
                 amountToRefund += _executePendingActionOrRevert(s, previousActionsData);
+            }
+        }
+
+        // refund any securityDeposit from a stale pending action to the validator
+        if (validatorAmount > 0) {
+            if (validator != msg.sender) {
+                balanceBefore -= validatorAmount;
+                _refundEther(validatorAmount, validator);
+            } else {
+                amountToRefund += validatorAmount;
             }
         }
 
@@ -154,16 +165,26 @@ library UsdnProtocolActionsVaultLibrary {
 
         uint256 balanceBefore = address(this).balance;
 
-        uint256 amountToRefund;
-        (amountToRefund, success_) =
+        uint256 validatorAmount;
+        (validatorAmount, success_) =
             _initiateWithdrawal(s, msg.sender, to, validator, usdnShares, securityDepositValue, currentPriceData);
 
+        uint256 amountToRefund;
         if (success_) {
             unchecked {
                 amountToRefund += _executePendingActionOrRevert(s, previousActionsData);
             }
         }
 
+        // refund any securityDeposit from a stale pending action to the validator
+        if (validatorAmount > 0) {
+            if (validator != msg.sender) {
+                balanceBefore -= validatorAmount;
+                _refundEther(validatorAmount, validator);
+            } else {
+                amountToRefund += validatorAmount;
+            }
+        }
         _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
         _checkPendingFee(s);
     }
