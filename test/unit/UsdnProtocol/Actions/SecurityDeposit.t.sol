@@ -253,7 +253,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         vm.expectRevert(UsdnProtocolSecurityDepositTooLow.selector);
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE - 1 }(
-            1, 0, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            1, disableAmountOutMin, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -336,7 +336,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         usdn.approve(address(protocol), 1);
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE + 100 }(
-            1, 0, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            1, disableAmountOutMin, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -509,7 +509,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         // we initiate a withdrawal for 1e18 shares of USDN
         usdn.approve(address(protocol), 2);
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(
-            1e18, 0, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            1e18, disableAmountOutMin, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
         _waitBeforeActionablePendingAction();
 
@@ -560,7 +560,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         // we initiate a withdrawal for 1e18 shares of USDN
         usdn.approve(address(protocol), 2);
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(
-            1e18, 0, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            1e18, disableAmountOutMin, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -846,7 +846,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         usdn.approve(address(protocol), 1);
         protocol.initiateWithdrawal{ value: newSecurityDepositValue }(
-            1, 0, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            1, disableAmountOutMin, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
