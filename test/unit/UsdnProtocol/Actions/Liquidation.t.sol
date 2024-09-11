@@ -58,7 +58,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         emit IUsdnProtocolEvents.LiquidatedTick(posId.tick, posId.tickVersion, 0, 0, 0);
         protocol.initiateDeposit(
             1 ether,
-            disableSharesOutMin,
+            DISABLESHARESOUTMIN,
             address(this),
             payable(address(this)),
             NO_PERMIT2,
@@ -140,7 +140,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         protocol.initiateWithdrawal(
             uint128(usdn.balanceOf(address(this))),
-            disableAmountOutMin,
+            DISABLEAMOUNTOUTMIN,
             address(this),
             payable(address(this)),
             abi.encode(effectivePriceForTick),

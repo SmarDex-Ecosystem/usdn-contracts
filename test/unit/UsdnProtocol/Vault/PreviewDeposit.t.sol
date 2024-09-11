@@ -37,7 +37,7 @@ contract TestUsdnProtocolPreviewDeposit is UsdnProtocolBaseFixture {
 
         protocol.initiateDeposit(
             amount.toUint128(),
-            disableSharesOutMin,
+            DISABLESHARESOUTMIN,
             address(this),
             payable(address(this)),
             NO_PERMIT2,

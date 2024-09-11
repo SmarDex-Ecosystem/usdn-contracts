@@ -298,11 +298,11 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
             PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
         vm.prank(USER_3);
         protocol.initiateDeposit(
-            1 ether, disableSharesOutMin, USER_3, USER_3, NO_PERMIT2, abi.encode(2200 ether), previousActionsData
+            1 ether, DISABLESHARESOUTMIN, USER_3, USER_3, NO_PERMIT2, abi.encode(2200 ether), previousActionsData
         );
         vm.prank(USER_4);
         protocol.initiateDeposit(
-            1 ether, disableSharesOutMin, USER_4, USER_4, NO_PERMIT2, abi.encode(2200 ether), previousActionsData
+            1 ether, DISABLESHARESOUTMIN, USER_4, USER_4, NO_PERMIT2, abi.encode(2200 ether), previousActionsData
         );
 
         // They should have validated both pending actions

@@ -126,7 +126,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         emit Rebase(0, 0);
         protocol.initiateDeposit(
             1 ether,
-            disableSharesOutMin,
+            DISABLESHARESOUTMIN,
             address(this),
             payable(address(this)),
             NO_PERMIT2,
@@ -180,7 +180,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         emit Rebase(0, 0);
         protocol.initiateWithdrawal(
             100 ether,
-            disableAmountOutMin,
+            DISABLEAMOUNTOUTMIN,
             address(this),
             payable(address(this)),
             abi.encode(newPrice),

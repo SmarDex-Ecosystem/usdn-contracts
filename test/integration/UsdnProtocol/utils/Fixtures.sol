@@ -292,7 +292,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         // deposit assets in the protocol to imbalance it
         protocol.initiateDeposit{ value: messageValue }(
             30 ether,
-            disableSharesOutMin,
+            DISABLESHARESOUTMIN,
             payable(address(this)),
             payable(address(this)),
             NO_PERMIT2,

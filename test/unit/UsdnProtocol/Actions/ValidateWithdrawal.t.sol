@@ -98,7 +98,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
 
         protocol.initiateWithdrawal(
             uint128(usdn.balanceOf(address(this))),
-            disableAmountOutMin,
+            DISABLEAMOUNTOUTMIN,
             address(this),
             payable(address(this)),
             abi.encode(params.initialPrice),
@@ -207,7 +207,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateWithdrawal);
         protocol.initiateWithdrawal{ value: validationCost }(
-            USDN_AMOUNT, disableAmountOutMin, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
+            USDN_AMOUNT, DISABLEAMOUNTOUTMIN, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
@@ -229,7 +229,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
 
         data.currentPrice = abi.encode(params.initialPrice);
         protocol.initiateWithdrawal(
-            withdrawShares, disableAmountOutMin, to, payable(address(this)), data.currentPrice, EMPTY_PREVIOUS_DATA
+            withdrawShares, DISABLEAMOUNTOUTMIN, to, payable(address(this)), data.currentPrice, EMPTY_PREVIOUS_DATA
         );
 
         data.actionId = oracleMiddleware.lastActionId();
@@ -341,7 +341,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(params.initialPrice);
         protocol.initiateWithdrawal(
             withdrawShares,
-            disableAmountOutMin,
+            DISABLEAMOUNTOUTMIN,
             address(this),
             payable(address(this)),
             currentPrice,
@@ -379,7 +379,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         uint256 balanceContractBefore = address(this).balance;
 
         protocol.initiateWithdrawal{ value: 0.5 ether }(
-            withdrawShares, disableAmountOutMin, address(this), USER_1, currentPrice, EMPTY_PREVIOUS_DATA
+            withdrawShares, DISABLEAMOUNTOUTMIN, address(this), USER_1, currentPrice, EMPTY_PREVIOUS_DATA
         );
         _waitBeforeActionablePendingAction();
         protocol.validateWithdrawal(USER_1, currentPrice, EMPTY_PREVIOUS_DATA);

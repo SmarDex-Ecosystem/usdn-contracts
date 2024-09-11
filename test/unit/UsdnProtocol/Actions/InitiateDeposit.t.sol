@@ -90,7 +90,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
             to, validator, depositAmount, protocol.getVaultFeeBps(), block.timestamp, expectedSdexBurnAmount
         );
         bool success = protocol.initiateDeposit(
-            depositAmount, disableSharesOutMin, to, payable(validator), NO_PERMIT2, currentPrice, EMPTY_PREVIOUS_DATA
+            depositAmount, DISABLESHARESOUTMIN, to, payable(validator), NO_PERMIT2, currentPrice, EMPTY_PREVIOUS_DATA
         );
         assertTrue(success, "success");
 
@@ -140,7 +140,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         vm.expectRevert(UsdnProtocolInvalidAddressTo.selector);
         protocol.initiateDeposit(
             1 ether,
-            disableSharesOutMin,
+            DISABLESHARESOUTMIN,
             address(0),
             payable(address(this)),
             NO_PERMIT2,
@@ -159,7 +159,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         vm.expectRevert(UsdnProtocolInvalidAddressValidator.selector);
         protocol.initiateDeposit(
             1 ether,
-            disableSharesOutMin,
+            DISABLESHARESOUTMIN,
             address(this),
             payable(address(0)),
             NO_PERMIT2,
@@ -177,7 +177,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         bytes memory priceData = abi.encode(uint128(2000 ether));
         vm.expectRevert(UsdnProtocolZeroAmount.selector);
         protocol.initiateDeposit(
-            0, disableSharesOutMin, address(this), payable(address(this)), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
+            0, DISABLESHARESOUTMIN, address(this), payable(address(this)), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -204,7 +204,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         vm.expectRevert(UsdnProtocolDepositTooSmall.selector);
         protocol.initiateDeposit(
             deposited,
-            disableSharesOutMin,
+            DISABLESHARESOUTMIN,
             address(this),
             payable(address(this)),
             NO_PERMIT2,
@@ -235,7 +235,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
 
         protocol.initiateDeposit(
             deposited,
-            disableSharesOutMin,
+            DISABLESHARESOUTMIN,
             address(this),
             payable(address(this)),
             NO_PERMIT2,
@@ -257,7 +257,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateDeposit);
         protocol.initiateDeposit{ value: 0.5 ether }(
             1 ether,
-            disableSharesOutMin,
+            DISABLESHARESOUTMIN,
             address(this),
             payable(address(this)),
             NO_PERMIT2,
@@ -281,7 +281,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
             vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
             protocol.initiateDeposit(
                 1 ether,
-                disableSharesOutMin,
+                DISABLESHARESOUTMIN,
                 address(this),
                 payable(address(this)),
                 NO_PERMIT2,
@@ -297,7 +297,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         // The value sent will cause a refund, which will trigger the receive() function of this contract
         protocol.initiateDeposit{ value: 1 }(
             1 ether,
-            disableSharesOutMin,
+            DISABLESHARESOUTMIN,
             address(this),
             payable(address(this)),
             NO_PERMIT2,
@@ -332,7 +332,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
 
         bool success = protocol.initiateDeposit(
             POSITION_AMOUNT,
-            disableSharesOutMin,
+            DISABLESHARESOUTMIN,
             address(this),
             payable(address(this)),
             NO_PERMIT2,
