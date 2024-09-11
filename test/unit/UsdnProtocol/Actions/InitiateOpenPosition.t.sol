@@ -498,12 +498,12 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
     }
 
     /**
-     * @custom:scenario The user initiates an open position action with an entry price less than the user's max price
+     * @custom:scenario The user initiates an open position action with an entry price greater than the user's max price
      * @custom:given The current price is $2000
      * @custom:when The user initiates an open position with a userMaxPrice of $1999
      * @custom:then The protocol reverts with UsdnProtocolSlippageMaxPriceExceeded
      */
-    function test_RevertWhen_initiateOpenPositionWithEntryPriceLessThanUserMaxPrice() public {
+    function test_RevertWhen_initiateOpenPositionWithEntryPriceGreaterThanUserMaxPrice() public {
         uint256 leverage = protocol.getMaxLeverage();
         vm.expectRevert(UsdnProtocolSlippageMaxPriceExceeded.selector);
         protocol.initiateOpenPosition(
