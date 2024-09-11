@@ -29,7 +29,7 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
      */
     function test_RevertWhen_rebalancerInvalidAmountZero() public {
         vm.expectRevert(IRebalancerErrors.RebalancerInvalidAmount.selector);
-        rebalancer.initiateClosePosition(0, address(this), 0, "", EMPTY_PREVIOUS_DATA);
+        rebalancer.initiateClosePosition(0, address(this), disableMinPrice, "", EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -39,7 +39,7 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
      */
     function test_RevertWhen_rebalancerInvalidAmountTooLarge() public {
         vm.expectRevert(IRebalancerErrors.RebalancerInvalidAmount.selector);
-        rebalancer.initiateClosePosition(minAsset + 1, address(this), 0, "", EMPTY_PREVIOUS_DATA);
+        rebalancer.initiateClosePosition(minAsset + 1, address(this), disableMinPrice, "", EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -50,7 +50,7 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
      */
     function test_RevertWhen_rebalancerInvalidAmountTooLow() public {
         vm.expectRevert(IRebalancerErrors.RebalancerInvalidAmount.selector);
-        rebalancer.initiateClosePosition(1, address(this), 0, "", EMPTY_PREVIOUS_DATA);
+        rebalancer.initiateClosePosition(1, address(this), disableMinPrice, "", EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -60,6 +60,6 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
      */
     function test_RevertWhen_rebalancerUserPending() public {
         vm.expectRevert(IRebalancerErrors.RebalancerUserPending.selector);
-        rebalancer.initiateClosePosition(minAsset, address(this), 0, "", EMPTY_PREVIOUS_DATA);
+        rebalancer.initiateClosePosition(minAsset, address(this), disableMinPrice, "", EMPTY_PREVIOUS_DATA);
     }
 }

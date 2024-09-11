@@ -323,7 +323,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         protocol.initiateClosePosition(
             posIdToClose,
             1 ether,
-            0,
+            disableMinPrice,
             address(this),
             payable(address(this)),
             abi.encode(effectivePriceForTick),

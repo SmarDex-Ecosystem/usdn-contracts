@@ -291,7 +291,13 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         vm.expectEmit(false, false, false, false);
         emit Rebase(0, 0);
         protocol.initiateClosePosition(
-            posId, 1 ether, 0, address(this), payable(address(this)), abi.encode(newPrice), EMPTY_PREVIOUS_DATA
+            posId,
+            1 ether,
+            disableMinPrice,
+            address(this),
+            payable(address(this)),
+            abi.encode(newPrice),
+            EMPTY_PREVIOUS_DATA
         );
     }
 
