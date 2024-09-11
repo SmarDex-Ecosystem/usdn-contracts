@@ -35,7 +35,7 @@ contract TestUsdnProtocolActionsPrepareWithdrawalData is UsdnProtocolBaseFixture
      */
     function test_prepareWithdrawalData() public {
         ActionsVault.WithdrawalData memory data =
-            protocol.i_prepareWithdrawalData(address(this), usdnSharesAmount, DISABLEAMOUNTOUTMIN, currentPriceData);
+            protocol.i_prepareWithdrawalData(address(this), usdnSharesAmount, DISABLE_AMOUNT_OUT_MIN, currentPriceData);
 
         assertFalse(data.isLiquidationPending, "There should be no pending liquidations");
         _assertData(data, false);
@@ -80,7 +80,7 @@ contract TestUsdnProtocolActionsPrepareWithdrawalData is UsdnProtocolBaseFixture
         currentPriceData = abi.encode(params.initialPrice * 7 / 10);
 
         ActionsVault.WithdrawalData memory data =
-            protocol.i_prepareWithdrawalData(address(this), usdnSharesAmount, DISABLEAMOUNTOUTMIN, currentPriceData);
+            protocol.i_prepareWithdrawalData(address(this), usdnSharesAmount, DISABLE_AMOUNT_OUT_MIN, currentPriceData);
 
         assertTrue(data.isLiquidationPending, "There should be pending liquidations");
         _assertData(data, true);

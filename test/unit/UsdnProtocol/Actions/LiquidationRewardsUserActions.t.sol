@@ -69,7 +69,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
         protocol.initiateDeposit(
             depositAmount,
-            DISABLESHARESOUTMIN,
+            DISABLE_SHARES_OUT_MIN,
             address(this),
             payable(address(this)),
             NO_PERMIT2,
@@ -98,7 +98,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
     function test_liquidationRewards_validateDeposit() public {
         protocol.initiateDeposit(
             depositAmount,
-            DISABLESHARESOUTMIN,
+            DISABLE_SHARES_OUT_MIN,
             address(this),
             payable(address(this)),
             NO_PERMIT2,
@@ -138,7 +138,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
         protocol.initiateWithdrawal(
             uint152(usdn.balanceOf(address(this))),
-            DISABLEAMOUNTOUTMIN,
+            DISABLE_AMOUNT_OUT_MIN,
             address(this),
             payable(address(this)),
             liquidationPriceData,

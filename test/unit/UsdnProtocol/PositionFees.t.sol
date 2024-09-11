@@ -309,7 +309,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         usdn.approve(address(protocol), type(uint256).max);
         protocol.initiateWithdrawal(
             uint128(mintedUsdn),
-            DISABLEAMOUNTOUTMIN,
+            DISABLE_AMOUNT_OUT_MIN,
             address(this),
             payable(address(this)),
             abi.encode(price),
@@ -345,7 +345,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         usdn.approve(address(protocol), type(uint256).max);
         protocol.initiateWithdrawal(
             uint128(mintedUsdn),
-            DISABLEAMOUNTOUTMIN,
+            DISABLE_AMOUNT_OUT_MIN,
             address(this),
             payable(address(this)),
             currentPrice,
@@ -435,7 +435,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         protocol.initiateWithdrawal(
             uint128(usdn.sharesOf(address(this))),
-            DISABLEAMOUNTOUTMIN,
+            DISABLE_AMOUNT_OUT_MIN,
             address(this),
             payable(address(this)),
             currentPrice,
@@ -452,7 +452,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         protocol.initiateWithdrawal(
             uint128(usdn.sharesOf(address(this))),
-            DISABLEAMOUNTOUTMIN,
+            DISABLE_AMOUNT_OUT_MIN,
             address(this),
             payable(address(this)),
             currentPrice,

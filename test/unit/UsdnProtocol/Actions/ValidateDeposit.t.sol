@@ -116,7 +116,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         assertEq(validationCost, 1);
         protocol.initiateDeposit{ value: validationCost }(
             DEPOSIT_AMOUNT,
-            DISABLESHARESOUTMIN,
+            DISABLE_SHARES_OUT_MIN,
             address(this),
             payable(address(this)),
             NO_PERMIT2,
@@ -160,7 +160,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
 
         protocol.initiateDeposit(
             DEPOSIT_AMOUNT,
-            DISABLESHARESOUTMIN,
+            DISABLE_SHARES_OUT_MIN,
             address(this),
             payable(address(this)),
             NO_PERMIT2,
@@ -224,7 +224,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         );
         protocol.initiateDeposit(
             DEPOSIT_AMOUNT,
-            DISABLESHARESOUTMIN,
+            DISABLE_SHARES_OUT_MIN,
             to,
             payable(address(this)),
             NO_PERMIT2,
@@ -349,7 +349,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         uint256 balanceContractBefore = address(this).balance;
 
         protocol.initiateDeposit{ value: 0.5 ether }(
-            DEPOSIT_AMOUNT, DISABLESHARESOUTMIN, address(this), USER_1, NO_PERMIT2, currentPrice, EMPTY_PREVIOUS_DATA
+            DEPOSIT_AMOUNT, DISABLE_SHARES_OUT_MIN, address(this), USER_1, NO_PERMIT2, currentPrice, EMPTY_PREVIOUS_DATA
         );
         _waitBeforeActionablePendingAction();
         protocol.validateDeposit(USER_1, currentPrice, EMPTY_PREVIOUS_DATA);

@@ -100,7 +100,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
 
         bool success = protocol.initiateWithdrawal(
             uint128(usdn.balanceOf(address(this))),
-            DISABLEAMOUNTOUTMIN,
+            DISABLE_AMOUNT_OUT_MIN,
             address(this),
             payable(address(this)),
             abi.encode(params.initialPrice / 3),
@@ -125,7 +125,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit InitiatedWithdrawal(to, address(this), USDN_AMOUNT, 0, block.timestamp); // expected event
         bool success = protocol.initiateWithdrawal(
-            withdrawShares, DISABLEAMOUNTOUTMIN, to, payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
+            withdrawShares, DISABLE_AMOUNT_OUT_MIN, to, payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
         );
         assertTrue(success, "success");
 
@@ -165,7 +165,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         vm.expectRevert(UsdnProtocolZeroAmount.selector);
         protocol.initiateWithdrawal(
-            0, DISABLEAMOUNTOUTMIN, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
+            0, DISABLE_AMOUNT_OUT_MIN, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -179,7 +179,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         vm.expectRevert(UsdnProtocolInvalidAddressTo.selector);
         protocol.initiateWithdrawal(
-            1 ether, DISABLEAMOUNTOUTMIN, address(0), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
+            1 ether, DISABLE_AMOUNT_OUT_MIN, address(0), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -193,7 +193,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         vm.expectRevert(UsdnProtocolInvalidAddressValidator.selector);
         protocol.initiateWithdrawal(
-            1 ether, DISABLEAMOUNTOUTMIN, address(this), payable(address(0)), currentPrice, EMPTY_PREVIOUS_DATA
+            1 ether, DISABLE_AMOUNT_OUT_MIN, address(this), payable(address(0)), currentPrice, EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -209,7 +209,12 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateWithdrawal);
         protocol.initiateWithdrawal{ value: validationCost }(
-            USDN_AMOUNT, DISABLEAMOUNTOUTMIN, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
+            USDN_AMOUNT,
+            DISABLE_AMOUNT_OUT_MIN,
+            address(this),
+            payable(address(this)),
+            currentPrice,
+            EMPTY_PREVIOUS_DATA
         );
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
@@ -242,7 +247,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
             vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
             protocol.initiateWithdrawal(
                 USDN_AMOUNT,
-                DISABLEAMOUNTOUTMIN,
+                DISABLE_AMOUNT_OUT_MIN,
                 address(this),
                 payable(address(this)),
                 currentPrice,
@@ -258,7 +263,12 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.initiateWithdrawal.selector), 2);
         // The value sent will cause a refund, which will trigger the receive() function of this contract
         protocol.initiateWithdrawal{ value: 1 }(
-            USDN_AMOUNT, DISABLEAMOUNTOUTMIN, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
+            USDN_AMOUNT,
+            DISABLE_AMOUNT_OUT_MIN,
+            address(this),
+            payable(address(this)),
+            currentPrice,
+            EMPTY_PREVIOUS_DATA
         );
     }
 

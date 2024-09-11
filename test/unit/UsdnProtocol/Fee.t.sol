@@ -170,7 +170,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         vm.expectRevert("FeeCollectorRevertCallback");
         protocol.initiateWithdrawal(
             1,
-            DISABLEAMOUNTOUTMIN,
+            DISABLE_AMOUNT_OUT_MIN,
             address(this),
             payable(address(this)),
             abi.encode(DEFAULT_PARAMS.initialPrice),
