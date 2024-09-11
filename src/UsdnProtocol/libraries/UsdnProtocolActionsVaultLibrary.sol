@@ -348,11 +348,11 @@ library UsdnProtocolActionsVaultLibrary {
         data_.usdnTotalShares = usdn.totalShares();
 
         // calculate the amount of SDEX tokens to burn
-        uint256 usdnSharesToMintEstimated = Vault._calcMintUsdnShares(amount, data_.balanceVault, data_.usdnTotalShares);
-        if (usdnSharesToMintEstimated < sharesOutMin) {
+        uint256 estimatedUsdnShares = Vault._calcMintUsdnShares(amount, data_.balanceVault, data_.usdnTotalShares);
+        if (estimatedUsdnShares < sharesOutMin) {
             revert IUsdnProtocolErrors.UsdnProtocolAmountReceivedTooSmall();
         }
-        uint256 usdnToMintEstimated = usdn.convertToTokens(usdnSharesToMintEstimated);
+        uint256 usdnToMintEstimated = usdn.convertToTokens(estimatedUsdnShares);
         // we want to at least mint 1 wei of USDN
         if (usdnToMintEstimated == 0) {
             revert IUsdnProtocolErrors.UsdnProtocolDepositTooSmall();
