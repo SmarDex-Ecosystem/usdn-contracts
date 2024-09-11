@@ -30,21 +30,25 @@ contract StETH is IStETH, ERC20Burnable, ERC20Permit, Ownable {
         return super.nonces(_owner);
     }
 
+    /// @inheritdoc IStETH
     function mint(address account, uint256 amount) external onlyOwner {
         _mint(account, amount);
     }
 
+    /// @inheritdoc IStETH
     function deposit(address account) external payable {
         if (msg.value != 0) {
             _mint(account, msg.value);
         }
     }
 
+    /// @inheritdoc IStETH
     function sweep(address to) external onlyOwner {
         (bool success,) = to.call{ value: address(this).balance }("");
         require(success, "Transfer failed");
     }
 
+    /// @inheritdoc IStETH
     function setStEthPerToken(uint256 _stEthAmount, IWstETH wstETH) external onlyOwner returns (uint256) {
         if (wstETH.stEthPerToken() > _stEthAmount) {
             revert setStEthPerTokenTooSmall(wstETH.stEthPerToken(), _stEthAmount);

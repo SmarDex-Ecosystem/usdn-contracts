@@ -46,30 +46,37 @@ contract WstETH is IWstETH, ERC4626, ERC20Permit, Ownable {
         return super.nonces(_owner);
     }
 
+    /// @inheritdoc IWstETH
     function wrap(uint256 _stETHAmount) external returns (uint256) {
         return deposit(_stETHAmount, msg.sender);
     }
 
+    /// @inheritdoc IWstETH
     function unwrap(uint256 _wstETHAmount) external returns (uint256) {
         return redeem(_wstETHAmount, msg.sender, msg.sender);
     }
 
+    /// @inheritdoc IWstETH
     function getWstETHByStETH(uint256 _stETHAmount) external view returns (uint256) {
         return convertToShares(_stETHAmount);
     }
 
+    /// @inheritdoc IWstETH
     function getStETHByWstETH(uint256 _wstETHAmount) external view returns (uint256) {
         return convertToAssets(_wstETHAmount);
     }
 
+    /// @inheritdoc IWstETH
     function stEthPerToken() public view returns (uint256) {
         return convertToAssets(1 ether);
     }
 
+    /// @inheritdoc IWstETH
     function tokensPerStEth() external view returns (uint256) {
         return convertToShares(1 ether);
     }
 
+    /// @inheritdoc IWstETH
     function stETH() external view returns (address) {
         return address(asset());
     }
