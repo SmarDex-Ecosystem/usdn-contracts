@@ -484,7 +484,7 @@ interface IUsdnProtocolTypes {
      * @param _oracleMiddleware The oracle middleware contract
      * @param _liquidationRewardsManager The liquidation rewards manager contract
      * @param _rebalancer The rebalancer contract
-     * @param _minLeverage The minimum leverage for a position (1.000000001)
+     * @param _minLeverage The minimum leverage for a position (1.1)
      * @param _maxLeverage The maximum leverage for a position
      * @param _lowLatencyValidatorDeadline The deadline for a user to confirm their action with a low-latency oracle
      * After this deadline, any user can validate the action with the low-latency oracle until the OracleMiddleware's
