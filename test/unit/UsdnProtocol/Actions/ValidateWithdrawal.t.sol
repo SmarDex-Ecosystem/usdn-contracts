@@ -411,7 +411,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         uint256 balanceContractBefore = address(this).balance;
 
         protocol.initiateWithdrawal{ value: 0.5 ether }(
-            withdrawShares, 0, address(this), USER_1, currentPrice, EMPTY_PREVIOUS_DATA
+            withdrawShares, disableAmountOutMin, address(this), USER_1, currentPrice, EMPTY_PREVIOUS_DATA
         );
         _waitBeforeActionablePendingAction();
         protocol.validateWithdrawal(USER_1, currentPrice, EMPTY_PREVIOUS_DATA);

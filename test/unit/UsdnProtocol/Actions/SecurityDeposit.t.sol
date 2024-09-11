@@ -523,7 +523,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(
-            1e18, 0, USER_1, USER_1, priceData, previousActionsData
+            1e18, disableAmountOutMin, USER_1, USER_1, priceData, previousActionsData
         );
 
         _waitDelay();
@@ -569,7 +569,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         vm.startPrank(USER_1);
         usdn.approve(address(protocol), 2);
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(
-            1e18, 0, USER_1, USER_1, priceData, EMPTY_PREVIOUS_DATA
+            1e18, disableAmountOutMin, USER_1, USER_1, priceData, EMPTY_PREVIOUS_DATA
         );
         _waitBeforeActionablePendingAction();
 
@@ -1082,7 +1082,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         usdn.approve(address(protocol), 1);
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(
-            1, 0, USER_1, payable(address(receiverContract)), priceData, EMPTY_PREVIOUS_DATA
+            1, disableAmountOutMin, USER_1, payable(address(receiverContract)), priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
