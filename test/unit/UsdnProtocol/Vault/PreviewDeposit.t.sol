@@ -30,7 +30,6 @@ contract TestUsdnProtocolPreviewDeposit is UsdnProtocolBaseFixture {
      * @custom:then The amount of USDN and SDEX tokens should be calculated correctly
      */
     function testFuzz_comparePreviewDepositAndDeposit(uint256 amount) public {
-        skip(1 hours);
         bytes memory currentPrice = abi.encode(uint128(params.initialPrice));
         amount = bound(amount, 1, wstETH.balanceOf(address(this)));
 
