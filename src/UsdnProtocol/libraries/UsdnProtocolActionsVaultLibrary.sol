@@ -788,8 +788,6 @@ library UsdnProtocolActionsVaultLibrary {
         if (isLiquidationPending) {
             return false;
         }
-        // no early return past this point, we know that the position will be validated
-        isValidated_ = true;
 
         uint256 available;
         {
@@ -834,6 +832,8 @@ library UsdnProtocolActionsVaultLibrary {
             s._balanceVault -= assetToTransferAfterFees;
             address(s._asset).safeTransfer(withdrawal.to, assetToTransferAfterFees);
         }
+
+        isValidated_ = true;
 
         emit IUsdnProtocolEvents.ValidatedWithdrawal(
             withdrawal.to,
