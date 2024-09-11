@@ -31,7 +31,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function previewWithdraw(uint256 usdnShares, uint256 price, uint128 timestamp)
+    function previewWithdraw(uint256 usdnShares, uint128 price, uint128 timestamp)
         external
         view
         returns (uint256 assetExpected_)

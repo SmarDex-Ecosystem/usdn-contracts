@@ -88,17 +88,17 @@ contract TestUsdnProtocolActionsPrepareWithdrawalData is UsdnProtocolBaseFixture
 
     /// @notice Assert the data in WithdrawalData depending on `isEarlyReturn`
     function _assertData(ActionsVault.WithdrawalData memory data, bool isEarlyReturn) private view {
-        uint128 currentPrice = abi.decode(currentPriceData, (uint128));
+        uint256 amountAfterFees = DEPOSITED_AMOUNT - (DEPOSITED_AMOUNT * protocol.getVaultFeeBps()) / BPS_DIVISOR;
 
         if (isEarlyReturn) {
-            assertEq(data.pendingActionPrice, 0, "The pending action price should not be set");
+            assertEq(data.feeBps, 0, "The fee should not be set");
             assertEq(data.usdnTotalShares, 0, "The total shares of USDN should not be set");
             assertEq(data.totalExpo, 0, "The total expo should not be set");
             assertEq(data.balanceLong, 0, "The balance long should not be set");
             assertEq(data.balanceVault, 0, "The balance vault should not be set");
-            assertEq(data.withdrawalAmount, 0, "The amount withdrawn should not be set");
+            assertEq(data.withdrawalAmountAfterFees, 0, "The amount withdrawn should not be set");
         } else {
-            assertEq(data.pendingActionPrice, currentPrice, "The pending action price should be the current price");
+            assertEq(data.feeBps, protocol.getVaultFeeBps(), "The fee should be the vault fee");
             assertEq(
                 data.usdnTotalShares, usdn.totalShares(), "The total shares of USDN should be the one in the contract"
             );
@@ -107,7 +107,7 @@ contract TestUsdnProtocolActionsPrepareWithdrawalData is UsdnProtocolBaseFixture
             assertEq(
                 data.balanceVault, protocol.getBalanceVault(), "The balance vault should be the one in the protocol"
             );
-            assertEq(data.withdrawalAmount, DEPOSITED_AMOUNT, "The amount withdrawn be the amount deposited");
+            assertEq(data.withdrawalAmountAfterFees, amountAfterFees, "The amount withdrawn includes fees");
         }
     }
 }

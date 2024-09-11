@@ -544,20 +544,26 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Calculate the amount of assets received when burning USDN shares
+     * @notice Calculate the amount of assets received when burning USDN shares (after fees)
      * @param usdnShares The amount of USDN shares
      * @param available The available asset in the vault
      * @param usdnTotalShares The total supply of USDN shares
-     * @return assetExpected_ The expected amount of assets to be received
+     * @param feeBps The fee in basis points
+     * @return assetExpected_ The expected amount of assets to be received, after fees
      */
-    function _calcBurnUsdn(uint256 usdnShares, uint256 available, uint256 usdnTotalShares)
-        internal
+    function _calcBurnUsdn(uint256 usdnShares, uint256 available, uint256 usdnTotalShares, uint256 feeBps)
+        public
         pure
         returns (uint256 assetExpected_)
     {
-        // assetExpected = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
+        // amount = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
         //                 = shares * assetAvailable / usdnTotalShares
-        assetExpected_ = FixedPointMathLib.fullMulDiv(usdnShares, available, usdnTotalShares);
+        // amountAfterFees = amount - (amount * feeBps / BPS_DIVISOR)
+        //                = shares * assetAvailable * (BPS_DIVISOR - feeBps) / (usdnTotalShares * BPS_DIVISOR)
+        // Note: the second division is moved out of the fullMulDiv to avoid an overflow in the denominator
+        assetExpected_ = FixedPointMathLib.fullMulDiv(
+            usdnShares, available * (Constants.BPS_DIVISOR - feeBps), usdnTotalShares
+        ) / Constants.BPS_DIVISOR;
     }
 
     /**

@@ -49,30 +49,27 @@ library UsdnProtocolVaultLibrary {
         view
         returns (uint256 usdnSharesExpected_, uint256 sdexToBurn_)
     {
-        // apply fees on price
-        uint128 depositPriceWithFees = uint128(price - uint256(price) * s._vaultFeeBps / Constants.BPS_DIVISOR);
-        int256 vaultBalance = vaultAssetAvailableWithFunding(s, depositPriceWithFees, timestamp);
+        int256 vaultBalance = vaultAssetAvailableWithFunding(s, price, timestamp);
         if (vaultBalance <= 0) {
             revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
         }
         IUsdn usdn = s._usdn;
-        usdnSharesExpected_ = Utils._calcMintUsdnShares(amount, uint256(vaultBalance), usdn.totalShares());
+        uint256 amountAfterFees = amount - FixedPointMathLib.fullMulDiv(amount, s._vaultFeeBps, Constants.BPS_DIVISOR);
+        usdnSharesExpected_ = Utils._calcMintUsdnShares(amountAfterFees, uint256(vaultBalance), usdn.totalShares());
         sdexToBurn_ = Utils._calcSdexToBurn(usdn.convertToTokens(usdnSharesExpected_), s._sdexBurnOnDepositRatio);
     }
 
     /// @notice See {IUsdnProtocolVault}
-    function previewWithdraw(Types.Storage storage s, uint256 usdnShares, uint256 price, uint128 timestamp)
+    function previewWithdraw(Types.Storage storage s, uint256 usdnShares, uint128 price, uint128 timestamp)
         public
         view
         returns (uint256 assetExpected_)
     {
-        // apply fees on price
-        uint128 withdrawalPriceWithFees = (price + price * s._vaultFeeBps / Constants.BPS_DIVISOR).toUint128();
-        int256 available = vaultAssetAvailableWithFunding(s, withdrawalPriceWithFees, timestamp);
+        int256 available = vaultAssetAvailableWithFunding(s, price, timestamp);
         if (available < 0) {
             return 0;
         }
-        assetExpected_ = Utils._calcBurnUsdn(usdnShares, uint256(available), s._usdn.totalShares());
+        assetExpected_ = Utils._calcBurnUsdn(usdnShares, uint256(available), s._usdn.totalShares(), s._vaultFeeBps);
     }
 
     /// @notice See {IUsdnProtocolVault}
