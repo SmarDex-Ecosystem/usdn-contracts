@@ -17,7 +17,7 @@ import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 
 import { MockWstEthOracleMiddleware } from "../../../src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
 import { ILiquidationRewardsManagerErrorsEventsTypes } from
-    "../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManagerErrorsEventsTypes.sol";
+    "../../../src/interfaces/LiquidationRewardsManager/ILiquidationRewardsManagerErrorsEventsTypes.sol";
 import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
 import { IUsdnEvents } from "../../../src/interfaces/Usdn/IUsdnEvents.sol";
 

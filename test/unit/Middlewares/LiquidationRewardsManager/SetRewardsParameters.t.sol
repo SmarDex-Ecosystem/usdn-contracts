@@ -7,7 +7,7 @@ import { USER_1 } from "../../../utils/Constants.sol";
 import { LiquidationRewardsManagerBaseFixture } from "../utils/Fixtures.sol";
 
 import { ILiquidationRewardsManagerErrorsEventsTypes } from
-    "../../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManagerErrorsEventsTypes.sol";
+    "../../../../src/interfaces/LiquidationRewardsManager/ILiquidationRewardsManagerErrorsEventsTypes.sol";
 
 /**
  * @custom:feature The `setRewardsParameters` function of `LiquidationRewardsManager`

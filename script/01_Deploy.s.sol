@@ -10,9 +10,9 @@ import { WstETH } from "../test/utils/WstEth.sol";
 
 import { Utils } from "./Utils.s.sol";
 
-import { LiquidationRewardsManager } from "../src/OracleMiddleware/LiquidationRewardsManager.sol";
+import { LiquidationRewardsManager } from "../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
+import { MockLiquidationRewardsManager } from "../src/LiquidationRewardsManager/mock/MockLiquidationRewardsManager.sol";
 import { WstEthOracleMiddleware } from "../src/OracleMiddleware/WstEthOracleMiddleware.sol";
-import { MockLiquidationRewardsManager } from "../src/OracleMiddleware/mock/MockLiquidationRewardsManager.sol";
 import { MockWstEthOracleMiddleware } from "../src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
 import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../src/Usdn/Usdn.sol";

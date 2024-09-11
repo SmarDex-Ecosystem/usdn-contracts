@@ -11,7 +11,7 @@ import { MockChainlinkOnChain } from "../../Middlewares/utils/MockChainlinkOnCha
 import { MockOracleMiddleware } from "../../UsdnProtocol/utils/MockOracleMiddleware.sol";
 import { RebalancerHandler } from "../utils/Handler.sol";
 
-import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
+import { LiquidationRewardsManager } from "../../../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";

@@ -4,12 +4,13 @@ pragma solidity 0.8.26;
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 
+import { ChainlinkOracle } from "../OracleMiddleware/oracles/ChainlinkOracle.sol";
 import { IWstETH } from "../interfaces/IWstETH.sol";
-import { IBaseLiquidationRewardsManager } from "../interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
-import { ILiquidationRewardsManager } from "../interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
+import { IBaseLiquidationRewardsManager } from
+    "../interfaces/LiquidationRewardsManager/IBaseLiquidationRewardsManager.sol";
+import { ILiquidationRewardsManager } from "../interfaces/LiquidationRewardsManager/ILiquidationRewardsManager.sol";
 import { ChainlinkPriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { ChainlinkOracle } from "./oracles/ChainlinkOracle.sol";
 
 /**
  * @title LiquidationRewardsManager contract
