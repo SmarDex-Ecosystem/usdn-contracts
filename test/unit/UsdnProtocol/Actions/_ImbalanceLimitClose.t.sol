@@ -28,11 +28,11 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
      */
     function test_checkImbalanceLimitClose() public view {
         (, uint256 longAmount, uint256 totalExpoValueToLimit) = _getCloseLimitValues(false);
-        protocol.i_checkImbalanceLimitClose(totalExpoValueToLimit / 2, longAmount);
+        protocol.i_checkImbalanceLimitClose(totalExpoValueToLimit / 2, longAmount, 0);
     }
 
     /**
-     * @custom:scenario The `_checkImbalanceLimitClose` function should not revert when the imballance is equal to the
+     * @custom:scenario The `_checkImbalanceLimitClose` function should not revert when the imbalance is equal to the
      * limit
      * @custom:given The protocol is in a balanced state
      * @custom:when The `_checkImbalanceLimitClose` function is called with values on the close limit
@@ -40,7 +40,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
      */
     function test_checkImbalanceLimitCloseOnLimit() public view {
         (, uint256 longAmount, uint256 totalExpoValueToLimit) = _getCloseLimitValues(false);
-        protocol.i_checkImbalanceLimitClose(totalExpoValueToLimit - 1, longAmount);
+        protocol.i_checkImbalanceLimitClose(totalExpoValueToLimit - 1, longAmount, 0);
     }
 
     /**
@@ -55,7 +55,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
         vm.expectRevert(
             abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, closeLimitBps)
         );
-        protocol.i_checkImbalanceLimitClose(totalExpoValueToLimit, longAmount);
+        protocol.i_checkImbalanceLimitClose(totalExpoValueToLimit, longAmount, 0);
     }
 
     /**
@@ -75,7 +75,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
             abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, closeLimitBps)
         );
 
-        protocol.i_checkImbalanceLimitClose(totalExpoValueToLimit, longAmount);
+        protocol.i_checkImbalanceLimitClose(totalExpoValueToLimit, longAmount, 0);
     }
 
     /**
@@ -90,7 +90,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
         // disable close limit
         protocol.setExpoImbalanceLimits(200, 200, 600, 0, 0, 0);
 
-        protocol.i_checkImbalanceLimitClose(totalExpoValueToLimit + 1, longAmount);
+        protocol.i_checkImbalanceLimitClose(totalExpoValueToLimit + 1, longAmount, 0);
     }
 
     /**
@@ -142,7 +142,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
         vm.expectRevert(
             abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, type(int256).max)
         );
-        protocol.i_checkImbalanceLimitClose(0, 0);
+        protocol.i_checkImbalanceLimitClose(0, 0, 0);
     }
 
     /**
@@ -167,7 +167,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
                 IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, uint256(expectedImbalance)
             )
         );
-        protocol.i_checkImbalanceLimitClose(totalExpoValueToLimit, longAmount);
+        protocol.i_checkImbalanceLimitClose(totalExpoValueToLimit, longAmount, 0);
     }
 
     /**

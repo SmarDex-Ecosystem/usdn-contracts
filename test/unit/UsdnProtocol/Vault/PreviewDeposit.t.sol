@@ -47,7 +47,7 @@ contract TestUsdnProtocolPreviewDeposit is UsdnProtocolBaseFixture {
 
         // calculate the expected USDN and SDEX tokens to be minted and burned
         (uint256 usdnSharesExpected, uint256 sdexToBurn) =
-            protocol.previewDeposit(amount, params.initialPrice, protocol.getLastUpdateTimestamp());
+            protocol.previewDeposit(amount, params.initialPrice, uint128(block.timestamp));
 
         // wait the required delay between initiation and validation
         _waitDelay();

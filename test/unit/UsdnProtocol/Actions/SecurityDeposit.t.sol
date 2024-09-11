@@ -26,6 +26,8 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         params.flags.enableSecurityDeposit = true;
         super._setUp(params);
         wstETH.mintAndApprove(address(this), 1000 ether, address(protocol), type(uint256).max);
+        wstETH.mintAndApprove(USER_1, 1000 ether, address(protocol), type(uint256).max);
+
         priceData = abi.encode(params.initialPrice);
 
         SECURITY_DEPOSIT_VALUE = protocol.getSecurityDepositValue();
@@ -402,7 +404,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:and The protocol returns the security deposit to the user1 at the initialization of his deposit
      */
     function test_initiateDeposit_multipleUsers() public {
-        wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
         uint256 usdnBalanceUser0Before = usdn.balanceOf(address(this));
         uint256 usdnBalanceUser1Before = usdn.balanceOf(USER_1);
@@ -450,7 +451,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:and The protocol returns the security deposit to the user1 at the validation of his deposit
      */
     function test_validateDeposit_multipleUsers() public {
-        wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
         uint256 usdnBalanceUser0Before = usdn.balanceOf(address(this));
         uint256 usdnBalanceUser1Before = usdn.balanceOf(USER_1);
@@ -498,7 +498,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:and The protocol returns the security deposit to the user1 at the initialization of his withdrawal
      */
     function test_initiateWithdrawal_multipleUsers() public {
-        wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
 
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
@@ -549,7 +548,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:and The protocol returns the security deposit to the user1 at the validation of his withdrawal
      */
     function test_validateWithdrawal_multipleUsers() public {
-        wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
 
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
@@ -598,7 +596,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:and The protocol returns the security deposit to the user1 at the initialization of his open position
      */
     function test_initiateOpenPosition_multipleUsers() public {
-        wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
 
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
@@ -643,7 +640,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:and The protocol returns the security deposit to the user1 at the validation of his open position
      */
     function test_validateOpenPosition_multipleUsers() public {
-        wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
 
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
@@ -692,7 +688,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:and The protocol returns the security deposit to the user1 at the initialization of his close position
      */
     function test_initiateClosePosition_multipleUsers() public {
-        wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
 
         PositionId memory posId = setUpUserPositionInLong(
@@ -747,7 +742,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:and The protocol returns the security deposit to the user1 at the validation of his close position
      */
     function test_validateClosePosition_multipleUsers() public {
-        wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
 
         PositionId memory posId = setUpUserPositionInLong(
@@ -885,7 +879,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:and The protocol returns `SECURITY_DEPOSIT_VALUE` the user1 at the initialization of his deposit
      */
     function test_changeValue_multipleUsers() public {
-        wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
         uint256 usdnBalanceUser0Before = usdn.balanceOf(address(this));
         uint256 usdnBalanceUser1Before = usdn.balanceOf(USER_1);
@@ -993,6 +986,131 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         protocol.validateDeposit(payable(address(this)), priceData, EMPTY_PREVIOUS_DATA);
 
         assertBalancesEnd();
+    }
+
+    /**
+     * @custom:scenario The user initiates a `deposit` with a stale pending action
+     * @custom:given The validator is different than the user
+     * @custom:when The action is initiated
+     * @custom:then The protocol takes the security deposit from the user
+     * @custom:and The protocol returns the security deposit of the stale pending action to the validator
+     */
+    function test_refundStaleToValidatorInDeposit() public {
+        PositionId memory posId = _createStalePendingActionHelper();
+
+        (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
+
+        vm.prank(USER_1);
+        vm.expectEmit();
+        emit StalePendingActionRemoved(address(this), posId);
+        protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
+            1 ether, USER_1, payable(this), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
+        );
+
+        assertStaleRefundValues();
+    }
+
+    /**
+     * @custom:scenario The user initiates a `open` with a stale pending action
+     * @custom:given The validator is different than the user
+     * @custom:when The action is initiated
+     * @custom:then The protocol takes the security deposit from the user
+     * @custom:and The protocol returns the security deposit of the stale pending action to the validator
+     */
+    function test_refundStaleToValidatorInOpen() public {
+        PositionId memory posId = _createStalePendingActionHelper();
+        (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
+
+        vm.startPrank(USER_1);
+        vm.expectEmit();
+        emit StalePendingActionRemoved(address(this), posId);
+        protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
+            1 ether,
+            params.initialPrice / 2,
+            protocol.getMaxLeverage(),
+            USER_1,
+            payable(this),
+            NO_PERMIT2,
+            priceData,
+            EMPTY_PREVIOUS_DATA
+        );
+        vm.stopPrank();
+
+        assertStaleRefundValues();
+    }
+
+    /**
+     * @custom:scenario The user initiates a `withdrawal` with a stale pending action
+     * @custom:given The validator is different than the user
+     * @custom:when The action is initiated
+     * @custom:then The protocol takes the security deposit from the user
+     * @custom:and The protocol returns the security deposit of the stale pending action to the validator
+     */
+    function test_refundStaleToValidatorInWithdrawal() public {
+        PositionId memory posId = _createStalePendingActionHelper();
+        vm.startPrank(USER_1);
+
+        protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
+            1 ether, USER_1, USER_1, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
+        );
+        _waitDelay();
+        protocol.validateDeposit(payable(USER_1), priceData, EMPTY_PREVIOUS_DATA);
+        _waitDelay();
+
+        (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
+
+        usdn.approve(address(protocol), type(uint256).max);
+        vm.expectEmit();
+        emit StalePendingActionRemoved(address(this), posId);
+        protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(
+            uint128(usdn.balanceOf(USER_1)), USER_1, payable(this), priceData, EMPTY_PREVIOUS_DATA
+        );
+
+        vm.stopPrank();
+
+        assertStaleRefundValues();
+    }
+
+    /**
+     * @custom:scenario The user initiates a `close` with a stale pending action
+     * @custom:given The validator is different than the user
+     * @custom:when The action is initiated
+     * @custom:then The protocol takes the security deposit from the user
+     * @custom:and The protocol returns the security deposit of the stale pending action to the validator
+     */
+    function test_refundStaleToValidatorInClose() public {
+        PositionId memory posId = _createStalePendingActionHelper();
+
+        vm.startPrank(USER_1);
+
+        (, PositionId memory user1PosId) = protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
+            1 ether,
+            params.initialPrice / 2,
+            protocol.getMaxLeverage(),
+            USER_1,
+            USER_1,
+            NO_PERMIT2,
+            priceData,
+            EMPTY_PREVIOUS_DATA
+        );
+
+        _waitDelay();
+
+        protocol.validateOpenPosition(payable(USER_1), priceData, EMPTY_PREVIOUS_DATA);
+
+        _waitDelay();
+
+        (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
+
+        vm.expectEmit();
+        emit StalePendingActionRemoved(address(this), posId);
+        protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(
+            user1PosId, 1 ether, USER_1, payable(this), priceData, EMPTY_PREVIOUS_DATA
+        );
+
+        vm.stopPrank();
+
+        assertStaleRefundValues();
     }
 
     /* -------------------------------------------------------------------------- */
@@ -1197,6 +1315,25 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     /* -------------------------------------------------------------------------- */
     /*                                test helpers                                */
     /* -------------------------------------------------------------------------- */
+
+    function assertStaleRefundValues() public view {
+        assertEq(
+            address(this).balance,
+            balanceUser0Before + SECURITY_DEPOSIT_VALUE,
+            "the user 0 should have retrieved his first security deposit from the stale pending action"
+        );
+
+        assertEq(
+            USER_1.balance,
+            balanceUser1Before - SECURITY_DEPOSIT_VALUE,
+            "the user 1 shouldn't have retrieved the security deposit from the stale pending action"
+        );
+        assertEq(
+            address(protocol).balance,
+            balanceProtocolBefore,
+            "the balance of the protocol after the second initialization should be equal"
+        );
+    }
 
     function assertSecurityDepositPaid() public view {
         assertEq(

@@ -17,6 +17,7 @@ contract TestUsdnProtocolActionsPrepareInitiateDepositData is UsdnProtocolBaseFi
 
     function setUp() public {
         params = DEFAULT_PARAMS;
+        params.initialPrice = 1 ether;
         params.flags.enableSdexBurnOnDeposit = true;
         super._setUp(params);
 
@@ -91,7 +92,7 @@ contract TestUsdnProtocolActionsPrepareInitiateDepositData is UsdnProtocolBaseFi
         uint128 currentPrice = abi.decode(currentPriceData, (uint128));
 
         if (isEarlyReturn) {
-            assertEq(data.pendingActionPrice, 0, "The pending action price should not be set");
+            assertEq(data.feeBps, 0, "The fee should not be set");
             assertEq(data.totalExpo, 0, "The total expo should not be set");
             assertEq(data.balanceLong, 0, "The balance long should not be set");
             assertEq(data.balanceVault, 0, "The balance vault should not be set");
@@ -99,7 +100,7 @@ contract TestUsdnProtocolActionsPrepareInitiateDepositData is UsdnProtocolBaseFi
         } else {
             (, uint256 sdexToBurn_) = protocol.previewDeposit(POSITION_AMOUNT, currentPrice, uint40(block.timestamp));
 
-            assertEq(data.pendingActionPrice, currentPrice, "The pending action price should be the current price");
+            assertEq(data.feeBps, protocol.getVaultFeeBps(), "The fee should be the one in the protocol");
             assertEq(data.totalExpo, protocol.getTotalExpo(), "The total expo should be the one in the protocol");
             assertEq(data.balanceLong, protocol.getBalanceLong(), "The balance long should be the one in the protocol");
             assertEq(

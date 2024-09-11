@@ -51,30 +51,27 @@ library UsdnProtocolVaultLibrary {
         view
         returns (uint256 usdnSharesExpected_, uint256 sdexToBurn_)
     {
-        // apply fees on price
-        uint128 depositPriceWithFees = uint128(price - uint256(price) * s._vaultFeeBps / Constants.BPS_DIVISOR);
-        int256 vaultBalance = vaultAssetAvailableWithFunding(s, depositPriceWithFees, timestamp);
+        int256 vaultBalance = vaultAssetAvailableWithFunding(s, price, timestamp);
         if (vaultBalance <= 0) {
             revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
         }
         IUsdn usdn = s._usdn;
-        usdnSharesExpected_ = _calcMintUsdnShares(amount, uint256(vaultBalance), usdn.totalShares());
+        uint256 amountAfterFees = amount - FixedPointMathLib.fullMulDiv(amount, s._vaultFeeBps, Constants.BPS_DIVISOR);
+        usdnSharesExpected_ = _calcMintUsdnShares(amountAfterFees, uint256(vaultBalance), usdn.totalShares());
         sdexToBurn_ = _calcSdexToBurn(usdn.convertToTokens(usdnSharesExpected_), s._sdexBurnOnDepositRatio);
     }
 
     /// @notice See {IUsdnProtocolVault}
-    function previewWithdraw(Types.Storage storage s, uint256 usdnShares, uint256 price, uint128 timestamp)
+    function previewWithdraw(Types.Storage storage s, uint256 usdnShares, uint128 price, uint128 timestamp)
         public
         view
         returns (uint256 assetExpected_)
     {
-        // apply fees on price
-        uint128 withdrawalPriceWithFees = (price + price * s._vaultFeeBps / Constants.BPS_DIVISOR).toUint128();
-        int256 available = vaultAssetAvailableWithFunding(s, withdrawalPriceWithFees, timestamp);
+        int256 available = vaultAssetAvailableWithFunding(s, price, timestamp);
         if (available < 0) {
             return 0;
         }
-        assetExpected_ = _calcBurnUsdn(usdnShares, uint256(available), s._usdn.totalShares());
+        assetExpected_ = _calcBurnUsdn(usdnShares, uint256(available), s._usdn.totalShares(), s._vaultFeeBps);
     }
 
     /// @notice See {IUsdnProtocolVault}
@@ -145,7 +142,7 @@ library UsdnProtocolVaultLibrary {
         // transfer the wstETH for the deposit
         address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
         s._balanceVault += amount;
-        emit IUsdnProtocolEvents.InitiatedDeposit(msg.sender, msg.sender, amount, block.timestamp, 0);
+        emit IUsdnProtocolEvents.InitiatedDeposit(msg.sender, msg.sender, amount, 0, block.timestamp, 0);
 
         // calculate the total minted amount of USDN shares (vault balance and total supply are zero for now, we assume
         // the USDN price to be $1 per token)
@@ -246,20 +243,26 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
-     * @notice Calculate the amount of assets received when burning USDN shares
+     * @notice Calculate the amount of assets received when burning USDN shares (after fees)
      * @param usdnShares The amount of USDN shares
      * @param available The available asset in the vault
      * @param usdnTotalShares The total supply of USDN shares
-     * @return assetExpected_ The expected amount of assets to be received
+     * @param feeBps The fee in basis points
+     * @return assetExpected_ The expected amount of assets to be received, after fees
      */
-    function _calcBurnUsdn(uint256 usdnShares, uint256 available, uint256 usdnTotalShares)
+    function _calcBurnUsdn(uint256 usdnShares, uint256 available, uint256 usdnTotalShares, uint256 feeBps)
         public
         pure
         returns (uint256 assetExpected_)
     {
-        // assetExpected = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
+        // amount = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
         //                 = shares * assetAvailable / usdnTotalShares
-        assetExpected_ = FixedPointMathLib.fullMulDiv(usdnShares, available, usdnTotalShares);
+        // amountAfterFees = amount - (amount * feeBps / BPS_DIVISOR)
+        //                = shares * assetAvailable * (BPS_DIVISOR - feeBps) / (usdnTotalShares * BPS_DIVISOR)
+        // Note: the second division is moved out of the fullMulDiv to avoid an overflow in the denominator
+        assetExpected_ = FixedPointMathLib.fullMulDiv(
+            usdnShares, available * (Constants.BPS_DIVISOR - feeBps), usdnTotalShares
+        ) / Constants.BPS_DIVISOR;
     }
 
     /**
