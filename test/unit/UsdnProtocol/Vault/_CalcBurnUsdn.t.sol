@@ -22,19 +22,21 @@ contract TestUsdnProtocolVaultCalcBurnUsdn is UsdnProtocolBaseFixture {
         uint256 usdnShares = 10 ether;
         uint256 available = 10 ether;
         uint256 usdnTotalShares = 10 ether;
-        uint256 assetExpected = protocol.i_calcBurnUsdn(usdnShares, available, usdnTotalShares);
+        uint256 assetExpected = protocol.i_calcBurnUsdn(usdnShares, available, usdnTotalShares, 0);
         assertEq(assetExpected, 10 ether, "assetExpected must match with expected value (10 ether)");
+        assetExpected = protocol.i_calcBurnUsdn(usdnShares, available, usdnTotalShares, 1000);
+        assertEq(assetExpected, 9 ether, "assetExpected must match with expected value (10% fee)");
 
         usdnShares = 100;
         available = 6 ether;
         usdnTotalShares = 500;
-        assetExpected = protocol.i_calcBurnUsdn(usdnShares, available, usdnTotalShares);
+        assetExpected = protocol.i_calcBurnUsdn(usdnShares, available, usdnTotalShares, 0);
         assertEq(assetExpected, 12e17, "assetExpected must match with expected value (12e17)");
 
         usdnShares = 6000 ether;
         available = 1 ether;
         usdnTotalShares = 2 ether;
-        assetExpected = protocol.i_calcBurnUsdn(usdnShares, available, usdnTotalShares);
+        assetExpected = protocol.i_calcBurnUsdn(usdnShares, available, usdnTotalShares, 0);
         assertEq(assetExpected, 3e21, "assetExpected must match with expected value (3e21)");
     }
 }

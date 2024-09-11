@@ -35,8 +35,9 @@ library UsdnProtocolActionsVaultLibrary {
 
     /**
      * @dev Structure to hold the transient data during `_initiateDeposit`
-     * @param pendingActionPrice The adjusted price with position fees applied
+     * @param lastPrice The last price of the asset
      * @param isLiquidationPending Whether some liquidations still need to be performed
+     * @param feeBps The vault deposit fee in basis points
      * @param totalExpo The total expo of the long side
      * @param balanceLong The long side balance
      * @param balanceVault The vault side balance, calculated according to the pendingActionPrice
@@ -44,8 +45,9 @@ library UsdnProtocolActionsVaultLibrary {
      * @param sdexToBurn The amount of SDEX to burn for the deposit
      */
     struct InitiateDepositData {
-        uint128 pendingActionPrice;
+        uint128 lastPrice;
         bool isLiquidationPending;
+        uint16 feeBps;
         uint256 totalExpo;
         uint256 balanceLong;
         uint256 balanceVault;
@@ -55,21 +57,23 @@ library UsdnProtocolActionsVaultLibrary {
 
     /**
      * @dev Structure to hold the transient data during `_initiateWithdrawal`
-     * @param pendingActionPrice The adjusted price with position fees applied
      * @param usdnTotalShares The total shares supply of USDN
      * @param totalExpo The current total expo
      * @param balanceLong The current long balance
      * @param balanceVault The vault balance, adjusted according to the pendingActionPrice
-     * @param withdrawalAmount The predicted amount of assets that will be withdrawn
+     * @param withdrawalAmountAfterFees The predicted amount of assets that will be withdrawn after fees
+     * @param lastPrice The last price of the asset
+     * @param feeBps The vault deposit fee in basis points
      * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
      */
     struct WithdrawalData {
-        uint128 pendingActionPrice;
         uint256 usdnTotalShares;
         uint256 totalExpo;
         uint256 balanceLong;
         uint256 balanceVault;
-        uint256 withdrawalAmount;
+        uint256 withdrawalAmountAfterFees;
+        uint128 lastPrice;
+        uint16 feeBps;
         bool isLiquidationPending;
     }
 
@@ -93,14 +97,25 @@ library UsdnProtocolActionsVaultLibrary {
         }
         uint256 balanceBefore = address(this).balance;
 
-        uint256 amountToRefund;
-        (amountToRefund, success_) = _initiateDeposit(
+        uint256 validatorAmount;
+        (validatorAmount, success_) = _initiateDeposit(
             s, msg.sender, to, validator, amount, securityDepositValue, permit2TokenBitfield, currentPriceData
         );
 
+        uint256 amountToRefund;
         if (success_) {
             unchecked {
                 amountToRefund += _executePendingActionOrRevert(s, previousActionsData);
+            }
+        }
+
+        // refund any securityDeposit from a stale pending action to the validator
+        if (validatorAmount > 0) {
+            if (validator != msg.sender) {
+                balanceBefore -= validatorAmount;
+                _refundEther(validatorAmount, validator);
+            } else {
+                amountToRefund += validatorAmount;
             }
         }
 
@@ -150,16 +165,26 @@ library UsdnProtocolActionsVaultLibrary {
 
         uint256 balanceBefore = address(this).balance;
 
-        uint256 amountToRefund;
-        (amountToRefund, success_) =
+        uint256 validatorAmount;
+        (validatorAmount, success_) =
             _initiateWithdrawal(s, msg.sender, to, validator, usdnShares, securityDepositValue, currentPriceData);
 
+        uint256 amountToRefund;
         if (success_) {
             unchecked {
                 amountToRefund += _executePendingActionOrRevert(s, previousActionsData);
             }
         }
 
+        // refund any securityDeposit from a stale pending action to the validator
+        if (validatorAmount > 0) {
+            if (validator != msg.sender) {
+                balanceBefore -= validatorAmount;
+                _refundEther(validatorAmount, validator);
+            } else {
+                amountToRefund += validatorAmount;
+            }
+        }
         _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
         _checkPendingFee(s);
     }
@@ -300,20 +325,25 @@ library UsdnProtocolActionsVaultLibrary {
 
         _checkImbalanceLimitDeposit(s, amount);
 
-        // apply fees on price
-        data_.pendingActionPrice =
-            (currentPrice.price - currentPrice.price * s._vaultFeeBps / Constants.BPS_DIVISOR).toUint128();
+        // apply fees on amount
+        data_.feeBps = s._vaultFeeBps;
+        uint128 amountAfterFees = (amount - uint256(amount) * data_.feeBps / Constants.BPS_DIVISOR).toUint128();
 
         data_.totalExpo = s._totalExpo;
         data_.balanceLong = s._balanceLong;
-        data_.balanceVault = Vault._vaultAssetAvailable(
-            data_.totalExpo, s._balanceVault, data_.balanceLong, data_.pendingActionPrice, s._lastPrice
-        ).toUint256();
+        data_.lastPrice = s._lastPrice;
+        int256 available = Vault.vaultAssetAvailableWithFunding(s, data_.lastPrice, uint128(block.timestamp));
+        if (available <= 0) {
+            // can't mint USDN if the vault is empty
+            revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
+        }
+        data_.balanceVault = uint256(available); // cast is safe, amount is positive
         IUsdn usdn = s._usdn;
         data_.usdnTotalShares = usdn.totalShares();
 
         // calculate the amount of SDEX tokens to burn
-        uint256 usdnSharesToMintEstimated = Vault._calcMintUsdnShares(amount, data_.balanceVault, data_.usdnTotalShares);
+        uint256 usdnSharesToMintEstimated =
+            Vault._calcMintUsdnShares(amountAfterFees, data_.balanceVault, data_.usdnTotalShares);
         uint256 usdnToMintEstimated = usdn.convertToTokens(usdnSharesToMintEstimated);
         // we want to at least mint 1 wei of USDN
         if (usdnToMintEstimated == 0) {
@@ -329,7 +359,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @param to The address that will receive the minted USDN
      * @param validator The address that will validate the deposit
      * @param securityDepositValue The value of the security deposit for the newly created pending action
-     * @param amount The amount of assets to deposit
+     * @param amount The amount of assets to deposit (before fees)
      * @param data The deposit action data
      * @return amountToRefund_ Refund The security deposit value of a stale pending action
      */
@@ -344,13 +374,13 @@ library UsdnProtocolActionsVaultLibrary {
         Types.DepositPendingAction memory pendingAction = Types.DepositPendingAction({
             action: Types.ProtocolAction.ValidateDeposit,
             timestamp: uint40(block.timestamp),
-            __unused: 0,
+            feeBps: data.feeBps,
             to: to,
             validator: validator,
             securityDepositValue: securityDepositValue,
             _unused: 0,
             amount: amount,
-            assetPrice: data.pendingActionPrice,
+            assetPrice: data.lastPrice,
             totalExpo: data.totalExpo,
             balanceVault: data.balanceVault,
             balanceLong: data.balanceLong,
@@ -412,6 +442,7 @@ library UsdnProtocolActionsVaultLibrary {
             if (permit2TokenBitfield.useForSdex()) {
                 address(s._sdex).permit2TransferFrom(user, Constants.DEAD_ADDRESS, data.sdexToBurn);
             } else {
+                // slither-disable-next-line arbitrary-send-erc20
                 address(s._sdex).safeTransferFrom(user, Constants.DEAD_ADDRESS, data.sdexToBurn);
             }
         }
@@ -420,13 +451,14 @@ library UsdnProtocolActionsVaultLibrary {
         if (permit2TokenBitfield.useForAsset()) {
             address(s._asset).permit2TransferFrom(user, address(this), amount);
         } else {
+            // slither-disable-next-line arbitrary-send-erc20
             address(s._asset).safeTransferFrom(user, address(this), amount);
         }
         s._pendingBalanceVault += Utils.toInt256(amount);
 
         isInitiated_ = true;
 
-        emit IUsdnProtocolEvents.InitiatedDeposit(to, validator, amount, block.timestamp, data.sdexToBurn);
+        emit IUsdnProtocolEvents.InitiatedDeposit(to, validator, amount, data.feeBps, block.timestamp, data.sdexToBurn);
     }
 
     /**
@@ -500,33 +532,39 @@ library UsdnProtocolActionsVaultLibrary {
             }
         }
 
-        // we calculate the amount of USDN to mint, either considering the asset price at the time of the initiate
-        // action, or the current price provided for validation. We will use the lower of the two to mint
-        // apply fees on price
-        uint128 priceWithFees =
-            (currentPrice.price - currentPrice.price * s._vaultFeeBps / Constants.BPS_DIVISOR).toUint128();
+        // we calculate the amount of USDN to mint, either considering the vault balance at the time of the initiate
+        // action, or the current balance with the new price. We will use the higher of the two to mint. Funding between
+        // the initiate and validate actions is ignored
+        uint128 amountAfterFees =
+            (deposit.amount - uint256(deposit.amount) * deposit.feeBps / Constants.BPS_DIVISOR).toUint128();
 
-        uint256 usdnSharesToMint;
-        // we use the lower of the two prices to mint
-        if (deposit.assetPrice <= priceWithFees) {
-            usdnSharesToMint = Vault._calcMintUsdnShares(deposit.amount, deposit.balanceVault, deposit.usdnTotalShares);
-        } else {
-            usdnSharesToMint = Vault._calcMintUsdnShares(
-                deposit.amount,
-                Vault._vaultAssetAvailable(
-                    deposit.totalExpo, deposit.balanceVault, deposit.balanceLong, priceWithFees, deposit.assetPrice
-                ).toUint256(),
-                deposit.usdnTotalShares
+        uint256 balanceVault = deposit.balanceVault;
+        if (currentPrice.price < deposit.assetPrice) {
+            // price decreased: balance of the vault increased
+            int256 available = Vault._vaultAssetAvailable(
+                deposit.totalExpo,
+                deposit.balanceVault,
+                deposit.balanceLong,
+                currentPrice.price.toUint128(),
+                deposit.assetPrice
             );
+            if (available < 0) {
+                // sanity check, should not happen
+                balanceVault = 0;
+            } else {
+                balanceVault = uint256(available);
+            }
         }
 
-        s._balanceVault += deposit.amount;
+        s._balanceVault += deposit.amount; // we credit the full deposit amount
         s._pendingBalanceVault -= Utils.toInt256(deposit.amount);
 
-        uint256 mintedTokens = s._usdn.mintShares(deposit.to, usdnSharesToMint);
+        uint256 mintedTokens = s._usdn.mintShares(
+            deposit.to, Vault._calcMintUsdnShares(amountAfterFees, balanceVault, deposit.usdnTotalShares)
+        );
         isValidated_ = true;
         emit IUsdnProtocolEvents.ValidatedDeposit(
-            deposit.to, deposit.validator, deposit.amount, mintedTokens, deposit.timestamp
+            deposit.to, deposit.validator, amountAfterFees, mintedTokens, deposit.timestamp
         );
     }
 
@@ -568,19 +606,20 @@ library UsdnProtocolActionsVaultLibrary {
             return data_;
         }
 
-        // apply fees on price
-        data_.pendingActionPrice =
-            (currentPrice.price + currentPrice.price * s._vaultFeeBps / Constants.BPS_DIVISOR).toUint128();
-
         data_.totalExpo = s._totalExpo;
         data_.balanceLong = s._balanceLong;
-        data_.balanceVault = Vault._vaultAssetAvailable(
-            data_.totalExpo, s._balanceVault, data_.balanceLong, data_.pendingActionPrice, s._lastPrice
-        ).toUint256();
+        data_.lastPrice = s._lastPrice;
+        int256 available = Vault.vaultAssetAvailableWithFunding(s, data_.lastPrice, uint128(block.timestamp));
+        if (available < 0) {
+            available = 0;
+        }
+        data_.balanceVault = uint256(available); // cast is safe, amount is positive
         data_.usdnTotalShares = s._usdn.totalShares();
-        data_.withdrawalAmount = Vault._calcBurnUsdn(usdnShares, data_.balanceVault, data_.usdnTotalShares);
+        data_.feeBps = s._vaultFeeBps;
+        data_.withdrawalAmountAfterFees =
+            Vault._calcBurnUsdn(usdnShares, data_.balanceVault, data_.usdnTotalShares, data_.feeBps);
 
-        _checkImbalanceLimitWithdrawal(s, data_.withdrawalAmount, data_.totalExpo);
+        _checkImbalanceLimitWithdrawal(s, data_.withdrawalAmountAfterFees, data_.totalExpo);
     }
 
     /**
@@ -605,13 +644,13 @@ library UsdnProtocolActionsVaultLibrary {
             Types.WithdrawalPendingAction({
                 action: Types.ProtocolAction.ValidateWithdrawal,
                 timestamp: uint40(block.timestamp),
-                _unused: 0,
+                feeBps: data.feeBps,
                 to: to,
                 validator: validator,
                 securityDepositValue: securityDepositValue,
                 sharesLSB: Vault._calcWithdrawalAmountLSB(usdnShares),
                 sharesMSB: Vault._calcWithdrawalAmountMSB(usdnShares),
-                assetPrice: data.pendingActionPrice,
+                assetPrice: data.lastPrice,
                 totalExpo: data.totalExpo,
                 balanceVault: data.balanceVault,
                 balanceLong: data.balanceLong,
@@ -694,10 +733,13 @@ library UsdnProtocolActionsVaultLibrary {
         // retrieve the USDN tokens, check that the balance is sufficient
         IUsdn usdn = s._usdn;
         usdn.transferSharesFrom(user, address(this), usdnShares);
-        s._pendingBalanceVault -= data.withdrawalAmount.toInt256();
+        // register the pending withdrawal for imbalance checks of future actions
+        s._pendingBalanceVault -= data.withdrawalAmountAfterFees.toInt256();
 
         isInitiated_ = true;
-        emit IUsdnProtocolEvents.InitiatedWithdrawal(to, validator, usdn.convertToTokens(usdnShares), block.timestamp);
+        emit IUsdnProtocolEvents.InitiatedWithdrawal(
+            to, validator, usdn.convertToTokens(usdnShares), data.feeBps, block.timestamp
+        );
     }
 
     /**
@@ -770,54 +812,56 @@ library UsdnProtocolActionsVaultLibrary {
 
         uint256 available;
         {
-            // apply fees on price
-            uint128 withdrawalPriceWithFees =
-                (currentPrice.price + currentPrice.price * s._vaultFeeBps / Constants.BPS_DIVISOR).toUint128();
-
-            // we calculate the available balance of the vault side, either considering the asset price at the time of
-            // the initiate action, or the current price provided for validation
+            // we calculate the available balance of the vault side at the price of the validate action (ignoring any
+            // funding between the initiate and validate)
             int256 vaultAssetAvailable = Vault._vaultAssetAvailable(
                 withdrawal.totalExpo,
                 withdrawal.balanceVault,
                 withdrawal.balanceLong,
-                withdrawalPriceWithFees,
+                currentPrice.price.toUint128(),
                 withdrawal.assetPrice
             );
 
             if (vaultAssetAvailable < 0) {
                 vaultAssetAvailable = 0;
             }
+            available = uint256(vaultAssetAvailable);
 
+            // we compare it to the available balance from the initiate action
             // we will use the lowest of the two amounts to redeem the underlying asset share
             // cast is safe because vaultAssetAvailable cannot be negative
             if (withdrawal.balanceVault <= uint256(vaultAssetAvailable)) {
                 available = withdrawal.balanceVault;
-            } else {
-                available = uint256(vaultAssetAvailable);
             }
         }
 
         uint256 shares = Core._mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
 
         // we can add back the _pendingBalanceVault we subtracted in the initiate action
-        uint256 tempWithdrawal = Vault._calcBurnUsdn(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares);
-        s._pendingBalanceVault += tempWithdrawal.toInt256();
+        uint256 tempWithdrawalAfterFees =
+            Vault._calcBurnUsdn(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares, withdrawal.feeBps);
+        s._pendingBalanceVault += tempWithdrawalAfterFees.toInt256();
 
         IUsdn usdn = s._usdn;
-        uint256 assetToTransfer = Vault._calcBurnUsdn(shares, available, usdn.totalShares());
+        // calculate the amount of asset to transfer with the same fees as recorded during the initiate action
+        uint256 assetToTransferAfterFees = Vault._calcBurnUsdn(shares, available, usdn.totalShares(), withdrawal.feeBps);
 
         usdn.burnShares(shares);
 
         // send the asset to the user
-        if (assetToTransfer > 0) {
-            s._balanceVault -= assetToTransfer;
-            address(s._asset).safeTransfer(withdrawal.to, assetToTransfer);
+        if (assetToTransferAfterFees > 0) {
+            s._balanceVault -= assetToTransferAfterFees;
+            address(s._asset).safeTransfer(withdrawal.to, assetToTransferAfterFees);
         }
 
         isValidated_ = true;
 
         emit IUsdnProtocolEvents.ValidatedWithdrawal(
-            withdrawal.to, withdrawal.validator, assetToTransfer, usdn.convertToTokens(shares), withdrawal.timestamp
+            withdrawal.to,
+            withdrawal.validator,
+            assetToTransferAfterFees,
+            usdn.convertToTokens(shares),
+            withdrawal.timestamp
         );
     }
 

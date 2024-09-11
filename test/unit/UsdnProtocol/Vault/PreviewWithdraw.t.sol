@@ -27,17 +27,18 @@ contract TestUsdnProtocolPreviewWithdraw is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Check calculations of `previewWithdraw`
      * @custom:given The available vault balance (with vault fee applied) is greater than zero
-     * @custom:when The user simulates the withdrawal of half of the total shares of USDN
-     * @custom:then The amount of asset should be equal to half of the available balance
+     * @custom:when The user simulates the withdrawal a portion of the usdnShares from the vault
+     * @custom:then The amount of asset should match the expected value
      */
-    function test_previewWithdraw() public view {
+    function testFuzz_previewWithdraw(uint256 shares) public view {
         uint128 price = 2000 ether;
-        uint128 priceWithFees = uint128(price + price * protocol.getVaultFeeBps() / protocol.BPS_DIVISOR());
-        uint256 shares = usdn.totalShares() / 2;
-        int256 available = protocol.vaultAssetAvailableWithFunding(priceWithFees, protocol.getLastUpdateTimestamp());
+        shares = bound(shares, 0, usdn.totalShares());
+        uint256 expectedAmount = shares * protocol.getBalanceVault() * (BPS_DIVISOR - protocol.getPositionFeeBps())
+            / (usdn.totalShares() * BPS_DIVISOR);
+
         assertEq(
             protocol.previewWithdraw(shares, price, protocol.getLastUpdateTimestamp()),
-            uint256(available) / 2,
+            expectedAmount,
             "asset is equal to expected"
         );
     }
@@ -87,7 +88,7 @@ contract TestUsdnProtocolPreviewWithdraw is UsdnProtocolBaseFixture {
 
         protocol.initiateWithdrawal(shares, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
         // calculate the expected asset to be received
-        uint256 assetExpected = protocol.previewWithdraw(shares, 2000 ether, protocol.getLastUpdateTimestamp());
+        uint256 assetExpected = protocol.previewWithdraw(shares, 2000 ether, uint128(block.timestamp));
         // wait the required delay between initiation and validation
         _waitDelay();
         protocol.validateWithdrawal(payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
