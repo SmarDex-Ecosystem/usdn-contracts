@@ -691,7 +691,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @param to The address that will receive the assets
      * @param validator The address that will validate the withdrawal
      * @param usdnShares The amount of USDN shares to burn
-     * @param amountOutMin The minimum amount of assets to receive
+     * @param amountOutMin The estimated minimum amount of assets to receive
      * @param securityDepositValue The value of the security deposit for the newly created pending action
      * @param currentPriceData The current price data
      * @return amountToRefund_ If there are pending liquidations we'll refund the `securityDepositValue`,
