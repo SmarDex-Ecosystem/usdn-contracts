@@ -684,6 +684,27 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     }
 
     /**
+     * @custom:scenario The user initiates a close position action with an exit price less than the user's min price
+     * @custom:given The current price is $2000
+     * @custom:when The user initiates a close position with a userMinPrice of $2001
+     * @custom:then The protocol reverts with UsdnProtocolSlippageMinPriceExceeded
+     */
+    function test_RevertWhen_initiateClosePositionWithExitPriceLessThanUserMinPrice() public {
+        uint128 amountToClose = POSITION_AMOUNT;
+
+        vm.expectRevert(UsdnProtocolSlippageMinPriceExceeded.selector);
+        protocol.initiateClosePosition(
+            posId,
+            amountToClose,
+            params.initialPrice + 1,
+            address(this),
+            payable(address(this)),
+            abi.encode(params.initialPrice),
+            EMPTY_PREVIOUS_DATA
+        );
+    }
+
+    /**
      * @custom:scenario The user initiates a close position action with a reentrancy attempt
      * @custom:given A user being a smart contract that calls initiateClosePosition with too much ether
      * @custom:and A receive() function that calls initiateClosePosition again
