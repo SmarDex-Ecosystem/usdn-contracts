@@ -370,14 +370,20 @@ library UsdnProtocolLongLibrary {
         uint16 liquidatedTicks,
         int256 remainingCollateral,
         bool rebased,
-        bool rebalancerTriggered,
+        Types.TriggerRebalancerChecks triggerRebalancerCheck,
         Types.ProtocolAction action,
         bytes memory rebaseCallbackResult,
         bytes memory priceData
     ) public {
         // get how much we should give to the liquidator as rewards
         uint256 liquidationRewards = s._liquidationRewardsManager.getLiquidationRewards(
-            liquidatedTicks, remainingCollateral, rebased, rebalancerTriggered, action, rebaseCallbackResult, priceData
+            liquidatedTicks,
+            remainingCollateral,
+            rebased,
+            triggerRebalancerCheck,
+            action,
+            rebaseCallbackResult,
+            priceData
         );
 
         // avoid underflows in the situation of extreme bad debt
