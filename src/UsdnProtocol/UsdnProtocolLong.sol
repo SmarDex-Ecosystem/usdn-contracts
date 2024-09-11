@@ -5,6 +5,7 @@ import { IUsdnProtocolLong } from "../interfaces/UsdnProtocol/IUsdnProtocolLong.
 import { HugeUint } from "../libraries/HugeUint.sol";
 import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { UsdnProtocolLongLibrary as Long } from "./libraries/UsdnProtocolLongLibrary.sol";
+import { UsdnProtocolUtilsLibrary as Utils } from "./libraries/UsdnProtocolUtilsLibrary.sol";
 
 abstract contract UsdnProtocolLong is UsdnProtocolStorage, IUsdnProtocolLong {
     /// @inheritdoc IUsdnProtocolLong
@@ -39,7 +40,7 @@ abstract contract UsdnProtocolLong is UsdnProtocolStorage, IUsdnProtocolLong {
 
     /// @inheritdoc IUsdnProtocolLong
     function getEffectivePriceForTick(int24 tick) external view returns (uint128 price_) {
-        return Long.getEffectivePriceForTick(s, tick);
+        return Utils.getEffectivePriceForTick(s, tick);
     }
 
     /// @inheritdoc IUsdnProtocolLong
@@ -49,7 +50,7 @@ abstract contract UsdnProtocolLong is UsdnProtocolStorage, IUsdnProtocolLong {
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator
     ) external pure returns (uint128 price_) {
-        return Long.getEffectivePriceForTick(tick, assetPrice, longTradingExpo, accumulator);
+        return Utils.getEffectivePriceForTick(tick, assetPrice, longTradingExpo, accumulator);
     }
 
     /// @inheritdoc IUsdnProtocolLong

@@ -4,7 +4,7 @@ pragma solidity 0.8.26;
 import { USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import { UsdnProtocolVaultLibrary as Vault } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
+import { UsdnProtocolUtilsLibrary as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
 import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
 /**
@@ -201,7 +201,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         uint128 amountAfterFees =
             uint128(DEPOSIT_AMOUNT - uint256(DEPOSIT_AMOUNT) * protocol.getVaultFeeBps() / BPS_DIVISOR);
         uint256 usdnSharesToMint =
-            Vault._calcMintUsdnShares(amountAfterFees, protocol.getBalanceVault(), protocol.getUsdn().totalShares());
+            Utils._calcMintUsdnShares(amountAfterFees, protocol.getBalanceVault(), protocol.getUsdn().totalShares());
         uint256 expectedSdexBurnAmount =
             protocol.i_calcSdexToBurn(usdn.convertToTokens(usdnSharesToMint), protocol.getSdexBurnOnDepositRatio());
         uint256 initiateDepositTimestamp = block.timestamp;
