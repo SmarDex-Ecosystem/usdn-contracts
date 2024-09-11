@@ -691,12 +691,10 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:then The protocol reverts with UsdnProtocolSlippageMinPriceExceeded
      */
     function test_RevertWhen_initiateClosePositionWithExitPriceLessThanUserMinPrice() public {
-        uint128 amountToClose = POSITION_AMOUNT;
-
         vm.expectRevert(UsdnProtocolSlippageMinPriceExceeded.selector);
         protocol.initiateClosePosition(
             posId,
-            amountToClose,
+            POSITION_AMOUNT,
             params.initialPrice + 1,
             address(this),
             payable(address(this)),
