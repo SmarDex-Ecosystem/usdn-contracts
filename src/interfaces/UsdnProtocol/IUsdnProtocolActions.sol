@@ -191,7 +191,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
     function initiateClosePosition(
         PositionId calldata posId,
         uint128 amountToClose,
-        uint128 userMinPrice,
+        uint256 userMinPrice,
         address to,
         address payable validator,
         bytes calldata currentPriceData,

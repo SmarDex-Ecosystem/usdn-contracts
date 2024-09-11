@@ -140,7 +140,7 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
     function initiateClosePosition(
         uint88 amount,
         address to,
-        uint128 userMinPrice,
+        uint256 userMinPrice,
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_);

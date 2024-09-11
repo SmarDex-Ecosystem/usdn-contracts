@@ -724,7 +724,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         address validator,
         PositionId memory posId,
         uint128 amountToClose,
-        uint128 userMinPrice,
+        uint256 userMinPrice,
         bytes calldata currentPriceData
     ) external returns (ClosePositionData memory data_, bool liquidated_) {
         return ActionsUtils._prepareClosePositionData(

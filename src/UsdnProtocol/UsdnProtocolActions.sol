@@ -91,7 +91,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
     function initiateClosePosition(
         PositionId calldata posId,
         uint128 amountToClose,
-        uint128 userMinPrice,
+        uint256 userMinPrice,
         address to,
         address payable validator,
         bytes calldata currentPriceData,

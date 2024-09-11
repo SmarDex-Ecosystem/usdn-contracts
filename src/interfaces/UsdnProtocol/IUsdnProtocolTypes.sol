@@ -289,7 +289,7 @@ interface IUsdnProtocolTypes {
         address validator;
         PositionId posId;
         uint128 amountToClose;
-        uint128 userMinPrice;
+        uint256 userMinPrice;
         uint64 securityDepositValue;
     }
 
@@ -325,7 +325,7 @@ interface IUsdnProtocolTypes {
         address validator;
         PositionId posId;
         uint128 amountToClose;
-        uint128 userMinPrice;
+        uint256 userMinPrice;
         bytes currentPriceData;
     }
 
@@ -340,7 +340,7 @@ interface IUsdnProtocolTypes {
     struct InitiateClosePositionParams {
         PositionId posId;
         uint128 amountToClose;
-        uint128 userMinPrice;
+        uint256 userMinPrice;
         address to;
         address payable validator;
     }
