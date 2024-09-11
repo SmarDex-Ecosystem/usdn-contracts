@@ -807,7 +807,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         uint256 balanceContractBefore = address(this).balance;
 
         protocol.initiateClosePosition{ value: 0.5 ether }(
-            posId, POSITION_AMOUNT, 0, USER_1, payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            posId, POSITION_AMOUNT, DISABLE_MIN_PRICE, USER_1, payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         vm.prank(USER_1);

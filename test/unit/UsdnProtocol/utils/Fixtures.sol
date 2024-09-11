@@ -376,7 +376,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         protocol.initiateClosePosition{ value: securityDepositValue }(
             posId_,
             openParams.positionSize,
-            0,
+            DISABLE_MIN_PRICE,
             openParams.user,
             payable(openParams.user),
             priceData,

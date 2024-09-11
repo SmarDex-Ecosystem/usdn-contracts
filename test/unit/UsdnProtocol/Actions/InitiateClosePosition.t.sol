@@ -229,7 +229,13 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         uint256 etherBalanceBefore = address(this).balance;
 
         protocol.initiateClosePosition{ value: 1 ether }(
-            posId, POSITION_AMOUNT, 0, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            posId,
+            POSITION_AMOUNT,
+            DISABLE_MIN_PRICE,
+            address(this),
+            payable(address(this)),
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
 
         assertEq(
@@ -767,7 +773,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         protocol.initiateClosePosition{ value: 1 }(
             posId,
             POSITION_AMOUNT,
-            0,
+            DISABLE_MIN_PRICE,
             address(this),
             payable(address(this)),
             abi.encode(params.initialPrice),

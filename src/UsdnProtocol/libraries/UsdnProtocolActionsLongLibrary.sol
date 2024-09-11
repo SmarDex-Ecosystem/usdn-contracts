@@ -548,6 +548,7 @@ library UsdnProtocolActionsLongLibrary {
      * consider this position anymore. The exit price (and thus profit) is not yet set definitively and will be done
      * during the `validate` action
      * @param s The storage of the protocol
+     * @param params The parameters for the close position initiation
      * @param currentPriceData The current price data
      * @return amountToRefund_ If there are pending liquidations we'll refund the `securityDepositValue`,
      * else we'll only refund the security deposit value of the stale pending action
