@@ -140,12 +140,15 @@ library UsdnProtocolActionsLongLibrary {
         bool liq;
         (amountToRefund, success_, liq) = _initiateClosePosition(
             s,
-            msg.sender,
-            params.to,
-            params.validator,
-            params.posId,
-            params.amountToClose,
-            securityDepositValue,
+            Types.InititateClosePositionParams({
+                owner: msg.sender,
+                to: params.to,
+                validator: params.validator,
+                posId: params.posId,
+                amountToClose: params.amountToClose,
+                userMinPrice: params.userMinPrice,
+                securityDepositValue: securityDepositValue
+            }),
             currentPriceData
         );
 
@@ -472,12 +475,6 @@ library UsdnProtocolActionsLongLibrary {
      * consider this position anymore. The exit price (and thus profit) is not yet set definitively and will be done
      * during the `validate` action
      * @param s The storage of the protocol
-     * @param owner The owner of the position
-     * @param to The address that will receive the assets
-     * @param validator The address that will validate the close action
-     * @param posId The unique identifier of the position
-     * @param amountToClose The amount of collateral to remove from the position's amount
-     * @param securityDepositValue The value of the security deposit for the newly created pending action
      * @param currentPriceData The current price data
      * @return amountToRefund_ If there are pending liquidations we'll refund the `securityDepositValue`,
      * else we'll only refund the security deposit value of the stale pending action
@@ -486,40 +483,46 @@ library UsdnProtocolActionsLongLibrary {
      */
     function _initiateClosePosition(
         Types.Storage storage s,
-        address owner,
-        address to,
-        address validator,
-        Types.PositionId memory posId,
-        uint128 amountToClose,
-        uint64 securityDepositValue,
+        Types.InititateClosePositionParams memory params,
         bytes calldata currentPriceData
     ) public returns (uint256 amountToRefund_, bool isInitiated_, bool liquidated_) {
         Types.ClosePositionData memory data;
-        (data, liquidated_) =
-            ActionsUtils._prepareClosePositionData(s, owner, to, validator, posId, amountToClose, currentPriceData);
+        (data, liquidated_) = ActionsUtils._prepareClosePositionData(
+            s,
+            Types.PrepareInitiateClosePositionParams({
+                owner: params.owner,
+                to: params.to,
+                validator: params.validator,
+                posId: params.posId,
+                amountToClose: params.amountToClose,
+                userMinPrice: params.userMinPrice,
+                currentPriceData: currentPriceData
+            })
+        );
 
         if (liquidated_ || data.isLiquidationPending) {
             // position was liquidated in this transaction or liquidations are pending
-            return (securityDepositValue, !data.isLiquidationPending, liquidated_);
+            return (params.securityDepositValue, !data.isLiquidationPending, liquidated_);
         }
 
-        amountToRefund_ =
-            ActionsUtils._createClosePendingAction(s, to, validator, posId, amountToClose, securityDepositValue, data);
+        amountToRefund_ = ActionsUtils._createClosePendingAction(
+            s, params.to, params.validator, params.posId, params.amountToClose, params.securityDepositValue, data
+        );
 
         s._balanceLong -= data.tempPositionValue;
 
         ActionsUtils._removeAmountFromPosition(
-            s, posId.tick, posId.index, data.pos, amountToClose, data.totalExpoToClose
+            s, params.posId.tick, params.posId.index, data.pos, params.amountToClose, data.totalExpoToClose
         );
 
         isInitiated_ = true;
         emit IUsdnProtocolEvents.InitiatedClosePosition(
             data.pos.user,
-            validator,
-            to,
-            posId,
+            params.validator,
+            params.to,
+            params.posId,
             data.pos.amount,
-            amountToClose,
+            params.amountToClose,
             data.pos.totalExpo - data.totalExpoToClose
         );
     }

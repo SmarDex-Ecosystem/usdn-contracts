@@ -130,6 +130,7 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
      * side after calling this function
      * @param amount The amount to close relative to the amount deposited
      * @param to The address that will receive the assets
+     * @param userMinPrice The minimum price at which the position can be closed
      * @param currentPriceData The current price data
      * @param previousActionsData The previous action price data
      * @return success_ If the UsdnProtocol's `initiateClosePosition` was successful
@@ -139,6 +140,7 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
     function initiateClosePosition(
         uint88 amount,
         address to,
+        uint128 userMinPrice,
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_);

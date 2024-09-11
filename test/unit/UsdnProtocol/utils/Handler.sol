@@ -204,18 +204,11 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         expo_ = s._totalExpo.toInt256().safeSub(Core._longAssetAvailable(s, currentPrice));
     }
 
-    function i_initiateClosePosition(
-        address owner,
-        address to,
-        address validator,
-        PositionId memory posId,
-        uint128 amountToClose,
-        uint64 securityDepositValue,
-        bytes calldata currentPriceData
-    ) external returns (uint256 securityDepositValue_, bool isLiquidationPending_, bool liq_) {
-        return ActionsLong._initiateClosePosition(
-            s, owner, to, validator, posId, amountToClose, securityDepositValue, currentPriceData
-        );
+    function i_initiateClosePosition(Types.InititateClosePositionParams memory params, bytes calldata currentPriceData)
+        external
+        returns (uint256 securityDepositValue_, bool isLiquidationPending_, bool liq_)
+    {
+        return ActionsLong._initiateClosePosition(s, params, currentPriceData);
     }
 
     function calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed) external view returns (int256) {
@@ -727,9 +720,21 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         address validator,
         PositionId memory posId,
         uint128 amountToClose,
+        uint128 userMinPrice,
         bytes calldata currentPriceData
     ) external returns (ClosePositionData memory data_, bool liquidated_) {
-        return ActionsUtils._prepareClosePositionData(s, owner, to, validator, posId, amountToClose, currentPriceData);
+        return ActionsUtils._prepareClosePositionData(
+            s,
+            Types.PrepareInitiateClosePositionParams({
+                owner: owner,
+                to: to,
+                validator: validator,
+                posId: posId,
+                amountToClose: amountToClose,
+                userMinPrice: userMinPrice,
+                currentPriceData: currentPriceData
+            })
+        );
     }
 
     function i_prepareValidateOpenPositionData(PendingAction memory pending, bytes calldata priceData)

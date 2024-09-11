@@ -190,7 +190,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint256 balanceBefore = wstETH.balanceOf(address(this));
 
         protocol.initiateClosePosition(
-            posId, 1 ether, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            posId, 1 ether, 0, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
 
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
@@ -565,7 +565,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         skip(1 hours);
 
         protocol.initiateClosePosition(
-            posId, 1 ether, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            posId, 1 ether, 0, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
 
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
@@ -600,7 +600,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         skip(1 hours);
 
         protocol.initiateClosePosition(
-            posId, 1 ether, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            posId, 1 ether, 0, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
 
         action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));

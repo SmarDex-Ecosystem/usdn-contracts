@@ -198,4 +198,7 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the vault balance is zero, and the calculation cannot be performed
     error UsdnProtocolEmptyVault();
+
+    /// @dev Indicates that the entry price exceeds the minimum given by the user
+    error UsdnProtocolSlippageMinPriceExceeded();
 }

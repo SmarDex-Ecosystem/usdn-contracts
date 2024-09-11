@@ -5,6 +5,7 @@ import { UsdnProtocolActionsVaultLibrary as ActionsVault } from
     "../../src/UsdnProtocol/libraries/UsdnProtocolActionsVaultLibrary.sol";
 import { PriceInfo } from "../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocol } from "../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IUsdnProtocolTypes as Types } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { HugeUint } from "../../src/libraries/HugeUint.sol";
 import { UsdnProtocolHandler } from "../unit/UsdnProtocol/utils/Handler.sol";
 
@@ -78,15 +79,9 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
 
     function calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed) external view returns (int256);
 
-    function i_initiateClosePosition(
-        address owner,
-        address to,
-        address validator,
-        PositionId memory posId,
-        uint128 amountToClose,
-        uint64 securityDepositValue,
-        bytes calldata currentPriceData
-    ) external returns (uint256 securityDepositValue_, bool isLiquidationPending_, bool liq_);
+    function i_initiateClosePosition(Types.InititateClosePositionParams memory params, bytes calldata currentPriceData)
+        external
+        returns (uint256 securityDepositValue_, bool isLiquidationPending_, bool liq_);
 
     function i_validateOpenPosition(address user, bytes calldata priceData)
         external
@@ -335,6 +330,7 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         address validator,
         PositionId memory posId,
         uint128 amountToClose,
+        uint128 userMinPrice,
         bytes calldata currentPriceData
     ) external returns (ClosePositionData memory data_, bool liquidated_);
 

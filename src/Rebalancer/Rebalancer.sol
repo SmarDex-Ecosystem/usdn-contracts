@@ -413,6 +413,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     function initiateClosePosition(
         uint88 amount,
         address to,
+        uint128 userMinPrice,
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData
     ) external payable nonReentrant returns (bool success_) {
@@ -475,6 +476,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
                 index: data.currentPositionData.index
             }),
             data.amountToClose.toUint128(),
+            userMinPrice,
             to,
             payable(msg.sender),
             currentPriceData,

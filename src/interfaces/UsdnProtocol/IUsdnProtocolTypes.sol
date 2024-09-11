@@ -274,6 +274,25 @@ interface IUsdnProtocolTypes {
     }
 
     /**
+     * @notice Parameters for the internal `_initiateClosePosition` function
+     * @param owner The owner of the position
+     * @param to The address that will receive the assets
+     * @param validator The address that will validate the close action
+     * @param posId The unique identifier of the position
+     * @param amountToClose The amount of collateral to remove from the position's amount
+     * @param securityDepositValue The value of the security deposit for the newly created pending action
+     */
+    struct InititateClosePositionParams {
+        address owner;
+        address to;
+        address validator;
+        PositionId posId;
+        uint128 amountToClose;
+        uint128 userMinPrice;
+        uint64 securityDepositValue;
+    }
+
+    /**
      * @notice Parameters for the internal `_prepareInitiateOpenPosition` function
      * @param validator The address of the validator
      * @param amount The amount of wstETH to deposit
@@ -288,17 +307,38 @@ interface IUsdnProtocolTypes {
         uint256 userMaxLeverage;
         bytes currentPriceData;
     }
+    /**
+     * @notice Parameters for the internal `_prepareClosePositionData` function
+     * @param owner The owner of the position
+     * @param to The address that will receive the assets
+     * @param validator The address of the pending action validator
+     * @param posId The unique identifier of the position
+     * @param amountToClose The amount of collateral to remove from the position's amount
+     * @param currentPriceData The current price data
+     */
+
+    struct PrepareInitiateClosePositionParams {
+        address owner;
+        address to;
+        address validator;
+        PositionId posId;
+        uint128 amountToClose;
+        uint128 userMinPrice;
+        bytes currentPriceData;
+    }
 
     /**
      * @notice Parameters for the internal `_initiateClosePosition` function
      * @param posId The position id
      * @param amountToClose The amount to close
+     * @param userMinPrice The minimum price at which the position can be closed
      * @param to The address that will receive the closed amount
      * @param validator The address that will validate the close position
      */
     struct InitiateClosePositionParams {
         PositionId posId;
         uint128 amountToClose;
+        uint128 userMinPrice;
         address to;
         address payable validator;
     }

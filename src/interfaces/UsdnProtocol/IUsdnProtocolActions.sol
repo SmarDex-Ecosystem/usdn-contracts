@@ -181,6 +181,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * (and `success_` would be false)
      * @param posId The unique identifier of the position to close
      * @param amountToClose The amount of collateral to remove from the position's amount
+     * @param userMinPrice The minimum price at which the position can be closed
      * @param to The address that will receive the assets
      * @param validator The address that will validate the close action
      * @param currentPriceData The current price data
@@ -190,6 +191,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
     function initiateClosePosition(
         PositionId calldata posId,
         uint128 amountToClose,
+        uint128 userMinPrice,
         address to,
         address payable validator,
         bytes calldata currentPriceData,
