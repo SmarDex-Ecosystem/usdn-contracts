@@ -257,12 +257,12 @@ library UsdnProtocolVaultLibrary {
     {
         // amount = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
         //                 = shares * assetAvailable / usdnTotalShares
-        uint256 amount = FixedPointMathLib.fullMulDiv(usdnShares, available, usdnTotalShares);
-        // note: here it is preferable to perform the fee calculation on the result of the muldiv above, even though
-        // precision is slightly worse. The reason is that the combined formula would have `usdnTotalShares *
-        // BPS_DIVISOR` in the denominator, which would always overflow without recourse/workaround if the total number
-        // of shares is close to uint.max.
-        assetExpected_ = amount - FixedPointMathLib.fullMulDiv(amount, feeBps, Constants.BPS_DIVISOR);
+        // amountAfterFees = amount - (amount * feeBps / BPS_DIVISOR)
+        //                = shares * assetAvailable * (BPS_DIVISOR - feeBps) / (usdnTotalShares * BPS_DIVISOR)
+        // Note: the second division is moved out of the fullMulDiv to avoid an overflow in the denominator
+        assetExpected_ = FixedPointMathLib.fullMulDiv(
+            usdnShares, available * (Constants.BPS_DIVISOR - feeBps), usdnTotalShares
+        ) / Constants.BPS_DIVISOR;
     }
 
     /**
