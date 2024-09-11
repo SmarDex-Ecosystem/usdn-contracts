@@ -352,7 +352,7 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         Position memory pos
     ) external view;
 
-    function i_calcBurnUsdn(uint256 usdnShares, uint256 available, uint256 usdnTotalShares)
+    function i_calcBurnUsdn(uint256 usdnShares, uint256 available, uint256 usdnTotalShares, uint256 feeBps)
         external
         pure
         returns (uint256 assetExpected_);

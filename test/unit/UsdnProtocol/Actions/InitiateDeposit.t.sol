@@ -72,10 +72,12 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
 
     function _initiateDepositScenario(address to, address validator) internal {
         uint128 depositAmount = 1 ether;
+        uint128 amountAfterFees =
+            uint128(depositAmount - uint256(depositAmount) * protocol.getVaultFeeBps() / BPS_DIVISOR);
         uint128 price = 2000 ether;
         bytes memory currentPrice = abi.encode(price); // only used to apply PnL + funding
         uint256 usdnSharesToMint =
-            Vault._calcMintUsdnShares(depositAmount, protocol.getBalanceVault(), protocol.getUsdn().totalShares());
+            Vault._calcMintUsdnShares(amountAfterFees, protocol.getBalanceVault(), protocol.getUsdn().totalShares());
         uint256 expectedSdexBurnAmount =
             protocol.i_calcSdexToBurn(usdn.convertToTokens(usdnSharesToMint), protocol.getSdexBurnOnDepositRatio());
         uint256 sdexBalanceBefore = sdex.balanceOf(address(this));
@@ -84,7 +86,9 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         vm.expectEmit(address(sdex));
         emit Transfer(address(this), deadAddress, expectedSdexBurnAmount); // SDEX transfer
         vm.expectEmit();
-        emit InitiatedDeposit(to, validator, depositAmount, block.timestamp, expectedSdexBurnAmount);
+        emit InitiatedDeposit(
+            to, validator, depositAmount, protocol.getVaultFeeBps(), block.timestamp, expectedSdexBurnAmount
+        );
         bool success = protocol.initiateDeposit(
             depositAmount, to, payable(validator), NO_PERMIT2, currentPrice, EMPTY_PREVIOUS_DATA
         );
