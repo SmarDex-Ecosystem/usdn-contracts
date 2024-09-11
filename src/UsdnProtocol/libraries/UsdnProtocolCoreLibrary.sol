@@ -365,6 +365,40 @@ library UsdnProtocolCoreLibrary {
     /* -------------------------------------------------------------------------- */
 
     /**
+     * @notice Prepare the pending action struct for an open position and add it to the queue
+     * @param s The storage of the protocol
+     * @param to The address that will be the owner of the position
+     * @param validator The address that will validate the open position
+     * @param securityDepositValue The value of the security deposit for the newly created pending action
+     * @param data The open position action data
+     * @return amountToRefund_ Refund The security deposit value of a stale pending action
+     */
+    function _createOpenPendingAction(
+        Types.Storage storage s,
+        address to,
+        address validator,
+        uint64 securityDepositValue,
+        Types.InitiateOpenPositionData memory data
+    ) public returns (uint256 amountToRefund_) {
+        Types.LongPendingAction memory action = Types.LongPendingAction({
+            action: Types.ProtocolAction.ValidateOpenPosition,
+            timestamp: uint40(block.timestamp),
+            closeLiqPenalty: 0,
+            to: to,
+            validator: validator,
+            securityDepositValue: securityDepositValue,
+            tick: data.posId.tick,
+            closeAmount: 0,
+            closePosTotalExpo: 0,
+            tickVersion: data.posId.tickVersion,
+            index: data.posId.index,
+            liqMultiplier: data.liqMultiplier,
+            closeBoundedPositionValue: 0
+        });
+        amountToRefund_ = _addPendingAction(s, validator, Utils._convertLongPendingAction(action));
+    }
+
+    /**
      * @notice Calculate the funding rate per day and the old long exposure
      * @param s The storage of the protocol
      * @param ema The EMA of the funding rate per day
