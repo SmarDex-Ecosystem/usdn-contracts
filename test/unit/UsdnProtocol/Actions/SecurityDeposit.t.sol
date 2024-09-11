@@ -26,6 +26,8 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         params.flags.enableSecurityDeposit = true;
         super._setUp(params);
         wstETH.mintAndApprove(address(this), 1000 ether, address(protocol), type(uint256).max);
+        wstETH.mintAndApprove(USER_1, 1000 ether, address(protocol), type(uint256).max);
+
         priceData = abi.encode(params.initialPrice);
 
         SECURITY_DEPOSIT_VALUE = protocol.getSecurityDepositValue();
@@ -384,7 +386,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:and The protocol returns the security deposit to the user1 at the initialization of his deposit
      */
     function test_initiateDeposit_multipleUsers() public {
-        wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
         uint256 usdnBalanceUser0Before = usdn.balanceOf(address(this));
         uint256 usdnBalanceUser1Before = usdn.balanceOf(USER_1);
@@ -426,7 +427,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:and The protocol returns the security deposit to the user1 at the validation of his deposit
      */
     function test_validateDeposit_multipleUsers() public {
-        wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
         uint256 usdnBalanceUser0Before = usdn.balanceOf(address(this));
         uint256 usdnBalanceUser1Before = usdn.balanceOf(USER_1);
@@ -468,7 +468,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:and The protocol returns the security deposit to the user1 at the initialization of his withdrawal
      */
     function test_initiateWithdrawal_multipleUsers() public {
-        wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
 
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
@@ -519,7 +518,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:and The protocol returns the security deposit to the user1 at the validation of his withdrawal
      */
     function test_validateWithdrawal_multipleUsers() public {
-        wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
 
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
@@ -568,7 +566,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:and The protocol returns the security deposit to the user1 at the initialization of his open position
      */
     function test_initiateOpenPosition_multipleUsers() public {
-        wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
 
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
@@ -613,7 +610,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:and The protocol returns the security deposit to the user1 at the validation of his open position
      */
     function test_validateOpenPosition_multipleUsers() public {
-        wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
 
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
@@ -662,7 +658,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:and The protocol returns the security deposit to the user1 at the initialization of his close position
      */
     function test_initiateClosePosition_multipleUsers() public {
-        wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
 
         PositionId memory posId = setUpUserPositionInLong(
@@ -717,7 +712,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:and The protocol returns the security deposit to the user1 at the validation of his close position
      */
     function test_validateClosePosition_multipleUsers() public {
-        wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
 
         PositionId memory posId = setUpUserPositionInLong(
@@ -849,7 +843,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:and The protocol returns `SECURITY_DEPOSIT_VALUE` the user1 at the initialization of his deposit
      */
     function test_changeValue_multipleUsers() public {
-        wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
         uint256 usdnBalanceUser0Before = usdn.balanceOf(address(this));
         uint256 usdnBalanceUser1Before = usdn.balanceOf(USER_1);
@@ -957,8 +950,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     function test_refundStaleToValidatorInDeposit() public {
         PositionId memory posId = _createStalePendingActionHelper();
 
-        wstETH.mintAndApprove(USER_1, 1000 ether, address(protocol), type(uint256).max);
-
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
 
         vm.prank(USER_1);
@@ -980,9 +971,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      */
     function test_refundStaleToValidatorInOpen() public {
         PositionId memory posId = _createStalePendingActionHelper();
-
-        wstETH.mintAndApprove(USER_1, 1000 ether, address(protocol), type(uint256).max);
-
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
 
         vm.startPrank(USER_1);
@@ -1012,9 +1000,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      */
     function test_refundStaleToValidatorInWithdrawal() public {
         PositionId memory posId = _createStalePendingActionHelper();
-
-        wstETH.mintAndApprove(USER_1, 1000 ether, address(protocol), type(uint256).max);
-
         vm.startPrank(USER_1);
 
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
@@ -1047,8 +1032,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      */
     function test_refundStaleToValidatorInClose() public {
         PositionId memory posId = _createStalePendingActionHelper();
-
-        wstETH.mintAndApprove(USER_1, 1000 ether, address(protocol), type(uint256).max);
 
         vm.startPrank(USER_1);
 
