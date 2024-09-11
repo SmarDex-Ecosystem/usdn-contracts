@@ -76,7 +76,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         // we initiate a 1 wei withdrawal
         usdn.approve(address(protocol), 1);
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(
-            1, disableSharesOutMin, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            1, disableAmountOutMin, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
