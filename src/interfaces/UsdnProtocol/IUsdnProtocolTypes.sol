@@ -280,6 +280,7 @@ interface IUsdnProtocolTypes {
      * @param validator The address that will validate the close action
      * @param posId The unique identifier of the position
      * @param amountToClose The amount of collateral to remove from the position's amount
+     * @param userMinPrice The minimum price at which the position can be closed
      * @param securityDepositValue The value of the security deposit for the newly created pending action
      */
     struct InititateClosePositionParams {
@@ -314,6 +315,7 @@ interface IUsdnProtocolTypes {
      * @param validator The address of the pending action validator
      * @param posId The unique identifier of the position
      * @param amountToClose The amount of collateral to remove from the position's amount
+     * @param userMinPrice The minimum price at which the position can be closed
      * @param currentPriceData The current price data
      */
 
