@@ -115,7 +115,13 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateDeposit);
         assertEq(validationCost, 1);
         protocol.initiateDeposit{ value: validationCost }(
-            DEPOSIT_AMOUNT, disableSharesOutMin, address(this), payable(address(this)), NO_PERMIT2, currentPrice, EMPTY_PREVIOUS_DATA
+            DEPOSIT_AMOUNT,
+            disableSharesOutMin,
+            address(this),
+            payable(address(this)),
+            NO_PERMIT2,
+            currentPrice,
+            EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
@@ -208,7 +214,13 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit InitiatedDeposit(to, address(this), DEPOSIT_AMOUNT, initiateDepositTimestamp, expectedSdexBurnAmount);
         protocol.initiateDeposit(
-            DEPOSIT_AMOUNT, disableSharesOutMin, to, payable(address(this)), NO_PERMIT2, currentPrice, EMPTY_PREVIOUS_DATA
+            DEPOSIT_AMOUNT,
+            disableSharesOutMin,
+            to,
+            payable(address(this)),
+            NO_PERMIT2,
+            currentPrice,
+            EMPTY_PREVIOUS_DATA
         );
         uint256 vaultBalance = protocol.getBalanceVault(); // save for mint amount calculation in case price increases
         bytes32 actionId = oracleMiddleware.lastActionId();
