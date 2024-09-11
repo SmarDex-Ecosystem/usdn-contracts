@@ -771,8 +771,8 @@ library UsdnProtocolActionsVaultLibrary {
 
         amountToRefund_ = _createWithdrawalPendingAction(s, to, validator, usdnShares, securityDepositValue, data);
 
-        IUsdn usdn = s._usdn;
         // retrieve the USDN tokens, check that the balance is sufficient
+        IUsdn usdn = s._usdn;
         usdn.transferSharesFrom(user, address(this), usdnShares);
         // register the pending withdrawal for imbalance checks of future actions
         s._pendingBalanceVault -= data.withdrawalAmountAfterFees.toInt256();
