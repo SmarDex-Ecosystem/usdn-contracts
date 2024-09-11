@@ -181,7 +181,9 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * (and `success_` would be false)
      * @param posId The unique identifier of the position to close
      * @param amountToClose The amount of collateral to remove from the position's amount
-     * @param userMinPrice The minimum price at which the position can be closed
+     * @param userMinPrice The minimum price at which the position can be closed. Note that there is no guarantee that
+     * the effective price at validation will below this value. Price changes during the interval could negatively
+     * affect the price. However, if the predicted price is below this threshold, the initiate action will revert
      * @param to The address that will receive the assets
      * @param validator The address that will validate the close action
      * @param currentPriceData The current price data
