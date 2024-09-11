@@ -652,7 +652,9 @@ library UsdnProtocolActionsVaultLibrary {
         data_.feeBps = s._vaultFeeBps;
         data_.withdrawalAmountAfterFees =
             Utils._calcBurnUsdn(usdnShares, data_.balanceVault, data_.usdnTotalShares, data_.feeBps);
-
+        if (data_.withdrawalAmountAfterFees < amountOutMin) {
+            revert IUsdnProtocolErrors.UsdnProtocolAmountReceivedTooSmall();
+        }
         _checkImbalanceLimitWithdrawal(s, data_.withdrawalAmountAfterFees, data_.totalExpo);
     }
 
