@@ -5,11 +5,11 @@ import { DEPLOYER } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+
 /**
  * @custom:feature Test the _sendRewardsToLiquidator internal function of the actions utils library
  * @custom:given A protocol with increased rewards and gas price
  */
-
 contract TestUsdnProtocolActionsSendRewardsToLiquidator is UsdnProtocolBaseFixture {
     function setUp() public {
         _setUp(DEFAULT_PARAMS);

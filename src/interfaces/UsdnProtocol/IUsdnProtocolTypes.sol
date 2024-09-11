@@ -60,12 +60,11 @@ interface IUsdnProtocolTypes {
     }
 
     /**
-     * @notice Classifies the checks of the `_triggerRebalancer` function
-     * @dev It's used to determine the gas spent when the function is called and to allow liquidation rewards depending
-     * on the case
-     * @param None The function doesn't do checks
-     * @param NotUpdated The function does checks but the position hasn't been updated
-     * @param Updated The function does checks and the position has been updated
+     * @notice Classifies how far in its logic the `_triggerRebalancer` function made it to
+     * @dev Used to estimate the gas spent by the function call to more accurately calculate liquidation rewards
+     * @param None The rebalancer is not set
+     * @param NotUpdated The rebalancer's position was not updated
+     * @param Updated The rebalancer's position was updated
      */
     enum TriggerRebalancerChecks {
         None,
