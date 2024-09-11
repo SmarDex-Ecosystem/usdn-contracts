@@ -40,6 +40,16 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
+    function refundSecurityDeposit(address payable validator) external {
+        uint256 securityDepositValue = Core._removeStalePendingAction(s, validator);
+        if (securityDepositValue > 0) {
+            Utils._refundEther(securityDepositValue, validator);
+        } else {
+            revert IUsdnProtocolErrors.UsdnProtocolNotEligibleForRefund(validator);
+        }
+    }
+
+    /// @inheritdoc IUsdnProtocolFallback
     function removeBlockedPendingAction(address validator, address payable to)
         external
         onlyRole(CRITICAL_FUNCTIONS_ROLE)

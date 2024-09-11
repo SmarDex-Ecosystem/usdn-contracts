@@ -197,16 +197,6 @@ library UsdnProtocolActionsLongLibrary {
         Utils._checkPendingFee(s);
     }
 
-    /// @notice See {IUsdnProtocolActions}
-    function refundSecurityDeposit(Types.Storage storage s, address payable validator) public {
-        uint256 securityDepositValue = Core._removeStalePendingAction(s, validator);
-        if (securityDepositValue > 0) {
-            Utils._refundEther(securityDepositValue, validator);
-        } else {
-            revert IUsdnProtocolErrors.UsdnProtocolNotEligibleForRefund(validator);
-        }
-    }
-
     /* -------------------------------------------------------------------------- */
     /*                             Internal functions                             */
     /* -------------------------------------------------------------------------- */
