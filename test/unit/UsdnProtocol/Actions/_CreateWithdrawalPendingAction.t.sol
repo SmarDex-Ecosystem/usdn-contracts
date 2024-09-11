@@ -23,7 +23,7 @@ contract TestUsdnProtocolActionsCreateWithdrawalPendingAction is UsdnProtocolBas
         params.flags.enableSecurityDeposit = true;
         _setUp(params);
 
-        data.pendingActionPrice = 2000 ether;
+        data.feeBps = protocol.getVaultFeeBps();
         data.totalExpo = 420 ether;
         data.balanceVault = 41 ether;
         data.balanceLong = 42 ether;
@@ -62,7 +62,7 @@ contract TestUsdnProtocolActionsCreateWithdrawalPendingAction is UsdnProtocolBas
         );
         assertEq(uint24(pendingAction.var1), sharesLSB, "var1 should be equal to the calculated sharesLSB");
         assertEq(pendingAction.var2, sharesMSB, "var2 should be equal to the calculated sharesMSB");
-        assertEq(pendingAction.var3, data.pendingActionPrice, "var3 should be the provided asset price");
+        assertEq(pendingAction.var3, data.feeBps, "var3 should be the fee");
         assertEq(pendingAction.var4, data.totalExpo, "var4 should be the provided total expo");
         assertEq(pendingAction.var5, data.balanceVault, "var5 should be the provided balance of the vault side");
         assertEq(pendingAction.var6, data.balanceLong, "var6 should be the provided balance of the long side");
