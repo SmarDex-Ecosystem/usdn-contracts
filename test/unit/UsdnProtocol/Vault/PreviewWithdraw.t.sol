@@ -27,14 +27,15 @@ contract TestUsdnProtocolPreviewWithdraw is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Check calculations of `previewWithdraw`
      * @custom:given The available vault balance (with vault fee applied) is greater than zero
-     * @custom:when The user simulates the withdrawal of half of the total shares of USDN
-     * @custom:then The amount of asset should be equal to half of the available balance minus fee
+     * @custom:when The user simulates the withdrawal a portion of the usdnShares from the vault
+     * @custom:then The amount of asset should match the expected value
      */
-    function test_previewWithdraw() public view {
+    function testFuzz_previewWithdraw(uint256 shares) public view {
         uint128 price = 2000 ether;
-        uint256 shares = usdn.totalShares() / 2;
-        uint256 amount = protocol.getBalanceVault() / 2;
-        uint256 expectedAmount = amount - amount * protocol.getVaultFeeBps() / BPS_DIVISOR;
+        shares = bound(shares, 0, usdn.totalShares());
+        uint256 expectedAmount = shares * protocol.getBalanceVault() * (BPS_DIVISOR - protocol.getPositionFeeBps())
+            / (usdn.totalShares() * BPS_DIVISOR);
+
         assertEq(
             protocol.previewWithdraw(shares, price, protocol.getLastUpdateTimestamp()),
             expectedAmount,
