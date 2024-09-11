@@ -38,7 +38,7 @@ contract TestForkUsdnProtocolInitiateDepositPermit2 is UsdnProtocolBaseIntegrati
         uint256 balanceBefore = wstETH.balanceOf(address(protocol));
         bool success = protocol.initiateDeposit{ value: protocol.getSecurityDepositValue() }(
             DEPOSIT_AMOUNT,
-            0,
+            disableSharesOutMin,
             address(this),
             payable(address(this)),
             Permit2TokenBitfield.Bitfield.wrap(Permit2TokenBitfield.ASSET_MASK),
@@ -61,7 +61,7 @@ contract TestForkUsdnProtocolInitiateDepositPermit2 is UsdnProtocolBaseIntegrati
         uint256 balanceBefore = sdex.balanceOf(protocol.DEAD_ADDRESS());
         bool success = protocol.initiateDeposit{ value: protocol.getSecurityDepositValue() }(
             DEPOSIT_AMOUNT,
-            0,
+            disableSharesOutMin,
             address(this),
             payable(address(this)),
             Permit2TokenBitfield.Bitfield.wrap(Permit2TokenBitfield.SDEX_MASK),
@@ -85,7 +85,7 @@ contract TestForkUsdnProtocolInitiateDepositPermit2 is UsdnProtocolBaseIntegrati
         uint256 sdexBalanceBefore = sdex.balanceOf(protocol.DEAD_ADDRESS());
         bool success = protocol.initiateDeposit{ value: protocol.getSecurityDepositValue() }(
             DEPOSIT_AMOUNT,
-            0,
+            disableSharesOutMin,
             address(this),
             payable(address(this)),
             Permit2TokenBitfield.Bitfield.wrap(Permit2TokenBitfield.ASSET_MASK | Permit2TokenBitfield.SDEX_MASK),

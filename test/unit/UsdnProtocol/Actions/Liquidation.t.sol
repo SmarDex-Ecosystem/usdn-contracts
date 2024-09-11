@@ -58,7 +58,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         emit IUsdnProtocolEvents.LiquidatedTick(posId.tick, posId.tickVersion, 0, 0, 0);
         protocol.initiateDeposit(
             1 ether,
-            0,
+            disableSharesOutMin,
             address(this),
             payable(address(this)),
             NO_PERMIT2,

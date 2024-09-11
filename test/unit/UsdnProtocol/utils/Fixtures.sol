@@ -315,7 +315,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         bytes memory priceData = abi.encode(price);
 
         protocol.initiateDeposit{ value: securityDepositValue }(
-            positionSize, 0, user, payable(user), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
+            positionSize, disableSharesOutMin, user, payable(user), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         if (untilAction == ProtocolAction.InitiateDeposit) return;
