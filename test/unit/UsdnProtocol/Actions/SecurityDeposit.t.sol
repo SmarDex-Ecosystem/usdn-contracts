@@ -993,6 +993,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
             1 ether,
             params.initialPrice / 2,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             USER_1,
             payable(this),
@@ -1052,6 +1053,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         (, PositionId memory user1PosId) = protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
             1 ether,
             params.initialPrice / 2,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             USER_1,
             USER_1,
