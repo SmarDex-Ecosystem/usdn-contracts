@@ -77,7 +77,7 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
 
         vm.prank(USER_1);
         protocol.initiateClosePosition(
-            posId, pos.amount, DISABLEMINPRICE, USER_1, USER_1, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
+            posId, pos.amount, DISABLE_MIN_PRICE, USER_1, USER_1, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
         );
 
         // the close action should have USER_1 as the validator

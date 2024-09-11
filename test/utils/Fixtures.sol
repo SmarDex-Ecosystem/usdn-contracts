@@ -12,7 +12,7 @@ import "./Constants.sol" as constants;
 contract BaseFixture is Test {
     uint256 constant BPS_DIVISOR = 10_000;
 
-    uint256 internal constant DISABLEMINPRICE = 0;
+    uint256 internal constant DISABLE_MIN_PRICE = 0;
 
     modifier ethMainnetFork() {
         string memory url = vm.rpcUrl("mainnet");
