@@ -117,11 +117,11 @@ contract TestUsdnProtocolActionsExecutePendingActionOrRevert is UsdnProtocolBase
         DepositPendingAction memory pendingDeposit = DepositPendingAction({
             action: ProtocolAction.ValidateDeposit,
             timestamp: uint40(timestamp),
-            _unused: 0,
+            feeBps: 0,
             to: user,
             validator: user,
             securityDepositValue: 0,
-            feeBps: 0,
+            _unused: 0,
             amount: 1 ether,
             assetPrice: 2000 ether,
             totalExpo: 20 ether,
