@@ -7,7 +7,7 @@ import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./libraries/UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./libraries/UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolActionsVaultLibrary as ActionsVault } from "./libraries/UsdnProtocolActionsVaultLibrary.sol";
-import { UsdnProtocolCoreLibrary as Core } from "./libraries/UsdnProtocolCoreLibrary.sol";
+import { UsdnProtocolUtilsLibrary as Utils } from "./libraries/UsdnProtocolUtilsLibrary.sol";
 
 abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActions {
     /// @inheritdoc IUsdnProtocolActions
@@ -116,11 +116,6 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
     }
 
     /// @inheritdoc IUsdnProtocolActions
-    function refundSecurityDeposit(address payable validator) external initializedAndNonReentrant {
-        ActionsLong.refundSecurityDeposit(s, validator);
-    }
-
-    /// @inheritdoc IUsdnProtocolActions
     function liquidate(bytes calldata currentPriceData, uint16 iterations)
         external
         payable
@@ -150,7 +145,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
 
     /// @inheritdoc IUsdnProtocolActions
     function tickHash(int24 tick, uint256 version) external pure returns (bytes32) {
-        return Core.tickHash(tick, version);
+        return Utils.tickHash(tick, version);
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -159,6 +154,6 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
         view
         returns (Position memory pos_, uint24 liquidationPenalty_)
     {
-        return ActionsLong.getLongPosition(s, posId);
+        return ActionsUtils.getLongPosition(s, posId);
     }
 }

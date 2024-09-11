@@ -285,13 +285,6 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
     function tickHash(int24 tick, uint256 version) external pure returns (bytes32);
 
     /**
-     * @notice Refund the security deposit to a validator of a liquidated initiated long position
-     * @param validator The address of the validator
-     * @dev The security deposit is always sent to the validator
-     */
-    function refundSecurityDeposit(address payable validator) external;
-
-    /**
      * @notice Get a long position identified by its tick, tickVersion and index
      * @param posId The unique position identifier
      * @return pos_ The position data
