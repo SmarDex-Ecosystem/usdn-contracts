@@ -40,6 +40,13 @@ interface IUsdnProtocolFallback {
         view
         returns (uint256 usdnSharesExpected_, uint256 sdexToBurn_);
 
+    /**
+     * @notice Refund the security deposit to a validator of a liquidated initiated long position
+     * @param validator The address of the validator
+     * @dev The security deposit is always sent to the validator
+     */
+    function refundSecurityDeposit(address payable validator) external;
+
     /* -------------------------------------------------------------------------- */
     /*                               Admin functions                              */
     /* -------------------------------------------------------------------------- */

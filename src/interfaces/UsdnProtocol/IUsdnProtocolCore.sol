@@ -26,16 +26,6 @@ interface IUsdnProtocolCore is IUsdnProtocolTypes {
         returns (int256 funding_, int256 fundingPerDay_, int256 oldLongExpo_);
 
     /**
-     * @notice Get the predicted value of the vault trading exposure for the given asset price and timestamp
-     * @dev The effects of the funding and any profit or loss of the long positions since the last contract state
-     * update is taken into account
-     * @param currentPrice The current or predicted asset price
-     * @param timestamp The timestamp corresponding to `currentPrice`
-     * @return The vault trading exposure
-     */
-    function vaultTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256);
-
-    /**
      * @notice Retrieve a list of pending actions, one of which must be validated by the next user action in the
      * protocol
      * @dev If this function returns a non-empty list of pending actions, then the next user action MUST include the

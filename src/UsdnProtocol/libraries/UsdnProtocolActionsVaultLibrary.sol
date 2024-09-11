@@ -1,27 +1,25 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
-import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../../interfaces/Usdn/IUsdn.sol";
-import { IFeeCollectorCallback } from "../../interfaces/UsdnProtocol/IFeeCollectorCallback.sol";
 import { IUsdnProtocolActions } from "../../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { DoubleEndedQueue } from "../../libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../../libraries/HugeUint.sol";
 import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./UsdnProtocolActionsLongLibrary.sol";
-import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "./UsdnProtocolLongLibrary.sol";
-import { UsdnProtocolUtils as Utils } from "./UsdnProtocolUtils.sol";
+import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.sol";
 
 library UsdnProtocolActionsVaultLibrary {
@@ -32,6 +30,7 @@ library UsdnProtocolActionsVaultLibrary {
     using SignedMath for int256;
     using HugeUint for HugeUint.Uint512;
     using Permit2TokenBitfield for Permit2TokenBitfield.Bitfield;
+    using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
     /**
      * @dev Structure to hold the transient data during `_initiateDeposit`
@@ -113,14 +112,14 @@ library UsdnProtocolActionsVaultLibrary {
         if (validatorAmount > 0) {
             if (validator != msg.sender) {
                 balanceBefore -= validatorAmount;
-                _refundEther(validatorAmount, validator);
+                Utils._refundEther(validatorAmount, validator);
             } else {
                 amountToRefund += validatorAmount;
             }
         }
 
-        _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
-        _checkPendingFee(s);
+        Utils._refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
+        Utils._checkPendingFee(s);
     }
 
     /// @notice See {IUsdnProtocolActions}
@@ -135,7 +134,7 @@ library UsdnProtocolActionsVaultLibrary {
         uint256 amountToRefund;
         (amountToRefund, success_) = _validateDeposit(s, validator, depositPriceData);
         if (msg.sender != validator) {
-            _refundEther(amountToRefund, validator);
+            Utils._refundEther(amountToRefund, validator);
             balanceBefore -= amountToRefund;
             amountToRefund = 0;
         }
@@ -145,8 +144,8 @@ library UsdnProtocolActionsVaultLibrary {
             }
         }
 
-        _refundExcessEther(0, amountToRefund, balanceBefore);
-        _checkPendingFee(s);
+        Utils._refundExcessEther(0, amountToRefund, balanceBefore);
+        Utils._checkPendingFee(s);
     }
 
     /// @notice See {IUsdnProtocolActions}
@@ -180,13 +179,13 @@ library UsdnProtocolActionsVaultLibrary {
         if (validatorAmount > 0) {
             if (validator != msg.sender) {
                 balanceBefore -= validatorAmount;
-                _refundEther(validatorAmount, validator);
+                Utils._refundEther(validatorAmount, validator);
             } else {
                 amountToRefund += validatorAmount;
             }
         }
-        _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
-        _checkPendingFee(s);
+        Utils._refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
+        Utils._checkPendingFee(s);
     }
 
     /// @notice See {IUsdnProtocolActions}
@@ -201,7 +200,7 @@ library UsdnProtocolActionsVaultLibrary {
         uint256 amountToRefund;
         (amountToRefund, success_) = _validateWithdrawal(s, validator, withdrawalPriceData);
         if (msg.sender != validator) {
-            _refundEther(amountToRefund, validator);
+            Utils._refundEther(amountToRefund, validator);
             balanceBefore -= amountToRefund;
             amountToRefund = 0;
         }
@@ -211,8 +210,8 @@ library UsdnProtocolActionsVaultLibrary {
             }
         }
 
-        _refundExcessEther(0, amountToRefund, balanceBefore);
-        _checkPendingFee(s);
+        Utils._refundExcessEther(0, amountToRefund, balanceBefore);
+        Utils._checkPendingFee(s);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -301,11 +300,11 @@ library UsdnProtocolActionsVaultLibrary {
         uint128 amount,
         bytes calldata currentPriceData
     ) public returns (InitiateDepositData memory data_) {
-        PriceInfo memory currentPrice = _getOraclePrice(
+        PriceInfo memory currentPrice = Utils._getOraclePrice(
             s,
             Types.ProtocolAction.InitiateDeposit,
             block.timestamp,
-            ActionsUtils._calcActionId(validator, uint128(block.timestamp)),
+            Utils._calcActionId(validator, uint128(block.timestamp)),
             currentPriceData
         );
 
@@ -343,14 +342,14 @@ library UsdnProtocolActionsVaultLibrary {
 
         // calculate the amount of SDEX tokens to burn
         uint256 usdnSharesToMintEstimated =
-            Vault._calcMintUsdnShares(amountAfterFees, data_.balanceVault, data_.usdnTotalShares);
+            Utils._calcMintUsdnShares(amountAfterFees, data_.balanceVault, data_.usdnTotalShares);
         uint256 usdnToMintEstimated = usdn.convertToTokens(usdnSharesToMintEstimated);
         // we want to at least mint 1 wei of USDN
         if (usdnToMintEstimated == 0) {
             revert IUsdnProtocolErrors.UsdnProtocolDepositTooSmall();
         }
         uint32 burnRatio = s._sdexBurnOnDepositRatio;
-        data_.sdexToBurn = Vault._calcSdexToBurn(usdnToMintEstimated, burnRatio);
+        data_.sdexToBurn = Utils._calcSdexToBurn(usdnToMintEstimated, burnRatio);
     }
 
     /**
@@ -387,7 +386,7 @@ library UsdnProtocolActionsVaultLibrary {
             usdnTotalShares: data.usdnTotalShares
         });
 
-        amountToRefund_ = Core._addPendingAction(s, validator, Core._convertDepositPendingAction(pendingAction));
+        amountToRefund_ = Core._addPendingAction(s, validator, Utils._convertDepositPendingAction(pendingAction));
     }
 
     /**
@@ -487,7 +486,7 @@ library UsdnProtocolActionsVaultLibrary {
         isValidated_ = _validateDepositWithAction(s, pending, priceData);
 
         if (isValidated_) {
-            Core._clearPendingAction(s, validator, rawIndex);
+            Utils._clearPendingAction(s, validator, rawIndex);
             securityDepositValue_ = pending.securityDepositValue;
         }
     }
@@ -504,13 +503,13 @@ library UsdnProtocolActionsVaultLibrary {
         Types.PendingAction memory pending,
         bytes calldata priceData
     ) public returns (bool isValidated_) {
-        Types.DepositPendingAction memory deposit = Core._toDepositPendingAction(pending);
+        Types.DepositPendingAction memory deposit = Utils._toDepositPendingAction(pending);
 
-        PriceInfo memory currentPrice = _getOraclePrice(
+        PriceInfo memory currentPrice = Utils._getOraclePrice(
             s,
             Types.ProtocolAction.ValidateDeposit,
             deposit.timestamp,
-            ActionsUtils._calcActionId(deposit.validator, deposit.timestamp),
+            Utils._calcActionId(deposit.validator, deposit.timestamp),
             priceData
         );
 
@@ -541,7 +540,7 @@ library UsdnProtocolActionsVaultLibrary {
         uint256 balanceVault = deposit.balanceVault;
         if (currentPrice.price < deposit.assetPrice) {
             // price decreased: balance of the vault increased
-            int256 available = Vault._vaultAssetAvailable(
+            int256 available = Utils._vaultAssetAvailable(
                 deposit.totalExpo,
                 deposit.balanceVault,
                 deposit.balanceLong,
@@ -560,7 +559,7 @@ library UsdnProtocolActionsVaultLibrary {
         s._pendingBalanceVault -= Utils.toInt256(deposit.amount);
 
         uint256 mintedTokens = s._usdn.mintShares(
-            deposit.to, Vault._calcMintUsdnShares(amountAfterFees, balanceVault, deposit.usdnTotalShares)
+            deposit.to, Utils._calcMintUsdnShares(amountAfterFees, balanceVault, deposit.usdnTotalShares)
         );
         isValidated_ = true;
         emit IUsdnProtocolEvents.ValidatedDeposit(
@@ -583,11 +582,11 @@ library UsdnProtocolActionsVaultLibrary {
         uint152 usdnShares,
         bytes calldata currentPriceData
     ) public returns (WithdrawalData memory data_) {
-        PriceInfo memory currentPrice = _getOraclePrice(
+        PriceInfo memory currentPrice = Utils._getOraclePrice(
             s,
             Types.ProtocolAction.InitiateWithdrawal,
             block.timestamp,
-            ActionsUtils._calcActionId(validator, uint128(block.timestamp)),
+            Utils._calcActionId(validator, uint128(block.timestamp)),
             currentPriceData
         );
 
@@ -617,7 +616,7 @@ library UsdnProtocolActionsVaultLibrary {
         data_.usdnTotalShares = s._usdn.totalShares();
         data_.feeBps = s._vaultFeeBps;
         data_.withdrawalAmountAfterFees =
-            Vault._calcBurnUsdn(usdnShares, data_.balanceVault, data_.usdnTotalShares, data_.feeBps);
+            Utils._calcBurnUsdn(usdnShares, data_.balanceVault, data_.usdnTotalShares, data_.feeBps);
 
         _checkImbalanceLimitWithdrawal(s, data_.withdrawalAmountAfterFees, data_.totalExpo);
     }
@@ -640,7 +639,7 @@ library UsdnProtocolActionsVaultLibrary {
         uint64 securityDepositValue,
         WithdrawalData memory data
     ) public returns (uint256 amountToRefund_) {
-        Types.PendingAction memory action = Core._convertWithdrawalPendingAction(
+        Types.PendingAction memory action = Utils._convertWithdrawalPendingAction(
             Types.WithdrawalPendingAction({
                 action: Types.ProtocolAction.ValidateWithdrawal,
                 timestamp: uint40(block.timestamp),
@@ -648,8 +647,8 @@ library UsdnProtocolActionsVaultLibrary {
                 to: to,
                 validator: validator,
                 securityDepositValue: securityDepositValue,
-                sharesLSB: Vault._calcWithdrawalAmountLSB(usdnShares),
-                sharesMSB: Vault._calcWithdrawalAmountMSB(usdnShares),
+                sharesLSB: _calcWithdrawalAmountLSB(usdnShares),
+                sharesMSB: _calcWithdrawalAmountMSB(usdnShares),
                 assetPrice: data.lastPrice,
                 totalExpo: data.totalExpo,
                 balanceVault: data.balanceVault,
@@ -658,32 +657,6 @@ library UsdnProtocolActionsVaultLibrary {
             })
         );
         amountToRefund_ = Core._addPendingAction(s, validator, action);
-    }
-
-    /**
-     * @notice Get the oracle price for the given action and timestamp then validate it
-     * @param s The storage of the protocol
-     * @param action The type of action that is being performed by the user
-     * @param timestamp The timestamp at which the wanted price was recorded
-     * @param actionId The unique identifier of the action
-     * @param priceData The price oracle data
-     * @return price_ The validated price
-     */
-    function _getOraclePrice(
-        Types.Storage storage s,
-        Types.ProtocolAction action,
-        uint256 timestamp,
-        bytes32 actionId,
-        bytes calldata priceData
-    ) public returns (PriceInfo memory price_) {
-        uint256 validationCost = s._oracleMiddleware.validationCost(priceData, action);
-        if (address(this).balance < validationCost) {
-            revert IUsdnProtocolErrors.UsdnProtocolInsufficientOracleFee();
-        }
-        // slither-disable-next-line arbitrary-send-eth
-        price_ = s._oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            actionId, uint128(timestamp), action, priceData
-        );
     }
 
     /**
@@ -768,7 +741,7 @@ library UsdnProtocolActionsVaultLibrary {
         isValidated_ = _validateWithdrawalWithAction(s, pending, priceData);
 
         if (isValidated_) {
-            Core._clearPendingAction(s, validator, rawIndex);
+            Utils._clearPendingAction(s, validator, rawIndex);
             securityDepositValue_ = pending.securityDepositValue;
         }
     }
@@ -785,13 +758,13 @@ library UsdnProtocolActionsVaultLibrary {
         Types.PendingAction memory pending,
         bytes calldata priceData
     ) public returns (bool isValidated_) {
-        Types.WithdrawalPendingAction memory withdrawal = Core._toWithdrawalPendingAction(pending);
+        Types.WithdrawalPendingAction memory withdrawal = Utils._toWithdrawalPendingAction(pending);
 
-        PriceInfo memory currentPrice = _getOraclePrice(
+        PriceInfo memory currentPrice = Utils._getOraclePrice(
             s,
             Types.ProtocolAction.ValidateWithdrawal,
             withdrawal.timestamp,
-            ActionsUtils._calcActionId(withdrawal.validator, withdrawal.timestamp),
+            Utils._calcActionId(withdrawal.validator, withdrawal.timestamp),
             priceData
         );
 
@@ -814,7 +787,7 @@ library UsdnProtocolActionsVaultLibrary {
         {
             // we calculate the available balance of the vault side at the price of the validate action (ignoring any
             // funding between the initiate and validate)
-            int256 vaultAssetAvailable = Vault._vaultAssetAvailable(
+            int256 vaultAssetAvailable = Utils._vaultAssetAvailable(
                 withdrawal.totalExpo,
                 withdrawal.balanceVault,
                 withdrawal.balanceLong,
@@ -835,16 +808,16 @@ library UsdnProtocolActionsVaultLibrary {
             }
         }
 
-        uint256 shares = Core._mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
+        uint256 shares = Utils._mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
 
         // we can add back the _pendingBalanceVault we subtracted in the initiate action
         uint256 tempWithdrawalAfterFees =
-            Vault._calcBurnUsdn(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares, withdrawal.feeBps);
+            Utils._calcBurnUsdn(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares, withdrawal.feeBps);
         s._pendingBalanceVault += tempWithdrawalAfterFees.toInt256();
 
         IUsdn usdn = s._usdn;
         // calculate the amount of asset to transfer with the same fees as recorded during the initiate action
-        uint256 assetToTransferAfterFees = Vault._calcBurnUsdn(shares, available, usdn.totalShares(), withdrawal.feeBps);
+        uint256 assetToTransferAfterFees = Utils._calcBurnUsdn(shares, available, usdn.totalShares(), withdrawal.feeBps);
 
         usdn.burnShares(shares);
 
@@ -927,74 +900,27 @@ library UsdnProtocolActionsVaultLibrary {
         success_ = true;
 
         if (executed_ || liquidated_) {
-            Core._clearPendingAction(s, pending.validator, rawIndex);
+            Utils._clearPendingAction(s, pending.validator, rawIndex);
             securityDepositValue_ = pending.securityDepositValue;
             emit IUsdnProtocolEvents.SecurityDepositRefunded(pending.validator, msg.sender, securityDepositValue_);
         }
     }
 
     /**
-     * @notice Refunds any excess ether to the user to prevent locking ETH in the contract
-     * @param securityDepositValue The security deposit value of the action (zero for a validation action)
-     * @param amountToRefund The amount to refund to the user:
-     *      - the security deposit if executing an action for another user,
-     *      - the initialization security deposit in case of a validation action
-     * @param balanceBefore The balance of the contract before the action
+     * @notice Get the lower 24 bits of the withdrawal amount (USDN shares)
+     * @param usdnShares The amount of USDN shares
+     * @return sharesLSB_ The 24 least significant bits of the USDN shares
      */
-    function _refundExcessEther(uint256 securityDepositValue, uint256 amountToRefund, uint256 balanceBefore) public {
-        uint256 positive = amountToRefund + address(this).balance + msg.value;
-        uint256 negative = balanceBefore + securityDepositValue;
-
-        if (negative > positive) {
-            revert IUsdnProtocolErrors.UsdnProtocolUnexpectedBalance();
-        }
-
-        uint256 amount;
-        unchecked {
-            // we know that positive >= negative, so this subtraction is safe
-            amount = positive - negative;
-        }
-
-        _refundEther(amount, payable(msg.sender));
+    function _calcWithdrawalAmountLSB(uint152 usdnShares) internal pure returns (uint24 sharesLSB_) {
+        sharesLSB_ = uint24(usdnShares);
     }
 
     /**
-     * @notice Refunds an amount of ether to the given address
-     * @param amount The amount of ether to refund
-     * @param to The address that should receive the refund
+     * @notice Get the higher 128 bits of the withdrawal amount (USDN shares)
+     * @param usdnShares The amount of USDN shares
+     * @return sharesMSB_ The 128 most significant bits of the USDN shares
      */
-    function _refundEther(uint256 amount, address payable to) public {
-        if (to == address(0)) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo();
-        }
-        if (amount != 0) {
-            // slither-disable-next-line arbitrary-send-eth
-            (bool success,) = to.call{ value: amount }("");
-            if (!success) {
-                revert IUsdnProtocolErrors.UsdnProtocolEtherRefundFailed();
-            }
-        }
-    }
-
-    /**
-     * @notice Distribute the protocol fee to the fee collector if it exceeds the threshold
-     * @dev This function is called after every action that changes the protocol fee balance
-     * Try to call the function `feeCollectorCallback` on the fee collector if it supports the interface (non reverting
-     * if it fails)
-     * @param s The storage of the protocol
-     */
-    function _checkPendingFee(Types.Storage storage s) public {
-        uint256 pendingFee = s._pendingProtocolFee;
-        if (pendingFee >= s._feeThreshold) {
-            address feeCollector = s._feeCollector;
-
-            emit IUsdnProtocolEvents.ProtocolFeeDistributed(feeCollector, pendingFee);
-            s._pendingProtocolFee = 0;
-            address(s._asset).safeTransfer(feeCollector, pendingFee);
-
-            if (ERC165Checker.supportsInterface(feeCollector, type(IFeeCollectorCallback).interfaceId)) {
-                IFeeCollectorCallback(feeCollector).feeCollectorCallback(pendingFee);
-            }
-        }
+    function _calcWithdrawalAmountMSB(uint152 usdnShares) internal pure returns (uint128 sharesMSB_) {
+        sharesMSB_ = uint128(usdnShares >> 24);
     }
 }
