@@ -579,7 +579,7 @@ library UsdnProtocolActionsLongLibrary {
         }
 
         amountToRefund_ = _createClosePendingAction(
-            s, params.to, params.validator, params.posId, aparams.mountToClose, params.securityDepositValue, data
+            s, params.to, params.validator, params.posId, params.amountToClose, params.securityDepositValue, data
         );
 
         s._balanceLong -= data.tempPositionValue;

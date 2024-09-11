@@ -248,7 +248,7 @@ library UsdnProtocolActionsUtilsLibrary {
                 s,
                 Types.ProtocolAction.InitiateClosePosition,
                 block.timestamp,
-                Utils.calcActionId(params.owner, uint128(block.timestamp)),
+                Utils._calcActionId(params.owner, uint128(block.timestamp)),
                 params.currentPriceData
             );
             if (currentPrice.price < params.userMinPrice) {
