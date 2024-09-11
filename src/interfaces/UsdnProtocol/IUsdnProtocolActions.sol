@@ -114,7 +114,9 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * In case liquidations are pending, this function might not initiate the position (and `success_` would be false)
      * @param amount The amount of wstETH to deposit
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
-     * @param userMaxPrice The maximum price at which the position can be opened
+     * @param userMaxPrice The maximum price at which the position can be opened. Note that there is no guarantee that
+     * the effective price at validation will above this value. Price changes during the interval could negatively
+     * affect the price. However, if the predicted price is above this threshold, the initiate action will revert
      * @param userMaxLeverage The maximum leverage for the newly created position
      * @param to The address that will be the owner of the position
      * @param validator The address that will validate the open position
