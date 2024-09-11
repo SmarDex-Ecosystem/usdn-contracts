@@ -128,12 +128,15 @@ library UsdnProtocolActionsUtilsLibrary {
      * the close limit on the vault side, otherwise revert
      * @param s The storage of the protocol
      * @param posTotalExpoToClose The total expo to remove position
-     * @param posValueToClose The value to remove from the position
+     * @param posValueToCloseAfterFees The value to remove from the position after the fees are applied
+     * @param fees The fees applied to the position, going to the vault
      */
-    function _checkImbalanceLimitClose(Types.Storage storage s, uint256 posTotalExpoToClose, uint256 posValueToClose)
-        public
-        view
-    {
+    function _checkImbalanceLimitClose(
+        Types.Storage storage s,
+        uint256 posTotalExpoToClose,
+        uint256 posValueToCloseAfterFees,
+        uint256 fees
+    ) public view {
         int256 closeExpoImbalanceLimitBps;
         if (msg.sender == address(s._rebalancer)) {
             closeExpoImbalanceLimitBps = s._rebalancerCloseExpoImbalanceLimitBps;
@@ -146,9 +149,9 @@ library UsdnProtocolActionsUtilsLibrary {
             return;
         }
 
-        int256 newLongBalance = s._balanceLong.toInt256().safeSub(posValueToClose.toInt256());
+        int256 newLongBalance = s._balanceLong.toInt256().safeSub(posValueToCloseAfterFees.toInt256());
         uint256 newTotalExpo = s._totalExpo - posTotalExpoToClose;
-        int256 currentVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault);
+        int256 currentVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault + fees.toInt256());
 
         int256 imbalanceBps = Long._calcImbalanceCloseBps(currentVaultExpo, newLongBalance, newTotalExpo);
 
@@ -379,32 +382,34 @@ library UsdnProtocolActionsUtilsLibrary {
 
         _checkInitiateClosePosition(s, params.owner, params.to, params.validator, params.amountToClose, data_.pos);
 
-        PriceInfo memory currentPrice = ActionsVault._getOraclePrice(
-            s,
-            Types.ProtocolAction.InitiateClosePosition,
-            block.timestamp,
-            _calcActionId(params.owner, uint128(block.timestamp)),
-            params.currentPriceData
-        );
-        if (currentPrice.price < params.userMinPrice) {
-            revert IUsdnProtocolErrors.UsdnProtocolSlippageMinPriceExceeded();
-        }
+        {
+            PriceInfo memory currentPrice = ActionsVault._getOraclePrice(
+                s,
+                Types.ProtocolAction.InitiateClosePosition,
+                block.timestamp,
+                _calcActionId(params.owner, uint128(block.timestamp)),
+                params.currentPriceData
+            );
+            if (currentPrice.price < params.userMinPrice) {
+                revert IUsdnProtocolErrors.UsdnProtocolSlippageMinPriceExceeded();
+            }
 
-        (, data_.isLiquidationPending) = Long._applyPnlAndFundingAndLiquidate(
-            s,
-            currentPrice.neutralPrice,
-            currentPrice.timestamp,
-            s._liquidationIteration,
-            false,
-            Types.ProtocolAction.InitiateClosePosition,
-            params.currentPriceData
-        );
+            (, data_.isLiquidationPending) = Long._applyPnlAndFundingAndLiquidate(
+                s,
+                currentPrice.neutralPrice,
+                currentPrice.timestamp,
+                s._liquidationIteration,
+                false,
+                Types.ProtocolAction.InitiateClosePosition,
+                params.currentPriceData
+            );
 
-        uint256 version = s._tickVersion[params.posId.tick];
-        if (version != params.posId.tickVersion) {
-            // the current tick version doesn't match the version from the position,
-            // that means that the position has been liquidated in this transaction
-            return (data_, true);
+            uint256 version = s._tickVersion[params.posId.tick];
+            if (version != params.posId.tickVersion) {
+                // the current tick version doesn't match the version from the position,
+                // that means that the position has been liquidated in this transaction
+                return (data_, true);
+            }
         }
 
         if (data_.isLiquidationPending) {
@@ -423,15 +428,25 @@ library UsdnProtocolActionsUtilsLibrary {
         // to have maximum precision, we do not pre-compute the liquidation multiplier with a fixed
         // precision just now, we will store it in the pending action later, to be used in the validate action
         int24 tick = Utils.calcTickWithoutPenalty(params.posId.tick, data_.liquidationPenalty);
-        data_.tempPositionValue = _assetToRemove(
-            s,
-            data_.lastPrice,
-            Long.getEffectivePriceForTick(tick, data_.lastPrice, data_.longTradingExpo, data_.liqMulAcc),
-            data_.totalExpoToClose
-        );
+        uint128 liqPriceWithoutPenalty =
+            Long.getEffectivePriceForTick(tick, data_.lastPrice, data_.longTradingExpo, data_.liqMulAcc);
 
-        // we perform the imbalance check based on the estimated balance change since that's the best we have right now
-        _checkImbalanceLimitClose(s, data_.totalExpoToClose, data_.tempPositionValue);
+        uint256 balanceLong = s._balanceLong;
+
+        data_.tempPositionValue =
+            _assetToRemove(balanceLong, data_.lastPrice, liqPriceWithoutPenalty, data_.totalExpoToClose);
+
+        uint128 priceAfterFees =
+            (data_.lastPrice - data_.lastPrice * s._positionFeeBps / Constants.BPS_DIVISOR).toUint128();
+
+        uint256 posValueAfterFees =
+            _assetToRemove(balanceLong, priceAfterFees, liqPriceWithoutPenalty, data_.totalExpoToClose);
+
+        // we perform the imbalance check with the position value after fees
+        // the position value after fees is smaller than the position value before fees so the subtraction is safe
+        _checkImbalanceLimitClose(
+            s, data_.totalExpoToClose, posValueAfterFees, data_.tempPositionValue - posValueAfterFees
+        );
     }
 
     /**
@@ -475,31 +490,27 @@ library UsdnProtocolActionsUtilsLibrary {
     /**
      * @notice Calculate how much wstETH must be removed from the long balance due to a position closing
      * @dev The amount is bound by the amount of wstETH available on the long side
-     * @param s The storage of the protocol
-     * @param priceWithFees The current price of the asset, adjusted with fees
+     * @param balanceLong The balance of long positions (with asset decimals)
+     * @param price The price to use for the position value calculation
      * @param liqPriceWithoutPenalty The liquidation price without penalty
      * @param posExpo The total expo of the position
      * @return boundedPosValue_ The amount of assets to remove from the long balance, bound by zero and the available
      * long balance
      */
-    function _assetToRemove(
-        Types.Storage storage s,
-        uint128 priceWithFees,
-        uint128 liqPriceWithoutPenalty,
-        uint128 posExpo
-    ) public view returns (uint256 boundedPosValue_) {
-        // the available amount of assets on the long side (with the current balance)
-        uint256 available = s._balanceLong;
-
+    function _assetToRemove(uint256 balanceLong, uint128 price, uint128 liqPriceWithoutPenalty, uint128 posExpo)
+        public
+        pure
+        returns (uint256 boundedPosValue_)
+    {
         // calculate position value
-        int256 positionValue = Long._positionValue(priceWithFees, liqPriceWithoutPenalty, posExpo);
+        int256 positionValue = Long._positionValue(price, liqPriceWithoutPenalty, posExpo);
 
         if (positionValue <= 0) {
             // should not happen, unless we did not manage to liquidate all ticks that needed to be liquidated during
             // the initiateClosePosition
             boundedPosValue_ = 0;
-        } else if (uint256(positionValue) > available) {
-            boundedPosValue_ = available;
+        } else if (uint256(positionValue) > balanceLong) {
+            boundedPosValue_ = balanceLong;
         } else {
             boundedPosValue_ = uint256(positionValue);
         }

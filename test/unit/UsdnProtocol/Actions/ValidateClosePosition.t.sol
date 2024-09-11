@@ -264,6 +264,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         uint128 totalExpoToClose = FixedPointMathLib.fullMulDiv(pos.totalExpo, POSITION_AMOUNT, pos.amount).toUint128();
 
         uint256 expectedAmountReceived = protocol.i_assetToRemove(
+            protocol.getBalanceLong(),
             price,
             protocol.i_getEffectivePriceForTick(
                 protocol.i_calcTickWithoutPenalty(posId.tick, liquidationPenalty), action.liqMultiplier
@@ -328,6 +329,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         data.totalExpoToClose =
             FixedPointMathLib.fullMulDiv(data.pos.totalExpo, data.amountToClose, data.pos.amount).toUint128();
         data.expectedAmountReceived = protocol.i_assetToRemove(
+            protocol.getBalanceLong(),
             params.initialPrice,
             protocol.i_getEffectivePriceForTick(
                 protocol.i_calcTickWithoutPenalty(posId.tick, data.liquidationPenalty), data.action.liqMultiplier
@@ -380,6 +382,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         _waitDelay();
         data.action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
         data.expectedAmountReceived = protocol.i_assetToRemove(
+            protocol.getBalanceLong(),
             params.initialPrice,
             protocol.i_getEffectivePriceForTick(
                 protocol.i_calcTickWithoutPenalty(posId.tick, data.liquidationPenalty), data.action.liqMultiplier
@@ -423,11 +426,13 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         (Position memory pos, uint24 liquidationPenalty) = protocol.getLongPosition(posId);
         uint256 assetBalanceBefore = protocol.getAsset().balanceOf(address(this));
 
-        uint128 amountToClose = pos.amount / 2;
-        protocol.initiateClosePosition(
-            posId, amountToClose, 0, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
-        );
-        _waitDelay();
+        {
+            uint128 amountToClose = pos.amount / 2;
+            protocol.initiateClosePosition(
+                posId, amountToClose, 0, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            );
+            _waitDelay();
+        }
 
         /* ------------------------- Validate Close Position ------------------------ */
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
@@ -437,6 +442,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         uint256 longBalanceBefore =
             uint256(protocol.longAssetAvailableWithFunding(priceAfterInit, uint128(block.timestamp)));
         uint256 assetToTransfer = protocol.i_assetToRemove(
+            protocol.getBalanceLong(),
             priceAfterInit,
             protocol.i_getEffectivePriceForTick(
                 protocol.i_calcTickWithoutPenalty(action.tick, liquidationPenalty), action.liqMultiplier
@@ -485,11 +491,13 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         (Position memory pos, uint24 liquidationPenalty) = protocol.getLongPosition(posId);
         uint256 assetBalanceBefore = protocol.getAsset().balanceOf(address(this));
 
-        uint128 amountToClose = pos.amount / 2;
-        protocol.initiateClosePosition(
-            posId, amountToClose, 0, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
-        );
-        _waitDelay();
+        {
+            uint128 amountToClose = pos.amount / 2;
+            protocol.initiateClosePosition(
+                posId, amountToClose, 0, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            );
+            _waitDelay();
+        }
 
         /* ------------------------- Validate Close Position ------------------------ */
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
@@ -497,6 +505,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         uint256 vaultBalanceBefore = uint256(protocol.vaultAssetAvailableWithFunding(price, uint128(block.timestamp)));
         uint256 longBalanceBefore = uint256(protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp)));
         uint256 assetToTransfer = protocol.i_assetToRemove(
+            protocol.getBalanceLong(),
             price,
             protocol.i_getEffectivePriceForTick(
                 protocol.i_calcTickWithoutPenalty(action.tick, liquidationPenalty), action.liqMultiplier
@@ -575,7 +584,10 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             data.liquidationPrice, data.liqPriceWithoutPenalty, data.pos.totalExpo - data.action.closePosTotalExpo
         );
         data.remainingToTransfer = protocol.i_assetToRemove(
-            data.liquidationPrice, data.liqPriceWithoutPenalty, data.pos.totalExpo - data.action.closePosTotalExpo
+            protocol.getBalanceLong(),
+            data.liquidationPrice,
+            data.liqPriceWithoutPenalty,
+            data.pos.totalExpo - data.action.closePosTotalExpo
         );
 
         assertGt(data.remainingValue, 0, "remaining position value should be positive");
