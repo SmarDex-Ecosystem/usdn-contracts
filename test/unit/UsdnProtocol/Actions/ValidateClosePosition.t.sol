@@ -126,7 +126,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         protocol.initiateClosePosition(
             posId,
             POSITION_AMOUNT,
-            disableMinPrice,
+            DISABLEMINPRICE,
             address(this),
             payable(address(this)),
             priceData,
@@ -165,7 +165,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         protocol.initiateClosePosition(
             posId,
             POSITION_AMOUNT,
-            disableMinPrice,
+            DISABLEMINPRICE,
             address(this),
             payable(address(this)),
             priceData,
@@ -195,7 +195,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         protocol.initiateClosePosition(
             posId,
             POSITION_AMOUNT,
-            disableMinPrice,
+            DISABLEMINPRICE,
             address(this),
             payable(address(this)),
             priceData,
@@ -273,7 +273,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         (Position memory pos, uint24 liquidationPenalty) = protocol.getLongPosition(posId);
         uint256 assetBalanceBefore = protocol.getAsset().balanceOf(to);
         protocol.initiateClosePosition(
-            posId, POSITION_AMOUNT, disableMinPrice, to, payable(validator), priceData, EMPTY_PREVIOUS_DATA
+            posId, POSITION_AMOUNT, DISABLEMINPRICE, to, payable(validator), priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -339,7 +339,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         protocol.initiateClosePosition(
             posId,
             data.amountToClose,
-            disableMinPrice,
+            DISABLEMINPRICE,
             address(this),
             payable(address(this)),
             data.priceData,
@@ -397,7 +397,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         protocol.initiateClosePosition(
             posId,
             data.pos.amount - data.amountToClose,
-            disableMinPrice,
+            DISABLEMINPRICE,
             address(this),
             payable(address(this)),
             data.priceData,
@@ -455,7 +455,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             protocol.initiateClosePosition(
                 posId,
                 amountToClose,
-                disableMinPrice,
+                DISABLEMINPRICE,
                 address(this),
                 payable(address(this)),
                 priceData,
@@ -526,7 +526,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             protocol.initiateClosePosition(
                 posId,
                 amountToClose,
-                disableMinPrice,
+                DISABLEMINPRICE,
                 address(this),
                 payable(address(this)),
                 priceData,
@@ -596,7 +596,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         protocol.initiateClosePosition(
             posId,
             data.amountToClose,
-            disableMinPrice,
+            DISABLEMINPRICE,
             address(this),
             payable(address(this)),
             data.priceData,
@@ -693,7 +693,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         (Position memory pos,) = protocol.getLongPosition(PositionId(posId.tick, 0, 0));
         vm.prank(DEPLOYER);
         protocol.initiateClosePosition(
-            posId, pos.amount, disableMinPrice, DEPLOYER, DEPLOYER, priceData, EMPTY_PREVIOUS_DATA
+            posId, pos.amount, DISABLEMINPRICE, DEPLOYER, DEPLOYER, priceData, EMPTY_PREVIOUS_DATA
         );
 
         /* ----------------- Validate close position under liq price ---------------- */

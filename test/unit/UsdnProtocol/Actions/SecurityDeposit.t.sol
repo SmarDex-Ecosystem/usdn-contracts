@@ -1057,7 +1057,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit StalePendingActionRemoved(address(this), posId);
         protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(
-            user1PosId, 1 ether, disableMinPrice, USER_1, payable(this), priceData, EMPTY_PREVIOUS_DATA
+            user1PosId, 1 ether, DISABLEMINPRICE, USER_1, payable(this), priceData, EMPTY_PREVIOUS_DATA
         );
 
         vm.stopPrank();

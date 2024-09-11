@@ -282,7 +282,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         protocol.initiateClosePosition(
             posId,
             depositAmount,
-            disableMinPrice,
+            DISABLEMINPRICE,
             address(this),
             payable(address(this)),
             liquidationPriceData,

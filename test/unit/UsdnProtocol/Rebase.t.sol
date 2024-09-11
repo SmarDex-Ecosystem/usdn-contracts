@@ -293,7 +293,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         protocol.initiateClosePosition(
             posId,
             1 ether,
-            disableMinPrice,
+            DISABLEMINPRICE,
             address(this),
             payable(address(this)),
             abi.encode(newPrice),
