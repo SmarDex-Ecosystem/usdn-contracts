@@ -13,6 +13,7 @@ contract TestForkUsdnProtocolValidateTwoPos is UsdnProtocolBaseIntegrationFixtur
         params = DEFAULT_PARAMS;
         params.fork = true; // all tests in this contract must be labeled `Fork`
         params.forkWarp = 1_717_452_000; // Mon Jun 03 2024 22:00:00 UTC
+        params.forkBlock = 20_014_134;
         _setUp(params);
     }
 
@@ -33,16 +34,16 @@ contract TestForkUsdnProtocolValidateTwoPos is UsdnProtocolBaseIntegrationFixtur
             + protocol.getSecurityDepositValue();
 
         protocol.initiateOpenPosition{ value: ethValue }(
-            2.5 ether, 1000 ether, address(this), USER_1, NO_PERMIT2, "", EMPTY_PREVIOUS_DATA
+            2.5 ether, 1000 ether, protocol.getMaxLeverage(), address(this), USER_1, NO_PERMIT2, "", EMPTY_PREVIOUS_DATA
         );
         vm.stopPrank();
-        skip(80 minutes);
+        vm.rollFork(block.number + 80 minutes / 12);
         vm.startPrank(USER_2);
         (success,) = address(wstETH).call{ value: 10 ether }("");
         require(success, "USER_2 wstETH mint failed");
         wstETH.approve(address(protocol), type(uint256).max);
         protocol.initiateOpenPosition{ value: ethValue }(
-            2.5 ether, 1000 ether, address(this), USER_2, NO_PERMIT2, "", EMPTY_PREVIOUS_DATA
+            2.5 ether, 1000 ether, protocol.getMaxLeverage(), address(this), USER_2, NO_PERMIT2, "", EMPTY_PREVIOUS_DATA
         );
         uint256 ts2 = block.timestamp;
         vm.stopPrank();

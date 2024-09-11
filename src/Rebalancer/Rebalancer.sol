@@ -91,7 +91,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     /* -------------------------------------------------------------------------- */
 
     /// @notice The maximum leverage that a position can have
-    uint256 internal _maxLeverage;
+    uint256 internal _maxLeverage = 3 * 10 ** Constants.LEVERAGE_DECIMALS;
 
     /// @notice The minimum amount of assets to be deposited by a user
     uint256 internal _minAssetDeposit;
@@ -132,7 +132,6 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         IERC20Metadata asset = usdnProtocol.getAsset();
         _asset = asset;
         _assetDecimals = usdnProtocol.getAssetDecimals();
-        _maxLeverage = usdnProtocol.getMaxLeverage();
         _minAssetDeposit = usdnProtocol.getMinLongPosition();
 
         // set allowance to allow the protocol to pull assets from this contract
