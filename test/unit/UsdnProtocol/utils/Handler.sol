@@ -341,12 +341,13 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         return Core._convertLongPendingAction(action);
     }
 
-    function i_assetToRemove(uint128 priceWithFees, uint128 liqPriceWithoutPenalty, uint128 posExpo)
-        external
-        view
-        returns (uint256)
-    {
-        return ActionsUtils._assetToRemove(s, priceWithFees, liqPriceWithoutPenalty, posExpo);
+    function i_assetToRemove(
+        uint256 balanceLong,
+        uint128 priceWithFees,
+        uint128 liqPriceWithoutPenalty,
+        uint128 posExpo
+    ) external pure returns (uint256) {
+        return ActionsUtils._assetToRemove(balanceLong, priceWithFees, liqPriceWithoutPenalty, posExpo);
     }
 
     function i_tickValue(
@@ -417,8 +418,11 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         Long._checkImbalanceLimitOpen(s, openTotalExpoValue, openCollatValue);
     }
 
-    function i_checkImbalanceLimitClose(uint256 posTotalExpoToClose, uint256 posValueToClose) external view {
-        ActionsUtils._checkImbalanceLimitClose(s, posTotalExpoToClose, posValueToClose);
+    function i_checkImbalanceLimitClose(uint256 posTotalExpoToClose, uint256 posValueToClose, uint256 fees)
+        external
+        view
+    {
+        ActionsUtils._checkImbalanceLimitClose(s, posTotalExpoToClose, posValueToClose, fees);
     }
 
     function i_getLeverage(uint128 price, uint128 liqPrice) external pure returns (uint256) {
@@ -559,12 +563,12 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         return Long._calcFixedPrecisionMultiplier(assetPrice, longTradingExpo, accumulator);
     }
 
-    function i_calcBurnUsdn(uint256 usdnShares, uint256 available, uint256 usdnTotalShares)
+    function i_calcBurnUsdn(uint256 usdnShares, uint256 available, uint256 usdnTotalShares, uint256 feeBps)
         external
         pure
         returns (uint256 assetExpected_)
     {
-        return Vault._calcBurnUsdn(usdnShares, available, usdnTotalShares);
+        return Vault._calcBurnUsdn(usdnShares, available, usdnTotalShares, feeBps);
     }
 
     function i_calcTickWithoutPenalty(int24 tick, uint24 liquidationPenalty) external pure returns (int24) {
