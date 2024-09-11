@@ -459,6 +459,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         uint256 totalExpoBefore = protocol.getTotalExpo();
         uint256 balanceLongBefore = protocol.getBalanceLong();
         uint256 assetToTransfer = protocol.i_assetToRemove(
+            balanceLongBefore,
             params.initialPrice,
             protocol.getEffectivePriceForTick(
                 protocol.i_calcTickWithoutPenalty(posId.tick),

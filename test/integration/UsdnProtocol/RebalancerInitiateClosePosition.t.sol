@@ -4,7 +4,7 @@ pragma solidity 0.8.26;
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { MOCK_PYTH_DATA } from "../../unit/Middlewares/utils/Constants.sol";
-import { USER_1 } from "../../utils/Constants.sol";
+import { DEPLOYER, USER_1 } from "../../utils/Constants.sol";
 import { SET_PROTOCOL_PARAMS_MANAGER } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 
@@ -32,6 +32,9 @@ contract TestRebalancerInitiateClosePosition is
 
     function setUp() public {
         (, amountInRebalancer,,) = _setUpImbalanced(15 ether);
+        uint256 maxLeverage = protocol.getMaxLeverage();
+        vm.prank(DEPLOYER);
+        rebalancer.setPositionMaxLeverage(maxLeverage);
         skip(5 minutes);
 
         {
@@ -126,17 +129,16 @@ contract TestRebalancerInitiateClosePosition is
      */
     function test_RevertWhen_rebalancerInitiateClosePositionPartialTriggerImbalanceLimit() public {
         // choose an amount big enough to trigger imbalance limits
-        uint88 amount = amountInRebalancer / 20;
+        uint88 amount = amountInRebalancer / 10;
         uint256 securityDeposit = protocol.getSecurityDepositValue();
 
         int256 currentVaultExpo = int256(protocol.getBalanceVault()) + protocol.getPendingBalanceVault();
-        int256 newLongExpo = int256(protocol.getTotalExpo() - protocolPosition.totalExpo / 20)
+        int256 newLongExpo = int256(protocol.getTotalExpo() - protocolPosition.totalExpo / 10)
             - (
                 int256(protocol.getBalanceLong())
-                    - protocol.getPositionValue(prevPosId, wstEthPrice, uint128(block.timestamp)) / 20
+                    - protocol.getPositionValue(prevPosId, wstEthPrice, uint128(block.timestamp)) / 10
             );
-        int256 expectedImbalance = (currentVaultExpo - newLongExpo) * 10_000 / newLongExpo;
-        emit log_named_int("expectedImbalance", expectedImbalance);
+        int256 expectedImbalance = (currentVaultExpo - newLongExpo) * int256(BPS_DIVISOR) / newLongExpo;
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolImbalanceLimitReached.selector, expectedImbalance));
         rebalancer.initiateClosePosition{ value: securityDeposit }(amount, address(this), "", EMPTY_PREVIOUS_DATA);

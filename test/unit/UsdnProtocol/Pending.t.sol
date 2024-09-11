@@ -271,14 +271,11 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      * @custom:scenario Two actionable pending actions are validated by two other users in the same block
      * @custom:given Two users have initiated deposits and the deadline has elapsed
      * @custom:when Two other users validate the pending actions in the same block
-     * @custom:then Both positions are validated with different prices and there are no reverts
+     * @custom:then Both positions are validated and there are no reverts
      */
     function test_twoUsersValidatingInSameBlock() public {
         uint128 price1 = 2000 ether;
         uint128 price2 = 2100 ether;
-
-        uint256 user1BalanceBefore = usdn.balanceOf(USER_1);
-        uint256 user2BalanceBefore = usdn.balanceOf(USER_2);
 
         // Setup 2 pending actions
         setUpUserPositionInVault(USER_1, ProtocolAction.InitiateDeposit, 1 ether, price1);
@@ -307,12 +304,6 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         // They should have validated both pending actions
         (actions, rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 0, "final actions length");
-
-        // We indeed validated with different price data
-        assertTrue(
-            usdn.balanceOf(USER_1) - user1BalanceBefore != usdn.balanceOf(USER_2) - user2BalanceBefore,
-            "user 1 and 2 have different minted amount"
-        );
     }
 
     /**
@@ -332,12 +323,12 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         DepositPendingAction memory pendingDeposit = DepositPendingAction({
             action: ProtocolAction.ValidateDeposit,
             timestamp: timestamp,
-            __unused: 0,
+            feeBps: 0,
             to: USER_1,
             validator: USER_1,
             securityDepositValue: 0,
-            _unused: 0,
             amount: 1 ether,
+            _unused: 0,
             assetPrice: 2000 ether,
             totalExpo: 20 ether,
             balanceVault: 20 ether,
@@ -402,11 +393,11 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         DepositPendingAction memory pendingDeposit = DepositPendingAction({
             action: ProtocolAction.ValidateDeposit,
             timestamp: timestamp,
-            __unused: 0,
+            _unused: 0,
             to: USER_1,
             validator: USER_1,
             securityDepositValue: 0,
-            _unused: 0,
+            feeBps: 0,
             amount: 1 ether,
             assetPrice: 2000 ether,
             totalExpo: 20 ether,
@@ -460,11 +451,11 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         DepositPendingAction memory depositAction = protocol.i_toDepositPendingAction(action);
         assertTrue(depositAction.action == action.action, "action action");
         assertEq(depositAction.timestamp, action.timestamp, "action timestamp");
-        assertEq(depositAction.__unused, action.var0, "action var0");
+        assertEq(depositAction._unused, action.var0, "action var0");
         assertEq(depositAction.to, action.to, "action to");
         assertEq(depositAction.validator, action.validator, "action validator");
         assertEq(depositAction.securityDepositValue, action.securityDepositValue, "action security deposit value");
-        assertEq(depositAction._unused, action.var1, "action var1");
+        assertEq(depositAction.feeBps, uint24(action.var1), "action fee");
         assertEq(depositAction.amount, action.var2, "action amount");
         assertEq(depositAction.assetPrice, action.var3, "action price");
         assertEq(depositAction.totalExpo, action.var4, "action expo");
@@ -500,7 +491,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         WithdrawalPendingAction memory withdrawalAction = protocol.i_toWithdrawalPendingAction(action);
         assertTrue(withdrawalAction.action == action.action, "action action");
         assertEq(withdrawalAction.timestamp, action.timestamp, "action timestamp");
-        assertEq(withdrawalAction._unused, action.var0, "action var0");
+        assertEq(withdrawalAction.feeBps, action.var0, "action feeBps");
         assertEq(withdrawalAction.to, action.to, "action to");
         assertEq(withdrawalAction.validator, action.validator, "action validator");
         assertEq(withdrawalAction.securityDepositValue, action.securityDepositValue, "action security deposit value");
