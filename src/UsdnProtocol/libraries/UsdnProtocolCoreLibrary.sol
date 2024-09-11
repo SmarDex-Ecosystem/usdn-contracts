@@ -670,17 +670,17 @@ library UsdnProtocolCoreLibrary {
      * @notice Remove the pending action from the queue if its tick version doesn't match the current tick version
      * @dev This is only applicable to `ValidateOpenPosition` pending actions
      * @param s The storage of the protocol
-     * @param user The user's address
+     * @param validator The validator's address
      * @return securityDepositValue_ The security deposit value of the removed stale pending action
      */
-    function _removeStalePendingAction(Types.Storage storage s, address user)
+    function _removeStalePendingAction(Types.Storage storage s, address validator)
         public
         returns (uint256 securityDepositValue_)
     {
-        if (s._pendingActions[user] == 0) {
+        if (s._pendingActions[validator] == 0) {
             return 0;
         }
-        (Types.PendingAction memory action, uint128 rawIndex) = _getPendingAction(s, user);
+        (Types.PendingAction memory action, uint128 rawIndex) = _getPendingAction(s, validator);
         // the position is only at risk of being liquidated while pending if it is an open position action
         if (action.action == Types.ProtocolAction.ValidateOpenPosition) {
             Types.LongPendingAction memory openAction = Utils._toLongPendingAction(action);
@@ -690,9 +690,9 @@ library UsdnProtocolCoreLibrary {
                 // the position was liquidated while pending
                 // remove the stale pending action
                 s._pendingActionsQueue.clearAt(rawIndex);
-                delete s._pendingActions[user];
+                delete s._pendingActions[validator];
                 emit IUsdnProtocolEvents.StalePendingActionRemoved(
-                    user,
+                    validator,
                     Types.PositionId({
                         tick: openAction.tick,
                         tickVersion: openAction.tickVersion,

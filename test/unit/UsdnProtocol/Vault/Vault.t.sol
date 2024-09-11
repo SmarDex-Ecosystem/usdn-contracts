@@ -33,7 +33,7 @@ contract TestUsdnProtocolVault is UsdnProtocolBaseFixture {
      * @custom:when The price of the asset changes after a rebase of stETH/wstETH
      * @custom:then The vault position should have an inherent loss and the long position should have an inherent gain
      */
-    function test_vaultPositionInherentLossAfterRebase() public {
+    function test_vaultPositionInherentLossAfterRebase() public view {
         uint256 balanceUserOutsideProtocol = protocol.getBalanceVault();
         uint128 newPrice = 2200 ether;
 

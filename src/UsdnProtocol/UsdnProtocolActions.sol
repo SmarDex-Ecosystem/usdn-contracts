@@ -112,6 +112,11 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
     }
 
     /// @inheritdoc IUsdnProtocolActions
+    function refundSecurityDeposit(address payable validator) external initializedAndNonReentrant {
+        ActionsLong.refundSecurityDeposit(s, validator);
+    }
+
+    /// @inheritdoc IUsdnProtocolActions
     function liquidate(bytes calldata currentPriceData, uint16 iterations)
         external
         payable
