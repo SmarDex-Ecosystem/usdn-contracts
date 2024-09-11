@@ -238,10 +238,10 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user validate a deposit of 1 wstETH
-     * @custom:given The price of the asset is $2000
-     * @custom:when The user deposit 1 wstETH
-     * @custom:and The minted USDN should match the amount with fees
+     * @custom:scenario The user validates a deposit of 1 wstETH
+     * @custom:given The user initiated the deposit of 1 wstETH
+     * @custom:when The user validates the deposit
+     * @custom:then The minted USDN should match the amount with fees
      */
     function test_validateDepositPositionFees() public {
         skip(1 hours);
