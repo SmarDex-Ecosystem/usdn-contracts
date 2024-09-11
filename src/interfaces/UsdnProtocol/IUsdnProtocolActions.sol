@@ -13,7 +13,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * of the middleware
      * The transaction must have `_securityDepositValue` in value
      * In case liquidations are pending, this function might not initiate the deposit (and `success_` would be false)
-     * @param amount The amount of wstETH to deposit
+     * @param amount The amount of assets to deposit
      * @param sharesOutMin The minimum amount of USDN shares to receive. Note that there is no guarantee that the
      * effective minted amount at validation will exceed this value. Price changes during the interval could negatively
      * affect the minted amount. However, if the predicted amount is below this threshold, the initiate action will
@@ -69,7 +69,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * @param usdnShares The amount of USDN shares to burn (Max 5708990770823839524233143877797980545530986495 which is
      * equivalent to 5.7B USDN token before any rebase. The token amount limit increases with each rebase)
      * In case liquidations are pending, this function might not initiate the withdrawal (and `success_` would be false)
-     * @param amountOutMin The predicted minimum amount of wstETH to receive. Note that there is no guarantee that the
+     * @param amountOutMin The estimated minimum amount of assets to receive. Note that there is no guarantee that the
      * effective
      * withdrawal amount at validation will exceed this value. Price changes during the interval could negatively affect
      * the withdrawal amount. However, if the predicted amount is below this threshold, the initiate action will revert.

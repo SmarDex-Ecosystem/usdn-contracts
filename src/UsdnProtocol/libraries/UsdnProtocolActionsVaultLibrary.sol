@@ -38,7 +38,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @param user The address of the user initiating the deposit
      * @param to The address to receive the USDN tokens
      * @param validator The address that will validate the deposit
-     * @param amount The amount of wstETH to deposit
+     * @param amount The amount of assets to deposit
      * @param sharesOutMin The minimum amount of USDN shares to receive
      * @param securityDepositValue The value of the security deposit for the newly created deposit
      * @param permit2TokenBitfield The permit2 bitfield
@@ -607,7 +607,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @param s The storage of the protocol
      * @param validator The validator address
      * @param usdnShares The amount of USDN shares to burn
-     * @param amountOutMin The predicted minimum amount of wstETH to receive.
+     * @param amountOutMin The estimated minimum amount of assets to receive
      * @param currentPriceData The current price data
      * @return data_ The withdrawal data struct
      */
