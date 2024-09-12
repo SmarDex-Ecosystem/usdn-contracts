@@ -100,6 +100,8 @@ contract ErrorsChecked is Test {
     bytes4[][] public LIQUIDATE_ERRORS =
         [[TickMath.TickMathInvalidPrice.selector, SignedMath.SignedMathDivideByZero.selector]];
 
+    bytes4[][] public SET_FEE_COLLECTOR_ERRORS = [[IUsdnProtocolErrors.UsdnProtocolInvalidFeeCollector.selector]];
+
     constructor() {
         INITIATE_DEPOSIT_ERRORS.push(INITIATE_ERRORS);
         INITIATE_OPEN_ERRORS.push(INITIATE_ERRORS);

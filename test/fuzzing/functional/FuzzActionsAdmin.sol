@@ -104,9 +104,11 @@ contract FuzzActionsAdmin is Setup, Utils {
     }
 
     function setFeeCollector(address newFeeCollector) public {
-        require(newFeeCollector != address(0));
         vm.prank(ADMIN);
-        usdnProtocol.setFeeCollector(newFeeCollector);
+        try usdnProtocol.setFeeCollector(newFeeCollector) { }
+        catch (bytes memory err) {
+            _checkErrors(err, SET_FEE_COLLECTOR_ERRORS);
+        }
     }
 
     function setExpoImbalanceLimits(
