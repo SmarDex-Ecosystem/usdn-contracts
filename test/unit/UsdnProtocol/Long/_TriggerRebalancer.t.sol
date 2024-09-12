@@ -58,14 +58,12 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
         vm.prank(ADMIN);
         protocol.setRebalancer(IBaseRebalancer(address(0)));
 
-        (uint256 newLongBalance, uint256 newVaultBalance, Types.TriggerRebalancerChecks triggerRebalancerCheck) =
+        (uint256 newLongBalance, uint256 newVaultBalance, Types.RebalancerAction rebalancerAction) =
             protocol.i_triggerRebalancer(lastPrice, longBalance, vaultBalance, remainingCollateral);
 
         assertEq(newLongBalance, longBalance, "The long balance should not have changed");
         assertEq(newVaultBalance, vaultBalance, "The long balance should not have changed");
-        assertTrue(
-            triggerRebalancerCheck == Types.TriggerRebalancerChecks.None, "The rebalancer should not be triggered"
-        );
+        assertTrue(rebalancerAction == Types.RebalancerAction.None, "The rebalancer should not be set");
     }
 
     /**
@@ -89,13 +87,13 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
             imbalanceLimit - 1, protocol.i_calcImbalanceCloseBps(int256(vaultBalance), int256(longBalance), totalExpo)
         );
 
-        (uint256 newLongBalance, uint256 newVaultBalance, Types.TriggerRebalancerChecks triggerRebalancerCheck) =
+        (uint256 newLongBalance, uint256 newVaultBalance, Types.RebalancerAction rebalancerAction) =
             protocol.i_triggerRebalancer(lastPrice, longBalance, vaultBalance, remainingCollateral);
 
         assertEq(newLongBalance, longBalance, "The long balance should not have changed");
         assertEq(newVaultBalance, vaultBalance, "The long balance should not have changed");
         assertTrue(
-            triggerRebalancerCheck == Types.TriggerRebalancerChecks.NotUpdated, "The rebalancer should not be updated"
+            rebalancerAction == Types.RebalancerAction.NoImbalance, "The rebalancer should not be imbalanced enough"
         );
     }
 
@@ -131,7 +129,7 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
         vm.prank(ADMIN);
         protocol.setMinLongPosition(10 ** assetDecimals);
 
-        (uint256 newLongBalance, uint256 newVaultBalance, Types.TriggerRebalancerChecks triggerRebalancerCheck) =
+        (uint256 newLongBalance, uint256 newVaultBalance, Types.RebalancerAction rebalancerAction) =
             protocol.i_triggerRebalancer(lastPrice, longBalance, vaultBalance, remainingCollateral);
 
         assertEq(
@@ -145,9 +143,7 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
             "The value of the closed position should have been transferred to the vault"
         );
 
-        assertTrue(
-            triggerRebalancerCheck == Types.TriggerRebalancerChecks.Updated, "The rebalancer should be triggered"
-        );
+        assertTrue(rebalancerAction == Types.RebalancerAction.Closed, "The rebalancer should only close the position");
     }
 
     /**
@@ -176,13 +172,13 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
 
         mockedRebalancer.setCurrentStateData(0, protocol.getMaxLeverage(), posId);
 
-        (uint256 newLongBalance, uint256 newVaultBalance, Types.TriggerRebalancerChecks triggerRebalancerCheck) =
+        (uint256 newLongBalance, uint256 newVaultBalance, Types.RebalancerAction rebalancerAction) =
             protocol.i_triggerRebalancer(DEFAULT_PARAMS.initialPrice, longBalance, vaultBalance, remainingCollateral);
 
         assertEq(newLongBalance, longBalance, "The long balance should not have changed");
         assertEq(newVaultBalance, vaultBalance, "The vault balance should not have changed");
         assertTrue(
-            triggerRebalancerCheck == Types.TriggerRebalancerChecks.NotUpdated, "The rebalancer should not be updated"
+            rebalancerAction == Types.RebalancerAction.PendingLiquidation, "The rebalancer action should be pending"
         );
     }
 
@@ -209,7 +205,7 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
             pendingAssets, protocol.getMaxLeverage(), PositionId(Constants.NO_POSITION_TICK, 0, 0)
         );
 
-        (uint256 newLongBalance, uint256 newVaultBalance, Types.TriggerRebalancerChecks triggerRebalancerCheck) =
+        (uint256 newLongBalance, uint256 newVaultBalance, Types.RebalancerAction rebalancerAction) =
             protocol.i_triggerRebalancer(lastPrice, longBalance, vaultBalance, remainingCollateral);
 
         assertEq(
@@ -221,9 +217,7 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
             newVaultBalance, vaultBalance - bonus, "The bonus should have been subtracted from the vault's balance"
         );
 
-        assertTrue(
-            triggerRebalancerCheck == Types.TriggerRebalancerChecks.Updated, "The rebalancer should be triggered"
-        );
+        assertTrue(rebalancerAction == Types.RebalancerAction.Opened, "The rebalancer position should be only opened");
     }
 
     /**
@@ -260,7 +254,7 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
 
         mockedRebalancer.setCurrentStateData(pendingAssets, protocol.getMaxLeverage(), posId);
 
-        (uint256 newLongBalance, uint256 newVaultBalance, Types.TriggerRebalancerChecks triggerRebalancerCheck) =
+        (uint256 newLongBalance, uint256 newVaultBalance, Types.RebalancerAction rebalancerAction) =
             protocol.i_triggerRebalancer(lastPrice, longBalance, vaultBalance, remainingCollateral);
 
         assertEq(
@@ -272,9 +266,7 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
             newVaultBalance, vaultBalance - bonus, "The bonus should have been subtracted from the vault's balance"
         );
 
-        assertTrue(
-            triggerRebalancerCheck == Types.TriggerRebalancerChecks.Updated, "The rebalancer should be triggered"
-        );
+        assertTrue(rebalancerAction == Types.RebalancerAction.ClosedOpened, "The rebalancer should be triggered");
     }
 
     /**
@@ -285,11 +277,9 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
      */
     function test_triggerEmptyRebalancer() public {
         uint256 totalExpo = protocol.getTotalExpo();
-        (,, Types.TriggerRebalancerChecks triggerRebalancerCheck) =
+        (,, Types.RebalancerAction rebalancerAction) =
             protocol.i_triggerRebalancer(lastPrice, totalExpo - 1, totalExpo * 10, 0);
         assertEq(rebalancer.getPositionVersion(), 0, "Version should not be incremented");
-        assertTrue(
-            triggerRebalancerCheck == Types.TriggerRebalancerChecks.NotUpdated, "The rebalancer should not be updated"
-        );
+        assertTrue(rebalancerAction == Types.RebalancerAction.NoCloseNoOpen, "The rebalancer should not be updated");
     }
 }

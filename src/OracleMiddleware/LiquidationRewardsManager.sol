@@ -85,7 +85,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         uint16 tickAmount,
         int256,
         bool rebased,
-        Types.TriggerRebalancerChecks triggerRebalancerCheck,
+        Types.RebalancerAction rebalancerAction,
         Types.ProtocolAction,
         bytes calldata,
         bytes calldata
@@ -103,7 +103,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         if (rebased) {
             gasUsed += rewardsParameters.rebaseGasUsed;
         }
-        if (triggerRebalancerCheck == Types.TriggerRebalancerChecks.Updated) {
+        if (uint8(rebalancerAction) > uint8(Types.RebalancerAction.NoCloseNoOpen)) {
             gasUsed += rewardsParameters.rebalancerGasUsed;
         }
 

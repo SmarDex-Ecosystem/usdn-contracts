@@ -29,12 +29,12 @@ contract TestUsdnProtocolActionsSendRewardsToLiquidator is UsdnProtocolBaseFixtu
      */
     function test_sendRewardsToLiquidatorLowerThan() public {
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(
-            1, 0, false, Types.TriggerRebalancerChecks.None, ProtocolAction.None, "", ""
+            1, 0, false, Types.RebalancerAction.None, ProtocolAction.None, "", ""
         );
 
         vm.expectEmit();
         emit LiquidatorRewarded(address(this), rewards);
-        protocol.i_sendRewardsToLiquidator(1, 0, false, Types.TriggerRebalancerChecks.None, ProtocolAction.None, "", "");
+        protocol.i_sendRewardsToLiquidator(1, 0, false, Types.RebalancerAction.None, ProtocolAction.None, "", "");
 
         assertEq(wstETH.balanceOf(address(this)), rewards, "Balance increase by the rewards");
     }
@@ -63,7 +63,7 @@ contract TestUsdnProtocolActionsSendRewardsToLiquidator is UsdnProtocolBaseFixtu
 
         vm.expectEmit();
         emit LiquidatorRewarded(address(this), balanceVault);
-        protocol.i_sendRewardsToLiquidator(3, 0, true, Types.TriggerRebalancerChecks.None, ProtocolAction.None, "", "");
+        protocol.i_sendRewardsToLiquidator(3, 0, true, Types.RebalancerAction.None, ProtocolAction.None, "", "");
 
         assertEq(wstETH.balanceOf(address(this)), balanceVault, "Balance increase by the vault balance");
     }

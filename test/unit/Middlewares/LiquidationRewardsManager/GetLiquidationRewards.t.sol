@@ -32,19 +32,19 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
      */
     function test_getLiquidationRewardsFor1Tick() public view {
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(
-            1, 0, false, Types.TriggerRebalancerChecks.None, Types.ProtocolAction.None, "", ""
+            1, 0, false, Types.RebalancerAction.None, Types.ProtocolAction.None, "", ""
         );
         assertEq(rewards, wsteth.getWstETHByStETH(2_430_000_000_000_000), "without rebase");
         rewards = liquidationRewardsManager.getLiquidationRewards(
-            1, 0, true, Types.TriggerRebalancerChecks.None, Types.ProtocolAction.None, "", ""
+            1, 0, true, Types.RebalancerAction.None, Types.ProtocolAction.None, "", ""
         );
         assertEq(rewards, wsteth.getWstETHByStETH(3_030_000_000_000_000), "with rebase");
         rewards = liquidationRewardsManager.getLiquidationRewards(
-            1, 0, true, Types.TriggerRebalancerChecks.None, Types.ProtocolAction.None, "", hex"beef"
+            1, 0, true, Types.RebalancerAction.None, Types.ProtocolAction.None, "", hex"beef"
         );
         assertEq(rewards, wsteth.getWstETHByStETH(3_030_000_000_000_000), "with rebase and price data");
         rewards = liquidationRewardsManager.getLiquidationRewards(
-            1, 0, false, Types.TriggerRebalancerChecks.Updated, Types.ProtocolAction.None, "", ""
+            1, 0, false, Types.RebalancerAction.ClosedOpened, Types.ProtocolAction.None, "", ""
         );
         assertEq(rewards, wsteth.getWstETHByStETH(2_730_000_000_000_000), "with rebalancer trigger");
     }
@@ -56,15 +56,15 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
      */
     function test_getLiquidationRewardsFor0Tick() public view {
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(
-            0, 0, false, Types.TriggerRebalancerChecks.None, Types.ProtocolAction.None, "", ""
+            0, 0, false, Types.RebalancerAction.None, Types.ProtocolAction.None, "", ""
         );
         assertEq(rewards, 0, "without rebase");
         rewards = liquidationRewardsManager.getLiquidationRewards(
-            0, 0, true, Types.TriggerRebalancerChecks.None, Types.ProtocolAction.None, "", ""
+            0, 0, true, Types.RebalancerAction.None, Types.ProtocolAction.None, "", ""
         );
         assertEq(rewards, 0, "with rebase");
         rewards = liquidationRewardsManager.getLiquidationRewards(
-            0, 0, false, Types.TriggerRebalancerChecks.Updated, Types.ProtocolAction.None, "", ""
+            0, 0, false, Types.RebalancerAction.ClosedOpened, Types.ProtocolAction.None, "", ""
         );
         assertEq(rewards, 0, "with rebalancer trigger");
     }
@@ -80,35 +80,35 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
      */
     function test_getLiquidationRewardsFor3Ticks() public view {
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(
-            3, 0, false, Types.TriggerRebalancerChecks.None, Types.ProtocolAction.None, "", ""
+            3, 0, false, Types.RebalancerAction.None, Types.ProtocolAction.None, "", ""
         );
         assertEq(rewards, wsteth.getWstETHByStETH(4_230_000_000_000_000), "The wrong amount of rewards was given");
         assertGt(
             rewards,
             liquidationRewardsManager.getLiquidationRewards(
-                1, 0, false, Types.TriggerRebalancerChecks.None, Types.ProtocolAction.None, "", ""
+                1, 0, false, Types.RebalancerAction.None, Types.ProtocolAction.None, "", ""
             ),
             "More rewards should be given if more ticks are liquidated"
         );
         rewards = liquidationRewardsManager.getLiquidationRewards(
-            3, 0, true, Types.TriggerRebalancerChecks.None, Types.ProtocolAction.None, "", ""
+            3, 0, true, Types.RebalancerAction.None, Types.ProtocolAction.None, "", ""
         );
         assertEq(rewards, wsteth.getWstETHByStETH(4_830_000_000_000_000), "with rebase - expected rewards");
         assertGt(
             rewards,
             liquidationRewardsManager.getLiquidationRewards(
-                1, 0, true, Types.TriggerRebalancerChecks.None, Types.ProtocolAction.None, "", ""
+                1, 0, true, Types.RebalancerAction.None, Types.ProtocolAction.None, "", ""
             ),
             "with rebase - greater than fewer ticks"
         );
         rewards = liquidationRewardsManager.getLiquidationRewards(
-            3, 0, false, Types.TriggerRebalancerChecks.Updated, Types.ProtocolAction.None, "", ""
+            3, 0, false, Types.RebalancerAction.ClosedOpened, Types.ProtocolAction.None, "", ""
         );
         assertEq(rewards, wsteth.getWstETHByStETH(4_530_000_000_000_000), "with rebalancer trigger - expected rewards");
         assertGt(
             rewards,
             liquidationRewardsManager.getLiquidationRewards(
-                1, 0, false, Types.TriggerRebalancerChecks.Updated, Types.ProtocolAction.None, "", ""
+                1, 0, false, Types.RebalancerAction.ClosedOpened, Types.ProtocolAction.None, "", ""
             ),
             "with rebalancer trigger - greater than fewer ticks"
         );
@@ -127,17 +127,17 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
         mockChainlinkOnChain.setLatestRoundData(1, 15 gwei, block.timestamp, 1);
 
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(
-            1, 0, false, Types.TriggerRebalancerChecks.None, Types.ProtocolAction.None, "", ""
+            1, 0, false, Types.RebalancerAction.None, Types.ProtocolAction.None, "", ""
         );
         assertEq(rewards, wsteth.getWstETHByStETH(1_215_000_000_000_000), "without rebase");
 
         rewards = liquidationRewardsManager.getLiquidationRewards(
-            1, 0, true, Types.TriggerRebalancerChecks.None, Types.ProtocolAction.None, "", ""
+            1, 0, true, Types.RebalancerAction.None, Types.ProtocolAction.None, "", ""
         );
         assertEq(rewards, wsteth.getWstETHByStETH(1_515_000_000_000_000), "with rebase");
 
         rewards = liquidationRewardsManager.getLiquidationRewards(
-            1, 0, false, Types.TriggerRebalancerChecks.Updated, Types.ProtocolAction.None, "", ""
+            1, 0, false, Types.RebalancerAction.ClosedOpened, Types.ProtocolAction.None, "", ""
         );
         assertEq(rewards, wsteth.getWstETHByStETH(1_365_000_000_000_000), "with rebalancer trigger");
     }
@@ -155,17 +155,17 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
         vm.txGasPrice(20 gwei);
 
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(
-            1, 0, false, Types.TriggerRebalancerChecks.None, Types.ProtocolAction.None, "", ""
+            1, 0, false, Types.RebalancerAction.None, Types.ProtocolAction.None, "", ""
         );
         assertEq(rewards, wsteth.getWstETHByStETH(1_620_000_000_000_000), "without rebase");
 
         rewards = liquidationRewardsManager.getLiquidationRewards(
-            1, 0, true, Types.TriggerRebalancerChecks.None, Types.ProtocolAction.None, "", ""
+            1, 0, true, Types.RebalancerAction.None, Types.ProtocolAction.None, "", ""
         );
         assertEq(rewards, wsteth.getWstETHByStETH(2_020_000_000_000_000), "with rebase");
 
         rewards = liquidationRewardsManager.getLiquidationRewards(
-            1, 0, false, Types.TriggerRebalancerChecks.Updated, Types.ProtocolAction.None, "", ""
+            1, 0, false, Types.RebalancerAction.ClosedOpened, Types.ProtocolAction.None, "", ""
         );
         assertEq(rewards, wsteth.getWstETHByStETH(1_820_000_000_000_000), "with rebalancer trigger");
     }
@@ -184,17 +184,17 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
         mockChainlinkOnChain.setLatestRoundData(1, 2000 gwei, block.timestamp, 1);
 
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(
-            1, 0, false, Types.TriggerRebalancerChecks.None, Types.ProtocolAction.None, "", ""
+            1, 0, false, Types.RebalancerAction.None, Types.ProtocolAction.None, "", ""
         );
         assertEq(rewards, wsteth.getWstETHByStETH(81_000_000_000_000_000), "without rebase");
 
         rewards = liquidationRewardsManager.getLiquidationRewards(
-            1, 0, true, Types.TriggerRebalancerChecks.None, Types.ProtocolAction.None, "", ""
+            1, 0, true, Types.RebalancerAction.None, Types.ProtocolAction.None, "", ""
         );
         assertEq(rewards, wsteth.getWstETHByStETH(101_000_000_000_000_000), "with rebase");
 
         rewards = liquidationRewardsManager.getLiquidationRewards(
-            1, 0, false, Types.TriggerRebalancerChecks.Updated, Types.ProtocolAction.None, "", ""
+            1, 0, false, Types.RebalancerAction.ClosedOpened, Types.ProtocolAction.None, "", ""
         );
         assertEq(rewards, wsteth.getWstETHByStETH(91_000_000_000_000_000), "with rebalancer trigger");
     }
@@ -213,17 +213,17 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
         mockChainlinkOnChain.setLatestRoundData(1, 1001 gwei, block.timestamp, 1);
 
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(
-            1, 0, false, Types.TriggerRebalancerChecks.None, Types.ProtocolAction.None, "", ""
+            1, 0, false, Types.RebalancerAction.None, Types.ProtocolAction.None, "", ""
         );
         assertEq(rewards, wsteth.getWstETHByStETH(81_000_000_000_000_000), "without rebase");
 
         rewards = liquidationRewardsManager.getLiquidationRewards(
-            1, 0, true, Types.TriggerRebalancerChecks.None, Types.ProtocolAction.None, "", ""
+            1, 0, true, Types.RebalancerAction.None, Types.ProtocolAction.None, "", ""
         );
         assertEq(rewards, wsteth.getWstETHByStETH(101_000_000_000_000_000), "with rebase");
 
         rewards = liquidationRewardsManager.getLiquidationRewards(
-            1, 0, false, Types.TriggerRebalancerChecks.Updated, Types.ProtocolAction.None, "", ""
+            1, 0, false, Types.RebalancerAction.ClosedOpened, Types.ProtocolAction.None, "", ""
         );
         assertEq(rewards, wsteth.getWstETHByStETH(91_000_000_000_000_000), "with rebalancer trigger");
     }
@@ -237,17 +237,17 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
         mockChainlinkOnChain.toggleRevert();
 
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(
-            1, 0, false, Types.TriggerRebalancerChecks.None, Types.ProtocolAction.None, "", ""
+            1, 0, false, Types.RebalancerAction.None, Types.ProtocolAction.None, "", ""
         );
         assertEq(rewards, 0, "The function should return 0");
 
         rewards = liquidationRewardsManager.getLiquidationRewards(
-            1, 0, true, Types.TriggerRebalancerChecks.None, Types.ProtocolAction.None, "", ""
+            1, 0, true, Types.RebalancerAction.None, Types.ProtocolAction.None, "", ""
         );
         assertEq(rewards, 0, "with rebase");
 
         rewards = liquidationRewardsManager.getLiquidationRewards(
-            1, 0, false, Types.TriggerRebalancerChecks.Updated, Types.ProtocolAction.None, "", ""
+            1, 0, false, Types.RebalancerAction.ClosedOpened, Types.ProtocolAction.None, "", ""
         );
         assertEq(rewards, 0, "with rebalancer trigger");
     }
@@ -261,17 +261,17 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
         mockChainlinkOnChain.setLastPublishTime(0);
 
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(
-            1, 0, false, Types.TriggerRebalancerChecks.None, Types.ProtocolAction.None, "", ""
+            1, 0, false, Types.RebalancerAction.None, Types.ProtocolAction.None, "", ""
         );
         assertEq(rewards, 0, "The function should return 0");
 
         rewards = liquidationRewardsManager.getLiquidationRewards(
-            1, 0, true, Types.TriggerRebalancerChecks.None, Types.ProtocolAction.None, "", ""
+            1, 0, true, Types.RebalancerAction.None, Types.ProtocolAction.None, "", ""
         );
         assertEq(rewards, 0, "with rebase");
 
         rewards = liquidationRewardsManager.getLiquidationRewards(
-            1, 0, false, Types.TriggerRebalancerChecks.Updated, Types.ProtocolAction.None, "", ""
+            1, 0, false, Types.RebalancerAction.ClosedOpened, Types.ProtocolAction.None, "", ""
         );
         assertEq(rewards, 0, "with rebalancer trigger");
     }
