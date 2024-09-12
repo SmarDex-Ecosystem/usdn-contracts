@@ -108,13 +108,7 @@ library UsdnProtocolLongLibrary {
         uint128 timestamp
     ) public view returns (int256 value_) {
         (Types.Position memory pos, uint24 liquidationPenalty) = ActionsLong.getLongPosition(s, posId);
-        int256 longTradingExpo = Core.longTradingExpoWithFunding(s, price, timestamp);
-        if (longTradingExpo < 0) {
-            // in case the long balance is equal to the total expo (or exceeds it), the trading expo will become zero
-            // in this case, the liquidation price will fall to zero, and the position value will be equal to its
-            // total expo (initial collateral * initial leverage)
-            longTradingExpo = 0;
-        }
+        uint256 longTradingExpo = Core.longTradingExpoWithFunding(s, price, timestamp);
         uint128 liqPrice = getEffectivePriceForTick(
             Utils.calcTickWithoutPenalty(posId.tick, liquidationPenalty),
             price,
@@ -649,7 +643,7 @@ library UsdnProtocolLongLibrary {
         Types.TickPriceConversionData memory conversionData = Types.TickPriceConversionData({
             assetPrice: lastPrice,
             // we need to take into account the funding for the trading expo between the last price timestamp and now
-            tradingExpo: Core.longTradingExpoWithFunding(s, lastPrice, uint128(block.timestamp)).toUint256(),
+            tradingExpo: Core.longTradingExpoWithFunding(s, lastPrice, uint128(block.timestamp)),
             accumulator: s._liqMultiplierAccumulator,
             tickSpacing: s._tickSpacing
         });

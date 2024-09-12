@@ -106,14 +106,9 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function tickValue(int24 tick, uint256 currentPrice) external view returns (int256) {
-        int256 longTradingExpo = this.longTradingExpoWithFunding(uint128(currentPrice), uint128(block.timestamp));
-        if (longTradingExpo < 0) {
-            longTradingExpo = 0;
-        }
+        uint256 longTradingExpo = this.longTradingExpoWithFunding(uint128(currentPrice), uint128(block.timestamp));
         bytes32 tickHash = Core.tickHash(tick, s._tickVersion[tick]);
-        return Long._tickValue(
-            tick, currentPrice, uint256(longTradingExpo), s._liqMultiplierAccumulator, s._tickData[tickHash]
-        );
+        return Long._tickValue(tick, currentPrice, longTradingExpo, s._liqMultiplierAccumulator, s._tickData[tickHash]);
     }
 
     /**

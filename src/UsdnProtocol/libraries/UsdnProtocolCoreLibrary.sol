@@ -244,15 +244,14 @@ library UsdnProtocolCoreLibrary {
             available_ = _longAssetAvailable(s, currentPrice).safeSub(fundAsset - fee);
         }
 
-        uint256 balanceLong = s._balanceLong;
-        uint256 maxTradingExpo =
+        uint256 maxLongBalance =
             s._totalExpo * (Constants.BPS_DIVISOR - Constants.MIN_LONG_TRADING_EXPO_BPS) / Constants.BPS_DIVISOR;
         // cast is safe as available_ is above 0
-        if (available_ > 0 && uint256(available_) >= maxTradingExpo) {
-            available_ = maxTradingExpo.toInt256();
+        if (available_ > 0 && uint256(available_) > maxLongBalance) {
+            available_ = maxLongBalance.toInt256();
         }
 
-        int256 totalBalance = (balanceLong + s._balanceVault).toInt256();
+        int256 totalBalance = (s._balanceLong + s._balanceVault).toInt256();
         if (available_ > totalBalance) {
             available_ = totalBalance;
         }
@@ -262,9 +261,10 @@ library UsdnProtocolCoreLibrary {
     function longTradingExpoWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
         public
         view
-        returns (int256 expo_)
+        returns (uint256 expo_)
     {
-        expo_ = s._totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(s, currentPrice, timestamp));
+        // cast is safe as balance long cannot be bigger than total expo
+        expo_ = uint256(s._totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(s, currentPrice, timestamp)));
     }
 
     /* -------------------------------------------------------------------------- */
@@ -569,10 +569,10 @@ library UsdnProtocolCoreLibrary {
             data_.tempLongBalance = _longAssetAvailable(s, currentPrice).safeSub(fundAssetWithFee);
         }
 
-        uint256 maxTradingExpo =
+        uint256 maxLongBalance =
             s._totalExpo * (Constants.BPS_DIVISOR - Constants.MIN_LONG_TRADING_EXPO_BPS) / Constants.BPS_DIVISOR;
-        if (data_.tempLongBalance > 0 && uint256(data_.tempLongBalance) > maxTradingExpo) {
-            data_.tempLongBalance = int256(maxTradingExpo);
+        if (data_.tempLongBalance > 0 && uint256(data_.tempLongBalance) > maxLongBalance) {
+            data_.tempLongBalance = int256(maxLongBalance);
         }
 
         data_.tempVaultBalance = totalBalance.safeSub(data_.tempLongBalance);

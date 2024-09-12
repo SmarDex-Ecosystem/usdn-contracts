@@ -88,5 +88,5 @@ interface IUsdnProtocolCore is IUsdnProtocolTypes {
      * @param timestamp The timestamp corresponding to `currentPrice`
      * @return The long trading exposure
      */
-    function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256);
+    function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (uint256);
 }
