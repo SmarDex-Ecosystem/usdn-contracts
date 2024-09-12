@@ -273,6 +273,32 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario longAssetAvailableWithFunding returns the highest possible value
+     * @custom:when The funding is negative
+     * @custom:then Return value should be equal to the min trading expo
+     * @custom:and A higher timestamp does not change the returned value
+     */
+    function test_longAssetAvailableIsCappedByMinTradingExpo() public {
+        skip(1 hours);
+        uint128 price = DEFAULT_PARAMS.initialPrice;
+        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 100 ether, price);
+        skip(30 days);
+
+        (, int256 fundingPerDay,) = protocol.funding(uint128(block.timestamp));
+        assertLt(fundingPerDay, 0, "funding rate should be negative");
+
+        int256 available = protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp));
+
+        uint256 minTradingExpo =
+            protocol.getTotalExpo() * (BPS_DIVISOR - protocol.MIN_LONG_TRADING_EXPO_BPS()) / BPS_DIVISOR;
+        assertEq(available, int256(minTradingExpo), "the long balance should be equal to the min trading expo");
+
+        // check that a higher timestamp does not increase the amount available
+        int256 availableLater = protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp) + 30 days);
+        assertEq(available, availableLater, "the available assets should not have changed");
+    }
+
+    /**
      * @custom:scenario longAssetAvailableWithFunding calculation
      * @custom:when the funding is negative
      * @custom:then return value should be equal to the long balance

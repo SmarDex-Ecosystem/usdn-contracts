@@ -137,6 +137,11 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
+    function MIN_LONG_TRADING_EXPO_BPS() external pure returns (uint256) {
+        return Constants.MIN_LONG_TRADING_EXPO_BPS;
+    }
+
+    /// @inheritdoc IUsdnProtocolFallback
     function getTickSpacing() external view returns (int24) {
         return s._tickSpacing;
     }

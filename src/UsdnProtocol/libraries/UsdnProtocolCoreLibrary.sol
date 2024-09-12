@@ -244,7 +244,15 @@ library UsdnProtocolCoreLibrary {
             available_ = _longAssetAvailable(s, currentPrice).safeSub(fundAsset - fee);
         }
 
-        int256 totalBalance = (s._balanceLong + s._balanceVault).toInt256();
+        uint256 balanceLong = s._balanceLong;
+        uint256 maxTradingExpo =
+            s._totalExpo * (Constants.BPS_DIVISOR - Constants.MIN_LONG_TRADING_EXPO_BPS) / Constants.BPS_DIVISOR;
+        // cast is safe as available_ is above 0
+        if (available_ > 0 && uint256(available_) >= maxTradingExpo) {
+            available_ = maxTradingExpo.toInt256();
+        }
+
+        int256 totalBalance = (balanceLong + s._balanceVault).toInt256();
         if (available_ > totalBalance) {
             available_ = totalBalance;
         }
@@ -414,13 +422,6 @@ library UsdnProtocolCoreLibrary {
         pure
         returns (int256 available_)
     {
-        // if balanceLong == totalExpo or the long trading expo is negative (theoretically impossible), the PnL is
-        // zero
-        // we can't calculate a proper PnL value if the long trading expo is negative because it would invert the
-        // sign of the amount
-        if (balanceLong >= totalExpo) {
-            return balanceLong.toInt256();
-        }
         int256 priceDiff = Utils.toInt256(newPrice) - Utils.toInt256(oldPrice);
         uint256 tradingExpo;
         // `balanceLong` is strictly inferior to `totalExpo`
@@ -553,8 +554,7 @@ library UsdnProtocolCoreLibrary {
         (int256 fee, int256 fundAssetWithFee) = _calculateFee(s, fundAsset);
 
         // we subtract the fee from the total balance
-        int256 totalBalance = s._balanceLong.toInt256();
-        totalBalance = totalBalance.safeAdd(s._balanceVault.toInt256()).safeSub(fee);
+        int256 totalBalance = s._balanceLong.toInt256().safeAdd(s._balanceVault.toInt256()).safeSub(fee);
         // calculate new balances (for now, any bad debt has not been repaid, balances could become negative)
 
         if (fundAsset > 0) {
@@ -568,6 +568,13 @@ library UsdnProtocolCoreLibrary {
             // only by the funding amount minus the fee amount
             data_.tempLongBalance = _longAssetAvailable(s, currentPrice).safeSub(fundAssetWithFee);
         }
+
+        uint256 maxTradingExpo =
+            s._totalExpo * (Constants.BPS_DIVISOR - Constants.MIN_LONG_TRADING_EXPO_BPS) / Constants.BPS_DIVISOR;
+        if (data_.tempLongBalance > 0 && uint256(data_.tempLongBalance) > maxTradingExpo) {
+            data_.tempLongBalance = int256(maxTradingExpo);
+        }
+
         data_.tempVaultBalance = totalBalance.safeSub(data_.tempLongBalance);
 
         // update state variables
