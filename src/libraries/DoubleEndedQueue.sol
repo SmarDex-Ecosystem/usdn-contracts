@@ -215,7 +215,7 @@ library DoubleEndedQueue {
     /**
      * @dev Check if the raw index is valid (in bounds)
      * @param deque The queue
-     * @param rawIndex The index of the item to return
+     * @param rawIndex The raw index to check
      * @return valid_ Whether the raw index is valid
      */
     function isValid(Deque storage deque, uint128 rawIndex) external view returns (bool valid_) {
