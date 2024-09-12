@@ -451,4 +451,6 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         int24 tickSpacing,
         uint24 liquidationPenalty
     ) external pure returns (int24 tickWithPenalty_, uint128 liqPriceWithoutPenalty_);
+
+    function i_calcMaxLongBalance(uint256 totalExpo) external pure returns (uint256);
 }

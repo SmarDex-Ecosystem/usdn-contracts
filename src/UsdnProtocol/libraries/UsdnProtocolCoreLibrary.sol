@@ -345,11 +345,10 @@ library UsdnProtocolCoreLibrary {
             available_ = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAsset - fee);
         }
 
-        uint256 maxLongBalance =
-            s._totalExpo * (Constants.BPS_DIVISOR - Constants.MIN_LONG_TRADING_EXPO_BPS) / Constants.BPS_DIVISOR;
-        // cast is safe as available_ is above 0
-        if (available_ > 0 && uint256(available_) > maxLongBalance) {
-            available_ = maxLongBalance.toInt256();
+        uint256 maxLongBalance = _calcMaxLongBalance(s._totalExpo);
+        // cast is safe as maxLongBalance cannot go above int256.max
+        if (available_ > 0 && available_ > int256(maxLongBalance)) {
+            available_ = int256(maxLongBalance);
         }
 
         int256 totalBalance = (s._balanceLong + s._balanceVault).toInt256();
@@ -364,7 +363,7 @@ library UsdnProtocolCoreLibrary {
         view
         returns (uint256 expo_)
     {
-        // cast is safe as balance long cannot be bigger than total expo
+        // cast is safe as the returned cannot be bigger than total expo
         expo_ = uint256(s._totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(s, currentPrice, timestamp)));
     }
 
@@ -627,9 +626,9 @@ library UsdnProtocolCoreLibrary {
             data_.tempLongBalance = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAssetWithFee);
         }
 
-        uint256 maxLongBalance =
-            s._totalExpo * (Constants.BPS_DIVISOR - Constants.MIN_LONG_TRADING_EXPO_BPS) / Constants.BPS_DIVISOR;
-        if (data_.tempLongBalance > 0 && uint256(data_.tempLongBalance) > maxLongBalance) {
+        uint256 maxLongBalance = _calcMaxLongBalance(s._totalExpo);
+        // cast is safe as maxLongBalance cannot be bigger than int256.max
+        if (data_.tempLongBalance > 0 && data_.tempLongBalance > int256(maxLongBalance)) {
             data_.tempLongBalance = int256(maxLongBalance);
         }
 
@@ -930,5 +929,11 @@ library UsdnProtocolCoreLibrary {
             // the validation must happen with an on-chain oracle
             actionable_ = block.timestamp > initiateTimestamp + lowLatencyDelay + onChainDeadline;
         }
+    }
+
+    function _calcMaxLongBalance(uint256 totalExpo) internal pure returns (uint256 maxLongBalance_) {
+        // cast is safe as totalExpo cannot be bigger than int256.max
+        maxLongBalance_ =
+            totalExpo * (Constants.BPS_DIVISOR - Constants.MIN_LONG_TRADING_EXPO_BPS) / Constants.BPS_DIVISOR;
     }
 }

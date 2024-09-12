@@ -16,9 +16,6 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
     }
 
     function setUp() public {
-        params = DEFAULT_PARAMS;
-        params.flags.enableFunding = false;
-        params.flags.enableProtocolFees = false;
         super._setUp(DEFAULT_PARAMS);
     }
 
@@ -30,6 +27,7 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
      * @custom:when The sum of all position values is calculated at a price between the max position start price and
      * 10000 dollars.
      * @custom:then The long side available balance is greater or equal to the sum of all position values
+     * @custom:then The long side available balance is lower or equal to the max long balance
      * @param finalPrice the final price of the asset, at which we want to compare the available balance with the sum of
      * all long positions.
      * @param random a random number used to generate the position parameters
@@ -106,8 +104,11 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
         uint128 liqPrice = protocol.getEffectivePriceForTick(data.firstPosTick);
 
         longPosValue += uint256(protocol.i_positionValue(finalPrice, liqPrice, data.firstPos.totalExpo));
+        uint256 maxLongBalance = protocol.i_calcMaxLongBalance(protocol.getTotalExpo());
 
+        uint256 longAssetAvailable = uint256(protocol.i_longAssetAvailable(finalPrice));
         // The available balance should always be able to cover the value of all long positions
-        assertGe(uint256(protocol.i_longAssetAvailable(finalPrice)), longPosValue, "long balance");
+        assertGe(longAssetAvailable, longPosValue, "long balance");
+        assertLe(longAssetAvailable, maxLongBalance, "max long balance");
     }
 }

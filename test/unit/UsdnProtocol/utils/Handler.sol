@@ -807,4 +807,8 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
             desiredLiqPriceWithoutPenalty, liqMultiplier, tickSpacing, liquidationPenalty
         );
     }
+
+    function i_calcMaxLongBalance(uint256 totalExpo) external pure returns (uint256) {
+        return Core._calcMaxLongBalance(totalExpo);
+    }
 }
