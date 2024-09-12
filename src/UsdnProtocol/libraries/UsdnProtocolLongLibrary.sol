@@ -63,8 +63,8 @@ library UsdnProtocolLongLibrary {
      * @param tempLongBalance The temporary long balance
      * @param tempVaultBalance The temporary vault balance
      * @param rebased A boolean indicating if the USDN token was rebased
-     * @param rebalancerTriggered A boolean indicating if the rebalancer was triggered
      * @param callbackResult The result of the callback
+     * @param rebalancerAction The `_triggerRebalancer` action
      */
     struct ApplyPnlAndFundingAndLiquidateData {
         bool isPriceRecent;
@@ -72,8 +72,8 @@ library UsdnProtocolLongLibrary {
         int256 tempVaultBalance;
         uint128 lastPrice;
         bool rebased;
-        bool rebalancerTriggered;
         bytes callbackResult;
+        Types.RebalancerAction rebalancerAction;
     }
 
     /**
@@ -320,14 +320,14 @@ library UsdnProtocolLongLibrary {
             isLiquidationPending_ = liquidationEffects.isLiquidationPending;
             if (!isLiquidationPending_ && liquidationEffects.liquidatedTicks > 0) {
                 if (s._closeExpoImbalanceLimitBps > 0) {
-                    (liquidationEffects.newLongBalance, liquidationEffects.newVaultBalance) = _triggerRebalancer(
+                    (liquidationEffects.newLongBalance, liquidationEffects.newVaultBalance, data.rebalancerAction) =
+                    _triggerRebalancer(
                         s,
                         data.lastPrice,
                         liquidationEffects.newLongBalance,
                         liquidationEffects.newVaultBalance,
                         liquidationEffects.remainingCollateral
                     );
-                    data.rebalancerTriggered = true;
                 }
             }
 
@@ -342,7 +342,7 @@ library UsdnProtocolLongLibrary {
                     liquidationEffects.liquidatedTicks,
                     liquidationEffects.remainingCollateral,
                     data.rebased,
-                    data.rebalancerTriggered,
+                    data.rebalancerAction,
                     action,
                     data.callbackResult,
                     priceData
@@ -370,14 +370,14 @@ library UsdnProtocolLongLibrary {
         uint16 liquidatedTicks,
         int256 remainingCollateral,
         bool rebased,
-        bool rebalancerTriggered,
+        Types.RebalancerAction rebalancerAction,
         Types.ProtocolAction action,
         bytes memory rebaseCallbackResult,
         bytes memory priceData
     ) public {
         // get how much we should give to the liquidator as rewards
         uint256 liquidationRewards = s._liquidationRewardsManager.getLiquidationRewards(
-            liquidatedTicks, remainingCollateral, rebased, rebalancerTriggered, action, rebaseCallbackResult, priceData
+            liquidatedTicks, remainingCollateral, rebased, rebalancerAction, action, rebaseCallbackResult, priceData
         );
 
         // avoid underflows in the situation of extreme bad debt
@@ -409,6 +409,7 @@ library UsdnProtocolLongLibrary {
      * @param remainingCollateral The collateral remaining after the liquidations
      * @return longBalance_ The temporary balance of the long side
      * @return vaultBalance_ The temporary balance of the vault side
+     * @return action_ The rebalancer action
      */
     function _triggerRebalancer(
         Types.Storage storage s,
@@ -416,13 +417,13 @@ library UsdnProtocolLongLibrary {
         uint256 longBalance,
         uint256 vaultBalance,
         int256 remainingCollateral
-    ) public returns (uint256 longBalance_, uint256 vaultBalance_) {
+    ) public returns (uint256 longBalance_, uint256 vaultBalance_, Types.RebalancerAction action_) {
         longBalance_ = longBalance;
         vaultBalance_ = vaultBalance;
         IBaseRebalancer rebalancer = s._rebalancer;
 
         if (address(rebalancer) == address(0)) {
-            return (longBalance_, vaultBalance_);
+            return (longBalance_, vaultBalance_, Types.RebalancerAction.None);
         }
 
         Types.CachedProtocolState memory cache = Types.CachedProtocolState({
@@ -454,7 +455,7 @@ library UsdnProtocolLongLibrary {
 
             // if the imbalance is lower than the threshold, return
             if (currentImbalance <= s._closeExpoImbalanceLimitBps) {
-                return (longBalance_, vaultBalance_);
+                return (longBalance_, vaultBalance_, Types.RebalancerAction.NoImbalance);
             }
         }
 
@@ -470,7 +471,7 @@ library UsdnProtocolLongLibrary {
             // if the position value is less than 0, it should have been liquidated but wasn't
             // interrupt the whole rebalancer process because there are pending liquidations
             if (realPositionValue < 0) {
-                return (longBalance_, vaultBalance_);
+                return (longBalance_, vaultBalance_, Types.RebalancerAction.PendingLiquidation);
             }
 
             // cast is safe as realPositionValue cannot be lower than 0
@@ -479,7 +480,7 @@ library UsdnProtocolLongLibrary {
             longBalance_ -= data.positionValue;
         } else if (data.positionAmount == 0) {
             // avoid to update an empty rebalancer
-            return (longBalance_, vaultBalance_);
+            return (longBalance_, vaultBalance_, Types.RebalancerAction.NoCloseNoOpen);
         }
 
         // if the amount in the position we wanted to open is below a fraction of the _minLongPosition setting,
@@ -489,7 +490,7 @@ library UsdnProtocolLongLibrary {
             // and inform it that no new position was open so it can start anew
             rebalancer.updatePosition(Types.PositionId(Constants.NO_POSITION_TICK, 0, 0), 0);
             vaultBalance_ += data.positionValue;
-            return (longBalance_, vaultBalance_);
+            return (longBalance_, vaultBalance_, Types.RebalancerAction.Closed);
         }
 
         // transfer the pending assets from the rebalancer to this contract
@@ -526,6 +527,12 @@ library UsdnProtocolLongLibrary {
 
         // call the rebalancer to update the public bookkeeping
         rebalancer.updatePosition(posId, data.positionValue);
+
+        if (data.positionValue > 0) {
+            action_ = Types.RebalancerAction.ClosedOpened;
+        } else {
+            action_ = Types.RebalancerAction.Opened;
+        }
     }
 
     /**

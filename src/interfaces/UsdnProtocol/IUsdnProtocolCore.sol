@@ -57,8 +57,8 @@ interface IUsdnProtocolCore is IUsdnProtocolTypes {
      * `ProtocolAction.Initialize` action
      * The price validation might require payment according to the return value of the `getValidationCost` function
      * of `IBaseOracleMiddleware`
-     * @param depositAmount The amount of wstETH for the deposit
-     * @param longAmount The amount of wstETH for the long
+     * @param depositAmount The amount of assets for the deposit
+     * @param longAmount The amount of assets for the long
      * @param desiredLiqPrice The desired liquidation price for the long, without penalty
      * @param currentPriceData The current price data
      */

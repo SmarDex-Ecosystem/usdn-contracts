@@ -331,7 +331,7 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         uint16 liquidatedTicks,
         int256 remainingCollateral,
         bool rebased,
-        bool rebalancerTriggered,
+        RebalancerAction rebalancerAction,
         ProtocolAction action,
         bytes memory rebaseCallbackResult,
         bytes memory priceData
@@ -431,7 +431,7 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         uint256 longBalance,
         uint256 vaultBalance,
         int256 remainingCollateral
-    ) external returns (uint256 longBalance_, uint256 vaultBalance_);
+    ) external returns (uint256 longBalance_, uint256 vaultBalance_, RebalancerAction rebalancerAction);
 
     function i_fundingAsset(uint128 timestamp, int256 ema)
         external
