@@ -18,7 +18,7 @@ contract FuzzTransfer is Setup, Utils {
             //            amountRand = bound(amountRand, 0, address(msg.sender).balance);
             vm.deal(msg.sender, amountRand);
             vm.prank(msg.sender);
-            dest.transfer(amountRand);
+            dest.call{ value: amountRand }("");
             emit log_named_uint("amount eth send : ", amountRand);
         } else if (token == address(usdn)) {
             //            amountRand = bound(amountRand, 0, usdn.sharesOf(msg.sender));
