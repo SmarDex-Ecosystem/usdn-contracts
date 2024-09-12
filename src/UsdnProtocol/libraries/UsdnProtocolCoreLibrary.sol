@@ -16,10 +16,10 @@ import { DoubleEndedQueue } from "../../libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../../libraries/HugeUint.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
 import { TickMath } from "../../libraries/TickMath.sol";
-import { UsdnProtocolActionsVaultLibrary as ActionsVault } from "./UsdnProtocolActionsVaultLibrary.sol";
+import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "./UsdnProtocolLongLibrary.sol";
-import { UsdnProtocolUtils as Utils } from "./UsdnProtocolUtils.sol";
+import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.sol";
 
 library UsdnProtocolCoreLibrary {
@@ -55,7 +55,7 @@ library UsdnProtocolCoreLibrary {
         }
 
         PriceInfo memory currentPrice =
-            ActionsVault._getOraclePrice(s, Types.ProtocolAction.Initialize, block.timestamp, "", currentPriceData);
+            Utils._getOraclePrice(s, Types.ProtocolAction.Initialize, block.timestamp, "", currentPriceData);
 
         s._lastUpdateTimestamp = uint128(block.timestamp);
         s._lastPrice = currentPrice.price.toUint128();
@@ -63,15 +63,121 @@ library UsdnProtocolCoreLibrary {
         (int24 tickWithPenalty, uint128 liqPriceWithoutPenalty) =
             Long._getTickFromDesiredLiqPrice(s, desiredLiqPrice, s._liquidationPenalty);
         uint128 positionTotalExpo =
-            Long._calcPositionTotalExpo(longAmount, currentPrice.price.toUint128(), liqPriceWithoutPenalty);
+            Utils._calcPositionTotalExpo(longAmount, currentPrice.price.toUint128(), liqPriceWithoutPenalty);
 
-        Vault._checkInitImbalance(s, positionTotalExpo, longAmount, depositAmount);
+        _checkInitImbalance(s, positionTotalExpo, longAmount, depositAmount);
 
-        Vault._createInitialDeposit(s, depositAmount, currentPrice.price.toUint128());
+        _createInitialDeposit(s, depositAmount, currentPrice.price.toUint128());
 
-        Vault._createInitialPosition(s, longAmount, currentPrice.price.toUint128(), tickWithPenalty, positionTotalExpo);
+        _createInitialPosition(s, longAmount, currentPrice.price.toUint128(), tickWithPenalty, positionTotalExpo);
 
-        ActionsVault._refundEther(address(this).balance, payable(msg.sender));
+        Utils._refundEther(address(this).balance, payable(msg.sender));
+    }
+
+    /**
+     * @notice Check if the initialize parameters lead to a balanced protocol
+     * @param s The storage of the protocol
+     * @dev This function reverts if the imbalance is exceeded for the deposit or open long action
+     * @param positionTotalExpo The total expo of the deployer's long position
+     * @param longAmount The amount (collateral) of the deployer's long position
+     * @param depositAmount The amount of assets for the deployer's deposit
+     */
+    function _checkInitImbalance(
+        Types.Storage storage s,
+        uint128 positionTotalExpo,
+        uint128 longAmount,
+        uint128 depositAmount
+    ) public view {
+        int256 longTradingExpo = Utils.toInt256(positionTotalExpo - longAmount);
+        int256 depositLimit = s._depositExpoImbalanceLimitBps;
+        int256 depositAmountInt = Utils.toInt256(depositAmount);
+        if (depositLimit != 0) {
+            int256 imbalanceBps = (depositAmountInt - longTradingExpo) * int256(Constants.BPS_DIVISOR) / longTradingExpo;
+            if (imbalanceBps > depositLimit) {
+                revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
+            }
+        }
+        int256 openLimit = s._openExpoImbalanceLimitBps;
+        if (openLimit != 0) {
+            int256 imbalanceBps =
+                (longTradingExpo - depositAmountInt) * int256(Constants.BPS_DIVISOR) / depositAmountInt;
+            if (imbalanceBps > openLimit) {
+                revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
+            }
+        }
+    }
+
+    /**
+     * @notice Create initial deposit
+     * @dev To be called from `initialize`
+     * @param s The storage of the protocol
+     * @param amount The initial deposit amount
+     * @param price The current asset price
+     */
+    function _createInitialDeposit(Types.Storage storage s, uint128 amount, uint128 price) public {
+        // transfer the wstETH for the deposit
+        address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
+        s._balanceVault += amount;
+        emit IUsdnProtocolEvents.InitiatedDeposit(msg.sender, msg.sender, amount, 0, block.timestamp, 0);
+
+        // calculate the total minted amount of USDN shares (vault balance and total supply are zero for now, we assume
+        // the USDN price to be $1 per token)
+        // the decimals conversion here is necessary since we calculate an amount in tokens and we want the
+        // corresponding amount of shares
+        uint256 usdnSharesToMint = s._usdn.convertToShares(
+            FixedPointMathLib.fullMulDiv(
+                amount, price, 10 ** (s._assetDecimals + s._priceFeedDecimals - Constants.TOKENS_DECIMALS)
+            )
+        );
+        IUsdn usdn = s._usdn;
+        uint256 minUsdnSharesSupply = usdn.convertToShares(Constants.MIN_USDN_SUPPLY);
+        // mint the minimum amount and send it to the dead address so it can never be removed from the total supply
+        usdn.mintShares(Constants.DEAD_ADDRESS, minUsdnSharesSupply);
+        // mint the user's share
+        uint256 mintSharesToUser = usdnSharesToMint - minUsdnSharesSupply;
+        uint256 mintedTokens = usdn.mintShares(msg.sender, mintSharesToUser);
+
+        emit IUsdnProtocolEvents.ValidatedDeposit(
+            Constants.DEAD_ADDRESS, Constants.DEAD_ADDRESS, 0, Constants.MIN_USDN_SUPPLY, block.timestamp
+        );
+        emit IUsdnProtocolEvents.ValidatedDeposit(msg.sender, msg.sender, amount, mintedTokens, block.timestamp);
+    }
+
+    /**
+     * @notice Create initial long position
+     * @dev To be called from `initialize`
+     * @param s The storage of the protocol
+     * @param amount The initial position amount
+     * @param price The current asset price
+     * @param tick The tick corresponding where the position should be stored
+     * @param totalExpo The total expo of the position
+     */
+    function _createInitialPosition(
+        Types.Storage storage s,
+        uint128 amount,
+        uint128 price,
+        int24 tick,
+        uint128 totalExpo
+    ) public {
+        // transfer the wstETH for the long
+        address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
+
+        Types.PositionId memory posId;
+        posId.tick = tick;
+        Types.Position memory long = Types.Position({
+            validated: true,
+            user: msg.sender,
+            amount: amount,
+            totalExpo: totalExpo,
+            timestamp: uint40(block.timestamp)
+        });
+        // save the position and update the state
+        (posId.tickVersion, posId.index,) = ActionsLong._saveNewPosition(s, posId.tick, long, s._liquidationPenalty);
+        s._balanceLong += long.amount;
+        emit IUsdnProtocolEvents.InitiatedOpenPosition(
+            msg.sender, msg.sender, long.timestamp, totalExpo, long.amount, price, posId
+        );
+        emit IUsdnProtocolEvents.ValidatedOpenPosition(msg.sender, msg.sender, totalExpo, price, posId);
     }
 
     /* -------------------------- public view functions ------------------------- */
@@ -193,11 +299,6 @@ library UsdnProtocolCoreLibrary {
         (action_,) = _getPendingAction(s, user);
     }
 
-    /// @notice See {IUsdnProtocolActions}
-    function tickHash(int24 tick, uint256 version) public pure returns (bytes32) {
-        return keccak256(abi.encodePacked(tick, version));
-    }
-
     /// @notice See {IUsdnProtocolCore}
     function removeBlockedPendingAction(Types.Storage storage s, address validator, address payable to) public {
         uint256 pendingActionIndex = s._pendingActions[validator];
@@ -237,11 +338,11 @@ library UsdnProtocolCoreLibrary {
         (int256 fundAsset,) = _fundingAsset(s, timestamp, s._EMA);
 
         if (fundAsset > 0) {
-            available_ = _longAssetAvailable(s, currentPrice).safeSub(fundAsset);
+            available_ = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAsset);
         } else {
             int256 fee = fundAsset * Utils.toInt256(s._protocolFeeBps) / int256(Constants.BPS_DIVISOR);
             // fees have the same sign as fundAsset (negative here), so we need to sub them
-            available_ = _longAssetAvailable(s, currentPrice).safeSub(fundAsset - fee);
+            available_ = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAsset - fee);
         }
 
         uint256 maxLongBalance =
@@ -270,6 +371,40 @@ library UsdnProtocolCoreLibrary {
     /* -------------------------------------------------------------------------- */
     /*                             Internal functions                             */
     /* -------------------------------------------------------------------------- */
+
+    /**
+     * @notice Prepare the pending action struct for an open position and add it to the queue
+     * @param s The storage of the protocol
+     * @param to The address that will be the owner of the position
+     * @param validator The address that will validate the open position
+     * @param securityDepositValue The value of the security deposit for the newly created pending action
+     * @param data The open position action data
+     * @return amountToRefund_ Refund The security deposit value of a stale pending action
+     */
+    function _createOpenPendingAction(
+        Types.Storage storage s,
+        address to,
+        address validator,
+        uint64 securityDepositValue,
+        Types.InitiateOpenPositionData memory data
+    ) public returns (uint256 amountToRefund_) {
+        Types.LongPendingAction memory action = Types.LongPendingAction({
+            action: Types.ProtocolAction.ValidateOpenPosition,
+            timestamp: uint40(block.timestamp),
+            closeLiqPenalty: 0,
+            to: to,
+            validator: validator,
+            securityDepositValue: securityDepositValue,
+            tick: data.posId.tick,
+            closeAmount: 0,
+            closePosTotalExpo: 0,
+            tickVersion: data.posId.tickVersion,
+            index: data.posId.index,
+            liqMultiplier: data.liqMultiplier,
+            closeBoundedPositionValue: 0
+        });
+        amountToRefund_ = _addPendingAction(s, validator, Utils._convertLongPendingAction(action));
+    }
 
     /**
      * @notice Calculate the funding rate per day and the old long exposure
@@ -394,46 +529,6 @@ library UsdnProtocolCoreLibrary {
     }
 
     /**
-     * @notice Calculate the long balance taking into account unreflected PnL (but not funding)
-     * @dev This function uses the latest total expo, balance and stored price as the reference values, and adds the PnL
-     * due to the price change to `currentPrice`
-     * @param s The storage of the protocol
-     * @param currentPrice The current price
-     * @return available_ The available balance on the long side
-     */
-    function _longAssetAvailable(Types.Storage storage s, uint128 currentPrice)
-        public
-        view
-        returns (int256 available_)
-    {
-        available_ = _longAssetAvailable(s._totalExpo, s._balanceLong, currentPrice, s._lastPrice);
-    }
-
-    /**
-     * @notice Calculate the long balance taking into account unreflected PnL (but not funding)
-     * @param totalExpo The total exposure of the long side
-     * @param balanceLong The (old) balance of the long side
-     * @param newPrice The new price
-     * @param oldPrice The old price when the old balance was updated
-     * @return available_ The available balance on the long side
-     */
-    function _longAssetAvailable(uint256 totalExpo, uint256 balanceLong, uint128 newPrice, uint128 oldPrice)
-        public
-        pure
-        returns (int256 available_)
-    {
-        int256 priceDiff = Utils.toInt256(newPrice) - Utils.toInt256(oldPrice);
-        uint256 tradingExpo;
-        // `balanceLong` is strictly inferior to `totalExpo`
-        unchecked {
-            tradingExpo = totalExpo - balanceLong;
-        }
-        int256 pnl = tradingExpo.toInt256().safeMul(priceDiff).safeDiv(Utils.toInt256(newPrice));
-
-        available_ = balanceLong.toInt256().safeAdd(pnl);
-    }
-
-    /**
      * @notice Update the Exponential Moving Average (EMA) of the funding rate (per day)
      * @dev This function is called every time the protocol state is updated
      * @dev All required checks are done in the caller function (_applyPnlAndFunding)
@@ -443,7 +538,7 @@ library UsdnProtocolCoreLibrary {
      * @param fundingPerDay The funding rate per day that was just calculated for the elapsed period
      * @param secondsElapsed The number of seconds elapsed since the last protocol action
      */
-    function _updateEMA(Types.Storage storage s, int256 fundingPerDay, uint128 secondsElapsed) public {
+    function _updateEMA(Types.Storage storage s, int256 fundingPerDay, uint128 secondsElapsed) internal {
         s._EMA = calcEMA(fundingPerDay, secondsElapsed, s._EMAPeriod, s._EMA);
     }
 
@@ -457,7 +552,7 @@ library UsdnProtocolCoreLibrary {
      * @return fundAssetWithFee_ The updated funding asset amount after applying the fee
      */
     function _calculateFee(Types.Storage storage s, int256 fundAsset)
-        public
+        internal
         returns (int256 fee_, int256 fundAssetWithFee_)
     {
         int256 protocolFeeBps = Utils.toInt256(s._protocolFeeBps);
@@ -471,43 +566,6 @@ library UsdnProtocolCoreLibrary {
         }
 
         s._pendingProtocolFee += uint256(fee_);
-    }
-
-    /**
-     * @notice Merge the two parts of the withdrawal amount (USDN shares) stored in the `Types.WithdrawalPendingAction`
-     * @param sharesLSB The lower 24 bits of the USDN shares
-     * @param sharesMSB The higher bits of the USDN shares
-     * @return usdnShares_ The amount of USDN shares
-     */
-    function _mergeWithdrawalAmountParts(uint24 sharesLSB, uint128 sharesMSB)
-        public
-        pure
-        returns (uint256 usdnShares_)
-    {
-        usdnShares_ = sharesLSB | uint256(sharesMSB) << 24;
-    }
-
-    /**
-     * @dev Convert a signed tick to an unsigned index into the Bitmap using the tick spacing in storage
-     * @param s The storage of the protocol
-     * @param tick The tick to convert, a multiple of the tick spacing
-     * @return index_ The index into the Bitmap
-     */
-    function _calcBitmapIndexFromTick(Types.Storage storage s, int24 tick) public view returns (uint256 index_) {
-        index_ = _calcBitmapIndexFromTick(tick, s._tickSpacing);
-    }
-
-    /**
-     * @dev Convert a signed tick to an unsigned index into the Bitmap using the provided tick spacing
-     * @param tick The tick to convert, a multiple of `tickSpacing`
-     * @param tickSpacing The tick spacing to use
-     * @return index_ The index into the Bitmap
-     */
-    function _calcBitmapIndexFromTick(int24 tick, int24 tickSpacing) public pure returns (uint256 index_) {
-        index_ = uint256( // cast is safe as the min tick is always above TickMath.MIN_TICK
-            (int256(tick) - TickMath.MIN_TICK) // shift into positive
-                / tickSpacing
-        );
     }
 
     /**
@@ -561,12 +619,12 @@ library UsdnProtocolCoreLibrary {
             // in case of positive funding, the vault balance must be decremented by the totality of the funding amount
             // however, since we deducted the fee amount from the total balance, the vault balance will be incremented
             // only by the funding amount minus the fee amount
-            data_.tempLongBalance = _longAssetAvailable(s, currentPrice).safeSub(fundAsset);
+            data_.tempLongBalance = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAsset);
         } else {
             // in case of negative funding, the vault balance must be decremented by the totality of the funding amount
             // however, since we deducted the fee amount from the total balance, the long balance will be incremented
             // only by the funding amount minus the fee amount
-            data_.tempLongBalance = _longAssetAvailable(s, currentPrice).safeSub(fundAssetWithFee);
+            data_.tempLongBalance = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAssetWithFee);
         }
 
         uint256 maxLongBalance =
@@ -583,96 +641,6 @@ library UsdnProtocolCoreLibrary {
         s._lastUpdateTimestamp = timestamp;
 
         data_.isPriceRecent = true;
-    }
-
-    /**
-     * @notice Convert a `Types.PendingAction` to a `Types.DepositPendingAction`
-     * @param action An untyped pending action
-     * @return vaultAction_ The converted deposit pending action
-     */
-    function _toDepositPendingAction(Types.PendingAction memory action)
-        public
-        pure
-        returns (Types.DepositPendingAction memory vaultAction_)
-    {
-        assembly {
-            vaultAction_ := action
-        }
-    }
-
-    /**
-     * @notice Convert a `Types.PendingAction` to a `Types.WithdrawalPendingAction`
-     * @param action An untyped pending action
-     * @return vaultAction_ The converted withdrawal pending action
-     */
-    function _toWithdrawalPendingAction(Types.PendingAction memory action)
-        public
-        pure
-        returns (Types.WithdrawalPendingAction memory vaultAction_)
-    {
-        assembly {
-            vaultAction_ := action
-        }
-    }
-
-    /**
-     * @notice Convert a `Types.PendingAction` to a `Types.LongPendingAction`
-     * @param action An untyped pending action
-     * @return longAction_ The converted long pending action
-     */
-    function _toLongPendingAction(Types.PendingAction memory action)
-        public
-        pure
-        returns (Types.LongPendingAction memory longAction_)
-    {
-        assembly {
-            longAction_ := action
-        }
-    }
-
-    /**
-     * @notice Convert a `Types.DepositPendingAction` to a `Types.PendingAction`
-     * @param action A deposit pending action
-     * @return pendingAction_ The converted untyped pending action
-     */
-    function _convertDepositPendingAction(Types.DepositPendingAction memory action)
-        public
-        pure
-        returns (Types.PendingAction memory pendingAction_)
-    {
-        assembly {
-            pendingAction_ := action
-        }
-    }
-
-    /**
-     * @notice Convert a `Types.WithdrawalPendingAction` to a `Types.PendingAction`
-     * @param action A withdrawal pending action
-     * @return pendingAction_ The converted untyped pending action
-     */
-    function _convertWithdrawalPendingAction(Types.WithdrawalPendingAction memory action)
-        public
-        pure
-        returns (Types.PendingAction memory pendingAction_)
-    {
-        assembly {
-            pendingAction_ := action
-        }
-    }
-
-    /**
-     * @notice Convert a `Types.LongPendingAction` to a `Types.PendingAction`
-     * @param action A long pending action
-     * @return pendingAction_ The converted untyped pending action
-     */
-    function _convertLongPendingAction(Types.LongPendingAction memory action)
-        public
-        pure
-        returns (Types.PendingAction memory pendingAction_)
-    {
-        assembly {
-            pendingAction_ := action
-        }
     }
 
     /**
@@ -741,29 +709,29 @@ library UsdnProtocolCoreLibrary {
      * @notice Remove the pending action from the queue if its tick version doesn't match the current tick version
      * @dev This is only applicable to `ValidateOpenPosition` pending actions
      * @param s The storage of the protocol
-     * @param user The user's address
+     * @param validator The validator's address
      * @return securityDepositValue_ The security deposit value of the removed stale pending action
      */
-    function _removeStalePendingAction(Types.Storage storage s, address user)
+    function _removeStalePendingAction(Types.Storage storage s, address validator)
         public
         returns (uint256 securityDepositValue_)
     {
-        if (s._pendingActions[user] == 0) {
+        if (s._pendingActions[validator] == 0) {
             return 0;
         }
-        (Types.PendingAction memory action, uint128 rawIndex) = _getPendingAction(s, user);
+        (Types.PendingAction memory action, uint128 rawIndex) = _getPendingAction(s, validator);
         // the position is only at risk of being liquidated while pending if it is an open position action
         if (action.action == Types.ProtocolAction.ValidateOpenPosition) {
-            Types.LongPendingAction memory openAction = _toLongPendingAction(action);
+            Types.LongPendingAction memory openAction = Utils._toLongPendingAction(action);
             uint256 version = s._tickVersion[openAction.tick];
             if (version != openAction.tickVersion) {
                 securityDepositValue_ = openAction.securityDepositValue;
                 // the position was liquidated while pending
                 // remove the stale pending action
                 s._pendingActionsQueue.clearAt(rawIndex);
-                delete s._pendingActions[user];
+                delete s._pendingActions[validator];
                 emit IUsdnProtocolEvents.StalePendingActionRemoved(
-                    user,
+                    validator,
                     Types.PositionId({
                         tick: openAction.tick,
                         tickVersion: openAction.tickVersion,
@@ -842,17 +810,6 @@ library UsdnProtocolCoreLibrary {
     }
 
     /**
-     * @notice Clear the pending action for a user
-     * @param s The storage of the protocol
-     * @param user The user's address
-     * @param rawIndex The rawIndex of the pending action in the queue
-     */
-    function _clearPendingAction(Types.Storage storage s, address user, uint128 rawIndex) public {
-        s._pendingActionsQueue.clearAt(rawIndex);
-        delete s._pendingActions[user];
-    }
-
-    /**
      * @notice Remove a stuck pending action and perform the minimal amount of cleanup necessary
      * @dev This function should only be called by the owner of the protocol, it serves as an escape hatch if a
      * pending action ever gets stuck due to something reverting unexpectedly
@@ -874,21 +831,21 @@ library UsdnProtocolCoreLibrary {
         s._pendingActionsQueue.clearAt(rawIndex);
         if (pending.action == Types.ProtocolAction.ValidateDeposit && cleanup) {
             // for pending deposits, we send back the locked assets
-            Types.DepositPendingAction memory deposit = _toDepositPendingAction(pending);
+            Types.DepositPendingAction memory deposit = Utils._toDepositPendingAction(pending);
             s._pendingBalanceVault -= Utils.toInt256(deposit.amount);
             address(s._asset).safeTransfer(to, deposit.amount);
         } else if (pending.action == Types.ProtocolAction.ValidateWithdrawal && cleanup) {
             // for pending withdrawals, we send the locked USDN
-            Types.WithdrawalPendingAction memory withdrawal = _toWithdrawalPendingAction(pending);
-            uint256 shares = _mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
+            Types.WithdrawalPendingAction memory withdrawal = Utils._toWithdrawalPendingAction(pending);
+            uint256 shares = Utils._mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
             uint256 pendingAmount =
                 FixedPointMathLib.fullMulDiv(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares);
             s._pendingBalanceVault += pendingAmount.toInt256();
             s._usdn.transferShares(to, shares);
         } else if (pending.action == Types.ProtocolAction.ValidateOpenPosition) {
             // for pending opens, we need to remove the position
-            Types.LongPendingAction memory open = _toLongPendingAction(pending);
-            (bytes32 tHash, uint256 tickVersion) = _tickHash(s, open.tick);
+            Types.LongPendingAction memory open = Utils._toLongPendingAction(pending);
+            (bytes32 tHash, uint256 tickVersion) = Utils._tickHash(s, open.tick);
             if (tickVersion == open.tickVersion) {
                 // we only need to modify storage if the pos was not liquidated already
 
@@ -914,7 +871,7 @@ library UsdnProtocolCoreLibrary {
                     tickData.totalPos -= 1;
                     if (tickData.totalPos == 0) {
                         // we removed the last position in the tick
-                        s._tickBitmap.unset(_calcBitmapIndexFromTick(s, open.tick));
+                        s._tickBitmap.unset(Utils._calcBitmapIndexFromTick(s, open.tick));
                     }
                     uint256 unadjustedTickPrice =
                         TickMath.getPriceAtTick(Utils.calcTickWithoutPenalty(open.tick, tickData.liquidationPenalty));
@@ -933,7 +890,7 @@ library UsdnProtocolCoreLibrary {
             }
         } else if (pending.action == Types.ProtocolAction.ValidateClosePosition && cleanup) {
             // for pending closes, the position is already out of the protocol
-            Types.LongPendingAction memory close = _toLongPendingAction(pending);
+            Types.LongPendingAction memory close = Utils._toLongPendingAction(pending);
             // credit the full amount to the vault to preserve the total balance invariant (like a liquidation)
             s._balanceVault += close.closeBoundedPositionValue;
         }
@@ -946,18 +903,6 @@ library UsdnProtocolCoreLibrary {
                 revert IUsdnProtocolErrors.UsdnProtocolEtherRefundFailed();
             }
         }
-    }
-
-    /**
-     * @notice Function to calculate the hash and version of a given tick
-     * @param s The storage of the protocol
-     * @param tick The tick
-     * @return hash_ The hash of the tick
-     * @return version_ The version of the tick
-     */
-    function _tickHash(Types.Storage storage s, int24 tick) public view returns (bytes32 hash_, uint256 version_) {
-        version_ = s._tickVersion[tick];
-        hash_ = tickHash(tick, version_);
     }
 
     /**
@@ -977,7 +922,7 @@ library UsdnProtocolCoreLibrary {
         uint256 lowLatencyDeadline,
         uint256 lowLatencyDelay,
         uint256 onChainDeadline
-    ) public view returns (bool actionable_) {
+    ) internal view returns (bool actionable_) {
         if (block.timestamp <= initiateTimestamp + lowLatencyDelay) {
             // the validation must happen with a low-latency oracle
             actionable_ = block.timestamp > initiateTimestamp + lowLatencyDeadline;

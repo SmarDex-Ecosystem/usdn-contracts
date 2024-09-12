@@ -95,7 +95,7 @@ interface IUsdnProtocolTypes {
      * @notice A pending action in the queue for a vault deposit
      * @param action The action type
      * @param timestamp The timestamp of the initiate action
-     * @param __unused Unused field to align the struct to `PendingAction`
+     * @param feeBps Fee for the deposit, in BPS
      * @param to The `to` address
      * @param validator The `validator` address
      * @param securityDepositValue The security deposit of the pending action
@@ -110,11 +110,11 @@ interface IUsdnProtocolTypes {
     struct DepositPendingAction {
         ProtocolAction action; // 1 byte
         uint40 timestamp; // 5 bytes
-        uint24 __unused; // 3 bytes
+        uint24 feeBps; // 3 bytes
         address to; // 20 bytes
         address validator; // 20 bytes
         uint64 securityDepositValue; // 8 bytes
-        int24 _unused; // 3 bytes
+        uint24 _unused; // 3 bytes
         uint128 amount; // 16 bytes
         uint128 assetPrice; // 16 bytes
         uint256 totalExpo; // 32 bytes
@@ -127,7 +127,7 @@ interface IUsdnProtocolTypes {
      * @notice A pending action in the queue for a vault withdrawal
      * @param action The action type
      * @param timestamp The timestamp of the initiate action
-     * @param _unused Unused field to align the struct to `PendingAction`
+     * @param feeBps Fee for the withdrawal, in BPS
      * @param to The `to` address
      * @param validator The `validator` address
      * @param securityDepositValue The security deposit of the pending action
@@ -142,7 +142,7 @@ interface IUsdnProtocolTypes {
     struct WithdrawalPendingAction {
         ProtocolAction action; // 1 byte
         uint40 timestamp; // 5 bytes
-        uint24 _unused; // 3 bytes
+        uint24 feeBps; // 3 bytes
         address to; // 20 bytes
         address validator; // 20 bytes
         uint64 securityDepositValue; // 8 bytes
@@ -256,6 +256,7 @@ interface IUsdnProtocolTypes {
      * @param validator The address that will validate the open position
      * @param amount The amount of wstETH to deposit
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
+     * @param userMaxLeverage The maximum leverage for the newly created position
      * @param securityDepositValue The value of the security deposit for the newly created pending action
      * @param permit2TokenBitfield The permit2 bitfield
      * @param currentPriceData The current price data (used to calculate the temporary leverage and entry price,
@@ -267,8 +268,25 @@ interface IUsdnProtocolTypes {
         address validator;
         uint128 amount;
         uint128 desiredLiqPrice;
+        uint256 userMaxLeverage;
         uint64 securityDepositValue;
         Permit2TokenBitfield.Bitfield permit2TokenBitfield;
+    }
+
+    /**
+     * @notice Parameters for the internal `_prepareInitiateOpenPosition` function
+     * @param validator The address of the validator
+     * @param amount The amount of wstETH to deposit
+     * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
+     * @param userMaxLeverage The maximum leverage for the newly created position
+     * @param currentPriceData The current price data
+     */
+    struct PrepareInitiateOpenPositionParams {
+        address validator;
+        uint128 amount;
+        uint128 desiredLiqPrice;
+        uint256 userMaxLeverage;
+        bytes currentPriceData;
     }
 
     /**

@@ -5,7 +5,7 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import { UsdnProtocolVaultLibrary as Vault } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
+import { UsdnProtocolUtilsLibrary as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
 /**
@@ -91,7 +91,7 @@ contract TestUsdnProtocolCalcMintUsdnShares is UsdnProtocolBaseFixture {
         require(keccak256(result) != keccak256(""), "Rust implementation returned an error");
 
         uint256 calcMintUsdnSharesRust = abi.decode(result, (uint256));
-        uint256 calcMintUsdnSharesSol = Vault._calcMintUsdnShares(amount, vaultBalance, usdnTotalShares);
+        uint256 calcMintUsdnSharesSol = Utils._calcMintUsdnShares(amount, vaultBalance, usdnTotalShares);
         assertEq(
             calcMintUsdnSharesSol,
             calcMintUsdnSharesRust,
@@ -107,6 +107,6 @@ contract TestUsdnProtocolCalcMintUsdnShares is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_calcMintUsdnSharesBalanceZero() public {
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolEmptyVault.selector);
-        Vault._calcMintUsdnShares(1, 0, 1);
+        Utils._calcMintUsdnShares(1, 0, 1);
     }
 }

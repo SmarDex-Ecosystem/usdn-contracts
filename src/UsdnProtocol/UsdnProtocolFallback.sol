@@ -15,7 +15,7 @@ import { HugeUint } from "../libraries/HugeUint.sol";
 import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./libraries/UsdnProtocolCoreLibrary.sol";
-import { UsdnProtocolUtils as Utils } from "./libraries/UsdnProtocolUtils.sol";
+import { UsdnProtocolUtilsLibrary as Utils } from "./libraries/UsdnProtocolUtilsLibrary.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "./libraries/UsdnProtocolVaultLibrary.sol";
 
 contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
@@ -31,12 +31,22 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function previewWithdraw(uint256 usdnShares, uint256 price, uint128 timestamp)
+    function previewWithdraw(uint256 usdnShares, uint128 price, uint128 timestamp)
         external
         view
         returns (uint256 assetExpected_)
     {
         return Vault.previewWithdraw(s, usdnShares, price, timestamp);
+    }
+
+    /// @inheritdoc IUsdnProtocolFallback
+    function refundSecurityDeposit(address payable validator) external {
+        uint256 securityDepositValue = Core._removeStalePendingAction(s, validator);
+        if (securityDepositValue > 0) {
+            Utils._refundEther(securityDepositValue, validator);
+        } else {
+            revert IUsdnProtocolErrors.UsdnProtocolNotEligibleForRefund(validator);
+        }
     }
 
     /// @inheritdoc IUsdnProtocolFallback
@@ -371,14 +381,14 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
 
     /// @inheritdoc IUsdnProtocolFallback
     function getTickData(int24 tick) external view returns (TickData memory) {
-        bytes32 cachedTickHash = Core.tickHash(tick, s._tickVersion[tick]);
+        bytes32 cachedTickHash = Utils.tickHash(tick, s._tickVersion[tick]);
         return s._tickData[cachedTickHash];
     }
 
     /// @inheritdoc IUsdnProtocolFallback
     function getCurrentLongPosition(int24 tick, uint256 index) external view returns (Position memory) {
         uint256 version = s._tickVersion[tick];
-        bytes32 cachedTickHash = Core.tickHash(tick, version);
+        bytes32 cachedTickHash = Utils.tickHash(tick, version);
         return s._longPositions[cachedTickHash][index];
     }
 

@@ -247,7 +247,14 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
 
         wstETH.mintAndApprove(address(this), POSITION_AMOUNT, address(protocol), type(uint256).max);
         (, posId) = protocol.initiateOpenPosition(
-            POSITION_AMOUNT, params.initialPrice / 2, address(this), USER_1, NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
+            POSITION_AMOUNT,
+            params.initialPrice / 2,
+            protocol.getMaxLeverage(),
+            address(this),
+            USER_1,
+            NO_PERMIT2,
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
 
         vm.expectRevert(UsdnProtocolPositionNotValidated.selector);
@@ -451,6 +458,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         uint256 totalExpoBefore = protocol.getTotalExpo();
         uint256 balanceLongBefore = protocol.getBalanceLong();
         uint256 assetToTransfer = protocol.i_assetToRemove(
+            balanceLongBefore,
             params.initialPrice,
             protocol.getEffectivePriceForTick(
                 protocol.i_calcTickWithoutPenalty(posId.tick),
@@ -544,6 +552,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         (, rebalancerPos_) = protocol.initiateOpenPosition(
             2 * userDeposit,
             params.initialPrice / 2,
+            protocol.getMaxLeverage(),
             address(rebalancer),
             payable(address(rebalancer)),
             NO_PERMIT2,

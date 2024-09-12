@@ -44,6 +44,7 @@ contract TestUsdnProtocolNegativeLongTradingExpo is UsdnProtocolBaseIntegrationF
         (, posIdToClose) = protocol.initiateOpenPosition{ value: securityDeposit + oracleFee }(
             amountInPosition,
             DEFAULT_PARAMS.initialPrice - (DEFAULT_PARAMS.initialPrice / 2),
+            protocol.getMaxLeverage(),
             address(this),
             USER_1, // so we can have 2 initiates at the same time
             NO_PERMIT2,
@@ -147,6 +148,7 @@ contract TestUsdnProtocolNegativeLongTradingExpo is UsdnProtocolBaseIntegrationF
         (, PositionId memory posId) = protocol.initiateOpenPosition{ value: securityDeposit + oracleFee }(
             2 ether,
             DEFAULT_PARAMS.initialPrice - (DEFAULT_PARAMS.initialPrice / 2),
+            protocol.getMaxLeverage(),
             address(this),
             payable(this),
             NO_PERMIT2,

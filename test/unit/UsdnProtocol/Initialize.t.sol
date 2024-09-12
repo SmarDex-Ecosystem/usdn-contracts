@@ -85,7 +85,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
 
         vm.expectEmit();
-        emit InitiatedDeposit(address(this), address(this), INITIAL_DEPOSIT, block.timestamp, 0);
+        emit InitiatedDeposit(address(this), address(this), INITIAL_DEPOSIT, 0, block.timestamp, 0);
         vm.expectEmit();
         emit ValidatedDeposit(
             protocol.DEAD_ADDRESS(), protocol.DEAD_ADDRESS(), 0, protocol.MIN_USDN_SUPPLY(), block.timestamp
@@ -242,7 +242,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
 
         vm.expectEmit();
-        emit InitiatedDeposit(address(this), address(this), INITIAL_DEPOSIT, block.timestamp, 0);
+        emit InitiatedDeposit(address(this), address(this), INITIAL_DEPOSIT, 0, block.timestamp, 0);
         vm.expectEmit();
         emit ValidatedDeposit(
             protocol.DEAD_ADDRESS(), protocol.DEAD_ADDRESS(), 0, protocol.MIN_USDN_SUPPLY(), block.timestamp

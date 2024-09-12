@@ -36,6 +36,7 @@ contract TestForkUsdnProtocolInitiateOpenPositionPermit2 is UsdnProtocolBaseInte
         (bool success,) = protocol.initiateOpenPosition{ value: protocol.getSecurityDepositValue() }(
             DEPOSIT_AMOUNT,
             params.initialPrice / 2,
+            protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
             Permit2TokenBitfield.Bitfield.wrap(Permit2TokenBitfield.ASSET_MASK),

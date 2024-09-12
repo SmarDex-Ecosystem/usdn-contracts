@@ -22,7 +22,7 @@ interface IUsdnProtocolFallback {
      * @param timestamp The timestamp of the operation
      * @return assetExpected_ The expected amount of assets to be received
      */
-    function previewWithdraw(uint256 usdnShares, uint256 price, uint128 timestamp)
+    function previewWithdraw(uint256 usdnShares, uint128 price, uint128 timestamp)
         external
         view
         returns (uint256 assetExpected_);
@@ -39,6 +39,13 @@ interface IUsdnProtocolFallback {
         external
         view
         returns (uint256 usdnSharesExpected_, uint256 sdexToBurn_);
+
+    /**
+     * @notice Refund the security deposit to a validator of a liquidated initiated long position
+     * @param validator The address of the validator
+     * @dev The security deposit is always sent to the validator
+     */
+    function refundSecurityDeposit(address payable validator) external;
 
     /* -------------------------------------------------------------------------- */
     /*                               Admin functions                              */
