@@ -640,7 +640,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint256 longBalance,
         uint256 vaultBalance,
         int256 remainingCollateral
-    ) public returns (uint256 longBalance_, uint256 vaultBalance_) {
+    ) public returns (uint256 longBalance_, uint256 vaultBalance_, Types.RebalancerAction rebalancerAction_) {
         return Long._triggerRebalancer(s, lastPrice, longBalance, vaultBalance, remainingCollateral);
     }
 
@@ -686,20 +686,13 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint16 liquidatedTicks,
         int256 remainingCollateral,
         bool rebased,
-        bool rebalancerTriggered,
+        Types.RebalancerAction rebalancerAction,
         ProtocolAction action,
         bytes memory rebaseCallbackResult,
         bytes memory priceData
     ) external {
         Long._sendRewardsToLiquidator(
-            s,
-            liquidatedTicks,
-            remainingCollateral,
-            rebased,
-            rebalancerTriggered,
-            action,
-            rebaseCallbackResult,
-            priceData
+            s, liquidatedTicks, remainingCollateral, rebased, rebalancerAction, action, rebaseCallbackResult, priceData
         );
     }
 

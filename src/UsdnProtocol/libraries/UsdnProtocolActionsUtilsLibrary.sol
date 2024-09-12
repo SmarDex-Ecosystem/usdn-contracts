@@ -318,8 +318,8 @@ library UsdnProtocolActionsUtilsLibrary {
     }
 
     /**
-     * @notice Calculate how much wstETH must be removed from the long balance due to a position closing
-     * @dev The amount is bound by the amount of wstETH available on the long side
+     * @notice Calculate how much assets must be removed from the long balance due to a position closing
+     * @dev The amount is bound by the amount of assets available on the long side
      * @param balanceLong The balance of long positions (with asset decimals)
      * @param price The price to use for the position value calculation
      * @param liqPriceWithoutPenalty The liquidation price without penalty
