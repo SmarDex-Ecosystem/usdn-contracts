@@ -88,6 +88,8 @@ library TickMath {
     /**
      * @notice Get the tick corresponding to a price, rounded down towards negative infinity
      * @dev log_1.0001(price) = ln(price)/ln(1.0001) gives the tick
+     * Note: for small prices (< ~1.025 gwei), the next tick can sometimes give a price
+     * that is exactly equal to the input
      * @param price The price
      * @return tick_ The largest tick whose price is less than or equal to the given price
      */
