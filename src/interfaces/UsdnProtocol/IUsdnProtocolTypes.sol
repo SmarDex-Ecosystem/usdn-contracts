@@ -308,6 +308,7 @@ interface IUsdnProtocolTypes {
         uint256 userMaxLeverage;
         bytes currentPriceData;
     }
+
     /**
      * @notice Parameters for the internal `_prepareClosePositionData` function
      * @param owner The owner of the position
@@ -318,7 +319,6 @@ interface IUsdnProtocolTypes {
      * @param userMinPrice The minimum price at which the position can be closed
      * @param currentPriceData The current price data
      */
-
     struct PrepareInitiateClosePositionParams {
         address owner;
         address to;
