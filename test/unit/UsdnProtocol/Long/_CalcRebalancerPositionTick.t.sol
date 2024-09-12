@@ -170,46 +170,6 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
     }
 
     /**
-     * @custom:scenario Calculate the position tick to use with a rebalancer max leverage
-     * below the protocol min leverage
-     * @custom:given The missing trading expo is 1 wei
-     * @custom:and A rebalancer max leverage below the protocol min leverage
-     * @custom:and An amount of 1 ether
-     * @custom:when _calcRebalancerPositionTick is called with a rebalancer leverage lower than
-     * the protocol's min leverage
-     * @custom:then The result is the expected tick capped by the protocol's min leverage
-     */
-    function test_calcRebalancerPositionTickCappedByTheRebalancerMaxLeverageBelowTheMinLeverage() public view {
-        uint256 rebalancerMaxLeverage = protocol.getMinLeverage() - 1;
-        uint256 minLeverage = rebalancer.getPositionMinLeverage();
-        uint256 totalExpo = vaultBalance + longBalance - 1;
-        uint128 amount = 1 ether;
-
-        // calculate the lowest usable trading expo to stay above the min leverage
-        uint256 lowestUsableTradingExpo = amount * minLeverage / 10 ** protocol.LEVERAGE_DECIMALS() - amount;
-        (int24 expectedTick,) = protocol.i_getTickFromDesiredLiqPrice(
-            protocol.i_calcLiqPriceFromTradingExpo(DEFAULT_PARAMS.initialPrice, amount, lowestUsableTradingExpo),
-            DEFAULT_PARAMS.initialPrice,
-            totalExpo - longBalance,
-            protocol.getLiqMultiplierAccumulator(),
-            _tickSpacing,
-            protocol.getLiquidationPenalty()
-        );
-
-        int24 tick = protocol.i_calcRebalancerPositionTick(
-            DEFAULT_PARAMS.initialPrice,
-            amount,
-            rebalancerMaxLeverage,
-            minLeverage,
-            totalExpo,
-            longBalance,
-            vaultBalance,
-            protocol.getLiqMultiplierAccumulator()
-        );
-        assertEq(tick, expectedTick, "The result should be equal to the expected tick");
-    }
-
-    /**
      * @custom:scenario The sentinel value is returned if there is no trading expo to fill
      * @custom:given The trading expo is equal to the vault balance
      * @custom:and An amount of 1 ether

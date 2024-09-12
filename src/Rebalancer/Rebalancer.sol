@@ -585,7 +585,11 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
     /// @inheritdoc IRebalancer
     function setPositionMaxLeverage(uint256 newMaxLeverage) external onlyOwner {
-        if (newMaxLeverage < _usdnProtocol.getMinLeverage() || newMaxLeverage > _usdnProtocol.getMaxLeverage()) {
+        if (newMaxLeverage < _usdnProtocol.getMinLeverage()) {
+            revert RebalancerInvalidMaxLeverage();
+        } else if (newMaxLeverage > _usdnProtocol.getMaxLeverage()) {
+            revert RebalancerInvalidMaxLeverage();
+        } else if (newMaxLeverage <= _minLeverage) {
             revert RebalancerInvalidMaxLeverage();
         }
 

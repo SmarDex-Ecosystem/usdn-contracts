@@ -1162,11 +1162,9 @@ library UsdnProtocolLongLibrary {
     ) public view returns (Types.RebalancerPositionData memory posData_) {
         Types.CalcRebalancerPositionTickData memory data;
 
-        {
-            data.protocolMaxLeverage = s._maxLeverage;
-            if (rebalancerMaxLeverage > data.protocolMaxLeverage) {
-                rebalancerMaxLeverage = data.protocolMaxLeverage;
-            }
+        data.protocolMaxLeverage = s._maxLeverage;
+        if (rebalancerMaxLeverage > data.protocolMaxLeverage) {
+            rebalancerMaxLeverage = data.protocolMaxLeverage;
         }
 
         data.longImbalanceTargetBps = s._longImbalanceTargetBps;
