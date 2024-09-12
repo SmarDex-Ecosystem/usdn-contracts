@@ -931,8 +931,12 @@ library UsdnProtocolCoreLibrary {
         }
     }
 
+    /**
+     * @notice Calculate the maximum value of the long balance for the provided total expo
+     * @param totalExpo The total expo of the long side of the protocol
+     * @return maxLongBalance_ The maximum value the long balance can reach
+     */
     function _calcMaxLongBalance(uint256 totalExpo) internal pure returns (uint256 maxLongBalance_) {
-        // cast is safe as totalExpo cannot be bigger than int256.max
         maxLongBalance_ =
             totalExpo * (Constants.BPS_DIVISOR - Constants.MIN_LONG_TRADING_EXPO_BPS) / Constants.BPS_DIVISOR;
     }
