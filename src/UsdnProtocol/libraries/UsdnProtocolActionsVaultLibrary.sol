@@ -399,7 +399,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @param user The address of the user initiating the deposit
      * @param to The address to receive the USDN tokens
      * @param validator The address that will validate the deposit
-     * @param amount The amount of wstETH to deposit
+     * @param amount The amount of assets to deposit
      * @param securityDepositValue The value of the security deposit for the newly created pending action
      * @param permit2TokenBitfield The permit2 bitfield
      * @param currentPriceData The current price data

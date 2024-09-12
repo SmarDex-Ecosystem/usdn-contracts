@@ -115,7 +115,7 @@ library UsdnProtocolCoreLibrary {
      * @param price The current asset price
      */
     function _createInitialDeposit(Types.Storage storage s, uint128 amount, uint128 price) public {
-        // transfer the wstETH for the deposit
+        // transfer the assets for the deposit
         address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
         s._balanceVault += amount;
         emit IUsdnProtocolEvents.InitiatedDeposit(msg.sender, msg.sender, amount, 0, block.timestamp, 0);
@@ -159,7 +159,7 @@ library UsdnProtocolCoreLibrary {
         int24 tick,
         uint128 totalExpo
     ) public {
-        // transfer the wstETH for the long
+        // transfer the assets for the long
         address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
 
         Types.PositionId memory posId;
