@@ -363,7 +363,7 @@ library UsdnProtocolCoreLibrary {
         view
         returns (uint256 expo_)
     {
-        // cast is safe as the returned cannot be bigger than total expo
+        // cast is safe as longAssetAvailableWithFunding cannot return a value bigger than the total expo
         expo_ = uint256(s._totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(s, currentPrice, timestamp)));
     }
 
