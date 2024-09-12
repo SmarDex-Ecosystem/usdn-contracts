@@ -14,7 +14,6 @@ import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocol
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { HugeUint } from "../../libraries/HugeUint.sol";
-import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
 import { UsdnProtocolActionsVaultLibrary as ActionsVault } from "./UsdnProtocolActionsVaultLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
@@ -29,7 +28,6 @@ library UsdnProtocolActionsUtilsLibrary {
     using LibBitmap for LibBitmap.Bitmap;
     using SignedMath for int256;
     using HugeUint for HugeUint.Uint512;
-    using Permit2TokenBitfield for Permit2TokenBitfield.Bitfield;
 
     /* -------------------------------------------------------------------------- */
     /*                              Public functions                              */

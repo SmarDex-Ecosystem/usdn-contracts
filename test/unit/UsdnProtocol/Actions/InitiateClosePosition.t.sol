@@ -252,7 +252,6 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             protocol.getMaxLeverage(),
             address(this),
             USER_1,
-            NO_PERMIT2,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -555,7 +554,6 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             protocol.getMaxLeverage(),
             address(rebalancer),
             payable(address(rebalancer)),
-            NO_PERMIT2,
             abi.encode(params.initialPrice),
             EMPTY_PREVIOUS_DATA
         );

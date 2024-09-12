@@ -57,12 +57,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(posId.tick, posId.tickVersion, 0, 0, 0);
         protocol.initiateDeposit(
-            1 ether,
-            address(this),
-            payable(address(this)),
-            NO_PERMIT2,
-            abi.encode(effectivePriceForTick),
-            EMPTY_PREVIOUS_DATA
+            1 ether, address(this), payable(address(this)), abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -224,7 +219,6 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             abi.encode(effectivePriceForTick),
             EMPTY_PREVIOUS_DATA
         );
@@ -593,7 +587,6 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             priceData,
             EMPTY_PREVIOUS_DATA
         );

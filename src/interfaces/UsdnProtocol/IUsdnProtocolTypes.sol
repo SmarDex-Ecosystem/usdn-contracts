@@ -6,7 +6,6 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
 import { DoubleEndedQueue } from "../../libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../../libraries/HugeUint.sol";
-import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 import { IBaseLiquidationRewardsManager } from "../OracleMiddleware/IBaseLiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IBaseRebalancer } from "../Rebalancer/IBaseRebalancer.sol";
@@ -258,7 +257,6 @@ interface IUsdnProtocolTypes {
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
      * @param userMaxLeverage The maximum leverage for the newly created position
      * @param securityDepositValue The value of the security deposit for the newly created pending action
-     * @param permit2TokenBitfield The permit2 bitfield
      * @param currentPriceData The current price data (used to calculate the temporary leverage and entry price,
      * pending validation)
      */
@@ -270,7 +268,6 @@ interface IUsdnProtocolTypes {
         uint128 desiredLiqPrice;
         uint256 userMaxLeverage;
         uint64 securityDepositValue;
-        Permit2TokenBitfield.Bitfield permit2TokenBitfield;
     }
 
     /**

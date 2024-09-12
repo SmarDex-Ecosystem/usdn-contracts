@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
+import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
+import { IRouterFallback } from "../../interfaces/IRouterFallback.sol";
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolCore } from "../../interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
@@ -115,8 +117,12 @@ library UsdnProtocolCoreLibrary {
      * @param price The current asset price
      */
     function _createInitialDeposit(Types.Storage storage s, uint128 amount, uint128 price) public {
-        // transfer the wstETH for the deposit
-        address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
+        if (ERC165Checker.supportsInterface(msg.sender, type(IRouterFallback).interfaceId)) {
+            Utils.transferAssetFallback(s._asset, amount);
+        } else {
+            // transfer the wstETH for the deposit
+            address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
+        }
         s._balanceVault += amount;
         emit IUsdnProtocolEvents.InitiatedDeposit(msg.sender, msg.sender, amount, 0, block.timestamp, 0);
 
@@ -159,8 +165,12 @@ library UsdnProtocolCoreLibrary {
         int24 tick,
         uint128 totalExpo
     ) public {
-        // transfer the wstETH for the long
-        address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
+        if (ERC165Checker.supportsInterface(msg.sender, type(IRouterFallback).interfaceId)) {
+            Utils.transferAssetFallback(s._asset, amount);
+        } else {
+            // transfer the wstETH for the long
+            address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
+        }
 
         Types.PositionId memory posId;
         posId.tick = tick;

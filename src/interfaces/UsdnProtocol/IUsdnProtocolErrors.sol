@@ -198,4 +198,10 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the vault balance is zero, and the calculation cannot be performed
     error UsdnProtocolEmptyVault();
+
+    /// @dev Indicates that the Sdex transfer failed
+    error UsdnProtocolSdexBurnFailed();
+
+    /// @dev Indicates that the asset transfer failed
+    error UsdnProtocolAssetTransferFailed();
 }

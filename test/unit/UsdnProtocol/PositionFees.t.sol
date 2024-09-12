@@ -68,7 +68,6 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             priceData,
             EMPTY_PREVIOUS_DATA
         );

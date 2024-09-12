@@ -106,7 +106,6 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
             protocol.getMaxLeverage(),
             USER_1,
             USER_1,
-            NO_PERMIT2,
             hex"beef",
             EMPTY_PREVIOUS_DATA
         );
@@ -117,7 +116,6 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
             protocol.getMaxLeverage(),
             USER_2,
             USER_2,
-            NO_PERMIT2,
             hex"beef",
             EMPTY_PREVIOUS_DATA
         );
@@ -128,7 +126,6 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
             protocol.getMaxLeverage(),
             USER_3,
             USER_3,
-            NO_PERMIT2,
             hex"beef",
             EMPTY_PREVIOUS_DATA
         );

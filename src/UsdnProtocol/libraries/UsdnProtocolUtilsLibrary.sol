@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
+import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
@@ -8,6 +9,8 @@ import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IFeeCollectorCallback } from "../../interfaces/UsdnProtocol/IFeeCollectorCallback.sol";
+
+import { IRouterFallback } from "../../interfaces/IRouterFallback.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -614,6 +617,34 @@ library UsdnProtocolUtilsLibrary {
         // price = unadjustedPrice * assetPrice * (totalExpo - balanceLong) / accumulator
         HugeUint.Uint512 memory numerator = HugeUint.mul(unadjustedPrice, assetPrice * longTradingExpo);
         price_ = numerator.div(accumulator).toUint128();
+    }
+
+    /**
+     * @notice Transfer the SDEX to burn to the dead address and validate the transfer
+     * @param sdex The SDEX token
+     * @param sdexToBurn The amount of SDEX to burn
+     */
+    function transferSdexBurnFallback(IERC20Metadata sdex, uint256 sdexToBurn) internal {
+        uint256 balanceBefore = sdex.balanceOf(Constants.DEAD_ADDRESS);
+        IRouterFallback(msg.sender).transferSdexCallback(sdex, sdexToBurn);
+        uint256 balanceAfter = sdex.balanceOf(Constants.DEAD_ADDRESS);
+        if (balanceAfter != balanceBefore + sdexToBurn) {
+            revert IUsdnProtocolErrors.UsdnProtocolSdexBurnFailed();
+        }
+    }
+
+    /**
+     * @notice Transfer the asset to the caller and validate the transfer
+     * @param asset The asset to transfer
+     * @param amount The amount of asset to transfer
+     */
+    function transferAssetFallback(IERC20Metadata asset, uint256 amount) internal {
+        uint256 balanceBefore = asset.balanceOf(address(this));
+        IRouterFallback(msg.sender).transferAssetCallback(asset, amount);
+        uint256 balanceAfter = asset.balanceOf(address(this));
+        if (balanceAfter != balanceBefore + amount) {
+            revert IUsdnProtocolErrors.UsdnProtocolAssetTransferFailed();
+        }
     }
 
     /// @notice See {IUsdnProtocolLong}

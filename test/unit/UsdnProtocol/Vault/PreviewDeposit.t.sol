@@ -36,7 +36,7 @@ contract TestUsdnProtocolPreviewDeposit is UsdnProtocolBaseFixture {
         uint256 sdexBalanceBefore = sdex.balanceOf(address(this));
 
         protocol.initiateDeposit(
-            amount.toUint128(), address(this), payable(address(this)), NO_PERMIT2, currentPrice, EMPTY_PREVIOUS_DATA
+            amount.toUint128(), address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
         );
 
         // calculate the expected USDN and SDEX tokens to be minted and burned

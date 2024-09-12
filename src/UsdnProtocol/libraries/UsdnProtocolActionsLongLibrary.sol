@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
+import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
+import { IRouterFallback } from "../../interfaces/IRouterFallback.sol";
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocolActions } from "../../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { HugeUint } from "../../libraries/HugeUint.sol";
-import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 import { TickMath } from "../../libraries/TickMath.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolActionsVaultLibrary as ActionsVault } from "./UsdnProtocolActionsVaultLibrary.sol";
@@ -24,7 +25,6 @@ library UsdnProtocolActionsLongLibrary {
     using SafeTransferLib for address;
     using SafeCast for uint256;
     using HugeUint for HugeUint.Uint512;
-    using Permit2TokenBitfield for Permit2TokenBitfield.Bitfield;
     using LibBitmap for LibBitmap.Bitmap;
 
     /**
@@ -273,8 +273,8 @@ library UsdnProtocolActionsLongLibrary {
         amountToRefund_ =
             Core._createOpenPendingAction(s, params.to, params.validator, params.securityDepositValue, data);
 
-        if (params.permit2TokenBitfield.useForAsset()) {
-            address(s._asset).permit2TransferFrom(params.user, address(this), params.amount);
+        if (ERC165Checker.supportsInterface(msg.sender, type(IRouterFallback).interfaceId)) {
+            Utils.transferAssetFallback(s._asset, params.amount);
         } else {
             // slither-disable-next-line arbitrary-send-erc20
             address(s._asset).safeTransferFrom(params.user, address(this), params.amount);

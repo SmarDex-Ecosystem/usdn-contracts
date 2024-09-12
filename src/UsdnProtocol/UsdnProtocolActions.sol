@@ -2,7 +2,6 @@
 pragma solidity 0.8.26;
 
 import { IUsdnProtocolActions } from "../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
-import { Permit2TokenBitfield } from "../libraries/Permit2TokenBitfield.sol";
 import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./libraries/UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./libraries/UsdnProtocolActionsUtilsLibrary.sol";
@@ -15,13 +14,10 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
         uint128 amount,
         address to,
         address payable validator,
-        Permit2TokenBitfield.Bitfield permit2TokenBitfield,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (bool success_) {
-        return ActionsVault.initiateDeposit(
-            s, amount, to, validator, permit2TokenBitfield, currentPriceData, previousActionsData
-        );
+        return ActionsVault.initiateDeposit(s, amount, to, validator, currentPriceData, previousActionsData);
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -60,7 +56,6 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
         uint256 userMaxLeverage,
         address to,
         address payable validator,
-        Permit2TokenBitfield.Bitfield permit2TokenBitfield,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (bool success_, PositionId memory posId_) {
@@ -71,8 +66,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
             amount: amount,
             desiredLiqPrice: desiredLiqPrice,
             userMaxLeverage: userMaxLeverage,
-            securityDepositValue: s._securityDepositValue,
-            permit2TokenBitfield: permit2TokenBitfield
+            securityDepositValue: s._securityDepositValue
         });
 
         return ActionsLong.initiateOpenPosition(s, params, currentPriceData, previousActionsData);

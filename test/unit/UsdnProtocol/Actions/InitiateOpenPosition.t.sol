@@ -125,7 +125,6 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             protocol.getMaxLeverage(),
             to,
             payable(validator),
-            NO_PERMIT2,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
@@ -229,7 +228,6 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
@@ -269,7 +267,6 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             abi.encode(params.initialPrice / 3),
             EMPTY_PREVIOUS_DATA
         );
@@ -302,7 +299,6 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             leverage,
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
@@ -323,7 +319,6 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             leverage,
             address(0),
             payable(address(this)),
-            NO_PERMIT2,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
@@ -344,7 +339,6 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             leverage,
             address(this),
             payable(address(0)),
-            NO_PERMIT2,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
@@ -364,7 +358,6 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             leverage,
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
@@ -390,7 +383,6 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             leverage,
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
@@ -428,7 +420,6 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             leverage,
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
@@ -456,7 +447,6 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -479,7 +469,6 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -503,7 +492,6 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
                 leverage,
                 address(this),
                 payable(address(this)),
-                NO_PERMIT2,
                 abi.encode(CURRENT_PRICE),
                 EMPTY_PREVIOUS_DATA
             );
@@ -520,7 +508,6 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
@@ -542,7 +529,6 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             2 * 10 ** Constants.LEVERAGE_DECIMALS,
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );

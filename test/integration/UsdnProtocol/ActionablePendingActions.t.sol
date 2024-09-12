@@ -49,14 +49,7 @@ contract TestUsdnProtocolActionablePendingActions is UsdnProtocolBaseIntegration
             oracleMiddleware.validationCost(previousData.priceData[2], Types.ProtocolAction.ValidateDeposit);
         assertEq(validationCost, 1, "validation cost");
         protocol.initiateOpenPosition{ value: securityDeposit + validationCost }(
-            2 ether,
-            params.initialPrice / 2,
-            protocol.getMaxLeverage(),
-            address(this),
-            payable(this),
-            NO_PERMIT2,
-            "",
-            previousData
+            2 ether, params.initialPrice / 2, protocol.getMaxLeverage(), address(this), payable(this), "", previousData
         );
         // check that one pending action was validated, only one should remain
         (Types.PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(this));
@@ -90,20 +83,13 @@ contract TestUsdnProtocolActionablePendingActions is UsdnProtocolBaseIntegration
         // create a pending deposit
         mockChainlinkOnChain.setLastPublishTime(initialTimestamp);
         vm.prank(USER_1);
-        protocol.initiateDeposit{ value: securityDeposit }(2 ether, USER_1, USER_1, NO_PERMIT2, "", EMPTY_PREVIOUS_DATA);
+        protocol.initiateDeposit{ value: securityDeposit }(2 ether, USER_1, USER_1, "", EMPTY_PREVIOUS_DATA);
         // create a pending open position a bit later
         skip(protocol.getOnChainValidatorDeadline() / 2);
         mockChainlinkOnChain.setLastPublishTime(block.timestamp);
         vm.prank(USER_2);
         protocol.initiateOpenPosition{ value: securityDeposit }(
-            2 ether,
-            params.initialPrice / 2,
-            protocol.getMaxLeverage(),
-            USER_2,
-            USER_2,
-            NO_PERMIT2,
-            "",
-            EMPTY_PREVIOUS_DATA
+            2 ether, params.initialPrice / 2, protocol.getMaxLeverage(), USER_2, USER_2, "", EMPTY_PREVIOUS_DATA
         );
         // create a pending deposit a bit later
         vm.warp(initialTimestamp + protocol.getOnChainValidatorDeadline() + 1);
@@ -113,7 +99,7 @@ contract TestUsdnProtocolActionablePendingActions is UsdnProtocolBaseIntegration
         mockPyth.setLastPublishTime(block.timestamp + oracleMiddleware.getValidationDelay());
         mockPyth.setPrice(int64(ethPrice));
         vm.prank(USER_3);
-        protocol.initiateDeposit{ value: securityDeposit }(2 ether, USER_3, USER_3, NO_PERMIT2, "", EMPTY_PREVIOUS_DATA);
+        protocol.initiateDeposit{ value: securityDeposit }(2 ether, USER_3, USER_3, "", EMPTY_PREVIOUS_DATA);
         // wait until the first and third are actionable
         vm.warp(initialTimestamp + oracleMiddleware.getLowLatencyDelay() + protocol.getOnChainValidatorDeadline() + 1);
         mockChainlinkOnChain.setLatestRoundData(10, ethPrice, block.timestamp, 10);

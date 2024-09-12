@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
+import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
+import { IRouterFallback } from "../../interfaces/IRouterFallback.sol";
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolActions } from "../../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
@@ -13,7 +16,6 @@ import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocol
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "../../libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../../libraries/HugeUint.sol";
-import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
@@ -29,7 +31,6 @@ library UsdnProtocolActionsVaultLibrary {
     using LibBitmap for LibBitmap.Bitmap;
     using SignedMath for int256;
     using HugeUint for HugeUint.Uint512;
-    using Permit2TokenBitfield for Permit2TokenBitfield.Bitfield;
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
     /**
@@ -86,7 +87,6 @@ library UsdnProtocolActionsVaultLibrary {
         uint128 amount,
         address to,
         address payable validator,
-        Permit2TokenBitfield.Bitfield permit2TokenBitfield,
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData
     ) public returns (bool success_) {
@@ -97,9 +97,8 @@ library UsdnProtocolActionsVaultLibrary {
         uint256 balanceBefore = address(this).balance;
 
         uint256 validatorAmount;
-        (validatorAmount, success_) = _initiateDeposit(
-            s, msg.sender, to, validator, amount, securityDepositValue, permit2TokenBitfield, currentPriceData
-        );
+        (validatorAmount, success_) =
+            _initiateDeposit(s, msg.sender, to, validator, amount, securityDepositValue, currentPriceData);
 
         uint256 amountToRefund;
         if (success_) {
@@ -401,7 +400,6 @@ library UsdnProtocolActionsVaultLibrary {
      * @param validator The address that will validate the deposit
      * @param amount The amount of wstETH to deposit
      * @param securityDepositValue The value of the security deposit for the newly created pending action
-     * @param permit2TokenBitfield The permit2 bitfield
      * @param currentPriceData The current price data
      * @return amountToRefund_ If there are pending liquidations we'll refund the `securityDepositValue`,
      * else we'll only refund the security deposit value of the stale pending action
@@ -414,7 +412,6 @@ library UsdnProtocolActionsVaultLibrary {
         address validator,
         uint128 amount,
         uint64 securityDepositValue,
-        Permit2TokenBitfield.Bitfield permit2TokenBitfield,
         bytes calldata currentPriceData
     ) public returns (uint256 amountToRefund_, bool isInitiated_) {
         if (to == address(0)) {
@@ -436,20 +433,17 @@ library UsdnProtocolActionsVaultLibrary {
 
         amountToRefund_ = _createDepositPendingAction(s, to, validator, securityDepositValue, amount, data);
 
-        if (data.sdexToBurn > 0) {
-            // send SDEX to the dead address
-            if (permit2TokenBitfield.useForSdex()) {
-                address(s._sdex).permit2TransferFrom(user, Constants.DEAD_ADDRESS, data.sdexToBurn);
-            } else {
+        if (ERC165Checker.supportsInterface(msg.sender, type(IRouterFallback).interfaceId)) {
+            if (data.sdexToBurn > 0) {
+                IERC20Metadata Sdex = s._sdex;
+                Utils.transferSdexBurnFallback(Sdex, data.sdexToBurn);
+            }
+            Utils.transferAssetFallback(s._asset, amount);
+        } else {
+            if (data.sdexToBurn > 0) {
                 // slither-disable-next-line arbitrary-send-erc20
                 address(s._sdex).safeTransferFrom(user, Constants.DEAD_ADDRESS, data.sdexToBurn);
             }
-        }
-
-        // transfer assets
-        if (permit2TokenBitfield.useForAsset()) {
-            address(s._asset).permit2TransferFrom(user, address(this), amount);
-        } else {
             // slither-disable-next-line arbitrary-send-erc20
             address(s._asset).safeTransferFrom(user, address(this), amount);
         }

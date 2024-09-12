@@ -6,8 +6,6 @@ import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 
-import { Permit2TokenBitfield } from "../../../src/libraries/Permit2TokenBitfield.sol";
-
 /**
  * @custom:feature Initiate a long position by using Permit2 for the transfer of wstETH
  * @custom:background The test contract has 1M wstETH and has approved Permit2 to spend all of them
@@ -39,7 +37,6 @@ contract TestForkUsdnProtocolInitiateOpenPositionPermit2 is UsdnProtocolBaseInte
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
-            Permit2TokenBitfield.Bitfield.wrap(Permit2TokenBitfield.ASSET_MASK),
             "",
             EMPTY_PREVIOUS_DATA
         );
