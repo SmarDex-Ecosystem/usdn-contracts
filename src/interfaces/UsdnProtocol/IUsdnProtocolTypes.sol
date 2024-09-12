@@ -60,6 +60,27 @@ interface IUsdnProtocolTypes {
     }
 
     /**
+     * @notice Classifies how far in its logic the `_triggerRebalancer` function made it to
+     * @dev Used to estimate the gas spent by the function call to more accurately calculate liquidation rewards
+     * @param None The rebalancer is not set
+     * @param NoImbalance The protocol imbalance is not reached
+     * @param PendingLiquidation The rebalancer position should be liquidated
+     * @param NoCloseNoOpen The action neither closes nor opens a position
+     * @param Closed The action only closes a position
+     * @param Opened The action only opens a position
+     * @param ClosedOpened The action closes and opens a position
+     */
+    enum RebalancerAction {
+        None,
+        NoImbalance,
+        PendingLiquidation,
+        NoCloseNoOpen,
+        Closed,
+        Opened,
+        ClosedOpened
+    }
+
+    /**
      * @notice A pending action in the queue
      * @param action The action type
      * @param timestamp The timestamp of the initiate action
