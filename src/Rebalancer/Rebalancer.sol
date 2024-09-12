@@ -93,6 +93,9 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     /// @notice The maximum leverage that a position can have
     uint256 internal _maxLeverage = 3 * 10 ** Constants.LEVERAGE_DECIMALS;
 
+    /// @notice The minimum leverage that a position can have
+    uint256 internal _minLeverage = 10 ** Constants.LEVERAGE_DECIMALS + 10 ** (Constants.LEVERAGE_DECIMALS - 9);
+
     /// @notice The minimum amount of assets to be deposited by a user
     uint256 internal _minAssetDeposit;
 
@@ -173,16 +176,27 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         }
     }
 
+    /// @inheritdoc IRebalancer
+    function getPositionMinLeverage() external view returns (uint256) {
+        return _minLeverage;
+    }
+
     /// @inheritdoc IBaseRebalancer
     function getCurrentStateData()
         external
         view
-        returns (uint128 pendingAssets_, uint256 maxLeverage_, Types.PositionId memory currentPosId_)
+        returns (
+            uint128 pendingAssets_,
+            uint256 maxLeverage_,
+            uint256 minLeverage_,
+            Types.PositionId memory currentPosId_
+        )
     {
         PositionData storage positionData = _positionData[_positionVersion];
         return (
             _pendingAssetsAmount,
             _maxLeverage,
+            _minLeverage,
             Types.PositionId({
                 tick: positionData.tick,
                 tickVersion: positionData.tickVersion,

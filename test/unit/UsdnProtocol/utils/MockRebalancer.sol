@@ -20,6 +20,7 @@ contract MockRebalancer is IBaseRebalancer, IRebalancerTypes {
     uint256 internal _minAssetDeposit;
     uint128 internal _pendingAssets;
     uint256 internal _maxLeverage;
+    uint256 internal _minLeverage;
     uint128 internal _positionVersion;
     uint128 internal _pendingAssetsAmount;
     uint128 internal _lastLiquidatedVersion;
@@ -31,20 +32,25 @@ contract MockRebalancer is IBaseRebalancer, IRebalancerTypes {
         _positionData[0].tick = Constants.NO_POSITION_TICK;
     }
 
-    function setCurrentStateData(uint128 pendingAssets, uint256 maxLeverage, Types.PositionId memory currentPosId)
-        external
-    {
+    function setCurrentStateData(
+        uint128 pendingAssets,
+        uint256 maxLeverage,
+        uint256 minLeverage,
+        Types.PositionId memory currentPosId
+    ) external {
         _pendingAssets = pendingAssets;
         _maxLeverage = maxLeverage;
+        _minLeverage = minLeverage;
         _positionData[_positionVersion].tick = currentPosId.tick;
         _positionData[_positionVersion].tickVersion = currentPosId.tickVersion;
         _positionData[_positionVersion].index = currentPosId.index;
     }
 
-    function getCurrentStateData() external view returns (uint128, uint256, Types.PositionId memory) {
+    function getCurrentStateData() external view returns (uint128, uint256, uint256, Types.PositionId memory) {
         return (
             _pendingAssets,
             _maxLeverage,
+            _minLeverage,
             Types.PositionId(
                 _positionData[_positionVersion].tick,
                 _positionData[_positionVersion].tickVersion,

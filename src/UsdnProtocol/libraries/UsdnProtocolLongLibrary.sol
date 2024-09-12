@@ -86,6 +86,7 @@ library UsdnProtocolLongLibrary {
     struct TriggerRebalancerData {
         uint128 positionAmount;
         uint256 rebalancerMaxLeverage;
+        uint256 rebalancerMinLeverage;
         Types.PositionId rebalancerPosId;
         uint128 positionValue;
     }
@@ -460,7 +461,8 @@ library UsdnProtocolLongLibrary {
 
         TriggerRebalancerData memory data;
         // the default value of `positionAmount` is the amount of pendingAssets in the rebalancer
-        (data.positionAmount, data.rebalancerMaxLeverage, data.rebalancerPosId) = rebalancer.getCurrentStateData();
+        (data.positionAmount, data.rebalancerMaxLeverage, data.rebalancerMinLeverage, data.rebalancerPosId) =
+            rebalancer.getCurrentStateData();
 
         // close the rebalancer position and get its value to open the next one
         if (data.rebalancerPosId.tick != Constants.NO_POSITION_TICK) {
@@ -502,8 +504,9 @@ library UsdnProtocolLongLibrary {
             data.positionAmount += bonus;
         }
 
-        Types.RebalancerPositionData memory posData =
-            _calcRebalancerPositionTick(s, lastPrice, data.positionAmount, data.rebalancerMaxLeverage, cache);
+        Types.RebalancerPositionData memory posData = _calcRebalancerPositionTick(
+            s, lastPrice, data.positionAmount, data.rebalancerMaxLeverage, data.rebalancerMinLeverage, cache
+        );
 
         // make sure that the rebalancer was not triggered without a sufficient imbalance
         // as we check the imbalance above, this should not happen
@@ -1144,7 +1147,8 @@ library UsdnProtocolLongLibrary {
      * @param s The storage of the protocol
      * @param lastPrice The last price used to update the protocol
      * @param positionAmount The amount of assets in the position
-     * @param rebalancerMaxLeverage The max leverage supported by the rebalancer
+     * @param rebalancerMaxLeverage The maximum leverage supported by the rebalancer
+     * @param rebalancerMinLeverage The minimum leverage supported by the rebalancer
      * @param cache The cached protocol state values
      * @return posData_ The tick, total expo and liquidation penalty for the rebalancer position
      */
@@ -1153,18 +1157,15 @@ library UsdnProtocolLongLibrary {
         uint128 lastPrice,
         uint128 positionAmount,
         uint256 rebalancerMaxLeverage,
+        uint256 rebalancerMinLeverage,
         Types.CachedProtocolState memory cache
     ) public view returns (Types.RebalancerPositionData memory posData_) {
         Types.CalcRebalancerPositionTickData memory data;
-        // use the lowest max leverage above the min leverage
-        data.protocolMinLeverage = s._minLeverage;
+
         {
             data.protocolMaxLeverage = s._maxLeverage;
             if (rebalancerMaxLeverage > data.protocolMaxLeverage) {
                 rebalancerMaxLeverage = data.protocolMaxLeverage;
-            }
-            if (rebalancerMaxLeverage < data.protocolMinLeverage) {
-                rebalancerMaxLeverage = data.protocolMinLeverage;
             }
         }
 
@@ -1192,7 +1193,7 @@ library UsdnProtocolLongLibrary {
 
         // check that the trading expo filled by the position would not be below the min leverage
         data.lowestUsableTradingExpo =
-            positionAmount * data.protocolMinLeverage / 10 ** Constants.LEVERAGE_DECIMALS - positionAmount;
+            positionAmount * rebalancerMinLeverage / 10 ** Constants.LEVERAGE_DECIMALS - positionAmount;
         if (data.lowestUsableTradingExpo > tradingExpoToFill) {
             tradingExpoToFill = data.lowestUsableTradingExpo;
         }

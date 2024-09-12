@@ -587,6 +587,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint128 neutralPrice,
         uint128 positionAmount,
         uint256 rebalancerMaxLeverage,
+        uint256 rebalancerMinLeverage,
         uint256 totalExpo,
         uint256 balanceLong,
         uint256 balanceVault,
@@ -600,8 +601,9 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
             liqMultiplierAccumulator: liqMultiplierAccumulator
         });
 
-        Types.RebalancerPositionData memory position =
-            Long._calcRebalancerPositionTick(s, neutralPrice, positionAmount, rebalancerMaxLeverage, cache);
+        Types.RebalancerPositionData memory position = Long._calcRebalancerPositionTick(
+            s, neutralPrice, positionAmount, rebalancerMaxLeverage, rebalancerMinLeverage, cache
+        );
 
         return (position.tick, position.totalExpo, position.liquidationPenalty);
     }

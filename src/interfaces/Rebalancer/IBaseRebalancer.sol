@@ -8,13 +8,19 @@ interface IBaseRebalancer {
     /**
      * @notice Returns the necessary data for the USDN protocol to update the position
      * @return pendingAssets_ The amount of assets that are pending inclusion in the protocol
-     * @return maxLeverage_ The max leverage of the rebalancer
+     * @return maxLeverage_ The maximum leverage of the rebalancer
+     * @return minLeverage_ The minimum leverage of the rebalancer
      * @return currentPosId_ The ID of the current position (tick == NO_POSITION_TICK if no position)
      */
     function getCurrentStateData()
         external
         view
-        returns (uint128 pendingAssets_, uint256 maxLeverage_, Types.PositionId memory currentPosId_);
+        returns (
+            uint128 pendingAssets_,
+            uint256 maxLeverage_,
+            uint256 minLeverage_,
+            Types.PositionId memory currentPosId_
+        );
 
     /**
      * @notice Returns the minimum amount of assets to be deposited by a user

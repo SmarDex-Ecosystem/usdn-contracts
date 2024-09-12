@@ -388,6 +388,7 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         uint128 neutralPrice,
         uint128 positionAmount,
         uint256 rebalancerMaxLeverage,
+        uint256 rebalancerMinLeverage,
         uint256 totalExpo,
         uint256 balanceLong,
         uint256 balanceVault,

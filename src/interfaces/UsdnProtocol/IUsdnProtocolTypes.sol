@@ -391,7 +391,6 @@ interface IUsdnProtocolTypes {
 
     /**
      * @notice Structure to hold transient data during the `_calcRebalancerPositionTick` function
-     * @param protocolMinLeverage The protocol minimum leverage
      * @param protocolMaxLeverage The protocol maximum leverage
      * @param longImbalanceTargetBps The long imbalance target in basis points
      * @param tradingExpoToFill The trading expo to fill
@@ -401,7 +400,6 @@ interface IUsdnProtocolTypes {
      * @param liqPriceWithoutPenalty The liquidation price without penalty
      */
     struct CalcRebalancerPositionTickData {
-        uint256 protocolMinLeverage;
         uint256 protocolMaxLeverage;
         int256 longImbalanceTargetBps;
         uint256 tradingExpoToFill;

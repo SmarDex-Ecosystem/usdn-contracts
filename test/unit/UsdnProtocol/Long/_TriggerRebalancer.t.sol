@@ -119,7 +119,8 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
             })
         );
 
-        mockedRebalancer.setCurrentStateData(0, protocol.getMaxLeverage(), posId);
+        // TO DO : change the hardcoded value to a variable
+        mockedRebalancer.setCurrentStateData(0, protocol.getMaxLeverage(), 10 ** 21 + 10 ** 12, posId);
 
         vm.prank(ADMIN);
         protocol.setMinLongPosition(10 ** assetDecimals);
@@ -163,7 +164,8 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
             })
         );
 
-        mockedRebalancer.setCurrentStateData(0, protocol.getMaxLeverage(), posId);
+        // TO DO : change the hardcoded value to a variable
+        mockedRebalancer.setCurrentStateData(0, protocol.getMaxLeverage(), 10 ** 21 + 10 ** 12, posId);
 
         (uint256 newLongBalance, uint256 newVaultBalance) =
             protocol.i_triggerRebalancer(DEFAULT_PARAMS.initialPrice, longBalance, vaultBalance, remainingCollateral);
@@ -191,8 +193,9 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
         vm.prank(address(mockedRebalancer));
         wstETH.mintAndApprove(address(mockedRebalancer), pendingAssets, address(protocol), type(uint256).max);
 
+        // TO DO : change the hardcoded value to a variable
         mockedRebalancer.setCurrentStateData(
-            pendingAssets, protocol.getMaxLeverage(), PositionId(Constants.NO_POSITION_TICK, 0, 0)
+            pendingAssets, protocol.getMaxLeverage(), 10 ** 21 + 10 ** 12, PositionId(Constants.NO_POSITION_TICK, 0, 0)
         );
 
         (uint256 newLongBalance, uint256 newVaultBalance) =
@@ -240,7 +243,8 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
         vm.prank(address(mockedRebalancer));
         wstETH.mintAndApprove(address(mockedRebalancer), pendingAssets, address(protocol), type(uint256).max);
 
-        mockedRebalancer.setCurrentStateData(pendingAssets, protocol.getMaxLeverage(), posId);
+        // TO DO : change the hardcoded value to a variable
+        mockedRebalancer.setCurrentStateData(pendingAssets, protocol.getMaxLeverage(), 10 ** 21 + 10 ** 12, posId);
 
         (uint256 newLongBalance, uint256 newVaultBalance) =
             protocol.i_triggerRebalancer(lastPrice, longBalance, vaultBalance, remainingCollateral);
