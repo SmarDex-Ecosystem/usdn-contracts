@@ -134,7 +134,9 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         int256 vaultTradingExpo = protocol.i_vaultAssetAvailable(params.initialPrice);
 
         assertEq(
-            protocol.getLongTradingExpo(params.initialPrice), vaultTradingExpo, "long and vault expos should be equal"
+            int256(protocol.getLongTradingExpo(params.initialPrice)),
+            vaultTradingExpo,
+            "long and vault expos should be equal"
         );
 
         int256 EMA = protocol.getEMA();

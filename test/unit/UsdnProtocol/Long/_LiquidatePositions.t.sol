@@ -22,8 +22,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
      */
     function test_nothingHappensWhenThereIsNothingToLiquidate() public {
         vm.recordLogs();
-        LiquidationsEffects memory liquidationsEffects =
-            protocol.i_liquidatePositions(2000 ether, 1, 100 ether, 100 ether);
+        LiquidationsEffects memory liquidationsEffects = protocol.i_liquidatePositions(2000 ether, 1, 5 ether, 5 ether);
         uint256 logsAmount = vm.getRecordedLogs().length;
 
         assertEq(logsAmount, 0, "No event should have been emitted");
@@ -32,10 +31,8 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         );
         assertEq(liquidationsEffects.liquidatedTicks, 0, "No tick should have been liquidated at this price");
         assertEq(liquidationsEffects.remainingCollateral, 0, "There should have been no changes to the collateral");
-        assertEq(liquidationsEffects.newLongBalance, 100 ether, "There should have been no changes to the long balance");
-        assertEq(
-            liquidationsEffects.newVaultBalance, 100 ether, "There should have been no changes to the vault balance"
-        );
+        assertEq(liquidationsEffects.newLongBalance, 5 ether, "There should have been no changes to the long balance");
+        assertEq(liquidationsEffects.newVaultBalance, 5 ether, "There should have been no changes to the vault balance");
     }
 
     /**

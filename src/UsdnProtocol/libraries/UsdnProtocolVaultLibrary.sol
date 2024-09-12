@@ -117,17 +117,18 @@ library UsdnProtocolVaultLibrary {
     ) public view {
         int256 longTradingExpo = Utils.toInt256(positionTotalExpo - longAmount);
         int256 depositLimit = s._depositExpoImbalanceLimitBps;
+        int256 castedDepositAmount = Utils.toInt256(depositAmount);
         if (depositLimit != 0) {
             int256 imbalanceBps =
-                (Utils.toInt256(depositAmount) - longTradingExpo) * int256(Constants.BPS_DIVISOR) / longTradingExpo;
+                (castedDepositAmount - longTradingExpo) * int256(Constants.BPS_DIVISOR) / longTradingExpo;
             if (imbalanceBps > depositLimit) {
                 revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
             }
         }
         int256 openLimit = s._openExpoImbalanceLimitBps;
         if (openLimit != 0) {
-            int256 imbalanceBps = (longTradingExpo - Utils.toInt256(depositAmount)) * int256(Constants.BPS_DIVISOR)
-                / Utils.toInt256(depositAmount);
+            int256 imbalanceBps =
+                (longTradingExpo - castedDepositAmount) * int256(Constants.BPS_DIVISOR) / castedDepositAmount;
             if (imbalanceBps > openLimit) {
                 revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
             }

@@ -112,7 +112,7 @@ library UsdnProtocolLongLibrary {
         uint128 liqPrice = getEffectivePriceForTick(
             Utils.calcTickWithoutPenalty(posId.tick, liquidationPenalty),
             price,
-            uint256(longTradingExpo),
+            longTradingExpo,
             s._liqMultiplierAccumulator
         );
         value_ = _positionValue(price, liqPrice, pos.totalExpo);
@@ -754,19 +754,11 @@ library UsdnProtocolLongLibrary {
         int256 tempLongBalance,
         int256 tempVaultBalance
     ) public returns (Types.LiquidationsEffects memory effects_) {
-        int256 longTradingExpo = s._totalExpo.toInt256() - tempLongBalance;
-        if (longTradingExpo <= 0) {
-            // in case the long balance is equal to the total expo (or exceeds it), the trading expo will become zero
-            // in this case, it's not possible to calculate the current tick, so we can't perform any liquidations
-            (effects_.newLongBalance, effects_.newVaultBalance) =
-                _handleNegativeBalances(tempLongBalance, tempVaultBalance);
-            return effects_;
-        }
-
         LiquidationData memory data;
         data.tempLongBalance = tempLongBalance;
         data.tempVaultBalance = tempVaultBalance;
-        data.longTradingExpo = uint256(longTradingExpo);
+        // cast is safe as tempLongBalance cannot exceed s._totalExpo
+        data.longTradingExpo = uint256(s._totalExpo.toInt256() - tempLongBalance);
         data.currentPrice = currentPrice;
         data.accumulator = s._liqMultiplierAccumulator;
 

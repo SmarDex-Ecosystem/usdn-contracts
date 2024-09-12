@@ -195,8 +195,8 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
      * @notice Helper to calculate the trading exposure of the long side at the time of the last balance update and
      * currentPrice
      */
-    function getLongTradingExpo(uint128 currentPrice) external view returns (int256 expo_) {
-        expo_ = s._totalExpo.toInt256().safeSub(Core._longAssetAvailable(s, currentPrice));
+    function getLongTradingExpo(uint128 currentPrice) external view returns (uint256 expo_) {
+        expo_ = uint256(s._totalExpo.toInt256().safeSub(Core._longAssetAvailable(s, currentPrice)));
     }
 
     function i_initiateClosePosition(

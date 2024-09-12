@@ -155,7 +155,7 @@ contract TestUsdnProtocolActionsPrepareClosePositionData is UsdnProtocolBaseFixt
             );
             assertEq(
                 data.longTradingExpo,
-                uint256(protocol.getLongTradingExpo(currentPrice)),
+                protocol.getLongTradingExpo(currentPrice),
                 "The long trading expo should match the expected value"
             );
             assertEq(
