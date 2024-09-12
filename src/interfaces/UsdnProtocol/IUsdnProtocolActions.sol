@@ -117,7 +117,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * @param userMaxPrice The maximum price at which the position can be opened. (adding MIDDLEWARE_DECIMALS) Note that
      * there is no guarantee that the effective price during validation will be below this value. However, if the
      * predicted price is below this threshold, the initiate action will revert. The userMinPrice is compared with a
-     * price considered with interval, penalty, etc...
+     * effective price
      * @param userMaxLeverage The maximum leverage for the newly created position
      * @param to The address that will be the owner of the position
      * @param validator The address that will validate the open position
