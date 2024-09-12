@@ -10,7 +10,7 @@ import { ERC20Burnable } from "@openzeppelin/contracts/token/ERC20/extensions/ER
 import { ERC20Permit, IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
-contract StETH is IStETH, ERC20Burnable, ERC20Permit, Ownable {
+contract MockStETH is IStETH, ERC20Burnable, ERC20Permit, Ownable {
     string private constant NAME = "Mock Staked Ether";
     string private constant SYMBOL = "stETH";
 
@@ -26,8 +26,8 @@ contract StETH is IStETH, ERC20Burnable, ERC20Permit, Ownable {
      * @inheritdoc IERC20Permit
      * @dev This function must be overridden to fix a solidity compiler error
      */
-    function nonces(address _owner) public view override(IERC20Permit, ERC20Permit) returns (uint256) {
-        return super.nonces(_owner);
+    function nonces(address owner) public view override(IERC20Permit, ERC20Permit) returns (uint256) {
+        return super.nonces(owner);
     }
 
     /// @inheritdoc IStETH
@@ -49,14 +49,16 @@ contract StETH is IStETH, ERC20Burnable, ERC20Permit, Ownable {
     }
 
     /// @inheritdoc IStETH
-    function setStEthPerToken(uint256 _stEthAmount, IWstETH wstETH) external onlyOwner returns (uint256) {
-        if (wstETH.stEthPerToken() > _stEthAmount) {
-            revert setStEthPerTokenTooSmall(wstETH.stEthPerToken(), _stEthAmount);
-        }
-
+    function setStEthPerToken(uint256 stEthAmount, IWstETH wstETH) external onlyOwner returns (uint256) {
         // assuming _decimalOffset is 0 on the wstETH vault
-        uint256 newTotalAsset = Math.mulDiv(_stEthAmount, wstETH.totalSupply() + 1, 1 ether) - 1;
-        _mint(address(wstETH), newTotalAsset - balanceOf(address(wstETH)));
+        uint256 newTotalAsset = Math.mulDiv(stEthAmount, wstETH.totalSupply() + 1, 1 ether) - 1;
+        uint256 balanceWstETH = balanceOf(address(wstETH));
+
+        if (newTotalAsset > balanceWstETH) {
+            _mint(address(wstETH), newTotalAsset - balanceWstETH);
+        } else {
+            _burn(address(wstETH), balanceWstETH - newTotalAsset);
+        }
 
         return wstETH.stEthPerToken();
     }

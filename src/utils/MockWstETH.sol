@@ -8,7 +8,7 @@ import { ERC20Burnable } from "@openzeppelin/contracts/token/ERC20/extensions/ER
 import { ERC20Permit, IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import { ERC20, ERC4626, IERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 
-contract WstETH is IWstETH, ERC4626, ERC20Permit, Ownable {
+contract MockWstETH is IWstETH, ERC4626, ERC20Permit, Ownable {
     string private constant NAME = "Mock Wrapped Staked Ether";
     string private constant SYMBOL = "wstETH";
 
@@ -42,28 +42,28 @@ contract WstETH is IWstETH, ERC4626, ERC20Permit, Ownable {
      * @inheritdoc IERC20Permit
      * @dev This function must be overridden to fix a solidity compiler error
      */
-    function nonces(address _owner) public view override(IERC20Permit, ERC20Permit) returns (uint256) {
-        return super.nonces(_owner);
+    function nonces(address owner) public view override(IERC20Permit, ERC20Permit) returns (uint256) {
+        return super.nonces(owner);
     }
 
     /// @inheritdoc IWstETH
-    function wrap(uint256 _stETHAmount) external returns (uint256) {
-        return deposit(_stETHAmount, msg.sender);
+    function wrap(uint256 stETHAmount) external returns (uint256) {
+        return deposit(stETHAmount, msg.sender);
     }
 
     /// @inheritdoc IWstETH
-    function unwrap(uint256 _wstETHAmount) external returns (uint256) {
-        return redeem(_wstETHAmount, msg.sender, msg.sender);
+    function unwrap(uint256 wstETHAmount) external returns (uint256) {
+        return redeem(wstETHAmount, msg.sender, msg.sender);
     }
 
     /// @inheritdoc IWstETH
-    function getWstETHByStETH(uint256 _stETHAmount) external view returns (uint256) {
-        return convertToShares(_stETHAmount);
+    function getWstETHByStETH(uint256 stETHAmount) external view returns (uint256) {
+        return convertToShares(stETHAmount);
     }
 
     /// @inheritdoc IWstETH
-    function getStETHByWstETH(uint256 _wstETHAmount) external view returns (uint256) {
-        return convertToAssets(_wstETHAmount);
+    function getStETHByWstETH(uint256 wstETHAmount) external view returns (uint256) {
+        return convertToAssets(wstETHAmount);
     }
 
     /// @inheritdoc IWstETH

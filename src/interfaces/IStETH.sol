@@ -15,11 +15,11 @@ interface IStETH is IERC20, IERC20Permit {
 
     /**
      * @notice Set the amount of stETH per wstETH token (only for owner)
-     * @param _stEthAmount The new amount of stETH per wstETH token
+     * @param stEthAmount The new amount of stETH per wstETH token
      * @param wstETH The wstETH contract
      * @return The new amount of stETH per token
      */
-    function setStEthPerToken(uint256 _stEthAmount, IWstETH wstETH) external returns (uint256);
+    function setStEthPerToken(uint256 stEthAmount, IWstETH wstETH) external returns (uint256);
 
     /**
      * @notice Mint stETH (only for owner)
