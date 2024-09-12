@@ -196,6 +196,7 @@ contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture, 
         (pos,) = protocol.getLongPosition(posId);
 
         mockedRebalancer.setCurrentStateData(0, protocol.getMaxLeverage(), rebalancer.getPositionMinLeverage(), posId);
+
         UserDeposit memory userDeposit = UserDeposit({
             initiateTimestamp: uint40(block.timestamp),
             amount: userAmount,

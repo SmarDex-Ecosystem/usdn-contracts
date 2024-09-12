@@ -162,6 +162,14 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
     function setPositionMaxLeverage(uint256 newMaxLeverage) external;
 
     /**
+     * @notice Update the minimum leverage a position can have
+     * @dev `newMinLeverage` must be smaller than the max leverage
+     * This function can only be called by the owner
+     * @param newMinLeverage The new minimum leverage
+     */
+    function setPositionMinLeverage(uint256 newMinLeverage) external;
+
+    /**
      * @notice Set the various time limits in seconds
      * @param validationDelay The validation delay
      * @param validationDeadline The validation deadline
