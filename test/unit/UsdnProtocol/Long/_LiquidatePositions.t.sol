@@ -30,7 +30,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         assertEq(
             liquidationsEffects.liquidatedPositions, 0, "No position should have been liquidated at the given price"
         );
-        assertEq(liquidationsEffects.liquidatedTicks, 0, "No tick should have been liquidated at this price");
+        assertEq(liquidationsEffects.liquidatedTicks.length, 0, "No tick should have been liquidated at this price");
         assertEq(liquidationsEffects.remainingCollateral, 0, "There should have been no changes to the collateral");
         assertEq(liquidationsEffects.newLongBalance, 100 ether, "There should have been no changes to the long balance");
         assertEq(
@@ -93,7 +93,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
 
         assertEq(liquidationLogsCount, 1, "Only one liquidation log should have been emitted");
         assertEq(liquidationsEffects.liquidatedPositions, 1, "Only one position should have been liquidated");
-        assertEq(liquidationsEffects.liquidatedTicks, 1, "Only one tick should have been liquidated");
+        assertEq(liquidationsEffects.liquidatedTicks.length, 1, "Only one tick should have been liquidated");
         assertEq(
             liquidationsEffects.remainingCollateral, tickValue, "Remaining collateral should be equal to tickValue"
         );
@@ -164,7 +164,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         LiquidationsEffects memory liquidationsEffects = protocol.i_liquidatePositions(price, 1, 100 ether, 100 ether);
 
         assertEq(liquidationsEffects.liquidatedPositions, 1, "Only one position should have been liquidated");
-        assertEq(liquidationsEffects.liquidatedTicks, 1, "Only one tick should have been liquidated");
+        assertEq(liquidationsEffects.liquidatedTicks.length, 1, "Only one tick should have been liquidated");
         assertEq(
             liquidationsEffects.remainingCollateral, tickValue, "Collateral liquidated should be equal to tickValue"
         );
@@ -305,7 +305,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         );
 
         assertEq(
-            liquidationsEffects.liquidatedTicks,
+            liquidationsEffects.liquidatedTicks.length,
             maxIterations,
             "The amount of ticks liquidated should be equal to MAX_LIQUIDATION_ITERATION"
         );
@@ -357,7 +357,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
             protocol.i_liquidatePositions(uint256(liqPrice), 1, tickValue - 1, 100 ether);
 
         assertEq(liquidationsEffects.liquidatedPositions, 1, "Only one position should have been liquidated");
-        assertEq(liquidationsEffects.liquidatedTicks, 1, "Only one tick should have been liquidated");
+        assertEq(liquidationsEffects.liquidatedTicks.length, 1, "Only one tick should have been liquidated");
         assertEq(
             liquidationsEffects.remainingCollateral,
             tickValue,
@@ -415,7 +415,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
             protocol.i_liquidatePositions(uint256(price), 1, 100 ether, tickValue);
 
         assertEq(liquidationsEffects.liquidatedPositions, 1, "Only one position should have been liquidated");
-        assertEq(liquidationsEffects.liquidatedTicks, 1, "Only one tick should have been liquidated");
+        assertEq(liquidationsEffects.liquidatedTicks.length, 1, "Only one tick should have been liquidated");
         assertEq(
             liquidationsEffects.remainingCollateral,
             tickValue,

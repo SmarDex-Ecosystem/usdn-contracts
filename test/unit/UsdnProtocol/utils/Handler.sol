@@ -97,11 +97,11 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     function mockLiquidate(bytes calldata currentPriceData, uint16 iterations)
         external
         payable
-        returns (uint256 liquidatedPositions_)
+        returns (Types.LiqTickInfo[] memory liquidatedTicks_)
     {
         uint256 lastUpdateTimestampBefore = s._lastUpdateTimestamp;
         vm.startPrank(msg.sender);
-        liquidatedPositions_ = this.liquidate(currentPriceData, iterations);
+        liquidatedTicks_ = this.liquidate(currentPriceData, iterations);
         vm.stopPrank();
         require(s._lastUpdateTimestamp > lastUpdateTimestampBefore, "UsdnProtocolHandler: liq price is not fresh");
     }
@@ -683,8 +683,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_sendRewardsToLiquidator(
-        uint16 liquidatedTicks,
-        int256 remainingCollateral,
+        Types.LiqTickInfo[] calldata liquidatedTicks,
         bool rebased,
         Types.RebalancerAction rebalancerAction,
         ProtocolAction action,
@@ -692,7 +691,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         bytes memory priceData
     ) external {
         Long._sendRewardsToLiquidator(
-            s, liquidatedTicks, remainingCollateral, rebased, rebalancerAction, action, rebaseCallbackResult, priceData
+            s, liquidatedTicks, rebased, rebalancerAction, action, rebaseCallbackResult, priceData
         );
     }
 

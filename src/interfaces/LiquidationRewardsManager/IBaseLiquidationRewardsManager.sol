@@ -10,9 +10,7 @@ import { IUsdnProtocolTypes as Types } from "../UsdnProtocol/IUsdnProtocolTypes.
 interface IBaseLiquidationRewardsManager {
     /**
      * @notice Returns the amount of asset that needs to be sent to the liquidator
-     * @param tickAmount How many ticks were liquidated
-     * @param remainingCollateral The amount of collateral remaining after liquidations. If negative, it means there was
-     * not enough collateral to cover the losses caused by the liquidations (can happen during heavy price fluctuations)
+     * @param liquidatedTicks Information about the liquidated ticks
      * @param rebased Whether an optional USDN rebase was performed
      * @param rebalancerAction The `_triggerRebalancer` action
      * @param action The type of protocol action that triggered the liquidation
@@ -22,8 +20,7 @@ interface IBaseLiquidationRewardsManager {
      * @return assetRewards_ The asset tokens to send to the liquidator as rewards (in wei)
      */
     function getLiquidationRewards(
-        uint16 tickAmount,
-        int256 remainingCollateral,
+        Types.LiqTickInfo[] calldata liquidatedTicks,
         bool rebased,
         Types.RebalancerAction rebalancerAction,
         Types.ProtocolAction action,

@@ -283,7 +283,7 @@ library UsdnProtocolCoreLibrary {
                 break;
             }
         } while (i < maxIter);
-        assembly {
+        assembly ("memory-safe") {
             // shrink the size of the arrays
             mstore(actions_, arrayLen)
             mstore(rawIndices_, arrayLen)

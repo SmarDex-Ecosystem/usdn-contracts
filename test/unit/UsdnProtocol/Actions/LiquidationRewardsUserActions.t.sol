@@ -53,8 +53,16 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         liquidationPrice = protocol.getEffectivePriceForTick(posId.tick);
         liquidationPriceData = abi.encode(liquidationPrice);
         initialPriceData = abi.encode(initialPrice);
+        Types.LiqTickInfo[] memory liquidatedTicks = new LiqTickInfo[](1);
+        liquidatedTicks[0] = Types.LiqTickInfo({
+            totalPositions: 1,
+            totalExpo: 10 ether,
+            remainingCollateral: 0.2 ether,
+            tickPrice: 1020 ether,
+            priceWithoutPenalty: 1000 ether
+        });
         expectedLiquidatorRewards = liquidationRewardsManager.getLiquidationRewards(
-            1, 0, false, Types.RebalancerAction.None, ProtocolAction.None, "", ""
+            liquidatedTicks, false, Types.RebalancerAction.None, ProtocolAction.None, "", ""
         );
 
         assertGt(expectedLiquidatorRewards, 0, "The expected liquidation rewards should be greater than 0");

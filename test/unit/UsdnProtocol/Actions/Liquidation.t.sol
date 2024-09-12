@@ -5,7 +5,6 @@ import { DEPLOYER, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
 /// @custom:feature The scenarios in `UsdnProtocolActions` which call `_liquidatePositions`
@@ -409,9 +408,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint256 longPositionsBeforeLiquidation = protocol.getTotalLongPositions();
 
         _waitBeforeLiquidation();
-        uint256 liquidatedPositions = protocol.mockLiquidate(priceData, 1);
+        LiqTickInfo[] memory liquidatedTicks = protocol.mockLiquidate(priceData, 1);
 
-        assertEq(liquidatedPositions, 0, "No position should have been liquidated");
+        assertEq(liquidatedTicks.length, 0, "No position should have been liquidated");
 
         // Check that the liquidator didn't receive any rewards
         assertEq(
@@ -460,8 +459,16 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.prank(DEPLOYER);
         liquidationRewardsManager.setRewardsParameters(10_000, 30_000, 20_000, 20_000, 1000 gwei, 20_000);
 
+        LiqTickInfo[] memory liquidatedTicks = new LiqTickInfo[](1);
+        liquidatedTicks[0] = LiqTickInfo({
+            totalPositions: 1,
+            totalExpo: 10 ether,
+            remainingCollateral: 0.2 ether,
+            tickPrice: 1020 ether,
+            priceWithoutPenalty: 1000 ether
+        });
         uint256 expectedLiquidatorRewards = liquidationRewardsManager.getLiquidationRewards(
-            1, 0, false, Types.RebalancerAction.None, ProtocolAction.None, "", ""
+            liquidatedTicks, false, RebalancerAction.None, ProtocolAction.None, "", ""
         );
         // Sanity check
         assertGt(expectedLiquidatorRewards, 0, "The expected liquidation rewards should be greater than 0");
@@ -482,10 +489,10 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         _waitBeforeLiquidation();
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
-        uint256 liquidatedPositions = protocol.mockLiquidate(abi.encode(price), 1);
+        liquidatedTicks = protocol.mockLiquidate(abi.encode(price), 1);
 
         // Check that the right number of positions have been liquidated
-        assertEq(liquidatedPositions, 1, "One position should have been liquidated");
+        assertEq(liquidatedTicks.length, 1, "One position should have been liquidated");
 
         // Check that the liquidator received its rewards
         assertEq(
@@ -536,8 +543,16 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         chainlinkGasPriceFeed.setLatestRoundData(1, 8000 gwei, block.timestamp, 1);
         vm.txGasPrice(8000 gwei);
 
+        LiqTickInfo[] memory liquidatedTicks = new LiqTickInfo[](1);
+        liquidatedTicks[0] = LiqTickInfo({
+            totalPositions: 1,
+            totalExpo: 10 ether,
+            remainingCollateral: 0.2 ether,
+            tickPrice: 1020 ether,
+            priceWithoutPenalty: 1000 ether
+        });
         uint256 expectedLiquidatorRewards = liquidationRewardsManager.getLiquidationRewards(
-            1, 0, false, Types.RebalancerAction.None, ProtocolAction.None, "", ""
+            liquidatedTicks, false, RebalancerAction.None, ProtocolAction.None, "", ""
         );
         // Sanity check
         assertGt(
@@ -561,10 +576,10 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         _waitBeforeLiquidation();
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedRewards);
-        uint256 liquidatedPositions = protocol.mockLiquidate(abi.encode(price), 1);
+        liquidatedTicks = protocol.mockLiquidate(abi.encode(price), 1);
 
         // Check that the right number of positions have been liquidated
-        assertEq(liquidatedPositions, 1, "One position should have been liquidated");
+        assertEq(liquidatedTicks.length, 1, "One position should have been liquidated");
 
         assertEq(
             wstETH.balanceOf(address(this)) - wstETHBalanceBeforeRewards,

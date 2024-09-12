@@ -196,13 +196,13 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
             }
 
             uint256 startGas = gasleft();
-            uint256 positionsLiquidated = protocol.liquidate{ value: oracleFee }(data, ticksToLiquidate);
+            LiqTickInfo[] memory liquidatedTicks = protocol.liquidate{ value: oracleFee }(data, ticksToLiquidate);
             uint256 gasUsed = startGas - gasleft();
             gasUsedArray[ticksToLiquidate - 1] = gasUsed;
 
             // make sure the expected amount of computation was executed
             assertEq(
-                positionsLiquidated,
+                liquidatedTicks.length,
                 ticksToLiquidate,
                 "We expect 1, 2 or 3 positions liquidated depending on the iteration"
             );
@@ -269,12 +269,12 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
             }
 
             uint256 startGas = gasleft();
-            uint256 positionsLiquidated = protocol.liquidate{ value: oracleFee }(data, ticksToLiquidate);
+            LiqTickInfo[] memory liquidatedTicks = protocol.liquidate{ value: oracleFee }(data, ticksToLiquidate);
             uint256 gasUsed = startGas - gasleft();
             gasUsedArray[i] = gasUsed;
 
             // make sure the expected amount of computation was executed
-            assertEq(positionsLiquidated, ticksToLiquidate, "We expect 3 positions liquidated");
+            assertEq(liquidatedTicks.length, ticksToLiquidate, "We expect 3 positions liquidated");
 
             // cancel the liquidation so it's available again
             vm.revertTo(snapshotId);

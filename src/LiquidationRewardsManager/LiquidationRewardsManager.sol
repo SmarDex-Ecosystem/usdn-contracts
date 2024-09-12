@@ -83,8 +83,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
      * `bytes calldata rebaseCallbackResult` and `bytes calldata priceData` parameters are not used
      */
     function getLiquidationRewards(
-        uint16 tickAmount,
-        int256,
+        Types.LiqTickInfo[] calldata liquidatedTicks,
         bool rebased,
         Types.RebalancerAction rebalancerAction,
         Types.ProtocolAction,
@@ -92,14 +91,17 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         bytes calldata
     ) external view returns (uint256 wstETHRewards_) {
         // do not give rewards if no ticks were liquidated
-        if (tickAmount == 0) {
+        if (liquidatedTicks.length == 0) {
             return 0;
         }
 
         RewardsParameters memory rewardsParameters = _rewardsParameters;
         // calculate the amount of gas spent during the liquidation
         uint256 gasUsed = rewardsParameters.otherGasUsed + BASE_GAS_COST
-            + (uint256(rewardsParameters.gasUsedPerTick) * tickAmount * rewardsParameters.multiplierBps / BPS_DIVISOR);
+            + (
+                uint256(rewardsParameters.gasUsedPerTick) * liquidatedTicks.length * rewardsParameters.multiplierBps
+                    / BPS_DIVISOR
+            );
 
         if (rebased) {
             gasUsed += rewardsParameters.rebaseGasUsed;
