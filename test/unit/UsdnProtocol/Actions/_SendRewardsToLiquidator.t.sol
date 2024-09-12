@@ -63,7 +63,7 @@ contract TestUsdnProtocolActionsSendRewardsToLiquidator is UsdnProtocolBaseFixtu
 
         vm.expectEmit();
         emit LiquidatorRewarded(address(this), balanceVault);
-        protocol.i_sendRewardsToLiquidator(3, 0, true, Types.RebalancerAction.None, ProtocolAction.None, "", "");
+        protocol.i_sendRewardsToLiquidator(3, 0, true, Types.RebalancerAction.ClosedOpened, ProtocolAction.None, "", "");
 
         assertEq(wstETH.balanceOf(address(this)), balanceVault, "Balance increase by the vault balance");
     }

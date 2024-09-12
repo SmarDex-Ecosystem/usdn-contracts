@@ -66,8 +66,8 @@ interface IUsdnProtocolTypes {
      * @param NoImbalance The protocol imbalance is not reached
      * @param PendingLiquidation The rebalancer already has a position pending
      * @param NoCloseNoOpen The action neither closes nor opens a position
-     * @param Closed The action only opens a position
-     * @param Opened The action only closes a position
+     * @param Closed The action only closes a position
+     * @param Opened The action only opens a position
      * @param ClosedOpened The action closes and opens a position
      */
     enum RebalancerAction {
