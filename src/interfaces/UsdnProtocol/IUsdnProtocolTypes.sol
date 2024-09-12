@@ -64,7 +64,7 @@ interface IUsdnProtocolTypes {
      * @dev Used to estimate the gas spent by the function call to more accurately calculate liquidation rewards
      * @param None The rebalancer is not set
      * @param NoImbalance The protocol imbalance is not reached
-     * @param PendingLiquidation The rebalancer already has a position pending
+     * @param PendingLiquidation The rebalancer position should be liquidated
      * @param NoCloseNoOpen The action neither closes nor opens a position
      * @param Closed The action only closes a position
      * @param Opened The action only opens a position
