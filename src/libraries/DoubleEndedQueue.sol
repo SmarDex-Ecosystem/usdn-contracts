@@ -181,7 +181,9 @@ library DoubleEndedQueue {
     function atRaw(Deque storage deque, uint128 rawIndex) external view returns (Types.PendingAction memory value_) {
         if (deque._begin > deque._end) {
             // here the values are split at the beginning and end of the range, so invalid indices are in the middle
-            if (rawIndex < deque._begin && rawIndex >= deque._end) revert QueueOutOfBounds();
+            if (rawIndex < deque._begin && rawIndex >= deque._end) {
+                revert QueueOutOfBounds();
+            }
         } else if (rawIndex < deque._begin || rawIndex >= deque._end) {
             revert QueueOutOfBounds();
         }
@@ -208,6 +210,24 @@ library DoubleEndedQueue {
             // we don't care to revert if this is not a valid index, since we're just clearing it
             delete deque._data[rawIndex];
         }
+    }
+
+    /**
+     * @dev Check if the raw index is valid (in bounds)
+     * @param deque The queue
+     * @param rawIndex The index of the item to return
+     * @return valid_ Whether the raw index is valid
+     */
+    function isValid(Deque storage deque, uint128 rawIndex) external view returns (bool valid_) {
+        if (deque._begin > deque._end) {
+            // here the values are split at the beginning and end of the range, so invalid indices are in the middle
+            if (rawIndex < deque._begin && rawIndex >= deque._end) {
+                return false;
+            }
+        } else if (rawIndex < deque._begin || rawIndex >= deque._end) {
+            return false;
+        }
+        valid_ = true;
     }
 
     /**
