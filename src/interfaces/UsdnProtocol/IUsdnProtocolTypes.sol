@@ -254,7 +254,7 @@ interface IUsdnProtocolTypes {
      * @param user The address of the user initiating the open position
      * @param to The address that will be the owner of the position
      * @param validator The address that will validate the open position
-     * @param amount The amount of wstETH to deposit
+     * @param amount The amount of assets to deposit
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
      * @param userMaxLeverage The maximum leverage for the newly created position
      * @param securityDepositValue The value of the security deposit for the newly created pending action
@@ -276,7 +276,7 @@ interface IUsdnProtocolTypes {
     /**
      * @notice Parameters for the internal `_prepareInitiateOpenPosition` function
      * @param validator The address of the validator
-     * @param amount The amount of wstETH to deposit
+     * @param amount The amount of assets to deposit
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
      * @param userMaxLeverage The maximum leverage for the newly created position
      * @param currentPriceData The current price data
@@ -475,9 +475,9 @@ interface IUsdnProtocolTypes {
      * @param _tickSpacing The liquidation tick spacing for storing long positions
      * A tick spacing of 1 is equivalent to a 0.01% increase in liquidation price between ticks. A tick spacing of
      * 100 is equivalent to a ~1.005% increase in liquidation price between ticks
-     * @param _asset The asset ERC20 contract (wstETH)
-     * @param _assetDecimals The asset decimals (wstETH => 18)
-     * @param _priceFeedDecimals The price feed decimals (wstETH => 18)
+     * @param _asset The asset ERC20 contract
+     * @param _assetDecimals The asset decimals
+     * @param _priceFeedDecimals The price feed decimals (18)
      * @param _usdn The USDN ERC20 contract
      * @param _sdex The SDEX ERC20 contract
      * @param _usdnMinDivisor The minimum divisor for USDN

@@ -13,7 +13,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * of the middleware
      * The transaction must have `_securityDepositValue` in value
      * In case liquidations are pending, this function might not initiate the deposit (and `success_` would be false)
-     * @param amount The amount of wstETH to deposit
+     * @param amount The amount of assets to deposit
      * @param to The address that will receive the USDN tokens
      * @param validator The address that will validate the deposit
      * @param permit2TokenBitfield Whether to use permit2 for transferring assets (first bit) and SDEX (second bit)
@@ -112,7 +112,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * leverage). The validation operation then updates the entry price and leverage with fresher data
      * The transaction must have `_securityDepositValue` in value
      * In case liquidations are pending, this function might not initiate the position (and `success_` would be false)
-     * @param amount The amount of wstETH to deposit
+     * @param amount The amount of assets to deposit
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
      * @param userMaxLeverage The maximum leverage for the newly created position
      * @param to The address that will be the owner of the position
