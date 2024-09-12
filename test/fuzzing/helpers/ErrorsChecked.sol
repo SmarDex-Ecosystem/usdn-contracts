@@ -48,7 +48,9 @@ contract ErrorsChecked is Test {
             IUsdnProtocolErrors.UsdnProtocolInvalidAddressValidator.selector,
             IUsdnProtocolErrors.UsdnProtocolLongPositionTooSmall.selector,
             IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction.selector,
-            IUsdnErrors.UsdnInsufficientSharesBalance.selector
+            IUsdnErrors.UsdnInsufficientSharesBalance.selector,
+            IUsdnProtocolErrors.UsdnProtocolLeverageTooLow.selector,
+            IUsdnProtocolErrors.UsdnProtocolLeverageTooHigh.selector
         ]
     ];
     bytes4[][] public INITIATE_WITHDRAWAL_ERRORS = [
