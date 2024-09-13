@@ -96,6 +96,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
 
         vm.expectRevert(customError("SET_EXTERNAL_ROLE"));
         protocol.setTransferPositionOwnershipPaused(false);
+
+        vm.expectRevert(customError("SET_EXTERNAL_ROLE"));
+        protocol.setOraclePricePaused(false);
     }
 
     /**
@@ -1077,6 +1080,32 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         bool paused = protocol.getTransferPositionOwnershipPaused();
         vm.expectRevert(UsdnProtocolPausedValueAlreadySet.selector);
         protocol.setTransferPositionOwnershipPaused(paused);
+    }
+
+    /**
+     * @custom:scenario Call `setOraclePricePaused` as admin
+     * @custom:when Admin wallet triggers admin contract function
+     * @custom:then The value should be updated
+     * @custom:and An event should be emitted with the corresponding new value
+     */
+    function test_setOraclePricePaused() external adminPrank {
+        bool paused = protocol.getOraclePricePaused();
+        vm.expectEmit();
+        emit OraclePricePausedValueUpdated(!paused);
+        protocol.setOraclePricePaused(!paused);
+        assertEq(protocol.getOraclePricePaused(), !paused);
+    }
+
+    /**
+     * @custom:scenario Call "setOraclePricePaused" from admin
+     * @custom:given The initial usdnProtocol state from admin wallet
+     * @custom:when Admin wallet triggers admin contract function
+     * @custom:then Revert because the value is already set
+     */
+    function test_RevertWhen_test_setOraclePricePausedSameValue() external adminPrank {
+        bool paused = protocol.getOraclePricePaused();
+        vm.expectRevert(UsdnProtocolPausedValueAlreadySet.selector);
+        protocol.setOraclePricePaused(paused);
     }
 
     function customError(string memory role) internal view returns (bytes memory customError_) {

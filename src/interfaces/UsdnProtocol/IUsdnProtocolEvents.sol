@@ -387,4 +387,10 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
      * @param paused The new paused value
      */
     event TransferPositionOwnershipPausedValueUpdated(bool paused);
+
+    /**
+     * @notice Emitted when the `_oraclePricePaused` value is updated
+     * @param paused The new paused value
+     */
+    event OraclePricePausedValueUpdated(bool paused);
 }

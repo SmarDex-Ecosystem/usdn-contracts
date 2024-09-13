@@ -533,6 +533,10 @@ library UsdnProtocolUtilsLibrary {
         bytes32 actionId,
         bytes calldata priceData
     ) internal returns (PriceInfo memory price_) {
+        if (s._oraclePricePaused) {
+            revert IUsdnProtocolErrors.UsdnProtocolFunctionPaused();
+        }
+
         uint256 validationCost = s._oracleMiddleware.validationCost(priceData, action);
         if (address(this).balance < validationCost) {
             revert IUsdnProtocolErrors.UsdnProtocolInsufficientOracleFee();

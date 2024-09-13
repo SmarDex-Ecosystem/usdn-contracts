@@ -3,6 +3,7 @@ pragma solidity 0.8.26;
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
+import { ADMIN } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
@@ -55,5 +56,17 @@ contract TestUsdnProtocolActionsGetOraclePrice is UsdnProtocolBaseFixture {
             vm.expectRevert(UsdnProtocolInsufficientOracleFee.selector);
             protocol.i_getOraclePrice(action, block.timestamp, hex"beef", priceData);
         }
+    }
+
+    /**
+     * @custom:scenario Try to call a paused `_getOraclePrice` function
+     * @custom:when The function is called
+     * @custom:then The transaction reverts with `UsdnProtocolFunctionPaused`
+     */
+    function test_RevertWhen_getOraclePricePaused() public {
+        vm.prank(ADMIN);
+        protocol.setOraclePricePaused(true);
+        vm.expectRevert(UsdnProtocolFunctionPaused.selector);
+        protocol.i_getOraclePrice(ProtocolAction.None, block.timestamp, "", "");
     }
 }

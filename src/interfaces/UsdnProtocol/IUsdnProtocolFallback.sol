@@ -437,6 +437,12 @@ interface IUsdnProtocolFallback {
      */
     function getTransferPositionOwnershipPaused() external view returns (bool);
 
+    /**
+     * @notice Whether the `_getOraclePrice` function is paused
+     * @return The paused value
+     */
+    function getOraclePricePaused() external view returns (bool);
+
     /* -------------------------------------------------------------------------- */
     /*                                    State getters                           */
     /* -------------------------------------------------------------------------- */
@@ -578,6 +584,12 @@ interface IUsdnProtocolFallback {
      * @param paused The paused value
      */
     function setTransferPositionOwnershipPaused(bool paused) external;
+
+    /**
+     * @notice Set the `_oraclePricePaused` value
+     * @param paused The paused value
+     */
+    function setOraclePricePaused(bool paused) external;
 
     /**
      * @notice Replace the LiquidationRewardsManager contract with a new implementation

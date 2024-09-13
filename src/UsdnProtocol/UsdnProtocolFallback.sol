@@ -323,6 +323,11 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
         return s._transferPositionOwnershipPaused;
     }
 
+    /// @inheritdoc IUsdnProtocolFallback
+    function getOraclePricePaused() external view returns (bool) {
+        return s._oraclePricePaused;
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                                    State getters                           */
     /* -------------------------------------------------------------------------- */
@@ -510,6 +515,16 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
 
         s._transferPositionOwnershipPaused = paused;
         emit IUsdnProtocolEvents.TransferPositionOwnershipPausedValueUpdated(paused);
+    }
+
+    /// @inheritdoc IUsdnProtocolFallback
+    function setOraclePricePaused(bool paused) external onlyRole(SET_EXTERNAL_ROLE) {
+        if (s._oraclePricePaused == paused) {
+            revert IUsdnProtocolErrors.UsdnProtocolPausedValueAlreadySet();
+        }
+
+        s._oraclePricePaused = paused;
+        emit IUsdnProtocolEvents.OraclePricePausedValueUpdated(paused);
     }
 
     /* -------------------------------------------------------------------------- */
