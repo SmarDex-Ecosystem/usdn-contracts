@@ -196,10 +196,13 @@ library UsdnProtocolActionsLongLibrary {
         Utils._refundExcessEther(0, amountToRefund, balanceBefore);
         Utils._checkPendingFee(s);
     }
+
     /* -------------------------------------------------------------------------- */
-    /*                              Public functions                              */
+    /*                             Internal functions                             */
     /* -------------------------------------------------------------------------- */
+
     /**
+     *
      * @notice Validate an open position action
      * @param s The storage of the protocol
      * @param pending The pending action data
@@ -207,7 +210,6 @@ library UsdnProtocolActionsLongLibrary {
      * @return isValidated_ Whether the action is validated
      * @return liquidated_ Whether the pending action has been liquidated
      */
-
     function _validateOpenPositionWithAction(
         Types.Storage storage s,
         Types.PendingAction memory pending,
@@ -447,10 +449,6 @@ library UsdnProtocolActionsLongLibrary {
             s._liqMultiplierAccumulator.sub(HugeUint.wrap(unadjustedTickPrice * totalExpoToRemove));
         s._liqMultiplierAccumulator = liqMultiplierAccumulator_;
     }
-
-    /* -------------------------------------------------------------------------- */
-    /*                             Internal functions                             */
-    /* -------------------------------------------------------------------------- */
 
     /**
      * @notice Initiate an open position action

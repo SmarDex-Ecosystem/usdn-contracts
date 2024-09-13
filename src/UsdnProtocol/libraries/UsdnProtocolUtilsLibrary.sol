@@ -30,6 +30,157 @@ library UsdnProtocolUtilsLibrary {
     using SafeTransferLib for address;
 
     /**
+     * @notice Refunds any excess ether to the user to prevent locking ETH in the contract
+     * @param securityDepositValue The security deposit value of the action (zero for a validation action)
+     * @param amountToRefund The amount to refund to the user:
+     *      - the security deposit if executing an action for another user,
+     *      - the initialization security deposit in case of a validation action
+     * @param balanceBefore The balance of the contract before the action
+     */
+    function _refundExcessEther(uint256 securityDepositValue, uint256 amountToRefund, uint256 balanceBefore) internal {
+        uint256 positive = amountToRefund + address(this).balance + msg.value;
+        uint256 negative = balanceBefore + securityDepositValue;
+
+        if (negative > positive) {
+            revert IUsdnProtocolErrors.UsdnProtocolUnexpectedBalance();
+        }
+
+        uint256 amount;
+        unchecked {
+            // we know that positive >= negative, so this subtraction is safe
+            amount = positive - negative;
+        }
+
+        _refundEther(amount, payable(msg.sender));
+    }
+
+    /**
+     * @notice Refunds an amount of ether to the given address
+     * @param amount The amount of ether to refund
+     * @param to The address that should receive the refund
+     */
+    function _refundEther(uint256 amount, address payable to) internal {
+        if (to == address(0)) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo();
+        }
+        if (amount != 0) {
+            // slither-disable-next-line arbitrary-send-eth
+            (bool success,) = to.call{ value: amount }("");
+            if (!success) {
+                revert IUsdnProtocolErrors.UsdnProtocolEtherRefundFailed();
+            }
+        }
+    }
+
+    /**
+     * @notice Distribute the protocol fee to the fee collector if it exceeds the threshold
+     * @dev This function is called after every action that changes the protocol fee balance
+     * Try to call the function `feeCollectorCallback` on the fee collector if it supports the interface (non reverting
+     * if it fails)
+     * @param s The storage of the protocol
+     */
+    function _checkPendingFee(Types.Storage storage s) internal {
+        uint256 pendingFee = s._pendingProtocolFee;
+        if (pendingFee >= s._feeThreshold) {
+            address feeCollector = s._feeCollector;
+
+            emit IUsdnProtocolEvents.ProtocolFeeDistributed(feeCollector, pendingFee);
+            s._pendingProtocolFee = 0;
+            address(s._asset).safeTransfer(feeCollector, pendingFee);
+
+            if (ERC165Checker.supportsInterface(feeCollector, type(IFeeCollectorCallback).interfaceId)) {
+                IFeeCollectorCallback(feeCollector).feeCollectorCallback(pendingFee);
+            }
+        }
+    }
+
+    /**
+     * @notice Get the oracle price for the given action and timestamp then validate it
+     * @param s The storage of the protocol
+     * @param action The type of action that is being performed by the user
+     * @param timestamp The timestamp at which the wanted price was recorded
+     * @param actionId The unique identifier of the action
+     * @param priceData The price oracle data
+     * @return price_ The validated price
+     */
+    function _getOraclePrice(
+        Types.Storage storage s,
+        Types.ProtocolAction action,
+        uint256 timestamp,
+        bytes32 actionId,
+        bytes calldata priceData
+    ) internal returns (PriceInfo memory price_) {
+        uint256 validationCost = s._oracleMiddleware.validationCost(priceData, action);
+        if (address(this).balance < validationCost) {
+            revert IUsdnProtocolErrors.UsdnProtocolInsufficientOracleFee();
+        }
+        // slither-disable-next-line arbitrary-send-eth
+        price_ = s._oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
+            actionId, uint128(timestamp), action, priceData
+        );
+    }
+
+    /**
+     * @notice Clear the pending action for a user
+     * @param s The storage of the protocol
+     * @param user The user's address
+     * @param rawIndex The rawIndex of the pending action in the queue
+     */
+    function _clearPendingAction(Types.Storage storage s, address user, uint128 rawIndex) internal {
+        s._pendingActionsQueue.clearAt(rawIndex);
+        delete s._pendingActions[user];
+    }
+
+    /**
+     * @notice Calculate the long balance taking into account unreflected PnL (but not funding)
+     * @dev This function uses the latest total expo, balance and stored price as the reference values, and adds the PnL
+     * due to the price change to `currentPrice`
+     * @param s The storage of the protocol
+     * @param currentPrice The current price
+     * @return available_ The available balance on the long side
+     */
+    function _longAssetAvailable(Types.Storage storage s, uint128 currentPrice)
+        internal
+        view
+        returns (int256 available_)
+    {
+        available_ = _longAssetAvailable(s._totalExpo, s._balanceLong, currentPrice, s._lastPrice);
+    }
+
+    /**
+     * @notice Function to calculate the hash and version of a given tick
+     * @param s The storage of the protocol
+     * @param tick The tick
+     * @return hash_ The hash of the tick
+     * @return version_ The version of the tick
+     */
+    function _tickHash(Types.Storage storage s, int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
+        version_ = s._tickVersion[tick];
+        hash_ = tickHash(tick, version_);
+    }
+
+    /**
+     * @dev Convert a signed tick to an unsigned index into the Bitmap using the tick spacing in storage
+     * @param s The storage of the protocol
+     * @param tick The tick to convert, a multiple of the tick spacing
+     * @return index_ The index into the Bitmap
+     */
+    function _calcBitmapIndexFromTick(Types.Storage storage s, int24 tick) internal view returns (uint256 index_) {
+        index_ = _calcBitmapIndexFromTick(tick, s._tickSpacing);
+    }
+
+    /// @notice See {IUsdnProtocolLong}
+    function getEffectivePriceForTick(Types.Storage storage s, int24 tick) internal view returns (uint128 price_) {
+        price_ =
+            getEffectivePriceForTick(tick, s._lastPrice, s._totalExpo - s._balanceLong, s._liqMultiplierAccumulator);
+    }
+
+    /// @notice See {IUsdnProtocolActions}
+    function tickHash(int24 tick, uint256 version) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(tick, version));
+    }
+
+    /**
      * @notice Convert a uint128 to an int256
      * @param x The value to convert
      * @return The converted value
@@ -183,16 +334,6 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @dev Convert a signed tick to an unsigned index into the Bitmap using the tick spacing in storage
-     * @param s The storage of the protocol
-     * @param tick The tick to convert, a multiple of the tick spacing
-     * @return index_ The index into the Bitmap
-     */
-    function _calcBitmapIndexFromTick(Types.Storage storage s, int24 tick) internal view returns (uint256 index_) {
-        index_ = _calcBitmapIndexFromTick(tick, s._tickSpacing);
-    }
-
-    /**
      * @dev Convert a signed tick to an unsigned index into the Bitmap using the provided tick spacing
      * @param tick The tick to convert, a multiple of `tickSpacing`
      * @param tickSpacing The tick spacing to use
@@ -248,39 +389,6 @@ library UsdnProtocolUtilsLibrary {
         int256 pnl = tradingExpo.toInt256().safeMul(priceDiff).safeDiv(toInt256(newPrice));
 
         available_ = balanceLong.toInt256().safeAdd(pnl);
-    }
-
-    /**
-     * @notice Calculate the long balance taking into account unreflected PnL (but not funding)
-     * @dev This function uses the latest total expo, balance and stored price as the reference values, and adds the PnL
-     * due to the price change to `currentPrice`
-     * @param s The storage of the protocol
-     * @param currentPrice The current price
-     * @return available_ The available balance on the long side
-     */
-    function _longAssetAvailable(Types.Storage storage s, uint128 currentPrice)
-        internal
-        view
-        returns (int256 available_)
-    {
-        available_ = _longAssetAvailable(s._totalExpo, s._balanceLong, currentPrice, s._lastPrice);
-    }
-
-    /// @notice See {IUsdnProtocolActions}
-    function tickHash(int24 tick, uint256 version) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(tick, version));
-    }
-
-    /**
-     * @notice Function to calculate the hash and version of a given tick
-     * @param s The storage of the protocol
-     * @param tick The tick
-     * @return hash_ The hash of the tick
-     * @return version_ The version of the tick
-     */
-    function _tickHash(Types.Storage storage s, int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
-        version_ = s._tickVersion[tick];
-        hash_ = tickHash(tick, version_);
     }
 
     /**
@@ -442,108 +550,6 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Clear the pending action for a user
-     * @param s The storage of the protocol
-     * @param user The user's address
-     * @param rawIndex The rawIndex of the pending action in the queue
-     */
-    function _clearPendingAction(Types.Storage storage s, address user, uint128 rawIndex) internal {
-        s._pendingActionsQueue.clearAt(rawIndex);
-        delete s._pendingActions[user];
-    }
-
-    /**
-     * @notice Refunds any excess ether to the user to prevent locking ETH in the contract
-     * @param securityDepositValue The security deposit value of the action (zero for a validation action)
-     * @param amountToRefund The amount to refund to the user:
-     *      - the security deposit if executing an action for another user,
-     *      - the initialization security deposit in case of a validation action
-     * @param balanceBefore The balance of the contract before the action
-     */
-    function _refundExcessEther(uint256 securityDepositValue, uint256 amountToRefund, uint256 balanceBefore) internal {
-        uint256 positive = amountToRefund + address(this).balance + msg.value;
-        uint256 negative = balanceBefore + securityDepositValue;
-
-        if (negative > positive) {
-            revert IUsdnProtocolErrors.UsdnProtocolUnexpectedBalance();
-        }
-
-        uint256 amount;
-        unchecked {
-            // we know that positive >= negative, so this subtraction is safe
-            amount = positive - negative;
-        }
-
-        _refundEther(amount, payable(msg.sender));
-    }
-
-    /**
-     * @notice Refunds an amount of ether to the given address
-     * @param amount The amount of ether to refund
-     * @param to The address that should receive the refund
-     */
-    function _refundEther(uint256 amount, address payable to) internal {
-        if (to == address(0)) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo();
-        }
-        if (amount != 0) {
-            // slither-disable-next-line arbitrary-send-eth
-            (bool success,) = to.call{ value: amount }("");
-            if (!success) {
-                revert IUsdnProtocolErrors.UsdnProtocolEtherRefundFailed();
-            }
-        }
-    }
-
-    /**
-     * @notice Distribute the protocol fee to the fee collector if it exceeds the threshold
-     * @dev This function is called after every action that changes the protocol fee balance
-     * Try to call the function `feeCollectorCallback` on the fee collector if it supports the interface (non reverting
-     * if it fails)
-     * @param s The storage of the protocol
-     */
-    function _checkPendingFee(Types.Storage storage s) internal {
-        uint256 pendingFee = s._pendingProtocolFee;
-        if (pendingFee >= s._feeThreshold) {
-            address feeCollector = s._feeCollector;
-
-            emit IUsdnProtocolEvents.ProtocolFeeDistributed(feeCollector, pendingFee);
-            s._pendingProtocolFee = 0;
-            address(s._asset).safeTransfer(feeCollector, pendingFee);
-
-            if (ERC165Checker.supportsInterface(feeCollector, type(IFeeCollectorCallback).interfaceId)) {
-                IFeeCollectorCallback(feeCollector).feeCollectorCallback(pendingFee);
-            }
-        }
-    }
-
-    /**
-     * @notice Get the oracle price for the given action and timestamp then validate it
-     * @param s The storage of the protocol
-     * @param action The type of action that is being performed by the user
-     * @param timestamp The timestamp at which the wanted price was recorded
-     * @param actionId The unique identifier of the action
-     * @param priceData The price oracle data
-     * @return price_ The validated price
-     */
-    function _getOraclePrice(
-        Types.Storage storage s,
-        Types.ProtocolAction action,
-        uint256 timestamp,
-        bytes32 actionId,
-        bytes calldata priceData
-    ) internal returns (PriceInfo memory price_) {
-        uint256 validationCost = s._oracleMiddleware.validationCost(priceData, action);
-        if (address(this).balance < validationCost) {
-            revert IUsdnProtocolErrors.UsdnProtocolInsufficientOracleFee();
-        }
-        // slither-disable-next-line arbitrary-send-eth
-        price_ = s._oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            actionId, uint128(timestamp), action, priceData
-        );
-    }
-
-    /**
      * @notice Calculate the amount of assets received when burning USDN shares (after fees)
      * @param usdnShares The amount of USDN shares
      * @param available The available asset in the vault
@@ -614,12 +620,6 @@ library UsdnProtocolUtilsLibrary {
         // price = unadjustedPrice * assetPrice * (totalExpo - balanceLong) / accumulator
         HugeUint.Uint512 memory numerator = HugeUint.mul(unadjustedPrice, assetPrice * longTradingExpo);
         price_ = numerator.div(accumulator).toUint128();
-    }
-
-    /// @notice See {IUsdnProtocolLong}
-    function getEffectivePriceForTick(Types.Storage storage s, int24 tick) internal view returns (uint128 price_) {
-        price_ =
-            getEffectivePriceForTick(tick, s._lastPrice, s._totalExpo - s._balanceLong, s._liqMultiplierAccumulator);
     }
 
     /// @notice See {IUsdnProtocolLong}

@@ -3,7 +3,6 @@ pragma solidity 0.8.26;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
-import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { IUsdn } from "../../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
@@ -16,27 +15,11 @@ import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.so
 
 library UsdnProtocolVaultLibrary {
     using SafeCast for int256;
-    using SafeCast for uint256;
     using SignedMath for int256;
-    using SafeTransferLib for address;
 
     /* -------------------------------------------------------------------------- */
-    /*                              Public functions                              */
+    /*                             External functions                             */
     /* -------------------------------------------------------------------------- */
-
-    /// @notice See {IUsdnProtocolVault}
-    function usdnPrice(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
-        public
-        view
-        returns (uint256 price_)
-    {
-        price_ = _calcUsdnPrice(
-            vaultAssetAvailableWithFunding(s, currentPrice, timestamp).toUint256(),
-            currentPrice,
-            s._usdn.totalSupply(),
-            s._assetDecimals
-        );
-    }
 
     /// @notice See {IUsdnProtocolVault}
     function usdnPrice(Types.Storage storage s, uint128 currentPrice) external view returns (uint256 price_) {
@@ -70,6 +53,24 @@ library UsdnProtocolVaultLibrary {
             return 0;
         }
         assetExpected_ = Utils._calcBurnUsdn(usdnShares, uint256(available), s._usdn.totalShares(), s._vaultFeeBps);
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                              Public functions                              */
+    /* -------------------------------------------------------------------------- */
+
+    /// @notice See {IUsdnProtocolVault}
+    function usdnPrice(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
+        public
+        view
+        returns (uint256 price_)
+    {
+        price_ = _calcUsdnPrice(
+            vaultAssetAvailableWithFunding(s, currentPrice, timestamp).toUint256(),
+            currentPrice,
+            s._usdn.totalSupply(),
+            s._assetDecimals
+        );
     }
 
     /// @notice See {IUsdnProtocolVault}

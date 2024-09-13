@@ -2,7 +2,6 @@
 pragma solidity 0.8.26;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
@@ -12,7 +11,6 @@ import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocol
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "../../libraries/DoubleEndedQueue.sol";
-import { HugeUint } from "../../libraries/HugeUint.sol";
 import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./UsdnProtocolActionsLongLibrary.sol";
@@ -25,10 +23,7 @@ import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.so
 library UsdnProtocolActionsVaultLibrary {
     using SafeTransferLib for address;
     using SafeCast for uint256;
-    using SafeCast for int256;
-    using LibBitmap for LibBitmap.Bitmap;
     using SignedMath for int256;
-    using HugeUint for HugeUint.Uint512;
     using Permit2TokenBitfield for Permit2TokenBitfield.Bitfield;
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
@@ -296,7 +291,7 @@ library UsdnProtocolActionsVaultLibrary {
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                              Public functions                              */
+    /*                             Internal functions                             */
     /* -------------------------------------------------------------------------- */
 
     /**
@@ -428,10 +423,6 @@ library UsdnProtocolActionsVaultLibrary {
             return (action_, rawIndex_);
         } while (i < maxIter);
     }
-
-    /* -------------------------------------------------------------------------- */
-    /*                             Internal functions                             */
-    /* -------------------------------------------------------------------------- */
 
     /**
      * @notice Prepare the data for the `initiateDeposit` function

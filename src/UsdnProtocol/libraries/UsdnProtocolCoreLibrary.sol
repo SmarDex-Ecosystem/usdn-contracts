@@ -113,6 +113,54 @@ library UsdnProtocolCoreLibrary {
     /*                              Public functions                              */
     /* -------------------------------------------------------------------------- */
 
+    /// @notice See {IUsdnProtocolCore}
+    function funding(Types.Storage storage s, uint128 timestamp)
+        public
+        view
+        returns (int256 funding_, int256 fundingPerDay_, int256 oldLongExpo_)
+    {
+        (funding_, fundingPerDay_, oldLongExpo_) = _funding(s, timestamp, s._EMA);
+    }
+
+    /// @notice See {IUsdnProtocolLong}
+    function longAssetAvailableWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
+        public
+        view
+        returns (int256 available_)
+    {
+        if (timestamp < s._lastUpdateTimestamp) {
+            revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
+        }
+
+        (int256 fundAsset,) = _fundingAsset(s, timestamp, s._EMA);
+
+        if (fundAsset > 0) {
+            available_ = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAsset);
+        } else {
+            int256 fee = fundAsset * Utils.toInt256(s._protocolFeeBps) / int256(Constants.BPS_DIVISOR);
+            // fees have the same sign as fundAsset (negative here), so we need to sub them
+            available_ = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAsset - fee);
+        }
+
+        int256 totalBalance = (s._balanceLong + s._balanceVault).toInt256();
+        if (available_ > totalBalance) {
+            available_ = totalBalance;
+        }
+    }
+
+    /// @notice See {IUsdnProtocolLong}
+    function longTradingExpoWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
+        public
+        view
+        returns (int256 expo_)
+    {
+        expo_ = s._totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(s, currentPrice, timestamp));
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                             Internal functions                             */
+    /* -------------------------------------------------------------------------- */
+
     /**
      * @notice Prepare the pending action struct for an open position and add it to the queue
      * @param s The storage of the protocol
@@ -436,54 +484,6 @@ library UsdnProtocolCoreLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolNoPendingAction();
         }
     }
-
-    /// @notice See {IUsdnProtocolCore}
-    function funding(Types.Storage storage s, uint128 timestamp)
-        public
-        view
-        returns (int256 funding_, int256 fundingPerDay_, int256 oldLongExpo_)
-    {
-        (funding_, fundingPerDay_, oldLongExpo_) = _funding(s, timestamp, s._EMA);
-    }
-
-    /// @notice See {IUsdnProtocolLong}
-    function longAssetAvailableWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
-        public
-        view
-        returns (int256 available_)
-    {
-        if (timestamp < s._lastUpdateTimestamp) {
-            revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
-        }
-
-        (int256 fundAsset,) = _fundingAsset(s, timestamp, s._EMA);
-
-        if (fundAsset > 0) {
-            available_ = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAsset);
-        } else {
-            int256 fee = fundAsset * Utils.toInt256(s._protocolFeeBps) / int256(Constants.BPS_DIVISOR);
-            // fees have the same sign as fundAsset (negative here), so we need to sub them
-            available_ = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAsset - fee);
-        }
-
-        int256 totalBalance = (s._balanceLong + s._balanceVault).toInt256();
-        if (available_ > totalBalance) {
-            available_ = totalBalance;
-        }
-    }
-
-    /// @notice See {IUsdnProtocolLong}
-    function longTradingExpoWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
-        public
-        view
-        returns (int256 expo_)
-    {
-        expo_ = s._totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(s, currentPrice, timestamp));
-    }
-
-    /* -------------------------------------------------------------------------- */
-    /*                             Internal functions                             */
-    /* -------------------------------------------------------------------------- */
 
     /**
      * @notice Update the Exponential Moving Average (EMA) of the funding rate (per day)
