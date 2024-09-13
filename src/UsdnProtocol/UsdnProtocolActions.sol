@@ -6,57 +6,9 @@ import { Permit2TokenBitfield } from "../libraries/Permit2TokenBitfield.sol";
 import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./libraries/UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./libraries/UsdnProtocolActionsUtilsLibrary.sol";
-import { UsdnProtocolActionsVaultLibrary as ActionsVault } from "./libraries/UsdnProtocolActionsVaultLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "./libraries/UsdnProtocolUtilsLibrary.sol";
 
 abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActions {
-    /// @inheritdoc IUsdnProtocolActions
-    function initiateDeposit(
-        uint128 amount,
-        uint256 sharesOutMin,
-        address to,
-        address payable validator,
-        Permit2TokenBitfield.Bitfield permit2TokenBitfield,
-        bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData
-    ) external payable initializedAndNonReentrant returns (bool success_) {
-        return ActionsVault.initiateDeposit(
-            s, amount, sharesOutMin, to, validator, permit2TokenBitfield, currentPriceData, previousActionsData
-        );
-    }
-
-    /// @inheritdoc IUsdnProtocolActions
-    function validateDeposit(
-        address payable validator,
-        bytes calldata depositPriceData,
-        PreviousActionsData calldata previousActionsData
-    ) external payable initializedAndNonReentrant returns (bool success_) {
-        return ActionsVault.validateDeposit(s, validator, depositPriceData, previousActionsData);
-    }
-
-    /// @inheritdoc IUsdnProtocolActions
-    function initiateWithdrawal(
-        uint152 usdnShares,
-        uint256 amountOutMin,
-        address to,
-        address payable validator,
-        bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData
-    ) external payable initializedAndNonReentrant returns (bool success_) {
-        return ActionsVault.initiateWithdrawal(
-            s, usdnShares, amountOutMin, to, validator, currentPriceData, previousActionsData
-        );
-    }
-
-    /// @inheritdoc IUsdnProtocolActions
-    function validateWithdrawal(
-        address payable validator,
-        bytes calldata withdrawalPriceData,
-        PreviousActionsData calldata previousActionsData
-    ) external payable initializedAndNonReentrant returns (bool success_) {
-        return ActionsVault.validateWithdrawal(s, validator, withdrawalPriceData, previousActionsData);
-    }
-
     /// @inheritdoc IUsdnProtocolActions
     function initiateOpenPosition(
         uint128 amount,
