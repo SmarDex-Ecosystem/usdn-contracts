@@ -35,9 +35,6 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Acc
     /// @inheritdoc IOracleMiddleware
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
-    /// @inheritdoc IOracleMiddleware
-    bytes32 public constant PAUSABLE_ROLE = keccak256("PAUSABLE_ROLE");
-
     /**
      * @notice The delay (in seconds) between the moment an action is initiated and the timestamp of the
      * price data used to validate that action
@@ -65,7 +62,6 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Acc
         AccessControlDefaultAdminRules(0, msg.sender)
     {
         _grantRole(ADMIN_ROLE, msg.sender);
-        _grantRole(PAUSABLE_ROLE, msg.sender);
     }
 
     /* -------------------------------------------------------------------------- */

@@ -21,12 +21,6 @@ interface IOracleMiddleware is IBaseOracleMiddleware, IOracleMiddlewareErrors, I
      */
     function ADMIN_ROLE() external pure returns (bytes32);
 
-    /**
-     * @notice The pausable role's signature
-     * @return Get the role signature
-     */
-    function PAUSABLE_ROLE() external pure returns (bytes32);
-
     /* -------------------------------------------------------------------------- */
     /*                                  Constants                                 */
     /* -------------------------------------------------------------------------- */
