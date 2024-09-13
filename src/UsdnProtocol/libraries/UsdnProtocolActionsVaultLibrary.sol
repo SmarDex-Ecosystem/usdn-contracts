@@ -89,7 +89,7 @@ library UsdnProtocolActionsVaultLibrary {
         Permit2TokenBitfield.Bitfield permit2TokenBitfield,
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData
-    ) public returns (bool success_) {
+    ) external returns (bool success_) {
         uint64 securityDepositValue = s._securityDepositValue;
         if (msg.value < securityDepositValue) {
             revert IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow();
@@ -128,7 +128,7 @@ library UsdnProtocolActionsVaultLibrary {
         address payable validator,
         bytes calldata depositPriceData,
         Types.PreviousActionsData calldata previousActionsData
-    ) public returns (bool success_) {
+    ) external returns (bool success_) {
         uint256 balanceBefore = address(this).balance;
 
         uint256 amountToRefund;
@@ -156,7 +156,7 @@ library UsdnProtocolActionsVaultLibrary {
         address payable validator,
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData
-    ) public returns (bool success_) {
+    ) external returns (bool success_) {
         uint64 securityDepositValue = s._securityDepositValue;
         if (msg.value < securityDepositValue) {
             revert IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow();
@@ -194,7 +194,7 @@ library UsdnProtocolActionsVaultLibrary {
         address payable validator,
         bytes calldata withdrawalPriceData,
         Types.PreviousActionsData calldata previousActionsData
-    ) public returns (bool success_) {
+    ) external returns (bool success_) {
         uint256 balanceBefore = address(this).balance;
 
         uint256 amountToRefund;
@@ -225,7 +225,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @param s The storage of the protocol
      * @param depositValue The deposit value in asset
      */
-    function _checkImbalanceLimitDeposit(Types.Storage storage s, uint256 depositValue) public view {
+    function _checkImbalanceLimitDeposit(Types.Storage storage s, uint256 depositValue) internal view {
         int256 depositExpoImbalanceLimitBps = s._depositExpoImbalanceLimitBps;
 
         // early return in case limit is disabled
@@ -259,7 +259,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @param totalExpo The current total expo
      */
     function _checkImbalanceLimitWithdrawal(Types.Storage storage s, uint256 withdrawalValue, uint256 totalExpo)
-        public
+        internal
         view
     {
         int256 withdrawalExpoImbalanceLimitBps = s._withdrawalExpoImbalanceLimitBps;
@@ -299,7 +299,7 @@ library UsdnProtocolActionsVaultLibrary {
         address validator,
         uint128 amount,
         bytes calldata currentPriceData
-    ) public returns (InitiateDepositData memory data_) {
+    ) internal returns (InitiateDepositData memory data_) {
         PriceInfo memory currentPrice = Utils._getOraclePrice(
             s,
             Types.ProtocolAction.InitiateDeposit,
@@ -369,7 +369,7 @@ library UsdnProtocolActionsVaultLibrary {
         uint64 securityDepositValue,
         uint128 amount,
         InitiateDepositData memory data
-    ) public returns (uint256 amountToRefund_) {
+    ) internal returns (uint256 amountToRefund_) {
         Types.DepositPendingAction memory pendingAction = Types.DepositPendingAction({
             action: Types.ProtocolAction.ValidateDeposit,
             timestamp: uint40(block.timestamp),
@@ -416,7 +416,7 @@ library UsdnProtocolActionsVaultLibrary {
         uint64 securityDepositValue,
         Permit2TokenBitfield.Bitfield permit2TokenBitfield,
         bytes calldata currentPriceData
-    ) public returns (uint256 amountToRefund_, bool isInitiated_) {
+    ) internal returns (uint256 amountToRefund_, bool isInitiated_) {
         if (to == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo();
         }
@@ -469,7 +469,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @return isValidated_ Whether the action is validated
      */
     function _validateDeposit(Types.Storage storage s, address validator, bytes calldata priceData)
-        public
+        internal
         returns (uint256 securityDepositValue_, bool isValidated_)
     {
         (Types.PendingAction memory pending, uint128 rawIndex) = Core._getPendingActionOrRevert(s, validator);
@@ -502,7 +502,7 @@ library UsdnProtocolActionsVaultLibrary {
         Types.Storage storage s,
         Types.PendingAction memory pending,
         bytes calldata priceData
-    ) public returns (bool isValidated_) {
+    ) internal returns (bool isValidated_) {
         Types.DepositPendingAction memory deposit = Utils._toDepositPendingAction(pending);
 
         PriceInfo memory currentPrice = Utils._getOraclePrice(
@@ -581,7 +581,7 @@ library UsdnProtocolActionsVaultLibrary {
         address validator,
         uint152 usdnShares,
         bytes calldata currentPriceData
-    ) public returns (WithdrawalData memory data_) {
+    ) internal returns (WithdrawalData memory data_) {
         PriceInfo memory currentPrice = Utils._getOraclePrice(
             s,
             Types.ProtocolAction.InitiateWithdrawal,
@@ -638,7 +638,7 @@ library UsdnProtocolActionsVaultLibrary {
         uint152 usdnShares,
         uint64 securityDepositValue,
         WithdrawalData memory data
-    ) public returns (uint256 amountToRefund_) {
+    ) internal returns (uint256 amountToRefund_) {
         Types.PendingAction memory action = Utils._convertWithdrawalPendingAction(
             Types.WithdrawalPendingAction({
                 action: Types.ProtocolAction.ValidateWithdrawal,
@@ -684,7 +684,7 @@ library UsdnProtocolActionsVaultLibrary {
         uint152 usdnShares,
         uint64 securityDepositValue,
         bytes calldata currentPriceData
-    ) public returns (uint256 amountToRefund_, bool isInitiated_) {
+    ) internal returns (uint256 amountToRefund_, bool isInitiated_) {
         if (to == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo();
         }
@@ -724,7 +724,7 @@ library UsdnProtocolActionsVaultLibrary {
      * @return isValidated_ Whether the action is validated
      */
     function _validateWithdrawal(Types.Storage storage s, address validator, bytes calldata priceData)
-        public
+        internal
         returns (uint256 securityDepositValue_, bool isValidated_)
     {
         (Types.PendingAction memory pending, uint128 rawIndex) = Core._getPendingActionOrRevert(s, validator);
@@ -757,7 +757,7 @@ library UsdnProtocolActionsVaultLibrary {
         Types.Storage storage s,
         Types.PendingAction memory pending,
         bytes calldata priceData
-    ) public returns (bool isValidated_) {
+    ) internal returns (bool isValidated_) {
         Types.WithdrawalPendingAction memory withdrawal = Utils._toWithdrawalPendingAction(pending);
 
         PriceInfo memory currentPrice = Utils._getOraclePrice(
@@ -838,6 +838,7 @@ library UsdnProtocolActionsVaultLibrary {
         );
     }
 
+    // TO DO
     /**
      * @notice Execute the first actionable pending action or revert if the price data was not provided
      * @param s The storage of the protocol

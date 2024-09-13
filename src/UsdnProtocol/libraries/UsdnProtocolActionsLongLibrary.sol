@@ -63,7 +63,7 @@ library UsdnProtocolActionsLongLibrary {
         Types.InitiateOpenPositionParams memory params,
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData
-    ) public returns (bool success_, Types.PositionId memory posId_) {
+    ) external returns (bool success_, Types.PositionId memory posId_) {
         uint64 securityDepositValue = s._securityDepositValue;
         if (msg.value < securityDepositValue) {
             revert IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow();
@@ -101,7 +101,7 @@ library UsdnProtocolActionsLongLibrary {
         address payable validator,
         bytes calldata openPriceData,
         Types.PreviousActionsData calldata previousActionsData
-    ) public returns (bool success_) {
+    ) external returns (bool success_) {
         uint256 balanceBefore = address(this).balance;
 
         uint256 amountToRefund;
@@ -128,7 +128,7 @@ library UsdnProtocolActionsLongLibrary {
         Types.InitiateClosePositionParams memory params,
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData
-    ) public returns (bool success_) {
+    ) external returns (bool success_) {
         uint64 securityDepositValue = s._securityDepositValue;
         if (msg.value < securityDepositValue) {
             revert IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow();
@@ -176,7 +176,7 @@ library UsdnProtocolActionsLongLibrary {
         address payable validator,
         bytes calldata closePriceData,
         Types.PreviousActionsData calldata previousActionsData
-    ) public returns (bool success_) {
+    ) external returns (bool success_) {
         uint256 balanceBefore = address(this).balance;
 
         uint256 amountToRefund;
@@ -222,7 +222,7 @@ library UsdnProtocolActionsLongLibrary {
         Types.Storage storage s,
         Types.InitiateOpenPositionParams memory params,
         bytes calldata currentPriceData
-    ) public returns (Types.PositionId memory posId_, uint256 amountToRefund_, bool isInitiated_) {
+    ) internal returns (Types.PositionId memory posId_, uint256 amountToRefund_, bool isInitiated_) {
         if (params.to == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo();
         }
@@ -302,7 +302,7 @@ library UsdnProtocolActionsLongLibrary {
      * @return liquidated_ Whether the pending action has been liquidated
      */
     function _validateOpenPosition(Types.Storage storage s, address validator, bytes calldata priceData)
-        public
+        internal
         returns (uint256 securityDepositValue_, bool isValidated_, bool liquidated_)
     {
         (Types.PendingAction memory pending, uint128 rawIndex) = Core._getPendingActionOrRevert(s, validator);
@@ -566,7 +566,7 @@ library UsdnProtocolActionsLongLibrary {
         uint128 amountToClose,
         uint64 securityDepositValue,
         bytes calldata currentPriceData
-    ) public returns (uint256 amountToRefund_, bool isInitiated_, bool liquidated_) {
+    ) internal returns (uint256 amountToRefund_, bool isInitiated_, bool liquidated_) {
         Types.ClosePositionData memory data;
         (data, liquidated_) =
             ActionsUtils._prepareClosePositionData(s, owner, to, validator, posId, amountToClose, currentPriceData);
@@ -642,7 +642,7 @@ library UsdnProtocolActionsLongLibrary {
      * @return liquidated_ Whether the pending action has been liquidated
      */
     function _validateClosePosition(Types.Storage storage s, address validator, bytes calldata priceData)
-        public
+        internal
         returns (uint256 securityDepositValue_, bool isValidated_, bool liquidated_)
     {
         (Types.PendingAction memory pending, uint128 rawIndex) = Core._getPendingActionOrRevert(s, validator);
@@ -664,6 +664,7 @@ library UsdnProtocolActionsLongLibrary {
         }
     }
 
+    // TO DO : maybe
     /**
      * @notice Update protocol balances, liquidate positions if necessary, then validate the close position action
      * @param s The storage of the protocol

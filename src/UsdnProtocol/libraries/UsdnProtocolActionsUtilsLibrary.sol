@@ -51,7 +51,7 @@ library UsdnProtocolActionsUtilsLibrary {
 
     /// @notice See {IUsdnProtocolActions}
     function liquidate(Types.Storage storage s, bytes calldata currentPriceData, uint16 iterations)
-        public
+        external
         returns (uint256 liquidatedPositions_)
     {
         uint256 balanceBefore = address(this).balance;
@@ -81,7 +81,7 @@ library UsdnProtocolActionsUtilsLibrary {
         Types.Storage storage s,
         Types.PreviousActionsData calldata previousActionsData,
         uint256 maxValidations
-    ) public returns (uint256 validatedActions_) {
+    ) external returns (uint256 validatedActions_) {
         uint256 balanceBefore = address(this).balance;
         uint256 amountToRefund;
 
@@ -105,7 +105,7 @@ library UsdnProtocolActionsUtilsLibrary {
 
     /// @notice See {IUsdnProtocolActions}
     function transferPositionOwnership(Types.Storage storage s, Types.PositionId calldata posId, address newOwner)
-        public
+        external
     {
         (bytes32 tickHash, uint256 version) = Utils._tickHash(s, posId.tick);
         if (posId.tickVersion != version) {
@@ -147,7 +147,7 @@ library UsdnProtocolActionsUtilsLibrary {
         uint256 posTotalExpoToClose,
         uint256 posValueToCloseAfterFees,
         uint256 fees
-    ) public view {
+    ) internal view {
         int256 closeExpoImbalanceLimitBps;
         if (msg.sender == address(s._rebalancer)) {
             closeExpoImbalanceLimitBps = s._rebalancerCloseExpoImbalanceLimitBps;
@@ -189,7 +189,7 @@ library UsdnProtocolActionsUtilsLibrary {
         address validator,
         uint128 amountToClose,
         Types.Position memory pos
-    ) public view {
+    ) internal view {
         if (to == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo();
         }
@@ -328,7 +328,7 @@ library UsdnProtocolActionsUtilsLibrary {
      * long balance
      */
     function _assetToRemove(uint256 balanceLong, uint128 price, uint128 liqPriceWithoutPenalty, uint128 posExpo)
-        public
+        internal
         pure
         returns (uint256 boundedPosValue_)
     {
