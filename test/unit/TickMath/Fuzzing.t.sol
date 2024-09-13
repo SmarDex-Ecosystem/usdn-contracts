@@ -37,15 +37,15 @@ contract TestTickMathFuzzing is TickMathFixture {
      * @custom:given A valid price
      * @custom:when The rounded down tick for the corresponding price is retrieved
      * @custom:and The corresponding price for the tick is retrieved
-     * @custom:then The corresponding price should be lower or equal than the input price
+     * @custom:then The corresponding price should be lower or equal to the input price
      * @custom:when The new corresponding price from the rounded down tick + 1 is retrieved
-     * @custom:then The new corresponding price should be greater than the price
+     * @custom:then The new corresponding price should be greater than the input price
      * @param price The price to compare with other calculated prices
      */
     function testFuzz_tickShouldBeLargestAllowed(uint128 price) public view {
         price = uint128(bound(price, 1.025 gwei, type(uint128).max));
         int24 tick = handler.getTickAtPrice(price);
-        assertLe(handler.getPriceAtTick(tick), price, "tick price should be later or equal than the input price");
+        assertLe(handler.getPriceAtTick(tick), price, "tick price should be lower or equal to the input price");
         assertGt(handler.getPriceAtTick(tick + 1), price, "next tick price should be greater than the input price");
     }
 }
