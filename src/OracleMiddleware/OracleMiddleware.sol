@@ -3,7 +3,6 @@ pragma solidity 0.8.26;
 
 import { AccessControlDefaultAdminRules } from
     "@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol";
-import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IOracleMiddleware } from "../interfaces/OracleMiddleware/IOracleMiddleware.sol";
@@ -23,13 +22,7 @@ import { PythOracle } from "./oracles/PythOracle.sol";
  * It is used by the USDN protocol to get the price of the USDN underlying asset
  * @dev This contract is a middleware between the USDN protocol and the price oracles
  */
-contract OracleMiddleware is
-    IOracleMiddleware,
-    PythOracle,
-    ChainlinkOracle,
-    Pausable,
-    AccessControlDefaultAdminRules
-{
+contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, AccessControlDefaultAdminRules {
     /// @inheritdoc IOracleMiddleware
     uint16 public constant BPS_DIVISOR = 10_000;
 
@@ -87,7 +80,6 @@ contract OracleMiddleware is
         public
         payable
         virtual
-        whenNotPaused
         returns (PriceInfo memory price_)
     {
         if (action == Types.ProtocolAction.None) {
@@ -448,15 +440,5 @@ contract OracleMiddleware is
         if (!success) {
             revert OracleMiddlewareTransferFailed(to);
         }
-    }
-
-    /// @inheritdoc IOracleMiddleware
-    function pausePriceValidation() external onlyRole(PAUSABLE_ROLE) {
-        _pause();
-    }
-
-    /// @inheritdoc IOracleMiddleware
-    function unpausePriceValidation() external onlyRole(PAUSABLE_ROLE) {
-        _unpause();
     }
 }
