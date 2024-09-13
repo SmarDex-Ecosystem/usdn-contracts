@@ -256,8 +256,8 @@ interface IUsdnProtocolTypes {
      * @param validator The address that will validate the open position
      * @param amount The amount of wstETH to deposit
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
-     * @param userMaxPrice The maximum price at which the position can be opened. Will be compared to the effective
-     * price
+     * @param userMaxPrice The maximum price at which the position can be opened. The userMaxPrice is compared with the
+     * price after confidence interval, penalty, etc...
      * @param userMaxLeverage The maximum leverage for the newly created position
      * @param securityDepositValue The value of the security deposit for the newly created pending action
      * @param permit2TokenBitfield The permit2 bitfield
@@ -281,8 +281,8 @@ interface IUsdnProtocolTypes {
      * @param validator The address of the validator
      * @param amount The amount of wstETH to deposit
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
-     * @param userMaxPrice The maximum price at which the position can be opened. Will be compared to the effective
-     * price
+     * @param userMaxPrice The maximum price at which the position can be opened. The userMaxPrice is compared with the
+     * price after confidence interval, penalty, etc...
      * @param userMaxLeverage The maximum leverage for the newly created position
      * @param currentPriceData The current price data
      */
