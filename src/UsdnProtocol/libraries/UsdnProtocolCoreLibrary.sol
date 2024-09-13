@@ -200,7 +200,6 @@ library UsdnProtocolCoreLibrary {
 
     /* --------------------------  public functions --------------------------- */
 
-    // TO DO
     /// @notice See {IUsdnProtocolCore}
     function funding(Types.Storage storage s, uint128 timestamp)
         public
@@ -219,7 +218,6 @@ library UsdnProtocolCoreLibrary {
         (action_,) = _getPendingAction(s, user);
     }
 
-    // TO DO
     /// @notice See {IUsdnProtocolCore}
     function removeBlockedPendingAction(Types.Storage storage s, address validator, address payable to) external {
         uint256 pendingActionIndex = s._pendingActions[validator];
@@ -272,7 +270,6 @@ library UsdnProtocolCoreLibrary {
         }
     }
 
-    // TO DO
     /// @notice See {IUsdnProtocolLong}
     function longTradingExpoWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
         public
@@ -286,7 +283,6 @@ library UsdnProtocolCoreLibrary {
     /*                             Internal functions                             */
     /* -------------------------------------------------------------------------- */
 
-    // TO DO
     /**
      * @notice Prepare the pending action struct for an open position and add it to the queue
      * @param s The storage of the protocol
