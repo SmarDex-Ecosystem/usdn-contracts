@@ -851,7 +851,6 @@ library UsdnProtocolCoreLibrary {
             data.rawIndex = previousActionsData.rawIndices[i];
             if (data.rawIndex != data.frontRawIndex) {
                 // only get the pending action if we didn't already get it via `front` above
-
                 if (!s._pendingActionsQueue.isValid(data.rawIndex)) {
                     // the raw index is not in the queue, let's keep looking
                     unchecked {
