@@ -30,7 +30,7 @@ interface IUsdnProtocolImpl is
      * It can only be called once
      * @param usdn The USDN ERC20 contract
      * @param sdex The SDEX ERC20 contract
-     * @param asset The asset ERC20 contract (wstETH)
+     * @param asset The asset ERC20 contract
      * @param oracleMiddleware The oracle middleware contract
      * @param liquidationRewardsManager The liquidation rewards manager contract
      * @param tickSpacing The positions tick spacing
