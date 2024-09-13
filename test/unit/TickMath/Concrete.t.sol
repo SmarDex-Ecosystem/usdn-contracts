@@ -88,4 +88,21 @@ contract TestTickMathConcrete is TickMathFixture {
         vm.expectRevert(TickMath.TickMathInvalidTickSpacing.selector);
         handler.minUsableTick(0);
     }
+
+    /**
+     * @custom:scenario Compares the price of a tick with the result of the getPriceAtTick function for tick + 1
+     * @custom:given A wrong price in the low range
+     * @custom:when The rounded down tick for the corresponding price is retrieved
+     * @custom:and The corresponding price for the tick is retrieved
+     * @custom:then The corresponding price should be lower or equal to the input price
+     * @custom:when The new corresponding price from the rounded down tick + 1 is retrieved
+     * @custom:then The new corresponding price should be equal to the input price
+     */
+    function test_nextTickWithSamePrice() public view {
+        uint128 price = 21_063;
+        assertLt(price, 1.025 gwei, "price should be in the valid range");
+        int24 tick = handler.getTickAtPrice(price);
+        assertLe(handler.getPriceAtTick(tick), price, "tick price should be lower or equal to the input price");
+        assertEq(handler.getPriceAtTick(tick + 1), price, "next tick price should be equal input price");
+    }
 }
