@@ -77,9 +77,9 @@ No files changed, compilation skipped
 | UsdnProtocolFallback                   |   18,796 |      5,780 |
 | UsdnProtocolImpl                       |   24,214 |        362 |
 | UsdnProtocolImplV2                     |   24,695 |       -119 |
-| UsdnProtocolLongLibrary                |   20,835 |      3,741 |
+| UsdnProtocolLongLibrary                |   21,622 |      2,954 |
 | UsdnProtocolUtilsLibrary               |       85 |     24,491 |
-| UsdnProtocolVaultLibrary               |    5,654 |     18,922 |
+| UsdnProtocolVaultLibrary               |    4,112 |     20,464 |
 | Utils                                  |       85 |     24,491 |
 | Versions                               |       85 |     24,491 |
 | WstETH                                 |    8,396 |     16,180 |

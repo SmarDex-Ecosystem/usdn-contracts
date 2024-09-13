@@ -461,7 +461,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_usdnRebase(uint128 assetPrice, bool ignoreInterval) external returns (bool, bytes memory) {
-        return Vault._usdnRebase(s, assetPrice, ignoreInterval);
+        return Long._usdnRebase(s, assetPrice, ignoreInterval);
     }
 
     function i_calcUsdnPrice(uint256 vaultBalance, uint128 assetPrice, uint256 usdnTotalSupply, uint8 assetDecimals)

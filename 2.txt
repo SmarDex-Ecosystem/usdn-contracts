@@ -1,5 +1,5 @@
 Compiling 18 files with Solc 0.8.26
-Solc 0.8.26 finished in 8.70s
+Solc 0.8.26 finished in 9.83s
 Compiler run successful!
 | Contract                               | Size (B) | Margin (B) |
 |----------------------------------------|----------|------------|
@@ -79,9 +79,9 @@ Compiler run successful!
 | UsdnProtocolFallback                   |   18,796 |      5,780 |
 | UsdnProtocolImpl                       |   24,214 |        362 |
 | UsdnProtocolImplV2                     |   24,695 |       -119 |
-| UsdnProtocolLongLibrary                |   20,835 |      3,741 |
+| UsdnProtocolLongLibrary                |   21,622 |      2,954 |
 | UsdnProtocolUtilsLibrary               |       85 |     24,491 |
-| UsdnProtocolVaultLibrary               |    5,414 |     19,162 |
+| UsdnProtocolVaultLibrary               |    4,112 |     20,464 |
 | Utils                                  |       85 |     24,491 |
 | Versions                               |       85 |     24,491 |
 | WstETH                                 |    8,396 |     16,180 |
