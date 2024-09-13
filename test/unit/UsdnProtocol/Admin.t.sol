@@ -90,6 +90,12 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
 
         vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ROLE"));
         protocol.setRebalancerBonusBps(0);
+
+        vm.expectRevert(customError("SET_EXTERNAL_ROLE"));
+        protocol.setRefundSecurityDepositPaused(false);
+
+        vm.expectRevert(customError("SET_EXTERNAL_ROLE"));
+        protocol.setTransferPositionOwnershipPaused(false);
     }
 
     /**
@@ -1019,6 +1025,58 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         uint128 minThreshold = protocol.getTargetUsdnPrice();
         vm.expectRevert(UsdnProtocolInvalidUsdnRebaseThreshold.selector);
         protocol.setUsdnRebaseThreshold(minThreshold - 1);
+    }
+
+    /**
+     * @custom:scenario Call `setRefundSecurityDepositPaused` as admin
+     * @custom:when Admin wallet triggers admin contract function
+     * @custom:then The value should be updated
+     * @custom:and An event should be emitted with the corresponding new value
+     */
+    function test_setRefundSecurityDepositPaused() external adminPrank {
+        bool paused = protocol.getRefundSecurityDepositPaused();
+        vm.expectEmit();
+        emit RefundSecurityDepositPausedValueUpdated(!paused);
+        protocol.setRefundSecurityDepositPaused(!paused);
+        assertEq(protocol.getRefundSecurityDepositPaused(), !paused);
+    }
+
+    /**
+     * @custom:scenario Call "setRefundSecurityDepositPaused" from admin
+     * @custom:given The initial usdnProtocol state from admin wallet
+     * @custom:when Admin wallet triggers admin contract function
+     * @custom:then Revert because the value is already set
+     */
+    function test_RevertWhen_setRefundSecurityDepositPausedSameValue() external adminPrank {
+        bool paused = protocol.getRefundSecurityDepositPaused();
+        vm.expectRevert(UsdnProtocolPausedValueAlreadySet.selector);
+        protocol.setRefundSecurityDepositPaused(paused);
+    }
+
+    /**
+     * @custom:scenario Call `setTransferPositionOwnershipPaused` as admin
+     * @custom:when Admin wallet triggers admin contract function
+     * @custom:then The value should be updated
+     * @custom:and An event should be emitted with the corresponding new value
+     */
+    function test_setTransferPositionOwnershipPaused() external adminPrank {
+        bool paused = protocol.getTransferPositionOwnershipPaused();
+        vm.expectEmit();
+        emit TransferPositionOwnershipPausedValueUpdated(!paused);
+        protocol.setTransferPositionOwnershipPaused(!paused);
+        assertEq(protocol.getTransferPositionOwnershipPaused(), !paused);
+    }
+
+    /**
+     * @custom:scenario Call "setTransferPositionOwnershipPaused" from admin
+     * @custom:given The initial usdnProtocol state from admin wallet
+     * @custom:when Admin wallet triggers admin contract function
+     * @custom:then Revert because the value is already set
+     */
+    function test_RevertWhen_setTransferPositionOwnershipPausedSameValue() external adminPrank {
+        bool paused = protocol.getTransferPositionOwnershipPaused();
+        vm.expectRevert(UsdnProtocolPausedValueAlreadySet.selector);
+        protocol.setTransferPositionOwnershipPaused(paused);
     }
 
     function customError(string memory role) internal view returns (bytes memory customError_) {
