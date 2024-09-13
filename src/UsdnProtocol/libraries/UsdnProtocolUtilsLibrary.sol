@@ -23,11 +23,11 @@ import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstan
  * @dev All functions should be marked as "internal"
  */
 library UsdnProtocolUtilsLibrary {
-    using SafeCast for uint256;
-    using SignedMath for int256;
-    using HugeUint for HugeUint.Uint512;
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
+    using HugeUint for HugeUint.Uint512;
+    using SafeCast for uint256;
     using SafeTransferLib for address;
+    using SignedMath for int256;
 
     /**
      * @notice Refunds any excess ether to the user to prevent locking ETH in the contract

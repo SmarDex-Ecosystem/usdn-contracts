@@ -1,6 +1,4 @@
-Compiling 18 files with Solc 0.8.26
-Solc 0.8.26 finished in 9.28s
-Compiler run successful!
+No files changed, compilation skipped
 | Contract                               | Size (B) | Margin (B) |
 |----------------------------------------|----------|------------|
 | ActionsFixture                         |      262 |     24,314 |
@@ -73,15 +71,14 @@ Compiler run successful!
 | Usdn                                   |   13,859 |     10,717 |
 | UsdnProtocolActionsLongLibrary         |   23,741 |        835 |
 | UsdnProtocolActionsUtilsLibrary        |   10,886 |     13,690 |
-| UsdnProtocolActionsVaultLibrary        |   21,474 |      3,102 |
 | UsdnProtocolConstantsLibrary           |       85 |     24,491 |
 | UsdnProtocolCoreLibrary                |   18,321 |      6,255 |
-| UsdnProtocolFallback                   |   18,796 |      5,780 |
+| UsdnProtocolFallback                   |   19,748 |      4,828 |
 | UsdnProtocolImpl                       |   24,214 |        362 |
 | UsdnProtocolImplV2                     |   24,695 |       -119 |
 | UsdnProtocolLongLibrary                |   21,622 |      2,954 |
 | UsdnProtocolUtilsLibrary               |       85 |     24,491 |
-| UsdnProtocolVaultLibrary               |    4,112 |     20,464 |
+| UsdnProtocolVaultLibrary               |   22,258 |      2,318 |
 | Utils                                  |       85 |     24,491 |
 | Versions                               |       85 |     24,491 |
 | WstETH                                 |    8,396 |     16,180 |

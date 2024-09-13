@@ -23,12 +23,12 @@ import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.so
 import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.sol";
 
 library UsdnProtocolCoreLibrary {
-    using SafeTransferLib for address;
-    using SafeCast for uint256;
-    using SignedMath for int256;
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
-    using LibBitmap for LibBitmap.Bitmap;
     using HugeUint for HugeUint.Uint512;
+    using LibBitmap for LibBitmap.Bitmap;
+    using SafeCast for uint256;
+    using SafeTransferLib for address;
+    using SignedMath for int256;
 
     /* -------------------------------------------------------------------------- */
     /*                             External functions                             */

@@ -14,18 +14,18 @@ import { HugeUint } from "../../libraries/HugeUint.sol";
 import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 import { TickMath } from "../../libraries/TickMath.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./UsdnProtocolActionsUtilsLibrary.sol";
-import { UsdnProtocolActionsVaultLibrary as ActionsVault } from "./UsdnProtocolActionsVaultLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "./UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.sol";
+import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.sol";
 
 library UsdnProtocolActionsLongLibrary {
-    using SafeTransferLib for address;
-    using SafeCast for uint256;
     using HugeUint for HugeUint.Uint512;
-    using Permit2TokenBitfield for Permit2TokenBitfield.Bitfield;
     using LibBitmap for LibBitmap.Bitmap;
+    using Permit2TokenBitfield for Permit2TokenBitfield.Bitfield;
+    using SafeCast for uint256;
+    using SafeTransferLib for address;
 
     /**
      * @notice Data structure for the `_validateClosePositionWithAction` function
@@ -77,7 +77,7 @@ library UsdnProtocolActionsLongLibrary {
         uint256 amountToRefund;
         if (success_) {
             unchecked {
-                amountToRefund += ActionsVault._executePendingActionOrRevert(s, previousActionsData);
+                amountToRefund += Vault._executePendingActionOrRevert(s, previousActionsData);
             }
         }
 
@@ -114,7 +114,7 @@ library UsdnProtocolActionsLongLibrary {
         }
         if (success_ || liquidated) {
             unchecked {
-                amountToRefund += ActionsVault._executePendingActionOrRevert(s, previousActionsData);
+                amountToRefund += Vault._executePendingActionOrRevert(s, previousActionsData);
             }
         }
 
@@ -152,7 +152,7 @@ library UsdnProtocolActionsLongLibrary {
         uint256 amountToRefund;
         if (success_ || liq) {
             unchecked {
-                amountToRefund += ActionsVault._executePendingActionOrRevert(s, previousActionsData);
+                amountToRefund += Vault._executePendingActionOrRevert(s, previousActionsData);
             }
         }
 
@@ -189,7 +189,7 @@ library UsdnProtocolActionsLongLibrary {
         }
         if (success_ || liq) {
             unchecked {
-                amountToRefund += ActionsVault._executePendingActionOrRevert(s, previousActionsData);
+                amountToRefund += Vault._executePendingActionOrRevert(s, previousActionsData);
             }
         }
 

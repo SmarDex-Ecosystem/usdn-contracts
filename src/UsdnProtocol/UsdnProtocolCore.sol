@@ -3,7 +3,6 @@ pragma solidity 0.8.26;
 
 import { IUsdnProtocolCore } from "../interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
 import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
-import { UsdnProtocolActionsVaultLibrary as ActionsVault } from "./libraries/UsdnProtocolActionsVaultLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./libraries/UsdnProtocolCoreLibrary.sol";
 
 abstract contract UsdnProtocolCore is UsdnProtocolStorage, IUsdnProtocolCore {
@@ -24,15 +23,6 @@ abstract contract UsdnProtocolCore is UsdnProtocolStorage, IUsdnProtocolCore {
         returns (int256 funding_, int256 fundingPerDay_, int256 oldLongExpo_)
     {
         return Core.funding(s, timestamp);
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
-    function getActionablePendingActions(address currentUser)
-        external
-        view
-        returns (PendingAction[] memory actions_, uint128[] memory rawIndices_)
-    {
-        return ActionsVault.getActionablePendingActions(s, currentUser);
     }
 
     /// @inheritdoc IUsdnProtocolCore

@@ -24,12 +24,12 @@ import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.so
 import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.sol";
 
 library UsdnProtocolLongLibrary {
-    using LibBitmap for LibBitmap.Bitmap;
-    using SafeCast for uint256;
-    using SafeCast for int256;
-    using SignedMath for int256;
     using HugeUint for HugeUint.Uint512;
+    using LibBitmap for LibBitmap.Bitmap;
+    using SafeCast for int256;
+    using SafeCast for uint256;
     using SafeTransferLib for address;
+    using SignedMath for int256;
 
     /**
      * @notice Structure to hold the temporary data during liquidation
@@ -355,8 +355,7 @@ library UsdnProtocolLongLibrary {
         if (uPrice <= s._usdnRebaseThreshold) {
             return (false, callbackResult_);
         }
-        uint256 targetTotalSupply =
-            Vault._calcRebaseTotalSupply(balanceVault, assetPrice, s._targetUsdnPrice, assetDecimals);
+        uint256 targetTotalSupply = _calcRebaseTotalSupply(balanceVault, assetPrice, s._targetUsdnPrice, assetDecimals);
         uint256 newDivisor = FixedPointMathLib.fullMulDiv(usdnTotalSupply, divisor, targetTotalSupply);
         // since the USDN token can call a handler after the rebase, we want to make sure we do not block the user
         // action in case the rebase fails
@@ -1367,5 +1366,25 @@ library UsdnProtocolLongLibrary {
         // unadjust price with liquidation multiplier
         uint256 unadjustedPrice = _unadjustPrice(price, liqMultiplier);
         tick_ = _unadjustedPriceToTick(unadjustedPrice);
+    }
+
+    /**
+     * @notice Calculate the required USDN total supply to reach `targetPrice`
+     * @param vaultBalance The balance of the vault
+     * @param assetPrice The price of the underlying asset
+     * @param targetPrice The target USDN price to reach
+     * @param assetDecimals The number of decimals of the asset
+     * @return totalSupply_ The required total supply to achieve `targetPrice`
+     */
+    function _calcRebaseTotalSupply(uint256 vaultBalance, uint128 assetPrice, uint128 targetPrice, uint8 assetDecimals)
+        internal
+        pure
+        returns (uint256 totalSupply_)
+    {
+        totalSupply_ = FixedPointMathLib.fullMulDiv(
+            vaultBalance,
+            uint256(assetPrice) * 10 ** Constants.TOKENS_DECIMALS,
+            uint256(targetPrice) * 10 ** assetDecimals
+        );
     }
 }
