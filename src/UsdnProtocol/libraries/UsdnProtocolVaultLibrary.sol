@@ -39,13 +39,13 @@ library UsdnProtocolVaultLibrary {
     }
 
     /// @notice See {IUsdnProtocolVault}
-    function usdnPrice(Types.Storage storage s, uint128 currentPrice) public view returns (uint256 price_) {
+    function usdnPrice(Types.Storage storage s, uint128 currentPrice) external view returns (uint256 price_) {
         price_ = usdnPrice(s, currentPrice, uint128(block.timestamp));
     }
 
     /// @notice See {IUsdnProtocolVault}
     function previewDeposit(Types.Storage storage s, uint256 amount, uint128 price, uint128 timestamp)
-        public
+        external
         view
         returns (uint256 usdnSharesExpected_, uint256 sdexToBurn_)
     {
@@ -61,7 +61,7 @@ library UsdnProtocolVaultLibrary {
 
     /// @notice See {IUsdnProtocolVault}
     function previewWithdraw(Types.Storage storage s, uint256 usdnShares, uint128 price, uint128 timestamp)
-        public
+        external
         view
         returns (uint256 assetExpected_)
     {
@@ -104,7 +104,7 @@ library UsdnProtocolVaultLibrary {
      * @return available_ The available balance in the vault side
      */
     function _vaultAssetAvailable(Types.Storage storage s, uint128 currentPrice)
-        public
+        internal
         view
         returns (int256 available_)
     {
@@ -122,7 +122,7 @@ library UsdnProtocolVaultLibrary {
      * @return price_ The price of the USDN token
      */
     function _calcUsdnPrice(uint256 vaultBalance, uint128 assetPrice, uint256 usdnTotalSupply, uint8 assetDecimals)
-        public
+        internal
         pure
         returns (uint256 price_)
     {
@@ -140,7 +140,7 @@ library UsdnProtocolVaultLibrary {
      * @return totalSupply_ The required total supply to achieve `targetPrice`
      */
     function _calcRebaseTotalSupply(uint256 vaultBalance, uint128 assetPrice, uint128 targetPrice, uint8 assetDecimals)
-        public
+        internal
         pure
         returns (uint256 totalSupply_)
     {
@@ -151,6 +151,7 @@ library UsdnProtocolVaultLibrary {
         );
     }
 
+    // TO DO : in long
     /**
      * @notice Check if a USDN rebase is required and adjust the divisor if needed
      * @dev Note: only call this function after `_applyPnlAndFunding` has been called to update the balances

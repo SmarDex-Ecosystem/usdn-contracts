@@ -552,7 +552,7 @@ library UsdnProtocolUtilsLibrary {
      * @return assetExpected_ The expected amount of assets to be received, after fees
      */
     function _calcBurnUsdn(uint256 usdnShares, uint256 available, uint256 usdnTotalShares, uint256 feeBps)
-        public
+        internal
         pure
         returns (uint256 assetExpected_)
     {
