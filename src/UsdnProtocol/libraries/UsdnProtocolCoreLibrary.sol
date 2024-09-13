@@ -32,7 +32,7 @@ library UsdnProtocolCoreLibrary {
     using HugeUint for HugeUint.Uint512;
 
     /**
-     * @notice Data structure for the transient state of the `validateMultipleActionable` function
+     * @notice Data structure for the transient state of the `_validateMultipleActionable` function
      * @param pending The candidate pending action to validate
      * @param frontRawIndex The raw index of the front of the queue
      * @param rawIndex The raw index of the candidate pending action
