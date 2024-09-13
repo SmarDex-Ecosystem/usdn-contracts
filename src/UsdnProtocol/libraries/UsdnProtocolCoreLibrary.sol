@@ -1016,7 +1016,6 @@ library UsdnProtocolCoreLibrary {
         uint256 onChainDeadline
     ) internal view returns (bool actionable_) {
         if (initiateTimestamp == 0) {
-            // sanity check
             return false;
         }
         if (block.timestamp <= initiateTimestamp + lowLatencyDelay) {
