@@ -78,7 +78,7 @@ library UsdnProtocolVaultLibrary {
     /*                             External functions                             */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice See {IUsdnProtocolActions}
+    /// @notice See {IUsdnProtocolVault}
     function initiateDeposit(
         Types.Storage storage s,
         uint128 amount,
@@ -120,7 +120,7 @@ library UsdnProtocolVaultLibrary {
         Utils._checkPendingFee(s);
     }
 
-    /// @notice See {IUsdnProtocolActions}
+    /// @notice See {IUsdnProtocolVault}
     function validateDeposit(
         Types.Storage storage s,
         address payable validator,
@@ -146,7 +146,7 @@ library UsdnProtocolVaultLibrary {
         Utils._checkPendingFee(s);
     }
 
-    /// @notice See {IUsdnProtocolActions}
+    /// @notice See {IUsdnProtocolVault}
     function initiateWithdrawal(
         Types.Storage storage s,
         uint152 usdnShares,
@@ -186,7 +186,7 @@ library UsdnProtocolVaultLibrary {
         Utils._checkPendingFee(s);
     }
 
-    /// @notice See {IUsdnProtocolActions}
+    /// @notice See {IUsdnProtocolVault}
     function validateWithdrawal(
         Types.Storage storage s,
         address payable validator,
@@ -212,7 +212,7 @@ library UsdnProtocolVaultLibrary {
         Utils._checkPendingFee(s);
     }
 
-    /// @notice See {IUsdnProtocolCore}
+    /// @notice See {IUsdnProtocolVault}
     function getActionablePendingActions(Types.Storage storage s, address currentUser)
         external
         view

@@ -122,7 +122,7 @@ library UsdnProtocolCoreLibrary {
         (funding_, fundingPerDay_, oldLongExpo_) = _funding(s, timestamp, s._EMA);
     }
 
-    /// @notice See {IUsdnProtocolLong}
+    /// @notice See {IUsdnProtocolCore}
     function longAssetAvailableWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
         public
         view
@@ -148,7 +148,7 @@ library UsdnProtocolCoreLibrary {
         }
     }
 
-    /// @notice See {IUsdnProtocolLong}
+    /// @notice See {IUsdnProtocolCore}
     function longTradingExpoWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
         public
         view
