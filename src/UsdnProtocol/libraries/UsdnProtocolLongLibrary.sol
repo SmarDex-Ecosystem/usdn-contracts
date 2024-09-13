@@ -195,7 +195,6 @@ library UsdnProtocolLongLibrary {
         tick_ = _unadjustedPriceToTick(unadjustedPrice);
     }
 
-    // TO DO
     /**
      * @notice For a desired liquidation price, get the tick number with penalty and liquidation price without penalty
      * @dev This function first calculates a tick for the desired liq price (no rounding), then adds the penalty to the

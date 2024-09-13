@@ -277,7 +277,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_getActionablePendingAction() external returns (PendingAction memory, uint128) {
-        return Core._getActionablePendingAction(s);
+        return ActionsVault._getActionablePendingAction(s);
     }
 
     function i_lastFundingPerDay() external view returns (int256) {

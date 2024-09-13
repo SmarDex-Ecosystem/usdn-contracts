@@ -868,7 +868,7 @@ library UsdnProtocolActionsVaultLibrary {
         public
         returns (bool success_, bool executed_, bool liquidated_, uint256 securityDepositValue_)
     {
-        (Types.PendingAction memory pending, uint128 rawIndex) = Core._getActionablePendingAction(s);
+        (Types.PendingAction memory pending, uint128 rawIndex) = _getActionablePendingAction(s);
         if (pending.action == Types.ProtocolAction.None) {
             // no pending action
             return (true, false, false, 0);
@@ -903,6 +903,176 @@ library UsdnProtocolActionsVaultLibrary {
             Utils._clearPendingAction(s, pending.validator, rawIndex);
             securityDepositValue_ = pending.securityDepositValue;
             emit IUsdnProtocolEvents.SecurityDepositRefunded(pending.validator, msg.sender, securityDepositValue_);
+        }
+    }
+
+    /**
+     * @notice This is the mutating version of `getActionablePendingAction`, where empty items at the front of the list
+     * are removed
+     * @return action_ The first actionable pending action if any, otherwise a struct with all fields set to zero and
+     * Types.ProtocolAction.None
+     * @return rawIndex_ The raw index in the queue for the returned pending action, or zero
+     */
+    function _getActionablePendingAction(Types.Storage storage s)
+        public
+        returns (Types.PendingAction memory action_, uint128 rawIndex_)
+    {
+        uint256 queueLength = s._pendingActionsQueue.length();
+        if (queueLength == 0) {
+            // empty queue, early return
+            return (action_, rawIndex_);
+        }
+        uint256 maxIter = Constants.MAX_ACTIONABLE_PENDING_ACTIONS;
+        if (queueLength < maxIter) {
+            maxIter = queueLength;
+        }
+
+        uint128 lowLatencyDeadline = s._lowLatencyValidatorDeadline;
+        uint16 middlewareLowLatencyDelay = s._oracleMiddleware.getLowLatencyDelay();
+        uint128 onChainDeadline = s._onChainValidatorDeadline;
+        uint256 i;
+        uint256 j;
+        do {
+            // since we will never loop more than `queueLength` times, there is no risk of reverting
+            (Types.PendingAction memory candidate, uint128 rawIndex) = s._pendingActionsQueue.at(j);
+            unchecked {
+                i++;
+            }
+            if (candidate.timestamp == 0) {
+                // remove the stale pending action
+                s._pendingActionsQueue.clearAt(rawIndex);
+                // if we were removing another item than the first one, we increment j (otherwise we keep looking at the
+                // first item because it was shifted to the front)
+                if (j > 0) {
+                    unchecked {
+                        j++;
+                    }
+                }
+                // try the next one
+                continue;
+            } else if (
+                _isActionable(candidate.timestamp, lowLatencyDeadline, middlewareLowLatencyDelay, onChainDeadline)
+            ) {
+                // we found an actionable pending action
+                return (candidate, rawIndex);
+            } else if (block.timestamp > candidate.timestamp + middlewareLowLatencyDelay) {
+                // the pending action is not actionable but some more recent ones might be (with low-latency oracle)
+                // continue looking
+                unchecked {
+                    j++;
+                }
+                continue;
+            }
+            // the first pending action is not actionable, none of the following ones will be either
+            return (action_, rawIndex_);
+        } while (i < maxIter);
+    }
+
+    /// @notice See {IUsdnProtocolCore}
+    function getActionablePendingActions(Types.Storage storage s, address currentUser)
+        external
+        view
+        returns (Types.PendingAction[] memory actions_, uint128[] memory rawIndices_)
+    {
+        uint256 queueLength = s._pendingActionsQueue.length();
+        if (queueLength == 0) {
+            // empty queue, early return
+            return (actions_, rawIndices_);
+        }
+        actions_ = new Types.PendingAction[](Constants.MAX_ACTIONABLE_PENDING_ACTIONS);
+        rawIndices_ = new uint128[](Constants.MAX_ACTIONABLE_PENDING_ACTIONS);
+        uint256 maxIter = Constants.MAX_ACTIONABLE_PENDING_ACTIONS;
+        if (queueLength < maxIter) {
+            maxIter = queueLength;
+        }
+
+        uint128 lowLatencyDeadline = s._lowLatencyValidatorDeadline;
+        uint16 middlewareLowLatencyDelay = s._oracleMiddleware.getLowLatencyDelay();
+        uint128 onChainDeadline = s._onChainValidatorDeadline;
+        uint256 i;
+        uint256 j;
+        uint256 arrayLen;
+        do {
+            // since `i` cannot be greater or equal to `queueLength`, there is no risk of reverting
+            (Types.PendingAction memory candidate, uint128 rawIndex) = s._pendingActionsQueue.at(i);
+
+            if (candidate.timestamp == 0 || candidate.validator == currentUser) {
+                // if the currentUser is equal to the validator of the pending action, then the pending action is not
+                // actionable by this user (it will get validated automatically by their action)
+                // and so we need to return the next item in the queue so that they can validate a third-party pending
+                // action (if any)
+                if (arrayLen > 0) {
+                    rawIndices_[j] = rawIndex;
+                    unchecked {
+                        j++;
+                    }
+                }
+                // try the next one
+                unchecked {
+                    i++;
+                }
+            } else if (
+                _isActionable(candidate.timestamp, lowLatencyDeadline, middlewareLowLatencyDelay, onChainDeadline)
+            ) {
+                // we found an actionable pending action
+                actions_[j] = candidate;
+                rawIndices_[j] = rawIndex;
+
+                // continue looking
+                unchecked {
+                    i++;
+                    j++;
+                    arrayLen = j;
+                }
+            } else if (block.timestamp > candidate.timestamp + middlewareLowLatencyDelay) {
+                // the pending action is not actionable but some more recent ones might be (with low-latency oracle)
+                // continue looking
+                if (arrayLen > 0) {
+                    rawIndices_[j] = rawIndex;
+                    unchecked {
+                        j++;
+                    }
+                }
+                unchecked {
+                    i++;
+                }
+            } else {
+                // the pending action is not actionable (it is too recent),
+                // following actions can't be actionable either so we return
+                break;
+            }
+        } while (i < maxIter);
+        assembly {
+            // shrink the size of the arrays
+            mstore(actions_, arrayLen)
+            mstore(rawIndices_, arrayLen)
+        }
+    }
+
+    /**
+     * @notice Check whether a pending action is actionable, i.e any user can validate it and retrieve the security
+     * deposit
+     * @dev Between `initiateTimestamp` and `initiateTimestamp + lowLatencyDeadline`,
+     * the validator receives the security deposit
+     * Between `initiateTimestamp + lowLatencyDelay` and `initiateTimestamp + lowLatencyDelay + onChainDeadline`,
+     * the validator also receives the security deposit
+     * Outside of those periods, the security deposit goes to the user validating the pending action
+     * @param initiateTimestamp The timestamp at which the action was initiated
+     * @param lowLatencyDelay The low latency delay of the oracle middleware
+     * @return actionable_ Whether the pending action is actionable
+     */
+    function _isActionable(
+        uint256 initiateTimestamp,
+        uint256 lowLatencyDeadline,
+        uint256 lowLatencyDelay,
+        uint256 onChainDeadline
+    ) internal view returns (bool actionable_) {
+        if (block.timestamp <= initiateTimestamp + lowLatencyDelay) {
+            // the validation must happen with a low-latency oracle
+            actionable_ = block.timestamp > initiateTimestamp + lowLatencyDeadline;
+        } else {
+            // the validation must happen with an on-chain oracle
+            actionable_ = block.timestamp > initiateTimestamp + lowLatencyDelay + onChainDeadline;
         }
     }
 
