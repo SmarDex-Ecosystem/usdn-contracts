@@ -355,7 +355,6 @@ library UsdnProtocolLongLibrary {
         }
     }
 
-    // TO DO : in long
     /**
      * @notice Check if a USDN rebase is required and adjust the divisor if needed
      * @dev Note: only call this function after `_applyPnlAndFunding` has been called to update the balances

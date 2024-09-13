@@ -664,7 +664,6 @@ library UsdnProtocolActionsLongLibrary {
         }
     }
 
-    // TO DO : maybe
     /**
      * @notice Update protocol balances, liquidate positions if necessary, then validate the close position action
      * @param s The storage of the protocol
@@ -677,7 +676,7 @@ library UsdnProtocolActionsLongLibrary {
         Types.Storage storage s,
         Types.PendingAction memory pending,
         bytes calldata priceData
-    ) public returns (bool isValidated_, bool liquidated_) {
+    ) internal returns (bool isValidated_, bool liquidated_) {
         ValidateClosePositionWithActionData memory data;
         Types.LongPendingAction memory long = Utils._toLongPendingAction(pending);
 

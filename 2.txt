@@ -1,5 +1,5 @@
 Compiling 18 files with Solc 0.8.26
-Solc 0.8.26 finished in 9.83s
+Solc 0.8.26 finished in 9.35s
 Compiler run successful!
 | Contract                               | Size (B) | Margin (B) |
 |----------------------------------------|----------|------------|
@@ -71,9 +71,9 @@ Compiler run successful!
 | UpgradeableBeacon                      |    1,256 |     23,320 |
 | Upgrades                               |       85 |     24,491 |
 | Usdn                                   |   13,859 |     10,717 |
-| UsdnProtocolActionsLongLibrary         |   23,779 |        797 |
+| UsdnProtocolActionsLongLibrary         |   23,741 |        835 |
 | UsdnProtocolActionsUtilsLibrary        |   10,886 |     13,690 |
-| UsdnProtocolActionsVaultLibrary        |   16,818 |      7,758 |
+| UsdnProtocolActionsVaultLibrary        |   18,893 |      5,683 |
 | UsdnProtocolConstantsLibrary           |       85 |     24,491 |
 | UsdnProtocolCoreLibrary                |   20,999 |      3,577 |
 | UsdnProtocolFallback                   |   18,796 |      5,780 |
