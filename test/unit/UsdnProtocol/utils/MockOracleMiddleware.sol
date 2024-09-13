@@ -126,8 +126,4 @@ contract MockOracleMiddleware is IOracleMiddleware, AccessControlDefaultAdminRul
     }
 
     function setLowLatencyDelay(uint16) external { }
-
-    function pausePriceValidation() external { }
-
-    function unpausePriceValidation() external { }
 }
