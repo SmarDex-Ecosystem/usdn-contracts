@@ -3,8 +3,6 @@ pragma solidity 0.8.26;
 
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
-import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IBaseRebalancer } from "../../interfaces/Rebalancer/IBaseRebalancer.sol";
@@ -13,45 +11,23 @@ import { IUsdnProtocolActions } from "../../interfaces/UsdnProtocol/IUsdnProtoco
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { HugeUint } from "../../libraries/HugeUint.sol";
-import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
-import { UsdnProtocolActionsVaultLibrary as ActionsVault } from "./UsdnProtocolActionsVaultLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "./UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.sol";
 
 library UsdnProtocolActionsUtilsLibrary {
-    using SafeTransferLib for address;
     using SafeCast for uint256;
-    using SafeCast for int256;
-    using LibBitmap for LibBitmap.Bitmap;
     using SignedMath for int256;
-    using HugeUint for HugeUint.Uint512;
-    using Permit2TokenBitfield for Permit2TokenBitfield.Bitfield;
 
     /* -------------------------------------------------------------------------- */
-    /*                              Public functions                              */
+    /*                             External functions                             */
     /* -------------------------------------------------------------------------- */
-
-    /// @notice See {IUsdnProtocolActions}
-    function getLongPosition(Types.Storage storage s, Types.PositionId memory posId)
-        public
-        view
-        returns (Types.Position memory pos_, uint24 liquidationPenalty_)
-    {
-        (bytes32 tickHash, uint256 version) = Utils._tickHash(s, posId.tick);
-        if (posId.tickVersion != version) {
-            revert IUsdnProtocolErrors.UsdnProtocolOutdatedTick(version, posId.tickVersion);
-        }
-        pos_ = s._longPositions[tickHash][posId.index];
-        liquidationPenalty_ = s._tickData[tickHash].liquidationPenalty;
-    }
 
     /// @notice See {IUsdnProtocolActions}
     function liquidate(Types.Storage storage s, bytes calldata currentPriceData, uint16 iterations)
-        public
+        external
         returns (uint256 liquidatedPositions_)
     {
         uint256 balanceBefore = address(this).balance;
@@ -81,7 +57,7 @@ library UsdnProtocolActionsUtilsLibrary {
         Types.Storage storage s,
         Types.PreviousActionsData calldata previousActionsData,
         uint256 maxValidations
-    ) public returns (uint256 validatedActions_) {
+    ) external returns (uint256 validatedActions_) {
         uint256 balanceBefore = address(this).balance;
         uint256 amountToRefund;
 
@@ -90,7 +66,7 @@ library UsdnProtocolActionsUtilsLibrary {
         }
         do {
             (, bool executed, bool liq, uint256 securityDepositValue) =
-                ActionsVault._executePendingAction(s, previousActionsData);
+                Vault._executePendingAction(s, previousActionsData);
             if (!executed && !liq) {
                 break;
             }
@@ -105,7 +81,7 @@ library UsdnProtocolActionsUtilsLibrary {
 
     /// @notice See {IUsdnProtocolActions}
     function transferPositionOwnership(Types.Storage storage s, Types.PositionId calldata posId, address newOwner)
-        public
+        external
     {
         if (s._transferPositionOwnershipPaused) {
             revert IUsdnProtocolErrors.UsdnProtocolFunctionPaused();
@@ -133,101 +109,26 @@ library UsdnProtocolActionsUtilsLibrary {
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                             Internal functions                             */
+    /*                              Public functions                              */
     /* -------------------------------------------------------------------------- */
 
-    /**
-     * @notice The close vault imbalance limit state verification
-     * @dev To ensure that the protocol does not imbalance more than
-     * the close limit on the vault side, otherwise revert
-     * @param s The storage of the protocol
-     * @param posTotalExpoToClose The total expo to remove position
-     * @param posValueToCloseAfterFees The value to remove from the position after the fees are applied
-     * @param fees The fees applied to the position, going to the vault
-     */
-    function _checkImbalanceLimitClose(
-        Types.Storage storage s,
-        uint256 posTotalExpoToClose,
-        uint256 posValueToCloseAfterFees,
-        uint256 fees
-    ) public view {
-        int256 closeExpoImbalanceLimitBps;
-        if (msg.sender == address(s._rebalancer)) {
-            closeExpoImbalanceLimitBps = s._rebalancerCloseExpoImbalanceLimitBps;
-        } else {
-            closeExpoImbalanceLimitBps = s._closeExpoImbalanceLimitBps;
+    /// @notice See {IUsdnProtocolActions}
+    function getLongPosition(Types.Storage storage s, Types.PositionId memory posId)
+        public
+        view
+        returns (Types.Position memory pos_, uint24 liquidationPenalty_)
+    {
+        (bytes32 tickHash, uint256 version) = Utils._tickHash(s, posId.tick);
+        if (posId.tickVersion != version) {
+            revert IUsdnProtocolErrors.UsdnProtocolOutdatedTick(version, posId.tickVersion);
         }
-
-        // early return in case limit is disabled
-        if (closeExpoImbalanceLimitBps == 0) {
-            return;
-        }
-
-        int256 newLongBalance = s._balanceLong.toInt256().safeSub(posValueToCloseAfterFees.toInt256());
-        uint256 newTotalExpo = s._totalExpo - posTotalExpoToClose;
-        int256 currentVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault + fees.toInt256());
-
-        int256 imbalanceBps = Utils._calcImbalanceCloseBps(currentVaultExpo, newLongBalance, newTotalExpo);
-
-        if (imbalanceBps > closeExpoImbalanceLimitBps) {
-            revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
-        }
+        pos_ = s._longPositions[tickHash][posId.index];
+        liquidationPenalty_ = s._tickData[tickHash].liquidationPenalty;
     }
 
-    /**
-     * @notice Perform checks for the initiate close position action
-     * @dev Reverts if the to address is zero, the position was not validated yet, the position is not owned by the
-     * user, the amount to close is higher than the position amount, or the amount to close is zero
-     * @param s The storage of the protocol
-     * @param owner The owner of the position
-     * @param to The address that will receive the assets
-     * @param validator The address of the validator
-     * @param amountToClose The amount of collateral to remove from the position's amount
-     * @param pos The position to close
-     */
-    function _checkInitiateClosePosition(
-        Types.Storage storage s,
-        address owner,
-        address to,
-        address validator,
-        uint128 amountToClose,
-        Types.Position memory pos
-    ) public view {
-        if (to == address(0)) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo();
-        }
-        if (validator == address(0)) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressValidator();
-        }
-        if (pos.user != owner) {
-            revert IUsdnProtocolErrors.UsdnProtocolUnauthorized();
-        }
-        if (!pos.validated) {
-            revert IUsdnProtocolErrors.UsdnProtocolPositionNotValidated();
-        }
-        if (amountToClose == 0) {
-            revert IUsdnProtocolErrors.UsdnProtocolZeroAmount();
-        }
-        if (amountToClose > pos.amount) {
-            revert IUsdnProtocolErrors.UsdnProtocolAmountToCloseHigherThanPositionAmount(amountToClose, pos.amount);
-        }
-
-        // make sure the remaining position is higher than _minLongPosition
-        // for the Rebalancer, we allow users to close their position fully in every case
-        uint128 remainingAmount = pos.amount - amountToClose;
-        if (remainingAmount > 0 && remainingAmount < s._minLongPosition) {
-            IBaseRebalancer rebalancer = s._rebalancer;
-            if (owner == address(rebalancer)) {
-                // note: the rebalancer always indicates the rebalancer user's address as validator
-                uint128 userPosAmount = rebalancer.getUserDepositData(validator).amount;
-                if (amountToClose != userPosAmount) {
-                    revert IUsdnProtocolErrors.UsdnProtocolLongPositionTooSmall();
-                }
-            } else {
-                revert IUsdnProtocolErrors.UsdnProtocolLongPositionTooSmall();
-            }
-        }
-    }
+    /* -------------------------------------------------------------------------- */
+    /*                             Internal functions                             */
+    /* -------------------------------------------------------------------------- */
 
     /**
      * @notice Update protocol balances, then prepare the data for the initiate close position action
@@ -321,6 +222,99 @@ library UsdnProtocolActionsUtilsLibrary {
     }
 
     /**
+     * @notice The close vault imbalance limit state verification
+     * @dev To ensure that the protocol does not imbalance more than
+     * the close limit on the vault side, otherwise revert
+     * @param s The storage of the protocol
+     * @param posTotalExpoToClose The total expo to remove position
+     * @param posValueToCloseAfterFees The value to remove from the position after the fees are applied
+     * @param fees The fees applied to the position, going to the vault
+     */
+    function _checkImbalanceLimitClose(
+        Types.Storage storage s,
+        uint256 posTotalExpoToClose,
+        uint256 posValueToCloseAfterFees,
+        uint256 fees
+    ) internal view {
+        int256 closeExpoImbalanceLimitBps;
+        if (msg.sender == address(s._rebalancer)) {
+            closeExpoImbalanceLimitBps = s._rebalancerCloseExpoImbalanceLimitBps;
+        } else {
+            closeExpoImbalanceLimitBps = s._closeExpoImbalanceLimitBps;
+        }
+
+        // early return in case limit is disabled
+        if (closeExpoImbalanceLimitBps == 0) {
+            return;
+        }
+
+        int256 newLongBalance = s._balanceLong.toInt256().safeSub(posValueToCloseAfterFees.toInt256());
+        uint256 newTotalExpo = s._totalExpo - posTotalExpoToClose;
+        int256 currentVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault + fees.toInt256());
+
+        int256 imbalanceBps = Utils._calcImbalanceCloseBps(currentVaultExpo, newLongBalance, newTotalExpo);
+
+        if (imbalanceBps > closeExpoImbalanceLimitBps) {
+            revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
+        }
+    }
+
+    /**
+     * @notice Perform checks for the initiate close position action
+     * @dev Reverts if the to address is zero, the position was not validated yet, the position is not owned by the
+     * user, the amount to close is higher than the position amount, or the amount to close is zero
+     * @param s The storage of the protocol
+     * @param owner The owner of the position
+     * @param to The address that will receive the assets
+     * @param validator The address of the validator
+     * @param amountToClose The amount of collateral to remove from the position's amount
+     * @param pos The position to close
+     */
+    function _checkInitiateClosePosition(
+        Types.Storage storage s,
+        address owner,
+        address to,
+        address validator,
+        uint128 amountToClose,
+        Types.Position memory pos
+    ) internal view {
+        if (to == address(0)) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo();
+        }
+        if (validator == address(0)) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressValidator();
+        }
+        if (pos.user != owner) {
+            revert IUsdnProtocolErrors.UsdnProtocolUnauthorized();
+        }
+        if (!pos.validated) {
+            revert IUsdnProtocolErrors.UsdnProtocolPositionNotValidated();
+        }
+        if (amountToClose == 0) {
+            revert IUsdnProtocolErrors.UsdnProtocolZeroAmount();
+        }
+        if (amountToClose > pos.amount) {
+            revert IUsdnProtocolErrors.UsdnProtocolAmountToCloseHigherThanPositionAmount(amountToClose, pos.amount);
+        }
+
+        // make sure the remaining position is higher than _minLongPosition
+        // for the Rebalancer, we allow users to close their position fully in every case
+        uint128 remainingAmount = pos.amount - amountToClose;
+        if (remainingAmount > 0 && remainingAmount < s._minLongPosition) {
+            IBaseRebalancer rebalancer = s._rebalancer;
+            if (owner == address(rebalancer)) {
+                // note: the rebalancer always indicates the rebalancer user's address as validator
+                uint128 userPosAmount = rebalancer.getUserDepositData(validator).amount;
+                if (amountToClose != userPosAmount) {
+                    revert IUsdnProtocolErrors.UsdnProtocolLongPositionTooSmall();
+                }
+            } else {
+                revert IUsdnProtocolErrors.UsdnProtocolLongPositionTooSmall();
+            }
+        }
+    }
+
+    /**
      * @notice Calculate how much assets must be removed from the long balance due to a position closing
      * @dev The amount is bound by the amount of assets available on the long side
      * @param balanceLong The balance of long positions (with asset decimals)
@@ -331,7 +325,7 @@ library UsdnProtocolActionsUtilsLibrary {
      * long balance
      */
     function _assetToRemove(uint256 balanceLong, uint128 price, uint128 liqPriceWithoutPenalty, uint128 posExpo)
-        public
+        internal
         pure
         returns (uint256 boundedPosValue_)
     {
