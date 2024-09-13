@@ -217,8 +217,8 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         );
     }
 
-    function calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed) external view returns (int256) {
-        return Core.calcEMA(lastFundingPerDay, secondsElapsed, s._EMAPeriod, s._EMA);
+    function _calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed) external view returns (int256) {
+        return Core._calcEMA(lastFundingPerDay, secondsElapsed, s._EMAPeriod, s._EMA);
     }
 
     function i_validateOpenPosition(address user, bytes calldata priceData)

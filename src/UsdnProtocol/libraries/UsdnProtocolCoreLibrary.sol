@@ -31,7 +31,7 @@ library UsdnProtocolCoreLibrary {
     using HugeUint for HugeUint.Uint512;
 
     /* -------------------------------------------------------------------------- */
-    /*                              Public functions                              */
+    /*                             External functions                             */
     /* -------------------------------------------------------------------------- */
 
     /// @notice See {IUsdnProtocolCore}
@@ -74,150 +74,6 @@ library UsdnProtocolCoreLibrary {
         Utils._refundEther(address(this).balance, payable(msg.sender));
     }
 
-    /**
-     * @notice Check if the initialize parameters lead to a balanced protocol
-     * @param s The storage of the protocol
-     * @dev This function reverts if the imbalance is exceeded for the deposit or open long action
-     * @param positionTotalExpo The total expo of the deployer's long position
-     * @param longAmount The amount (collateral) of the deployer's long position
-     * @param depositAmount The amount of assets for the deployer's deposit
-     */
-    function _checkInitImbalance(
-        Types.Storage storage s,
-        uint128 positionTotalExpo,
-        uint128 longAmount,
-        uint128 depositAmount
-    ) internal view {
-        int256 longTradingExpo = Utils.toInt256(positionTotalExpo - longAmount);
-        int256 depositLimit = s._depositExpoImbalanceLimitBps;
-        if (depositLimit != 0) {
-            int256 imbalanceBps =
-                (Utils.toInt256(depositAmount) - longTradingExpo) * int256(Constants.BPS_DIVISOR) / longTradingExpo;
-            if (imbalanceBps > depositLimit) {
-                revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
-            }
-        }
-        int256 openLimit = s._openExpoImbalanceLimitBps;
-        if (openLimit != 0) {
-            int256 imbalanceBps = (longTradingExpo - Utils.toInt256(depositAmount)) * int256(Constants.BPS_DIVISOR)
-                / Utils.toInt256(depositAmount);
-            if (imbalanceBps > openLimit) {
-                revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
-            }
-        }
-    }
-
-    /**
-     * @notice Create initial deposit
-     * @dev To be called from `initialize`
-     * @param s The storage of the protocol
-     * @param amount The initial deposit amount
-     * @param price The current asset price
-     */
-    function _createInitialDeposit(Types.Storage storage s, uint128 amount, uint128 price) internal {
-        // transfer the assets for the deposit
-        address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
-        s._balanceVault += amount;
-        emit IUsdnProtocolEvents.InitiatedDeposit(msg.sender, msg.sender, amount, 0, block.timestamp, 0);
-
-        // calculate the total minted amount of USDN shares (vault balance and total supply are zero for now, we assume
-        // the USDN price to be $1 per token)
-        // the decimals conversion here is necessary since we calculate an amount in tokens and we want the
-        // corresponding amount of shares
-        uint256 usdnSharesToMint = s._usdn.convertToShares(
-            FixedPointMathLib.fullMulDiv(
-                amount, price, 10 ** (s._assetDecimals + s._priceFeedDecimals - Constants.TOKENS_DECIMALS)
-            )
-        );
-        IUsdn usdn = s._usdn;
-        uint256 minUsdnSharesSupply = usdn.convertToShares(Constants.MIN_USDN_SUPPLY);
-        // mint the minimum amount and send it to the dead address so it can never be removed from the total supply
-        usdn.mintShares(Constants.DEAD_ADDRESS, minUsdnSharesSupply);
-        // mint the user's share
-        uint256 mintSharesToUser = usdnSharesToMint - minUsdnSharesSupply;
-        uint256 mintedTokens = usdn.mintShares(msg.sender, mintSharesToUser);
-
-        emit IUsdnProtocolEvents.ValidatedDeposit(
-            Constants.DEAD_ADDRESS, Constants.DEAD_ADDRESS, 0, Constants.MIN_USDN_SUPPLY, block.timestamp
-        );
-        emit IUsdnProtocolEvents.ValidatedDeposit(msg.sender, msg.sender, amount, mintedTokens, block.timestamp);
-    }
-
-    /**
-     * @notice Create initial long position
-     * @dev To be called from `initialize`
-     * @param s The storage of the protocol
-     * @param amount The initial position amount
-     * @param price The current asset price
-     * @param tick The tick corresponding where the position should be stored
-     * @param totalExpo The total expo of the position
-     */
-    function _createInitialPosition(
-        Types.Storage storage s,
-        uint128 amount,
-        uint128 price,
-        int24 tick,
-        uint128 totalExpo
-    ) internal {
-        // transfer the assets for the long
-        address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
-
-        Types.PositionId memory posId;
-        posId.tick = tick;
-        Types.Position memory long = Types.Position({
-            validated: true,
-            user: msg.sender,
-            amount: amount,
-            totalExpo: totalExpo,
-            timestamp: uint40(block.timestamp)
-        });
-        // save the position and update the state
-        (posId.tickVersion, posId.index,) = ActionsLong._saveNewPosition(s, posId.tick, long, s._liquidationPenalty);
-        s._balanceLong += long.amount;
-        emit IUsdnProtocolEvents.InitiatedOpenPosition(
-            msg.sender, msg.sender, long.timestamp, totalExpo, long.amount, price, posId
-        );
-        emit IUsdnProtocolEvents.ValidatedOpenPosition(msg.sender, msg.sender, totalExpo, price, posId);
-    }
-
-    /* -------------------------- public view functions ------------------------- */
-
-    /// @notice See {IUsdnProtocolCore}
-    function calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
-        internal
-        pure
-        returns (int256)
-    {
-        if (secondsElapsed >= emaPeriod) {
-            return lastFundingPerDay;
-        }
-
-        return (
-            lastFundingPerDay * Utils.toInt256(secondsElapsed)
-                + previousEMA * Utils.toInt256(emaPeriod - secondsElapsed)
-        ) / Utils.toInt256(emaPeriod);
-    }
-
-    /* --------------------------  public functions --------------------------- */
-
-    /// @notice See {IUsdnProtocolCore}
-    function funding(Types.Storage storage s, uint128 timestamp)
-        public
-        view
-        returns (int256 funding_, int256 fundingPerDay_, int256 oldLongExpo_)
-    {
-        (funding_, fundingPerDay_, oldLongExpo_) = _funding(s, timestamp, s._EMA);
-    }
-
-    /// @notice See {IUsdnProtocolCore}
-    function getUserPendingAction(Types.Storage storage s, address user)
-        external
-        view
-        returns (Types.PendingAction memory action_)
-    {
-        (action_,) = _getPendingAction(s, user);
-    }
-
     /// @notice See {IUsdnProtocolCore}
     function removeBlockedPendingAction(Types.Storage storage s, address validator, address payable to) external {
         uint256 pendingActionIndex = s._pendingActions[validator];
@@ -244,43 +100,17 @@ library UsdnProtocolCoreLibrary {
         _removeBlockedPendingAction(s, rawIndex, to, false);
     }
 
-    /// @notice See {IUsdnProtocolLong}
-    function longAssetAvailableWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
-        public
+    /// @notice See {IUsdnProtocolCore}
+    function getUserPendingAction(Types.Storage storage s, address user)
+        external
         view
-        returns (int256 available_)
+        returns (Types.PendingAction memory action_)
     {
-        if (timestamp < s._lastUpdateTimestamp) {
-            revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
-        }
-
-        (int256 fundAsset,) = _fundingAsset(s, timestamp, s._EMA);
-
-        if (fundAsset > 0) {
-            available_ = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAsset);
-        } else {
-            int256 fee = fundAsset * Utils.toInt256(s._protocolFeeBps) / int256(Constants.BPS_DIVISOR);
-            // fees have the same sign as fundAsset (negative here), so we need to sub them
-            available_ = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAsset - fee);
-        }
-
-        int256 totalBalance = (s._balanceLong + s._balanceVault).toInt256();
-        if (available_ > totalBalance) {
-            available_ = totalBalance;
-        }
-    }
-
-    /// @notice See {IUsdnProtocolLong}
-    function longTradingExpoWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
-        public
-        view
-        returns (int256 expo_)
-    {
-        expo_ = s._totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(s, currentPrice, timestamp));
+        (action_,) = _getPendingAction(s, user);
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                             Internal functions                             */
+    /*                              Public functions                              */
     /* -------------------------------------------------------------------------- */
 
     /**
@@ -315,168 +145,6 @@ library UsdnProtocolCoreLibrary {
             closeBoundedPositionValue: 0
         });
         amountToRefund_ = _addPendingAction(s, validator, Utils._convertLongPendingAction(action));
-    }
-
-    /**
-     * @notice Calculate the funding rate per day and the old long exposure
-     * @param s The storage of the protocol
-     * @param ema The EMA of the funding rate per day
-     * @return fundingPerDay_ The funding rate (per day) with `FUNDING_RATE_DECIMALS` decimals
-     * @return oldLongExpo_ The old long trading expo
-     */
-    function _fundingPerDay(Types.Storage storage s, int256 ema)
-        internal
-        view
-        returns (int256 fundingPerDay_, int256 oldLongExpo_)
-    {
-        // imbalanceIndex = (longExpo - vaultExpo) / max(longExpo, vaultExpo)
-        // fundingPerDay = (sign(imbalanceIndex) * imbalanceIndex^2 * fundingSF) + _EMA
-        // fundingPerDay = (sign(ImbalanceIndex) * (longExpo - vaultExpo)^2 * fundingSF / denominator) + _EMA
-        // with denominator = vaultExpo^2 if vaultExpo > longExpo, or longExpo^2 if longExpo > vaultExpo
-
-        oldLongExpo_ = s._totalExpo.toInt256().safeSub(s._balanceLong.toInt256());
-        int256 oldVaultExpo = s._balanceVault.toInt256();
-        int256 numerator = oldLongExpo_ - oldVaultExpo;
-        // optimization: if the numerator is zero, then we simply return the EMA
-        if (numerator == 0) {
-            return (ema, oldLongExpo_);
-        }
-
-        if (oldLongExpo_ <= 0) {
-            // if oldLongExpo is negative, then we cap the imbalance index to -1
-            // this should never happen, but for safety we handle it anyway
-            return (
-                -int256(s._fundingSF * 10 ** (Constants.FUNDING_RATE_DECIMALS - Constants.FUNDING_SF_DECIMALS)) + ema,
-                oldLongExpo_
-            );
-        } else if (oldVaultExpo == 0) {
-            // if oldVaultExpo is zero (can't be negative), then we cap the imbalance index to 1
-            return (
-                int256(s._fundingSF * 10 ** (Constants.FUNDING_RATE_DECIMALS - Constants.FUNDING_SF_DECIMALS)) + ema,
-                oldLongExpo_
-            );
-        }
-
-        // starting here, oldLongExpo and oldVaultExpo are always strictly positive
-        uint256 numeratorSquared = uint256(numerator * numerator);
-
-        uint256 denominator;
-        if (oldVaultExpo > oldLongExpo_) {
-            denominator = uint256(oldVaultExpo * oldVaultExpo);
-            fundingPerDay_ = -int256(
-                FixedPointMathLib.fullMulDiv(
-                    numeratorSquared,
-                    s._fundingSF * 10 ** (Constants.FUNDING_RATE_DECIMALS - Constants.FUNDING_SF_DECIMALS),
-                    denominator
-                )
-            ) + ema;
-        } else {
-            denominator = uint256(oldLongExpo_ * oldLongExpo_);
-            fundingPerDay_ = int256(
-                FixedPointMathLib.fullMulDiv(
-                    numeratorSquared,
-                    s._fundingSF * 10 ** (Constants.FUNDING_RATE_DECIMALS - Constants.FUNDING_SF_DECIMALS),
-                    denominator
-                )
-            ) + ema;
-        }
-    }
-
-    /**
-     * @notice Calculate the funding value, funding rate value and the old long exposure
-     * @dev Reverts if `timestamp` < `s._lastUpdateTimestamp`
-     * @param s The storage of the protocol
-     * @param timestamp The current timestamp
-     * @param ema The EMA of the funding rate per day
-     * @return funding_ The funding (proportion of long trading expo that needs to be transferred from one side to the
-     * other) with `FUNDING_RATE_DECIMALS` decimals. If positive, long side pays to vault side, otherwise it's the
-     * opposite
-     * @return fundingPerDay_ The funding rate (per day) with `FUNDING_RATE_DECIMALS` decimals
-     * @return oldLongExpo_ The old long trading expo
-     */
-    function _funding(Types.Storage storage s, uint128 timestamp, int256 ema)
-        internal
-        view
-        returns (int256 funding_, int256 fundingPerDay_, int256 oldLongExpo_)
-    {
-        (fundingPerDay_, oldLongExpo_) = _fundingPerDay(s, ema);
-
-        uint128 lastUpdateTimestamp = s._lastUpdateTimestamp;
-        if (timestamp < lastUpdateTimestamp) {
-            revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
-        }
-        // subtraction can't underflow, checked above
-        // conversion from uint128 to int256 is always safe
-        int256 elapsedSeconds;
-        unchecked {
-            elapsedSeconds = Utils.toInt256(timestamp - lastUpdateTimestamp);
-        }
-        if (elapsedSeconds == 0) {
-            return (0, fundingPerDay_, oldLongExpo_);
-        }
-
-        funding_ = fundingPerDay_.safeMul(elapsedSeconds).safeDiv(1 days);
-    }
-
-    /**
-     * @notice Get the predicted value of the funding (in asset units) since the last state update for the given
-     * timestamp
-     * @dev If the provided timestamp is older than the last state update, the result will be zero
-     * @param s The storage of the protocol
-     * @param timestamp The current timestamp
-     * @param ema The EMA of the funding rate
-     * @return fundingAsset_ The number of asset tokens of funding (with asset decimals)
-     * @return fundingPerDay_ The funding rate (per day) with `FUNDING_RATE_DECIMALS` decimals
-     */
-    function _fundingAsset(Types.Storage storage s, uint128 timestamp, int256 ema)
-        public
-        view
-        returns (int256 fundingAsset_, int256 fundingPerDay_)
-    {
-        int256 oldLongExpo;
-        int256 fund;
-        (fund, fundingPerDay_, oldLongExpo) = _funding(s, timestamp, ema);
-        fundingAsset_ = fund.safeMul(oldLongExpo) / int256(10) ** Constants.FUNDING_RATE_DECIMALS;
-    }
-
-    /**
-     * @notice Update the Exponential Moving Average (EMA) of the funding rate (per day)
-     * @dev This function is called every time the protocol state is updated
-     * @dev All required checks are done in the caller function (_applyPnlAndFunding)
-     * @dev If the number of seconds elapsed is greater than or equal to the EMA period, the EMA is updated to the last
-     * funding value
-     * @param s The storage of the protocol
-     * @param fundingPerDay The funding rate per day that was just calculated for the elapsed period
-     * @param secondsElapsed The number of seconds elapsed since the last protocol action
-     */
-    function _updateEMA(Types.Storage storage s, int256 fundingPerDay, uint128 secondsElapsed) internal {
-        s._EMA = calcEMA(fundingPerDay, secondsElapsed, s._EMAPeriod, s._EMA);
-    }
-
-    /**
-     * @notice Calculate the protocol fee and apply it to the funding asset amount
-     * @dev The funding factor is only adjusted by the fee rate when the funding is negative (vault pays to the long
-     * side)
-     * @param s The storage of the protocol
-     * @param fundAsset The funding asset amount to be used for the fee calculation
-     * @return fee_ The absolute value of the calculated fee
-     * @return fundAssetWithFee_ The updated funding asset amount after applying the fee
-     */
-    function _calculateFee(Types.Storage storage s, int256 fundAsset)
-        internal
-        returns (int256 fee_, int256 fundAssetWithFee_)
-    {
-        int256 protocolFeeBps = Utils.toInt256(s._protocolFeeBps);
-        fee_ = fundAsset * protocolFeeBps / int256(Constants.BPS_DIVISOR);
-        // fundAsset and fee_ have the same sign, we can safely subtract them to reduce the absolute amount of asset
-        fundAssetWithFee_ = fundAsset - fee_;
-
-        if (fee_ < 0) {
-            // we want to return the absolute value of the fee
-            fee_ = -fee_;
-        }
-
-        s._pendingProtocolFee += uint256(fee_);
     }
 
     /**
@@ -609,50 +277,6 @@ library UsdnProtocolCoreLibrary {
     }
 
     /**
-     * @notice Get the pending action for a user
-     * @dev To check for the presence of a pending action, compare `action_.action` to `Types.ProtocolAction.None`. There
-     * is
-     * a pending action only if the action is different from `Types.ProtocolAction.None`
-     * @param s The storage of the protocol
-     * @param user The user's address
-     * @return action_ The pending action struct if any, otherwise a zero-initialized struct
-     * @return rawIndex_ The raw index of the pending action in the queue
-     */
-    function _getPendingAction(Types.Storage storage s, address user)
-        public
-        view
-        returns (Types.PendingAction memory action_, uint128 rawIndex_)
-    {
-        uint256 pendingActionIndex = s._pendingActions[user];
-        if (pendingActionIndex == 0) {
-            // no pending action
-            return (action_, rawIndex_);
-        }
-
-        rawIndex_ = uint128(pendingActionIndex - 1);
-        action_ = s._pendingActionsQueue.atRaw(rawIndex_);
-    }
-
-    /**
-     * @notice Get the pending action for a user
-     * @dev This function reverts if there is no pending action for the user
-     * @param s The storage of the protocol
-     * @param user The user's address
-     * @return action_ The pending action struct
-     * @return rawIndex_ The raw index of the pending action in the queue
-     */
-    function _getPendingActionOrRevert(Types.Storage storage s, address user)
-        public
-        view
-        returns (Types.PendingAction memory action_, uint128 rawIndex_)
-    {
-        (action_, rawIndex_) = _getPendingAction(s, user);
-        if (action_.action == Types.ProtocolAction.None) {
-            revert IUsdnProtocolErrors.UsdnProtocolNoPendingAction();
-        }
-    }
-
-    /**
      * @notice Remove a stuck pending action and perform the minimal amount of cleanup necessary
      * @dev This function should only be called by the owner of the protocol, it serves as an escape hatch if a
      * pending action ever gets stuck due to something reverting unexpectedly
@@ -746,5 +370,381 @@ library UsdnProtocolCoreLibrary {
                 revert IUsdnProtocolErrors.UsdnProtocolEtherRefundFailed();
             }
         }
+    }
+
+    /**
+     * @notice Get the predicted value of the funding (in asset units) since the last state update for the given
+     * timestamp
+     * @dev If the provided timestamp is older than the last state update, the result will be zero
+     * @param s The storage of the protocol
+     * @param timestamp The current timestamp
+     * @param ema The EMA of the funding rate
+     * @return fundingAsset_ The number of asset tokens of funding (with asset decimals)
+     * @return fundingPerDay_ The funding rate (per day) with `FUNDING_RATE_DECIMALS` decimals
+     */
+    function _fundingAsset(Types.Storage storage s, uint128 timestamp, int256 ema)
+        public
+        view
+        returns (int256 fundingAsset_, int256 fundingPerDay_)
+    {
+        int256 oldLongExpo;
+        int256 fund;
+        (fund, fundingPerDay_, oldLongExpo) = _funding(s, timestamp, ema);
+        fundingAsset_ = fund.safeMul(oldLongExpo) / int256(10) ** Constants.FUNDING_RATE_DECIMALS;
+    }
+
+    /**
+     * @notice Get the pending action for a user
+     * @dev To check for the presence of a pending action, compare `action_.action` to `Types.ProtocolAction.None`. There
+     * is
+     * a pending action only if the action is different from `Types.ProtocolAction.None`
+     * @param s The storage of the protocol
+     * @param user The user's address
+     * @return action_ The pending action struct if any, otherwise a zero-initialized struct
+     * @return rawIndex_ The raw index of the pending action in the queue
+     */
+    function _getPendingAction(Types.Storage storage s, address user)
+        public
+        view
+        returns (Types.PendingAction memory action_, uint128 rawIndex_)
+    {
+        uint256 pendingActionIndex = s._pendingActions[user];
+        if (pendingActionIndex == 0) {
+            // no pending action
+            return (action_, rawIndex_);
+        }
+
+        rawIndex_ = uint128(pendingActionIndex - 1);
+        action_ = s._pendingActionsQueue.atRaw(rawIndex_);
+    }
+
+    /**
+     * @notice Get the pending action for a user
+     * @dev This function reverts if there is no pending action for the user
+     * @param s The storage of the protocol
+     * @param user The user's address
+     * @return action_ The pending action struct
+     * @return rawIndex_ The raw index of the pending action in the queue
+     */
+    function _getPendingActionOrRevert(Types.Storage storage s, address user)
+        public
+        view
+        returns (Types.PendingAction memory action_, uint128 rawIndex_)
+    {
+        (action_, rawIndex_) = _getPendingAction(s, user);
+        if (action_.action == Types.ProtocolAction.None) {
+            revert IUsdnProtocolErrors.UsdnProtocolNoPendingAction();
+        }
+    }
+
+    /// @notice See {IUsdnProtocolCore}
+    function funding(Types.Storage storage s, uint128 timestamp)
+        public
+        view
+        returns (int256 funding_, int256 fundingPerDay_, int256 oldLongExpo_)
+    {
+        (funding_, fundingPerDay_, oldLongExpo_) = _funding(s, timestamp, s._EMA);
+    }
+
+    /// @notice See {IUsdnProtocolLong}
+    function longAssetAvailableWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
+        public
+        view
+        returns (int256 available_)
+    {
+        if (timestamp < s._lastUpdateTimestamp) {
+            revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
+        }
+
+        (int256 fundAsset,) = _fundingAsset(s, timestamp, s._EMA);
+
+        if (fundAsset > 0) {
+            available_ = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAsset);
+        } else {
+            int256 fee = fundAsset * Utils.toInt256(s._protocolFeeBps) / int256(Constants.BPS_DIVISOR);
+            // fees have the same sign as fundAsset (negative here), so we need to sub them
+            available_ = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAsset - fee);
+        }
+
+        int256 totalBalance = (s._balanceLong + s._balanceVault).toInt256();
+        if (available_ > totalBalance) {
+            available_ = totalBalance;
+        }
+    }
+
+    /// @notice See {IUsdnProtocolLong}
+    function longTradingExpoWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
+        public
+        view
+        returns (int256 expo_)
+    {
+        expo_ = s._totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(s, currentPrice, timestamp));
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                             Internal functions                             */
+    /* -------------------------------------------------------------------------- */
+
+    /**
+     * @notice Update the Exponential Moving Average (EMA) of the funding rate (per day)
+     * @dev This function is called every time the protocol state is updated
+     * @dev All required checks are done in the caller function (_applyPnlAndFunding)
+     * @dev If the number of seconds elapsed is greater than or equal to the EMA period, the EMA is updated to the last
+     * funding value
+     * @param s The storage of the protocol
+     * @param fundingPerDay The funding rate per day that was just calculated for the elapsed period
+     * @param secondsElapsed The number of seconds elapsed since the last protocol action
+     */
+    function _updateEMA(Types.Storage storage s, int256 fundingPerDay, uint128 secondsElapsed) internal {
+        s._EMA = _calcEMA(fundingPerDay, secondsElapsed, s._EMAPeriod, s._EMA);
+    }
+
+    /**
+     * @notice Calculate the protocol fee and apply it to the funding asset amount
+     * @dev The funding factor is only adjusted by the fee rate when the funding is negative (vault pays to the long
+     * side)
+     * @param s The storage of the protocol
+     * @param fundAsset The funding asset amount to be used for the fee calculation
+     * @return fee_ The absolute value of the calculated fee
+     * @return fundAssetWithFee_ The updated funding asset amount after applying the fee
+     */
+    function _calculateFee(Types.Storage storage s, int256 fundAsset)
+        internal
+        returns (int256 fee_, int256 fundAssetWithFee_)
+    {
+        int256 protocolFeeBps = Utils.toInt256(s._protocolFeeBps);
+        fee_ = fundAsset * protocolFeeBps / int256(Constants.BPS_DIVISOR);
+        // fundAsset and fee_ have the same sign, we can safely subtract them to reduce the absolute amount of asset
+        fundAssetWithFee_ = fundAsset - fee_;
+
+        if (fee_ < 0) {
+            // we want to return the absolute value of the fee
+            fee_ = -fee_;
+        }
+
+        s._pendingProtocolFee += uint256(fee_);
+    }
+
+    /**
+     * @notice Create initial deposit
+     * @dev To be called from `initialize`
+     * @param s The storage of the protocol
+     * @param amount The initial deposit amount
+     * @param price The current asset price
+     */
+    function _createInitialDeposit(Types.Storage storage s, uint128 amount, uint128 price) internal {
+        // transfer the assets for the deposit
+        address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
+        s._balanceVault += amount;
+        emit IUsdnProtocolEvents.InitiatedDeposit(msg.sender, msg.sender, amount, 0, block.timestamp, 0);
+
+        // calculate the total minted amount of USDN shares (vault balance and total supply are zero for now, we assume
+        // the USDN price to be $1 per token)
+        // the decimals conversion here is necessary since we calculate an amount in tokens and we want the
+        // corresponding amount of shares
+        uint256 usdnSharesToMint = s._usdn.convertToShares(
+            FixedPointMathLib.fullMulDiv(
+                amount, price, 10 ** (s._assetDecimals + s._priceFeedDecimals - Constants.TOKENS_DECIMALS)
+            )
+        );
+        IUsdn usdn = s._usdn;
+        uint256 minUsdnSharesSupply = usdn.convertToShares(Constants.MIN_USDN_SUPPLY);
+        // mint the minimum amount and send it to the dead address so it can never be removed from the total supply
+        usdn.mintShares(Constants.DEAD_ADDRESS, minUsdnSharesSupply);
+        // mint the user's share
+        uint256 mintSharesToUser = usdnSharesToMint - minUsdnSharesSupply;
+        uint256 mintedTokens = usdn.mintShares(msg.sender, mintSharesToUser);
+
+        emit IUsdnProtocolEvents.ValidatedDeposit(
+            Constants.DEAD_ADDRESS, Constants.DEAD_ADDRESS, 0, Constants.MIN_USDN_SUPPLY, block.timestamp
+        );
+        emit IUsdnProtocolEvents.ValidatedDeposit(msg.sender, msg.sender, amount, mintedTokens, block.timestamp);
+    }
+
+    /**
+     * @notice Create initial long position
+     * @dev To be called from `initialize`
+     * @param s The storage of the protocol
+     * @param amount The initial position amount
+     * @param price The current asset price
+     * @param tick The tick corresponding where the position should be stored
+     * @param totalExpo The total expo of the position
+     */
+    function _createInitialPosition(
+        Types.Storage storage s,
+        uint128 amount,
+        uint128 price,
+        int24 tick,
+        uint128 totalExpo
+    ) internal {
+        // transfer the assets for the long
+        address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
+
+        Types.PositionId memory posId;
+        posId.tick = tick;
+        Types.Position memory long = Types.Position({
+            validated: true,
+            user: msg.sender,
+            amount: amount,
+            totalExpo: totalExpo,
+            timestamp: uint40(block.timestamp)
+        });
+        // save the position and update the state
+        (posId.tickVersion, posId.index,) = ActionsLong._saveNewPosition(s, posId.tick, long, s._liquidationPenalty);
+        s._balanceLong += long.amount;
+        emit IUsdnProtocolEvents.InitiatedOpenPosition(
+            msg.sender, msg.sender, long.timestamp, totalExpo, long.amount, price, posId
+        );
+        emit IUsdnProtocolEvents.ValidatedOpenPosition(msg.sender, msg.sender, totalExpo, price, posId);
+    }
+
+    /**
+     * @notice Check if the initialize parameters lead to a balanced protocol
+     * @param s The storage of the protocol
+     * @dev This function reverts if the imbalance is exceeded for the deposit or open long action
+     * @param positionTotalExpo The total expo of the deployer's long position
+     * @param longAmount The amount (collateral) of the deployer's long position
+     * @param depositAmount The amount of assets for the deployer's deposit
+     */
+    function _checkInitImbalance(
+        Types.Storage storage s,
+        uint128 positionTotalExpo,
+        uint128 longAmount,
+        uint128 depositAmount
+    ) internal view {
+        int256 longTradingExpo = Utils.toInt256(positionTotalExpo - longAmount);
+        int256 depositLimit = s._depositExpoImbalanceLimitBps;
+        if (depositLimit != 0) {
+            int256 imbalanceBps =
+                (Utils.toInt256(depositAmount) - longTradingExpo) * int256(Constants.BPS_DIVISOR) / longTradingExpo;
+            if (imbalanceBps > depositLimit) {
+                revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
+            }
+        }
+        int256 openLimit = s._openExpoImbalanceLimitBps;
+        if (openLimit != 0) {
+            int256 imbalanceBps = (longTradingExpo - Utils.toInt256(depositAmount)) * int256(Constants.BPS_DIVISOR)
+                / Utils.toInt256(depositAmount);
+            if (imbalanceBps > openLimit) {
+                revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
+            }
+        }
+    }
+
+    /**
+     * @notice Calculate the funding rate per day and the old long exposure
+     * @param s The storage of the protocol
+     * @param ema The EMA of the funding rate per day
+     * @return fundingPerDay_ The funding rate (per day) with `FUNDING_RATE_DECIMALS` decimals
+     * @return oldLongExpo_ The old long trading expo
+     */
+    function _fundingPerDay(Types.Storage storage s, int256 ema)
+        internal
+        view
+        returns (int256 fundingPerDay_, int256 oldLongExpo_)
+    {
+        // imbalanceIndex = (longExpo - vaultExpo) / max(longExpo, vaultExpo)
+        // fundingPerDay = (sign(imbalanceIndex) * imbalanceIndex^2 * fundingSF) + _EMA
+        // fundingPerDay = (sign(ImbalanceIndex) * (longExpo - vaultExpo)^2 * fundingSF / denominator) + _EMA
+        // with denominator = vaultExpo^2 if vaultExpo > longExpo, or longExpo^2 if longExpo > vaultExpo
+
+        oldLongExpo_ = s._totalExpo.toInt256().safeSub(s._balanceLong.toInt256());
+        int256 oldVaultExpo = s._balanceVault.toInt256();
+        int256 numerator = oldLongExpo_ - oldVaultExpo;
+        // optimization: if the numerator is zero, then we simply return the EMA
+        if (numerator == 0) {
+            return (ema, oldLongExpo_);
+        }
+
+        if (oldLongExpo_ <= 0) {
+            // if oldLongExpo is negative, then we cap the imbalance index to -1
+            // this should never happen, but for safety we handle it anyway
+            return (
+                -int256(s._fundingSF * 10 ** (Constants.FUNDING_RATE_DECIMALS - Constants.FUNDING_SF_DECIMALS)) + ema,
+                oldLongExpo_
+            );
+        } else if (oldVaultExpo == 0) {
+            // if oldVaultExpo is zero (can't be negative), then we cap the imbalance index to 1
+            return (
+                int256(s._fundingSF * 10 ** (Constants.FUNDING_RATE_DECIMALS - Constants.FUNDING_SF_DECIMALS)) + ema,
+                oldLongExpo_
+            );
+        }
+
+        // starting here, oldLongExpo and oldVaultExpo are always strictly positive
+        uint256 numeratorSquared = uint256(numerator * numerator);
+
+        uint256 denominator;
+        if (oldVaultExpo > oldLongExpo_) {
+            denominator = uint256(oldVaultExpo * oldVaultExpo);
+            fundingPerDay_ = -int256(
+                FixedPointMathLib.fullMulDiv(
+                    numeratorSquared,
+                    s._fundingSF * 10 ** (Constants.FUNDING_RATE_DECIMALS - Constants.FUNDING_SF_DECIMALS),
+                    denominator
+                )
+            ) + ema;
+        } else {
+            denominator = uint256(oldLongExpo_ * oldLongExpo_);
+            fundingPerDay_ = int256(
+                FixedPointMathLib.fullMulDiv(
+                    numeratorSquared,
+                    s._fundingSF * 10 ** (Constants.FUNDING_RATE_DECIMALS - Constants.FUNDING_SF_DECIMALS),
+                    denominator
+                )
+            ) + ema;
+        }
+    }
+
+    /**
+     * @notice Calculate the funding value, funding rate value and the old long exposure
+     * @dev Reverts if `timestamp` < `s._lastUpdateTimestamp`
+     * @param s The storage of the protocol
+     * @param timestamp The current timestamp
+     * @param ema The EMA of the funding rate per day
+     * @return funding_ The funding (proportion of long trading expo that needs to be transferred from one side to the
+     * other) with `FUNDING_RATE_DECIMALS` decimals. If positive, long side pays to vault side, otherwise it's the
+     * opposite
+     * @return fundingPerDay_ The funding rate (per day) with `FUNDING_RATE_DECIMALS` decimals
+     * @return oldLongExpo_ The old long trading expo
+     */
+    function _funding(Types.Storage storage s, uint128 timestamp, int256 ema)
+        internal
+        view
+        returns (int256 funding_, int256 fundingPerDay_, int256 oldLongExpo_)
+    {
+        (fundingPerDay_, oldLongExpo_) = _fundingPerDay(s, ema);
+
+        uint128 lastUpdateTimestamp = s._lastUpdateTimestamp;
+        if (timestamp < lastUpdateTimestamp) {
+            revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
+        }
+        // subtraction can't underflow, checked above
+        // conversion from uint128 to int256 is always safe
+        int256 elapsedSeconds;
+        unchecked {
+            elapsedSeconds = Utils.toInt256(timestamp - lastUpdateTimestamp);
+        }
+        if (elapsedSeconds == 0) {
+            return (0, fundingPerDay_, oldLongExpo_);
+        }
+
+        funding_ = fundingPerDay_.safeMul(elapsedSeconds).safeDiv(1 days);
+    }
+
+    /// @notice See {IUsdnProtocolCore}
+    function _calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
+        internal
+        pure
+        returns (int256)
+    {
+        if (secondsElapsed >= emaPeriod) {
+            return lastFundingPerDay;
+        }
+
+        return (
+            lastFundingPerDay * Utils.toInt256(secondsElapsed)
+                + previousEMA * Utils.toInt256(emaPeriod - secondsElapsed)
+        ) / Utils.toInt256(emaPeriod);
     }
 }

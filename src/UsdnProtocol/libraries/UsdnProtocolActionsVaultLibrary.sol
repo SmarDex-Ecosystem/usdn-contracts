@@ -77,7 +77,7 @@ library UsdnProtocolActionsVaultLibrary {
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                              Public functions                              */
+    /*                             External functions                             */
     /* -------------------------------------------------------------------------- */
 
     /// @notice See {IUsdnProtocolActions}
@@ -214,77 +214,224 @@ library UsdnProtocolActionsVaultLibrary {
         Utils._checkPendingFee(s);
     }
 
+    /// @notice See {IUsdnProtocolCore}
+    function getActionablePendingActions(Types.Storage storage s, address currentUser)
+        external
+        view
+        returns (Types.PendingAction[] memory actions_, uint128[] memory rawIndices_)
+    {
+        uint256 queueLength = s._pendingActionsQueue.length();
+        if (queueLength == 0) {
+            // empty queue, early return
+            return (actions_, rawIndices_);
+        }
+        actions_ = new Types.PendingAction[](Constants.MAX_ACTIONABLE_PENDING_ACTIONS);
+        rawIndices_ = new uint128[](Constants.MAX_ACTIONABLE_PENDING_ACTIONS);
+        uint256 maxIter = Constants.MAX_ACTIONABLE_PENDING_ACTIONS;
+        if (queueLength < maxIter) {
+            maxIter = queueLength;
+        }
+
+        uint128 lowLatencyDeadline = s._lowLatencyValidatorDeadline;
+        uint16 middlewareLowLatencyDelay = s._oracleMiddleware.getLowLatencyDelay();
+        uint128 onChainDeadline = s._onChainValidatorDeadline;
+        uint256 i;
+        uint256 j;
+        uint256 arrayLen;
+        do {
+            // since `i` cannot be greater or equal to `queueLength`, there is no risk of reverting
+            (Types.PendingAction memory candidate, uint128 rawIndex) = s._pendingActionsQueue.at(i);
+
+            if (candidate.timestamp == 0 || candidate.validator == currentUser) {
+                // if the currentUser is equal to the validator of the pending action, then the pending action is not
+                // actionable by this user (it will get validated automatically by their action)
+                // and so we need to return the next item in the queue so that they can validate a third-party pending
+                // action (if any)
+                if (arrayLen > 0) {
+                    rawIndices_[j] = rawIndex;
+                    unchecked {
+                        j++;
+                    }
+                }
+                // try the next one
+                unchecked {
+                    i++;
+                }
+            } else if (
+                _isActionable(candidate.timestamp, lowLatencyDeadline, middlewareLowLatencyDelay, onChainDeadline)
+            ) {
+                // we found an actionable pending action
+                actions_[j] = candidate;
+                rawIndices_[j] = rawIndex;
+
+                // continue looking
+                unchecked {
+                    i++;
+                    j++;
+                    arrayLen = j;
+                }
+            } else if (block.timestamp > candidate.timestamp + middlewareLowLatencyDelay) {
+                // the pending action is not actionable but some more recent ones might be (with low-latency oracle)
+                // continue looking
+                if (arrayLen > 0) {
+                    rawIndices_[j] = rawIndex;
+                    unchecked {
+                        j++;
+                    }
+                }
+                unchecked {
+                    i++;
+                }
+            } else {
+                // the pending action is not actionable (it is too recent),
+                // following actions can't be actionable either so we return
+                break;
+            }
+        } while (i < maxIter);
+        assembly {
+            // shrink the size of the arrays
+            mstore(actions_, arrayLen)
+            mstore(rawIndices_, arrayLen)
+        }
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                              Public functions                              */
+    /* -------------------------------------------------------------------------- */
+
+    /**
+     * @notice Execute the first actionable pending action or revert if the price data was not provided
+     * @param s The storage of the protocol
+     * @param data The price data and raw indices
+     * @return securityDepositValue_ The security deposit value of the executed action
+     */
+    function _executePendingActionOrRevert(Types.Storage storage s, Types.PreviousActionsData calldata data)
+        public
+        returns (uint256 securityDepositValue_)
+    {
+        bool success;
+        (success,,, securityDepositValue_) = _executePendingAction(s, data);
+        if (!success) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidPendingActionData();
+        }
+    }
+
+    /**
+     * @notice Execute the first actionable pending action and report the success
+     * @param s The storage of the protocol
+     * @param data The price data and raw indices
+     * @return success_ Whether the price data is valid
+     * @return executed_ Whether the pending action was executed (false if the queue has no actionable item)
+     * @return liquidated_ Whether the position corresponding to the pending action was liquidated
+     * @return securityDepositValue_ The security deposit value of the executed action
+     */
+    function _executePendingAction(Types.Storage storage s, Types.PreviousActionsData calldata data)
+        public
+        returns (bool success_, bool executed_, bool liquidated_, uint256 securityDepositValue_)
+    {
+        (Types.PendingAction memory pending, uint128 rawIndex) = _getActionablePendingAction(s);
+        if (pending.action == Types.ProtocolAction.None) {
+            // no pending action
+            return (true, false, false, 0);
+        }
+        uint256 length = data.priceData.length;
+        if (data.rawIndices.length != length || length < 1) {
+            return (false, false, false, 0);
+        }
+        uint128 offset;
+        unchecked {
+            // underflow is desired here (wrap-around)
+            offset = rawIndex - data.rawIndices[0];
+        }
+        if (offset >= length || data.rawIndices[offset] != rawIndex) {
+            return (false, false, false, 0);
+        }
+        bytes calldata priceData = data.priceData[offset];
+        // for safety we consider that no pending action was validated by default
+        if (pending.action == Types.ProtocolAction.ValidateDeposit) {
+            executed_ = _validateDepositWithAction(s, pending, priceData);
+        } else if (pending.action == Types.ProtocolAction.ValidateWithdrawal) {
+            executed_ = _validateWithdrawalWithAction(s, pending, priceData);
+        } else if (pending.action == Types.ProtocolAction.ValidateOpenPosition) {
+            (executed_, liquidated_) = ActionsLong._validateOpenPositionWithAction(s, pending, priceData);
+        } else if (pending.action == Types.ProtocolAction.ValidateClosePosition) {
+            (executed_, liquidated_) = ActionsLong._validateClosePositionWithAction(s, pending, priceData);
+        }
+
+        success_ = true;
+
+        if (executed_ || liquidated_) {
+            Utils._clearPendingAction(s, pending.validator, rawIndex);
+            securityDepositValue_ = pending.securityDepositValue;
+            emit IUsdnProtocolEvents.SecurityDepositRefunded(pending.validator, msg.sender, securityDepositValue_);
+        }
+    }
+
+    /**
+     * @notice This is the mutating version of `getActionablePendingAction`, where empty items at the front of the list
+     * are removed
+     * @return action_ The first actionable pending action if any, otherwise a struct with all fields set to zero and
+     * Types.ProtocolAction.None
+     * @return rawIndex_ The raw index in the queue for the returned pending action, or zero
+     */
+    function _getActionablePendingAction(Types.Storage storage s)
+        public
+        returns (Types.PendingAction memory action_, uint128 rawIndex_)
+    {
+        uint256 queueLength = s._pendingActionsQueue.length();
+        if (queueLength == 0) {
+            // empty queue, early return
+            return (action_, rawIndex_);
+        }
+        uint256 maxIter = Constants.MAX_ACTIONABLE_PENDING_ACTIONS;
+        if (queueLength < maxIter) {
+            maxIter = queueLength;
+        }
+
+        uint128 lowLatencyDeadline = s._lowLatencyValidatorDeadline;
+        uint16 middlewareLowLatencyDelay = s._oracleMiddleware.getLowLatencyDelay();
+        uint128 onChainDeadline = s._onChainValidatorDeadline;
+        uint256 i;
+        uint256 j;
+        do {
+            // since we will never loop more than `queueLength` times, there is no risk of reverting
+            (Types.PendingAction memory candidate, uint128 rawIndex) = s._pendingActionsQueue.at(j);
+            unchecked {
+                i++;
+            }
+            if (candidate.timestamp == 0) {
+                // remove the stale pending action
+                s._pendingActionsQueue.clearAt(rawIndex);
+                // if we were removing another item than the first one, we increment j (otherwise we keep looking at the
+                // first item because it was shifted to the front)
+                if (j > 0) {
+                    unchecked {
+                        j++;
+                    }
+                }
+                // try the next one
+                continue;
+            } else if (
+                _isActionable(candidate.timestamp, lowLatencyDeadline, middlewareLowLatencyDelay, onChainDeadline)
+            ) {
+                // we found an actionable pending action
+                return (candidate, rawIndex);
+            } else if (block.timestamp > candidate.timestamp + middlewareLowLatencyDelay) {
+                // the pending action is not actionable but some more recent ones might be (with low-latency oracle)
+                // continue looking
+                unchecked {
+                    j++;
+                }
+                continue;
+            }
+            // the first pending action is not actionable, none of the following ones will be either
+            return (action_, rawIndex_);
+        } while (i < maxIter);
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                             Internal functions                             */
     /* -------------------------------------------------------------------------- */
-
-    /**
-     * @notice The deposit vault imbalance limit state verification
-     * @dev To ensure that the protocol does not imbalance more than
-     * the deposit limit on the vault side, otherwise revert
-     * @param s The storage of the protocol
-     * @param depositValue The deposit value in asset
-     */
-    function _checkImbalanceLimitDeposit(Types.Storage storage s, uint256 depositValue) internal view {
-        int256 depositExpoImbalanceLimitBps = s._depositExpoImbalanceLimitBps;
-
-        // early return in case limit is disabled
-        if (depositExpoImbalanceLimitBps == 0) {
-            return;
-        }
-
-        int256 currentLongExpo = (s._totalExpo - s._balanceLong).toInt256();
-
-        // cannot be calculated
-        if (currentLongExpo == 0) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidLongExpo();
-        }
-
-        int256 newVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault).safeAdd(int256(depositValue));
-
-        int256 imbalanceBps =
-            newVaultExpo.safeSub(currentLongExpo).safeMul(int256(Constants.BPS_DIVISOR)).safeDiv(currentLongExpo);
-
-        if (imbalanceBps > depositExpoImbalanceLimitBps) {
-            revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
-        }
-    }
-
-    /**
-     * @notice The withdrawal imbalance limit state verification
-     * @dev To ensure that the protocol does not imbalance more than
-     * the withdrawal limit on the long side, otherwise revert
-     * @param s The storage of the protocol
-     * @param withdrawalValue The withdrawal value in asset
-     * @param totalExpo The current total expo
-     */
-    function _checkImbalanceLimitWithdrawal(Types.Storage storage s, uint256 withdrawalValue, uint256 totalExpo)
-        internal
-        view
-    {
-        int256 withdrawalExpoImbalanceLimitBps = s._withdrawalExpoImbalanceLimitBps;
-
-        // early return in case limit is disabled
-        if (withdrawalExpoImbalanceLimitBps == 0) {
-            return;
-        }
-
-        int256 newVaultExpo =
-            s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault).safeSub(withdrawalValue.toInt256());
-
-        // cannot be calculated if equal to zero
-        if (newVaultExpo == 0) {
-            revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
-        }
-
-        int256 imbalanceBps = (totalExpo - s._balanceLong).toInt256().safeSub(newVaultExpo).safeMul(
-            int256(Constants.BPS_DIVISOR)
-        ).safeDiv(newVaultExpo);
-
-        if (imbalanceBps > withdrawalExpoImbalanceLimitBps) {
-            revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
-        }
-    }
 
     /**
      * @notice Prepare the data for the `initiateDeposit` function
@@ -839,217 +986,6 @@ library UsdnProtocolActionsVaultLibrary {
     }
 
     /**
-     * @notice Execute the first actionable pending action or revert if the price data was not provided
-     * @param s The storage of the protocol
-     * @param data The price data and raw indices
-     * @return securityDepositValue_ The security deposit value of the executed action
-     */
-    function _executePendingActionOrRevert(Types.Storage storage s, Types.PreviousActionsData calldata data)
-        public
-        returns (uint256 securityDepositValue_)
-    {
-        bool success;
-        (success,,, securityDepositValue_) = _executePendingAction(s, data);
-        if (!success) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidPendingActionData();
-        }
-    }
-
-    /**
-     * @notice Execute the first actionable pending action and report the success
-     * @param s The storage of the protocol
-     * @param data The price data and raw indices
-     * @return success_ Whether the price data is valid
-     * @return executed_ Whether the pending action was executed (false if the queue has no actionable item)
-     * @return liquidated_ Whether the position corresponding to the pending action was liquidated
-     * @return securityDepositValue_ The security deposit value of the executed action
-     */
-    function _executePendingAction(Types.Storage storage s, Types.PreviousActionsData calldata data)
-        public
-        returns (bool success_, bool executed_, bool liquidated_, uint256 securityDepositValue_)
-    {
-        (Types.PendingAction memory pending, uint128 rawIndex) = _getActionablePendingAction(s);
-        if (pending.action == Types.ProtocolAction.None) {
-            // no pending action
-            return (true, false, false, 0);
-        }
-        uint256 length = data.priceData.length;
-        if (data.rawIndices.length != length || length < 1) {
-            return (false, false, false, 0);
-        }
-        uint128 offset;
-        unchecked {
-            // underflow is desired here (wrap-around)
-            offset = rawIndex - data.rawIndices[0];
-        }
-        if (offset >= length || data.rawIndices[offset] != rawIndex) {
-            return (false, false, false, 0);
-        }
-        bytes calldata priceData = data.priceData[offset];
-        // for safety we consider that no pending action was validated by default
-        if (pending.action == Types.ProtocolAction.ValidateDeposit) {
-            executed_ = _validateDepositWithAction(s, pending, priceData);
-        } else if (pending.action == Types.ProtocolAction.ValidateWithdrawal) {
-            executed_ = _validateWithdrawalWithAction(s, pending, priceData);
-        } else if (pending.action == Types.ProtocolAction.ValidateOpenPosition) {
-            (executed_, liquidated_) = ActionsLong._validateOpenPositionWithAction(s, pending, priceData);
-        } else if (pending.action == Types.ProtocolAction.ValidateClosePosition) {
-            (executed_, liquidated_) = ActionsLong._validateClosePositionWithAction(s, pending, priceData);
-        }
-
-        success_ = true;
-
-        if (executed_ || liquidated_) {
-            Utils._clearPendingAction(s, pending.validator, rawIndex);
-            securityDepositValue_ = pending.securityDepositValue;
-            emit IUsdnProtocolEvents.SecurityDepositRefunded(pending.validator, msg.sender, securityDepositValue_);
-        }
-    }
-
-    /**
-     * @notice This is the mutating version of `getActionablePendingAction`, where empty items at the front of the list
-     * are removed
-     * @return action_ The first actionable pending action if any, otherwise a struct with all fields set to zero and
-     * Types.ProtocolAction.None
-     * @return rawIndex_ The raw index in the queue for the returned pending action, or zero
-     */
-    function _getActionablePendingAction(Types.Storage storage s)
-        public
-        returns (Types.PendingAction memory action_, uint128 rawIndex_)
-    {
-        uint256 queueLength = s._pendingActionsQueue.length();
-        if (queueLength == 0) {
-            // empty queue, early return
-            return (action_, rawIndex_);
-        }
-        uint256 maxIter = Constants.MAX_ACTIONABLE_PENDING_ACTIONS;
-        if (queueLength < maxIter) {
-            maxIter = queueLength;
-        }
-
-        uint128 lowLatencyDeadline = s._lowLatencyValidatorDeadline;
-        uint16 middlewareLowLatencyDelay = s._oracleMiddleware.getLowLatencyDelay();
-        uint128 onChainDeadline = s._onChainValidatorDeadline;
-        uint256 i;
-        uint256 j;
-        do {
-            // since we will never loop more than `queueLength` times, there is no risk of reverting
-            (Types.PendingAction memory candidate, uint128 rawIndex) = s._pendingActionsQueue.at(j);
-            unchecked {
-                i++;
-            }
-            if (candidate.timestamp == 0) {
-                // remove the stale pending action
-                s._pendingActionsQueue.clearAt(rawIndex);
-                // if we were removing another item than the first one, we increment j (otherwise we keep looking at the
-                // first item because it was shifted to the front)
-                if (j > 0) {
-                    unchecked {
-                        j++;
-                    }
-                }
-                // try the next one
-                continue;
-            } else if (
-                _isActionable(candidate.timestamp, lowLatencyDeadline, middlewareLowLatencyDelay, onChainDeadline)
-            ) {
-                // we found an actionable pending action
-                return (candidate, rawIndex);
-            } else if (block.timestamp > candidate.timestamp + middlewareLowLatencyDelay) {
-                // the pending action is not actionable but some more recent ones might be (with low-latency oracle)
-                // continue looking
-                unchecked {
-                    j++;
-                }
-                continue;
-            }
-            // the first pending action is not actionable, none of the following ones will be either
-            return (action_, rawIndex_);
-        } while (i < maxIter);
-    }
-
-    /// @notice See {IUsdnProtocolCore}
-    function getActionablePendingActions(Types.Storage storage s, address currentUser)
-        external
-        view
-        returns (Types.PendingAction[] memory actions_, uint128[] memory rawIndices_)
-    {
-        uint256 queueLength = s._pendingActionsQueue.length();
-        if (queueLength == 0) {
-            // empty queue, early return
-            return (actions_, rawIndices_);
-        }
-        actions_ = new Types.PendingAction[](Constants.MAX_ACTIONABLE_PENDING_ACTIONS);
-        rawIndices_ = new uint128[](Constants.MAX_ACTIONABLE_PENDING_ACTIONS);
-        uint256 maxIter = Constants.MAX_ACTIONABLE_PENDING_ACTIONS;
-        if (queueLength < maxIter) {
-            maxIter = queueLength;
-        }
-
-        uint128 lowLatencyDeadline = s._lowLatencyValidatorDeadline;
-        uint16 middlewareLowLatencyDelay = s._oracleMiddleware.getLowLatencyDelay();
-        uint128 onChainDeadline = s._onChainValidatorDeadline;
-        uint256 i;
-        uint256 j;
-        uint256 arrayLen;
-        do {
-            // since `i` cannot be greater or equal to `queueLength`, there is no risk of reverting
-            (Types.PendingAction memory candidate, uint128 rawIndex) = s._pendingActionsQueue.at(i);
-
-            if (candidate.timestamp == 0 || candidate.validator == currentUser) {
-                // if the currentUser is equal to the validator of the pending action, then the pending action is not
-                // actionable by this user (it will get validated automatically by their action)
-                // and so we need to return the next item in the queue so that they can validate a third-party pending
-                // action (if any)
-                if (arrayLen > 0) {
-                    rawIndices_[j] = rawIndex;
-                    unchecked {
-                        j++;
-                    }
-                }
-                // try the next one
-                unchecked {
-                    i++;
-                }
-            } else if (
-                _isActionable(candidate.timestamp, lowLatencyDeadline, middlewareLowLatencyDelay, onChainDeadline)
-            ) {
-                // we found an actionable pending action
-                actions_[j] = candidate;
-                rawIndices_[j] = rawIndex;
-
-                // continue looking
-                unchecked {
-                    i++;
-                    j++;
-                    arrayLen = j;
-                }
-            } else if (block.timestamp > candidate.timestamp + middlewareLowLatencyDelay) {
-                // the pending action is not actionable but some more recent ones might be (with low-latency oracle)
-                // continue looking
-                if (arrayLen > 0) {
-                    rawIndices_[j] = rawIndex;
-                    unchecked {
-                        j++;
-                    }
-                }
-                unchecked {
-                    i++;
-                }
-            } else {
-                // the pending action is not actionable (it is too recent),
-                // following actions can't be actionable either so we return
-                break;
-            }
-        } while (i < maxIter);
-        assembly {
-            // shrink the size of the arrays
-            mstore(actions_, arrayLen)
-            mstore(rawIndices_, arrayLen)
-        }
-    }
-
-    /**
      * @notice Check whether a pending action is actionable, i.e any user can validate it and retrieve the security
      * deposit
      * @dev Between `initiateTimestamp` and `initiateTimestamp + lowLatencyDeadline`,
@@ -1073,6 +1009,74 @@ library UsdnProtocolActionsVaultLibrary {
         } else {
             // the validation must happen with an on-chain oracle
             actionable_ = block.timestamp > initiateTimestamp + lowLatencyDelay + onChainDeadline;
+        }
+    }
+
+    /**
+     * @notice The deposit vault imbalance limit state verification
+     * @dev To ensure that the protocol does not imbalance more than
+     * the deposit limit on the vault side, otherwise revert
+     * @param s The storage of the protocol
+     * @param depositValue The deposit value in asset
+     */
+    function _checkImbalanceLimitDeposit(Types.Storage storage s, uint256 depositValue) internal view {
+        int256 depositExpoImbalanceLimitBps = s._depositExpoImbalanceLimitBps;
+
+        // early return in case limit is disabled
+        if (depositExpoImbalanceLimitBps == 0) {
+            return;
+        }
+
+        int256 currentLongExpo = (s._totalExpo - s._balanceLong).toInt256();
+
+        // cannot be calculated
+        if (currentLongExpo == 0) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidLongExpo();
+        }
+
+        int256 newVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault).safeAdd(int256(depositValue));
+
+        int256 imbalanceBps =
+            newVaultExpo.safeSub(currentLongExpo).safeMul(int256(Constants.BPS_DIVISOR)).safeDiv(currentLongExpo);
+
+        if (imbalanceBps > depositExpoImbalanceLimitBps) {
+            revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
+        }
+    }
+
+    /**
+     * @notice The withdrawal imbalance limit state verification
+     * @dev To ensure that the protocol does not imbalance more than
+     * the withdrawal limit on the long side, otherwise revert
+     * @param s The storage of the protocol
+     * @param withdrawalValue The withdrawal value in asset
+     * @param totalExpo The current total expo
+     */
+    function _checkImbalanceLimitWithdrawal(Types.Storage storage s, uint256 withdrawalValue, uint256 totalExpo)
+        internal
+        view
+    {
+        int256 withdrawalExpoImbalanceLimitBps = s._withdrawalExpoImbalanceLimitBps;
+
+        // early return in case limit is disabled
+        if (withdrawalExpoImbalanceLimitBps == 0) {
+            return;
+        }
+
+        int256 newVaultExpo =
+            s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault).safeSub(withdrawalValue.toInt256());
+
+        // cannot be calculated if equal to zero
+        if (newVaultExpo == 0) {
+            revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
+        }
+
+        int256 imbalanceBps = (totalExpo - s._balanceLong).toInt256().safeSub(newVaultExpo).safeMul(
+            int256(Constants.BPS_DIVISOR)
+        ).safeDiv(newVaultExpo);
+
+        if (imbalanceBps > withdrawalExpoImbalanceLimitBps) {
+            revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
         }
     }
 
