@@ -41,7 +41,7 @@ library UsdnProtocolCoreLibrary {
         uint128 longAmount,
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData
-    ) public {
+    ) external {
         if (depositAmount < Constants.MIN_INIT_DEPOSIT) {
             revert IUsdnProtocolErrors.UsdnProtocolMinInitAmount(Constants.MIN_INIT_DEPOSIT);
         }
@@ -87,7 +87,7 @@ library UsdnProtocolCoreLibrary {
         uint128 positionTotalExpo,
         uint128 longAmount,
         uint128 depositAmount
-    ) public view {
+    ) internal view {
         int256 longTradingExpo = Utils.toInt256(positionTotalExpo - longAmount);
         int256 depositLimit = s._depositExpoImbalanceLimitBps;
         if (depositLimit != 0) {
@@ -114,7 +114,7 @@ library UsdnProtocolCoreLibrary {
      * @param amount The initial deposit amount
      * @param price The current asset price
      */
-    function _createInitialDeposit(Types.Storage storage s, uint128 amount, uint128 price) public {
+    function _createInitialDeposit(Types.Storage storage s, uint128 amount, uint128 price) internal {
         // transfer the assets for the deposit
         address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
         s._balanceVault += amount;
@@ -158,7 +158,7 @@ library UsdnProtocolCoreLibrary {
         uint128 price,
         int24 tick,
         uint128 totalExpo
-    ) public {
+    ) internal {
         // transfer the assets for the long
         address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
 
@@ -184,7 +184,7 @@ library UsdnProtocolCoreLibrary {
 
     /// @notice See {IUsdnProtocolCore}
     function calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
-        public
+        internal
         pure
         returns (int256)
     {
@@ -200,6 +200,7 @@ library UsdnProtocolCoreLibrary {
 
     /* --------------------------  public functions --------------------------- */
 
+    // TO DO
     /// @notice See {IUsdnProtocolCore}
     function funding(Types.Storage storage s, uint128 timestamp)
         public
@@ -211,7 +212,7 @@ library UsdnProtocolCoreLibrary {
 
     /// @notice See {IUsdnProtocolCore}
     function getActionablePendingActions(Types.Storage storage s, address currentUser)
-        public
+        external
         view
         returns (Types.PendingAction[] memory actions_, uint128[] memory rawIndices_)
     {
@@ -292,15 +293,16 @@ library UsdnProtocolCoreLibrary {
 
     /// @notice See {IUsdnProtocolCore}
     function getUserPendingAction(Types.Storage storage s, address user)
-        public
+        external
         view
         returns (Types.PendingAction memory action_)
     {
         (action_,) = _getPendingAction(s, user);
     }
 
+    // TO DO
     /// @notice See {IUsdnProtocolCore}
-    function removeBlockedPendingAction(Types.Storage storage s, address validator, address payable to) public {
+    function removeBlockedPendingAction(Types.Storage storage s, address validator, address payable to) external {
         uint256 pendingActionIndex = s._pendingActions[validator];
         if (pendingActionIndex == 0) {
             // no pending action
@@ -313,7 +315,7 @@ library UsdnProtocolCoreLibrary {
 
     /// @notice See {IUsdnProtocolCore}
     function removeBlockedPendingActionNoCleanup(Types.Storage storage s, address validator, address payable to)
-        public
+        external
     {
         uint256 pendingActionIndex = s._pendingActions[validator];
         if (pendingActionIndex == 0) {
@@ -351,6 +353,7 @@ library UsdnProtocolCoreLibrary {
         }
     }
 
+    // TO DO
     /// @notice See {IUsdnProtocolLong}
     function longTradingExpoWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
         public
@@ -364,6 +367,7 @@ library UsdnProtocolCoreLibrary {
     /*                             Internal functions                             */
     /* -------------------------------------------------------------------------- */
 
+    // TO DO
     /**
      * @notice Prepare the pending action struct for an open position and add it to the queue
      * @param s The storage of the protocol
@@ -406,7 +410,7 @@ library UsdnProtocolCoreLibrary {
      * @return oldLongExpo_ The old long trading expo
      */
     function _fundingPerDay(Types.Storage storage s, int256 ema)
-        public
+        internal
         view
         returns (int256 fundingPerDay_, int256 oldLongExpo_)
     {
@@ -476,7 +480,7 @@ library UsdnProtocolCoreLibrary {
      * @return oldLongExpo_ The old long trading expo
      */
     function _funding(Types.Storage storage s, uint128 timestamp, int256 ema)
-        public
+        internal
         view
         returns (int256 funding_, int256 fundingPerDay_, int256 oldLongExpo_)
     {
@@ -629,6 +633,7 @@ library UsdnProtocolCoreLibrary {
         data_.isPriceRecent = true;
     }
 
+    // TO DO : COre
     /**
      * @notice This is the mutating version of `getActionablePendingAction`, where empty items at the front of the list
      * are removed
@@ -795,6 +800,7 @@ library UsdnProtocolCoreLibrary {
         }
     }
 
+    // TO DO
     /**
      * @notice Remove a stuck pending action and perform the minimal amount of cleanup necessary
      * @dev This function should only be called by the owner of the protocol, it serves as an escape hatch if a

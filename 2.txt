@@ -1,6 +1,4 @@
-Compiling 18 files with Solc 0.8.26
-Solc 0.8.26 finished in 9.82s
-Compiler run successful!
+No files changed, compilation skipped
 | Contract                               | Size (B) | Margin (B) |
 |----------------------------------------|----------|------------|
 | ActionsFixture                         |      262 |     24,314 |
@@ -73,9 +71,9 @@ Compiler run successful!
 | Usdn                                   |   13,859 |     10,717 |
 | UsdnProtocolActionsLongLibrary         |   23,779 |        797 |
 | UsdnProtocolActionsUtilsLibrary        |   10,886 |     13,690 |
-| UsdnProtocolActionsVaultLibrary        |   19,718 |      4,858 |
+| UsdnProtocolActionsVaultLibrary        |   17,231 |      7,345 |
 | UsdnProtocolConstantsLibrary           |       85 |     24,491 |
-| UsdnProtocolCoreLibrary                |   21,516 |      3,060 |
+| UsdnProtocolCoreLibrary                |   20,999 |      3,577 |
 | UsdnProtocolFallback                   |   18,796 |      5,780 |
 | UsdnProtocolImpl                       |   24,214 |        362 |
 | UsdnProtocolImplV2                     |   24,695 |       -119 |

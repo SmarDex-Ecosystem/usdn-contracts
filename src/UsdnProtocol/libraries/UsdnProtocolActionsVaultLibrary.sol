@@ -838,7 +838,6 @@ library UsdnProtocolActionsVaultLibrary {
         );
     }
 
-    // TO DO
     /**
      * @notice Execute the first actionable pending action or revert if the price data was not provided
      * @param s The storage of the protocol
