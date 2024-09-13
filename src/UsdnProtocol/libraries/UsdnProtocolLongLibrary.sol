@@ -22,6 +22,8 @@ import { UsdnProtocolCoreLibrary as Core } from "./UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.sol";
 
+import "forge-std/console.sol";
+
 library UsdnProtocolLongLibrary {
     using LibBitmap for LibBitmap.Bitmap;
     using SafeCast for uint256;
@@ -741,6 +743,14 @@ library UsdnProtocolLongLibrary {
         // reverts if liquidationPrice >= entryPrice
         uint256 leverage = Utils._getLeverage(adjustedPrice, liqPriceWithoutPenalty);
 
+        console.log("leverage");
+        console.logUint(leverage);
+        console.log("adjustedPrice");
+        console.logUint(adjustedPrice);
+        console.log("liqPriceWithoutPenalty");
+        console.logUint(liqPriceWithoutPenalty);
+        console.log("s._minLeverage");
+        console.logUint(s._minLeverage);
         if (leverage < s._minLeverage) {
             revert IUsdnProtocolErrors.UsdnProtocolLeverageTooLow();
         }

@@ -22,6 +22,8 @@ import { UsdnProtocolLongLibrary as Long } from "./UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.sol";
 
+import "forge-std/console.sol";
+
 library UsdnProtocolCoreLibrary {
     using SafeTransferLib for address;
     using SafeCast for uint256;
@@ -65,9 +67,18 @@ library UsdnProtocolCoreLibrary {
         uint128 positionTotalExpo =
             Utils._calcPositionTotalExpo(longAmount, currentPrice.price.toUint128(), liqPriceWithoutPenalty);
 
+        console.log("positionTotalExpo");
+        console.logUint(positionTotalExpo);
+        console.log("longAmount");
+        console.logUint(longAmount);
+        console.log("depositAmount");
+        console.logUint(depositAmount);
+
         _checkInitImbalance(s, positionTotalExpo, longAmount, depositAmount);
 
         _createInitialDeposit(s, depositAmount, currentPrice.price.toUint128());
+
+        Long._checkOpenPositionLeverage(s, currentPrice.price.toUint128(), liqPriceWithoutPenalty, s._maxLeverage);
 
         _createInitialPosition(s, longAmount, currentPrice.price.toUint128(), tickWithPenalty, positionTotalExpo);
 
@@ -101,6 +112,10 @@ library UsdnProtocolCoreLibrary {
         if (openLimit != 0) {
             int256 imbalanceBps = (longTradingExpo - Utils.toInt256(depositAmount)) * int256(Constants.BPS_DIVISOR)
                 / Utils.toInt256(depositAmount);
+            console.log("imbalanceBps");
+            console.logInt(imbalanceBps);
+            console.log("openLimit");
+            console.logInt(openLimit);
             if (imbalanceBps > openLimit) {
                 revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
             }
