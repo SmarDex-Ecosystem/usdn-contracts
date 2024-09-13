@@ -199,6 +199,6 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the vault balance is zero, and the calculation cannot be performed
     error UsdnProtocolEmptyVault();
 
-    /// @dev Indicates that user doesn't receive enough prediction tokens compared to the expected amount
+    /// @dev Indicates that user would not receive enough tokens compared to the expected amount
     error UsdnProtocolAmountReceivedTooSmall();
 }

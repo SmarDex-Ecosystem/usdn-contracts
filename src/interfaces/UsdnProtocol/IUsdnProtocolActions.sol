@@ -70,9 +70,9 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * equivalent to 5.7B USDN token before any rebase. The token amount limit increases with each rebase)
      * In case liquidations are pending, this function might not initiate the withdrawal (and `success_` would be false)
      * @param amountOutMin The estimated minimum amount of assets to receive. Note that there is no guarantee that the
-     * effective
-     * withdrawal amount at validation will exceed this value. Price changes during the interval could negatively affect
-     * the withdrawal amount. However, if the predicted amount is below this threshold, the initiate action will revert.
+     * effective withdrawal amount at validation will exceed this value. Price changes during the interval could
+     * negatively affect the withdrawal amount. However, if the predicted amount is below this threshold, the initiate
+     * action will revert
      * @param to The address that will receive the assets
      * @param validator The address that will validate the withdrawal
      * @param currentPriceData The current price data
