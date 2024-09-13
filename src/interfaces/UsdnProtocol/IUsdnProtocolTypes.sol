@@ -555,6 +555,8 @@ interface IUsdnProtocolTypes {
      * @param _usdnRebaseInterval The interval between two automatic rebase checks. Disabled by default
      * A rebase can be forced (if the `_usdnRebaseThreshold` is exceeded) by calling the `liquidate` function
      * @param _minLongPosition The minimum long position size (with `_assetDecimals`)
+     * @param _refundSecurityDepositPaused Whether the `refundSecurityDeposit` function is paused
+     * @param _transferPositionOwnershipPaused Whether the `transferPositionOwnership` function is paused
      * @param _lastFundingPerDay The funding rate calculated at the last update timestamp
      * @param _lastPrice The price of the asset during the last balances update (with price feed decimals)
      * @param _lastUpdateTimestamp The timestamp of the last balances update
@@ -621,6 +623,8 @@ interface IUsdnProtocolTypes {
         uint128 _usdnRebaseThreshold;
         uint256 _usdnRebaseInterval;
         uint256 _minLongPosition;
+        bool _refundSecurityDepositPaused;
+        bool _transferPositionOwnershipPaused;
         // State
         int256 _lastFundingPerDay;
         uint128 _lastPrice;

@@ -375,4 +375,16 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
      * @param lastUpdateTimestamp The timestamp for which the funding per day was calculated
      */
     event LastFundingPerDayUpdated(int256 lastFundingPerDay, uint256 lastUpdateTimestamp);
+
+    /**
+     * @notice Emitted when the `_refundSecurityDepositPaused` value is updated
+     * @param paused The new paused value
+     */
+    event RefundSecurityDepositPausedValueUpdated(bool paused);
+
+    /**
+     * @notice Emitted when the `_transferPositionOwnership` value is updated
+     * @param paused The new paused value
+     */
+    event TransferPositionOwnershipPausedValueUpdated(bool paused);
 }

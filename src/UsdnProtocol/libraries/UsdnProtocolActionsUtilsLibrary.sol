@@ -107,6 +107,9 @@ library UsdnProtocolActionsUtilsLibrary {
     function transferPositionOwnership(Types.Storage storage s, Types.PositionId calldata posId, address newOwner)
         public
     {
+        if (s._transferPositionOwnershipPaused) {
+            revert IUsdnProtocolErrors.UsdnProtocolFunctionPaused();
+        }
         (bytes32 tickHash, uint256 version) = Utils._tickHash(s, posId.tick);
         if (posId.tickVersion != version) {
             revert IUsdnProtocolErrors.UsdnProtocolOutdatedTick(version, posId.tickVersion);

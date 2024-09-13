@@ -41,6 +41,9 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
 
     /// @inheritdoc IUsdnProtocolFallback
     function refundSecurityDeposit(address payable validator) external {
+        if (s._refundSecurityDepositPaused) {
+            revert IUsdnProtocolErrors.UsdnProtocolFunctionPaused();
+        }
         uint256 securityDepositValue = Core._removeStalePendingAction(s, validator);
         if (securityDepositValue > 0) {
             Utils._refundEther(securityDepositValue, validator);
@@ -310,6 +313,16 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
         return s._minLongPosition;
     }
 
+    /// @inheritdoc IUsdnProtocolFallback
+    function getRefundSecurityDepositPaused() external view returns (bool) {
+        return s._refundSecurityDepositPaused;
+    }
+
+    /// @inheritdoc IUsdnProtocolFallback
+    function getTransferPositionOwnershipPaused() external view returns (bool) {
+        return s._transferPositionOwnershipPaused;
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                                    State getters                           */
     /* -------------------------------------------------------------------------- */
@@ -477,6 +490,26 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
         }
         s._feeCollector = newFeeCollector;
         emit IUsdnProtocolEvents.FeeCollectorUpdated(newFeeCollector);
+    }
+
+    /// @inheritdoc IUsdnProtocolFallback
+    function setRefundSecurityDepositPaused(bool paused) external onlyRole(SET_EXTERNAL_ROLE) {
+        if (s._refundSecurityDepositPaused == paused) {
+            revert IUsdnProtocolErrors.UsdnProtocolPausedValueAlreadySet();
+        }
+
+        s._refundSecurityDepositPaused = paused;
+        emit IUsdnProtocolEvents.RefundSecurityDepositPausedValueUpdated(paused);
+    }
+
+    /// @inheritdoc IUsdnProtocolFallback
+    function setTransferPositionOwnershipPaused(bool paused) external onlyRole(SET_EXTERNAL_ROLE) {
+        if (s._transferPositionOwnershipPaused == paused) {
+            revert IUsdnProtocolErrors.UsdnProtocolPausedValueAlreadySet();
+        }
+
+        s._transferPositionOwnershipPaused = paused;
+        emit IUsdnProtocolEvents.TransferPositionOwnershipPausedValueUpdated(paused);
     }
 
     /* -------------------------------------------------------------------------- */

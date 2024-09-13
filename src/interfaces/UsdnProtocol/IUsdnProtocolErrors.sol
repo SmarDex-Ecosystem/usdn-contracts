@@ -198,4 +198,10 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the vault balance is zero, and the calculation cannot be performed
     error UsdnProtocolEmptyVault();
+
+    /// @dev Indicates that the paused value is already set
+    error UsdnProtocolPausedValueAlreadySet();
+
+    /// @dev Indicates that the current function is paused
+    error UsdnProtocolFunctionPaused();
 }

@@ -425,6 +425,18 @@ interface IUsdnProtocolFallback {
      */
     function getMinLongPosition() external view returns (uint256);
 
+    /**
+     * @notice Whether the `refundSecurityDeposit` function is paused
+     * @return The paused value
+     */
+    function getRefundSecurityDepositPaused() external view returns (bool);
+
+    /**
+     * @notice Whether the `transferPositionOwnership` function is paused
+     * @return The paused value
+     */
+    function getTransferPositionOwnershipPaused() external view returns (bool);
+
     /* -------------------------------------------------------------------------- */
     /*                                    State getters                           */
     /* -------------------------------------------------------------------------- */
@@ -554,6 +566,18 @@ interface IUsdnProtocolFallback {
      * The fee collector must be different from the zero address
      */
     function setFeeCollector(address newFeeCollector) external;
+
+    /**
+     * @notice Set the `_refundSecurityDepositPaused` value
+     * @param paused The paused value
+     */
+    function setRefundSecurityDepositPaused(bool paused) external;
+
+    /**
+     * @notice Set the `_transferPositionOwnershipPaused` value
+     * @param paused The paused value
+     */
+    function setTransferPositionOwnershipPaused(bool paused) external;
 
     /**
      * @notice Replace the LiquidationRewardsManager contract with a new implementation
