@@ -326,46 +326,6 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Check if a USDN rebase is required and adjust the divisor if needed
-     * @dev Note: only call this function after `_applyPnlAndFunding` has been called to update the balances
-     * @param s The storage of the protocol
-     * @param assetPrice The current price of the underlying asset
-     * @param ignoreInterval If true, then the price check will be performed regardless of when the last check happened
-     * @return rebased_ Whether a rebase was performed
-     * @return callbackResult_ The rebase callback result, if any
-     */
-    function _usdnRebase(Types.Storage storage s, uint128 assetPrice, bool ignoreInterval)
-        public
-        returns (bool rebased_, bytes memory callbackResult_)
-    {
-        if (!ignoreInterval && block.timestamp - s._lastRebaseCheck < s._usdnRebaseInterval) {
-            return (false, callbackResult_);
-        }
-        s._lastRebaseCheck = block.timestamp;
-        IUsdn usdn = s._usdn;
-        uint256 divisor = usdn.divisor();
-        if (divisor <= s._usdnMinDivisor) {
-            // no need to rebase, the USDN divisor cannot go lower
-            return (false, callbackResult_);
-        }
-        uint256 balanceVault = s._balanceVault;
-        uint8 assetDecimals = s._assetDecimals;
-        uint256 usdnTotalSupply = usdn.totalSupply();
-        uint256 uPrice = Vault._calcUsdnPrice(balanceVault, assetPrice, usdnTotalSupply, assetDecimals);
-        if (uPrice <= s._usdnRebaseThreshold) {
-            return (false, callbackResult_);
-        }
-        uint256 targetTotalSupply = _calcRebaseTotalSupply(balanceVault, assetPrice, s._targetUsdnPrice, assetDecimals);
-        uint256 newDivisor = FixedPointMathLib.fullMulDiv(usdnTotalSupply, divisor, targetTotalSupply);
-        // since the USDN token can call a handler after the rebase, we want to make sure we do not block the user
-        // action in case the rebase fails
-        try usdn.rebase(newDivisor) returns (bool rebased, uint256, bytes memory callbackResult) {
-            rebased_ = rebased;
-            callbackResult_ = callbackResult;
-        } catch { }
-    }
-
-    /**
      * @notice For a desired liquidation price, get the tick number with penalty and liquidation price without penalty
      * @dev This function first calculates a tick for the desired liq price (no rounding), then adds the penalty to the
      * tick and rounds down to the nearest tick spacing. Then it subtracts the penalty from the final tick and
@@ -450,6 +410,46 @@ library UsdnProtocolLongLibrary {
         liqPriceWithoutPenalty_ = Utils._getEffectivePriceForTick(
             Utils.calcTickWithoutPenalty(tickWithPenalty_, liquidationPenalty), liqMultiplier
         );
+    }
+
+    /**
+     * @notice Check if a USDN rebase is required and adjust the divisor if needed
+     * @dev Note: only call this function after `_applyPnlAndFunding` has been called to update the balances
+     * @param s The storage of the protocol
+     * @param assetPrice The current price of the underlying asset
+     * @param ignoreInterval If true, then the price check will be performed regardless of when the last check happened
+     * @return rebased_ Whether a rebase was performed
+     * @return callbackResult_ The rebase callback result, if any
+     */
+    function _usdnRebase(Types.Storage storage s, uint128 assetPrice, bool ignoreInterval)
+        internal
+        returns (bool rebased_, bytes memory callbackResult_)
+    {
+        if (!ignoreInterval && block.timestamp - s._lastRebaseCheck < s._usdnRebaseInterval) {
+            return (false, callbackResult_);
+        }
+        s._lastRebaseCheck = block.timestamp;
+        IUsdn usdn = s._usdn;
+        uint256 divisor = usdn.divisor();
+        if (divisor <= s._usdnMinDivisor) {
+            // no need to rebase, the USDN divisor cannot go lower
+            return (false, callbackResult_);
+        }
+        uint256 balanceVault = s._balanceVault;
+        uint8 assetDecimals = s._assetDecimals;
+        uint256 usdnTotalSupply = usdn.totalSupply();
+        uint256 uPrice = Vault._calcUsdnPrice(balanceVault, assetPrice, usdnTotalSupply, assetDecimals);
+        if (uPrice <= s._usdnRebaseThreshold) {
+            return (false, callbackResult_);
+        }
+        uint256 targetTotalSupply = _calcRebaseTotalSupply(balanceVault, assetPrice, s._targetUsdnPrice, assetDecimals);
+        uint256 newDivisor = FixedPointMathLib.fullMulDiv(usdnTotalSupply, divisor, targetTotalSupply);
+        // since the USDN token can call a handler after the rebase, we want to make sure we do not block the user
+        // action in case the rebase fails
+        try usdn.rebase(newDivisor) returns (bool rebased, uint256, bytes memory callbackResult) {
+            rebased_ = rebased;
+            callbackResult_ = callbackResult;
+        } catch { }
     }
 
     /**

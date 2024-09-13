@@ -443,31 +443,6 @@ library UsdnProtocolCoreLibrary {
 
     /**
      * @notice Get the pending action for a user
-     * @dev To check for the presence of a pending action, compare `action_.action` to `Types.ProtocolAction.None`. There
-     * is
-     * a pending action only if the action is different from `Types.ProtocolAction.None`
-     * @param s The storage of the protocol
-     * @param user The user's address
-     * @return action_ The pending action struct if any, otherwise a zero-initialized struct
-     * @return rawIndex_ The raw index of the pending action in the queue
-     */
-    function _getPendingAction(Types.Storage storage s, address user)
-        public
-        view
-        returns (Types.PendingAction memory action_, uint128 rawIndex_)
-    {
-        uint256 pendingActionIndex = s._pendingActions[user];
-        if (pendingActionIndex == 0) {
-            // no pending action
-            return (action_, rawIndex_);
-        }
-
-        rawIndex_ = uint128(pendingActionIndex - 1);
-        action_ = s._pendingActionsQueue.atRaw(rawIndex_);
-    }
-
-    /**
-     * @notice Get the pending action for a user
      * @dev This function reverts if there is no pending action for the user
      * @param s The storage of the protocol
      * @param user The user's address
@@ -596,6 +571,30 @@ library UsdnProtocolCoreLibrary {
             msg.sender, msg.sender, long.timestamp, totalExpo, long.amount, price, posId
         );
         emit IUsdnProtocolEvents.ValidatedOpenPosition(msg.sender, msg.sender, totalExpo, price, posId);
+    }
+
+    /**
+     * @notice Get the pending action for a user
+     * @dev To check for the presence of a pending action, compare `action_.action` to `Types.ProtocolAction.None`. There
+     * is a pending action only if the action is different from `Types.ProtocolAction.None`
+     * @param s The storage of the protocol
+     * @param user The user's address
+     * @return action_ The pending action struct if any, otherwise a zero-initialized struct
+     * @return rawIndex_ The raw index of the pending action in the queue
+     */
+    function _getPendingAction(Types.Storage storage s, address user)
+        internal
+        view
+        returns (Types.PendingAction memory action_, uint128 rawIndex_)
+    {
+        uint256 pendingActionIndex = s._pendingActions[user];
+        if (pendingActionIndex == 0) {
+            // no pending action
+            return (action_, rawIndex_);
+        }
+
+        rawIndex_ = uint128(pendingActionIndex - 1);
+        action_ = s._pendingActionsQueue.atRaw(rawIndex_);
     }
 
     /**
