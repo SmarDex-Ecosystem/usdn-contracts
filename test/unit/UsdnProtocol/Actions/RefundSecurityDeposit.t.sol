@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { USER_1 } from "../../../utils/Constants.sol";
+import { ADMIN, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
@@ -62,6 +62,18 @@ contract TestUsdnProtocolRefundSecurityDeposit is UsdnProtocolBaseFixture {
 
         vm.expectRevert(abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolNotEligibleForRefund.selector, USER_1));
         protocol.refundSecurityDeposit(USER_1);
+    }
+
+    /**
+     * @custom:scenario Try to call a paused `refundSecurityDeposit` function
+     * @custom:when The function is called
+     * @custom:then The transaction reverts with `UsdnProtocolFunctionPaused`
+     */
+    function test_RevertWhen_refundSecurityDepositPaused() public {
+        vm.prank(ADMIN);
+        protocol.setRefundSecurityDepositPaused(true);
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolFunctionPaused.selector);
+        protocol.refundSecurityDeposit(payable(this));
     }
 
     /// @notice Helper function to initiate a long position and liquidate it before it gets validated

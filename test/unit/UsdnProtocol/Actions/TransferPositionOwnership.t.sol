@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { USER_1 } from "../../../utils/Constants.sol";
+import { ADMIN, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 import { OwnershipCallbackHandler } from "../utils/OwnershipCallbackHandler.sol";
 
@@ -218,6 +218,19 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
         vm.expectRevert(
             abi.encodeWithSelector(UsdnProtocolOutdatedTick.selector, posId.tickVersion + 1, posId.tickVersion)
         );
+        protocol.transferPositionOwnership(posId, USER_1);
+    }
+
+    /**
+     * @custom:scenario Try to call a paused `transferPositionOwnership` function
+     * @custom:when The function is called
+     * @custom:then The transaction reverts with `UsdnProtocolFunctionPaused`
+     */
+    function test_RevertWhen_transferPositionOwnershipPaused() public {
+        PositionId memory posId;
+        vm.prank(ADMIN);
+        protocol.setTransferPositionOwnershipPaused(true);
+        vm.expectRevert(UsdnProtocolFunctionPaused.selector);
         protocol.transferPositionOwnership(posId, USER_1);
     }
 }
