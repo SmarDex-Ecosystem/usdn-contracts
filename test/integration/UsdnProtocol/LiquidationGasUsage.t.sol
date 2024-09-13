@@ -18,6 +18,7 @@ import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 import { MockWstEthOracleMiddleware } from "../../../src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
 import { ILiquidationRewardsManagerErrorsEventsTypes } from
     "../../../src/interfaces/LiquidationRewardsManager/ILiquidationRewardsManagerErrorsEventsTypes.sol";
+import { IBaseRebalancer } from "../../../src/interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
 import { IUsdnEvents } from "../../../src/interfaces/Usdn/IUsdnEvents.sol";
 
@@ -34,6 +35,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
 
     function setUp() public {
         params = DEFAULT_PARAMS;
+        params.initialDeposit = 99 ether; // needed to trigger rebase
         params.fork = true; // all tests in this contract must be labeled `Fork`
         params.forkWarp = 1_709_794_800; // thu mar 07 2024 07:00:00 UTC
         _setUp(params);
@@ -99,11 +101,12 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
         /* ---------------------------- set up positions ---------------------------- */
 
         uint128 minLongPosition = uint128(protocol.getMinLongPosition());
+        uint256 maxLeverage = protocol.getMaxLeverage();
         vm.prank(USER_1);
         protocol.initiateOpenPosition{ value: securityDepositValue }(
             minLongPosition,
             pythPriceNormalized + 200 ether,
-            protocol.getMaxLeverage(),
+            maxLeverage,
             USER_1,
             USER_1,
             NO_PERMIT2,
@@ -114,7 +117,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
         protocol.initiateOpenPosition{ value: securityDepositValue }(
             minLongPosition,
             pythPriceNormalized + 150 ether,
-            protocol.getMaxLeverage(),
+            maxLeverage,
             USER_2,
             USER_2,
             NO_PERMIT2,
@@ -125,7 +128,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
         protocol.initiateOpenPosition{ value: securityDepositValue }(
             minLongPosition,
             pythPriceNormalized + 100 ether,
-            protocol.getMaxLeverage(),
+            maxLeverage,
             USER_3,
             USER_3,
             NO_PERMIT2,
@@ -170,6 +173,10 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
     }
 
     function _forkGasUsageHelper(bool withRebase) public {
+        // disable rebalancer
+        vm.prank(SET_EXTERNAL_MANAGER);
+        protocol.setRebalancer(IBaseRebalancer(address(0)));
+
         uint256[] memory gasUsedArray = new uint256[](3);
         ILiquidationRewardsManagerErrorsEventsTypes.RewardsParameters memory rewardsParameters =
             liquidationRewardsManager.getRewardsParameters();

@@ -347,5 +347,6 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         vm.makePersistent(address(oracleMiddleware));
         vm.makePersistent(address(usdn));
         vm.makePersistent(address(wstETH));
+        vm.makePersistent(address(rebalancer));
     }
 }
