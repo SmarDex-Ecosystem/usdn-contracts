@@ -317,6 +317,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         (, posToLiquidate_) = protocol.initiateOpenPosition{ value: messageValue }(
             additionalLongAmount,
             1500 ether,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             payable(address(this)),
             payable(address(this)),

@@ -115,6 +115,9 @@ contract TestDequePopulated is DequeFixture {
      * @custom:then Returns the item at the given raw index
      */
     function test_accessAtRaw() public view {
+        assertTrue(queue.isValid(rawIndex1));
+        assertTrue(queue.isValid(rawIndex2));
+        assertTrue(queue.isValid(rawIndex3));
         _assertActionsEqual(queue.atRaw(rawIndex1), action1, "action 1");
         _assertActionsEqual(queue.atRaw(rawIndex2), action2, "action 2");
         _assertActionsEqual(queue.atRaw(rawIndex3), action3, "action 3");
@@ -131,6 +134,7 @@ contract TestDequePopulated is DequeFixture {
         queue.at(3);
         vm.expectRevert(DoubleEndedQueue.QueueOutOfBounds.selector);
         queue.atRaw(3);
+        assertFalse(queue.isValid(3));
     }
 
     /**
@@ -313,5 +317,20 @@ contract TestDequePopulated is DequeFixture {
         queue.clearAt(rawIndex3);
         assertEq(queue.length(), 0);
         assertTrue(queue.empty());
+    }
+
+    /**
+     * @custom:scenario Checking if a raw index is valid
+     * @custom:when Calling `isValid` with a random raw index
+     * @custom:then Returns `true` if the index is valid, `false` otherwise
+     * @param rawIndex The raw index to check
+     */
+    function testFuzz_isValid(uint128 rawIndex) public view {
+        bool valid = queue.isValid(rawIndex);
+        if (rawIndex == rawIndex1 || rawIndex == rawIndex2 || rawIndex == rawIndex3) {
+            assertTrue(valid);
+        } else {
+            assertFalse(valid);
+        }
     }
 }

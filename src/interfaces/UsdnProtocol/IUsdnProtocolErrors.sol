@@ -199,6 +199,9 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the vault balance is zero, and the calculation cannot be performed
     error UsdnProtocolEmptyVault();
 
+    /// @dev Indicates that the entry price exceeds the maximum given by the user
+    error UsdnProtocolSlippageMaxPriceExceeded();
+
     /// @dev Indicates that user would not receive enough prediction tokens compared to the expected amount
     error UsdnProtocolAmountReceivedTooSmall();
 }

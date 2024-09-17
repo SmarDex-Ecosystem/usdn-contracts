@@ -13,6 +13,7 @@ import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocol
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
+import { UsdnProtocolCoreLibrary as Core } from "./UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "./UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.sol";
@@ -48,33 +49,17 @@ library UsdnProtocolActionsUtilsLibrary {
         Utils._checkPendingFee(s);
     }
 
-    /**
-     * @notice See {IUsdnProtocolActions}
-     * @dev TODO: refactor to loop on the queue and then index into `previousActionsData` when an actionable pending
-     * action has been found, to avoid loop multiple times over the unactionable items in the queue
-     */
+    /// @notice See {IUsdnProtocolActions}
     function validateActionablePendingActions(
         Types.Storage storage s,
         Types.PreviousActionsData calldata previousActionsData,
         uint256 maxValidations
     ) external returns (uint256 validatedActions_) {
         uint256 balanceBefore = address(this).balance;
-        uint256 amountToRefund;
 
-        if (maxValidations > previousActionsData.rawIndices.length) {
-            maxValidations = previousActionsData.rawIndices.length;
-        }
-        do {
-            (, bool executed, bool liq, uint256 securityDepositValue) =
-                Vault._executePendingAction(s, previousActionsData);
-            if (!executed && !liq) {
-                break;
-            }
-            unchecked {
-                validatedActions_++;
-                amountToRefund += securityDepositValue;
-            }
-        } while (validatedActions_ < maxValidations);
+        uint256 amountToRefund;
+        (validatedActions_, amountToRefund) = Core._validateMultipleActionable(s, previousActionsData, maxValidations);
+
         Utils._refundExcessEther(0, amountToRefund, balanceBefore);
         Utils._checkPendingFee(s);
     }

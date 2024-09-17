@@ -230,6 +230,7 @@ contract TestRebalancerInitiateClosePosition is
         (, PositionId memory newPosId) = protocol.initiateOpenPosition{ value: securityDeposit }(
             20 ether,
             1100 ether,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             payable(address(this)),
             payable(address(this)),
@@ -298,6 +299,7 @@ contract TestRebalancerInitiateClosePosition is
         protocol.initiateOpenPosition{ value: securityDeposit }(
             20 ether,
             800 ether,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             payable(address(this)),
             payable(address(this)),
