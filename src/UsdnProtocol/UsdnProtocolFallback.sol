@@ -213,6 +213,11 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
+    function getRebalancerMinLeverage() external view returns (uint256) {
+        return s._rebalancerMinLeverage;
+    }
+
+    /// @inheritdoc IUsdnProtocolFallback
     function getMinLeverage() external view returns (uint256) {
         return s._minLeverage;
     }
@@ -520,6 +525,20 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     /* -------------------------------------------------------------------------- */
     /*                          SET_PROTOCOL_PARAMS_ROLE                          */
     /* -------------------------------------------------------------------------- */
+
+    /// @inheritdoc IUsdnProtocolFallback
+    function setRebalancerMinLeverage(uint256 newMinLeverage) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
+        (, uint256 rebalancerMaxLeverage,) = s._rebalancer.getCurrentStateData();
+        if (newMinLeverage >= rebalancerMaxLeverage) {
+            revert UsdnProtocolInvalidRebalancerMinLeverage();
+        } else if (newMinLeverage <= 10 ** Constants.LEVERAGE_DECIMALS) {
+            revert UsdnProtocolInvalidRebalancerMinLeverage();
+        }
+
+        s._minLeverage = newMinLeverage;
+
+        emit RebalancerMinLeverageUpdated(newMinLeverage);
+    }
 
     /// @inheritdoc IUsdnProtocolFallback
     function setMinLeverage(uint256 newMinLeverage) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {

@@ -25,7 +25,6 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
      */
     function test_calcRebalancerPositionTick() public view {
         uint256 maxLeverage = protocol.getMaxLeverage();
-        uint256 minLeverage = rebalancer.getPositionMinLeverage();
         uint256 totalExpo = 295 ether;
         uint256 missingTradingExpo = vaultBalance + longBalance - totalExpo;
         uint128 amount = 2 ether;
@@ -44,7 +43,6 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
             DEFAULT_PARAMS.initialPrice,
             amount,
             maxLeverage,
-            minLeverage,
             totalExpo,
             longBalance,
             vaultBalance,
@@ -63,7 +61,6 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
      */
     function test_calcRebalancerPositionTickCappedByTheProtocolMaxLeverage() public view {
         uint256 rebalancerMaxLeverage = protocol.getMaxLeverage() + 1;
-        uint256 minLeverage = rebalancer.getPositionMinLeverage();
         uint256 totalExpo = 200 ether;
         uint128 amount = 1 ether;
 
@@ -83,7 +80,6 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
             DEFAULT_PARAMS.initialPrice,
             amount,
             rebalancerMaxLeverage,
-            minLeverage,
             totalExpo,
             longBalance,
             vaultBalance,
@@ -102,7 +98,7 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
      */
     function test_calcRebalancerPositionTickCappedByTheMinLeverage() public view {
         uint256 rebalancerMaxLeverage = protocol.getMaxLeverage();
-        uint256 minLeverage = rebalancer.getPositionMinLeverage();
+        uint256 minLeverage = protocol.getRebalancerMinLeverage();
         uint256 totalExpo = vaultBalance + longBalance - 1;
         uint128 amount = 1 ether;
 
@@ -121,7 +117,6 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
             DEFAULT_PARAMS.initialPrice,
             amount,
             rebalancerMaxLeverage,
-            minLeverage,
             totalExpo,
             longBalance,
             vaultBalance,
@@ -141,7 +136,6 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
      */
     function test_calcRebalancerPositionTickCappedByTheRebalancerMaxLeverage() public view {
         uint256 rebalancerMaxLeverage = protocol.getMaxLeverage() / 2;
-        uint256 minLeverage = rebalancer.getPositionMinLeverage();
         uint256 totalExpo = 200 ether;
         uint128 amount = 1 ether;
 
@@ -160,7 +154,6 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
             DEFAULT_PARAMS.initialPrice,
             amount,
             rebalancerMaxLeverage,
-            minLeverage,
             totalExpo,
             longBalance,
             vaultBalance,
@@ -178,7 +171,6 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
      */
     function test_calcRebalancerPositionTickWithNoTradingExpoToFill() public view {
         uint256 rebalancerMaxLeverage = protocol.getMaxLeverage() + 1;
-        uint256 minLeverage = rebalancer.getPositionMinLeverage();
         uint256 totalExpo = vaultBalance + longBalance;
         uint128 amount = 1 ether;
 
@@ -187,7 +179,6 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
             DEFAULT_PARAMS.initialPrice,
             amount,
             rebalancerMaxLeverage,
-            minLeverage,
             totalExpo,
             longBalance,
             vaultBalance,

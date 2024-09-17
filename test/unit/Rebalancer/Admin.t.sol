@@ -37,9 +37,6 @@ contract TestRebalancerAdmin is RebalancerFixture {
         vm.expectRevert(customError);
         rebalancer.setPositionMaxLeverage(0);
 
-        vm.expectRevert(customError);
-        rebalancer.setPositionMinLeverage(0);
-
         vm.expectRevert(RebalancerUnauthorized.selector);
         rebalancer.setMinAssetDeposit(1);
 
@@ -119,7 +116,7 @@ contract TestRebalancerAdmin is RebalancerFixture {
      * @custom:then The call reverts with a {RebalancerInvalidMaxLeverage} error
      */
     function test_RevertWhen_setPositionMaxLeverageLowerThanMinLeverage() public adminPrank {
-        uint256 minLeverage = rebalancer.getPositionMinLeverage();
+        uint256 minLeverage = usdnProtocol.getRebalancerMinLeverage();
 
         vm.expectRevert(RebalancerInvalidMaxLeverage.selector);
         rebalancer.setPositionMaxLeverage(minLeverage);
@@ -141,54 +138,6 @@ contract TestRebalancerAdmin is RebalancerFixture {
         rebalancer.setPositionMaxLeverage(newMaxLeverage);
 
         assertEq(rebalancer.getPositionMaxLeverage(), newMaxLeverage, "The maximum leverage should have been updated");
-    }
-
-    /* -------------------------------------------------------------------------- */
-    /*                             positionMinLeverage                            */
-    /* -------------------------------------------------------------------------- */
-
-    /**
-     * @custom:scenario Trying to set the minimum leverage greater than the maximum leverage
-     * @custom:given A value higher than the maximum leverage
-     * @custom:when `setPositionMinLeverage` is called with this value
-     * @custom:then The call reverts with a {RebalancerInvalidMinLeverage} error
-     */
-    function test_RevertWhen_setPositionMinLeverageWithLeverageTooHigh() public adminPrank {
-        uint256 maxLeverage = rebalancer.getPositionMaxLeverage();
-
-        vm.expectRevert(RebalancerInvalidMinLeverage.selector);
-        rebalancer.setPositionMinLeverage(maxLeverage);
-    }
-
-    /**
-     * @custom:scenario Trying to set the minimum leverage to x1
-     * @custom:given A x1 minimum leverage
-     * @custom:when `setPositionMinLeverage` is called with this value
-     * @custom:then The call reverts with a {RebalancerInvalidMinLeverage} error
-     */
-    function test_RevertWhen_setPositionMinLeverage1x() public adminPrank {
-        uint256 minLeverage = 10 ** Constants.LEVERAGE_DECIMALS;
-        vm.expectRevert(RebalancerInvalidMinLeverage.selector);
-        rebalancer.setPositionMinLeverage(minLeverage);
-    }
-
-    /**
-     * @custom:scenario Setting the minimum leverage of the rebalancer
-     * @custom:given A value higher than x1
-     * @custom:when Lower than the maximum leverage
-     * @custom:when {setPositionMinLeverage} is called with this value
-     * @custom:then The value of `_positionMinLeverage` is updated
-     * @custom:and A {PositionMaxLeverageUpdated} event is emitted
-     */
-    function test_setPositionMinLeverage() public adminPrank {
-        uint256 newMinLeverage = rebalancer.getPositionMaxLeverage() / 2;
-        assertGt(newMinLeverage, 10 ** Constants.LEVERAGE_DECIMALS, "The minimum leverage should be greater than x1");
-
-        vm.expectEmit();
-        emit PositionMinLeverageUpdated(newMinLeverage);
-        rebalancer.setPositionMinLeverage(newMinLeverage);
-
-        assertEq(rebalancer.getPositionMinLeverage(), newMinLeverage, "The minimum leverage should have been updated");
     }
 
     /* -------------------------------------------------------------------------- */
