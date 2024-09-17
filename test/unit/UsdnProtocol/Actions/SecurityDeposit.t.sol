@@ -103,7 +103,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         (balanceUser0Before, balanceProtocolBefore,,) = _getBalances();
 
         protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(
-            posId, 1 ether, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            posId, 1 ether, DISABLE_MIN_PRICE, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -285,7 +285,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         vm.expectRevert(UsdnProtocolSecurityDepositTooLow.selector);
         protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE - 1 }(
-            posId, 1 ether, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            posId, 1 ether, DISABLE_MIN_PRICE, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -367,7 +367,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         (balanceUser0Before, balanceProtocolBefore,,) = _getBalances();
 
         protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE + 100 }(
-            posId, 1 ether, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            posId, 1 ether, DISABLE_MIN_PRICE, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -687,7 +687,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
 
         protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(
-            posId, 1 ether, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            posId, 1 ether, DISABLE_MIN_PRICE, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
         _waitBeforeActionablePendingAction();
 
@@ -699,7 +699,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
         vm.prank(USER_1);
         protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(
-            posId1, 1 ether, USER_1, USER_1, priceData, previousActionsData
+            posId1, 1 ether, DISABLE_MIN_PRICE, USER_1, USER_1, priceData, previousActionsData
         );
         _waitDelay();
 
@@ -741,7 +741,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
 
         protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(
-            posId, 1 ether, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            posId, 1 ether, DISABLE_MIN_PRICE, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -749,7 +749,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         vm.startPrank(USER_1);
         protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(
-            posId1, 1 ether, USER_1, USER_1, priceData, EMPTY_PREVIOUS_DATA
+            posId1, 1 ether, DISABLE_MIN_PRICE, USER_1, USER_1, priceData, EMPTY_PREVIOUS_DATA
         );
         _waitBeforeActionablePendingAction();
 
@@ -1064,7 +1064,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit StalePendingActionRemoved(address(this), posId);
         protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(
-            user1PosId, 1 ether, USER_1, payable(this), priceData, EMPTY_PREVIOUS_DATA
+            user1PosId, 1 ether, DISABLE_MIN_PRICE, USER_1, payable(this), priceData, EMPTY_PREVIOUS_DATA
         );
 
         vm.stopPrank();
@@ -1236,7 +1236,13 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
 
         protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(
-            posId, 1 ether, USER_1, payable(address(receiverContract)), priceData, EMPTY_PREVIOUS_DATA
+            posId,
+            1 ether,
+            DISABLE_MIN_PRICE,
+            USER_1,
+            payable(address(receiverContract)),
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
