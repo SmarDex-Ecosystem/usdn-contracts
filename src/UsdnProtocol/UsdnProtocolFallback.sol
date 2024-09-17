@@ -104,6 +104,11 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
+    function REBALANCER_MIN_LEVERAGE() external pure returns (uint256) {
+        return Constants.REBALANCER_MIN_LEVERAGE;
+    }
+
+    /// @inheritdoc IUsdnProtocolFallback
     function TOKENS_DECIMALS() external pure returns (uint8) {
         return Constants.TOKENS_DECIMALS;
     }
@@ -210,11 +215,6 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     /// @inheritdoc IUsdnProtocolFallback
     function getRebalancer() external view returns (IBaseRebalancer) {
         return s._rebalancer;
-    }
-
-    /// @inheritdoc IUsdnProtocolFallback
-    function getRebalancerMinLeverage() external view returns (uint256) {
-        return s._rebalancerMinLeverage;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
@@ -525,20 +525,6 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     /* -------------------------------------------------------------------------- */
     /*                          SET_PROTOCOL_PARAMS_ROLE                          */
     /* -------------------------------------------------------------------------- */
-
-    /// @inheritdoc IUsdnProtocolFallback
-    function setRebalancerMinLeverage(uint256 newMinLeverage) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        (, uint256 rebalancerMaxLeverage,) = s._rebalancer.getCurrentStateData();
-        if (newMinLeverage >= rebalancerMaxLeverage) {
-            revert UsdnProtocolInvalidRebalancerMinLeverage();
-        } else if (newMinLeverage <= 10 ** Constants.LEVERAGE_DECIMALS) {
-            revert UsdnProtocolInvalidRebalancerMinLeverage();
-        }
-
-        s._rebalancerMinLeverage = newMinLeverage;
-
-        emit RebalancerMinLeverageUpdated(newMinLeverage);
-    }
 
     /// @inheritdoc IUsdnProtocolFallback
     function setMinLeverage(uint256 newMinLeverage) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {

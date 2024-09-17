@@ -3,6 +3,9 @@ pragma solidity 0.8.26;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constant } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
+
 /**
  * @custom:feature Test the {_calcRebalancerPositionTick} internal function of the long layer
  * @custom:background An initialized usdn protocol contract with 200 ether in the vault
@@ -98,12 +101,12 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
      */
     function test_calcRebalancerPositionTickCappedByTheMinLeverage() public view {
         uint256 rebalancerMaxLeverage = protocol.getMaxLeverage();
-        uint256 minLeverage = protocol.getRebalancerMinLeverage();
         uint256 totalExpo = vaultBalance + longBalance - 1;
         uint128 amount = 1 ether;
 
         // calculate the lowest usable trading expo to stay above the min leverage
-        uint256 lowestUsableTradingExpo = amount * minLeverage / 10 ** protocol.LEVERAGE_DECIMALS() - amount;
+        uint256 lowestUsableTradingExpo =
+            amount * Constant.REBALANCER_MIN_LEVERAGE / 10 ** protocol.LEVERAGE_DECIMALS() - amount;
         (int24 expectedTick,) = protocol.i_getTickFromDesiredLiqPrice(
             protocol.i_calcLiqPriceFromTradingExpo(DEFAULT_PARAMS.initialPrice, amount, lowestUsableTradingExpo),
             DEFAULT_PARAMS.initialPrice,

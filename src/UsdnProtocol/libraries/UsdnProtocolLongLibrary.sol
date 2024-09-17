@@ -970,7 +970,7 @@ library UsdnProtocolLongLibrary {
 
         // check that the trading expo filled by the position would not be below the min leverage
         data.lowestUsableTradingExpo =
-            positionAmount * s._rebalancerMinLeverage / 10 ** Constants.LEVERAGE_DECIMALS - positionAmount;
+            positionAmount * Constants.REBALANCER_MIN_LEVERAGE / 10 ** Constants.LEVERAGE_DECIMALS - positionAmount;
         if (data.lowestUsableTradingExpo > tradingExpoToFill) {
             tradingExpoToFill = data.lowestUsableTradingExpo;
         }

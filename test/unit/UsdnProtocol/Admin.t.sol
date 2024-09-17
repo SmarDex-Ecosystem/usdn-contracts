@@ -37,9 +37,6 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         protocol.setOracleMiddleware(IOracleMiddleware(address(1)));
 
         vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ROLE"));
-        protocol.setRebalancerMinLeverage(0);
-
-        vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ROLE"));
         protocol.setMinLeverage(0);
 
         vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ROLE"));
@@ -127,51 +124,6 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         protocol.setOracleMiddleware(IOracleMiddleware(address(this)));
         // assert new middleware equal randAddress
         assertEq(address(protocol.getOracleMiddleware()), address(this));
-    }
-
-    /**
-     * @custom:scenario Trying to set the minimum leverage equal to the rebalancer maximum leverage
-     * @custom:given A value equal to the maximum leverage
-     * @custom:when `setRebalancerMinLeverage` is called with this value
-     * @custom:then The call reverts with a {UsdnProtocolInvalidRebalancerMinLeverage} error
-     */
-    function test_RevertWhen_setRebalancerMinLeverageWithLeverageTooHigh() public adminPrank {
-        uint256 maxLeverage = rebalancer.getPositionMaxLeverage();
-
-        vm.expectRevert(UsdnProtocolInvalidRebalancerMinLeverage.selector);
-        protocol.setRebalancerMinLeverage(maxLeverage);
-    }
-
-    /**
-     * @custom:scenario Trying to set the minimum leverage to x1
-     * @custom:given A x1 minimum leverage
-     * @custom:when `setPositionMinLeverage` is called with this value
-     * @custom:then The call reverts with a {UsdnProtocolInvalidRebalancerMinLeverage} error
-     */
-    function test_RevertWhen_setPositionMinLeverage1x() public adminPrank {
-        uint256 minLeverage = 10 ** Constants.LEVERAGE_DECIMALS;
-
-        vm.expectRevert(UsdnProtocolInvalidRebalancerMinLeverage.selector);
-        protocol.setRebalancerMinLeverage(minLeverage);
-    }
-
-    /**
-     * @custom:scenario Setting the minimum leverage of the rebalancer
-     * @custom:given A value higher than x1
-     * @custom:and Lower than the maximum leverage
-     * @custom:when {setPositionMinLeverage} is called with this value
-     * @custom:then The value of `_rebalancerMinLeverage` is updated
-     * @custom:and A {RebalancerMinLeverageUpdated} event is emitted
-     */
-    function test_setPositionMinLeverage() public adminPrank {
-        uint256 newMinLeverage = rebalancer.getPositionMaxLeverage() / 2;
-        assertGt(newMinLeverage, 10 ** Constants.LEVERAGE_DECIMALS, "The minimum leverage should be greater than x1");
-
-        vm.expectEmit();
-        emit RebalancerMinLeverageUpdated(newMinLeverage);
-        protocol.setRebalancerMinLeverage(newMinLeverage);
-
-        assertEq(protocol.getRebalancerMinLeverage(), newMinLeverage, "The minimum leverage should have been updated");
     }
 
     /**

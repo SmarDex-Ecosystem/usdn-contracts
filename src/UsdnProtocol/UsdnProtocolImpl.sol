@@ -52,7 +52,6 @@ contract UsdnProtocolImpl is
         _grantRole(PROXY_UPGRADE_ROLE, managers.proxyUpgradeManager);
 
         // parameters
-        s._rebalancerMinLeverage = 10 ** Constants.LEVERAGE_DECIMALS + 10 ** (Constants.LEVERAGE_DECIMALS - 9); // x1.000000001
         s._minLeverage = 10 ** Constants.LEVERAGE_DECIMALS + 10 ** (Constants.LEVERAGE_DECIMALS - 1); // x1.1
         s._maxLeverage = 10 * 10 ** Constants.LEVERAGE_DECIMALS; // x10
         s._lowLatencyValidatorDeadline = 15 minutes;

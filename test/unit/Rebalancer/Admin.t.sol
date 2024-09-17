@@ -110,14 +110,14 @@ contract TestRebalancerAdmin is RebalancerFixture {
     }
 
     /**
-     * @custom:scenario Trying to set the maximum leverage lower than the rebalancer minimum leverage value defined by
+     * @custom:scenario Trying to set the maximum leverage equal to the rebalancer minimum leverage value defined by
      * the USDN protocol
-     * @custom:given A value lower than the USDN protocol's minimum leverage
+     * @custom:given A value equal to the USDN protocol's minimum leverage
      * @custom:when `setPositionMaxLeverage` is called with this value
      * @custom:then The call reverts with a {RebalancerInvalidMaxLeverage} error
      */
     function test_RevertWhen_setPositionMaxLeverageLowerThanMinLeverage() public adminPrank {
-        uint256 minLeverage = usdnProtocol.getRebalancerMinLeverage();
+        uint256 minLeverage = usdnProtocol.REBALANCER_MIN_LEVERAGE();
 
         vm.expectRevert(RebalancerInvalidMaxLeverage.selector);
         rebalancer.setPositionMaxLeverage(minLeverage);
