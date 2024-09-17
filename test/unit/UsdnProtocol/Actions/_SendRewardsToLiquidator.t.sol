@@ -9,14 +9,22 @@ import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
  * @custom:given A protocol with increased rewards and gas price
  */
 contract TestUsdnProtocolActionsSendRewardsToLiquidator is UsdnProtocolBaseFixture {
+    uint256 internal constant CURRENT_PRICE = 1000 ether;
+
     function setUp() public {
-        _setUp(DEFAULT_PARAMS);
+        params = DEFAULT_PARAMS;
+        params.flags.enableLiquidationRewards = true;
+        _setUp(params);
 
         // increase the rewards
         vm.prank(DEPLOYER);
-        liquidationRewardsManager.setRewardsParameters(500_000, 1_000_000, 200_000, 200_000, 8000 gwei, 20_000);
-        // puts the gas at 8000 gwei
-        vm.txGasPrice(8000 gwei);
+        liquidationRewardsManager.setRewardsParameters(
+            500_000, 1_000_000, 200_000, 200_000, 10 gwei, 20_000, 500, 0.1 ether, 1000 ether
+        );
+        // base fee is 30 gwei
+        vm.fee(30 gwei);
+        // puts the tx gas at 40 gwei
+        vm.txGasPrice(40 gwei);
     }
 
     /**
@@ -35,12 +43,14 @@ contract TestUsdnProtocolActionsSendRewardsToLiquidator is UsdnProtocolBaseFixtu
             priceWithoutPenalty: 1000 ether
         });
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(
-            liquidatedTicks, false, RebalancerAction.None, ProtocolAction.None, "", ""
+            liquidatedTicks, CURRENT_PRICE, false, RebalancerAction.None, ProtocolAction.None, "", ""
         );
 
         vm.expectEmit();
         emit LiquidatorRewarded(address(this), rewards);
-        protocol.i_sendRewardsToLiquidator(liquidatedTicks, false, RebalancerAction.None, ProtocolAction.None, "", "");
+        protocol.i_sendRewardsToLiquidator(
+            liquidatedTicks, CURRENT_PRICE, false, RebalancerAction.None, ProtocolAction.None, "", ""
+        );
 
         assertEq(wstETH.balanceOf(address(this)), rewards, "Balance increase by the rewards");
     }
@@ -93,7 +103,7 @@ contract TestUsdnProtocolActionsSendRewardsToLiquidator is UsdnProtocolBaseFixtu
         vm.expectEmit();
         emit LiquidatorRewarded(address(this), balanceVault);
         protocol.i_sendRewardsToLiquidator(
-            liquidatedTicks, true, RebalancerAction.ClosedOpened, ProtocolAction.None, "", ""
+            liquidatedTicks, 900 ether, true, RebalancerAction.ClosedOpened, ProtocolAction.None, "", ""
         );
 
         assertEq(wstETH.balanceOf(address(this)), balanceVault, "Balance increase by the vault balance");

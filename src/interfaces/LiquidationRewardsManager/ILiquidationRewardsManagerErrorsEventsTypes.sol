@@ -12,16 +12,22 @@ interface ILiquidationRewardsManagerErrorsEventsTypes {
      * @param otherGasUsed Gas used for the rest of the computation
      * @param rebaseGasUsed Gas used for the optional USDN rebase
      * @param rebalancerGasUsed Gas used for the optional rebalancer trigger
-     * @param gasPriceLimit Upper limit for the gas price
-     * @param multiplierBps Multiplier for the liquidators
+     * @param baseFeeOffset Offset added to the block's base gas fee
+     * @param gasMultiplierBps Multiplier for the amount of gas used in BPS
+     * @param positionBonusMultiplierBps Multiplier for the position size bonus in BPS
+     * @param fixedReward fixed amount added to the final reward (native currency)
+     * @param maxReward Upper limit for the rewards (native currency)
      */
     event RewardsParametersUpdated(
         uint32 gasUsedPerTick,
         uint32 otherGasUsed,
         uint32 rebaseGasUsed,
         uint32 rebalancerGasUsed,
-        uint64 gasPriceLimit,
-        uint32 multiplierBps
+        uint64 baseFeeOffset,
+        uint16 gasMultiplierBps,
+        uint16 positionBonusMultiplierBps,
+        uint128 fixedReward,
+        uint128 maxReward
     );
 
     /* -------------------------------------------------------------------------- */
@@ -34,16 +40,22 @@ interface ILiquidationRewardsManagerErrorsEventsTypes {
      * @param otherGasUsed Gas used for the rest of the computation
      * @param rebaseGasUsed Gas used for the optional USDN rebase
      * @param rebalancerGasUsed Gas used for the optional rebalancer trigger
-     * @param gasPriceLimit Upper limit for the gas price
-     * @param multiplierBps Multiplier basis points for the liquidator rewards
+     * @param baseFeeOffset Offset added to the block's base gas fee
+     * @param gasMultiplierBps Multiplier for the amount of gas used (max 6.55x)
+     * @param positionBonusMultiplierBps Multiplier for the position size bonus (max 6.55x)
+     * @param fixedReward fixed amount added to the final reward (native currency)
+     * @param maxReward Upper limit for the rewards (native currency)
      */
     struct RewardsParameters {
         uint32 gasUsedPerTick;
         uint32 otherGasUsed;
         uint32 rebaseGasUsed;
         uint32 rebalancerGasUsed;
-        uint64 gasPriceLimit;
-        uint32 multiplierBps;
+        uint64 baseFeeOffset;
+        uint16 gasMultiplierBps;
+        uint16 positionBonusMultiplierBps;
+        uint128 fixedReward;
+        uint128 maxReward;
     }
 
     /* -------------------------------------------------------------------------- */
@@ -75,14 +87,8 @@ interface ILiquidationRewardsManagerErrorsEventsTypes {
     error LiquidationRewardsManagerRebalancerGasUsedTooHigh(uint256 value);
 
     /**
-     * @notice Indicates that the gasPriceLimit parameter has been set to a value we consider too high
+     * @notice Indicates that the maxReward parameter has been set to a value considered too low
      * @param value The wanted value
      */
-    error LiquidationRewardsManagerGasPriceLimitTooHigh(uint256 value);
-
-    /**
-     * @notice Indicates that the multiplierBps parameter has been set to a value we consider too high
-     * @param value The wanted value
-     */
-    error LiquidationRewardsManagerMultiplierBpsTooHigh(uint256 value);
+    error LiquidationRewardsManagerMaxRewardTooLow(uint256 value);
 }

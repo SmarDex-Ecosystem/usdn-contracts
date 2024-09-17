@@ -27,13 +27,15 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
     uint256 expectedLiquidatorRewards;
 
     function setUp() public {
-        super._setUp(DEFAULT_PARAMS);
+        params = DEFAULT_PARAMS;
+        params.flags.enableLiquidationRewards = true;
+        super._setUp(params);
 
         wstETH.mintAndApprove(address(this), 1 ether, address(protocol), 1 ether);
         usdn.approve(address(protocol), type(uint256).max);
 
-        chainlinkGasPriceFeed.setLatestRoundData(1, 30 gwei, block.timestamp, 1);
-        vm.txGasPrice(30 gwei);
+        vm.fee(30 gwei);
+        vm.txGasPrice(32 gwei);
 
         initialPrice = params.initialPrice;
         uint128 desiredLiqPrice = uint128(initialPrice) * 9 / 10;
@@ -58,11 +60,13 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
             totalPositions: 1,
             totalExpo: 10 ether,
             remainingCollateral: 0.2 ether,
-            tickPrice: 1020 ether,
-            priceWithoutPenalty: 1000 ether
+            tickPrice: liquidationPrice,
+            priceWithoutPenalty: protocol.getEffectivePriceForTick(
+                protocol.i_calcTickWithoutPenalty(posId.tick, protocol.getLiquidationPenalty())
+            )
         });
         expectedLiquidatorRewards = liquidationRewardsManager.getLiquidationRewards(
-            liquidatedTicks, false, Types.RebalancerAction.None, ProtocolAction.None, "", ""
+            liquidatedTicks, liquidationPrice, false, Types.RebalancerAction.None, ProtocolAction.None, "", ""
         );
 
         assertGt(expectedLiquidatorRewards, 0, "The expected liquidation rewards should be greater than 0");

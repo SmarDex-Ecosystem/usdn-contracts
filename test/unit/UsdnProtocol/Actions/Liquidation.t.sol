@@ -17,8 +17,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         usdn.approve(address(protocol), type(uint256).max);
 
-        chainlinkGasPriceFeed.setLatestRoundData(1, 30 gwei, block.timestamp, 1);
-        vm.txGasPrice(30 gwei);
+        vm.fee(30 gwei);
+        vm.txGasPrice(32 gwei);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -457,23 +457,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // Change The rewards calculations parameters to not be dependent of the initial values
         vm.prank(DEPLOYER);
-        liquidationRewardsManager.setRewardsParameters(10_000, 30_000, 20_000, 20_000, 1000 gwei, 20_000);
-
-        LiqTickInfo[] memory liquidatedTicks = new LiqTickInfo[](1);
-        liquidatedTicks[0] = LiqTickInfo({
-            totalPositions: 1,
-            totalExpo: 10 ether,
-            remainingCollateral: 0.2 ether,
-            tickPrice: 1020 ether,
-            priceWithoutPenalty: 1000 ether
-        });
-        uint256 expectedLiquidatorRewards = liquidationRewardsManager.getLiquidationRewards(
-            liquidatedTicks, false, RebalancerAction.None, ProtocolAction.None, "", ""
+        liquidationRewardsManager.setRewardsParameters(
+            10_000, 30_000, 20_000, 20_000, 10 gwei, 15_000, 500, 0.1 ether, 1 ether
         );
-        // Sanity check
-        assertGt(expectedLiquidatorRewards, 0, "The expected liquidation rewards should be greater than 0");
-
-        uint256 wstETHBalanceBeforeRewards = wstETH.balanceOf(address(this));
 
         // Get the proper liquidation price for the tick
         price = protocol.getEffectivePriceForTick(posId.tick);
@@ -484,6 +470,24 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             protocol.getLiqMultiplierAccumulator(),
             protocol.getTickData(posId.tick)
         );
+        (Position memory position, uint24 penalty) = protocol.getLongPosition(posId);
+
+        LiqTickInfo[] memory liquidatedTicks = new LiqTickInfo[](1);
+        liquidatedTicks[0] = LiqTickInfo({
+            totalPositions: 1,
+            totalExpo: position.totalExpo,
+            remainingCollateral: collateralLiquidated,
+            tickPrice: price,
+            priceWithoutPenalty: protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(posId.tick, penalty))
+        });
+        uint256 expectedLiquidatorRewards = liquidationRewardsManager.getLiquidationRewards(
+            liquidatedTicks, price, false, RebalancerAction.None, ProtocolAction.None, "", ""
+        );
+        // Sanity check
+        assertGt(expectedLiquidatorRewards, 0, "The expected liquidation rewards should be greater than 0");
+
+        uint256 wstETHBalanceBeforeRewards = wstETH.balanceOf(address(this));
+
         int256 vaultAssetAvailable = protocol.i_vaultAssetAvailable(price);
 
         _waitBeforeLiquidation();
@@ -534,32 +538,15 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // Change The rewards calculations parameters to not be dependent of the initial values
         vm.prank(DEPLOYER);
         // Put incredibly high values to empty the vault
-        liquidationRewardsManager.setRewardsParameters(500_000, 1_000_000, 200_000, 200_000, 8000 gwei, 20_000);
+        liquidationRewardsManager.setRewardsParameters(
+            500_000, 1_000_000, 200_000, 200_000, 100 gwei, type(uint16).max, type(uint16).max, 100 ether, 1000 ether
+        );
 
         uint256 wstETHBalanceBeforeRewards = wstETH.balanceOf(address(this));
-        uint256 vaultBalanceBeforeRewards = protocol.getBalanceVault();
 
         // Set high gas fees
-        chainlinkGasPriceFeed.setLatestRoundData(1, 8000 gwei, block.timestamp, 1);
-        vm.txGasPrice(8000 gwei);
-
-        LiqTickInfo[] memory liquidatedTicks = new LiqTickInfo[](1);
-        liquidatedTicks[0] = LiqTickInfo({
-            totalPositions: 1,
-            totalExpo: 10 ether,
-            remainingCollateral: 0.2 ether,
-            tickPrice: 1020 ether,
-            priceWithoutPenalty: 1000 ether
-        });
-        uint256 expectedLiquidatorRewards = liquidationRewardsManager.getLiquidationRewards(
-            liquidatedTicks, false, RebalancerAction.None, ProtocolAction.None, "", ""
-        );
-        // Sanity check
-        assertGt(
-            expectedLiquidatorRewards,
-            vaultBalanceBeforeRewards,
-            "The expected liquidation rewards should be higher than the balance of the vault"
-        );
+        vm.fee(8000 gwei);
+        vm.txGasPrice(9000 gwei);
 
         // Get the proper liquidation price for the tick
         uint128 price = protocol.getEffectivePriceForTick(posId.tick);
@@ -576,7 +563,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         _waitBeforeLiquidation();
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedRewards);
-        liquidatedTicks = protocol.mockLiquidate(abi.encode(price), 1);
+        LiqTickInfo[] memory liquidatedTicks = protocol.mockLiquidate(abi.encode(price), 1);
 
         // Check that the right number of positions have been liquidated
         assertEq(liquidatedTicks.length, 1, "One position should have been liquidated");
@@ -627,7 +614,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // disable rewards
         vm.prank(DEPLOYER);
-        liquidationRewardsManager.setRewardsParameters(0, 0, 0, 0, 1000 gwei, 0);
+        liquidationRewardsManager.setRewardsParameters(0, 0, 0, 0, 0, 0, 0, 0, 0.1 ether);
 
         // liquidate
         uint256 balanceBefore = address(this).balance;

@@ -684,6 +684,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
 
     function i_sendRewardsToLiquidator(
         Types.LiqTickInfo[] calldata liquidatedTicks,
+        uint256 currentPrice,
         bool rebased,
         Types.RebalancerAction rebalancerAction,
         ProtocolAction action,
@@ -691,7 +692,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         bytes memory priceData
     ) external {
         Long._sendRewardsToLiquidator(
-            s, liquidatedTicks, rebased, rebalancerAction, action, rebaseCallbackResult, priceData
+            s, liquidatedTicks, currentPrice, rebased, rebalancerAction, action, rebaseCallbackResult, priceData
         );
     }
 

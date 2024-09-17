@@ -340,6 +340,7 @@ library UsdnProtocolLongLibrary {
                 _sendRewardsToLiquidator(
                     s,
                     liquidationEffects.liquidatedTicks,
+                    data.lastPrice,
                     data.rebased,
                     data.rebalancerAction,
                     action,
@@ -358,6 +359,7 @@ library UsdnProtocolLongLibrary {
      * those will be managed off-chain
      * @param s The storage of the protocol
      * @param liquidatedTicks Information about the liquidated ticks
+     * @param currentPrice The current price of the asset
      * @param rebased Whether a USDN rebase was performed
      * @param action The protocol action that triggered liquidations
      * @param rebaseCallbackResult The rebase callback result, if any
@@ -366,6 +368,7 @@ library UsdnProtocolLongLibrary {
     function _sendRewardsToLiquidator(
         Types.Storage storage s,
         Types.LiqTickInfo[] memory liquidatedTicks,
+        uint256 currentPrice,
         bool rebased,
         Types.RebalancerAction rebalancerAction,
         Types.ProtocolAction action,
@@ -374,7 +377,7 @@ library UsdnProtocolLongLibrary {
     ) public {
         // get how much we should give to the liquidator as rewards
         uint256 liquidationRewards = s._liquidationRewardsManager.getLiquidationRewards(
-            liquidatedTicks, rebased, rebalancerAction, action, rebaseCallbackResult, priceData
+            liquidatedTicks, currentPrice, rebased, rebalancerAction, action, rebaseCallbackResult, priceData
         );
 
         // avoid underflows in the situation of extreme bad debt

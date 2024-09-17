@@ -11,6 +11,7 @@ interface IBaseLiquidationRewardsManager {
     /**
      * @notice Returns the amount of asset that needs to be sent to the liquidator
      * @param liquidatedTicks Information about the liquidated ticks
+     * @param currentPrice The current price of the asset
      * @param rebased Whether an optional USDN rebase was performed
      * @param rebalancerAction The `_triggerRebalancer` action
      * @param action The type of protocol action that triggered the liquidation
@@ -21,6 +22,7 @@ interface IBaseLiquidationRewardsManager {
      */
     function getLiquidationRewards(
         Types.LiqTickInfo[] calldata liquidatedTicks,
+        uint256 currentPrice,
         bool rebased,
         Types.RebalancerAction rebalancerAction,
         Types.ProtocolAction action,

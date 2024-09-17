@@ -11,7 +11,6 @@ import { WstETH } from "../test/utils/WstEth.sol";
 import { Utils } from "./Utils.s.sol";
 
 import { LiquidationRewardsManager } from "../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
-import { MockLiquidationRewardsManager } from "../src/LiquidationRewardsManager/mock/MockLiquidationRewardsManager.sol";
 import { WstEthOracleMiddleware } from "../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { MockWstEthOracleMiddleware } from "../src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
 import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
@@ -195,23 +194,9 @@ contract Deploy is Script {
         address liquidationRewardsManagerAddress = vm.envOr("LIQUIDATION_REWARDS_MANAGER_ADDRESS", address(0));
 
         if (liquidationRewardsManagerAddress != address(0)) {
-            if (_isProdEnv) {
-                liquidationRewardsManager_ = LiquidationRewardsManager(liquidationRewardsManagerAddress);
-            } else {
-                liquidationRewardsManager_ = MockLiquidationRewardsManager(liquidationRewardsManagerAddress);
-            }
+            liquidationRewardsManager_ = LiquidationRewardsManager(liquidationRewardsManagerAddress);
         } else {
-            address chainlinkGasPriceFeed = vm.envOr("CHAINLINK_GAS_PRICE_ADDRESS", CHAINLINK_GAS_MAINNET);
-            uint256 chainlinkPriceValidity = vm.envOr("CHAINLINK_GAS_PRICE_VALIDITY", CHAINLINK_GAS_PRICE_VALIDITY);
-
-            if (_isProdEnv) {
-                liquidationRewardsManager_ =
-                    new LiquidationRewardsManager(chainlinkGasPriceFeed, IWstETH(wstETHAddress), chainlinkPriceValidity);
-            } else {
-                liquidationRewardsManager_ = new MockLiquidationRewardsManager(
-                    chainlinkGasPriceFeed, IWstETH(wstETHAddress), chainlinkPriceValidity
-                );
-            }
+            liquidationRewardsManager_ = new LiquidationRewardsManager(IWstETH(wstETHAddress));
         }
     }
 

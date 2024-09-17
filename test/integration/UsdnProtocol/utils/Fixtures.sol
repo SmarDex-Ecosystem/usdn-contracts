@@ -12,7 +12,6 @@ import { UsdnProtocolHandler } from "../../../unit/UsdnProtocol/utils/Handler.so
 import {
     ADMIN,
     CHAINLINK_ORACLE_ETH,
-    CHAINLINK_ORACLE_GAS,
     CRITICAL_FUNCTIONS_MANAGER,
     DEPLOYER,
     PROXY_UPGRADE_MANAGER,
@@ -111,6 +110,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
     ExpoImbalanceLimitsBps internal defaultLimits;
 
     function _setUp(SetUpParams memory testParams) public virtual {
+        vm.startPrank(DEPLOYER);
         if (testParams.fork) {
             string memory url = vm.rpcUrl("mainnet");
             vm.createSelectFork(url);
@@ -133,8 +133,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             PriceInfo memory currentPrice =
                 oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.Initialize, "");
             testParams.initialLiqPrice = uint128(currentPrice.neutralPrice) / 2;
-            AggregatorV3Interface chainlinkGasPriceFeed = AggregatorV3Interface(CHAINLINK_ORACLE_GAS);
-            liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
+            liquidationRewardsManager = new LiquidationRewardsManager(wstETH);
         } else {
             wstETH = new WstETH();
             sdex = new Sdex();
@@ -149,10 +148,8 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
                 address(mockPyth), PYTH_ETH_USD, address(mockChainlinkOnChain), address(wstETH), 1 hours
             );
             vm.warp(testParams.initialTimestamp);
-            liquidationRewardsManager =
-                new LiquidationRewardsManager(address(new MockChainlinkOnChain()), wstETH, 2 days);
+            liquidationRewardsManager = new LiquidationRewardsManager(wstETH);
         }
-        vm.startPrank(DEPLOYER);
         (bool success,) = address(wstETH).call{ value: DEPLOYER.balance * 9 / 10 }("");
         require(success, "DEPLOYER wstETH mint failed");
         usdn = new Usdn(address(0), address(0));

@@ -323,6 +323,7 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
 
     function i_sendRewardsToLiquidator(
         LiqTickInfo[] calldata liquidatedTicks,
+        uint256 currentPrice,
         bool rebased,
         RebalancerAction rebalancerAction,
         ProtocolAction action,
