@@ -6,103 +6,6 @@ import { IUsdnProtocolTypes } from "./IUsdnProtocolTypes.sol";
 
 interface IUsdnProtocolActions is IUsdnProtocolTypes {
     /**
-     * @notice Initiate a deposit of assets into the vault to mint USDN
-     * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
-     * the `ProtocolAction.InitiateDeposit` action
-     * The price validation might require payment according to the return value of the `getValidationCost` function
-     * of the middleware
-     * The transaction must have `_securityDepositValue` in value
-     * In case liquidations are pending, this function might not initiate the deposit (and `success_` would be false)
-     * @param amount The amount of wstETH to deposit
-     * @param to The address that will receive the USDN tokens
-     * @param validator The address that will validate the deposit
-     * @param permit2TokenBitfield Whether to use permit2 for transferring assets (first bit) and SDEX (second bit)
-     * @param currentPriceData The current price data
-     * @param previousActionsData The data needed to validate actionable pending actions
-     * @return success_ Whether the deposit was initiated
-     */
-    function initiateDeposit(
-        uint128 amount,
-        address to,
-        address payable validator,
-        Permit2TokenBitfield.Bitfield permit2TokenBitfield,
-        bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData
-    ) external payable returns (bool success_);
-
-    /**
-     * @notice Validate a pending deposit action
-     * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
-     * the `ProtocolAction.ValidateDeposit` action
-     * The price validation might require payment according to the return value of the `validationCost` function
-     * of the middleware
-     * The timestamp corresponding to the price data is calculated by adding the mandatory `validationDelay`
-     * (from the oracle middleware) to the timestamp of the `initiate` action
-     * Note: this function always sends the security deposit of the validator's pending action to the validator, even
-     * if the validation deadline has passed
-     * Users wanting to validate an actionable pending action must use another function such as
-     * `validateActionablePendingActions` to earn the corresponding security deposit
-     * In case liquidations are pending, this function might not validate the deposit (and `success_` would be false)
-     * @param validator The address that has the pending deposit action to validate
-     * @param depositPriceData The price data corresponding to the sender's pending deposit action
-     * @param previousActionsData The data needed to validate actionable pending actions
-     * @return success_ Whether the deposit was validated
-     */
-    function validateDeposit(
-        address payable validator,
-        bytes calldata depositPriceData,
-        PreviousActionsData calldata previousActionsData
-    ) external payable returns (bool success_);
-
-    /**
-     * @notice Initiate a withdrawal of assets from the vault by providing USDN tokens
-     * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
-     * the `ProtocolAction.InitiateWithdrawal` action
-     * The price validation might require payment according to the return value of the `getValidationCost` function
-     * of the middleware
-     * The transaction must have `_securityDepositValue` in value
-     * @param usdnShares The amount of USDN shares to burn (Max 5708990770823839524233143877797980545530986495 which is
-     * equivalent to 5.7B USDN token before any rebase. The token amount limit increases with each rebase)
-     * In case liquidations are pending, this function might not initiate the withdrawal (and `success_` would be false)
-     * @param to The address that will receive the assets
-     * @param validator The address that will validate the withdrawal
-     * @param currentPriceData The current price data
-     * @param previousActionsData The data needed to validate actionable pending actions
-     * @return success_ Whether the withdrawal was initiated
-     */
-    function initiateWithdrawal(
-        uint152 usdnShares,
-        address to,
-        address payable validator,
-        bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData
-    ) external payable returns (bool success_);
-
-    /**
-     * @notice Validate a pending withdrawal action
-     * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
-     * the `ProtocolAction.ValidateWithdrawal` action
-     * The price validation might require payment according to the return value of the `getValidationCost` function
-     * of the middleware
-     * The timestamp corresponding to the price data is calculated by adding the mandatory `validationDelay`
-     * (from the oracle middleware) to the timestamp of the `initiate` action
-     * Note: this function always sends the security deposit of the validator's pending action to the validator, even
-     * if the validation deadline has passed
-     * Users wanting to validate an actionable pending action must use another function such as
-     * `validateActionablePendingActions` to earn the corresponding security deposit
-     * In case liquidations are pending, this function might not validate the withdrawal (and `success_` would be false)
-     * @param validator The address that has the pending withdrawal action to validate
-     * @param withdrawalPriceData The price data corresponding to the sender's pending withdrawal action
-     * @param previousActionsData The data needed to validate actionable pending actions
-     * @return success_ Whether the withdrawal was validated
-     */
-    function validateWithdrawal(
-        address payable validator,
-        bytes calldata withdrawalPriceData,
-        PreviousActionsData calldata previousActionsData
-    ) external payable returns (bool success_);
-
-    /**
      * @notice Initiate an open position action
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
      * the `ProtocolAction.InitiateOpenPosition` action
@@ -112,8 +15,12 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * leverage). The validation operation then updates the entry price and leverage with fresher data
      * The transaction must have `_securityDepositValue` in value
      * In case liquidations are pending, this function might not initiate the position (and `success_` would be false)
-     * @param amount The amount of wstETH to deposit
+     * @param amount The amount of assets to deposit
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
+     * @param userMaxPrice The minimum price at which the position can be opened (with _priceFeedDecimals). Note that
+     * there is no guarantee that the effective price during validation will be below this value. The userMinPrice is
+     * compared with the price after confidence interval, penalty, etc... However, if the
+     * temporary entry price is below this threshold, the initiate action will revert
      * @param userMaxLeverage The maximum leverage for the newly created position
      * @param to The address that will be the owner of the position
      * @param validator The address that will validate the open position
@@ -128,6 +35,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
     function initiateOpenPosition(
         uint128 amount,
         uint128 desiredLiqPrice,
+        uint128 userMaxPrice,
         uint256 userMaxLeverage,
         address to,
         address payable validator,
