@@ -26,24 +26,6 @@ abstract contract UsdnProtocolCore is UsdnProtocolStorage, IUsdnProtocolCore {
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function vaultTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp)
-        external
-        view
-        returns (int256 expo_)
-    {
-        return Core.vaultTradingExpoWithFunding(s, currentPrice, timestamp);
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
-    function getActionablePendingActions(address currentUser)
-        external
-        view
-        returns (PendingAction[] memory actions_, uint128[] memory rawIndices_)
-    {
-        return Core.getActionablePendingActions(s, currentUser);
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
     function getUserPendingAction(address user) external view returns (PendingAction memory action_) {
         return Core.getUserPendingAction(s, user);
     }

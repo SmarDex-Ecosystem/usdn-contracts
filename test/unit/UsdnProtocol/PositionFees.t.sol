@@ -6,7 +6,7 @@ import { Vm } from "forge-std/Vm.sol";
 import { ADMIN } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
 
-import { UsdnProtocolVaultLibrary as Vault } from "../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
+import { UsdnProtocolUtilsLibrary as Utils } from "../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
 
 /**
  * @custom:feature The entry/exit position fees mechanism of the protocol
@@ -65,6 +65,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         (, PositionId memory posId) = protocol.initiateOpenPosition(
             amount,
             desiredLiqPrice,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
@@ -221,9 +222,9 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario The user initiates a deposit of 1 wstETH
-     * @custom:given The price of the asset is $2000
      * @custom:when The user initiates a deposit of 1 wstETH
-     * @custom:then The user's position should have a start price according to the fees
+     * @custom:then The user's position should have an amount corresponding to the deposited amount
+     * @custom:and The fee should match the vault fee
      */
     function test_initiateDepositPositionFees() public {
         skip(1 hours);
@@ -233,26 +234,30 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         DepositPendingAction memory action =
             protocol.i_toDepositPendingAction(protocol.getUserPendingAction(address(this)));
 
-        uint256 priceWithoutFees = 2000 ether - 2000 ether * uint256(protocol.getVaultFeeBps()) / protocol.BPS_DIVISOR();
-        assertEq(action.assetPrice, priceWithoutFees, "assetPrice");
+        assertEq(action.amount, depositAmount, "amount");
+        assertEq(action.feeBps, protocol.getVaultFeeBps(), "fee");
     }
 
     /**
-     * @custom:scenario The user validate a deposit of 1 wstETH
-     * @custom:given The price of the asset is $2000
-     * @custom:when The user deposit 1 wstETH
-     * @custom:then The user's position should have a start price according to the fees
-     * @custom:and The minted USDN should be updated according to the fees
+     * @custom:scenario The user validates a deposit of 1 wstETH
+     * @custom:given The user initiated the deposit of 1 wstETH
+     * @custom:when The user validates the deposit
+     * @custom:then The minted USDN should match the amount with fees
      */
     function test_validateDepositPositionFees() public {
         skip(1 hours);
         uint128 depositAmount = 1 ether;
-        bytes memory currentPrice = abi.encode(uint128(2000 ether)); // only used to apply funding
+        uint128 price = 2000 ether;
+        bytes memory priceData = abi.encode(price); // only used to apply funding
 
-        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, depositAmount, 2000 ether);
+        uint128 initialBlock = uint128(block.timestamp);
+        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, depositAmount, price);
 
-        uint256 expectedSharesBalanceA =
-            Vault._calcMintUsdnShares(depositAmount, protocol.getBalanceVault(), usdn.totalShares());
+        uint128 amountAfterFees =
+            uint128(depositAmount - uint256(depositAmount) * protocol.getVaultFeeBps() / protocol.BPS_DIVISOR());
+        uint256 expectedSharesBalanceA = Utils._calcMintUsdnShares(
+            amountAfterFees, uint256(protocol.vaultAssetAvailableWithFunding(price, initialBlock)), usdn.totalShares()
+        );
 
         _waitDelay();
 
@@ -260,15 +265,11 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         DepositPendingAction memory deposit = protocol.i_toDepositPendingAction(action);
 
         // Check stored position asset price
-        uint256 expectedSharesBalanceB = Vault._calcMintUsdnShares(
-            depositAmount,
+        uint256 expectedSharesBalanceB = Utils._calcMintUsdnShares(
+            amountAfterFees,
             uint256(
                 protocol.i_vaultAssetAvailable(
-                    deposit.totalExpo,
-                    deposit.balanceVault,
-                    deposit.balanceLong,
-                    uint128(2000 ether - 2000 ether * uint256(protocol.getVaultFeeBps()) / protocol.BPS_DIVISOR()),
-                    deposit.assetPrice
+                    deposit.totalExpo, deposit.balanceVault, deposit.balanceLong, price, deposit.assetPrice
                 )
             ),
             deposit.usdnTotalShares
@@ -280,7 +281,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
         uint256 usdnSharesBefore = usdn.sharesOf(address(this));
-        protocol.validateDeposit(payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit(payable(address(this)), priceData, EMPTY_PREVIOUS_DATA);
         uint256 usdnBalanceAfter = usdn.balanceOf(address(this));
         uint256 usdnSharesAfter = usdn.sharesOf(address(this));
         uint256 mintedUsdn = usdnBalanceAfter - usdnBalanceBefore;
@@ -293,37 +294,28 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario The user initiates a withdraw of 1 wstETH
      * @custom:given The price of the asset is $2000
-     * @custom:when The user deposit 1 wstETH
-     * @custom:and Withdraw the all minted USDN
-     * @custom:then The user's position should have a start price according to the fees
-     * @custom:and The minted USDN should be updated according to the fees
-     * @custom:and The user's withdrawal pending position should have a start price according to the fees
+     * @custom:and The user deposited 1 wstETH
+     * @custom:when The user initiates a withdrawal
+     * @custom:then The pending action fee matches the vault fee
      */
     function test_initiateWithdrawalPositionFees() public {
         skip(1 hours);
         uint128 depositAmount = 1 ether;
-        bytes memory currentPrice = abi.encode(uint128(2000 ether)); // only used to apply PnL + funding
-
-        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, depositAmount, 2000 ether);
-
-        _waitDelay();
+        uint128 price = 2000 ether;
 
         uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
-        protocol.validateDeposit(payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
-        uint256 usdnBalanceAfter = usdn.balanceOf(address(this));
-        uint256 mintedUsdn = usdnBalanceAfter - usdnBalanceBefore;
+        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, depositAmount, price);
+        uint256 mintedUsdn = usdn.balanceOf(address(this)) - usdnBalanceBefore;
 
         usdn.approve(address(protocol), type(uint256).max);
         protocol.initiateWithdrawal(
-            uint128(mintedUsdn), address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
+            uint128(mintedUsdn), address(this), payable(address(this)), abi.encode(price), EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         PendingAction memory action = protocol.getUserPendingAction(address(this));
         WithdrawalPendingAction memory withdraw = protocol.i_toWithdrawalPendingAction(action);
 
-        // Check stored position asset price
-        uint256 expectedPrice = 2000 ether + 2000 ether * uint256(protocol.getVaultFeeBps()) / protocol.BPS_DIVISOR();
-        assertEq(withdraw.assetPrice, expectedPrice, "assetPrice validate");
+        assertEq(withdraw.feeBps, protocol.getVaultFeeBps(), "feeBps");
     }
 
     /**
@@ -419,9 +411,10 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         usdn.approve(address(protocol), type(uint256).max);
 
         uint128 depositAmount = 1 ether;
-        bytes memory currentPrice = abi.encode(uint128(2000 ether)); // only used to apply PnL + funding
+        uint128 price = 2000 ether;
+        bytes memory currentPrice = abi.encode(price); // only used to apply PnL + funding
 
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, depositAmount, 2000 ether);
+        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, depositAmount, price);
 
         // Store the snapshot id to revert to this point after the next test
         uint256 snapshotId = vm.snapshot();
@@ -432,7 +425,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         protocol.setVaultFeeBps(100); // 1% fees
 
         protocol.initiateWithdrawal(
-            uint128(usdn.balanceOf(address(this))),
+            uint152(usdn.sharesOf(address(this))),
             address(this),
             payable(address(this)),
             currentPrice,
@@ -448,7 +441,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         vm.revertTo(snapshotId);
 
         protocol.initiateWithdrawal(
-            uint128(usdn.balanceOf(address(this))),
+            uint152(usdn.sharesOf(address(this))),
             address(this),
             payable(address(this)),
             currentPrice,
@@ -613,14 +606,14 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         protocol.validateClosePosition(payable(address(this)), priceData, EMPTY_PREVIOUS_DATA);
         logs = vm.getRecordedLogs();
 
-        (,,, uint256 assetToTransferWithFees,) = abi.decode(logs[2].data, (int24, uint256, uint256, uint256, int256));
+        (,,, uint256 assetToTransferAfterFees,) = abi.decode(logs[2].data, (int24, uint256, uint256, uint256, int256));
         uint256 assetTransferredWithFees = wstETH.balanceOf(address(this)) - balanceBeforeValidateWithFees;
         assertEq(logs[2].topics[0], ValidatedClosePosition.selector);
 
         /* --------------------------------- Checks --------------------------------- */
 
         // Check if the transferred asset with fees is less than the transferred asset without fees
-        assertLt(assetToTransferWithFees, assetToTransferWithoutFees, "Transferred asset");
+        assertLt(assetToTransferAfterFees, assetToTransferWithoutFees, "Transferred asset");
 
         // Same check for the emitted event
         assertLt(assetTransferredWithFees, assetTransferredWithoutFees, "Transferred asset");

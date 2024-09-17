@@ -60,6 +60,27 @@ interface IUsdnProtocolTypes {
     }
 
     /**
+     * @notice Classifies how far in its logic the `_triggerRebalancer` function made it to
+     * @dev Used to estimate the gas spent by the function call to more accurately calculate liquidation rewards
+     * @param None The rebalancer is not set
+     * @param NoImbalance The protocol imbalance is not reached
+     * @param PendingLiquidation The rebalancer position should be liquidated
+     * @param NoCloseNoOpen The action neither closes nor opens a position
+     * @param Closed The action only closes a position
+     * @param Opened The action only opens a position
+     * @param ClosedOpened The action closes and opens a position
+     */
+    enum RebalancerAction {
+        None,
+        NoImbalance,
+        PendingLiquidation,
+        NoCloseNoOpen,
+        Closed,
+        Opened,
+        ClosedOpened
+    }
+
+    /**
      * @notice A pending action in the queue
      * @param action The action type
      * @param timestamp The timestamp of the initiate action
@@ -95,7 +116,7 @@ interface IUsdnProtocolTypes {
      * @notice A pending action in the queue for a vault deposit
      * @param action The action type
      * @param timestamp The timestamp of the initiate action
-     * @param __unused Unused field to align the struct to `PendingAction`
+     * @param feeBps Fee for the deposit, in BPS
      * @param to The `to` address
      * @param validator The `validator` address
      * @param securityDepositValue The security deposit of the pending action
@@ -110,11 +131,11 @@ interface IUsdnProtocolTypes {
     struct DepositPendingAction {
         ProtocolAction action; // 1 byte
         uint40 timestamp; // 5 bytes
-        uint24 __unused; // 3 bytes
+        uint24 feeBps; // 3 bytes
         address to; // 20 bytes
         address validator; // 20 bytes
         uint64 securityDepositValue; // 8 bytes
-        int24 _unused; // 3 bytes
+        uint24 _unused; // 3 bytes
         uint128 amount; // 16 bytes
         uint128 assetPrice; // 16 bytes
         uint256 totalExpo; // 32 bytes
@@ -127,7 +148,7 @@ interface IUsdnProtocolTypes {
      * @notice A pending action in the queue for a vault withdrawal
      * @param action The action type
      * @param timestamp The timestamp of the initiate action
-     * @param _unused Unused field to align the struct to `PendingAction`
+     * @param feeBps Fee for the withdrawal, in BPS
      * @param to The `to` address
      * @param validator The `validator` address
      * @param securityDepositValue The security deposit of the pending action
@@ -142,7 +163,7 @@ interface IUsdnProtocolTypes {
     struct WithdrawalPendingAction {
         ProtocolAction action; // 1 byte
         uint40 timestamp; // 5 bytes
-        uint24 _unused; // 3 bytes
+        uint24 feeBps; // 3 bytes
         address to; // 20 bytes
         address validator; // 20 bytes
         uint64 securityDepositValue; // 8 bytes
@@ -254,8 +275,10 @@ interface IUsdnProtocolTypes {
      * @param user The address of the user initiating the open position
      * @param to The address that will be the owner of the position
      * @param validator The address that will validate the open position
-     * @param amount The amount of wstETH to deposit
+     * @param amount The amount of assets to deposit
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
+     * @param userMaxPrice The maximum price at which the position can be opened. The userMaxPrice is compared with the
+     * price after confidence interval, penalty, etc...
      * @param userMaxLeverage The maximum leverage for the newly created position
      * @param securityDepositValue The value of the security deposit for the newly created pending action
      * @param permit2TokenBitfield The permit2 bitfield
@@ -268,6 +291,7 @@ interface IUsdnProtocolTypes {
         address validator;
         uint128 amount;
         uint128 desiredLiqPrice;
+        uint128 userMaxPrice;
         uint256 userMaxLeverage;
         uint64 securityDepositValue;
         Permit2TokenBitfield.Bitfield permit2TokenBitfield;
@@ -276,8 +300,10 @@ interface IUsdnProtocolTypes {
     /**
      * @notice Parameters for the internal `_prepareInitiateOpenPosition` function
      * @param validator The address of the validator
-     * @param amount The amount of wstETH to deposit
+     * @param amount The amount of assets to deposit
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
+     * @param userMaxPrice The maximum price at which the position can be opened. The userMaxPrice is compared with the
+     * price after confidence interval, penalty, etc...
      * @param userMaxLeverage The maximum leverage for the newly created position
      * @param currentPriceData The current price data
      */
@@ -285,6 +311,7 @@ interface IUsdnProtocolTypes {
         address validator;
         uint128 amount;
         uint128 desiredLiqPrice;
+        uint256 userMaxPrice;
         uint256 userMaxLeverage;
         bytes currentPriceData;
     }
@@ -475,9 +502,9 @@ interface IUsdnProtocolTypes {
      * @param _tickSpacing The liquidation tick spacing for storing long positions
      * A tick spacing of 1 is equivalent to a 0.01% increase in liquidation price between ticks. A tick spacing of
      * 100 is equivalent to a ~1.005% increase in liquidation price between ticks
-     * @param _asset The asset ERC20 contract (wstETH)
-     * @param _assetDecimals The asset decimals (wstETH => 18)
-     * @param _priceFeedDecimals The price feed decimals (wstETH => 18)
+     * @param _asset The asset ERC20 contract
+     * @param _assetDecimals The asset decimals
+     * @param _priceFeedDecimals The price feed decimals (18)
      * @param _usdn The USDN ERC20 contract
      * @param _sdex The SDEX ERC20 contract
      * @param _usdnMinDivisor The minimum divisor for USDN
