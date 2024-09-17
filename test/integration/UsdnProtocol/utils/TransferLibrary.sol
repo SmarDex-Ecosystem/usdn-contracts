@@ -4,8 +4,6 @@ pragma solidity >=0.8.0;
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { ERC165, IERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
-import { UsdnProtocolConstantsLibrary as Constants } from
-    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IRouterFallback } from "../../../../src/interfaces/IRouterFallback.sol";
 
 abstract contract TransferLibrary is IRouterFallback, ERC165 {
