@@ -2,6 +2,7 @@
 pragma solidity 0.8.26;
 
 import { RebalancerFixture } from "../../../test/unit/Rebalancer/utils/Fixtures.sol";
+import { USER_1 } from "../../utils/Constants.sol";
 
 import { IRebalancerErrors } from "../../../src/interfaces/Rebalancer/IRebalancerErrors.sol";
 
@@ -16,6 +17,7 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
         super._setUp();
 
         wstETH.mintAndApprove(address(this), 1000 ether, address(rebalancer), type(uint256).max);
+        wstETH.mintAndApprove(USER_1, 1000 ether, address(rebalancer), type(uint256).max);
         minAsset = uint88(rebalancer.getMinAssetDeposit());
         rebalancer.initiateDepositAssets(minAsset, address(this));
         skip(rebalancer.getTimeLimits().validationDelay);
@@ -61,5 +63,18 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
     function test_RevertWhen_rebalancerUserPending() public {
         vm.expectRevert(IRebalancerErrors.RebalancerUserPending.selector);
         rebalancer.initiateClosePosition(minAsset, address(this), "", EMPTY_PREVIOUS_DATA);
+    }
+
+    /**
+     * @custom:scenario Call `initiateClosePosition` function without having validated the deposit
+     * @custom:when The `initiateClosePosition` function is called by a user that did not validate it deposit
+     * @custom:then It should revert with `RebalancerUserPending`
+     */
+    function test_RevertWhen_rebalancerUserNotInRebalancer() public {
+        vm.startPrank(USER_1);
+        rebalancer.initiateDepositAssets(minAsset, USER_1);
+        vm.expectRevert(IRebalancerErrors.RebalancerUserPending.selector);
+        rebalancer.initiateClosePosition(minAsset, USER_1, "", EMPTY_PREVIOUS_DATA);
+        vm.stopPrank();
     }
 }
