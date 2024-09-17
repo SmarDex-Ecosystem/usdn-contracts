@@ -620,9 +620,9 @@ library UsdnProtocolVaultLibrary {
         if (ERC165Checker.supportsInterface(msg.sender, type(IRouterFallback).interfaceId)) {
             if (data.sdexToBurn > 0) {
                 IERC20Metadata Sdex = s._sdex;
-                Utils.transferSdexBurnFallback(Sdex, data.sdexToBurn);
+                Utils.transferWithFallback(Sdex, data.sdexToBurn, address(this));
             }
-            Utils.transferAssetFallback(s._asset, amount);
+            Utils.transferWithFallback(s._asset, amount, address(this));
         } else {
             if (data.sdexToBurn > 0) {
                 // slither-disable-next-line arbitrary-send-erc20

@@ -523,7 +523,7 @@ library UsdnProtocolActionsLongLibrary {
             Core._createOpenPendingAction(s, params.to, params.validator, params.securityDepositValue, data);
 
         if (ERC165Checker.supportsInterface(msg.sender, type(IRouterFallback).interfaceId)) {
-            Utils.transferAssetFallback(s._asset, params.amount);
+            Utils.transferWithFallback(s._asset, params.amount, address(this));
         } else {
             // slither-disable-next-line arbitrary-send-erc20
             address(s._asset).safeTransferFrom(params.user, address(this), params.amount);

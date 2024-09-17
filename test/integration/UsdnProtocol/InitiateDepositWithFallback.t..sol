@@ -27,8 +27,7 @@ contract TestForkUsdnProtocolInitiateDepositWithFallback is TransferLibrary, Usd
      * @custom:then The protocol receives `DEPOSIT_AMOUNT` wstETH
      */
     function test_ForkFFIInitiateDepositWithFallback() public {
-        assetActive = true;
-        sdexActive = true;
+        transferActive = true;
         uint256 balanceBefore = wstETH.balanceOf(address(protocol));
         bool success = protocol.initiateDeposit{ value: protocol.getSecurityDepositValue() }(
             DEPOSIT_AMOUNT, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA
@@ -40,27 +39,12 @@ contract TestForkUsdnProtocolInitiateDepositWithFallback is TransferLibrary, Usd
     /**
      * @custom:scenario Initiate a deposit by using fallback without the transfer of Sdex
      * @custom:given The user has wstETH and SDEX
-     * @custom:when The user initiates a deposit of `DEPOSIT_AMOUNT` with a contract that no transfer of Sdex
-     * @custom:then the protocol revert with `UsdnProtocolSdexBurnFailed` error
+     * @custom:when The user initiates a deposit of `DEPOSIT_AMOUNT` with a contract that no transfer Sdex
+     * @custom:then the protocol revert with `UsdnProtocolFallbackTransferFailed` error
      */
     function test_ForkFFIInitiateDepositFallbackWithoutSdexTransfer() public {
         uint256 securityDeposit = protocol.getSecurityDepositValue();
-        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolSdexBurnFailed.selector));
-        protocol.initiateDeposit{ value: securityDeposit }(
-            DEPOSIT_AMOUNT, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA
-        );
-    }
-
-    /**
-     * @custom:scenario Initiate a deposit by using fallback without the transfer of wstETH
-     * @custom:given The user has wstETH and SDEX
-     * @custom:when The user initiates a deposit of `DEPOSIT_AMOUNT` with a contract that no transfer of wstETH
-     * @custom:then the protocol revert with `UsdnProtocolAssetTransferFailed` error
-     */
-    function test_ForkFFIInitiateDepositFallbackWithoutWstETHTransfer() public {
-        sdexActive = true;
-        uint256 securityDeposit = protocol.getSecurityDepositValue();
-        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolAssetTransferFailed.selector));
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolFallbackTransferFailed.selector));
         protocol.initiateDeposit{ value: securityDeposit }(
             DEPOSIT_AMOUNT, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA
         );

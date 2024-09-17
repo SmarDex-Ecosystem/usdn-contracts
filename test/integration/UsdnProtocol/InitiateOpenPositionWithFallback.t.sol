@@ -26,7 +26,7 @@ contract TestForkUsdnProtocolInitiateOpenPositionWithFallback is TransferLibrary
      * @custom:then The protocol receives `DEPOSIT_AMOUNT` wstETH
      */
     function test_ForkFFIInitiateOpenPositionWithWithFallback() public {
-        assetActive = true;
+        transferActive = true;
         uint256 balanceBefore = wstETH.balanceOf(address(protocol));
         (bool success,) = protocol.initiateOpenPosition{ value: protocol.getSecurityDepositValue() }(
             DEPOSIT_AMOUNT,
@@ -44,13 +44,13 @@ contract TestForkUsdnProtocolInitiateOpenPositionWithFallback is TransferLibrary
     /**
      * @custom:scenario Initiate a new long by using fallback without the transfer of wstETH
      * @custom:given The user has wstETH
-     * @custom:when The user initiates a new long of `DEPOSIT_AMOUNT` with a contract that no transfer of wstETH
-     * @custom:then the protocol revert with `UsdnProtocolAssetTransferFailed` error
+     * @custom:when The user initiates a new long of `DEPOSIT_AMOUNT` with a contract that no transfer wstETH
+     * @custom:then the protocol revert with `UsdnProtocolFallbackTransferFailed` error
      */
     function test_ForkFFIInitiateDepositFallbackWithoutWstETHTransfer() public {
         uint256 securityDeposit = protocol.getSecurityDepositValue();
         uint256 leverage = protocol.getMaxLeverage();
-        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolAssetTransferFailed.selector));
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolFallbackTransferFailed.selector));
         protocol.initiateOpenPosition{ value: securityDeposit }(
             DEPOSIT_AMOUNT,
             params.initialPrice / 2,

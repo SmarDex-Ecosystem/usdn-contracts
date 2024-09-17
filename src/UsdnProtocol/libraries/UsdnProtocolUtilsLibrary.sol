@@ -626,30 +626,17 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Transfer the SDEX to burn to the dead address and validate the transfer
-     * @param sdex The SDEX token
-     * @param sdexToBurn The amount of SDEX to burn
+     * @notice Call the fallback function of the external contract to transfer the token and verify balance
+     * @param token The token to transfer
+     * @param amount The amount to transfer
+     * @param to The address to transfer
      */
-    function transferSdexBurnFallback(IERC20Metadata sdex, uint256 sdexToBurn) internal {
-        uint256 balanceBefore = sdex.balanceOf(Constants.DEAD_ADDRESS);
-        IRouterFallback(msg.sender).transferSdexCallback(sdex, sdexToBurn);
-        uint256 balanceAfter = sdex.balanceOf(Constants.DEAD_ADDRESS);
-        if (balanceAfter != balanceBefore + sdexToBurn) {
-            revert IUsdnProtocolErrors.UsdnProtocolSdexBurnFailed();
-        }
-    }
-
-    /**
-     * @notice Transfer the asset to the caller and validate the transfer
-     * @param asset The asset to transfer
-     * @param amount The amount of asset to transfer
-     */
-    function transferAssetFallback(IERC20Metadata asset, uint256 amount) internal {
-        uint256 balanceBefore = asset.balanceOf(address(this));
-        IRouterFallback(msg.sender).transferAssetCallback(asset, amount);
-        uint256 balanceAfter = asset.balanceOf(address(this));
+    function transferWithFallback(IERC20Metadata token, uint256 amount, address to) internal {
+        uint256 balanceBefore = token.balanceOf(to);
+        IRouterFallback(msg.sender).transferWithFallback(token, amount, to);
+        uint256 balanceAfter = token.balanceOf(to);
         if (balanceAfter != balanceBefore + amount) {
-            revert IUsdnProtocolErrors.UsdnProtocolAssetTransferFailed();
+            revert IUsdnProtocolErrors.UsdnProtocolFallbackTransferFailed();
         }
     }
 

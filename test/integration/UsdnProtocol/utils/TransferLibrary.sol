@@ -9,20 +9,12 @@ import { UsdnProtocolConstantsLibrary as Constants } from
 import { IRouterFallback } from "../../../../src/interfaces/IRouterFallback.sol";
 
 abstract contract TransferLibrary is IRouterFallback, ERC165 {
-    bool public assetActive;
-    bool public sdexActive;
+    bool public transferActive;
 
     /// @inheritdoc IRouterFallback
-    function transferSdexCallback(IERC20Metadata sdex, uint256 amount) external {
-        if (sdexActive) {
-            sdex.transfer(Constants.DEAD_ADDRESS, amount);
-        }
-    }
-
-    /// @inheritdoc IRouterFallback
-    function transferAssetCallback(IERC20Metadata asset, uint256 amount) external {
-        if (assetActive) {
-            asset.transfer(msg.sender, amount);
+    function transferWithFallback(IERC20Metadata token, uint256 amount, address to) external {
+        if (transferActive) {
+            token.transfer(to, amount);
         }
     }
 

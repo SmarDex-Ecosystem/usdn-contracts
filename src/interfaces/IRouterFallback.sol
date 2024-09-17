@@ -12,15 +12,9 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol
 interface IRouterFallback is IERC165 {
     /**
      * @notice Callback function to be called during initiate functions to transfer asset tokens
-     * @param asset The asset token to transfer
-     * @param _amount The amount of tokens to transfer
+     * @param token The token to transfer
+     * @param amount The amount to transfer
+     * @param to The address to transfer
      */
-    function transferAssetCallback(IERC20Metadata asset, uint256 _amount) external;
-
-    /**
-     * @notice Callback function to be called during initiate functions to transfer Sdex tokens
-     * @param sdex The Sdex token to transfer
-     * @param _amount The amount of Sdex tokens to transfer
-     */
-    function transferSdexCallback(IERC20Metadata sdex, uint256 _amount) external;
+    function transferWithFallback(IERC20Metadata token, uint256 amount, address to) external;
 }

@@ -511,7 +511,7 @@ library UsdnProtocolCoreLibrary {
      */
     function _createInitialDeposit(Types.Storage storage s, uint128 amount, uint128 price) internal {
         if (ERC165Checker.supportsInterface(msg.sender, type(IRouterFallback).interfaceId)) {
-            Utils.transferAssetFallback(s._asset, amount);
+            Utils.transferWithFallback(s._asset, amount, address(this));
         } else {
             // transfer the wstETH for the deposit
             address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
@@ -559,7 +559,7 @@ library UsdnProtocolCoreLibrary {
         uint128 totalExpo
     ) internal {
         if (ERC165Checker.supportsInterface(msg.sender, type(IRouterFallback).interfaceId)) {
-            Utils.transferAssetFallback(s._asset, amount);
+            Utils.transferWithFallback(s._asset, amount, address(this));
         } else {
             // transfer the wstETH for the long
             address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
