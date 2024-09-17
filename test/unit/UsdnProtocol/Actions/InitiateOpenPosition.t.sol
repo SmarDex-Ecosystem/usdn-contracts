@@ -502,7 +502,6 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             leverage,
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );

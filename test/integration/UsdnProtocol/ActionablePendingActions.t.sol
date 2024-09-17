@@ -55,7 +55,6 @@ contract TestUsdnProtocolActionablePendingActions is UsdnProtocolBaseIntegration
             protocol.getMaxLeverage(),
             address(this),
             payable(this),
-            NO_PERMIT2,
             "",
             previousData
         );
@@ -103,7 +102,6 @@ contract TestUsdnProtocolActionablePendingActions is UsdnProtocolBaseIntegration
             protocol.getMaxLeverage(),
             USER_2,
             USER_2,
-            NO_PERMIT2,
             "",
             EMPTY_PREVIOUS_DATA
         );
