@@ -16,6 +16,10 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * In case liquidations are pending, this function might not initiate the position (and `success_` would be false)
      * @param amount The amount of assets to deposit
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
+     * @param userMaxPrice The minimum price at which the position can be opened (with _priceFeedDecimals). Note that
+     * there is no guarantee that the effective price during validation will be below this value. The userMinPrice is
+     * compared with the price after confidence interval, penalty, etc... However, if the
+     * temporary entry price is below this threshold, the initiate action will revert
      * @param userMaxLeverage The maximum leverage for the newly created position
      * @param to The address that will be the owner of the position
      * @param validator The address that will validate the open position
@@ -29,6 +33,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
     function initiateOpenPosition(
         uint128 amount,
         uint128 desiredLiqPrice,
+        uint128 userMaxPrice,
         uint256 userMaxLeverage,
         address to,
         address payable validator,

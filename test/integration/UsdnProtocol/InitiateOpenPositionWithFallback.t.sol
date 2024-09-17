@@ -31,6 +31,7 @@ contract TestForkUsdnProtocolInitiateOpenPositionWithFallback is TransferLibrary
         (bool success,) = protocol.initiateOpenPosition{ value: protocol.getSecurityDepositValue() }(
             DEPOSIT_AMOUNT,
             params.initialPrice / 2,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
@@ -54,6 +55,7 @@ contract TestForkUsdnProtocolInitiateOpenPositionWithFallback is TransferLibrary
         protocol.initiateOpenPosition{ value: securityDeposit }(
             DEPOSIT_AMOUNT,
             params.initialPrice / 2,
+            type(uint128).max,
             leverage,
             address(this),
             payable(address(this)),

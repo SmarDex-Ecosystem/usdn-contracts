@@ -253,6 +253,9 @@ library UsdnProtocolLongLibrary {
             Utils._calcActionId(params.validator, uint128(block.timestamp)),
             params.currentPriceData
         );
+        if (currentPrice.price > params.userMaxPrice) {
+            revert IUsdnProtocolErrors.UsdnProtocolSlippageMaxPriceExceeded();
+        }
         data_.adjustedPrice =
             (currentPrice.price + currentPrice.price * s._positionFeeBps / Constants.BPS_DIVISOR).toUint128();
 

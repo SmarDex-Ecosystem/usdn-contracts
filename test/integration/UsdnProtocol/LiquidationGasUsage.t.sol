@@ -103,6 +103,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
         protocol.initiateOpenPosition{ value: securityDepositValue }(
             minLongPosition,
             pythPriceNormalized + 200 ether,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             USER_1,
             USER_1,
@@ -113,6 +114,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
         protocol.initiateOpenPosition{ value: securityDepositValue }(
             minLongPosition,
             pythPriceNormalized + 150 ether,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             USER_2,
             USER_2,
@@ -123,6 +125,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
         protocol.initiateOpenPosition{ value: securityDepositValue }(
             minLongPosition,
             pythPriceNormalized + 100 ether,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             USER_3,
             USER_3,

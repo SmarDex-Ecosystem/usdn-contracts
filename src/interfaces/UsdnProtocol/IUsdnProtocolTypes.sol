@@ -276,6 +276,8 @@ interface IUsdnProtocolTypes {
      * @param validator The address that will validate the open position
      * @param amount The amount of assets to deposit
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
+     * @param userMaxPrice The maximum price at which the position can be opened. The userMaxPrice is compared with the
+     * price after confidence interval, penalty, etc...
      * @param userMaxLeverage The maximum leverage for the newly created position
      * @param securityDepositValue The value of the security deposit for the newly created pending action
      * @param currentPriceData The current price data (used to calculate the temporary leverage and entry price,
@@ -287,6 +289,7 @@ interface IUsdnProtocolTypes {
         address validator;
         uint128 amount;
         uint128 desiredLiqPrice;
+        uint128 userMaxPrice;
         uint256 userMaxLeverage;
         uint64 securityDepositValue;
     }
@@ -296,6 +299,8 @@ interface IUsdnProtocolTypes {
      * @param validator The address of the validator
      * @param amount The amount of assets to deposit
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
+     * @param userMaxPrice The maximum price at which the position can be opened. The userMaxPrice is compared with the
+     * price after confidence interval, penalty, etc...
      * @param userMaxLeverage The maximum leverage for the newly created position
      * @param currentPriceData The current price data
      */
@@ -303,6 +308,7 @@ interface IUsdnProtocolTypes {
         address validator;
         uint128 amount;
         uint128 desiredLiqPrice;
+        uint256 userMaxPrice;
         uint256 userMaxLeverage;
         bytes currentPriceData;
     }

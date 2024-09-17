@@ -12,6 +12,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
     function initiateOpenPosition(
         uint128 amount,
         uint128 desiredLiqPrice,
+        uint128 userMaxPrice,
         uint256 userMaxLeverage,
         address to,
         address payable validator,
@@ -24,6 +25,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
             validator: validator,
             amount: amount,
             desiredLiqPrice: desiredLiqPrice,
+            userMaxPrice: userMaxPrice,
             userMaxLeverage: userMaxLeverage,
             securityDepositValue: s._securityDepositValue
         });

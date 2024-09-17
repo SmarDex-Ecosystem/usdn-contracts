@@ -178,6 +178,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         (, PositionId memory posId) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
             desiredLiqPrice,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             to,
             payable(validator),
@@ -259,6 +260,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         (, PositionId memory posId) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
             CURRENT_PRICE * 9 / 10,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
             payable(this),
@@ -335,6 +337,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         (, PositionId memory posId) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
             CURRENT_PRICE * 9 / 10,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
             payable(this),
@@ -407,6 +410,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         (, data.tempPosId) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
             CURRENT_PRICE * 9 / 10,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
             payable(this),
@@ -584,6 +588,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         protocol.initiateOpenPosition{ value: 0.5 ether }(
             uint128(LONG_AMOUNT),
             desiredLiqPrice,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
             USER_1,

@@ -122,6 +122,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         (bool success, PositionId memory posId) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
             desiredLiqPrice,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             to,
             payable(validator),
@@ -225,6 +226,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         (, PositionId memory posId2) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
             desiredLiqPrice,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
@@ -264,6 +266,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         (bool success, PositionId memory posId) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
             params.initialPrice / 10,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
@@ -296,6 +299,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         protocol.initiateOpenPosition(
             0,
             2000 ether,
+            type(uint128).max,
             leverage,
             address(this),
             payable(address(this)),
@@ -316,6 +320,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         protocol.initiateOpenPosition(
             1 ether,
             2000 ether,
+            type(uint128).max,
             leverage,
             address(0),
             payable(address(this)),
@@ -336,6 +341,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         protocol.initiateOpenPosition(
             1 ether,
             2000 ether,
+            type(uint128).max,
             leverage,
             address(this),
             payable(address(0)),
@@ -355,6 +361,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
             100_000,
+            type(uint128).max,
             leverage,
             address(this),
             payable(address(this)),
@@ -380,6 +387,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
             desiredLiqPrice,
+            type(uint128).max,
             leverage,
             address(this),
             payable(address(this)),
@@ -417,6 +425,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
             CURRENT_PRICE,
+            type(uint128).max,
             leverage,
             address(this),
             payable(address(this)),
@@ -444,6 +453,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         protocol.initiateOpenPosition(
             1 ether,
             1000 ether,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
@@ -466,6 +476,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         protocol.initiateOpenPosition{ value: 0.5 ether }(
             uint128(LONG_AMOUNT),
             1000 ether,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
@@ -473,6 +484,28 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             EMPTY_PREVIOUS_DATA
         );
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
+    }
+
+    /**
+     * @custom:scenario The user initiates an open position action with an entry price greater than the user's max price
+     * @custom:given The current price is $2000
+     * @custom:when The user initiates an open position with a userMaxPrice of $1999
+     * @custom:then The protocol reverts with UsdnProtocolSlippageMaxPriceExceeded
+     */
+    function test_RevertWhen_initiateOpenPositionWithEntryPriceGreaterThanUserMaxPrice() public {
+        uint256 leverage = protocol.getMaxLeverage();
+        vm.expectRevert(UsdnProtocolSlippageMaxPriceExceeded.selector);
+        protocol.initiateOpenPosition(
+            1 ether,
+            2000 ether,
+            CURRENT_PRICE - 1,
+            leverage,
+            address(this),
+            payable(address(this)),
+            NO_PERMIT2,
+            abi.encode(CURRENT_PRICE),
+            EMPTY_PREVIOUS_DATA
+        );
     }
 
     /**
@@ -489,6 +522,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             protocol.initiateOpenPosition(
                 1 ether,
                 1500 ether,
+                type(uint128).max,
                 leverage,
                 address(this),
                 payable(address(this)),
@@ -505,6 +539,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         protocol.initiateOpenPosition{ value: 1 }(
             1 ether,
             1500 ether,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
@@ -526,6 +561,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         protocol.initiateOpenPosition(
             1 ether,
             1500 ether,
+            type(uint128).max,
             2 * 10 ** Constants.LEVERAGE_DECIMALS,
             address(this),
             payable(address(this)),
