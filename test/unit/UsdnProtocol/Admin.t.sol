@@ -7,8 +7,6 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { ADMIN } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
 
-import { UsdnProtocolConstantsLibrary as Constants } from
-    "../../../src//UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { ILiquidationRewardsManager } from "../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "../../../src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { IRebalancer } from "../../../src/interfaces/Rebalancer/IRebalancer.sol";
@@ -20,10 +18,7 @@ import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalance
  */
 contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
     function setUp() public {
-        SetUpParams memory params = DEFAULT_PARAMS;
-        params.flags.enableRebalancer = true;
-
-        super._setUp(params);
+        super._setUp(DEFAULT_PARAMS);
     }
 
     /**
