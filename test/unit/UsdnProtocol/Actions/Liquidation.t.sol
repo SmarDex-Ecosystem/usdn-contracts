@@ -5,6 +5,7 @@ import { DEPLOYER, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
+import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
 /// @custom:feature The scenarios in `UsdnProtocolActions` which call `_liquidatePositions`
@@ -453,8 +454,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.prank(DEPLOYER);
         liquidationRewardsManager.setRewardsParameters(10_000, 30_000, 20_000, 20_000, 1000 gwei, 20_000);
 
-        uint256 expectedLiquidatorRewards =
-            liquidationRewardsManager.getLiquidationRewards(1, 0, false, false, ProtocolAction.None, "", "");
+        uint256 expectedLiquidatorRewards = liquidationRewardsManager.getLiquidationRewards(
+            1, 0, false, Types.RebalancerAction.None, ProtocolAction.None, "", ""
+        );
         // Sanity check
         assertGt(expectedLiquidatorRewards, 0, "The expected liquidation rewards should be greater than 0");
 
@@ -528,8 +530,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         chainlinkGasPriceFeed.setLatestRoundData(1, 8000 gwei, block.timestamp, 1);
         vm.txGasPrice(8000 gwei);
 
-        uint256 expectedLiquidatorRewards =
-            liquidationRewardsManager.getLiquidationRewards(1, 0, false, false, ProtocolAction.None, "", "");
+        uint256 expectedLiquidatorRewards = liquidationRewardsManager.getLiquidationRewards(
+            1, 0, false, Types.RebalancerAction.None, ProtocolAction.None, "", ""
+        );
         // Sanity check
         assertGt(
             expectedLiquidatorRewards,
