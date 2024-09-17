@@ -89,7 +89,9 @@ library TickMath {
      * @notice Get the tick corresponding to a price, rounded down towards negative infinity
      * @dev log_1.0001(price) = ln(price)/ln(1.0001) gives the tick
      * Note: for small prices (< ~1.025 gwei), the next tick can sometimes give a price
-     * that is exactly equal to the input
+     * that is exactly equal to the input.
+     * For this to be somewhat of an issue, we would need the tick spacing to be 1 and the price to fall to an extremely
+     * low price, which is unlikely, but should be considered for tokens with extremely high total supply
      * @param price The price
      * @return tick_ The largest tick whose price is less than or equal to the given price
      */
