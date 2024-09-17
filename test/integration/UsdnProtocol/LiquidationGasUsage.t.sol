@@ -35,10 +35,25 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
 
     function setUp() public {
         params = DEFAULT_PARAMS;
-        params.initialDeposit = 99 ether; // needed to trigger rebase
+        params.initialDeposit = 101 ether; // needed to trigger rebase
         params.fork = true; // all tests in this contract must be labeled `Fork`
         params.forkWarp = 1_709_794_800; // thu mar 07 2024 07:00:00 UTC
         _setUp(params);
+
+        ILiquidationRewardsManagerErrorsEventsTypes.RewardsParameters memory rewardsParameters =
+            liquidationRewardsManager.getRewardsParameters();
+        vm.prank(DEPLOYER);
+        liquidationRewardsManager.setRewardsParameters(
+            rewardsParameters.gasUsedPerTick,
+            rewardsParameters.otherGasUsed,
+            rewardsParameters.rebaseGasUsed,
+            rewardsParameters.rebalancerGasUsed,
+            0,
+            0,
+            0,
+            0,
+            0.1 ether
+        );
 
         vm.startPrank(USER_1);
         (bool success,) = address(wstETH).call{ value: 1000 ether }("");
