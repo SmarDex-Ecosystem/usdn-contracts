@@ -535,7 +535,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
             revert UsdnProtocolInvalidRebalancerMinLeverage();
         }
 
-        s._minLeverage = newMinLeverage;
+        s._rebalancerMinLeverage = newMinLeverage;
 
         emit RebalancerMinLeverageUpdated(newMinLeverage);
     }

@@ -20,7 +20,10 @@ import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalance
 
 contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
     function setUp() public {
-        super._setUp(DEFAULT_PARAMS);
+        SetUpParams memory params = DEFAULT_PARAMS;
+        params.flags.enableRebalancer = true;
+
+        super._setUp(params);
     }
 
     /**
@@ -147,6 +150,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      */
     function test_RevertWhen_setPositionMinLeverage1x() public adminPrank {
         uint256 minLeverage = 10 ** Constants.LEVERAGE_DECIMALS;
+
         vm.expectRevert(UsdnProtocolInvalidRebalancerMinLeverage.selector);
         protocol.setRebalancerMinLeverage(minLeverage);
     }
