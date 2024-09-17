@@ -21,6 +21,7 @@ import {
     SDEX,
     SET_EXTERNAL_MANAGER,
     SET_OPTIONS_MANAGER,
+    SET_PAUSE_MANAGER,
     SET_PROTOCOL_PARAMS_MANAGER,
     SET_USDN_PARAMS_MANAGER,
     WSTETH
@@ -90,6 +91,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         setProtocolParamsManager: SET_PROTOCOL_PARAMS_MANAGER,
         setUsdnParamsManager: SET_USDN_PARAMS_MANAGER,
         setOptionsManager: SET_OPTIONS_MANAGER,
+        setPauseManager: SET_PAUSE_MANAGER,
         proxyUpgradeManager: PROXY_UPGRADE_MANAGER
     });
 
@@ -164,6 +166,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
                 setProtocolParamsManager: ADMIN,
                 setUsdnParamsManager: ADMIN,
                 setOptionsManager: ADMIN,
+                setPauseManager: ADMIN,
                 proxyUpgradeManager: ADMIN
             });
         }

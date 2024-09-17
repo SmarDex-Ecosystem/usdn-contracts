@@ -53,6 +53,12 @@ interface IUsdnProtocolStorage is
     function SET_USDN_PARAMS_ROLE() external pure returns (bytes32);
 
     /**
+     * @notice The pause role's signature
+     * @return Get the role signature
+     */
+    function SET_PAUSE_ROLE() external pure returns (bytes32);
+
+    /**
      * @notice The proxyUpgrade role's signature
      * @return Get the role signature
      */
@@ -87,6 +93,12 @@ interface IUsdnProtocolStorage is
      * @return Get the role signature
      */
     function ADMIN_SET_OPTIONS_ROLE() external pure returns (bytes32);
+
+    /**
+     * @notice The adminSetPause role's signature
+     * @return Get the role signature
+     */
+    function ADMIN_SET_PAUSE_ROLE() external pure returns (bytes32);
 
     /**
      * @notice The adminProxyUpgrade role's signature

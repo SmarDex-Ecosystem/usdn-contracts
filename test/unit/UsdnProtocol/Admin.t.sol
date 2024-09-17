@@ -91,13 +91,13 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ROLE"));
         protocol.setRebalancerBonusBps(0);
 
-        vm.expectRevert(customError("SET_EXTERNAL_ROLE"));
+        vm.expectRevert(customError("SET_PAUSE_ROLE"));
         protocol.setRefundSecurityDepositPaused(false);
 
-        vm.expectRevert(customError("SET_EXTERNAL_ROLE"));
+        vm.expectRevert(customError("SET_PAUSE_ROLE"));
         protocol.setTransferPositionOwnershipPaused(false);
 
-        vm.expectRevert(customError("SET_EXTERNAL_ROLE"));
+        vm.expectRevert(customError("SET_PAUSE_ROLE"));
         protocol.setOraclePricePaused(false);
     }
 

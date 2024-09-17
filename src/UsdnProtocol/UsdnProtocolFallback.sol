@@ -510,7 +510,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function setRefundSecurityDepositPaused(bool paused) external onlyRole(SET_EXTERNAL_ROLE) {
+    function setRefundSecurityDepositPaused(bool paused) external onlyRole(SET_PAUSE_ROLE) {
         if (s._refundSecurityDepositPaused == paused) {
             revert IUsdnProtocolErrors.UsdnProtocolPausedValueAlreadySet();
         }
@@ -520,7 +520,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function setTransferPositionOwnershipPaused(bool paused) external onlyRole(SET_EXTERNAL_ROLE) {
+    function setTransferPositionOwnershipPaused(bool paused) external onlyRole(SET_PAUSE_ROLE) {
         if (s._transferPositionOwnershipPaused == paused) {
             revert IUsdnProtocolErrors.UsdnProtocolPausedValueAlreadySet();
         }
@@ -530,7 +530,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function setOraclePricePaused(bool paused) external onlyRole(SET_EXTERNAL_ROLE) {
+    function setOraclePricePaused(bool paused) external onlyRole(SET_PAUSE_ROLE) {
         if (s._oraclePricePaused == paused) {
             revert IUsdnProtocolErrors.UsdnProtocolPausedValueAlreadySet();
         }

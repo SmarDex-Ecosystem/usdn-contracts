@@ -480,6 +480,7 @@ interface IUsdnProtocolTypes {
      * @param setUsdnParamsManager The manager's address to set the USDN parameters
      * @param setOptionsManager The manager's address to set the protocol options that do not impact the usage of the
      * protocol
+     * @param setPauseManager The manager's address to set the protocol paused values
      * @param proxyUpgradeManager The manager's address to upgrade the protocol implementation
      */
     struct Managers {
@@ -488,6 +489,7 @@ interface IUsdnProtocolTypes {
         address setProtocolParamsManager;
         address setUsdnParamsManager;
         address setOptionsManager;
+        address setPauseManager;
         address proxyUpgradeManager;
     }
 

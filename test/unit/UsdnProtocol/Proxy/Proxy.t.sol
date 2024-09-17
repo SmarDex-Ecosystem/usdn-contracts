@@ -87,6 +87,7 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
                 setProtocolParamsManager: ADMIN,
                 setUsdnParamsManager: ADMIN,
                 setOptionsManager: ADMIN,
+                setPauseManager: ADMIN,
                 proxyUpgradeManager: ADMIN
             }),
             IUsdnProtocolFallback(address(0))

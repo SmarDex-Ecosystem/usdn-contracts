@@ -36,6 +36,9 @@ abstract contract UsdnProtocolStorage is
     bytes32 public constant SET_OPTIONS_ROLE = keccak256("SET_OPTIONS_ROLE");
 
     /// @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant SET_PAUSE_ROLE = keccak256("SET_PAUSE_ROLE");
+
+    /// @inheritdoc IUsdnProtocolStorage
     bytes32 public constant PROXY_UPGRADE_ROLE = keccak256("PROXY_UPGRADE_ROLE");
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -52,6 +55,9 @@ abstract contract UsdnProtocolStorage is
 
     /// @inheritdoc IUsdnProtocolStorage
     bytes32 public constant ADMIN_SET_OPTIONS_ROLE = keccak256("ADMIN_SET_OPTIONS_ROLE");
+
+    /// @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant ADMIN_SET_PAUSE_ROLE = keccak256("ADMIN_SET_PAUSE_ROLE");
 
     /// @inheritdoc IUsdnProtocolStorage
     bytes32 public constant ADMIN_PROXY_UPGRADE_ROLE = keccak256("ADMIN_PROXY_UPGRADE_ROLE");

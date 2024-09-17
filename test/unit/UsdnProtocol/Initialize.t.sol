@@ -47,6 +47,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
                         setProtocolParamsManager: address(this),
                         setUsdnParamsManager: address(this),
                         setOptionsManager: address(this),
+                        setPauseManager: address(this),
                         proxyUpgradeManager: address(this)
                     }),
                     protocolFallback

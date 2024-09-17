@@ -135,6 +135,7 @@ contract Deploy is Script {
                         setProtocolParamsManager: _deployerAddress,
                         setUsdnParamsManager: _deployerAddress,
                         setOptionsManager: _deployerAddress,
+                        setPauseManager: _deployerAddress,
                         proxyUpgradeManager: _deployerAddress
                     }),
                     protocolFallback
