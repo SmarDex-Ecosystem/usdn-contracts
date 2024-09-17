@@ -205,6 +205,9 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the current price exceeds the minimum given by the user
     error UsdnProtocolSlippageMinPriceExceeded();
 
+    /// @dev Indicates that user would not receive enough prediction tokens compared to the expected amount
+    error UsdnProtocolAmountReceivedTooSmall();
+
     /// @dev Indicates that the transfer's fallback failed
     error UsdnProtocolFallbackTransferFailed();
 }

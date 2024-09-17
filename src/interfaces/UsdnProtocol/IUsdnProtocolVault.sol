@@ -17,6 +17,10 @@ interface IUsdnProtocolVault is IUsdnProtocolTypes {
      * The transaction must have `_securityDepositValue` in value
      * In case liquidations are pending, this function might not initiate the deposit (and `success_` would be false)
      * @param amount The amount of assets to deposit
+     * @param sharesOutMin The minimum amount of USDN shares to receive. Note that there is no guarantee that the
+     * effective minted amount at validation will exceed this value. Price changes during the interval could negatively
+     * affect the minted amount. However, if the predicted amount is below this threshold, the initiate action will
+     * revert
      * @param to The address that will receive the USDN tokens
      * @param validator The address that will validate the deposit
      * @param currentPriceData The current price data
@@ -25,6 +29,7 @@ interface IUsdnProtocolVault is IUsdnProtocolTypes {
      */
     function initiateDeposit(
         uint128 amount,
+        uint256 sharesOutMin,
         address to,
         address payable validator,
         bytes calldata currentPriceData,
@@ -65,6 +70,10 @@ interface IUsdnProtocolVault is IUsdnProtocolTypes {
      * @param usdnShares The amount of USDN shares to burn (Max 5708990770823839524233143877797980545530986495 which is
      * equivalent to 5.7B USDN token before any rebase. The token amount limit increases with each rebase)
      * In case liquidations are pending, this function might not initiate the withdrawal (and `success_` would be false)
+     * @param amountOutMin The estimated minimum amount of assets to receive. Note that there is no guarantee that the
+     * effective withdrawal amount at validation will exceed this value. Price changes during the interval could
+     * negatively affect the withdrawal amount. However, if the predicted amount is below this threshold, the initiate
+     * action will revert
      * @param to The address that will receive the assets
      * @param validator The address that will validate the withdrawal
      * @param currentPriceData The current price data
@@ -73,6 +82,7 @@ interface IUsdnProtocolVault is IUsdnProtocolTypes {
      */
     function initiateWithdrawal(
         uint152 usdnShares,
+        uint256 amountOutMin,
         address to,
         address payable validator,
         bytes calldata currentPriceData,
@@ -84,13 +94,11 @@ interface IUsdnProtocolVault is IUsdnProtocolTypes {
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
      * the `ProtocolAction.ValidateWithdrawal` action
      * The price validation might require payment according to the return value of the `getValidationCost` function
-     * of the middleware
-     * The timestamp corresponding to the price data is calculated by adding the mandatory `validationDelay`
-     * (from the oracle middleware) to the timestamp of the `initiate` action
-     * Note: this function always sends the security deposit of the validator's pending action to the validator, even
-     * if the validation deadline has passed
-     * Users wanting to validate an actionable pending action must use another function such as
-     * `validateActionablePendingActions` to earn the corresponding security deposit
+     * of the middleware The timestamp corresponding to the price data is calculated by adding the mandatory
+     * `validationDelay` (from the oracle middleware) to the timestamp of the `initiate` action Note: this function
+     * always sends the security deposit of the validator's pending action to the validator, even
+     * if the validation deadline has passed Users wanting to validate an actionable pending action must use another
+     * function such as `validateActionablePendingActions` to earn the corresponding security deposit
      * In case liquidations are pending, this function might not validate the withdrawal (and `success_` would be false)
      * @param validator The address that has the pending withdrawal action to validate
      * @param withdrawalPriceData The price data corresponding to the sender's pending withdrawal action

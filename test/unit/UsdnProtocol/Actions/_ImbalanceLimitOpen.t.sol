@@ -102,6 +102,7 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
         usdn.approve(address(protocol), type(uint256).max);
         protocol.initiateWithdrawal(
             uint152(usdn.sharesOf(DEPLOYER) / 2),
+            DISABLE_AMOUNT_OUT_MIN,
             DEPLOYER,
             DEPLOYER,
             abi.encode(params.initialPrice),

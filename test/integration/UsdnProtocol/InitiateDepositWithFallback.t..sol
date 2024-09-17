@@ -30,7 +30,7 @@ contract TestForkUsdnProtocolInitiateDepositWithFallback is TransferLibrary, Usd
         transferActive = true;
         uint256 balanceBefore = wstETH.balanceOf(address(protocol));
         bool success = protocol.initiateDeposit{ value: protocol.getSecurityDepositValue() }(
-            DEPOSIT_AMOUNT, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA
+            DEPOSIT_AMOUNT, DISABLE_SHARES_OUT_MIN, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA
         );
         assertTrue(success);
         assertEq(wstETH.balanceOf(address(protocol)), balanceBefore + DEPOSIT_AMOUNT);
@@ -46,7 +46,7 @@ contract TestForkUsdnProtocolInitiateDepositWithFallback is TransferLibrary, Usd
         uint256 securityDeposit = protocol.getSecurityDepositValue();
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolFallbackTransferFailed.selector));
         protocol.initiateDeposit{ value: securityDeposit }(
-            DEPOSIT_AMOUNT, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA
+            DEPOSIT_AMOUNT, DISABLE_SHARES_OUT_MIN, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA
         );
     }
 }
