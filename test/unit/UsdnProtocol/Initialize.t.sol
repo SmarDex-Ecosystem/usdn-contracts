@@ -287,7 +287,8 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      * @custom:then The transaction reverts with the error `UsdnProtocolMinInitAmount`
      */
     function test_RevertWhen_initializeDepositAmountLow() public {
-        uint256 minDeposit = protocol.MIN_INIT_DEPOSIT();
+        // TODO edit test
+        // uint256 minDeposit = protocol.MIN_INIT_DEPOSIT();
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolMinInitAmount.selector, minDeposit));
         protocol.initialize(uint128(minDeposit - 1), INITIAL_POSITION, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE));
     }
@@ -298,7 +299,8 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      * @custom:then The transaction reverts with the error `UsdnProtocolMinInitAmount`
      */
     function test_RevertWhen_initializeLongAmountLow() public {
-        uint256 minDeposit = protocol.MIN_INIT_DEPOSIT();
+        // TODO edit test
+        // uint256 minDeposit = protocol.MIN_INIT_DEPOSIT();
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolMinInitAmount.selector, minDeposit));
         protocol.initialize(INITIAL_DEPOSIT, uint128(minDeposit - 1), INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE));
     }

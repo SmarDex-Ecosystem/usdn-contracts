@@ -149,12 +149,6 @@ interface IUsdnProtocolFallback {
     function NO_POSITION_TICK() external view returns (int24);
 
     /**
-     * @notice Get the minimum amount of assets for the initialization deposit and long
-     * @return The minimum amount of assets
-     */
-    function MIN_INIT_DEPOSIT() external view returns (uint256);
-
-    /**
      * @notice The minimum total supply of USDN that we allow
      * @dev Upon the first deposit, this amount is sent to the dead address and cannot be later recovered
      * @return The minimum total supply of USDN

@@ -58,12 +58,7 @@ library UsdnProtocolCoreLibrary {
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData
     ) external {
-        if (depositAmount < Constants.MIN_INIT_DEPOSIT) {
-            revert IUsdnProtocolErrors.UsdnProtocolMinInitAmount(Constants.MIN_INIT_DEPOSIT);
-        }
-        if (longAmount < Constants.MIN_INIT_DEPOSIT) {
-            revert IUsdnProtocolErrors.UsdnProtocolMinInitAmount(Constants.MIN_INIT_DEPOSIT);
-        }
+        // TODO check the amount with new formula
         // since all USDN must be minted by the protocol, we check that the total supply is 0
         IUsdn usdn = s._usdn;
         if (usdn.totalSupply() != 0) {
