@@ -4,8 +4,7 @@ pragma solidity 0.8.26;
 import { ADMIN } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import { UsdnProtocolActionsVaultLibrary as ActionsVault } from
-    "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsVaultLibrary.sol";
+import { UsdnProtocolVaultLibrary as Vault } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 
 /**
  * @custom:feature Test of the protocol `_prepareInitiateDepositData` internal function
@@ -35,8 +34,9 @@ contract TestUsdnProtocolActionsPrepareInitiateDepositData is UsdnProtocolBaseFi
      * @custom:and There should be no pending liquidations
      */
     function test_prepareInitiateDepositData() public {
-        ActionsVault.InitiateDepositData memory data =
-            protocol.i_prepareInitiateDepositData(address(this), POSITION_AMOUNT, 0, currentPriceData);
+        Vault.InitiateDepositData memory data = protocol.i_prepareInitiateDepositData(
+            address(this), POSITION_AMOUNT, DISABLE_SHARES_OUT_MIN, currentPriceData
+        );
 
         assertFalse(data.isLiquidationPending, "There should be no pending liquidations");
         _assertData(data, false);
@@ -80,15 +80,16 @@ contract TestUsdnProtocolActionsPrepareInitiateDepositData is UsdnProtocolBaseFi
 
         currentPriceData = abi.encode(params.initialPrice * 7 / 10);
 
-        ActionsVault.InitiateDepositData memory data =
-            protocol.i_prepareInitiateDepositData(address(this), POSITION_AMOUNT, 0, currentPriceData);
+        Vault.InitiateDepositData memory data = protocol.i_prepareInitiateDepositData(
+            address(this), POSITION_AMOUNT, DISABLE_SHARES_OUT_MIN, currentPriceData
+        );
 
         assertTrue(data.isLiquidationPending, "There should be pending liquidations");
         _assertData(data, true);
     }
 
     /// @notice Assert the data in InitiateDepositData depending on `isEarlyReturn`
-    function _assertData(ActionsVault.InitiateDepositData memory data, bool isEarlyReturn) private view {
+    function _assertData(Vault.InitiateDepositData memory data, bool isEarlyReturn) private view {
         uint128 currentPrice = abi.decode(currentPriceData, (uint128));
 
         if (isEarlyReturn) {
