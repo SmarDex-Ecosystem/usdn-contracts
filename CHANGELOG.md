@@ -1,5 +1,62 @@
 # Changelog
 
+## [0.18.0](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v0.17.2...v0.18.0) (2024-09-12)
+
+
+### ⚠ BREAKING CHANGES
+
+* **vault:** the `InitiatedDeposit` and `InitiatedWithdrawal` events have an additional `feeBps` field. The `ValidatedDeposit` event now shows the deposit amount after fees. The `ValidatedWithdrawal` even now shows the withdrawn amount after fees. `IUsdnProtocolFallback.previewWithdraw` takes the price as a `uint128` for consistency with `previewDeposit`. `DepositPendingAction` and `WithdrawalPendingAction` structs now use the third member to store the `feeBps`
+* `IBaseOracleMiddleware` now exposes `getLowLatencyDelay`. The `ValidationDeadlineUpdated` event was renamed to `ValidationDeadlinesUpdated` and has two parameters. The `IUsdnProtocol.getValidationDeadline` function was renamed to `getLowLatencyValidationDeadline` and a new function `getOnChainValidationDeadline` was added.
+* **long:** the `IUsdnProtocolTypes.PendingAction` struct (and associated action-specific structs) has an additional `uint24` field.
+* **open:** `maxTick` was removed, the `closeLiqMultiplier` member of `LongPendingAction` was renamed to `liqMultiplier`.
+* **vault:** the `UsdnProtocolInvalidVaultExpo` error was renamed to `UsdnProtocolEmptyVault`.
+* **rebalancer:** Everything regarding the imbalance has been removed from the rebalancer contract (event and functions)
+* the liquidation penalty is now expressed in ticks and is stored as a uint24. This affects the `LiquidationPenaltyUpdated` event, functions `getLiquidationPenalty`, `setLiquidationPenalty`, `getLongPosition`, `getTickLiquidationPenalty`, and the `TickDat` struct
+* **protocol:** The setExpoImbalanceLimits now takes an additional parameter, as well as the ImbalanceLimitsUpdated event, both representing the closeLimitBps of the rebalancer position
+
+### Features
+
+* add fees on imbalance calculation during the initialization of position closure ([#560](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/560)) ([2e8555a](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/2e8555ad169df6d94ffe8e274d37fd1dd6cc8f1a))
+* add max leverage on init open ([#559](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/559)) ([aa4e4ce](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/aa4e4cea5c1b84a320b6b20dbe11bcf53a03b57e))
+* add pausable mechanism to the protocol ([#514](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/514)) ([3dcd974](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/3dcd974b29ce8c78603fa5284bb3874ede23c0da))
+* add roles on middleware ([#527](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/527)) ([cb62662](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/cb6266201c4de4c81796e096a941083d536ed4b9))
+* change coverage command ([#526](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/526)) ([0a368b1](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/0a368b12568aecaaaf639b4a037ac9b046a05162))
+* more granularity for liquidation penalty ([#516](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/516)) ([5957adf](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/5957adf0c62c273a174438284d865ccedc8a5f7b))
+* new validation flow ([#544](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/544)) ([5348772](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/534877252b2a530791635a466883591b518c374b))
+* only owner initialize ([#525](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/525)) ([521cd94](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/521cd9413fdfea36172525adc6e3abf5d68b510d))
+* **oracle:** let the middleware return the chainlink price if Pyth reverts for initiate actions ([#515](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/515)) ([0647f45](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/0647f456ce56e5a4af17ba4bb1d11da8fbdb12f4))
+* **protocol:** add an imbalance setting for the rebalancer and the check for the close action ([#503](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/503)) ([e380a1b](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/e380a1be932c5e22554d7a04970f102417f9a3d0))
+* **rebalancer:** adjust default max leverage ([#566](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/566)) ([2ddf1a0](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/2ddf1a0224219ffda93e4227d078bad81ec6a125))
+* refund security deposit for stale pending actions ([#538](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/538)) ([bb2c808](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/bb2c808d86b89bf5091302f73a8aa6a1db1a5287))
+* **script:** add a script to upgrade the proxy of the USDN protocol ([#539](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/539)) ([25e9202](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/25e920288cb83a412651c4f40c21e6fee6ae7ecc))
+* simplify _update ([#550](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/550)) ([46cabba](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/46cabba96f306bca97abb519f2dc4f090307863f))
+* use `getTickAtPrice` instead of `getClosestTickAtPrice` ([#547](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/547)) ([f65acc3](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/f65acc37711092dbf82335aca1b51b4eb7ca9da5))
+
+
+### Bug Fixes
+
+* **chainlink:** fix the previous round ID checks too allow the first ID of a phase to be used ([#548](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/548)) ([0d24fb4](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/0d24fb4f03968eb8710bd5690a3102f9353a33bd))
+* consistency on imbalance checks ([#558](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/558)) ([70047da](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/70047da91095a4ecbeead4cd067bf95efacd8ae9))
+* **core:** handle excess assets in `_removeBlockedPendingAction` ([#528](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/528)) ([38e90f8](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/38e90f8632cc7fb0e82990d7fb285272cf777eea))
+* **events:** removed the indexation of structs in procol events ([#555](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/555)) ([72e04b2](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/72e04b2e86ad6e57547c976b19da2c6a4a9f9e59))
+* **long:** add funding on trading expo when opening a position ([#552](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/552)) ([cbad22e](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/cbad22e2bdd8e8c65e78253863bee9d69043b010))
+* **long:** store and use liquidation penalty for position closing ([#549](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/549)) ([79c617b](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/79c617bfbe6c2aec04fde788cd53f99dc3deaf1b))
+* **open:** apply funding to positions that change tick ([#530](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/530)) ([052fd28](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/052fd2880035b5a36146a59619270d280c6acf57))
+* **rebalancer-trigger:** only gift the previous position value when dealing with dust ([#536](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/536)) ([89bfea7](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/89bfea77f1468bfc7f8f052baa0852c5d1572ab5))
+* **rebalancer:** add a check in `initiateClosePosition` to revert if the user was liquidated ([#534](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/534)) ([570b65f](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/570b65fee76eaafb266f04cbba8e4922ab5b2865))
+* **rebalancer:** remove the imbalance setting as it is now part of the USDN protocol ([#529](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/529)) ([3196f32](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/3196f32f3584fd14ae62160552e07c4de7bd5419))
+* rewards only when rebalancer is triggered ([#561](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/561)) ([905f168](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/905f1689c135058848f1c1a10b72cb1af7175bb2))
+* round up sdex fee ([#551](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/551)) ([052afbd](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/052afbded7ae3c0e56eb47130ae2b85eeeaeca4c))
+* stale to validator at initiate ([#565](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/565)) ([ac8fd0f](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/ac8fd0f1be346a6b4e79e06accd25614383b592a))
+* **vault:** `_calcMintUsdnShares` now reverts if the vault balance is zero ([#533](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/533)) ([3ed4dc4](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/3ed4dc477966e98a89efc2d939d25df384e055ee))
+* **vault:** apply fees on amounts and not price + ignore funding before initiate + include fee in imbalance calc ([#557](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/557)) ([088eb03](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/088eb038546779b61873d5b678d67da9db8d545b))
+* withdrawal and deposit underflow ([#532](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/532)) ([8b41653](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/8b4165346b063c04f45bd28102a58cbb47e1bfd3))
+
+
+### Performance Improvements
+
+* libraries optimization ([#563](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/563)) ([4bfe72b](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/4bfe72b43b25f19995c3032ff1502eaed3b9cc78))
+
 ## [0.17.2](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v0.17.1...v0.17.2) (2024-08-15)
 
 

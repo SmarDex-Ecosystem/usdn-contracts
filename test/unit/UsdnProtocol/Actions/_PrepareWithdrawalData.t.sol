@@ -4,8 +4,7 @@ pragma solidity 0.8.26;
 import { ADMIN } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import { UsdnProtocolActionsVaultLibrary as ActionsVault } from
-    "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsVaultLibrary.sol";
+import { UsdnProtocolVaultLibrary as Vault } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 
 /**
  * @custom:feature Test of the protocol `_prepareWithdrawalData` internal function
@@ -34,7 +33,7 @@ contract TestUsdnProtocolActionsPrepareWithdrawalData is UsdnProtocolBaseFixture
      * @custom:and There should be no pending liquidations
      */
     function test_prepareWithdrawalData() public {
-        ActionsVault.WithdrawalData memory data =
+        Vault.WithdrawalData memory data =
             protocol.i_prepareWithdrawalData(address(this), usdnSharesAmount, currentPriceData);
 
         assertFalse(data.isLiquidationPending, "There should be no pending liquidations");
@@ -79,7 +78,7 @@ contract TestUsdnProtocolActionsPrepareWithdrawalData is UsdnProtocolBaseFixture
 
         currentPriceData = abi.encode(params.initialPrice * 7 / 10);
 
-        ActionsVault.WithdrawalData memory data =
+        Vault.WithdrawalData memory data =
             protocol.i_prepareWithdrawalData(address(this), usdnSharesAmount, currentPriceData);
 
         assertTrue(data.isLiquidationPending, "There should be pending liquidations");
@@ -87,7 +86,7 @@ contract TestUsdnProtocolActionsPrepareWithdrawalData is UsdnProtocolBaseFixture
     }
 
     /// @notice Assert the data in WithdrawalData depending on `isEarlyReturn`
-    function _assertData(ActionsVault.WithdrawalData memory data, bool isEarlyReturn) private view {
+    function _assertData(Vault.WithdrawalData memory data, bool isEarlyReturn) private view {
         uint256 amountAfterFees = DEPOSITED_AMOUNT - (DEPOSITED_AMOUNT * protocol.getVaultFeeBps()) / BPS_DIVISOR;
 
         if (isEarlyReturn) {
