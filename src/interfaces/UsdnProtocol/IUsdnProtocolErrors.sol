@@ -201,4 +201,7 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the entry price exceeds the maximum given by the user
     error UsdnProtocolSlippageMaxPriceExceeded();
+
+    /// @dev Indicates that the current price exceeds the minimum given by the user
+    error UsdnProtocolSlippageMinPriceExceeded();
 }
