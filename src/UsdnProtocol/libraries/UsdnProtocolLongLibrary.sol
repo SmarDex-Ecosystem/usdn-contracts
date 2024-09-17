@@ -941,7 +941,6 @@ library UsdnProtocolLongLibrary {
     ) internal view returns (Types.RebalancerPositionData memory posData_) {
         Types.CalcRebalancerPositionTickData memory data;
 
-        // TO DO : check
         data.protocolMaxLeverage = s._maxLeverage;
         if (rebalancerMaxLeverage > data.protocolMaxLeverage) {
             rebalancerMaxLeverage = data.protocolMaxLeverage;
