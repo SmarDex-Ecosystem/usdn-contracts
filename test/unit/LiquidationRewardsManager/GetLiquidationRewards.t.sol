@@ -319,7 +319,18 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
         );
     }
 
-    function test_getLiquidationRewardsWithLimit() public pure {
-        assertTrue(false, "todo");
+    /**
+     * @custom:scenario Call `getLiquidationRewards` when the reward amount is greater than the `maxReward`
+     * @custom:given The max reward is set to 0.1 wstETH
+     * @custom:and The parameters for the reward would result in a reward greater than the max reward
+     * @custom:when The liquidation reward is calculated
+     * @custom:then It should return the max reward in wstETH
+     */
+    function test_getLiquidationRewardsWithLimit() public {
+        liquidationRewardsManager.setRewardsParameters(0, 0, 0, 0, 0, 0, 0, 0.5 ether, 0.1 ether);
+        uint256 rewards = liquidationRewardsManager.getLiquidationRewards(
+            _singleLiquidatedTick, CURRENT_PRICE, false, Types.RebalancerAction.None, Types.ProtocolAction.None, "", ""
+        );
+        assertEq(rewards, wsteth.getWstETHByStETH(0.1 ether), "reward");
     }
 }
