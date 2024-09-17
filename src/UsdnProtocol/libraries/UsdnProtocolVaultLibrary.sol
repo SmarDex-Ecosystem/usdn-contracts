@@ -7,7 +7,6 @@ import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../../interfaces/Usdn/IUsdn.sol";
-import { IUsdnProtocolActions } from "../../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -29,6 +28,26 @@ library UsdnProtocolVaultLibrary {
     using SafeTransferLib for address;
     using SignedMath for int256;
     using SignedMath for int256;
+
+    /**
+     * @notice Parameters for the internal `_initiateDeposit` function
+     * @param user The address of the user initiating the deposit
+     * @param to The address to receive the USDN tokens
+     * @param validator The address that will validate the deposit
+     * @param amount The amount of assets to deposit
+     * @param sharesOutMin The minimum amount of USDN shares to receive
+     * @param securityDepositValue The value of the security deposit for the newly created deposit
+     * @param permit2TokenBitfield The permit2 bitfield
+     */
+    struct InitiateDepositParams {
+        address user;
+        address to;
+        address validator;
+        uint128 amount;
+        uint256 sharesOutMin;
+        uint64 securityDepositValue;
+        Permit2TokenBitfield.Bitfield permit2TokenBitfield;
+    }
 
     /**
      * @dev Structure to hold the transient data during `_initiateDeposit`
@@ -82,6 +101,7 @@ library UsdnProtocolVaultLibrary {
     function initiateDeposit(
         Types.Storage storage s,
         uint128 amount,
+        uint256 sharesOutMin,
         address to,
         address payable validator,
         Permit2TokenBitfield.Bitfield permit2TokenBitfield,
@@ -96,7 +116,17 @@ library UsdnProtocolVaultLibrary {
 
         uint256 validatorAmount;
         (validatorAmount, success_) = _initiateDeposit(
-            s, msg.sender, to, validator, amount, securityDepositValue, permit2TokenBitfield, currentPriceData
+            s,
+            InitiateDepositParams({
+                user: msg.sender,
+                to: to,
+                validator: validator,
+                amount: amount,
+                sharesOutMin: sharesOutMin,
+                securityDepositValue: securityDepositValue,
+                permit2TokenBitfield: permit2TokenBitfield
+            }),
+            currentPriceData
         );
 
         uint256 amountToRefund;
@@ -150,6 +180,7 @@ library UsdnProtocolVaultLibrary {
     function initiateWithdrawal(
         Types.Storage storage s,
         uint152 usdnShares,
+        uint256 amountOutMin,
         address to,
         address payable validator,
         bytes calldata currentPriceData,
@@ -163,8 +194,9 @@ library UsdnProtocolVaultLibrary {
         uint256 balanceBefore = address(this).balance;
 
         uint256 validatorAmount;
-        (validatorAmount, success_) =
-            _initiateWithdrawal(s, msg.sender, to, validator, usdnShares, securityDepositValue, currentPriceData);
+        (validatorAmount, success_) = _initiateWithdrawal(
+            s, msg.sender, to, validator, usdnShares, amountOutMin, securityDepositValue, currentPriceData
+        );
 
         uint256 amountToRefund;
         if (success_) {
@@ -475,6 +507,7 @@ library UsdnProtocolVaultLibrary {
      * @param s The storage of the protocol
      * @param validator The validator address
      * @param amount The amount of asset to deposit
+     * @param sharesOutMin The minimum amount of USDN shares to receive
      * @param currentPriceData The price data for the initiate action
      * @return data_ The transient data for the `deposit` action
      */
@@ -482,6 +515,7 @@ library UsdnProtocolVaultLibrary {
         Types.Storage storage s,
         address validator,
         uint128 amount,
+        uint256 sharesOutMin,
         bytes calldata currentPriceData
     ) internal returns (InitiateDepositData memory data_) {
         PriceInfo memory currentPrice = Utils._getOraclePrice(
@@ -527,6 +561,9 @@ library UsdnProtocolVaultLibrary {
         // calculate the amount of SDEX tokens to burn
         uint256 usdnSharesToMintEstimated =
             Utils._calcMintUsdnShares(amountAfterFees, data_.balanceVault, data_.usdnTotalShares);
+        if (usdnSharesToMintEstimated < sharesOutMin) {
+            revert IUsdnProtocolErrors.UsdnProtocolAmountReceivedTooSmall();
+        }
         uint256 usdnToMintEstimated = usdn.convertToTokens(usdnSharesToMintEstimated);
         // we want to at least mint 1 wei of USDN
         if (usdnToMintEstimated == 0) {
@@ -580,12 +617,7 @@ library UsdnProtocolVaultLibrary {
      * The price validation might require payment according to the return value of the `getValidationCost` function
      * of the middleware
      * @param s The storage of the protocol
-     * @param user The address of the user initiating the deposit
-     * @param to The address to receive the USDN tokens
-     * @param validator The address that will validate the deposit
-     * @param amount The amount of assets to deposit
-     * @param securityDepositValue The value of the security deposit for the newly created pending action
-     * @param permit2TokenBitfield The permit2 bitfield
+     * @param params The parameters for the deposit
      * @param currentPriceData The current price data
      * @return amountToRefund_ If there are pending liquidations we'll refund the `securityDepositValue`,
      * else we'll only refund the security deposit value of the stale pending action
@@ -593,55 +625,55 @@ library UsdnProtocolVaultLibrary {
      */
     function _initiateDeposit(
         Types.Storage storage s,
-        address user,
-        address to,
-        address validator,
-        uint128 amount,
-        uint64 securityDepositValue,
-        Permit2TokenBitfield.Bitfield permit2TokenBitfield,
+        InitiateDepositParams memory params,
         bytes calldata currentPriceData
     ) internal returns (uint256 amountToRefund_, bool isInitiated_) {
-        if (to == address(0)) {
+        if (params.to == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo();
         }
-        if (validator == address(0)) {
+        if (params.validator == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressValidator();
         }
-        if (amount == 0) {
+        if (params.amount == 0) {
             revert IUsdnProtocolErrors.UsdnProtocolZeroAmount();
         }
 
-        InitiateDepositData memory data = _prepareInitiateDepositData(s, validator, amount, currentPriceData);
+        InitiateDepositData memory data =
+            _prepareInitiateDepositData(s, params.validator, params.amount, params.sharesOutMin, currentPriceData);
 
         // early return in case there are still pending liquidations
         if (data.isLiquidationPending) {
-            return (securityDepositValue, false);
+            return (params.securityDepositValue, false);
         }
 
-        amountToRefund_ = _createDepositPendingAction(s, to, validator, securityDepositValue, amount, data);
+        amountToRefund_ = _createDepositPendingAction(
+            s, params.to, params.validator, params.securityDepositValue, params.amount, data
+        );
 
         if (data.sdexToBurn > 0) {
             // send SDEX to the dead address
-            if (permit2TokenBitfield.useForSdex()) {
-                address(s._sdex).permit2TransferFrom(user, Constants.DEAD_ADDRESS, data.sdexToBurn);
+            if (params.permit2TokenBitfield.useForSdex()) {
+                address(s._sdex).permit2TransferFrom(params.user, Constants.DEAD_ADDRESS, data.sdexToBurn);
             } else {
                 // slither-disable-next-line arbitrary-send-erc20
-                address(s._sdex).safeTransferFrom(user, Constants.DEAD_ADDRESS, data.sdexToBurn);
+                address(s._sdex).safeTransferFrom(params.user, Constants.DEAD_ADDRESS, data.sdexToBurn);
             }
         }
 
         // transfer assets
-        if (permit2TokenBitfield.useForAsset()) {
-            address(s._asset).permit2TransferFrom(user, address(this), amount);
+        if (params.permit2TokenBitfield.useForAsset()) {
+            address(s._asset).permit2TransferFrom(params.user, address(this), params.amount);
         } else {
             // slither-disable-next-line arbitrary-send-erc20
-            address(s._asset).safeTransferFrom(user, address(this), amount);
+            address(s._asset).safeTransferFrom(params.user, address(this), params.amount);
         }
-        s._pendingBalanceVault += Utils.toInt256(amount);
+        s._pendingBalanceVault += Utils.toInt256(params.amount);
 
         isInitiated_ = true;
 
-        emit IUsdnProtocolEvents.InitiatedDeposit(to, validator, amount, data.feeBps, block.timestamp, data.sdexToBurn);
+        emit IUsdnProtocolEvents.InitiatedDeposit(
+            params.to, params.validator, params.amount, data.feeBps, block.timestamp, data.sdexToBurn
+        );
     }
 
     /**
@@ -757,6 +789,7 @@ library UsdnProtocolVaultLibrary {
      * @param s The storage of the protocol
      * @param validator The validator address
      * @param usdnShares The amount of USDN shares to burn
+     * @param amountOutMin The estimated minimum amount of assets to receive
      * @param currentPriceData The current price data
      * @return data_ The withdrawal data struct
      */
@@ -764,6 +797,7 @@ library UsdnProtocolVaultLibrary {
         Types.Storage storage s,
         address validator,
         uint152 usdnShares,
+        uint256 amountOutMin,
         bytes calldata currentPriceData
     ) internal returns (WithdrawalData memory data_) {
         PriceInfo memory currentPrice = Utils._getOraclePrice(
@@ -801,7 +835,9 @@ library UsdnProtocolVaultLibrary {
         data_.feeBps = s._vaultFeeBps;
         data_.withdrawalAmountAfterFees =
             Utils._calcBurnUsdn(usdnShares, data_.balanceVault, data_.usdnTotalShares, data_.feeBps);
-
+        if (data_.withdrawalAmountAfterFees < amountOutMin) {
+            revert IUsdnProtocolErrors.UsdnProtocolAmountReceivedTooSmall();
+        }
         _checkImbalanceLimitWithdrawal(s, data_.withdrawalAmountAfterFees, data_.totalExpo);
     }
 
@@ -854,6 +890,7 @@ library UsdnProtocolVaultLibrary {
      * @param to The address that will receive the assets
      * @param validator The address that will validate the withdrawal
      * @param usdnShares The amount of USDN shares to burn
+     * @param amountOutMin The estimated minimum amount of assets to receive
      * @param securityDepositValue The value of the security deposit for the newly created pending action
      * @param currentPriceData The current price data
      * @return amountToRefund_ If there are pending liquidations we'll refund the `securityDepositValue`,
@@ -866,6 +903,7 @@ library UsdnProtocolVaultLibrary {
         address to,
         address validator,
         uint152 usdnShares,
+        uint256 amountOutMin,
         uint64 securityDepositValue,
         bytes calldata currentPriceData
     ) internal returns (uint256 amountToRefund_, bool isInitiated_) {
@@ -879,7 +917,7 @@ library UsdnProtocolVaultLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolZeroAmount();
         }
 
-        WithdrawalData memory data = _prepareWithdrawalData(s, validator, usdnShares, currentPriceData);
+        WithdrawalData memory data = _prepareWithdrawalData(s, validator, usdnShares, amountOutMin, currentPriceData);
 
         if (data.isLiquidationPending) {
             return (securityDepositValue, false);
