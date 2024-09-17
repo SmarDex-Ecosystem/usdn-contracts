@@ -65,6 +65,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         (, PositionId memory posId) = protocol.initiateOpenPosition(
             amount,
             desiredLiqPrice,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),

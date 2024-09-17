@@ -494,6 +494,7 @@ library UsdnProtocolActionsLongLibrary {
                 validator: params.validator,
                 amount: params.amount,
                 desiredLiqPrice: params.desiredLiqPrice,
+                userMaxPrice: params.userMaxPrice,
                 userMaxLeverage: params.userMaxLeverage,
                 currentPriceData: currentPriceData
             })

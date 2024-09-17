@@ -323,6 +323,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         (, posId) = protocol.initiateOpenPosition(
             POSITION_AMOUNT,
             params.initialPrice / 2,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
             USER_1,
@@ -643,6 +644,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         (, rebalancerPos_) = protocol.initiateOpenPosition(
             2 * userDeposit,
             params.initialPrice / 2,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             address(rebalancer),
             payable(address(rebalancer)),
