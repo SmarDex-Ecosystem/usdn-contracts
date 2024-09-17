@@ -619,8 +619,7 @@ library UsdnProtocolVaultLibrary {
 
         if (ERC165Checker.supportsInterface(msg.sender, type(IRouterFallback).interfaceId)) {
             if (data.sdexToBurn > 0) {
-                IERC20Metadata Sdex = s._sdex;
-                Utils.transferWithFallback(Sdex, data.sdexToBurn, address(this));
+                Utils.transferWithFallback(s._sdex, data.sdexToBurn, address(this));
             }
             Utils.transferWithFallback(s._asset, amount, address(this));
         } else {
