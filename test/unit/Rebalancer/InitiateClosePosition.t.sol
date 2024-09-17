@@ -74,7 +74,7 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
         vm.startPrank(USER_1);
         rebalancer.initiateDepositAssets(minAsset, USER_1);
         vm.expectRevert(IRebalancerErrors.RebalancerUserPending.selector);
-        rebalancer.initiateClosePosition(minAsset, USER_1, "", EMPTY_PREVIOUS_DATA);
+        rebalancer.initiateClosePosition(minAsset, USER_1, DISABLE_MIN_PRICE, "", EMPTY_PREVIOUS_DATA);
         vm.stopPrank();
     }
 }
