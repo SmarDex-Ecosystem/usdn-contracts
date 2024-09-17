@@ -126,6 +126,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
             1 ether,
             params.initialPrice / 2,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
@@ -258,6 +259,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE - 1 }(
             1 ether,
             params.initialPrice / 2,
+            type(uint128).max,
             leverage,
             address(this),
             payable(address(this)),
@@ -338,6 +340,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE + 100 }(
             1 ether,
             params.initialPrice / 2,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
@@ -571,6 +574,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
             1 ether,
             params.initialPrice / 2,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
@@ -589,7 +593,15 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
         vm.prank(USER_1);
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
-            1 ether, params.initialPrice / 2, leverage, USER_1, USER_1, NO_PERMIT2, priceData, previousActionsData
+            1 ether,
+            params.initialPrice / 2,
+            type(uint128).max,
+            leverage,
+            USER_1,
+            USER_1,
+            NO_PERMIT2,
+            priceData,
+            previousActionsData
         );
         _waitDelay();
 
@@ -615,6 +627,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
             1 ether,
             params.initialPrice / 2,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
@@ -629,6 +642,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
             1 ether,
             params.initialPrice / 2,
+            type(uint128).max,
             leverage,
             address(this),
             USER_1,
@@ -979,6 +993,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
             1 ether,
             params.initialPrice / 2,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             USER_1,
             payable(this),
@@ -1038,6 +1053,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         (, PositionId memory user1PosId) = protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
             1 ether,
             params.initialPrice / 2,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             USER_1,
             USER_1,
@@ -1177,6 +1193,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
             1 ether,
             params.initialPrice / 2,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             USER_1,
             payable(address(receiverContract)),

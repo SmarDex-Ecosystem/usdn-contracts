@@ -204,4 +204,7 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the current function is paused
     error UsdnProtocolFunctionPaused();
+
+    /// @dev Indicates that the entry price exceeds the maximum given by the user
+    error UsdnProtocolSlippageMaxPriceExceeded();
 }

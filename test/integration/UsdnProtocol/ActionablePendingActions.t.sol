@@ -51,6 +51,7 @@ contract TestUsdnProtocolActionablePendingActions is UsdnProtocolBaseIntegration
         protocol.initiateOpenPosition{ value: securityDeposit + validationCost }(
             2 ether,
             params.initialPrice / 2,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
             payable(this),
@@ -98,6 +99,7 @@ contract TestUsdnProtocolActionablePendingActions is UsdnProtocolBaseIntegration
         protocol.initiateOpenPosition{ value: securityDeposit }(
             2 ether,
             params.initialPrice / 2,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             USER_2,
             USER_2,

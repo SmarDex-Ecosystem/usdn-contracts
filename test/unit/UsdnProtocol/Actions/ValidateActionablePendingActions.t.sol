@@ -26,7 +26,7 @@ contract TestUsdnProtocolValidateActionablePendingActions is UsdnProtocolBaseFix
      * @custom:then All four actions are validated and the returned count is 4
      * @custom:and the pending actions are removed
      */
-    function test_validateActionablePendingActions() public {
+    function test_validateActionablePendingActionsSimple() public {
         PreviousActionsData memory previousActionsData = _setUpFourPendingActions();
 
         vm.expectEmit(true, true, false, false);
