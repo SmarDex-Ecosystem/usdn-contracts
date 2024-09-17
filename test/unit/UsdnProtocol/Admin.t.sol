@@ -1031,7 +1031,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
     }
 
     /**
-     * @custom:scenario Call `setRefundSecurityDepositPaused` as admin
+     * @custom:scenario Call `setRefundSecurityDepositPaused` as admin with a different value than in storage
      * @custom:when Admin wallet triggers admin contract function
      * @custom:then The value should be updated
      * @custom:and An event should be emitted with the corresponding new value
@@ -1045,7 +1045,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
     }
 
     /**
-     * @custom:scenario Call "setRefundSecurityDepositPaused" from admin
+     * @custom:scenario Call "setRefundSecurityDepositPaused" with the same value than in storage
      * @custom:given The initial usdnProtocol state from admin wallet
      * @custom:when Admin wallet triggers admin contract function
      * @custom:then Revert because the value is already set
@@ -1057,7 +1057,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
     }
 
     /**
-     * @custom:scenario Call `setTransferPositionOwnershipPaused` as admin
+     * @custom:scenario Call `setTransferPositionOwnershipPaused` as admin with a different value than in storage
      * @custom:when Admin wallet triggers admin contract function
      * @custom:then The value should be updated
      * @custom:and An event should be emitted with the corresponding new value
@@ -1071,7 +1071,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
     }
 
     /**
-     * @custom:scenario Call "setTransferPositionOwnershipPaused" from admin
+     * @custom:scenario Call "setTransferPositionOwnershipPaused" from admin with the same value than in storage
      * @custom:given The initial usdnProtocol state from admin wallet
      * @custom:when Admin wallet triggers admin contract function
      * @custom:then Revert because the value is already set
@@ -1083,7 +1083,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
     }
 
     /**
-     * @custom:scenario Call `setOraclePricePaused` as admin
+     * @custom:scenario Call `setOraclePricePaused` as admin with a different value than in storage
      * @custom:when Admin wallet triggers admin contract function
      * @custom:then The value should be updated
      * @custom:and An event should be emitted with the corresponding new value
@@ -1097,12 +1097,12 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
     }
 
     /**
-     * @custom:scenario Call "setOraclePricePaused" from admin
+     * @custom:scenario Call "setOraclePricePaused" from admin with the same value than in storage
      * @custom:given The initial usdnProtocol state from admin wallet
      * @custom:when Admin wallet triggers admin contract function
      * @custom:then Revert because the value is already set
      */
-    function test_RevertWhen_test_setOraclePricePausedSameValue() external adminPrank {
+    function test_RevertWhen_setOraclePricePausedSameValue() external adminPrank {
         bool paused = protocol.getOraclePricePaused();
         vm.expectRevert(UsdnProtocolPausedValueAlreadySet.selector);
         protocol.setOraclePricePaused(paused);
