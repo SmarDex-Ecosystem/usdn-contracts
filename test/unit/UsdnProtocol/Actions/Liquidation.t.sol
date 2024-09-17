@@ -221,6 +221,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition(
             1 ether,
             desiredLiqPrice - 200 ether,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
@@ -595,6 +596,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         }(
             5 ether,
             9 * currentPrice / 10,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),

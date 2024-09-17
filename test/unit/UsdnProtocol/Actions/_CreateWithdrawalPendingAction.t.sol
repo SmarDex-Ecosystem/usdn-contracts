@@ -4,8 +4,7 @@ pragma solidity 0.8.26;
 import { USER_1, USER_2 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import { UsdnProtocolActionsVaultLibrary as ActionsVault } from
-    "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsVaultLibrary.sol";
+import { UsdnProtocolVaultLibrary as Vault } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 
 /**
  * @custom:feature Test the `_createWithdrawalPendingAction` internal function of the actions vault layer
@@ -14,7 +13,7 @@ import { UsdnProtocolActionsVaultLibrary as ActionsVault } from
  */
 contract TestUsdnProtocolActionsCreateWithdrawalPendingAction is UsdnProtocolBaseFixture {
     /// @dev Instance of WithdrawalData to store data for withdrawing assets
-    ActionsVault.WithdrawalData data;
+    Vault.WithdrawalData data;
     /// @dev The amount of USDN shares originally deposited
     uint152 usdnShares = 1 ether;
 
