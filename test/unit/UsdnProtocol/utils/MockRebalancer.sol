@@ -20,7 +20,6 @@ contract MockRebalancer is IBaseRebalancer, IRebalancerTypes {
     uint256 internal _minAssetDeposit;
     uint128 internal _pendingAssets;
     uint256 internal _maxLeverage;
-    uint256 internal _minLeverage;
     uint128 internal _positionVersion;
     uint128 internal _pendingAssetsAmount;
     uint128 internal _lastLiquidatedVersion;

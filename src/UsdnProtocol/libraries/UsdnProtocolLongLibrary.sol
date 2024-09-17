@@ -87,7 +87,6 @@ library UsdnProtocolLongLibrary {
     struct TriggerRebalancerData {
         uint128 positionAmount;
         uint256 rebalancerMaxLeverage;
-        uint256 rebalancerMinLeverage;
         Types.PositionId rebalancerPosId;
         uint128 positionValue;
     }

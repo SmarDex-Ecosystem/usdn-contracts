@@ -594,7 +594,6 @@ interface IUsdnProtocolFallback {
     /**
      * @notice Update the minimum leverage the rebalancer can use
      * @dev `newMinLeverage` must be smaller than the rebalancer's `maxLeverage`
-     * This function can only be called by the owner
      * @param newMinLeverage The new minimum leverage for the rebalancer
      */
     function setRebalancerMinLeverage(uint256 newMinLeverage) external;

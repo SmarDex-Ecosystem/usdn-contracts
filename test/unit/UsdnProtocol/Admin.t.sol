@@ -13,11 +13,11 @@ import { ILiquidationRewardsManager } from "../../../src/interfaces/OracleMiddle
 import { IOracleMiddleware } from "../../../src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { IRebalancer } from "../../../src/interfaces/Rebalancer/IRebalancer.sol";
 import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
+
 /**
  * @custom:feature The admin functions of the protocol
  * @custom:background Given a protocol instance that was initialized with default params
  */
-
 contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
     function setUp() public {
         SetUpParams memory params = DEFAULT_PARAMS;
@@ -130,12 +130,12 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
     }
 
     /**
-     * @custom:scenario Trying to set the minimum leverage greater than the maximum leverage
-     * @custom:given A value higher than the maximum leverage
-     * @custom:when `setPositionMinLeverage` is called with this value
-     * @custom:then The call reverts with a {RebalancerInvalidMinLeverage} error
+     * @custom:scenario Trying to set the minimum leverage equal to the rebalancer maximum leverage
+     * @custom:given A value equal to the maximum leverage
+     * @custom:when `setRebalancerMinLeverage` is called with this value
+     * @custom:then The call reverts with a {UsdnProtocolInvalidRebalancerMinLeverage} error
      */
-    function test_RevertWhen_setPositionMinLeverageWithLeverageTooHigh() public adminPrank {
+    function test_RevertWhen_setRebalancerMinLeverageWithLeverageTooHigh() public adminPrank {
         uint256 maxLeverage = rebalancer.getPositionMaxLeverage();
 
         vm.expectRevert(UsdnProtocolInvalidRebalancerMinLeverage.selector);
@@ -146,7 +146,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      * @custom:scenario Trying to set the minimum leverage to x1
      * @custom:given A x1 minimum leverage
      * @custom:when `setPositionMinLeverage` is called with this value
-     * @custom:then The call reverts with a {RebalancerInvalidMinLeverage} error
+     * @custom:then The call reverts with a {UsdnProtocolInvalidRebalancerMinLeverage} error
      */
     function test_RevertWhen_setPositionMinLeverage1x() public adminPrank {
         uint256 minLeverage = 10 ** Constants.LEVERAGE_DECIMALS;
@@ -158,10 +158,10 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
     /**
      * @custom:scenario Setting the minimum leverage of the rebalancer
      * @custom:given A value higher than x1
-     * @custom:when Lower than the maximum leverage
+     * @custom:and Lower than the maximum leverage
      * @custom:when {setPositionMinLeverage} is called with this value
-     * @custom:then The value of `_positionMinLeverage` is updated
-     * @custom:and A {PositionMaxLeverageUpdated} event is emitted
+     * @custom:then The value of `_rebalancerMinLeverage` is updated
+     * @custom:and A {RebalancerMinLeverageUpdated} event is emitted
      */
     function test_setPositionMinLeverage() public adminPrank {
         uint256 newMinLeverage = rebalancer.getPositionMaxLeverage() / 2;

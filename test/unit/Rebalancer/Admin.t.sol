@@ -97,8 +97,8 @@ contract TestRebalancerAdmin is RebalancerFixture {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @custom:scenario Trying to set the maximum leverage lower than the USDN protocol's value
-     * @custom:given A value lower than the USDN protocol's maximum leverage
+     * @custom:scenario Trying to set the maximum leverage higher than the USDN protocol's value
+     * @custom:given A value higher than the USDN protocol's maximum leverage
      * @custom:when `setPositionMaxLeverage` is called with this value
      * @custom:then The call reverts with a {RebalancerInvalidMaxLeverage} error
      */
@@ -110,8 +110,9 @@ contract TestRebalancerAdmin is RebalancerFixture {
     }
 
     /**
-     * @custom:scenario Trying to set the maximum leverage lower than the minimum leverage value
-     * @custom:given A value lower than the USDN protocol's maximum leverage
+     * @custom:scenario Trying to set the maximum leverage lower than the rebalancer minimum leverage value defined by
+     * the USDN protocol
+     * @custom:given A value lower than the USDN protocol's minimum leverage
      * @custom:when `setPositionMaxLeverage` is called with this value
      * @custom:then The call reverts with a {RebalancerInvalidMaxLeverage} error
      */
