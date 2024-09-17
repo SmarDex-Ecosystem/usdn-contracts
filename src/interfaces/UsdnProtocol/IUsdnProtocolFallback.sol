@@ -245,6 +245,12 @@ interface IUsdnProtocolFallback {
     function getRebalancer() external view returns (IBaseRebalancer);
 
     /**
+     * @notice Returns the minimum leverage the rebalancer can use
+     * @return minLeverage_ The minimum leverage
+     */
+    function getRebalancerMinLeverage() external view returns (uint256);
+
+    /**
      * @notice Get the lowest leverage used to open a position
      * @return The minimum leverage (with `LEVERAGE_DECIMALS` decimals)
      */
@@ -584,6 +590,14 @@ interface IUsdnProtocolFallback {
      * @param newMinLongPosition The new minimum long position, with _assetDecimals
      */
     function setMinLongPosition(uint256 newMinLongPosition) external;
+
+    /**
+     * @notice Update the minimum leverage the rebalancer can use
+     * @dev `newMinLeverage` must be smaller than the rebalancer's `maxLeverage`
+     * This function can only be called by the owner
+     * @param newMinLeverage The new minimum leverage for the rebalancer
+     */
+    function setRebalancerMinLeverage(uint256 newMinLeverage) external;
 
     /**
      * @notice Set the new minimum leverage for a position

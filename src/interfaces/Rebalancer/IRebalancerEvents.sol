@@ -61,12 +61,6 @@ interface IRebalancerEvents {
     event PositionMaxLeverageUpdated(uint256 newMaxLeverage);
 
     /**
-     * @notice Emitted when the minimum leverage is updated
-     * @param newMinLeverage The new value for the minimum leverage
-     */
-    event PositionMinLeverageUpdated(uint256 newMinLeverage);
-
-    /**
      * @notice Emitted when the minimum amount of assets to be deposited by a user is updated
      * @param minAssetDeposit The new minimum amount of assets to be deposited
      */

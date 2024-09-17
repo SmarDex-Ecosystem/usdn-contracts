@@ -50,12 +50,6 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
     function getPositionMaxLeverage() external view returns (uint256 maxLeverage_);
 
     /**
-     * @notice Returns the minimum leverage a position can have
-     * @return minLeverage_ The minimum leverage
-     */
-    function getPositionMinLeverage() external view returns (uint256);
-
-    /**
      * @notice Returns the amount of assets deposited and waiting for the next version to be opened
      * @return The amount of pending assets
      */
@@ -160,14 +154,6 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
      * @param newMaxLeverage The new max leverage
      */
     function setPositionMaxLeverage(uint256 newMaxLeverage) external;
-
-    /**
-     * @notice Update the minimum leverage a position can have
-     * @dev `newMinLeverage` must be smaller than the max leverage
-     * This function can only be called by the owner
-     * @param newMinLeverage The new minimum leverage
-     */
-    function setPositionMinLeverage(uint256 newMinLeverage) external;
 
     /**
      * @notice Set the various time limits in seconds
