@@ -130,7 +130,6 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
             address(this),
             payable(address(this)),
             type(uint256).max,
-            NO_PERMIT2,
             abi.encode(newPrice),
             EMPTY_PREVIOUS_DATA
         );
@@ -238,7 +237,6 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             abi.encode(newPrice),
             EMPTY_PREVIOUS_DATA
         );

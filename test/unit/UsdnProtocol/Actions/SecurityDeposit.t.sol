@@ -52,7 +52,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             address(this),
             payable(address(this)),
             type(uint256).max,
-            NO_PERMIT2,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -137,7 +136,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -242,7 +240,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             address(this),
             payable(address(this)),
             type(uint256).max,
-            NO_PERMIT2,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -277,7 +274,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             leverage,
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -323,7 +319,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             address(this),
             payable(address(this)),
             type(uint256).max,
-            NO_PERMIT2,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -365,7 +360,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -420,7 +414,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             address(this),
             payable(address(this)),
             type(uint256).max,
-            NO_PERMIT2,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -434,14 +427,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
         vm.prank(USER_1);
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
-            1 ether,
-            DISABLE_SHARES_OUT_MIN,
-            USER_1,
-            USER_1,
-            type(uint256).max,
-            NO_PERMIT2,
-            priceData,
-            previousActionsData
+            1 ether, DISABLE_SHARES_OUT_MIN, USER_1, USER_1, type(uint256).max, priceData, previousActionsData
         );
         _waitDelay();
 
@@ -475,7 +461,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             address(this),
             payable(address(this)),
             type(uint256).max,
-            NO_PERMIT2,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -484,14 +469,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         vm.prank(USER_1);
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
-            1 ether,
-            DISABLE_SHARES_OUT_MIN,
-            USER_1,
-            USER_1,
-            type(uint256).max,
-            NO_PERMIT2,
-            priceData,
-            EMPTY_PREVIOUS_DATA
+            1 ether, DISABLE_SHARES_OUT_MIN, USER_1, USER_1, type(uint256).max, priceData, EMPTY_PREVIOUS_DATA
         );
         _waitBeforeActionablePendingAction();
 
@@ -627,7 +605,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -648,7 +625,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             leverage,
             USER_1,
             USER_1,
-            NO_PERMIT2,
             priceData,
             previousActionsData
         );
@@ -680,7 +656,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -695,7 +670,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             leverage,
             address(this),
             USER_1,
-            NO_PERMIT2,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -843,7 +817,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             address(this),
             payable(address(this)),
             type(uint256).max,
-            NO_PERMIT2,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -924,7 +897,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             address(this),
             payable(address(this)),
             type(uint256).max,
-            NO_PERMIT2,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -946,14 +918,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
         vm.prank(USER_1);
         protocol.initiateDeposit{ value: newSecurityDepositValue }(
-            1 ether,
-            DISABLE_SHARES_OUT_MIN,
-            USER_1,
-            USER_1,
-            type(uint256).max,
-            NO_PERMIT2,
-            priceData,
-            previousActionsData
+            1 ether, DISABLE_SHARES_OUT_MIN, USER_1, USER_1, type(uint256).max, priceData, previousActionsData
         );
         _waitDelay();
 
@@ -1009,7 +974,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             address(this),
             payable(address(this)),
             type(uint256).max,
-            NO_PERMIT2,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -1047,14 +1011,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit StalePendingActionRemoved(address(this), posId);
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
-            1 ether,
-            DISABLE_SHARES_OUT_MIN,
-            USER_1,
-            payable(this),
-            type(uint256).max,
-            NO_PERMIT2,
-            priceData,
-            EMPTY_PREVIOUS_DATA
+            1 ether, DISABLE_SHARES_OUT_MIN, USER_1, payable(this), type(uint256).max, priceData, EMPTY_PREVIOUS_DATA
         );
 
         assertStaleRefundValues();
@@ -1081,7 +1038,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             protocol.getMaxLeverage(),
             USER_1,
             payable(this),
-            NO_PERMIT2,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -1102,14 +1058,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         vm.startPrank(USER_1);
 
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
-            1 ether,
-            DISABLE_SHARES_OUT_MIN,
-            USER_1,
-            USER_1,
-            type(uint256).max,
-            NO_PERMIT2,
-            priceData,
-            EMPTY_PREVIOUS_DATA
+            1 ether, DISABLE_SHARES_OUT_MIN, USER_1, USER_1, type(uint256).max, priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         protocol.validateDeposit(payable(USER_1), priceData, EMPTY_PREVIOUS_DATA);
@@ -1153,7 +1102,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             protocol.getMaxLeverage(),
             USER_1,
             USER_1,
-            NO_PERMIT2,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -1196,7 +1144,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             address(this),
             payable(address(receiverContract)),
             type(uint256).max,
-            NO_PERMIT2,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -1226,7 +1173,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             USER_1,
             payable(address(receiverContract)),
             type(uint256).max,
-            NO_PERMIT2,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -1307,7 +1253,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             protocol.getMaxLeverage(),
             USER_1,
             payable(address(receiverContract)),
-            NO_PERMIT2,
             priceData,
             EMPTY_PREVIOUS_DATA
         );

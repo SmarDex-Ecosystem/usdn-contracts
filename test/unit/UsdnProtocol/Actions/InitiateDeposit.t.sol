@@ -95,7 +95,6 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
             to,
             payable(validator),
             type(uint256).max,
-            NO_PERMIT2,
             currentPrice,
             EMPTY_PREVIOUS_DATA
         );
@@ -151,7 +150,6 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
             address(0),
             payable(address(this)),
             type(uint256).max,
-            NO_PERMIT2,
             abi.encode(uint128(2000 ether)),
             EMPTY_PREVIOUS_DATA
         );
@@ -171,7 +169,6 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
             address(this),
             payable(address(0)),
             type(uint256).max,
-            NO_PERMIT2,
             abi.encode(uint128(2000 ether)),
             EMPTY_PREVIOUS_DATA
         );
@@ -191,7 +188,6 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
             address(this),
             payable(address(this)),
             type(uint256).max,
-            NO_PERMIT2,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -224,7 +220,6 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
             address(this),
             payable(address(this)),
             type(uint256).max,
-            NO_PERMIT2,
             abi.encode(params.initialPrice),
             EMPTY_PREVIOUS_DATA
         );
@@ -256,7 +251,6 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
             address(this),
             payable(address(this)),
             type(uint256).max,
-            NO_PERMIT2,
             abi.encode(params.initialPrice),
             EMPTY_PREVIOUS_DATA
         );
@@ -279,7 +273,6 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
             address(this),
             payable(address(this)),
             type(uint256).max,
-            NO_PERMIT2,
             currentPrice,
             EMPTY_PREVIOUS_DATA
         );
@@ -304,7 +297,6 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
                 address(this),
                 payable(address(this)),
                 type(uint256).max,
-                NO_PERMIT2,
                 currentPrice,
                 EMPTY_PREVIOUS_DATA
             );
@@ -321,7 +313,6 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
             address(this),
             payable(address(this)),
             type(uint256).max,
-            NO_PERMIT2,
             currentPrice,
             EMPTY_PREVIOUS_DATA
         );
@@ -357,7 +348,6 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
             address(this),
             payable(address(this)),
             type(uint256).max,
-            NO_PERMIT2,
             abi.encode(params.initialPrice / 10),
             EMPTY_PREVIOUS_DATA
         );
@@ -388,7 +378,6 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
             address(this),
             payable(address(this)),
             type(uint256).max,
-            NO_PERMIT2,
             abi.encode(uint128(2000 ether)),
             EMPTY_PREVIOUS_DATA
         );

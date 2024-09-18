@@ -303,7 +303,6 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
             USER_3,
             USER_3,
             type(uint256).max,
-            NO_PERMIT2,
             abi.encode(2200 ether),
             previousActionsData
         );
@@ -314,7 +313,6 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
             USER_4,
             USER_4,
             type(uint256).max,
-            NO_PERMIT2,
             abi.encode(2200 ether),
             previousActionsData
         );

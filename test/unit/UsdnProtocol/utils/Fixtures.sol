@@ -31,7 +31,6 @@ import { UsdnProtocolVaultLibrary as Vault } from "../../../../src/UsdnProtocol/
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
-import { Permit2TokenBitfield } from "../../../../src/libraries/Permit2TokenBitfield.sol";
 import { FeeCollector } from "../../../../src/utils/FeeCollector.sol";
 
 /**
@@ -60,8 +59,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         uint256 initialBlock;
         Flags flags;
     }
-
-    Permit2TokenBitfield.Bitfield constant NO_PERMIT2 = Permit2TokenBitfield.Bitfield.wrap(0);
 
     SetUpParams public params;
     SetUpParams public DEFAULT_PARAMS = SetUpParams({
@@ -316,14 +313,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         bytes memory priceData = abi.encode(price);
 
         protocol.initiateDeposit{ value: securityDepositValue }(
-            positionSize,
-            DISABLE_SHARES_OUT_MIN,
-            user,
-            payable(user),
-            type(uint256).max,
-            NO_PERMIT2,
-            priceData,
-            EMPTY_PREVIOUS_DATA
+            positionSize, DISABLE_SHARES_OUT_MIN, user, payable(user), type(uint256).max, priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         if (untilAction == ProtocolAction.InitiateDeposit) return;
@@ -369,7 +359,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             protocol.getMaxLeverage(),
             openParams.user,
             payable(openParams.user),
-            NO_PERMIT2,
             priceData,
             EMPTY_PREVIOUS_DATA
         );

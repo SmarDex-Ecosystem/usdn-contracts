@@ -63,7 +63,6 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             address(this),
             payable(address(this)),
             type(uint256).max,
-            NO_PERMIT2,
             abi.encode(effectivePriceForTick),
             EMPTY_PREVIOUS_DATA
         );
@@ -229,7 +228,6 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             abi.encode(effectivePriceForTick),
             EMPTY_PREVIOUS_DATA
         );
@@ -602,7 +600,6 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             priceData,
             EMPTY_PREVIOUS_DATA
         );

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 import { IUsdnProtocolTypes } from "./IUsdnProtocolTypes.sol";
 
 /**
@@ -25,7 +24,6 @@ interface IUsdnProtocolVault is IUsdnProtocolTypes {
      * @param to The address that will receive the USDN tokens
      * @param validator The address that will validate the deposit
      * @param deadline The deadline for the deposit to be initiated
-     * @param permit2TokenBitfield Whether to use permit2 for transferring assets (first bit) and SDEX (second bit)
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions
      * @return success_ Whether the deposit was initiated
@@ -36,7 +34,6 @@ interface IUsdnProtocolVault is IUsdnProtocolTypes {
         address to,
         address payable validator,
         uint256 deadline,
-        Permit2TokenBitfield.Bitfield permit2TokenBitfield,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_);

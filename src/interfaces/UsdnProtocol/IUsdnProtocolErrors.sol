@@ -208,6 +208,9 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that user would not receive enough prediction tokens compared to the expected amount
     error UsdnProtocolAmountReceivedTooSmall();
 
+    /// @dev Indicates that the payment callback failed
+    error UsdnProtocolPaymentCallbackFailed();
+
     /// @dev Indicates that the deadline for the action has been exceeded
     error UsdnProtocolDeadlineExceeded();
 }
