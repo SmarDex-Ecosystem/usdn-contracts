@@ -146,11 +146,13 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Balanced protocol initialization
      * @custom:given Imbalance checks are 2% for deposit and 2% for open long
+     * @custom:and The minLongPosition setting is at 0
      * @custom:when The deployer initializes the protocol with balanced amounts
      * @custom:then The transaction completes successfully
      */
     function test_checkInitImbalance() public {
         protocol.setExpoImbalanceLimits(200, 200, 0, 0, 0, 0); // 2%
+        protocol.setMinLongPosition(0);
 
         uint128 depositAmount = 100 ether;
         uint128 longAmount = 100 ether;
