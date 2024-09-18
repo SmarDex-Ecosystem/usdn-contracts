@@ -787,7 +787,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     /**
      * @custom:scenario The user initiates a close position with a paused protocol
      * @custom:given A user open position
-     * @custom:given A paused protocol
+     * @custom:and A paused protocol
      * @custom:when The user calls initiateClosePosition
      * @custom:then The call reverts with `EnforcedPause`
      */

@@ -587,7 +587,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
     }
 
     /**
-     * @custom:scenario The user initiates an open position action with a paused protocol
+     * @custom:scenario The user initiates an open position with a paused protocol
      * @custom:given A paused protocol
      * @custom:when The user calls initiateOpenPosition
      * @custom:then The call reverts with `EnforcedPause`

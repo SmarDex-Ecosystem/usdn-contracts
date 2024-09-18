@@ -107,13 +107,13 @@ interface IUsdnProtocolStorage is
     function ADMIN_PROXY_UPGRADE_ROLE() external pure returns (bytes32);
 
     /**
-     * @notice The adminPauserRole role's signature
+     * @notice The adminPauser role's signature
      * @return Get the role signature
      */
     function ADMIN_PAUSER_ROLE() external pure returns (bytes32);
 
     /**
-     * @notice The adminUnpauserRole role's signature
+     * @notice The adminUnpauser role's signature
      * @return Get the role signature
      */
     function ADMIN_UNPAUSER_ROLE() external pure returns (bytes32);

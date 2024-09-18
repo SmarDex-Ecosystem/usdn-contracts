@@ -395,7 +395,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user validates a withdrawal with a paused protocol
+     * @custom:scenario The user validates a withdrawal position with a paused protocol
      * @custom:given A pending withdrawal position
      * @custom:and A paused protocol
      * @custom:when The user calls validateWithdrawal

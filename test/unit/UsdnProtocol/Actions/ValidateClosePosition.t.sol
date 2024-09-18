@@ -821,7 +821,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
     /**
      * @custom:scenario The user validate a close position with a paused protocol
      * @custom:given A user initiated close position
-     * @custom:given A paused protocol
+     * @custom:and A paused protocol
      * @custom:when The user calls validateClosePosition
      * @custom:then The call reverts with `EnforcedPause`
      */

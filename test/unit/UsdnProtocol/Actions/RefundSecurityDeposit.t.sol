@@ -88,7 +88,7 @@ contract TestUsdnProtocolRefundSecurityDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Try to get the security deposit refunded with a paused protocol
+     * @custom:scenario Try to get the security deposit refund with a paused protocol
      * @custom:given A liquidated user pending action
      * @custom:and A paused protocol
      * @custom:when The user calls refundSecurityDeposit
