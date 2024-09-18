@@ -9,9 +9,16 @@ import { IStETH } from "../interfaces/IStETH.sol";
 import { IWstETH } from "../interfaces/IWstETH.sol";
 
 contract MockWstETH is IWstETH, ERC4626, ERC20Permit, Ownable {
+    /// @notice The name of the token
     string private constant NAME = "Mock Wrapped Staked Ether";
+
+    /// @notice The symbol of the token
     string private constant SYMBOL = "wstETH";
 
+    /**
+     * @notice Create an instance of wstETH
+     * @param _underlyingAsset The address of the stETH contract
+     */
     constructor(IStETH _underlyingAsset)
         ERC20(NAME, SYMBOL)
         ERC20Permit(NAME)

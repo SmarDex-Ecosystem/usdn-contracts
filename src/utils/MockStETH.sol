@@ -5,13 +5,17 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { ERC20Burnable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import { ERC20Permit, IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
+import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { IStETH } from "../interfaces/IStETH.sol";
 import { IWstETH } from "../interfaces/IWstETH.sol";
 
 contract MockStETH is IStETH, ERC20Burnable, ERC20Permit, Ownable {
+    /// @notice The name of the token
     string private constant NAME = "Mock Staked Ether";
+
+    /// @notice The symbol of the token
     string private constant SYMBOL = "stETH";
 
     constructor() ERC20(NAME, SYMBOL) ERC20Permit(NAME) Ownable(msg.sender) { }
