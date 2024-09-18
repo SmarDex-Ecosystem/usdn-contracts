@@ -43,9 +43,9 @@ contract TestForkUsdnProtocolInitiateDepositWithFallback is TransferLibrary, Usd
     }
 
     /**
-     * @custom:scenario Initiate a deposit by using fallback without the transfer of Sdex
+     * @custom:scenario Initiate a deposit by using fallback without token transfer
      * @custom:given The user has wstETH and SDEX
-     * @custom:when The user initiates a deposit of `DEPOSIT_AMOUNT` with a contract that no transfer Sdex
+     * @custom:when The user initiates a deposit of `DEPOSIT_AMOUNT` with a contract that no transfer tokens
      * @custom:then the protocol revert with `UsdnProtocolFallbackTransferFailed` error
      */
     function test_ForkFFIInitiateDepositFallbackWithoutSdexTransfer() public {
