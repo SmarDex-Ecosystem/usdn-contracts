@@ -529,6 +529,8 @@ interface IUsdnProtocolTypes {
      * @param setOptionsManager The manager's address to set the protocol options that do not impact the usage of the
      * protocol
      * @param proxyUpgradeManager The manager's address to upgrade the protocol implementation
+     * @param pauserManager The manager's address to pause the protocol
+     * @param unpauserManager The manager's address to unpause the protocol
      */
     struct Managers {
         address setExternalManager;
@@ -537,6 +539,8 @@ interface IUsdnProtocolTypes {
         address setUsdnParamsManager;
         address setOptionsManager;
         address proxyUpgradeManager;
+        address pauserManager;
+        address unpauserManager;
     }
 
     /**

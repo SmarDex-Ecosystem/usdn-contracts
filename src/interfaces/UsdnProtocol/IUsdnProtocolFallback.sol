@@ -536,6 +536,12 @@ interface IUsdnProtocolFallback {
      */
     function getFallbackAddress() external view returns (address);
 
+    /**
+     * @notice Whether the contract is paused
+     * @return True if it's paused otherwise false
+     */
+    function isPaused() external view returns (bool);
+
     /* -------------------------------------------------------------------------- */
     /*                                   Setters                                  */
     /* -------------------------------------------------------------------------- */
@@ -716,4 +722,16 @@ interface IUsdnProtocolFallback {
      * When calling `liquidate`, this limit is ignored and the check is always performed
      */
     function setUsdnRebaseInterval(uint256 newInterval) external;
+
+    /**
+     * @notice Pauses related USDN protocol functions
+     * @dev Pauses simultaneously all initiate/validate, refundSecurityDeposit and transferPositionOwnership functions
+     */
+    function pause() external;
+
+    /**
+     * @notice Unpauses related USDN protocol functions
+     * @dev Unpauses simultaneously all initiate/validate, refundSecurityDeposit and transferPositionOwnership functions
+     */
+    function unpause() external;
 }

@@ -15,6 +15,7 @@ import {
     CHAINLINK_ORACLE_GAS,
     CRITICAL_FUNCTIONS_MANAGER,
     DEPLOYER,
+    PAUSER_MANAGER,
     PROXY_UPGRADE_MANAGER,
     PYTH_ETH_USD,
     PYTH_ORACLE,
@@ -23,6 +24,7 @@ import {
     SET_OPTIONS_MANAGER,
     SET_PROTOCOL_PARAMS_MANAGER,
     SET_USDN_PARAMS_MANAGER,
+    UNPAUSER_MANAGER,
     WSTETH
 } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
@@ -90,7 +92,9 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         setProtocolParamsManager: SET_PROTOCOL_PARAMS_MANAGER,
         setUsdnParamsManager: SET_USDN_PARAMS_MANAGER,
         setOptionsManager: SET_OPTIONS_MANAGER,
-        proxyUpgradeManager: PROXY_UPGRADE_MANAGER
+        proxyUpgradeManager: PROXY_UPGRADE_MANAGER,
+        pauserManager: PAUSER_MANAGER,
+        unpauserManager: UNPAUSER_MANAGER
     });
 
     Usdn public usdn;
@@ -164,7 +168,9 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
                 setProtocolParamsManager: ADMIN,
                 setUsdnParamsManager: ADMIN,
                 setOptionsManager: ADMIN,
-                proxyUpgradeManager: ADMIN
+                proxyUpgradeManager: ADMIN,
+                pauserManager: ADMIN,
+                unpauserManager: ADMIN
             });
         }
 

@@ -44,6 +44,8 @@ contract UsdnProtocolImpl is
         _setRoleAdmin(SET_USDN_PARAMS_ROLE, ADMIN_SET_USDN_PARAMS_ROLE);
         _setRoleAdmin(SET_OPTIONS_ROLE, ADMIN_SET_OPTIONS_ROLE);
         _setRoleAdmin(PROXY_UPGRADE_ROLE, ADMIN_PROXY_UPGRADE_ROLE);
+        _setRoleAdmin(PAUSER_ROLE, ADMIN_PAUSER_ROLE);
+        _setRoleAdmin(UNPAUSER_ROLE, ADMIN_UNPAUSER_ROLE);
         _grantRole(SET_EXTERNAL_ROLE, managers.setExternalManager);
         _grantRole(CRITICAL_FUNCTIONS_ROLE, managers.criticalFunctionsManager);
         _grantRole(SET_PROTOCOL_PARAMS_ROLE, managers.setProtocolParamsManager);

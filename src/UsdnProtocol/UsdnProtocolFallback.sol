@@ -52,7 +52,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function refundSecurityDeposit(address payable validator) external {
+    function refundSecurityDeposit(address payable validator) external whenNotPaused {
         uint256 securityDepositValue = Core._removeStalePendingAction(s, validator);
         if (securityDepositValue > 0) {
             Utils._refundEther(securityDepositValue, validator);
@@ -448,6 +448,11 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
         return s._protocolFallbackAddr;
     }
 
+    /// @inheritdoc IUsdnProtocolFallback
+    function isPaused() external view returns (bool) {
+        return paused();
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                              SET_EXTERNAL_ROLE                             */
     /* -------------------------------------------------------------------------- */
@@ -761,5 +766,23 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     function setUsdnRebaseInterval(uint256 newInterval) external onlyRole(SET_USDN_PARAMS_ROLE) {
         s._usdnRebaseInterval = newInterval;
         emit IUsdnProtocolEvents.UsdnRebaseIntervalUpdated(newInterval);
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                            PAUSER_ROLE                                     */
+    /* -------------------------------------------------------------------------- */
+
+    /// @inheritdoc IUsdnProtocolFallback
+    function pause() external onlyRole(PAUSER_ROLE) {
+        _pause();
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                            UNPAUSER_ROLE                                     */
+    /* -------------------------------------------------------------------------- */
+
+    /// @inheritdoc IUsdnProtocolFallback
+    function unpause() external onlyRole(UNPAUSER_ROLE) {
+        _unpause();
     }
 }
