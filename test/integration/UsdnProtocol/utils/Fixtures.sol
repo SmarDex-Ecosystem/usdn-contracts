@@ -295,6 +295,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             DISABLE_SHARES_OUT_MIN,
             payable(address(this)),
             payable(address(this)),
+            type(uint256).max,
             NO_PERMIT2,
             "",
             EMPTY_PREVIOUS_DATA

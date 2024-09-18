@@ -41,6 +41,7 @@ contract TestForkUsdnProtocolInitiateDepositPermit2 is UsdnProtocolBaseIntegrati
             DISABLE_SHARES_OUT_MIN,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             Permit2TokenBitfield.Bitfield.wrap(Permit2TokenBitfield.ASSET_MASK),
             "",
             EMPTY_PREVIOUS_DATA
@@ -64,6 +65,7 @@ contract TestForkUsdnProtocolInitiateDepositPermit2 is UsdnProtocolBaseIntegrati
             DISABLE_SHARES_OUT_MIN,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             Permit2TokenBitfield.Bitfield.wrap(Permit2TokenBitfield.SDEX_MASK),
             "",
             EMPTY_PREVIOUS_DATA
@@ -88,6 +90,7 @@ contract TestForkUsdnProtocolInitiateDepositPermit2 is UsdnProtocolBaseIntegrati
             DISABLE_SHARES_OUT_MIN,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             Permit2TokenBitfield.Bitfield.wrap(Permit2TokenBitfield.ASSET_MASK | Permit2TokenBitfield.SDEX_MASK),
             "",
             EMPTY_PREVIOUS_DATA
