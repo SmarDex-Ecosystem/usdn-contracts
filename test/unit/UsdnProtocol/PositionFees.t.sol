@@ -312,6 +312,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
             DISABLE_AMOUNT_OUT_MIN,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(price),
             EMPTY_PREVIOUS_DATA
         );
@@ -348,6 +349,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
             DISABLE_AMOUNT_OUT_MIN,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             currentPrice,
             EMPTY_PREVIOUS_DATA
         );
@@ -438,6 +440,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
             DISABLE_AMOUNT_OUT_MIN,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             currentPrice,
             EMPTY_PREVIOUS_DATA
         );
@@ -455,6 +458,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
             DISABLE_AMOUNT_OUT_MIN,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             currentPrice,
             EMPTY_PREVIOUS_DATA
         );

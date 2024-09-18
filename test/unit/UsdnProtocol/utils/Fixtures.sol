@@ -325,7 +325,13 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         uint256 sharesOf = usdn.sharesOf(user);
         usdn.approve(address(protocol), usdn.convertToTokensRoundUp(sharesOf));
         protocol.initiateWithdrawal{ value: securityDepositValue }(
-            uint152(sharesOf), DISABLE_AMOUNT_OUT_MIN, user, payable(user), priceData, EMPTY_PREVIOUS_DATA
+            uint152(sharesOf),
+            DISABLE_AMOUNT_OUT_MIN,
+            user,
+            payable(user),
+            type(uint256).max,
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 

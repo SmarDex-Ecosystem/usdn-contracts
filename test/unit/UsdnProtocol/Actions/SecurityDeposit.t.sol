@@ -78,7 +78,13 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         // we initiate a 1 wei withdrawal
         usdn.approve(address(protocol), 1);
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(
-            1, DISABLE_AMOUNT_OUT_MIN, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            1,
+            DISABLE_AMOUNT_OUT_MIN,
+            address(this),
+            payable(address(this)),
+            type(uint256).max,
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -255,7 +261,13 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         vm.expectRevert(UsdnProtocolSecurityDepositTooLow.selector);
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE - 1 }(
-            1, DISABLE_AMOUNT_OUT_MIN, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            1,
+            DISABLE_AMOUNT_OUT_MIN,
+            address(this),
+            payable(address(this)),
+            type(uint256).max,
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -338,7 +350,13 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         usdn.approve(address(protocol), 1);
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE + 100 }(
-            1, DISABLE_AMOUNT_OUT_MIN, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            1,
+            DISABLE_AMOUNT_OUT_MIN,
+            address(this),
+            payable(address(this)),
+            type(uint256).max,
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -508,7 +526,13 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         // we initiate a withdrawal for 1e18 shares of USDN
         usdn.approve(address(protocol), 2);
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(
-            1e18, DISABLE_AMOUNT_OUT_MIN, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            1e18,
+            DISABLE_AMOUNT_OUT_MIN,
+            address(this),
+            payable(address(this)),
+            type(uint256).max,
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
         _waitBeforeActionablePendingAction();
 
@@ -522,7 +546,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(
-            1e18, DISABLE_AMOUNT_OUT_MIN, USER_1, USER_1, priceData, previousActionsData
+            1e18, DISABLE_AMOUNT_OUT_MIN, USER_1, USER_1, type(uint256).max, priceData, previousActionsData
         );
 
         _waitDelay();
@@ -558,7 +582,13 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         // we initiate a withdrawal for 1e18 shares of USDN
         usdn.approve(address(protocol), 2);
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(
-            1e18, DISABLE_AMOUNT_OUT_MIN, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            1e18,
+            DISABLE_AMOUNT_OUT_MIN,
+            address(this),
+            payable(address(this)),
+            type(uint256).max,
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -567,7 +597,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         vm.startPrank(USER_1);
         usdn.approve(address(protocol), 2);
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(
-            1e18, DISABLE_AMOUNT_OUT_MIN, USER_1, USER_1, priceData, EMPTY_PREVIOUS_DATA
+            1e18, DISABLE_AMOUNT_OUT_MIN, USER_1, USER_1, type(uint256).max, priceData, EMPTY_PREVIOUS_DATA
         );
         _waitBeforeActionablePendingAction();
 
@@ -847,7 +877,13 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         usdn.approve(address(protocol), 1);
         protocol.initiateWithdrawal{ value: newSecurityDepositValue }(
-            1, DISABLE_AMOUNT_OUT_MIN, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            1,
+            DISABLE_AMOUNT_OUT_MIN,
+            address(this),
+            payable(address(this)),
+            type(uint256).max,
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -1074,6 +1110,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             DISABLE_AMOUNT_OUT_MIN,
             USER_1,
             payable(this),
+            type(uint256).max,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -1212,7 +1249,13 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         usdn.approve(address(protocol), 1);
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(
-            1, DISABLE_AMOUNT_OUT_MIN, USER_1, payable(address(receiverContract)), priceData, EMPTY_PREVIOUS_DATA
+            1,
+            DISABLE_AMOUNT_OUT_MIN,
+            USER_1,
+            payable(address(receiverContract)),
+            type(uint256).max,
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
