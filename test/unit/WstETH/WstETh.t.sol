@@ -5,7 +5,7 @@ import { USER_1 } from "../../utils/Constants.sol";
 import { WstEthFixture } from "./utils/Fixtures.sol";
 
 /**
- * @custom:feature Test functions in `StEth`
+ * @custom:feature Test functions in `wstEth`
  */
 contract TestWstEth is WstEthFixture {
     function setUp() public override {
