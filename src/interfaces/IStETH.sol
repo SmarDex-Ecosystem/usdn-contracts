@@ -39,5 +39,5 @@ interface IStETH is IERC20, IERC20Permit {
      * @notice Sweep ETH from the contract (only for owner)
      * @param to The account to sweep ETH to
      */
-    function sweep(address to) external;
+    function sweep(address payable to) external;
 }
