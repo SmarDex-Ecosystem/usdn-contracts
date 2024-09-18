@@ -13,12 +13,21 @@ abstract contract UsdnProtocolVault is UsdnProtocolStorage, IUsdnProtocolVault {
         uint256 sharesOutMin,
         address to,
         address payable validator,
+        uint256 deadline,
         Permit2TokenBitfield.Bitfield permit2TokenBitfield,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (bool success_) {
         return Vault.initiateDeposit(
-            s, amount, sharesOutMin, to, validator, permit2TokenBitfield, currentPriceData, previousActionsData
+            s,
+            amount,
+            sharesOutMin,
+            to,
+            validator,
+            deadline,
+            permit2TokenBitfield,
+            currentPriceData,
+            previousActionsData
         );
     }
 

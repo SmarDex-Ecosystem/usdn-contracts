@@ -24,6 +24,7 @@ interface IUsdnProtocolVault is IUsdnProtocolTypes {
      * revert
      * @param to The address that will receive the USDN tokens
      * @param validator The address that will validate the deposit
+     * @param deadline The deadline for the deposit to be initiated
      * @param permit2TokenBitfield Whether to use permit2 for transferring assets (first bit) and SDEX (second bit)
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions
@@ -34,6 +35,7 @@ interface IUsdnProtocolVault is IUsdnProtocolTypes {
         uint256 sharesOutMin,
         address to,
         address payable validator,
+        uint256 deadline,
         Permit2TokenBitfield.Bitfield permit2TokenBitfield,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData

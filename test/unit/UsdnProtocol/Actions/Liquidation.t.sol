@@ -62,6 +62,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             DISABLE_SHARES_OUT_MIN,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             NO_PERMIT2,
             abi.encode(effectivePriceForTick),
             EMPTY_PREVIOUS_DATA

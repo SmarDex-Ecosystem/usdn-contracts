@@ -104,10 +104,14 @@ library UsdnProtocolVaultLibrary {
         uint256 sharesOutMin,
         address to,
         address payable validator,
+        uint256 deadline,
         Permit2TokenBitfield.Bitfield permit2TokenBitfield,
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData
     ) external returns (bool success_) {
+        if (block.timestamp > deadline) {
+            revert IUsdnProtocolErrors.UsdnProtocolDeadlineExceeded();
+        }
         uint64 securityDepositValue = s._securityDepositValue;
         if (msg.value < securityDepositValue) {
             revert IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow();
