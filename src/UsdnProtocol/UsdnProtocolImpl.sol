@@ -52,6 +52,8 @@ contract UsdnProtocolImpl is
         _grantRole(SET_USDN_PARAMS_ROLE, managers.setUsdnParamsManager);
         _grantRole(SET_OPTIONS_ROLE, managers.setOptionsManager);
         _grantRole(PROXY_UPGRADE_ROLE, managers.proxyUpgradeManager);
+        _grantRole(PAUSER_ROLE, managers.pauserManager);
+        _grantRole(UNPAUSER_ROLE, managers.unpauserManager);
 
         // parameters
         s._minLeverage = 10 ** Constants.LEVERAGE_DECIMALS + 10 ** 12;
