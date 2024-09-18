@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import { IStETH } from "../interfaces/IStEth.sol";
+import { IStETH } from "../interfaces/IStETH.sol";
 import { IWstETH } from "../interfaces/IWstETH.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { ERC20Burnable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";

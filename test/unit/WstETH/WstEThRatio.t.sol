@@ -13,6 +13,7 @@ contract TestWstEthRatio is WstEthFixture {
         deal(USER_1, 1 ether);
         stETH.mint(USER_1, 1 ether);
         (bool success,) = payable(wstETH).call{ value: 1 ether }("");
+        assertTrue(success);
         wstETH.transfer(USER_1, 1 ether);
     }
 
