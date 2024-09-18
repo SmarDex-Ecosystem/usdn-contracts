@@ -625,7 +625,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Call the fallback function of the external contract to transfer the token and verify balance
+     * @notice Call back the msg.sender to transfer assets and check that they were received
      * @param token The token to transfer
      * @param amount The amount to transfer
      * @param to The address to transfer

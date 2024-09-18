@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 import { TransferLibrary } from "./utils/TransferLibrary.sol";
 
@@ -24,16 +26,20 @@ contract TestForkUsdnProtocolInitiateDepositWithFallback is TransferLibrary, Usd
      * @custom:given The user has wstETH and SDEX
      * @custom:when The user initiates a deposit of `DEPOSIT_AMOUNT` with a contract that has fallback to transfer
      * tokens
-     * @custom:then The protocol receives `DEPOSIT_AMOUNT` wstETH
+     * @custom:then The protocol receives `DEPOSIT_AMOUNT` wstETH and dead address receives SDEX
      */
     function test_ForkFFIInitiateDepositWithFallback() public {
         transferActive = true;
         uint256 balanceBefore = wstETH.balanceOf(address(protocol));
+        uint256 balanceSdexBefore = sdex.balanceOf(address(this));
+        uint256 deadBalanceSdexBefore = sdex.balanceOf(Constants.DEAD_ADDRESS);
         bool success = protocol.initiateDeposit{ value: protocol.getSecurityDepositValue() }(
             DEPOSIT_AMOUNT, DISABLE_SHARES_OUT_MIN, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA
         );
         assertTrue(success);
         assertEq(wstETH.balanceOf(address(protocol)), balanceBefore + DEPOSIT_AMOUNT);
+        assertLt(sdex.balanceOf(address(this)), balanceSdexBefore);
+        assertGt(sdex.balanceOf(Constants.DEAD_ADDRESS), deadBalanceSdexBefore);
     }
 
     /**

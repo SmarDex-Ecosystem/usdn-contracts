@@ -5,8 +5,7 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 /**
- * @notice This interface can be implemented by contracts that wish to transfer tokens during initiates
- * functions
+ * @notice This interface can be implemented by contracts that wish to transfer tokens during initiate actions
  * @dev The contract must implement the ERC-165 interface detection mechanism
  */
 interface IRouterFallback is IERC165 {

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
-import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
@@ -649,7 +648,7 @@ library UsdnProtocolVaultLibrary {
 
         if (ERC165Checker.supportsInterface(msg.sender, type(IRouterFallback).interfaceId)) {
             if (data.sdexToBurn > 0) {
-                Utils.transferWithFallback(s._sdex, data.sdexToBurn, address(this));
+                Utils.transferWithFallback(s._sdex, data.sdexToBurn, Constants.DEAD_ADDRESS);
             }
             Utils.transferWithFallback(s._asset, params.amount, address(this));
         } else {
