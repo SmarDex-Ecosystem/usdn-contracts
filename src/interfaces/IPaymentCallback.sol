@@ -15,5 +15,5 @@ interface IPaymentCallback is IERC165 {
      * @param amount The amount to transfer
      * @param to The address to transfer
      */
-    function transferWithFallback(IERC20Metadata token, uint256 amount, address to) external;
+    function transferCallback(IERC20Metadata token, uint256 amount, address to) external;
 }

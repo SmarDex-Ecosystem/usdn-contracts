@@ -10,7 +10,7 @@ abstract contract TransferLibrary is IPaymentCallback, ERC165 {
     bool public transferActive;
 
     /// @inheritdoc IPaymentCallback
-    function transferWithFallback(IERC20Metadata token, uint256 amount, address to) external {
+    function transferCallback(IERC20Metadata token, uint256 amount, address to) external {
         if (transferActive) {
             token.transfer(to, amount);
         }

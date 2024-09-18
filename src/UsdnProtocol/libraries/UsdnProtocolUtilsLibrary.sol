@@ -630,9 +630,9 @@ library UsdnProtocolUtilsLibrary {
      * @param amount The amount to transfer
      * @param to The address to transfer
      */
-    function transferWithFallback(IERC20Metadata token, uint256 amount, address to) internal {
+    function transferCallback(IERC20Metadata token, uint256 amount, address to) internal {
         uint256 balanceBefore = token.balanceOf(to);
-        IPaymentCallback(msg.sender).transferWithFallback(token, amount, to);
+        IPaymentCallback(msg.sender).transferCallback(token, amount, to);
         uint256 balanceAfter = token.balanceOf(to);
         if (balanceAfter != balanceBefore + amount) {
             revert IUsdnProtocolErrors.UsdnProtocolPaymentCallbackFailed();

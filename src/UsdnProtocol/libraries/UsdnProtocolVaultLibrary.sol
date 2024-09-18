@@ -648,9 +648,9 @@ library UsdnProtocolVaultLibrary {
 
         if (ERC165Checker.supportsInterface(msg.sender, type(IPaymentCallback).interfaceId)) {
             if (data.sdexToBurn > 0) {
-                Utils.transferWithFallback(s._sdex, data.sdexToBurn, Constants.DEAD_ADDRESS);
+                Utils.transferCallback(s._sdex, data.sdexToBurn, Constants.DEAD_ADDRESS);
             }
-            Utils.transferWithFallback(s._asset, params.amount, address(this));
+            Utils.transferCallback(s._asset, params.amount, address(this));
         } else {
             if (data.sdexToBurn > 0) {
                 // slither-disable-next-line arbitrary-send-erc20
