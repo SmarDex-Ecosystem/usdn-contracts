@@ -135,7 +135,7 @@ mainnet = { key = "${ETHERSCAN_API_KEY}" }
 #                                 Dependencies                                 #
 # ---------------------------------------------------------------------------- #
 
-[profile.soldeer]
+[soldeer]
 remappings_generate = false
 
 [dependencies]
