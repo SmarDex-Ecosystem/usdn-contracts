@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+
 import { ADMIN, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
@@ -571,6 +573,29 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
      */
     function test_RevertWhen_initiateOpenPositionLeverageLowerThanExpected() public {
         vm.expectRevert(UsdnProtocolLeverageTooHigh.selector);
+        protocol.initiateOpenPosition(
+            1 ether,
+            1500 ether,
+            type(uint128).max,
+            2 * 10 ** Constants.LEVERAGE_DECIMALS,
+            address(this),
+            payable(address(this)),
+            NO_PERMIT2,
+            abi.encode(CURRENT_PRICE),
+            EMPTY_PREVIOUS_DATA
+        );
+    }
+
+    /**
+     * @custom:scenario The user initiates an open position action with a paused protocol
+     * @custom:given A paused protocol
+     * @custom:when The user calls initiateOpenPosition
+     * @custom:then The call reverts with `EnforcedPause`
+     */
+    function test_RevertWhen_initiateOpenPositionPaused() public {
+        _pauseProtocol(ADMIN);
+
+        vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
         protocol.initiateOpenPosition(
             1 ether,
             1500 ether,

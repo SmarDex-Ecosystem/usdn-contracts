@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
@@ -815,6 +816,29 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         assertEq(USER_1.balance, balanceUserBefore, "validator balance after refund");
         assertEq(address(this).balance, balanceContractBefore, "contract balance after refund");
+    }
+
+    /**
+     * @custom:scenario The user validate a close position with a paused protocol
+     * @custom:given A user initiated close position
+     * @custom:given A paused protocol
+     * @custom:when The user calls validateClosePosition
+     * @custom:then The call reverts with `EnforcedPause`
+     */
+    function test_RevertWhen_validateClosePositionPaused() public {
+        setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.InitiateClosePosition,
+                positionSize: POSITION_AMOUNT,
+                desiredLiqPrice: params.initialPrice - (params.initialPrice / 5),
+                price: params.initialPrice
+            })
+        );
+
+        _pauseProtocol(ADMIN);
+        vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
+        protocol.validateClosePosition(payable(address(this)), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA);
     }
 
     /// @dev Allow refund tests

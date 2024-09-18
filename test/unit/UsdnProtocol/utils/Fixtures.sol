@@ -498,4 +498,18 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
     function _waitMockMiddlewarePriceDelay() internal {
         skip(30 minutes - oracleMiddleware.getValidationDelay());
     }
+
+    /// @dev Pause the protocol
+    function _pauseProtocol(address pauser) internal {
+        vm.prank(pauser);
+        protocol.pause();
+        assertTrue(protocol.isPaused(), "The protocol should be paused");
+    }
+
+    /// @dev Unpause the protocol
+    function _unpauseProtocol(address unpauser) internal {
+        vm.prank(unpauser);
+        protocol.unpause();
+        assertFalse(protocol.isPaused(), "The protocol should not be paused");
+    }
 }

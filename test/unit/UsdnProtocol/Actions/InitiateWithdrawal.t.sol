@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import { USER_1 } from "../../../utils/Constants.sol";
+import { ADMIN, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
@@ -268,6 +269,25 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
             address(this),
             payable(address(this)),
             currentPrice,
+            EMPTY_PREVIOUS_DATA
+        );
+    }
+
+    /**
+     * @custom:scenario The user initiates a withdrawal action with a paused protocol
+     * @custom:given A paused protocol
+     * @custom:when The user calls initiateWithdrawal
+     * @custom:then The call reverts with `EnforcedPause`
+     */
+    function test_RevertWhen_initiateWithdrawalPaused() public {
+        _pauseProtocol(ADMIN);
+        vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
+        protocol.initiateWithdrawal(
+            USDN_AMOUNT,
+            type(uint256).max,
+            address(this),
+            payable(address(this)),
+            abi.encode(uint128(2000 ether)),
             EMPTY_PREVIOUS_DATA
         );
     }

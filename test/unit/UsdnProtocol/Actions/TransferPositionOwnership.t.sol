@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { USER_1 } from "../../../utils/Constants.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+
+import { ADMIN, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 import { OwnershipCallbackHandler } from "../utils/OwnershipCallbackHandler.sol";
 
@@ -219,5 +221,28 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
             abi.encodeWithSelector(UsdnProtocolOutdatedTick.selector, posId.tickVersion + 1, posId.tickVersion)
         );
         protocol.transferPositionOwnership(posId, USER_1);
+    }
+
+    /**
+     * @custom:scenario Try to transfer a user position ownership with a paused protocol
+     * @custom:given A user open position
+     * @custom:and A paused protocol
+     * @custom:when The user calls transferPositionOwnership
+     * @custom:then The call reverts with `EnforcedPause`
+     */
+    function test_RevertWhen_transferOwnershipPaused() public {
+        PositionId memory posId = setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: params.initialPrice / 2,
+                price: params.initialPrice
+            })
+        );
+
+        _pauseProtocol(ADMIN);
+        vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
+        protocol.transferPositionOwnership(posId, address(0));
     }
 }
