@@ -100,12 +100,11 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, Ownable2Step {
         if (uint8(rebalancerAction) > uint8(Types.RebalancerAction.NoCloseNoOpen)) {
             gasUsed += rewardsParameters.rebalancerGasUsed;
         }
-        gasUsed = gasUsed * rewardsParameters.gasMultiplierBps / BPS_DIVISOR;
 
         uint256 totalRewardETH =
-            _calcGasPrice(rewardsParameters.baseFeeOffset) * gasUsed + rewardsParameters.fixedReward;
-        totalRewardETH +=
-            _calcPositionSizeBonus(liquidatedTicks, currentPrice, rewardsParameters.positionBonusMultiplierBps);
+            _calcGasPrice(rewardsParameters.baseFeeOffset) * gasUsed * rewardsParameters.gasMultiplierBps / BPS_DIVISOR;
+        totalRewardETH += rewardsParameters.fixedReward
+            + _calcPositionSizeBonus(liquidatedTicks, currentPrice, rewardsParameters.positionBonusMultiplierBps);
         if (totalRewardETH > rewardsParameters.maxReward) {
             totalRewardETH = rewardsParameters.maxReward;
         }
