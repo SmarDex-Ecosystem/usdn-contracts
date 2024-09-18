@@ -213,7 +213,7 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
         );
 
         _waitBeforeLiquidation();
-        protocol.liquidate(abi.encode(params.initialPrice / 3), 10);
+        protocol.liquidate(abi.encode(params.initialPrice / 3));
 
         vm.expectRevert(
             abi.encodeWithSelector(UsdnProtocolOutdatedTick.selector, posId.tickVersion + 1, posId.tickVersion)

@@ -21,7 +21,9 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
 
     function getQueueItem(uint128 rawIndex) external view returns (PendingAction memory);
 
-    function mockLiquidate(bytes calldata currentPriceData, uint16 iterations)
+    function mockLiquidate(bytes calldata currentPriceData) external payable returns (uint256 liquidatedPositions_);
+
+    function liquidateForGasUsage(bytes calldata currentPriceData, uint16 iterations)
         external
         payable
         returns (uint256 liquidatedPositions_);

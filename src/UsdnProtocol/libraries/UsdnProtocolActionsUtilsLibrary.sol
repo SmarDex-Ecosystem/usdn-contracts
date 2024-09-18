@@ -27,7 +27,7 @@ library UsdnProtocolActionsUtilsLibrary {
     /* -------------------------------------------------------------------------- */
 
     /// @notice See {IUsdnProtocolActions}
-    function liquidate(Types.Storage storage s, bytes calldata currentPriceData, uint16 iterations)
+    function liquidate(Types.Storage storage s, bytes calldata currentPriceData)
         external
         returns (uint256 liquidatedPositions_)
     {
@@ -39,7 +39,7 @@ library UsdnProtocolActionsUtilsLibrary {
             s,
             currentPrice.neutralPrice,
             currentPrice.timestamp,
-            iterations,
+            Constants.MAX_LIQUIDATION_ITERATION,
             true,
             Types.ProtocolAction.Liquidation,
             currentPriceData

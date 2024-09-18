@@ -28,7 +28,7 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
      * @custom:and They are both below the gas price limit
      * @custom:and The exchange rate for stETH per wstETH is 1.15
      * @custom:then It should return an amount of wstETH based on the gas used by
-     * UsdnProtocolActions.liquidate(bytes,uint16)
+     * UsdnProtocolActions.liquidate(bytes)
      */
     function test_getLiquidationRewardsFor1Tick() public view {
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(
@@ -76,7 +76,7 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
      * @custom:and They are both below the gas price limit
      * @custom:and The exchange rate for stETH per wstETH is 1.15
      * @custom:then It should return more wstETH than for 1 tick as more gas was used by
-     * UsdnProtocolActions.liquidate(bytes,uint16)
+     * UsdnProtocolActions.liquidate(bytes)
      */
     function test_getLiquidationRewardsFor3Ticks() public view {
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(
@@ -121,7 +121,7 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
      * @custom:and 1 tick was liquidated
      * @custom:and The exchange rate for stETH per wstETH is 1.15
      * @custom:then It should return an amount of wstETH based on the gas used by
-     * UsdnProtocolActions.liquidate(bytes,uint16) and the gas price from the oracle
+     * UsdnProtocolActions.liquidate(bytes) and the gas price from the oracle
      */
     function test_getLiquidationRewardsWithOracleGasPrice() public {
         mockChainlinkOnChain.setLatestRoundData(1, 15 gwei, block.timestamp, 1);
@@ -149,7 +149,7 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
      * @custom:and 1 tick was liquidated
      * @custom:and The exchange rate for stETH per wstETH is 1.15
      * @custom:then It should return an amount of wstETH based on the gas used by
-     * UsdnProtocolActions.liquidate(bytes,uint16) and the gas price from tx.gasPrice
+     * UsdnProtocolActions.liquidate(bytes) and the gas price from tx.gasPrice
      */
     function test_getLiquidationRewardsWithTxGasPrice() public {
         vm.txGasPrice(20 gwei);

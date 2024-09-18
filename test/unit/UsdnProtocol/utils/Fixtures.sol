@@ -402,7 +402,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
 
         // the price drops to $1500 and the position gets liquidated
         _waitBeforeLiquidation();
-        protocol.liquidate(abi.encode(uint128(1500 ether)), 10);
+        protocol.liquidate(abi.encode(uint128(1500 ether)));
 
         // the pending action is stale
         uint256 currentTickVersion = protocol.getTickVersion(posId_.tick);

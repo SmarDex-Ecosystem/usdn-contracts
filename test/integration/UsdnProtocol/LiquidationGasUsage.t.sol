@@ -149,7 +149,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
     }
 
     /**
-     * @custom:scenario The gas usage of UsdnProtocolActions.liquidate(bytes,uint16) matches the values set in
+     * @custom:scenario The gas usage of UsdnProtocolActions.liquidate(bytes) matches the values set in
      * LiquidationRewardsManager.getRewardsParameters
      * @custom:given There are one or more ticks that can be liquidated
      * @custom:and No rebase occurs
@@ -161,7 +161,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
     }
 
     /**
-     * @custom:scenario The gas usage of UsdnProtocolActions.liquidate(bytes,uint16) matches the values set in
+     * @custom:scenario The gas usage of UsdnProtocolActions.liquidate(bytes) matches the values set in
      * LiquidationRewardsManager.getRewardsParameters
      * @custom:given There are one or more ticks that can be liquidated
      * @custom:and A rebase occurs
@@ -199,7 +199,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
             }
 
             uint256 startGas = gasleft();
-            uint256 positionsLiquidated = protocol.liquidate{ value: oracleFee }(data, ticksToLiquidate);
+            uint256 positionsLiquidated = protocol.liquidateForGasUsage{ value: oracleFee }(data, ticksToLiquidate);
             uint256 gasUsed = startGas - gasleft();
             gasUsedArray[ticksToLiquidate - 1] = gasUsed;
 
@@ -239,7 +239,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
     }
 
     /**
-     * @custom:scenario The gas usage of UsdnProtocolActions.liquidate(bytes,uint16) matches the values set in
+     * @custom:scenario The gas usage of UsdnProtocolActions.liquidate(bytes) matches the values set in
      * LiquidationRewardsManager.getRewardsParameters
      * @custom:given There are 3 ticks that can be liquidated
      * @custom:and A rebalancer trigger occurs
@@ -272,7 +272,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
             }
 
             uint256 startGas = gasleft();
-            uint256 positionsLiquidated = protocol.liquidate{ value: oracleFee }(data, ticksToLiquidate);
+            uint256 positionsLiquidated = protocol.liquidateForGasUsage{ value: oracleFee }(data, ticksToLiquidate);
             uint256 gasUsed = startGas - gasleft();
             gasUsedArray[i] = gasUsed;
 

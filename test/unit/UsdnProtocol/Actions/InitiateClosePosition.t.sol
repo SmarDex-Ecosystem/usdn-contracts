@@ -190,7 +190,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         // we need wait delay to make the new price data fresh
         _waitDelay();
         // Liquidate the position
-        protocol.mockLiquidate(priceData, 1);
+        protocol.mockLiquidate(priceData);
         (, uint256 version) = protocol.i_tickHash(posId.tick);
         assertGt(version, posId.tickVersion, "The tick should have been liquidated");
 

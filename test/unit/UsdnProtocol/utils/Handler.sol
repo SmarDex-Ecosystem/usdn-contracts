@@ -13,6 +13,9 @@ import { UsdnProtocolActionsLongLibrary as ActionsLong } from
     "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from
     "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsUtilsLibrary.sol";
+
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
@@ -91,16 +94,36 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
      * update. Call `_waitBeforeLiquidation()` before calling this function to make sure enough time has passed.
      * Do not use this function in contexts where ether needs to be refunded.
      */
-    function mockLiquidate(bytes calldata currentPriceData, uint16 iterations)
+    function mockLiquidate(bytes calldata currentPriceData) external payable returns (uint256 liquidatedPositions_) {
+        uint256 lastUpdateTimestampBefore = s._lastUpdateTimestamp;
+        vm.startPrank(msg.sender);
+        liquidatedPositions_ = this.liquidate(currentPriceData);
+        vm.stopPrank();
+        require(s._lastUpdateTimestamp > lastUpdateTimestampBefore, "UsdnProtocolHandler: liq price is not fresh");
+    }
+
+    /// @dev Call of the liquidate function with the iterations to help measure gas usage
+    function liquidateForGasUsage(bytes calldata currentPriceData, uint16 iterations)
         external
         payable
         returns (uint256 liquidatedPositions_)
     {
-        uint256 lastUpdateTimestampBefore = s._lastUpdateTimestamp;
-        vm.startPrank(msg.sender);
-        liquidatedPositions_ = this.liquidate(currentPriceData, iterations);
-        vm.stopPrank();
-        require(s._lastUpdateTimestamp > lastUpdateTimestampBefore, "UsdnProtocolHandler: liq price is not fresh");
+        uint256 balanceBefore = address(this).balance;
+        PriceInfo memory currentPrice =
+            Utils._getOraclePrice(s, Types.ProtocolAction.Liquidation, 0, "", currentPriceData);
+
+        (liquidatedPositions_,) = Long._applyPnlAndFundingAndLiquidate(
+            s,
+            currentPrice.neutralPrice,
+            currentPrice.timestamp,
+            iterations,
+            true,
+            Types.ProtocolAction.Liquidation,
+            currentPriceData
+        );
+
+        Utils._refundExcessEther(0, 0, balanceBefore);
+        Utils._checkPendingFee(s);
     }
 
     function tickValue(int24 tick, uint256 currentPrice) external view returns (int256) {

@@ -172,18 +172,21 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
             })
         );
         if (negative) {
-            setUpUserPositionInLong(
-                OpenParams({
-                    user: USER_2,
-                    untilAction: untilAction,
-                    positionSize: amount,
-                    desiredLiqPrice: params.initialPrice / 10,
-                    price: params.initialPrice
-                })
-            );
+            // create 10 positions that we can liquidate
+            for (uint128 i = 1; i <= 10; i++) {
+                setUpUserPositionInLong(
+                    OpenParams({
+                        user: USER_2,
+                        untilAction: ProtocolAction.ValidateOpenPosition,
+                        positionSize: amount,
+                        desiredLiqPrice: params.initialPrice * (i + 5) / 20,
+                        price: params.initialPrice
+                    })
+                );
+            }
             _wait();
             // liquidate the deployer's position but keep the position from USER_1
-            protocol.liquidate(abi.encode(params.initialPrice / 5), 1);
+            protocol.liquidate(abi.encode(params.initialPrice / 5));
         } else {
             _wait();
         }
@@ -269,9 +272,9 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         (, int256 posValue) = _removeBlockedLongScenario(ProtocolAction.InitiateOpenPosition, amount, true, true);
         assertLt(posValue, 0, "pos value");
 
-        // we opened 2 additional positions of `amount` during this test
-        assertEq(wstETH.balanceOf(address(protocol)), protocolBalanceBefore + 2 * amount, "protocol balance");
-        assertEq(protocol.getBalanceLong() + protocol.getBalanceVault(), totalBalance + 2 * amount, "total balance");
+        // we opened 11 additional positions of `amount` during this test
+        assertEq(wstETH.balanceOf(address(protocol)), protocolBalanceBefore + 11 * amount, "protocol balance");
+        assertEq(protocol.getBalanceLong() + protocol.getBalanceVault(), totalBalance + 11 * amount, "total balance");
     }
 
     /**

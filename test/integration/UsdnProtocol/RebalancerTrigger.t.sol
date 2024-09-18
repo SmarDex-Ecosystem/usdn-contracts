@@ -95,7 +95,7 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
         );
         uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
         _expectEmits(wstEthPrice, amountInRebalancer, bonus, liqPriceWithoutPenalty, expectedTick, 1);
-        protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA, 1);
+        protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA);
 
         imbalance = protocol.i_calcImbalanceCloseBps(
             int256(protocol.getBalanceVault()), int256(protocol.getBalanceLong()), protocol.getTotalExpo()
@@ -162,7 +162,7 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
 
         vm.expectEmit(false, false, false, false);
         emit LiquidatedTick(0, 0, 0, 0, 0);
-        protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA, 1);
+        protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA);
 
         assertEq(rebalancer.getPendingAssetsAmount(), pendingAssets);
         assertEq(rebalancer.getPositionVersion(), posVersion);

@@ -76,13 +76,13 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
     }
 
     /// @inheritdoc IUsdnProtocolActions
-    function liquidate(bytes calldata currentPriceData, uint16 iterations)
+    function liquidate(bytes calldata currentPriceData)
         external
         payable
         initializedAndNonReentrant
         returns (uint256 liquidatedPositions_)
     {
-        return ActionsUtils.liquidate(s, currentPriceData, iterations);
+        return ActionsUtils.liquidate(s, currentPriceData);
     }
 
     /// @inheritdoc IUsdnProtocolActions
