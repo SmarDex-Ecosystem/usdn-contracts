@@ -27,7 +27,7 @@ contract MockWstETH is IWstETH, ERC4626, ERC20Permit, Ownable {
             uint256 wstETHAmount = previewDeposit(msg.value);
 
             // should receive msg.value stETH
-            IStETH(asset()).deposit{ value: msg.value }(address(this));
+            IStETH(asset()).submit{ value: msg.value }(address(this));
 
             // mint wstETH and sent them to msg.sender
             _mint(msg.sender, wstETHAmount);

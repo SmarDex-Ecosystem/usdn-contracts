@@ -13,12 +13,12 @@ contract TestStEth is WstEthFixture {
         deal(USER_1, 1 ether);
     }
 
-    function test_deposit() public {
+    function test_submit() public {
         assertEq(USER_1.balance, 1 ether);
         assertEq(stETH.balanceOf(USER_1), 0);
 
         vm.startBroadcast(USER_1);
-        stETH.deposit{ value: 1 ether }(USER_1);
+        stETH.submit{ value: 1 ether }(USER_1);
         vm.stopBroadcast();
 
         assertEq(USER_1.balance, 0);

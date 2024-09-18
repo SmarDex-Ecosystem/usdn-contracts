@@ -8,11 +8,10 @@ import { IWstETH } from "./IWstETH.sol";
 
 interface IStETH is IERC20, IERC20Permit {
     /**
-     * @notice Indicates that the setStEthPerToken failed because the new stETH per token value is too small
-     * @param currentStEthPerToken The current amount of stETH per token
-     * @param newStEthPerToken The new amount of stETH per token that is too small
+     * @notice Gets the total amount of Ether controlled by the system
+     * @return total balance in wei
      */
-    error setStEthPerTokenTooSmall(uint256 currentStEthPerToken, uint256 newStEthPerToken);
+    function getTotalPooledEther() external view returns (uint256);
 
     /**
      * @notice Set the amount of stETH per wstETH token (only for owner)
@@ -33,7 +32,7 @@ interface IStETH is IERC20, IERC20Permit {
      * @notice Deposit ETH to mint stETH
      * @param account The account to mint stETH to
      */
-    function deposit(address account) external payable;
+    function submit(address account) external payable;
 
     /**
      * @notice Sweep ETH from the contract (only for owner)

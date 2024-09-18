@@ -30,13 +30,22 @@ contract MockStETH is IStETH, ERC20Burnable, ERC20Permit, Ownable {
         return super.nonces(owner);
     }
 
+    /**
+     * @inheritdoc IStETH
+     * @dev Returns the amount of ether of the contract. As the Mock contract can mint without ether, this function
+     * might return a different amount than totalSupply()
+     */
+    function getTotalPooledEther() external view override returns (uint256) {
+        return address(this).balance;
+    }
+
     /// @inheritdoc IStETH
     function mint(address account, uint256 amount) external onlyOwner {
         _mint(account, amount);
     }
 
     /// @inheritdoc IStETH
-    function deposit(address account) external payable {
+    function submit(address account) external payable {
         if (msg.value != 0) {
             _mint(account, msg.value);
         }
