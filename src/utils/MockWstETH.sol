@@ -21,11 +21,17 @@ contract MockWstETH is IWstETH, ERC4626, ERC20Permit, Ownable {
 
     receive() external payable {
         if (msg.value != 0) {
+            // need to do that before minting stETH. Otherwise, the totalAsset() will be incorrect. And so, a standard
+            // call to deposit() will be incorrect.
+            uint256 wstETHAmount = previewDeposit(msg.value);
+
             // should receive msg.value stETH
-            IStETH(asset()).deposit{ value: msg.value }(msg.sender);
+            IStETH(asset()).deposit{ value: msg.value }(address(this));
 
             // mint wstETH and sent them to msg.sender
-            deposit(msg.value, msg.sender);
+            _mint(msg.sender, wstETHAmount);
+
+            emit Deposit(msg.sender, msg.sender, msg.value, wstETHAmount);
         }
     }
 
