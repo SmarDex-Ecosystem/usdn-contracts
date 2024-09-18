@@ -46,11 +46,11 @@ contract TestForkUsdnProtocolInitiateDepositWithFallback is TransferLibrary, Usd
      * @custom:scenario Initiate a deposit by using fallback without token transfer
      * @custom:given The user has wstETH and SDEX
      * @custom:when The user initiates a deposit of `DEPOSIT_AMOUNT` with a contract that no transfer tokens
-     * @custom:then the protocol revert with `UsdnProtocolFallbackTransferFailed` error
+     * @custom:then the protocol revert with `UsdnProtocolPaymentCallbackFailed` error
      */
     function test_ForkFFIInitiateDepositFallbackWithoutSdexTransfer() public {
         uint256 securityDeposit = protocol.getSecurityDepositValue();
-        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolFallbackTransferFailed.selector));
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolPaymentCallbackFailed.selector));
         protocol.initiateDeposit{ value: securityDeposit }(
             DEPOSIT_AMOUNT, DISABLE_SHARES_OUT_MIN, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA
         );

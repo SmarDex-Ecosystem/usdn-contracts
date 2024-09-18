@@ -8,7 +8,7 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol
  * @notice This interface can be implemented by contracts that wish to transfer tokens during initiate actions
  * @dev The contract must implement the ERC-165 interface detection mechanism
  */
-interface IRouterFallback is IERC165 {
+interface IPaymentCallback is IERC165 {
     /**
      * @notice Callback function to be called during initiate functions to transfer asset tokens
      * @param token The token to transfer

@@ -7,7 +7,7 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
-import { IRouterFallback } from "../../interfaces/IRouterFallback.sol";
+import { IPaymentCallback } from "../../interfaces/IPaymentCallback.sol";
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolCore } from "../../interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
@@ -646,7 +646,7 @@ library UsdnProtocolCoreLibrary {
      * @param price The current asset price
      */
     function _createInitialDeposit(Types.Storage storage s, uint128 amount, uint128 price) internal {
-        if (ERC165Checker.supportsInterface(msg.sender, type(IRouterFallback).interfaceId)) {
+        if (ERC165Checker.supportsInterface(msg.sender, type(IPaymentCallback).interfaceId)) {
             Utils.transferWithFallback(s._asset, amount, address(this));
         } else {
             // transfer the wstETH for the deposit
@@ -694,7 +694,7 @@ library UsdnProtocolCoreLibrary {
         int24 tick,
         uint128 totalExpo
     ) internal {
-        if (ERC165Checker.supportsInterface(msg.sender, type(IRouterFallback).interfaceId)) {
+        if (ERC165Checker.supportsInterface(msg.sender, type(IPaymentCallback).interfaceId)) {
             Utils.transferWithFallback(s._asset, amount, address(this));
         } else {
             // transfer the wstETH for the long

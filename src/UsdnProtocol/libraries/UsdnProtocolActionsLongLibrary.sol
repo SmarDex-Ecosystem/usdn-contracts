@@ -6,7 +6,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
-import { IRouterFallback } from "../../interfaces/IRouterFallback.sol";
+import { IPaymentCallback } from "../../interfaces/IPaymentCallback.sol";
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocolActions } from "../../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
@@ -526,7 +526,7 @@ library UsdnProtocolActionsLongLibrary {
         amountToRefund_ =
             Core._createOpenPendingAction(s, params.to, params.validator, params.securityDepositValue, data);
 
-        if (ERC165Checker.supportsInterface(msg.sender, type(IRouterFallback).interfaceId)) {
+        if (ERC165Checker.supportsInterface(msg.sender, type(IPaymentCallback).interfaceId)) {
             Utils.transferWithFallback(s._asset, params.amount, address(this));
         } else {
             // slither-disable-next-line arbitrary-send-erc20

@@ -46,12 +46,12 @@ contract TestForkUsdnProtocolInitiateOpenPositionWithFallback is TransferLibrary
      * @custom:scenario Initiate a new long by using fallback without the transfer of wstETH
      * @custom:given The user has wstETH
      * @custom:when The user initiates a new long of `DEPOSIT_AMOUNT` with a contract that no transfer wstETH
-     * @custom:then the protocol revert with `UsdnProtocolFallbackTransferFailed` error
+     * @custom:then the protocol revert with `UsdnProtocolPaymentCallbackFailed` error
      */
     function test_ForkFFIInitiateDepositFallbackWithoutWstETHTransfer() public {
         uint256 securityDeposit = protocol.getSecurityDepositValue();
         uint256 leverage = protocol.getMaxLeverage();
-        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolFallbackTransferFailed.selector));
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolPaymentCallbackFailed.selector));
         protocol.initiateOpenPosition{ value: securityDeposit }(
             DEPOSIT_AMOUNT,
             params.initialPrice / 2,

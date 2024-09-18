@@ -7,7 +7,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
-import { IRouterFallback } from "../../interfaces/IRouterFallback.sol";
+import { IPaymentCallback } from "../../interfaces/IPaymentCallback.sol";
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IFeeCollectorCallback } from "../../interfaces/UsdnProtocol/IFeeCollectorCallback.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
@@ -632,10 +632,10 @@ library UsdnProtocolUtilsLibrary {
      */
     function transferWithFallback(IERC20Metadata token, uint256 amount, address to) internal {
         uint256 balanceBefore = token.balanceOf(to);
-        IRouterFallback(msg.sender).transferWithFallback(token, amount, to);
+        IPaymentCallback(msg.sender).transferWithFallback(token, amount, to);
         uint256 balanceAfter = token.balanceOf(to);
         if (balanceAfter != balanceBefore + amount) {
-            revert IUsdnProtocolErrors.UsdnProtocolFallbackTransferFailed();
+            revert IUsdnProtocolErrors.UsdnProtocolPaymentCallbackFailed();
         }
     }
 

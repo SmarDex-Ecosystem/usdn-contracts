@@ -6,7 +6,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
-import { IRouterFallback } from "../../interfaces/IRouterFallback.sol";
+import { IPaymentCallback } from "../../interfaces/IPaymentCallback.sol";
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
@@ -646,7 +646,7 @@ library UsdnProtocolVaultLibrary {
             s, params.to, params.validator, params.securityDepositValue, params.amount, data
         );
 
-        if (ERC165Checker.supportsInterface(msg.sender, type(IRouterFallback).interfaceId)) {
+        if (ERC165Checker.supportsInterface(msg.sender, type(IPaymentCallback).interfaceId)) {
             if (data.sdexToBurn > 0) {
                 Utils.transferWithFallback(s._sdex, data.sdexToBurn, Constants.DEAD_ADDRESS);
             }
