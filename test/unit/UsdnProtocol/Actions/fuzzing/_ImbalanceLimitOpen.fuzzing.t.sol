@@ -37,7 +37,7 @@ contract TestImbalanceLimitOpenFuzzing is UsdnProtocolBaseFixture {
         // initial open limit bps
         int256 openLimit = protocol.getOpenExpoImbalanceLimitBps();
 
-        if (imbalanceBps >= openLimit) {
+        if (imbalanceBps > openLimit) {
             // should revert with above open imbalance limit
             vm.expectRevert(
                 abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, imbalanceBps)
