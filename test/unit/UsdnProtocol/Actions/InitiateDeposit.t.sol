@@ -3,7 +3,10 @@ pragma solidity 0.8.26;
 
 import { USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
+import { TransferLibrary } from "../utils/TransferLibrary.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
 import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
@@ -12,7 +15,7 @@ import { InitializableReentrancyGuard } from "../../../../src/utils/Initializabl
  * @custom:background Given a protocol initialized at equilibrium.
  * @custom:and A user with 10 wstETH in their wallet
  */
-contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
+contract TestUsdnProtocolActionsInitiateDeposit is TransferLibrary, UsdnProtocolBaseFixture {
     uint256 internal constant INITIAL_WSTETH_BALANCE = 10 ether;
     uint128 internal constant POSITION_AMOUNT = 1 ether;
     /// @notice Trigger a reentrancy after receiving ether
@@ -255,6 +258,51 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
             1 ether, DISABLE_SHARES_OUT_MIN, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
         );
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
+    }
+
+    /**
+     * @custom:scenario Initiate a deposit by using callback for tokens transfer
+     * @custom:given The user has wstETH and SDEX
+     * @custom:when The user initiates a deposit of 1 ether with a contract that has callback to transfer
+     * tokens
+     * @custom:then The protocol receives 1 ether wstETH and dead address receives SDEX
+     */
+    function test_InitiateDepositWithCallback() public {
+        transferActive = true;
+        uint256 balanceBefore = wstETH.balanceOf(address(protocol));
+        uint256 balanceSdexBefore = sdex.balanceOf(address(this));
+        uint256 deadBalanceSdexBefore = sdex.balanceOf(Constants.DEAD_ADDRESS);
+        bool success = protocol.initiateDeposit{ value: protocol.getSecurityDepositValue() }(
+            1 ether,
+            DISABLE_SHARES_OUT_MIN,
+            address(this),
+            payable(address(this)),
+            abi.encode(uint128(2000 ether)),
+            EMPTY_PREVIOUS_DATA
+        );
+        assertTrue(success);
+        assertEq(wstETH.balanceOf(address(protocol)), balanceBefore + 1 ether);
+        assertLt(sdex.balanceOf(address(this)), balanceSdexBefore);
+        assertGt(sdex.balanceOf(Constants.DEAD_ADDRESS), deadBalanceSdexBefore);
+    }
+
+    /**
+     * @custom:scenario Initiate a deposit by using callback without token transfer
+     * @custom:given The user has wstETH and SDEX
+     * @custom:when The user initiates a deposit of 1 ether with a contract that no transfer tokens
+     * @custom:then the protocol revert with `UsdnProtocolPaymentCallbackFailed` error
+     */
+    function test_InitiateDepositCallbackWithoutSdexTransfer() public {
+        uint256 securityDeposit = protocol.getSecurityDepositValue();
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolPaymentCallbackFailed.selector));
+        protocol.initiateDeposit{ value: securityDeposit }(
+            1 ether,
+            DISABLE_SHARES_OUT_MIN,
+            address(this),
+            payable(address(this)),
+            abi.encode(uint128(2000 ether)),
+            EMPTY_PREVIOUS_DATA
+        );
     }
 
     /**
