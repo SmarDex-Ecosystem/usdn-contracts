@@ -43,7 +43,7 @@ contract MockStETH is IStETH, ERC20Burnable, ERC20Permit, Ownable {
     }
 
     /// @inheritdoc IStETH
-    function sweep(address to) external onlyOwner {
+    function sweep(address payable to) external onlyOwner {
         (bool success,) = to.call{ value: address(this).balance }("");
         require(success, "Transfer failed");
     }
