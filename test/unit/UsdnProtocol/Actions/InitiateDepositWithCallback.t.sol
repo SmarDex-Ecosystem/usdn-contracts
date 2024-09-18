@@ -2,7 +2,7 @@
 pragma solidity 0.8.26;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
-import { TransferLibrary } from "../utils/TransferLibrary.sol";
+import { TransferCallback } from "../utils/TransferCallback.sol";
 
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
@@ -12,7 +12,7 @@ import { UsdnProtocolConstantsLibrary as Constants } from
  * @custom:background Given a protocol initialized at equilibrium.
  * @custom:and A user with 10 wstETH in their wallet
  */
-contract TestUsdnProtocolActionsInitiateDepositWithCallback is TransferLibrary, UsdnProtocolBaseFixture {
+contract TestUsdnProtocolActionsInitiateDepositWithCallback is TransferCallback, UsdnProtocolBaseFixture {
     uint256 internal constant INITIAL_WSTETH_BALANCE = 10 ether;
     uint128 internal constant POSITION_AMOUNT = 1 ether;
 

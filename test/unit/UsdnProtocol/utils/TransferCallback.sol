@@ -6,7 +6,7 @@ import { ERC165, IERC165 } from "@openzeppelin/contracts/utils/introspection/ERC
 
 import { IPaymentCallback } from "../../../../src/interfaces/IPaymentCallback.sol";
 
-abstract contract TransferLibrary is IPaymentCallback, ERC165 {
+abstract contract TransferCallback is IPaymentCallback, ERC165 {
     bool public transferActive;
 
     /// @inheritdoc IPaymentCallback

@@ -13,7 +13,7 @@ interface IPaymentCallback is IERC165 {
      * @notice Callback function to be called during initiate functions to transfer asset tokens
      * @param token The token to transfer
      * @param amount The amount to transfer
-     * @param to The address to transfer
+     * @param to The address of the recipient
      */
     function transferCallback(IERC20Metadata token, uint256 amount, address to) external;
 }

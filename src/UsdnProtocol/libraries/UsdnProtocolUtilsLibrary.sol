@@ -628,7 +628,7 @@ library UsdnProtocolUtilsLibrary {
      * @notice Call back the msg.sender to transfer assets and check that they were received
      * @param token The token to transfer
      * @param amount The amount to transfer
-     * @param to The address to transfer
+     * @param to The address of the recipient
      */
     function transferCallback(IERC20Metadata token, uint256 amount, address to) internal {
         uint256 balanceBefore = token.balanceOf(to);
