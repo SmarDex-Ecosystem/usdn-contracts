@@ -90,7 +90,7 @@ contract TestRebalancerInitiateClosePosition is
         vm.expectEmit();
         emit ClosePositionInitiated(address(this), amount, amountToClose, amountInRebalancer - amount);
         (bool success) = rebalancer.initiateClosePosition{ value: protocol.getSecurityDepositValue() }(
-            amount, address(this), "", EMPTY_PREVIOUS_DATA
+            amount, address(this), DISABLE_MIN_PRICE, "", EMPTY_PREVIOUS_DATA
         );
 
         assertTrue(success, "The rebalancer close should be successful");
@@ -141,7 +141,9 @@ contract TestRebalancerInitiateClosePosition is
         int256 expectedImbalance = (currentVaultExpo - newLongExpo) * int256(BPS_DIVISOR) / newLongExpo;
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolImbalanceLimitReached.selector, expectedImbalance));
-        rebalancer.initiateClosePosition{ value: securityDeposit }(amount, address(this), "", EMPTY_PREVIOUS_DATA);
+        rebalancer.initiateClosePosition{ value: securityDeposit }(
+            amount, address(this), DISABLE_MIN_PRICE, "", EMPTY_PREVIOUS_DATA
+        );
     }
 
     /**
@@ -170,7 +172,7 @@ contract TestRebalancerInitiateClosePosition is
         vm.expectEmit();
         emit ClosePositionInitiated(address(this), amountInRebalancer, amountToClose, 0);
         (bool success) = rebalancer.initiateClosePosition{ value: protocol.getSecurityDepositValue() }(
-            amountInRebalancer, address(this), "", EMPTY_PREVIOUS_DATA
+            amountInRebalancer, address(this), DISABLE_MIN_PRICE, "", EMPTY_PREVIOUS_DATA
         );
 
         UserDeposit memory depositData = rebalancer.getUserDepositData(address(this));
@@ -207,7 +209,7 @@ contract TestRebalancerInitiateClosePosition is
 
         // send more ether than necessary to trigger the refund
         rebalancer.initiateClosePosition{ value: securityDeposit + excessAmount }(
-            amountInRebalancer, address(this), "", EMPTY_PREVIOUS_DATA
+            amountInRebalancer, address(this), DISABLE_MIN_PRICE, "", EMPTY_PREVIOUS_DATA
         );
 
         assertEq(payable(rebalancer).balance, 0, "There should be no ether left in the rebalancer");
@@ -230,6 +232,7 @@ contract TestRebalancerInitiateClosePosition is
         (, PositionId memory newPosId) = protocol.initiateOpenPosition{ value: securityDeposit }(
             20 ether,
             1100 ether,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             payable(address(this)),
             payable(address(this)),
@@ -271,7 +274,7 @@ contract TestRebalancerInitiateClosePosition is
         // but the _lastLiquidatedVersion has not been updated yet
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolOutdatedTick.selector, 1, 0));
         rebalancer.initiateClosePosition{ value: securityDeposit }(
-            1 ether, address(this), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA
+            1 ether, address(this), DISABLE_MIN_PRICE, MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA
         );
 
         // wait 1 minute to provide a fresh price
@@ -298,6 +301,7 @@ contract TestRebalancerInitiateClosePosition is
         protocol.initiateOpenPosition{ value: securityDeposit }(
             20 ether,
             800 ether,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             payable(address(this)),
             payable(address(this)),
@@ -314,7 +318,7 @@ contract TestRebalancerInitiateClosePosition is
         // try to withdraw from the rebalancer again
         vm.expectRevert(IRebalancerErrors.RebalancerUserLiquidated.selector);
         rebalancer.initiateClosePosition{ value: securityDeposit + 1 ether }(
-            amountInRebalancer, address(this), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA
+            amountInRebalancer, address(this), DISABLE_MIN_PRICE, MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA
         );
     }
 

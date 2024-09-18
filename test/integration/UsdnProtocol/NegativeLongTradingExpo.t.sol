@@ -38,12 +38,13 @@ contract TestUsdnProtocolNegativeLongTradingExpo is UsdnProtocolBaseIntegrationF
         securityDeposit = protocol.getSecurityDepositValue();
         // deposit assets in the protocol to imbalance it heavily
         protocol.initiateDeposit{ value: securityDeposit }(
-            100 ether, address(this), payable(this), NO_PERMIT2, "", EMPTY_PREVIOUS_DATA
+            100 ether, 0, address(this), payable(this), NO_PERMIT2, "", EMPTY_PREVIOUS_DATA
         );
 
         (, posIdToClose) = protocol.initiateOpenPosition{ value: securityDeposit + oracleFee }(
             amountInPosition,
             DEFAULT_PARAMS.initialPrice - (DEFAULT_PARAMS.initialPrice / 2),
+            0,
             protocol.getMaxLeverage(),
             address(this),
             USER_1, // so we can have 2 initiates at the same time
@@ -94,7 +95,7 @@ contract TestUsdnProtocolNegativeLongTradingExpo is UsdnProtocolBaseIntegrationF
 
         uint256 balanceOfBefore = wstETH.balanceOf(address(this));
         protocol.initiateClosePosition{ value: oracleFee + securityDeposit }(
-            posIdToClose, amountInPosition, address(this), payable(this), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA
+            posIdToClose, amountInPosition, 0, address(this), payable(this), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
@@ -148,6 +149,7 @@ contract TestUsdnProtocolNegativeLongTradingExpo is UsdnProtocolBaseIntegrationF
         (, PositionId memory posId) = protocol.initiateOpenPosition{ value: securityDeposit + oracleFee }(
             2 ether,
             DEFAULT_PARAMS.initialPrice - (DEFAULT_PARAMS.initialPrice / 2),
+            0,
             protocol.getMaxLeverage(),
             address(this),
             payable(this),

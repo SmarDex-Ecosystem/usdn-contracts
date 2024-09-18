@@ -145,7 +145,7 @@ contract TestUsdnProtocolCoreApplyPnlAndFunding is UsdnProtocolBaseFixture {
             expectedFeeAsset = expectedFundingAsset * protocolFeeBps / int256(protocol.BPS_DIVISOR());
         }
 
-        int256 expectedEma = protocol.calcEMA(expectedFundingPerDay, 12 hours);
+        int256 expectedEma = protocol._calcEMA(expectedFundingPerDay, 12 hours);
         int256 expectedPnl = int256(protocol.getLongTradingExpo(oldPrice))
             * (int256(int128(newPrice)) - int256(int128(oldPrice))) / int256(int128(newPrice));
 

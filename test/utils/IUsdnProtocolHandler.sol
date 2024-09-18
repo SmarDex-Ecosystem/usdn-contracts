@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { UsdnProtocolActionsVaultLibrary as ActionsVault } from
-    "../../src/UsdnProtocol/libraries/UsdnProtocolActionsVaultLibrary.sol";
+import { UsdnProtocolVaultLibrary as Vault } from "../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 import { PriceInfo } from "../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocol } from "../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IUsdnProtocolTypes as Types } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { HugeUint } from "../../src/libraries/HugeUint.sol";
 import { UsdnProtocolHandler } from "../unit/UsdnProtocol/utils/Handler.sol";
 
@@ -39,7 +39,7 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         address validator,
         uint152 usdnShares,
         uint64 securityDepositValue,
-        ActionsVault.WithdrawalData memory data
+        Vault.WithdrawalData memory data
     ) external returns (uint256 amountToRefund_);
 
     function i_createDepositPendingAction(
@@ -47,7 +47,7 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         address to,
         uint64 securityDepositValue,
         uint128 amount,
-        ActionsVault.InitiateDepositData memory data
+        Vault.InitiateDepositData memory data
     ) external returns (uint256 amountToRefund_);
 
     function i_createOpenPendingAction(
@@ -76,17 +76,11 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
 
     function getLongTradingExpo(uint128 currentPrice) external view returns (uint256 expo_);
 
-    function calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed) external view returns (int256);
+    function _calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed) external view returns (int256);
 
-    function i_initiateClosePosition(
-        address owner,
-        address to,
-        address validator,
-        PositionId memory posId,
-        uint128 amountToClose,
-        uint64 securityDepositValue,
-        bytes calldata currentPriceData
-    ) external returns (uint256 securityDepositValue_, bool isLiquidationPending_, bool liq_);
+    function i_initiateClosePosition(Types.InititateClosePositionParams memory params, bytes calldata currentPriceData)
+        external
+        returns (uint256 securityDepositValue_, bool isLiquidationPending_, bool liq_);
 
     function i_validateOpenPosition(address user, bytes calldata priceData)
         external
@@ -297,13 +291,19 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
 
     function i_executePendingActionOrRevert(PreviousActionsData calldata data) external;
 
-    function i_prepareInitiateDepositData(address validator, uint128 amount, bytes calldata currentPriceData)
-        external
-        returns (ActionsVault.InitiateDepositData memory data_);
+    function i_prepareInitiateDepositData(
+        address validator,
+        uint128 amount,
+        uint256 sharesOutMin,
+        bytes calldata currentPriceData
+    ) external returns (Vault.InitiateDepositData memory data_);
 
-    function i_prepareWithdrawalData(address validator, uint152 usdnShares, bytes calldata currentPriceData)
-        external
-        returns (ActionsVault.WithdrawalData memory data_);
+    function i_prepareWithdrawalData(
+        address validator,
+        uint152 usdnShares,
+        uint256 amountOutMin,
+        bytes calldata currentPriceData
+    ) external returns (Vault.WithdrawalData memory data_);
 
     function i_refundEther(uint256 amount, address payable to) external payable;
 
@@ -325,7 +325,7 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         uint16 liquidatedTicks,
         int256 remainingCollateral,
         bool rebased,
-        bool rebalancerTriggered,
+        RebalancerAction rebalancerAction,
         ProtocolAction action,
         bytes memory rebaseCallbackResult,
         bytes memory priceData
@@ -337,6 +337,7 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         address validator,
         PositionId memory posId,
         uint128 amountToClose,
+        uint256 userMinPrice,
         bytes calldata currentPriceData
     ) external returns (ClosePositionData memory data_, bool liquidated_);
 
@@ -425,7 +426,7 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         uint256 longBalance,
         uint256 vaultBalance,
         int256 remainingCollateral
-    ) external returns (uint256 longBalance_, uint256 vaultBalance_);
+    ) external returns (uint256 longBalance_, uint256 vaultBalance_, RebalancerAction rebalancerAction);
 
     function i_fundingAsset(uint128 timestamp, int256 ema)
         external

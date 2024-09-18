@@ -13,8 +13,6 @@ import { UsdnProtocolActionsLongLibrary as ActionsLong } from
     "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from
     "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsUtilsLibrary.sol";
-import { UsdnProtocolActionsVaultLibrary as ActionsVault } from
-    "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsVaultLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
@@ -139,9 +137,9 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         address validator,
         uint152 usdnShares,
         uint64 securityDepositValue,
-        ActionsVault.WithdrawalData memory data
+        Vault.WithdrawalData memory data
     ) public returns (uint256 amountToRefund_) {
-        return ActionsVault._createWithdrawalPendingAction(s, to, validator, usdnShares, securityDepositValue, data);
+        return Vault._createWithdrawalPendingAction(s, to, validator, usdnShares, securityDepositValue, data);
     }
 
     function i_createDepositPendingAction(
@@ -149,9 +147,9 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         address to,
         uint64 securityDepositValue,
         uint128 amount,
-        ActionsVault.InitiateDepositData memory data
+        Vault.InitiateDepositData memory data
     ) external returns (uint256 amountToRefund_) {
-        return ActionsVault._createDepositPendingAction(s, validator, to, securityDepositValue, amount, data);
+        return Vault._createDepositPendingAction(s, validator, to, securityDepositValue, amount, data);
     }
 
     function i_createOpenPendingAction(
@@ -198,22 +196,15 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         expo_ = uint256(s._totalExpo.toInt256().safeSub(Utils._longAssetAvailable(s, currentPrice)));
     }
 
-    function i_initiateClosePosition(
-        address owner,
-        address to,
-        address validator,
-        PositionId memory posId,
-        uint128 amountToClose,
-        uint64 securityDepositValue,
-        bytes calldata currentPriceData
-    ) external returns (uint256 securityDepositValue_, bool isLiquidationPending_, bool liq_) {
-        return ActionsLong._initiateClosePosition(
-            s, owner, to, validator, posId, amountToClose, securityDepositValue, currentPriceData
-        );
+    function i_initiateClosePosition(Types.InititateClosePositionParams memory params, bytes calldata currentPriceData)
+        external
+        returns (uint256 securityDepositValue_, bool isLiquidationPending_, bool liq_)
+    {
+        return ActionsLong._initiateClosePosition(s, params, currentPriceData);
     }
 
-    function calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed) external view returns (int256) {
-        return Core.calcEMA(lastFundingPerDay, secondsElapsed, s._EMAPeriod, s._EMA);
+    function _calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed) external view returns (int256) {
+        return Core._calcEMA(lastFundingPerDay, secondsElapsed, s._EMAPeriod, s._EMA);
     }
 
     function i_validateOpenPosition(address user, bytes calldata priceData)
@@ -234,14 +225,14 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         external
         returns (uint256 securityDepositValue_, bool isValidated_)
     {
-        return ActionsVault._validateWithdrawal(s, user, priceData);
+        return Vault._validateWithdrawal(s, user, priceData);
     }
 
     function i_validateDeposit(address user, bytes calldata priceData)
         external
         returns (uint256 securityDepositValue_, bool isValidated_)
     {
-        return ActionsVault._validateDeposit(s, user, priceData);
+        return Vault._validateDeposit(s, user, priceData);
     }
 
     function i_removeAmountFromPosition(
@@ -272,7 +263,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_getActionablePendingAction() external returns (PendingAction memory, uint128) {
-        return Core._getActionablePendingAction(s);
+        return Vault._getActionablePendingAction(s);
     }
 
     function i_lastFundingPerDay() external view returns (int256) {
@@ -401,11 +392,11 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_checkImbalanceLimitDeposit(uint256 depositValue) external view {
-        ActionsVault._checkImbalanceLimitDeposit(s, depositValue);
+        Vault._checkImbalanceLimitDeposit(s, depositValue);
     }
 
     function i_checkImbalanceLimitWithdrawal(uint256 withdrawalValue, uint256 totalExpo) external view {
-        ActionsVault._checkImbalanceLimitWithdrawal(s, withdrawalValue, totalExpo);
+        Vault._checkImbalanceLimitWithdrawal(s, withdrawalValue, totalExpo);
     }
 
     function i_checkImbalanceLimitOpen(uint256 openTotalExpoValue, uint256 openCollatValue) external view {
@@ -456,7 +447,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_usdnRebase(uint128 assetPrice, bool ignoreInterval) external returns (bool, bytes memory) {
-        return Vault._usdnRebase(s, assetPrice, ignoreInterval);
+        return Long._usdnRebase(s, assetPrice, ignoreInterval);
     }
 
     function i_calcUsdnPrice(uint256 vaultBalance, uint128 assetPrice, uint256 usdnTotalSupply, uint8 assetDecimals)
@@ -472,7 +463,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         pure
         returns (uint256)
     {
-        return Vault._calcRebaseTotalSupply(vaultBalance, assetPrice, targetPrice, assetDecimals);
+        return Long._calcRebaseTotalSupply(vaultBalance, assetPrice, targetPrice, assetDecimals);
     }
 
     function i_addPendingAction(address user, PendingAction memory action) external returns (uint256) {
@@ -488,11 +479,11 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_executePendingAction(PreviousActionsData calldata data) external returns (bool, bool, bool, uint256) {
-        return ActionsVault._executePendingAction(s, data);
+        return Vault._executePendingAction(s, data);
     }
 
     function i_executePendingActionOrRevert(PreviousActionsData calldata data) external {
-        ActionsVault._executePendingActionOrRevert(s, data);
+        Vault._executePendingActionOrRevert(s, data);
     }
 
     function i_refundExcessEther(uint256 securityDepositValue, uint256 amountToRefund, uint256 balanceBefore)
@@ -511,11 +502,11 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_calcWithdrawalAmountLSB(uint152 usdnShares) external pure returns (uint24) {
-        return ActionsVault._calcWithdrawalAmountLSB(usdnShares);
+        return Vault._calcWithdrawalAmountLSB(usdnShares);
     }
 
     function i_calcWithdrawalAmountMSB(uint152 usdnShares) external pure returns (uint128) {
-        return ActionsVault._calcWithdrawalAmountMSB(usdnShares);
+        return Vault._calcWithdrawalAmountMSB(usdnShares);
     }
 
     function i_createInitialDeposit(uint128 amount, uint128 price) external {
@@ -634,7 +625,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint256 longBalance,
         uint256 vaultBalance,
         int256 remainingCollateral
-    ) public returns (uint256 longBalance_, uint256 vaultBalance_) {
+    ) public returns (uint256 longBalance_, uint256 vaultBalance_, Types.RebalancerAction rebalancerAction_) {
         return Long._triggerRebalancer(s, lastPrice, longBalance, vaultBalance, remainingCollateral);
     }
 
@@ -680,35 +671,32 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint16 liquidatedTicks,
         int256 remainingCollateral,
         bool rebased,
-        bool rebalancerTriggered,
+        Types.RebalancerAction rebalancerAction,
         ProtocolAction action,
         bytes memory rebaseCallbackResult,
         bytes memory priceData
     ) external {
         Long._sendRewardsToLiquidator(
-            s,
-            liquidatedTicks,
-            remainingCollateral,
-            rebased,
-            rebalancerTriggered,
-            action,
-            rebaseCallbackResult,
-            priceData
+            s, liquidatedTicks, remainingCollateral, rebased, rebalancerAction, action, rebaseCallbackResult, priceData
         );
     }
 
-    function i_prepareInitiateDepositData(address validator, uint128 amount, bytes calldata currentPriceData)
-        public
-        returns (ActionsVault.InitiateDepositData memory data_)
-    {
-        return ActionsVault._prepareInitiateDepositData(s, validator, amount, currentPriceData);
+    function i_prepareInitiateDepositData(
+        address validator,
+        uint128 amount,
+        uint256 sharesOutMin,
+        bytes calldata currentPriceData
+    ) public returns (Vault.InitiateDepositData memory data_) {
+        return Vault._prepareInitiateDepositData(s, validator, amount, sharesOutMin, currentPriceData);
     }
 
-    function i_prepareWithdrawalData(address validator, uint152 usdnShares, bytes calldata currentPriceData)
-        public
-        returns (ActionsVault.WithdrawalData memory data_)
-    {
-        return ActionsVault._prepareWithdrawalData(s, validator, usdnShares, currentPriceData);
+    function i_prepareWithdrawalData(
+        address validator,
+        uint152 usdnShares,
+        uint256 amountOutMin,
+        bytes calldata currentPriceData
+    ) public returns (Vault.WithdrawalData memory data_) {
+        return Vault._prepareWithdrawalData(s, validator, usdnShares, amountOutMin, currentPriceData);
     }
 
     function i_prepareClosePositionData(
@@ -717,9 +705,21 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         address validator,
         PositionId memory posId,
         uint128 amountToClose,
+        uint256 userMinPrice,
         bytes calldata currentPriceData
     ) external returns (ClosePositionData memory data_, bool liquidated_) {
-        return ActionsUtils._prepareClosePositionData(s, owner, to, validator, posId, amountToClose, currentPriceData);
+        return ActionsUtils._prepareClosePositionData(
+            s,
+            Types.PrepareInitiateClosePositionParams({
+                owner: owner,
+                to: to,
+                validator: validator,
+                posId: posId,
+                amountToClose: amountToClose,
+                userMinPrice: userMinPrice,
+                currentPriceData: currentPriceData
+            })
+        );
     }
 
     function i_prepareValidateOpenPositionData(PendingAction memory pending, bytes calldata priceData)

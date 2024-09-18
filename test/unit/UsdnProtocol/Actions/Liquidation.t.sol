@@ -5,6 +5,7 @@ import { DEPLOYER, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
+import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
 /// @custom:feature The scenarios in `UsdnProtocolActions` which call `_liquidatePositions`
@@ -58,6 +59,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         emit IUsdnProtocolEvents.LiquidatedTick(posId.tick, posId.tickVersion, 0, 0, 0);
         protocol.initiateDeposit(
             1 ether,
+            DISABLE_SHARES_OUT_MIN,
             address(this),
             payable(address(this)),
             NO_PERMIT2,
@@ -139,6 +141,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         protocol.initiateWithdrawal(
             uint128(usdn.balanceOf(address(this))),
+            DISABLE_AMOUNT_OUT_MIN,
             address(this),
             payable(address(this)),
             abi.encode(effectivePriceForTick),
@@ -221,6 +224,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition(
             1 ether,
             desiredLiqPrice - 200 ether,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
@@ -323,6 +327,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         protocol.initiateClosePosition(
             posIdToClose,
             1 ether,
+            DISABLE_MIN_PRICE,
             address(this),
             payable(address(this)),
             abi.encode(effectivePriceForTick),
@@ -459,8 +464,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.prank(DEPLOYER);
         liquidationRewardsManager.setRewardsParameters(10_000, 30_000, 20_000, 20_000, 1000 gwei, 20_000);
 
-        uint256 expectedLiquidatorRewards =
-            liquidationRewardsManager.getLiquidationRewards(1, 0, false, false, ProtocolAction.None, "", "");
+        uint256 expectedLiquidatorRewards = liquidationRewardsManager.getLiquidationRewards(
+            1, 0, false, Types.RebalancerAction.None, ProtocolAction.None, "", ""
+        );
         // Sanity check
         assertGt(expectedLiquidatorRewards, 0, "The expected liquidation rewards should be greater than 0");
 
@@ -534,8 +540,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         chainlinkGasPriceFeed.setLatestRoundData(1, 8000 gwei, block.timestamp, 1);
         vm.txGasPrice(8000 gwei);
 
-        uint256 expectedLiquidatorRewards =
-            liquidationRewardsManager.getLiquidationRewards(1, 0, false, false, ProtocolAction.None, "", "");
+        uint256 expectedLiquidatorRewards = liquidationRewardsManager.getLiquidationRewards(
+            1, 0, false, Types.RebalancerAction.None, ProtocolAction.None, "", ""
+        );
         // Sanity check
         assertGt(
             expectedLiquidatorRewards,
@@ -590,6 +597,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         }(
             5 ether,
             9 * currentPrice / 10,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),

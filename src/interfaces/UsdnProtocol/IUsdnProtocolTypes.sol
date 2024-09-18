@@ -60,6 +60,27 @@ interface IUsdnProtocolTypes {
     }
 
     /**
+     * @notice Classifies how far in its logic the `_triggerRebalancer` function made it to
+     * @dev Used to estimate the gas spent by the function call to more accurately calculate liquidation rewards
+     * @param None The rebalancer is not set
+     * @param NoImbalance The protocol imbalance is not reached
+     * @param PendingLiquidation The rebalancer position should be liquidated
+     * @param NoCloseNoOpen The action neither closes nor opens a position
+     * @param Closed The action only closes a position
+     * @param Opened The action only opens a position
+     * @param ClosedOpened The action closes and opens a position
+     */
+    enum RebalancerAction {
+        None,
+        NoImbalance,
+        PendingLiquidation,
+        NoCloseNoOpen,
+        Closed,
+        Opened,
+        ClosedOpened
+    }
+
+    /**
      * @notice A pending action in the queue
      * @param action The action type
      * @param timestamp The timestamp of the initiate action
@@ -254,8 +275,10 @@ interface IUsdnProtocolTypes {
      * @param user The address of the user initiating the open position
      * @param to The address that will be the owner of the position
      * @param validator The address that will validate the open position
-     * @param amount The amount of wstETH to deposit
+     * @param amount The amount of assets to deposit
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
+     * @param userMaxPrice The maximum price at which the position can be opened. The userMaxPrice is compared with the
+     * price after confidence interval, penalty, etc...
      * @param userMaxLeverage The maximum leverage for the newly created position
      * @param securityDepositValue The value of the security deposit for the newly created pending action
      * @param permit2TokenBitfield The permit2 bitfield
@@ -268,16 +291,39 @@ interface IUsdnProtocolTypes {
         address validator;
         uint128 amount;
         uint128 desiredLiqPrice;
+        uint128 userMaxPrice;
         uint256 userMaxLeverage;
         uint64 securityDepositValue;
         Permit2TokenBitfield.Bitfield permit2TokenBitfield;
     }
 
     /**
+     * @notice Parameters for the internal `_initiateClosePosition` function
+     * @param owner The owner of the position
+     * @param to The address that will receive the assets
+     * @param validator The address that will validate the close action
+     * @param posId The unique identifier of the position
+     * @param amountToClose The amount of collateral to remove from the position's amount
+     * @param userMinPrice The minimum price at which the position can be closed
+     * @param securityDepositValue The value of the security deposit for the newly created pending action
+     */
+    struct InititateClosePositionParams {
+        address owner;
+        address to;
+        address validator;
+        PositionId posId;
+        uint128 amountToClose;
+        uint256 userMinPrice;
+        uint64 securityDepositValue;
+    }
+
+    /**
      * @notice Parameters for the internal `_prepareInitiateOpenPosition` function
      * @param validator The address of the validator
-     * @param amount The amount of wstETH to deposit
+     * @param amount The amount of assets to deposit
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
+     * @param userMaxPrice The maximum price at which the position can be opened. The userMaxPrice is compared with the
+     * price after confidence interval, penalty, etc...
      * @param userMaxLeverage The maximum leverage for the newly created position
      * @param currentPriceData The current price data
      */
@@ -285,7 +331,28 @@ interface IUsdnProtocolTypes {
         address validator;
         uint128 amount;
         uint128 desiredLiqPrice;
+        uint256 userMaxPrice;
         uint256 userMaxLeverage;
+        bytes currentPriceData;
+    }
+
+    /**
+     * @notice Parameters for the internal `_prepareClosePositionData` function
+     * @param owner The owner of the position
+     * @param to The address that will receive the assets
+     * @param validator The address of the pending action validator
+     * @param posId The unique identifier of the position
+     * @param amountToClose The amount of collateral to remove from the position's amount
+     * @param userMinPrice The minimum price at which the position can be closed
+     * @param currentPriceData The current price data
+     */
+    struct PrepareInitiateClosePositionParams {
+        address owner;
+        address to;
+        address validator;
+        PositionId posId;
+        uint128 amountToClose;
+        uint256 userMinPrice;
         bytes currentPriceData;
     }
 
@@ -293,12 +360,14 @@ interface IUsdnProtocolTypes {
      * @notice Parameters for the internal `_initiateClosePosition` function
      * @param posId The position id
      * @param amountToClose The amount to close
+     * @param userMinPrice The minimum price at which the position can be closed
      * @param to The address that will receive the closed amount
      * @param validator The address that will validate the close position
      */
     struct InitiateClosePositionParams {
         PositionId posId;
         uint128 amountToClose;
+        uint256 userMinPrice;
         address to;
         address payable validator;
     }
@@ -475,9 +544,9 @@ interface IUsdnProtocolTypes {
      * @param _tickSpacing The liquidation tick spacing for storing long positions
      * A tick spacing of 1 is equivalent to a 0.01% increase in liquidation price between ticks. A tick spacing of
      * 100 is equivalent to a ~1.005% increase in liquidation price between ticks
-     * @param _asset The asset ERC20 contract (wstETH)
-     * @param _assetDecimals The asset decimals (wstETH => 18)
-     * @param _priceFeedDecimals The price feed decimals (wstETH => 18)
+     * @param _asset The asset ERC20 contract
+     * @param _assetDecimals The asset decimals
+     * @param _priceFeedDecimals The price feed decimals (18)
      * @param _usdn The USDN ERC20 contract
      * @param _sdex The SDEX ERC20 contract
      * @param _usdnMinDivisor The minimum divisor for USDN

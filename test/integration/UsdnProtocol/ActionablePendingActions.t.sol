@@ -51,6 +51,7 @@ contract TestUsdnProtocolActionablePendingActions is UsdnProtocolBaseIntegration
         protocol.initiateOpenPosition{ value: securityDeposit + validationCost }(
             2 ether,
             params.initialPrice / 2,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
             payable(this),
@@ -90,7 +91,9 @@ contract TestUsdnProtocolActionablePendingActions is UsdnProtocolBaseIntegration
         // create a pending deposit
         mockChainlinkOnChain.setLastPublishTime(initialTimestamp);
         vm.prank(USER_1);
-        protocol.initiateDeposit{ value: securityDeposit }(2 ether, USER_1, USER_1, NO_PERMIT2, "", EMPTY_PREVIOUS_DATA);
+        protocol.initiateDeposit{ value: securityDeposit }(
+            2 ether, DISABLE_SHARES_OUT_MIN, USER_1, USER_1, NO_PERMIT2, "", EMPTY_PREVIOUS_DATA
+        );
         // create a pending open position a bit later
         skip(protocol.getOnChainValidatorDeadline() / 2);
         mockChainlinkOnChain.setLastPublishTime(block.timestamp);
@@ -98,6 +101,7 @@ contract TestUsdnProtocolActionablePendingActions is UsdnProtocolBaseIntegration
         protocol.initiateOpenPosition{ value: securityDeposit }(
             2 ether,
             params.initialPrice / 2,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             USER_2,
             USER_2,
@@ -113,7 +117,9 @@ contract TestUsdnProtocolActionablePendingActions is UsdnProtocolBaseIntegration
         mockPyth.setLastPublishTime(block.timestamp + oracleMiddleware.getValidationDelay());
         mockPyth.setPrice(int64(ethPrice));
         vm.prank(USER_3);
-        protocol.initiateDeposit{ value: securityDeposit }(2 ether, USER_3, USER_3, NO_PERMIT2, "", EMPTY_PREVIOUS_DATA);
+        protocol.initiateDeposit{ value: securityDeposit }(
+            2 ether, DISABLE_SHARES_OUT_MIN, USER_3, USER_3, NO_PERMIT2, "", EMPTY_PREVIOUS_DATA
+        );
         // wait until the first and third are actionable
         vm.warp(initialTimestamp + oracleMiddleware.getLowLatencyDelay() + protocol.getOnChainValidatorDeadline() + 1);
         mockChainlinkOnChain.setLatestRoundData(10, ethPrice, block.timestamp, 10);

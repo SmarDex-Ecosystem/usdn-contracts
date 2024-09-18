@@ -26,15 +26,6 @@ abstract contract UsdnProtocolCore is UsdnProtocolStorage, IUsdnProtocolCore {
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function getActionablePendingActions(address currentUser)
-        external
-        view
-        returns (PendingAction[] memory actions_, uint128[] memory rawIndices_)
-    {
-        return Core.getActionablePendingActions(s, currentUser);
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
     function getUserPendingAction(address user) external view returns (PendingAction memory action_) {
         return Core.getUserPendingAction(s, user);
     }

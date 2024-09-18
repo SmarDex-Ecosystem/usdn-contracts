@@ -65,6 +65,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         (, PositionId memory posId) = protocol.initiateOpenPosition(
             amount,
             desiredLiqPrice,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
@@ -190,7 +191,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint256 balanceBefore = wstETH.balanceOf(address(this));
 
         protocol.initiateClosePosition(
-            posId, 1 ether, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            posId, 1 ether, DISABLE_MIN_PRICE, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
 
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
@@ -308,7 +309,12 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         usdn.approve(address(protocol), type(uint256).max);
         protocol.initiateWithdrawal(
-            uint128(mintedUsdn), address(this), payable(address(this)), abi.encode(price), EMPTY_PREVIOUS_DATA
+            uint128(mintedUsdn),
+            DISABLE_AMOUNT_OUT_MIN,
+            address(this),
+            payable(address(this)),
+            abi.encode(price),
+            EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         PendingAction memory action = protocol.getUserPendingAction(address(this));
@@ -339,7 +345,12 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         usdn.approve(address(protocol), type(uint256).max);
         protocol.initiateWithdrawal(
-            uint128(mintedUsdn), address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
+            uint128(mintedUsdn),
+            DISABLE_AMOUNT_OUT_MIN,
+            address(this),
+            payable(address(this)),
+            currentPrice,
+            EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -424,7 +435,8 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         protocol.setVaultFeeBps(100); // 1% fees
 
         protocol.initiateWithdrawal(
-            uint152(usdn.sharesOf(address(this))),
+            uint128(usdn.sharesOf(address(this))),
+            DISABLE_AMOUNT_OUT_MIN,
             address(this),
             payable(address(this)),
             currentPrice,
@@ -440,7 +452,8 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         vm.revertTo(snapshotId);
 
         protocol.initiateWithdrawal(
-            uint152(usdn.sharesOf(address(this))),
+            uint128(usdn.sharesOf(address(this))),
+            DISABLE_AMOUNT_OUT_MIN,
             address(this),
             payable(address(this)),
             currentPrice,
@@ -557,7 +570,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         skip(1 hours);
 
         protocol.initiateClosePosition(
-            posId, 1 ether, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            posId, 1 ether, DISABLE_MIN_PRICE, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
 
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
@@ -592,7 +605,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         skip(1 hours);
 
         protocol.initiateClosePosition(
-            posId, 1 ether, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            posId, 1 ether, DISABLE_MIN_PRICE, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
         );
 
         action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));

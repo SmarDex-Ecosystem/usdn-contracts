@@ -46,7 +46,7 @@ contract TestUsdnProtocolActionsPrepareClosePositionData is UsdnProtocolBaseFixt
      */
     function test_prepareClosePositionData() public {
         (ClosePositionData memory data, bool liquidated) = protocol.i_prepareClosePositionData(
-            address(this), address(this), address(this), posId, POSITION_AMOUNT, currentPriceData
+            address(this), address(this), address(this), posId, POSITION_AMOUNT, 0, currentPriceData
         );
 
         assertFalse(liquidated, "The position should not have been liquidated");
@@ -65,7 +65,7 @@ contract TestUsdnProtocolActionsPrepareClosePositionData is UsdnProtocolBaseFixt
     function test_prepareClosePositionDataWithALiquidatedPosition() public {
         currentPriceData = abi.encode(liqPrice);
         (ClosePositionData memory data, bool liquidated) = protocol.i_prepareClosePositionData(
-            address(this), address(this), address(this), posId, POSITION_AMOUNT, currentPriceData
+            address(this), address(this), address(this), posId, POSITION_AMOUNT, 0, currentPriceData
         );
 
         assertTrue(liquidated, "The position should have been liquidated");
@@ -104,7 +104,7 @@ contract TestUsdnProtocolActionsPrepareClosePositionData is UsdnProtocolBaseFixt
         currentPriceData = abi.encode(liqPrice);
 
         (ClosePositionData memory data, bool liquidated) = protocol.i_prepareClosePositionData(
-            address(this), address(this), address(this), posId, POSITION_AMOUNT, currentPriceData
+            address(this), address(this), address(this), posId, POSITION_AMOUNT, 0, currentPriceData
         );
 
         assertFalse(liquidated, "The position should have been liquidated");

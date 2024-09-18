@@ -7,6 +7,7 @@ import { USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
+import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The reward when a user action performs a liquidation during an action
@@ -52,8 +53,9 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         liquidationPrice = protocol.getEffectivePriceForTick(posId.tick);
         liquidationPriceData = abi.encode(liquidationPrice);
         initialPriceData = abi.encode(initialPrice);
-        expectedLiquidatorRewards =
-            liquidationRewardsManager.getLiquidationRewards(1, 0, false, false, ProtocolAction.None, "", "");
+        expectedLiquidatorRewards = liquidationRewardsManager.getLiquidationRewards(
+            1, 0, false, Types.RebalancerAction.None, ProtocolAction.None, "", ""
+        );
 
         assertGt(expectedLiquidatorRewards, 0, "The expected liquidation rewards should be greater than 0");
     }
@@ -68,7 +70,13 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
         protocol.initiateDeposit(
-            depositAmount, address(this), payable(address(this)), NO_PERMIT2, liquidationPriceData, EMPTY_PREVIOUS_DATA
+            depositAmount,
+            DISABLE_SHARES_OUT_MIN,
+            address(this),
+            payable(address(this)),
+            NO_PERMIT2,
+            liquidationPriceData,
+            EMPTY_PREVIOUS_DATA
         );
 
         uint256 balanceSenderAfter = wstETH.balanceOf(address(this));
@@ -91,7 +99,13 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
      */
     function test_liquidationRewards_validateDeposit() public {
         protocol.initiateDeposit(
-            depositAmount, address(this), payable(address(this)), NO_PERMIT2, initialPriceData, EMPTY_PREVIOUS_DATA
+            depositAmount,
+            DISABLE_SHARES_OUT_MIN,
+            address(this),
+            payable(address(this)),
+            NO_PERMIT2,
+            initialPriceData,
+            EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -126,6 +140,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
         protocol.initiateWithdrawal(
             uint152(usdn.balanceOf(address(this))),
+            DISABLE_AMOUNT_OUT_MIN,
             address(this),
             payable(address(this)),
             liquidationPriceData,
@@ -201,6 +216,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition(
             depositAmount,
             initialPrice / 2,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
@@ -232,6 +248,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition(
             depositAmount,
             initialPrice / 2,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
@@ -280,7 +297,13 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
         protocol.initiateClosePosition(
-            posId, depositAmount, address(this), payable(address(this)), liquidationPriceData, EMPTY_PREVIOUS_DATA
+            posId,
+            depositAmount,
+            DISABLE_MIN_PRICE,
+            address(this),
+            payable(address(this)),
+            liquidationPriceData,
+            EMPTY_PREVIOUS_DATA
         );
 
         uint256 balanceSenderAfter = wstETH.balanceOf(address(this));

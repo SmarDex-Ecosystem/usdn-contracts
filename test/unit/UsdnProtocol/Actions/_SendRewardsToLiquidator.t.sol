@@ -4,6 +4,8 @@ pragma solidity 0.8.26;
 import { DEPLOYER } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+
 /**
  * @custom:feature Test the _sendRewardsToLiquidator internal function of the actions utils library
  * @custom:given A protocol with increased rewards and gas price
@@ -26,12 +28,13 @@ contract TestUsdnProtocolActionsSendRewardsToLiquidator is UsdnProtocolBaseFixtu
      * @custom:then The user receives the rewards calculated by the liquidation rewards manager
      */
     function test_sendRewardsToLiquidatorLowerThan() public {
-        uint256 rewards =
-            liquidationRewardsManager.getLiquidationRewards(1, 0, false, false, ProtocolAction.None, "", "");
+        uint256 rewards = liquidationRewardsManager.getLiquidationRewards(
+            1, 0, false, Types.RebalancerAction.None, ProtocolAction.None, "", ""
+        );
 
         vm.expectEmit();
         emit LiquidatorRewarded(address(this), rewards);
-        protocol.i_sendRewardsToLiquidator(1, 0, false, false, ProtocolAction.None, "", "");
+        protocol.i_sendRewardsToLiquidator(1, 0, false, Types.RebalancerAction.None, ProtocolAction.None, "", "");
 
         assertEq(wstETH.balanceOf(address(this)), rewards, "Balance increase by the rewards");
     }
@@ -47,6 +50,7 @@ contract TestUsdnProtocolActionsSendRewardsToLiquidator is UsdnProtocolBaseFixtu
         usdn.approve(address(protocol), type(uint256).max);
         protocol.initiateWithdrawal(
             uint152(usdn.sharesOf(DEPLOYER)),
+            DISABLE_AMOUNT_OUT_MIN,
             DEPLOYER,
             payable(DEPLOYER),
             abi.encode(params.initialPrice),
@@ -60,7 +64,7 @@ contract TestUsdnProtocolActionsSendRewardsToLiquidator is UsdnProtocolBaseFixtu
 
         vm.expectEmit();
         emit LiquidatorRewarded(address(this), balanceVault);
-        protocol.i_sendRewardsToLiquidator(3, 0, true, true, ProtocolAction.None, "", "");
+        protocol.i_sendRewardsToLiquidator(3, 0, true, Types.RebalancerAction.ClosedOpened, ProtocolAction.None, "", "");
 
         assertEq(wstETH.balanceOf(address(this)), balanceVault, "Balance increase by the vault balance");
     }

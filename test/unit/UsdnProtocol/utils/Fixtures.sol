@@ -316,7 +316,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         bytes memory priceData = abi.encode(price);
 
         protocol.initiateDeposit{ value: securityDepositValue }(
-            positionSize, user, payable(user), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
+            positionSize, DISABLE_SHARES_OUT_MIN, user, payable(user), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         if (untilAction == ProtocolAction.InitiateDeposit) return;
@@ -328,7 +328,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         uint256 sharesOf = usdn.sharesOf(user);
         usdn.approve(address(protocol), usdn.convertToTokensRoundUp(sharesOf));
         protocol.initiateWithdrawal{ value: securityDepositValue }(
-            uint152(sharesOf), user, payable(user), priceData, EMPTY_PREVIOUS_DATA
+            uint152(sharesOf), DISABLE_AMOUNT_OUT_MIN, user, payable(user), priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -358,6 +358,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         (success, posId_) = protocol.initiateOpenPosition{ value: securityDepositValue }(
             openParams.positionSize,
             openParams.desiredLiqPrice,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             openParams.user,
             payable(openParams.user),
@@ -374,7 +375,13 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         if (openParams.untilAction == ProtocolAction.ValidateOpenPosition) return (posId_);
 
         protocol.initiateClosePosition{ value: securityDepositValue }(
-            posId_, openParams.positionSize, openParams.user, payable(openParams.user), priceData, EMPTY_PREVIOUS_DATA
+            posId_,
+            openParams.positionSize,
+            DISABLE_MIN_PRICE,
+            openParams.user,
+            payable(openParams.user),
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         if (openParams.untilAction == ProtocolAction.InitiateClosePosition) return (posId_);
