@@ -27,11 +27,11 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the provided `validator` address is invalid
     error UsdnProtocolInvalidAddressValidator();
 
-    /**
-     * @dev Indicates that the initialization deposit is too low
-     * @param minInitAmount The minimum initialization amount
-     */
-    error UsdnProtocolMinInitAmount(uint256 minInitAmount);
+    // @dev Indicates that the amount deposited in the vault during the initialization is too small
+    error UsdnProtocolMinInitDepositAmount();
+
+    // @dev Indicates that the long position open during initialization is too small
+    error UsdnProtocolMinInitLongAmount();
 
     /**
      * @dev Indicates that the provided USDN contract has a total supply above zero at deployment

@@ -58,7 +58,6 @@ library UsdnProtocolCoreLibrary {
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData
     ) external {
-        // TODO check the amount with new formula
         // since all USDN must be minted by the protocol, we check that the total supply is 0
         IUsdn usdn = s._usdn;
         if (usdn.totalSupply() != 0) {
@@ -744,19 +743,38 @@ library UsdnProtocolCoreLibrary {
     ) internal view {
         int256 longTradingExpo = Utils.toInt256(positionTotalExpo - longAmount);
         int256 depositLimit = s._depositExpoImbalanceLimitBps;
+        // users should be able to open positions after initialization
+        // with at least 2 times the minimum amount required for a position without exceeding imbalance limits
+        int256 minAmount = int256(s._minLongPosition * 2);
+
         if (depositLimit != 0) {
             int256 imbalanceBps =
                 (Utils.toInt256(depositAmount) - longTradingExpo) * int256(Constants.BPS_DIVISOR) / longTradingExpo;
             if (imbalanceBps > depositLimit) {
                 revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
             }
+
+            // make sure that the minAmount can be added as vault balance without imbalancing the protocol
+            imbalanceBps = (Utils.toInt256(depositAmount) + minAmount - longTradingExpo) * int256(Constants.BPS_DIVISOR)
+                / longTradingExpo;
+            if (imbalanceBps > depositLimit) {
+                revert IUsdnProtocolErrors.UsdnProtocolMinInitDepositAmount();
+            }
         }
+
         int256 openLimit = s._openExpoImbalanceLimitBps;
         if (openLimit != 0) {
             int256 imbalanceBps = (longTradingExpo - Utils.toInt256(depositAmount)) * int256(Constants.BPS_DIVISOR)
                 / Utils.toInt256(depositAmount);
             if (imbalanceBps > openLimit) {
                 revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
+            }
+
+            // make sure that the minAmount can be added as trading expo without imbalancing the protocol
+            imbalanceBps = (longTradingExpo + minAmount - Utils.toInt256(depositAmount)) * int256(Constants.BPS_DIVISOR)
+                / Utils.toInt256(depositAmount);
+            if (imbalanceBps > openLimit) {
+                revert IUsdnProtocolErrors.UsdnProtocolMinInitLongAmount();
             }
         }
     }

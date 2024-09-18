@@ -282,27 +282,48 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Initialize with low amount for deposit
-     * @custom:when The deployer calls the `initialize` function with a deposit amount lower than the minimum required
-     * @custom:then The transaction reverts with the error `UsdnProtocolMinInitAmount`
+     * @custom:scenario Initialize with a deposit amount so low that a position cannot be opened afterwards
+     * @custom:given A minLongPosition amount of 2 ether
+     * @custom:and An imbalance limit of 2% for deposits
+     * @custom:when The deployer calls the `initialize` function with a deposit amount too low
+     * @custom:then The transaction reverts with the error `UsdnProtocolMinInitDepositAmount`
      */
     function test_RevertWhen_initializeDepositAmountLow() public {
-        // TODO edit test
-        // uint256 minDeposit = protocol.MIN_INIT_DEPOSIT();
-        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolMinInitAmount.selector, minDeposit));
-        protocol.initialize(uint128(minDeposit - 1), INITIAL_POSITION, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE));
+        protocol.setExpoImbalanceLimits(0, 200, 0, 0, 0, 0); // 2% for deposit
+        protocol.setMinLongPosition(2 ether);
+
+        uint128 minInitAmount = uint128(protocol.getMinLongPosition() * 2);
+        uint128 initialDeposit =
+            uint128(BPS_DIVISOR * minInitAmount / uint256(protocol.getDepositExpoImbalanceLimitBps()));
+        uint128 initialLong = initialDeposit;
+
+        int24 tick = protocol.getEffectiveTickForPrice(INITIAL_PRICE / 2);
+        uint128 price = protocol.getEffectivePriceForTick(tick);
+
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolMinInitDepositAmount.selector));
+        protocol.initialize(initialDeposit - 1 ether, initialLong - 1 ether, price, abi.encode(price * 2));
     }
 
     /**
-     * @custom:scenario Initialize with low amount for long
-     * @custom:when The deployer calls the `initialize` function with a long amount lower than the minimum required
-     * @custom:then The transaction reverts with the error `UsdnProtocolMinInitAmount`
+     * @custom:scenario Initialize with a long amount so low that a position cannot be opened afterwards
+     * @custom:given a minLongPosition amount of 2 ether
+     * @custom:and An imbalance limit of 2% for opening long positions
+     * @custom:when The deployer calls the `initialize` function with a long amount too low
+     * @custom:then The transaction reverts with the error `UsdnProtocolMinInitLongAmount`
      */
     function test_RevertWhen_initializeLongAmountLow() public {
-        // TODO edit test
-        // uint256 minDeposit = protocol.MIN_INIT_DEPOSIT();
-        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolMinInitAmount.selector, minDeposit));
-        protocol.initialize(INITIAL_DEPOSIT, uint128(minDeposit - 1), INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE));
+        protocol.setExpoImbalanceLimits(200, 0, 0, 0, 0, 0); // 2% for open
+        protocol.setMinLongPosition(2 ether);
+
+        uint128 minInitAmount = uint128(protocol.getMinLongPosition() * 2);
+        uint128 initialLong = uint128(BPS_DIVISOR * minInitAmount / uint256(protocol.getOpenExpoImbalanceLimitBps()));
+        uint128 initialDeposit = initialLong;
+
+        int24 tick = protocol.getEffectiveTickForPrice(INITIAL_PRICE / 2);
+        uint128 price = protocol.getEffectivePriceForTick(tick);
+
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolMinInitLongAmount.selector));
+        protocol.initialize(initialDeposit - 1 ether, initialLong - 1 ether, price, abi.encode(price * 2));
     }
 
     /**
