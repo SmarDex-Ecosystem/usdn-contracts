@@ -23,7 +23,7 @@ contract TestUsdnProtocolCalcMaxLongBalance is UsdnProtocolBaseFixture {
         uint256 marginBps = protocol.MIN_LONG_TRADING_EXPO_BPS();
 
         uint256 totalExpo = 100 ether;
-        uint256 minTradingExpo = totalExpo * protocol.MIN_LONG_TRADING_EXPO_BPS() / BPS_DIVISOR;
+        uint256 minTradingExpo = totalExpo * marginBps / BPS_DIVISOR;
         uint256 maxLongBalance = protocol.i_calcMaxLongBalance(totalExpo);
         assertEq(
             maxLongBalance + minTradingExpo,
@@ -32,7 +32,7 @@ contract TestUsdnProtocolCalcMaxLongBalance is UsdnProtocolBaseFixture {
         );
 
         totalExpo = uint256(type(int256).max) / 10_000;
-        minTradingExpo = totalExpo * protocol.MIN_LONG_TRADING_EXPO_BPS() / BPS_DIVISOR;
+        minTradingExpo = totalExpo * marginBps / BPS_DIVISOR;
         maxLongBalance = protocol.i_calcMaxLongBalance(totalExpo);
         assertEq(
             maxLongBalance + minTradingExpo + 1, // +1 because of lack of precision
