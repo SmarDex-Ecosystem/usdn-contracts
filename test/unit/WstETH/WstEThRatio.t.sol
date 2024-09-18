@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { USER_1 } from "../../utils/Constants.sol";
 import { WstEthFixture } from "./utils/Fixtures.sol";
 
 /**
@@ -10,11 +9,9 @@ import { WstEthFixture } from "./utils/Fixtures.sol";
 contract TestWstEthRatio is WstEthFixture {
     function setUp() public override {
         super.setUp();
-        deal(USER_1, 1 ether);
-        stETH.mint(USER_1, 1 ether);
+        stETH.mint(address(this), 1 ether);
         (bool success,) = payable(wstETH).call{ value: 1 ether }("");
         assertTrue(success);
-        wstETH.transfer(USER_1, 1 ether);
     }
 
     function test_ratio() public {
@@ -23,6 +20,7 @@ contract TestWstEthRatio is WstEthFixture {
         assertEq(wstETH.tokensPerStEth(), 1 ether);
         assertEq(wstETH.stEthPerToken(), 1 ether);
 
+        // admin mint: change the ratio by faking eth staked yield
         stETH.mint(address(wstETH), 1 ether);
 
         assertEq(wstETH.getWstETHByStETH(1 ether), 0.5 ether);

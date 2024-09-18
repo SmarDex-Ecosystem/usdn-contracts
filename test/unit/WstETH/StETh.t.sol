@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { USER_1 } from "../../utils/Constants.sol";
 import { WstEthFixture } from "./utils/Fixtures.sol";
 
 /**
@@ -10,31 +9,26 @@ import { WstEthFixture } from "./utils/Fixtures.sol";
 contract TestStEth is WstEthFixture {
     function setUp() public override {
         super.setUp();
-        deal(USER_1, 1 ether);
     }
 
     function test_submit() public {
-        assertEq(USER_1.balance, 1 ether);
-        assertEq(stETH.balanceOf(USER_1), 0);
+        uint256 oldBalance = address(this).balance;
+        assertEq(stETH.balanceOf(address(this)), 0);
 
-        vm.startBroadcast(USER_1);
-        stETH.submit{ value: 1 ether }(USER_1);
-        vm.stopBroadcast();
+        stETH.submit{ value: 1 ether }(address(this));
 
-        assertEq(USER_1.balance, 0);
-        assertEq(stETH.balanceOf(USER_1), 1 ether);
+        assertEq(oldBalance - address(this).balance, 1 ether);
+        assertEq(stETH.balanceOf(address(this)), 1 ether);
     }
 
     function test_receive() public {
-        assertEq(USER_1.balance, 1 ether);
-        assertEq(stETH.balanceOf(USER_1), 0);
+        uint256 oldBalance = address(this).balance;
+        assertEq(stETH.balanceOf(address(this)), 0);
 
-        vm.startBroadcast(USER_1);
         (bool success,) = payable(stETH).call{ value: 1 ether }("");
-        vm.stopBroadcast();
 
         assertTrue(success);
-        assertEq(USER_1.balance, 0);
-        assertEq(stETH.balanceOf(USER_1), 1 ether);
+        assertEq(oldBalance - address(this).balance, 1 ether);
+        assertEq(stETH.balanceOf(address(this)), 1 ether);
     }
 }
