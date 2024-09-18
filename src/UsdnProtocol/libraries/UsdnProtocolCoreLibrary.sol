@@ -649,7 +649,7 @@ library UsdnProtocolCoreLibrary {
         if (ERC165Checker.supportsInterface(msg.sender, type(IPaymentCallback).interfaceId)) {
             Utils.transferCallback(s._asset, amount, address(this));
         } else {
-            // transfer the wstETH for the deposit
+            // transfer the assets for the deposit
             address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
         }
         s._balanceVault += amount;
@@ -697,7 +697,7 @@ library UsdnProtocolCoreLibrary {
         if (ERC165Checker.supportsInterface(msg.sender, type(IPaymentCallback).interfaceId)) {
             Utils.transferCallback(s._asset, amount, address(this));
         } else {
-            // transfer the wstETH for the long
+            // transfer the assets for the long
             address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
         }
 
