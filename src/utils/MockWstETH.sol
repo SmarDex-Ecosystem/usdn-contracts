@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import { IStETH } from "../interfaces/IStETH.sol";
-import { IWstETH } from "../interfaces/IWstETH.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { ERC20Burnable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import { ERC20Permit, IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import { ERC20, ERC4626, IERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
+
+import { IStETH } from "../interfaces/IStETH.sol";
+import { IWstETH } from "../interfaces/IWstETH.sol";
 
 contract MockWstETH is IWstETH, ERC4626, ERC20Permit, Ownable {
     string private constant NAME = "Mock Wrapped Staked Ether";
