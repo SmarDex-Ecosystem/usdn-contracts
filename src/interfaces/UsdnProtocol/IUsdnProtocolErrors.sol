@@ -27,10 +27,10 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the provided `validator` address is invalid
     error UsdnProtocolInvalidAddressValidator();
 
-    // @dev Indicates that the amount deposited in the vault during the initialization is too small
+    /// @dev Indicates that the amount deposited in the vault during the initialization is too small
     error UsdnProtocolMinInitDepositAmount();
 
-    // @dev Indicates that the long position open during initialization is too small
+    /// @dev Indicates that the long position open during initialization is too small
     error UsdnProtocolMinInitLongAmount();
 
     /**
