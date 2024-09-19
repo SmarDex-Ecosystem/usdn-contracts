@@ -365,6 +365,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             protocol.getMaxLeverage(),
             openParams.user,
             payable(openParams.user),
+            type(uint256).max,
             priceData,
             EMPTY_PREVIOUS_DATA
         );

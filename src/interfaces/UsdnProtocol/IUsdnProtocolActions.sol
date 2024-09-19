@@ -23,6 +23,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * @param userMaxLeverage The maximum leverage for the newly created position
      * @param to The address that will be the owner of the position
      * @param validator The address that will validate the open position
+     * @param deadline The deadline for the open position to be initiated
      * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
      * pending validation)
      * @param previousActionsData The data needed to validate actionable pending actions
@@ -37,6 +38,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
         uint256 userMaxLeverage,
         address to,
         address payable validator,
+        uint256 deadline,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_, PositionId memory posId_);

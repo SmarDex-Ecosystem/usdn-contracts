@@ -238,6 +238,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(newPrice),
             EMPTY_PREVIOUS_DATA
         );

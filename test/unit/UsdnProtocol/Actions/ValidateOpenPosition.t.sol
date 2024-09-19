@@ -182,6 +182,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
             protocol.getMaxLeverage(),
             to,
             payable(validator),
+            type(uint256).max,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
@@ -264,6 +265,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
             protocol.getMaxLeverage(),
             address(this),
             payable(this),
+            type(uint256).max,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
@@ -341,6 +343,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
             protocol.getMaxLeverage(),
             address(this),
             payable(this),
+            type(uint256).max,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
@@ -414,6 +417,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
             protocol.getMaxLeverage(),
             address(this),
             payable(this),
+            type(uint256).max,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
@@ -592,6 +596,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
             protocol.getMaxLeverage(),
             address(this),
             USER_1,
+            type(uint256).max,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );

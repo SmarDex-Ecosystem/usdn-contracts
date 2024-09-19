@@ -38,6 +38,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is TransferCallback, UsdnPr
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
@@ -62,6 +63,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is TransferCallback, UsdnPr
             leverage,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );

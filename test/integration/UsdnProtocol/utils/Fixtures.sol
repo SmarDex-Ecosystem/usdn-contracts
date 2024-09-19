@@ -318,6 +318,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             protocol.getMaxLeverage(),
             payable(address(this)),
             payable(address(this)),
+            type(uint256).max,
             "",
             EMPTY_PREVIOUS_DATA
         );

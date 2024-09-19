@@ -221,6 +221,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
+            type(uint256).max,
             liquidationPriceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -252,6 +253,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
+            type(uint256).max,
             initialPriceData,
             EMPTY_PREVIOUS_DATA
         );

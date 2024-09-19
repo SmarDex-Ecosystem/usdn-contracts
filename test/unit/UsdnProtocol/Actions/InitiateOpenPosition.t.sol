@@ -126,6 +126,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             protocol.getMaxLeverage(),
             to,
             payable(validator),
+            type(uint256).max,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
@@ -230,6 +231,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
@@ -270,6 +272,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(params.initialPrice / 3),
             EMPTY_PREVIOUS_DATA
         );
@@ -303,6 +306,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             leverage,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
@@ -324,6 +328,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             leverage,
             address(0),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
@@ -345,6 +350,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             leverage,
             address(this),
             payable(address(0)),
+            type(uint256).max,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
@@ -365,6 +371,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             leverage,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
@@ -391,6 +398,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             leverage,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
@@ -429,6 +437,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             leverage,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
@@ -457,6 +466,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
+            type(uint256).max,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -480,6 +490,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
+            type(uint256).max,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -502,6 +513,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             leverage,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
@@ -525,6 +537,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
                 leverage,
                 address(this),
                 payable(address(this)),
+                type(uint256).max,
                 abi.encode(CURRENT_PRICE),
                 EMPTY_PREVIOUS_DATA
             );
@@ -542,6 +555,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
@@ -564,6 +578,29 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             2 * 10 ** Constants.LEVERAGE_DECIMALS,
             address(this),
             payable(address(this)),
+            type(uint256).max,
+            abi.encode(CURRENT_PRICE),
+            EMPTY_PREVIOUS_DATA
+        );
+    }
+
+    /**
+     * @custom:scenario The user initiates an open position action and the deadline is exceeded
+     * @custom:given The user has wsETH in his wallet
+     * @custom:when The user initiates an open position with a deadline in the past
+     * @custom:then The protocol reverts with UsdnProtocolDeadlineExceeded
+     */
+    function test_RevertWhen_initiateOpenPositionDeadlineExceeded() public {
+        uint256 leverage = protocol.getMaxLeverage();
+        vm.expectRevert(UsdnProtocolDeadlineExceeded.selector);
+        protocol.initiateOpenPosition(
+            1 ether,
+            1500 ether,
+            type(uint128).max,
+            leverage,
+            address(this),
+            payable(address(this)),
+            block.timestamp - 1,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
