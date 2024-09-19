@@ -864,7 +864,7 @@ library UsdnProtocolLongLibrary {
         uint128 adjustedPrice,
         uint128 liqPriceWithoutPenalty,
         uint256 userMaxLeverage
-    ) public view {
+    ) internal view {
         // calculate position leverage
         // reverts if liquidationPrice >= entryPrice
         uint256 leverage = Utils._getLeverage(adjustedPrice, liqPriceWithoutPenalty);
@@ -892,7 +892,7 @@ library UsdnProtocolLongLibrary {
      * @param openCollatValue The open position collateral value
      */
     function _checkImbalanceLimitOpen(Types.Storage storage s, uint256 openTotalExpoValue, uint256 openCollatValue)
-        public
+        internal
         view
     {
         int256 openExpoImbalanceLimitBps = s._openExpoImbalanceLimitBps;
