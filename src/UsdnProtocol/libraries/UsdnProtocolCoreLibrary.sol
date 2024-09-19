@@ -758,7 +758,7 @@ library UsdnProtocolCoreLibrary {
             imbalanceBps = (Utils.toInt256(depositAmount) + minAmount - longTradingExpo) * int256(Constants.BPS_DIVISOR)
                 / longTradingExpo;
             if (imbalanceBps > depositLimit) {
-                revert IUsdnProtocolErrors.UsdnProtocolMinInitDepositAmount();
+                revert IUsdnProtocolErrors.UsdnProtocolMinInitAmount();
             }
         }
 
@@ -774,7 +774,7 @@ library UsdnProtocolCoreLibrary {
             imbalanceBps = (longTradingExpo + minAmount - Utils.toInt256(depositAmount)) * int256(Constants.BPS_DIVISOR)
                 / Utils.toInt256(depositAmount);
             if (imbalanceBps > openLimit) {
-                revert IUsdnProtocolErrors.UsdnProtocolMinInitLongAmount();
+                revert IUsdnProtocolErrors.UsdnProtocolMinInitAmount();
             }
         }
     }

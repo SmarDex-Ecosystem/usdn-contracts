@@ -288,7 +288,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      * @custom:given A minLongPosition amount of 2 ether
      * @custom:and An imbalance limit of 2% for deposits
      * @custom:when The deployer calls the `initialize` function with a deposit amount too low
-     * @custom:then The transaction reverts with the error `UsdnProtocolMinInitDepositAmount`
+     * @custom:then The transaction reverts with the error `UsdnProtocolMinInitAmount`
      */
     function test_RevertWhen_initializeDepositAmountLow() public {
         protocol.setExpoImbalanceLimits(0, 200, 0, 0, 0, 0); // 2% for deposit
@@ -302,7 +302,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         int24 tick = protocol.getEffectiveTickForPrice(INITIAL_PRICE / 2);
         uint128 price = protocol.getEffectivePriceForTick(tick);
 
-        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolMinInitDepositAmount.selector));
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolMinInitAmount.selector));
         protocol.initialize(initialDeposit - 1 ether, initialLong - 1 ether, price, abi.encode(price * 2));
     }
 
@@ -311,7 +311,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      * @custom:given a minLongPosition amount of 2 ether
      * @custom:and An imbalance limit of 2% for opening long positions
      * @custom:when The deployer calls the `initialize` function with a long amount too low
-     * @custom:then The transaction reverts with the error `UsdnProtocolMinInitLongAmount`
+     * @custom:then The transaction reverts with the error `UsdnProtocolMinInitAmount`
      */
     function test_RevertWhen_initializeLongAmountLow() public {
         protocol.setExpoImbalanceLimits(200, 0, 0, 0, 0, 0); // 2% for open
@@ -324,7 +324,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         int24 tick = protocol.getEffectiveTickForPrice(INITIAL_PRICE / 2);
         uint128 price = protocol.getEffectivePriceForTick(tick);
 
-        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolMinInitLongAmount.selector));
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolMinInitAmount.selector));
         protocol.initialize(initialDeposit - 1 ether, initialLong - 1 ether, price, abi.encode(price * 2));
     }
 
