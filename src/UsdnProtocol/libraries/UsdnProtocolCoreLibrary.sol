@@ -575,8 +575,9 @@ library UsdnProtocolCoreLibrary {
      * @return maxLongBalance_ The maximum value the long balance can reach
      */
     function _calcMaxLongBalance(uint256 totalExpo) internal pure returns (uint256 maxLongBalance_) {
-        maxLongBalance_ =
-            totalExpo * (Constants.BPS_DIVISOR - Constants.MIN_LONG_TRADING_EXPO_BPS) / Constants.BPS_DIVISOR;
+        maxLongBalance_ = FixedPointMathLib.fullMulDiv(
+            totalExpo, (Constants.BPS_DIVISOR - Constants.MIN_LONG_TRADING_EXPO_BPS), Constants.BPS_DIVISOR
+        );
     }
 
     /**
