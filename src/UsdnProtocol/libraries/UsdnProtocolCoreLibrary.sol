@@ -142,7 +142,7 @@ library UsdnProtocolCoreLibrary {
     function longAssetAvailableWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
         public
         view
-        returns (int256 available_)
+        returns (uint256 available_)
     {
         if (timestamp < s._lastUpdateTimestamp) {
             revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
@@ -150,21 +150,27 @@ library UsdnProtocolCoreLibrary {
 
         (int256 fundAsset,) = _fundingAsset(s, timestamp, s._EMA);
 
+        int256 tempAvailable;
         if (fundAsset > 0) {
-            available_ = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAsset);
+            tempAvailable = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAsset);
         } else {
             int256 fee = fundAsset * Utils.toInt256(s._protocolFeeBps) / int256(Constants.BPS_DIVISOR);
             // fees have the same sign as fundAsset (negative here), so we need to sub them
-            available_ = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAsset - fee);
+            tempAvailable = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAsset - fee);
+        }
+
+        // clamp the value to 0
+        if (tempAvailable > 0) {
+            // cast is safe as tempAvailable cannot be below 0
+            available_ = uint256(tempAvailable);
         }
 
         uint256 maxLongBalance = _calcMaxLongBalance(s._totalExpo);
-        // cast is safe as maxLongBalance cannot go above int256.max
-        if (available_ > 0 && available_ > int256(maxLongBalance)) {
-            available_ = int256(maxLongBalance);
+        if (available_ > maxLongBalance) {
+            available_ = maxLongBalance;
         }
 
-        int256 totalBalance = (s._balanceLong + s._balanceVault).toInt256();
+        uint256 totalBalance = s._balanceLong + s._balanceVault;
         if (available_ > totalBalance) {
             available_ = totalBalance;
         }
@@ -176,8 +182,7 @@ library UsdnProtocolCoreLibrary {
         view
         returns (uint256 expo_)
     {
-        // cast is safe as longAssetAvailableWithFunding cannot return a value bigger than the total expo
-        expo_ = uint256(s._totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(s, currentPrice, timestamp)));
+        expo_ = s._totalExpo - longAssetAvailableWithFunding(s, currentPrice, timestamp);
     }
 
     /* -------------------------------------------------------------------------- */

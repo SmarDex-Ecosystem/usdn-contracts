@@ -87,7 +87,7 @@ contract TestUsdnProtocolNegativeLongTradingExpo is UsdnProtocolBaseIntegrationF
 
         assertEq(
             protocol.longAssetAvailableWithFunding(DEFAULT_PARAMS.initialPrice, uint128(block.timestamp)),
-            int256(totalExpo * (BPS_DIVISOR - protocol.MIN_LONG_TRADING_EXPO_BPS()) / BPS_DIVISOR),
+            totalExpo * (BPS_DIVISOR - protocol.MIN_LONG_TRADING_EXPO_BPS()) / BPS_DIVISOR,
             "sanity check: trading expo should be equal to the min trading expo for this test to work"
         );
 
@@ -137,7 +137,7 @@ contract TestUsdnProtocolNegativeLongTradingExpo is UsdnProtocolBaseIntegrationF
 
         assertEq(
             protocol.longAssetAvailableWithFunding(DEFAULT_PARAMS.initialPrice, uint128(block.timestamp)),
-            int256(totalExpo * (BPS_DIVISOR - protocol.MIN_LONG_TRADING_EXPO_BPS()) / BPS_DIVISOR),
+            totalExpo * (BPS_DIVISOR - protocol.MIN_LONG_TRADING_EXPO_BPS()) / BPS_DIVISOR,
             "sanity check: trading expo should be equal to the min trading expo for this test to work"
         );
 

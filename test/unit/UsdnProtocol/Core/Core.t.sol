@@ -268,10 +268,10 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         assertGt(fundingPerDay, 0, "funding rate should be positive");
 
         // we have to subtract 30 seconds from the timestamp because of the mock oracle middleware behavior
-        int256 available = protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
+        uint256 available = protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
         // call liquidate to update the contract state
         protocol.mockLiquidate(priceData, 5);
-        assertEq(available, int256(protocol.getBalanceLong()), "long balance != available");
+        assertEq(available, protocol.getBalanceLong(), "long balance != available");
     }
 
     /**
@@ -289,14 +289,14 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         (, int256 fundingPerDay,) = protocol.funding(uint128(block.timestamp));
         assertLt(fundingPerDay, 0, "funding rate should be negative");
 
-        int256 available = protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp));
+        uint256 available = protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp));
 
         uint256 minTradingExpo =
             protocol.getTotalExpo() * (BPS_DIVISOR - protocol.MIN_LONG_TRADING_EXPO_BPS()) / BPS_DIVISOR;
-        assertEq(available, int256(minTradingExpo), "the long balance should be equal to the min trading expo");
+        assertEq(available, minTradingExpo, "the long balance should be equal to the min trading expo");
 
         // check that a higher timestamp does not increase the amount available
-        int256 availableLater = protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp) + 30 days);
+        uint256 availableLater = protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp) + 30 days);
         assertEq(available, availableLater, "the available assets should not have changed");
     }
 
@@ -314,11 +314,11 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         assertLt(fundingPerDay, 0, "funding rate should be negative");
 
         // we have to subtract 30 seconds from the timestamp because of the mock oracle middleware behavior
-        int256 available = protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
+        uint256 available = protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
         // call liquidate to update the contract state
         protocol.mockLiquidate(abi.encode(price), 5);
 
-        assertEq(available, int256(protocol.getBalanceLong()), "long balance != available");
+        assertEq(available, protocol.getBalanceLong(), "long balance != available");
     }
 
     /**
@@ -346,11 +346,11 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         assertLt(fundingPerDay, 0, "funding rate should be negative");
 
         // we have to subtract 30 seconds from the timestamp because of the mock oracle middleware behavior
-        int256 available = protocol.vaultAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
+        uint256 available = protocol.vaultAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
         // call liquidate to update the contract state
         protocol.mockLiquidate(abi.encode(price), 5);
 
-        assertEq(available, int256(protocol.getBalanceVault()), "vault balance != available");
+        assertEq(available, protocol.getBalanceVault(), "vault balance != available");
     }
 
     /**
@@ -377,10 +377,10 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         assertGt(fundingPerDay, 0, "funding rate should be positive");
 
         // we have to subtract 30 seconds from the timestamp because of the mock oracle middleware behavior
-        int256 available = protocol.vaultAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
+        uint256 available = protocol.vaultAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
         // call liquidate to update the contract state
         protocol.mockLiquidate(priceData, 5);
-        assertEq(available, int256(protocol.getBalanceVault()), "vault balance != available");
+        assertEq(available, protocol.getBalanceVault(), "vault balance != available");
     }
 
     /**

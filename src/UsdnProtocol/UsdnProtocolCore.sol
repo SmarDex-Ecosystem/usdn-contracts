@@ -34,7 +34,7 @@ abstract contract UsdnProtocolCore is UsdnProtocolStorage, IUsdnProtocolCore {
     function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
         external
         view
-        returns (int256 available_)
+        returns (uint256 available_)
     {
         return Core.longAssetAvailableWithFunding(s, currentPrice, timestamp);
     }

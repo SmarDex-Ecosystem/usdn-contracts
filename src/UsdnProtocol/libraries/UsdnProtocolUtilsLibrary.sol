@@ -374,11 +374,8 @@ library UsdnProtocolUtilsLibrary {
         returns (int256 available_)
     {
         int256 priceDiff = toInt256(newPrice) - toInt256(oldPrice);
-        uint256 tradingExpo;
-        // `balanceLong` is strictly inferior to `totalExpo`
-        unchecked {
-            tradingExpo = totalExpo - balanceLong;
-        }
+        uint256 tradingExpo = totalExpo - balanceLong;
+
         int256 pnl = tradingExpo.toInt256().safeMul(priceDiff).safeDiv(toInt256(newPrice));
 
         available_ = balanceLong.toInt256().safeAdd(pnl);
