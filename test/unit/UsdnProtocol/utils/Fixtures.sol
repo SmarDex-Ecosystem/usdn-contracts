@@ -448,8 +448,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         _setUp(params);
 
         // cannot be less than 1 ether
-        // TODO edit test
-        // initialAmount = uint128(bound(initialAmount, protocol.MIN_INIT_DEPOSIT(), 5000 ether));
         initialAmount = uint128(bound(initialAmount, 1 ether, 5000 ether));
 
         int256 depositLimit = protocol.getDepositExpoImbalanceLimitBps();
