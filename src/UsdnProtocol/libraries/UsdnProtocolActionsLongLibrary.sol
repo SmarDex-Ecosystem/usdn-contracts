@@ -135,8 +135,7 @@ library UsdnProtocolActionsLongLibrary {
         if (block.timestamp > params.deadline) {
             revert IUsdnProtocolErrors.UsdnProtocolDeadlineExceeded();
         }
-        uint64 securityDepositValue = s._securityDepositValue;
-        if (msg.value < securityDepositValue) {
+        if (msg.value < params.securityDepositValue) {
             revert IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow();
         }
 
@@ -144,19 +143,7 @@ library UsdnProtocolActionsLongLibrary {
         bool liq;
         uint256 validatorAmount;
 
-        (validatorAmount, success_, liq) = _initiateClosePosition(
-            s,
-            Types.InititateClosePositionParams({
-                owner: msg.sender,
-                to: params.to,
-                validator: params.validator,
-                posId: params.posId,
-                amountToClose: params.amountToClose,
-                userMinPrice: params.userMinPrice,
-                securityDepositValue: securityDepositValue
-            }),
-            currentPriceData
-        );
+        (validatorAmount, success_, liq) = _initiateClosePosition(s, params, currentPriceData);
 
         uint256 amountToRefund;
         if (success_ || liq) {
@@ -175,7 +162,7 @@ library UsdnProtocolActionsLongLibrary {
             }
         }
 
-        Utils._refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
+        Utils._refundExcessEther(params.securityDepositValue, amountToRefund, balanceBefore);
         Utils._checkPendingFee(s);
     }
 
@@ -704,7 +691,7 @@ library UsdnProtocolActionsLongLibrary {
      */
     function _initiateClosePosition(
         Types.Storage storage s,
-        Types.InititateClosePositionParams memory params,
+        Types.InitiateClosePositionParams memory params,
         bytes calldata currentPriceData
     ) internal returns (uint256 amountToRefund_, bool isInitiated_, bool liquidated_) {
         Types.ClosePositionData memory data;

@@ -58,10 +58,11 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             )
         );
         protocol.i_initiateClosePosition(
-            Types.InititateClosePositionParams({
+            Types.InitiateClosePositionParams({
                 owner: address(this),
                 to: address(this),
-                validator: address(this),
+                validator: payable(address(this)),
+                deadline: type(uint256).max,
                 posId: posId,
                 amountToClose: amountToClose,
                 userMinPrice: DISABLE_MIN_PRICE,
@@ -94,10 +95,11 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
 
         vm.expectRevert(UsdnProtocolLongPositionTooSmall.selector);
         protocol.i_initiateClosePosition(
-            Types.InititateClosePositionParams({
+            Types.InitiateClosePositionParams({
                 owner: address(this),
                 to: address(this),
-                validator: address(this),
+                validator: payable(address(this)),
+                deadline: type(uint256).max,
                 posId: posId,
                 amountToClose: amountToClose,
                 userMinPrice: DISABLE_MIN_PRICE,
@@ -117,10 +119,11 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         vm.expectRevert(UsdnProtocolUnauthorized.selector);
         vm.prank(USER_1);
         protocol.i_initiateClosePosition(
-            Types.InititateClosePositionParams({
+            Types.InitiateClosePositionParams({
                 owner: USER_1,
                 to: address(this),
                 validator: USER_1,
+                deadline: type(uint256).max,
                 posId: posId,
                 amountToClose: POSITION_AMOUNT,
                 userMinPrice: DISABLE_MIN_PRICE,
@@ -140,10 +143,11 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         bytes memory priceData = abi.encode(params.initialPrice);
         vm.expectRevert(UsdnProtocolInvalidAddressTo.selector);
         protocol.i_initiateClosePosition(
-            Types.InititateClosePositionParams({
+            Types.InitiateClosePositionParams({
                 owner: address(this),
                 to: address(0),
-                validator: address(this),
+                validator: payable(address(this)),
+                deadline: type(uint256).max,
                 posId: posId,
                 amountToClose: POSITION_AMOUNT,
                 userMinPrice: DISABLE_MIN_PRICE,
@@ -164,10 +168,11 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolZeroAmount.selector));
         protocol.i_initiateClosePosition(
-            Types.InititateClosePositionParams({
+            Types.InitiateClosePositionParams({
                 owner: address(this),
                 to: address(this),
-                validator: address(this),
+                validator: payable(address(this)),
+                deadline: type(uint256).max,
                 posId: posId,
                 amountToClose: 0,
                 userMinPrice: DISABLE_MIN_PRICE,
@@ -200,10 +205,11 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             abi.encodeWithSelector(UsdnProtocolOutdatedTick.selector, posId.tickVersion + 1, posId.tickVersion)
         );
         protocol.i_initiateClosePosition(
-            Types.InititateClosePositionParams({
+            Types.InitiateClosePositionParams({
                 owner: address(this),
                 to: address(this),
-                validator: address(this),
+                validator: payable(address(this)),
+                deadline: type(uint256).max,
                 posId: posId,
                 amountToClose: POSITION_AMOUNT / 2,
                 userMinPrice: DISABLE_MIN_PRICE,
@@ -572,10 +578,11 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             posBefore.totalExpo - totalExpoToClose
         );
         protocol.i_initiateClosePosition(
-            Types.InititateClosePositionParams({
+            Types.InitiateClosePositionParams({
                 owner: address(this),
                 to: to,
-                validator: validator,
+                validator: payable(validator),
+                deadline: type(uint256).max,
                 posId: posId,
                 amountToClose: amountToClose,
                 userMinPrice: DISABLE_MIN_PRICE,
