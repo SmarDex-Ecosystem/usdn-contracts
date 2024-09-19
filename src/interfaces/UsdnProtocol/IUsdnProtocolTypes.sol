@@ -298,26 +298,6 @@ interface IUsdnProtocolTypes {
     }
 
     /**
-     * @notice Parameters for the internal `_initiateClosePosition` function
-     * @param owner The owner of the position
-     * @param to The address that will receive the assets
-     * @param validator The address that will validate the close action
-     * @param posId The unique identifier of the position
-     * @param amountToClose The amount of collateral to remove from the position's amount
-     * @param userMinPrice The minimum price at which the position can be closed
-     * @param securityDepositValue The value of the security deposit for the newly created pending action
-     */
-    struct InititateClosePositionParams {
-        address owner;
-        address to;
-        address validator;
-        PositionId posId;
-        uint128 amountToClose;
-        uint256 userMinPrice;
-        uint64 securityDepositValue;
-    }
-
-    /**
      * @notice Parameters for the internal `_prepareInitiateOpenPosition` function
      * @param validator The address of the validator
      * @param amount The amount of assets to deposit
@@ -358,18 +338,22 @@ interface IUsdnProtocolTypes {
 
     /**
      * @notice Parameters for the internal `_initiateClosePosition` function
+     * @param owner The owner of the position
+     * @param to The address that will receive the closed amount
+     * @param validator The address that will validate the close position
      * @param posId The position id
      * @param amountToClose The amount to close
      * @param userMinPrice The minimum price at which the position can be closed
-     * @param to The address that will receive the closed amount
-     * @param validator The address that will validate the close position
+     * @param securityDepositValue The value of the security deposit for the newly created pending action
      */
     struct InitiateClosePositionParams {
+        address owner;
+        address to;
+        address payable validator;
         PositionId posId;
         uint128 amountToClose;
         uint256 userMinPrice;
-        address to;
-        address payable validator;
+        uint64 securityDepositValue;
     }
 
     /**

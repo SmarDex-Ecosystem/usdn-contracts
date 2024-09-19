@@ -56,11 +56,13 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (bool success_) {
         InitiateClosePositionParams memory params = InitiateClosePositionParams({
+            owner: msg.sender,
+            to: to,
+            validator: validator,
             posId: posId,
             amountToClose: amountToClose,
             userMinPrice: userMinPrice,
-            to: to,
-            validator: validator
+            securityDepositValue: s._securityDepositValue
         });
 
         return ActionsLong.initiateClosePosition(s, params, currentPriceData, previousActionsData);
