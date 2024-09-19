@@ -4,7 +4,7 @@ pragma solidity 0.8.26;
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 /**
- * @custom:feature tests for the _calcMaxLongBalance function
+ * @custom:feature Tests for the _calcMaxLongBalance function
  * @custom:background Given a protocol instance that was initialized with default params
  */
 contract TestUsdnProtocolCalcMaxLongBalance is UsdnProtocolBaseFixture {
