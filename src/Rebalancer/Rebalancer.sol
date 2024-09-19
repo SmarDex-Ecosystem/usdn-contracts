@@ -479,6 +479,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
             userMinPrice,
             to,
             payable(msg.sender),
+            type(uint256).max,
             currentPriceData,
             previousActionsData
         );

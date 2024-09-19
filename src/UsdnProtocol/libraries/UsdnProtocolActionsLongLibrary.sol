@@ -132,6 +132,9 @@ library UsdnProtocolActionsLongLibrary {
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData
     ) external returns (bool success_) {
+        if (block.timestamp > params.deadline) {
+            revert IUsdnProtocolErrors.UsdnProtocolDeadlineExceeded();
+        }
         uint64 securityDepositValue = s._securityDepositValue;
         if (msg.value < securityDepositValue) {
             revert IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow();

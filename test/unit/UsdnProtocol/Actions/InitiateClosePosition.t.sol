@@ -234,6 +234,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             DISABLE_MIN_PRICE,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -280,6 +281,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             DISABLE_MIN_PRICE,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             priceData,
             PreviousActionsData(previousData, rawIndices)
         );
@@ -304,6 +306,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             DISABLE_MIN_PRICE,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -339,6 +342,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             DISABLE_MIN_PRICE,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -487,6 +491,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             DISABLE_MIN_PRICE,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(params.initialPrice * 2 / 3),
             EMPTY_PREVIOUS_DATA
         );
@@ -517,6 +522,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             DISABLE_MIN_PRICE,
             DEPLOYER,
             DEPLOYER,
+            type(uint256).max,
             abi.encode(params.initialPrice / 3),
             EMPTY_PREVIOUS_DATA
         );
@@ -682,6 +688,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             DISABLE_MIN_PRICE,
             USER_1,
             USER_1,
+            type(uint256).max,
             abi.encode(params.initialPrice),
             EMPTY_PREVIOUS_DATA
         );
@@ -711,6 +718,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             DISABLE_MIN_PRICE,
             USER_1,
             USER_1,
+            type(uint256).max,
             abi.encode(params.initialPrice),
             EMPTY_PREVIOUS_DATA
         );
@@ -730,6 +738,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             params.initialPrice + 1,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(params.initialPrice),
             EMPTY_PREVIOUS_DATA
         );
@@ -752,6 +761,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
                 DISABLE_MIN_PRICE,
                 address(this),
                 payable(address(this)),
+                type(uint256).max,
                 abi.encode(params.initialPrice),
                 EMPTY_PREVIOUS_DATA
             );
@@ -778,6 +788,27 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             DISABLE_MIN_PRICE,
             address(this),
             payable(address(this)),
+            type(uint256).max,
+            abi.encode(params.initialPrice),
+            EMPTY_PREVIOUS_DATA
+        );
+    }
+
+    /**
+     * @custom:scenario The user initiates a close position action and the deadline is exceeded
+     * @custom:given A user position
+     * @custom:when The user initiates a close position action with a deadline in the past
+     * @custom:then The protocol reverts with UsdnProtocolDeadlineExceeded
+     */
+    function test_RevertWhen_initiateClosePositionDeadlineExceeded() public {
+        vm.expectRevert(UsdnProtocolDeadlineExceeded.selector);
+        protocol.initiateClosePosition(
+            posId,
+            POSITION_AMOUNT,
+            DISABLE_MIN_PRICE,
+            address(this),
+            payable(address(this)),
+            block.timestamp - 1,
             abi.encode(params.initialPrice),
             EMPTY_PREVIOUS_DATA
         );

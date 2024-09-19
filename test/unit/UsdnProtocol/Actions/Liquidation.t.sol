@@ -331,6 +331,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             DISABLE_MIN_PRICE,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(effectivePriceForTick),
             EMPTY_PREVIOUS_DATA
         );

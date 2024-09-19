@@ -51,6 +51,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
         uint256 userMinPrice,
         address to,
         address payable validator,
+        uint256 deadline,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (bool success_) {
@@ -59,7 +60,8 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
             amountToClose: amountToClose,
             userMinPrice: userMinPrice,
             to: to,
-            validator: validator
+            validator: validator,
+            deadline: deadline
         });
 
         return ActionsLong.initiateClosePosition(s, params, currentPriceData, previousActionsData);

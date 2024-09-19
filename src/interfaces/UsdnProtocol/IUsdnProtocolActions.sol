@@ -94,6 +94,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * temporary entry price is below this threshold, the initiate action will revert
      * @param to The address that will receive the assets
      * @param validator The address that will validate the close action
+     * @param deadline The deadline for the close position to be initiated
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions
      * @return success_ Whether the closing was initiated
@@ -104,6 +105,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
         uint256 userMinPrice,
         address to,
         address payable validator,
+        uint256 deadline,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_);

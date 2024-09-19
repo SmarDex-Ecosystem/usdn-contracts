@@ -309,6 +309,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
             DISABLE_MIN_PRICE,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(newPrice),
             EMPTY_PREVIOUS_DATA
         );

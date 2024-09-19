@@ -383,6 +383,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             DISABLE_MIN_PRICE,
             openParams.user,
             payable(openParams.user),
+            type(uint256).max,
             priceData,
             EMPTY_PREVIOUS_DATA
         );

@@ -360,6 +360,8 @@ interface IUsdnProtocolTypes {
      * @param userMinPrice The minimum price at which the position can be closed
      * @param to The address that will receive the closed amount
      * @param validator The address that will validate the close position
+     * @param deadline The deadline for the close position to be initiated
+     *
      */
     struct InitiateClosePositionParams {
         PositionId posId;
@@ -367,6 +369,7 @@ interface IUsdnProtocolTypes {
         uint256 userMinPrice;
         address to;
         address payable validator;
+        uint256 deadline;
     }
 
     /**

@@ -129,6 +129,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             DISABLE_MIN_PRICE,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -168,6 +169,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             DISABLE_MIN_PRICE,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -198,6 +200,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             DISABLE_MIN_PRICE,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -273,7 +276,14 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         (Position memory pos, uint24 liquidationPenalty) = protocol.getLongPosition(posId);
         uint256 assetBalanceBefore = protocol.getAsset().balanceOf(to);
         protocol.initiateClosePosition(
-            posId, POSITION_AMOUNT, DISABLE_MIN_PRICE, to, payable(validator), priceData, EMPTY_PREVIOUS_DATA
+            posId,
+            POSITION_AMOUNT,
+            DISABLE_MIN_PRICE,
+            to,
+            payable(validator),
+            type(uint256).max,
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -342,6 +352,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             DISABLE_MIN_PRICE,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             data.priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -400,6 +411,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             DISABLE_MIN_PRICE,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             data.priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -458,6 +470,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
                 DISABLE_MIN_PRICE,
                 address(this),
                 payable(address(this)),
+                type(uint256).max,
                 priceData,
                 EMPTY_PREVIOUS_DATA
             );
@@ -529,6 +542,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
                 DISABLE_MIN_PRICE,
                 address(this),
                 payable(address(this)),
+                type(uint256).max,
                 priceData,
                 EMPTY_PREVIOUS_DATA
             );
@@ -599,6 +613,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             DISABLE_MIN_PRICE,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             data.priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -693,7 +708,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         (Position memory pos,) = protocol.getLongPosition(PositionId(posId.tick, 0, 0));
         vm.prank(DEPLOYER);
         protocol.initiateClosePosition(
-            posId, pos.amount, DISABLE_MIN_PRICE, DEPLOYER, DEPLOYER, priceData, EMPTY_PREVIOUS_DATA
+            posId, pos.amount, DISABLE_MIN_PRICE, DEPLOYER, DEPLOYER, type(uint256).max, priceData, EMPTY_PREVIOUS_DATA
         );
 
         /* ----------------- Validate close position under liq price ---------------- */
@@ -807,7 +822,14 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         uint256 balanceContractBefore = address(this).balance;
 
         protocol.initiateClosePosition{ value: 0.5 ether }(
-            posId, POSITION_AMOUNT, DISABLE_MIN_PRICE, USER_1, payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            posId,
+            POSITION_AMOUNT,
+            DISABLE_MIN_PRICE,
+            USER_1,
+            payable(address(this)),
+            type(uint256).max,
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         vm.prank(USER_1);
