@@ -414,6 +414,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         uint88 amount,
         address to,
         uint256 userMinPrice,
+        uint256 deadline,
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData
     ) external payable nonReentrant returns (bool success_) {
@@ -479,7 +480,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
             userMinPrice,
             to,
             payable(msg.sender),
-            type(uint256).max,
+            deadline,
             currentPriceData,
             previousActionsData
         );
