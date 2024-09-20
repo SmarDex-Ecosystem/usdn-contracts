@@ -3,6 +3,7 @@ pragma solidity 0.8.26;
 
 import { Script } from "forge-std/Script.sol";
 
+import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import { Sdex } from "../test/utils/Sdex.sol";
@@ -20,6 +21,8 @@ import { Wusdn } from "../src/Usdn/Wusdn.sol";
 import { UsdnProtocolFallback } from "../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { IWstETH } from "../src/interfaces/IWstETH.sol";
+import { IBaseLiquidationRewardsManager } from "../src/interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
+import { IBaseOracleMiddleware } from "../src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
@@ -400,6 +403,23 @@ contract Deploy is Script {
     function _initializeImplementation(address proxy) internal {
         IUsdnProtocol implementation = IUsdnProtocol(Upgrades.getImplementationAddress(proxy));
 
-        implementation.initializeStorage();
+        implementation.initializeStorage(
+            Usdn(address(0)),
+            IERC20Metadata(address(0)),
+            IERC20Metadata(address(0)),
+            IBaseOracleMiddleware(address(0)),
+            IBaseLiquidationRewardsManager(address(0)),
+            0,
+            address(0),
+            Types.Managers({
+                setExternalManager: _deployerAddress,
+                criticalFunctionsManager: _deployerAddress,
+                setProtocolParamsManager: _deployerAddress,
+                setUsdnParamsManager: _deployerAddress,
+                setOptionsManager: _deployerAddress,
+                proxyUpgradeManager: _deployerAddress
+            }),
+            UsdnProtocolFallback(address(0))
+        );
     }
 }
