@@ -56,8 +56,8 @@ contract UsdnProtocolImpl is
         _grantRole(UNPAUSER_ROLE, managers.unpauserManager);
 
         // parameters
-        s._minLeverage = 10 ** Constants.LEVERAGE_DECIMALS + 10 ** 12;
-        s._maxLeverage = 10 * 10 ** Constants.LEVERAGE_DECIMALS;
+        s._minLeverage = 10 ** Constants.LEVERAGE_DECIMALS + 10 ** (Constants.LEVERAGE_DECIMALS - 1); // x1.1
+        s._maxLeverage = 10 * 10 ** Constants.LEVERAGE_DECIMALS; // x10
         s._lowLatencyValidatorDeadline = 15 minutes;
         s._onChainValidatorDeadline = 65 minutes; // slightly more than chainlink's heartbeat
         s._safetyMarginBps = 200; // 2%
@@ -92,7 +92,6 @@ contract UsdnProtocolImpl is
 
         s._usdn = usdn;
         s._sdex = sdex;
-        // those tokens should have 18 decimals
         if (usdn.decimals() != Constants.TOKENS_DECIMALS || sdex.decimals() != Constants.TOKENS_DECIMALS) {
             revert UsdnProtocolInvalidTokenDecimals();
         }

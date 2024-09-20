@@ -17,7 +17,7 @@ interface IRebalancerErrors {
     /// @dev Indicates that the amount to deposit is insufficient
     error RebalancerInsufficientAmount();
 
-    /// @dev Indicates that the provided max leverage is invalid
+    /// @dev Indicates that the provided maximum leverage is invalid
     error RebalancerInvalidMaxLeverage();
 
     /// @dev Indicates that the wanted minimum asset deposit is invalid

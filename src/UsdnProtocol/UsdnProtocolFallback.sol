@@ -104,6 +104,11 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
+    function REBALANCER_MIN_LEVERAGE() external pure returns (uint256) {
+        return Constants.REBALANCER_MIN_LEVERAGE;
+    }
+
+    /// @inheritdoc IUsdnProtocolFallback
     function TOKENS_DECIMALS() external pure returns (uint8) {
         return Constants.TOKENS_DECIMALS;
     }
