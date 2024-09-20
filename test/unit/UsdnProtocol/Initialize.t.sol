@@ -354,7 +354,6 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      * @custom:then The protocol reverts with UsdnProtocolLeverageTooLow
      */
     function test_RevertWhen_initializePositionLowLeverage() public {
-        uint256 leverage = protocol.getMaxLeverage();
         vm.expectRevert(UsdnProtocolLeverageTooLow.selector);
         protocol.initialize(INITIAL_DEPOSIT, INITIAL_POSITION * 30, INITIAL_PRICE / 31, abi.encode(INITIAL_PRICE));
     }
@@ -365,7 +364,6 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      * @custom:then The protocol reverts with UsdnProtocolLeverageTooHigh
      */
     function test_RevertWhen_initializePositionHighLeverage() public {
-        uint256 leverage = protocol.getMaxLeverage();
         vm.expectRevert(UsdnProtocolLeverageTooHigh.selector);
         protocol.initialize(
             INITIAL_DEPOSIT, INITIAL_POSITION / 10, (INITIAL_PRICE * 10) / 11, abi.encode(INITIAL_PRICE)

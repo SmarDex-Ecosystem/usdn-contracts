@@ -24,8 +24,6 @@ import { UsdnProtocolLongLibrary as Long } from "./UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.sol";
 
-import "forge-std/console.sol";
-
 library UsdnProtocolCoreLibrary {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
     using HugeUint for HugeUint.Uint512;
@@ -84,13 +82,6 @@ library UsdnProtocolCoreLibrary {
             Long._getTickFromDesiredLiqPrice(s, desiredLiqPrice, s._liquidationPenalty);
         uint128 positionTotalExpo =
             Utils._calcPositionTotalExpo(longAmount, currentPrice.price.toUint128(), liqPriceWithoutPenalty);
-
-        console.log("positionTotalExpo");
-        console.logUint(positionTotalExpo);
-        console.log("longAmount");
-        console.logUint(longAmount);
-        console.log("depositAmount");
-        console.logUint(depositAmount);
 
         _checkInitImbalance(s, positionTotalExpo, longAmount, depositAmount);
 
