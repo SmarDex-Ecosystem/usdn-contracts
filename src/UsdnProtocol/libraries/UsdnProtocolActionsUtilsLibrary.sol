@@ -117,36 +117,29 @@ library UsdnProtocolActionsUtilsLibrary {
      * @dev Reverts if the imbalance limit is reached, or if any of the checks in `_checkInitiateClosePosition` fail
      * Returns without creating a pending action if the position gets liquidated in this transaction
      * @param s The storage of the protocol
-     * @param owner The owner of the position
-     * @param to The address that will receive the assets
-     * @param validator The address of the pending action validator
-     * @param posId The unique identifier of the position
-     * @param amountToClose The amount of collateral to remove from the position's amount
-     * @param currentPriceData The current price data
+     * @param params The parameters for the _prepareClosePositionData function
      * @return data_ The close position data
      * @return liquidated_ Whether the position was liquidated and the caller should return early
      */
     function _prepareClosePositionData(
         Types.Storage storage s,
-        address owner,
-        address to,
-        address validator,
-        Types.PositionId memory posId,
-        uint128 amountToClose,
-        bytes calldata currentPriceData
+        Types.PrepareInitiateClosePositionParams calldata params
     ) public returns (Types.ClosePositionData memory data_, bool liquidated_) {
-        (data_.pos, data_.liquidationPenalty) = getLongPosition(s, posId);
+        (data_.pos, data_.liquidationPenalty) = getLongPosition(s, params.posId);
 
-        _checkInitiateClosePosition(s, owner, to, validator, amountToClose, data_.pos);
+        _checkInitiateClosePosition(s, params.owner, params.to, params.validator, params.amountToClose, data_.pos);
 
         {
             PriceInfo memory currentPrice = Utils._getOraclePrice(
                 s,
                 Types.ProtocolAction.InitiateClosePosition,
                 block.timestamp,
-                Utils._calcActionId(owner, uint128(block.timestamp)),
-                currentPriceData
+                Utils._calcActionId(params.owner, uint128(block.timestamp)),
+                params.currentPriceData
             );
+            if (currentPrice.price < params.userMinPrice) {
+                revert IUsdnProtocolErrors.UsdnProtocolSlippageMinPriceExceeded();
+            }
 
             (, data_.isLiquidationPending) = Long._applyPnlAndFundingAndLiquidate(
                 s,
@@ -155,11 +148,11 @@ library UsdnProtocolActionsUtilsLibrary {
                 s._liquidationIteration,
                 false,
                 Types.ProtocolAction.InitiateClosePosition,
-                currentPriceData
+                params.currentPriceData
             );
 
-            uint256 version = s._tickVersion[posId.tick];
-            if (version != posId.tickVersion) {
+            uint256 version = s._tickVersion[params.posId.tick];
+            if (version != params.posId.tickVersion) {
                 // the current tick version doesn't match the version from the position,
                 // that means that the position has been liquidated in this transaction
                 return (data_, true);
@@ -170,7 +163,7 @@ library UsdnProtocolActionsUtilsLibrary {
             return (data_, false);
         }
 
-        data_.totalExpoToClose = (uint256(data_.pos.totalExpo) * amountToClose / data_.pos.amount).toUint128();
+        data_.totalExpoToClose = (uint256(data_.pos.totalExpo) * params.amountToClose / data_.pos.amount).toUint128();
 
         data_.longTradingExpo = s._totalExpo - s._balanceLong;
         data_.liqMulAcc = s._liqMultiplierAccumulator;
@@ -181,7 +174,7 @@ library UsdnProtocolActionsUtilsLibrary {
 
         // to have maximum precision, we do not pre-compute the liquidation multiplier with a fixed
         // precision just now, we will store it in the pending action later, to be used in the validate action
-        int24 tick = Utils.calcTickWithoutPenalty(posId.tick, data_.liquidationPenalty);
+        int24 tick = Utils.calcTickWithoutPenalty(params.posId.tick, data_.liquidationPenalty);
         uint128 liqPriceWithoutPenalty =
             Utils.getEffectivePriceForTick(tick, data_.lastPrice, data_.longTradingExpo, data_.liqMulAcc);
 

@@ -120,7 +120,13 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
 
         // initiate close
         protocol.initiateClosePosition(
-            PositionId(tick, 0, 0), params.initialLong, DEPLOYER, DEPLOYER, abi.encode(params.initialPrice), data
+            PositionId(tick, 0, 0),
+            params.initialLong,
+            DISABLE_MIN_PRICE,
+            DEPLOYER,
+            DEPLOYER,
+            abi.encode(params.initialPrice),
+            data
         );
 
         // wait more than 2 blocks

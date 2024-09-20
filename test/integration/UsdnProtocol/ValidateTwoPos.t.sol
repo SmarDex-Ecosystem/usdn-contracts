@@ -40,7 +40,6 @@ contract TestForkUsdnProtocolValidateTwoPos is UsdnProtocolBaseIntegrationFixtur
             protocol.getMaxLeverage(),
             address(this),
             USER_1,
-            NO_PERMIT2,
             "",
             EMPTY_PREVIOUS_DATA
         );
@@ -57,7 +56,6 @@ contract TestForkUsdnProtocolValidateTwoPos is UsdnProtocolBaseIntegrationFixtur
             protocol.getMaxLeverage(),
             address(this),
             USER_2,
-            NO_PERMIT2,
             "",
             EMPTY_PREVIOUS_DATA
         );

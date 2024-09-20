@@ -33,7 +33,7 @@ contract TestImbalanceLimitDepositFuzzing is UsdnProtocolBaseFixture {
         // initial deposit limit bps
         int256 depositLimit = protocol.getDepositExpoImbalanceLimitBps();
 
-        if (imbalanceBps >= depositLimit) {
+        if (imbalanceBps > depositLimit) {
             // should revert with above deposit imbalance limit
             vm.expectRevert(
                 abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, imbalanceBps)

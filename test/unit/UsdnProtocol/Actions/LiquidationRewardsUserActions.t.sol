@@ -82,7 +82,12 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
         protocol.initiateDeposit(
-            depositAmount, address(this), payable(address(this)), NO_PERMIT2, liquidationPriceData, EMPTY_PREVIOUS_DATA
+            depositAmount,
+            DISABLE_SHARES_OUT_MIN,
+            address(this),
+            payable(address(this)),
+            liquidationPriceData,
+            EMPTY_PREVIOUS_DATA
         );
 
         uint256 balanceSenderAfter = wstETH.balanceOf(address(this));
@@ -105,7 +110,12 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
      */
     function test_liquidationRewards_validateDeposit() public {
         protocol.initiateDeposit(
-            depositAmount, address(this), payable(address(this)), NO_PERMIT2, initialPriceData, EMPTY_PREVIOUS_DATA
+            depositAmount,
+            DISABLE_SHARES_OUT_MIN,
+            address(this),
+            payable(address(this)),
+            initialPriceData,
+            EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -140,6 +150,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
         protocol.initiateWithdrawal(
             uint152(usdn.balanceOf(address(this))),
+            DISABLE_AMOUNT_OUT_MIN,
             address(this),
             payable(address(this)),
             liquidationPriceData,
@@ -219,7 +230,6 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             liquidationPriceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -251,7 +261,6 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             initialPriceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -296,7 +305,13 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
         protocol.initiateClosePosition(
-            posId, depositAmount, address(this), payable(address(this)), liquidationPriceData, EMPTY_PREVIOUS_DATA
+            posId,
+            depositAmount,
+            DISABLE_MIN_PRICE,
+            address(this),
+            payable(address(this)),
+            liquidationPriceData,
+            EMPTY_PREVIOUS_DATA
         );
 
         uint256 balanceSenderAfter = wstETH.balanceOf(address(this));

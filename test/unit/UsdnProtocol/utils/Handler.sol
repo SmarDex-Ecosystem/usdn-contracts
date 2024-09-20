@@ -202,18 +202,11 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         expo_ = s._totalExpo.toInt256().safeSub(Utils._longAssetAvailable(s, currentPrice));
     }
 
-    function i_initiateClosePosition(
-        address owner,
-        address to,
-        address validator,
-        PositionId memory posId,
-        uint128 amountToClose,
-        uint64 securityDepositValue,
-        bytes calldata currentPriceData
-    ) external returns (uint256 securityDepositValue_, bool isLiquidationPending_, bool liq_) {
-        return ActionsLong._initiateClosePosition(
-            s, owner, to, validator, posId, amountToClose, securityDepositValue, currentPriceData
-        );
+    function i_initiateClosePosition(Types.InitiateClosePositionParams memory params, bytes calldata currentPriceData)
+        external
+        returns (uint256 securityDepositValue_, bool isLiquidationPending_, bool liq_)
+    {
+        return ActionsLong._initiateClosePosition(s, params, currentPriceData);
     }
 
     function _calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed) external view returns (int256) {
@@ -694,18 +687,22 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         );
     }
 
-    function i_prepareInitiateDepositData(address validator, uint128 amount, bytes calldata currentPriceData)
-        public
-        returns (Vault.InitiateDepositData memory data_)
-    {
-        return Vault._prepareInitiateDepositData(s, validator, amount, currentPriceData);
+    function i_prepareInitiateDepositData(
+        address validator,
+        uint128 amount,
+        uint256 sharesOutMin,
+        bytes calldata currentPriceData
+    ) public returns (Vault.InitiateDepositData memory data_) {
+        return Vault._prepareInitiateDepositData(s, validator, amount, sharesOutMin, currentPriceData);
     }
 
-    function i_prepareWithdrawalData(address validator, uint152 usdnShares, bytes calldata currentPriceData)
-        public
-        returns (Vault.WithdrawalData memory data_)
-    {
-        return Vault._prepareWithdrawalData(s, validator, usdnShares, currentPriceData);
+    function i_prepareWithdrawalData(
+        address validator,
+        uint152 usdnShares,
+        uint256 amountOutMin,
+        bytes calldata currentPriceData
+    ) public returns (Vault.WithdrawalData memory data_) {
+        return Vault._prepareWithdrawalData(s, validator, usdnShares, amountOutMin, currentPriceData);
     }
 
     function i_prepareClosePositionData(
@@ -714,9 +711,21 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         address validator,
         PositionId memory posId,
         uint128 amountToClose,
+        uint256 userMinPrice,
         bytes calldata currentPriceData
     ) external returns (ClosePositionData memory data_, bool liquidated_) {
-        return ActionsUtils._prepareClosePositionData(s, owner, to, validator, posId, amountToClose, currentPriceData);
+        return ActionsUtils._prepareClosePositionData(
+            s,
+            Types.PrepareInitiateClosePositionParams({
+                owner: owner,
+                to: to,
+                validator: validator,
+                posId: posId,
+                amountToClose: amountToClose,
+                userMinPrice: userMinPrice,
+                currentPriceData: currentPriceData
+            })
+        );
     }
 
     function i_prepareValidateOpenPositionData(PendingAction memory pending, bytes calldata priceData)
