@@ -3,6 +3,9 @@ pragma solidity 0.8.26;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constant } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
+
 /**
  * @custom:feature Test the {_calcRebalancerPositionTick} internal function of the long layer
  * @custom:background An initialized usdn protocol contract with 200 ether in the vault
@@ -90,11 +93,11 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
 
     /**
      * @custom:scenario Calculate the position tick to use to fill as little trading expo as possible
-     * to stay above the protocol min leverage
+     * to stay above the rebalancer minimum leverage
      * @custom:given The missing trading expo is 1 wei
      * @custom:and An amount of 1 ether
      * @custom:when _calcRebalancerPositionTick is called with too little trading expo to fill
-     * @custom:then The result is the expected tick capped to the protocol's min leverage
+     * @custom:then The result is the expected tick capped to the rebalancer's min leverage
      */
     function test_calcRebalancerPositionTickCappedByTheMinLeverage() public view {
         uint256 rebalancerMaxLeverage = protocol.getMaxLeverage();
@@ -103,7 +106,7 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
 
         // calculate the lowest usable trading expo to stay above the min leverage
         uint256 lowestUsableTradingExpo =
-            amount * protocol.getMinLeverage() / 10 ** protocol.LEVERAGE_DECIMALS() - amount;
+            amount * Constant.REBALANCER_MIN_LEVERAGE / 10 ** protocol.LEVERAGE_DECIMALS() - amount;
         (int24 expectedTick,) = protocol.i_getTickFromDesiredLiqPrice(
             protocol.i_calcLiqPriceFromTradingExpo(DEFAULT_PARAMS.initialPrice, amount, lowestUsableTradingExpo),
             DEFAULT_PARAMS.initialPrice,
@@ -143,45 +146,6 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
         uint256 highestUsableTradingExpo = amount * rebalancerMaxLeverage / 10 ** protocol.LEVERAGE_DECIMALS() - amount;
         (int24 expectedTick,) = protocol.i_getTickFromDesiredLiqPrice(
             protocol.i_calcLiqPriceFromTradingExpo(DEFAULT_PARAMS.initialPrice, amount, highestUsableTradingExpo),
-            DEFAULT_PARAMS.initialPrice,
-            totalExpo - longBalance,
-            protocol.getLiqMultiplierAccumulator(),
-            _tickSpacing,
-            protocol.getLiquidationPenalty()
-        );
-
-        int24 tick = protocol.i_calcRebalancerPositionTick(
-            DEFAULT_PARAMS.initialPrice,
-            amount,
-            rebalancerMaxLeverage,
-            totalExpo,
-            longBalance,
-            vaultBalance,
-            protocol.getLiqMultiplierAccumulator()
-        );
-        assertEq(tick, expectedTick, "The result should be equal to the expected tick");
-    }
-
-    /**
-     * @custom:scenario Calculate the position tick to use with a rebalancer max leverage
-     * below the protocol min leverage
-     * @custom:given The missing trading expo is 1 wei
-     * @custom:and A rebalancer max leverage below the protocol min leverage
-     * @custom:and An amount of 1 ether
-     * @custom:when _calcRebalancerPositionTick is called with a rebalancer leverage lower than
-     * the protocol's min leverage
-     * @custom:then The result is the expected tick capped by the protocol's min leverage
-     */
-    function test_calcRebalancerPositionTickCappedByTheRebalancerMaxLeverageBelowTheMinLeverage() public view {
-        uint256 rebalancerMaxLeverage = protocol.getMinLeverage() - 1;
-        uint256 totalExpo = vaultBalance + longBalance - 1;
-        uint128 amount = 1 ether;
-
-        // calculate the lowest usable trading expo to stay above the min leverage
-        uint256 lowestUsableTradingExpo =
-            amount * protocol.getMinLeverage() / 10 ** protocol.LEVERAGE_DECIMALS() - amount;
-        (int24 expectedTick,) = protocol.i_getTickFromDesiredLiqPrice(
-            protocol.i_calcLiqPriceFromTradingExpo(DEFAULT_PARAMS.initialPrice, amount, lowestUsableTradingExpo),
             DEFAULT_PARAMS.initialPrice,
             totalExpo - longBalance,
             protocol.getLiqMultiplierAccumulator(),
