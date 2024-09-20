@@ -6,9 +6,9 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
-import { IPaymentCallback } from "../../interfaces/IPaymentCallback.sol";
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../../interfaces/Usdn/IUsdn.sol";
+import { IPaymentCallback } from "../../interfaces/UsdnProtocol/IPaymentCallback.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -917,9 +917,14 @@ library UsdnProtocolVaultLibrary {
 
         amountToRefund_ = _createWithdrawalPendingAction(s, to, validator, usdnShares, securityDepositValue, data);
 
-        // retrieve the USDN tokens, check that the balance is sufficient
         IUsdn usdn = s._usdn;
-        usdn.transferSharesFrom(user, address(this), usdnShares);
+        if (ERC165Checker.supportsInterface(msg.sender, type(IPaymentCallback).interfaceId)) {
+            // ask the msg.sender to send USDN shares and check the balance
+            Utils.usdnTransferCallback(usdn, usdnShares);
+        } else {
+            // retrieve the USDN shares, check that the balance is sufficient
+            usdn.transferSharesFrom(user, address(this), usdnShares);
+        }
         // register the pending withdrawal for imbalance checks of future actions
         s._pendingBalanceVault -= data.withdrawalAmountAfterFees.toInt256();
 
