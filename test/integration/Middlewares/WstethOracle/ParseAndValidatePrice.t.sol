@@ -2,6 +2,7 @@
 pragma solidity 0.8.26;
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 
 import { PYTH_ETH_USD, PYTH_WSTETH_USD } from "../../../utils/Constants.sol";
 import { WstethIntegrationFixture } from "../utils/Fixtures.sol";
@@ -109,6 +110,9 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
      * by applying Steth/Wsteth on-chain price ratio
      */
     function test_ForkEthParseAndValidatePriceForInitiateDepositWithChainlink() public ethMainnetFork reSetUp {
+        // roll to a block where the chainlink price is more recent than Pyth's unsafe one
+        vm.rollFork(20_785_422);
+
         // all targeted actions loop
         for (uint256 i; i < actions.length; i++) {
             // action type
@@ -146,6 +150,63 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
                 ),
                 priceError
             );
+        }
+    }
+
+    /**
+     * @custom:scenario Parse and validate price with Pyth's unsafe price
+     * @custom:given The price feed is ETH/USD for chainlink
+     * @custom:and The unsafe Pyth's price is more recent
+     * @custom:when The Protocol action is any InitiateDeposit
+     * @custom:then The price retrieved by the oracle middleware is the same as the one from the chainlink on-chain data
+     * by applying Steth/Wsteth on-chain price ratio
+     */
+    function test_ForkEthParseAndValidatePriceForInitiateDepositWithUnsafePyth() public ethMainnetFork reSetUp {
+        // roll to a block where the chainlink price is older than Pyth's unsafe one
+        vm.rollFork(20_785_200);
+
+        // all targeted actions loop
+        for (uint256 i; i < actions.length; i++) {
+            // action type
+            ProtocolAction action = actions[i];
+
+            // if the action is only available for pyth, skip it
+            if (
+                action == ProtocolAction.None || action == ProtocolAction.ValidateDeposit
+                    || action == ProtocolAction.ValidateWithdrawal || action == ProtocolAction.ValidateOpenPosition
+                    || action == ProtocolAction.ValidateClosePosition || action == ProtocolAction.Liquidation
+            ) {
+                continue;
+            }
+
+            // timestamp error message
+            string memory timestampError =
+                string.concat("Wrong oracle middleware timestamp for action: ", uint256(action).toString());
+            // price error message
+            string memory priceError =
+                string.concat("Wrong oracle middleware price for action: ", uint256(action).toString());
+
+            // pyth data
+            PythStructs.Price memory pythPrice = getPythUnsafePrice();
+            uint256 price = uint64(pythPrice.price);
+            price *= 10 ** wstethMiddleware.getDecimals() / 10 ** uint32(-pythPrice.expo);
+
+            uint256 conf = pythPrice.conf * 10 ** (wstethMiddleware.getDecimals() - uint32(-pythPrice.expo))
+                * wstethMiddleware.getConfRatioBps() / BPS_DIVISOR;
+            if (action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.InitiateWithdrawal) {
+                price += conf;
+            } else if (action == ProtocolAction.InitiateClosePosition || action == ProtocolAction.InitiateDeposit) {
+                price -= conf;
+            }
+
+            // middleware data
+            PriceInfo memory middlewarePrice =
+                wstethMiddleware.parseAndValidatePrice("", uint128(block.timestamp), action, "");
+
+            // timestamp check
+            assertEq(middlewarePrice.timestamp, pythPrice.publishTime, timestampError);
+            // price check
+            assertEq(middlewarePrice.price, stethToWsteth(price), priceError);
         }
     }
 
@@ -259,6 +320,9 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
      * by applying Steth/Wsteth on-chain price ratio
      */
     function test_ForkFFIParseAndValidatePriceForInitiateDepositWithChainlink() public ethMainnetFork reSetUp {
+        // roll to a block where the chainlink price is more recent than Pyth's unsafe one
+        vm.rollFork(20_785_422);
+
         // all targeted actions loop
         for (uint256 i; i < actions.length; i++) {
             // action type
