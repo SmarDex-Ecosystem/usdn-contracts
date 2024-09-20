@@ -2,65 +2,20 @@
 pragma solidity 0.8.26;
 
 import { IUsdnProtocolActions } from "../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
-import { Permit2TokenBitfield } from "../libraries/Permit2TokenBitfield.sol";
 import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./libraries/UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./libraries/UsdnProtocolActionsUtilsLibrary.sol";
-import { UsdnProtocolActionsVaultLibrary as ActionsVault } from "./libraries/UsdnProtocolActionsVaultLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "./libraries/UsdnProtocolUtilsLibrary.sol";
 
 abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActions {
     /// @inheritdoc IUsdnProtocolActions
-    function initiateDeposit(
-        uint128 amount,
-        address to,
-        address payable validator,
-        Permit2TokenBitfield.Bitfield permit2TokenBitfield,
-        bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData
-    ) external payable initializedAndNonReentrant returns (bool success_) {
-        return ActionsVault.initiateDeposit(
-            s, amount, to, validator, permit2TokenBitfield, currentPriceData, previousActionsData
-        );
-    }
-
-    /// @inheritdoc IUsdnProtocolActions
-    function validateDeposit(
-        address payable validator,
-        bytes calldata depositPriceData,
-        PreviousActionsData calldata previousActionsData
-    ) external payable initializedAndNonReentrant returns (bool success_) {
-        return ActionsVault.validateDeposit(s, validator, depositPriceData, previousActionsData);
-    }
-
-    /// @inheritdoc IUsdnProtocolActions
-    function initiateWithdrawal(
-        uint152 usdnShares,
-        address to,
-        address payable validator,
-        bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData
-    ) external payable initializedAndNonReentrant returns (bool success_) {
-        return ActionsVault.initiateWithdrawal(s, usdnShares, to, validator, currentPriceData, previousActionsData);
-    }
-
-    /// @inheritdoc IUsdnProtocolActions
-    function validateWithdrawal(
-        address payable validator,
-        bytes calldata withdrawalPriceData,
-        PreviousActionsData calldata previousActionsData
-    ) external payable initializedAndNonReentrant returns (bool success_) {
-        return ActionsVault.validateWithdrawal(s, validator, withdrawalPriceData, previousActionsData);
-    }
-
-    /// @inheritdoc IUsdnProtocolActions
     function initiateOpenPosition(
         uint128 amount,
         uint128 desiredLiqPrice,
+        uint128 userMaxPrice,
         uint256 userMaxLeverage,
         address to,
         address payable validator,
-        Permit2TokenBitfield.Bitfield permit2TokenBitfield,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (bool success_, PositionId memory posId_) {
@@ -70,9 +25,9 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
             validator: validator,
             amount: amount,
             desiredLiqPrice: desiredLiqPrice,
+            userMaxPrice: userMaxPrice,
             userMaxLeverage: userMaxLeverage,
-            securityDepositValue: s._securityDepositValue,
-            permit2TokenBitfield: permit2TokenBitfield
+            securityDepositValue: s._securityDepositValue
         });
 
         return ActionsLong.initiateOpenPosition(s, params, currentPriceData, previousActionsData);
@@ -91,13 +46,21 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
     function initiateClosePosition(
         PositionId calldata posId,
         uint128 amountToClose,
+        uint256 userMinPrice,
         address to,
         address payable validator,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (bool success_) {
-        InitiateClosePositionParams memory params =
-            InitiateClosePositionParams({ posId: posId, amountToClose: amountToClose, to: to, validator: validator });
+        InitiateClosePositionParams memory params = InitiateClosePositionParams({
+            owner: msg.sender,
+            to: to,
+            validator: validator,
+            posId: posId,
+            amountToClose: amountToClose,
+            userMinPrice: userMinPrice,
+            securityDepositValue: s._securityDepositValue
+        });
 
         return ActionsLong.initiateClosePosition(s, params, currentPriceData, previousActionsData);
     }

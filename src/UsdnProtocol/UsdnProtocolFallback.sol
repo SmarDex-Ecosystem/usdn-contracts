@@ -3,6 +3,7 @@ pragma solidity 0.8.26;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { IBaseLiquidationRewardsManager } from "../interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
@@ -27,7 +28,14 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
         view
         returns (uint256 usdnSharesExpected_, uint256 sdexToBurn_)
     {
-        return Vault.previewDeposit(s, amount, price, timestamp);
+        int256 vaultBalance = Vault.vaultAssetAvailableWithFunding(s, price, timestamp);
+        if (vaultBalance <= 0) {
+            revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
+        }
+        IUsdn usdn = s._usdn;
+        uint256 amountAfterFees = amount - FixedPointMathLib.fullMulDiv(amount, s._vaultFeeBps, Constants.BPS_DIVISOR);
+        usdnSharesExpected_ = Utils._calcMintUsdnShares(amountAfterFees, uint256(vaultBalance), usdn.totalShares());
+        sdexToBurn_ = Utils._calcSdexToBurn(usdn.convertToTokens(usdnSharesExpected_), s._sdexBurnOnDepositRatio);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
@@ -36,7 +44,11 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
         view
         returns (uint256 assetExpected_)
     {
-        return Vault.previewWithdraw(s, usdnShares, price, timestamp);
+        int256 available = Vault.vaultAssetAvailableWithFunding(s, price, timestamp);
+        if (available < 0) {
+            return 0;
+        }
+        assetExpected_ = Utils._calcBurnUsdn(usdnShares, uint256(available), s._usdn.totalShares(), s._vaultFeeBps);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
@@ -89,6 +101,11 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     /// @inheritdoc IUsdnProtocolFallback
     function FUNDING_RATE_DECIMALS() external pure returns (uint8) {
         return Constants.FUNDING_RATE_DECIMALS;
+    }
+
+    /// @inheritdoc IUsdnProtocolFallback
+    function REBALANCER_MIN_LEVERAGE() external pure returns (uint256) {
+        return Constants.REBALANCER_MIN_LEVERAGE;
     }
 
     /// @inheritdoc IUsdnProtocolFallback

@@ -125,7 +125,12 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         vm.expectEmit(false, false, false, false);
         emit Rebase(0, 0);
         protocol.initiateDeposit(
-            1 ether, address(this), payable(address(this)), NO_PERMIT2, abi.encode(newPrice), EMPTY_PREVIOUS_DATA
+            1 ether,
+            DISABLE_SHARES_OUT_MIN,
+            address(this),
+            payable(address(this)),
+            abi.encode(newPrice),
+            EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -173,7 +178,12 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         vm.expectEmit(false, false, false, false);
         emit Rebase(0, 0);
         protocol.initiateWithdrawal(
-            100 ether, address(this), payable(address(this)), abi.encode(newPrice), EMPTY_PREVIOUS_DATA
+            100 ether,
+            DISABLE_AMOUNT_OUT_MIN,
+            address(this),
+            payable(address(this)),
+            abi.encode(newPrice),
+            EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -222,10 +232,10 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         protocol.initiateOpenPosition(
             1 ether,
             params.initialPrice / 2,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             abi.encode(newPrice),
             EMPTY_PREVIOUS_DATA
         );
@@ -291,7 +301,13 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         vm.expectEmit(false, false, false, false);
         emit Rebase(0, 0);
         protocol.initiateClosePosition(
-            posId, 1 ether, address(this), payable(address(this)), abi.encode(newPrice), EMPTY_PREVIOUS_DATA
+            posId,
+            1 ether,
+            DISABLE_MIN_PRICE,
+            address(this),
+            payable(address(this)),
+            abi.encode(newPrice),
+            EMPTY_PREVIOUS_DATA
         );
     }
 

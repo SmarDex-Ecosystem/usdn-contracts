@@ -98,6 +98,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
 
         protocol.initiateWithdrawal(
             uint128(usdn.balanceOf(address(this))),
+            DISABLE_AMOUNT_OUT_MIN,
             address(this),
             payable(address(this)),
             abi.encode(params.initialPrice),
@@ -206,7 +207,12 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateWithdrawal);
         protocol.initiateWithdrawal{ value: validationCost }(
-            USDN_AMOUNT, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
+            USDN_AMOUNT,
+            DISABLE_AMOUNT_OUT_MIN,
+            address(this),
+            payable(address(this)),
+            currentPrice,
+            EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
@@ -227,7 +233,9 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         TestData2 memory data;
 
         data.currentPrice = abi.encode(params.initialPrice);
-        protocol.initiateWithdrawal(withdrawShares, to, payable(address(this)), data.currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.initiateWithdrawal(
+            withdrawShares, DISABLE_AMOUNT_OUT_MIN, to, payable(address(this)), data.currentPrice, EMPTY_PREVIOUS_DATA
+        );
 
         data.actionId = oracleMiddleware.lastActionId();
         PendingAction memory pending = protocol.getUserPendingAction(address(this));
@@ -337,7 +345,12 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
     function test_RevertWhen_validateWithdrawalWithWrongValidator() public {
         bytes memory currentPrice = abi.encode(params.initialPrice);
         protocol.initiateWithdrawal(
-            withdrawShares, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
+            withdrawShares,
+            DISABLE_AMOUNT_OUT_MIN,
+            address(this),
+            payable(address(this)),
+            currentPrice,
+            EMPTY_PREVIOUS_DATA
         );
 
         // update the pending action to put another validator
@@ -371,7 +384,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         uint256 balanceContractBefore = address(this).balance;
 
         protocol.initiateWithdrawal{ value: 0.5 ether }(
-            withdrawShares, address(this), USER_1, currentPrice, EMPTY_PREVIOUS_DATA
+            withdrawShares, DISABLE_AMOUNT_OUT_MIN, address(this), USER_1, currentPrice, EMPTY_PREVIOUS_DATA
         );
         _waitBeforeActionablePendingAction();
         protocol.validateWithdrawal(USER_1, currentPrice, EMPTY_PREVIOUS_DATA);

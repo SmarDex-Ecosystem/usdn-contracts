@@ -178,10 +178,10 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         (, PositionId memory posId) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
             desiredLiqPrice,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             to,
             payable(validator),
-            NO_PERMIT2,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
@@ -260,10 +260,10 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         (, PositionId memory posId) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
             CURRENT_PRICE * 9 / 10,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
             payable(this),
-            NO_PERMIT2,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
@@ -337,10 +337,10 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         (, PositionId memory posId) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
             CURRENT_PRICE * 9 / 10,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
             payable(this),
-            NO_PERMIT2,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
@@ -410,10 +410,10 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         (, data.tempPosId) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
             CURRENT_PRICE * 9 / 10,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
             payable(this),
-            NO_PERMIT2,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );
@@ -588,10 +588,10 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         protocol.initiateOpenPosition{ value: 0.5 ether }(
             uint128(LONG_AMOUNT),
             desiredLiqPrice,
+            type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
             USER_1,
-            NO_PERMIT2,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );

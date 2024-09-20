@@ -3,6 +3,7 @@ pragma solidity 0.8.26;
 
 library UsdnProtocolConstantsLibrary {
     uint8 internal constant LEVERAGE_DECIMALS = 21;
+    uint256 internal constant REBALANCER_MIN_LEVERAGE = 10 ** LEVERAGE_DECIMALS + 1; // x1.000000000000000000001
     uint8 internal constant FUNDING_RATE_DECIMALS = 18;
     uint8 internal constant TOKENS_DECIMALS = 18;
     uint8 internal constant LIQUIDATION_MULTIPLIER_DECIMALS = 38;
