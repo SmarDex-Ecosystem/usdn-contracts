@@ -360,31 +360,17 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user initiates an open position action with a leverage that's too high
-     * @custom:given The maximum leverage is 10x and the current price is $2000
-     * @custom:when The user initiates an open position with a desired liquidation price of $1854
+     * @custom:scenario Owner initialize protocol with position that has a leverage too high
+     * @custom:when Owner initialize an open position with a leverage of 10.8
      * @custom:then The protocol reverts with UsdnProtocolLeverageTooHigh
      */
-    //    function test_RevertWhen_initializeOpenPositionHighLeverage() public {
-    //        // max liquidation price without liquidation penalty
-    //        uint256 maxLiquidationPrice = protocol.i_getLiquidationPrice(CURRENT_PRICE,
-    // uint128(protocol.getMaxLeverage()));
-    //        // add 3% to be above max liquidation price including penalty
-    //        uint128 desiredLiqPrice = uint128(maxLiquidationPrice * 1.03 ether / 1 ether);
-    //
-    //        uint256 leverage = protocol.getMaxLeverage();
-    //        vm.expectRevert(UsdnProtocolLeverageTooHigh.selector);
-    //        protocol.initiateOpenPosition(
-    //            uint128(LONG_AMOUNT),
-    //            desiredLiqPrice,
-    //            leverage,
-    //            address(this),
-    //            payable(address(this)),
-    //            NO_PERMIT2,
-    //            abi.encode(CURRENT_PRICE),
-    //            EMPTY_PREVIOUS_DATA
-    //        );
-    //    }
+    function test_RevertWhen_initializePositionHighLeverage() public {
+        uint256 leverage = protocol.getMaxLeverage();
+        vm.expectRevert(UsdnProtocolLeverageTooHigh.selector);
+        protocol.initialize(
+            INITIAL_DEPOSIT, INITIAL_POSITION / 10, (INITIAL_PRICE * 10) / 11, abi.encode(INITIAL_PRICE)
+        );
+    }
 
     receive() external payable { }
 }
