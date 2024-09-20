@@ -233,7 +233,7 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
      * @custom:then It should return an amount of wstETH based on the gas used by
      * UsdnProtocolActions.liquidate(bytes,uint16) and the base fee offset
      */
-    function test_getLiquidationRewardsWithOracleGasPrice() public {
+    function test_getLiquidationRewardsUserPriorityFee() public {
         vm.txGasPrice(41 gwei); // 11 gwei priority fee
         uint256 posBonus = (_singleLiquidatedTick[0].tickPrice - CURRENT_PRICE) * _singleLiquidatedTick[0].totalExpo
             * 500 / (BPS_DIVISOR * CURRENT_PRICE);
