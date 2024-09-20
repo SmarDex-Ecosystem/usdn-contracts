@@ -773,6 +773,10 @@ library UsdnProtocolLongLibrary {
             iteration = Constants.MAX_LIQUIDATION_ITERATION;
         }
 
+        // For small prices (< ~1.025 gwei), the next tick can sometimes
+        // give a price that is exactly equal to the input. For this to be somewhat of an issue,
+        // we would need the tick spacing to be 1 and the price to fall to an extremely low price,
+        // which is unlikely, but should be considered for tokens with extremely high total supply
         uint256 unadjustedPrice =
             _unadjustPrice(data.currentPrice, data.currentPrice, data.longTradingExpo, data.accumulator);
         data.currentTick = TickMath.getTickAtPrice(unadjustedPrice);
