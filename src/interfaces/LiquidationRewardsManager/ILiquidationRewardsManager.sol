@@ -71,7 +71,7 @@ interface ILiquidationRewardsManager is IBaseLiquidationRewardsManager, ILiquida
      * @param baseFeeOffset Offset added to the block's base gas fee
      * @param gasMultiplierBps Multiplier for the amount of gas used in BPS
      * @param positionBonusMultiplierBps Multiplier for the position size bonus in BPS
-     * @param fixedReward fixed amount added to the final reward (native currency, will be converted to wstETH)
+     * @param fixedReward Fixed amount added to the final reward (native currency, will be converted to wstETH)
      * @param maxReward Upper limit for the rewards (native currency, will be converted to wstETH)
      */
     function setRewardsParameters(

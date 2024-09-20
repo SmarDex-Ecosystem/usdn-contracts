@@ -15,7 +15,7 @@ interface ILiquidationRewardsManagerErrorsEventsTypes {
      * @param baseFeeOffset Offset added to the block's base gas fee
      * @param gasMultiplierBps Multiplier for the amount of gas used in BPS
      * @param positionBonusMultiplierBps Multiplier for the position size bonus in BPS
-     * @param fixedReward fixed amount added to the final reward (native currency)
+     * @param fixedReward Fixed amount added to the final reward (native currency)
      * @param maxReward Upper limit for the rewards (native currency)
      */
     event RewardsParametersUpdated(
@@ -43,7 +43,7 @@ interface ILiquidationRewardsManagerErrorsEventsTypes {
      * @param baseFeeOffset Offset added to the block's base gas fee
      * @param gasMultiplierBps Multiplier for the amount of gas used (max 6.55x)
      * @param positionBonusMultiplierBps Multiplier for the position size bonus (max 6.55x)
-     * @param fixedReward fixed amount added to the final reward (native currency)
+     * @param fixedReward Fixed amount added to the final reward (native currency)
      * @param maxReward Upper limit for the rewards (native currency)
      */
     struct RewardsParameters {
