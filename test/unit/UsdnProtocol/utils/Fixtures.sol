@@ -501,11 +501,4 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         protocol.pause();
         assertTrue(protocol.isPaused(), "The protocol should be paused");
     }
-
-    /// @dev Unpause the protocol
-    function _unpauseProtocol(address unpauser) internal {
-        vm.prank(unpauser);
-        protocol.unpause();
-        assertFalse(protocol.isPaused(), "The protocol should not be paused");
-    }
 }

@@ -78,6 +78,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
     function liquidate(bytes calldata currentPriceData, uint16 iterations)
         external
         payable
+        whenNotPaused
         initializedAndNonReentrant
         returns (uint256 liquidatedPositions_)
     {
@@ -88,6 +89,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
     function validateActionablePendingActions(PreviousActionsData calldata previousActionsData, uint256 maxValidations)
         external
         payable
+        whenNotPaused
         initializedAndNonReentrant
         returns (uint256 validatedActions_)
     {

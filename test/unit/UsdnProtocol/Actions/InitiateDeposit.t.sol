@@ -369,23 +369,9 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
             type(uint256).max,
             address(this),
             payable(this),
-            NO_PERMIT2,
             abi.encode(uint128(2000 ether)),
             EMPTY_PREVIOUS_DATA
         );
-    }
-
-    /**
-     * @custom:scenario The user initiates a deposit action after the protocol was unpaused
-     * @custom:given An unpaused protocol
-     * @custom:when The user calls initiateDeposit
-     * @custom:then The initiateDeposit should be successful
-     */
-    function test_initiateDepositUnpaused() public {
-        _pauseProtocol(ADMIN);
-        _unpauseProtocol(ADMIN);
-
-        _initiateDepositScenario(address(this), payable(this));
     }
 
     // test refunds

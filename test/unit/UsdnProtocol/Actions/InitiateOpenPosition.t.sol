@@ -588,7 +588,6 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             2 * 10 ** Constants.LEVERAGE_DECIMALS,
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
         );

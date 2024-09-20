@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { USER_1, USER_2, USER_3, USER_4 } from "../../../utils/Constants.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+
+import { ADMIN, USER_1, USER_2, USER_3, USER_4 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
@@ -230,6 +232,22 @@ contract TestUsdnProtocolValidateActionablePendingActions is UsdnProtocolBaseFix
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.validateActionablePendingActions.selector), 2);
         // The value sent will cause a refund, which will trigger the receive() function of this contract
         protocol.validateActionablePendingActions{ value: 1 }(previousActionsData, 4);
+    }
+
+    /**
+     * @custom:scenario The user validates pending actions with a paused protocol
+     * @custom:given A user that calls validateActionablePendingActions
+     * @custom:and A paused protocol
+     * @custom:when The user calls validateActionablePendingActions
+     * @custom:then The call reverts with `EnforcedPause`
+     */
+    function test_RevertWhen_validateActionablePendingActionsPaused() public {
+        PreviousActionsData memory previousActionsData = _setUpFourPendingActions();
+
+        _pauseProtocol(ADMIN);
+
+        vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
+        protocol.validateActionablePendingActions(previousActionsData, previousActionsData.priceData.length);
     }
 
     /// @dev Allow refund tests

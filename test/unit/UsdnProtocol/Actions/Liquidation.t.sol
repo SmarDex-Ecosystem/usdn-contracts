@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { DEPLOYER, USER_1 } from "../../../utils/Constants.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+
+import { ADMIN, DEPLOYER, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
@@ -656,6 +658,32 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.liquidate.selector), 2);
         // The value sent will cause a refund, which will trigger the receive() function of this contract
         protocol.liquidate{ value: 1 }(priceData, 1);
+    }
+
+    /**
+     * @custom:scenario The user liquidates with a paused protocol
+     * @custom:given A user that calls liquidate
+     * @custom:and A paused protocol
+     * @custom:when The user calls liquidate
+     * @custom:then The call reverts with `EnforcedPause`
+     */
+    function test_RevertWhen_liquidatePaused() public {
+        uint128 price = 2000 ether;
+
+        setUpUserPositionInLong(
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 5 ether,
+                desiredLiqPrice: price / 2,
+                price: price
+            })
+        );
+
+        _pauseProtocol(ADMIN);
+
+        vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
+        protocol.liquidate(abi.encode(price / 3), 1);
     }
 
     // test refunds
