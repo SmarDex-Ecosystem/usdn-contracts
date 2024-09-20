@@ -383,6 +383,25 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         );
     }
 
+    /**
+     * @custom:scenario The user initiates a deposit action and the deadline is exceeded
+     * @custom:given The user has 1 wstETH
+     * @custom:when The user initiates a deposit action with a deadline in the past
+     * @custom:then The protocol reverts with `UsdnProtocolDeadlineExceeded`
+     */
+    function test_RevertWhen_initiateDepositDeadlineExceeded() public {
+        vm.expectRevert(UsdnProtocolDeadlineExceeded.selector);
+        protocol.initiateDeposit(
+            1 ether,
+            DISABLE_SHARES_OUT_MIN,
+            address(this),
+            payable(address(this)),
+            block.timestamp - 1,
+            abi.encode(uint128(2000 ether)),
+            EMPTY_PREVIOUS_DATA
+        );
+    }
+
     // test refunds
     receive() external payable {
         // test reentrancy

@@ -584,6 +584,28 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         );
     }
 
+    /**
+     * @custom:scenario The user initiates an open position action and the deadline is exceeded
+     * @custom:given The user has 10 wstETH
+     * @custom:when The user initiates an open position action with a deadline in the past
+     * @custom:then The protocol reverts with `UsdnProtocolDeadlineExceeded`
+     */
+    function test_RevertWhen_initiateOpenPositionDeadlineExceeded() public {
+        uint256 leverage = protocol.getMaxLeverage();
+        vm.expectRevert(UsdnProtocolDeadlineExceeded.selector);
+        protocol.initiateOpenPosition(
+            1 ether,
+            1500 ether,
+            type(uint128).max,
+            leverage,
+            address(this),
+            payable(address(this)),
+            block.timestamp - 1,
+            abi.encode(CURRENT_PRICE),
+            EMPTY_PREVIOUS_DATA
+        );
+    }
+
     // test refunds
     receive() external payable {
         // test reentrancy
