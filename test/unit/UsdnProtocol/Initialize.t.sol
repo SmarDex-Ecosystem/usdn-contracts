@@ -350,24 +350,13 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario Owner initialize protocol with position that has a leverage too low
-     * @custom:when Owner initialize an open position with a leverage at 1.05
+     * @custom:when Owner initialize an open position with a leverage of 1.033
      * @custom:then The protocol reverts with UsdnProtocolLeverageTooLow
      */
     function test_RevertWhen_initializePositionLowLeverage() public {
         uint256 leverage = protocol.getMaxLeverage();
         vm.expectRevert(UsdnProtocolLeverageTooLow.selector);
         protocol.initialize(INITIAL_DEPOSIT, INITIAL_POSITION * 30, INITIAL_PRICE / 31, abi.encode(INITIAL_PRICE));
-
-        //    protocol.initiateOpenPosition(
-        //            uint128(LONG_AMOUNT),
-        //            100_000,
-        //            leverage,
-        //            address(this),
-        //            payable(address(this)),
-        //            NO_PERMIT2,
-        //            abi.encode(CURRENT_PRICE),
-        //            EMPTY_PREVIOUS_DATA
-        //        );
     }
 
     /**

@@ -887,6 +887,15 @@ library UsdnProtocolLongLibrary {
         // reverts if liquidationPrice >= entryPrice
         uint256 leverage = Utils._getLeverage(adjustedPrice, liqPriceWithoutPenalty);
 
+        console.log("leverage");
+        console.logUint(leverage);
+        console.log("adjustedPrice");
+        console.logUint(adjustedPrice);
+        console.log("liqPriceWithoutPenalty");
+        console.logUint(liqPriceWithoutPenalty);
+        console.log("s._minLeverage");
+        console.logUint(s._minLeverage);
+
         if (leverage < s._minLeverage) {
             revert IUsdnProtocolErrors.UsdnProtocolLeverageTooLow();
         }
