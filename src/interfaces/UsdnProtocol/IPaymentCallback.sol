@@ -13,6 +13,7 @@ import { IUsdn } from "../Usdn/IUsdn.sol";
 interface IPaymentCallback is IERC165 {
     /**
      * @notice Callback function to be called during initiate functions to transfer asset tokens
+     * @dev The implementation must ensure that the `msg.sender` is the protocol contract
      * @param token The token to transfer
      * @param amount The amount to transfer
      * @param to The address of the recipient
@@ -21,6 +22,7 @@ interface IPaymentCallback is IERC165 {
 
     /**
      * @notice Callback function to be called during `initiateWithdrawal` to transfer USDN shares to the protocol
+     * @dev The implementation must ensure that the `msg.sender` is the protocol contract
      * @param usdn The USDN contract address
      * @param shares The amount of USDN shares to transfer to the `msg.sender`
      */
