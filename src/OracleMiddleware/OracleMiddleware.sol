@@ -444,6 +444,7 @@ contract OracleMiddleware is
             revert OracleMiddlewareTransferToZeroAddress();
         }
 
+        // slither-disable-next-line arbitrary-send-eth
         (bool success,) = payable(to).call{ value: address(this).balance }("");
         if (!success) {
             revert OracleMiddlewareTransferFailed(to);
