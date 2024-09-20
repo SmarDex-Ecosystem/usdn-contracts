@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 import { IUsdnProtocolTypes } from "./IUsdnProtocolTypes.sol";
 
 interface IUsdnProtocolActions is IUsdnProtocolTypes {
@@ -17,10 +16,13 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * In case liquidations are pending, this function might not initiate the position (and `success_` would be false)
      * @param amount The amount of assets to deposit
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
+     * @param userMaxPrice The minimum price at which the position can be opened (with _priceFeedDecimals). Note that
+     * there is no guarantee that the effective price during validation will be below this value. The userMinPrice is
+     * compared with the price after confidence interval, penalty, etc... However, if the
+     * temporary entry price is below this threshold, the initiate action will revert
      * @param userMaxLeverage The maximum leverage for the newly created position
      * @param to The address that will be the owner of the position
      * @param validator The address that will validate the open position
-     * @param permit2TokenBitfield Whether to use permit2 for transferring assets (first bit)
      * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
      * pending validation)
      * @param previousActionsData The data needed to validate actionable pending actions
@@ -31,10 +33,10 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
     function initiateOpenPosition(
         uint128 amount,
         uint128 desiredLiqPrice,
+        uint128 userMaxPrice,
         uint256 userMaxLeverage,
         address to,
         address payable validator,
-        Permit2TokenBitfield.Bitfield permit2TokenBitfield,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_, PositionId memory posId_);
@@ -84,6 +86,10 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * (and `success_` would be false)
      * @param posId The unique identifier of the position to close
      * @param amountToClose The amount of collateral to remove from the position's amount
+     *  @param userMinPrice The minimum price at which the position can be closed (with _priceFeedDecimals). Note that
+     * there is no guarantee that the effective price during validation will be below this value. The userMinPrice is
+     * compared with the price after confidence interval, penalty, etc... However, if the
+     * temporary entry price is below this threshold, the initiate action will revert
      * @param to The address that will receive the assets
      * @param validator The address that will validate the close action
      * @param currentPriceData The current price data
@@ -93,6 +99,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
     function initiateClosePosition(
         PositionId calldata posId,
         uint128 amountToClose,
+        uint256 userMinPrice,
         address to,
         address payable validator,
         bytes calldata currentPriceData,

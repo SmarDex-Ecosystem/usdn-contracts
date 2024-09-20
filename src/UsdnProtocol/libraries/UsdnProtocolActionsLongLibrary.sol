@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
+import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
+import { IPaymentCallback } from "../../interfaces/IPaymentCallback.sol";
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocolActions } from "../../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { HugeUint } from "../../libraries/HugeUint.sol";
-import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 import { TickMath } from "../../libraries/TickMath.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
@@ -23,7 +24,6 @@ import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.so
 library UsdnProtocolActionsLongLibrary {
     using HugeUint for HugeUint.Uint512;
     using LibBitmap for LibBitmap.Bitmap;
-    using Permit2TokenBitfield for Permit2TokenBitfield.Bitfield;
     using SafeCast for uint256;
     using SafeTransferLib for address;
 
@@ -129,8 +129,7 @@ library UsdnProtocolActionsLongLibrary {
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData
     ) external returns (bool success_) {
-        uint64 securityDepositValue = s._securityDepositValue;
-        if (msg.value < securityDepositValue) {
+        if (msg.value < params.securityDepositValue) {
             revert IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow();
         }
 
@@ -138,16 +137,7 @@ library UsdnProtocolActionsLongLibrary {
         bool liq;
         uint256 validatorAmount;
 
-        (validatorAmount, success_, liq) = _initiateClosePosition(
-            s,
-            msg.sender,
-            params.to,
-            params.validator,
-            params.posId,
-            params.amountToClose,
-            securityDepositValue,
-            currentPriceData
-        );
+        (validatorAmount, success_, liq) = _initiateClosePosition(s, params, currentPriceData);
 
         uint256 amountToRefund;
         if (success_ || liq) {
@@ -166,7 +156,7 @@ library UsdnProtocolActionsLongLibrary {
             }
         }
 
-        Utils._refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
+        Utils._refundExcessEther(params.securityDepositValue, amountToRefund, balanceBefore);
         Utils._checkPendingFee(s);
     }
 
@@ -491,6 +481,7 @@ library UsdnProtocolActionsLongLibrary {
                 validator: params.validator,
                 amount: params.amount,
                 desiredLiqPrice: params.desiredLiqPrice,
+                userMaxPrice: params.userMaxPrice,
                 userMaxLeverage: params.userMaxLeverage,
                 currentPriceData: currentPriceData
             })
@@ -522,8 +513,8 @@ library UsdnProtocolActionsLongLibrary {
         amountToRefund_ =
             Core._createOpenPendingAction(s, params.to, params.validator, params.securityDepositValue, data);
 
-        if (params.permit2TokenBitfield.useForAsset()) {
-            address(s._asset).permit2TransferFrom(params.user, address(this), params.amount);
+        if (ERC165Checker.supportsInterface(msg.sender, type(IPaymentCallback).interfaceId)) {
+            Utils.transferCallback(s._asset, params.amount, address(this));
         } else {
             // slither-disable-next-line arbitrary-send-erc20
             address(s._asset).safeTransferFrom(params.user, address(this), params.amount);
@@ -685,12 +676,7 @@ library UsdnProtocolActionsLongLibrary {
      * consider this position anymore. The exit price (and thus profit) is not yet set definitively and will be done
      * during the `validate` action
      * @param s The storage of the protocol
-     * @param owner The owner of the position
-     * @param to The address that will receive the assets
-     * @param validator The address that will validate the close action
-     * @param posId The unique identifier of the position
-     * @param amountToClose The amount of collateral to remove from the position's amount
-     * @param securityDepositValue The value of the security deposit for the newly created pending action
+     * @param params The parameters for the close position initiation
      * @param currentPriceData The current price data
      * @return amountToRefund_ If there are pending liquidations we'll refund the `securityDepositValue`,
      * else we'll only refund the security deposit value of the stale pending action
@@ -699,37 +685,46 @@ library UsdnProtocolActionsLongLibrary {
      */
     function _initiateClosePosition(
         Types.Storage storage s,
-        address owner,
-        address to,
-        address validator,
-        Types.PositionId memory posId,
-        uint128 amountToClose,
-        uint64 securityDepositValue,
+        Types.InitiateClosePositionParams memory params,
         bytes calldata currentPriceData
     ) internal returns (uint256 amountToRefund_, bool isInitiated_, bool liquidated_) {
         Types.ClosePositionData memory data;
-        (data, liquidated_) =
-            ActionsUtils._prepareClosePositionData(s, owner, to, validator, posId, amountToClose, currentPriceData);
+        (data, liquidated_) = ActionsUtils._prepareClosePositionData(
+            s,
+            Types.PrepareInitiateClosePositionParams({
+                owner: params.owner,
+                to: params.to,
+                validator: params.validator,
+                posId: params.posId,
+                amountToClose: params.amountToClose,
+                userMinPrice: params.userMinPrice,
+                currentPriceData: currentPriceData
+            })
+        );
 
         if (liquidated_ || data.isLiquidationPending) {
             // position was liquidated in this transaction or liquidations are pending
-            return (securityDepositValue, !data.isLiquidationPending, liquidated_);
+            return (params.securityDepositValue, !data.isLiquidationPending, liquidated_);
         }
 
-        amountToRefund_ = _createClosePendingAction(s, to, validator, posId, amountToClose, securityDepositValue, data);
+        amountToRefund_ = _createClosePendingAction(
+            s, params.to, params.validator, params.posId, params.amountToClose, params.securityDepositValue, data
+        );
 
         s._balanceLong -= data.tempPositionValue;
 
-        _removeAmountFromPosition(s, posId.tick, posId.index, data.pos, amountToClose, data.totalExpoToClose);
+        _removeAmountFromPosition(
+            s, params.posId.tick, params.posId.index, data.pos, params.amountToClose, data.totalExpoToClose
+        );
 
         isInitiated_ = true;
         emit IUsdnProtocolEvents.InitiatedClosePosition(
             data.pos.user,
-            validator,
-            to,
-            posId,
+            params.validator,
+            params.to,
+            params.posId,
             data.pos.amount,
-            amountToClose,
+            params.amountToClose,
             data.pos.totalExpo - data.totalExpoToClose
         );
     }

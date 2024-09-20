@@ -50,6 +50,7 @@ contract TestUsdnProtocolActionsSendRewardsToLiquidator is UsdnProtocolBaseFixtu
         usdn.approve(address(protocol), type(uint256).max);
         protocol.initiateWithdrawal(
             uint152(usdn.sharesOf(DEPLOYER)),
+            DISABLE_AMOUNT_OUT_MIN,
             DEPLOYER,
             payable(DEPLOYER),
             abi.encode(params.initialPrice),
