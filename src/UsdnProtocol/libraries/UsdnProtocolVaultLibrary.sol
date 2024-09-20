@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
+import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
+import { IPaymentCallback } from "../../interfaces/IPaymentCallback.sol";
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
@@ -12,7 +14,6 @@ import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocol
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IUsdnProtocolVault } from "../../interfaces/UsdnProtocol/IUsdnProtocolVault.sol";
 import { DoubleEndedQueue } from "../../libraries/DoubleEndedQueue.sol";
-import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
@@ -22,7 +23,6 @@ import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.so
 
 library UsdnProtocolVaultLibrary {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
-    using Permit2TokenBitfield for Permit2TokenBitfield.Bitfield;
     using SafeCast for int256;
     using SafeCast for uint256;
     using SafeTransferLib for address;
@@ -37,7 +37,6 @@ library UsdnProtocolVaultLibrary {
      * @param amount The amount of assets to deposit
      * @param sharesOutMin The minimum amount of USDN shares to receive
      * @param securityDepositValue The value of the security deposit for the newly created deposit
-     * @param permit2TokenBitfield The permit2 bitfield
      */
     struct InitiateDepositParams {
         address user;
@@ -46,7 +45,6 @@ library UsdnProtocolVaultLibrary {
         uint128 amount;
         uint256 sharesOutMin;
         uint64 securityDepositValue;
-        Permit2TokenBitfield.Bitfield permit2TokenBitfield;
     }
 
     /**
@@ -104,7 +102,6 @@ library UsdnProtocolVaultLibrary {
         uint256 sharesOutMin,
         address to,
         address payable validator,
-        Permit2TokenBitfield.Bitfield permit2TokenBitfield,
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData
     ) external returns (bool success_) {
@@ -123,8 +120,7 @@ library UsdnProtocolVaultLibrary {
                 validator: validator,
                 amount: amount,
                 sharesOutMin: sharesOutMin,
-                securityDepositValue: securityDepositValue,
-                permit2TokenBitfield: permit2TokenBitfield
+                securityDepositValue: securityDepositValue
             }),
             currentPriceData
         );
@@ -650,20 +646,16 @@ library UsdnProtocolVaultLibrary {
             s, params.to, params.validator, params.securityDepositValue, params.amount, data
         );
 
-        if (data.sdexToBurn > 0) {
-            // send SDEX to the dead address
-            if (params.permit2TokenBitfield.useForSdex()) {
-                address(s._sdex).permit2TransferFrom(params.user, Constants.DEAD_ADDRESS, data.sdexToBurn);
-            } else {
+        if (ERC165Checker.supportsInterface(msg.sender, type(IPaymentCallback).interfaceId)) {
+            if (data.sdexToBurn > 0) {
+                Utils.transferCallback(s._sdex, data.sdexToBurn, Constants.DEAD_ADDRESS);
+            }
+            Utils.transferCallback(s._asset, params.amount, address(this));
+        } else {
+            if (data.sdexToBurn > 0) {
                 // slither-disable-next-line arbitrary-send-erc20
                 address(s._sdex).safeTransferFrom(params.user, Constants.DEAD_ADDRESS, data.sdexToBurn);
             }
-        }
-
-        // transfer assets
-        if (params.permit2TokenBitfield.useForAsset()) {
-            address(s._asset).permit2TransferFrom(params.user, address(this), params.amount);
-        } else {
             // slither-disable-next-line arbitrary-send-erc20
             address(s._asset).safeTransferFrom(params.user, address(this), params.amount);
         }

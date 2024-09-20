@@ -47,7 +47,6 @@ import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMi
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
-import { Permit2TokenBitfield } from "../../../../src/libraries/Permit2TokenBitfield.sol";
 
 contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProtocolEvents {
     struct SetUpParams {
@@ -70,8 +69,6 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         int256 rebalancerCloseExpoImbalanceLimitBps;
         int256 longImbalanceTargetBps;
     }
-
-    Permit2TokenBitfield.Bitfield constant NO_PERMIT2 = Permit2TokenBitfield.Bitfield.wrap(0);
 
     SetUpParams public params;
     SetUpParams public DEFAULT_PARAMS = SetUpParams({
@@ -297,13 +294,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
         // deposit assets in the protocol to imbalance it
         protocol.initiateDeposit{ value: messageValue }(
-            30 ether,
-            DISABLE_SHARES_OUT_MIN,
-            payable(address(this)),
-            payable(address(this)),
-            NO_PERMIT2,
-            "",
-            EMPTY_PREVIOUS_DATA
+            30 ether, DISABLE_SHARES_OUT_MIN, payable(address(this)), payable(address(this)), "", EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
@@ -327,7 +318,6 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             protocol.getMaxLeverage(),
             payable(address(this)),
             payable(address(this)),
-            NO_PERMIT2,
             "",
             EMPTY_PREVIOUS_DATA
         );

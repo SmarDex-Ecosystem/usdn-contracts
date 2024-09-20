@@ -6,7 +6,6 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
 import { DoubleEndedQueue } from "../../libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../../libraries/HugeUint.sol";
-import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 import { IBaseLiquidationRewardsManager } from "../OracleMiddleware/IBaseLiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IBaseRebalancer } from "../Rebalancer/IBaseRebalancer.sol";
@@ -281,7 +280,6 @@ interface IUsdnProtocolTypes {
      * price after confidence interval, penalty, etc...
      * @param userMaxLeverage The maximum leverage for the newly created position
      * @param securityDepositValue The value of the security deposit for the newly created pending action
-     * @param permit2TokenBitfield The permit2 bitfield
      * @param currentPriceData The current price data (used to calculate the temporary leverage and entry price,
      * pending validation)
      */
@@ -293,27 +291,6 @@ interface IUsdnProtocolTypes {
         uint128 desiredLiqPrice;
         uint128 userMaxPrice;
         uint256 userMaxLeverage;
-        uint64 securityDepositValue;
-        Permit2TokenBitfield.Bitfield permit2TokenBitfield;
-    }
-
-    /**
-     * @notice Parameters for the internal `_initiateClosePosition` function
-     * @param owner The owner of the position
-     * @param to The address that will receive the assets
-     * @param validator The address that will validate the close action
-     * @param posId The unique identifier of the position
-     * @param amountToClose The amount of collateral to remove from the position's amount
-     * @param userMinPrice The minimum price at which the position can be closed
-     * @param securityDepositValue The value of the security deposit for the newly created pending action
-     */
-    struct InititateClosePositionParams {
-        address owner;
-        address to;
-        address validator;
-        PositionId posId;
-        uint128 amountToClose;
-        uint256 userMinPrice;
         uint64 securityDepositValue;
     }
 
@@ -358,18 +335,22 @@ interface IUsdnProtocolTypes {
 
     /**
      * @notice Parameters for the internal `_initiateClosePosition` function
+     * @param owner The owner of the position
+     * @param to The address that will receive the closed amount
+     * @param validator The address that will validate the close position
      * @param posId The position id
      * @param amountToClose The amount to close
      * @param userMinPrice The minimum price at which the position can be closed
-     * @param to The address that will receive the closed amount
-     * @param validator The address that will validate the close position
+     * @param securityDepositValue The value of the security deposit for the newly created pending action
      */
     struct InitiateClosePositionParams {
+        address owner;
+        address to;
+        address payable validator;
         PositionId posId;
         uint128 amountToClose;
         uint256 userMinPrice;
-        address to;
-        address payable validator;
+        uint64 securityDepositValue;
     }
 
     /**
