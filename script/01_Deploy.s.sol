@@ -144,6 +144,8 @@ contract Deploy is Script {
         );
 
         usdnProtocol_ = IUsdnProtocol(proxy);
+
+        _initializeImplementation(proxy);
     }
 
     /**
@@ -393,5 +395,11 @@ contract Deploy is Script {
         } catch {
             revert("INIT_DEPOSIT_AMOUNT is required");
         }
+    }
+
+    function _initializeImplementation(address proxy) internal {
+        IUsdnProtocol implementation = IUsdnProtocol(Upgrades.getImplementationAddress(proxy));
+
+        implementation.initializeStorage();
     }
 }
