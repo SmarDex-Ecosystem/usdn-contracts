@@ -9,7 +9,9 @@ import { Utils } from "./Utils.s.sol";
 
 import { UsdnProtocolFallback } from "../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
+import { IBaseLiquidationRewardsManager } from "../src/interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 contract Upgrade is Script {
     Utils _utils = new Utils();
@@ -53,6 +55,8 @@ contract Upgrade is Script {
             opts
         );
 
+        _initializeImplementation(_usdnProtocol, protocolFallback);
+
         vm.stopBroadcast();
     }
 
@@ -72,5 +76,28 @@ contract Upgrade is Script {
 
         string memory etherscanApiKey = vm.envOr("ETHERSCAN_API_KEY", string("XXXXXXXXXXXXXXXXX"));
         vm.setEnv("ETHERSCAN_API_KEY", etherscanApiKey);
+    }
+
+    function _initializeImplementation(IUsdnProtocol proxy, UsdnProtocolFallback protocolFallback) internal {
+        IUsdnProtocol implementation = IUsdnProtocol(Upgrades.getImplementationAddress(address(proxy)));
+
+        implementation.initializeStorage(
+            proxy.getUsdn(),
+            proxy.getSdex(),
+            proxy.getAsset(),
+            proxy.getOracleMiddleware(),
+            proxy.getLiquidationRewardsManager(),
+            100,
+            _deployerAddress,
+            Types.Managers({
+                setExternalManager: _deployerAddress,
+                criticalFunctionsManager: _deployerAddress,
+                setProtocolParamsManager: _deployerAddress,
+                setUsdnParamsManager: _deployerAddress,
+                setOptionsManager: _deployerAddress,
+                proxyUpgradeManager: _deployerAddress
+            }),
+            protocolFallback
+        );
     }
 }

@@ -3,7 +3,6 @@ pragma solidity 0.8.26;
 
 import { Script } from "forge-std/Script.sol";
 
-import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import { Sdex } from "../test/utils/Sdex.sol";
@@ -21,7 +20,6 @@ import { Wusdn } from "../src/Usdn/Wusdn.sol";
 import { UsdnProtocolFallback } from "../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { IWstETH } from "../src/interfaces/IWstETH.sol";
-import { IBaseLiquidationRewardsManager } from "../src/interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
@@ -36,6 +34,7 @@ contract Deploy is Script {
     uint256 constant CHAINLINK_GAS_PRICE_VALIDITY = 2 hours + 5 minutes;
 
     Utils _utils = new Utils();
+    UsdnProtocolFallback _protocolFallback;
     address _deployerAddress;
     address _feeCollector;
     bool _isProdEnv;
@@ -82,7 +81,9 @@ contract Deploy is Script {
 
         UsdnProtocol_ = _deployProtocol(Usdn_, Sdex_, WstETH_, WstEthOracleMiddleware_, LiquidationRewardsManager_);
 
-        _initializeImplementation(address(UsdnProtocol_), Usdn_, Sdex_, WstETH_, WstEthOracleMiddleware_);
+        _initializeImplementation(
+            address(UsdnProtocol_), Usdn_, Sdex_, WstETH_, WstEthOracleMiddleware_, LiquidationRewardsManager_
+        );
 
         Rebalancer_ = _deployRebalancer(UsdnProtocol_);
 
@@ -117,7 +118,7 @@ contract Deploy is Script {
         opts.unsafeAllow = "external-library-linking,state-variable-immutable";
 
         // deploy the protocol fallback
-        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
+        _protocolFallback = new UsdnProtocolFallback();
 
         address proxy = Upgrades.deployUUPSProxy(
             "UsdnProtocolImpl.sol",
@@ -139,7 +140,7 @@ contract Deploy is Script {
                         setOptionsManager: _deployerAddress,
                         proxyUpgradeManager: _deployerAddress
                     }),
-                    protocolFallback
+                    _protocolFallback
                 )
             ),
             opts
@@ -402,7 +403,8 @@ contract Deploy is Script {
         Usdn usdn,
         Sdex sdex,
         WstETH wstETH,
-        WstEthOracleMiddleware wstEthOracleMiddleware
+        WstEthOracleMiddleware wstEthOracleMiddleware,
+        LiquidationRewardsManager liquidationRewardsManager
     ) internal {
         IUsdnProtocol implementation = IUsdnProtocol(Upgrades.getImplementationAddress(proxy));
 
@@ -411,8 +413,8 @@ contract Deploy is Script {
             sdex,
             wstETH,
             wstEthOracleMiddleware,
-            IBaseLiquidationRewardsManager(address(0)),
-            0,
+            liquidationRewardsManager,
+            100,
             _feeCollector,
             Types.Managers({
                 setExternalManager: _deployerAddress,
@@ -422,7 +424,7 @@ contract Deploy is Script {
                 setOptionsManager: _deployerAddress,
                 proxyUpgradeManager: _deployerAddress
             }),
-            UsdnProtocolFallback(address(0))
+            _protocolFallback
         );
     }
 }
