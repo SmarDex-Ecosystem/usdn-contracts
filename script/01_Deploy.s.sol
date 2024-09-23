@@ -22,7 +22,6 @@ import { UsdnProtocolFallback } from "../src/UsdnProtocol/UsdnProtocolFallback.s
 import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { IWstETH } from "../src/interfaces/IWstETH.sol";
 import { IBaseLiquidationRewardsManager } from "../src/interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
-import { IBaseOracleMiddleware } from "../src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
@@ -81,10 +80,10 @@ contract Deploy is Script {
         WstEthOracleMiddleware_ = _deployWstEthOracleMiddleware(address(WstETH_));
         LiquidationRewardsManager_ = _deployLiquidationRewardsManager(address(WstETH_));
 
-        // deploy the USDN protocol
         UsdnProtocol_ = _deployProtocol(Usdn_, Sdex_, WstETH_, WstEthOracleMiddleware_, LiquidationRewardsManager_);
 
-        // deploy the rebalancer
+        _initializeImplementation(address(UsdnProtocol_), Usdn_, Sdex_, WstETH_, WstEthOracleMiddleware_);
+
         Rebalancer_ = _deployRebalancer(UsdnProtocol_);
 
         _handlePostDeployment(UsdnProtocol_, Usdn_, Rebalancer_);
@@ -147,8 +146,6 @@ contract Deploy is Script {
         );
 
         usdnProtocol_ = IUsdnProtocol(proxy);
-
-        _initializeImplementation(proxy);
     }
 
     /**
@@ -400,17 +397,23 @@ contract Deploy is Script {
         }
     }
 
-    function _initializeImplementation(address proxy) internal {
+    function _initializeImplementation(
+        address proxy,
+        Usdn usdn,
+        Sdex sdex,
+        WstETH wstETH,
+        WstEthOracleMiddleware wstEthOracleMiddleware
+    ) internal {
         IUsdnProtocol implementation = IUsdnProtocol(Upgrades.getImplementationAddress(proxy));
 
         implementation.initializeStorage(
-            Usdn(address(0)),
-            IERC20Metadata(address(0)),
-            IERC20Metadata(address(0)),
-            IBaseOracleMiddleware(address(0)),
+            usdn,
+            sdex,
+            wstETH,
+            wstEthOracleMiddleware,
             IBaseLiquidationRewardsManager(address(0)),
             0,
-            address(0),
+            _feeCollector,
             Types.Managers({
                 setExternalManager: _deployerAddress,
                 criticalFunctionsManager: _deployerAddress,
