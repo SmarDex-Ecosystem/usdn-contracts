@@ -141,9 +141,12 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * of the middleware
      * Each tick is liquidated in constant time. The tick version is incremented for each tick that was liquidated
      * @param currentPriceData The most recent price data
-     * @return liquidatedPositions_ The number of positions that were liquidated
+     * @return liquidatedTicks_ Information about the liquidated ticks
      */
-    function liquidate(bytes calldata currentPriceData) external payable returns (uint256 liquidatedPositions_);
+    function liquidate(bytes calldata currentPriceData)
+        external
+        payable
+        returns (LiqTickInfo[] memory liquidatedTicks_);
 
     /**
      * @notice Manually validate one or more actionable pending actions

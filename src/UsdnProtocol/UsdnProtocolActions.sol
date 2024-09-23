@@ -79,7 +79,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
         external
         payable
         initializedAndNonReentrant
-        returns (uint256 liquidatedPositions_)
+        returns (LiqTickInfo[] memory liquidatedTicks_)
     {
         return ActionsUtils.liquidate(s, currentPriceData);
     }

@@ -17,7 +17,7 @@ import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 
 import { MockWstEthOracleMiddleware } from "../../../src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
 import { ILiquidationRewardsManagerErrorsEventsTypes } from
-    "../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManagerErrorsEventsTypes.sol";
+    "../../../src/interfaces/LiquidationRewardsManager/ILiquidationRewardsManagerErrorsEventsTypes.sol";
 import { IBaseRebalancer } from "../../../src/interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
 import { IUsdnEvents } from "../../../src/interfaces/Usdn/IUsdnEvents.sol";
@@ -37,11 +37,25 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
 
     function setUp() public {
         params = DEFAULT_PARAMS;
-        params.initialDeposit = 202 ether; // needed to trigger rebase
-        params.initialLong = 200 ether;
+        params.initialDeposit = 101 ether; // needed to trigger rebase
         params.fork = true; // all tests in this contract must be labeled `Fork`
         params.forkWarp = 1_709_794_800; // thu mar 07 2024 07:00:00 UTC
         _setUp(params);
+
+        ILiquidationRewardsManagerErrorsEventsTypes.RewardsParameters memory rewardsParameters =
+            liquidationRewardsManager.getRewardsParameters();
+        vm.prank(DEPLOYER);
+        liquidationRewardsManager.setRewardsParameters(
+            rewardsParameters.gasUsedPerTick,
+            rewardsParameters.otherGasUsed,
+            rewardsParameters.rebaseGasUsed,
+            rewardsParameters.rebalancerGasUsed,
+            0,
+            0,
+            0,
+            0,
+            0.1 ether
+        );
 
         vm.startPrank(USER_1);
         (bool success,) = address(wstETH).call{ value: 1000 ether }("");
@@ -160,13 +174,13 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
             }
 
             uint256 startGas = gasleft();
-            uint256 positionsLiquidated = protocol.liquidate{ value: oracleFee }(data);
+            LiqTickInfo[] memory liquidatedTicks = protocol.liquidate{ value: oracleFee }(data);
             uint256 gasUsed = startGas - gasleft();
             gasUsedArray[ticksToLiquidate - 1] = gasUsed;
 
             // make sure the expected amount of computation was executed
             assertEq(
-                positionsLiquidated,
+                liquidatedTicks.length,
                 ticksToLiquidate,
                 "We expect 1, 2 or 3 positions liquidated depending on the iteration"
             );
@@ -230,12 +244,12 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
             }
 
             uint256 startGas = gasleft();
-            uint256 positionsLiquidated = protocol.liquidate{ value: oracleFee }(data);
+            LiqTickInfo[] memory liquidatedTicks = protocol.liquidate{ value: oracleFee }(data);
             uint256 gasUsed = startGas - gasleft();
             gasUsedArray[i] = gasUsed;
 
             // make sure the expected amount of computation was executed
-            assertEq(positionsLiquidated, ticksToLiquidate, "We expect 3 positions liquidated");
+            assertEq(liquidatedTicks.length, ticksToLiquidate, "We expect 3 positions liquidated");
 
             // cancel the liquidation so it's available again
             vm.revertTo(snapshotId);

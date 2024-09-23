@@ -21,7 +21,10 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
 
     function getQueueItem(uint128 rawIndex) external view returns (PendingAction memory);
 
-    function mockLiquidate(bytes calldata currentPriceData) external payable returns (uint256 liquidatedPositions_);
+    function mockLiquidate(bytes calldata currentPriceData)
+        external
+        payable
+        returns (LiqTickInfo[] memory liquidatedPositions_);
 
     function tickValue(int24 tick, uint256 currentPrice) external view returns (int256);
 
@@ -319,8 +322,8 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
     function i_checkPendingFee() external;
 
     function i_sendRewardsToLiquidator(
-        uint16 liquidatedTicks,
-        int256 remainingCollateral,
+        LiqTickInfo[] calldata liquidatedTicks,
+        uint256 currentPrice,
         bool rebased,
         RebalancerAction rebalancerAction,
         ProtocolAction action,

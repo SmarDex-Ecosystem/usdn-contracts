@@ -29,13 +29,13 @@ library UsdnProtocolActionsUtilsLibrary {
     /// @notice See {IUsdnProtocolActions}
     function liquidate(Types.Storage storage s, bytes calldata currentPriceData)
         external
-        returns (uint256 liquidatedPositions_)
+        returns (Types.LiqTickInfo[] memory liquidatedTicks_)
     {
         uint256 balanceBefore = address(this).balance;
         PriceInfo memory currentPrice =
             Utils._getOraclePrice(s, Types.ProtocolAction.Liquidation, 0, "", currentPriceData);
 
-        (liquidatedPositions_,) = Long._applyPnlAndFundingAndLiquidate(
+        (liquidatedTicks_,) = Long._applyPnlAndFundingAndLiquidate(
             s,
             currentPrice.neutralPrice,
             currentPrice.timestamp,

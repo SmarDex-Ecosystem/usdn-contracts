@@ -10,9 +10,8 @@ import { WstETH } from "../test/utils/WstEth.sol";
 
 import { Utils } from "./Utils.s.sol";
 
-import { LiquidationRewardsManager } from "../src/OracleMiddleware/LiquidationRewardsManager.sol";
+import { LiquidationRewardsManager } from "../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
 import { WstEthOracleMiddleware } from "../src/OracleMiddleware/WstEthOracleMiddleware.sol";
-import { MockLiquidationRewardsManager } from "../src/OracleMiddleware/mock/MockLiquidationRewardsManager.sol";
 import { MockWstEthOracleMiddleware } from "../src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
 import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../src/Usdn/Usdn.sol";
@@ -29,7 +28,6 @@ contract Deploy is Script {
     address constant PYTH_MAINNET = 0x4305FB66699C3B2702D4d05CF36551390A4c69C6;
     bytes32 constant PYTH_ETH_FEED_ID = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;
     address constant CHAINLINK_ETH_PRICE_MAINNET = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
-    address constant CHAINLINK_GAS_MAINNET = 0x169E633A2D1E6c10dD91238Ba11c4A708dfEF37C;
     uint256 constant CHAINLINK_PRICE_VALIDITY = 1 hours + 2 minutes;
     uint256 constant CHAINLINK_GAS_PRICE_VALIDITY = 2 hours + 5 minutes;
 
@@ -195,23 +193,9 @@ contract Deploy is Script {
         address liquidationRewardsManagerAddress = vm.envOr("LIQUIDATION_REWARDS_MANAGER_ADDRESS", address(0));
 
         if (liquidationRewardsManagerAddress != address(0)) {
-            if (_isProdEnv) {
-                liquidationRewardsManager_ = LiquidationRewardsManager(liquidationRewardsManagerAddress);
-            } else {
-                liquidationRewardsManager_ = MockLiquidationRewardsManager(liquidationRewardsManagerAddress);
-            }
+            liquidationRewardsManager_ = LiquidationRewardsManager(liquidationRewardsManagerAddress);
         } else {
-            address chainlinkGasPriceFeed = vm.envOr("CHAINLINK_GAS_PRICE_ADDRESS", CHAINLINK_GAS_MAINNET);
-            uint256 chainlinkPriceValidity = vm.envOr("CHAINLINK_GAS_PRICE_VALIDITY", CHAINLINK_GAS_PRICE_VALIDITY);
-
-            if (_isProdEnv) {
-                liquidationRewardsManager_ =
-                    new LiquidationRewardsManager(chainlinkGasPriceFeed, IWstETH(wstETHAddress), chainlinkPriceValidity);
-            } else {
-                liquidationRewardsManager_ = new MockLiquidationRewardsManager(
-                    chainlinkGasPriceFeed, IWstETH(wstETHAddress), chainlinkPriceValidity
-                );
-            }
+            liquidationRewardsManager_ = new LiquidationRewardsManager(IWstETH(wstETHAddress));
         }
     }
 

@@ -18,8 +18,9 @@ import { UsdnProtocolCoreLibrary as Core } from "../../../../src/UsdnProtocol/li
 import { UsdnProtocolLongLibrary as Long } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
+import { ILiquidationRewardsManager } from
+    "../../../../src/interfaces/LiquidationRewardsManager/ILiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../../../../src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
-import { ILiquidationRewardsManager } from "../../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../../../../src/interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolFallback } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
@@ -92,10 +93,14 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
      * update. Call `_waitBeforeLiquidation()` before calling this function to make sure enough time has passed.
      * Do not use this function in contexts where ether needs to be refunded.
      */
-    function mockLiquidate(bytes calldata currentPriceData) external payable returns (uint256 liquidatedPositions_) {
+    function mockLiquidate(bytes calldata currentPriceData)
+        external
+        payable
+        returns (Types.LiqTickInfo[] memory liquidatedTicks_)
+    {
         uint256 lastUpdateTimestampBefore = s._lastUpdateTimestamp;
         vm.startPrank(msg.sender);
-        liquidatedPositions_ = this.liquidate(currentPriceData);
+        liquidatedTicks_ = this.liquidate(currentPriceData);
         vm.stopPrank();
         require(s._lastUpdateTimestamp > lastUpdateTimestampBefore, "UsdnProtocolHandler: liq price is not fresh");
     }
@@ -665,8 +670,8 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_sendRewardsToLiquidator(
-        uint16 liquidatedTicks,
-        int256 remainingCollateral,
+        Types.LiqTickInfo[] calldata liquidatedTicks,
+        uint256 currentPrice,
         bool rebased,
         Types.RebalancerAction rebalancerAction,
         ProtocolAction action,
@@ -674,7 +679,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         bytes memory priceData
     ) external {
         Long._sendRewardsToLiquidator(
-            s, liquidatedTicks, remainingCollateral, rebased, rebalancerAction, action, rebaseCallbackResult, priceData
+            s, liquidatedTicks, currentPrice, rebased, rebalancerAction, action, rebaseCallbackResult, priceData
         );
     }
 
