@@ -222,7 +222,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         expo_ = s._totalExpo.toInt256().safeSub(Utils._longAssetAvailable(s, currentPrice));
     }
 
-    function i_initiateClosePosition(Types.InititateClosePositionParams memory params, bytes calldata currentPriceData)
+    function i_initiateClosePosition(Types.InitiateClosePositionParams memory params, bytes calldata currentPriceData)
         external
         returns (uint256 securityDepositValue_, bool isLiquidationPending_, bool liq_)
     {

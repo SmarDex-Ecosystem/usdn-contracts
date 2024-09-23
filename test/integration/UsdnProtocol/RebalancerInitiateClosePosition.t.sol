@@ -236,7 +236,6 @@ contract TestRebalancerInitiateClosePosition is
             protocol.getMaxLeverage(),
             payable(address(this)),
             payable(address(this)),
-            NO_PERMIT2,
             "",
             EMPTY_PREVIOUS_DATA
         );
@@ -305,7 +304,6 @@ contract TestRebalancerInitiateClosePosition is
             protocol.getMaxLeverage(),
             payable(address(this)),
             payable(address(this)),
-            NO_PERMIT2,
             "",
             EMPTY_PREVIOUS_DATA
         );

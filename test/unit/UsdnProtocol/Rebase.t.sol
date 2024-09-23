@@ -129,7 +129,6 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
             DISABLE_SHARES_OUT_MIN,
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             abi.encode(newPrice),
             EMPTY_PREVIOUS_DATA
         );
@@ -237,7 +236,6 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             abi.encode(newPrice),
             EMPTY_PREVIOUS_DATA
         );

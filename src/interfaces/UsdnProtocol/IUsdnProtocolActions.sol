@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 import { IUsdnProtocolTypes } from "./IUsdnProtocolTypes.sol";
 
 interface IUsdnProtocolActions is IUsdnProtocolTypes {
@@ -24,7 +23,6 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * @param userMaxLeverage The maximum leverage for the newly created position
      * @param to The address that will be the owner of the position
      * @param validator The address that will validate the open position
-     * @param permit2TokenBitfield Whether to use permit2 for transferring assets (first bit)
      * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
      * pending validation)
      * @param previousActionsData The data needed to validate actionable pending actions
@@ -39,7 +37,6 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
         uint256 userMaxLeverage,
         address to,
         address payable validator,
-        Permit2TokenBitfield.Bitfield permit2TokenBitfield,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_, PositionId memory posId_);

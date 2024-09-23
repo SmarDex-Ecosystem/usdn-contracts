@@ -80,7 +80,7 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
 
     function _calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed) external view returns (int256);
 
-    function i_initiateClosePosition(Types.InititateClosePositionParams memory params, bytes calldata currentPriceData)
+    function i_initiateClosePosition(Types.InitiateClosePositionParams memory params, bytes calldata currentPriceData)
         external
         returns (uint256 securityDepositValue_, bool isLiquidationPending_, bool liq_);
 

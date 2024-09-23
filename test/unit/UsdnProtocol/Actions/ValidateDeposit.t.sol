@@ -119,7 +119,6 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
             DISABLE_SHARES_OUT_MIN,
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             currentPrice,
             EMPTY_PREVIOUS_DATA
         );
@@ -163,7 +162,6 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
             DISABLE_SHARES_OUT_MIN,
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             abi.encode(params.initialPrice),
             EMPTY_PREVIOUS_DATA
         );
@@ -223,13 +221,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
             expectedSdexBurnAmount
         );
         protocol.initiateDeposit(
-            DEPOSIT_AMOUNT,
-            DISABLE_SHARES_OUT_MIN,
-            to,
-            payable(address(this)),
-            NO_PERMIT2,
-            currentPrice,
-            EMPTY_PREVIOUS_DATA
+            DEPOSIT_AMOUNT, DISABLE_SHARES_OUT_MIN, to, payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
         );
         uint256 vaultBalance = protocol.getBalanceVault(); // save for mint amount calculation in case price increases
         bytes32 actionId = oracleMiddleware.lastActionId();
@@ -349,7 +341,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         uint256 balanceContractBefore = address(this).balance;
 
         protocol.initiateDeposit{ value: 0.5 ether }(
-            DEPOSIT_AMOUNT, DISABLE_SHARES_OUT_MIN, address(this), USER_1, NO_PERMIT2, currentPrice, EMPTY_PREVIOUS_DATA
+            DEPOSIT_AMOUNT, DISABLE_SHARES_OUT_MIN, address(this), USER_1, currentPrice, EMPTY_PREVIOUS_DATA
         );
         _waitBeforeActionablePendingAction();
         protocol.validateDeposit(USER_1, currentPrice, EMPTY_PREVIOUS_DATA);
