@@ -142,12 +142,12 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * At least one tick will be liquidated, even if the `iterations` parameter is zero
      * @param currentPriceData The most recent price data
      * @param iterations The maximum number of ticks to liquidate
-     * @return liquidatedPositions_ The number of positions that were liquidated
+     * @return liquidatedTicks_ Information about the liquidated ticks
      */
     function liquidate(bytes calldata currentPriceData, uint16 iterations)
         external
         payable
-        returns (uint256 liquidatedPositions_);
+        returns (LiqTickInfo[] memory liquidatedTicks_);
 
     /**
      * @notice Manually validate one or more actionable pending actions

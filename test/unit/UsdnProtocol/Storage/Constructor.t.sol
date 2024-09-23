@@ -10,7 +10,7 @@ import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { IBaseLiquidationRewardsManager } from
-    "../../../../src/interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
+    "../../../../src/interfaces/LiquidationRewardsManager/IBaseLiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../../../../src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IUsdn } from "../../../../src/interfaces/Usdn/IUsdn.sol";
 
