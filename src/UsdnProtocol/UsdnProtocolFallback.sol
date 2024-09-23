@@ -151,11 +151,6 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function MIN_INIT_DEPOSIT() external pure returns (uint256) {
-        return Constants.MIN_INIT_DEPOSIT;
-    }
-
-    /// @inheritdoc IUsdnProtocolFallback
     function MAX_ACTIONABLE_PENDING_ACTIONS() external pure returns (uint256) {
         return Constants.MAX_ACTIONABLE_PENDING_ACTIONS;
     }

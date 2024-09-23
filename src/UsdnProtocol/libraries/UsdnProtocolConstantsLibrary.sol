@@ -14,7 +14,6 @@ library UsdnProtocolConstantsLibrary {
     int24 internal constant NO_POSITION_TICK = type(int24).min;
     address internal constant DEAD_ADDRESS = address(0xdead);
     uint256 internal constant MIN_USDN_SUPPLY = 1000;
-    uint256 internal constant MIN_INIT_DEPOSIT = 1 ether;
     uint256 internal constant MAX_ACTIONABLE_PENDING_ACTIONS = 20;
     uint256 internal constant MIN_VALIDATION_DEADLINE = 60;
     uint256 internal constant MAX_VALIDATION_DEADLINE = 1 days;
