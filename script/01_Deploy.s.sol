@@ -81,10 +81,6 @@ contract Deploy is Script {
 
         UsdnProtocol_ = _deployProtocol(Usdn_, Sdex_, WstETH_, WstEthOracleMiddleware_, LiquidationRewardsManager_);
 
-        _initializeImplementation(
-            address(UsdnProtocol_), Usdn_, Sdex_, WstETH_, WstEthOracleMiddleware_, LiquidationRewardsManager_
-        );
-
         Rebalancer_ = _deployRebalancer(UsdnProtocol_);
 
         _handlePostDeployment(UsdnProtocol_, Usdn_, Rebalancer_);
@@ -396,35 +392,5 @@ contract Deploy is Script {
         } catch {
             revert("INIT_DEPOSIT_AMOUNT is required");
         }
-    }
-
-    function _initializeImplementation(
-        address proxy,
-        Usdn usdn,
-        Sdex sdex,
-        WstETH wstETH,
-        WstEthOracleMiddleware wstEthOracleMiddleware,
-        LiquidationRewardsManager liquidationRewardsManager
-    ) internal {
-        IUsdnProtocol implementation = IUsdnProtocol(Upgrades.getImplementationAddress(proxy));
-
-        implementation.initializeStorage(
-            usdn,
-            sdex,
-            wstETH,
-            wstEthOracleMiddleware,
-            liquidationRewardsManager,
-            100,
-            _feeCollector,
-            Types.Managers({
-                setExternalManager: _deployerAddress,
-                criticalFunctionsManager: _deployerAddress,
-                setProtocolParamsManager: _deployerAddress,
-                setUsdnParamsManager: _deployerAddress,
-                setOptionsManager: _deployerAddress,
-                proxyUpgradeManager: _deployerAddress
-            }),
-            _protocolFallback
-        );
     }
 }
