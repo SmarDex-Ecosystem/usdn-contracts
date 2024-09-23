@@ -482,8 +482,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         uint128 priceAfterInit = params.initialPrice - 50 ether;
         uint256 vaultBalanceBefore =
             uint256(protocol.vaultAssetAvailableWithFunding(priceAfterInit, uint128(block.timestamp)));
-        uint256 longBalanceBefore =
-            uint256(protocol.longAssetAvailableWithFunding(priceAfterInit, uint128(block.timestamp)));
+        uint256 longBalanceBefore = protocol.longAssetAvailableWithFunding(priceAfterInit, uint128(block.timestamp));
         uint256 assetToTransfer = protocol.i_assetToRemove(
             protocol.getBalanceLong(),
             priceAfterInit,
@@ -553,7 +552,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
         uint128 price = params.initialPrice + 200 ether;
         uint256 vaultBalanceBefore = uint256(protocol.vaultAssetAvailableWithFunding(price, uint128(block.timestamp)));
-        uint256 longBalanceBefore = uint256(protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp)));
+        uint256 longBalanceBefore = protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp));
         uint256 assetToTransfer = protocol.i_assetToRemove(
             protocol.getBalanceLong(),
             price,
@@ -631,8 +630,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         data.liquidationPrice = protocol.getEffectivePriceForTick(posId.tick);
         data.vaultBalanceBefore =
             uint256(protocol.vaultAssetAvailableWithFunding(data.liquidationPrice, uint128(block.timestamp)));
-        data.longBalanceBefore =
-            uint256(protocol.longAssetAvailableWithFunding(data.liquidationPrice, uint128(block.timestamp)));
+        data.longBalanceBefore = protocol.longAssetAvailableWithFunding(data.liquidationPrice, uint128(block.timestamp));
         // value of the remaining part of the position (not being closed, but will be liquidated)
         data.liqPriceWithoutPenalty = protocol.getEffectivePriceForTick(
             protocol.i_calcTickWithoutPenalty(data.action.tick, data.liquidationPenalty)
@@ -694,8 +692,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
     function test_internalValidateCloseLiquidatePosition() public {
         // liquidate the position in setup, leaving only the deployer position
         _waitBeforeLiquidation();
-        uint256 liquidated = protocol.mockLiquidate(abi.encode(7 * params.initialPrice / 10), 10);
-        assertEq(liquidated, 1, "liquidated");
+        LiqTickInfo[] memory liquidatedTicks = protocol.mockLiquidate(abi.encode(7 * params.initialPrice / 10), 10);
+        assertEq(liquidatedTicks.length, 1, "liquidated");
 
         bytes memory priceData = abi.encode(params.initialPrice);
 

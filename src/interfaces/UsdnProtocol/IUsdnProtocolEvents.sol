@@ -192,6 +192,7 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
      * @param bonus The new bonus (in basis points)
      */
     event RebalancerBonusUpdated(uint256 bonus);
+
     /**
      * @notice Emitted when the ratio of USDN to SDEX tokens to burn on deposit is updated
      * @param newRatio The new ratio
@@ -209,6 +210,12 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
      * @param newMiddleware The new oracle middleware address
      */
     event OracleMiddlewareUpdated(address newMiddleware);
+
+    /**
+     * @notice Emitted when the minimum leverage of the rebalancer is updated
+     * @param newMinLeverage The new value for the minimum leverage
+     */
+    event RebalancerMinLeverageUpdated(uint256 newMinLeverage);
 
     /**
      * @notice Emitted when the `minLeverage` is updated

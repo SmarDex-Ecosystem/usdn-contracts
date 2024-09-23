@@ -4,7 +4,8 @@ pragma solidity 0.8.26;
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { UUPSUpgradeable } from "solady/src/utils/UUPSUpgradeable.sol";
 
-import { IBaseLiquidationRewardsManager } from "../interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
+import { IBaseLiquidationRewardsManager } from
+    "../interfaces/LiquidationRewardsManager/IBaseLiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolFallback } from "../interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
@@ -23,6 +24,11 @@ contract UsdnProtocolImpl is
     UsdnProtocolActions,
     UUPSUpgradeable
 {
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     /// @inheritdoc IUsdnProtocolImpl
     function initializeStorage(
         IUsdn usdn,
@@ -52,8 +58,8 @@ contract UsdnProtocolImpl is
         _grantRole(PROXY_UPGRADE_ROLE, managers.proxyUpgradeManager);
 
         // parameters
-        s._minLeverage = 10 ** Constants.LEVERAGE_DECIMALS + 10 ** 12;
-        s._maxLeverage = 10 * 10 ** Constants.LEVERAGE_DECIMALS;
+        s._minLeverage = 10 ** Constants.LEVERAGE_DECIMALS + 10 ** (Constants.LEVERAGE_DECIMALS - 1); // x1.1
+        s._maxLeverage = 10 * 10 ** Constants.LEVERAGE_DECIMALS; // x10
         s._lowLatencyValidatorDeadline = 15 minutes;
         s._onChainValidatorDeadline = 65 minutes; // slightly more than chainlink's heartbeat
         s._safetyMarginBps = 200; // 2%
@@ -88,7 +94,6 @@ contract UsdnProtocolImpl is
 
         s._usdn = usdn;
         s._sdex = sdex;
-        // those tokens should have 18 decimals
         if (usdn.decimals() != Constants.TOKENS_DECIMALS || sdex.decimals() != Constants.TOKENS_DECIMALS) {
             revert UsdnProtocolInvalidTokenDecimals();
         }

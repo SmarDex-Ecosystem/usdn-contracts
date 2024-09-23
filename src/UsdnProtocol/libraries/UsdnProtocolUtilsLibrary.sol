@@ -375,19 +375,9 @@ library UsdnProtocolUtilsLibrary {
         pure
         returns (int256 available_)
     {
-        // if balanceLong == totalExpo or the long trading expo is negative (theoretically impossible), the PnL is
-        // zero
-        // we can't calculate a proper PnL value if the long trading expo is negative because it would invert the
-        // sign of the amount
-        if (balanceLong >= totalExpo) {
-            return balanceLong.toInt256();
-        }
         int256 priceDiff = toInt256(newPrice) - toInt256(oldPrice);
-        uint256 tradingExpo;
-        // `balanceLong` is strictly inferior to `totalExpo`
-        unchecked {
-            tradingExpo = totalExpo - balanceLong;
-        }
+        uint256 tradingExpo = totalExpo - balanceLong;
+
         int256 pnl = tradingExpo.toInt256().safeMul(priceDiff).safeDiv(toInt256(newPrice));
 
         available_ = balanceLong.toInt256().safeAdd(pnl);

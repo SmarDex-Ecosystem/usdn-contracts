@@ -194,10 +194,8 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         expected.expectedLiqPrice = protocol.getEffectivePriceForTick(
             protocol.i_calcTickWithoutPenalty(posId.tick),
             uint256(newPrice),
-            uint256(
-                protocol.longTradingExpoWithFunding(
-                    newPrice, tempPos.timestamp + uint128(oracleMiddleware.getValidationDelay())
-                )
+            protocol.longTradingExpoWithFunding(
+                newPrice, tempPos.timestamp + uint128(oracleMiddleware.getValidationDelay())
             ),
             protocol.getLiqMultiplierAccumulator()
         );
@@ -385,7 +383,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         (data.validateTick,) = protocol.i_getTickFromDesiredLiqPrice(
             protocol.i_getLiquidationPrice(data.validatePrice, uint128(protocol.getMaxLeverage())),
             data.validatePrice,
-            uint256(protocol.getLongTradingExpo(data.validatePrice)),
+            protocol.getLongTradingExpo(data.validatePrice),
             protocol.getLiqMultiplierAccumulator(),
             protocol.getTickSpacing(),
             data.originalLiqPenalty

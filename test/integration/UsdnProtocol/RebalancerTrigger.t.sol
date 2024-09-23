@@ -24,8 +24,11 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
     function setUp() public {
         (tickSpacing, amountInRebalancer, posToLiquidate, tickToLiquidateData) = _setUpImbalanced(10 ether);
         uint256 maxLeverage = protocol.getMaxLeverage();
-        vm.prank(DEPLOYER);
+        vm.startPrank(DEPLOYER);
         rebalancer.setPositionMaxLeverage(maxLeverage);
+        // disable liquidation rewards
+        liquidationRewardsManager.setRewardsParameters(0, 0, 0, 0, 0, 0, 0, 0, 0.1 ether);
+        vm.stopPrank();
     }
 
     /**
@@ -56,7 +59,7 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
         uint256 vaultAssetAvailable =
             uint256(protocol.vaultAssetAvailableWithFunding(wstEthPrice, uint40(block.timestamp))) + remainingCollateral;
         uint256 longAssetAvailable =
-            uint256(protocol.longAssetAvailableWithFunding(wstEthPrice, uint40(block.timestamp))) - remainingCollateral;
+            protocol.longAssetAvailableWithFunding(wstEthPrice, uint40(block.timestamp)) - remainingCollateral;
         uint256 tradingExpoToFill = vaultAssetAvailable * BPS_DIVISOR
             / uint256(int256(BPS_DIVISOR) + protocol.getLongImbalanceTargetBps()) - (totalExpo - longAssetAvailable);
 
@@ -118,8 +121,8 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
         assertEq(liqAcc.hi, 0, "The hi attribute should be 0");
         assertEq(liqAcc.lo, expectedAccumulator.lo, "The lo attribute should be the expected value");
 
-        assertEq(protocol.getBalanceLong(), longAssetAvailable + amountInRebalancer + bonus);
-        assertEq(protocol.getBalanceVault(), vaultAssetAvailable - bonus);
+        assertEq(protocol.getBalanceLong(), longAssetAvailable + amountInRebalancer + bonus, "balance long");
+        assertEq(protocol.getBalanceVault(), vaultAssetAvailable - bonus, "balance vault");
     }
 
     /**

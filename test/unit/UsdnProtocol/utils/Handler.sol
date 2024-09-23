@@ -17,8 +17,9 @@ import { UsdnProtocolCoreLibrary as Core } from "../../../../src/UsdnProtocol/li
 import { UsdnProtocolLongLibrary as Long } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
+import { ILiquidationRewardsManager } from
+    "../../../../src/interfaces/LiquidationRewardsManager/ILiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../../../../src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
-import { ILiquidationRewardsManager } from "../../../../src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../../../../src/interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolFallback } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
@@ -94,24 +95,19 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     function mockLiquidate(bytes calldata currentPriceData, uint16 iterations)
         external
         payable
-        returns (uint256 liquidatedPositions_)
+        returns (Types.LiqTickInfo[] memory liquidatedTicks_)
     {
         uint256 lastUpdateTimestampBefore = s._lastUpdateTimestamp;
         vm.startPrank(msg.sender);
-        liquidatedPositions_ = this.liquidate(currentPriceData, iterations);
+        liquidatedTicks_ = this.liquidate(currentPriceData, iterations);
         vm.stopPrank();
         require(s._lastUpdateTimestamp > lastUpdateTimestampBefore, "UsdnProtocolHandler: liq price is not fresh");
     }
 
     function tickValue(int24 tick, uint256 currentPrice) external view returns (int256) {
-        int256 longTradingExpo = this.longTradingExpoWithFunding(uint128(currentPrice), uint128(block.timestamp));
-        if (longTradingExpo < 0) {
-            longTradingExpo = 0;
-        }
+        uint256 longTradingExpo = this.longTradingExpoWithFunding(uint128(currentPrice), uint128(block.timestamp));
         bytes32 tickHash = Utils.tickHash(tick, s._tickVersion[tick]);
-        return Long._tickValue(
-            tick, currentPrice, uint256(longTradingExpo), s._liqMultiplierAccumulator, s._tickData[tickHash]
-        );
+        return Long._tickValue(tick, currentPrice, longTradingExpo, s._liqMultiplierAccumulator, s._tickData[tickHash]);
     }
 
     /**
@@ -197,8 +193,8 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
      * @notice Helper to calculate the trading exposure of the long side at the time of the last balance update and
      * currentPrice
      */
-    function getLongTradingExpo(uint128 currentPrice) external view returns (int256 expo_) {
-        expo_ = s._totalExpo.toInt256().safeSub(Utils._longAssetAvailable(s, currentPrice));
+    function getLongTradingExpo(uint128 currentPrice) external view returns (uint256 expo_) {
+        expo_ = uint256(s._totalExpo.toInt256().safeSub(Utils._longAssetAvailable(s, currentPrice)));
     }
 
     function i_initiateClosePosition(Types.InitiateClosePositionParams memory params, bytes calldata currentPriceData)
@@ -673,8 +669,8 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_sendRewardsToLiquidator(
-        uint16 liquidatedTicks,
-        int256 remainingCollateral,
+        Types.LiqTickInfo[] calldata liquidatedTicks,
+        uint256 currentPrice,
         bool rebased,
         Types.RebalancerAction rebalancerAction,
         ProtocolAction action,
@@ -682,7 +678,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         bytes memory priceData
     ) external {
         Long._sendRewardsToLiquidator(
-            s, liquidatedTicks, remainingCollateral, rebased, rebalancerAction, action, rebaseCallbackResult, priceData
+            s, liquidatedTicks, currentPrice, rebased, rebalancerAction, action, rebaseCallbackResult, priceData
         );
     }
 
@@ -811,5 +807,9 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         return Long._getTickFromDesiredLiqPrice(
             desiredLiqPriceWithoutPenalty, liqMultiplier, tickSpacing, liquidationPenalty
         );
+    }
+
+    function i_calcMaxLongBalance(uint256 totalExpo) external pure returns (uint256) {
+        return Core._calcMaxLongBalance(totalExpo);
     }
 }

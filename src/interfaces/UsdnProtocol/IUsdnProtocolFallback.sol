@@ -4,7 +4,7 @@ pragma solidity >=0.8.0;
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import { HugeUint } from "../../libraries/HugeUint.sol";
-import { IBaseLiquidationRewardsManager } from "../OracleMiddleware/IBaseLiquidationRewardsManager.sol";
+import { IBaseLiquidationRewardsManager } from "../LiquidationRewardsManager/IBaseLiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IBaseRebalancer } from "../Rebalancer/IBaseRebalancer.sol";
 import { IUsdn } from "../Usdn/IUsdn.sol";
@@ -100,6 +100,16 @@ interface IUsdnProtocolFallback {
     function LEVERAGE_DECIMALS() external view returns (uint8);
 
     /**
+     * @notice Get the minimum leverage allowed for the rebalancer to open a position
+     * @dev In edge cases where the rebalancer holds significantly more assets than the protocol, opening a position
+     * with the protocol's minimum leverage could cause a large overshoot of the target, potentially creating even
+     * greater imbalance than before the trigger. To prevent this, the rebalancer can use leverage as low as the
+     * technical minimum (10**LEVERAGE_DECIMALS + 1)
+     * @return The minimum leverage value (with `LEVERAGE_DECIMALS` decimals)
+     */
+    function REBALANCER_MIN_LEVERAGE() external view returns (uint256);
+
+    /**
      * @notice Get the number of decimals of the funding rate
      * @return The funding rate's number of decimals
      */
@@ -149,12 +159,6 @@ interface IUsdnProtocolFallback {
     function NO_POSITION_TICK() external view returns (int24);
 
     /**
-     * @notice Get the minimum amount of assets for the initialization deposit and long
-     * @return The minimum amount of assets
-     */
-    function MIN_INIT_DEPOSIT() external view returns (uint256);
-
-    /**
      * @notice The minimum total supply of USDN that we allow
      * @dev Upon the first deposit, this amount is sent to the dead address and cannot be later recovered
      * @return The minimum total supply of USDN
@@ -172,6 +176,14 @@ interface IUsdnProtocolFallback {
      * @return The maximum value
      */
     function MAX_ACTIONABLE_PENDING_ACTIONS() external pure returns (uint256);
+
+    /**
+     * @notice The lowest margin between the total expo and the balance long
+     * @dev The balance long cannot increase in a way that makes the trading expo worth less than the margin
+     * If that happens, the balance long will be clamped down to the total expo minus the margin
+     * @return The minimum margin between the total expo and the balance for the long side (in basis points)
+     */
+    function MIN_LONG_TRADING_EXPO_BPS() external pure returns (uint256);
 
     /* -------------------------------------------------------------------------- */
     /*                                 Immutables getters                         */
@@ -259,7 +271,7 @@ interface IUsdnProtocolFallback {
     function getMaxLeverage() external view returns (uint256);
 
     /**
-     * @notice The deadline of a user to confirm their action with a low-latency oracle
+     * @notice The deadline for a user to confirm their action with a low-latency oracle
      * @dev After this deadline, any user can validate the action with the low-latency oracle until the
      * OracleMiddleware's `_lowLatencyDelay`, and retrieve the security deposit for the pending action
      * @return The low-latency validation deadline (in seconds)
@@ -267,7 +279,7 @@ interface IUsdnProtocolFallback {
     function getLowLatencyValidatorDeadline() external view returns (uint128);
 
     /**
-     * @notice The deadline of a user to confirm their action with the on-chain oracle
+     * @notice The deadline for a user to confirm their action with the on-chain oracle
      * @dev After this deadline, any user can validate the action with the on-chain oracle and retrieve the security
      * deposit for the pending action
      * @return The on-chain validation deadline (in seconds)

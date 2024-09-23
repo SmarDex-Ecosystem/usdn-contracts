@@ -4,21 +4,27 @@ pragma solidity 0.8.26;
 import { DEPLOYER } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
 /**
  * @custom:feature Test the _sendRewardsToLiquidator internal function of the actions utils library
  * @custom:given A protocol with increased rewards and gas price
  */
 contract TestUsdnProtocolActionsSendRewardsToLiquidator is UsdnProtocolBaseFixture {
+    uint256 internal constant CURRENT_PRICE = 1000 ether;
+
     function setUp() public {
-        _setUp(DEFAULT_PARAMS);
+        params = DEFAULT_PARAMS;
+        params.flags.enableLiquidationRewards = true;
+        _setUp(params);
 
         // increase the rewards
         vm.prank(DEPLOYER);
-        liquidationRewardsManager.setRewardsParameters(500_000, 1_000_000, 200_000, 200_000, 8000 gwei, 20_000);
-        // puts the gas at 8000 gwei
-        vm.txGasPrice(8000 gwei);
+        liquidationRewardsManager.setRewardsParameters(
+            500_000, 1_000_000, 200_000, 200_000, 10 gwei, 20_000, 500, 0.1 ether, 1000 ether
+        );
+        // base fee is 30 gwei
+        vm.fee(30 gwei);
+        // puts the tx gas at 40 gwei
+        vm.txGasPrice(40 gwei);
     }
 
     /**
@@ -28,13 +34,23 @@ contract TestUsdnProtocolActionsSendRewardsToLiquidator is UsdnProtocolBaseFixtu
      * @custom:then The user receives the rewards calculated by the liquidation rewards manager
      */
     function test_sendRewardsToLiquidatorLowerThan() public {
+        LiqTickInfo[] memory liquidatedTicks = new LiqTickInfo[](1);
+        liquidatedTicks[0] = LiqTickInfo({
+            totalPositions: 1,
+            totalExpo: 10 ether,
+            remainingCollateral: 0.2 ether,
+            tickPrice: 1020 ether,
+            priceWithoutPenalty: 1000 ether
+        });
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(
-            1, 0, false, Types.RebalancerAction.None, ProtocolAction.None, "", ""
+            liquidatedTicks, CURRENT_PRICE, false, RebalancerAction.None, ProtocolAction.None, "", ""
         );
 
         vm.expectEmit();
         emit LiquidatorRewarded(address(this), rewards);
-        protocol.i_sendRewardsToLiquidator(1, 0, false, Types.RebalancerAction.None, ProtocolAction.None, "", "");
+        protocol.i_sendRewardsToLiquidator(
+            liquidatedTicks, CURRENT_PRICE, false, RebalancerAction.None, ProtocolAction.None, "", ""
+        );
 
         assertEq(wstETH.balanceOf(address(this)), rewards, "Balance increase by the rewards");
     }
@@ -63,9 +79,34 @@ contract TestUsdnProtocolActionsSendRewardsToLiquidator is UsdnProtocolBaseFixtu
 
         uint256 balanceVault = protocol.getBalanceVault();
 
+        LiqTickInfo[] memory liquidatedTicks = new LiqTickInfo[](3);
+        liquidatedTicks[0] = LiqTickInfo({
+            totalPositions: 1,
+            totalExpo: 10 ether,
+            remainingCollateral: 0.2 ether,
+            tickPrice: 1020 ether,
+            priceWithoutPenalty: 1000 ether
+        });
+        liquidatedTicks[1] = LiqTickInfo({
+            totalPositions: 1,
+            totalExpo: 10 ether,
+            remainingCollateral: 0.2 ether,
+            tickPrice: 1010 ether,
+            priceWithoutPenalty: 990 ether
+        });
+        liquidatedTicks[2] = LiqTickInfo({
+            totalPositions: 1,
+            totalExpo: 10 ether,
+            remainingCollateral: 0.2 ether,
+            tickPrice: 1000 ether,
+            priceWithoutPenalty: 980 ether
+        });
+
         vm.expectEmit();
         emit LiquidatorRewarded(address(this), balanceVault);
-        protocol.i_sendRewardsToLiquidator(3, 0, true, Types.RebalancerAction.ClosedOpened, ProtocolAction.None, "", "");
+        protocol.i_sendRewardsToLiquidator(
+            liquidatedTicks, 900 ether, true, RebalancerAction.ClosedOpened, ProtocolAction.None, "", ""
+        );
 
         assertEq(wstETH.balanceOf(address(this)), balanceVault, "Balance increase by the vault balance");
     }

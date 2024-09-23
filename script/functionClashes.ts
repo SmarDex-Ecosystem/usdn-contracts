@@ -83,6 +83,8 @@ for (const file of solFiles) {
           `function ${pc.blue(signature)} in ${pc.green(file)} have the same selector (${selector})\n`,
           `\t    than ${pc.blue(existingSignature)} in ${pc.green(solFiles[0])}`,
         );
+
+        process.exit(1);
       } else {
         selectorMap.set(selector, signature);
       }

@@ -28,10 +28,10 @@ interface IUsdnProtocolErrors {
     error UsdnProtocolInvalidAddressValidator();
 
     /**
-     * @dev Indicates that the initialization deposit is too low
-     * @param minInitAmount The minimum initialization amount
+     * @dev Indicates that an amount provided during the initialization is too small and do not allow opening
+     * reasonably sized positions afterwards
      */
-    error UsdnProtocolMinInitAmount(uint256 minInitAmount);
+    error UsdnProtocolMinInitAmount();
 
     /**
      * @dev Indicates that the provided USDN contract has a total supply above zero at deployment
@@ -110,6 +110,9 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the new middleware address value is invalid
     error UsdnProtocolInvalidMiddlewareAddress();
+
+    /// @dev Indicates that the provided minimum leverage is invalid
+    error UsdnProtocolInvalidRebalancerMinLeverage();
 
     /// @dev Indicate that the new `minLeverage` value is invalid
     error UsdnProtocolInvalidMinLeverage();
