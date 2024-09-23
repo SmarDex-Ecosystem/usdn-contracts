@@ -195,8 +195,11 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, Ownable2Step {
         uint256 i;
         do {
             if (currentPrice >= liquidatedTicks[i].tickPrice) {
-                // should never happen, we can't liquidate a tick when the current price is above its price
+                // the currentPrice should never exceed the tick price, we can't liquidate a tick when the current
+                // price is above its price
                 // if that would happen, the bonus is clamped to 0
+                // if the price is equal to the tick price, the bonus is also 0 according to the formula so we can
+                // skip the calculation
                 unchecked {
                     i++;
                 }
