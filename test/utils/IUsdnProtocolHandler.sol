@@ -23,11 +23,6 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
 
     function mockLiquidate(bytes calldata currentPriceData) external payable returns (uint256 liquidatedPositions_);
 
-    function liquidateForGasUsage(bytes calldata currentPriceData, uint16 iterations)
-        external
-        payable
-        returns (uint256 liquidatedPositions_);
-
     function tickValue(int24 tick, uint256 currentPrice) external view returns (int256);
 
     function emptyVault() external;

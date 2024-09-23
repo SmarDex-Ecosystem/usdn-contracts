@@ -100,30 +100,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         require(s._lastUpdateTimestamp > lastUpdateTimestampBefore, "UsdnProtocolHandler: liq price is not fresh");
     }
 
-    /// @dev Call of the liquidate function with the iterations to help measure gas usage
-    function liquidateForGasUsage(bytes calldata currentPriceData, uint16 iterations)
-        external
-        payable
-        returns (uint256 liquidatedPositions_)
-    {
-        uint256 balanceBefore = address(this).balance;
-        PriceInfo memory currentPrice =
-            Utils._getOraclePrice(s, Types.ProtocolAction.Liquidation, 0, "", currentPriceData);
-
-        (liquidatedPositions_,) = Long._applyPnlAndFundingAndLiquidate(
-            s,
-            currentPrice.neutralPrice,
-            currentPrice.timestamp,
-            iterations,
-            true,
-            Types.ProtocolAction.Liquidation,
-            currentPriceData
-        );
-
-        Utils._refundExcessEther(0, 0, balanceBefore);
-        Utils._checkPendingFee(s);
-    }
-
     function tickValue(int24 tick, uint256 currentPrice) external view returns (int256) {
         uint256 longTradingExpo = this.longTradingExpoWithFunding(uint128(currentPrice), uint128(block.timestamp));
         bytes32 tickHash = Utils.tickHash(tick, s._tickVersion[tick]);
