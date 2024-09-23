@@ -56,12 +56,12 @@ interface IUsdnProtocolCore is IUsdnProtocolTypes {
      * @notice Get the predicted value of the long balance for the given asset price and timestamp
      * @dev The effects of the funding and any profit or loss of the long positions since the last contract state
      * update is taken into account, as well as the fees. If the provided timestamp is older than the last state
-     * update, the function reverts with `UsdnProtocolTimestampTooOld`
+     * update, the function reverts with `UsdnProtocolTimestampTooOld`. The value cannot be below 0
      * @param currentPrice The current or predicted asset price
      * @param timestamp The timestamp corresponding to `currentPrice`
      * @return The long balance
      */
-    function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256);
+    function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (uint256);
 
     /**
      * @notice Get the predicted value of the long trading exposure for the given asset price and timestamp
@@ -71,5 +71,5 @@ interface IUsdnProtocolCore is IUsdnProtocolTypes {
      * @param timestamp The timestamp corresponding to `currentPrice`
      * @return The long trading exposure
      */
-    function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256);
+    function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (uint256);
 }

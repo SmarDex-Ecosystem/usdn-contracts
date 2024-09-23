@@ -159,12 +159,6 @@ interface IUsdnProtocolFallback {
     function NO_POSITION_TICK() external view returns (int24);
 
     /**
-     * @notice Get the minimum amount of assets for the initialization deposit and long
-     * @return The minimum amount of assets
-     */
-    function MIN_INIT_DEPOSIT() external view returns (uint256);
-
-    /**
      * @notice The minimum total supply of USDN that we allow
      * @dev Upon the first deposit, this amount is sent to the dead address and cannot be later recovered
      * @return The minimum total supply of USDN
@@ -182,6 +176,14 @@ interface IUsdnProtocolFallback {
      * @return The maximum value
      */
     function MAX_ACTIONABLE_PENDING_ACTIONS() external pure returns (uint256);
+
+    /**
+     * @notice The lowest margin between the total expo and the balance long
+     * @dev The balance long cannot increase in a way that makes the trading expo worth less than the margin
+     * If that happens, the balance long will be clamped down to the total expo minus the margin
+     * @return The minimum margin between the total expo and the balance for the long side (in basis points)
+     */
+    function MIN_LONG_TRADING_EXPO_BPS() external pure returns (uint256);
 
     /* -------------------------------------------------------------------------- */
     /*                                 Immutables getters                         */

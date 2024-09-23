@@ -56,7 +56,7 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
         uint256 vaultAssetAvailable =
             uint256(protocol.vaultAssetAvailableWithFunding(wstEthPrice, uint40(block.timestamp))) + remainingCollateral;
         uint256 longAssetAvailable =
-            uint256(protocol.longAssetAvailableWithFunding(wstEthPrice, uint40(block.timestamp))) - remainingCollateral;
+            protocol.longAssetAvailableWithFunding(wstEthPrice, uint40(block.timestamp)) - remainingCollateral;
         uint256 tradingExpoToFill = vaultAssetAvailable * BPS_DIVISOR
             / uint256(int256(BPS_DIVISOR) + protocol.getLongImbalanceTargetBps()) - (totalExpo - longAssetAvailable);
 
