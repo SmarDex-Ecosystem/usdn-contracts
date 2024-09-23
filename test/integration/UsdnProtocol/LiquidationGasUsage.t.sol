@@ -37,7 +37,8 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
 
     function setUp() public {
         params = DEFAULT_PARAMS;
-        params.initialDeposit = 101 ether; // needed to trigger rebase
+        params.initialDeposit = 202 ether; // needed to trigger rebase
+        params.initialLong = 200 ether;
         params.fork = true; // all tests in this contract must be labeled `Fork`
         params.forkWarp = 1_709_794_800; // thu mar 07 2024 07:00:00 UTC
         _setUp(params);
