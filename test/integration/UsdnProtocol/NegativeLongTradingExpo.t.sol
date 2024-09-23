@@ -124,7 +124,7 @@ contract TestUsdnProtocolNegativeLongTradingExpo is UsdnProtocolBaseIntegrationF
     }
 
     /**
-     * @custom:scenario The fundings can push the long trading expo at its limit and positions can still be closed
+     * @custom:scenario The fundings can push the long trading expo at its limit and positions can still be opened
      * @custom:given Fundings accumulated until the protocol has the smallest trading expo possible
      * @custom:when A long position is opened
      * @custom:then It's value is close to it's collateral amount
