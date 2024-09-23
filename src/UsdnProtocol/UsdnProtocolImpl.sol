@@ -24,6 +24,11 @@ contract UsdnProtocolImpl is
     UsdnProtocolActions,
     UUPSUpgradeable
 {
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     /// @inheritdoc IUsdnProtocolImpl
     function initializeStorage(
         IUsdn usdn,
