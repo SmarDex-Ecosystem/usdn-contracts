@@ -80,6 +80,9 @@ library UsdnProtocolCoreLibrary {
 
         (int24 tickWithPenalty, uint128 liqPriceWithoutPenalty) =
             Long._getTickFromDesiredLiqPrice(s, desiredLiqPrice, s._liquidationPenalty);
+
+        Long._checkOpenPositionLeverage(s, currentPrice.price.toUint128(), liqPriceWithoutPenalty, s._maxLeverage);
+
         uint128 positionTotalExpo =
             Utils._calcPositionTotalExpo(longAmount, currentPrice.price.toUint128(), liqPriceWithoutPenalty);
 

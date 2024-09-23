@@ -348,5 +348,27 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         protocol.initialize(INITIAL_DEPOSIT, INITIAL_POSITION, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE));
     }
 
+    /**
+     * @custom:scenario Owner initialize protocol with position that has a leverage too low
+     * @custom:when Owner initialize an open position with a leverage of 1.033
+     * @custom:then The protocol reverts with UsdnProtocolLeverageTooLow
+     */
+    function test_RevertWhen_initializePositionLowLeverage() public {
+        vm.expectRevert(UsdnProtocolLeverageTooLow.selector);
+        protocol.initialize(INITIAL_DEPOSIT, INITIAL_POSITION * 30, INITIAL_PRICE / 31, abi.encode(INITIAL_PRICE));
+    }
+
+    /**
+     * @custom:scenario Owner initialize protocol with position that has a leverage too high
+     * @custom:when Owner initialize an open position with a leverage of 10.8
+     * @custom:then The protocol reverts with UsdnProtocolLeverageTooHigh
+     */
+    function test_RevertWhen_initializePositionHighLeverage() public {
+        vm.expectRevert(UsdnProtocolLeverageTooHigh.selector);
+        protocol.initialize(
+            INITIAL_DEPOSIT, INITIAL_POSITION / 10, (INITIAL_PRICE * 10) / 11, abi.encode(INITIAL_PRICE)
+        );
+    }
+
     receive() external payable { }
 }
