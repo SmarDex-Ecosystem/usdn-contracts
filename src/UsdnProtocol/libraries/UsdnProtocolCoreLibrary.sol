@@ -283,9 +283,9 @@ library UsdnProtocolCoreLibrary {
         }
 
         uint256 maxLongBalance = _calcMaxLongBalance(s._totalExpo);
-        // cast is safe as maxLongBalance cannot be bigger than int256.max
-        if (data_.tempLongBalance > 0 && data_.tempLongBalance > int256(maxLongBalance)) {
-            data_.tempLongBalance = int256(maxLongBalance);
+
+        if (data_.tempLongBalance > 0 && uint256(data_.tempLongBalance) > maxLongBalance) {
+            data_.tempLongBalance = maxLongBalance.toInt256();
         }
 
         data_.tempVaultBalance = totalBalance.safeSub(data_.tempLongBalance);
