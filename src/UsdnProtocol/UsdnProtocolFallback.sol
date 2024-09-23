@@ -28,13 +28,13 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
         view
         returns (uint256 usdnSharesExpected_, uint256 sdexToBurn_)
     {
-        int256 vaultBalance = Vault.vaultAssetAvailableWithFunding(s, price, timestamp);
-        if (vaultBalance <= 0) {
+        uint256 vaultBalance = Vault.vaultAssetAvailableWithFunding(s, price, timestamp);
+        if (vaultBalance == 0) {
             revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
         }
         IUsdn usdn = s._usdn;
         uint256 amountAfterFees = amount - FixedPointMathLib.fullMulDiv(amount, s._vaultFeeBps, Constants.BPS_DIVISOR);
-        usdnSharesExpected_ = Utils._calcMintUsdnShares(amountAfterFees, uint256(vaultBalance), usdn.totalShares());
+        usdnSharesExpected_ = Utils._calcMintUsdnShares(amountAfterFees, vaultBalance, usdn.totalShares());
         sdexToBurn_ = Utils._calcSdexToBurn(usdn.convertToTokens(usdnSharesExpected_), s._sdexBurnOnDepositRatio);
     }
 
@@ -44,11 +44,8 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
         view
         returns (uint256 assetExpected_)
     {
-        int256 available = Vault.vaultAssetAvailableWithFunding(s, price, timestamp);
-        if (available < 0) {
-            return 0;
-        }
-        assetExpected_ = Utils._calcBurnUsdn(usdnShares, uint256(available), s._usdn.totalShares(), s._vaultFeeBps);
+        uint256 available = Vault.vaultAssetAvailableWithFunding(s, price, timestamp);
+        assetExpected_ = Utils._calcBurnUsdn(usdnShares, available, s._usdn.totalShares(), s._vaultFeeBps);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
@@ -104,6 +101,11 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
+    function REBALANCER_MIN_LEVERAGE() external pure returns (uint256) {
+        return Constants.REBALANCER_MIN_LEVERAGE;
+    }
+
+    /// @inheritdoc IUsdnProtocolFallback
     function TOKENS_DECIMALS() external pure returns (uint8) {
         return Constants.TOKENS_DECIMALS;
     }
@@ -149,13 +151,13 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function MIN_INIT_DEPOSIT() external pure returns (uint256) {
-        return Constants.MIN_INIT_DEPOSIT;
+    function MAX_ACTIONABLE_PENDING_ACTIONS() external pure returns (uint256) {
+        return Constants.MAX_ACTIONABLE_PENDING_ACTIONS;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function MAX_ACTIONABLE_PENDING_ACTIONS() external pure returns (uint256) {
-        return Constants.MAX_ACTIONABLE_PENDING_ACTIONS;
+    function MIN_LONG_TRADING_EXPO_BPS() external pure returns (uint256) {
+        return Constants.MIN_LONG_TRADING_EXPO_BPS;
     }
 
     /// @inheritdoc IUsdnProtocolFallback

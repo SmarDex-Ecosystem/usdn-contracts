@@ -103,17 +103,11 @@ library UsdnProtocolLongLibrary {
         uint128 timestamp
     ) external view returns (int256 value_) {
         (Types.Position memory pos, uint24 liquidationPenalty) = ActionsUtils.getLongPosition(s, posId);
-        int256 longTradingExpo = Core.longTradingExpoWithFunding(s, price, timestamp);
-        if (longTradingExpo < 0) {
-            // in case the long balance is equal to the total expo (or exceeds it), the trading expo will become zero
-            // in this case, the liquidation price will fall to zero, and the position value will be equal to its
-            // total expo (initial collateral * initial leverage)
-            longTradingExpo = 0;
-        }
+        uint256 longTradingExpo = Core.longTradingExpoWithFunding(s, price, timestamp);
         uint128 liqPrice = Utils.getEffectivePriceForTick(
             Utils.calcTickWithoutPenalty(posId.tick, liquidationPenalty),
             price,
-            uint256(longTradingExpo),
+            longTradingExpo,
             s._liqMultiplierAccumulator
         );
         value_ = Utils._positionValue(price, liqPrice, pos.totalExpo);
@@ -253,9 +247,11 @@ library UsdnProtocolLongLibrary {
             Utils._calcActionId(params.validator, uint128(block.timestamp)),
             params.currentPriceData
         );
+
         if (currentPrice.price > params.userMaxPrice) {
             revert IUsdnProtocolErrors.UsdnProtocolSlippageMaxPriceExceeded();
         }
+
         data_.adjustedPrice =
             (currentPrice.price + currentPrice.price * s._positionFeeBps / Constants.BPS_DIVISOR).toUint128();
 
@@ -282,7 +278,7 @@ library UsdnProtocolLongLibrary {
         Types.TickPriceConversionData memory conversionData = Types.TickPriceConversionData({
             assetPrice: lastPrice,
             // we need to take into account the funding for the trading expo between the last price timestamp and now
-            tradingExpo: Core.longTradingExpoWithFunding(s, lastPrice, uint128(block.timestamp)).toUint256(),
+            tradingExpo: Core.longTradingExpoWithFunding(s, lastPrice, uint128(block.timestamp)),
             accumulator: s._liqMultiplierAccumulator,
             tickSpacing: s._tickSpacing
         });
@@ -752,19 +748,11 @@ library UsdnProtocolLongLibrary {
         int256 tempLongBalance,
         int256 tempVaultBalance
     ) internal returns (Types.LiquidationsEffects memory effects_) {
-        int256 longTradingExpo = s._totalExpo.toInt256() - tempLongBalance;
-        if (longTradingExpo <= 0) {
-            // in case the long balance is equal to the total expo (or exceeds it), the trading expo will become zero
-            // in this case, it's not possible to calculate the current tick, so we can't perform any liquidations
-            (effects_.newLongBalance, effects_.newVaultBalance) =
-                _handleNegativeBalances(tempLongBalance, tempVaultBalance);
-            return effects_;
-        }
-
         LiquidationData memory data;
         data.tempLongBalance = tempLongBalance;
         data.tempVaultBalance = tempVaultBalance;
-        data.longTradingExpo = uint256(longTradingExpo);
+        // cast is safe as tempLongBalance cannot exceed s._totalExpo
+        data.longTradingExpo = uint256(s._totalExpo.toInt256() - tempLongBalance);
         data.currentPrice = currentPrice;
         data.accumulator = s._liqMultiplierAccumulator;
 
@@ -773,6 +761,10 @@ library UsdnProtocolLongLibrary {
             iteration = Constants.MAX_LIQUIDATION_ITERATION;
         }
 
+        // For small prices (< ~1.025 gwei), the next tick can sometimes
+        // give a price that is exactly equal to the input. For this to be somewhat of an issue,
+        // we would need the tick spacing to be 1 and the price to fall to an extremely low price,
+        // which is unlikely, but should be considered for tokens with extremely high total supply
         uint256 unadjustedPrice =
             _unadjustPrice(data.currentPrice, data.currentPrice, data.longTradingExpo, data.accumulator);
         data.currentTick = TickMath.getTickAtPrice(unadjustedPrice);
@@ -931,7 +923,7 @@ library UsdnProtocolLongLibrary {
      * @param s The storage of the protocol
      * @param lastPrice The last price used to update the protocol
      * @param positionAmount The amount of assets in the position
-     * @param rebalancerMaxLeverage The max leverage supported by the rebalancer
+     * @param rebalancerMaxLeverage The maximum leverage supported by the rebalancer
      * @param cache The cached protocol state values
      * @return posData_ The tick, total expo and liquidation penalty for the rebalancer position
      */
@@ -943,16 +935,10 @@ library UsdnProtocolLongLibrary {
         Types.CachedProtocolState memory cache
     ) internal view returns (Types.RebalancerPositionData memory posData_) {
         Types.CalcRebalancerPositionTickData memory data;
-        // use the lowest max leverage above the min leverage
-        data.protocolMinLeverage = s._minLeverage;
-        {
-            data.protocolMaxLeverage = s._maxLeverage;
-            if (rebalancerMaxLeverage > data.protocolMaxLeverage) {
-                rebalancerMaxLeverage = data.protocolMaxLeverage;
-            }
-            if (rebalancerMaxLeverage < data.protocolMinLeverage) {
-                rebalancerMaxLeverage = data.protocolMinLeverage;
-            }
+
+        data.protocolMaxLeverage = s._maxLeverage;
+        if (rebalancerMaxLeverage > data.protocolMaxLeverage) {
+            rebalancerMaxLeverage = data.protocolMaxLeverage;
         }
 
         data.longImbalanceTargetBps = s._longImbalanceTargetBps;
@@ -979,7 +965,7 @@ library UsdnProtocolLongLibrary {
 
         // check that the trading expo filled by the position would not be below the min leverage
         data.lowestUsableTradingExpo =
-            positionAmount * data.protocolMinLeverage / 10 ** Constants.LEVERAGE_DECIMALS - positionAmount;
+            positionAmount * Constants.REBALANCER_MIN_LEVERAGE / 10 ** Constants.LEVERAGE_DECIMALS - positionAmount;
         if (data.lowestUsableTradingExpo > tradingExpoToFill) {
             tradingExpoToFill = data.lowestUsableTradingExpo;
         }

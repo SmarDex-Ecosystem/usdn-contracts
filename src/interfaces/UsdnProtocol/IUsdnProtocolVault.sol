@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 import { IUsdnProtocolTypes } from "./IUsdnProtocolTypes.sol";
 
 /**
@@ -24,7 +23,6 @@ interface IUsdnProtocolVault is IUsdnProtocolTypes {
      * revert
      * @param to The address that will receive the USDN tokens
      * @param validator The address that will validate the deposit
-     * @param permit2TokenBitfield Whether to use permit2 for transferring assets (first bit) and SDEX (second bit)
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions
      * @return success_ Whether the deposit was initiated
@@ -34,7 +32,6 @@ interface IUsdnProtocolVault is IUsdnProtocolTypes {
         uint256 sharesOutMin,
         address to,
         address payable validator,
-        Permit2TokenBitfield.Bitfield permit2TokenBitfield,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_);
@@ -154,10 +151,10 @@ interface IUsdnProtocolVault is IUsdnProtocolTypes {
      * @notice Get the predicted value of the vault balance for the given asset price and timestamp
      * @dev The effects of the funding and any profit or loss of the long positions since the last contract state
      * update is taken into account, as well as the fees. If the provided timestamp is older than the last state
-     * update, the function reverts with `UsdnProtocolTimestampTooOld`
+     * update, the function reverts with `UsdnProtocolTimestampTooOld`. The value cannot be below 0
      * @param currentPrice The current or predicted asset price
      * @param timestamp The timestamp corresponding to `currentPrice`
      * @return The vault balance
      */
-    function vaultAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256);
+    function vaultAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (uint256);
 }

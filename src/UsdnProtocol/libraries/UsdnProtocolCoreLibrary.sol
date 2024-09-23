@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
+import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
+import { IPaymentCallback } from "../../interfaces/IPaymentCallback.sol";
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolCore } from "../../interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
@@ -58,12 +60,6 @@ library UsdnProtocolCoreLibrary {
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData
     ) external {
-        if (depositAmount < Constants.MIN_INIT_DEPOSIT) {
-            revert IUsdnProtocolErrors.UsdnProtocolMinInitAmount(Constants.MIN_INIT_DEPOSIT);
-        }
-        if (longAmount < Constants.MIN_INIT_DEPOSIT) {
-            revert IUsdnProtocolErrors.UsdnProtocolMinInitAmount(Constants.MIN_INIT_DEPOSIT);
-        }
         // since all USDN must be minted by the protocol, we check that the total supply is 0
         IUsdn usdn = s._usdn;
         if (usdn.totalSupply() != 0) {
@@ -78,6 +74,9 @@ library UsdnProtocolCoreLibrary {
 
         (int24 tickWithPenalty, uint128 liqPriceWithoutPenalty) =
             Long._getTickFromDesiredLiqPrice(s, desiredLiqPrice, s._liquidationPenalty);
+
+        Long._checkOpenPositionLeverage(s, currentPrice.price.toUint128(), liqPriceWithoutPenalty, s._maxLeverage);
+
         uint128 positionTotalExpo =
             Utils._calcPositionTotalExpo(longAmount, currentPrice.price.toUint128(), liqPriceWithoutPenalty);
 
@@ -142,7 +141,7 @@ library UsdnProtocolCoreLibrary {
     function longAssetAvailableWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
         public
         view
-        returns (int256 available_)
+        returns (uint256 available_)
     {
         if (timestamp < s._lastUpdateTimestamp) {
             revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
@@ -150,15 +149,27 @@ library UsdnProtocolCoreLibrary {
 
         (int256 fundAsset,) = _fundingAsset(s, timestamp, s._EMA);
 
+        int256 tempAvailable;
         if (fundAsset > 0) {
-            available_ = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAsset);
+            tempAvailable = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAsset);
         } else {
             int256 fee = fundAsset * Utils.toInt256(s._protocolFeeBps) / int256(Constants.BPS_DIVISOR);
             // fees have the same sign as fundAsset (negative here), so we need to sub them
-            available_ = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAsset - fee);
+            tempAvailable = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAsset - fee);
         }
 
-        int256 totalBalance = (s._balanceLong + s._balanceVault).toInt256();
+        // clamp the value to 0
+        if (tempAvailable > 0) {
+            // cast is safe as tempAvailable cannot be below 0
+            available_ = uint256(tempAvailable);
+        }
+
+        uint256 maxLongBalance = _calcMaxLongBalance(s._totalExpo);
+        if (available_ > maxLongBalance) {
+            available_ = maxLongBalance;
+        }
+
+        uint256 totalBalance = s._balanceLong + s._balanceVault;
         if (available_ > totalBalance) {
             available_ = totalBalance;
         }
@@ -168,9 +179,9 @@ library UsdnProtocolCoreLibrary {
     function longTradingExpoWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
         public
         view
-        returns (int256 expo_)
+        returns (uint256 expo_)
     {
-        expo_ = s._totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(s, currentPrice, timestamp));
+        expo_ = s._totalExpo - longAssetAvailableWithFunding(s, currentPrice, timestamp);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -255,10 +266,9 @@ library UsdnProtocolCoreLibrary {
         (int256 fee, int256 fundAssetWithFee) = _calculateFee(s, fundAsset);
 
         // we subtract the fee from the total balance
-        int256 totalBalance = s._balanceLong.toInt256();
-        totalBalance = totalBalance.safeAdd(s._balanceVault.toInt256()).safeSub(fee);
-        // calculate new balances (for now, any bad debt has not been repaid, balances could become negative)
+        int256 totalBalance = (s._balanceLong + s._balanceVault).toInt256() - fee;
 
+        // calculate new balances (for now, any bad debt has not been repaid, balances could become negative)
         if (fundAsset > 0) {
             // in case of positive funding, the vault balance must be decremented by the totality of the funding amount
             // however, since we deducted the fee amount from the total balance, the vault balance will be incremented
@@ -270,6 +280,12 @@ library UsdnProtocolCoreLibrary {
             // only by the funding amount minus the fee amount
             data_.tempLongBalance = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAssetWithFee);
         }
+
+        uint256 maxLongBalance = _calcMaxLongBalance(s._totalExpo);
+        if (data_.tempLongBalance > 0 && uint256(data_.tempLongBalance) > maxLongBalance) {
+            data_.tempLongBalance = maxLongBalance.toInt256();
+        }
+
         data_.tempVaultBalance = totalBalance.safeSub(data_.tempLongBalance);
 
         // update state variables
@@ -555,6 +571,18 @@ library UsdnProtocolCoreLibrary {
             actionable_ = block.timestamp > initiateTimestamp + lowLatencyDelay + onChainDeadline;
         }
     }
+
+    /**
+     * @notice Calculate the maximum value of the long balance for the provided total expo
+     * @param totalExpo The total expo of the long side of the protocol
+     * @return maxLongBalance_ The maximum value the long balance can reach
+     */
+    function _calcMaxLongBalance(uint256 totalExpo) internal pure returns (uint256 maxLongBalance_) {
+        maxLongBalance_ = FixedPointMathLib.fullMulDiv(
+            totalExpo, (Constants.BPS_DIVISOR - Constants.MIN_LONG_TRADING_EXPO_BPS), Constants.BPS_DIVISOR
+        );
+    }
+
     /**
      * @notice Get the predicted value of the funding (in asset units) since the last state update for the given
      * timestamp
@@ -565,7 +593,6 @@ library UsdnProtocolCoreLibrary {
      * @return fundingAsset_ The number of asset tokens of funding (with asset decimals)
      * @return fundingPerDay_ The funding rate (per day) with `FUNDING_RATE_DECIMALS` decimals
      */
-
     function _fundingAsset(Types.Storage storage s, uint128 timestamp, int256 ema)
         public
         view
@@ -644,8 +671,12 @@ library UsdnProtocolCoreLibrary {
      * @param price The current asset price
      */
     function _createInitialDeposit(Types.Storage storage s, uint128 amount, uint128 price) internal {
-        // transfer the assets for the deposit
-        address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
+        if (ERC165Checker.supportsInterface(msg.sender, type(IPaymentCallback).interfaceId)) {
+            Utils.transferCallback(s._asset, amount, address(this));
+        } else {
+            // transfer the assets for the deposit
+            address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
+        }
         s._balanceVault += amount;
         emit IUsdnProtocolEvents.InitiatedDeposit(msg.sender, msg.sender, amount, 0, block.timestamp, 0);
 
@@ -688,8 +719,12 @@ library UsdnProtocolCoreLibrary {
         int24 tick,
         uint128 totalExpo
     ) internal {
-        // transfer the assets for the long
-        address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
+        if (ERC165Checker.supportsInterface(msg.sender, type(IPaymentCallback).interfaceId)) {
+            Utils.transferCallback(s._asset, amount, address(this));
+        } else {
+            // transfer the assets for the long
+            address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
+        }
 
         Types.PositionId memory posId;
         posId.tick = tick;
@@ -749,19 +784,38 @@ library UsdnProtocolCoreLibrary {
     ) internal view {
         int256 longTradingExpo = Utils.toInt256(positionTotalExpo - longAmount);
         int256 depositLimit = s._depositExpoImbalanceLimitBps;
+        // users should be able to open positions after initialization
+        // with at least 2 times the minimum amount required for a position without exceeding imbalance limits
+        int256 minAmount = int256(s._minLongPosition * 2);
+
         if (depositLimit != 0) {
             int256 imbalanceBps =
                 (Utils.toInt256(depositAmount) - longTradingExpo) * int256(Constants.BPS_DIVISOR) / longTradingExpo;
             if (imbalanceBps > depositLimit) {
                 revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
             }
+
+            // make sure that the minAmount can be added as vault balance without imbalancing the protocol
+            imbalanceBps = (Utils.toInt256(depositAmount) + minAmount - longTradingExpo) * int256(Constants.BPS_DIVISOR)
+                / longTradingExpo;
+            if (imbalanceBps > depositLimit) {
+                revert IUsdnProtocolErrors.UsdnProtocolMinInitAmount();
+            }
         }
+
         int256 openLimit = s._openExpoImbalanceLimitBps;
         if (openLimit != 0) {
             int256 imbalanceBps = (longTradingExpo - Utils.toInt256(depositAmount)) * int256(Constants.BPS_DIVISOR)
                 / Utils.toInt256(depositAmount);
             if (imbalanceBps > openLimit) {
                 revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
+            }
+
+            // make sure that the minAmount can be added as trading expo without imbalancing the protocol
+            imbalanceBps = (longTradingExpo + minAmount - Utils.toInt256(depositAmount)) * int256(Constants.BPS_DIVISOR)
+                / Utils.toInt256(depositAmount);
+            if (imbalanceBps > openLimit) {
+                revert IUsdnProtocolErrors.UsdnProtocolMinInitAmount();
             }
         }
     }

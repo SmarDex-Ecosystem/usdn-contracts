@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
+import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
+import { IPaymentCallback } from "../../interfaces/IPaymentCallback.sol";
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
@@ -12,7 +14,6 @@ import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocol
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IUsdnProtocolVault } from "../../interfaces/UsdnProtocol/IUsdnProtocolVault.sol";
 import { DoubleEndedQueue } from "../../libraries/DoubleEndedQueue.sol";
-import { Permit2TokenBitfield } from "../../libraries/Permit2TokenBitfield.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
@@ -22,7 +23,6 @@ import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.so
 
 library UsdnProtocolVaultLibrary {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
-    using Permit2TokenBitfield for Permit2TokenBitfield.Bitfield;
     using SafeCast for int256;
     using SafeCast for uint256;
     using SafeTransferLib for address;
@@ -37,7 +37,6 @@ library UsdnProtocolVaultLibrary {
      * @param amount The amount of assets to deposit
      * @param sharesOutMin The minimum amount of USDN shares to receive
      * @param securityDepositValue The value of the security deposit for the newly created deposit
-     * @param permit2TokenBitfield The permit2 bitfield
      */
     struct InitiateDepositParams {
         address user;
@@ -46,7 +45,6 @@ library UsdnProtocolVaultLibrary {
         uint128 amount;
         uint256 sharesOutMin;
         uint64 securityDepositValue;
-        Permit2TokenBitfield.Bitfield permit2TokenBitfield;
     }
 
     /**
@@ -104,7 +102,6 @@ library UsdnProtocolVaultLibrary {
         uint256 sharesOutMin,
         address to,
         address payable validator,
-        Permit2TokenBitfield.Bitfield permit2TokenBitfield,
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData
     ) external returns (bool success_) {
@@ -123,8 +120,7 @@ library UsdnProtocolVaultLibrary {
                 validator: validator,
                 amount: amount,
                 sharesOutMin: sharesOutMin,
-                securityDepositValue: securityDepositValue,
-                permit2TokenBitfield: permit2TokenBitfield
+                securityDepositValue: securityDepositValue
             }),
             currentPriceData
         );
@@ -341,7 +337,7 @@ library UsdnProtocolVaultLibrary {
         returns (uint256 price_)
     {
         price_ = _calcUsdnPrice(
-            vaultAssetAvailableWithFunding(s, currentPrice, timestamp).toUint256(),
+            vaultAssetAvailableWithFunding(s, currentPrice, timestamp),
             currentPrice,
             s._usdn.totalSupply(),
             s._assetDecimals
@@ -352,20 +348,13 @@ library UsdnProtocolVaultLibrary {
     function vaultAssetAvailableWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
         public
         view
-        returns (int256 available_)
+        returns (uint256 available_)
     {
         if (timestamp < s._lastUpdateTimestamp) {
             revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
         }
 
-        (int256 fundAsset,) = Core._fundingAsset(s, timestamp, s._EMA);
-
-        if (fundAsset < 0) {
-            available_ = _vaultAssetAvailable(s, currentPrice).safeAdd(fundAsset);
-        } else {
-            int256 fee = fundAsset * Utils.toInt256(s._protocolFeeBps) / int256(Constants.BPS_DIVISOR);
-            available_ = _vaultAssetAvailable(s, currentPrice).safeAdd(fundAsset - fee);
-        }
+        return (s._balanceLong + s._balanceVault) - Core.longAssetAvailableWithFunding(s, currentPrice, timestamp);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -549,12 +538,12 @@ library UsdnProtocolVaultLibrary {
         data_.totalExpo = s._totalExpo;
         data_.balanceLong = s._balanceLong;
         data_.lastPrice = s._lastPrice;
-        int256 available = vaultAssetAvailableWithFunding(s, data_.lastPrice, uint128(block.timestamp));
-        if (available <= 0) {
+        data_.balanceVault = vaultAssetAvailableWithFunding(s, data_.lastPrice, uint128(block.timestamp));
+        if (data_.balanceVault == 0) {
             // can't mint USDN if the vault is empty
             revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
         }
-        data_.balanceVault = uint256(available); // cast is safe, amount is positive
+
         IUsdn usdn = s._usdn;
         data_.usdnTotalShares = usdn.totalShares();
 
@@ -650,20 +639,16 @@ library UsdnProtocolVaultLibrary {
             s, params.to, params.validator, params.securityDepositValue, params.amount, data
         );
 
-        if (data.sdexToBurn > 0) {
-            // send SDEX to the dead address
-            if (params.permit2TokenBitfield.useForSdex()) {
-                address(s._sdex).permit2TransferFrom(params.user, Constants.DEAD_ADDRESS, data.sdexToBurn);
-            } else {
+        if (ERC165Checker.supportsInterface(msg.sender, type(IPaymentCallback).interfaceId)) {
+            if (data.sdexToBurn > 0) {
+                Utils.transferCallback(s._sdex, data.sdexToBurn, Constants.DEAD_ADDRESS);
+            }
+            Utils.transferCallback(s._asset, params.amount, address(this));
+        } else {
+            if (data.sdexToBurn > 0) {
                 // slither-disable-next-line arbitrary-send-erc20
                 address(s._sdex).safeTransferFrom(params.user, Constants.DEAD_ADDRESS, data.sdexToBurn);
             }
-        }
-
-        // transfer assets
-        if (params.permit2TokenBitfield.useForAsset()) {
-            address(s._asset).permit2TransferFrom(params.user, address(this), params.amount);
-        } else {
             // slither-disable-next-line arbitrary-send-erc20
             address(s._asset).safeTransferFrom(params.user, address(this), params.amount);
         }
@@ -826,11 +811,7 @@ library UsdnProtocolVaultLibrary {
         data_.totalExpo = s._totalExpo;
         data_.balanceLong = s._balanceLong;
         data_.lastPrice = s._lastPrice;
-        int256 available = vaultAssetAvailableWithFunding(s, data_.lastPrice, uint128(block.timestamp));
-        if (available < 0) {
-            available = 0;
-        }
-        data_.balanceVault = uint256(available); // cast is safe, amount is positive
+        data_.balanceVault = vaultAssetAvailableWithFunding(s, data_.lastPrice, uint128(block.timestamp));
         data_.usdnTotalShares = s._usdn.totalShares();
         data_.feeBps = s._vaultFeeBps;
         data_.withdrawalAmountAfterFees =

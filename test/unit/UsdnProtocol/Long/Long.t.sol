@@ -99,7 +99,6 @@ contract TestUsdnProtocolLongLong is UsdnProtocolBaseFixture {
             leverage,
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             abi.encode(2000 ether),
             EMPTY_PREVIOUS_DATA
         );

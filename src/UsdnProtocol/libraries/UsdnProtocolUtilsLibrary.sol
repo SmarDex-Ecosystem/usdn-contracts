@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
+import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
+import { IPaymentCallback } from "../../interfaces/IPaymentCallback.sol";
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IFeeCollectorCallback } from "../../interfaces/UsdnProtocol/IFeeCollectorCallback.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
@@ -373,19 +375,9 @@ library UsdnProtocolUtilsLibrary {
         pure
         returns (int256 available_)
     {
-        // if balanceLong == totalExpo or the long trading expo is negative (theoretically impossible), the PnL is
-        // zero
-        // we can't calculate a proper PnL value if the long trading expo is negative because it would invert the
-        // sign of the amount
-        if (balanceLong >= totalExpo) {
-            return balanceLong.toInt256();
-        }
         int256 priceDiff = toInt256(newPrice) - toInt256(oldPrice);
-        uint256 tradingExpo;
-        // `balanceLong` is strictly inferior to `totalExpo`
-        unchecked {
-            tradingExpo = totalExpo - balanceLong;
-        }
+        uint256 tradingExpo = totalExpo - balanceLong;
+
         int256 pnl = tradingExpo.toInt256().safeMul(priceDiff).safeDiv(toInt256(newPrice));
 
         available_ = balanceLong.toInt256().safeAdd(pnl);
@@ -620,6 +612,21 @@ library UsdnProtocolUtilsLibrary {
         // price = unadjustedPrice * assetPrice * (totalExpo - balanceLong) / accumulator
         HugeUint.Uint512 memory numerator = HugeUint.mul(unadjustedPrice, assetPrice * longTradingExpo);
         price_ = numerator.div(accumulator).toUint128();
+    }
+
+    /**
+     * @notice Call back the msg.sender to transfer assets and check that they were received
+     * @param token The token to transfer
+     * @param amount The amount to transfer
+     * @param to The address of the recipient
+     */
+    function transferCallback(IERC20Metadata token, uint256 amount, address to) internal {
+        uint256 balanceBefore = token.balanceOf(to);
+        IPaymentCallback(msg.sender).transferCallback(token, amount, to);
+        uint256 balanceAfter = token.balanceOf(to);
+        if (balanceAfter != balanceBefore + amount) {
+            revert IUsdnProtocolErrors.UsdnProtocolPaymentCallbackFailed();
+        }
     }
 
     /// @notice See {IUsdnProtocolLong}
