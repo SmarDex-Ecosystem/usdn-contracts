@@ -55,8 +55,8 @@ interface IRebalancerEvents {
     );
 
     /**
-     * @notice Emitted when the max leverage is updated
-     * @param newMaxLeverage The new value for the max leverage
+     * @notice Emitted when the maximum leverage is updated
+     * @param newMaxLeverage The new value for the maximum leverage
      */
     event PositionMaxLeverageUpdated(uint256 newMaxLeverage);
 

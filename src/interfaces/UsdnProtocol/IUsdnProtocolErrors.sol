@@ -111,6 +111,9 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the new middleware address value is invalid
     error UsdnProtocolInvalidMiddlewareAddress();
 
+    /// @dev Indicates that the provided minimum leverage is invalid
+    error UsdnProtocolInvalidRebalancerMinLeverage();
+
     /// @dev Indicate that the new `minLeverage` value is invalid
     error UsdnProtocolInvalidMinLeverage();
 
@@ -207,4 +210,7 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that user would not receive enough prediction tokens compared to the expected amount
     error UsdnProtocolAmountReceivedTooSmall();
+
+    /// @dev Indicates that the payment callback failed
+    error UsdnProtocolPaymentCallbackFailed();
 }

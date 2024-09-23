@@ -74,7 +74,6 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
             DISABLE_SHARES_OUT_MIN,
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             liquidationPriceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -103,7 +102,6 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
             DISABLE_SHARES_OUT_MIN,
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             initialPriceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -220,7 +218,6 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             liquidationPriceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -252,7 +249,6 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             initialPriceData,
             EMPTY_PREVIOUS_DATA
         );

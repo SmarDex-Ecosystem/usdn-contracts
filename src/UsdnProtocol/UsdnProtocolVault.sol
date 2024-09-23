@@ -2,7 +2,6 @@
 pragma solidity 0.8.26;
 
 import { IUsdnProtocolVault } from "../interfaces/UsdnProtocol/IUsdnProtocolVault.sol";
-import { Permit2TokenBitfield } from "../libraries/Permit2TokenBitfield.sol";
 import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "./libraries/UsdnProtocolVaultLibrary.sol";
 
@@ -13,13 +12,10 @@ abstract contract UsdnProtocolVault is UsdnProtocolStorage, IUsdnProtocolVault {
         uint256 sharesOutMin,
         address to,
         address payable validator,
-        Permit2TokenBitfield.Bitfield permit2TokenBitfield,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (bool success_) {
-        return Vault.initiateDeposit(
-            s, amount, sharesOutMin, to, validator, permit2TokenBitfield, currentPriceData, previousActionsData
-        );
+        return Vault.initiateDeposit(s, amount, sharesOutMin, to, validator, currentPriceData, previousActionsData);
     }
 
     /// @inheritdoc IUsdnProtocolVault
