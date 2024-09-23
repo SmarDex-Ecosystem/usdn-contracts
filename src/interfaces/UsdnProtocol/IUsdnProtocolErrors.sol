@@ -211,6 +211,6 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the payment callback failed
     error UsdnProtocolPaymentCallbackFailed();
 
-    /// @dev Indicates that the deadline for the action has been exceeded
+    /// @dev Indicates that the deadline of the action has been exceeded
     error UsdnProtocolDeadlineExceeded();
 }

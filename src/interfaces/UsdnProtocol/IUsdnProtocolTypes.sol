@@ -279,7 +279,7 @@ interface IUsdnProtocolTypes {
      * @param userMaxPrice The maximum price at which the position can be opened. The userMaxPrice is compared with the
      * price after confidence interval, penalty, etc...
      * @param userMaxLeverage The maximum leverage for the newly created position
-     * @param deadline The deadline for the open position to be initiated
+     * @param deadline The deadline of the open position to be initiated
      * @param securityDepositValue The value of the security deposit for the newly created pending action
      * @param currentPriceData The current price data (used to calculate the temporary leverage and entry price,
      * pending validation)
@@ -343,7 +343,7 @@ interface IUsdnProtocolTypes {
      * @param posId The position id
      * @param amountToClose The amount to close
      * @param userMinPrice The minimum price at which the position can be closed
-     * @param deadline The deadline for the close position to be initiated
+     * @param deadline The deadline of the close position to be initiated
      * @param securityDepositValue The value of the security deposit for the newly created pending action
      */
     struct InitiateClosePositionParams {
@@ -540,10 +540,10 @@ interface IUsdnProtocolTypes {
      * @param _rebalancer The rebalancer contract
      * @param _minLeverage The minimum leverage for a position (1.000000001)
      * @param _maxLeverage The maximum leverage for a position
-     * @param _lowLatencyValidatorDeadline The deadline for a user to confirm their action with a low-latency oracle
+     * @param _lowLatencyValidatorDeadline The deadline of a user to confirm their action with a low-latency oracle
      * After this deadline, any user can validate the action with the low-latency oracle until the OracleMiddleware's
      * _lowLatencyDelay. This is an offset compared to the timestamp of the initiate action
-     * @param _onChainValidatorDeadline The deadline for a user to confirm their action with an on-chain oracle
+     * @param _onChainValidatorDeadline The deadline of a user to confirm their action with an on-chain oracle
      * After this deadline, any user can validate the action with the on-chain oracle. This is an offset compared to the
      * timestamp of the initiate action + the oracle middleware's _lowLatencyDelay
      * @param _safetyMarginBps Safety margin for the liquidation price of newly open positions, in basis points
