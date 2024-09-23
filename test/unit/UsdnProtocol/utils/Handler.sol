@@ -14,8 +14,6 @@ import { UsdnProtocolActionsLongLibrary as ActionsLong } from
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from
     "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsUtilsLibrary.sol";
 
-import { UsdnProtocolConstantsLibrary as Constants } from
-    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
