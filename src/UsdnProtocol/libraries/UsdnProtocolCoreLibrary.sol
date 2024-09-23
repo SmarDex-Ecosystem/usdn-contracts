@@ -269,9 +269,9 @@ library UsdnProtocolCoreLibrary {
         (int256 fee, int256 fundAssetWithFee) = _calculateFee(s, fundAsset);
 
         // we subtract the fee from the total balance
-        int256 totalBalance = s._balanceLong.toInt256().safeAdd(s._balanceVault.toInt256()).safeSub(fee);
-        // calculate new balances (for now, any bad debt has not been repaid, balances could become negative)
+        int256 totalBalance = (s._balanceLong + s._balanceVault).toInt256() - fee;
 
+        // calculate new balances (for now, any bad debt has not been repaid, balances could become negative)
         if (fundAsset > 0) {
             // in case of positive funding, the vault balance must be decremented by the totality of the funding amount
             // however, since we deducted the fee amount from the total balance, the vault balance will be incremented
@@ -285,7 +285,6 @@ library UsdnProtocolCoreLibrary {
         }
 
         uint256 maxLongBalance = _calcMaxLongBalance(s._totalExpo);
-
         if (data_.tempLongBalance > 0 && uint256(data_.tempLongBalance) > maxLongBalance) {
             data_.tempLongBalance = maxLongBalance.toInt256();
         }
