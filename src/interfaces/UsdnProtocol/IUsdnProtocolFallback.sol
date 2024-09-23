@@ -183,6 +183,14 @@ interface IUsdnProtocolFallback {
      */
     function MAX_ACTIONABLE_PENDING_ACTIONS() external pure returns (uint256);
 
+    /**
+     * @notice The lowest margin between the total expo and the balance long
+     * @dev The balance long cannot increase in a way that makes the trading expo worth less than the margin
+     * If that happens, the balance long will be clamped down to the total expo minus the margin
+     * @return The minimum margin between the total expo and the balance for the long side (in basis points)
+     */
+    function MIN_LONG_TRADING_EXPO_BPS() external pure returns (uint256);
+
     /* -------------------------------------------------------------------------- */
     /*                                 Immutables getters                         */
     /* -------------------------------------------------------------------------- */

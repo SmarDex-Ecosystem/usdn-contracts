@@ -104,14 +104,9 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function tickValue(int24 tick, uint256 currentPrice) external view returns (int256) {
-        int256 longTradingExpo = this.longTradingExpoWithFunding(uint128(currentPrice), uint128(block.timestamp));
-        if (longTradingExpo < 0) {
-            longTradingExpo = 0;
-        }
+        uint256 longTradingExpo = this.longTradingExpoWithFunding(uint128(currentPrice), uint128(block.timestamp));
         bytes32 tickHash = Utils.tickHash(tick, s._tickVersion[tick]);
-        return Long._tickValue(
-            tick, currentPrice, uint256(longTradingExpo), s._liqMultiplierAccumulator, s._tickData[tickHash]
-        );
+        return Long._tickValue(tick, currentPrice, longTradingExpo, s._liqMultiplierAccumulator, s._tickData[tickHash]);
     }
 
     /**
@@ -197,8 +192,8 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
      * @notice Helper to calculate the trading exposure of the long side at the time of the last balance update and
      * currentPrice
      */
-    function getLongTradingExpo(uint128 currentPrice) external view returns (int256 expo_) {
-        expo_ = s._totalExpo.toInt256().safeSub(Utils._longAssetAvailable(s, currentPrice));
+    function getLongTradingExpo(uint128 currentPrice) external view returns (uint256 expo_) {
+        expo_ = uint256(s._totalExpo.toInt256().safeSub(Utils._longAssetAvailable(s, currentPrice)));
     }
 
     function i_initiateClosePosition(Types.InitiateClosePositionParams memory params, bytes calldata currentPriceData)
@@ -811,5 +806,9 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         return Long._getTickFromDesiredLiqPrice(
             desiredLiqPriceWithoutPenalty, liqMultiplier, tickSpacing, liquidationPenalty
         );
+    }
+
+    function i_calcMaxLongBalance(uint256 totalExpo) external pure returns (uint256) {
+        return Core._calcMaxLongBalance(totalExpo);
     }
 }

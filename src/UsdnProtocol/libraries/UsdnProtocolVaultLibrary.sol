@@ -337,7 +337,7 @@ library UsdnProtocolVaultLibrary {
         returns (uint256 price_)
     {
         price_ = _calcUsdnPrice(
-            vaultAssetAvailableWithFunding(s, currentPrice, timestamp).toUint256(),
+            vaultAssetAvailableWithFunding(s, currentPrice, timestamp),
             currentPrice,
             s._usdn.totalSupply(),
             s._assetDecimals
@@ -348,20 +348,13 @@ library UsdnProtocolVaultLibrary {
     function vaultAssetAvailableWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
         public
         view
-        returns (int256 available_)
+        returns (uint256 available_)
     {
         if (timestamp < s._lastUpdateTimestamp) {
             revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
         }
 
-        (int256 fundAsset,) = Core._fundingAsset(s, timestamp, s._EMA);
-
-        if (fundAsset < 0) {
-            available_ = _vaultAssetAvailable(s, currentPrice).safeAdd(fundAsset);
-        } else {
-            int256 fee = fundAsset * Utils.toInt256(s._protocolFeeBps) / int256(Constants.BPS_DIVISOR);
-            available_ = _vaultAssetAvailable(s, currentPrice).safeAdd(fundAsset - fee);
-        }
+        return (s._balanceLong + s._balanceVault) - Core.longAssetAvailableWithFunding(s, currentPrice, timestamp);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -545,12 +538,12 @@ library UsdnProtocolVaultLibrary {
         data_.totalExpo = s._totalExpo;
         data_.balanceLong = s._balanceLong;
         data_.lastPrice = s._lastPrice;
-        int256 available = vaultAssetAvailableWithFunding(s, data_.lastPrice, uint128(block.timestamp));
-        if (available <= 0) {
+        data_.balanceVault = vaultAssetAvailableWithFunding(s, data_.lastPrice, uint128(block.timestamp));
+        if (data_.balanceVault == 0) {
             // can't mint USDN if the vault is empty
             revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
         }
-        data_.balanceVault = uint256(available); // cast is safe, amount is positive
+
         IUsdn usdn = s._usdn;
         data_.usdnTotalShares = usdn.totalShares();
 
@@ -818,11 +811,7 @@ library UsdnProtocolVaultLibrary {
         data_.totalExpo = s._totalExpo;
         data_.balanceLong = s._balanceLong;
         data_.lastPrice = s._lastPrice;
-        int256 available = vaultAssetAvailableWithFunding(s, data_.lastPrice, uint128(block.timestamp));
-        if (available < 0) {
-            available = 0;
-        }
-        data_.balanceVault = uint256(available); // cast is safe, amount is positive
+        data_.balanceVault = vaultAssetAvailableWithFunding(s, data_.lastPrice, uint128(block.timestamp));
         data_.usdnTotalShares = s._usdn.totalShares();
         data_.feeBps = s._vaultFeeBps;
         data_.withdrawalAmountAfterFees =

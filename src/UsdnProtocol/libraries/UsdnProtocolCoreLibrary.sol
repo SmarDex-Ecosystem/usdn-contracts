@@ -147,7 +147,7 @@ library UsdnProtocolCoreLibrary {
     function longAssetAvailableWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
         public
         view
-        returns (int256 available_)
+        returns (uint256 available_)
     {
         if (timestamp < s._lastUpdateTimestamp) {
             revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
@@ -155,15 +155,27 @@ library UsdnProtocolCoreLibrary {
 
         (int256 fundAsset,) = _fundingAsset(s, timestamp, s._EMA);
 
+        int256 tempAvailable;
         if (fundAsset > 0) {
-            available_ = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAsset);
+            tempAvailable = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAsset);
         } else {
             int256 fee = fundAsset * Utils.toInt256(s._protocolFeeBps) / int256(Constants.BPS_DIVISOR);
             // fees have the same sign as fundAsset (negative here), so we need to sub them
-            available_ = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAsset - fee);
+            tempAvailable = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAsset - fee);
         }
 
-        int256 totalBalance = (s._balanceLong + s._balanceVault).toInt256();
+        // clamp the value to 0
+        if (tempAvailable > 0) {
+            // cast is safe as tempAvailable cannot be below 0
+            available_ = uint256(tempAvailable);
+        }
+
+        uint256 maxLongBalance = _calcMaxLongBalance(s._totalExpo);
+        if (available_ > maxLongBalance) {
+            available_ = maxLongBalance;
+        }
+
+        uint256 totalBalance = s._balanceLong + s._balanceVault;
         if (available_ > totalBalance) {
             available_ = totalBalance;
         }
@@ -173,9 +185,9 @@ library UsdnProtocolCoreLibrary {
     function longTradingExpoWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
         public
         view
-        returns (int256 expo_)
+        returns (uint256 expo_)
     {
-        expo_ = s._totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(s, currentPrice, timestamp));
+        expo_ = s._totalExpo - longAssetAvailableWithFunding(s, currentPrice, timestamp);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -260,10 +272,9 @@ library UsdnProtocolCoreLibrary {
         (int256 fee, int256 fundAssetWithFee) = _calculateFee(s, fundAsset);
 
         // we subtract the fee from the total balance
-        int256 totalBalance = s._balanceLong.toInt256();
-        totalBalance = totalBalance.safeAdd(s._balanceVault.toInt256()).safeSub(fee);
-        // calculate new balances (for now, any bad debt has not been repaid, balances could become negative)
+        int256 totalBalance = (s._balanceLong + s._balanceVault).toInt256() - fee;
 
+        // calculate new balances (for now, any bad debt has not been repaid, balances could become negative)
         if (fundAsset > 0) {
             // in case of positive funding, the vault balance must be decremented by the totality of the funding amount
             // however, since we deducted the fee amount from the total balance, the vault balance will be incremented
@@ -275,6 +286,12 @@ library UsdnProtocolCoreLibrary {
             // only by the funding amount minus the fee amount
             data_.tempLongBalance = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAssetWithFee);
         }
+
+        uint256 maxLongBalance = _calcMaxLongBalance(s._totalExpo);
+        if (data_.tempLongBalance > 0 && uint256(data_.tempLongBalance) > maxLongBalance) {
+            data_.tempLongBalance = maxLongBalance.toInt256();
+        }
+
         data_.tempVaultBalance = totalBalance.safeSub(data_.tempLongBalance);
 
         // update state variables
@@ -560,6 +577,18 @@ library UsdnProtocolCoreLibrary {
             actionable_ = block.timestamp > initiateTimestamp + lowLatencyDelay + onChainDeadline;
         }
     }
+
+    /**
+     * @notice Calculate the maximum value of the long balance for the provided total expo
+     * @param totalExpo The total expo of the long side of the protocol
+     * @return maxLongBalance_ The maximum value the long balance can reach
+     */
+    function _calcMaxLongBalance(uint256 totalExpo) internal pure returns (uint256 maxLongBalance_) {
+        maxLongBalance_ = FixedPointMathLib.fullMulDiv(
+            totalExpo, (Constants.BPS_DIVISOR - Constants.MIN_LONG_TRADING_EXPO_BPS), Constants.BPS_DIVISOR
+        );
+    }
+
     /**
      * @notice Get the predicted value of the funding (in asset units) since the last state update for the given
      * timestamp
@@ -570,7 +599,6 @@ library UsdnProtocolCoreLibrary {
      * @return fundingAsset_ The number of asset tokens of funding (with asset decimals)
      * @return fundingPerDay_ The funding rate (per day) with `FUNDING_RATE_DECIMALS` decimals
      */
-
     function _fundingAsset(Types.Storage storage s, uint128 timestamp, int256 ema)
         public
         view
