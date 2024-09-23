@@ -585,9 +585,10 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
     }
 
     /**
-     * @custom:scenario The user initiates an open position action and the deadline is exceeded
+     * @custom:scenario The user sign a transaction to open a position with a deadline in the future. Transaction stays
+     * in the mempool and the deadline is exceeded
      * @custom:given The user has 10 wstETH
-     * @custom:when The user initiates an open position action with a deadline in the past
+     * @custom:when The protocol receives a transaction to initiates an open position action with a deadline in the past
      * @custom:then The protocol reverts with `UsdnProtocolDeadlineExceeded`
      */
     function test_RevertWhen_initiateOpenPositionDeadlineExceeded() public {
@@ -599,7 +600,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             type(uint128).max,
             leverage,
             address(this),
-            payable(address(this)),
+            payable(this),
             block.timestamp - 1,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
