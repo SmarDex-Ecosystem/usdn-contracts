@@ -51,7 +51,7 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
      */
     function testFuzz_roundToNearest(uint256 divisor, uint256 shares) public {
         divisor = bound(divisor, usdn.MIN_DIVISOR(), usdn.MAX_DIVISOR());
-        shares = bound(shares, 0, FixedPointMathLib.divUp(type(uint256).max, divisor) * divisor);
+        shares = bound(shares, 0, type(uint256).max / divisor * divisor);
 
         if (divisor < usdn.MAX_DIVISOR()) {
             usdn.rebase(divisor);
