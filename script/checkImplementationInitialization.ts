@@ -33,4 +33,5 @@ const constructorDisabledInitializers = `
 const fileContent = readFileSync(path);
 if (!fileContent.includes(constructorDisabledInitializers)) {
   console.log('\nImplementation initializer is enabled, please disable it');
+  process.exit(1);
 }

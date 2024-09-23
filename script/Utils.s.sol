@@ -7,7 +7,8 @@ import { Vm } from "forge-std/Vm.sol";
 import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
 
 contract Utils is Script {
-    string constant SCRIPT_PATH = "script/functionClashes.ts";
+    string constant FUNC_CLASHES_SCRIPT_PATH = "script/functionClashes.ts";
+    string constant IMPL_INITIALIZATION_SCRIPT_PATH = "script/checkImplementationInitialization.ts";
 
     // to run the script in standalone mode
     function run() external {
@@ -18,12 +19,12 @@ contract Utils is Script {
      * @notice Validate the Usdn protocol
      * @dev Call this function to validate the Usdn protocol before deploying it
      */
-    function validateProtocol(string memory contract1, string memory contract2) public {
-        string[] memory inputs = _buildCommandFunctionClashes(contract1, contract2);
-        try this.runFfiCommand(inputs) { }
-        catch {
-            revert("function clash detected, run the functionClashes.ts script to see the clashing functions");
-        }
+    function validateProtocol(string memory implementationFile, string memory fallbackFile) public {
+        string[] memory inputs = _buildCommandFunctionClashes(implementationFile, fallbackFile);
+        runFfiCommand(inputs);
+
+        inputs = _buildCommandCheckImplementationInitialization(implementationFile);
+        runFfiCommand(inputs);
     }
 
     /**
@@ -45,7 +46,7 @@ contract Utils is Script {
         Vm.FfiResult memory result = vm.tryFfi(inputs);
 
         if (result.exitCode != 0) {
-            revert(string(abi.encodePacked('Failed to run bash command with "', inputs[0], '": ', result.stderr)));
+            revert(string(abi.encodePacked("Failed to run bash command: ", result.stdout)));
         } else {
             return (result.stdout);
         }
@@ -79,7 +80,7 @@ contract Utils is Script {
      * @notice Build the command to run the functionClashes.ts script
      * @return inputs_ The command to run the functionClashes.ts script
      */
-    function _buildCommandFunctionClashes(string memory contract1, string memory contract2)
+    function _buildCommandFunctionClashes(string memory implementationFile, string memory fallbackFile)
         internal
         pure
         returns (string[] memory inputs_)
@@ -87,15 +88,35 @@ contract Utils is Script {
         inputs_ = new string[](7);
         uint8 i = 0;
 
-        // create the command to run the functionClashes.ts script
+        // create the command to run the functionClashes.ts script:
         // npx ts-node UsdnProtocolImpl.sol UsdnProtocolFallback.sol -s UsdnProtocolStorage.sol
         inputs_[i++] = "npx";
         inputs_[i++] = "ts-node";
-        inputs_[i++] = SCRIPT_PATH;
-        inputs_[i++] = contract1;
-        inputs_[i++] = contract2;
+        inputs_[i++] = FUNC_CLASHES_SCRIPT_PATH;
+        inputs_[i++] = implementationFile;
+        inputs_[i++] = fallbackFile;
         // we need to give the storage contract to remove common functions
         inputs_[i++] = "-s";
-        inputs_[i++] = "UsdnProtocolStorage.sol";
+        inputs_[i] = "UsdnProtocolStorage.sol";
+    }
+
+    /**
+     * @notice Build the command to run the checkImplementationInitialization.ts script
+     * @return inputs_ The command to run the checkImplementationInitialization.ts script
+     */
+    function _buildCommandCheckImplementationInitialization(string memory implementationName)
+        internal
+        pure
+        returns (string[] memory inputs_)
+    {
+        inputs_ = new string[](4);
+        uint8 i = 0;
+
+        // create the command to run the checkImplementationInitialization.ts script:
+        // npx ts-node UsdnProtocolImpl.sol
+        inputs_[i++] = "npx";
+        inputs_[i++] = "ts-node";
+        inputs_[i++] = IMPL_INITIALIZATION_SCRIPT_PATH;
+        inputs_[i] = implementationName;
     }
 }

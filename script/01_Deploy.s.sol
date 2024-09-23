@@ -76,6 +76,7 @@ contract Deploy is Script {
         (Usdn_, Wusdn_, Sdex_, WstETH_) = _handlePeripheryDeployment(depositAmount, longAmount);
 
         WstEthOracleMiddleware_ = _deployWstEthOracleMiddleware(address(WstETH_));
+
         LiquidationRewardsManager_ = _deployLiquidationRewardsManager(address(WstETH_));
 
         UsdnProtocol_ = _deployProtocol(Usdn_, Sdex_, WstETH_, WstEthOracleMiddleware_, LiquidationRewardsManager_);
