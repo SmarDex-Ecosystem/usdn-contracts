@@ -100,6 +100,16 @@ interface IUsdnProtocolFallback {
     function LEVERAGE_DECIMALS() external view returns (uint8);
 
     /**
+     * @notice Get the minimum leverage allowed for the rebalancer to open a position
+     * @dev In edge cases where the rebalancer holds significantly more assets than the protocol, opening a position
+     * with the protocol's minimum leverage could cause a large overshoot of the target, potentially creating even
+     * greater imbalance than before the trigger. To prevent this, the rebalancer can use leverage as low as the
+     * technical minimum (10**LEVERAGE_DECIMALS + 1)
+     * @return The minimum leverage value (with `LEVERAGE_DECIMALS` decimals)
+     */
+    function REBALANCER_MIN_LEVERAGE() external view returns (uint256);
+
+    /**
      * @notice Get the number of decimals of the funding rate
      * @return The funding rate's number of decimals
      */

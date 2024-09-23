@@ -775,6 +775,10 @@ library UsdnProtocolLongLibrary {
 
         effects_.liquidatedTicks = new Types.LiqTickInfo[](iteration);
 
+        // For small prices (< ~1.025 gwei), the next tick can sometimes
+        // give a price that is exactly equal to the input. For this to be somewhat of an issue,
+        // we would need the tick spacing to be 1 and the price to fall to an extremely low price,
+        // which is unlikely, but should be considered for tokens with extremely high total supply
         uint256 unadjustedPrice =
             _unadjustPrice(data.currentPrice, data.currentPrice, data.longTradingExpo, data.accumulator);
         data.currentTick = TickMath.getTickAtPrice(unadjustedPrice);
@@ -955,7 +959,7 @@ library UsdnProtocolLongLibrary {
      * @param s The storage of the protocol
      * @param lastPrice The last price used to update the protocol
      * @param positionAmount The amount of assets in the position
-     * @param rebalancerMaxLeverage The max leverage supported by the rebalancer
+     * @param rebalancerMaxLeverage The maximum leverage supported by the rebalancer
      * @param cache The cached protocol state values
      * @return posData_ The tick, total expo and liquidation penalty for the rebalancer position
      */
@@ -967,16 +971,10 @@ library UsdnProtocolLongLibrary {
         Types.CachedProtocolState memory cache
     ) internal view returns (Types.RebalancerPositionData memory posData_) {
         Types.CalcRebalancerPositionTickData memory data;
-        // use the lowest max leverage above the min leverage
-        data.protocolMinLeverage = s._minLeverage;
-        {
-            data.protocolMaxLeverage = s._maxLeverage;
-            if (rebalancerMaxLeverage > data.protocolMaxLeverage) {
-                rebalancerMaxLeverage = data.protocolMaxLeverage;
-            }
-            if (rebalancerMaxLeverage < data.protocolMinLeverage) {
-                rebalancerMaxLeverage = data.protocolMinLeverage;
-            }
+
+        data.protocolMaxLeverage = s._maxLeverage;
+        if (rebalancerMaxLeverage > data.protocolMaxLeverage) {
+            rebalancerMaxLeverage = data.protocolMaxLeverage;
         }
 
         data.longImbalanceTargetBps = s._longImbalanceTargetBps;
@@ -1003,7 +1001,7 @@ library UsdnProtocolLongLibrary {
 
         // check that the trading expo filled by the position would not be below the min leverage
         data.lowestUsableTradingExpo =
-            positionAmount * data.protocolMinLeverage / 10 ** Constants.LEVERAGE_DECIMALS - positionAmount;
+            positionAmount * Constants.REBALANCER_MIN_LEVERAGE / 10 ** Constants.LEVERAGE_DECIMALS - positionAmount;
         if (data.lowestUsableTradingExpo > tradingExpoToFill) {
             tradingExpoToFill = data.lowestUsableTradingExpo;
         }
