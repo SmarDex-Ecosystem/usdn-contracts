@@ -81,10 +81,8 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
      * @custom:then The result should be rounded down
      */
     function test_roundToNearestCounterExample() public {
-        uint256 divisor = 1_000_000_001;
-        uint256 shares = 1_500_000_001;
-        usdn.rebase(divisor);
-        uint256 tokens = usdn.convertToTokens(shares);
+        usdn.rebase(1_000_000_001);
+        uint256 tokens = usdn.convertToTokens(1_500_000_001);
         assertEq(tokens, 1, "should round down");
     }
 
