@@ -38,10 +38,6 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, Ownable2Step {
 
     /// @inheritdoc ILiquidationRewardsManager
     uint256 public constant MAX_REBALANCER_GAS_USED = 300_000;
-
-    /// @inheritdoc ILiquidationRewardsManager
-    uint256 public constant MIN_MAX_REWARD = 0.1 ether;
-
     /* -------------------------------------------------------------------------- */
     /*                              Storage Variables                             */
     /* -------------------------------------------------------------------------- */
@@ -137,8 +133,6 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, Ownable2Step {
             revert LiquidationRewardsManagerRebaseGasUsedTooHigh(rebaseGasUsed);
         } else if (rebalancerGasUsed > MAX_REBALANCER_GAS_USED) {
             revert LiquidationRewardsManagerRebalancerGasUsedTooHigh(rebalancerGasUsed);
-        } else if (maxReward < MIN_MAX_REWARD) {
-            revert LiquidationRewardsManagerMaxRewardTooLow(maxReward);
         }
 
         _rewardsParameters = RewardsParameters({

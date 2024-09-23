@@ -46,12 +46,6 @@ interface ILiquidationRewardsManager is IBaseLiquidationRewardsManager, ILiquida
      */
     function MAX_REBALANCER_GAS_USED() external pure returns (uint256);
 
-    /**
-     * @notice Minimum amount for the maxReward parameter
-     * @return The minimum value for the maxReward parameter
-     */
-    function MIN_MAX_REWARD() external pure returns (uint256);
-
     /* -------------------------------------------------------------------------- */
     /*                                  Getters Setters                           */
     /* -------------------------------------------------------------------------- */

@@ -211,28 +211,4 @@ contract TestLiquidationRewardsManagerSetRewardsParameters is
             maxReward
         );
     }
-
-    /**
-     * @custom:scenario Call `setRewardsParameters` reverts when the maxReward is too low
-     * @custom:when The value of maxReward is smaller than the limit
-     * @custom:and The other parameters are within the limits
-     * @custom:then It reverts with a LiquidationRewardsManagerMaxRewardTooLow error
-     */
-    function test_RevertWhen_setRewardsParametersWithMaxRewardTooLow() public {
-        maxReward = 0.09 ether;
-
-        // Expect revert when the value of maxReward is too low
-        vm.expectRevert(abi.encodeWithSelector(LiquidationRewardsManagerMaxRewardTooLow.selector, maxReward));
-        liquidationRewardsManager.setRewardsParameters(
-            gasUsedPerTick,
-            otherGasUsed,
-            rebaseGasUsed,
-            rebalancerGasUsed,
-            baseFeeOffset,
-            gasMultiplierBps,
-            positionBonusMultiplierBps,
-            fixedReward,
-            maxReward
-        );
-    }
 }
