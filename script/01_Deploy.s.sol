@@ -34,7 +34,6 @@ contract Deploy is Script {
     uint256 constant CHAINLINK_GAS_PRICE_VALIDITY = 2 hours + 5 minutes;
 
     Utils _utils = new Utils();
-    UsdnProtocolFallback _protocolFallback;
     address _deployerAddress;
     address _feeCollector;
     bool _isProdEnv;
@@ -114,7 +113,7 @@ contract Deploy is Script {
         opts.unsafeAllow = "external-library-linking,state-variable-immutable";
 
         // deploy the protocol fallback
-        _protocolFallback = new UsdnProtocolFallback();
+        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
 
         address proxy = Upgrades.deployUUPSProxy(
             "UsdnProtocolImpl.sol",
@@ -136,7 +135,7 @@ contract Deploy is Script {
                         setOptionsManager: _deployerAddress,
                         proxyUpgradeManager: _deployerAddress
                     }),
-                    _protocolFallback
+                    protocolFallback
                 )
             ),
             opts
