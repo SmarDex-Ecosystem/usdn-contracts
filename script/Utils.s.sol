@@ -23,8 +23,8 @@ contract Utils is Script {
         string[] memory inputs = _buildCommandFunctionClashes(implementationFile, fallbackFile);
         runFfiCommand(inputs);
 
-        inputs = _buildCommandCheckImplementationInitialization(implementationFile);
-        runFfiCommand(inputs);
+        string[] memory inputs2 = _buildCommandCheckImplementationInitialization(implementationFile);
+        runFfiCommand(inputs2);
     }
 
     /**
