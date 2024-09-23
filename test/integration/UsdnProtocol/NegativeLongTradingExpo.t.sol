@@ -38,7 +38,7 @@ contract TestUsdnProtocolNegativeLongTradingExpo is UsdnProtocolBaseIntegrationF
         securityDeposit = protocol.getSecurityDepositValue();
         // deposit assets in the protocol to imbalance it heavily
         protocol.initiateDeposit{ value: securityDeposit }(
-            100 ether, 0, address(this), payable(this), "", EMPTY_PREVIOUS_DATA
+            100 ether, 0, address(this), payable(this), type(uint256).max, "", EMPTY_PREVIOUS_DATA
         );
 
         (, posIdToClose) = protocol.initiateOpenPosition{ value: securityDeposit + oracleFee }(
@@ -48,6 +48,7 @@ contract TestUsdnProtocolNegativeLongTradingExpo is UsdnProtocolBaseIntegrationF
             protocol.getMaxLeverage(),
             address(this),
             USER_1, // so we can have 2 initiates at the same time
+            type(uint256).max,
             MOCK_PYTH_DATA,
             EMPTY_PREVIOUS_DATA
         );
@@ -94,7 +95,14 @@ contract TestUsdnProtocolNegativeLongTradingExpo is UsdnProtocolBaseIntegrationF
 
         uint256 balanceOfBefore = wstETH.balanceOf(address(this));
         protocol.initiateClosePosition{ value: oracleFee + securityDeposit }(
-            posIdToClose, amountInPosition, 0, address(this), payable(this), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA
+            posIdToClose,
+            amountInPosition,
+            0,
+            address(this),
+            payable(this),
+            type(uint256).max,
+            MOCK_PYTH_DATA,
+            EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
@@ -152,6 +160,7 @@ contract TestUsdnProtocolNegativeLongTradingExpo is UsdnProtocolBaseIntegrationF
             protocol.getMaxLeverage(),
             address(this),
             payable(this),
+            type(uint256).max,
             MOCK_PYTH_DATA,
             EMPTY_PREVIOUS_DATA
         );
