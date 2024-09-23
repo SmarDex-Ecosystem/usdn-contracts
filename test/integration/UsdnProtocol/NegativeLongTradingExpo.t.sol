@@ -38,7 +38,7 @@ contract TestUsdnProtocolNegativeLongTradingExpo is UsdnProtocolBaseIntegrationF
         securityDeposit = protocol.getSecurityDepositValue();
         // deposit assets in the protocol to imbalance it heavily
         protocol.initiateDeposit{ value: securityDeposit }(
-            100 ether, 0, address(this), payable(this), NO_PERMIT2, "", EMPTY_PREVIOUS_DATA
+            100 ether, 0, address(this), payable(this), "", EMPTY_PREVIOUS_DATA
         );
 
         (, posIdToClose) = protocol.initiateOpenPosition{ value: securityDeposit + oracleFee }(
@@ -48,7 +48,6 @@ contract TestUsdnProtocolNegativeLongTradingExpo is UsdnProtocolBaseIntegrationF
             protocol.getMaxLeverage(),
             address(this),
             USER_1, // so we can have 2 initiates at the same time
-            NO_PERMIT2,
             MOCK_PYTH_DATA,
             EMPTY_PREVIOUS_DATA
         );
@@ -153,7 +152,6 @@ contract TestUsdnProtocolNegativeLongTradingExpo is UsdnProtocolBaseIntegrationF
             protocol.getMaxLeverage(),
             address(this),
             payable(this),
-            NO_PERMIT2,
             MOCK_PYTH_DATA,
             EMPTY_PREVIOUS_DATA
         );
