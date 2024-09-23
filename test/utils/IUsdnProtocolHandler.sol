@@ -74,7 +74,7 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
 
     function setPendingProtocolFee(uint256 value) external;
 
-    function getLongTradingExpo(uint128 currentPrice) external view returns (int256 expo_);
+    function getLongTradingExpo(uint128 currentPrice) external view returns (uint256 expo_);
 
     function _calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed) external view returns (int256);
 
@@ -452,4 +452,6 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         int24 tickSpacing,
         uint24 liquidationPenalty
     ) external pure returns (int24 tickWithPenalty_, uint128 liqPriceWithoutPenalty_);
+
+    function i_calcMaxLongBalance(uint256 totalExpo) external pure returns (uint256);
 }
