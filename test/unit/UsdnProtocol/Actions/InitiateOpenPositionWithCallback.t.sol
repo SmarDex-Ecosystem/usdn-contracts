@@ -28,7 +28,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is TransferCallback, UsdnPr
      * tokens
      * @custom:then The protocol receives `2 ether` wstETH
      */
-    function test_InitiateOpenPositionWithCallback() public {
+    function test_initiateOpenPositionWithCallback() public {
         transferActive = true;
         uint256 balanceBefore = wstETH.balanceOf(address(protocol));
         (bool success,) = protocol.initiateOpenPosition{ value: protocol.getSecurityDepositValue() }(
@@ -49,10 +49,10 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is TransferCallback, UsdnPr
     /**
      * @custom:scenario Initiate a new long by using callback without the transfer of wstETH
      * @custom:given The user has wstETH
-     * @custom:when The user initiates a new long of `2 ether` with a contract that no transfer wstETH
+     * @custom:when The user initiates a new long of `2 ether` with a contract that does not transfer wstETH
      * @custom:then the protocol revert with `UsdnProtocolPaymentCallbackFailed` error
      */
-    function test_InitiateDepositCallbackWithoutWstETHTransfer() public {
+    function test_RevertWhen_initiateDepositCallbackNoTransfer() public {
         uint256 securityDeposit = protocol.getSecurityDepositValue();
         uint256 leverage = protocol.getMaxLeverage();
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolPaymentCallbackFailed.selector));

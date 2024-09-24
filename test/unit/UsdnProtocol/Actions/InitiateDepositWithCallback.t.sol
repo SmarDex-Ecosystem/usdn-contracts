@@ -35,7 +35,7 @@ contract TestUsdnProtocolActionsInitiateDepositWithCallback is TransferCallback,
      * tokens
      * @custom:then The protocol receives `POSITION_AMOUNT` wstETH and dead address receives SDEX
      */
-    function test_InitiateDepositWithCallback() public {
+    function test_initiateDepositWithCallback() public {
         transferActive = true;
         uint256 balanceBefore = wstETH.balanceOf(address(protocol));
         uint256 balanceSdexBefore = sdex.balanceOf(address(this));
@@ -58,10 +58,10 @@ contract TestUsdnProtocolActionsInitiateDepositWithCallback is TransferCallback,
     /**
      * @custom:scenario Initiate a deposit by using callback without token transfer
      * @custom:given The user has wstETH and SDEX
-     * @custom:when The user initiates a deposit of `POSITION_AMOUNT` with a contract that no transfer tokens
+     * @custom:when The user initiates a deposit of `POSITION_AMOUNT` with a contract that does not transfer tokens
      * @custom:then the protocol revert with `UsdnProtocolPaymentCallbackFailed` error
      */
-    function test_InitiateDepositCallbackWithoutSdexTransfer() public {
+    function test_RevertWhen_initiateDepositCallbackNoTransfer() public {
         uint256 securityDeposit = protocol.getSecurityDepositValue();
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolPaymentCallbackFailed.selector));
         protocol.initiateDeposit{ value: securityDeposit }(

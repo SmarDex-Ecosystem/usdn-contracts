@@ -7,9 +7,10 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
-import { IPaymentCallback } from "../../interfaces/IPaymentCallback.sol";
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IUsdn } from "../../interfaces/Usdn/IUsdn.sol";
 import { IFeeCollectorCallback } from "../../interfaces/UsdnProtocol/IFeeCollectorCallback.sol";
+import { IPaymentCallback } from "../../interfaces/UsdnProtocol/IPaymentCallback.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -625,6 +626,20 @@ library UsdnProtocolUtilsLibrary {
         IPaymentCallback(msg.sender).transferCallback(token, amount, to);
         uint256 balanceAfter = token.balanceOf(to);
         if (balanceAfter != balanceBefore + amount) {
+            revert IUsdnProtocolErrors.UsdnProtocolPaymentCallbackFailed();
+        }
+    }
+
+    /**
+     * @notice Call back the msg.sender to transfer USDN shares and check that they were received
+     * @param usdn The USDN token address
+     * @param shares The amount of shares to transfer
+     */
+    function usdnTransferCallback(IUsdn usdn, uint256 shares) internal {
+        uint256 balanceBefore = usdn.sharesOf(address(this));
+        IPaymentCallback(msg.sender).usdnTransferCallback(usdn, shares);
+        uint256 balanceAfter = usdn.sharesOf(address(this));
+        if (balanceAfter != balanceBefore + shares) {
             revert IUsdnProtocolErrors.UsdnProtocolPaymentCallbackFailed();
         }
     }
