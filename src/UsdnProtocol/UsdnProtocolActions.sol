@@ -16,6 +16,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
         uint256 userMaxLeverage,
         address to,
         address payable validator,
+        uint256 deadline,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_, PositionId memory posId_) {
@@ -27,6 +28,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
             desiredLiqPrice: desiredLiqPrice,
             userMaxPrice: userMaxPrice,
             userMaxLeverage: userMaxLeverage,
+            deadline: deadline,
             securityDepositValue: s._securityDepositValue
         });
 
@@ -49,6 +51,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
         uint256 userMinPrice,
         address to,
         address payable validator,
+        uint256 deadline,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
@@ -59,6 +62,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
             posId: posId,
             amountToClose: amountToClose,
             userMinPrice: userMinPrice,
+            deadline: deadline,
             securityDepositValue: s._securityDepositValue
         });
 
@@ -75,14 +79,14 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
     }
 
     /// @inheritdoc IUsdnProtocolActions
-    function liquidate(bytes calldata currentPriceData, uint16 iterations)
+    function liquidate(bytes calldata currentPriceData)
         external
         payable
         whenNotPaused
         initializedAndNonReentrant
-        returns (uint256 liquidatedPositions_)
+        returns (LiqTickInfo[] memory liquidatedTicks_)
     {
-        return ActionsUtils.liquidate(s, currentPriceData, iterations);
+        return ActionsUtils.liquidate(s, currentPriceData);
     }
 
     /// @inheritdoc IUsdnProtocolActions

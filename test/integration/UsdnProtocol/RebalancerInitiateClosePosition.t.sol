@@ -46,7 +46,7 @@ contract TestRebalancerInitiateClosePosition is
         }
 
         uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
-        protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA, 1);
+        protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA);
 
         version = rebalancer.getPositionVersion();
         previousPositionData = rebalancer.getPositionData(version);
@@ -90,7 +90,7 @@ contract TestRebalancerInitiateClosePosition is
         vm.expectEmit();
         emit ClosePositionInitiated(address(this), amount, amountToClose, amountInRebalancer - amount);
         (bool success) = rebalancer.initiateClosePosition{ value: protocol.getSecurityDepositValue() }(
-            amount, address(this), DISABLE_MIN_PRICE, "", EMPTY_PREVIOUS_DATA
+            amount, address(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA
         );
 
         assertTrue(success, "The rebalancer close should be successful");
@@ -142,7 +142,7 @@ contract TestRebalancerInitiateClosePosition is
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolImbalanceLimitReached.selector, expectedImbalance));
         rebalancer.initiateClosePosition{ value: securityDeposit }(
-            amount, address(this), DISABLE_MIN_PRICE, "", EMPTY_PREVIOUS_DATA
+            amount, address(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -172,7 +172,7 @@ contract TestRebalancerInitiateClosePosition is
         vm.expectEmit();
         emit ClosePositionInitiated(address(this), amountInRebalancer, amountToClose, 0);
         (bool success) = rebalancer.initiateClosePosition{ value: protocol.getSecurityDepositValue() }(
-            amountInRebalancer, address(this), DISABLE_MIN_PRICE, "", EMPTY_PREVIOUS_DATA
+            amountInRebalancer, address(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA
         );
 
         UserDeposit memory depositData = rebalancer.getUserDepositData(address(this));
@@ -209,7 +209,7 @@ contract TestRebalancerInitiateClosePosition is
 
         // send more ether than necessary to trigger the refund
         rebalancer.initiateClosePosition{ value: securityDeposit + excessAmount }(
-            amountInRebalancer, address(this), DISABLE_MIN_PRICE, "", EMPTY_PREVIOUS_DATA
+            amountInRebalancer, address(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA
         );
 
         assertEq(payable(rebalancer).balance, 0, "There should be no ether left in the rebalancer");
@@ -236,6 +236,7 @@ contract TestRebalancerInitiateClosePosition is
             protocol.getMaxLeverage(),
             payable(address(this)),
             payable(address(this)),
+            type(uint256).max,
             "",
             EMPTY_PREVIOUS_DATA
         );
@@ -255,7 +256,7 @@ contract TestRebalancerInitiateClosePosition is
 
         // liquidate the rebalancer's tick
         uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
-        protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA, 1);
+        protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA);
         // sanity check
         assertEq(
             prevPosId.tickVersion + 1, protocol.getTickVersion(prevPosId.tick), "Rebalancer tick was not liquidated"
@@ -273,7 +274,7 @@ contract TestRebalancerInitiateClosePosition is
         // but the _lastLiquidatedVersion has not been updated yet
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolOutdatedTick.selector, 1, 0));
         rebalancer.initiateClosePosition{ value: securityDeposit }(
-            1 ether, address(this), DISABLE_MIN_PRICE, MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA
+            1 ether, address(this), DISABLE_MIN_PRICE, type(uint256).max, MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA
         );
 
         // wait 1 minute to provide a fresh price
@@ -291,7 +292,7 @@ contract TestRebalancerInitiateClosePosition is
         // liquidate the position we created earlier and trigger the rebalancer
         vm.expectEmit(false, false, false, false);
         emit PositionVersionUpdated(0, 0, 0, PositionId(0, 0, 0));
-        protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA, 1);
+        protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA);
         // sanity checks
         assertEq(newPosId.tickVersion + 1, protocol.getTickVersion(newPosId.tick), "Position tick was not liquidated");
         assertEq(rebalancer.getLastLiquidatedVersion(), version, "Liquidated version should have been updated");
@@ -304,6 +305,7 @@ contract TestRebalancerInitiateClosePosition is
             protocol.getMaxLeverage(),
             payable(address(this)),
             payable(address(this)),
+            type(uint256).max,
             "",
             EMPTY_PREVIOUS_DATA
         );
@@ -316,7 +318,7 @@ contract TestRebalancerInitiateClosePosition is
         // try to withdraw from the rebalancer again
         vm.expectRevert(IRebalancerErrors.RebalancerUserLiquidated.selector);
         rebalancer.initiateClosePosition{ value: securityDeposit + 1 ether }(
-            amountInRebalancer, address(this), DISABLE_MIN_PRICE, MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA
+            amountInRebalancer, address(this), DISABLE_MIN_PRICE, type(uint256).max, MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA
         );
     }
 

@@ -63,6 +63,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
                 owner: address(this),
                 to: address(this),
                 validator: payable(address(this)),
+                deadline: type(uint256).max,
                 posId: posId,
                 amountToClose: amountToClose,
                 userMinPrice: DISABLE_MIN_PRICE,
@@ -99,6 +100,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
                 owner: address(this),
                 to: address(this),
                 validator: payable(address(this)),
+                deadline: type(uint256).max,
                 posId: posId,
                 amountToClose: amountToClose,
                 userMinPrice: DISABLE_MIN_PRICE,
@@ -122,6 +124,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
                 owner: USER_1,
                 to: address(this),
                 validator: USER_1,
+                deadline: type(uint256).max,
                 posId: posId,
                 amountToClose: POSITION_AMOUNT,
                 userMinPrice: DISABLE_MIN_PRICE,
@@ -145,6 +148,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
                 owner: address(this),
                 to: address(0),
                 validator: payable(address(this)),
+                deadline: type(uint256).max,
                 posId: posId,
                 amountToClose: POSITION_AMOUNT,
                 userMinPrice: DISABLE_MIN_PRICE,
@@ -169,6 +173,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
                 owner: address(this),
                 to: address(this),
                 validator: payable(address(this)),
+                deadline: type(uint256).max,
                 posId: posId,
                 amountToClose: 0,
                 userMinPrice: DISABLE_MIN_PRICE,
@@ -191,7 +196,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         // we need wait delay to make the new price data fresh
         _waitDelay();
         // Liquidate the position
-        protocol.mockLiquidate(priceData, 1);
+        protocol.mockLiquidate(priceData);
         (, uint256 version) = protocol.i_tickHash(posId.tick);
         assertGt(version, posId.tickVersion, "The tick should have been liquidated");
 
@@ -205,6 +210,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
                 owner: address(this),
                 to: address(this),
                 validator: payable(address(this)),
+                deadline: type(uint256).max,
                 posId: posId,
                 amountToClose: POSITION_AMOUNT / 2,
                 userMinPrice: DISABLE_MIN_PRICE,
@@ -235,6 +241,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             DISABLE_MIN_PRICE,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -281,6 +288,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             DISABLE_MIN_PRICE,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             priceData,
             PreviousActionsData(previousData, rawIndices)
         );
@@ -305,6 +313,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             DISABLE_MIN_PRICE,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -328,6 +337,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             protocol.getMaxLeverage(),
             address(this),
             USER_1,
+            type(uint256).max,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -339,6 +349,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             DISABLE_MIN_PRICE,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -487,6 +498,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             DISABLE_MIN_PRICE,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(params.initialPrice * 2 / 3),
             EMPTY_PREVIOUS_DATA
         );
@@ -517,6 +529,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             DISABLE_MIN_PRICE,
             DEPLOYER,
             DEPLOYER,
+            type(uint256).max,
             abi.encode(params.initialPrice / 3),
             EMPTY_PREVIOUS_DATA
         );
@@ -570,6 +583,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
                 owner: address(this),
                 to: to,
                 validator: payable(validator),
+                deadline: type(uint256).max,
                 posId: posId,
                 amountToClose: amountToClose,
                 userMinPrice: DISABLE_MIN_PRICE,
@@ -648,6 +662,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             protocol.getMaxLeverage(),
             address(rebalancer),
             payable(address(rebalancer)),
+            type(uint256).max,
             abi.encode(params.initialPrice),
             EMPTY_PREVIOUS_DATA
         );
@@ -681,6 +696,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             DISABLE_MIN_PRICE,
             USER_1,
             USER_1,
+            type(uint256).max,
             abi.encode(params.initialPrice),
             EMPTY_PREVIOUS_DATA
         );
@@ -710,6 +726,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             DISABLE_MIN_PRICE,
             USER_1,
             USER_1,
+            type(uint256).max,
             abi.encode(params.initialPrice),
             EMPTY_PREVIOUS_DATA
         );
@@ -729,6 +746,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             params.initialPrice + 1,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(params.initialPrice),
             EMPTY_PREVIOUS_DATA
         );
@@ -751,6 +769,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
                 DISABLE_MIN_PRICE,
                 address(this),
                 payable(address(this)),
+                type(uint256).max,
                 abi.encode(params.initialPrice),
                 EMPTY_PREVIOUS_DATA
             );
@@ -777,6 +796,28 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             DISABLE_MIN_PRICE,
             address(this),
             payable(address(this)),
+            type(uint256).max,
+            abi.encode(params.initialPrice),
+            EMPTY_PREVIOUS_DATA
+        );
+    }
+
+    /**
+     * @custom:scenario The user sign a transaction to close a position with a deadline in the future. Transaction stays
+     * in the mempool and the deadline is exceeded
+     * @custom:given A user position
+     * @custom:when The protocol receives a transaction to initiates a close position action with a deadline in the past
+     * @custom:then The protocol reverts with UsdnProtocolDeadlineExceeded
+     */
+    function test_RevertWhen_initiateClosePositionDeadlineExceeded() public {
+        vm.expectRevert(UsdnProtocolDeadlineExceeded.selector);
+        protocol.initiateClosePosition(
+            posId,
+            POSITION_AMOUNT,
+            DISABLE_MIN_PRICE,
+            address(this),
+            payable(this),
+            block.timestamp - 1,
             abi.encode(params.initialPrice),
             EMPTY_PREVIOUS_DATA
         );
@@ -799,6 +840,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             params.initialPrice,
             address(this),
             payable(this),
+            type(uint256).max,
             abi.encode(params.initialPrice),
             EMPTY_PREVIOUS_DATA
         );

@@ -12,6 +12,7 @@ import { UsdnProtocolImplV2 } from "../utils/UsdnProtocolImplV2.sol";
 
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
+import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolFallback } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
 import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
@@ -74,6 +75,43 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
     function test_RevertWhen_initializeIsCalledSecondTime() public {
         vm.expectRevert(Initializable.InvalidInitialization.selector);
         protocol.initializeStorage(
+            usdn,
+            sdex,
+            wstETH,
+            oracleMiddleware,
+            liquidationRewardsManager,
+            _tickSpacing,
+            address(feeCollector),
+            Managers({
+                setExternalManager: ADMIN,
+                criticalFunctionsManager: ADMIN,
+                setProtocolParamsManager: ADMIN,
+                setUsdnParamsManager: ADMIN,
+                setOptionsManager: ADMIN,
+                proxyUpgradeManager: ADMIN,
+                pauserManager: ADMIN,
+                unpauserManager: ADMIN
+            }),
+            IUsdnProtocolFallback(address(0))
+        );
+    }
+
+    /**
+     * @custom:scenario Try to initialize the implementation of the protocol
+     * @custom:given An initialized protocol
+     * @custom:when {initializeStorage} is called on the implementation
+     * @custom:then The call should revert with {InvalidInitialization} error
+     */
+    function test_RevertWhen_initializeIsCalledOnImplementation() public {
+        // 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d38_2bbc
+        uint256 implementation_slot = uint256(keccak256("eip1967.proxy.implementation")) - 1;
+        bytes32 implementation_addr_bytes = vm.load(address(protocol), bytes32(implementation_slot));
+        address implementation_addr = address(uint160(uint256(implementation_addr_bytes)));
+
+        assertTrue(implementation_addr != address(0), "The implementation address should not be zero");
+
+        vm.expectRevert(Initializable.InvalidInitialization.selector);
+        IUsdnProtocol(implementation_addr).initializeStorage(
             usdn,
             sdex,
             wstETH,

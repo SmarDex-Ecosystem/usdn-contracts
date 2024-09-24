@@ -130,6 +130,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             DISABLE_MIN_PRICE,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -169,6 +170,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             DISABLE_MIN_PRICE,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -199,6 +201,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             DISABLE_MIN_PRICE,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -274,7 +277,14 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         (Position memory pos, uint24 liquidationPenalty) = protocol.getLongPosition(posId);
         uint256 assetBalanceBefore = protocol.getAsset().balanceOf(to);
         protocol.initiateClosePosition(
-            posId, POSITION_AMOUNT, DISABLE_MIN_PRICE, to, payable(validator), priceData, EMPTY_PREVIOUS_DATA
+            posId,
+            POSITION_AMOUNT,
+            DISABLE_MIN_PRICE,
+            to,
+            payable(validator),
+            type(uint256).max,
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -343,6 +353,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             DISABLE_MIN_PRICE,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             data.priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -401,6 +412,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             DISABLE_MIN_PRICE,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             data.priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -459,6 +471,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
                 DISABLE_MIN_PRICE,
                 address(this),
                 payable(address(this)),
+                type(uint256).max,
                 priceData,
                 EMPTY_PREVIOUS_DATA
             );
@@ -470,8 +483,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         uint128 priceAfterInit = params.initialPrice - 50 ether;
         uint256 vaultBalanceBefore =
             uint256(protocol.vaultAssetAvailableWithFunding(priceAfterInit, uint128(block.timestamp)));
-        uint256 longBalanceBefore =
-            uint256(protocol.longAssetAvailableWithFunding(priceAfterInit, uint128(block.timestamp)));
+        uint256 longBalanceBefore = protocol.longAssetAvailableWithFunding(priceAfterInit, uint128(block.timestamp));
         uint256 assetToTransfer = protocol.i_assetToRemove(
             protocol.getBalanceLong(),
             priceAfterInit,
@@ -530,6 +542,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
                 DISABLE_MIN_PRICE,
                 address(this),
                 payable(address(this)),
+                type(uint256).max,
                 priceData,
                 EMPTY_PREVIOUS_DATA
             );
@@ -540,7 +553,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
         uint128 price = params.initialPrice + 200 ether;
         uint256 vaultBalanceBefore = uint256(protocol.vaultAssetAvailableWithFunding(price, uint128(block.timestamp)));
-        uint256 longBalanceBefore = uint256(protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp)));
+        uint256 longBalanceBefore = protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp));
         uint256 assetToTransfer = protocol.i_assetToRemove(
             protocol.getBalanceLong(),
             price,
@@ -600,6 +613,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             DISABLE_MIN_PRICE,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             data.priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -617,8 +631,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         data.liquidationPrice = protocol.getEffectivePriceForTick(posId.tick);
         data.vaultBalanceBefore =
             uint256(protocol.vaultAssetAvailableWithFunding(data.liquidationPrice, uint128(block.timestamp)));
-        data.longBalanceBefore =
-            uint256(protocol.longAssetAvailableWithFunding(data.liquidationPrice, uint128(block.timestamp)));
+        data.longBalanceBefore = protocol.longAssetAvailableWithFunding(data.liquidationPrice, uint128(block.timestamp));
         // value of the remaining part of the position (not being closed, but will be liquidated)
         data.liqPriceWithoutPenalty = protocol.getEffectivePriceForTick(
             protocol.i_calcTickWithoutPenalty(data.action.tick, data.liquidationPenalty)
@@ -680,8 +693,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
     function test_internalValidateCloseLiquidatePosition() public {
         // liquidate the position in setup, leaving only the deployer position
         _waitBeforeLiquidation();
-        uint256 liquidated = protocol.mockLiquidate(abi.encode(7 * params.initialPrice / 10), 10);
-        assertEq(liquidated, 1, "liquidated");
+        LiqTickInfo[] memory liquidatedTicks = protocol.mockLiquidate(abi.encode(7 * params.initialPrice / 10));
+        assertEq(liquidatedTicks.length, 1, "liquidated");
 
         bytes memory priceData = abi.encode(params.initialPrice);
 
@@ -694,7 +707,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         (Position memory pos,) = protocol.getLongPosition(PositionId(posId.tick, 0, 0));
         vm.prank(DEPLOYER);
         protocol.initiateClosePosition(
-            posId, pos.amount, DISABLE_MIN_PRICE, DEPLOYER, DEPLOYER, priceData, EMPTY_PREVIOUS_DATA
+            posId, pos.amount, DISABLE_MIN_PRICE, DEPLOYER, DEPLOYER, type(uint256).max, priceData, EMPTY_PREVIOUS_DATA
         );
 
         /* ----------------- Validate close position under liq price ---------------- */
@@ -808,7 +821,14 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         uint256 balanceContractBefore = address(this).balance;
 
         protocol.initiateClosePosition{ value: 0.5 ether }(
-            posId, POSITION_AMOUNT, DISABLE_MIN_PRICE, USER_1, payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            posId,
+            POSITION_AMOUNT,
+            DISABLE_MIN_PRICE,
+            USER_1,
+            payable(address(this)),
+            type(uint256).max,
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         vm.prank(USER_1);

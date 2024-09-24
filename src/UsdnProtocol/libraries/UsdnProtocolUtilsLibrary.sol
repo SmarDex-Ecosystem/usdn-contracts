@@ -7,9 +7,10 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
-import { IPaymentCallback } from "../../interfaces/IPaymentCallback.sol";
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IUsdn } from "../../interfaces/Usdn/IUsdn.sol";
 import { IFeeCollectorCallback } from "../../interfaces/UsdnProtocol/IFeeCollectorCallback.sol";
+import { IPaymentCallback } from "../../interfaces/UsdnProtocol/IPaymentCallback.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -375,19 +376,9 @@ library UsdnProtocolUtilsLibrary {
         pure
         returns (int256 available_)
     {
-        // if balanceLong == totalExpo or the long trading expo is negative (theoretically impossible), the PnL is
-        // zero
-        // we can't calculate a proper PnL value if the long trading expo is negative because it would invert the
-        // sign of the amount
-        if (balanceLong >= totalExpo) {
-            return balanceLong.toInt256();
-        }
         int256 priceDiff = toInt256(newPrice) - toInt256(oldPrice);
-        uint256 tradingExpo;
-        // `balanceLong` is strictly inferior to `totalExpo`
-        unchecked {
-            tradingExpo = totalExpo - balanceLong;
-        }
+        uint256 tradingExpo = totalExpo - balanceLong;
+
         int256 pnl = tradingExpo.toInt256().safeMul(priceDiff).safeDiv(toInt256(newPrice));
 
         available_ = balanceLong.toInt256().safeAdd(pnl);
@@ -635,6 +626,20 @@ library UsdnProtocolUtilsLibrary {
         IPaymentCallback(msg.sender).transferCallback(token, amount, to);
         uint256 balanceAfter = token.balanceOf(to);
         if (balanceAfter != balanceBefore + amount) {
+            revert IUsdnProtocolErrors.UsdnProtocolPaymentCallbackFailed();
+        }
+    }
+
+    /**
+     * @notice Call back the msg.sender to transfer USDN shares and check that they were received
+     * @param usdn The USDN token address
+     * @param shares The amount of shares to transfer
+     */
+    function usdnTransferCallback(IUsdn usdn, uint256 shares) internal {
+        uint256 balanceBefore = usdn.sharesOf(address(this));
+        IPaymentCallback(msg.sender).usdnTransferCallback(usdn, shares);
+        uint256 balanceAfter = usdn.sharesOf(address(this));
+        if (balanceAfter != balanceBefore + shares) {
             revert IUsdnProtocolErrors.UsdnProtocolPaymentCallbackFailed();
         }
     }

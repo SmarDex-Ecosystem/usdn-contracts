@@ -23,6 +23,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * @param userMaxLeverage The maximum leverage for the newly created position
      * @param to The address that will be the owner of the position
      * @param validator The address that will validate the open position
+     * @param deadline The deadline of the open position to be initiated
      * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
      * pending validation)
      * @param previousActionsData The data needed to validate actionable pending actions
@@ -37,6 +38,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
         uint256 userMaxLeverage,
         address to,
         address payable validator,
+        uint256 deadline,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_, PositionId memory posId_);
@@ -92,6 +94,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * temporary entry price is below this threshold, the initiate action will revert
      * @param to The address that will receive the assets
      * @param validator The address that will validate the close action
+     * @param deadline The deadline of the close position to be initiated
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions
      * @return success_ Whether the closing was initiated
@@ -102,6 +105,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
         uint256 userMinPrice,
         address to,
         address payable validator,
+        uint256 deadline,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_);
@@ -133,21 +137,20 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
     ) external payable returns (bool success_);
 
     /**
-     * @notice Liquidate positions according to the current asset price, limited to a maximum of `iterations` ticks
+     * @notice Liquidate positions according to the current asset price
+     * limited to a maximum of `MAX_LIQUIDATION_ITERATION` ticks
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
      * the `ProtocolAction.Liquidation` action
      * The price validation might require payment according to the return value of the `getValidationCost` function
      * of the middleware
      * Each tick is liquidated in constant time. The tick version is incremented for each tick that was liquidated
-     * At least one tick will be liquidated, even if the `iterations` parameter is zero
      * @param currentPriceData The most recent price data
-     * @param iterations The maximum number of ticks to liquidate
-     * @return liquidatedPositions_ The number of positions that were liquidated
+     * @return liquidatedTicks_ Information about the liquidated ticks
      */
-    function liquidate(bytes calldata currentPriceData, uint16 iterations)
+    function liquidate(bytes calldata currentPriceData)
         external
         payable
-        returns (uint256 liquidatedPositions_);
+        returns (LiqTickInfo[] memory liquidatedTicks_);
 
     /**
      * @notice Manually validate one or more actionable pending actions

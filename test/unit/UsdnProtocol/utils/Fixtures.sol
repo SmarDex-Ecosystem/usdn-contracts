@@ -20,12 +20,11 @@ import { IEventsErrors } from "../../../utils/IEventsErrors.sol";
 import { IUsdnProtocolHandler } from "../../../utils/IUsdnProtocolHandler.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
-import { MockChainlinkOnChain } from "../../Middlewares/utils/MockChainlinkOnChain.sol";
 import { RebalancerHandler } from "../../Rebalancer/utils/Handler.sol";
 import { UsdnProtocolHandler } from "./Handler.sol";
 import { MockOracleMiddleware } from "./MockOracleMiddleware.sol";
 
-import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
+import { LiquidationRewardsManager } from "../../../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
@@ -50,6 +49,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         bool enableSdexBurnOnDeposit;
         bool enableLongLimit;
         bool enableRebalancer;
+        bool enableLiquidationRewards;
         bool enableRoles;
     }
 
@@ -79,6 +79,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             enableSdexBurnOnDeposit: false,
             enableLongLimit: false,
             enableRebalancer: false,
+            enableLiquidationRewards: false,
             enableRoles: false
         })
     });
@@ -95,7 +96,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
     Sdex public sdex;
     WstETH public wstETH;
     MockOracleMiddleware public oracleMiddleware;
-    MockChainlinkOnChain public chainlinkGasPriceFeed;
     LiquidationRewardsManager public liquidationRewardsManager;
     RebalancerHandler public rebalancer;
     IUsdnProtocolHandler public protocol;
@@ -121,9 +121,12 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         wstETH = new WstETH();
         sdex = new Sdex();
         oracleMiddleware = new MockOracleMiddleware();
-        chainlinkGasPriceFeed = new MockChainlinkOnChain();
-        liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
+        liquidationRewardsManager = new LiquidationRewardsManager(wstETH);
         feeCollector = new FeeCollector();
+
+        if (!testParams.flags.enableLiquidationRewards) {
+            liquidationRewardsManager.setRewardsParameters(0, 0, 0, 0, 0, 0, 0, 0, 0.1 ether);
+        }
 
         Managers memory managers = Managers({
             setExternalManager: SET_EXTERNAL_MANAGER,
@@ -319,7 +322,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         bytes memory priceData = abi.encode(price);
 
         protocol.initiateDeposit{ value: securityDepositValue }(
-            positionSize, DISABLE_SHARES_OUT_MIN, user, payable(user), priceData, EMPTY_PREVIOUS_DATA
+            positionSize, DISABLE_SHARES_OUT_MIN, user, payable(user), type(uint256).max, priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         if (untilAction == ProtocolAction.InitiateDeposit) return;
@@ -331,7 +334,13 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         uint256 sharesOf = usdn.sharesOf(user);
         usdn.approve(address(protocol), usdn.convertToTokensRoundUp(sharesOf));
         protocol.initiateWithdrawal{ value: securityDepositValue }(
-            uint152(sharesOf), DISABLE_AMOUNT_OUT_MIN, user, payable(user), priceData, EMPTY_PREVIOUS_DATA
+            uint152(sharesOf),
+            DISABLE_AMOUNT_OUT_MIN,
+            user,
+            payable(user),
+            type(uint256).max,
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -365,6 +374,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             protocol.getMaxLeverage(),
             openParams.user,
             payable(openParams.user),
+            type(uint256).max,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -382,6 +392,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             DISABLE_MIN_PRICE,
             openParams.user,
             payable(openParams.user),
+            type(uint256).max,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -404,7 +415,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
 
         // the price drops to $1500 and the position gets liquidated
         _waitBeforeLiquidation();
-        protocol.liquidate(abi.encode(uint128(1500 ether)), 10);
+        protocol.liquidate(abi.encode(uint128(1500 ether)));
 
         // the pending action is stale
         uint256 currentTickVersion = protocol.getTickVersion(posId_.tick);
@@ -456,7 +467,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         _setUp(params);
 
         // cannot be less than 1 ether
-        initialAmount = uint128(bound(initialAmount, protocol.MIN_INIT_DEPOSIT(), 5000 ether));
+        initialAmount = uint128(bound(initialAmount, 1 ether, 5000 ether));
 
         int256 depositLimit = protocol.getDepositExpoImbalanceLimitBps();
         uint128 margin = uint128(initialAmount * uint256(depositLimit) / protocol.BPS_DIVISOR());

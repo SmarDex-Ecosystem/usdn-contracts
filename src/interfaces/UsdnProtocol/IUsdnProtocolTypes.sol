@@ -6,7 +6,7 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
 import { DoubleEndedQueue } from "../../libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../../libraries/HugeUint.sol";
-import { IBaseLiquidationRewardsManager } from "../OracleMiddleware/IBaseLiquidationRewardsManager.sol";
+import { IBaseLiquidationRewardsManager } from "../LiquidationRewardsManager/IBaseLiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IBaseRebalancer } from "../Rebalancer/IBaseRebalancer.sol";
 import { IUsdn } from "../Usdn/IUsdn.sol";
@@ -224,21 +224,37 @@ interface IUsdnProtocolTypes {
     }
 
     /**
+     * @notice Information of a liquidated tick
+     * @param totalPositions The total number of positions in the tick
+     * @param totalExpo The total expo of the tick
+     * @param remainingCollateral The remaining collateral after liquidation
+     * @param tickPrice The corresponding price
+     * @param priceWithoutPenalty The price without the liquidation penalty
+     */
+    struct LiqTickInfo {
+        uint256 totalPositions;
+        uint256 totalExpo;
+        int256 remainingCollateral;
+        uint128 tickPrice;
+        uint128 priceWithoutPenalty;
+    }
+
+    /**
      * @notice The effects of executed liquidations on the protocol
-     * @param liquidatedPositions The number of liquidated positions
-     * @param liquidatedTicks The number of liquidated ticks
-     * @param remainingCollateral The collateral remaining after the liquidations
+     * @param liquidatedPositions The total number of liquidated positions
+     * @param remainingCollateral The remaining collateral after liquidation
      * @param newLongBalance The new balance of the long side
      * @param newVaultBalance The new balance of the vault side
      * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
+     * @param liquidatedTicks Information about the liquidated ticks
      */
     struct LiquidationsEffects {
         uint256 liquidatedPositions;
-        uint16 liquidatedTicks;
         int256 remainingCollateral;
         uint256 newLongBalance;
         uint256 newVaultBalance;
         bool isLiquidationPending;
+        LiqTickInfo[] liquidatedTicks;
     }
 
     /**
@@ -279,6 +295,7 @@ interface IUsdnProtocolTypes {
      * @param userMaxPrice The maximum price at which the position can be opened. The userMaxPrice is compared with the
      * price after confidence interval, penalty, etc...
      * @param userMaxLeverage The maximum leverage for the newly created position
+     * @param deadline The deadline of the open position to be initiated
      * @param securityDepositValue The value of the security deposit for the newly created pending action
      * @param currentPriceData The current price data (used to calculate the temporary leverage and entry price,
      * pending validation)
@@ -291,6 +308,7 @@ interface IUsdnProtocolTypes {
         uint128 desiredLiqPrice;
         uint128 userMaxPrice;
         uint256 userMaxLeverage;
+        uint256 deadline;
         uint64 securityDepositValue;
     }
 
@@ -341,12 +359,14 @@ interface IUsdnProtocolTypes {
      * @param posId The position id
      * @param amountToClose The amount to close
      * @param userMinPrice The minimum price at which the position can be closed
+     * @param deadline The deadline of the close position to be initiated
      * @param securityDepositValue The value of the security deposit for the newly created pending action
      */
     struct InitiateClosePositionParams {
         address owner;
         address to;
         address payable validator;
+        uint256 deadline;
         PositionId posId;
         uint128 amountToClose;
         uint256 userMinPrice;

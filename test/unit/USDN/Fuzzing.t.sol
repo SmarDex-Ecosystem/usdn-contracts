@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+
 import { USER_1 } from "../../utils/Constants.sol";
 import { UsdnTokenFixture } from "./utils/Fixtures.sol";
 
@@ -36,6 +38,52 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
         uint256 tokensOut = usdn.convertToTokens(shares);
 
         assertEq(tokens, tokensOut);
+    }
+
+    /**
+     * @custom:scenario Convert shares to tokens rounding to the nearest integer
+     * @custom:given A divisor between MAX_DIVISOR and MIN_DIVISOR
+     * @custom:and An amount of shares between 0 and the maximum
+     * @custom:when The shares are converted to tokens
+     * @custom:then The result is the nearest integer to shares / divisor
+     * @param divisor The divisor to use
+     * @param shares The amount of shares to convert
+     */
+    function testFuzz_roundToNearest(uint256 divisor, uint256 shares) public {
+        divisor = bound(divisor, usdn.MIN_DIVISOR(), usdn.MAX_DIVISOR());
+        shares = bound(shares, 0, type(uint256).max / divisor * divisor);
+
+        if (divisor < usdn.MAX_DIVISOR()) {
+            usdn.rebase(divisor);
+        }
+
+        uint256 tokens = usdn.convertToTokens(shares);
+
+        uint256 down = shares / divisor;
+        uint256 up = FixedPointMathLib.divUp(shares, divisor);
+
+        uint256 sharesOutDown = down * divisor;
+        uint256 sharesOutUp = up * divisor;
+        uint256 diffDown = shares - sharesOutDown;
+        uint256 diffUp = sharesOutUp - shares;
+        if (diffDown < diffUp) {
+            assertEq(tokens, down, "should round down");
+        } else {
+            assertEq(tokens, up, "should round up");
+        }
+    }
+
+    /**
+     * @custom:scenario Edge case for nearest rounding
+     * @custom:given A divisor of 1_000_000_001
+     * @custom:and A number of shares of 1_500_000_001
+     * @custom:when The shares are converted to tokens
+     * @custom:then The result should be rounded down
+     */
+    function test_roundToNearestCounterExample() public {
+        usdn.rebase(1_000_000_001);
+        uint256 tokens = usdn.convertToTokens(1_500_000_001);
+        assertEq(tokens, 1, "should round down");
     }
 
     /**

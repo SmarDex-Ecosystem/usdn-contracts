@@ -92,7 +92,13 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
             to, validator, depositAmount, protocol.getVaultFeeBps(), block.timestamp, expectedSdexBurnAmount
         );
         bool success = protocol.initiateDeposit(
-            depositAmount, DISABLE_SHARES_OUT_MIN, to, payable(validator), currentPrice, EMPTY_PREVIOUS_DATA
+            depositAmount,
+            DISABLE_SHARES_OUT_MIN,
+            to,
+            payable(validator),
+            type(uint256).max,
+            currentPrice,
+            EMPTY_PREVIOUS_DATA
         );
         assertTrue(success, "success");
 
@@ -145,6 +151,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
             DISABLE_SHARES_OUT_MIN,
             address(0),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(uint128(2000 ether)),
             EMPTY_PREVIOUS_DATA
         );
@@ -163,6 +170,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
             DISABLE_SHARES_OUT_MIN,
             address(this),
             payable(address(0)),
+            type(uint256).max,
             abi.encode(uint128(2000 ether)),
             EMPTY_PREVIOUS_DATA
         );
@@ -177,7 +185,13 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         bytes memory priceData = abi.encode(uint128(2000 ether));
         vm.expectRevert(UsdnProtocolZeroAmount.selector);
         protocol.initiateDeposit(
-            0, DISABLE_SHARES_OUT_MIN, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+            0,
+            DISABLE_SHARES_OUT_MIN,
+            address(this),
+            payable(address(this)),
+            type(uint256).max,
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -207,6 +221,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
             DISABLE_SHARES_OUT_MIN,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(params.initialPrice),
             EMPTY_PREVIOUS_DATA
         );
@@ -237,6 +252,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
             DISABLE_SHARES_OUT_MIN,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(params.initialPrice),
             EMPTY_PREVIOUS_DATA
         );
@@ -254,7 +270,13 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateDeposit);
         protocol.initiateDeposit{ value: 0.5 ether }(
-            1 ether, DISABLE_SHARES_OUT_MIN, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
+            1 ether,
+            DISABLE_SHARES_OUT_MIN,
+            address(this),
+            payable(address(this)),
+            type(uint256).max,
+            currentPrice,
+            EMPTY_PREVIOUS_DATA
         );
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
@@ -276,6 +298,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
                 DISABLE_SHARES_OUT_MIN,
                 address(this),
                 payable(address(this)),
+                type(uint256).max,
                 currentPrice,
                 EMPTY_PREVIOUS_DATA
             );
@@ -287,7 +310,13 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.initiateDeposit.selector), 2);
         // The value sent will cause a refund, which will trigger the receive() function of this contract
         protocol.initiateDeposit{ value: 1 }(
-            1 ether, DISABLE_SHARES_OUT_MIN, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
+            1 ether,
+            DISABLE_SHARES_OUT_MIN,
+            address(this),
+            payable(address(this)),
+            type(uint256).max,
+            currentPrice,
+            EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -320,6 +349,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
             DISABLE_SHARES_OUT_MIN,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(params.initialPrice / 10),
             EMPTY_PREVIOUS_DATA
         );
@@ -349,6 +379,27 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
             type(uint256).max,
             address(this),
             payable(address(this)),
+            type(uint256).max,
+            abi.encode(uint128(2000 ether)),
+            EMPTY_PREVIOUS_DATA
+        );
+    }
+
+    /**
+     * @custom:scenario The user sign transaction to initiate a deposit action with a deadline in the future. Transaction
+     * stays in mempool for a long time and the deadline is exceeded
+     * @custom:given The user has 1 wstETH
+     * @custom:when The protocol receives a transaction to initiate a deposit action with a deadline in the past
+     * @custom:then The protocol reverts with `UsdnProtocolDeadlineExceeded`
+     */
+    function test_RevertWhen_initiateDepositDeadlineExceeded() public {
+        vm.expectRevert(UsdnProtocolDeadlineExceeded.selector);
+        protocol.initiateDeposit(
+            1 ether,
+            DISABLE_SHARES_OUT_MIN,
+            address(this),
+            payable(this),
+            block.timestamp - 1,
             abi.encode(uint128(2000 ether)),
             EMPTY_PREVIOUS_DATA
         );
@@ -369,6 +420,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
             type(uint256).max,
             address(this),
             payable(this),
+            type(uint256).max,
             abi.encode(uint128(2000 ether)),
             EMPTY_PREVIOUS_DATA
         );

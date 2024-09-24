@@ -44,7 +44,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         protocol.setProtocolFeeBps(0);
 
         _waitBeforeLiquidation();
-        protocol.mockLiquidate(abi.encode(DEFAULT_PARAMS.initialPrice), 0);
+        protocol.mockLiquidate(abi.encode(DEFAULT_PARAMS.initialPrice));
 
         assertEq(protocol.getPendingProtocolFee(), 0, "initial pending protocol fee");
     }
@@ -173,6 +173,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
             DISABLE_AMOUNT_OUT_MIN,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(DEFAULT_PARAMS.initialPrice),
             EMPTY_PREVIOUS_DATA
         );

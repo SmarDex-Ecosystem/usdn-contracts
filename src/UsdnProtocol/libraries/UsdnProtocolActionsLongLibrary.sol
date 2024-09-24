@@ -6,8 +6,8 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
-import { IPaymentCallback } from "../../interfaces/IPaymentCallback.sol";
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IPaymentCallback } from "../../interfaces/UsdnProtocol/IPaymentCallback.sol";
 import { IUsdnProtocolActions } from "../../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
@@ -64,6 +64,9 @@ library UsdnProtocolActionsLongLibrary {
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData
     ) external returns (bool success_, Types.PositionId memory posId_) {
+        if (params.deadline < block.timestamp) {
+            revert IUsdnProtocolErrors.UsdnProtocolDeadlineExceeded();
+        }
         uint64 securityDepositValue = s._securityDepositValue;
         if (msg.value < securityDepositValue) {
             revert IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow();
@@ -107,17 +110,17 @@ library UsdnProtocolActionsLongLibrary {
         uint256 amountToRefund;
         bool liquidated;
         (amountToRefund, success_, liquidated) = _validateOpenPosition(s, validator, openPriceData);
+        uint256 securityDeposit;
+        if (success_ || liquidated) {
+            securityDeposit = Vault._executePendingActionOrRevert(s, previousActionsData);
+        }
         if (msg.sender != validator) {
             Utils._refundEther(amountToRefund, validator);
             balanceBefore -= amountToRefund;
-            amountToRefund = 0;
+            amountToRefund = securityDeposit;
+        } else {
+            amountToRefund += securityDeposit;
         }
-        if (success_ || liquidated) {
-            unchecked {
-                amountToRefund += Vault._executePendingActionOrRevert(s, previousActionsData);
-            }
-        }
-
         Utils._refundExcessEther(0, amountToRefund, balanceBefore);
         Utils._checkPendingFee(s);
     }
@@ -129,6 +132,9 @@ library UsdnProtocolActionsLongLibrary {
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData
     ) external returns (bool success_) {
+        if (params.deadline < block.timestamp) {
+            revert IUsdnProtocolErrors.UsdnProtocolDeadlineExceeded();
+        }
         if (msg.value < params.securityDepositValue) {
             revert IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow();
         }
@@ -172,17 +178,17 @@ library UsdnProtocolActionsLongLibrary {
         uint256 amountToRefund;
         bool liq;
         (amountToRefund, success_, liq) = _validateClosePosition(s, validator, closePriceData);
+        uint256 securityDeposit;
+        if (success_ || liq) {
+            securityDeposit = Vault._executePendingActionOrRevert(s, previousActionsData);
+        }
         if (msg.sender != validator) {
             Utils._refundEther(amountToRefund, validator);
             balanceBefore -= amountToRefund;
-            amountToRefund = 0;
+            amountToRefund = securityDeposit;
+        } else {
+            amountToRefund += securityDeposit;
         }
-        if (success_ || liq) {
-            unchecked {
-                amountToRefund += Vault._executePendingActionOrRevert(s, previousActionsData);
-            }
-        }
-
         Utils._refundExcessEther(0, amountToRefund, balanceBefore);
         Utils._checkPendingFee(s);
     }

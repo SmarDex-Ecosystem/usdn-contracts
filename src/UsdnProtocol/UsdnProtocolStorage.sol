@@ -7,7 +7,6 @@ import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/P
 
 import { IUsdnProtocolErrors } from "../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolStorage } from "../interfaces/UsdnProtocol/IUsdnProtocolStorage.sol";
-import { DoubleEndedQueue } from "../libraries/DoubleEndedQueue.sol";
 import { InitializableReentrancyGuard } from "../utils/InitializableReentrancyGuard.sol";
 
 abstract contract UsdnProtocolStorage is
@@ -17,8 +16,6 @@ abstract contract UsdnProtocolStorage is
     AccessControlDefaultAdminRulesUpgradeable,
     PausableUpgradeable
 {
-    using DoubleEndedQueue for DoubleEndedQueue.Deque;
-
     /// @notice The storage structure of the Usdn protocol
     Storage internal s;
 

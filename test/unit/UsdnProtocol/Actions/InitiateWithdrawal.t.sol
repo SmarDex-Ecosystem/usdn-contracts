@@ -104,6 +104,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
             DISABLE_AMOUNT_OUT_MIN,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(params.initialPrice / 3),
             EMPTY_PREVIOUS_DATA
         );
@@ -126,7 +127,13 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit InitiatedWithdrawal(to, address(this), USDN_AMOUNT, 0, block.timestamp); // expected event
         bool success = protocol.initiateWithdrawal(
-            withdrawShares, DISABLE_AMOUNT_OUT_MIN, to, payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
+            withdrawShares,
+            DISABLE_AMOUNT_OUT_MIN,
+            to,
+            payable(address(this)),
+            type(uint256).max,
+            currentPrice,
+            EMPTY_PREVIOUS_DATA
         );
         assertTrue(success, "success");
 
@@ -166,7 +173,13 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         vm.expectRevert(UsdnProtocolZeroAmount.selector);
         protocol.initiateWithdrawal(
-            0, DISABLE_AMOUNT_OUT_MIN, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
+            0,
+            DISABLE_AMOUNT_OUT_MIN,
+            address(this),
+            payable(address(this)),
+            type(uint256).max,
+            currentPrice,
+            EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -180,7 +193,13 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         vm.expectRevert(UsdnProtocolInvalidAddressTo.selector);
         protocol.initiateWithdrawal(
-            1 ether, DISABLE_AMOUNT_OUT_MIN, address(0), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
+            1 ether,
+            DISABLE_AMOUNT_OUT_MIN,
+            address(0),
+            payable(address(this)),
+            type(uint256).max,
+            currentPrice,
+            EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -194,7 +213,13 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         vm.expectRevert(UsdnProtocolInvalidAddressValidator.selector);
         protocol.initiateWithdrawal(
-            1 ether, DISABLE_AMOUNT_OUT_MIN, address(this), payable(address(0)), currentPrice, EMPTY_PREVIOUS_DATA
+            1 ether,
+            DISABLE_AMOUNT_OUT_MIN,
+            address(this),
+            payable(address(0)),
+            type(uint256).max,
+            currentPrice,
+            EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -214,6 +239,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
             DISABLE_AMOUNT_OUT_MIN,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             currentPrice,
             EMPTY_PREVIOUS_DATA
         );
@@ -230,7 +256,13 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         vm.expectRevert(UsdnProtocolAmountReceivedTooSmall.selector);
         protocol.initiateWithdrawal(
-            USDN_AMOUNT, type(uint256).max, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
+            USDN_AMOUNT,
+            type(uint256).max,
+            address(this),
+            payable(address(this)),
+            type(uint256).max,
+            currentPrice,
+            EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -251,6 +283,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
                 DISABLE_AMOUNT_OUT_MIN,
                 address(this),
                 payable(address(this)),
+                type(uint256).max,
                 currentPrice,
                 EMPTY_PREVIOUS_DATA
             );
@@ -268,6 +301,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
             DISABLE_AMOUNT_OUT_MIN,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             currentPrice,
             EMPTY_PREVIOUS_DATA
         );
@@ -286,7 +320,28 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
             USDN_AMOUNT,
             type(uint256).max,
             address(this),
-            payable(address(this)),
+            payable(this),
+            type(uint256).max,
+            abi.encode(uint128(2000 ether)),
+            EMPTY_PREVIOUS_DATA
+        );
+    }
+
+    /**
+     * @custom:scenario The user sign a transaction to initiate a withdrawal action with a deadline in the future.
+     * Transaction stays in the mempool and the deadline is exceeded
+     * @custom:given The user has 1000 USDN
+     * @custom:when The protocol receives a transaction to initiates a withdrawal action with a deadline in the past
+     * @custom:then The protocol reverts with `UsdnProtocolDeadlineExceeded`
+     */
+    function test_RevertWhen_initiateWithdrawalDeadlineExceeded() public {
+        vm.expectRevert(UsdnProtocolDeadlineExceeded.selector);
+        protocol.initiateWithdrawal(
+            1 ether,
+            DISABLE_AMOUNT_OUT_MIN,
+            address(this),
+            payable(this),
+            block.timestamp - 1,
             abi.encode(uint128(2000 ether)),
             EMPTY_PREVIOUS_DATA
         );
