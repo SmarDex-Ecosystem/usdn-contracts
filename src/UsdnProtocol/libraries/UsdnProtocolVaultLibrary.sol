@@ -179,17 +179,17 @@ library UsdnProtocolVaultLibrary {
 
         uint256 amountToRefund;
         (amountToRefund, success_) = _validateDeposit(s, validator, depositPriceData);
+        uint256 securityDeposit;
+        if (success_) {
+            securityDeposit = _executePendingActionOrRevert(s, previousActionsData);
+        }
         if (msg.sender != validator) {
             Utils._refundEther(amountToRefund, validator);
             balanceBefore -= amountToRefund;
-            amountToRefund = 0;
+            amountToRefund = securityDeposit;
+        } else {
+            amountToRefund += securityDeposit;
         }
-        if (success_) {
-            unchecked {
-                amountToRefund += _executePendingActionOrRevert(s, previousActionsData);
-            }
-        }
-
         Utils._refundExcessEther(0, amountToRefund, balanceBefore);
         Utils._checkPendingFee(s);
     }
@@ -260,17 +260,17 @@ library UsdnProtocolVaultLibrary {
 
         uint256 amountToRefund;
         (amountToRefund, success_) = _validateWithdrawal(s, validator, withdrawalPriceData);
+        uint256 securityDeposit;
+        if (success_) {
+            securityDeposit = _executePendingActionOrRevert(s, previousActionsData);
+        }
         if (msg.sender != validator) {
             Utils._refundEther(amountToRefund, validator);
             balanceBefore -= amountToRefund;
-            amountToRefund = 0;
+            amountToRefund = securityDeposit;
+        } else {
+            amountToRefund += securityDeposit;
         }
-        if (success_) {
-            unchecked {
-                amountToRefund += _executePendingActionOrRevert(s, previousActionsData);
-            }
-        }
-
         Utils._refundExcessEther(0, amountToRefund, balanceBefore);
         Utils._checkPendingFee(s);
     }

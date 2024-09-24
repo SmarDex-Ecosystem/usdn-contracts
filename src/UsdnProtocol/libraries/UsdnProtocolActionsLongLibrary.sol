@@ -110,17 +110,17 @@ library UsdnProtocolActionsLongLibrary {
         uint256 amountToRefund;
         bool liquidated;
         (amountToRefund, success_, liquidated) = _validateOpenPosition(s, validator, openPriceData);
+        uint256 securityDeposit;
+        if (success_ || liquidated) {
+            securityDeposit = Vault._executePendingActionOrRevert(s, previousActionsData);
+        }
         if (msg.sender != validator) {
             Utils._refundEther(amountToRefund, validator);
             balanceBefore -= amountToRefund;
-            amountToRefund = 0;
+            amountToRefund = securityDeposit;
+        } else {
+            amountToRefund += securityDeposit;
         }
-        if (success_ || liquidated) {
-            unchecked {
-                amountToRefund += Vault._executePendingActionOrRevert(s, previousActionsData);
-            }
-        }
-
         Utils._refundExcessEther(0, amountToRefund, balanceBefore);
         Utils._checkPendingFee(s);
     }
@@ -178,17 +178,17 @@ library UsdnProtocolActionsLongLibrary {
         uint256 amountToRefund;
         bool liq;
         (amountToRefund, success_, liq) = _validateClosePosition(s, validator, closePriceData);
+        uint256 securityDeposit;
+        if (success_ || liq) {
+            securityDeposit = Vault._executePendingActionOrRevert(s, previousActionsData);
+        }
         if (msg.sender != validator) {
             Utils._refundEther(amountToRefund, validator);
             balanceBefore -= amountToRefund;
-            amountToRefund = 0;
+            amountToRefund = securityDeposit;
+        } else {
+            amountToRefund += securityDeposit;
         }
-        if (success_ || liq) {
-            unchecked {
-                amountToRefund += Vault._executePendingActionOrRevert(s, previousActionsData);
-            }
-        }
-
         Utils._refundExcessEther(0, amountToRefund, balanceBefore);
         Utils._checkPendingFee(s);
     }
