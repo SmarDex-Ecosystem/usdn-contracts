@@ -227,7 +227,7 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
      * @custom:scenario Try to transfer a user position ownership with a paused protocol
      * @custom:given A user open position
      * @custom:and A paused protocol
-     * @custom:when The user calls transferPositionOwnership
+     * @custom:when The user calls {transferPositionOwnership}
      * @custom:then The call reverts with `EnforcedPause`
      */
     function test_RevertWhen_transferOwnershipPaused() public {

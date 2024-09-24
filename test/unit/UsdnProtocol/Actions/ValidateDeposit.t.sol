@@ -367,7 +367,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         _pauseProtocol(ADMIN);
 
         vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
-        protocol.validateDeposit{ value: 1 }(payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit(payable(this), currentPrice, EMPTY_PREVIOUS_DATA);
     }
 
     // test refunds
