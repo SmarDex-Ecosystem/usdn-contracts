@@ -12,10 +12,13 @@ abstract contract UsdnProtocolVault is UsdnProtocolStorage, IUsdnProtocolVault {
         uint256 sharesOutMin,
         address to,
         address payable validator,
+        uint256 deadline,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (bool success_) {
-        return Vault.initiateDeposit(s, amount, sharesOutMin, to, validator, currentPriceData, previousActionsData);
+        return Vault.initiateDeposit(
+            s, amount, sharesOutMin, to, validator, deadline, currentPriceData, previousActionsData
+        );
     }
 
     /// @inheritdoc IUsdnProtocolVault
@@ -33,11 +36,13 @@ abstract contract UsdnProtocolVault is UsdnProtocolStorage, IUsdnProtocolVault {
         uint256 amountOutMin,
         address to,
         address payable validator,
+        uint256 deadline,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (bool success_) {
-        return
-            Vault.initiateWithdrawal(s, usdnShares, amountOutMin, to, validator, currentPriceData, previousActionsData);
+        return Vault.initiateWithdrawal(
+            s, usdnShares, amountOutMin, to, validator, deadline, currentPriceData, previousActionsData
+        );
     }
 
     /// @inheritdoc IUsdnProtocolVault

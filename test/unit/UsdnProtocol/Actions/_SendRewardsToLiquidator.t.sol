@@ -69,6 +69,7 @@ contract TestUsdnProtocolActionsSendRewardsToLiquidator is UsdnProtocolBaseFixtu
             DISABLE_AMOUNT_OUT_MIN,
             DEPLOYER,
             payable(DEPLOYER),
+            type(uint256).max,
             abi.encode(params.initialPrice),
             EMPTY_PREVIOUS_DATA
         );

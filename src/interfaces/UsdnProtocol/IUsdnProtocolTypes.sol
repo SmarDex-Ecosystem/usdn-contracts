@@ -295,6 +295,7 @@ interface IUsdnProtocolTypes {
      * @param userMaxPrice The maximum price at which the position can be opened. The userMaxPrice is compared with the
      * price after confidence interval, penalty, etc...
      * @param userMaxLeverage The maximum leverage for the newly created position
+     * @param deadline The deadline of the open position to be initiated
      * @param securityDepositValue The value of the security deposit for the newly created pending action
      * @param currentPriceData The current price data (used to calculate the temporary leverage and entry price,
      * pending validation)
@@ -307,6 +308,7 @@ interface IUsdnProtocolTypes {
         uint128 desiredLiqPrice;
         uint128 userMaxPrice;
         uint256 userMaxLeverage;
+        uint256 deadline;
         uint64 securityDepositValue;
     }
 
@@ -357,12 +359,14 @@ interface IUsdnProtocolTypes {
      * @param posId The position id
      * @param amountToClose The amount to close
      * @param userMinPrice The minimum price at which the position can be closed
+     * @param deadline The deadline of the close position to be initiated
      * @param securityDepositValue The value of the security deposit for the newly created pending action
      */
     struct InitiateClosePositionParams {
         address owner;
         address to;
         address payable validator;
+        uint256 deadline;
         PositionId posId;
         uint128 amountToClose;
         uint256 userMinPrice;

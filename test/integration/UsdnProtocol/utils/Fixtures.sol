@@ -285,7 +285,13 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
         // deposit assets in the protocol to imbalance it
         protocol.initiateDeposit{ value: messageValue }(
-            30 ether, DISABLE_SHARES_OUT_MIN, payable(address(this)), payable(address(this)), "", EMPTY_PREVIOUS_DATA
+            30 ether,
+            DISABLE_SHARES_OUT_MIN,
+            payable(address(this)),
+            payable(address(this)),
+            type(uint256).max,
+            "",
+            EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
@@ -309,6 +315,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             protocol.getMaxLeverage(),
             payable(address(this)),
             payable(address(this)),
+            type(uint256).max,
             "",
             EMPTY_PREVIOUS_DATA
         );

@@ -292,6 +292,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
             maxLeverage,
             address(this),
             payable(this),
+            type(uint256).max,
             hex"beef",
             EMPTY_PREVIOUS_DATA
         );

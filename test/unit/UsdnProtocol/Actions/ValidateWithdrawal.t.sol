@@ -101,6 +101,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
             DISABLE_AMOUNT_OUT_MIN,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(params.initialPrice),
             EMPTY_PREVIOUS_DATA
         );
@@ -211,6 +212,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
             DISABLE_AMOUNT_OUT_MIN,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             currentPrice,
             EMPTY_PREVIOUS_DATA
         );
@@ -234,7 +236,13 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
 
         data.currentPrice = abi.encode(params.initialPrice);
         protocol.initiateWithdrawal(
-            withdrawShares, DISABLE_AMOUNT_OUT_MIN, to, payable(address(this)), data.currentPrice, EMPTY_PREVIOUS_DATA
+            withdrawShares,
+            DISABLE_AMOUNT_OUT_MIN,
+            to,
+            payable(address(this)),
+            type(uint256).max,
+            data.currentPrice,
+            EMPTY_PREVIOUS_DATA
         );
 
         data.actionId = oracleMiddleware.lastActionId();
@@ -349,6 +357,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
             DISABLE_AMOUNT_OUT_MIN,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             currentPrice,
             EMPTY_PREVIOUS_DATA
         );
@@ -384,7 +393,13 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         uint256 balanceContractBefore = address(this).balance;
 
         protocol.initiateWithdrawal{ value: 0.5 ether }(
-            withdrawShares, DISABLE_AMOUNT_OUT_MIN, address(this), USER_1, currentPrice, EMPTY_PREVIOUS_DATA
+            withdrawShares,
+            DISABLE_AMOUNT_OUT_MIN,
+            address(this),
+            USER_1,
+            type(uint256).max,
+            currentPrice,
+            EMPTY_PREVIOUS_DATA
         );
         _waitBeforeActionablePendingAction();
         protocol.validateWithdrawal(USER_1, currentPrice, EMPTY_PREVIOUS_DATA);

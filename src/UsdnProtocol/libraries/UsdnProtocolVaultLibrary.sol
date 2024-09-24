@@ -6,9 +6,9 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
-import { IPaymentCallback } from "../../interfaces/IPaymentCallback.sol";
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../../interfaces/Usdn/IUsdn.sol";
+import { IPaymentCallback } from "../../interfaces/UsdnProtocol/IPaymentCallback.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -70,6 +70,24 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
+     * @notice Parameters for the internal `_initiateWithdrawal` function
+     * @param user The address of the user initiating the withdrawal
+     * @param to The address to receive the USDN tokens
+     * @param validator The address that will validate the withdrawal
+     * @param usdnShares The amount of USDN shares to withdraw
+     * @param sharesOutMin The minimum amount of assets to receive
+     * @param securityDepositValue The value of the security deposit for the newly created withdrawal
+     */
+    struct WithdrawalParams {
+        address user;
+        address to;
+        address validator;
+        uint152 usdnShares;
+        uint256 amountOutMin;
+        uint64 securityDepositValue;
+    }
+
+    /**
      * @dev Structure to hold the transient data during `_initiateWithdrawal`
      * @param usdnTotalShares The total shares supply of USDN
      * @param totalExpo The current total expo
@@ -102,9 +120,13 @@ library UsdnProtocolVaultLibrary {
         uint256 sharesOutMin,
         address to,
         address payable validator,
+        uint256 deadline,
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData
     ) external returns (bool success_) {
+        if (deadline < block.timestamp) {
+            revert IUsdnProtocolErrors.UsdnProtocolDeadlineExceeded();
+        }
         uint64 securityDepositValue = s._securityDepositValue;
         if (msg.value < securityDepositValue) {
             revert IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow();
@@ -179,9 +201,13 @@ library UsdnProtocolVaultLibrary {
         uint256 amountOutMin,
         address to,
         address payable validator,
+        uint256 deadline,
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData
     ) external returns (bool success_) {
+        if (deadline < block.timestamp) {
+            revert IUsdnProtocolErrors.UsdnProtocolDeadlineExceeded();
+        }
         uint64 securityDepositValue = s._securityDepositValue;
         if (msg.value < securityDepositValue) {
             revert IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow();
@@ -191,7 +217,16 @@ library UsdnProtocolVaultLibrary {
 
         uint256 validatorAmount;
         (validatorAmount, success_) = _initiateWithdrawal(
-            s, msg.sender, to, validator, usdnShares, amountOutMin, securityDepositValue, currentPriceData
+            s,
+            WithdrawalParams({
+                user: msg.sender,
+                to: to,
+                validator: validator,
+                usdnShares: usdnShares,
+                amountOutMin: amountOutMin,
+                securityDepositValue: securityDepositValue
+            }),
+            currentPriceData
         );
 
         uint256 amountToRefund;
@@ -867,12 +902,7 @@ library UsdnProtocolVaultLibrary {
      * The price validation might require payment according to the return value of the `getValidationCost` function
      * of the middleware
      * @param s The storage of the protocol
-     * @param user The address of the user initiating the withdrawal
-     * @param to The address that will receive the assets
-     * @param validator The address that will validate the withdrawal
-     * @param usdnShares The amount of USDN shares to burn
-     * @param amountOutMin The estimated minimum amount of assets to receive
-     * @param securityDepositValue The value of the security deposit for the newly created pending action
+     * @param params The parameters for the withdrawal
      * @param currentPriceData The current price data
      * @return amountToRefund_ If there are pending liquidations we'll refund the `securityDepositValue`,
      * else we'll only refund the security deposit value of the stale pending action
@@ -880,41 +910,45 @@ library UsdnProtocolVaultLibrary {
      */
     function _initiateWithdrawal(
         Types.Storage storage s,
-        address user,
-        address to,
-        address validator,
-        uint152 usdnShares,
-        uint256 amountOutMin,
-        uint64 securityDepositValue,
+        WithdrawalParams memory params,
         bytes calldata currentPriceData
     ) internal returns (uint256 amountToRefund_, bool isInitiated_) {
-        if (to == address(0)) {
+        if (params.to == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo();
         }
-        if (validator == address(0)) {
+        if (params.validator == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressValidator();
         }
-        if (usdnShares == 0) {
+        if (params.usdnShares == 0) {
             revert IUsdnProtocolErrors.UsdnProtocolZeroAmount();
         }
 
-        WithdrawalData memory data = _prepareWithdrawalData(s, validator, usdnShares, amountOutMin, currentPriceData);
+        WithdrawalData memory data =
+            _prepareWithdrawalData(s, params.validator, params.usdnShares, params.amountOutMin, currentPriceData);
 
         if (data.isLiquidationPending) {
-            return (securityDepositValue, false);
+            return (params.securityDepositValue, false);
         }
 
-        amountToRefund_ = _createWithdrawalPendingAction(s, to, validator, usdnShares, securityDepositValue, data);
+        amountToRefund_ = _createWithdrawalPendingAction(
+            s, params.to, params.validator, params.usdnShares, params.securityDepositValue, data
+        );
 
-        // retrieve the USDN tokens, check that the balance is sufficient
-        IUsdn usdn = s._usdn;
-        usdn.transferSharesFrom(user, address(this), usdnShares);
         // register the pending withdrawal for imbalance checks of future actions
         s._pendingBalanceVault -= data.withdrawalAmountAfterFees.toInt256();
 
+        IUsdn usdn = s._usdn;
+        if (ERC165Checker.supportsInterface(msg.sender, type(IPaymentCallback).interfaceId)) {
+            // ask the msg.sender to send USDN shares and check the balance
+            Utils.usdnTransferCallback(usdn, params.usdnShares);
+        } else {
+            // retrieve the USDN shares, check that the balance is sufficient
+            usdn.transferSharesFrom(params.user, address(this), params.usdnShares);
+        }
+
         isInitiated_ = true;
         emit IUsdnProtocolEvents.InitiatedWithdrawal(
-            to, validator, usdn.convertToTokens(usdnShares), data.feeBps, block.timestamp
+            params.to, params.validator, usdn.convertToTokens(params.usdnShares), data.feeBps, block.timestamp
         );
     }
 

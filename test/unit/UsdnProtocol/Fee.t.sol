@@ -173,6 +173,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
             DISABLE_AMOUNT_OUT_MIN,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(DEFAULT_PARAMS.initialPrice),
             EMPTY_PREVIOUS_DATA
         );
