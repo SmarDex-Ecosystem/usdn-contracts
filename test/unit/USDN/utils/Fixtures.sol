@@ -24,8 +24,4 @@ contract UsdnTokenFixture is BaseFixture, IEventsErrors, IUsdnEvents, IUsdnError
         _actors[3] = USER_4;
         usdn = new UsdnHandler();
     }
-
-    // force ignore from coverage report
-    // until https://github.com/foundry-rs/foundry/issues/2988 is fixed
-    function test() public virtual override { }
 }

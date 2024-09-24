@@ -82,10 +82,6 @@ contract CommonBaseIntegrationFixture is BaseFixture {
         require(timestamp <= block.timestamp, "Timestamp cannot be in the future");
         return _getHermesApiSignature(feed, timestamp);
     }
-
-    // force ignore from coverage report
-    // until https://github.com/foundry-rs/foundry/issues/2988 is fixed
-    function test() public virtual override { }
 }
 
 /**

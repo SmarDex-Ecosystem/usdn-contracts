@@ -40,10 +40,10 @@ contract TestUsdnProtocolLongSaveNewPosition is UsdnProtocolBaseFixture {
     function test_saveNewPosition() public {
         uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
         int24 expectedTick = protocol.getEffectiveTickForPrice(desiredLiqPrice);
-        uint8 liquidationPenalty = protocol.getTickLiquidationPenalty(expectedTick);
+        uint24 liquidationPenalty = protocol.getTickLiquidationPenalty(expectedTick);
         HugeUint.Uint512 memory initialLiqMultiplierAccumulator = protocol.getLiqMultiplierAccumulator();
         uint256 unadjustedTickPrice =
-            TickMath.getPriceAtTick(expectedTick - int24(uint24(liquidationPenalty)) * protocol.getTickSpacing());
+            TickMath.getPriceAtTick(protocol.i_calcTickWithoutPenalty(expectedTick, liquidationPenalty));
 
         HugeUint.Uint512 memory expectedLiqMultiplierAccumulator =
             initialLiqMultiplierAccumulator.add(HugeUint.wrap(unadjustedTickPrice * long.totalExpo));

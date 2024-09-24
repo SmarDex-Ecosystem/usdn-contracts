@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 
 import { USER_1 } from "../../../../utils/Constants.sol";
 import { OracleMiddlewareWithRedstoneFixture } from "../../utils/Fixtures.sol";
@@ -18,18 +18,19 @@ contract TestSetRedstoneRecentPriceDelay is OracleMiddlewareWithRedstoneFixture 
     }
 
     /**
-     * @custom:scenario Call `setRedstoneRecentPriceDelay` functions from non contract admin
+     * @custom:scenario Call `setRedstoneRecentPriceDelay` functions from a wallet without the right role
      * @custom:given The initial oracle middleware state
-     * @custom:when Non admin wallet trigger `setRedstoneRecentPriceDelay`
-     * @custom:then functions should revert with custom Ownable error
+     * @custom:when A wallet without right role trigger `setRedstoneRecentPriceDelay`
+     * @custom:then functions should revert with custom "AccessControlUnauthorizedAccount" error
      */
     function test_RevertWhen_nonAdminWalletCallSetRedstoneRecentPriceDelay() public {
-        vm.startPrank(USER_1);
-        // Ownable contract custom error
-        bytes memory customError = abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, USER_1);
-        vm.expectRevert(customError);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector, USER_1, oracleMiddleware.ADMIN_ROLE()
+            )
+        );
+        vm.prank(USER_1);
         oracleMiddleware.setRedstoneRecentPriceDelay(11);
-        vm.stopPrank();
     }
 
     /**

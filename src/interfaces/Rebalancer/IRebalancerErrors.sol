@@ -5,6 +5,9 @@ interface IRebalancerErrors {
     /// @dev Indicates that the user assets are not used in a position
     error RebalancerUserPending();
 
+    /// @dev Indicates that the user's assets were in a position version that is not liquidated
+    error RebalancerUserLiquidated();
+
     /// @dev Indicates that the `to` address is invalid
     error RebalancerInvalidAddressTo();
 
@@ -14,7 +17,7 @@ interface IRebalancerErrors {
     /// @dev Indicates that the amount to deposit is insufficient
     error RebalancerInsufficientAmount();
 
-    /// @dev Indicates that the provided max leverage is invalid
+    /// @dev Indicates that the provided maximum leverage is invalid
     error RebalancerInvalidMaxLeverage();
 
     /// @dev Indicates that the wanted minimum asset deposit is invalid

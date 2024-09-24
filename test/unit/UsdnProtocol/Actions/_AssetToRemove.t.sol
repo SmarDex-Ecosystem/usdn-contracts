@@ -26,7 +26,7 @@ contract TestUsdnProtocolActionsAssetToRemove is UsdnProtocolBaseFixture {
         int24 tick = protocol.getEffectiveTickForPrice(params.initialPrice / 4);
         uint128 liqPrice = protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(tick));
         int256 value = protocol.i_positionValue(params.initialPrice, liqPrice, 2 ether);
-        uint256 toRemove = protocol.i_assetToRemove(params.initialPrice, liqPrice, 2 ether);
+        uint256 toRemove = protocol.i_assetToRemove(protocol.getBalanceLong(), params.initialPrice, liqPrice, 2 ether);
         assertEq(toRemove, uint256(value), "to transfer vs pos value");
         assertEq(toRemove, 1.512304848730381401 ether, "to transfer");
     }
@@ -46,7 +46,8 @@ contract TestUsdnProtocolActionsAssetToRemove is UsdnProtocolBaseFixture {
         uint256 longAvailable = uint256(protocol.i_longAssetAvailable(params.initialPrice)); // 5 ether
         uint128 liqPrice = protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(tick));
         int256 value = protocol.i_positionValue(params.initialPrice, liqPrice, 200 ether);
-        uint256 toRemove = protocol.i_assetToRemove(params.initialPrice, liqPrice, 200 ether);
+        uint256 toRemove = protocol.i_assetToRemove(protocol.getBalanceLong(), params.initialPrice, liqPrice, 200 ether);
+
         assertGt(uint256(value), toRemove, "value vs asset to transfer");
         assertEq(toRemove, longAvailable, "asset to transfer vs long asset available");
     }
@@ -63,14 +64,19 @@ contract TestUsdnProtocolActionsAssetToRemove is UsdnProtocolBaseFixture {
         // liquidate the default position
         protocol.mockLiquidate(abi.encode(price), 10);
 
+        uint256 balanceLong = protocol.getBalanceLong();
+
         assertEq(protocol.getTotalLongPositions(), 0, "total long positions");
         assertEq(protocol.getLongTradingExpo(price), 0, "long trading expo with funding");
-        assertEq(protocol.getBalanceLong(), 0, "balance long");
+        assertEq(balanceLong, 0, "balance long");
         assertEq(protocol.i_longAssetAvailable(price), 0, "long asset available");
 
         int24 tick = protocol.getEffectiveTickForPrice(price);
         uint256 toRemove = protocol.i_assetToRemove(
-            params.initialPrice, protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(tick)), 100 ether
+            balanceLong,
+            params.initialPrice,
+            protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(tick)),
+            100 ether
         );
         assertEq(toRemove, 0, "asset to transfer");
     }

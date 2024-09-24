@@ -25,4 +25,30 @@ contract TestUsdnProtocolVault is UsdnProtocolBaseFixture {
         uint256 res = protocol.i_mergeWithdrawalAmountParts(lsb, msb);
         assertEq(res, amount, "Amount splitting and merging failed");
     }
+
+    /**
+     * @custom:scenario Check the inherent loss of the vault position after a rebase compared to the inherent gain of
+     * the long position
+     * @custom:given A vault position and a long position
+     * @custom:when The price of the asset changes after a rebase of stETH/wstETH
+     * @custom:then The vault position should have an inherent loss and the long position should have an inherent gain
+     */
+    function test_vaultPositionInherentLossAfterRebase() public view {
+        uint256 balanceUserOutsideProtocol = protocol.getBalanceVault();
+        uint128 newPrice = 2200 ether;
+
+        uint256 longAssetAvailableAfterRebase = uint256(protocol.i_longAssetAvailable(newPrice));
+        uint256 vaultAssetAvailableAfterRebase = uint256(protocol.i_vaultAssetAvailable(newPrice));
+
+        uint256 valueLongAfterRebase = longAssetAvailableAfterRebase * newPrice;
+        uint256 valueVaultAfterRebase = vaultAssetAvailableAfterRebase * newPrice;
+        uint256 valueUserAfterRebase = balanceUserOutsideProtocol * newPrice;
+
+        assertGt(valueLongAfterRebase, valueUserAfterRebase, "User outside protocol is a loser over the long position");
+        assertLt(
+            valueVaultAfterRebase, valueUserAfterRebase, "User outside protocol is a winner over the vault position"
+        );
+        // Long positions are inherently profitable due to the stETh/wstETH rebase and the vault positions are
+        // inherently lossy due to the same rebase
+    }
 }

@@ -91,13 +91,10 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     /* -------------------------------------------------------------------------- */
 
     /// @notice The maximum leverage that a position can have
-    uint256 internal _maxLeverage;
+    uint256 internal _maxLeverage = 3 * 10 ** Constants.LEVERAGE_DECIMALS;
 
     /// @notice The minimum amount of assets to be deposited by a user
     uint256 internal _minAssetDeposit;
-
-    /// @notice The limit of the imbalance in bps to close the position
-    uint256 internal _closeImbalanceLimitBps = 500;
 
     /**
      * @notice The time limits for the initiate/validate process of deposits and withdrawals
@@ -135,7 +132,6 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         IERC20Metadata asset = usdnProtocol.getAsset();
         _asset = asset;
         _assetDecimals = usdnProtocol.getAssetDecimals();
-        _maxLeverage = usdnProtocol.getMaxLeverage();
         _minAssetDeposit = usdnProtocol.getMinLongPosition();
 
         // set allowance to allow the protocol to pull assets from this contract
@@ -208,11 +204,6 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     /// @inheritdoc IRebalancer
     function getPositionData(uint128 version) external view returns (PositionData memory positionData_) {
         positionData_ = _positionData[version];
-    }
-
-    /// @inheritdoc IRebalancer
-    function getCloseImbalanceLimitBps() external view returns (uint256) {
-        return _closeImbalanceLimitBps;
     }
 
     /// @inheritdoc IRebalancer
@@ -422,6 +413,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     function initiateClosePosition(
         uint88 amount,
         address to,
+        uint256 userMinPrice,
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData
     ) external payable nonReentrant returns (bool success_) {
@@ -443,6 +435,10 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
         if (data.userDepositData.entryPositionVersion == 0) {
             revert RebalancerUserPending();
+        }
+
+        if (data.userDepositData.entryPositionVersion <= _lastLiquidatedVersion) {
+            revert RebalancerUserLiquidated();
         }
 
         data.positionVersion = _positionVersion;
@@ -480,6 +476,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
                 index: data.currentPositionData.index
             }),
             data.amountToClose.toUint128(),
+            userMinPrice,
             to,
             payable(msg.sender),
             currentPriceData,
@@ -576,7 +573,9 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
     /// @inheritdoc IRebalancer
     function setPositionMaxLeverage(uint256 newMaxLeverage) external onlyOwner {
-        if (newMaxLeverage < _usdnProtocol.getMinLeverage() || newMaxLeverage > _usdnProtocol.getMaxLeverage()) {
+        if (newMaxLeverage > _usdnProtocol.getMaxLeverage()) {
+            revert RebalancerInvalidMaxLeverage();
+        } else if (newMaxLeverage <= Constants.REBALANCER_MIN_LEVERAGE) {
             revert RebalancerInvalidMaxLeverage();
         }
 
@@ -593,13 +592,6 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
         _minAssetDeposit = minAssetDeposit;
         emit MinAssetDepositUpdated(minAssetDeposit);
-    }
-
-    /// @inheritdoc IRebalancer
-    function setCloseImbalanceLimitBps(uint256 closeImbalanceLimitBps) external onlyOwner {
-        _closeImbalanceLimitBps = closeImbalanceLimitBps;
-
-        emit CloseImbalanceLimitBpsUpdated(closeImbalanceLimitBps);
     }
 
     /// @inheritdoc IRebalancer

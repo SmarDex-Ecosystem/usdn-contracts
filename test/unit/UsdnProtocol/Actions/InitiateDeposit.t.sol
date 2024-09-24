@@ -4,6 +4,7 @@ pragma solidity 0.8.26;
 import { USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolUtilsLibrary as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
 import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
 /**
@@ -71,11 +72,12 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
 
     function _initiateDepositScenario(address to, address validator) internal {
         uint128 depositAmount = 1 ether;
+        uint128 amountAfterFees =
+            uint128(depositAmount - uint256(depositAmount) * protocol.getVaultFeeBps() / BPS_DIVISOR);
         uint128 price = 2000 ether;
         bytes memory currentPrice = abi.encode(price); // only used to apply PnL + funding
-        uint256 usdnSharesToMint = protocol.i_calcMintUsdnShares(
-            depositAmount, protocol.getBalanceVault(), protocol.getUsdn().totalShares(), price
-        );
+        uint256 usdnSharesToMint =
+            Utils._calcMintUsdnShares(amountAfterFees, protocol.getBalanceVault(), protocol.getUsdn().totalShares());
         uint256 expectedSdexBurnAmount =
             protocol.i_calcSdexToBurn(usdn.convertToTokens(usdnSharesToMint), protocol.getSdexBurnOnDepositRatio());
         uint256 sdexBalanceBefore = sdex.balanceOf(address(this));
@@ -84,9 +86,11 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         vm.expectEmit(address(sdex));
         emit Transfer(address(this), deadAddress, expectedSdexBurnAmount); // SDEX transfer
         vm.expectEmit();
-        emit InitiatedDeposit(to, validator, depositAmount, block.timestamp, expectedSdexBurnAmount);
+        emit InitiatedDeposit(
+            to, validator, depositAmount, protocol.getVaultFeeBps(), block.timestamp, expectedSdexBurnAmount
+        );
         bool success = protocol.initiateDeposit(
-            depositAmount, to, payable(validator), NO_PERMIT2, currentPrice, EMPTY_PREVIOUS_DATA
+            depositAmount, DISABLE_SHARES_OUT_MIN, to, payable(validator), currentPrice, EMPTY_PREVIOUS_DATA
         );
         assertTrue(success, "success");
 
@@ -120,7 +124,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         assertEq(action.var2, depositAmount, "action amount");
 
         // the pending action should be actionable after the validation deadline
-        skip(protocol.getValidationDeadline() + 1);
+        _waitBeforeActionablePendingAction();
         (actions,) = protocol.getActionablePendingActions(address(0));
         assertEq(actions[0].to, to, "pending action to");
         assertEq(actions[0].validator, validator, "pending action validator");
@@ -136,9 +140,9 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         vm.expectRevert(UsdnProtocolInvalidAddressTo.selector);
         protocol.initiateDeposit(
             1 ether,
+            DISABLE_SHARES_OUT_MIN,
             address(0),
             payable(address(this)),
-            NO_PERMIT2,
             abi.encode(uint128(2000 ether)),
             EMPTY_PREVIOUS_DATA
         );
@@ -154,9 +158,9 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         vm.expectRevert(UsdnProtocolInvalidAddressValidator.selector);
         protocol.initiateDeposit(
             1 ether,
+            DISABLE_SHARES_OUT_MIN,
             address(this),
             payable(address(0)),
-            NO_PERMIT2,
             abi.encode(uint128(2000 ether)),
             EMPTY_PREVIOUS_DATA
         );
@@ -170,7 +174,9 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
     function test_RevertWhen_zeroAmount() public {
         bytes memory priceData = abi.encode(uint128(2000 ether));
         vm.expectRevert(UsdnProtocolZeroAmount.selector);
-        protocol.initiateDeposit(0, address(this), payable(address(this)), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA);
+        protocol.initiateDeposit(
+            0, DISABLE_SHARES_OUT_MIN, address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+        );
     }
 
     /**
@@ -189,57 +195,16 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
 
         uint128 deposited = 4;
 
-        uint256 usdnSharesToMintEstimated = protocol.i_calcMintUsdnShares(
-            deposited, protocol.getBalanceVault(), usdn.totalShares(), params.initialPrice
-        );
+        uint256 usdnSharesToMintEstimated =
+            Utils._calcMintUsdnShares(deposited, protocol.getBalanceVault(), usdn.totalShares());
         assertEq(usdn.convertToTokens(usdnSharesToMintEstimated), 0, "usdn minted");
 
         vm.expectRevert(UsdnProtocolDepositTooSmall.selector);
         protocol.initiateDeposit(
             deposited,
+            DISABLE_SHARES_OUT_MIN,
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
-            abi.encode(params.initialPrice),
-            EMPTY_PREVIOUS_DATA
-        );
-    }
-
-    /**
-     * @custom:scenario The user initiates a small deposit and no SDEX would be burned
-     * @custom:given The price of wstETH is $1
-     * @custom:and The SDEX burn on deposit is enabled at 1% of the minted USDN
-     * @custom:when The user initiates a deposit of 99 wei of wstETH
-     * @custom:then The protocol would mint more than 0 USDN
-     * @custom:and The protocol would burn 0 SDEX
-     * @custom:and The protocol reverts with `UsdnProtocolDepositTooSmall`
-     */
-    function test_RevertWhen_depositTooSmallNoSDEXBurned() public {
-        params = DEFAULT_PARAMS;
-        params.initialPrice = 1 ether;
-        params.flags.enableSdexBurnOnDeposit = true;
-        super._setUp(params);
-        wstETH.mintAndApprove(address(this), INITIAL_WSTETH_BALANCE, address(protocol), type(uint256).max);
-        sdex.mintAndApprove(address(this), 200_000_000 ether, address(protocol), type(uint256).max);
-
-        uint128 deposited = 99;
-
-        uint256 usdnSharesToMintEstimated = protocol.i_calcMintUsdnShares(
-            deposited, protocol.getBalanceVault(), usdn.totalShares(), params.initialPrice
-        );
-        assertGt(usdnSharesToMintEstimated, 0, "usdn minted");
-
-        uint256 sdexToBurn = protocol.i_calcSdexToBurn(
-            usdn.convertToTokens(usdnSharesToMintEstimated), protocol.getSdexBurnOnDepositRatio()
-        );
-        assertEq(sdexToBurn, 0, "sdex burned");
-
-        vm.expectRevert(UsdnProtocolDepositTooSmall.selector);
-        protocol.initiateDeposit(
-            deposited,
-            address(this),
-            payable(address(this)),
-            NO_PERMIT2,
             abi.encode(params.initialPrice),
             EMPTY_PREVIOUS_DATA
         );
@@ -261,16 +226,15 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
 
         uint128 deposited = 99;
 
-        uint256 usdnSharesToMintEstimated = protocol.i_calcMintUsdnShares(
-            deposited, protocol.getBalanceVault(), usdn.totalShares(), params.initialPrice
-        );
+        uint256 usdnSharesToMintEstimated =
+            Utils._calcMintUsdnShares(deposited, protocol.getBalanceVault(), usdn.totalShares());
         assertGt(usdnSharesToMintEstimated, 0, "usdn minted");
 
         protocol.initiateDeposit(
             deposited,
+            DISABLE_SHARES_OUT_MIN,
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             abi.encode(params.initialPrice),
             EMPTY_PREVIOUS_DATA
         );
@@ -288,7 +252,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateDeposit);
         protocol.initiateDeposit{ value: 0.5 ether }(
-            1 ether, address(this), payable(address(this)), NO_PERMIT2, currentPrice, EMPTY_PREVIOUS_DATA
+            1 ether, DISABLE_SHARES_OUT_MIN, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
         );
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
@@ -306,7 +270,12 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         if (_reenter) {
             vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
             protocol.initiateDeposit(
-                1 ether, address(this), payable(address(this)), NO_PERMIT2, currentPrice, EMPTY_PREVIOUS_DATA
+                1 ether,
+                DISABLE_SHARES_OUT_MIN,
+                address(this),
+                payable(address(this)),
+                currentPrice,
+                EMPTY_PREVIOUS_DATA
             );
             return;
         }
@@ -316,7 +285,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.initiateDeposit.selector), 2);
         // The value sent will cause a refund, which will trigger the receive() function of this contract
         protocol.initiateDeposit{ value: 1 }(
-            1 ether, address(this), payable(address(this)), NO_PERMIT2, currentPrice, EMPTY_PREVIOUS_DATA
+            1 ether, DISABLE_SHARES_OUT_MIN, address(this), payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -346,9 +315,9 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
 
         bool success = protocol.initiateDeposit(
             POSITION_AMOUNT,
+            DISABLE_SHARES_OUT_MIN,
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             abi.encode(params.initialPrice / 10),
             EMPTY_PREVIOUS_DATA
         );
@@ -362,6 +331,25 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         );
 
         assertEq(wstethBalanceBefore, wstETH.balanceOf(address(this)), "user 1 should not have spent wstETH");
+    }
+
+    /**
+     * @custom:scenario The user initiates a deposit action with a predicted mint of USDN shares lower than the
+     * parameter
+     * @custom:given The user has 1 wstETH
+     * @custom:when The user initiates a deposit with 1 wstETH and wants to receive max USDN
+     * @custom:then The protocol reverts with `UsdnProtocolAmountReceivedTooSmall`
+     */
+    function test_RevertWhen_initiateDepositWithEnoughExpectedAmountOut() public {
+        vm.expectRevert(UsdnProtocolAmountReceivedTooSmall.selector);
+        protocol.initiateDeposit(
+            1 ether,
+            type(uint256).max,
+            address(this),
+            payable(address(this)),
+            abi.encode(uint128(2000 ether)),
+            EMPTY_PREVIOUS_DATA
+        );
     }
 
     // test refunds

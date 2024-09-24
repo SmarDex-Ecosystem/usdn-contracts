@@ -53,17 +53,11 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      */
     function test_longAssetAvailable() public view {
         // calculate the value of the deployer's long position
+        int24 tick = protocol.getHighestPopulatedTick();
         uint128 longLiqPrice =
-            protocol.getEffectivePriceForTick(protocol.getEffectiveTickForPrice(params.initialPrice / 2));
+            protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(tick, protocol.getLiquidationPenalty()));
 
-        (Position memory firstPos,) = protocol.getLongPosition(
-            PositionId(
-                protocol.getEffectiveTickForPrice(longLiqPrice)
-                    + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing(),
-                0,
-                0
-            )
-        );
+        (Position memory firstPos,) = protocol.getLongPosition(PositionId(tick, 0, 0));
 
         int256 longPosValue = protocol.i_positionValue(params.initialPrice, longLiqPrice, firstPos.totalExpo);
 
@@ -140,7 +134,9 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         int256 vaultTradingExpo = protocol.i_vaultAssetAvailable(params.initialPrice);
 
         assertEq(
-            protocol.getLongTradingExpo(params.initialPrice), vaultTradingExpo, "long and vault expos should be equal"
+            int256(protocol.getLongTradingExpo(params.initialPrice)),
+            vaultTradingExpo,
+            "long and vault expos should be equal"
         );
 
         int256 EMA = protocol.getEMA();
@@ -272,10 +268,36 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         assertGt(fundingPerDay, 0, "funding rate should be positive");
 
         // we have to subtract 30 seconds from the timestamp because of the mock oracle middleware behavior
-        int256 available = protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
+        uint256 available = protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
         // call liquidate to update the contract state
         protocol.mockLiquidate(priceData, 5);
-        assertEq(available, int256(protocol.getBalanceLong()), "long balance != available");
+        assertEq(available, protocol.getBalanceLong(), "long balance != available");
+    }
+
+    /**
+     * @custom:scenario longAssetAvailableWithFunding returns the highest possible value
+     * @custom:when The funding is negative
+     * @custom:then Return value should be equal to the min trading expo
+     * @custom:and A higher timestamp does not change the returned value
+     */
+    function test_longAssetAvailableIsCappedByMinTradingExpo() public {
+        skip(1 hours);
+        uint128 price = DEFAULT_PARAMS.initialPrice;
+        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 100 ether, price);
+        skip(30 days);
+
+        (, int256 fundingPerDay,) = protocol.funding(uint128(block.timestamp));
+        assertLt(fundingPerDay, 0, "funding rate should be negative");
+
+        uint256 available = protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp));
+
+        uint256 minTradingExpo =
+            protocol.getTotalExpo() * (BPS_DIVISOR - protocol.MIN_LONG_TRADING_EXPO_BPS()) / BPS_DIVISOR;
+        assertEq(available, minTradingExpo, "the long balance should be equal to the min trading expo");
+
+        // check that a higher timestamp does not increase the amount available
+        uint256 availableLater = protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp) + 30 days);
+        assertEq(available, availableLater, "the available assets should not have changed");
     }
 
     /**
@@ -292,11 +314,11 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         assertLt(fundingPerDay, 0, "funding rate should be negative");
 
         // we have to subtract 30 seconds from the timestamp because of the mock oracle middleware behavior
-        int256 available = protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
+        uint256 available = protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
         // call liquidate to update the contract state
         protocol.mockLiquidate(abi.encode(price), 5);
 
-        assertEq(available, int256(protocol.getBalanceLong()), "long balance != available");
+        assertEq(available, protocol.getBalanceLong(), "long balance != available");
     }
 
     /**
@@ -324,11 +346,11 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         assertLt(fundingPerDay, 0, "funding rate should be negative");
 
         // we have to subtract 30 seconds from the timestamp because of the mock oracle middleware behavior
-        int256 available = protocol.vaultAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
+        uint256 available = protocol.vaultAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
         // call liquidate to update the contract state
         protocol.mockLiquidate(abi.encode(price), 5);
 
-        assertEq(available, int256(protocol.getBalanceVault()), "vault balance != available");
+        assertEq(available, protocol.getBalanceVault(), "vault balance != available");
     }
 
     /**
@@ -355,10 +377,10 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         assertGt(fundingPerDay, 0, "funding rate should be positive");
 
         // we have to subtract 30 seconds from the timestamp because of the mock oracle middleware behavior
-        int256 available = protocol.vaultAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
+        uint256 available = protocol.vaultAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
         // call liquidate to update the contract state
         protocol.mockLiquidate(priceData, 5);
-        assertEq(available, int256(protocol.getBalanceVault()), "vault balance != available");
+        assertEq(available, protocol.getBalanceVault(), "vault balance != available");
     }
 
     /**
@@ -453,6 +475,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.ValidateDeposit,
             timestamp: uint40(block.timestamp),
+            var0: 0,
             to: address(this),
             validator: address(this),
             securityDepositValue: 0.1 ether,
@@ -480,6 +503,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.ValidateOpenPosition,
             timestamp: uint40(block.timestamp),
+            var0: 0,
             to: address(this),
             validator: address(this),
             securityDepositValue: 0.01 ether,
@@ -539,6 +563,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.ValidateOpenPosition,
             timestamp: uint40(block.timestamp),
+            var0: 0,
             to: address(this),
             validator: address(this),
             securityDepositValue: 0.01 ether,
@@ -576,6 +601,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.InitiateWithdrawal,
             timestamp: uint40(block.timestamp - 1 days),
+            var0: 0,
             to: address(this),
             validator: address(this),
             securityDepositValue: 0.01 ether,
@@ -597,6 +623,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         LongPendingAction memory longPendingAction = LongPendingAction({
             action: ProtocolAction.ValidateOpenPosition,
             timestamp: uint40(block.timestamp - 1 days),
+            closeLiqPenalty: 0,
             to: address(this),
             validator: USER_1,
             securityDepositValue: 0.01 ether,
@@ -605,7 +632,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
             closePosTotalExpo: 0,
             tickVersion: protocol.getTickVersion(1),
             index: 0,
-            closeLiqMultiplier: 0,
+            liqMultiplier: 0,
             closeBoundedPositionValue: 0
         });
         protocol.i_addPendingAction(USER_1, protocol.i_convertLongPendingAction(longPendingAction));
@@ -625,6 +652,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         LongPendingAction memory longPendingAction = LongPendingAction({
             action: ProtocolAction.ValidateOpenPosition,
             timestamp: uint40(block.timestamp - 1 days),
+            closeLiqPenalty: 0,
             to: address(this),
             validator: USER_1,
             securityDepositValue: 0.01 ether,
@@ -633,7 +661,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
             closePosTotalExpo: 0,
             tickVersion: protocol.getTickVersion(1) - 1,
             index: 0,
-            closeLiqMultiplier: 0,
+            liqMultiplier: 0,
             closeBoundedPositionValue: 0
         });
         protocol.i_addPendingAction(USER_1, protocol.i_convertLongPendingAction(longPendingAction));

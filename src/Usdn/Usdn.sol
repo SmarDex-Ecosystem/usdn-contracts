@@ -7,6 +7,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ERC20Burnable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import { ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { IRebaseCallback } from "../interfaces/Usdn/IRebaseCallback.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
@@ -303,7 +304,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
             }
 
             // below, we round to the closest integer
-            uint256 half = d >> 1; // divide `d` by 2
+            uint256 half = FixedPointMathLib.divUp(d, 2); // need to divUp so some edge cases round correctly
             // if the remainder is equal to or larger than half of the divisor, we round up, else down
             if (remainder >= half) {
                 tokens_ = tokensUp;
@@ -399,15 +400,8 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
         uint256 fromBalance = balanceOf(from);
 
         if (from == address(0)) {
-            // mint
-            unchecked {
-                uint256 res = _totalShares + valueShares;
-                // overflow check required, the rest of the code assumes that `totalShares` never overflows
-                if (res < _totalShares) {
-                    revert UsdnTotalSupplyOverflow();
-                }
-                _totalShares = res;
-            }
+            // overflow check required: the rest of the code assumes that `totalShares` never overflows
+            _totalShares += valueShares;
         } else {
             uint256 fromShares = _shares[from];
             // perform the balance check on the amount of tokens, since due to rounding errors, `valueShares` can be

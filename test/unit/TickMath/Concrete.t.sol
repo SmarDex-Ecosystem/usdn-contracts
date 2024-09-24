@@ -51,18 +51,6 @@ contract TestTickMathConcrete is TickMathFixture {
     }
 
     /**
-     * @custom:scenario Converting a price to a tick (some values, rest is fuzzed)
-     * @custom:given A price of 904_841_941_932_768_878, 1 ether or 1.0001 ether
-     * @custom:when The closest tick for the price is retrieved
-     * @custom:then The closest tick is -1000, 0 or 1
-     */
-    function test_priceToTick() public view {
-        assertEq(handler.getClosestTickAtPrice(904_841_941_932_768_878), -1000, "at tick -1000");
-        assertEq(handler.getClosestTickAtPrice(1 ether), 0, "at tick 0");
-        assertEq(handler.getClosestTickAtPrice(1.0001 ether), 1, "at tick 1");
-    }
-
-    /**
      * @custom:scenario An invalid ticks is provided to `getPriceAtTick`
      * @custom:given A tick of MIN_TICK - 1 or MAX_TICK + 1
      * @custom:when The price at the tick is retrieved
@@ -89,19 +77,6 @@ contract TestTickMathConcrete is TickMathFixture {
     }
 
     /**
-     * @custom:scenario An invalid price is provided to `getClosestTickAtPrice`
-     * @custom:given A price of MIN_PRICE - 1 or MAX_PRICE + 1
-     * @custom:when The tick for the price is retrieved with `getClosestTickAtPrice`
-     * @custom:then The call reverts with `TickMathInvalidPrice()`
-     */
-    function test_RevertWhen_priceIsOutOfBoundsClosest() public {
-        vm.expectRevert(TickMath.TickMathInvalidPrice.selector);
-        handler.getClosestTickAtPrice(TickMath.MIN_PRICE - 1);
-        vm.expectRevert(TickMath.TickMathInvalidPrice.selector);
-        handler.getClosestTickAtPrice(TickMath.MAX_PRICE + 1);
-    }
-
-    /**
      * @custom:scenario An invalid tick spacing is provided
      * @custom:given A tick spacing of 0
      * @custom:when The min or max usable tick is retrieved
@@ -112,5 +87,21 @@ contract TestTickMathConcrete is TickMathFixture {
         handler.maxUsableTick(0);
         vm.expectRevert(TickMath.TickMathInvalidTickSpacing.selector);
         handler.minUsableTick(0);
+    }
+
+    /**
+     * @custom:scenario Checking that the tick corresponding to the input price could have been tick + 1 for low prices
+     * @custom:given A price below 1.025 gwei
+     * @custom:when The rounded down tick for the corresponding price is retrieved
+     * @custom:and The corresponding price for the tick is retrieved
+     * @custom:then The corresponding price should be lower than the input price
+     * @custom:and The price for tick + 1 should be equal to the input price
+     */
+    function test_getTickAtPriceWithNextTickWithEqualInputPrice() public view {
+        uint128 price = 21_063;
+        assertLt(price, 1.025 gwei, "price should be in the valid range");
+        int24 tick = handler.getTickAtPrice(price);
+        assertLt(handler.getPriceAtTick(tick), price, "tick price should be lower than the input price");
+        assertEq(handler.getPriceAtTick(tick + 1), price, "next tick price should be equal input price");
     }
 }

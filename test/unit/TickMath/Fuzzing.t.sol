@@ -27,28 +27,25 @@ contract TestTickMathFuzzing is TickMathFixture {
         tick = bound_int24(tick, TickMath.MIN_TICK, TickMath.MAX_TICK);
         uint256 price = handler.getPriceAtTick(tick);
         console2.log("corresponding price", price);
-        // Conversion from price to tick can lose precision, so to check equality we need to use the precise method
-        int24 tick2 = handler.getClosestTickAtPrice(price);
         // The imprecise method should be within 1 tick of the precise method
         int24 tick3 = handler.getTickAtPrice(price);
-        assertEq(tick2, tick, "closest tick vs original tick");
         assertApproxEqAbs(tick3, tick, 1, "rounded down tick vs original tick");
     }
 
     /**
-     * @custom:scenario Converting a price to a tick and back to a price (fuzzed)
-     * @custom:given A valid price
-     * @custom:when The closest tick for the price is retrieved
-     * @custom:and The price at the corresponding tick is retrieved
-     * @custom:then The price is equal to the original price within 0.01%
-     * @param price The price to convert to a tick and back to a price
+     * @custom:scenario Compares the price of a tick with the result of the getPriceAtTick function for tick + 1
+     * @custom:given A valid price between 1.025 gwei and uint128.max
+     * @custom:when The rounded down tick for the corresponding price is retrieved
+     * @custom:and The corresponding price for the tick is retrieved
+     * @custom:then The corresponding price should be lower or equal to the input price
+     * @custom:when The new corresponding price from the rounded down tick + 1 is retrieved
+     * @custom:then The new corresponding price should be greater than the input price
+     * @param price The price to compare with other calculated prices
      */
-    function testFuzz_conversionReverse(uint256 price) public view {
-        price = bound(price, TickMath.MIN_PRICE, TickMath.MAX_PRICE);
-        int24 tick = handler.getClosestTickAtPrice(price);
-        console2.log("corresponding tick", tick);
-        uint256 price2 = handler.getPriceAtTick(tick);
-        console2.log("price", price2);
-        assertApproxEqRel(price, price2, 0.0001 ether); // within 0.01%
+    function testFuzz_getTickAtPriceShouldBeLowerThanNextTick(uint128 price) public view {
+        price = uint128(bound(price, 1.025 gwei, type(uint128).max));
+        int24 tick = handler.getTickAtPrice(price);
+        assertLe(handler.getPriceAtTick(tick), price, "tick price should be lower or equal to the input price");
+        assertGt(handler.getPriceAtTick(tick + 1), price, "next tick price should be greater than the input price");
     }
 }

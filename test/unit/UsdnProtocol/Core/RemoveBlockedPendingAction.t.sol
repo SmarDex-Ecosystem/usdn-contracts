@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { ADMIN, USER_1 } from "../../../utils/Constants.sol";
+import { ADMIN, USER_1, USER_2 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { DoubleEndedQueue } from "../../../../src/libraries/DoubleEndedQueue.sol";
@@ -156,21 +156,39 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
      * @param untilAction Whether to initiate an open or a close position
      * @param amount The amount of collateral
      * @param cleanup Whether to remove the action with more cleanup
+     * @param negative Whether the position value should be negative
      */
-    function _removeBlockedLongScenario(ProtocolAction untilAction, uint128 amount, bool cleanup)
+    function _removeBlockedLongScenario(ProtocolAction untilAction, uint128 amount, bool cleanup, bool negative)
         internal
-        returns (PositionId memory posId_)
+        returns (PositionId memory posId_, int256 positionValue_)
     {
         posId_ = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
                 untilAction: untilAction,
                 positionSize: amount,
-                desiredLiqPrice: params.initialPrice / 2,
+                desiredLiqPrice: params.initialPrice / 3,
                 price: params.initialPrice
             })
         );
-        _wait();
+        if (negative) {
+            setUpUserPositionInLong(
+                OpenParams({
+                    user: USER_2,
+                    untilAction: untilAction,
+                    positionSize: amount,
+                    desiredLiqPrice: params.initialPrice / 10,
+                    price: params.initialPrice
+                })
+            );
+            _wait();
+            // liquidate the deployer's position but keep the position from USER_1
+            protocol.liquidate(abi.encode(params.initialPrice / 5), 1);
+        } else {
+            _wait();
+        }
+
+        positionValue_ = protocol.getPositionValue(posId_, protocol.getLastPrice(), protocol.getLastUpdateTimestamp());
 
         (, uint128 rawIndex) = protocol.i_getPendingAction(USER_1);
 
@@ -191,17 +209,23 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
      * @custom:when The admin removes the pending action with cleanup
      * @custom:then The pending action is removed
      * @custom:and The protocol state is updated to remove the position
+     * @custom:and The assets corresponding to the position's value are sent to the `to` address
      */
     function test_removeBlockedOpenPositionCleanup() public {
         uint256 balanceBefore = address(this).balance;
-        int24 expectedTick = protocol.getEffectiveTickForPrice(params.initialPrice / 2);
+        int24 expectedTick = protocol.getEffectiveTickForPrice(params.initialPrice / 3);
         TickData memory tickDataBefore = protocol.getTickData(expectedTick);
         uint256 totalPosBefore = protocol.getTotalLongPositions();
         HugeUint.Uint512 memory accBefore = protocol.getLiqMultiplierAccumulator();
         uint256 totalExpoBefore = protocol.getTotalExpo();
+        uint256 protocolBalanceBefore = wstETH.balanceOf(address(protocol));
+        uint256 totalBalance = protocol.getBalanceLong() + protocol.getBalanceVault();
 
-        PositionId memory posId = _removeBlockedLongScenario(ProtocolAction.InitiateOpenPosition, 10 ether, true);
+        uint128 amount = 10 ether;
+        (PositionId memory posId, int256 posValue) =
+            _removeBlockedLongScenario(ProtocolAction.InitiateOpenPosition, amount, true, false);
         assertEq(posId.tick, expectedTick, "expected tick");
+        assertGt(posValue, 0, "pos value");
 
         TickData memory tickDataAfter = protocol.getTickData(posId.tick);
         assertEq(tickDataAfter.totalExpo, tickDataBefore.totalExpo, "tick total expo");
@@ -216,8 +240,38 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         assertEq(accAfter.lo, accBefore.lo, "accumulator lo");
 
         assertEq(protocol.getTotalExpo(), totalExpoBefore, "total expo");
+        assertEq(
+            wstETH.balanceOf(address(protocol)), protocolBalanceBefore + amount - uint256(posValue), "protocol balance"
+        );
+        assertEq(
+            protocol.getBalanceLong() + protocol.getBalanceVault(),
+            totalBalance + amount - uint256(posValue),
+            "total balance"
+        );
 
         assertEq(address(this).balance, balanceBefore + protocol.getSecurityDepositValue(), "balance after");
+    }
+
+    /**
+     * @custom:scenario Remove a stuck open position with cleanup and negative value
+     * @custom:given A user has initiated an open position which gets stuck for any reason
+     * @custom:and The position value is negative because it needs to be liquidated
+     * @custom:when The admin removes the pending action with cleanup
+     * @custom:then The pending action is removed
+     * @custom:and The protocol state is updated to remove the position
+     * @custom:and The assets remain in the protocol because they belong to the vault
+     */
+    function test_removeBlockedOpenPositionCleanupNegativeValue() public {
+        uint256 protocolBalanceBefore = wstETH.balanceOf(address(protocol));
+        uint256 totalBalance = protocol.getBalanceLong() + protocol.getBalanceVault();
+
+        uint128 amount = 10 ether;
+        (, int256 posValue) = _removeBlockedLongScenario(ProtocolAction.InitiateOpenPosition, amount, true, true);
+        assertLt(posValue, 0, "pos value");
+
+        // we opened 2 additional positions of `amount` during this test
+        assertEq(wstETH.balanceOf(address(protocol)), protocolBalanceBefore + 2 * amount, "protocol balance");
+        assertEq(protocol.getBalanceLong() + protocol.getBalanceVault(), totalBalance + 2 * amount, "total balance");
     }
 
     /**
@@ -232,7 +286,7 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         uint256 totalPosBefore = protocol.getTotalLongPositions();
         uint256 totalExpoBefore = protocol.getTotalExpo();
 
-        _removeBlockedLongScenario(ProtocolAction.InitiateOpenPosition, 10 ether, false);
+        _removeBlockedLongScenario(ProtocolAction.InitiateOpenPosition, 10 ether, false, false);
 
         assertEq(protocol.getTotalLongPositions(), totalPosBefore + 1, "total pos");
         assertGt(protocol.getTotalExpo(), totalExpoBefore, "total expo");
@@ -253,7 +307,7 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         uint256 balanceLongBefore = protocol.getBalanceLong();
         uint256 balanceVaultBefore = protocol.getBalanceVault();
 
-        _removeBlockedLongScenario(ProtocolAction.InitiateClosePosition, 10 ether, true);
+        _removeBlockedLongScenario(ProtocolAction.InitiateClosePosition, 10 ether, true, false);
 
         assertApproxEqAbs(protocol.getBalanceLong(), balanceLongBefore, 1, "balance long");
         assertApproxEqAbs(protocol.getBalanceVault(), balanceVaultBefore + 10 ether, 1, "balance vault");
@@ -279,7 +333,7 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         uint256 balanceLongBefore = protocol.getBalanceLong();
         uint256 balanceVaultBefore = protocol.getBalanceVault();
 
-        _removeBlockedLongScenario(ProtocolAction.InitiateClosePosition, 10 ether, false);
+        _removeBlockedLongScenario(ProtocolAction.InitiateClosePosition, 10 ether, false, false);
 
         // during the initiateClosePosition, we optimistically decrease the long balance by the position value
         // (10 ether +- 1 wei) which we do not add back to any balances since we are doing the safe fix
@@ -319,7 +373,7 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         vm.expectRevert(UsdnProtocolUnauthorized.selector);
         protocol.i_removeBlockedPendingAction(rawIndex, payable(this), true);
 
-        vm.warp(action.timestamp + protocol.getValidationDeadline() + 3599 seconds);
+        vm.warp(action.timestamp + protocol.getLowLatencyValidatorDeadline() + 3599 seconds);
 
         vm.expectRevert(UsdnProtocolUnauthorized.selector);
         protocol.i_removeBlockedPendingAction(rawIndex, payable(this), true);

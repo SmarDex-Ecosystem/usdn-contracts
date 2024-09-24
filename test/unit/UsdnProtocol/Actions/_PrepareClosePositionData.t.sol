@@ -46,7 +46,7 @@ contract TestUsdnProtocolActionsPrepareClosePositionData is UsdnProtocolBaseFixt
      */
     function test_prepareClosePositionData() public {
         (ClosePositionData memory data, bool liquidated) = protocol.i_prepareClosePositionData(
-            address(this), address(this), address(this), posId, POSITION_AMOUNT, currentPriceData
+            address(this), address(this), address(this), posId, POSITION_AMOUNT, 0, currentPriceData
         );
 
         assertFalse(liquidated, "The position should not have been liquidated");
@@ -65,7 +65,7 @@ contract TestUsdnProtocolActionsPrepareClosePositionData is UsdnProtocolBaseFixt
     function test_prepareClosePositionDataWithALiquidatedPosition() public {
         currentPriceData = abi.encode(liqPrice);
         (ClosePositionData memory data, bool liquidated) = protocol.i_prepareClosePositionData(
-            address(this), address(this), address(this), posId, POSITION_AMOUNT, currentPriceData
+            address(this), address(this), address(this), posId, POSITION_AMOUNT, 0, currentPriceData
         );
 
         assertTrue(liquidated, "The position should have been liquidated");
@@ -104,7 +104,7 @@ contract TestUsdnProtocolActionsPrepareClosePositionData is UsdnProtocolBaseFixt
         currentPriceData = abi.encode(liqPrice);
 
         (ClosePositionData memory data, bool liquidated) = protocol.i_prepareClosePositionData(
-            address(this), address(this), address(this), posId, POSITION_AMOUNT, currentPriceData
+            address(this), address(this), address(this), posId, POSITION_AMOUNT, 0, currentPriceData
         );
 
         assertFalse(liquidated, "The position should have been liquidated");
@@ -115,11 +115,11 @@ contract TestUsdnProtocolActionsPrepareClosePositionData is UsdnProtocolBaseFixt
     /// @notice Assert the data in ClosePositionData depending on `isEarlyReturn`
     function _assertData(ClosePositionData memory data, bool isEarlyReturn) private view {
         uint128 currentPrice = abi.decode(currentPriceData, (uint128));
-        uint8 liquidationPenalty = protocol.getLiquidationPenalty();
+        uint24 liquidationPenalty = protocol.getLiquidationPenalty();
         uint256 positionTotalExpo = protocol.i_calcPositionTotalExpo(
             POSITION_AMOUNT,
             params.initialPrice,
-            protocol.getEffectivePriceForTick(posId.tick - (int24(uint24(liquidationPenalty)) * _tickSpacing))
+            protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(posId.tick))
         );
 
         // asserts that should be done independently from the `isEarlyReturn` param
@@ -155,7 +155,7 @@ contract TestUsdnProtocolActionsPrepareClosePositionData is UsdnProtocolBaseFixt
             );
             assertEq(
                 data.longTradingExpo,
-                uint256(protocol.getLongTradingExpo(currentPrice)),
+                protocol.getLongTradingExpo(currentPrice),
                 "The long trading expo should match the expected value"
             );
             assertEq(

@@ -26,16 +26,15 @@ contract TestUsdnProtocolActionsPrepareValidateOpenPositionData is UsdnProtocolB
         (, posId) = protocol.initiateOpenPosition(
             POSITION_AMOUNT,
             params.initialPrice * 2 / 3,
+            type(uint128).max,
+            protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             currentPriceData,
             EMPTY_PREVIOUS_DATA
         );
 
-        uint8 liquidationPenalty = protocol.getLiquidationPenalty();
-        liqPriceWithoutPenalty =
-            protocol.getEffectivePriceForTick(posId.tick - (int24(uint24(liquidationPenalty)) * _tickSpacing));
+        liqPriceWithoutPenalty = protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(posId.tick));
         (pendingAction,) = protocol.i_getPendingAction(address(this));
         timestampAtInitiate = uint40(block.timestamp);
     }
@@ -100,9 +99,10 @@ contract TestUsdnProtocolActionsPrepareValidateOpenPositionData is UsdnProtocolB
         protocol.initiateOpenPosition(
             POSITION_AMOUNT,
             params.initialPrice * 9 / 10,
+            type(uint128).max,
+            protocol.getMaxLeverage(),
             USER_1,
             USER_1,
-            NO_PERMIT2,
             currentPriceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -125,7 +125,7 @@ contract TestUsdnProtocolActionsPrepareValidateOpenPositionData is UsdnProtocolB
     /// @notice Assert the data in ValidateOpenPositionData depending on `isEarlyReturn`
     function _assertData(ValidateOpenPositionData memory data, bool isEarlyReturn) private view {
         uint128 currentPrice = abi.decode(currentPriceData, (uint128));
-        uint8 liquidationPenalty = protocol.getLiquidationPenalty();
+        uint24 liquidationPenalty = protocol.getLiquidationPenalty();
         uint256 positionTotalExpo =
             protocol.i_calcPositionTotalExpo(POSITION_AMOUNT, params.initialPrice, liqPriceWithoutPenalty);
 

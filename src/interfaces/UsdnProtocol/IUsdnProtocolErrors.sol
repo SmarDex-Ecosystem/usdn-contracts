@@ -12,6 +12,12 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the sender could not accept the ether refund
     error UsdnProtocolEtherRefundFailed();
 
+    /**
+     * @dev Indicates that the validator is not eligible for a security deposit refund
+     * @param validator The address of the validator
+     */
+    error UsdnProtocolNotEligibleForRefund(address validator);
+
     /// @dev Indicates that the provided amount is zero
     error UsdnProtocolZeroAmount();
 
@@ -22,10 +28,10 @@ interface IUsdnProtocolErrors {
     error UsdnProtocolInvalidAddressValidator();
 
     /**
-     * @dev Indicates that the initialization deposit is too low
-     * @param minInitAmount The minimum initialization amount
+     * @dev Indicates that an amount provided during the initialization is too small and do not allow opening
+     * reasonably sized positions afterwards
      */
-    error UsdnProtocolMinInitAmount(uint256 minInitAmount);
+    error UsdnProtocolMinInitAmount();
 
     /**
      * @dev Indicates that the provided USDN contract has a total supply above zero at deployment
@@ -105,6 +111,9 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the new middleware address value is invalid
     error UsdnProtocolInvalidMiddlewareAddress();
 
+    /// @dev Indicates that the provided minimum leverage is invalid
+    error UsdnProtocolInvalidRebalancerMinLeverage();
+
     /// @dev Indicate that the new `minLeverage` value is invalid
     error UsdnProtocolInvalidMinLeverage();
 
@@ -112,7 +121,7 @@ interface IUsdnProtocolErrors {
     error UsdnProtocolInvalidMaxLeverage();
 
     /// @dev Indicates that the new validation deadline value is invalid
-    error UsdnProtocolInvalidValidationDeadline();
+    error UsdnProtocolInvalidValidatorDeadline();
 
     /// @dev Indicates that the new `liquidationPenalty` value is invalid
     error UsdnProtocolInvalidLiquidationPenalty();
@@ -159,9 +168,6 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the tick of the rebalancer position is invalid
     error UsdnProtocolInvalidRebalancerTick();
 
-    /// @dev Indicates that the protocol vault expo is invalid
-    error UsdnProtocolInvalidVaultExpo();
-
     /// @dev Indicates that the protocol long expo is invalid
     error UsdnProtocolInvalidLongExpo();
 
@@ -192,4 +198,19 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the long trading expo is zero, we can't get the effective tick for a liquidation price
     error UsdnProtocolZeroLongTradingExpo();
+
+    /// @dev Indicates that the vault balance is zero, and the calculation cannot be performed
+    error UsdnProtocolEmptyVault();
+
+    /// @dev Indicates that the entry price exceeds the maximum given by the user
+    error UsdnProtocolSlippageMaxPriceExceeded();
+
+    /// @dev Indicates that the current price exceeds the minimum given by the user
+    error UsdnProtocolSlippageMinPriceExceeded();
+
+    /// @dev Indicates that user would not receive enough prediction tokens compared to the expected amount
+    error UsdnProtocolAmountReceivedTooSmall();
+
+    /// @dev Indicates that the payment callback failed
+    error UsdnProtocolPaymentCallbackFailed();
 }

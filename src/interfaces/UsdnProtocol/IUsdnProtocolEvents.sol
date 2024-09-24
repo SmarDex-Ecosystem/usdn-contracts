@@ -13,23 +13,29 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
      * @param to The address that will receive the USDN tokens
      * @param validator The address of the validator that will validate the deposit
      * @param amount The amount of assets that were deposited
+     * @param feeBps The fee in basis points
      * @param timestamp The timestamp of the action
      * @param sdexBurned The amount of SDEX tokens burned
      */
     event InitiatedDeposit(
-        address indexed to, address indexed validator, uint256 amount, uint256 timestamp, uint256 sdexBurned
+        address indexed to,
+        address indexed validator,
+        uint256 amount,
+        uint256 feeBps,
+        uint256 timestamp,
+        uint256 sdexBurned
     );
 
     /**
      * @notice Emitted when a user validates a deposit
      * @param to The address that received the USDN tokens
      * @param validator The address of the validator that validated the deposit
-     * @param amountDeposited The amount of assets that were deposited
+     * @param amountAfterFees The amount of assets that were deposited after fees
      * @param usdnMinted The amount of USDN that was minted
      * @param timestamp The timestamp of the InitiatedDeposit action
      */
     event ValidatedDeposit(
-        address indexed to, address indexed validator, uint256 amountDeposited, uint256 usdnMinted, uint256 timestamp
+        address indexed to, address indexed validator, uint256 amountAfterFees, uint256 usdnMinted, uint256 timestamp
     );
 
     /**
@@ -37,20 +43,27 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
      * @param to The address that will receive the assets
      * @param validator The address of the validator that will validate the withdrawal
      * @param usdnAmount The amount of USDN that will be burned
+     * @param feeBps The fee in basis points
      * @param timestamp The timestamp of the action
      */
-    event InitiatedWithdrawal(address indexed to, address indexed validator, uint256 usdnAmount, uint256 timestamp);
+    event InitiatedWithdrawal(
+        address indexed to, address indexed validator, uint256 usdnAmount, uint256 feeBps, uint256 timestamp
+    );
 
     /**
      * @notice Emitted when a user validates a withdrawal
      * @param to The address that received the assets
      * @param validator The address of the validator that validated the withdrawal
-     * @param amountWithdrawn The amount of assets that were withdrawn
+     * @param amountWithdrawnAfterFees The amount of assets that were withdrawn after fees
      * @param usdnBurned The amount of USDN that was burned
      * @param timestamp The timestamp of the InitiatedWithdrawal action
      */
     event ValidatedWithdrawal(
-        address indexed to, address indexed validator, uint256 amountWithdrawn, uint256 usdnBurned, uint256 timestamp
+        address indexed to,
+        address indexed validator,
+        uint256 amountWithdrawnAfterFees,
+        uint256 usdnBurned,
+        uint256 timestamp
     );
 
     /**
@@ -91,7 +104,7 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
      * @param oldPosId The old position identifier
      * @param newPosId The new position identifier
      */
-    event LiquidationPriceUpdated(PositionId indexed oldPosId, PositionId newPosId);
+    event LiquidationPriceUpdated(PositionId oldPosId, PositionId newPosId);
 
     /**
      * @notice Emitted when a user initiates the closing of all or part of a long position
@@ -179,6 +192,7 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
      * @param bonus The new bonus (in basis points)
      */
     event RebalancerBonusUpdated(uint256 bonus);
+
     /**
      * @notice Emitted when the ratio of USDN to SDEX tokens to burn on deposit is updated
      * @param newRatio The new ratio
@@ -198,6 +212,12 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     event OracleMiddlewareUpdated(address newMiddleware);
 
     /**
+     * @notice Emitted when the minimum leverage of the rebalancer is updated
+     * @param newMinLeverage The new value for the minimum leverage
+     */
+    event RebalancerMinLeverageUpdated(uint256 newMinLeverage);
+
+    /**
      * @notice Emitted when the `minLeverage` is updated
      * @param newMinLeverage The new `minLeverage`
      */
@@ -210,16 +230,19 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     event MaxLeverageUpdated(uint256 newMaxLeverage);
 
     /**
-     * @notice Emitted when the `validationDeadline` is updated
-     * @param newValidationDeadline The new `validationDeadline`
+     * @notice Emitted when the `lowLatencyValidatorDeadline` and `onChainValidatorDeadline` are updated
+     * @param newLowLatencyValidatorDeadline The new deadline for low-latency validation (offset from the initiate
+     * action timestamp)
+     * @param newOnChainValidatorDeadline The new deadline for on-chain validation (offset from the initiate action
+     * timestamp + the oracle middleware's low-latency delay)
      */
-    event ValidationDeadlineUpdated(uint256 newValidationDeadline);
+    event ValidatorDeadlinesUpdated(uint128 newLowLatencyValidatorDeadline, uint128 newOnChainValidatorDeadline);
 
     /**
      * @notice Emitted when the `liquidationPenalty` is updated
      * @param newLiquidationPenalty The new `liquidationPenalty`
      */
-    event LiquidationPenaltyUpdated(uint8 newLiquidationPenalty);
+    event LiquidationPenaltyUpdated(uint24 newLiquidationPenalty);
 
     /**
      * @notice Emitted when the `safetyMargin` is updated
@@ -313,6 +336,7 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
      * @param newDepositLimitBps The new deposit limit
      * @param newWithdrawalLimitBps The new withdrawal limit
      * @param newCloseLimitBps The new close limit
+     * @param newRebalancerCloseLimitBps The new close limit for the rebalancer's position
      * @param newLongImbalanceTargetBps The new long imbalance target
      */
     event ImbalanceLimitsUpdated(
@@ -320,6 +344,7 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
         uint256 newDepositLimitBps,
         uint256 newWithdrawalLimitBps,
         uint256 newCloseLimitBps,
+        uint256 newRebalancerCloseLimitBps,
         int256 newLongImbalanceTargetBps
     );
 
@@ -349,7 +374,7 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
      * @param oldOwner The old owner
      * @param newOwner The new owner
      */
-    event PositionOwnershipTransferred(PositionId indexed posId, address indexed oldOwner, address indexed newOwner);
+    event PositionOwnershipTransferred(PositionId posId, address indexed oldOwner, address indexed newOwner);
 
     /**
      * @notice Emitted when the last funding per day is updated
