@@ -25,7 +25,7 @@ import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.so
 import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.sol";
 
 library UsdnProtocolCoreLibrary {
-    using DoubleEndedQueue for DoubleEndedQueue.Deque; // TO DO
+    using DoubleEndedQueue for DoubleEndedQueue.Deque;
     using HugeUint for HugeUint.Uint512;
     using LibBitmap for LibBitmap.Bitmap;
     using SafeCast for uint256;

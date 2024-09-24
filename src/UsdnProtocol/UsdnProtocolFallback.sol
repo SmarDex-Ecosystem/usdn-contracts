@@ -24,6 +24,21 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     using SafeCast for uint256;
 
     /// @inheritdoc IUsdnProtocolFallback
+    function getEffectivePriceForTick(int24 tick) external view returns (uint128 price_) {
+        return Utils.getEffectivePriceForTick(s, tick);
+    }
+
+    /// @inheritdoc IUsdnProtocolFallback
+    function getEffectivePriceForTick(
+        int24 tick,
+        uint256 assetPrice,
+        uint256 longTradingExpo,
+        HugeUint.Uint512 memory accumulator
+    ) external pure returns (uint128 price_) {
+        return Utils.getEffectivePriceForTick(tick, assetPrice, longTradingExpo, accumulator);
+    }
+
+    /// @inheritdoc IUsdnProtocolFallback
     function previewDeposit(uint256 amount, uint128 price, uint128 timestamp)
         external
         view
