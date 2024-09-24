@@ -10,10 +10,10 @@ import { WstETH } from "../test/utils/WstEth.sol";
 
 import { Utils } from "./Utils.s.sol";
 
-import { LiquidationRewardsManager } from "../src/OracleMiddleware/LiquidationRewardsManager.sol";
+import { LiquidationRewardsManager } from "../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
+import { WstEthOracleMiddleware } from "../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { WstEthOracleMiddleware } from "../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { MockFastGasGwei } from "../src/OracleMiddleware/mock/MockFastGasGwei.sol";
-import { MockLiquidationRewardsManager } from "../src/OracleMiddleware/mock/MockLiquidationRewardsManager.sol";
 import { MockWstEthOracleMiddleware } from "../src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
 import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../src/Usdn/Usdn.sol";
@@ -75,7 +75,7 @@ contract Deploy is Script {
         )
     {
         // validate the Usdn protocol before deploying it
-        _utils.validateProtocol();
+        _utils.validateProtocol("UsdnProtocolImpl.sol", "UsdnProtocolFallback.sol");
 
         if (block.chainid == 1) {
             _chainId = ChainId.Mainnet;
@@ -100,7 +100,7 @@ contract Deploy is Script {
         }
 
         WstEthOracleMiddleware_ = _deployWstEthOracleMiddleware(isProdEnv, address(WstETH_));
-        LiquidationRewardsManager_ = _deployLiquidationRewardsManager(isProdEnv, address(WstETH_));
+        LiquidationRewardsManager_ = _deployLiquidationRewardsManager(address(WstETH_));
 
         // deploy the USDN protocol
         UsdnProtocol_ = _deployProtocol(Usdn_, Sdex_, WstETH_, WstEthOracleMiddleware_, LiquidationRewardsManager_);
@@ -157,7 +157,7 @@ contract Deploy is Script {
                     wstETH,
                     wstEthOracleMiddleware,
                     liquidationRewardsManager,
-                    100, // tick spacing 100 = 1%
+                    100, // tick spacing 100 = 1.05%
                     _feeCollector,
                     Types.Managers({
                         setExternalManager: _deployerAddress,
@@ -215,33 +215,19 @@ contract Deploy is Script {
     /**
      * @notice Deploy the liquidation rewards manager if necessary
      * @dev Will return the already deployed one if an address is in the env variables
-     * @param isProdEnv Env check
      * @param wstETHAddress The address of the WstETH token
      * @return liquidationRewardsManager_ The deployed contract
      */
-    function _deployLiquidationRewardsManager(bool isProdEnv, address wstETHAddress)
+    function _deployLiquidationRewardsManager(address wstETHAddress)
         internal
         returns (LiquidationRewardsManager liquidationRewardsManager_)
     {
         address liquidationRewardsManagerAddress = vm.envOr("LIQUIDATION_REWARDS_MANAGER_ADDRESS", address(0));
-        if (liquidationRewardsManagerAddress != address(0)) {
-            if (isProdEnv) {
-                liquidationRewardsManager_ = LiquidationRewardsManager(liquidationRewardsManagerAddress);
-            } else {
-                liquidationRewardsManager_ = MockLiquidationRewardsManager(liquidationRewardsManagerAddress);
-            }
-        } else {
-            address chainlinkGasPriceFeed = vm.envOr("CHAINLINK_GAS_PRICE_ADDRESS", CHAINLINK_GAS_MAINNET);
-            uint256 chainlinkPriceValidity = vm.envOr("CHAINLINK_GAS_PRICE_VALIDITY", CHAINLINK_GAS_PRICE_VALIDITY);
 
-            if (isProdEnv) {
-                liquidationRewardsManager_ =
-                    new LiquidationRewardsManager(chainlinkGasPriceFeed, IWstETH(wstETHAddress), chainlinkPriceValidity);
-            } else {
-                liquidationRewardsManager_ = new MockLiquidationRewardsManager(
-                    chainlinkGasPriceFeed, IWstETH(wstETHAddress), chainlinkPriceValidity
-                );
-            }
+        if (liquidationRewardsManagerAddress != address(0)) {
+            liquidationRewardsManager_ = LiquidationRewardsManager(liquidationRewardsManagerAddress);
+        } else {
+            liquidationRewardsManager_ = new LiquidationRewardsManager(IWstETH(wstETHAddress));
         }
     }
 

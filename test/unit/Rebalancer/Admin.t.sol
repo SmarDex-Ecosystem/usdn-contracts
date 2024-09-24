@@ -6,6 +6,8 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { ADMIN } from "../../utils/Constants.sol";
 import { RebalancerFixture } from "./utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../src//UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IUsdnProtocolTypes as Types } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
@@ -40,9 +42,6 @@ contract TestRebalancerAdmin is RebalancerFixture {
 
         vm.expectRevert(RebalancerUnauthorized.selector);
         rebalancer.ownershipCallback(address(this), Types.PositionId(0, 0, 0));
-
-        vm.expectRevert(customError);
-        rebalancer.setCloseImbalanceLimitBps(0);
 
         vm.expectRevert(customError);
         rebalancer.setTimeLimits(0, 0, 0);
@@ -98,21 +97,8 @@ contract TestRebalancerAdmin is RebalancerFixture {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @custom:scenario Trying to set the max leverage lower than the USDN protocol's value
-     * @custom:given A value lower than the USDN protocol's max leverage
-     * @custom:when `setPositionMaxLeverage` is called with this value
-     * @custom:then The call reverts with a {RebalancerInvalidMaxLeverage} error
-     */
-    function test_RevertWhen_setPositionMaxLeverageWithLeverageTooLow() public adminPrank {
-        uint256 minLeverage = usdnProtocol.getMinLeverage();
-
-        vm.expectRevert(RebalancerInvalidMaxLeverage.selector);
-        rebalancer.setPositionMaxLeverage(minLeverage - 1);
-    }
-
-    /**
-     * @custom:scenario Trying to set the max leverage lower than the USDN protocol's value
-     * @custom:given A value lower than the USDN protocol's max leverage
+     * @custom:scenario Trying to set the maximum leverage higher than the USDN protocol's value
+     * @custom:given A value higher than the USDN protocol's maximum leverage
      * @custom:when `setPositionMaxLeverage` is called with this value
      * @custom:then The call reverts with a {RebalancerInvalidMaxLeverage} error
      */
@@ -124,21 +110,22 @@ contract TestRebalancerAdmin is RebalancerFixture {
     }
 
     /**
-     * @custom:scenario Trying to set the max leverage from an address that is not the owner
-     * @custom:given The caller not being the owner
-     * @custom:when `setPositionMaxLeverage` is called
-     * @custom:then The call reverts with an {OwnableUnauthorizedAccount} error
+     * @custom:scenario Trying to set the maximum leverage equal to the rebalancer minimum leverage value defined by
+     * the USDN protocol
+     * @custom:given A value equal to the USDN protocol's minimum leverage
+     * @custom:when `setPositionMaxLeverage` is called with this value
+     * @custom:then The call reverts with a {RebalancerInvalidMaxLeverage} error
      */
-    function test_RevertWhen_setPositionMaxLeverageWithCallerNotTheOwner() public {
-        uint256 maxLeverage = usdnProtocol.getMaxLeverage();
+    function test_RevertWhen_setPositionMaxLeverageLowerThanMinLeverage() public adminPrank {
+        uint256 minLeverage = usdnProtocol.REBALANCER_MIN_LEVERAGE();
 
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
-        rebalancer.setPositionMaxLeverage(maxLeverage - 1);
+        vm.expectRevert(RebalancerInvalidMaxLeverage.selector);
+        rebalancer.setPositionMaxLeverage(minLeverage);
     }
 
     /**
-     * @custom:scenario Setting the max leverage of the rebalancer
-     * @custom:given A value lower than the USDN protocol's max leverage
+     * @custom:scenario Setting the maximum leverage of the rebalancer
+     * @custom:given A value lower than the USDN protocol's maximum leverage
      * @custom:when {setPositionMaxLeverage} is called with this value
      * @custom:then The value of `_positionMaxLeverage` is updated
      * @custom:and A {PositionMaxLeverageUpdated} event is emitted
@@ -151,7 +138,7 @@ contract TestRebalancerAdmin is RebalancerFixture {
         emit PositionMaxLeverageUpdated(newMaxLeverage);
         rebalancer.setPositionMaxLeverage(newMaxLeverage);
 
-        assertEq(rebalancer.getPositionMaxLeverage(), newMaxLeverage, "The max leverage should have been updated");
+        assertEq(rebalancer.getPositionMaxLeverage(), newMaxLeverage, "The maximum leverage should have been updated");
     }
 
     /* -------------------------------------------------------------------------- */

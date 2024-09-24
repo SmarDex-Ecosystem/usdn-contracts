@@ -5,25 +5,12 @@ import { IUsdnProtocolLong } from "../interfaces/UsdnProtocol/IUsdnProtocolLong.
 import { HugeUint } from "../libraries/HugeUint.sol";
 import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { UsdnProtocolLongLibrary as Long } from "./libraries/UsdnProtocolLongLibrary.sol";
+import { UsdnProtocolUtilsLibrary as Utils } from "./libraries/UsdnProtocolUtilsLibrary.sol";
 
 abstract contract UsdnProtocolLong is UsdnProtocolStorage, IUsdnProtocolLong {
     /// @inheritdoc IUsdnProtocolLong
     function minTick() external view returns (int24 tick_) {
         return Long.minTick(s);
-    }
-
-    /// @inheritdoc IUsdnProtocolLong
-    function maxTick() external view returns (int24 tick_) {
-        return Long.maxTick(s);
-    }
-
-    /// @inheritdoc IUsdnProtocolLong
-    function getLongPosition(PositionId memory posId)
-        external
-        view
-        returns (Position memory pos_, uint8 liquidationPenalty_)
-    {
-        return Long.getLongPosition(s, posId);
     }
 
     /// @inheritdoc IUsdnProtocolLong
@@ -53,7 +40,7 @@ abstract contract UsdnProtocolLong is UsdnProtocolStorage, IUsdnProtocolLong {
 
     /// @inheritdoc IUsdnProtocolLong
     function getEffectivePriceForTick(int24 tick) external view returns (uint128 price_) {
-        return Long.getEffectivePriceForTick(s, tick);
+        return Utils.getEffectivePriceForTick(s, tick);
     }
 
     /// @inheritdoc IUsdnProtocolLong
@@ -63,25 +50,11 @@ abstract contract UsdnProtocolLong is UsdnProtocolStorage, IUsdnProtocolLong {
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator
     ) external pure returns (uint128 price_) {
-        return Long.getEffectivePriceForTick(tick, assetPrice, longTradingExpo, accumulator);
+        return Utils.getEffectivePriceForTick(tick, assetPrice, longTradingExpo, accumulator);
     }
 
     /// @inheritdoc IUsdnProtocolLong
-    function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
-        external
-        view
-        returns (int256 available_)
-    {
-        return Long.longAssetAvailableWithFunding(s, currentPrice, timestamp);
-    }
-
-    /// @inheritdoc IUsdnProtocolLong
-    function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256 expo_) {
-        return Long.longTradingExpoWithFunding(s, currentPrice, timestamp);
-    }
-
-    /// @inheritdoc IUsdnProtocolLong
-    function getTickLiquidationPenalty(int24 tick) external view returns (uint8 liquidationPenalty_) {
+    function getTickLiquidationPenalty(int24 tick) external view returns (uint24 liquidationPenalty_) {
         return Long.getTickLiquidationPenalty(s, tick);
     }
 }

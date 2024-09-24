@@ -12,6 +12,22 @@ import { IOracleMiddlewareEvents } from "./IOracleMiddlewareEvents.sol";
  */
 interface IOracleMiddleware is IBaseOracleMiddleware, IOracleMiddlewareErrors, IOracleMiddlewareEvents {
     /* -------------------------------------------------------------------------- */
+    /*                                    Roles                                   */
+    /* -------------------------------------------------------------------------- */
+
+    /**
+     * @notice The admin role's signature
+     * @return Get the role signature
+     */
+    function ADMIN_ROLE() external pure returns (bytes32);
+
+    /**
+     * @notice The pausable role's signature
+     * @return Get the role signature
+     */
+    function PAUSABLE_ROLE() external pure returns (bytes32);
+
+    /* -------------------------------------------------------------------------- */
     /*                                  Constants                                 */
     /* -------------------------------------------------------------------------- */
 
@@ -38,12 +54,6 @@ interface IOracleMiddleware is IBaseOracleMiddleware, IOracleMiddlewareErrors, I
      * @return The confidence ratio basis points
      */
     function getConfRatioBps() external view returns (uint16);
-
-    /**
-     * @notice Getter for the delay during which a low latency oracle price validation is available
-     * @return The low latency delay
-     */
-    function getLowLatencyDelay() external view returns (uint16);
 
     /* -------------------------------------------------------------------------- */
     /*                               Owner features                               */

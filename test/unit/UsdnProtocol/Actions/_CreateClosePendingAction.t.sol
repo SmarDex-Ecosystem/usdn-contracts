@@ -19,7 +19,7 @@ contract TestUsdnProtocolActionsCreateClosePendingAction is UsdnProtocolBaseFixt
         _setUp(params);
 
         data.lastPrice = DEFAULT_PARAMS.initialPrice * 11 / 10; // 10% price increase
-        data.longTradingExpo = uint256(protocol.getLongTradingExpo(data.lastPrice));
+        data.longTradingExpo = protocol.getLongTradingExpo(data.lastPrice);
         data.liqMulAcc = protocol.getLiqMultiplierAccumulator();
     }
 

@@ -12,7 +12,7 @@ abstract contract UsdnProtocolCore is UsdnProtocolStorage, IUsdnProtocolCore {
         uint128 longAmount,
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData
-    ) external payable protocolInitializer {
+    ) external payable protocolInitializer onlyRole(DEFAULT_ADMIN_ROLE) {
         return Core.initialize(s, depositAmount, longAmount, desiredLiqPrice, currentPriceData);
     }
 
@@ -26,25 +26,25 @@ abstract contract UsdnProtocolCore is UsdnProtocolStorage, IUsdnProtocolCore {
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function vaultTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp)
-        external
-        view
-        returns (int256 expo_)
-    {
-        return Core.vaultTradingExpoWithFunding(s, currentPrice, timestamp);
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
-    function getActionablePendingActions(address currentUser)
-        external
-        view
-        returns (PendingAction[] memory actions_, uint128[] memory rawIndices_)
-    {
-        return Core.getActionablePendingActions(s, currentUser);
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
     function getUserPendingAction(address user) external view returns (PendingAction memory action_) {
         return Core.getUserPendingAction(s, user);
+    }
+
+    /// @inheritdoc IUsdnProtocolCore
+    function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
+        external
+        view
+        returns (uint256 available_)
+    {
+        return Core.longAssetAvailableWithFunding(s, currentPrice, timestamp);
+    }
+
+    /// @inheritdoc IUsdnProtocolCore
+    function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp)
+        external
+        view
+        returns (uint256 expo_)
+    {
+        return Core.longTradingExpoWithFunding(s, currentPrice, timestamp);
     }
 }

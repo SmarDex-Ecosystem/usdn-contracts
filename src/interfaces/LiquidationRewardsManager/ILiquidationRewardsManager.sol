@@ -46,12 +46,6 @@ interface ILiquidationRewardsManager is IBaseLiquidationRewardsManager, ILiquida
      */
     function MAX_REBALANCER_GAS_USED() external pure returns (uint256);
 
-    /**
-     * @notice Maximum upper limit for the gas price
-     * @return The maximum upper limit for the gas price
-     */
-    function MAX_GAS_PRICE_LIMIT() external pure returns (uint256);
-
     /* -------------------------------------------------------------------------- */
     /*                                  Getters Setters                           */
     /* -------------------------------------------------------------------------- */
@@ -64,19 +58,25 @@ interface ILiquidationRewardsManager is IBaseLiquidationRewardsManager, ILiquida
 
     /**
      * @notice Set new parameters for the rewards calculation
-     * @param gasUsedPerTick Gas used per tick liquidated
+     * @param gasUsedPerTick Gas used per tick to liquidate
      * @param otherGasUsed Gas used for the rest of the computation
      * @param rebaseGasUsed Gas used for the optional USDN rebase
      * @param rebalancerGasUsed Gas used for the optional rebalancer trigger
-     * @param gasPriceLimit Upper limit for the gas price
-     * @param multiplierBps Multiplier for the rewards (will be divided by BPS_DIVISOR)
+     * @param baseFeeOffset Offset added to the block's base gas fee
+     * @param gasMultiplierBps Multiplier for the amount of gas used in BPS
+     * @param positionBonusMultiplierBps Multiplier for the position size bonus in BPS
+     * @param fixedReward Fixed amount added to the final reward (native currency, will be converted to wstETH)
+     * @param maxReward Upper limit for the rewards (native currency, will be converted to wstETH)
      */
     function setRewardsParameters(
         uint32 gasUsedPerTick,
         uint32 otherGasUsed,
         uint32 rebaseGasUsed,
         uint32 rebalancerGasUsed,
-        uint64 gasPriceLimit,
-        uint32 multiplierBps
+        uint64 baseFeeOffset,
+        uint16 gasMultiplierBps,
+        uint16 positionBonusMultiplierBps,
+        uint128 fixedReward,
+        uint128 maxReward
     ) external;
 }

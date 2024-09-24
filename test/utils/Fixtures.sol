@@ -12,6 +12,10 @@ import "./Constants.sol" as constants;
 contract BaseFixture is Test {
     uint256 constant BPS_DIVISOR = 10_000;
 
+    uint256 internal constant DISABLE_MIN_PRICE = 0;
+    uint256 internal constant DISABLE_SHARES_OUT_MIN = 0;
+    uint256 internal constant DISABLE_AMOUNT_OUT_MIN = 0;
+
     modifier ethMainnetFork() {
         string memory url = vm.rpcUrl("mainnet");
         vm.createSelectFork(url);
@@ -46,6 +50,7 @@ contract BaseFixture is Test {
         vm.label(constants.USER_3, "User3");
         vm.label(constants.USER_4, "User4");
         dealAccounts();
+        persistAccounts();
 
         /* -------------------------------------------------------------------------- */
         /*                              Ethereum mainnet                              */
@@ -107,6 +112,14 @@ contract BaseFixture is Test {
         vm.deal(constants.USER_2, 10_000 ether);
         vm.deal(constants.USER_3, 10_000 ether);
         vm.deal(constants.USER_4, 10_000 ether);
+    }
+
+    // @dev this function aims to persist users when use vm.rollFork in tests
+    function persistAccounts() internal {
+        vm.makePersistent(constants.USER_1);
+        vm.makePersistent(constants.USER_2);
+        vm.makePersistent(constants.USER_3);
+        vm.makePersistent(constants.USER_4);
     }
 
     /**
@@ -198,8 +211,4 @@ contract BaseFixture is Test {
 
         return vm.ffi(cmds);
     }
-
-    // force ignore from coverage report
-    // until https://github.com/foundry-rs/foundry/issues/2988 is fixed
-    function test() public virtual { }
 }

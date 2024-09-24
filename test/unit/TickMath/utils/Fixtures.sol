@@ -26,8 +26,4 @@ contract TickMathFixture is BaseFixture {
         res_ = int24(int256(_bound) - int256(type(int24).max));
         console2.log("Bound Result", res_);
     }
-
-    // force ignore from coverage report
-    // until https://github.com/foundry-rs/foundry/issues/2988 is fixed
-    function test() public override { }
 }

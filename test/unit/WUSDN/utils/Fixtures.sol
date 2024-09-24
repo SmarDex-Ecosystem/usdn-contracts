@@ -34,8 +34,4 @@ contract WusdnTokenFixture is BaseFixture, IWusdnErrors, IWusdnEvents {
         usdn.grantRole(usdn.REBASER_ROLE(), ADMIN);
         usdn.mint(address(this), 100 ether);
     }
-
-    // force ignore from coverage report
-    // until https://github.com/foundry-rs/foundry/issues/2988 is fixed
-    function test() public virtual override { }
 }

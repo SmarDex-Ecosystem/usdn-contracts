@@ -39,6 +39,13 @@ interface IBaseOracleMiddleware {
     function getValidationDelay() external view returns (uint256);
 
     /**
+     * @notice The maximum delay (in seconds) after initiation during which a low-latency price oracle can be used for
+     * validation
+     * @return The maximum delay for low-latency validation
+     */
+    function getLowLatencyDelay() external view returns (uint16);
+
+    /**
      * @notice Returns the number of decimals for the price (constant)
      * @return The number of decimals
      */

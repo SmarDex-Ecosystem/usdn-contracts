@@ -26,7 +26,7 @@ contract TestUsdnProtocolValidateActionablePendingActions is UsdnProtocolBaseFix
      * @custom:then All four actions are validated and the returned count is 4
      * @custom:and the pending actions are removed
      */
-    function test_validateActionablePendingActions() public {
+    function test_validateActionablePendingActionsSimple() public {
         PreviousActionsData memory previousActionsData = _setUpFourPendingActions();
 
         vm.expectEmit(true, true, false, false);
@@ -191,7 +191,7 @@ contract TestUsdnProtocolValidateActionablePendingActions is UsdnProtocolBaseFix
         setUpUserPositionInVault(USER_3, ProtocolAction.InitiateDeposit, 1 ether, params.initialPrice);
         setUpUserPositionInVault(USER_4, ProtocolAction.InitiateWithdrawal, 1 ether, params.initialPrice);
         // make actionable
-        skip(protocol.getValidationDeadline() + 1);
+        _waitBeforeActionablePendingAction();
 
         (PendingAction[] memory actions, uint128[] memory rawIndices) =
             protocol.getActionablePendingActions(address(this));

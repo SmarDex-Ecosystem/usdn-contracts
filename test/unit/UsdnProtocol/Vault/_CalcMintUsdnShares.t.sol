@@ -1,7 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
+
+import { UsdnProtocolUtilsLibrary as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
+import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
 /**
  * @custom:feature The _calcMintUsdnShares internal function of the UsdnProtocolVault contract.
@@ -13,12 +18,12 @@ contract TestUsdnProtocolCalcMintUsdnShares is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Compare calculations of `_calcMintUsdnShares` with more precise
-     * values and vaultBalance equal to zero
+     * @custom:scenario Compare calculations of USDN mint calculation with more precise
+     * values when vaultBalance equal to zero
      * @custom:given An amount between 0 and `type(uint256).max`
      * @custom:and A price between 0 and `type(uint128).max/amount` or `type(uint128).max`
      * @custom:and A decimals value calculated from the protocol
-     * @custom:when The `_calcMintUsdnShares` function is called with the value
+     * @custom:when The mint amount is calculated
      * @custom:then The result is equal to the result of the Rust implementation
      * @param amount The amount of asset to be converted into USDN shares
      * @param price The price of the asset
@@ -48,7 +53,9 @@ contract TestUsdnProtocolCalcMintUsdnShares is UsdnProtocolBaseFixture {
         require(keccak256(result) != keccak256(""), "Rust implementation returned an error");
 
         uint256 calcRebaseTotalSupplyRust = abi.decode(result, (uint256));
-        uint256 calcRebaseTotalSupplySol = protocol.i_calcMintUsdnShares(amount, 0, 0, price);
+        uint256 calcRebaseTotalSupplySol = usdn.convertToShares(
+            FixedPointMathLib.fullMulDiv(amount, price, 10 ** (assetDecimals + priceFeedDecimals - tokensDecimals))
+        );
         assertEq(
             calcRebaseTotalSupplySol,
             calcRebaseTotalSupplyRust,
@@ -84,11 +91,22 @@ contract TestUsdnProtocolCalcMintUsdnShares is UsdnProtocolBaseFixture {
         require(keccak256(result) != keccak256(""), "Rust implementation returned an error");
 
         uint256 calcMintUsdnSharesRust = abi.decode(result, (uint256));
-        uint256 calcMintUsdnSharesSol = protocol.i_calcMintUsdnShares(amount, vaultBalance, usdnTotalShares, 1);
+        uint256 calcMintUsdnSharesSol = Utils._calcMintUsdnShares(amount, vaultBalance, usdnTotalShares);
         assertEq(
             calcMintUsdnSharesSol,
             calcMintUsdnSharesRust,
             "The rust and solidity implementations should return the same value"
         );
+    }
+
+    /**
+     * @custom:scenario Revert when the vault balance is zero
+     * @custom:given A vault balance equal to zero
+     * @custom:when The `_calcMintUsdnShares` function is called
+     * @custom:then The transaction reverts with `UsdnProtocolEmptyVault`
+     */
+    function test_RevertWhen_calcMintUsdnSharesBalanceZero() public {
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolEmptyVault.selector);
+        Utils._calcMintUsdnShares(1, 0, 1);
     }
 }

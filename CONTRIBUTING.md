@@ -153,10 +153,11 @@ For invariant testing, use the third argument even if there is only one assert s
 Example:
 
 ```solidity
-function test_priceToTick() public {
-    assertEq(handler.getClosestTickAtPrice(904_882_630_897_776_112), -100, "at tick -100");
-    assertEq(handler.getClosestTickAtPrice(1 ether), 0, "at tick 0");
-    assertEq(handler.getClosestTickAtPrice(1.001 ether), 1, "at tick 1");
+function test_tickToPrice() public view {
+    assertEq(handler.getPriceAtTick(-100), 990_050_328_741_209_514, "price at tick -100");
+    assertEq(handler.getPriceAtTick(0), 1 ether, "price at tick 0");
+    assertApproxEqAbs(handler.getPriceAtTick(1), 1.0001 ether, 1, "price at tick 1"); // We are one wei off here
+    assertEq(handler.getPriceAtTick(100), 1_010_049_662_092_876_534, "price at tick 100");
 }
 
 function invariant_totalSupply() public {

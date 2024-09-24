@@ -26,7 +26,6 @@ ignored_error_codes = [
 
 # -------------------------------- Remappings -------------------------------- #
 
-
 remappings = [
     "@chainlink/=dependencies/@chainlink-1.2.0/",
     "@openzeppelin/contracts-upgradeable/=dependencies/@openzeppelin-contracts-upgradeable-5.0.2/",
@@ -35,7 +34,7 @@ remappings = [
     "@redstone-finance/evm-connector/=dependencies/@redstone-finance-evm-connector-0.6.1/",
     "@uniswap/permit2/=dependencies/@uniswap-permit2-1.0.0/",
     "forge-std/=dependencies/forge-std-1.9.2/src/",
-    "openzeppelin-foundry-upgrades/=dependencies/openzeppelin-foundry-upgrades-0.3.1/src/",
+    "openzeppelin-foundry-upgrades/=dependencies/openzeppelin-foundry-upgrades-0.3.3/src/",
     "solady/src/=dependencies/solady-0.0.228/src/",
 ]
 
@@ -132,7 +131,15 @@ anvil = "${URL_ANVIL}"
 [etherscan]
 mainnet = { key = "${ETHERSCAN_API_KEY}" }
 
+# ---------------------------------------------------------------------------- #
+#                                 Dependencies                                 #
+# ---------------------------------------------------------------------------- #
+
+[soldeer]
+remappings_generate = false
+
 [dependencies]
+solady = "0.0.228"
 "@chainlink" = { version = "1.2.0", url = "https://github.com/smartcontractkit/chainlink/archive/c3dc764bba9e1c57b3f7933bcb804a1740fab695.zip" }
 "@openzeppelin-contracts-upgradeable" = "5.0.2"
 "@openzeppelin-contracts" = "5.0.2"
@@ -140,5 +147,4 @@ mainnet = { key = "${ETHERSCAN_API_KEY}" }
 "@redstone-finance-evm-connector" = "0.6.1"
 "@uniswap-permit2" = { version = "1.0.0", url = "https://github.com/Uniswap/permit2/archive/cc56ad0f3439c502c246fc5cfcc3db92bb8b7219.zip" }
 forge-std = "1.9.2"
-openzeppelin-foundry-upgrades = "0.3.1"
-solady = "0.0.228"
+openzeppelin-foundry-upgrades = "0.3.3"

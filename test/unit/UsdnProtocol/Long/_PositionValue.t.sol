@@ -46,5 +46,13 @@ contract TestUsdnProtocolLongPositionValue is UsdnProtocolBaseFixture {
         positionTotalExpo = 4 ether;
         value = protocol.i_positionValue(2000 ether, 750 ether, positionTotalExpo);
         assertEq(value, 2.5 ether, "Position with 4x leverage should have a 2.5 ether value");
+
+        positionTotalExpo = 5 ether;
+        value = protocol.i_positionValue(2000 ether, 0, positionTotalExpo);
+        assertEq(
+            value,
+            int128(positionTotalExpo),
+            "Position with 0 as liquidation price should have a value equal to the totalExpo"
+        );
     }
 }
