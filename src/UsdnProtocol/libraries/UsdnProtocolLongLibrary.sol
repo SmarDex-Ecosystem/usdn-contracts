@@ -325,6 +325,57 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
+     * @notice Remove the provided total amount from its position and update the tick data and position
+     * @dev Note: this method does not update the long balance
+     * If the amount to remove is greater than or equal to the position's total amount, the position is deleted instead
+     * @param s The storage of the protocol
+     * @param tick The tick to remove from
+     * @param index Index of the position in the tick array
+     * @param pos The position to remove the amount from
+     * @param amountToRemove The amount to remove from the position
+     * @param totalExpoToRemove The total expo to remove from the position
+     * @return liqMultiplierAccumulator_ The updated liquidation multiplier accumulator
+     */
+    function _removeAmountFromPosition(
+        Types.Storage storage s,
+        int24 tick,
+        uint256 index,
+        Types.Position memory pos,
+        uint128 amountToRemove,
+        uint128 totalExpoToRemove
+    ) public returns (HugeUint.Uint512 memory liqMultiplierAccumulator_) {
+        (bytes32 tickHash,) = Utils._tickHash(s, tick);
+        Types.TickData storage tickData = s._tickData[tickHash];
+        uint256 unadjustedTickPrice =
+            TickMath.getPriceAtTick(Utils.calcTickWithoutPenalty(tick, tickData.liquidationPenalty));
+        if (amountToRemove < pos.amount) {
+            Types.Position storage position = s._longPositions[tickHash][index];
+            position.totalExpo = pos.totalExpo - totalExpoToRemove;
+
+            unchecked {
+                position.amount = pos.amount - amountToRemove;
+            }
+        } else {
+            totalExpoToRemove = pos.totalExpo;
+            tickData.totalPos -= 1;
+            --s._totalLongPositions;
+
+            // remove from tick array (set to zero to avoid shifting indices)
+            delete s._longPositions[tickHash][index];
+            if (tickData.totalPos == 0) {
+                // we removed the last position in the tick
+                s._tickBitmap.unset(Utils._calcBitmapIndexFromTick(s, tick));
+            }
+        }
+
+        s._totalExpo -= totalExpoToRemove;
+        tickData.totalExpo -= totalExpoToRemove;
+        liqMultiplierAccumulator_ =
+            s._liqMultiplierAccumulator.sub(HugeUint.wrap(unadjustedTickPrice * totalExpoToRemove));
+        s._liqMultiplierAccumulator = liqMultiplierAccumulator_;
+    }
+
+    /**
      * @notice For a desired liquidation price, get the tick number with penalty and liquidation price without penalty
      * @dev This function first calculates a tick for the desired liq price (no rounding), then adds the penalty to the
      * tick and rounds down to the nearest tick spacing. Then it subtracts the penalty from the final tick and
@@ -716,7 +767,7 @@ library UsdnProtocolLongLibrary {
 
         // fully close the position and update the cache
         cache.liqMultiplierAccumulator =
-            ActionsLong._removeAmountFromPosition(s, posId.tick, posId.index, pos, pos.amount, pos.totalExpo);
+            _removeAmountFromPosition(s, posId.tick, posId.index, pos, pos.amount, pos.totalExpo);
 
         // update the cache
         cache.totalExpo -= pos.totalExpo;

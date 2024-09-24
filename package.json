@@ -1,6 +1,6 @@
 {
   "name": "@smardex/usdn-contracts",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "description": "Contracts for the USDN token and derivatives protocol",
   "repository": "git@github.com:SmarDex-Ecosystem/usdn-contracts.git",
   "author": "RA2 Tech",
@@ -26,7 +26,11 @@
     "test": "forge test -vvv"
   },
   "main": "dist/index.js",
-  "files": ["dist", "broadcast", "docs"],
+  "files": [
+    "dist",
+    "broadcast",
+    "docs"
+  ],
   "devDependencies": {
     "@biomejs/biome": "^1.8.3",
     "@defi-wonderland/natspec-smells": "^1.1.4",

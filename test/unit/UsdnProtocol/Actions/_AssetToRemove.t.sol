@@ -62,7 +62,7 @@ contract TestUsdnProtocolActionsAssetToRemove is UsdnProtocolBaseFixture {
         uint128 price = 500 ether;
         skip(1 weeks);
         // liquidate the default position
-        protocol.mockLiquidate(abi.encode(price), 10);
+        protocol.mockLiquidate(abi.encode(price));
 
         uint256 balanceLong = protocol.getBalanceLong();
 

@@ -40,6 +40,7 @@ contract TestUsdnProtocolPreviewDeposit is UsdnProtocolBaseFixture {
             DISABLE_SHARES_OUT_MIN,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             currentPrice,
             EMPTY_PREVIOUS_DATA
         );

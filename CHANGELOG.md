@@ -1,5 +1,55 @@
 # Changelog
 
+## [0.19.0](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v0.18.0...v0.19.0) (2024-09-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* **liquidate:** the iterations parameter of the liquidate function has been removed
+* add `deadline ` variable in `initiateOpenPosition`, `initiateClosePosition`,`initiateDeposit`, and `initiateWithdrawal` functions. Also, I have added It inside the Rebalancer on `initiateClosePosition` function
+* `IBaseLiquidationRewardsManager.getLiquidationRewards` now expects an array of liquidated ticks info and the current asset price for the first two parameters. `ILiquidationRewardsManager` has more parameters in `setRewardsParameters` and the associated `RewardsParametersUpdated` event. `IUsdnProtocolActions.liquidate` now returns an array of `LiqTickInfo`. The `LiquidationsEffects` struct has a new type `LiqTickInfo[]` for the `liquidatedTicks` member.
+* **initialize:** MIN_INIT_DEPOSIT() is not available anymore
+* The external function vaultTradingExpoWithFunding has been removed
+* remove `permit2TokenBitfield` variable in `initiateOpenPosition` and `initiateDeposit` functions.
+* `initiateDeposit` has a new argument named `amountMinOut` and `initiateWithdrawal` has a new argument named `amountMinOut`. The user can set the minimum accepted stETh or USDN wants to be received
+* add min price on initiate close ([#569](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/569))
+
+### Features
+
+* add deadline on each initiate actions ([#588](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/588)) ([97f4d4b](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/97f4d4b564b6ab1a8a3ce505bb9ba33fff49cbbf))
+* add max price on initiate open ([#562](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/562)) ([2a8adb1](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/2a8adb1e51a1aad2c341e30d547c5acd401d4b90))
+* add min max leverage on initialize position ([#579](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/579)) ([853ef63](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/853ef63e32b44260e48c2af33773f41ba92c4af5))
+* add min price on initiate close ([#569](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/569)) ([c977bae](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/c977bae5f5ff206637be22a62c35521c06dcdcbd))
+* add slippage vault side ([#581](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/581)) ([4da907d](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/4da907dbfe0d0157e09bc07fa58fbe6be1d2e7a2))
+* add stETH and wstETH mock contracts ([#570](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/570)) ([71e21f5](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/71e21f5d5ece11c5114a73a969eb5774d3ea35c0))
+* callback on initiates and remove permit2 ([#582](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/582)) ([47e5701](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/47e5701f9a450d665db09d911cffa1facfcc262e))
+* fix struct ([#589](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/589)) ([0461194](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/0461194441828cd5c364fae16185b12e7e54b283))
+* implementation initialization ([#593](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/593)) ([433f1f1](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/433f1f1d159b69e37e4e53501e7e056aae649004))
+* **initialize:** add checks on amounts to make sure positions can be opened ([#584](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/584)) ([f8469a6](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/f8469a611c5b006dded25173d4f23c19da1b7f41))
+* **liquidate:** removes the iterations parameter for the external function ([#586](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/586)) ([51d1a5b](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/51d1a5b7e83e6db964fff8d02f88698882039cc8))
+* **withdraw:** add callback for router to transfer shares ([#592](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/592)) ([03ec9f9](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/03ec9f977c7699c1de7c0d4947c39d83fe11c5b5))
+
+
+### Bug Fixes
+
+* enforce CEI pattern in validate actions ([#598](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/598)) ([41ed217](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/41ed2179d474a4eea1d1d209230568bd0db0ac54))
+* **middleware:** fix flaky tests ([#591](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/591)) ([68ff15e](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/68ff15e9720ed9cff84ac601d82fc03b69a839a7))
+* **slither:** ignore slither arbitrary-send-eth error in permissioned function ([#590](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/590)) ([46ce477](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/46ce47728f865ebc03d9d6ddedecc69509eaa57a))
+* the trading expo cannot become negative anymore ([#573](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/573)) ([a0e9cbc](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/a0e9cbc8b18148bfcc02289fd888bef003647e10))
+* **usdn:** rounding edge case ([#597](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/597)) ([ef17cb8](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/ef17cb87f3b0377db1d434d236bc68665a1d24ff))
+
+
+### Performance Improvements
+
+* delete ActionsVault lib and change functions visibility ([#577](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/577)) ([611d162](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/611d16267153dd986cdd7f323b199ebe7e0c2d3d))
+* reduce `validateActionablePendingActions` gas usage ([#574](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/574)) ([12baa7a](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/12baa7a06bc2bae6f87e274152be61520e2328cd))
+* reduce protocol size ([#600](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/600)) ([83515b5](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/83515b56e014bc4421a0f2e97c490ba517d01638))
+
+
+### Code Refactoring
+
+* new liquidation rewards formula ([#583](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/583)) ([1d3a2ee](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/1d3a2eecedb482fd4350306722238c592d644f95))
+
 ## [0.18.0](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v0.17.2...v0.18.0) (2024-09-12)
 
 

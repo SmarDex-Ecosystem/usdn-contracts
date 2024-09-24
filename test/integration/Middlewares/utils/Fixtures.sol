@@ -3,6 +3,7 @@ pragma solidity 0.8.26;
 
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
+import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 
 import { CHAINLINK_ORACLE_ETH, PYTH_ETH_USD, PYTH_ORACLE, WSTETH } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
@@ -58,6 +59,7 @@ contract ActionsIntegrationFixture is IOracleMiddlewareErrors, IUsdnProtocolType
 
 contract CommonBaseIntegrationFixture is BaseFixture {
     AggregatorV3Interface internal chainlinkOnChain;
+    IPyth internal pyth;
 
     function _getHermesApiSignature(bytes32 feed, uint256 timestamp)
         internal
@@ -75,6 +77,10 @@ contract CommonBaseIntegrationFixture is BaseFixture {
         return (uint256(price), uint256(timestamp));
     }
 
+    function getPythUnsafePrice() internal view returns (PythStructs.Price memory) {
+        return pyth.getPriceUnsafe(PYTH_ETH_USD);
+    }
+
     function getHermesApiSignature(bytes32 feed, uint256 timestamp)
         internal
         returns (uint256 price_, uint256 conf_, uint256 decimals_, uint256 publishTime_, bytes memory vaa_)
@@ -89,7 +95,6 @@ contract CommonBaseIntegrationFixture is BaseFixture {
  * @dev Utils for testing the oracle middleware
  */
 contract OracleMiddlewareBaseIntegrationFixture is CommonBaseIntegrationFixture, ActionsIntegrationFixture {
-    IPyth internal pyth;
     OracleMiddleware public oracleMiddleware;
 
     modifier reSetUp() {
@@ -117,7 +122,6 @@ contract OracleMiddlewareBaseIntegrationFixture is CommonBaseIntegrationFixture,
  * @dev Utils for testing the oracle middleware
  */
 contract WstethIntegrationFixture is CommonBaseIntegrationFixture, ActionsIntegrationFixture {
-    IPyth internal pyth;
     WstEthOracleMiddleware public wstethMiddleware;
     IWstETH public constant WST_ETH = IWstETH(WSTETH);
 
