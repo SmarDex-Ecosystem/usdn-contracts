@@ -89,9 +89,9 @@ contract Utils is Script {
         uint8 i = 0;
 
         // create the command to run the functionClashes.ts script:
-        // npx ts-node UsdnProtocolImpl.sol UsdnProtocolFallback.sol -s UsdnProtocolStorage.sol
+        // npx tsx UsdnProtocolImpl.sol UsdnProtocolFallback.sol -s UsdnProtocolStorage.sol
         inputs_[i++] = "npx";
-        inputs_[i++] = "ts-node";
+        inputs_[i++] = "tsx";
         inputs_[i++] = FUNC_CLASHES_SCRIPT_PATH;
         inputs_[i++] = implementationFile;
         inputs_[i++] = fallbackFile;
@@ -113,9 +113,9 @@ contract Utils is Script {
         uint8 i = 0;
 
         // create the command to run the checkImplementationInitialization.ts script:
-        // npx ts-node UsdnProtocolImpl.sol
+        // npx tsx UsdnProtocolImpl.sol
         inputs_[i++] = "npx";
-        inputs_[i++] = "ts-node";
+        inputs_[i++] = "tsx";
         inputs_[i++] = IMPL_INITIALIZATION_SCRIPT_PATH;
         inputs_[i] = implementationName;
     }
