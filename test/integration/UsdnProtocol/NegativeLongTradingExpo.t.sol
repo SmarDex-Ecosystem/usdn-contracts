@@ -72,7 +72,7 @@ contract TestUsdnProtocolNegativeLongTradingExpo is UsdnProtocolBaseIntegrationF
 
         // update the ema
         mockPyth.setLastPublishTime(block.timestamp - 1);
-        protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA, 10);
+        protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA);
     }
 
     /**

@@ -92,14 +92,14 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
      * update. Call `_waitBeforeLiquidation()` before calling this function to make sure enough time has passed.
      * Do not use this function in contexts where ether needs to be refunded.
      */
-    function mockLiquidate(bytes calldata currentPriceData, uint16 iterations)
+    function mockLiquidate(bytes calldata currentPriceData)
         external
         payable
         returns (Types.LiqTickInfo[] memory liquidatedTicks_)
     {
         uint256 lastUpdateTimestampBefore = s._lastUpdateTimestamp;
         vm.startPrank(msg.sender);
-        liquidatedTicks_ = this.liquidate(currentPriceData, iterations);
+        liquidatedTicks_ = this.liquidate(currentPriceData);
         vm.stopPrank();
         require(s._lastUpdateTimestamp > lastUpdateTimestampBefore, "UsdnProtocolHandler: liq price is not fresh");
     }

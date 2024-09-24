@@ -137,18 +137,17 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
     ) external payable returns (bool success_);
 
     /**
-     * @notice Liquidate positions according to the current asset price, limited to a maximum of `iterations` ticks
+     * @notice Liquidate positions according to the current asset price
+     * limited to a maximum of `MAX_LIQUIDATION_ITERATION` ticks
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
      * the `ProtocolAction.Liquidation` action
      * The price validation might require payment according to the return value of the `getValidationCost` function
      * of the middleware
      * Each tick is liquidated in constant time. The tick version is incremented for each tick that was liquidated
-     * At least one tick will be liquidated, even if the `iterations` parameter is zero
      * @param currentPriceData The most recent price data
-     * @param iterations The maximum number of ticks to liquidate
      * @return liquidatedTicks_ Information about the liquidated ticks
      */
-    function liquidate(bytes calldata currentPriceData, uint16 iterations)
+    function liquidate(bytes calldata currentPriceData)
         external
         payable
         returns (LiqTickInfo[] memory liquidatedTicks_);

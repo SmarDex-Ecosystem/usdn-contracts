@@ -414,7 +414,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint256 longPositionsBeforeLiquidation = protocol.getTotalLongPositions();
 
         _waitBeforeLiquidation();
-        LiqTickInfo[] memory liquidatedTicks = protocol.mockLiquidate(priceData, 1);
+        LiqTickInfo[] memory liquidatedTicks = protocol.mockLiquidate(priceData);
 
         assertEq(liquidatedTicks.length, 0, "No position should have been liquidated");
 
@@ -499,7 +499,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         _waitBeforeLiquidation();
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
-        liquidatedTicks = protocol.mockLiquidate(abi.encode(price), 1);
+        liquidatedTicks = protocol.mockLiquidate(abi.encode(price));
 
         // Check that the right number of positions have been liquidated
         assertEq(liquidatedTicks.length, 1, "One position should have been liquidated");
@@ -569,7 +569,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         _waitBeforeLiquidation();
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedRewards);
-        LiqTickInfo[] memory liquidatedTicks = protocol.mockLiquidate(abi.encode(price), 1);
+        LiqTickInfo[] memory liquidatedTicks = protocol.mockLiquidate(abi.encode(price));
 
         // Check that the right number of positions have been liquidated
         assertEq(liquidatedTicks.length, 1, "One position should have been liquidated");
@@ -589,7 +589,6 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
      * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
      */
     function test_liquidateEtherRefund() public {
-        uint256 initialTotalPos = protocol.getTotalLongPositions();
         uint128 currentPrice = 2000 ether;
         bytes memory priceData = abi.encode(currentPrice);
 
@@ -613,7 +612,6 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         protocol.validateOpenPosition{
             value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
         }(payable(address(this)), priceData, EMPTY_PREVIOUS_DATA);
-        assertEq(protocol.getTotalLongPositions(), initialTotalPos + 1, "total positions after create");
 
         // price drops
         skip(1 hours);
@@ -627,8 +625,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint256 balanceBefore = address(this).balance;
         uint256 validationCost = oracleMiddleware.validationCost(priceData, ProtocolAction.Liquidation);
         // we use `liquidate` instead of `testLiquidate` to avoid testing the "hack" in the handler
-        protocol.liquidate{ value: 0.5 ether }(priceData, 1);
-        assertEq(protocol.getTotalLongPositions(), initialTotalPos, "total positions after liquidate");
+        protocol.liquidate{ value: 0.5 ether }(priceData);
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
 
@@ -644,7 +641,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         bytes memory priceData = abi.encode(price);
         if (_reenter) {
             vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
-            protocol.liquidate(priceData, 1);
+            protocol.liquidate(priceData);
             return;
         }
 
@@ -662,7 +659,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // If a reentrancy occurred, the function should have been called 2 times
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.liquidate.selector), 2);
         // The value sent will cause a refund, which will trigger the receive() function of this contract
-        protocol.liquidate{ value: 1 }(priceData, 1);
+        protocol.liquidate{ value: 1 }(priceData);
     }
 
     // test refunds

@@ -46,7 +46,7 @@ contract TestRebalancerInitiateClosePosition is
         }
 
         uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
-        protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA, 1);
+        protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA);
 
         version = rebalancer.getPositionVersion();
         previousPositionData = rebalancer.getPositionData(version);
@@ -256,7 +256,7 @@ contract TestRebalancerInitiateClosePosition is
 
         // liquidate the rebalancer's tick
         uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
-        protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA, 1);
+        protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA);
         // sanity check
         assertEq(
             prevPosId.tickVersion + 1, protocol.getTickVersion(prevPosId.tick), "Rebalancer tick was not liquidated"
@@ -292,7 +292,7 @@ contract TestRebalancerInitiateClosePosition is
         // liquidate the position we created earlier and trigger the rebalancer
         vm.expectEmit(false, false, false, false);
         emit PositionVersionUpdated(0, 0, 0, PositionId(0, 0, 0));
-        protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA, 1);
+        protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA);
         // sanity checks
         assertEq(newPosId.tickVersion + 1, protocol.getTickVersion(newPosId.tick), "Position tick was not liquidated");
         assertEq(rebalancer.getLastLiquidatedVersion(), version, "Liquidated version should have been updated");

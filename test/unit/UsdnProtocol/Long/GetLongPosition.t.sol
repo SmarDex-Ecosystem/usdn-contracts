@@ -131,7 +131,7 @@ contract TestGetLongPosition is UsdnProtocolBaseFixture {
         );
 
         _waitBeforeLiquidation();
-        protocol.mockLiquidate(abi.encode(params.initialPrice / 3), 10);
+        protocol.mockLiquidate(abi.encode(params.initialPrice / 3));
 
         vm.expectRevert(
             abi.encodeWithSelector(

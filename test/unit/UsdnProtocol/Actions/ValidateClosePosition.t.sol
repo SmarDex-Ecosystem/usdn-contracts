@@ -692,7 +692,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
     function test_internalValidateCloseLiquidatePosition() public {
         // liquidate the position in setup, leaving only the deployer position
         _waitBeforeLiquidation();
-        LiqTickInfo[] memory liquidatedTicks = protocol.mockLiquidate(abi.encode(7 * params.initialPrice / 10), 10);
+        LiqTickInfo[] memory liquidatedTicks = protocol.mockLiquidate(abi.encode(7 * params.initialPrice / 10));
         assertEq(liquidatedTicks.length, 1, "liquidated");
 
         bytes memory priceData = abi.encode(params.initialPrice);
