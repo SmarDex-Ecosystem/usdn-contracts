@@ -917,6 +917,9 @@ library UsdnProtocolVaultLibrary {
 
         amountToRefund_ = _createWithdrawalPendingAction(s, to, validator, usdnShares, securityDepositValue, data);
 
+        // register the pending withdrawal for imbalance checks of future actions
+        s._pendingBalanceVault -= data.withdrawalAmountAfterFees.toInt256();
+
         IUsdn usdn = s._usdn;
         if (ERC165Checker.supportsInterface(msg.sender, type(IPaymentCallback).interfaceId)) {
             // ask the msg.sender to send USDN shares and check the balance
@@ -925,8 +928,6 @@ library UsdnProtocolVaultLibrary {
             // retrieve the USDN shares, check that the balance is sufficient
             usdn.transferSharesFrom(user, address(this), usdnShares);
         }
-        // register the pending withdrawal for imbalance checks of future actions
-        s._pendingBalanceVault -= data.withdrawalAmountAfterFees.toInt256();
 
         isInitiated_ = true;
         emit IUsdnProtocolEvents.InitiatedWithdrawal(
