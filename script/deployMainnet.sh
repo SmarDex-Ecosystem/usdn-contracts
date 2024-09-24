@@ -38,6 +38,7 @@ while true; do
         fi
 
         printf "\n\n$green Running script in Non-Ledger mode with :\n"
+
         break
         ;;
     *) printf "\nPlease answer yes (Y/y) or no (N/n).\n" ;;

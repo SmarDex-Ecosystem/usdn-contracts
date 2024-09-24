@@ -12,7 +12,6 @@ import { Utils } from "./Utils.s.sol";
 
 import { LiquidationRewardsManager } from "../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
 import { WstEthOracleMiddleware } from "../src/OracleMiddleware/WstEthOracleMiddleware.sol";
-import { MockFastGasGwei } from "../src/OracleMiddleware/mock/MockFastGasGwei.sol";
 import { MockWstEthOracleMiddleware } from "../src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
 import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../src/Usdn/Usdn.sol";
@@ -100,10 +99,8 @@ contract Deploy is Script {
 
         LiquidationRewardsManager_ = _deployLiquidationRewardsManager(address(WstETH_));
 
-        // deploy the USDN protocol
         UsdnProtocol_ = _deployProtocol(Usdn_, Sdex_, WstETH_, WstEthOracleMiddleware_, LiquidationRewardsManager_);
 
-        // deploy the rebalancer
         Rebalancer_ = _deployRebalancer(UsdnProtocol_);
 
         _handlePostDeployment(UsdnProtocol_, Usdn_, Rebalancer_);
@@ -194,7 +191,7 @@ contract Deploy is Script {
             }
         } else {
             address pythAddress = vm.envOr("PYTH_ADDRESS", PYTH_MAINNET);
-            bytes32 pythFeedId = vm.envOr("PYTH_ETH_FEED_ID", bytes32(PYTH_ETH_FEED_ID));
+            bytes32 pythFeedId = vm.envOr("PYTH_ETH_FEED_ID", PYTH_ETH_FEED_ID);
             address chainlinkPriceAddress = vm.envOr("CHAINLINK_ETH_PRICE_ADDRESS", CHAINLINK_ETH_PRICE_MAINNET);
             uint256 chainlinkPriceValidity = vm.envOr("CHAINLINK_ETH_PRICE_VALIDITY", CHAINLINK_PRICE_VALIDITY);
 
@@ -336,6 +333,7 @@ contract Deploy is Script {
 
         // approve wstETH spending for initialization
         wstETH.approve(address(usdnProtocol), depositAmount + longAmount);
+
         usdnProtocol.initialize(uint128(depositAmount), uint128(longAmount), uint128(desiredLiqPrice), "");
     }
 
@@ -390,7 +388,6 @@ contract Deploy is Script {
 
         SdexSepolia sdex = new SdexSepolia();
         WstETHSepolia wsteth = new WstETHSepolia();
-        MockFastGasGwei mockFastGasGwei = new MockFastGasGwei();
 
         // mint needed wstETH for the initialization to the deployer
         wsteth.mint(_deployerAddress, wstEthNeeded);
@@ -405,7 +402,6 @@ contract Deploy is Script {
         vm.setEnv("PYTH_ADDRESS", vm.toString(PYTH_SEPOLIA));
         vm.setEnv("PYTH_ETH_FEED_ID", vm.toString(PYTH_ETH_FEED_ID));
         vm.setEnv("CHAINLINK_ETH_PRICE_ADDRESS", vm.toString(CHAINLINK_ETH_PRICE_SEPOLIA));
-        vm.setEnv("CHAINLINK_GAS_PRICE_ADDRESS", vm.toString(address(mockFastGasGwei)));
     }
 
     /**
