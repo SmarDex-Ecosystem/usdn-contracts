@@ -15,19 +15,31 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
 
         // we enable only open limit
         vm.prank(ADMIN);
-        protocol.setExpoImbalanceLimits(200, 0, 0, 0, 0);
+        protocol.setExpoImbalanceLimits(200, 0, 0, 0, 0, 0);
     }
 
     /**
      * @custom:scenario The `_checkImbalanceLimitOpen` function should not revert when contract is balanced
-     * and position is within limit
+     * and the wanted open position does not imbalance the protocol
      * @custom:given The protocol is in a balanced state
      * @custom:when The `_checkImbalanceLimitOpen` function is called with a value below the open limit
      * @custom:then The transaction should not revert
      */
     function test_checkImbalanceLimitOpen() public view {
         (, uint256 longAmount, uint256 totalExpoValueToLimit) = _getOpenLimitValues();
-        protocol.i_checkImbalanceLimitOpen(totalExpoValueToLimit, longAmount);
+        protocol.i_checkImbalanceLimitOpen(totalExpoValueToLimit / 2, longAmount);
+    }
+
+    /**
+     * @custom:scenario The `_checkImbalanceLimitOpen` function should not revert when the imballance is equal to the
+     * limit
+     * @custom:given The protocol is in a balanced state
+     * @custom:when The `_checkImbalanceLimitOpen` function is called with values on the open limit
+     * @custom:then The transaction should not revert
+     */
+    function test_checkImbalanceLimitOpenOnLimit() public view {
+        (, uint256 longAmount, uint256 totalExpoValueToLimit) = _getOpenLimitValues();
+        protocol.i_checkImbalanceLimitOpen(totalExpoValueToLimit - 1, longAmount);
     }
 
     /**
@@ -40,9 +52,9 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
         (, uint256 longAmount, uint256 totalExpoValueToLimit) = _getOpenLimitValues();
 
         // disable open limit
-        protocol.setExpoImbalanceLimits(0, 200, 600, 600, 300);
+        protocol.setExpoImbalanceLimits(0, 200, 600, 600, 500, 300);
 
-        protocol.i_checkImbalanceLimitOpen(totalExpoValueToLimit + 1, longAmount);
+        protocol.i_checkImbalanceLimitOpen(totalExpoValueToLimit, longAmount);
     }
 
     /**
@@ -57,7 +69,7 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
         vm.expectRevert(
             abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, openLimitBps)
         );
-        protocol.i_checkImbalanceLimitOpen(totalExpoValueToLimit + 1, longAmount);
+        protocol.i_checkImbalanceLimitOpen(totalExpoValueToLimit, longAmount);
     }
 
     /**
@@ -90,6 +102,7 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
         usdn.approve(address(protocol), type(uint256).max);
         protocol.initiateWithdrawal(
             uint152(usdn.sharesOf(DEPLOYER) / 2),
+            DISABLE_AMOUNT_OUT_MIN,
             DEPLOYER,
             DEPLOYER,
             abi.encode(params.initialPrice),
@@ -110,6 +123,12 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
         protocol.i_checkImbalanceLimitOpen(totalExpoValueToLimit, longAmount);
     }
 
+    /**
+     * @notice Get the open limit values at with the protocol revert
+     * @return openLimitBps_ The open limit bps
+     * @return longAmount_ The long amount
+     * @return totalExpoValueToLimit_ The total expo value to imbalance the protocol
+     */
     function _getOpenLimitValues()
         private
         view
@@ -118,13 +137,13 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
         // current vault expo
         int256 vaultExpo = int256(protocol.getBalanceVault()) + protocol.getPendingBalanceVault();
         // open limit bps
-        openLimitBps_ = protocol.getOpenExpoImbalanceLimitBps();
+        openLimitBps_ = protocol.getOpenExpoImbalanceLimitBps() + 1;
         // current long expo value to unbalance protocol
         uint256 longExpoValueToLimit = uint256(vaultExpo) * uint256(openLimitBps_) / protocol.BPS_DIVISOR();
         // long amount for vaultExpoValueToLimit and any leverage
         longAmount_ =
             longExpoValueToLimit * 10 ** protocol.LEVERAGE_DECIMALS() / protocol.i_getLeverage(2000 ether, 1500 ether);
         // current total expo value to imbalance the protocol
-        totalExpoValueToLimit_ = longExpoValueToLimit + longAmount_;
+        totalExpoValueToLimit_ = longExpoValueToLimit + longAmount_ + 1;
     }
 }

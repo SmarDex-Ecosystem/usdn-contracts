@@ -4,8 +4,7 @@ pragma solidity 0.8.26;
 import { ADMIN } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import { UsdnProtocolActionsVaultLibrary as ActionsVault } from
-    "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsVaultLibrary.sol";
+import { UsdnProtocolVaultLibrary as Vault } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 
 /**
  * @custom:feature Test of the protocol `_prepareWithdrawalData` internal function
@@ -34,8 +33,8 @@ contract TestUsdnProtocolActionsPrepareWithdrawalData is UsdnProtocolBaseFixture
      * @custom:and There should be no pending liquidations
      */
     function test_prepareWithdrawalData() public {
-        ActionsVault.WithdrawalData memory data =
-            protocol.i_prepareWithdrawalData(address(this), usdnSharesAmount, currentPriceData);
+        Vault.WithdrawalData memory data =
+            protocol.i_prepareWithdrawalData(address(this), usdnSharesAmount, DISABLE_AMOUNT_OUT_MIN, currentPriceData);
 
         assertFalse(data.isLiquidationPending, "There should be no pending liquidations");
         _assertData(data, false);
@@ -79,26 +78,26 @@ contract TestUsdnProtocolActionsPrepareWithdrawalData is UsdnProtocolBaseFixture
 
         currentPriceData = abi.encode(params.initialPrice * 7 / 10);
 
-        ActionsVault.WithdrawalData memory data =
-            protocol.i_prepareWithdrawalData(address(this), usdnSharesAmount, currentPriceData);
+        Vault.WithdrawalData memory data =
+            protocol.i_prepareWithdrawalData(address(this), usdnSharesAmount, DISABLE_AMOUNT_OUT_MIN, currentPriceData);
 
         assertTrue(data.isLiquidationPending, "There should be pending liquidations");
         _assertData(data, true);
     }
 
     /// @notice Assert the data in WithdrawalData depending on `isEarlyReturn`
-    function _assertData(ActionsVault.WithdrawalData memory data, bool isEarlyReturn) private view {
-        uint128 currentPrice = abi.decode(currentPriceData, (uint128));
+    function _assertData(Vault.WithdrawalData memory data, bool isEarlyReturn) private view {
+        uint256 amountAfterFees = DEPOSITED_AMOUNT - (DEPOSITED_AMOUNT * protocol.getVaultFeeBps()) / BPS_DIVISOR;
 
         if (isEarlyReturn) {
-            assertEq(data.pendingActionPrice, 0, "The pending action price should not be set");
+            assertEq(data.feeBps, 0, "The fee should not be set");
             assertEq(data.usdnTotalShares, 0, "The total shares of USDN should not be set");
             assertEq(data.totalExpo, 0, "The total expo should not be set");
             assertEq(data.balanceLong, 0, "The balance long should not be set");
             assertEq(data.balanceVault, 0, "The balance vault should not be set");
-            assertEq(data.withdrawalAmount, 0, "The amount withdrawn should not be set");
+            assertEq(data.withdrawalAmountAfterFees, 0, "The amount withdrawn should not be set");
         } else {
-            assertEq(data.pendingActionPrice, currentPrice, "The pending action price should be the current price");
+            assertEq(data.feeBps, protocol.getVaultFeeBps(), "The fee should be the vault fee");
             assertEq(
                 data.usdnTotalShares, usdn.totalShares(), "The total shares of USDN should be the one in the contract"
             );
@@ -107,7 +106,7 @@ contract TestUsdnProtocolActionsPrepareWithdrawalData is UsdnProtocolBaseFixture
             assertEq(
                 data.balanceVault, protocol.getBalanceVault(), "The balance vault should be the one in the protocol"
             );
-            assertEq(data.withdrawalAmount, DEPOSITED_AMOUNT, "The amount withdrawn be the amount deposited");
+            assertEq(data.withdrawalAmountAfterFees, amountAfterFees, "The amount withdrawn includes fees");
         }
     }
 }

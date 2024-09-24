@@ -55,8 +55,8 @@ interface IRebalancerEvents {
     );
 
     /**
-     * @notice Emitted when the max leverage is updated
-     * @param newMaxLeverage The new value for the max leverage
+     * @notice Emitted when the maximum leverage is updated
+     * @param newMaxLeverage The new value for the maximum leverage
      */
     event PositionMaxLeverageUpdated(uint256 newMaxLeverage);
 
@@ -76,12 +76,6 @@ interface IRebalancerEvents {
     event PositionVersionUpdated(
         uint128 newPositionVersion, uint256 entryAccMultiplier, uint128 amount, Types.PositionId positionId
     );
-
-    /**
-     * @notice Emitted when the close imbalance limit in bps is updated
-     * @param closeImbalanceLimitBps The new close imbalance limit in bps
-     */
-    event CloseImbalanceLimitBpsUpdated(uint256 closeImbalanceLimitBps);
 
     /**
      * @notice Emitted when the time limits have been updated

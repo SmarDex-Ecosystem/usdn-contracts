@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import { AccessControlDefaultAdminRules } from
+    "@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol";
+import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IOracleMiddleware } from "../interfaces/OracleMiddleware/IOracleMiddleware.sol";
@@ -22,7 +23,13 @@ import { PythOracle } from "./oracles/PythOracle.sol";
  * It is used by the USDN protocol to get the price of the USDN underlying asset
  * @dev This contract is a middleware between the USDN protocol and the price oracles
  */
-contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Ownable2Step {
+contract OracleMiddleware is
+    IOracleMiddleware,
+    PythOracle,
+    ChainlinkOracle,
+    Pausable,
+    AccessControlDefaultAdminRules
+{
     /// @inheritdoc IOracleMiddleware
     uint16 public constant BPS_DIVISOR = 10_000;
 
@@ -31,6 +38,12 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
 
     /// @notice The number of decimals for the returned price
     uint8 internal constant MIDDLEWARE_DECIMALS = 18;
+
+    /// @inheritdoc IOracleMiddleware
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+
+    /// @inheritdoc IOracleMiddleware
+    bytes32 public constant PAUSABLE_ROLE = keccak256("PAUSABLE_ROLE");
 
     /**
      * @notice The delay (in seconds) between the moment an action is initiated and the timestamp of the
@@ -41,7 +54,10 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     /// @notice confidence ratio in basis points: default 40%
     uint16 internal _confRatioBps = 4000; // to divide by BPS_DIVISOR
 
-    /// @notice The delay during which a low latency oracle price validation is available
+    /**
+     * @notice The delay during which a low latency oracle price validation is available
+     * @dev This value should be greater than or equal to `_lowLatencyValidatorDeadline` of the USDN protocol
+     */
     uint16 internal _lowLatencyDelay = 20 minutes;
 
     /**
@@ -53,8 +69,11 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     constructor(address pythContract, bytes32 pythFeedId, address chainlinkPriceFeed, uint256 chainlinkTimeElapsedLimit)
         PythOracle(pythContract, pythFeedId)
         ChainlinkOracle(chainlinkPriceFeed, chainlinkTimeElapsedLimit)
-        Ownable(msg.sender)
-    { }
+        AccessControlDefaultAdminRules(0, msg.sender)
+    {
+        _grantRole(ADMIN_ROLE, msg.sender);
+        _grantRole(PAUSABLE_ROLE, msg.sender);
+    }
 
     /* -------------------------------------------------------------------------- */
     /*                           Public view functions                            */
@@ -68,6 +87,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         public
         payable
         virtual
+        whenNotPaused
         returns (PriceInfo memory price_)
     {
         if (action == Types.ProtocolAction.None) {
@@ -125,7 +145,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         return _confRatioBps;
     }
 
-    /// @inheritdoc IOracleMiddleware
+    /// @inheritdoc IBaseOracleMiddleware
     function getLowLatencyDelay() external view returns (uint16) {
         return _lowLatencyDelay;
     }
@@ -262,7 +282,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
      * Else, get the specified roundId on-chain price from Chainlink. In case of chainlink price,
      * we don't have a confidence interval and so both `neutralPrice` and `price` are equal
      * @param data An optional VAA from Pyth or a chainlink roundId (abi-encoded uint80)
-     * @param targetTimestamp The target timestamp
+     * @param targetTimestamp The timestamp of the initiate action
      * @param dir The direction for applying the confidence interval (in case we use a Pyth price)
      * @return price_ The price to use for the user action
      */
@@ -282,37 +302,66 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
 
         uint80 validateRoundId = abi.decode(data, (uint80));
 
-        // previous round id
-        ChainlinkPriceInfo memory chainlinkOnChainPrice =
-            _getFormattedChainlinkPrice(MIDDLEWARE_DECIMALS, validateRoundId - 1);
+        // check that the round ID is valid and get its price data
+        ChainlinkPriceInfo memory chainlinkOnChainPrice = _validateChainlinkRoundId(targetLimit, validateRoundId);
 
-        // if the price is negative or zero, revert
-        if (chainlinkOnChainPrice.price <= 0) {
-            revert OracleMiddlewareWrongPrice(chainlinkOnChainPrice.price);
-        }
-
-        // if previous price is higher than targetLimit
-        if (chainlinkOnChainPrice.timestamp > targetLimit) {
-            revert OracleMiddlewareInvalidRoundId();
-        }
-
-        // validate round id
-        chainlinkOnChainPrice = _getFormattedChainlinkPrice(MIDDLEWARE_DECIMALS, validateRoundId);
-
-        // if the price is negative or zero, revert
-        if (chainlinkOnChainPrice.price <= 0) {
-            revert OracleMiddlewareWrongPrice(chainlinkOnChainPrice.price);
-        }
-
-        // if validate price is lower or equal than targetLimit
-        if (chainlinkOnChainPrice.timestamp <= targetLimit) {
-            revert OracleMiddlewareInvalidRoundId();
-        }
         price_ = PriceInfo({
             price: uint256(chainlinkOnChainPrice.price),
             neutralPrice: uint256(chainlinkOnChainPrice.price),
             timestamp: chainlinkOnChainPrice.timestamp
         });
+    }
+
+    /**
+     * @notice Make sure that the given round ID matches with the validation constraints
+     * @param targetLimit The timestamp of the initiate action + _lowLatencyDelay
+     * @param roundId The round ID to validate
+     * @return providedRoundPrice_ The price data of the provided round ID
+     */
+    function _validateChainlinkRoundId(uint128 targetLimit, uint80 roundId)
+        internal
+        view
+        returns (ChainlinkPriceInfo memory providedRoundPrice_)
+    {
+        providedRoundPrice_ = _getFormattedChainlinkPrice(MIDDLEWARE_DECIMALS, roundId);
+
+        if (providedRoundPrice_.price <= 0) {
+            revert OracleMiddlewareWrongPrice(providedRoundPrice_.price);
+        }
+
+        (,,, uint256 previousRoundTimestamp,) = _priceFeed.getRoundData(roundId - 1);
+
+        // if the provided round's timestamp is 0, it's possible the aggregator recently changed and there is no data
+        // available for the previous round ID in the aggregator. In that case, we accept the given round ID as the
+        // sole reference with additional checks to make sure it is not too far from the target timestamp
+        if (previousRoundTimestamp == 0) {
+            // calculate the provided round's phase ID
+            uint80 roundPhaseId = roundId >> 64;
+            // calculate the first valid round ID for this phase
+            uint80 firstRoundId = (roundPhaseId << 64) + 1;
+            // the provided round ID must be the first round ID of the phase, if not, revert
+            if (firstRoundId != roundId) {
+                revert OracleMiddlewareInvalidRoundId();
+            }
+
+            (uint80 latestRoundId,,,,) = _priceFeed.latestRoundData();
+            // if the provided round ID does not belong to the latest phase, revert
+            if (latestRoundId >> 64 != roundPhaseId) {
+                revert OracleMiddlewareInvalidRoundId();
+            }
+
+            // make sure that the provided round ID is not newer than it should be
+            if (providedRoundPrice_.timestamp > targetLimit + _timeElapsedLimit) {
+                revert OracleMiddlewareInvalidRoundId();
+            }
+        } else if (previousRoundTimestamp > targetLimit) {
+            // previous round should precede targetLimit
+            revert OracleMiddlewareInvalidRoundId();
+        }
+
+        if (providedRoundPrice_.timestamp <= targetLimit) {
+            revert OracleMiddlewareInvalidRoundId();
+        }
     }
 
     /**
@@ -338,21 +387,21 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IOracleMiddleware
-    function setValidationDelay(uint256 newValidationDelay) external onlyOwner {
+    function setValidationDelay(uint256 newValidationDelay) external onlyRole(ADMIN_ROLE) {
         _validationDelay = newValidationDelay;
 
         emit ValidationDelayUpdated(newValidationDelay);
     }
 
     /// @inheritdoc IOracleMiddleware
-    function setChainlinkTimeElapsedLimit(uint256 newTimeElapsedLimit) external onlyOwner {
+    function setChainlinkTimeElapsedLimit(uint256 newTimeElapsedLimit) external onlyRole(ADMIN_ROLE) {
         _timeElapsedLimit = newTimeElapsedLimit;
 
         emit TimeElapsedLimitUpdated(newTimeElapsedLimit);
     }
 
     /// @inheritdoc IOracleMiddleware
-    function setPythRecentPriceDelay(uint64 newDelay) external onlyOwner {
+    function setPythRecentPriceDelay(uint64 newDelay) external onlyRole(ADMIN_ROLE) {
         if (newDelay < 10 seconds) {
             revert OracleMiddlewareInvalidRecentPriceDelay(newDelay);
         }
@@ -365,7 +414,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     }
 
     /// @inheritdoc IOracleMiddleware
-    function setConfRatio(uint16 newConfRatio) external onlyOwner {
+    function setConfRatio(uint16 newConfRatio) external onlyRole(ADMIN_ROLE) {
         // confidence ratio limit check
         if (newConfRatio > MAX_CONF_RATIO) {
             revert OracleMiddlewareConfRatioTooHigh();
@@ -377,7 +426,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     }
 
     /// @inheritdoc IOracleMiddleware
-    function setLowLatencyDelay(uint16 newLowLatencyDelay) external onlyOwner {
+    function setLowLatencyDelay(uint16 newLowLatencyDelay) external onlyRole(ADMIN_ROLE) {
         if (newLowLatencyDelay < 15 minutes) {
             revert OracleMiddlewareInvalidLowLatencyDelay();
         }
@@ -390,14 +439,25 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     }
 
     /// @inheritdoc IOracleMiddleware
-    function withdrawEther(address to) external onlyOwner {
+    function withdrawEther(address to) external onlyRole(ADMIN_ROLE) {
         if (to == address(0)) {
             revert OracleMiddlewareTransferToZeroAddress();
         }
 
+        // slither-disable-next-line arbitrary-send-eth
         (bool success,) = payable(to).call{ value: address(this).balance }("");
         if (!success) {
             revert OracleMiddlewareTransferFailed(to);
         }
+    }
+
+    /// @inheritdoc IOracleMiddleware
+    function pausePriceValidation() external onlyRole(PAUSABLE_ROLE) {
+        _pause();
+    }
+
+    /// @inheritdoc IOracleMiddleware
+    function unpausePriceValidation() external onlyRole(PAUSABLE_ROLE) {
+        _unpause();
     }
 }

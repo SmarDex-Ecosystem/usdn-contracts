@@ -22,20 +22,17 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
      */
     function test_nothingHappensWhenThereIsNothingToLiquidate() public {
         vm.recordLogs();
-        LiquidationsEffects memory liquidationsEffects =
-            protocol.i_liquidatePositions(2000 ether, 1, 100 ether, 100 ether);
+        LiquidationsEffects memory liquidationsEffects = protocol.i_liquidatePositions(2000 ether, 1, 5 ether, 5 ether);
         uint256 logsAmount = vm.getRecordedLogs().length;
 
         assertEq(logsAmount, 0, "No event should have been emitted");
         assertEq(
             liquidationsEffects.liquidatedPositions, 0, "No position should have been liquidated at the given price"
         );
-        assertEq(liquidationsEffects.liquidatedTicks, 0, "No tick should have been liquidated at this price");
+        assertEq(liquidationsEffects.liquidatedTicks.length, 0, "No tick should have been liquidated at this price");
         assertEq(liquidationsEffects.remainingCollateral, 0, "There should have been no changes to the collateral");
-        assertEq(liquidationsEffects.newLongBalance, 100 ether, "There should have been no changes to the long balance");
-        assertEq(
-            liquidationsEffects.newVaultBalance, 100 ether, "There should have been no changes to the vault balance"
-        );
+        assertEq(liquidationsEffects.newLongBalance, 5 ether, "There should have been no changes to the long balance");
+        assertEq(liquidationsEffects.newVaultBalance, 5 ether, "There should have been no changes to the vault balance");
     }
 
     /**
@@ -60,9 +57,9 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         );
 
         uint128 liqPrice = protocol.getEffectivePriceForTick(posId.tick);
-        int256 balanceLong = protocol.longAssetAvailableWithFunding(liqPrice, uint128(block.timestamp));
-        int256 balanceVault = protocol.vaultAssetAvailableWithFunding(liqPrice, uint128(block.timestamp));
-        uint256 longTradingExpo = protocol.getTotalExpo() - uint256(balanceLong);
+        uint256 balanceLong = protocol.longAssetAvailableWithFunding(liqPrice, uint128(block.timestamp));
+        uint256 balanceVault = protocol.vaultAssetAvailableWithFunding(liqPrice, uint128(block.timestamp));
+        uint256 longTradingExpo = protocol.getTotalExpo() - balanceLong;
         uint128 effectiveTickPrice = protocol.getEffectivePriceForTick(
             posId.tick, liqPrice, longTradingExpo, protocol.getLiqMultiplierAccumulator()
         );
@@ -77,7 +74,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit HighestPopulatedTickUpdated(initialPosition.tick);
         LiquidationsEffects memory liquidationsEffects =
-            protocol.i_liquidatePositions(uint256(liqPrice), 1, balanceLong, balanceVault);
+            protocol.i_liquidatePositions(uint256(liqPrice), 1, int256(balanceLong), int256(balanceVault));
         Vm.Log[] memory logs = vm.getRecordedLogs();
 
         uint256 logsAmount = logs.length;
@@ -93,18 +90,18 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
 
         assertEq(liquidationLogsCount, 1, "Only one liquidation log should have been emitted");
         assertEq(liquidationsEffects.liquidatedPositions, 1, "Only one position should have been liquidated");
-        assertEq(liquidationsEffects.liquidatedTicks, 1, "Only one tick should have been liquidated");
+        assertEq(liquidationsEffects.liquidatedTicks.length, 1, "Only one tick should have been liquidated");
         assertEq(
             liquidationsEffects.remainingCollateral, tickValue, "Remaining collateral should be equal to tickValue"
         );
         assertEq(
-            int256(liquidationsEffects.newLongBalance),
-            balanceLong - tickValue,
+            liquidationsEffects.newLongBalance,
+            balanceLong - uint256(tickValue),
             "The long side should have paid tickValue to the vault side"
         );
         assertEq(
             int256(liquidationsEffects.newVaultBalance),
-            balanceVault + tickValue,
+            int256(balanceVault) + tickValue,
             "The vault side should have received tickValue from the long side"
         );
 
@@ -164,7 +161,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         LiquidationsEffects memory liquidationsEffects = protocol.i_liquidatePositions(price, 1, 100 ether, 100 ether);
 
         assertEq(liquidationsEffects.liquidatedPositions, 1, "Only one position should have been liquidated");
-        assertEq(liquidationsEffects.liquidatedTicks, 1, "Only one tick should have been liquidated");
+        assertEq(liquidationsEffects.liquidatedTicks.length, 1, "Only one tick should have been liquidated");
         assertEq(
             liquidationsEffects.remainingCollateral, tickValue, "Collateral liquidated should be equal to tickValue"
         );
@@ -189,9 +186,9 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
     function test_canLiquidateTheLastPosition() public {
         int24 tick = protocol.getHighestPopulatedTick();
         uint128 liqPrice = protocol.getEffectivePriceForTick(tick);
-        int256 balanceLong = protocol.longAssetAvailableWithFunding(liqPrice, uint128(block.timestamp));
-        int256 balanceVault = protocol.vaultAssetAvailableWithFunding(liqPrice, uint128(block.timestamp));
-        uint256 longTradingExpo = protocol.getTotalExpo() - uint256(balanceLong);
+        uint256 balanceLong = protocol.longAssetAvailableWithFunding(liqPrice, uint128(block.timestamp));
+        uint256 balanceVault = protocol.vaultAssetAvailableWithFunding(liqPrice, uint128(block.timestamp));
+        uint256 longTradingExpo = protocol.getTotalExpo() - balanceLong;
         uint128 effectiveTickPrice =
             protocol.getEffectivePriceForTick(tick, liqPrice, longTradingExpo, protocol.getLiqMultiplierAccumulator());
 
@@ -207,7 +204,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         vm.recordLogs();
         // 2 Iterations to make sure we break the loop when there are no ticks to be found
         LiquidationsEffects memory liquidationsEffects =
-            protocol.i_liquidatePositions(uint256(liqPrice), 2, balanceLong, balanceVault);
+            protocol.i_liquidatePositions(uint256(liqPrice), 2, int256(balanceLong), int256(balanceVault));
 
         Vm.Log[] memory logs = vm.getRecordedLogs();
         uint256 logsAmount = logs.length;
@@ -242,7 +239,6 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         uint128 price = 2000 ether;
         uint16 maxIterations = protocol.MAX_LIQUIDATION_ITERATION();
         uint128 desiredLiqPrice = price - 200 ether;
-        uint128 liqPrice;
 
         // Iterate once more than the maximum of liquidations allowed
         int24[] memory ticksToLiquidate = new int24[](maxIterations + 1);
@@ -262,16 +258,14 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
                 })
             );
 
-            liqPrice = protocol.getEffectivePriceForTick(posId.tick);
-
             // Save the tick for future checks
             ticksToLiquidate[i] = posId.tick;
         }
 
         // Set a price below all others
-        liqPrice = desiredLiqPrice - 100 ether;
-        int256 balanceLong = protocol.longAssetAvailableWithFunding(liqPrice, uint128(block.timestamp));
-        int256 balanceVault = protocol.vaultAssetAvailableWithFunding(liqPrice, uint128(block.timestamp));
+        uint128 liqPrice = desiredLiqPrice - 100 ether;
+        int256 balanceLong = protocol.i_longAssetAvailable(liqPrice);
+        int256 balanceVault = protocol.i_vaultAssetAvailable(liqPrice);
 
         // Expect MAX_LIQUIDATION_ITERATION events
         for (uint256 i = 0; i < maxIterations; ++i) {
@@ -305,7 +299,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         );
 
         assertEq(
-            liquidationsEffects.liquidatedTicks,
+            liquidationsEffects.liquidatedTicks.length,
             maxIterations,
             "The amount of ticks liquidated should be equal to MAX_LIQUIDATION_ITERATION"
         );
@@ -357,7 +351,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
             protocol.i_liquidatePositions(uint256(liqPrice), 1, tickValue - 1, 100 ether);
 
         assertEq(liquidationsEffects.liquidatedPositions, 1, "Only one position should have been liquidated");
-        assertEq(liquidationsEffects.liquidatedTicks, 1, "Only one tick should have been liquidated");
+        assertEq(liquidationsEffects.liquidatedTicks.length, 1, "Only one tick should have been liquidated");
         assertEq(
             liquidationsEffects.remainingCollateral,
             tickValue,
@@ -415,7 +409,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
             protocol.i_liquidatePositions(uint256(price), 1, 100 ether, tickValue);
 
         assertEq(liquidationsEffects.liquidatedPositions, 1, "Only one position should have been liquidated");
-        assertEq(liquidationsEffects.liquidatedTicks, 1, "Only one tick should have been liquidated");
+        assertEq(liquidationsEffects.liquidatedTicks.length, 1, "Only one tick should have been liquidated");
         assertEq(
             liquidationsEffects.remainingCollateral,
             tickValue,

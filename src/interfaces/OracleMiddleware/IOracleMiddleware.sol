@@ -12,6 +12,22 @@ import { IOracleMiddlewareEvents } from "./IOracleMiddlewareEvents.sol";
  */
 interface IOracleMiddleware is IBaseOracleMiddleware, IOracleMiddlewareErrors, IOracleMiddlewareEvents {
     /* -------------------------------------------------------------------------- */
+    /*                                    Roles                                   */
+    /* -------------------------------------------------------------------------- */
+
+    /**
+     * @notice The admin role's signature
+     * @return Get the role signature
+     */
+    function ADMIN_ROLE() external pure returns (bytes32);
+
+    /**
+     * @notice The pausable role's signature
+     * @return Get the role signature
+     */
+    function PAUSABLE_ROLE() external pure returns (bytes32);
+
+    /* -------------------------------------------------------------------------- */
     /*                                  Constants                                 */
     /* -------------------------------------------------------------------------- */
 
@@ -38,12 +54,6 @@ interface IOracleMiddleware is IBaseOracleMiddleware, IOracleMiddlewareErrors, I
      * @return The confidence ratio basis points
      */
     function getConfRatioBps() external view returns (uint16);
-
-    /**
-     * @notice Getter for the delay during which a low latency oracle price validation is available
-     * @return The low latency delay
-     */
-    function getLowLatencyDelay() external view returns (uint16);
 
     /* -------------------------------------------------------------------------- */
     /*                               Owner features                               */
@@ -76,6 +86,12 @@ interface IOracleMiddleware is IBaseOracleMiddleware, IOracleMiddlewareErrors, I
     function setValidationDelay(uint256 newValidationDelay) external;
 
     /**
+     * @notice Set the new low latency delay
+     * @param newLowLatencyDelay The new low latency delay
+     */
+    function setLowLatencyDelay(uint16 newLowLatencyDelay) external;
+
+    /**
      * @notice Withdraw the ether balance of this contract
      * @dev This contract can receive funds but is not designed to hold them
      * So this function can be used if there's an error and funds remain after a call
@@ -84,8 +100,15 @@ interface IOracleMiddleware is IBaseOracleMiddleware, IOracleMiddlewareErrors, I
     function withdrawEther(address to) external;
 
     /**
-     * @notice Set the new low latency delay
-     * @param newLowLatencyDelay The new low latency delay
+     * @notice Pause the price validation mechanism
+     * @dev This function is used to pause the price validation mechanism in case of
+     * an emergency to pause all user actions that rely on the oracle in the protocol
      */
-    function setLowLatencyDelay(uint16 newLowLatencyDelay) external;
+    function pausePriceValidation() external;
+
+    /**
+     * @notice Unpause the price validation mechanism
+     * @dev This function is used to unpause the price validation mechanism
+     */
+    function unpausePriceValidation() external;
 }

@@ -4,8 +4,7 @@ pragma solidity 0.8.26;
 import { USER_1, USER_2 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import { UsdnProtocolActionsVaultLibrary as ActionsVault } from
-    "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsVaultLibrary.sol";
+import { UsdnProtocolVaultLibrary as Vault } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 
 /**
  * @custom:feature Test the `_createDepositPendingAction` internal function of the actions vault layer
@@ -14,7 +13,7 @@ import { UsdnProtocolActionsVaultLibrary as ActionsVault } from
  */
 contract TestUsdnProtocolActionsCreateDepositPendingAction is UsdnProtocolBaseFixture {
     /// @dev Instance of InitiateDepositData to store data for depositing assets
-    ActionsVault.InitiateDepositData data;
+    Vault.InitiateDepositData data;
     /// @dev The amount of assets to deposit
     uint128 amount = 1 ether;
 
@@ -23,7 +22,7 @@ contract TestUsdnProtocolActionsCreateDepositPendingAction is UsdnProtocolBaseFi
         params.flags.enableSecurityDeposit = true;
         _setUp(params);
 
-        data.pendingActionPrice = 2000 ether;
+        data.lastPrice = params.initialPrice;
         data.totalExpo = 420 ether;
         data.balanceVault = 41 ether;
         data.balanceLong = 42 ether;
@@ -55,11 +54,9 @@ contract TestUsdnProtocolActionsCreateDepositPendingAction is UsdnProtocolBaseFi
         assertEq(
             pendingAction.securityDepositValue, securityDeposit, "securityDepositValue should be the provided amount"
         );
-        assertEq(pendingAction.var1, 0, "var1 should be 0");
+        assertEq(pendingAction.var0, protocol.getVaultFeeBps(), "var0 should be the vault fee");
         assertEq(pendingAction.var2, amount, "var2 should be the amount");
-        assertEq(
-            pendingAction.var3, data.pendingActionPrice, "var3 should be the pendingActionPrice attribute of `data`"
-        );
+        assertEq(pendingAction.var3, data.lastPrice, "var3 should be the last price");
         assertEq(pendingAction.var4, data.totalExpo, "var4 should be the totalExpo attribute of `data`");
         assertEq(pendingAction.var5, data.balanceVault, "var5 should be the balanceVault attribute of `data`");
         assertEq(pendingAction.var6, data.balanceLong, "var6 should be the balanceLong attribute of `data`");

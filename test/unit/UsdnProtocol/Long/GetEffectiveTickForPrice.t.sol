@@ -3,11 +3,12 @@ pragma solidity 0.8.26;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolLongLibrary } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolLongLibrary.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { TickMath } from "../../../../src/libraries/TickMath.sol";
 
 /**
- * @custom:feature The getEffectiveTickForPrice public function of the UsdnProtocolLong contract.
+ * @custom:feature The `getEffectiveTickForPrice` and `getEffectiveTickForPriceNoRounding` functions
  * @custom:background Given a protocol initialized with default parameters
  */
 contract TestUsdnProtocolLongGetEffectiveTickForPrice is UsdnProtocolBaseFixture {
@@ -19,14 +20,12 @@ contract TestUsdnProtocolLongGetEffectiveTickForPrice is UsdnProtocolBaseFixture
 
     /**
      * @custom:scenario Fuzzing the `getEffectiveTickForPrice` function and return expected minTick
-     * @custom:given A price, assetPrice, longTradingExpo and accumulator
-     * @custom:when getEffectiveTickForPrice is called
+     * @custom:given A tickSpacing between 1 and 10_000
+     * @custom:when getEffectiveTickForPrice is called (ignoring funding)
      * @custom:then The function should return expected minTick
      */
     function testFuzz_getEffectiveTickForPriceExpectedMinTick(int24 tickSpacing) public view {
-        if (tickSpacing == 0) {
-            return;
-        }
+        tickSpacing = int24(bound(tickSpacing, 1, 10_000));
         int24 expectedMinTick = TickMath.minUsableTick(tickSpacing);
 
         /* ------------------ unadjustedPrice < TickMath.MIN_PRICE ------------------ */
@@ -94,5 +93,19 @@ contract TestUsdnProtocolLongGetEffectiveTickForPrice is UsdnProtocolBaseFixture
         price = 5_000_000_000 ether;
         tick = protocol.getEffectiveTickForPrice(price, 0, 0, HugeUint.wrap(0), tickSpacing);
         assertEq(tick, 223_300, "tick should be equal to 223300");
+    }
+
+    /**
+     * @custom:scenario Fuzzing the `getEffectiveTickForPriceNoRounding` function
+     * @custom:given A price between MIN_PRICE and uint128 max
+     * @custom:when getEffectiveTickForPriceNoRounding is called with no effect of funding
+     * @custom:then The function should return the same tick as the TickMath library
+     */
+    function testFuzz_getEffectiveTickForPriceNoRounding(uint128 price) public pure {
+        price = uint128(bound(price, TickMath.MIN_PRICE, type(uint128).max));
+        assertEq(
+            UsdnProtocolLongLibrary._getEffectiveTickForPriceNoRounding(price, 0, 0, HugeUint.wrap(0)),
+            TickMath.getTickAtPrice(price)
+        );
     }
 }

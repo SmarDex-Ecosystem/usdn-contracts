@@ -65,7 +65,13 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
             amountClosed += amountToClose;
 
             protocol.initiateClosePosition(
-                posId, uint128(amountToClose), address(this), payable(address(this)), priceData, EMPTY_PREVIOUS_DATA
+                posId,
+                uint128(amountToClose),
+                DISABLE_MIN_PRICE,
+                address(this),
+                payable(address(this)),
+                priceData,
+                EMPTY_PREVIOUS_DATA
             );
             _waitDelay();
             protocol.i_validateClosePosition(address(this), priceData);
@@ -87,6 +93,7 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
             protocol.initiateClosePosition(
                 posId,
                 uint128(amountToOpen - amountClosed),
+                DISABLE_MIN_PRICE,
                 address(this),
                 payable(address(this)),
                 priceData,

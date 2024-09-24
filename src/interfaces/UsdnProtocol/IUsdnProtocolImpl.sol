@@ -3,7 +3,7 @@ pragma solidity >=0.8.0;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import { IBaseLiquidationRewardsManager } from "../OracleMiddleware/IBaseLiquidationRewardsManager.sol";
+import { IBaseLiquidationRewardsManager } from "../LiquidationRewardsManager/IBaseLiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IUsdn } from "../Usdn/IUsdn.sol";
 import { IUsdnProtocolActions } from "./IUsdnProtocolActions.sol";
@@ -30,12 +30,12 @@ interface IUsdnProtocolImpl is
      * It can only be called once
      * @param usdn The USDN ERC20 contract
      * @param sdex The SDEX ERC20 contract
-     * @param asset The asset ERC20 contract (wstETH)
+     * @param asset The asset ERC20 contract
      * @param oracleMiddleware The oracle middleware contract
      * @param liquidationRewardsManager The liquidation rewards manager contract
      * @param tickSpacing The positions tick spacing
      * @param feeCollector The address of the fee collector
-     * @param roles The protocol roles
+     * @param managers The protocol managers
      * @param protocolFallback The protocol fallback contract
      */
     function initializeStorage(
@@ -46,7 +46,7 @@ interface IUsdnProtocolImpl is
         IBaseLiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector,
-        Roles memory roles,
+        Managers memory managers,
         IUsdnProtocolFallback protocolFallback
     ) external;
 }

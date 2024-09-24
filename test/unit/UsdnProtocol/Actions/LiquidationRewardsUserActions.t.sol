@@ -7,6 +7,7 @@ import { USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
+import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The reward when a user action performs a liquidation during an action
@@ -26,13 +27,15 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
     uint256 expectedLiquidatorRewards;
 
     function setUp() public {
-        super._setUp(DEFAULT_PARAMS);
+        params = DEFAULT_PARAMS;
+        params.flags.enableLiquidationRewards = true;
+        super._setUp(params);
 
         wstETH.mintAndApprove(address(this), 1 ether, address(protocol), 1 ether);
         usdn.approve(address(protocol), type(uint256).max);
 
-        chainlinkGasPriceFeed.setLatestRoundData(1, 30 gwei, block.timestamp, 1);
-        vm.txGasPrice(30 gwei);
+        vm.fee(30 gwei);
+        vm.txGasPrice(32 gwei);
 
         initialPrice = params.initialPrice;
         uint128 desiredLiqPrice = uint128(initialPrice) * 9 / 10;
@@ -52,8 +55,19 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         liquidationPrice = protocol.getEffectivePriceForTick(posId.tick);
         liquidationPriceData = abi.encode(liquidationPrice);
         initialPriceData = abi.encode(initialPrice);
-        expectedLiquidatorRewards =
-            liquidationRewardsManager.getLiquidationRewards(1, 0, false, false, ProtocolAction.None, "", "");
+        Types.LiqTickInfo[] memory liquidatedTicks = new LiqTickInfo[](1);
+        liquidatedTicks[0] = Types.LiqTickInfo({
+            totalPositions: 1,
+            totalExpo: 10 ether,
+            remainingCollateral: 0.2 ether,
+            tickPrice: liquidationPrice,
+            priceWithoutPenalty: protocol.getEffectivePriceForTick(
+                protocol.i_calcTickWithoutPenalty(posId.tick, protocol.getLiquidationPenalty())
+            )
+        });
+        expectedLiquidatorRewards = liquidationRewardsManager.getLiquidationRewards(
+            liquidatedTicks, liquidationPrice, false, Types.RebalancerAction.None, ProtocolAction.None, "", ""
+        );
 
         assertGt(expectedLiquidatorRewards, 0, "The expected liquidation rewards should be greater than 0");
     }
@@ -68,7 +82,12 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
         protocol.initiateDeposit(
-            depositAmount, address(this), payable(address(this)), NO_PERMIT2, liquidationPriceData, EMPTY_PREVIOUS_DATA
+            depositAmount,
+            DISABLE_SHARES_OUT_MIN,
+            address(this),
+            payable(address(this)),
+            liquidationPriceData,
+            EMPTY_PREVIOUS_DATA
         );
 
         uint256 balanceSenderAfter = wstETH.balanceOf(address(this));
@@ -91,7 +110,12 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
      */
     function test_liquidationRewards_validateDeposit() public {
         protocol.initiateDeposit(
-            depositAmount, address(this), payable(address(this)), NO_PERMIT2, initialPriceData, EMPTY_PREVIOUS_DATA
+            depositAmount,
+            DISABLE_SHARES_OUT_MIN,
+            address(this),
+            payable(address(this)),
+            initialPriceData,
+            EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -126,6 +150,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
         protocol.initiateWithdrawal(
             uint152(usdn.balanceOf(address(this))),
+            DISABLE_AMOUNT_OUT_MIN,
             address(this),
             payable(address(this)),
             liquidationPriceData,
@@ -201,9 +226,10 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition(
             depositAmount,
             initialPrice / 2,
+            type(uint128).max,
+            protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             liquidationPriceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -231,9 +257,10 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition(
             depositAmount,
             initialPrice / 2,
+            type(uint128).max,
+            protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
-            NO_PERMIT2,
             initialPriceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -278,7 +305,13 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
         protocol.initiateClosePosition(
-            posId, depositAmount, address(this), payable(address(this)), liquidationPriceData, EMPTY_PREVIOUS_DATA
+            posId,
+            depositAmount,
+            DISABLE_MIN_PRICE,
+            address(this),
+            payable(address(this)),
+            liquidationPriceData,
+            EMPTY_PREVIOUS_DATA
         );
 
         uint256 balanceSenderAfter = wstETH.balanceOf(address(this));
@@ -323,9 +356,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
 
         int256 positionValue = protocol.i_positionValue(
             uint128(priceWithFees),
-            protocol.i_getEffectivePriceForTick(
-                protocol.i_calcTickWithoutPenalty(posId.tick), longAction.closeLiqMultiplier
-            ),
+            protocol.i_getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(posId.tick), longAction.liqMultiplier),
             longAction.closePosTotalExpo
         );
 

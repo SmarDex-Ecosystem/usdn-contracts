@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 
 import { USER_1 } from "../../../utils/Constants.sol";
 import { OracleMiddlewareBaseFixture } from "../utils/Fixtures.sol";
@@ -16,13 +16,17 @@ contract TestOracleMiddlewareWithdrawEther is OracleMiddlewareBaseFixture {
     }
 
     /**
-     * @custom:scenario A user that is not the owner calls withdrawEther
-     * @custom:given A user that is not the owner
+     * @custom:scenario A user that does not have the right role calls withdrawEther
+     * @custom:given A user that does not have the right role
      * @custom:when withdrawEther is called
-     * @custom:then the transaction reverts with an OwnableUnauthorizedAccount error
+     * @custom:then the transaction reverts with an AccessControlUnauthorizedAccount error
      */
-    function test_RevertWhen_withdrawEtherCalledByNonOwner() public {
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, USER_1));
+    function test_RevertWhen_withdrawEtherCalledWithoutRightRole() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector, USER_1, oracleMiddleware.ADMIN_ROLE()
+            )
+        );
         vm.prank(USER_1);
         oracleMiddleware.withdrawEther(USER_1);
     }

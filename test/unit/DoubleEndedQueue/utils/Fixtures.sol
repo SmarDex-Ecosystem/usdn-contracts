@@ -2,7 +2,6 @@
 pragma solidity 0.8.26;
 
 import { BaseFixture } from "../../../utils/Fixtures.sol";
-import { DequeHandler } from "./Handler.sol";
 
 import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
@@ -11,11 +10,7 @@ import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProt
  * @dev Utils for testing DoubleEndedQueue.sol
  */
 contract DequeFixture is BaseFixture {
-    DequeHandler public handler; // wrapper to get gas usage report
-
-    function setUp() public virtual {
-        handler = new DequeHandler();
-    }
+    function setUp() public virtual { }
 
     /**
      * @dev Helper function to assert two `PendingAction` are equal.
@@ -30,6 +25,7 @@ contract DequeFixture is BaseFixture {
     {
         assertTrue(a.action == b.action, string.concat(err, " - action type"));
         assertEq(a.timestamp, b.timestamp, string.concat(err, " - action timestamp"));
+        assertEq(a.var0, b.var0, string.concat(err, " - action var0"));
         assertEq(a.to, b.to, string.concat(err, " - action to"));
         assertEq(a.validator, b.validator, string.concat(err, " - action validator"));
         assertEq(a.securityDepositValue, b.securityDepositValue, string.concat(err, " - action security deposit"));
@@ -40,8 +36,4 @@ contract DequeFixture is BaseFixture {
         assertEq(a.var5, b.var5, string.concat(err, " - action var5"));
         assertEq(a.var6, b.var6, string.concat(err, " - action var6"));
     }
-
-    // force ignore from coverage report
-    // until https://github.com/foundry-rs/foundry/issues/2988 is fixed
-    function test() public override { }
 }

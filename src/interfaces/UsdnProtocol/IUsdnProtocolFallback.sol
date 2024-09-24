@@ -4,7 +4,7 @@ pragma solidity >=0.8.0;
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import { HugeUint } from "../../libraries/HugeUint.sol";
-import { IBaseLiquidationRewardsManager } from "../OracleMiddleware/IBaseLiquidationRewardsManager.sol";
+import { IBaseLiquidationRewardsManager } from "../LiquidationRewardsManager/IBaseLiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IBaseRebalancer } from "../Rebalancer/IBaseRebalancer.sol";
 import { IUsdn } from "../Usdn/IUsdn.sol";
@@ -22,7 +22,7 @@ interface IUsdnProtocolFallback {
      * @param timestamp The timestamp of the operation
      * @return assetExpected_ The expected amount of assets to be received
      */
-    function previewWithdraw(uint256 usdnShares, uint256 price, uint128 timestamp)
+    function previewWithdraw(uint256 usdnShares, uint128 price, uint128 timestamp)
         external
         view
         returns (uint256 assetExpected_);
@@ -39,6 +39,13 @@ interface IUsdnProtocolFallback {
         external
         view
         returns (uint256 usdnSharesExpected_, uint256 sdexToBurn_);
+
+    /**
+     * @notice Refund the security deposit to a validator of a liquidated initiated long position
+     * @param validator The address of the validator
+     * @dev The security deposit is always sent to the validator
+     */
+    function refundSecurityDeposit(address payable validator) external;
 
     /* -------------------------------------------------------------------------- */
     /*                               Admin functions                              */
@@ -93,6 +100,16 @@ interface IUsdnProtocolFallback {
     function LEVERAGE_DECIMALS() external view returns (uint8);
 
     /**
+     * @notice Get the minimum leverage allowed for the rebalancer to open a position
+     * @dev In edge cases where the rebalancer holds significantly more assets than the protocol, opening a position
+     * with the protocol's minimum leverage could cause a large overshoot of the target, potentially creating even
+     * greater imbalance than before the trigger. To prevent this, the rebalancer can use leverage as low as the
+     * technical minimum (10**LEVERAGE_DECIMALS + 1)
+     * @return The minimum leverage value (with `LEVERAGE_DECIMALS` decimals)
+     */
+    function REBALANCER_MIN_LEVERAGE() external view returns (uint256);
+
+    /**
      * @notice Get the number of decimals of the funding rate
      * @return The funding rate's number of decimals
      */
@@ -142,12 +159,6 @@ interface IUsdnProtocolFallback {
     function NO_POSITION_TICK() external view returns (int24);
 
     /**
-     * @notice Get the minimum amount of wstETH for the initialization deposit and long
-     * @return The minimum amount of wstETH
-     */
-    function MIN_INIT_DEPOSIT() external view returns (uint256);
-
-    /**
      * @notice The minimum total supply of USDN that we allow
      * @dev Upon the first deposit, this amount is sent to the dead address and cannot be later recovered
      * @return The minimum total supply of USDN
@@ -166,6 +177,14 @@ interface IUsdnProtocolFallback {
      */
     function MAX_ACTIONABLE_PENDING_ACTIONS() external pure returns (uint256);
 
+    /**
+     * @notice The lowest margin between the total expo and the balance long
+     * @dev The balance long cannot increase in a way that makes the trading expo worth less than the margin
+     * If that happens, the balance long will be clamped down to the total expo minus the margin
+     * @return The minimum margin between the total expo and the balance for the long side (in basis points)
+     */
+    function MIN_LONG_TRADING_EXPO_BPS() external pure returns (uint256);
+
     /* -------------------------------------------------------------------------- */
     /*                                 Immutables getters                         */
     /* -------------------------------------------------------------------------- */
@@ -173,7 +192,7 @@ interface IUsdnProtocolFallback {
     /**
      * @notice The liquidation tick spacing for storing long positions
      * @dev A tick spacing of 1 is equivalent to a 0.01% increase in liquidation price between ticks. A tick spacing of
-     * 100 is equivalent to a 1% increase in liquidation price between ticks
+     * 100 is equivalent to a ~1.005% increase in liquidation price between ticks
      * @return The tick spacing
      */
     function getTickSpacing() external view returns (int24);
@@ -252,17 +271,26 @@ interface IUsdnProtocolFallback {
     function getMaxLeverage() external view returns (uint256);
 
     /**
-     * @notice Get the amount of time a user can validate its action, after which other users can do it
-     * and will claim the security deposit
-     * @return The validation deadline (in seconds)
+     * @notice The deadline for a user to confirm their action with a low-latency oracle
+     * @dev After this deadline, any user can validate the action with the low-latency oracle until the
+     * OracleMiddleware's `_lowLatencyDelay`, and retrieve the security deposit for the pending action
+     * @return The low-latency validation deadline (in seconds)
      */
-    function getValidationDeadline() external view returns (uint256);
+    function getLowLatencyValidatorDeadline() external view returns (uint128);
+
+    /**
+     * @notice The deadline for a user to confirm their action with the on-chain oracle
+     * @dev After this deadline, any user can validate the action with the on-chain oracle and retrieve the security
+     * deposit for the pending action
+     * @return The on-chain validation deadline (in seconds)
+     */
+    function getOnChainValidatorDeadline() external view returns (uint128);
 
     /**
      * @notice Get the liquidation penalty applied to the liquidation price when opening a position
-     * @return The liquidation penalty (in tick spacing units)
+     * @return The liquidation penalty (in ticks)
      */
-    function getLiquidationPenalty() external view returns (uint8);
+    function getLiquidationPenalty() external view returns (uint24);
 
     /**
      * @notice Get the safety margin for the liquidation price of newly open positions
@@ -368,6 +396,15 @@ interface IUsdnProtocolFallback {
      * @return closeExpoImbalanceLimitBps_ The close expo imbalance limit
      */
     function getCloseExpoImbalanceLimitBps() external view returns (int256 closeExpoImbalanceLimitBps_);
+
+    /**
+     * @notice Returns the limit of the imbalance in bps to close the rebalancer position
+     * @return rebalancerCloseExpoImbalanceLimitBps_ The limit of the imbalance in bps to close the rebalancer position
+     */
+    function getRebalancerCloseExpoImbalanceLimitBps()
+        external
+        view
+        returns (int256 rebalancerCloseExpoImbalanceLimitBps_);
 
     /**
      * @notice Returns the target imbalance to have on the long side after the creation of a rebalancer position
@@ -544,10 +581,14 @@ interface IUsdnProtocolFallback {
     function setRebalancer(IBaseRebalancer newRebalancer) external;
 
     /**
-     * @notice Set the new deadline for a user to confirm their action
-     * @param newValidationDeadline The new deadline
+     * @notice Set the new deadlines for a user to confirm their action
+     * @param newLowLatencyValidatorDeadline The new deadline for low-latency validation (offset from initiate
+     * timestamp)
+     * @param newOnChainValidatorDeadline The new deadline for on-chain validation (offset from initiate timestamp +
+     * oracle middleware's low latency delay)
      */
-    function setValidationDeadline(uint256 newValidationDeadline) external;
+    function setValidatorDeadlines(uint128 newLowLatencyValidatorDeadline, uint128 newOnChainValidatorDeadline)
+        external;
 
     /**
      * @notice Set the minimum long position size
@@ -569,10 +610,10 @@ interface IUsdnProtocolFallback {
     function setMaxLeverage(uint256 newMaxLeverage) external;
 
     /**
-     * @notice Set the new liquidation penalty (in tick spacing units)
+     * @notice Set the new liquidation penalty (in ticks)
      * @param newLiquidationPenalty The new liquidation penalty
      */
-    function setLiquidationPenalty(uint8 newLiquidationPenalty) external;
+    function setLiquidationPenalty(uint24 newLiquidationPenalty) external;
 
     /**
      * @notice Set the new exponential moving average period of the funding rate
@@ -633,6 +674,7 @@ interface IUsdnProtocolFallback {
      * @param newDepositLimitBps The new deposit limit
      * @param newWithdrawalLimitBps The new withdrawal limit
      * @param newCloseLimitBps The new close limit
+     * @param newRebalancerCloseLimitBps The new rebalancer close limit
      * @param newLongImbalanceTargetBps The new target imbalance limit for the long side
      * A positive value will target below equilibrium, a negative one will target above equilibrium
      */
@@ -641,6 +683,7 @@ interface IUsdnProtocolFallback {
         uint256 newDepositLimitBps,
         uint256 newWithdrawalLimitBps,
         uint256 newCloseLimitBps,
+        uint256 newRebalancerCloseLimitBps,
         int256 newLongImbalanceTargetBps
     ) external;
 

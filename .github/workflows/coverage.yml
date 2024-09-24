@@ -1,6 +1,8 @@
 name: Coverage report
 on:
-  pull_request:
+  push:
+    branches:
+      - main
 
 env:
   FOUNDRY_PROFILE: ci
@@ -8,10 +10,16 @@ env:
 jobs:
   coverage:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
+    # permissions:
+    #   contents: read
+    #   pull-requests: write
     steps:
+      # - uses: actions/create-github-app-token@v1
+      #   id: app-token
+      #   with:
+      #     app-id: ${{ secrets.APP_ID }}
+      #     private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - uses: actions/checkout@v4
         with:
           submodules: recursive
@@ -30,15 +38,15 @@ jobs:
         run: npm ci && forge soldeer install
 
       - name: Generate coverage report
-        run: npm run coverage
+        run: npm run cov
 
-      - name: Setup LCOV
-        uses: hrishikesh-kadam/setup-lcov@v1
+      # - name: Setup LCOV
+      #   uses: hrishikesh-kadam/setup-lcov@v1
 
-      - name: Report code coverage
-        uses: zgosalvez/github-actions-report-lcov@v4
-        with:
-          coverage-files: lcov.info
-          artifact-name: code-coverage-report
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          update-comment: true
+      # - name: Report code coverage
+      #   uses: zgosalvez/github-actions-report-lcov@v4
+      #   with:
+      #     coverage-files: lcov.info
+      #     artifact-name: code-coverage-report
+      #     github-token: ${{ steps.app-token.outputs.token }}
+      #     update-comment: true

@@ -7,11 +7,10 @@ import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
-import { MockChainlinkOnChain } from "../../Middlewares/utils/MockChainlinkOnChain.sol";
 import { MockOracleMiddleware } from "../../UsdnProtocol/utils/MockOracleMiddleware.sol";
 import { RebalancerHandler } from "../utils/Handler.sol";
 
-import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
+import { LiquidationRewardsManager } from "../../../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
@@ -30,7 +29,6 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
     Sdex public sdex;
     WstETH public wstETH;
     MockOracleMiddleware public oracleMiddleware;
-    MockChainlinkOnChain public chainlinkGasPriceFeed;
     LiquidationRewardsManager public liquidationRewardsManager;
     RebalancerHandler public rebalancer;
     IUsdnProtocol public usdnProtocol;
@@ -44,8 +42,7 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
         wstETH = new WstETH();
         sdex = new Sdex();
         oracleMiddleware = new MockOracleMiddleware();
-        chainlinkGasPriceFeed = new MockChainlinkOnChain();
-        liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
+        liquidationRewardsManager = new LiquidationRewardsManager(wstETH);
 
         UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
         UsdnProtocolImpl implementation = new UsdnProtocolImpl();
@@ -59,14 +56,15 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
                     wstETH,
                     oracleMiddleware,
                     liquidationRewardsManager,
-                    100, // tick spacing 100 = 1%
+                    100, // tick spacing 100 = ~1.005%
                     ADMIN, // Fee collector
-                    Types.Roles({
-                        setExternalAdmin: ADMIN,
-                        criticalFunctionsAdmin: ADMIN,
-                        setProtocolParamsAdmin: ADMIN,
-                        setUsdnParamsAdmin: ADMIN,
-                        setOptionsAdmin: ADMIN
+                    Types.Managers({
+                        setExternalManager: ADMIN,
+                        criticalFunctionsManager: ADMIN,
+                        setProtocolParamsManager: ADMIN,
+                        setUsdnParamsManager: ADMIN,
+                        setOptionsManager: ADMIN,
+                        proxyUpgradeManager: ADMIN
                     }),
                     protocolFallback
                 )

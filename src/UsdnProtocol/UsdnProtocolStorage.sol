@@ -6,7 +6,6 @@ import { AccessControlDefaultAdminRulesUpgradeable } from
 
 import { IUsdnProtocolErrors } from "../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolStorage } from "../interfaces/UsdnProtocol/IUsdnProtocolStorage.sol";
-import { DoubleEndedQueue } from "../libraries/DoubleEndedQueue.sol";
 import { InitializableReentrancyGuard } from "../utils/InitializableReentrancyGuard.sol";
 
 abstract contract UsdnProtocolStorage is
@@ -15,8 +14,6 @@ abstract contract UsdnProtocolStorage is
     InitializableReentrancyGuard,
     AccessControlDefaultAdminRulesUpgradeable
 {
-    using DoubleEndedQueue for DoubleEndedQueue.Deque;
-
     /// @notice The storage structure of the Usdn protocol
     Storage internal s;
 
@@ -36,6 +33,9 @@ abstract contract UsdnProtocolStorage is
     bytes32 public constant SET_OPTIONS_ROLE = keccak256("SET_OPTIONS_ROLE");
 
     /// @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant PROXY_UPGRADE_ROLE = keccak256("PROXY_UPGRADE_ROLE");
+
+    /// @inheritdoc IUsdnProtocolStorage
     bytes32 public constant ADMIN_SET_EXTERNAL_ROLE = keccak256("ADMIN_SET_EXTERNAL_ROLE");
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -49,4 +49,7 @@ abstract contract UsdnProtocolStorage is
 
     /// @inheritdoc IUsdnProtocolStorage
     bytes32 public constant ADMIN_SET_OPTIONS_ROLE = keccak256("ADMIN_SET_OPTIONS_ROLE");
+
+    /// @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant ADMIN_PROXY_UPGRADE_ROLE = keccak256("ADMIN_PROXY_UPGRADE_ROLE");
 }

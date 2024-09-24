@@ -45,7 +45,7 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
     /**
      * @notice Returns the maximum leverage a position can have
      * @dev Returns the max leverage of the USDN Protocol if it's lower than the rebalancer's
-     * @return maxLeverage_ The max leverage a position can have
+     * @return maxLeverage_ The maximum leverage
      */
     function getPositionMaxLeverage() external view returns (uint256 maxLeverage_);
 
@@ -61,12 +61,6 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
      * @return positionData_ The date for the provided version of the position
      */
     function getPositionData(uint128 version) external view returns (PositionData memory positionData_);
-
-    /**
-     * @notice Returns the limit of the imbalance in bps to close the position
-     * @return The limit of the imbalance in bps to close the position
-     */
-    function getCloseImbalanceLimitBps() external view returns (uint256);
 
     /**
      * @notice Get the time limits for the action validation process
@@ -136,6 +130,7 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
      * side after calling this function
      * @param amount The amount to close relative to the amount deposited
      * @param to The address that will receive the assets
+     * @param userMinPrice The minimum price at which the position can be closed
      * @param currentPriceData The current price data
      * @param previousActionsData The previous action price data
      * @return success_ If the UsdnProtocol's `initiateClosePosition` was successful
@@ -145,6 +140,7 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
     function initiateClosePosition(
         uint88 amount,
         address to,
+        uint256 userMinPrice,
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_);
@@ -160,15 +156,6 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
      * @param newMaxLeverage The new max leverage
      */
     function setPositionMaxLeverage(uint256 newMaxLeverage) external;
-
-    /**
-     * @notice Sets the limit of the imbalance in bps to close the position
-     * @dev This function can only be called by the owner
-     * If the new limit is greater than the `_closeExpoImbalanceLimitBps` setting in the USDN protocol,
-     * this new limit will be ineffective
-     * @param closeImbalanceLimitBps The new limit of the imbalance in bps to close the position
-     */
-    function setCloseImbalanceLimitBps(uint256 closeImbalanceLimitBps) external;
 
     /**
      * @notice Set the various time limits in seconds

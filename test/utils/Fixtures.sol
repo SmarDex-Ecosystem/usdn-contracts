@@ -12,6 +12,10 @@ import "./Constants.sol" as constants;
 contract BaseFixture is Test {
     uint256 constant BPS_DIVISOR = 10_000;
 
+    uint256 internal constant DISABLE_MIN_PRICE = 0;
+    uint256 internal constant DISABLE_SHARES_OUT_MIN = 0;
+    uint256 internal constant DISABLE_AMOUNT_OUT_MIN = 0;
+
     modifier ethMainnetFork() {
         string memory url = vm.rpcUrl("mainnet");
         vm.createSelectFork(url);
@@ -31,11 +35,11 @@ contract BaseFixture is Test {
         /* -------------------------------------------------------------------------- */
         vm.label(constants.DEPLOYER, "Deployer");
         vm.label(constants.ADMIN, "Admin");
-        vm.label(constants.SET_EXTERNAL_ADMIN, "setExternalAdmin");
-        vm.label(constants.CRITICAL_FUNCTIONS_ADMIN, "criticalFunctionsAdmin");
-        vm.label(constants.SET_PROTOCOL_PARAMS_ADMIN, "setProtocolParamsAdmin");
-        vm.label(constants.SET_USDN_PARAMS_ADMIN, "setUsdnParamsAdmin");
-        vm.label(constants.SET_OPTIONS_ADMIN, "setOptionsAdmin");
+        vm.label(constants.SET_EXTERNAL_MANAGER, "setExternalManager");
+        vm.label(constants.CRITICAL_FUNCTIONS_MANAGER, "criticalFunctionsManager");
+        vm.label(constants.SET_PROTOCOL_PARAMS_MANAGER, "setProtocolParamsManager");
+        vm.label(constants.SET_USDN_PARAMS_MANAGER, "setUsdnParamsManager");
+        vm.label(constants.SET_OPTIONS_MANAGER, "setOptionsManager");
         vm.label(constants.SET_EXTERNAL_ROLE_ADMIN, "setExternalRoleAdmin");
         vm.label(constants.CRITICAL_FUNCTIONS_ROLE_ADMIN, "criticalFunctionsRoleAdmin");
         vm.label(constants.SET_PROTOCOL_PARAMS_ROLE_ADMIN, "setProtocolParamsRoleAdmin");
@@ -46,6 +50,7 @@ contract BaseFixture is Test {
         vm.label(constants.USER_3, "User3");
         vm.label(constants.USER_4, "User4");
         dealAccounts();
+        persistAccounts();
 
         /* -------------------------------------------------------------------------- */
         /*                              Ethereum mainnet                              */
@@ -94,11 +99,11 @@ contract BaseFixture is Test {
         // deal ether
         vm.deal(constants.DEPLOYER, 10_000 ether);
         vm.deal(constants.ADMIN, 10_000 ether);
-        vm.deal(constants.SET_EXTERNAL_ADMIN, 10_000 ether);
-        vm.deal(constants.CRITICAL_FUNCTIONS_ADMIN, 10_000 ether);
-        vm.deal(constants.SET_PROTOCOL_PARAMS_ADMIN, 10_000 ether);
-        vm.deal(constants.SET_USDN_PARAMS_ADMIN, 10_000 ether);
-        vm.deal(constants.SET_OPTIONS_ADMIN, 10_000 ether);
+        vm.deal(constants.SET_EXTERNAL_MANAGER, 10_000 ether);
+        vm.deal(constants.CRITICAL_FUNCTIONS_MANAGER, 10_000 ether);
+        vm.deal(constants.SET_PROTOCOL_PARAMS_MANAGER, 10_000 ether);
+        vm.deal(constants.SET_USDN_PARAMS_MANAGER, 10_000 ether);
+        vm.deal(constants.SET_OPTIONS_MANAGER, 10_000 ether);
         vm.deal(constants.SET_EXTERNAL_ROLE_ADMIN, 10_000 ether);
         vm.deal(constants.CRITICAL_FUNCTIONS_ROLE_ADMIN, 10_000 ether);
         vm.deal(constants.SET_PROTOCOL_PARAMS_ROLE_ADMIN, 10_000 ether);
@@ -107,6 +112,14 @@ contract BaseFixture is Test {
         vm.deal(constants.USER_2, 10_000 ether);
         vm.deal(constants.USER_3, 10_000 ether);
         vm.deal(constants.USER_4, 10_000 ether);
+    }
+
+    // @dev this function aims to persist users when use vm.rollFork in tests
+    function persistAccounts() internal {
+        vm.makePersistent(constants.USER_1);
+        vm.makePersistent(constants.USER_2);
+        vm.makePersistent(constants.USER_3);
+        vm.makePersistent(constants.USER_4);
     }
 
     /**
@@ -198,8 +211,4 @@ contract BaseFixture is Test {
 
         return vm.ffi(cmds);
     }
-
-    // force ignore from coverage report
-    // until https://github.com/foundry-rs/foundry/issues/2988 is fixed
-    function test() public virtual { }
 }

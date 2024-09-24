@@ -139,7 +139,7 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
         uint256 pythDecimals = uint32(-pythPrice.expo);
 
         price_ = FormattedPythPrice({
-            price: uint256(uint64(pythPrice.price)) * 10 ** middlewareDecimals / 10 ** pythDecimals,
+            price: uint256(int256(pythPrice.price)) * 10 ** middlewareDecimals / 10 ** pythDecimals,
             conf: uint256(pythPrice.conf) * 10 ** middlewareDecimals / 10 ** pythDecimals,
             publishTime: pythPrice.publishTime
         });
@@ -168,7 +168,12 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
         returns (FormattedPythPrice memory price_)
     {
         // we use getPriceUnsafe to get the latest price without reverting, no matter how old
-        PythStructs.Price memory pythPrice = _pyth.getPriceUnsafe(_pythFeedId);
+        PythStructs.Price memory pythPrice;
+        // if the proxy implementation changes, this can revert
+        try _pyth.getPriceUnsafe(_pythFeedId) returns (PythStructs.Price memory unsafePrice_) {
+            pythPrice = unsafePrice_;
+        } catch { }
+
         // negative or zero prices are considered invalid, we return zero
         if (pythPrice.price <= 0) {
             return price_;

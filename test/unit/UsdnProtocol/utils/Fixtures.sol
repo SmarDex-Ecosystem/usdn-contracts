@@ -5,30 +5,31 @@ import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import {
     ADMIN,
-    CRITICAL_FUNCTIONS_ADMIN,
+    CRITICAL_FUNCTIONS_MANAGER,
     DEPLOYER,
-    SET_EXTERNAL_ADMIN,
-    SET_OPTIONS_ADMIN,
-    SET_PROTOCOL_PARAMS_ADMIN,
-    SET_USDN_PARAMS_ADMIN
+    PROXY_UPGRADE_MANAGER,
+    SET_EXTERNAL_MANAGER,
+    SET_OPTIONS_MANAGER,
+    SET_PROTOCOL_PARAMS_MANAGER,
+    SET_USDN_PARAMS_MANAGER
 } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { IEventsErrors } from "../../../utils/IEventsErrors.sol";
 import { IUsdnProtocolHandler } from "../../../utils/IUsdnProtocolHandler.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
-import { MockChainlinkOnChain } from "../../Middlewares/utils/MockChainlinkOnChain.sol";
 import { RebalancerHandler } from "../../Rebalancer/utils/Handler.sol";
 import { UsdnProtocolHandler } from "./Handler.sol";
 import { MockOracleMiddleware } from "./MockOracleMiddleware.sol";
 
-import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
+import { LiquidationRewardsManager } from "../../../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
+import { UsdnProtocolUtilsLibrary as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
+import { UsdnProtocolVaultLibrary as Vault } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
-import { Permit2TokenBitfield } from "../../../../src/libraries/Permit2TokenBitfield.sol";
 import { FeeCollector } from "../../../../src/utils/FeeCollector.sol";
 
 /**
@@ -46,6 +47,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         bool enableSdexBurnOnDeposit;
         bool enableLongLimit;
         bool enableRebalancer;
+        bool enableLiquidationRewards;
         bool enableRoles;
     }
 
@@ -58,11 +60,9 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         Flags flags;
     }
 
-    Permit2TokenBitfield.Bitfield constant NO_PERMIT2 = Permit2TokenBitfield.Bitfield.wrap(0);
-
     SetUpParams public params;
     SetUpParams public DEFAULT_PARAMS = SetUpParams({
-        initialDeposit: 4.919970269703463156 ether,
+        initialDeposit: 0, // 0 = auto-calculate to reach equilibrium
         initialLong: 5 ether,
         initialPrice: 2000 ether, // 2000 USD per wstETH
         initialTimestamp: 1_704_092_400, // 2024-01-01 07:00:00 UTC,
@@ -77,6 +77,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             enableSdexBurnOnDeposit: false,
             enableLongLimit: false,
             enableRebalancer: false,
+            enableLiquidationRewards: false,
             enableRoles: false
         })
     });
@@ -93,7 +94,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
     Sdex public sdex;
     WstETH public wstETH;
     MockOracleMiddleware public oracleMiddleware;
-    MockChainlinkOnChain public chainlinkGasPriceFeed;
     LiquidationRewardsManager public liquidationRewardsManager;
     RebalancerHandler public rebalancer;
     IUsdnProtocolHandler public protocol;
@@ -102,7 +102,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
     uint256 public usdnInitialTotalSupply;
     address[] public users;
 
-    int24 internal _tickSpacing = 100; // tick spacing 100 = 1%
+    int24 internal _tickSpacing = 100; // tick spacing 100 = ~1.005%
     PreviousActionsData internal EMPTY_PREVIOUS_DATA =
         PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
 
@@ -119,24 +119,29 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         wstETH = new WstETH();
         sdex = new Sdex();
         oracleMiddleware = new MockOracleMiddleware();
-        chainlinkGasPriceFeed = new MockChainlinkOnChain();
-        liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
+        liquidationRewardsManager = new LiquidationRewardsManager(wstETH);
         feeCollector = new FeeCollector();
 
-        Roles memory roles = Roles({
-            setExternalAdmin: SET_EXTERNAL_ADMIN,
-            criticalFunctionsAdmin: CRITICAL_FUNCTIONS_ADMIN,
-            setProtocolParamsAdmin: SET_PROTOCOL_PARAMS_ADMIN,
-            setUsdnParamsAdmin: SET_USDN_PARAMS_ADMIN,
-            setOptionsAdmin: SET_OPTIONS_ADMIN
+        if (!testParams.flags.enableLiquidationRewards) {
+            liquidationRewardsManager.setRewardsParameters(0, 0, 0, 0, 0, 0, 0, 0, 0.1 ether);
+        }
+
+        Managers memory managers = Managers({
+            setExternalManager: SET_EXTERNAL_MANAGER,
+            criticalFunctionsManager: CRITICAL_FUNCTIONS_MANAGER,
+            setProtocolParamsManager: SET_PROTOCOL_PARAMS_MANAGER,
+            setUsdnParamsManager: SET_USDN_PARAMS_MANAGER,
+            setOptionsManager: SET_OPTIONS_MANAGER,
+            proxyUpgradeManager: PROXY_UPGRADE_MANAGER
         });
         if (!testParams.flags.enableRoles) {
-            roles = Roles({
-                setExternalAdmin: ADMIN,
-                criticalFunctionsAdmin: ADMIN,
-                setProtocolParamsAdmin: ADMIN,
-                setUsdnParamsAdmin: ADMIN,
-                setOptionsAdmin: ADMIN
+            managers = Managers({
+                setExternalManager: ADMIN,
+                criticalFunctionsManager: ADMIN,
+                setProtocolParamsManager: ADMIN,
+                setUsdnParamsManager: ADMIN,
+                setOptionsManager: ADMIN,
+                proxyUpgradeManager: ADMIN
             });
         }
 
@@ -154,7 +159,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
                     liquidationRewardsManager,
                     _tickSpacing,
                     address(feeCollector),
-                    roles,
+                    managers,
                     protocolFallback
                 )
             )
@@ -166,7 +171,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         wstETH.approve(address(protocol), type(uint256).max);
 
         vm.stopPrank();
-        vm.startPrank(roles.setProtocolParamsAdmin);
+        vm.startPrank(managers.setProtocolParamsManager);
         if (!testParams.flags.enablePositionFees) {
             protocol.setPositionFeeBps(0);
             protocol.setVaultFeeBps(0);
@@ -184,7 +189,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
 
         // disable imbalance limits
         if (!testParams.flags.enableLimits) {
-            protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
+            protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0, 0);
         }
 
         // disable burn sdex on deposit
@@ -198,7 +203,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         }
         vm.stopPrank();
 
-        vm.startPrank(roles.setUsdnParamsAdmin);
+        vm.startPrank(managers.setUsdnParamsManager);
         if (!testParams.flags.enableUsdnRebase) {
             // set a high target price to effectively disable rebases
             protocol.setUsdnRebaseThreshold(type(uint128).max);
@@ -210,8 +215,23 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         rebalancer = new RebalancerHandler(protocol);
 
         if (testParams.flags.enableRebalancer) {
-            vm.prank(roles.setExternalAdmin);
+            vm.prank(managers.setExternalManager);
             protocol.setRebalancer(rebalancer);
+        }
+
+        if (testParams.initialDeposit == 0) {
+            (, uint128 liqPriceWithoutPenalty) = protocol.i_getTickFromDesiredLiqPrice(
+                testParams.initialPrice / 2,
+                testParams.initialPrice,
+                0,
+                HugeUint.wrap(0),
+                protocol.getTickSpacing(),
+                protocol.getLiquidationPenalty()
+            );
+            uint128 positionTotalExpo = protocol.i_calcPositionTotalExpo(
+                testParams.initialLong, testParams.initialPrice, liqPriceWithoutPenalty
+            );
+            testParams.initialDeposit = positionTotalExpo - testParams.initialLong;
         }
 
         vm.startPrank(DEPLOYER);
@@ -253,8 +273,12 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         assertEq(usdn.balanceOf(DEPLOYER), usdnTotalSupply - protocol.MIN_USDN_SUPPLY(), "usdn deployer balance");
         int24 firstPosTick = protocol.getHighestPopulatedTick();
         (Position memory firstPos,) = protocol.getLongPosition(PositionId(firstPosTick, 0, 0));
+        uint128 liquidationPriceWithoutPenalty =
+            protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(firstPosTick), 0, 0, HugeUint.wrap(0));
+        uint128 posTotalExpo =
+            protocol.i_calcPositionTotalExpo(params.initialLong, params.initialPrice, liquidationPriceWithoutPenalty);
 
-        assertEq(firstPos.totalExpo, 9_919_970_269_703_463_156, "first position total expo");
+        assertEq(firstPos.totalExpo, posTotalExpo, "first position total expo");
         assertEq(firstPos.timestamp + 1, block.timestamp, "first pos timestamp");
         assertEq(firstPos.user, DEPLOYER, "first pos user");
         assertEq(firstPos.amount, params.initialLong, "first pos amount");
@@ -279,8 +303,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         sdex.mintAndApprove(
             user,
             usdn.convertToTokens(
-                protocol.i_calcMintUsdnShares(
-                    positionSize, uint256(protocol.i_vaultAssetAvailable(uint128(price))), usdn.totalShares(), price
+                Utils._calcMintUsdnShares(
+                    positionSize, uint256(protocol.i_vaultAssetAvailable(uint128(price))), usdn.totalShares()
                 )
             ) * protocol.getSdexBurnOnDepositRatio() / protocol.SDEX_BURN_ON_DEPOSIT_DIVISOR(),
             address(protocol),
@@ -292,7 +316,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         bytes memory priceData = abi.encode(price);
 
         protocol.initiateDeposit{ value: securityDepositValue }(
-            positionSize, user, payable(user), NO_PERMIT2, priceData, EMPTY_PREVIOUS_DATA
+            positionSize, DISABLE_SHARES_OUT_MIN, user, payable(user), priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         if (untilAction == ProtocolAction.InitiateDeposit) return;
@@ -304,7 +328,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         uint256 sharesOf = usdn.sharesOf(user);
         usdn.approve(address(protocol), usdn.convertToTokensRoundUp(sharesOf));
         protocol.initiateWithdrawal{ value: securityDepositValue }(
-            uint152(sharesOf), user, payable(user), priceData, EMPTY_PREVIOUS_DATA
+            uint152(sharesOf), DISABLE_AMOUNT_OUT_MIN, user, payable(user), priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -334,9 +358,10 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         (success, posId_) = protocol.initiateOpenPosition{ value: securityDepositValue }(
             openParams.positionSize,
             openParams.desiredLiqPrice,
+            type(uint128).max,
+            protocol.getMaxLeverage(),
             openParams.user,
             payable(openParams.user),
-            NO_PERMIT2,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -349,7 +374,13 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         if (openParams.untilAction == ProtocolAction.ValidateOpenPosition) return (posId_);
 
         protocol.initiateClosePosition{ value: securityDepositValue }(
-            posId_, openParams.positionSize, openParams.user, payable(openParams.user), priceData, EMPTY_PREVIOUS_DATA
+            posId_,
+            openParams.positionSize,
+            DISABLE_MIN_PRICE,
+            openParams.user,
+            payable(openParams.user),
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         if (openParams.untilAction == ProtocolAction.InitiateClosePosition) return (posId_);
@@ -389,6 +420,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
     function _assertActionsEqual(PendingAction memory a, PendingAction memory b, string memory err) internal pure {
         assertTrue(a.action == b.action, string.concat(err, " - action type"));
         assertEq(a.timestamp, b.timestamp, string.concat(err, " - action timestamp"));
+        assertEq(a.var0, b.var0, string.concat(err, " - action var0"));
         assertEq(a.to, b.to, string.concat(err, " - action to"));
         assertEq(a.validator, b.validator, string.concat(err, " - action validator"));
         assertEq(a.securityDepositValue, b.securityDepositValue, string.concat(err, " - action security deposit"));
@@ -409,7 +441,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
     }
 
     function _waitBeforeActionablePendingAction() internal {
-        skip(protocol.getValidationDeadline() + 1);
+        skip(protocol.getLowLatencyValidatorDeadline() + 1);
     }
 
     /// @dev Calculate proper initial values from randoms to initialize a balanced protocol
@@ -421,7 +453,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         _setUp(params);
 
         // cannot be less than 1 ether
-        initialAmount = uint128(bound(initialAmount, protocol.MIN_INIT_DEPOSIT(), 5000 ether));
+        initialAmount = uint128(bound(initialAmount, 1 ether, 5000 ether));
 
         int256 depositLimit = protocol.getDepositExpoImbalanceLimitBps();
         uint128 margin = uint128(initialAmount * uint256(depositLimit) / protocol.BPS_DIVISOR());
