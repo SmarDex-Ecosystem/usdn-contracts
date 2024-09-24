@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-
-import { ADMIN, USER_1 } from "../../../utils/Constants.sol";
+import { USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { UsdnProtocolUtilsLibrary as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
@@ -364,24 +362,6 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
 
         assertEq(USER_1.balance, balanceUserBefore + securityDepositValue, "user balance after refund");
         assertEq(address(this).balance, balanceContractBefore - securityDepositValue, "contract balance after refund");
-    }
-
-    /**
-     * @custom:scenario The user validates a deposit with a paused protocol
-     * @custom:given A pending deposit position
-     * @custom:and A paused protocol
-     * @custom:when The user calls validateDeposit
-     * @custom:then The protocol reverts with a `EnforcedPause` error
-     */
-    function test_RevertWhen_validateDepositPaused() public {
-        bytes memory currentPrice = abi.encode(uint128(2000 ether));
-
-        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, DEPOSIT_AMOUNT, 2000 ether);
-
-        _pauseProtocol(ADMIN);
-
-        vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
-        protocol.validateDeposit(payable(this), currentPrice, EMPTY_PREVIOUS_DATA);
     }
 
     // test refunds

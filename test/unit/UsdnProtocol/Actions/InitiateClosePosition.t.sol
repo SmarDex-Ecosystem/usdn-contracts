@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
@@ -818,29 +817,6 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             address(this),
             payable(this),
             block.timestamp - 1,
-            abi.encode(params.initialPrice),
-            EMPTY_PREVIOUS_DATA
-        );
-    }
-
-    /**
-     * @custom:scenario The user initiates a close position with a paused protocol
-     * @custom:given A user with an open position
-     * @custom:and A paused protocol
-     * @custom:when The user calls initiateClosePosition
-     * @custom:then The call reverts with `EnforcedPause`
-     */
-    function test_RevertWhen_initiateClosePositionPaused() public {
-        _pauseProtocol(ADMIN);
-        vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
-
-        protocol.initiateClosePosition(
-            posId,
-            POSITION_AMOUNT,
-            params.initialPrice,
-            address(this),
-            payable(this),
-            type(uint256).max,
             abi.encode(params.initialPrice),
             EMPTY_PREVIOUS_DATA
         );

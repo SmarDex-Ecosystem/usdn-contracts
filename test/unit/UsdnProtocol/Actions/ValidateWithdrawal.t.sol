@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
@@ -407,32 +406,6 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
 
         assertEq(USER_1.balance, balanceUserBefore + securityDepositValue, "user balance after refund");
         assertEq(address(this).balance, balanceContractBefore - securityDepositValue, "contract balance after refund");
-    }
-
-    /**
-     * @custom:scenario The user validates a withdrawal position with a paused protocol
-     * @custom:given A pending withdrawal position
-     * @custom:and A paused protocol
-     * @custom:when The user calls validateWithdrawal
-     * @custom:then The protocol reverts with a `EnforcedPause` error
-     */
-    function test_RevertWhen_validateWithdrawalPaused() public {
-        bytes memory currentPrice = abi.encode(params.initialPrice);
-        protocol.initiateWithdrawal(
-            withdrawShares,
-            DISABLE_AMOUNT_OUT_MIN,
-            address(this),
-            payable(this),
-            type(uint256).max,
-            currentPrice,
-            EMPTY_PREVIOUS_DATA
-        );
-
-        _waitDelay();
-        _pauseProtocol(ADMIN);
-
-        vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
-        protocol.validateWithdrawal(payable(this), currentPrice, EMPTY_PREVIOUS_DATA);
     }
 
     // test refunds

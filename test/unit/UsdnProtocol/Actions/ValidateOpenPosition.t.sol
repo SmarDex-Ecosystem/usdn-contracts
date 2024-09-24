@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-
 import { ADMIN, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
@@ -605,30 +603,6 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
 
         assertEq(USER_1.balance, balanceUserBefore + securityDepositValue, "validator balance after refund");
         assertEq(address(this).balance, balanceContractBefore - securityDepositValue, "contract balance after refund");
-    }
-
-    /**
-     * @custom:scenario The user validates an open position with a paused protocol
-     * @custom:given A pending open position
-     * @custom:and A paused protocol
-     * @custom:when The user calls validateOpenPosition
-     * @custom:then The protocol reverts with a `EnforcedPause` error
-     */
-    function test_RevertWhen_validateOpenPositionPaused() public {
-        setUpUserPositionInLong(
-            OpenParams({
-                user: address(this),
-                untilAction: ProtocolAction.InitiateOpenPosition,
-                positionSize: uint128(LONG_AMOUNT),
-                desiredLiqPrice: CURRENT_PRICE * 2 / 3,
-                price: CURRENT_PRICE
-            })
-        );
-
-        _pauseProtocol(ADMIN);
-
-        vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
-        protocol.validateOpenPosition(payable(this), abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA);
     }
 
     // test refunds

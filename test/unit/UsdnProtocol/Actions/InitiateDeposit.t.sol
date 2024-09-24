@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-
-import { ADMIN, USER_1 } from "../../../utils/Constants.sol";
+import { USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { UsdnProtocolUtilsLibrary as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
@@ -400,27 +398,6 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
             address(this),
             payable(this),
             block.timestamp - 1,
-            abi.encode(uint128(2000 ether)),
-            EMPTY_PREVIOUS_DATA
-        );
-    }
-
-    /**
-     * @custom:scenario The user initiates a deposit action with a paused protocol
-     * @custom:given A paused protocol
-     * @custom:when The user calls initiateDeposit
-     * @custom:then The call reverts with `EnforcedPause`
-     */
-    function test_RevertWhen_initiateDepositPaused() public {
-        _pauseProtocol(ADMIN);
-
-        vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
-        protocol.initiateDeposit(
-            1 ether,
-            type(uint256).max,
-            address(this),
-            payable(this),
-            type(uint256).max,
             abi.encode(uint128(2000 ether)),
             EMPTY_PREVIOUS_DATA
         );

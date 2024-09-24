@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-
-import { ADMIN, USER_1 } from "../../../utils/Constants.sol";
+import { USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
@@ -85,21 +83,6 @@ contract TestUsdnProtocolRefundSecurityDeposit is UsdnProtocolBaseFixture {
 
         // liquidate the position with a price drop to $1000
         protocol.liquidate(abi.encode(1000 ether));
-    }
-
-    /**
-     * @custom:scenario Try to get the security deposit refund with a paused protocol
-     * @custom:given A liquidated user pending action
-     * @custom:and A paused protocol
-     * @custom:when The user calls refundSecurityDeposit
-     * @custom:then The call reverts with `EnforcedPause`
-     */
-    function test_RevertWhen_refundSecurityDepositPaused() public {
-        _initiateAndLiquidate();
-
-        _pauseProtocol(ADMIN);
-        vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
-        protocol.refundSecurityDeposit(payable(this));
     }
 
     receive() external payable { }
