@@ -18,6 +18,11 @@ import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMi
 contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBaseIntegrationFixture {
     using Strings for uint256;
 
+    /// @dev Block at which Chainlink's price is most recent one
+    uint256 constant CHAINLINK_BLOCK_NUMBER = 20_785_422;
+    /// @dev Block at which Pyth's unsafe price is most recent one
+    uint256 constant PYTH_PRICE_BLOCK_NUMBER = 20_785_200;
+
     function setUp() public override {
         super.setUp();
     }
@@ -105,7 +110,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
      */
     function test_ForkParseAndValidatePriceForAllInitiateActionsWithChainlink() public ethMainnetFork reSetUp {
         // roll to a block where the chainlink price is more recent than Pyth's unsafe one
-        vm.rollFork(20_785_422);
+        vm.rollFork(CHAINLINK_BLOCK_NUMBER);
 
         // all targeted actions loop
         for (uint256 i; i < actions.length; i++) {
@@ -154,7 +159,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
      */
     function test_ForkEthParseAndValidatePriceForInitiateDepositWithUnsafePyth() public ethMainnetFork reSetUp {
         // roll to a block where the chainlink price is older than Pyth's unsafe one
-        vm.rollFork(20_785_200);
+        vm.rollFork(PYTH_PRICE_BLOCK_NUMBER);
 
         // all targeted actions loop
         for (uint256 i; i < actions.length; i++) {
@@ -283,7 +288,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
      */
     function test_ForkFFIParseAndValidatePriceForAllInitiateActionsWithChainlink() public ethMainnetFork reSetUp {
         // roll to a block where the chainlink price is more recent than Pyth's unsafe one
-        vm.rollFork(20_785_422);
+        vm.rollFork(CHAINLINK_BLOCK_NUMBER);
 
         // all targeted actions loop
         for (uint256 i; i < actions.length; i++) {
