@@ -5,6 +5,7 @@ import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 
 import { PYTH_ETH_USD } from "../../../utils/Constants.sol";
+import { CHAINLINK_BLOCK_NUMBER, PYTH_PRICE_BLOCK_NUMBER } from "../utils/Constants.sol";
 import { OracleMiddlewareBaseIntegrationFixture } from "../utils/Fixtures.sol";
 
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
@@ -17,11 +18,6 @@ import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMi
  */
 contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBaseIntegrationFixture {
     using Strings for uint256;
-
-    /// @dev Block at which Chainlink's price is most recent one
-    uint256 constant CHAINLINK_BLOCK_NUMBER = 20_785_422;
-    /// @dev Block at which Pyth's unsafe price is most recent one
-    uint256 constant PYTH_PRICE_BLOCK_NUMBER = 20_785_200;
 
     function setUp() public override {
         super.setUp();
