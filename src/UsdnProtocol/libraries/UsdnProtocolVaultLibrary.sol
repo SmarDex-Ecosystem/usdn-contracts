@@ -124,7 +124,7 @@ library UsdnProtocolVaultLibrary {
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData
     ) external returns (bool success_) {
-        if (block.timestamp > deadline) {
+        if (deadline < block.timestamp) {
             revert IUsdnProtocolErrors.UsdnProtocolDeadlineExceeded();
         }
         uint64 securityDepositValue = s._securityDepositValue;
@@ -205,7 +205,7 @@ library UsdnProtocolVaultLibrary {
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData
     ) external returns (bool success_) {
-        if (block.timestamp > deadline) {
+        if (deadline < block.timestamp) {
             revert IUsdnProtocolErrors.UsdnProtocolDeadlineExceeded();
         }
         uint64 securityDepositValue = s._securityDepositValue;
