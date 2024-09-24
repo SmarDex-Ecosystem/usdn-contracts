@@ -39,6 +39,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawalWithCallback is TransferCallba
             DISABLE_AMOUNT_OUT_MIN,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(2000 ether),
             EMPTY_PREVIOUS_DATA
         );
@@ -60,6 +61,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawalWithCallback is TransferCallba
             DISABLE_AMOUNT_OUT_MIN,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(2000 ether),
             EMPTY_PREVIOUS_DATA
         );

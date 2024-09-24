@@ -30,6 +30,7 @@ contract TestUsdnProtocolActionsPrepareValidateOpenPositionData is UsdnProtocolB
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
+            type(uint256).max,
             currentPriceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -103,6 +104,7 @@ contract TestUsdnProtocolActionsPrepareValidateOpenPositionData is UsdnProtocolB
             protocol.getMaxLeverage(),
             USER_1,
             USER_1,
+            type(uint256).max,
             currentPriceData,
             EMPTY_PREVIOUS_DATA
         );

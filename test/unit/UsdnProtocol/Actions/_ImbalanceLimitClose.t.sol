@@ -125,6 +125,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
             DISABLE_MIN_PRICE,
             DEPLOYER,
             DEPLOYER,
+            type(uint256).max,
             abi.encode(params.initialPrice),
             data
         );

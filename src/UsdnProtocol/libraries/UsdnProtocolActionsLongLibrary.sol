@@ -64,6 +64,9 @@ library UsdnProtocolActionsLongLibrary {
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData
     ) external returns (bool success_, Types.PositionId memory posId_) {
+        if (params.deadline < block.timestamp) {
+            revert IUsdnProtocolErrors.UsdnProtocolDeadlineExceeded();
+        }
         uint64 securityDepositValue = s._securityDepositValue;
         if (msg.value < securityDepositValue) {
             revert IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow();
@@ -129,6 +132,9 @@ library UsdnProtocolActionsLongLibrary {
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData
     ) external returns (bool success_) {
+        if (params.deadline < block.timestamp) {
+            revert IUsdnProtocolErrors.UsdnProtocolDeadlineExceeded();
+        }
         if (msg.value < params.securityDepositValue) {
             revert IUsdnProtocolErrors.UsdnProtocolSecurityDepositTooLow();
         }

@@ -45,6 +45,7 @@ contract TestUsdnProtocolActionsInitiateDepositWithCallback is TransferCallback,
             DISABLE_SHARES_OUT_MIN,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(uint128(2000 ether)),
             EMPTY_PREVIOUS_DATA
         );
@@ -68,6 +69,7 @@ contract TestUsdnProtocolActionsInitiateDepositWithCallback is TransferCallback,
             DISABLE_SHARES_OUT_MIN,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(uint128(2000 ether)),
             EMPTY_PREVIOUS_DATA
         );

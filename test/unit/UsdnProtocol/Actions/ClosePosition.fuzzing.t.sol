@@ -70,6 +70,7 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
                 DISABLE_MIN_PRICE,
                 address(this),
                 payable(address(this)),
+                type(uint256).max,
                 priceData,
                 EMPTY_PREVIOUS_DATA
             );
@@ -96,6 +97,7 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
                 DISABLE_MIN_PRICE,
                 address(this),
                 payable(address(this)),
+                type(uint256).max,
                 priceData,
                 EMPTY_PREVIOUS_DATA
             );

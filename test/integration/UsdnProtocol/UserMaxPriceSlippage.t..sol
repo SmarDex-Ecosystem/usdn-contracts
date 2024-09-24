@@ -28,7 +28,15 @@ contract TestForkUsdnProtocolUserMaxPriceSlippage is UsdnProtocolBaseIntegration
         uint256 securityDeposit = protocol.getSecurityDepositValue();
         vm.expectRevert(UsdnProtocolSlippageMaxPriceExceeded.selector);
         protocol.initiateOpenPosition{ value: securityDeposit }(
-            2.5 ether, 3000 ether, 3001 ether, leverage, address(this), payable(address(this)), "", EMPTY_PREVIOUS_DATA
+            2.5 ether,
+            3000 ether,
+            3001 ether,
+            leverage,
+            address(this),
+            payable(address(this)),
+            type(uint256).max,
+            "",
+            EMPTY_PREVIOUS_DATA
         );
     }
 }
