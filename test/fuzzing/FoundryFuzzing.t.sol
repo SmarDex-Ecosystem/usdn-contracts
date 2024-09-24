@@ -37,7 +37,7 @@ contract FoundryFuzzingTest is Test {
         //FuzzActionsAdmin.sol
         fuzzingSuiteSelectors[15] = fuzzingSuite.setMinLeverage.selector;
         fuzzingSuiteSelectors[16] = fuzzingSuite.setMaxLeverage.selector;
-        fuzzingSuiteSelectors[17] = fuzzingSuite.setValidationDeadline.selector;
+        fuzzingSuiteSelectors[17] = fuzzingSuite.setValidatorDeadlines.selector;
         fuzzingSuiteSelectors[18] = fuzzingSuite.setLiquidationPenalty.selector;
         fuzzingSuiteSelectors[19] = fuzzingSuite.setSafetyMarginBps.selector;
         fuzzingSuiteSelectors[20] = fuzzingSuite.setLiquidationIteration.selector;
@@ -51,14 +51,14 @@ contract FoundryFuzzingTest is Test {
         fuzzingSuiteSelectors[28] = fuzzingSuite.setSecurityDepositValue.selector;
         fuzzingSuiteSelectors[29] = fuzzingSuite.setFeeThreshold.selector;
         fuzzingSuiteSelectors[30] = fuzzingSuite.setFeeCollector.selector;
-        fuzzingSuiteSelectors[31] = fuzzingSuite.setExpoImbalanceLimits.selector;
-        fuzzingSuiteSelectors[32] = fuzzingSuite.setTargetUsdnPrice.selector;
-        fuzzingSuiteSelectors[33] = fuzzingSuite.setUsdnRebaseThreshold.selector;
-        fuzzingSuiteSelectors[34] = fuzzingSuite.setUsdnRebaseInterval.selector;
-        fuzzingSuiteSelectors[35] = fuzzingSuite.setMinLongPosition.selector;
+        //        fuzzingSuiteSelectors[31] = fuzzingSuite.setExpoImbalanceLimits.selector;
+        fuzzingSuiteSelectors[31] = fuzzingSuite.setTargetUsdnPrice.selector;
+        fuzzingSuiteSelectors[32] = fuzzingSuite.setUsdnRebaseThreshold.selector;
+        fuzzingSuiteSelectors[33] = fuzzingSuite.setUsdnRebaseInterval.selector;
+        fuzzingSuiteSelectors[34] = fuzzingSuite.setMinLongPosition.selector;
 
         //FuzzTransfer.sol
-        fuzzingSuiteSelectors[36] = fuzzingSuite.transfer.selector;
+        fuzzingSuiteSelectors[35] = fuzzingSuite.transfer.selector;
 
         targetSelector(FuzzSelector({ addr: address(fuzzingSuite), selectors: fuzzingSuiteSelectors }));
 

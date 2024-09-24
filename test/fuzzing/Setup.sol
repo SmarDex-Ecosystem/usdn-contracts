@@ -3,6 +3,7 @@ pragma solidity ^0.8.25;
 
 import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
+import { LiquidationRewardsManager } from "../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
 import { RebalancerHandler } from "../unit/Rebalancer/utils/Handler.sol";
 import { UsdnProtocolHandler } from "../unit/UsdnProtocol/utils/Handler.sol";
 import { MockOracleMiddleware } from "../unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
@@ -12,21 +13,18 @@ import { Sdex } from "../utils/Sdex.sol";
 import { Weth } from "../utils/WETH.sol";
 import { WstETH } from "../utils/WstEth.sol";
 import { ErrorsChecked } from "./helpers/ErrorsChecked.sol";
-import { MockLiquidationRewardsManager } from "./mock/MockLiquidationRewardsManager.sol";
 
 import { Rebalancer } from "../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../src/Usdn/Usdn.sol";
 import { UsdnProtocolFallback } from "../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { IWstETH } from "../../src/interfaces/IWstETH.sol";
 import { IUsdnProtocolTypes } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { Permit2TokenBitfield } from "../../src/libraries/Permit2TokenBitfield.sol";
 import { FeeCollector } from "../../src/utils/FeeCollector.sol";
 import { InitializableReentrancyGuard } from "../../src/utils/InitializableReentrancyGuard.sol";
 
 contract Setup is ErrorsChecked {
     address[] public users = [USER_1, USER_2, ADMIN];
     address public constant FEE_COLLECTOR = address(0x00fee);
-    Permit2TokenBitfield.Bitfield public constant NO_PERMIT2 = Permit2TokenBitfield.Bitfield.wrap(0);
 
     Sdex public sdex = new Sdex();
     Weth public weth = new Weth();
@@ -41,10 +39,12 @@ contract Setup is ErrorsChecked {
     FeeCollector public feeCollector;
 
     MockOracleMiddleware public wstEthOracleMiddleware;
-    MockLiquidationRewardsManager public liquidationRewardsManager;
+    LiquidationRewardsManager public liquidationRewardsManager;
     Usdn public usdn;
     IUsdnProtocolHandler public usdnProtocol;
     Rebalancer public rebalancer;
+
+    bool initialized;
 
     struct BalancesSnapshot {
         uint256 validatorEth;
@@ -67,18 +67,19 @@ contract Setup is ErrorsChecked {
         vm.startPrank(ADMIN);
         wstEthOracleMiddleware = new MockOracleMiddleware();
         // todo: see if we want to fuzz chainlinkElapsedTimeLimit
-        liquidationRewardsManager = new MockLiquidationRewardsManager(IWstETH(wsteth), uint256(2 hours + 5 minutes));
+        liquidationRewardsManager = new LiquidationRewardsManager(IWstETH(wsteth));
         usdn = new Usdn(address(0), address(0));
 
         bytes32 MINTER_ROLE = usdn.MINTER_ROLE();
         bytes32 REBASER_ROLE = usdn.REBASER_ROLE();
 
-        IUsdnProtocolTypes.Roles memory roles = IUsdnProtocolTypes.Roles({
-            setExternalAdmin: ADMIN,
-            criticalFunctionsAdmin: ADMIN,
-            setProtocolParamsAdmin: ADMIN,
-            setUsdnParamsAdmin: ADMIN,
-            setOptionsAdmin: ADMIN
+        IUsdnProtocolTypes.Managers memory managers = IUsdnProtocolTypes.Managers({
+            setExternalManager: ADMIN,
+            criticalFunctionsManager: ADMIN,
+            setProtocolParamsManager: ADMIN,
+            setUsdnParamsManager: ADMIN,
+            setOptionsManager: ADMIN,
+            proxyUpgradeManager: ADMIN
         });
 
         feeCollector = new FeeCollector();
@@ -96,7 +97,7 @@ contract Setup is ErrorsChecked {
                     liquidationRewardsManager,
                     _tickSpacing,
                     address(feeCollector),
-                    roles,
+                    managers,
                     protocolFallback
                 )
             )
@@ -138,13 +139,13 @@ contract Setup is ErrorsChecked {
     function _checkErrors(bytes memory err, bytes4[][] memory errorsArrays) internal virtual override {
         if (
             bytes4(err) == InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector
-                && usdnProtocol.isInitialized()
+                && initialized
         ) {
             emit log_named_bytes("Should be initialized: ", err);
             assert(false);
         } else if (
             bytes4(err) == InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector
-                && !usdnProtocol.isInitialized()
+                && !initialized
         ) {
             emit log_named_bytes("Should not be initialized :", err);
             assert(false);

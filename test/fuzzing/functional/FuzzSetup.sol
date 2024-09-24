@@ -35,6 +35,7 @@ contract FuzzSetup is Setup, Utils {
             //            assert(address(usdnProtocol).balance == 0);
             //            assert(usdn.balanceOf(msg.sender) >= depositAmountRand * priceRand / 10 ** 18 - 1000);
             //            assert(wsteth.balanceOf(address(usdnProtocol)) == depositAmountRand + longAmountRand);
+            initialized = true;
         } catch (bytes memory err) {
             _checkErrors(err, INITIALIZE_ERRORS);
         }

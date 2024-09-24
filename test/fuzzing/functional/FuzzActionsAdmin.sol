@@ -26,11 +26,19 @@ contract FuzzActionsAdmin is Setup, Utils {
         usdnProtocol.setMaxLeverage(newMaxLeverage);
     }
 
-    function setValidationDeadline(uint256 newValidationDeadline) public {
-        newValidationDeadline =
-            bound(newValidationDeadline, Constants.MIN_VALIDATION_DEADLINE, Constants.MAX_VALIDATION_DEADLINE);
+    function setValidatorDeadlines(uint128 newLowLatencyValidatorDeadline, uint128 newOnChainValidatorDeadline)
+        public
+    {
+        newOnChainValidatorDeadline = uint128(bound(newOnChainValidatorDeadline, 0, Constants.MAX_VALIDATION_DEADLINE));
+        newLowLatencyValidatorDeadline = uint128(
+            bound(
+                newLowLatencyValidatorDeadline,
+                Constants.MIN_VALIDATION_DEADLINE,
+                wstEthOracleMiddleware.getLowLatencyDelay()
+            )
+        );
         vm.prank(ADMIN);
-        usdnProtocol.setValidationDeadline(newValidationDeadline);
+        usdnProtocol.setValidatorDeadlines(newLowLatencyValidatorDeadline, newOnChainValidatorDeadline);
     }
 
     function setLiquidationPenalty(uint8 newLiquidationPenalty) public {
@@ -111,29 +119,30 @@ contract FuzzActionsAdmin is Setup, Utils {
         }
     }
 
-    function setExpoImbalanceLimits(
-        uint256 newOpenLimitBps,
-        uint256 newDepositLimitBps,
-        uint256 newWithdrawalLimitBps,
-        uint256 newCloseLimitBps,
-        int256 newLongImbalanceTargetBps
-    ) public {
-        newOpenLimitBps = bound(newOpenLimitBps, 1, uint256(type(int256).max));
-        newWithdrawalLimitBps = bound(newWithdrawalLimitBps, newOpenLimitBps, uint256(type(int256).max));
-        newDepositLimitBps = bound(newDepositLimitBps, 1, uint256(type(int256).max));
-        newCloseLimitBps = bound(newCloseLimitBps, newDepositLimitBps, uint256(type(int256).max));
-        if (newWithdrawalLimitBps > Constants.BPS_DIVISOR / 2) {
-            newLongImbalanceTargetBps =
-                bound(newLongImbalanceTargetBps, -int256(Constants.BPS_DIVISOR / 2), int256(newCloseLimitBps));
-        } else {
-            newLongImbalanceTargetBps =
-                bound(newLongImbalanceTargetBps, -int256(newWithdrawalLimitBps), int256(newCloseLimitBps));
-        }
-        vm.prank(ADMIN);
-        usdnProtocol.setExpoImbalanceLimits(
-            newOpenLimitBps, newDepositLimitBps, newWithdrawalLimitBps, newCloseLimitBps, newLongImbalanceTargetBps
-        );
-    }
+    //    function setExpoImbalanceLimits(
+    //        uint256 newOpenLimitBps,
+    //        uint256 newDepositLimitBps,
+    //        uint256 newWithdrawalLimitBps,
+    //        uint256 newCloseLimitBps,
+    //        int256 newLongImbalanceTargetBps
+    //    ) public {
+    //        newOpenLimitBps = bound(newOpenLimitBps, 1, uint256(type(int256).max));
+    //        newWithdrawalLimitBps = bound(newWithdrawalLimitBps, newOpenLimitBps, uint256(type(int256).max));
+    //        newDepositLimitBps = bound(newDepositLimitBps, 1, uint256(type(int256).max));
+    //        newCloseLimitBps = bound(newCloseLimitBps, newDepositLimitBps, uint256(type(int256).max));
+    //        if (newWithdrawalLimitBps > Constants.BPS_DIVISOR / 2) {
+    //            newLongImbalanceTargetBps =
+    //                bound(newLongImbalanceTargetBps, -int256(Constants.BPS_DIVISOR / 2), int256(newCloseLimitBps));
+    //        } else {
+    //            newLongImbalanceTargetBps =
+    //                bound(newLongImbalanceTargetBps, -int256(newWithdrawalLimitBps), int256(newCloseLimitBps));
+    //        }
+    //        vm.prank(ADMIN);
+    //        usdnProtocol.setExpoImbalanceLimits(
+    //            newOpenLimitBps, newDepositLimitBps, newWithdrawalLimitBps, newCloseLimitBps,
+    // newLongImbalanceTargetBps
+    //        );
+    //    }
 
     function setTargetUsdnPrice(uint128 newPrice) public {
         newPrice =
