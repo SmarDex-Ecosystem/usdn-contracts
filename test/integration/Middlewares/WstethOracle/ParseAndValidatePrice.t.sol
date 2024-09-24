@@ -163,7 +163,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
      * @custom:given The price feed is ETH/USD for chainlink
      * @custom:and The unsafe Pyth's price is more recent
      * @custom:when The Protocol action is any InitiateDeposit
-     * @custom:then The price retrieved by the oracle middleware is the same as the one from the chainlink on-chain data
+     * @custom:then The price retrieved by the oracle middleware is the same as the one from the Pyth on-chain cache
      * by applying Steth/Wsteth on-chain price ratio
      */
     function test_ForkEthParseAndValidatePriceForInitiateDepositWithUnsafePyth() public ethMainnetFork reSetUp {
