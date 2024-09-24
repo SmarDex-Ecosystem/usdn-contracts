@@ -34,12 +34,7 @@ contract Deploy is Script {
     bytes32 constant PYTH_ETH_FEED_ID = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;
     address constant CHAINLINK_ETH_PRICE_SEPOLIA = 0x694AA1769357215DE4FAC081bf1f309aDC325306;
     address constant CHAINLINK_ETH_PRICE_MAINNET = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
-    address constant CHAINLINK_GAS_MAINNET = 0x169E633A2D1E6c10dD91238Ba11c4A708dfEF37C;
-    address constant PYTH_MAINNET = 0x4305FB66699C3B2702D4d05CF36551390A4c69C6;
-    bytes32 constant PYTH_ETH_FEED_ID = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;
-    address constant CHAINLINK_ETH_PRICE_MAINNET = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
     uint256 constant CHAINLINK_PRICE_VALIDITY = 1 hours + 2 minutes;
-    uint256 constant CHAINLINK_GAS_PRICE_VALIDITY = 2 hours + 5 minutes;
 
     Utils _utils = new Utils();
     address _deployerAddress;
@@ -77,7 +72,7 @@ contract Deploy is Script {
         )
     {
         // validate the Usdn protocol before deploying it
-        _utils.validateProtocol();
+        _utils.validateProtocol("UsdnProtocolImpl.sol", "UsdnProtocolFallback.sol");
 
         if (block.chainid == 1) {
             _chainId = ChainId.Mainnet;
@@ -102,7 +97,8 @@ contract Deploy is Script {
         }
 
         WstEthOracleMiddleware_ = _deployWstEthOracleMiddleware(isProdEnv, address(WstETH_));
-        LiquidationRewardsManager_ = _deployLiquidationRewardsManager(isProdEnv, address(WstETH_));
+
+        LiquidationRewardsManager_ = _deployLiquidationRewardsManager(address(WstETH_));
 
         // deploy the USDN protocol
         UsdnProtocol_ = _deployProtocol(Usdn_, Sdex_, WstETH_, WstEthOracleMiddleware_, LiquidationRewardsManager_);
@@ -217,11 +213,10 @@ contract Deploy is Script {
     /**
      * @notice Deploy the liquidation rewards manager if necessary
      * @dev Will return the already deployed one if an address is in the env variables
-     * @param isProdEnv Env check
      * @param wstETHAddress The address of the WstETH token
      * @return liquidationRewardsManager_ The deployed contract
      */
-    function _deployLiquidationRewardsManager(bool isProdEnv, address wstETHAddress)
+    function _deployLiquidationRewardsManager(address wstETHAddress)
         internal
         returns (LiquidationRewardsManager liquidationRewardsManager_)
     {
