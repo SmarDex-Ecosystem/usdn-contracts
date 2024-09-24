@@ -37,6 +37,8 @@ contract UsdnProtocolImpl is
     ) public initializer {
         __AccessControlDefaultAdminRules_init_unchained(0, msg.sender);
         __initializeReentrancyGuard_init();
+        __Pausable_init();
+
         // roles
         _setRoleAdmin(SET_EXTERNAL_ROLE, ADMIN_SET_EXTERNAL_ROLE);
         _setRoleAdmin(CRITICAL_FUNCTIONS_ROLE, ADMIN_CRITICAL_FUNCTIONS_ROLE);
