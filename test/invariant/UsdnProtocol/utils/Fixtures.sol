@@ -70,7 +70,7 @@ contract UsdnProtocolInvariantFixture is UsdnProtocolInvariantBaseFixture {
         super.setUp();
 
         vm.startPrank(DEPLOYER);
-        UsdnProtocolHandler handler = new UsdnProtocolHandler();
+        UsdnProtocolHandler handler = new UsdnProtocolHandler(wstETH, sdex);
 
         address proxy = UnsafeUpgrades.deployUUPSProxy(
             address(handler),
@@ -129,7 +129,7 @@ contract UsdnProtocolInvariantSafeFixture is UsdnProtocolInvariantBaseFixture {
         super.setUp();
 
         vm.startPrank(DEPLOYER);
-        UsdnProtocolSafeHandler handler = new UsdnProtocolSafeHandler();
+        UsdnProtocolSafeHandler handler = new UsdnProtocolSafeHandler(wstETH, sdex);
 
         address proxy = UnsafeUpgrades.deployUUPSProxy(
             address(handler),

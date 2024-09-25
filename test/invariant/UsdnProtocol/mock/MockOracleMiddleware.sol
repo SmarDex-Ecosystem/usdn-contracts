@@ -82,9 +82,8 @@ contract MockOracleMiddleware is OracleMiddleware {
             price_.price = price;
             return price_;
         }
-
         // validate actions, we need to return the first price which comes after the target timestamp + validation delay
-        if (
+        else if (
             action == Types.ProtocolAction.ValidateDeposit || action == Types.ProtocolAction.ValidateWithdrawal
                 || action == Types.ProtocolAction.ValidateOpenPosition
                 || action == Types.ProtocolAction.ValidateClosePosition
@@ -116,19 +115,27 @@ contract MockOracleMiddleware is OracleMiddleware {
             }
             return price_;
         }
-
         // liquidations, we want a recent price, ideally the one before the current block, otherwise the latest
-        uint256 at;
-        if (_prices.length() > 1) {
-            at = _prices.length() - 2;
-        } else {
-            at = _prices.length() - 1;
+        else if (action == Types.ProtocolAction.Liquidation) {
+            uint256 at;
+            if (_prices.length() > 1) {
+                at = _prices.length() - 2;
+            } else {
+                at = _prices.length() - 1;
+            }
+            (uint256 timestamp, uint256 price) = _prices.at(at);
+            if (timestamp < block.timestamp - 45 seconds) {
+                // the one before last is too old, we return the latest
+                (timestamp, price) = _prices.at(_prices.length() - 1);
+            }
+            price_.timestamp = timestamp;
+            price_.neutralPrice = price;
+            price_.price = price;
+            return price_;
         }
-        (uint256 lastTimestamp, uint256 lastPrice) = _prices.at(at);
-        if (lastTimestamp < block.timestamp - 45 seconds) {
-            // the one before last is too old, we return the latest
-            (lastTimestamp, lastPrice) = _prices.at(_prices.length() - 1);
-        }
+
+        // none, get latest price
+        (uint256 lastTimestamp, uint256 lastPrice) = _prices.at(_prices.length() - 1);
         price_.timestamp = lastTimestamp;
         price_.neutralPrice = lastPrice;
         price_.price = lastPrice;
