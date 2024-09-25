@@ -14,6 +14,9 @@ contract TestUsdnProtocolPausable is UsdnProtocolBaseFixture {
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
+        vm.prank(ADMIN);
+        protocol.pause();
+        assertTrue(protocol.isPaused(), "The protocol should be paused");
     }
 
     /**
@@ -23,8 +26,6 @@ contract TestUsdnProtocolPausable is UsdnProtocolBaseFixture {
      * @custom:then Each function should revert with the `EnforcedPause` error
      */
     function test_RevertWhen_callsPausedFunctions() public {
-        _pauseProtocol(ADMIN);
-
         vm.expectRevert(pausedErr);
         protocol.initiateDeposit(0, 0, ADDR_ZERO, ADDR_ZERO, 0, "", EMPTY_PREVIOUS_DATA);
 
