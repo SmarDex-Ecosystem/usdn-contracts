@@ -26,7 +26,6 @@ import { IUsdnProtocolFallback } from "../../../../src/interfaces/UsdnProtocol/I
 import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "../../../../src/libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
-import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { SignedMath } from "../../../../src/libraries/SignedMath.sol";
 
 /**
