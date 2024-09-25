@@ -17,8 +17,22 @@ import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
  * To perform invariant testing without unexpected reverts, use UsdnProtocolSafeHandler
  */
 contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
-    uint256 public constant SENDERS_LENGTH = 5;
-    address[] public senders = [ADMIN, USER_1, USER_2, USER_3, USER_4];
+    function senders() public pure returns (address[] memory senders_) {
+        senders_ = new address[](5);
+        senders_[0] = ADMIN;
+        senders_[1] = USER_1;
+        senders_[2] = USER_2;
+        senders_[3] = USER_3;
+        senders_[4] = USER_4;
+    }
+
+    function mine(uint256 rand) external {
+        uint256 blocks = rand % 10;
+        skip(12 * blocks);
+        vm.roll(block.number + blocks);
+    }
+
+    /* --------------------------------- Helpers -------------------------------- */
 
     function i_getTickFromDesiredLiqPrice(
         uint128 desiredLiqPriceWithoutPenalty,
@@ -47,10 +61,11 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
  * @dev Inputs are sanitized to prevent reverts. If a call is not possible, each function is a no-op
  */
 contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
-    function boundAddress(address addr) public view returns (address) {
+    function boundAddress(address addr) public pure returns (address) {
         // there is a 50% chance of returning one of the senders, otherwise the input address
         if (uint256(uint160(addr)) % 2 == 0) {
-            return senders[uint256(uint160(addr) / 2) % SENDERS_LENGTH];
+            address[] memory senders = senders();
+            return senders[uint256(uint160(addr) / 2) % senders.length];
         } else {
             return addr;
         }

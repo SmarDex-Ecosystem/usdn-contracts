@@ -8,10 +8,10 @@ import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
+import { MockOracleMiddleware } from "../mock/MockOracleMiddleware.sol";
 import { UsdnProtocolHandler, UsdnProtocolSafeHandler } from "./Handlers.sol";
 
 import { LiquidationRewardsManager } from "../../../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
-import { MockWstEthOracleMiddleware } from "../../../../src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
 import { Rebalancer } from "../../../../src/Rebalancer/Rebalancer.sol";
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
@@ -29,19 +29,20 @@ contract UsdnProtocolInvariantBaseFixture is BaseFixture, IUsdnProtocolErrors, I
     UsdnHandler public usdn;
     Sdex public sdex;
     WstETH public wstETH;
-    MockWstEthOracleMiddleware public oracleMiddleware;
+    MockOracleMiddleware public oracleMiddleware;
     LiquidationRewardsManager public liquidationRewardsManager;
     UsdnProtocolFallback protocolFallback;
     Managers managers;
 
     function setUp() public virtual {
+        vm.warp(1_727_266_553); // 2024-09-25 12:15:53 UTC
+
         // deploy contracts
         vm.startPrank(DEPLOYER);
         usdn = new UsdnHandler();
         wstETH = new WstETH();
         sdex = new Sdex();
-        oracleMiddleware = new MockWstEthOracleMiddleware(address(0), "", address(0), address(wstETH), 65 minutes);
-        oracleMiddleware.setWstethMockedPrice(INITIAL_PRICE);
+        oracleMiddleware = new MockOracleMiddleware(INITIAL_PRICE);
         liquidationRewardsManager = new LiquidationRewardsManager(wstETH);
         protocolFallback = new UsdnProtocolFallback();
         vm.stopPrank();
