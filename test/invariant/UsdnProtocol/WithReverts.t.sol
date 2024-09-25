@@ -6,6 +6,7 @@ import { UsdnProtocolInvariantFixture } from "./utils/Fixtures.sol";
 contract TestUsdnProtocolInvariantsWithReverts is UsdnProtocolInvariantFixture {
     function setUp() public override {
         super.setUp();
+        vm.deal(address(protocol), 100_000 ether); // for security deposits and oracle payments
 
         targetContract(address(protocol));
         bytes4[] memory protocolSelectors = new bytes4[](1);

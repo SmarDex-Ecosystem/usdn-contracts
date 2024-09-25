@@ -3,10 +3,14 @@ pragma solidity 0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+
 import { ADMIN, USER_1, USER_2, USER_3, USER_4 } from "../../../utils/Constants.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol//libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { UsdnProtocolLongLibrary as Long } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolLongLibrary.sol";
@@ -32,7 +36,8 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
     /* ------------------------ Invariant testing helpers ----------------------- */
 
     function mine(uint256 rand) external {
-        uint256 blocks = rand % 10;
+        uint256 blocks = rand % 9;
+        blocks++;
         skip(12 * blocks);
         vm.roll(block.number + blocks);
     }
@@ -75,6 +80,26 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
         (PendingAction[] memory actions, uint128[] memory rawIndices) = Vault.getActionablePendingActions(s, msg.sender);
         return PreviousActionsData({ priceData: new bytes[](actions.length), rawIndices: rawIndices });
     }
+
+    function _minDeposit() internal view returns (uint128 minDeposit_) {
+        minDeposit_ = uint128(
+            FixedPointMathLib.fullMulDiv(
+                FixedPointMathLib.divUp(s._usdn.divisor(), 2),
+                s._usdn.totalShares() * Constants.BPS_DIVISOR,
+                (s._balanceVault * (Constants.BPS_DIVISOR - s._vaultFeeBps))
+            )
+        );
+    }
+
+    function _maxDeposit() internal view returns (uint128 maxDeposit_) {
+        int256 maxVaultExpo =
+            int256(s._totalExpo - s._balanceLong) * s._depositExpoImbalanceLimitBps / int256(Constants.BPS_DIVISOR);
+        maxVaultExpo -= s._pendingBalanceVault;
+        if (maxVaultExpo <= int256(s._balanceVault)) {
+            return 0;
+        }
+        maxDeposit_ = uint128(_bound(uint256(maxVaultExpo) - s._balanceVault, 0, type(uint128).max));
+    }
 }
 
 /**
@@ -87,21 +112,21 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
     /* ------------------------ Protocol actions helpers ------------------------ */
 
     function initiateDepositTest(uint128 amount, address to, address validator) external {
+        if (_maxDeposit() < _minDeposit()) {
+            return; // deposit not possible
+        }
+        amount = uint128(_bound(amount, _minDeposit(), _maxDeposit()));
+        emit log_named_decimal_uint("deposit amount", amount, 18);
         _mockAsset.mintAndApprove(msg.sender, amount, address(this), amount);
-        uint256 balance = s._asset.balanceOf(msg.sender);
-        if (balance < s._minLongPosition) {
-            return;
-        }
-        if (balance > type(uint128).max) {
-            balance = type(uint128).max;
-        }
-        amount = uint128(bound(amount, s._minLongPosition, balance));
         PriceInfo memory price =
             s._oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.None, "");
         (, uint256 sdexToBurn) = this.previewDeposit(amount, uint128(price.neutralPrice), uint128(block.timestamp));
         sdexToBurn = sdexToBurn * 15 / 10;
         _mockSdex.mintAndApprove(msg.sender, sdexToBurn, address(this), sdexToBurn);
-        Vault.initiateDeposit(s, amount, 0, boundAddress(to), boundAddress(validator), "", _getPreviousActionsData());
+        vm.prank(msg.sender);
+        this.initiateDeposit{ value: s._securityDepositValue }(
+            amount, 0, boundAddress(to), boundAddress(validator), "", _getPreviousActionsData()
+        );
     }
 
     /* ------------------------ Invariant testing helpers ----------------------- */

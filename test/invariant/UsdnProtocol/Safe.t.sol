@@ -6,17 +6,14 @@ import { UsdnProtocolInvariantSafeFixture } from "./utils/Fixtures.sol";
 contract TestUsdnProtocolInvariantsSafe is UsdnProtocolInvariantSafeFixture {
     function setUp() public override {
         super.setUp();
+        vm.deal(address(protocol), 100_000 ether); // for security deposits and oracle payments
 
-        targetContract(address(protocol));
+        string[] memory artifacts = new string[](1);
+        artifacts[0] = "test/invariant/UsdnProtocol/utils/Handlers.sol:UsdnProtocolSafeHandler";
+        targetInterface(FuzzInterface({ addr: address(protocol), artifacts: artifacts }));
         bytes4[] memory protocolSelectors = new bytes4[](2);
         protocolSelectors[0] = protocol.mine.selector;
         protocolSelectors[1] = protocol.initiateDepositTest.selector;
-        /* targetArtifactSelector(
-            FuzzArtifactSelector({
-                artifact: "test/invariant/UsdnProtocol/utils/Handlers.sol:UsdnProtocolSafeHandler",
-                selectors: protocolSelectors
-            })
-        ); */
         targetSelector(FuzzSelector({ addr: address(protocol), selectors: protocolSelectors }));
 
         targetContract(address(oracleMiddleware));
