@@ -399,12 +399,11 @@ contract Deploy is Script {
             wsteth = WstETHSepolia(wstEthAddress);
         } else {
             wsteth = new WstETHSepolia();
+
+            // mint needed wstETH for the initialization to the deployer
+            wsteth.mint(_deployerAddress, wstEthNeeded);
+            wsteth.setStEthPerToken(stEthPerToken);
         }
-
-        // mint needed wstETH for the initialization to the deployer
-        wsteth.mint(_deployerAddress, wstEthNeeded);
-
-        wsteth.setStEthPerToken(stEthPerToken);
 
         (usdn_, wusdn_) = _deployUsdnAndWusdn();
 
