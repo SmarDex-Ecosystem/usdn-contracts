@@ -13,6 +13,7 @@ import { UsdnProtocolConstantsLibrary as Constants } from
     "../../../../src/UsdnProtocol//libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
+import { UsdnProtocolCoreLibrary as Core } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
@@ -81,24 +82,46 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
         return PreviousActionsData({ priceData: new bytes[](actions.length), rawIndices: rawIndices });
     }
 
-    function _minDeposit() internal view returns (uint128 minDeposit_) {
+    function _minDeposit() internal returns (uint128 minDeposit_) {
+        PriceInfo memory price =
+            s._oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.None, "");
+        uint256 vaultBalance =
+            Vault.vaultAssetAvailableWithFunding(s, uint128(price.neutralPrice), uint128(block.timestamp));
+        // minimum USDN shares to mint for burning 1 wei of SDEX
+        uint256 minUsdnShares = FixedPointMathLib.divUp(
+            Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR * s._usdn.divisor(), s._sdexBurnOnDepositRatio
+        );
+        // minimum USDN shares to mint 1 wei of USDN tokens
+        uint256 halfDivisor = FixedPointMathLib.divUp(s._usdn.divisor(), 2);
+        if (halfDivisor > minUsdnShares) {
+            minUsdnShares = halfDivisor;
+        }
+        // minimum deposit that respects both conditions above
         minDeposit_ = uint128(
             FixedPointMathLib.fullMulDiv(
-                FixedPointMathLib.divUp(s._usdn.divisor(), 2),
-                s._usdn.totalShares() * Constants.BPS_DIVISOR,
-                (s._balanceVault * (Constants.BPS_DIVISOR - s._vaultFeeBps))
+                minUsdnShares,
+                vaultBalance * Constants.BPS_DIVISOR,
+                s._usdn.totalShares() * (Constants.BPS_DIVISOR - s._vaultFeeBps)
             )
         );
+        // if the minimum deposit is less than 1 wei of assets, set it to 1 wei (can't deposit 0)
+        if (minDeposit_ == 0) {
+            minDeposit_ = 1;
+        }
     }
 
-    function _maxDeposit() internal view returns (uint128 maxDeposit_) {
-        int256 maxVaultExpo =
-            int256(s._totalExpo - s._balanceLong) * s._depositExpoImbalanceLimitBps / int256(Constants.BPS_DIVISOR);
-        maxVaultExpo -= s._pendingBalanceVault;
-        if (maxVaultExpo <= int256(s._balanceVault)) {
+    function _maxDeposit() internal returns (uint128 maxDeposit_) {
+        PriceInfo memory price =
+            s._oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.None, "");
+        uint256 longBalance =
+            Core.longAssetAvailableWithFunding(s, uint128(price.neutralPrice), uint128(block.timestamp));
+        int256 maxDeposit =
+            int256(s._totalExpo - longBalance) * s._depositExpoImbalanceLimitBps / int256(Constants.BPS_DIVISOR);
+        maxDeposit -= s._pendingBalanceVault;
+        if (maxDeposit < 0) {
             return 0;
         }
-        maxDeposit_ = uint128(_bound(uint256(maxVaultExpo) - s._balanceVault, 0, type(uint128).max));
+        maxDeposit_ = uint128(_bound(uint256(maxDeposit), 0, type(uint128).max));
     }
 }
 
@@ -111,9 +134,14 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
 
     /* ------------------------ Protocol actions helpers ------------------------ */
 
-    function initiateDepositTest(uint128 amount, address to, address validator) external {
+    function initiateDepositTest(uint128 amount, address to, address payable validator) external {
         if (_maxDeposit() < _minDeposit()) {
-            return; // deposit not possible
+            return;
+        }
+        validator = boundAddress(validator);
+        PendingAction memory action = Core.getUserPendingAction(s, validator);
+        if (action.action != ProtocolAction.None) {
+            return;
         }
         amount = uint128(_bound(amount, _minDeposit(), _maxDeposit()));
         emit log_named_decimal_uint("deposit amount", amount, 18);
@@ -123,10 +151,11 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         (, uint256 sdexToBurn) = this.previewDeposit(amount, uint128(price.neutralPrice), uint128(block.timestamp));
         sdexToBurn = sdexToBurn * 15 / 10;
         _mockSdex.mintAndApprove(msg.sender, sdexToBurn, address(this), sdexToBurn);
-        vm.prank(msg.sender);
+        vm.startPrank(msg.sender);
         this.initiateDeposit{ value: s._securityDepositValue }(
-            amount, 0, boundAddress(to), boundAddress(validator), "", _getPreviousActionsData()
+            amount, 0, boundAddress(to), validator, "", _getPreviousActionsData()
         );
+        vm.stopPrank();
     }
 
     /* ------------------------ Invariant testing helpers ----------------------- */

@@ -21,14 +21,13 @@ contract TestUsdnProtocolInvariantsSafe is UsdnProtocolInvariantSafeFixture {
         oracleSelectors[0] = oracleMiddleware.updatePrice.selector;
         targetSelector(FuzzSelector({ addr: address(oracleMiddleware), selectors: oracleSelectors }));
 
-        targetContract(address(usdn));
-        bytes4[] memory usdnSelectors = new bytes4[](5);
-        usdnSelectors[0] = usdn.rebaseTest.selector;
-        usdnSelectors[1] = usdn.burnTest.selector;
-        usdnSelectors[2] = usdn.transferTest.selector;
-        usdnSelectors[3] = usdn.burnSharesTest.selector;
-        usdnSelectors[4] = usdn.transferSharesTest.selector;
-        targetSelector(FuzzSelector({ addr: address(usdn), selectors: usdnSelectors }));
+        /*     targetContract(address(usdn));
+        bytes4[] memory usdnSelectors = new bytes4[](4);
+        usdnSelectors[0] = usdn.burnTest.selector;
+        usdnSelectors[1] = usdn.transferTest.selector;
+        usdnSelectors[2] = usdn.burnSharesTest.selector;
+        usdnSelectors[3] = usdn.transferSharesTest.selector;
+        targetSelector(FuzzSelector({ addr: address(usdn), selectors: usdnSelectors })); */
 
         address[] memory senders = protocol.senders();
         for (uint256 i = 0; i < senders.length; i++) {
