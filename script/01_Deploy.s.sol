@@ -386,8 +386,20 @@ contract Deploy is Script {
     {
         uint256 stEthPerToken = _utils.getStEthPerTokenMainnet();
 
-        SdexSepolia sdex = new SdexSepolia();
-        WstETHSepolia wsteth = new WstETHSepolia();
+        address sdexAddress = vm.envOr("SDEX_ADDRESS", address(0));
+        if (sdexAddress != address(0)) {
+            sdex_ = Sdex(sdexAddress);
+        } else {
+            sdex_ = Sdex(address(new SdexSepolia()));
+        }
+
+        address payable wstEthAddress = payable(vm.envOr("WSTETH_ADDRESS", address(0)));
+        WstETHSepolia wsteth;
+        if (wstEthAddress != address(0)) {
+            wsteth = WstETHSepolia(wstEthAddress);
+        } else {
+            wsteth = new WstETHSepolia();
+        }
 
         // mint needed wstETH for the initialization to the deployer
         wsteth.mint(_deployerAddress, wstEthNeeded);
@@ -396,8 +408,7 @@ contract Deploy is Script {
 
         (usdn_, wusdn_) = _deployUsdnAndWusdn();
 
-        sdex_ = Sdex(address(sdex));
-        wstETH_ = WstETH(payable(address(wsteth)));
+        wstETH_ = WstETH(payable(wsteth));
 
         vm.setEnv("PYTH_ADDRESS", vm.toString(PYTH_SEPOLIA));
         vm.setEnv("PYTH_ETH_FEED_ID", vm.toString(PYTH_ETH_FEED_ID));
