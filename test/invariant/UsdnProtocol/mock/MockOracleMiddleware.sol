@@ -53,6 +53,7 @@ contract MockOracleMiddleware is OracleMiddleware {
         override
         returns (PriceInfo memory price_)
     {
+        // register a new latest price if needed (new block)
         updatePrice(uint256(keccak256(abi.encodePacked(block.number, block.timestamp))));
 
         // initiate actions, we want to return an on-chain price which is at least 15 minutes old
@@ -116,8 +117,18 @@ contract MockOracleMiddleware is OracleMiddleware {
             return price_;
         }
 
-        // liquidations, we want the most recent price
-        (uint256 lastTimestamp, uint256 lastPrice) = _prices.at(_prices.length() - 1);
+        // liquidations, we want a recent price, ideally the one before the current block, otherwise the latest
+        uint256 at;
+        if (_prices.length() > 1) {
+            at = _prices.length() - 2;
+        } else {
+            at = _prices.length() - 1;
+        }
+        (uint256 lastTimestamp, uint256 lastPrice) = _prices.at(at);
+        if (lastTimestamp < block.timestamp - 45 seconds) {
+            // the one before last is too old, we return the latest
+            (lastTimestamp, lastPrice) = _prices.at(_prices.length() - 1);
+        }
         price_.timestamp = lastTimestamp;
         price_.neutralPrice = lastPrice;
         price_.price = lastPrice;

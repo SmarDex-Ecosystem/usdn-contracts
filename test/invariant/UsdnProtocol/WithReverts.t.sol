@@ -3,7 +3,7 @@ pragma solidity 0.8.26;
 
 import { UsdnProtocolInvariantFixture } from "./utils/Fixtures.sol";
 
-contract FoundryFuzzingTest is UsdnProtocolInvariantFixture {
+contract TestUsdnProtocolInvariantsWithReverts is UsdnProtocolInvariantFixture {
     function setUp() public override {
         super.setUp();
 
