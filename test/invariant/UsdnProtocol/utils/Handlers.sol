@@ -228,7 +228,9 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
 }
 
 /**
- * @notice A handler for invariant testing of the USDN token
+ * @notice A USDN token handler for invariant testing of the USDN protocol
+ * @dev This handler is very simple and just serves to test some out-of-band transfers and burns while using the
+ * protocol
  */
 contract UsdnHandler is Usdn, Test {
     constructor() Usdn(address(0), address(0)) { }
