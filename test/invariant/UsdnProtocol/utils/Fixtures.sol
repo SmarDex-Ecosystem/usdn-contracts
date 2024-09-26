@@ -8,8 +8,8 @@ import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
-import { MockOracleMiddleware } from "../mock/MockOracleMiddleware.sol";
 import { UsdnProtocolHandler, UsdnProtocolSafeHandler } from "./Handlers.sol";
+import { MockOracleMiddleware } from "./MockOracleMiddleware.sol";
 
 import { LiquidationRewardsManager } from "../../../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
 import { Rebalancer } from "../../../../src/Rebalancer/Rebalancer.sol";

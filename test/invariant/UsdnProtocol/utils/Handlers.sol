@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { Test } from "forge-std/Test.sol";
+import { Test, console } from "forge-std/Test.sol";
 
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
@@ -40,6 +40,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
     function mine(uint256 rand) external {
         uint256 blocks = rand % 9;
         blocks++;
+        emit log_named_uint("mining blocks", blocks);
         skip(12 * blocks);
         vm.roll(block.number + blocks);
     }
@@ -134,6 +135,11 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
         }
         maxDeposit_ = uint128(_bound(uint256(maxDeposit), 0, type(uint128).max));
     }
+
+    function _isFoundryContract(address addr) internal pure returns (bool) {
+        return addr == address(vm) || addr == 0x000000000000000000636F6e736F6c652e6c6f67
+            || addr == 0x4e59b44847b379578588920cA78FbF26c0B4956C || addr <= address(0xff);
+    }
 }
 
 /**
@@ -171,7 +177,8 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         }
         sdexToBurn = sdexToBurn * 15 / 10; // margin
         _mockSdex.mintAndApprove(msg.sender, sdexToBurn, address(this), sdexToBurn);
-        emit log_named_decimal_uint("deposit with amount", amount, 18);
+        console.log("deposit with amount %s to %s and validator %s", amount, to, validator);
+
         vm.startPrank(msg.sender);
         this.initiateDeposit{ value: s._securityDepositValue }(
             amount, 0, boundAddress(to), validator, "", _getPreviousActionsData()
@@ -200,7 +207,7 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
 
     function boundAddress(address addr) public view returns (address payable) {
         // there is a 50% chance of returning one of the senders, otherwise the input address unless it's a contract
-        bool isContract = addr.code.length > 0 || addr == CONSOLE;
+        bool isContract = addr.code.length > 0 || _isFoundryContract(addr);
         if (isContract || uint256(uint160(addr)) % 2 == 0) {
             address[] memory senders = senders();
             return payable(senders[uint256(uint160(addr) / 2) % senders.length]);
