@@ -10,6 +10,7 @@ import { ADMIN, USER_1, USER_2, USER_3, USER_4 } from "../../../utils/Constants.
 import { Sdex } from "../../../utils/Sdex.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
 
+import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../../../../src/UsdnProtocol//libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
@@ -223,5 +224,52 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         }
         uint256 pick = uint256(uint160(addr)) % length;
         return payable(_activeValidators.at(pick));
+    }
+}
+
+/**
+ * @notice A handler for invariant testing of the USDN token
+ */
+contract UsdnHandler is Usdn, Test {
+    constructor() Usdn(address(0), address(0)) { }
+
+    function burnTest(uint256 value) external {
+        if (balanceOf(msg.sender) == 0) {
+            return;
+        }
+        value = bound(value, 1, balanceOf(msg.sender));
+        emit log_named_decimal_uint("USDN burn", value, 18);
+
+        _burn(msg.sender, value);
+    }
+
+    function transferTest(address to, uint256 value) external {
+        if (balanceOf(msg.sender) == 0 || to == address(0)) {
+            return;
+        }
+        value = bound(value, 1, balanceOf(msg.sender));
+        console.log("USDN transfer from %s to %s with value %s", msg.sender, to, value);
+
+        _transfer(msg.sender, to, value);
+    }
+
+    function burnSharesTest(uint256 value) external {
+        if (sharesOf(msg.sender) == 0) {
+            return;
+        }
+        value = bound(value, 1, sharesOf(msg.sender));
+        emit log_named_uint("USDN burn shares", value);
+
+        _burnShares(msg.sender, value, _convertToTokens(value, Rounding.Closest, _divisor));
+    }
+
+    function transferSharesTest(address to, uint256 value) external {
+        if (sharesOf(msg.sender) == 0 || to == address(0)) {
+            return;
+        }
+        value = bound(value, 1, sharesOf(msg.sender));
+        console.log("USDN transfer shares from %s to %s with value %s", msg.sender, to, value);
+
+        _transferShares(msg.sender, to, value, _convertToTokens(value, Rounding.Closest, _divisor));
     }
 }

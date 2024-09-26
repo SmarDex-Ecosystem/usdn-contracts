@@ -7,15 +7,12 @@ contract TestUsdnProtocolInvariantsWithReverts is UsdnProtocolInvariantFixture {
     function setUp() public override {
         super.setUp();
 
-        targetContract(address(protocol));
+        string[] memory artifacts = new string[](1);
+        artifacts[0] = "test/invariant/UsdnProtocol/utils/Handlers.sol:UsdnProtocolSafeHandler";
+        targetInterface(FuzzInterface({ addr: address(protocol), artifacts: artifacts }));
         bytes4[] memory protocolSelectors = new bytes4[](1);
         protocolSelectors[0] = protocol.mine.selector;
-        targetArtifactSelector(
-            FuzzArtifactSelector({
-                artifact: "test/invariant/UsdnProtocol/utils/Handlers.sol:UsdnProtocolHandler",
-                selectors: protocolSelectors
-            })
-        );
+        targetSelector(FuzzSelector({ addr: address(protocol), selectors: protocolSelectors }));
 
         targetContract(address(oracleMiddleware));
         bytes4[] memory oracleSelectors = new bytes4[](1);
@@ -23,7 +20,7 @@ contract TestUsdnProtocolInvariantsWithReverts is UsdnProtocolInvariantFixture {
         targetSelector(FuzzSelector({ addr: address(oracleMiddleware), selectors: oracleSelectors }));
 
         targetContract(address(usdn));
-        bytes4[] memory usdnSelectors = new bytes4[](3);
+        bytes4[] memory usdnSelectors = new bytes4[](4);
         usdnSelectors[0] = usdn.burnTest.selector;
         usdnSelectors[1] = usdn.transferTest.selector;
         usdnSelectors[2] = usdn.burnSharesTest.selector;

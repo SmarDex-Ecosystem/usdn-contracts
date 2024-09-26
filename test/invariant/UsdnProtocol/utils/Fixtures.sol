@@ -3,11 +3,11 @@ pragma solidity 0.8.26;
 
 import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
-import { UsdnHandler } from "../../../unit/USDN/utils/Handler.sol";
 import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
+import { UsdnHandler } from "./Handlers.sol";
 import { UsdnProtocolHandler, UsdnProtocolSafeHandler } from "./Handlers.sol";
 import { MockOracleMiddleware } from "./MockOracleMiddleware.sol";
 
