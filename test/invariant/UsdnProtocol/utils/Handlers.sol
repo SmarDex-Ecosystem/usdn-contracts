@@ -80,8 +80,8 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
 
     /* -------------------------------- Internal -------------------------------- */
 
-    function _getPreviousActionsData() internal view returns (PreviousActionsData memory) {
-        (PendingAction[] memory actions, uint128[] memory rawIndices) = Vault.getActionablePendingActions(s, msg.sender);
+    function _getPreviousActionsData(address validator) internal view returns (PreviousActionsData memory) {
+        (PendingAction[] memory actions, uint128[] memory rawIndices) = Vault.getActionablePendingActions(s, validator);
         return PreviousActionsData({ priceData: new bytes[](actions.length), rawIndices: rawIndices });
     }
 
@@ -212,11 +212,11 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         }
         sdexToBurn = sdexToBurn * 15 / 10; // margin
         _mockSdex.mintAndApprove(msg.sender, sdexToBurn, address(this), sdexToBurn);
-        console.log("deposit of amount %s to %s and validator %s", amount, to, validator);
 
+        console.log("deposit of %s assets to %s and validator %s", amount, to, validator);
         vm.startPrank(msg.sender);
         this.initiateDeposit{ value: s._securityDepositValue }(
-            amount, 0, boundAddress(to), validator, "", _getPreviousActionsData()
+            amount, 0, boundAddress(to), validator, "", _getPreviousActionsData(address(0))
         );
         vm.stopPrank();
     }
@@ -234,7 +234,7 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         uint256 oracleFee = s._oracleMiddleware.validationCost("", ProtocolAction.ValidateDeposit);
         emit log_named_address("validate deposit for", validator);
         vm.startPrank(msg.sender);
-        this.validateDeposit{ value: oracleFee }(validator, "", _getPreviousActionsData());
+        this.validateDeposit{ value: oracleFee }(validator, "", _getPreviousActionsData(validator));
         vm.stopPrank();
     }
 
@@ -251,11 +251,11 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         _withdrawalValidators.add(validator);
         shares = uint152(_bound(shares, 1, maxWithdrawal));
 
-        console.log("withdrawal of shares %s to %s and validator %s", shares, to, validator);
+        console.log("withdrawal of %s shares to %s and validator %s", shares, to, validator);
         vm.startPrank(msg.sender);
         s._usdn.approve(address(this), shares);
         this.initiateWithdrawal{ value: s._securityDepositValue }(
-            shares, 0, boundAddress(to), validator, "", _getPreviousActionsData()
+            shares, 0, boundAddress(to), validator, "", _getPreviousActionsData(address(0))
         );
         vm.stopPrank();
     }
@@ -273,7 +273,7 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         uint256 oracleFee = s._oracleMiddleware.validationCost("", ProtocolAction.ValidateDeposit);
         emit log_named_address("validate withdrawal for", validator);
         vm.startPrank(msg.sender);
-        this.validateWithdrawal{ value: oracleFee }(validator, "", _getPreviousActionsData());
+        this.validateWithdrawal{ value: oracleFee }(validator, "", _getPreviousActionsData(validator));
         vm.stopPrank();
     }
 
@@ -319,7 +319,7 @@ contract UsdnHandler is Usdn, Test {
             return;
         }
         value = bound(value, 1, sharesOf(msg.sender));
-        emit log_named_uint("USDN burn shares", value);
+        console.log("USDN burn %s shares from %s", value, msg.sender);
 
         _burnShares(msg.sender, value, _convertToTokens(value, Rounding.Closest, _divisor));
     }
@@ -329,7 +329,7 @@ contract UsdnHandler is Usdn, Test {
             return;
         }
         value = bound(value, 1, sharesOf(msg.sender));
-        console.log("USDN transfer shares from %s to %s with value %s", msg.sender, to, value);
+        console.log("USDN transfer %s shares from %s to %s ", value, msg.sender, to);
 
         _transferShares(msg.sender, to, value, _convertToTokens(value, Rounding.Closest, _divisor));
     }
