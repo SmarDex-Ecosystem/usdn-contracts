@@ -137,6 +137,37 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
         maxDeposit_ = uint128(_bound(uint256(maxDeposit), 0, type(uint128).max));
     }
 
+    function _maxWithdrawal(uint256 balance) internal returns (uint152 maxWithdrawal_) {
+        PriceInfo memory price = s._oracleMiddleware.parseAndValidatePrice(
+            "", uint128(block.timestamp), ProtocolAction.InitiateWithdrawal, ""
+        );
+        uint256 vaultBalance = s._balanceVault;
+        if (price.timestamp >= s._lastUpdateTimestamp) {
+            vaultBalance =
+                Vault.vaultAssetAvailableWithFunding(s, uint128(price.neutralPrice), uint128(price.timestamp));
+        }
+        int256 v = int256(vaultBalance);
+        uint256 longBalance = s._balanceLong;
+        if (price.timestamp >= s._lastUpdateTimestamp) {
+            longBalance = Core.longAssetAvailableWithFunding(s, uint128(price.neutralPrice), uint128(price.timestamp));
+        }
+        uint256 longTradingExpo = s._totalExpo - longBalance;
+        int256 l = int256(longTradingExpo);
+        int256 b = int256(Constants.BPS_DIVISOR);
+        int256 t = int256(s._usdn.totalShares());
+        int256 p = int256(s._pendingBalanceVault);
+        int256 f = int256(uint256(s._vaultFeeBps));
+        int256 maxWithdrawal = b * t * (b * (p + v - l) + s._withdrawalExpoImbalanceLimitBps * (p + v))
+            / (v * (b - f) * (b - s._withdrawalExpoImbalanceLimitBps));
+        if (maxWithdrawal < 0) {
+            return 0;
+        }
+        if (maxWithdrawal > int256(balance)) {
+            maxWithdrawal = int256(balance);
+        }
+        maxWithdrawal_ = uint152(_bound(uint256(maxWithdrawal), 0, type(uint152).max));
+    }
+
     function _isFoundryContract(address addr) internal pure returns (bool) {
         return addr == address(vm) || addr == 0x000000000000000000636F6e736F6c652e6c6f67
             || addr == 0x4e59b44847b379578588920cA78FbF26c0B4956C || addr <= address(0xff);
@@ -150,7 +181,10 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
 contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    EnumerableSet.AddressSet _activeValidators;
+    EnumerableSet.AddressSet _depositValidators;
+    EnumerableSet.AddressSet _withdrawalValidators;
+    EnumerableSet.AddressSet _openValidators;
+    EnumerableSet.AddressSet _closeValidators;
 
     constructor(WstETH mockAsset, Sdex mockSdex) UsdnProtocolHandler(mockAsset, mockSdex) { }
 
@@ -165,7 +199,7 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         if (action.action != ProtocolAction.None) {
             return;
         }
-        _activeValidators.add(validator);
+        _depositValidators.add(validator);
         amount = uint128(_bound(amount, _minDeposit(), _maxDeposit()));
         _mockAsset.mintAndApprove(msg.sender, amount, address(this), amount);
         PriceInfo memory price =
@@ -178,7 +212,7 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         }
         sdexToBurn = sdexToBurn * 15 / 10; // margin
         _mockSdex.mintAndApprove(msg.sender, sdexToBurn, address(this), sdexToBurn);
-        console.log("deposit with amount %s to %s and validator %s", amount, to, validator);
+        console.log("deposit of amount %s to %s and validator %s", amount, to, validator);
 
         vm.startPrank(msg.sender);
         this.initiateDeposit{ value: s._securityDepositValue }(
@@ -188,7 +222,7 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
     }
 
     function validateDepositTest(address payable validator) external {
-        validator = boundValidator(validator);
+        validator = _boundValidator(validator, _depositValidators);
         PendingAction memory action = Core.getUserPendingAction(s, validator);
         if (action.action == ProtocolAction.None) {
             return;
@@ -196,11 +230,33 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         if (block.timestamp < action.timestamp + s._oracleMiddleware.getValidationDelay()) {
             return;
         }
-        _activeValidators.remove(validator);
+        _depositValidators.remove(validator);
         uint256 oracleFee = s._oracleMiddleware.validationCost("", ProtocolAction.ValidateDeposit);
         emit log_named_address("validate deposit for", validator);
         vm.startPrank(msg.sender);
         this.validateDeposit{ value: oracleFee }(validator, "", _getPreviousActionsData());
+        vm.stopPrank();
+    }
+
+    function initiateWithdrawalTest(uint152 shares, address to, address payable validator) external {
+        uint152 maxWithdrawal = _maxWithdrawal(s._usdn.sharesOf(msg.sender));
+        if (maxWithdrawal < 1) {
+            return;
+        }
+        validator = boundAddress(validator);
+        PendingAction memory action = Core.getUserPendingAction(s, validator);
+        if (action.action != ProtocolAction.None) {
+            return;
+        }
+        _withdrawalValidators.add(validator);
+        shares = uint152(_bound(shares, 1, maxWithdrawal));
+
+        console.log("withdrawal of shares %s to %s and validator %s", shares, to, validator);
+        vm.startPrank(msg.sender);
+        s._usdn.approve(address(this), shares);
+        this.initiateWithdrawal{ value: s._securityDepositValue }(
+            shares, 0, boundAddress(to), validator, "", _getPreviousActionsData()
+        );
         vm.stopPrank();
     }
 
@@ -217,13 +273,19 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         }
     }
 
-    function boundValidator(address addr) public view returns (address payable) {
-        uint256 length = _activeValidators.length();
+    /* --------------------------- Internal functions --------------------------- */
+
+    function _boundValidator(address addr, EnumerableSet.AddressSet storage validators)
+        internal
+        view
+        returns (address payable)
+    {
+        uint256 length = validators.length();
         if (length == 0) {
             return payable(addr);
         }
         uint256 pick = uint256(uint160(addr)) % length;
-        return payable(_activeValidators.at(pick));
+        return payable(validators.at(pick));
     }
 }
 
