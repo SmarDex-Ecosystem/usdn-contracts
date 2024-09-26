@@ -85,8 +85,11 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
     function _minDeposit() internal returns (uint128 minDeposit_) {
         PriceInfo memory price =
             s._oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.InitiateDeposit, "");
-        uint256 vaultBalance =
-            Vault.vaultAssetAvailableWithFunding(s, uint128(price.neutralPrice), uint128(price.timestamp));
+        uint256 vaultBalance = s._balanceVault;
+        if (price.timestamp >= s._lastUpdateTimestamp) {
+            vaultBalance =
+                Vault.vaultAssetAvailableWithFunding(s, uint128(price.neutralPrice), uint128(price.timestamp));
+        }
         // minimum USDN shares to mint for burning 1 wei of SDEX
         uint256 minUsdnShares = FixedPointMathLib.divUp(
             Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR * s._usdn.divisor(), s._sdexBurnOnDepositRatio
@@ -113,11 +116,18 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
     function _maxDeposit() internal returns (uint128 maxDeposit_) {
         PriceInfo memory price =
             s._oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.InitiateDeposit, "");
-        uint256 longBalance =
-            Core.longAssetAvailableWithFunding(s, uint128(price.neutralPrice), uint128(price.timestamp));
-        int256 maxDeposit =
-            int256(s._totalExpo - longBalance) * s._depositExpoImbalanceLimitBps / int256(Constants.BPS_DIVISOR);
-        maxDeposit -= s._pendingBalanceVault;
+        uint256 longBalance = s._balanceLong;
+        if (price.timestamp >= s._lastUpdateTimestamp) {
+            longBalance = Core.longAssetAvailableWithFunding(s, uint128(price.neutralPrice), uint128(price.timestamp));
+        }
+        uint256 vaultBalance = s._balanceVault;
+        if (price.timestamp >= s._lastUpdateTimestamp) {
+            vaultBalance =
+                Vault.vaultAssetAvailableWithFunding(s, uint128(price.neutralPrice), uint128(price.timestamp));
+        }
+        int256 longTradingExpo = int256(s._totalExpo - longBalance);
+        int256 maxDeposit = (s._depositExpoImbalanceLimitBps * longTradingExpo / int256(Constants.BPS_DIVISOR))
+            + longTradingExpo - int256(vaultBalance) - int256(s._pendingBalanceVault);
         if (maxDeposit < 0) {
             return 0;
         }
@@ -144,17 +154,35 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
             return;
         }
         amount = uint128(_bound(amount, _minDeposit(), _maxDeposit()));
-        emit log_named_decimal_uint("deposit with amount", amount, 18);
         _mockAsset.mintAndApprove(msg.sender, amount, address(this), amount);
         PriceInfo memory price =
-            s._oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.None, "");
-        (, uint256 sdexToBurn) = this.previewDeposit(amount, uint128(price.neutralPrice), uint128(block.timestamp));
-        sdexToBurn = sdexToBurn * 15 / 10;
+            s._oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.InitiateDeposit, "");
+        uint256 sdexToBurn;
+        if (price.timestamp >= s._lastUpdateTimestamp) {
+            (, sdexToBurn) = this.previewDeposit(amount, uint128(price.neutralPrice), uint128(price.timestamp));
+        } else {
+            (, sdexToBurn) = this.previewDeposit(amount, uint128(price.neutralPrice), uint128(block.timestamp));
+        }
+        sdexToBurn = sdexToBurn * 15 / 10; // margin
         _mockSdex.mintAndApprove(msg.sender, sdexToBurn, address(this), sdexToBurn);
+        emit log_named_decimal_uint("deposit with amount", amount, 18);
         vm.startPrank(msg.sender);
         this.initiateDeposit{ value: s._securityDepositValue }(
             amount, 0, boundAddress(to), validator, "", _getPreviousActionsData()
         );
+        vm.stopPrank();
+    }
+
+    function validateDepositTest(address payable validator) external {
+        validator = boundAddress(validator);
+        PendingAction memory action = Core.getUserPendingAction(s, validator);
+        if (action.action == ProtocolAction.None) {
+            return;
+        }
+        uint256 oracleFee = s._oracleMiddleware.validationCost("", ProtocolAction.ValidateDeposit);
+        emit log_named_address("validate deposit for", validator);
+        vm.startPrank(msg.sender);
+        this.validateDeposit{ value: oracleFee }(validator, "", _getPreviousActionsData());
         vm.stopPrank();
     }
 
