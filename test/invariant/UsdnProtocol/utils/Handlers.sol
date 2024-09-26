@@ -224,7 +224,7 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
     function validateDepositTest(address payable validator) external {
         validator = _boundValidator(validator, _depositValidators);
         PendingAction memory action = Core.getUserPendingAction(s, validator);
-        if (action.action == ProtocolAction.None) {
+        if (action.action != ProtocolAction.ValidateDeposit) {
             return;
         }
         if (block.timestamp < action.timestamp + s._oracleMiddleware.getValidationDelay()) {
