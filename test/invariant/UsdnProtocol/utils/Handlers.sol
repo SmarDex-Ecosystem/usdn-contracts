@@ -84,9 +84,9 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
 
     function _minDeposit() internal returns (uint128 minDeposit_) {
         PriceInfo memory price =
-            s._oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.None, "");
+            s._oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.InitiateDeposit, "");
         uint256 vaultBalance =
-            Vault.vaultAssetAvailableWithFunding(s, uint128(price.neutralPrice), uint128(block.timestamp));
+            Vault.vaultAssetAvailableWithFunding(s, uint128(price.neutralPrice), uint128(price.timestamp));
         // minimum USDN shares to mint for burning 1 wei of SDEX
         uint256 minUsdnShares = FixedPointMathLib.divUp(
             Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR * s._usdn.divisor(), s._sdexBurnOnDepositRatio
@@ -112,9 +112,9 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
 
     function _maxDeposit() internal returns (uint128 maxDeposit_) {
         PriceInfo memory price =
-            s._oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.None, "");
+            s._oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.InitiateDeposit, "");
         uint256 longBalance =
-            Core.longAssetAvailableWithFunding(s, uint128(price.neutralPrice), uint128(block.timestamp));
+            Core.longAssetAvailableWithFunding(s, uint128(price.neutralPrice), uint128(price.timestamp));
         int256 maxDeposit =
             int256(s._totalExpo - longBalance) * s._depositExpoImbalanceLimitBps / int256(Constants.BPS_DIVISOR);
         maxDeposit -= s._pendingBalanceVault;
@@ -144,7 +144,7 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
             return;
         }
         amount = uint128(_bound(amount, _minDeposit(), _maxDeposit()));
-        emit log_named_decimal_uint("deposit amount", amount, 18);
+        emit log_named_decimal_uint("deposit with amount", amount, 18);
         _mockAsset.mintAndApprove(msg.sender, amount, address(this), amount);
         PriceInfo memory price =
             s._oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.None, "");
