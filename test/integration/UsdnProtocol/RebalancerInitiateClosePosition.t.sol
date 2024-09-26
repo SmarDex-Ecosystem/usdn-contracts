@@ -11,7 +11,6 @@ import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 import { IRebalancerErrors } from "../../../src/interfaces/Rebalancer/IRebalancerErrors.sol";
 import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
 import { IRebalancerTypes } from "../../../src/interfaces/Rebalancer/IRebalancerTypes.sol";
-import { IUsdnProtocolTypes as Types } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The `initiateClosePosition` function of the rebalancer contract
@@ -62,6 +61,7 @@ contract TestRebalancerInitiateClosePosition is
     function test_setUp() public view {
         assertGt(rebalancer.getPositionVersion(), 0, "The rebalancer version should be updated");
         assertGt(protocolPosition.amount - previousPositionData.amount, 0, "The protocol bonus should be positive");
+        revert("TestRevert");
     }
 
     /**
@@ -74,24 +74,8 @@ contract TestRebalancerInitiateClosePosition is
      * @custom:and The user action is pending in protocol
      */
     function test_rebalancerInitiateClosePositionPartial() public {
-        // wstETH.mintAndApprove(openParams.user, openParams.positionSize, address(protocol), openParams.positionSize);
-
-        uint256 validationCost =
-            oracleMiddleware.validationCost(MOCK_PYTH_DATA, Types.ProtocolAction.InitiateOpenPosition);
-        protocol.initiateOpenPosition{ value: protocol.getSecurityDepositValue() + validationCost }(
-            100 ether,
-            1000 ether,
-            type(uint128).max,
-            protocol.getMaxLeverage(),
-            address(this),
-            payable(address(this)),
-            "",
-            EMPTY_PREVIOUS_DATA
-        );
-
-        _waitDelay();
-
-        protocol.validateOpenPosition(payable(address(this)), abi.encode(2000 ether), EMPTY_PREVIOUS_DATA);
+        mockChainlinkOnChain.setLastPublishTime(block.timestamp);
+        mockChainlinkOnChain.setLastPrice(int256(wstETH.getWstETHByStETH(uint256(1365 ether / 10 ** (18 - 8)))));
 
         // choose an amount small enough to not trigger imbalance limits
         uint88 amount = amountInRebalancer / 100;
