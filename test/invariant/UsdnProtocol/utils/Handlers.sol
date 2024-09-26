@@ -168,6 +168,41 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
         maxWithdrawal_ = uint152(_bound(uint256(maxWithdrawal), 0, type(uint152).max));
     }
 
+    function _minLeverageTick() internal returns (int24 tick_) {
+        PriceInfo memory price = s._oracleMiddleware.parseAndValidatePrice(
+            "", uint128(block.timestamp), ProtocolAction.InitiateOpenPosition, ""
+        );
+        uint128 adjustedPrice = uint128(price.price + price.price * s._positionFeeBps / Constants.BPS_DIVISOR);
+        uint128 liqPriceWithoutPenalty = Utils._getLiquidationPrice(adjustedPrice, uint128(s._minLeverage));
+        (tick_,) = Long._getTickFromDesiredLiqPrice(
+            liqPriceWithoutPenalty,
+            s._lastPrice,
+            Core.longTradingExpoWithFunding(s, s._lastPrice, uint128(block.timestamp)),
+            s._liqMultiplierAccumulator,
+            s._tickSpacing,
+            s._liquidationPenalty
+        );
+        tick_ += s._tickSpacing; // because of the rounding down
+    }
+
+    function _maxLeverageTick() internal returns (int24 tick_) {
+        PriceInfo memory price = s._oracleMiddleware.parseAndValidatePrice(
+            "", uint128(block.timestamp), ProtocolAction.InitiateOpenPosition, ""
+        );
+        uint128 adjustedPrice = uint128(price.price + price.price * s._positionFeeBps / Constants.BPS_DIVISOR);
+        uint128 liqPriceWithoutPenalty = Utils._getLiquidationPrice(adjustedPrice, uint128(s._maxLeverage));
+        (tick_,) = Long._getTickFromDesiredLiqPrice(
+            liqPriceWithoutPenalty,
+            s._lastPrice,
+            Core.longTradingExpoWithFunding(s, s._lastPrice, uint128(block.timestamp)),
+            s._liqMultiplierAccumulator,
+            s._tickSpacing,
+            s._liquidationPenalty
+        );
+    }
+
+    function _maxLongAmount(uint128 entryPrice, uint128 liqPriceWithoutPenalty) internal returns (uint128 amount_) { }
+
     function _isFoundryContract(address addr) internal pure returns (bool) {
         return addr == address(vm) || addr == 0x000000000000000000636F6e736F6c652e6c6f67
             || addr == 0x4e59b44847b379578588920cA78FbF26c0B4956C || addr <= address(0xff);
@@ -275,6 +310,23 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         vm.startPrank(msg.sender);
         this.validateWithdrawal{ value: oracleFee }(validator, "", _getPreviousActionsData(validator));
         vm.stopPrank();
+    }
+
+    function initiateOpenPositionTest(uint128 amount, int24 tick, address to, address payable validator) external {
+        // first set desired liq price to have a leverage between min and max
+        tick = int24(bound(tick, _minLeverageTick(), _maxLeverageTick()));
+        uint256 desiredLiqPrice = Utils.getEffectivePriceForTick(
+            tick,
+            s._lastPrice,
+            Core.longTradingExpoWithFunding(s, s._lastPrice, uint128(block.timestamp)),
+            s._liqMultiplierAccumulator
+        );
+        uint256 liqPriceWithoutPenalty = Utils.getEffectivePriceForTick(
+            Utils.calcTickWithoutPenalty(tick, s._liquidationPenalty),
+            s._lastPrice,
+            Core.longTradingExpoWithFunding(s, s._lastPrice, uint128(block.timestamp)),
+            s._liqMultiplierAccumulator
+        );
     }
 
     /* ------------------------ Invariant testing helpers ----------------------- */
