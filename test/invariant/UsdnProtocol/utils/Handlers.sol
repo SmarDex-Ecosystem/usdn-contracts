@@ -3,6 +3,7 @@ pragma solidity 0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 
+import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { ADMIN, USER_1, USER_2, USER_3, USER_4 } from "../../../utils/Constants.sol";
@@ -140,6 +141,10 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
  * @dev Inputs are sanitized to prevent reverts. If a call is not possible, each function is a no-op
  */
 contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
+    using EnumerableSet for EnumerableSet.AddressSet;
+
+    EnumerableSet.AddressSet _activeValidators;
+
     constructor(WstETH mockAsset, Sdex mockSdex) UsdnProtocolHandler(mockAsset, mockSdex) { }
 
     /* ------------------------ Protocol actions helpers ------------------------ */
@@ -153,6 +158,7 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         if (action.action != ProtocolAction.None) {
             return;
         }
+        _activeValidators.add(validator);
         amount = uint128(_bound(amount, _minDeposit(), _maxDeposit()));
         _mockAsset.mintAndApprove(msg.sender, amount, address(this), amount);
         PriceInfo memory price =
@@ -174,11 +180,15 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
     }
 
     function validateDepositTest(address payable validator) external {
-        validator = boundAddress(validator);
+        validator = boundValidator(validator);
         PendingAction memory action = Core.getUserPendingAction(s, validator);
         if (action.action == ProtocolAction.None) {
             return;
         }
+        if (block.timestamp < action.timestamp + s._oracleMiddleware.getValidationDelay()) {
+            return;
+        }
+        _activeValidators.remove(validator);
         uint256 oracleFee = s._oracleMiddleware.validationCost("", ProtocolAction.ValidateDeposit);
         emit log_named_address("validate deposit for", validator);
         vm.startPrank(msg.sender);
@@ -188,13 +198,23 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
 
     /* ------------------------ Invariant testing helpers ----------------------- */
 
-    function boundAddress(address addr) public pure returns (address payable) {
-        // there is a 50% chance of returning one of the senders, otherwise the input address
-        if (uint256(uint160(addr)) % 2 == 0) {
+    function boundAddress(address addr) public view returns (address payable) {
+        // there is a 50% chance of returning one of the senders, otherwise the input address unless it's a contract
+        bool isContract = addr.code.length > 0 || addr == CONSOLE;
+        if (isContract || uint256(uint160(addr)) % 2 == 0) {
             address[] memory senders = senders();
             return payable(senders[uint256(uint160(addr) / 2) % senders.length]);
         } else {
             return payable(addr);
         }
+    }
+
+    function boundValidator(address addr) public view returns (address payable) {
+        uint256 length = _activeValidators.length();
+        if (length == 0) {
+            return payable(addr);
+        }
+        uint256 pick = uint256(uint160(addr)) % length;
+        return payable(_activeValidators.at(pick));
     }
 }

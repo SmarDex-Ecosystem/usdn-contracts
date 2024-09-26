@@ -16,7 +16,6 @@ contract MockOracleMiddleware is OracleMiddleware {
     using EnumerableMap for EnumerableMap.UintToUintMap;
 
     uint256 internal constant MAX_CONF_BPS = 200; // 2% max
-    uint256 internal constant VALIDATION_DELAY = 24 seconds;
     uint256 internal constant MAX_PRICE_INCREMENT = 20 ether; // $20
 
     EnumerableMap.UintToUintMap internal _prices; // append-only map of timestamps to prices
@@ -93,7 +92,7 @@ contract MockOracleMiddleware is OracleMiddleware {
             uint256 price;
             do {
                 (timestamp, price) = _prices.at(i);
-                if (timestamp >= targetTimestamp + VALIDATION_DELAY) {
+                if (timestamp >= targetTimestamp + _validationDelay) {
                     // price is new enough, we return it
                     price_.timestamp = timestamp;
                     price_.neutralPrice = price;
@@ -102,18 +101,8 @@ contract MockOracleMiddleware is OracleMiddleware {
                 }
                 i++;
             } while (i < _prices.length());
-            // we couldn't find a new enough price let's return the latest
-            price_.timestamp = timestamp;
-            price_.neutralPrice = price;
-            // confidence interval
-            if (
-                action == Types.ProtocolAction.ValidateWithdrawal || action == Types.ProtocolAction.ValidateOpenPosition
-            ) {
-                price_.price = price + _priceConf(price);
-            } else {
-                price_.price = price - _priceConf(price);
-            }
-            return price_;
+            // we couldn't find a new enough price
+            revert("MockOracleMiddleware: must wait _validationDelay");
         }
         // liquidations, we want a recent price, ideally the one before the current block, otherwise the latest
         else if (action == Types.ProtocolAction.Liquidation) {
