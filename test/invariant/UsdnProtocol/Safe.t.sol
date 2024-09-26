@@ -10,11 +10,12 @@ contract TestUsdnProtocolInvariantsSafe is UsdnProtocolInvariantSafeFixture {
         string[] memory artifacts = new string[](1);
         artifacts[0] = "test/invariant/UsdnProtocol/utils/Handlers.sol:UsdnProtocolSafeHandler";
         targetInterface(FuzzInterface({ addr: address(protocol), artifacts: artifacts }));
-        bytes4[] memory protocolSelectors = new bytes4[](4);
+        bytes4[] memory protocolSelectors = new bytes4[](5);
         protocolSelectors[0] = protocol.mine.selector;
         protocolSelectors[1] = protocol.initiateDepositTest.selector;
         protocolSelectors[2] = protocol.validateDepositTest.selector;
         protocolSelectors[3] = protocol.initiateWithdrawalTest.selector;
+        protocolSelectors[4] = protocol.validateWithdrawalTest.selector;
         targetSelector(FuzzSelector({ addr: address(protocol), selectors: protocolSelectors }));
 
         targetContract(address(oracleMiddleware));
@@ -23,11 +24,9 @@ contract TestUsdnProtocolInvariantsSafe is UsdnProtocolInvariantSafeFixture {
         targetSelector(FuzzSelector({ addr: address(oracleMiddleware), selectors: oracleSelectors }));
 
         targetContract(address(usdn));
-        bytes4[] memory usdnSelectors = new bytes4[](4);
-        usdnSelectors[0] = usdn.burnTest.selector;
-        usdnSelectors[1] = usdn.transferTest.selector;
-        usdnSelectors[2] = usdn.burnSharesTest.selector;
-        usdnSelectors[3] = usdn.transferSharesTest.selector;
+        bytes4[] memory usdnSelectors = new bytes4[](2);
+        usdnSelectors[0] = usdn.burnSharesTest.selector;
+        usdnSelectors[1] = usdn.transferSharesTest.selector;
         targetSelector(FuzzSelector({ addr: address(usdn), selectors: usdnSelectors }));
 
         address[] memory senders = protocol.senders();

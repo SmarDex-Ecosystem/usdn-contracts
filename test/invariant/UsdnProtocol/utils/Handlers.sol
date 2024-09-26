@@ -260,6 +260,23 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         vm.stopPrank();
     }
 
+    function validateWithdrawalTest(address payable validator) external {
+        validator = _boundValidator(validator, _withdrawalValidators);
+        PendingAction memory action = Core.getUserPendingAction(s, validator);
+        if (action.action != ProtocolAction.ValidateWithdrawal) {
+            return;
+        }
+        if (block.timestamp < action.timestamp + s._oracleMiddleware.getValidationDelay()) {
+            return;
+        }
+        _withdrawalValidators.remove(validator);
+        uint256 oracleFee = s._oracleMiddleware.validationCost("", ProtocolAction.ValidateDeposit);
+        emit log_named_address("validate withdrawal for", validator);
+        vm.startPrank(msg.sender);
+        this.validateWithdrawal{ value: oracleFee }(validator, "", _getPreviousActionsData());
+        vm.stopPrank();
+    }
+
     /* ------------------------ Invariant testing helpers ----------------------- */
 
     function boundAddress(address addr) public view returns (address payable) {
@@ -296,26 +313,6 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
  */
 contract UsdnHandler is Usdn, Test {
     constructor() Usdn(address(0), address(0)) { }
-
-    function burnTest(uint256 value) external {
-        if (balanceOf(msg.sender) == 0) {
-            return;
-        }
-        value = bound(value, 1, balanceOf(msg.sender));
-        emit log_named_decimal_uint("USDN burn", value, 18);
-
-        _burn(msg.sender, value);
-    }
-
-    function transferTest(address to, uint256 value) external {
-        if (balanceOf(msg.sender) == 0 || to == address(0)) {
-            return;
-        }
-        value = bound(value, 1, balanceOf(msg.sender));
-        console.log("USDN transfer from %s to %s with value %s", msg.sender, to, value);
-
-        _transfer(msg.sender, to, value);
-    }
 
     function burnSharesTest(uint256 value) external {
         if (sharesOf(msg.sender) == 0) {
