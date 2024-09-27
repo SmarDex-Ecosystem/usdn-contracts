@@ -93,7 +93,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         // rebase (no liquidation happens)
         vm.expectEmit();
         emit Rebase(usdn.MAX_DIVISOR(), expectedDivisor);
-        protocol.mockLiquidate(abi.encode(newPrice), 0);
+        protocol.mockLiquidate(abi.encode(newPrice));
 
         assertApproxEqAbs(
             protocol.usdnPrice(newPrice, uint128(block.timestamp - 30)),
@@ -129,6 +129,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
             DISABLE_SHARES_OUT_MIN,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(newPrice),
             EMPTY_PREVIOUS_DATA
         );
@@ -182,6 +183,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
             DISABLE_AMOUNT_OUT_MIN,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(newPrice),
             EMPTY_PREVIOUS_DATA
         );
@@ -236,6 +238,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
             protocol.getMaxLeverage(),
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(newPrice),
             EMPTY_PREVIOUS_DATA
         );
@@ -306,6 +309,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
             DISABLE_MIN_PRICE,
             address(this),
             payable(address(this)),
+            type(uint256).max,
             abi.encode(newPrice),
             EMPTY_PREVIOUS_DATA
         );

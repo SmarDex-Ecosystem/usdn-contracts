@@ -11,9 +11,7 @@ import { OracleMiddlewareWithRedstoneHandler } from "../utils/HandlerWithRedston
 import { MockChainlinkOnChain } from "../utils/MockChainlinkOnChain.sol";
 import { MockPyth } from "../utils/MockPyth.sol";
 
-import { LiquidationRewardsManager } from "../../../../src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
-import { IWstETH } from "../../../../src/interfaces/IWstETH.sol";
 import { IOracleMiddlewareErrors } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
 import { IOracleMiddlewareEvents } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareEvents.sol";
 import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -130,25 +128,6 @@ contract OracleMiddlewareWithRedstoneFixture is BaseFixture, ActionsFixture {
         (, int256 price,, uint256 updatedAt,) = mockChainlinkOnChain.latestRoundData();
         assertEq(price, 2000e8);
         assertEq(updatedAt, block.timestamp);
-    }
-}
-
-/**
- * @title LiquidationRewardsManagerBaseFixture
- * @dev Utils for testing the liquidation rewards manager
- */
-contract LiquidationRewardsManagerBaseFixture is BaseFixture {
-    MockChainlinkOnChain internal mockChainlinkOnChain;
-    WstETH internal wsteth;
-    LiquidationRewardsManager internal liquidationRewardsManager;
-
-    function setUp() public virtual {
-        vm.warp(1_704_063_600); // 01/01/2024 @ 12:00am (UTC+2)
-
-        mockChainlinkOnChain = new MockChainlinkOnChain();
-        wsteth = new WstETH();
-        liquidationRewardsManager =
-            new LiquidationRewardsManager(address(mockChainlinkOnChain), IWstETH(address(wsteth)), 2 days);
     }
 }
 

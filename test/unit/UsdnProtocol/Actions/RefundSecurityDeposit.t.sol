@@ -82,7 +82,7 @@ contract TestUsdnProtocolRefundSecurityDeposit is UsdnProtocolBaseFixture {
         skip(1 minutes);
 
         // liquidate the position with a price drop to $1000
-        protocol.liquidate(abi.encode(1000 ether), 1);
+        protocol.liquidate(abi.encode(1000 ether));
     }
 
     receive() external payable { }

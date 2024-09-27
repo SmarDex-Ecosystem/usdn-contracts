@@ -23,6 +23,7 @@ interface IUsdnProtocolVault is IUsdnProtocolTypes {
      * revert
      * @param to The address that will receive the USDN tokens
      * @param validator The address that will validate the deposit
+     * @param deadline The deadline of the deposit to be initiated
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions
      * @return success_ Whether the deposit was initiated
@@ -32,6 +33,7 @@ interface IUsdnProtocolVault is IUsdnProtocolTypes {
         uint256 sharesOutMin,
         address to,
         address payable validator,
+        uint256 deadline,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_);
@@ -76,6 +78,7 @@ interface IUsdnProtocolVault is IUsdnProtocolTypes {
      * action will revert
      * @param to The address that will receive the assets
      * @param validator The address that will validate the withdrawal
+     * @param deadline The deadline of the withdrawal to be initiated
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions
      * @return success_ Whether the withdrawal was initiated
@@ -85,6 +88,7 @@ interface IUsdnProtocolVault is IUsdnProtocolTypes {
         uint256 amountOutMin,
         address to,
         address payable validator,
+        uint256 deadline,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable returns (bool success_);

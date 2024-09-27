@@ -11,35 +11,53 @@ import { IUsdnProtocolActions } from "../../interfaces/UsdnProtocol/IUsdnProtoco
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { DoubleEndedQueue } from "../../libraries/DoubleEndedQueue.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
+import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
-import { UsdnProtocolCoreLibrary as Core } from "./UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "./UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.sol";
 
 library UsdnProtocolActionsUtilsLibrary {
+    using DoubleEndedQueue for DoubleEndedQueue.Deque;
     using SafeCast for uint256;
     using SignedMath for int256;
+
+    /**
+     * @notice Data structure for the transient state of the `_validateMultipleActionable` function
+     * @param pending The candidate pending action to validate
+     * @param frontRawIndex The raw index of the front of the queue
+     * @param rawIndex The raw index of the candidate pending action
+     * @param executed Whether the pending action was executed
+     * @param liq Whether the pending action was liquidated
+     */
+    struct ValidateMultipleActionableData {
+        Types.PendingAction pending;
+        uint128 frontRawIndex;
+        uint128 rawIndex;
+        bool executed;
+        bool liq;
+    }
 
     /* -------------------------------------------------------------------------- */
     /*                             External functions                             */
     /* -------------------------------------------------------------------------- */
 
     /// @notice See {IUsdnProtocolActions}
-    function liquidate(Types.Storage storage s, bytes calldata currentPriceData, uint16 iterations)
+    function liquidate(Types.Storage storage s, bytes calldata currentPriceData)
         external
-        returns (uint256 liquidatedPositions_)
+        returns (Types.LiqTickInfo[] memory liquidatedTicks_)
     {
         uint256 balanceBefore = address(this).balance;
         PriceInfo memory currentPrice =
             Utils._getOraclePrice(s, Types.ProtocolAction.Liquidation, 0, "", currentPriceData);
 
-        (liquidatedPositions_,) = Long._applyPnlAndFundingAndLiquidate(
+        (liquidatedTicks_,) = Long._applyPnlAndFundingAndLiquidate(
             s,
             currentPrice.neutralPrice,
             currentPrice.timestamp,
-            iterations,
+            Constants.MAX_LIQUIDATION_ITERATION,
             true,
             Types.ProtocolAction.Liquidation,
             currentPriceData
@@ -58,7 +76,7 @@ library UsdnProtocolActionsUtilsLibrary {
         uint256 balanceBefore = address(this).balance;
 
         uint256 amountToRefund;
-        (validatedActions_, amountToRefund) = Core._validateMultipleActionable(s, previousActionsData, maxValidations);
+        (validatedActions_, amountToRefund) = _validateMultipleActionable(s, previousActionsData, maxValidations);
 
         Utils._refundExcessEther(0, amountToRefund, balanceBefore);
         Utils._checkPendingFee(s);
@@ -194,6 +212,126 @@ library UsdnProtocolActionsUtilsLibrary {
         _checkImbalanceLimitClose(
             s, data_.totalExpoToClose, posValueAfterFees, data_.tempPositionValue - posValueAfterFees
         );
+    }
+
+    /**
+     * @notice Validate multiple actionable pending actions
+     * @param s The storage of the protocol
+     * @param previousActionsData The data for the actions to validate (price and raw indices)
+     * @param maxValidations The maximum number of validations to perform
+     * @return validatedActions_ The number of validated actions
+     * @return amountToRefund_ The total amount of security deposits refunded
+     */
+    function _validateMultipleActionable(
+        Types.Storage storage s,
+        Types.PreviousActionsData calldata previousActionsData,
+        uint256 maxValidations
+    ) internal returns (uint256 validatedActions_, uint256 amountToRefund_) {
+        uint256 length = previousActionsData.rawIndices.length;
+        if (previousActionsData.priceData.length != length || length < 1) {
+            return (0, 0);
+        }
+        if (maxValidations > length) {
+            maxValidations = length;
+        }
+        uint128 lowLatencyDeadline = s._lowLatencyValidatorDeadline;
+        uint16 middlewareLowLatencyDelay = s._oracleMiddleware.getLowLatencyDelay();
+        uint128 onChainDeadline = s._onChainValidatorDeadline;
+        uint256 i;
+        do {
+            if (s._pendingActionsQueue.empty()) {
+                break;
+            }
+            ValidateMultipleActionableData memory data; // avoid stack too deep
+            // perform cleanup on the queue if needed
+            (data.pending, data.frontRawIndex) = s._pendingActionsQueue.front();
+            if (data.pending.timestamp == 0) {
+                s._pendingActionsQueue.popFront();
+            }
+
+            // check if the pending action is actionable and validate it
+            data.rawIndex = previousActionsData.rawIndices[i];
+            if (data.rawIndex != data.frontRawIndex) {
+                // only get the pending action if we didn't already get it via `front` above
+                if (!s._pendingActionsQueue.isValid(data.rawIndex)) {
+                    // the raw index is not in the queue, let's keep looking
+                    unchecked {
+                        i++;
+                    }
+                    continue;
+                }
+                data.pending = s._pendingActionsQueue.atRaw(data.rawIndex);
+            }
+            if (_isActionable(data.pending.timestamp, lowLatencyDeadline, middlewareLowLatencyDelay, onChainDeadline)) {
+                if (data.pending.action == Types.ProtocolAction.ValidateDeposit) {
+                    data.executed = Vault._validateDepositWithAction(s, data.pending, previousActionsData.priceData[i]);
+                } else if (data.pending.action == Types.ProtocolAction.ValidateWithdrawal) {
+                    data.executed =
+                        Vault._validateWithdrawalWithAction(s, data.pending, previousActionsData.priceData[i]);
+                } else if (data.pending.action == Types.ProtocolAction.ValidateOpenPosition) {
+                    (data.executed, data.liq) =
+                        ActionsLong._validateOpenPositionWithAction(s, data.pending, previousActionsData.priceData[i]);
+                } else if (data.pending.action == Types.ProtocolAction.ValidateClosePosition) {
+                    (data.executed, data.liq) =
+                        ActionsLong._validateClosePositionWithAction(s, data.pending, previousActionsData.priceData[i]);
+                }
+            } else {
+                // not actionable or empty pending action, let's keep looking
+                unchecked {
+                    i++;
+                }
+                continue;
+            }
+            if (data.executed || data.liq) {
+                // validation was performed, let's update the return values and cleanup
+                Utils._clearPendingAction(s, data.pending.validator, data.rawIndex);
+                amountToRefund_ += data.pending.securityDepositValue;
+                unchecked {
+                    validatedActions_++;
+                }
+                emit IUsdnProtocolEvents.SecurityDepositRefunded(
+                    data.pending.validator, msg.sender, data.pending.securityDepositValue
+                );
+            } else {
+                // if we didn't perform a validation, this likely means that there are pending liquidations, we stop
+                break;
+            }
+            unchecked {
+                i++;
+            }
+        } while (i < maxValidations);
+    }
+
+    /**
+     * @notice Check whether a pending action is actionable, i.e any user can validate it and retrieve the security
+     * deposit
+     * @dev Between `initiateTimestamp` and `initiateTimestamp + lowLatencyDeadline`,
+     * the validator receives the security deposit
+     * Between `initiateTimestamp + lowLatencyDelay` and `initiateTimestamp + lowLatencyDelay + onChainDeadline`,
+     * the validator also receives the security deposit
+     * Outside of those periods, the security deposit goes to the user validating the pending action
+     * @param initiateTimestamp The timestamp at which the action was initiated
+     * @param lowLatencyDeadline The low latency deadline
+     * @param lowLatencyDelay The low latency delay of the oracle middleware
+     * @param onChainDeadline The on-chain deadline
+     * @return actionable_ Whether the pending action is actionable
+     */
+    function _isActionable(
+        uint256 initiateTimestamp,
+        uint256 lowLatencyDeadline,
+        uint256 lowLatencyDelay,
+        uint256 onChainDeadline
+    ) internal view returns (bool actionable_) {
+        if (initiateTimestamp == 0) {
+            return false;
+        }
+        if (block.timestamp <= initiateTimestamp + lowLatencyDelay) {
+            // the validation must happen with a low-latency oracle
+            actionable_ = block.timestamp > initiateTimestamp + lowLatencyDeadline;
+        } else {
+            // the validation must happen with an on-chain oracle
+            actionable_ = block.timestamp > initiateTimestamp + lowLatencyDelay + onChainDeadline;
+        }
     }
 
     /**

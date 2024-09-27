@@ -5,7 +5,8 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { IBaseLiquidationRewardsManager } from "../interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
+import { IBaseLiquidationRewardsManager } from
+    "../interfaces/LiquidationRewardsManager/IBaseLiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
@@ -21,6 +22,21 @@ import { UsdnProtocolVaultLibrary as Vault } from "./libraries/UsdnProtocolVault
 
 contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     using SafeCast for uint256;
+
+    /// @inheritdoc IUsdnProtocolFallback
+    function getEffectivePriceForTick(int24 tick) external view returns (uint128 price_) {
+        return Utils.getEffectivePriceForTick(s, tick);
+    }
+
+    /// @inheritdoc IUsdnProtocolFallback
+    function getEffectivePriceForTick(
+        int24 tick,
+        uint256 assetPrice,
+        uint256 longTradingExpo,
+        HugeUint.Uint512 memory accumulator
+    ) external pure returns (uint128 price_) {
+        return Utils.getEffectivePriceForTick(tick, assetPrice, longTradingExpo, accumulator);
+    }
 
     /// @inheritdoc IUsdnProtocolFallback
     function previewDeposit(uint256 amount, uint128 price, uint128 timestamp)
