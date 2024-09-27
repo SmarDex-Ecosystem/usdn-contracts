@@ -61,7 +61,23 @@ contract TestRebalancerInitiateClosePosition is
     function test_setUp() public view {
         assertGt(rebalancer.getPositionVersion(), 0, "The rebalancer version should be updated");
         assertGt(protocolPosition.amount - previousPositionData.amount, 0, "The protocol bonus should be positive");
-        revert("TestRevert");
+    }
+
+    /**
+     * @custom:scenario Verify that a user can't withdraw from the rebalancer just after it was triggered
+     * @custom:given A rebalancer that just opened a position
+     * @custom:when The user calls the rebalancer's `initiateClosePosition`
+     * @custom:then The call reverts because of the imbalance
+     */
+    function test_rebalancer_noWithdrawAfterReabalancerOpen() public {
+        mockChainlinkOnChain.setLastPublishTime(block.timestamp);
+        mockChainlinkOnChain.setLastPrice(int256(wstETH.getWstETHByStETH(uint256(1370 ether / 10 ** (18 - 8)))));
+
+        // vm.expectEmit();
+        // emit ClosePositionInitiated(address(this), amount, amountToClose, amountInRebalancer - amount);
+        (bool success) = rebalancer.initiateClosePosition{ value: protocol.getSecurityDepositValue() }(
+            amountInRebalancer, address(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA
+        );
     }
 
     /**
@@ -75,10 +91,10 @@ contract TestRebalancerInitiateClosePosition is
      */
     function test_rebalancerInitiateClosePositionPartial() public {
         mockChainlinkOnChain.setLastPublishTime(block.timestamp);
-        mockChainlinkOnChain.setLastPrice(int256(wstETH.getWstETHByStETH(uint256(1365 ether / 10 ** (18 - 8)))));
+        mockChainlinkOnChain.setLastPrice(int256(wstETH.getWstETHByStETH(uint256(1370 ether / 10 ** (18 - 8)))));
 
         // choose an amount small enough to not trigger imbalance limits
-        uint88 amount = amountInRebalancer / 100;
+        uint88 amount = amountInRebalancer / 200;
 
         uint256 amountToCloseWithoutBonus = FixedPointMathLib.fullMulDiv(
             amount,
