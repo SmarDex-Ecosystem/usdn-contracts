@@ -202,9 +202,4 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
     }
 
     function _maxLongAmount(uint128 entryPrice, uint128 liqPriceWithoutPenalty) internal returns (uint128 amount_) { }
-
-    function _isFoundryContract(address addr) internal pure returns (bool) {
-        return addr == address(vm) || addr == 0x000000000000000000636F6e736F6c652e6c6f67
-            || addr == 0x4e59b44847b379578588920cA78FbF26c0B4956C || addr <= address(0xff);
-    }
 }

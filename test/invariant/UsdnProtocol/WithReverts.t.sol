@@ -13,6 +13,7 @@ contract TestUsdnProtocolInvariantsWithReverts is UsdnProtocolInvariantFixture {
         bytes4[] memory protocolSelectors = new bytes4[](1);
         protocolSelectors[0] = protocol.mine.selector;
         targetSelector(FuzzSelector({ addr: address(protocol), selectors: protocolSelectors }));
+        targetContract(address(protocol));
 
         targetContract(address(oracleMiddleware));
         bytes4[] memory oracleSelectors = new bytes4[](1);

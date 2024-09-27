@@ -136,10 +136,10 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
     /* ------------------------ Invariant testing helpers ----------------------- */
 
     function boundAddress(address addr) public view returns (address payable) {
-        /*     assumeNotPrecompile(addr);
-        assumeNotForgeAddress(addr); */
+        assumeNotPrecompile(addr);
+        assumeNotForgeAddress(addr);
         // there is a 50% chance of returning one of the senders, otherwise the input address unless it's a contract
-        bool isContract = addr.code.length > 0 || _isFoundryContract(addr);
+        bool isContract = addr.code.length > 0;
         if (isContract || uint256(uint160(addr)) % 2 == 0) {
             address[] memory senders = senders();
             return payable(senders[uint256(uint160(addr) / 2) % senders.length]);

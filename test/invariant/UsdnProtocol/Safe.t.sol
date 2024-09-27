@@ -17,6 +17,7 @@ contract TestUsdnProtocolInvariantsSafe is UsdnProtocolInvariantSafeFixture {
         protocolSelectors[3] = protocol.initiateWithdrawalTest.selector;
         protocolSelectors[4] = protocol.validateWithdrawalTest.selector;
         targetSelector(FuzzSelector({ addr: address(protocol), selectors: protocolSelectors }));
+        targetContract(address(protocol));
 
         targetContract(address(oracleMiddleware));
         bytes4[] memory oracleSelectors = new bytes4[](1);
