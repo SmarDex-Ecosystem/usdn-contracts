@@ -7,9 +7,10 @@ import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
-import { UsdnHandler } from "./Handlers.sol";
-import { UsdnProtocolHandler, UsdnProtocolSafeHandler } from "./Handlers.sol";
 import { MockOracleMiddleware } from "./MockOracleMiddleware.sol";
+import { UsdnHandler } from "./handlers/Usdn.sol";
+import { UsdnProtocolHandler } from "./handlers/UsdnProtocolHandler.sol";
+import { UsdnProtocolSafeHandler } from "./handlers/UsdnProtocolSafeHandler.sol";
 
 import { LiquidationRewardsManager } from "../../../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
 import { Rebalancer } from "../../../../src/Rebalancer/Rebalancer.sol";
