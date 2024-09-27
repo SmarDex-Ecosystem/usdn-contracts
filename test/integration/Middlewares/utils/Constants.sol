@@ -14,5 +14,9 @@ bytes constant PYTH_DATA_ETH =
 uint256 constant PYTH_DATA_ETH_PRICE = 306_584_975_000;
 uint256 constant PYTH_DATA_ETH_CONF = 238_207_530;
 uint256 constant PYTH_DATA_ETH_DECIMALS = 8;
-
 uint256 constant PYTH_DATA_TIMESTAMP = 1_713_596_400; // 2024-04-20 07:00:00 UTC
+
+/// @dev Block at which Chainlink's latest price is more recent than Pyth's
+uint256 constant CHAINLINK_BLOCK_NUMBER = 20_785_422;
+/// @dev Block at which Pyth's unsafe price is more recent than Chainlink's
+uint256 constant PYTH_PRICE_BLOCK_NUMBER = 20_785_200;
