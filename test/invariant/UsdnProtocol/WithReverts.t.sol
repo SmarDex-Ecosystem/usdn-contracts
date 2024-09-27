@@ -8,7 +8,7 @@ contract TestUsdnProtocolInvariantsWithReverts is UsdnProtocolInvariantFixture {
         super.setUp();
 
         string[] memory artifacts = new string[](1);
-        artifacts[0] = "test/invariant/UsdnProtocol/utils/Handlers.sol:UsdnProtocolSafeHandler";
+        artifacts[0] = "test/invariant/UsdnProtocol/utils/handlers/UsdnProtocolHandler.sol:UsdnProtocolSafeHandler";
         targetInterface(FuzzInterface({ addr: address(protocol), artifacts: artifacts }));
         bytes4[] memory protocolSelectors = new bytes4[](1);
         protocolSelectors[0] = protocol.mine.selector;
