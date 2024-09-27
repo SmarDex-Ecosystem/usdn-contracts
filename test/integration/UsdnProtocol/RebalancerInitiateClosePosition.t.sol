@@ -70,12 +70,10 @@ contract TestRebalancerInitiateClosePosition is
      * @custom:then The call reverts because of the imbalance
      */
     function test_rebalancer_noWithdrawAfterReabalancerOpen() public {
-        mockChainlinkOnChain.setLastPublishTime(block.timestamp);
-        mockChainlinkOnChain.setLastPrice(int256(wstETH.getWstETHByStETH(uint256(1370 ether / 10 ** (18 - 8)))));
-
-        // vm.expectEmit();
-        // emit ClosePositionInitiated(address(this), amount, amountToClose, amountInRebalancer - amount);
-        (bool success) = rebalancer.initiateClosePosition{ value: protocol.getSecurityDepositValue() }(
+        uint256 securityDepositValue = protocol.getSecurityDepositValue();
+        // todo : vm.expectPartialRevert(UsdnProtocolImbalanceLimitReached.selector)
+        vm.expectRevert();
+        rebalancer.initiateClosePosition{ value: securityDepositValue }(
             amountInRebalancer, address(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA
         );
     }
