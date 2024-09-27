@@ -59,6 +59,18 @@ interface IUsdnProtocolStorage is
     function PROXY_UPGRADE_ROLE() external pure returns (bytes32);
 
     /**
+     * @notice The pauser role's signature
+     * @return Get the role signature
+     */
+    function PAUSER_ROLE() external pure returns (bytes32);
+
+    /**
+     * @notice The unpauser role's signature
+     * @return Get the role signature
+     */
+    function UNPAUSER_ROLE() external pure returns (bytes32);
+
+    /**
      * @notice The adminSetExternal role's signature
      * @return Get the role signature
      */
@@ -93,4 +105,16 @@ interface IUsdnProtocolStorage is
      * @return Get the role signature
      */
     function ADMIN_PROXY_UPGRADE_ROLE() external pure returns (bytes32);
+
+    /**
+     * @notice The adminPauser role's signature
+     * @return Get the role signature
+     */
+    function ADMIN_PAUSER_ROLE() external pure returns (bytes32);
+
+    /**
+     * @notice The adminUnpauser role's signature
+     * @return Get the role signature
+     */
+    function ADMIN_UNPAUSER_ROLE() external pure returns (bytes32);
 }

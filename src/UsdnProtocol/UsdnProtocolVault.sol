@@ -15,7 +15,7 @@ abstract contract UsdnProtocolVault is UsdnProtocolStorage, IUsdnProtocolVault {
         uint256 deadline,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable initializedAndNonReentrant returns (bool success_) {
+    ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
         return Vault.initiateDeposit(
             s, amount, sharesOutMin, to, validator, deadline, currentPriceData, previousActionsData
         );
@@ -26,7 +26,7 @@ abstract contract UsdnProtocolVault is UsdnProtocolStorage, IUsdnProtocolVault {
         address payable validator,
         bytes calldata depositPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable initializedAndNonReentrant returns (bool success_) {
+    ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
         return Vault.validateDeposit(s, validator, depositPriceData, previousActionsData);
     }
 
@@ -39,7 +39,7 @@ abstract contract UsdnProtocolVault is UsdnProtocolStorage, IUsdnProtocolVault {
         uint256 deadline,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable initializedAndNonReentrant returns (bool success_) {
+    ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
         return Vault.initiateWithdrawal(
             s, usdnShares, amountOutMin, to, validator, deadline, currentPriceData, previousActionsData
         );
@@ -50,7 +50,7 @@ abstract contract UsdnProtocolVault is UsdnProtocolStorage, IUsdnProtocolVault {
         address payable validator,
         bytes calldata withdrawalPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable initializedAndNonReentrant returns (bool success_) {
+    ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
         return Vault.validateWithdrawal(s, validator, withdrawalPriceData, previousActionsData);
     }
 

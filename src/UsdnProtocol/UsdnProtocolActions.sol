@@ -19,7 +19,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
         uint256 deadline,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable initializedAndNonReentrant returns (bool success_, PositionId memory posId_) {
+    ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_, PositionId memory posId_) {
         InitiateOpenPositionParams memory params = InitiateOpenPositionParams({
             user: msg.sender,
             to: to,
@@ -40,7 +40,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
         address payable validator,
         bytes calldata openPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable initializedAndNonReentrant returns (bool success_) {
+    ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
         return ActionsLong.validateOpenPosition(s, validator, openPriceData, previousActionsData);
     }
 
@@ -54,7 +54,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
         uint256 deadline,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable initializedAndNonReentrant returns (bool success_) {
+    ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
         InitiateClosePositionParams memory params = InitiateClosePositionParams({
             owner: msg.sender,
             to: to,
@@ -74,7 +74,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
         address payable validator,
         bytes calldata closePriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable initializedAndNonReentrant returns (bool success_) {
+    ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
         return ActionsLong.validateClosePosition(s, validator, closePriceData, previousActionsData);
     }
 
@@ -82,6 +82,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
     function liquidate(bytes calldata currentPriceData)
         external
         payable
+        whenNotPaused
         initializedAndNonReentrant
         returns (LiqTickInfo[] memory liquidatedTicks_)
     {
@@ -92,6 +93,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
     function validateActionablePendingActions(PreviousActionsData calldata previousActionsData, uint256 maxValidations)
         external
         payable
+        whenNotPaused
         initializedAndNonReentrant
         returns (uint256 validatedActions_)
     {
@@ -101,6 +103,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
     /// @inheritdoc IUsdnProtocolActions
     function transferPositionOwnership(PositionId calldata posId, address newOwner)
         external
+        whenNotPaused
         initializedAndNonReentrant
     {
         return ActionsUtils.transferPositionOwnership(s, posId, newOwner);

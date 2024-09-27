@@ -64,7 +64,9 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
                         setProtocolParamsManager: ADMIN,
                         setUsdnParamsManager: ADMIN,
                         setOptionsManager: ADMIN,
-                        proxyUpgradeManager: ADMIN
+                        proxyUpgradeManager: ADMIN,
+                        pauserManager: ADMIN,
+                        unpauserManager: ADMIN
                     }),
                     protocolFallback
                 )
