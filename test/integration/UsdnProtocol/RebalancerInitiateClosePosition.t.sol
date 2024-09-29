@@ -69,7 +69,7 @@ contract TestRebalancerInitiateClosePosition is
      * @custom:when The user calls the rebalancer's `initiateClosePosition`
      * @custom:then The call reverts because of the imbalance
      */
-    function test_rebalancer_noWithdrawAfterReabalancerOpen() public {
+    function test_rebalancerNoWithdrawalAfterRebalancerTrigger() public {
         uint256 securityDepositValue = protocol.getSecurityDepositValue();
         // todo : vm.expectPartialRevert(UsdnProtocolImbalanceLimitReached.selector)
         vm.expectRevert();
