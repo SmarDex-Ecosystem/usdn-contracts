@@ -5,7 +5,10 @@ import { console } from "forge-std/console.sol";
 
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../../src/UsdnProtocol//libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "../../../../../src/UsdnProtocol/libraries/UsdnProtocolCoreLibrary.sol";
+import { UsdnProtocolLongLibrary as Long } from "../../../../../src/UsdnProtocol/libraries/UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from
     "../../../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
 import { PriceInfo } from "../../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
@@ -125,12 +128,15 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
             Core.longTradingExpoWithFunding(s, s._lastPrice, uint128(block.timestamp)),
             s._liqMultiplierAccumulator
         );
-        uint256 liqPriceWithoutPenalty = Utils.getEffectivePriceForTick(
+        uint128 liqPriceWithoutPenalty = Utils.getEffectivePriceForTick(
             Utils.calcTickWithoutPenalty(tick, s._liquidationPenalty),
             s._lastPrice,
             Core.longTradingExpoWithFunding(s, s._lastPrice, uint128(block.timestamp)),
             s._liqMultiplierAccumulator
         );
+        // then, calculate the maximum long amount to avoid excessive imbalance
+        uint128 adjustedPrice = uint128(s._lastPrice + s._lastPrice * s._positionFeeBps / Constants.BPS_DIVISOR);
+        amount = uint128(_bound(amount, s._minLongPosition, _maxLongAmount(adjustedPrice, liqPriceWithoutPenalty)));
     }
 
     /* ------------------------ Invariant testing helpers ----------------------- */

@@ -201,5 +201,26 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
         );
     }
 
-    function _maxLongAmount(uint128 entryPrice, uint128 liqPriceWithoutPenalty) internal returns (uint128 amount_) { }
+    function _maxLongAmount(uint128 entryPrice, uint128 liqPriceWithoutPenalty) internal returns (uint128 amount_) {
+        PriceInfo memory price =
+            s._oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.InitiateDeposit, "");
+        uint256 longBalance = s._balanceLong;
+        if (price.timestamp >= s._lastUpdateTimestamp) {
+            longBalance = Core.longAssetAvailableWithFunding(s, uint128(price.neutralPrice), uint128(price.timestamp));
+        }
+        uint256 vaultBalance = s._balanceVault;
+        if (price.timestamp >= s._lastUpdateTimestamp) {
+            vaultBalance =
+                Vault.vaultAssetAvailableWithFunding(s, uint128(price.neutralPrice), uint128(price.timestamp));
+        }
+        uint256 maxLongTradingExpo =
+            vaultBalance * (Constants.BPS_DIVISOR + uint256(s._openExpoImbalanceLimitBps)) / Constants.BPS_DIVISOR;
+        uint256 longTradingExpo = s._totalExpo - longBalance;
+        if (longTradingExpo >= maxLongTradingExpo) {
+            return 0;
+        }
+        uint256 newPosTradingExpo = maxLongTradingExpo - longTradingExpo;
+        uint256 amount = (entryPrice * newPosTradingExpo / liqPriceWithoutPenalty) - newPosTradingExpo;
+        amount_ = uint128(_bound(amount, s._minLongPosition, type(uint128).max));
+    }
 }
