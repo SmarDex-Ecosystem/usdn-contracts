@@ -399,8 +399,7 @@ interface IUsdnProtocolTypes {
      * @dev Structure to hold the transient data during `_validateOpenPosition`
      * @param action The long pending action
      * @param startPrice The new entry price of the position
-     * @param currentPrice The current price of the asset as reported by the oracle, potentially biased in favor of the
-     * protocol
+     * @param lastPrice The price of the last balances update
      * @param tickHash The tick hash
      * @param pos The position object
      * @param liqPriceWithoutPenalty The new liquidation price without penalty
@@ -412,7 +411,7 @@ interface IUsdnProtocolTypes {
     struct ValidateOpenPositionData {
         LongPendingAction action;
         uint128 startPrice;
-        uint128 currentPrice;
+        uint128 lastPrice;
         bytes32 tickHash;
         Position pos;
         uint128 liqPriceWithoutPenalty;
@@ -507,13 +506,11 @@ interface IUsdnProtocolTypes {
 
     /**
      * @notice Data structure for tick to price conversion functions
-     * @param assetPrice The asset price
      * @param tradingExpo The long side trading expo
      * @param accumulator The liquidation multiplier accumulator
      * @param tickSpacing The tick spacing
      */
     struct TickPriceConversionData {
-        uint128 assetPrice;
         uint256 tradingExpo;
         HugeUint.Uint512 accumulator;
         int24 tickSpacing;
