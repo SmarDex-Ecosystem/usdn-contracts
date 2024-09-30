@@ -155,9 +155,6 @@ library UsdnProtocolActionsUtilsLibrary {
                 Utils._calcActionId(params.owner, uint128(block.timestamp)),
                 params.currentPriceData
             );
-            if (currentPrice.price < params.userMinPrice) {
-                revert IUsdnProtocolErrors.UsdnProtocolSlippageMinPriceExceeded();
-            }
 
             (, data_.isLiquidationPending) = Long._applyPnlAndFundingAndLiquidate(
                 s,
@@ -168,6 +165,11 @@ library UsdnProtocolActionsUtilsLibrary {
                 Types.ProtocolAction.InitiateClosePosition,
                 params.currentPriceData
             );
+
+            data_.lastPrice = s._lastPrice;
+            if (data_.lastPrice < params.userMinPrice) {
+                revert IUsdnProtocolErrors.UsdnProtocolSlippageMinPriceExceeded();
+            }
 
             uint256 version = s._tickVersion[params.posId.tick];
             if (version != params.posId.tickVersion) {
@@ -185,7 +187,6 @@ library UsdnProtocolActionsUtilsLibrary {
 
         data_.longTradingExpo = s._totalExpo - s._balanceLong;
         data_.liqMulAcc = s._liqMultiplierAccumulator;
-        data_.lastPrice = s._lastPrice;
 
         // the approximate value position to remove is calculated with `_lastPrice`, so not taking into account
         // any fees. This way, the removal of the position doesn't affect the liquidation multiplier calculations

@@ -137,7 +137,6 @@ contract TestUsdnProtocolActionsPrepareClosePositionData is UsdnProtocolBaseFixt
 
         if (isEarlyReturn) {
             assertEq(data.totalExpoToClose, 0, "The total expo to close should not be set");
-            assertEq(data.lastPrice, 0, "The last price should not be set");
             assertEq(data.tempPositionValue, 0, "The position value should not be set");
             assertEq(data.longTradingExpo, 0, "The long trading expo should not be set");
             assertEq(data.liqMulAcc.lo, 0, "The liq multiplier accumulator should not be set");
