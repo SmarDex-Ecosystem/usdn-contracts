@@ -70,18 +70,18 @@ contract UsdnProtocolImpl is
         s._onChainValidatorDeadline = 65 minutes; // slightly more than chainlink's heartbeat
         s._safetyMarginBps = 200; // 2%
         s._liquidationIteration = 1;
-        s._protocolFeeBps = 800;
+        s._protocolFeeBps = 800; // 8%
         s._rebalancerBonusBps = 8000; // 80%
         s._liquidationPenalty = 200; // 200 ticks -> ~2.02%
         s._EMAPeriod = 5 days;
-        s._fundingSF = 12 * 10 ** (Constants.FUNDING_SF_DECIMALS - 2);
+        s._fundingSF = 12 * 10 ** (Constants.FUNDING_SF_DECIMALS - 2); // 0.12
         s._feeThreshold = 1 ether;
-        s._openExpoImbalanceLimitBps = 500;
-        s._withdrawalExpoImbalanceLimitBps = 600;
-        s._depositExpoImbalanceLimitBps = 500;
-        s._closeExpoImbalanceLimitBps = 600;
-        s._rebalancerCloseExpoImbalanceLimitBps = 500;
-        s._longImbalanceTargetBps = 550;
+        s._openExpoImbalanceLimitBps = 500; // 5%
+        s._withdrawalExpoImbalanceLimitBps = 600; // 6%
+        s._depositExpoImbalanceLimitBps = 500; // 5%
+        s._closeExpoImbalanceLimitBps = 600; // 6%
+        s._rebalancerCloseExpoImbalanceLimitBps = 350; // 3.5%
+        s._longImbalanceTargetBps = 400; // 4%
         s._positionFeeBps = 4; // 0.04%
         s._vaultFeeBps = 4; // 0.04%
         s._sdexBurnOnDepositRatio = 1e6; // 1%
@@ -120,7 +120,7 @@ contract UsdnProtocolImpl is
 
         s._targetUsdnPrice = uint128(10_087 * 10 ** (priceFeedDecimals - 4)); // $1.0087
         s._usdnRebaseThreshold = uint128(1009 * 10 ** (priceFeedDecimals - 3)); // $1.009
-        s._minLongPosition = 2 * 10 ** assetDecimals;
+        s._minLongPosition = 2 * 10 ** assetDecimals; // 2 tokens
         s._protocolFallbackAddr = address(protocolFallback);
     }
 

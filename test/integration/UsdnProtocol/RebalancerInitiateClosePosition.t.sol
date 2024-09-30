@@ -64,6 +64,20 @@ contract TestRebalancerInitiateClosePosition is
     }
 
     /**
+     * @custom:scenario Verify that a user can't withdraw from the rebalancer just after it was triggered
+     * @custom:given A rebalancer that just opened a position
+     * @custom:when The user calls the rebalancer's `initiateClosePosition`
+     * @custom:then The call reverts because of the imbalance
+     */
+    function test_rebalancerNoWithdrawalAfterRebalancerTrigger() public {
+        uint256 securityDepositValue = protocol.getSecurityDepositValue();
+        vm.expectPartialRevert(UsdnProtocolImbalanceLimitReached.selector);
+        rebalancer.initiateClosePosition{ value: securityDepositValue }(
+            amountInRebalancer, address(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA
+        );
+    }
+
+    /**
      * @custom:scenario Closes partially a rebalancer amount
      * @custom:when The user calls the rebalancer's `initiateClosePosition` function with a
      * portion of his rebalancer amount
@@ -73,8 +87,11 @@ contract TestRebalancerInitiateClosePosition is
      * @custom:and The user action is pending in protocol
      */
     function test_rebalancerInitiateClosePositionPartial() public {
+        mockChainlinkOnChain.setLastPublishTime(block.timestamp);
+        mockChainlinkOnChain.setLastPrice(int256(wstETH.getWstETHByStETH(uint256(1370 ether / 10 ** (18 - 8)))));
+
         // choose an amount small enough to not trigger imbalance limits
-        uint88 amount = amountInRebalancer / 100;
+        uint88 amount = amountInRebalancer / 200;
 
         uint256 amountToCloseWithoutBonus = FixedPointMathLib.fullMulDiv(
             amount,
