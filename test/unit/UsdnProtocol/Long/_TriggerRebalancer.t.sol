@@ -154,6 +154,7 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
      * @custom:and The long and vault balances should not have changed
      */
     function test_triggerRebalancerWithExistingPositionThatShouldHaveBeenLiquidated() public {
+        skip(1 hours); // skip so that the setUpUserPositionInLong below updates the lastPrice
         uint128 amount = 1 ether;
 
         // make sure there's enough imbalance
