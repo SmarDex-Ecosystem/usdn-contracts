@@ -71,8 +71,7 @@ contract TestRebalancerInitiateClosePosition is
      */
     function test_rebalancerNoWithdrawalAfterRebalancerTrigger() public {
         uint256 securityDepositValue = protocol.getSecurityDepositValue();
-        // todo : vm.expectPartialRevert(UsdnProtocolImbalanceLimitReached.selector)
-        vm.expectRevert();
+        vm.expectPartialRevert(UsdnProtocolImbalanceLimitReached.selector);
         rebalancer.initiateClosePosition{ value: securityDepositValue }(
             amountInRebalancer, address(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA
         );
