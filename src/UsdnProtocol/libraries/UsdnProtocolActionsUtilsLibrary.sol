@@ -201,18 +201,9 @@ library UsdnProtocolActionsUtilsLibrary {
         data_.tempPositionValue =
             _assetToRemove(balanceLong, data_.lastPrice, liqPriceWithoutPenalty, data_.totalExpoToClose);
 
-        uint128 priceAfterFees =
-            (data_.lastPrice - data_.lastPrice * s._positionFeeBps / Constants.BPS_DIVISOR).toUint128();
-
-        uint256 posValueAfterFees =
-            _assetToRemove(balanceLong, priceAfterFees, liqPriceWithoutPenalty, data_.totalExpoToClose);
-
-        // we perform the imbalance check with the full position value subtracted from the long side, and the fee
-        // added to the vault side, to simulate the end state after validation of this action
-        // the position value after fees is smaller than the position value before fees so the subtraction is safe
-        _checkImbalanceLimitClose(
-            s, data_.totalExpoToClose, data_.tempPositionValue, data_.tempPositionValue - posValueAfterFees
-        );
+        // we perform the imbalance check with the full position value subtracted from the long side, which is
+        // representative of the state of the balances after this initiate action
+        _checkImbalanceLimitClose(s, data_.totalExpoToClose, data_.tempPositionValue);
     }
 
     /**
@@ -341,15 +332,12 @@ library UsdnProtocolActionsUtilsLibrary {
      * the close limit on the vault side, otherwise revert
      * @param s The storage of the protocol
      * @param posTotalExpoToClose The total expo to remove position
-     * @param posValueToCloseAfterFees The value to remove from the position after the fees are applied
-     * @param fees The fees applied to the position, going to the vault
+     * @param posValueToClose The value to remove from the position (and the long balance)
      */
-    function _checkImbalanceLimitClose(
-        Types.Storage storage s,
-        uint256 posTotalExpoToClose,
-        uint256 posValueToCloseAfterFees,
-        uint256 fees
-    ) internal view {
+    function _checkImbalanceLimitClose(Types.Storage storage s, uint256 posTotalExpoToClose, uint256 posValueToClose)
+        internal
+        view
+    {
         int256 closeExpoImbalanceLimitBps;
         if (msg.sender == address(s._rebalancer)) {
             closeExpoImbalanceLimitBps = s._rebalancerCloseExpoImbalanceLimitBps;
@@ -362,9 +350,9 @@ library UsdnProtocolActionsUtilsLibrary {
             return;
         }
 
-        int256 newLongBalance = s._balanceLong.toInt256().safeSub(posValueToCloseAfterFees.toInt256());
+        int256 newLongBalance = s._balanceLong.toInt256().safeSub(posValueToClose.toInt256());
         uint256 newTotalExpo = s._totalExpo - posTotalExpoToClose;
-        int256 currentVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault + fees.toInt256());
+        int256 currentVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault);
 
         int256 imbalanceBps = Utils._calcImbalanceCloseBps(currentVaultExpo, newLongBalance, newTotalExpo);
 
