@@ -221,6 +221,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
         }
         uint256 newPosTradingExpo = maxLongTradingExpo - longTradingExpo;
         uint256 amount = (entryPrice * newPosTradingExpo / liqPriceWithoutPenalty) - newPosTradingExpo;
-        amount_ = uint128(_bound(amount, s._minLongPosition, type(uint128).max));
+        amount_ = uint128(_bound(amount, 0, type(uint128).max));
     }
 }

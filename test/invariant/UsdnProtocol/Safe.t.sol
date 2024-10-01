@@ -10,12 +10,13 @@ contract TestUsdnProtocolInvariantsSafe is UsdnProtocolInvariantSafeFixture {
         string[] memory artifacts = new string[](1);
         artifacts[0] = "test/invariant/UsdnProtocol/utils/handlers/UsdnProtocolSafeHandler.sol:UsdnProtocolSafeHandler";
         targetInterface(FuzzInterface({ addr: address(protocol), artifacts: artifacts }));
-        bytes4[] memory protocolSelectors = new bytes4[](5);
+        bytes4[] memory protocolSelectors = new bytes4[](6);
         protocolSelectors[0] = protocol.mine.selector;
         protocolSelectors[1] = protocol.initiateDepositTest.selector;
         protocolSelectors[2] = protocol.validateDepositTest.selector;
         protocolSelectors[3] = protocol.initiateWithdrawalTest.selector;
         protocolSelectors[4] = protocol.validateWithdrawalTest.selector;
+        protocolSelectors[5] = protocol.initiateOpenPositionTest.selector;
         targetSelector(FuzzSelector({ addr: address(protocol), selectors: protocolSelectors }));
         targetContract(address(protocol));
 

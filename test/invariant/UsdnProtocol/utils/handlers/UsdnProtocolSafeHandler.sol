@@ -60,7 +60,7 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
             amount, 0, boundAddress(to), validator, "", _getPreviousActionsData(address(0))
         );
         vm.stopPrank();
-        console.log("deposit of %s assets to %s and validator %s", amount, to, validator);
+        console.log("deposit of %s assets to %s with validator %s", amount, to, validator);
     }
 
     function validateDepositTest(address payable validator) external {
@@ -99,7 +99,7 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
             shares, 0, boundAddress(to), validator, "", _getPreviousActionsData(address(0))
         );
         vm.stopPrank();
-        console.log("withdrawal of %s shares to %s and validator %s", shares, to, validator);
+        console.log("withdrawal of %s shares to %s with validator %s", shares, to, validator);
     }
 
     function validateWithdrawalTest(address payable validator) external {
@@ -136,7 +136,32 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         );
         // then, calculate the maximum long amount to avoid excessive imbalance
         uint128 adjustedPrice = uint128(s._lastPrice + s._lastPrice * s._positionFeeBps / Constants.BPS_DIVISOR);
-        amount = uint128(_bound(amount, s._minLongPosition, _maxLongAmount(adjustedPrice, liqPriceWithoutPenalty)));
+        uint128 maxAmount = _maxLongAmount(adjustedPrice, liqPriceWithoutPenalty);
+        if (maxAmount < s._minLongPosition) {
+            return;
+        }
+        amount = uint128(_bound(amount, s._minLongPosition, maxAmount));
+        // validator checks
+        validator = boundAddress(validator);
+        PendingAction memory action = Core.getUserPendingAction(s, validator);
+        if (action.action != ProtocolAction.None) {
+            return;
+        }
+        _openValidators.add(validator);
+        _mockAsset.mintAndApprove(msg.sender, amount, address(this), amount);
+        vm.startPrank(msg.sender);
+        this.initiateOpenPosition{ value: s._securityDepositValue }(
+            amount,
+            uint128(desiredLiqPrice),
+            type(uint128).max,
+            s._maxLeverage,
+            boundAddress(to),
+            validator,
+            "",
+            _getPreviousActionsData(address(0))
+        );
+        vm.stopPrank();
+        console.log("open long of %s assets to %s with validator %s", amount, to, validator);
     }
 
     /* ------------------------ Invariant testing helpers ----------------------- */
