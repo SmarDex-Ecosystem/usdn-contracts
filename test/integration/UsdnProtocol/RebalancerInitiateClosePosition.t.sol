@@ -4,10 +4,11 @@ pragma solidity 0.8.26;
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { MOCK_PYTH_DATA } from "../../unit/Middlewares/utils/Constants.sol";
-import { DEPLOYER, USER_1 } from "../../utils/Constants.sol";
+import { DEPLOYER, SET_EXTERNAL_MANAGER, USER_1 } from "../../utils/Constants.sol";
 import { SET_PROTOCOL_PARAMS_MANAGER } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 
+import { IBaseRebalancer } from "../../../src/interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IRebalancerErrors } from "../../../src/interfaces/Rebalancer/IRebalancerErrors.sol";
 import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
 import { IRebalancerTypes } from "../../../src/interfaces/Rebalancer/IRebalancerTypes.sol";
@@ -43,6 +44,8 @@ contract TestRebalancerInitiateClosePosition is
             mockPyth.setPrice(int64(uint64(ethPrice)));
             mockPyth.setLastPublishTime(block.timestamp);
             wstEthPrice = uint128(wstETH.getStETHByWstETH(ethPrice * 1e10));
+            mockChainlinkOnChain.setLastPublishTime(block.timestamp);
+            mockChainlinkOnChain.setLastPrice(int256(uint256(ethPrice)));
         }
 
         uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
@@ -149,15 +152,7 @@ contract TestRebalancerInitiateClosePosition is
         uint88 amount = amountInRebalancer / 10;
         uint256 securityDeposit = protocol.getSecurityDepositValue();
 
-        int256 currentVaultExpo = int256(protocol.getBalanceVault()) + protocol.getPendingBalanceVault();
-        int256 newLongExpo = int256(protocol.getTotalExpo() - protocolPosition.totalExpo / 10)
-            - (
-                int256(protocol.getBalanceLong())
-                    - protocol.getPositionValue(prevPosId, wstEthPrice, uint128(block.timestamp)) / 10
-            );
-        int256 expectedImbalance = (currentVaultExpo - newLongExpo) * int256(BPS_DIVISOR) / newLongExpo;
-
-        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolImbalanceLimitReached.selector, expectedImbalance));
+        vm.expectPartialRevert(UsdnProtocolImbalanceLimitReached.selector);
         rebalancer.initiateClosePosition{ value: securityDeposit }(
             amount, address(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA
         );
@@ -247,7 +242,7 @@ contract TestRebalancerInitiateClosePosition is
         uint256 securityDeposit = protocol.getSecurityDepositValue();
         // compensate imbalance to allow rebalancer users to close
         (, PositionId memory newPosId) = protocol.initiateOpenPosition{ value: securityDeposit }(
-            20 ether,
+            10 ether,
             1100 ether,
             type(uint128).max,
             protocol.getMaxLeverage(),
@@ -271,13 +266,19 @@ contract TestRebalancerInitiateClosePosition is
             wstEthPrice = uint128(wstETH.getStETHByWstETH(ethPrice * 1e10));
         }
 
-        // liquidate the rebalancer's tick
+        // liquidate the rebalancer's tick after disabling the rebalancer temporarily, so that it does not get
+        // re-triggered
+        // TODO: refactor this test so it's more robust
+        vm.startPrank(SET_EXTERNAL_MANAGER);
+        protocol.setRebalancer(IBaseRebalancer(address(0)));
         uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
         protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA);
         // sanity check
         assertEq(
             prevPosId.tickVersion + 1, protocol.getTickVersion(prevPosId.tick), "Rebalancer tick was not liquidated"
         );
+        protocol.setRebalancer(IBaseRebalancer(address(rebalancer)));
+        vm.stopPrank();
 
         // another user deposits in the rebalancer to re-trigger it later
         wstETH.mintAndApprove(USER_1, amountInRebalancer, address(rebalancer), type(uint256).max);

@@ -248,15 +248,7 @@ library UsdnProtocolLongLibrary {
             params.currentPriceData
         );
 
-        if (currentPrice.price > params.userMaxPrice) {
-            revert IUsdnProtocolErrors.UsdnProtocolSlippageMaxPriceExceeded();
-        }
-
-        data_.adjustedPrice =
-            (currentPrice.price + currentPrice.price * s._positionFeeBps / Constants.BPS_DIVISOR).toUint128();
-
         uint128 neutralPrice = currentPrice.neutralPrice.toUint128();
-
         (, data_.isLiquidationPending) = _applyPnlAndFundingAndLiquidate(
             s,
             neutralPrice,
@@ -266,17 +258,22 @@ library UsdnProtocolLongLibrary {
             Types.ProtocolAction.InitiateOpenPosition,
             params.currentPriceData
         );
-
         // early return in case there are still pending liquidations
         if (data_.isLiquidationPending) {
             return data_;
         }
 
+        // check slippage
         uint128 lastPrice = s._lastPrice;
+        if (lastPrice > params.userMaxPrice) {
+            revert IUsdnProtocolErrors.UsdnProtocolSlippageMaxPriceExceeded();
+        }
+
+        // add position fee
+        data_.adjustedPrice = (lastPrice + uint256(lastPrice) * s._positionFeeBps / Constants.BPS_DIVISOR).toUint128();
 
         // gas savings, we only load the data once and use it for all conversions below
         Types.TickPriceConversionData memory conversionData = Types.TickPriceConversionData({
-            assetPrice: lastPrice,
             // we need to take into account the funding for the trading expo between the last price timestamp and now
             tradingExpo: Core.longTradingExpoWithFunding(s, lastPrice, uint128(block.timestamp)),
             accumulator: s._liqMultiplierAccumulator,
@@ -286,7 +283,7 @@ library UsdnProtocolLongLibrary {
         // we calculate the closest valid tick down for the desired liq price with liquidation penalty
         data_.posId.tick = getEffectiveTickForPrice(
             params.desiredLiqPrice,
-            conversionData.assetPrice,
+            lastPrice,
             conversionData.tradingExpo,
             conversionData.accumulator,
             conversionData.tickSpacing
@@ -295,16 +292,16 @@ library UsdnProtocolLongLibrary {
 
         // calculate effective liquidation price
         uint128 liqPrice = Utils.getEffectivePriceForTick(
-            data_.posId.tick, conversionData.assetPrice, conversionData.tradingExpo, conversionData.accumulator
+            data_.posId.tick, lastPrice, conversionData.tradingExpo, conversionData.accumulator
         );
 
         // liquidation price must be at least x% below the current price
-        _checkSafetyMargin(s, neutralPrice, liqPrice);
+        _checkSafetyMargin(s, lastPrice, liqPrice);
 
         // remove liquidation penalty for leverage and total expo calculations
         uint128 liqPriceWithoutPenalty = Utils.getEffectivePriceForTick(
             Utils.calcTickWithoutPenalty(data_.posId.tick, data_.liquidationPenalty),
-            conversionData.assetPrice,
+            lastPrice,
             conversionData.tradingExpo,
             conversionData.accumulator
         );
@@ -313,15 +310,11 @@ library UsdnProtocolLongLibrary {
         data_.positionTotalExpo =
             Utils._calcPositionTotalExpo(params.amount, data_.adjustedPrice, liqPriceWithoutPenalty);
         // the current price is known to be above the liquidation price because we checked the safety margin
-        // the `currentPrice.price` value can safely be cast to uint128 because we already did so above after the
-        // `adjustedPrice` calculation
-        data_.positionValue =
-            Utils.positionValue(data_.positionTotalExpo, uint128(currentPrice.price), liqPriceWithoutPenalty);
+        data_.positionValue = Utils.positionValue(data_.positionTotalExpo, lastPrice, liqPriceWithoutPenalty);
         _checkImbalanceLimitOpen(s, data_.positionTotalExpo, params.amount);
 
-        data_.liqMultiplier = Utils._calcFixedPrecisionMultiplier(
-            conversionData.assetPrice, conversionData.tradingExpo, conversionData.accumulator
-        );
+        data_.liqMultiplier =
+            Utils._calcFixedPrecisionMultiplier(lastPrice, conversionData.tradingExpo, conversionData.accumulator);
     }
 
     /**
