@@ -112,7 +112,7 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
             return;
         }
         _withdrawalValidators.remove(validator);
-        uint256 oracleFee = s._oracleMiddleware.validationCost("", ProtocolAction.ValidateDeposit);
+        uint256 oracleFee = s._oracleMiddleware.validationCost("", ProtocolAction.ValidateWithdrawal);
         vm.startPrank(msg.sender);
         this.validateWithdrawal{ value: oracleFee }(validator, "", _getPreviousActionsData(validator));
         vm.stopPrank();
@@ -162,6 +162,23 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         );
         vm.stopPrank();
         console.log("open long of %s assets to %s with validator %s", amount, to, validator);
+    }
+
+    function validateOpenPositionTest(address payable validator) external {
+        validator = _boundValidator(validator, _openValidators);
+        PendingAction memory action = Core.getUserPendingAction(s, validator);
+        if (action.action != ProtocolAction.ValidateOpenPosition) {
+            return;
+        }
+        if (block.timestamp < action.timestamp + s._oracleMiddleware.getValidationDelay()) {
+            return;
+        }
+        _openValidators.remove(validator);
+        uint256 oracleFee = s._oracleMiddleware.validationCost("", ProtocolAction.ValidateOpenPosition);
+        vm.startPrank(msg.sender);
+        this.validateOpenPosition{ value: oracleFee }(validator, "", _getPreviousActionsData(validator));
+        vm.stopPrank();
+        emit log_named_address("validate open long for", validator);
     }
 
     /* ------------------------ Invariant testing helpers ----------------------- */
