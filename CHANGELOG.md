@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.20.0](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v0.19.1...v0.20.0) (2024-10-01)
+
+
+### ⚠ BREAKING CHANGES
+
+* pausable functions ([#587](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/587))
+
+### Features
+
+* pausable functions ([#587](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/587)) ([9201187](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/92011871a26ac0c01626bfae8b12a985cf319176))
+* print environment variables on fork deployment ([#604](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/604)) ([473e575](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/473e575d7a33ede5e1a2b2acc26d77e9be192ba2))
+
+
+### Bug Fixes
+
+* close imbalance check ([#606](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/606)) ([7a51119](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/7a51119c351beba58a3bdc06b2d330fc01969400))
+* use lastPrice for value calculations in open actions ([#605](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/605)) ([a28d228](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/a28d2281c5db980304ee46aec3383ee12ca9c6b8))
+
 ## [0.19.1](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v0.19.0...v0.19.1) (2024-09-24)
 
 
