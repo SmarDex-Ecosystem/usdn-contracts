@@ -54,6 +54,6 @@ contract TestImbalanceLimitCloseFuzzing is UsdnProtocolBaseFixture {
             );
         }
 
-        protocol.i_checkImbalanceLimitClose(totalExpoToRemove, closeAmount, 0);
+        protocol.i_checkImbalanceLimitClose(totalExpoToRemove, closeAmount);
     }
 }
