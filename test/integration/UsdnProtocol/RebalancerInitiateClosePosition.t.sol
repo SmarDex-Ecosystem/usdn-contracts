@@ -268,6 +268,7 @@ contract TestRebalancerInitiateClosePosition is
 
         // liquidate the rebalancer's tick after disabling the rebalancer temporarily, so that it does not get
         // re-triggered
+        // TODO: refactor this test so it's more robust
         vm.startPrank(SET_EXTERNAL_MANAGER);
         protocol.setRebalancer(IBaseRebalancer(address(0)));
         uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
