@@ -91,14 +91,14 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
      * update. Call `_waitBeforeLiquidation()` before calling this function to make sure enough time has passed.
      * Do not use this function in contexts where ether needs to be refunded.
      */
-    function mockLiquidate(bytes calldata currentPriceData, uint16 iterations)
+    function mockLiquidate(bytes calldata currentPriceData)
         external
         payable
         returns (Types.LiqTickInfo[] memory liquidatedTicks_)
     {
         uint256 lastUpdateTimestampBefore = s._lastUpdateTimestamp;
         vm.startPrank(msg.sender);
-        liquidatedTicks_ = this.liquidate(currentPriceData, iterations);
+        liquidatedTicks_ = this.liquidate(currentPriceData);
         vm.stopPrank();
         require(s._lastUpdateTimestamp > lastUpdateTimestampBefore, "UsdnProtocolHandler: liq price is not fresh");
     }
@@ -243,7 +243,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint128 totalExpoToRemove
     ) external returns (HugeUint.Uint512 memory liqMultiplierAccumulator_) {
         liqMultiplierAccumulator_ =
-            ActionsLong._removeAmountFromPosition(s, tick, index, pos, amountToRemove, totalExpoToRemove);
+            Long._removeAmountFromPosition(s, tick, index, pos, amountToRemove, totalExpoToRemove);
     }
 
     function i_positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)
@@ -403,11 +403,8 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         Long._checkImbalanceLimitOpen(s, openTotalExpoValue, openCollatValue);
     }
 
-    function i_checkImbalanceLimitClose(uint256 posTotalExpoToClose, uint256 posValueToClose, uint256 fees)
-        external
-        view
-    {
-        ActionsUtils._checkImbalanceLimitClose(s, posTotalExpoToClose, posValueToClose, fees);
+    function i_checkImbalanceLimitClose(uint256 posTotalExpoToClose, uint256 posValueToClose) external view {
+        ActionsUtils._checkImbalanceLimitClose(s, posTotalExpoToClose, posValueToClose);
     }
 
     function i_getLeverage(uint128 price, uint128 liqPrice) external pure returns (uint256) {

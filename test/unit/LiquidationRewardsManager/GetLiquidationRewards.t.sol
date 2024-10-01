@@ -45,7 +45,7 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
      * @custom:and The current price of wstETH is $1000
      * @custom:when 1 tick was liquidated
      * @custom:then It should return an amount of wstETH based on the gas used by
-     * UsdnProtocolActions.liquidate(bytes,uint16)
+     * UsdnProtocolActions.liquidate(bytes)
      */
     function test_getLiquidationRewardsFor1Tick() public view {
         uint256 posBonus = (_singleLiquidatedTick[0].tickPrice - CURRENT_PRICE) * _singleLiquidatedTick[0].totalExpo
@@ -116,7 +116,7 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
      * @custom:and The current price of wstETH is $1000
      * @custom:when 3 ticks were liquidated
      * @custom:then It should return more wstETH than for 1 tick as more gas was used by
-     * UsdnProtocolActions.liquidate(bytes,uint16)
+     * UsdnProtocolActions.liquidate(bytes)
      */
     function test_getLiquidationRewardsFor3Ticks() public view {
         Types.LiqTickInfo[] memory threeLiquidatedTicks = new Types.LiqTickInfo[](3);
@@ -231,7 +231,7 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
      * @custom:and The exchange rate for stETH per wstETH is 1.15
      * @custom:when 1 tick was liquidated
      * @custom:then It should return an amount of wstETH based on the gas used by
-     * UsdnProtocolActions.liquidate(bytes,uint16) and the base fee offset
+     * UsdnProtocolActions.liquidate(bytes) and the base fee offset
      */
     function test_getLiquidationRewardsUserPriorityFee() public {
         vm.txGasPrice(41 gwei); // 11 gwei priority fee
@@ -278,7 +278,7 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
      * @custom:and The exchange rate for stETH per wstETH is 1.15
      * @custom:when 1 tick was liquidated
      * @custom:then It should return an amount of wstETH based on the gas used by
-     * UsdnProtocolActions.liquidate(bytes,uint16) and the base fee offset
+     * UsdnProtocolActions.liquidate(bytes) and the base fee offset
      */
     function test_getLiquidationRewardsWithTxGasPrice() public {
         vm.txGasPrice(31 gwei); // priority fee 1 gwei

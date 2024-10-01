@@ -295,6 +295,7 @@ interface IUsdnProtocolTypes {
      * @param userMaxPrice The maximum price at which the position can be opened. The userMaxPrice is compared with the
      * price after confidence interval, penalty, etc...
      * @param userMaxLeverage The maximum leverage for the newly created position
+     * @param deadline The deadline of the open position to be initiated
      * @param securityDepositValue The value of the security deposit for the newly created pending action
      * @param currentPriceData The current price data (used to calculate the temporary leverage and entry price,
      * pending validation)
@@ -307,6 +308,7 @@ interface IUsdnProtocolTypes {
         uint128 desiredLiqPrice;
         uint128 userMaxPrice;
         uint256 userMaxLeverage;
+        uint256 deadline;
         uint64 securityDepositValue;
     }
 
@@ -357,12 +359,14 @@ interface IUsdnProtocolTypes {
      * @param posId The position id
      * @param amountToClose The amount to close
      * @param userMinPrice The minimum price at which the position can be closed
+     * @param deadline The deadline of the close position to be initiated
      * @param securityDepositValue The value of the security deposit for the newly created pending action
      */
     struct InitiateClosePositionParams {
         address owner;
         address to;
         address payable validator;
+        uint256 deadline;
         PositionId posId;
         uint128 amountToClose;
         uint256 userMinPrice;
@@ -395,8 +399,7 @@ interface IUsdnProtocolTypes {
      * @dev Structure to hold the transient data during `_validateOpenPosition`
      * @param action The long pending action
      * @param startPrice The new entry price of the position
-     * @param currentPrice The current price of the asset as reported by the oracle, potentially biased in favor of the
-     * protocol
+     * @param lastPrice The price of the last balances update
      * @param tickHash The tick hash
      * @param pos The position object
      * @param liqPriceWithoutPenalty The new liquidation price without penalty
@@ -408,7 +411,7 @@ interface IUsdnProtocolTypes {
     struct ValidateOpenPositionData {
         LongPendingAction action;
         uint128 startPrice;
-        uint128 currentPrice;
+        uint128 lastPrice;
         bytes32 tickHash;
         Position pos;
         uint128 liqPriceWithoutPenalty;
@@ -503,13 +506,11 @@ interface IUsdnProtocolTypes {
 
     /**
      * @notice Data structure for tick to price conversion functions
-     * @param assetPrice The asset price
      * @param tradingExpo The long side trading expo
      * @param accumulator The liquidation multiplier accumulator
      * @param tickSpacing The tick spacing
      */
     struct TickPriceConversionData {
-        uint128 assetPrice;
         uint256 tradingExpo;
         HugeUint.Uint512 accumulator;
         int24 tickSpacing;
@@ -524,6 +525,8 @@ interface IUsdnProtocolTypes {
      * @param setOptionsManager The manager's address to set the protocol options that do not impact the usage of the
      * protocol
      * @param proxyUpgradeManager The manager's address to upgrade the protocol implementation
+     * @param pauserManager The manager's address to pause the protocol
+     * @param unpauserManager The manager's address to unpause the protocol
      */
     struct Managers {
         address setExternalManager;
@@ -532,6 +535,8 @@ interface IUsdnProtocolTypes {
         address setUsdnParamsManager;
         address setOptionsManager;
         address proxyUpgradeManager;
+        address pauserManager;
+        address unpauserManager;
     }
 
     /**

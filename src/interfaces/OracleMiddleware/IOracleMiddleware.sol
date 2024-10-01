@@ -21,12 +21,6 @@ interface IOracleMiddleware is IBaseOracleMiddleware, IOracleMiddlewareErrors, I
      */
     function ADMIN_ROLE() external pure returns (bytes32);
 
-    /**
-     * @notice The pausable role's signature
-     * @return Get the role signature
-     */
-    function PAUSABLE_ROLE() external pure returns (bytes32);
-
     /* -------------------------------------------------------------------------- */
     /*                                  Constants                                 */
     /* -------------------------------------------------------------------------- */
@@ -98,17 +92,4 @@ interface IOracleMiddleware is IBaseOracleMiddleware, IOracleMiddlewareErrors, I
      * @param to The address to send the ether to
      */
     function withdrawEther(address to) external;
-
-    /**
-     * @notice Pause the price validation mechanism
-     * @dev This function is used to pause the price validation mechanism in case of
-     * an emergency to pause all user actions that rely on the oracle in the protocol
-     */
-    function pausePriceValidation() external;
-
-    /**
-     * @notice Unpause the price validation mechanism
-     * @dev This function is used to unpause the price validation mechanism
-     */
-    function unpausePriceValidation() external;
 }

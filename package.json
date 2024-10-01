@@ -1,6 +1,6 @@
 {
   "name": "@smardex/usdn-contracts",
-  "version": "0.18.0",
+  "version": "0.20.0",
   "description": "Contracts for the USDN token and derivatives protocol",
   "repository": "git@github.com:SmarDex-Ecosystem/usdn-contracts.git",
   "author": "RA2 Tech",
@@ -10,7 +10,7 @@
     "cov:html": "npm run coverage && genhtml --ignore-errors corrupt,inconsistent -o .coverage lcov.info && open .coverage/index.html",
     "cov": "forge build --skip .sol && forge coverage --no-match-coverage \"(script|mock|test)\" --no-match-test \"(FFI|Fork|Fuzz|invariant)\" --no-match-contract Fork -vvv --offline",
     "coverage": "npm run cov -- --report lcov",
-    "exportAbi": "forge build --skip \"test/**/*\" --skip script && ts-node ./script/exportAbi.ts -g '{interfaces/**/*.sol,**/*[mM]ock*.sol}' && tsup ./dist/abi/index.ts --format cjs --format esm --dts --sourcemap",
+    "exportAbi": "forge build --skip \"test/**/*\" --skip script && tsx ./script/exportAbi.ts -g '{interfaces/**/*.sol,**/*[mM]ock*.sol}' && tsup ./dist/abi/index.ts --format cjs --format esm --dts --sourcemap",
     "format:js": "npx @biomejs/biome format . --write",
     "format": "forge fmt",
     "installDeps": "npm i && forge soldeer install",
@@ -26,7 +26,11 @@
     "test": "forge test -vvv"
   },
   "main": "dist/index.js",
-  "files": ["dist", "broadcast", "docs"],
+  "files": [
+    "dist",
+    "broadcast",
+    "docs"
+  ],
   "devDependencies": {
     "@biomejs/biome": "^1.8.3",
     "@defi-wonderland/natspec-smells": "^1.1.4",
@@ -38,8 +42,8 @@
     "luxon": "^3.4.4",
     "picocolors": "^1.0.1",
     "solhint": "^5.0.2",
-    "ts-node": "^10.9.2",
     "tsup": "^8.2.3",
+    "tsx": "^4.19.1",
     "viem": "^2.18.5"
   }
 }

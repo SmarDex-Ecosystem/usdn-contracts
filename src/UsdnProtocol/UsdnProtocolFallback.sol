@@ -24,6 +24,21 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     using SafeCast for uint256;
 
     /// @inheritdoc IUsdnProtocolFallback
+    function getEffectivePriceForTick(int24 tick) external view returns (uint128 price_) {
+        return Utils.getEffectivePriceForTick(s, tick);
+    }
+
+    /// @inheritdoc IUsdnProtocolFallback
+    function getEffectivePriceForTick(
+        int24 tick,
+        uint256 assetPrice,
+        uint256 longTradingExpo,
+        HugeUint.Uint512 memory accumulator
+    ) external pure returns (uint128 price_) {
+        return Utils.getEffectivePriceForTick(tick, assetPrice, longTradingExpo, accumulator);
+    }
+
+    /// @inheritdoc IUsdnProtocolFallback
     function previewDeposit(uint256 amount, uint128 price, uint128 timestamp)
         external
         view
@@ -50,7 +65,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function refundSecurityDeposit(address payable validator) external {
+    function refundSecurityDeposit(address payable validator) external whenNotPaused {
         uint256 securityDepositValue = Core._removeStalePendingAction(s, validator);
         if (securityDepositValue > 0) {
             Utils._refundEther(securityDepositValue, validator);
@@ -451,6 +466,11 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
         return s._protocolFallbackAddr;
     }
 
+    /// @inheritdoc IUsdnProtocolFallback
+    function isPaused() external view returns (bool) {
+        return paused();
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                              SET_EXTERNAL_ROLE                             */
     /* -------------------------------------------------------------------------- */
@@ -764,5 +784,23 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     function setUsdnRebaseInterval(uint256 newInterval) external onlyRole(SET_USDN_PARAMS_ROLE) {
         s._usdnRebaseInterval = newInterval;
         emit IUsdnProtocolEvents.UsdnRebaseIntervalUpdated(newInterval);
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                            PAUSER_ROLE                                     */
+    /* -------------------------------------------------------------------------- */
+
+    /// @inheritdoc IUsdnProtocolFallback
+    function pause() external onlyRole(PAUSER_ROLE) {
+        _pause();
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                            UNPAUSER_ROLE                                     */
+    /* -------------------------------------------------------------------------- */
+
+    /// @inheritdoc IUsdnProtocolFallback
+    function unpause() external onlyRole(UNPAUSER_ROLE) {
+        _unpause();
     }
 }

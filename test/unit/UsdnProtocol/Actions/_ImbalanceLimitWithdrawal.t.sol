@@ -110,6 +110,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
             DISABLE_AMOUNT_OUT_MIN,
             DEPLOYER,
             DEPLOYER,
+            type(uint256).max,
             abi.encode(params.initialPrice),
             EMPTY_PREVIOUS_DATA
         );

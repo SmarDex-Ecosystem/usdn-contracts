@@ -7,11 +7,13 @@ import {
     ADMIN,
     CRITICAL_FUNCTIONS_MANAGER,
     DEPLOYER,
+    PAUSER_MANAGER,
     PROXY_UPGRADE_MANAGER,
     SET_EXTERNAL_MANAGER,
     SET_OPTIONS_MANAGER,
     SET_PROTOCOL_PARAMS_MANAGER,
-    SET_USDN_PARAMS_MANAGER
+    SET_USDN_PARAMS_MANAGER,
+    UNPAUSER_MANAGER
 } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { IEventsErrors } from "../../../utils/IEventsErrors.sol";
@@ -132,7 +134,9 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             setProtocolParamsManager: SET_PROTOCOL_PARAMS_MANAGER,
             setUsdnParamsManager: SET_USDN_PARAMS_MANAGER,
             setOptionsManager: SET_OPTIONS_MANAGER,
-            proxyUpgradeManager: PROXY_UPGRADE_MANAGER
+            proxyUpgradeManager: PROXY_UPGRADE_MANAGER,
+            pauserManager: PAUSER_MANAGER,
+            unpauserManager: UNPAUSER_MANAGER
         });
         if (!testParams.flags.enableRoles) {
             managers = Managers({
@@ -141,7 +145,9 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
                 setProtocolParamsManager: ADMIN,
                 setUsdnParamsManager: ADMIN,
                 setOptionsManager: ADMIN,
-                proxyUpgradeManager: ADMIN
+                proxyUpgradeManager: ADMIN,
+                pauserManager: ADMIN,
+                unpauserManager: ADMIN
             });
         }
 
@@ -316,7 +322,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         bytes memory priceData = abi.encode(price);
 
         protocol.initiateDeposit{ value: securityDepositValue }(
-            positionSize, DISABLE_SHARES_OUT_MIN, user, payable(user), priceData, EMPTY_PREVIOUS_DATA
+            positionSize, DISABLE_SHARES_OUT_MIN, user, payable(user), type(uint256).max, priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         if (untilAction == ProtocolAction.InitiateDeposit) return;
@@ -328,7 +334,13 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         uint256 sharesOf = usdn.sharesOf(user);
         usdn.approve(address(protocol), usdn.convertToTokensRoundUp(sharesOf));
         protocol.initiateWithdrawal{ value: securityDepositValue }(
-            uint152(sharesOf), DISABLE_AMOUNT_OUT_MIN, user, payable(user), priceData, EMPTY_PREVIOUS_DATA
+            uint152(sharesOf),
+            DISABLE_AMOUNT_OUT_MIN,
+            user,
+            payable(user),
+            type(uint256).max,
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -362,6 +374,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             protocol.getMaxLeverage(),
             openParams.user,
             payable(openParams.user),
+            type(uint256).max,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -379,6 +392,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             DISABLE_MIN_PRICE,
             openParams.user,
             payable(openParams.user),
+            type(uint256).max,
             priceData,
             EMPTY_PREVIOUS_DATA
         );
@@ -401,7 +415,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
 
         // the price drops to $1500 and the position gets liquidated
         _waitBeforeLiquidation();
-        protocol.liquidate(abi.encode(uint128(1500 ether)), 10);
+        protocol.liquidate(abi.encode(uint128(1500 ether)));
 
         // the pending action is stale
         uint256 currentTickVersion = protocol.getTickVersion(posId_.tick);

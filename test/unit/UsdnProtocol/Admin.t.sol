@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
@@ -91,6 +92,12 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
 
         vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ROLE"));
         protocol.setRebalancerBonusBps(0);
+
+        vm.expectRevert(customError("PAUSER_ROLE"));
+        protocol.pause();
+
+        vm.expectRevert(customError("UNPAUSER_ROLE"));
+        protocol.unpause();
     }
 
     /**
@@ -1020,6 +1027,36 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         uint128 minThreshold = protocol.getTargetUsdnPrice();
         vm.expectRevert(UsdnProtocolInvalidUsdnRebaseThreshold.selector);
         protocol.setUsdnRebaseThreshold(minThreshold - 1);
+    }
+
+    /**
+     * @custom:scenario Call `pause` as admin
+     * @custom:when The admin call the function
+     * @custom:then The pause value should be true
+     * @custom:and An event should be emitted with the corresponding new value
+     */
+    function test_pause() external adminPrank {
+        vm.expectEmit();
+        emit PausableUpgradeable.Paused(ADMIN);
+        protocol.pause();
+        assertTrue(protocol.isPaused(), "The paused value should be true");
+    }
+
+    /**
+     * @custom:scenario Call `unpause` as admin
+     * @custom:given The pause value is set to true
+     * @custom:when The admin call the function
+     * @custom:then The pause value should be false
+     * @custom:and An event should be emitted with the corresponding new value
+     */
+    function test_unpause() external adminPrank {
+        protocol.pause();
+        assertTrue(protocol.isPaused(), "The paused value should be true");
+
+        vm.expectEmit();
+        emit PausableUpgradeable.Unpaused(ADMIN);
+        protocol.unpause();
+        assertFalse(protocol.isPaused(), "The paused value should be false");
     }
 
     function customError(string memory role) internal view returns (bytes memory customError_) {
