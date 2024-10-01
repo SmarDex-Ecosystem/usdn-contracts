@@ -207,10 +207,11 @@ library UsdnProtocolActionsUtilsLibrary {
         uint256 posValueAfterFees =
             _assetToRemove(balanceLong, priceAfterFees, liqPriceWithoutPenalty, data_.totalExpoToClose);
 
-        // we perform the imbalance check with the position value after fees
+        // we perform the imbalance check with the full position value subtracted from the long side, and the fee
+        // added to the vault side, to simulate the end state after validation of this action
         // the position value after fees is smaller than the position value before fees so the subtraction is safe
         _checkImbalanceLimitClose(
-            s, data_.totalExpoToClose, posValueAfterFees, data_.tempPositionValue - posValueAfterFees
+            s, data_.totalExpoToClose, data_.tempPositionValue, data_.tempPositionValue - posValueAfterFees
         );
     }
 
