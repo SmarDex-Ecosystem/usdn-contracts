@@ -88,10 +88,13 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
     function _minDeposit() internal returns (uint128 minDeposit_) {
         PriceInfo memory price =
             s._oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.InitiateDeposit, "");
-        uint256 vaultBalance = s._balanceVault;
+        // the balance that is used for the deposit amount calculation is extrapolated to the block timestamp
+        uint256 vaultBalance;
         if (price.timestamp > s._lastUpdateTimestamp) {
             vaultBalance =
-                Vault.vaultAssetAvailableWithFunding(s, uint128(price.neutralPrice), uint128(price.timestamp));
+                Vault.vaultAssetAvailableWithFunding(s, uint128(price.neutralPrice), uint128(block.timestamp));
+        } else {
+            vaultBalance = Vault.vaultAssetAvailableWithFunding(s, s._lastPrice, uint128(block.timestamp));
         }
         // minimum USDN shares to mint for burning 1 wei of SDEX
         uint256 minUsdnShares = FixedPointMathLib.divUp(
@@ -119,6 +122,8 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
     function _maxDeposit() internal returns (uint128 maxDeposit_) {
         PriceInfo memory price =
             s._oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.InitiateDeposit, "");
+        // for imbalance checks, the balances in storage are considered
+        // we simulate what those should be after _applyPnlAndFunding
         uint256 longBalance = s._balanceLong;
         if (price.timestamp > s._lastUpdateTimestamp) {
             longBalance = Core.longAssetAvailableWithFunding(s, uint128(price.neutralPrice), uint128(price.timestamp));
@@ -138,6 +143,10 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
     }
 
     function _maxWithdrawal(uint256 balance) internal returns (uint152 maxWithdrawal_) {
+        // TODO: this formula is probably not 100% correct
+        // for the imbalance checks, the balances in storage are considered (so we extrapolate to the price update
+        // timestamp if needed, otherwise use the stored value)
+        // for the withdrawal amount calculation, the balances should be extrapolated to block.timestamp
         PriceInfo memory price = s._oracleMiddleware.parseAndValidatePrice(
             "", uint128(block.timestamp), ProtocolAction.InitiateWithdrawal, ""
         );
