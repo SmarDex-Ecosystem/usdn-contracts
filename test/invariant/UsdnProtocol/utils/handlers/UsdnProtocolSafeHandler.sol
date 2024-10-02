@@ -257,9 +257,14 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         // max close amount to respect imbalance
         data.maxCloseAmount = _maxCloseAmount(data.liqPriceWithoutPenalty, data.pos.totalExpo, data.pos.amount);
         // 50% chance of closing the position fully (if we're allowed to)
-        if (amount % 2 == 0 && data.pos.amount <= data.maxCloseAmount) {
+        // if we must close the position fully, then we do so
+        if ((amount % 2 == 0 && data.pos.amount <= data.maxCloseAmount) || data.pos.amount - s._minLongPosition == 0) {
             amount = data.pos.amount;
+        } else if (data.maxCloseAmount > data.pos.amount - s._minLongPosition) {
+            // we can partial close only until we have at least minLongPosition left
+            amount = uint128(_bound(amount, 1, data.pos.amount - s._minLongPosition));
         } else if (data.maxCloseAmount > 0) {
+            // we can partial close up to maxCloseAmount
             amount = uint128(_bound(amount, 1, data.maxCloseAmount));
         } else {
             // can't close the position right now
