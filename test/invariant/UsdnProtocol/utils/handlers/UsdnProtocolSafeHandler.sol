@@ -254,13 +254,16 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
             Core.longTradingExpoWithFunding(s, data.lastPrice, uint128(block.timestamp)),
             s._liqMultiplierAccumulator
         );
-        // max close amount for partial close (with imbalance check)
+        // max close amount to respect imbalance
         data.maxCloseAmount = _maxCloseAmount(data.liqPriceWithoutPenalty, data.pos.totalExpo, data.pos.amount);
-        if (data.maxCloseAmount == 0) {
-            // no choice but to close the position fully
+        // 50% chance of closing the position fully (if we're allowed to)
+        if (amount % 2 == 0 && data.pos.amount <= data.maxCloseAmount) {
             amount = data.pos.amount;
-        } else {
+        } else if (data.maxCloseAmount > 0) {
             amount = uint128(_bound(amount, 1, data.maxCloseAmount));
+        } else {
+            // can't close the position right now
+            return;
         }
         validator = boundAddress(validator);
         PendingAction memory action = Core.getUserPendingAction(s, validator);

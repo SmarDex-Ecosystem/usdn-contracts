@@ -253,6 +253,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
         if (amount < 0) {
             return 0;
         }
-        amount_ = uint128(_bound(uint256(amount), 0, posAmount - s._minLongPosition));
+        amount_ = uint128(_bound(uint256(amount), 0, posAmount));
     }
 }
