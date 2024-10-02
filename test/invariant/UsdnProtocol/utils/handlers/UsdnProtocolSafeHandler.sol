@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { console } from "forge-std/console.sol";
+import { Vm, console } from "forge-std/Test.sol";
 
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
@@ -38,6 +38,11 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         uint128 maxCloseAmount;
     }
 
+    struct UpdateIds {
+        PositionId[] oldIds;
+        PositionId[] newIds;
+    }
+
     constructor(WstETH mockAsset, Sdex mockSdex) UsdnProtocolHandler(mockAsset, mockSdex) { }
 
     /* ------------------------ Protocol actions helpers ------------------------ */
@@ -65,10 +70,12 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         _mockSdex.mintAndApprove(msg.sender, sdexToBurn, address(this), sdexToBurn);
 
         vm.startPrank(msg.sender);
+        vm.recordLogs();
         bool success = this.initiateDeposit{ value: s._securityDepositValue }(
             amount, 0, boundAddress(to), validator, block.timestamp, "", _getPreviousActionsData(address(0))
         );
         vm.stopPrank();
+        _updatePositionsMapping(vm.getRecordedLogs());
         if (success) {
             console.log("deposit of %s assets to %s with validator %s", amount, to, validator);
             _depositValidators.add(validator);
@@ -88,8 +95,10 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         }
         uint256 oracleFee = s._oracleMiddleware.validationCost("", ProtocolAction.ValidateDeposit);
         vm.startPrank(msg.sender);
+        vm.recordLogs();
         bool success = this.validateDeposit{ value: oracleFee }(validator, "", _getPreviousActionsData(validator));
         vm.stopPrank();
+        _updatePositionsMapping(vm.getRecordedLogs());
         if (success) {
             emit log_named_address("validate deposit for", validator);
             _depositValidators.remove(validator);
@@ -112,10 +121,12 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
 
         vm.startPrank(msg.sender);
         s._usdn.approve(address(this), shares);
+        vm.recordLogs();
         bool success = this.initiateWithdrawal{ value: s._securityDepositValue }(
             shares, 0, boundAddress(to), validator, block.timestamp, "", _getPreviousActionsData(address(0))
         );
         vm.stopPrank();
+        _updatePositionsMapping(vm.getRecordedLogs());
         if (success) {
             console.log("withdrawal of %s shares to %s with validator %s", shares, to, validator);
             _withdrawalValidators.add(validator);
@@ -135,8 +146,10 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         }
         uint256 oracleFee = s._oracleMiddleware.validationCost("", ProtocolAction.ValidateWithdrawal);
         vm.startPrank(msg.sender);
+        vm.recordLogs();
         bool success = this.validateWithdrawal{ value: oracleFee }(validator, "", _getPreviousActionsData(validator));
         vm.stopPrank();
+        _updatePositionsMapping(vm.getRecordedLogs());
         if (success) {
             emit log_named_address("validate withdrawal for", validator);
             _withdrawalValidators.remove(validator);
@@ -176,6 +189,7 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         to = boundAddress(to);
         _mockAsset.mintAndApprove(msg.sender, amount, address(this), amount);
         vm.startPrank(msg.sender);
+        vm.recordLogs();
         (bool success, PositionId memory posId) = this.initiateOpenPosition{ value: s._securityDepositValue }(
             amount,
             uint128(desiredLiqPrice),
@@ -188,6 +202,7 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
             _getPreviousActionsData(address(0))
         );
         vm.stopPrank();
+        _updatePositionsMapping(vm.getRecordedLogs());
         if (success) {
             console.log("open long of %s assets to %s with validator %s", amount, to, validator);
             _openValidators.add(validator);
@@ -208,11 +223,14 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         }
         uint256 oracleFee = s._oracleMiddleware.validationCost("", ProtocolAction.ValidateOpenPosition);
         vm.startPrank(msg.sender);
+        vm.recordLogs();
         bool success = this.validateOpenPosition{ value: oracleFee }(validator, "", _getPreviousActionsData(validator));
         vm.stopPrank();
+        _updatePositionsMapping(vm.getRecordedLogs());
         if (success) {
             emit log_named_address("validate open long for", validator);
             _openValidators.remove(validator);
+            // TODO: check if the position ID changed and update the _userPositions mapping
         } else {
             console.log("open long validation skipped due to pending liquidations");
         }
@@ -277,10 +295,12 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         }
         to = boundAddress(to);
         vm.startPrank(msg.sender);
+        vm.recordLogs();
         bool success = this.initiateClosePosition{ value: s._securityDepositValue }(
             data.posId, amount, 0, to, validator, block.timestamp, "", _getPreviousActionsData(address(0))
         );
         vm.stopPrank();
+        _updatePositionsMapping(vm.getRecordedLogs());
         if (success) {
             _closeValidators.add(validator);
             if (data.pos.amount == amount) {
@@ -316,8 +336,10 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         }
         uint256 oracleFee = s._oracleMiddleware.validationCost("", ProtocolAction.ValidateClosePosition);
         vm.startPrank(msg.sender);
+        vm.recordLogs();
         bool success = this.validateClosePosition{ value: oracleFee }(validator, "", _getPreviousActionsData(validator));
         vm.stopPrank();
+        _updatePositionsMapping(vm.getRecordedLogs());
         if (success) {
             emit log_named_address("validate close long for", validator);
             _closeValidators.remove(validator);
@@ -354,5 +376,22 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         }
         uint256 pick = uint256(uint160(addr)) % length;
         return payable(validators.at(pick));
+    }
+
+    /// @dev during validateOpenPosition, a position ID can change, so we update the mapping according to the logs
+    function _updatePositionsMapping(Vm.Log[] memory logs) internal {
+        (PositionId[] memory oldIds, PositionId[] memory newIds) = _checkPosIdChanges(logs);
+        for (uint256 i = 0; i < oldIds.length; i++) {
+            (Position memory pos,) = this.getLongPosition(newIds[i]);
+            // find the old position in the mapping and replace it
+            PositionId[] storage userPositions = _userPositions[pos.user];
+            for (uint256 j = 0; j < userPositions.length; j++) {
+                if (userPositions[j].tick == oldIds[i].tick && userPositions[j].index == oldIds[i].index) {
+                    // replace with the new ID
+                    userPositions[j] = newIds[i];
+                    break;
+                }
+            }
+        }
     }
 }

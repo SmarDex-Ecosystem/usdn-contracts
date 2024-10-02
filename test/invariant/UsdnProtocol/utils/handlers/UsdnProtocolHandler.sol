@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { Test } from "forge-std/Test.sol";
+import { Test, Vm } from "forge-std/Test.sol";
 
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
@@ -262,5 +262,25 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
             return 0;
         }
         amount_ = uint128(_bound(uint256(amount), 0, posAmount));
+    }
+
+    function _checkPosIdChanges(Vm.Log[] memory logs)
+        internal
+        pure
+        returns (PositionId[] memory oldPosIds, PositionId[] memory newPosIds)
+    {
+        for (uint256 i = 0; i < logs.length; i++) {
+            if (logs[i].topics[0] == LiquidationPriceUpdated.selector) {
+                (PositionId memory oldPosId, PositionId memory newPosId) =
+                    abi.decode(logs[i].data, (PositionId, PositionId));
+                uint256 len = oldPosIds.length;
+                assembly ("memory-safe") {
+                    mstore(oldPosIds, add(len, 1))
+                    mstore(newPosIds, add(len, 1))
+                }
+                oldPosIds[len] = oldPosId;
+                newPosIds[len] = newPosId;
+            }
+        }
     }
 }
