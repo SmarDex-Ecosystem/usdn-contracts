@@ -305,6 +305,27 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         }
     }
 
+    function validateClosePositionTest(address payable validator) external {
+        validator = _boundValidator(validator, _closeValidators);
+        PendingAction memory action = Core.getUserPendingAction(s, validator);
+        if (action.action != ProtocolAction.ValidateClosePosition) {
+            return;
+        }
+        if (block.timestamp < action.timestamp + s._oracleMiddleware.getValidationDelay()) {
+            return;
+        }
+        uint256 oracleFee = s._oracleMiddleware.validationCost("", ProtocolAction.ValidateClosePosition);
+        vm.startPrank(msg.sender);
+        bool success = this.validateClosePosition{ value: oracleFee }(validator, "", _getPreviousActionsData(validator));
+        vm.stopPrank();
+        if (success) {
+            emit log_named_address("validate close long for", validator);
+            _closeValidators.remove(validator);
+        } else {
+            console.log("close long validation skipped due to pending liquidations");
+        }
+    }
+
     /* ------------------------ Invariant testing helpers ----------------------- */
 
     function boundAddress(address addr) public view returns (address payable) {
