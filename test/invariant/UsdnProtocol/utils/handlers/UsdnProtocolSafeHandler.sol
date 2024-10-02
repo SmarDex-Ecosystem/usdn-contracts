@@ -254,7 +254,7 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
             Core.longTradingExpoWithFunding(s, data.lastPrice, uint128(block.timestamp)),
             s._liqMultiplierAccumulator
         );
-        // max close amount to respect imbalance
+        // max close amount to remain below imbalance limits
         data.maxCloseAmount = _maxCloseAmount(data.liqPriceWithoutPenalty, data.pos.totalExpo, data.pos.amount);
         // 50% chance of closing the position fully (if we're allowed to)
         // if we must close the position fully, then we do so
@@ -298,7 +298,7 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
                     }
                 }
             } else {
-                console.log("partial close long of %s to %s with validator %s", amount, to, validator);
+                console.log("partial close long of %s to %s with validator %s", msg.sender, to, validator);
             }
         } else {
             console.log("close long skipped due to pending liquidations");
