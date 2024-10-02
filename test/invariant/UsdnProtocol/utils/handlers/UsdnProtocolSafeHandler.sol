@@ -28,6 +28,16 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
     EnumerableSet.AddressSet _openValidators;
     EnumerableSet.AddressSet _closeValidators;
 
+    mapping(address => PositionId[]) _userPositions;
+
+    struct InitiateClosePositionData {
+        PositionId posId;
+        Position pos;
+        uint128 lastPrice;
+        uint128 liqPriceWithoutPenalty;
+        uint128 maxCloseAmount;
+    }
+
     constructor(WstETH mockAsset, Sdex mockSdex) UsdnProtocolHandler(mockAsset, mockSdex) { }
 
     /* ------------------------ Protocol actions helpers ------------------------ */
@@ -41,7 +51,6 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         if (action.action != ProtocolAction.None) {
             return;
         }
-        _depositValidators.add(validator);
         amount = uint128(_bound(amount, _minDeposit(), _maxDeposit()));
         _mockAsset.mintAndApprove(msg.sender, amount, address(this), amount);
         PriceInfo memory price =
@@ -56,11 +65,16 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         _mockSdex.mintAndApprove(msg.sender, sdexToBurn, address(this), sdexToBurn);
 
         vm.startPrank(msg.sender);
-        this.initiateDeposit{ value: s._securityDepositValue }(
+        bool success = this.initiateDeposit{ value: s._securityDepositValue }(
             amount, 0, boundAddress(to), validator, block.timestamp, "", _getPreviousActionsData(address(0))
         );
         vm.stopPrank();
-        console.log("deposit of %s assets to %s with validator %s", amount, to, validator);
+        if (success) {
+            console.log("deposit of %s assets to %s with validator %s", amount, to, validator);
+            _depositValidators.add(validator);
+        } else {
+            console.log("deposit skipped due to pending liquidations");
+        }
     }
 
     function validateDepositTest(address payable validator) external {
@@ -72,12 +86,16 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         if (block.timestamp < action.timestamp + s._oracleMiddleware.getValidationDelay()) {
             return;
         }
-        _depositValidators.remove(validator);
         uint256 oracleFee = s._oracleMiddleware.validationCost("", ProtocolAction.ValidateDeposit);
         vm.startPrank(msg.sender);
-        this.validateDeposit{ value: oracleFee }(validator, "", _getPreviousActionsData(validator));
+        bool success = this.validateDeposit{ value: oracleFee }(validator, "", _getPreviousActionsData(validator));
         vm.stopPrank();
-        emit log_named_address("validate deposit for", validator);
+        if (success) {
+            emit log_named_address("validate deposit for", validator);
+            _depositValidators.remove(validator);
+        } else {
+            console.log("deposit validation skipped due to pending liquidations");
+        }
     }
 
     function initiateWithdrawalTest(uint152 shares, address to, address payable validator) external {
@@ -90,16 +108,20 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         if (action.action != ProtocolAction.None) {
             return;
         }
-        _withdrawalValidators.add(validator);
         shares = uint152(_bound(shares, 1, maxWithdrawal));
 
         vm.startPrank(msg.sender);
         s._usdn.approve(address(this), shares);
-        this.initiateWithdrawal{ value: s._securityDepositValue }(
+        bool success = this.initiateWithdrawal{ value: s._securityDepositValue }(
             shares, 0, boundAddress(to), validator, block.timestamp, "", _getPreviousActionsData(address(0))
         );
         vm.stopPrank();
-        console.log("withdrawal of %s shares to %s with validator %s", shares, to, validator);
+        if (success) {
+            console.log("withdrawal of %s shares to %s with validator %s", shares, to, validator);
+            _withdrawalValidators.add(validator);
+        } else {
+            console.log("withdrawal skipped due to pending liquidations");
+        }
     }
 
     function validateWithdrawalTest(address payable validator) external {
@@ -111,12 +133,16 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         if (block.timestamp < action.timestamp + s._oracleMiddleware.getValidationDelay()) {
             return;
         }
-        _withdrawalValidators.remove(validator);
         uint256 oracleFee = s._oracleMiddleware.validationCost("", ProtocolAction.ValidateWithdrawal);
         vm.startPrank(msg.sender);
-        this.validateWithdrawal{ value: oracleFee }(validator, "", _getPreviousActionsData(validator));
+        bool success = this.validateWithdrawal{ value: oracleFee }(validator, "", _getPreviousActionsData(validator));
         vm.stopPrank();
-        emit log_named_address("validate withdrawal for", validator);
+        if (success) {
+            emit log_named_address("validate withdrawal for", validator);
+            _withdrawalValidators.remove(validator);
+        } else {
+            console.log("withdrawal validation skipped due to pending liquidations");
+        }
     }
 
     function initiateOpenPositionTest(uint128 amount, int24 tick, address to, address payable validator) external {
@@ -147,22 +173,28 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         if (action.action != ProtocolAction.None) {
             return;
         }
-        _openValidators.add(validator);
+        to = boundAddress(to);
         _mockAsset.mintAndApprove(msg.sender, amount, address(this), amount);
         vm.startPrank(msg.sender);
-        this.initiateOpenPosition{ value: s._securityDepositValue }(
+        (bool success, PositionId memory posId) = this.initiateOpenPosition{ value: s._securityDepositValue }(
             amount,
             uint128(desiredLiqPrice),
             type(uint128).max,
             s._maxLeverage,
-            boundAddress(to),
+            to,
             validator,
             block.timestamp,
             "",
             _getPreviousActionsData(address(0))
         );
         vm.stopPrank();
-        console.log("open long of %s assets to %s with validator %s", amount, to, validator);
+        if (success) {
+            console.log("open long of %s assets to %s with validator %s", amount, to, validator);
+            _openValidators.add(validator);
+            _userPositions[to].push(posId);
+        } else {
+            console.log("open long skipped due to pending liquidations");
+        }
     }
 
     function validateOpenPositionTest(address payable validator) external {
@@ -174,12 +206,95 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         if (block.timestamp < action.timestamp + s._oracleMiddleware.getValidationDelay()) {
             return;
         }
-        _openValidators.remove(validator);
         uint256 oracleFee = s._oracleMiddleware.validationCost("", ProtocolAction.ValidateOpenPosition);
         vm.startPrank(msg.sender);
-        this.validateOpenPosition{ value: oracleFee }(validator, "", _getPreviousActionsData(validator));
+        bool success = this.validateOpenPosition{ value: oracleFee }(validator, "", _getPreviousActionsData(validator));
         vm.stopPrank();
-        emit log_named_address("validate open long for", validator);
+        if (success) {
+            emit log_named_address("validate open long for", validator);
+            _openValidators.remove(validator);
+        } else {
+            console.log("open long validation skipped due to pending liquidations");
+        }
+    }
+
+    function initiateClosePositionTest(uint128 amount, address to, address payable validator) external {
+        // retrieve a position from the msg.sender
+        PositionId[] storage positions = _userPositions[msg.sender];
+        if (positions.length == 0) {
+            return;
+        }
+        InitiateClosePositionData memory data;
+        data.posId.tick = type(int24).min; // sentinel value if we can't find a valid pos
+        uint24 penalty;
+        for (uint256 i; i < positions.length; i++) {
+            (data.pos, penalty) = this.getLongPosition(positions[i]);
+            if (!data.pos.validated) {
+                // position must have been validated
+                continue;
+            }
+            // found a suitable position, we record its ID
+            data.posId = positions[i];
+        }
+        if (data.posId.tick == type(int24).min) {
+            // no suitable position found
+            return;
+        }
+
+        PriceInfo memory price = s._oracleMiddleware.parseAndValidatePrice(
+            "", uint128(block.timestamp), ProtocolAction.InitiateClosePosition, ""
+        );
+        data.lastPrice = s._lastPrice;
+        if (price.timestamp > s._lastUpdateTimestamp) {
+            data.lastPrice = uint128(price.neutralPrice);
+        }
+        data.liqPriceWithoutPenalty = Utils.getEffectivePriceForTick(
+            Utils.calcTickWithoutPenalty(data.posId.tick, penalty),
+            data.lastPrice,
+            Core.longTradingExpoWithFunding(s, data.lastPrice, uint128(block.timestamp)),
+            s._liqMultiplierAccumulator
+        );
+        // max close amount for partial close (with imbalance check)
+        data.maxCloseAmount = _maxCloseAmount(data.liqPriceWithoutPenalty, data.pos.totalExpo, data.pos.amount);
+        if (data.maxCloseAmount == 0) {
+            // no choice but to close the position fully
+            amount = data.pos.amount;
+        } else {
+            amount = uint128(_bound(amount, 1, data.maxCloseAmount));
+        }
+        validator = boundAddress(validator);
+        PendingAction memory action = Core.getUserPendingAction(s, validator);
+        if (action.action != ProtocolAction.None) {
+            return;
+        }
+        to = boundAddress(to);
+        vm.startPrank(msg.sender);
+        bool success = this.initiateClosePosition{ value: s._securityDepositValue }(
+            data.posId, amount, 0, to, validator, block.timestamp, "", _getPreviousActionsData(address(0))
+        );
+        vm.stopPrank();
+        if (success) {
+            _closeValidators.add(validator);
+            if (data.pos.amount == amount) {
+                console.log("close long of %s to %s with validator %s", msg.sender, to, validator);
+                // remove from helper mapping
+                PositionId[] storage userPositions = _userPositions[msg.sender];
+                for (uint256 i = 0; i < userPositions.length; i++) {
+                    if (userPositions[i].tick == data.posId.tick && userPositions[i].index == data.posId.index) {
+                        if (i < userPositions.length - 1) {
+                            // replace with last element
+                            userPositions[i] = userPositions[userPositions.length - 1];
+                        }
+                        userPositions.pop();
+                        break;
+                    }
+                }
+            } else {
+                console.log("partial close long of %s to %s with validator %s", amount, to, validator);
+            }
+        } else {
+            console.log("close long skipped due to pending liquidations");
+        }
     }
 
     /* ------------------------ Invariant testing helpers ----------------------- */
