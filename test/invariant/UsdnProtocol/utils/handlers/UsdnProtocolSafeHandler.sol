@@ -147,7 +147,7 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
 
     function initiateOpenPositionTest(uint128 amount, int24 tick, address to, address payable validator) external {
         // first set desired liq price to have a leverage between min and max
-        tick = int24(bound(tick, _minLeverageTick(), _maxLeverageTick()));
+        tick = int24(_bound(tick, _minLeverageTick(), _maxLeverageTick()));
         uint256 desiredLiqPrice = Utils.getEffectivePriceForTick(
             tick,
             s._lastPrice,
