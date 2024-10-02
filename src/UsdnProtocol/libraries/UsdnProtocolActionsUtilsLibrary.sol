@@ -15,6 +15,7 @@ import { DoubleEndedQueue } from "../../libraries/DoubleEndedQueue.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
+import { UsdnProtocolCoreLibrary as Core } from "./UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "./UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.sol";
@@ -185,7 +186,7 @@ library UsdnProtocolActionsUtilsLibrary {
 
         data_.totalExpoToClose = (uint256(data_.pos.totalExpo) * params.amountToClose / data_.pos.amount).toUint128();
 
-        data_.longTradingExpo = s._totalExpo - s._balanceLong;
+        data_.longTradingExpo = Core.longTradingExpoWithFunding(s, data_.lastPrice, uint128(block.timestamp));
         data_.liqMulAcc = s._liqMultiplierAccumulator;
 
         // the approximate value position to remove is calculated with `_lastPrice`, so not taking into account
