@@ -57,7 +57,7 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
 
         vm.startPrank(msg.sender);
         this.initiateDeposit{ value: s._securityDepositValue }(
-            amount, 0, boundAddress(to), validator, "", _getPreviousActionsData(address(0))
+            amount, 0, boundAddress(to), validator, block.timestamp, "", _getPreviousActionsData(address(0))
         );
         vm.stopPrank();
         console.log("deposit of %s assets to %s with validator %s", amount, to, validator);
@@ -96,7 +96,7 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         vm.startPrank(msg.sender);
         s._usdn.approve(address(this), shares);
         this.initiateWithdrawal{ value: s._securityDepositValue }(
-            shares, 0, boundAddress(to), validator, "", _getPreviousActionsData(address(0))
+            shares, 0, boundAddress(to), validator, block.timestamp, "", _getPreviousActionsData(address(0))
         );
         vm.stopPrank();
         console.log("withdrawal of %s shares to %s with validator %s", shares, to, validator);
@@ -157,6 +157,7 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
             s._maxLeverage,
             boundAddress(to),
             validator,
+            block.timestamp,
             "",
             _getPreviousActionsData(address(0))
         );

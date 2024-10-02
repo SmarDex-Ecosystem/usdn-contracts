@@ -54,7 +54,9 @@ contract UsdnProtocolInvariantBaseFixture is BaseFixture, IUsdnProtocolErrors, I
             setProtocolParamsManager: ADMIN,
             setUsdnParamsManager: ADMIN,
             setOptionsManager: ADMIN,
-            proxyUpgradeManager: ADMIN
+            proxyUpgradeManager: ADMIN,
+            pauserManager: ADMIN,
+            unpauserManager: ADMIN
         });
     }
 }
