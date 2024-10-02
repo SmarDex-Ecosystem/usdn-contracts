@@ -253,6 +253,7 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
             }
             // found a suitable position, we record its ID
             data.posId = positions[i];
+            break;
         }
         if (data.posId.tick == type(int24).min) {
             // no suitable position found
