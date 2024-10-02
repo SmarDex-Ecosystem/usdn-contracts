@@ -56,7 +56,7 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         PriceInfo memory price =
             s._oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.InitiateDeposit, "");
         uint256 sdexToBurn;
-        if (price.timestamp >= s._lastUpdateTimestamp) {
+        if (price.timestamp > s._lastUpdateTimestamp) {
             (, sdexToBurn) = this.previewDeposit(amount, uint128(price.neutralPrice), uint128(price.timestamp));
         } else {
             (, sdexToBurn) = this.previewDeposit(amount, uint128(price.neutralPrice), uint128(block.timestamp));

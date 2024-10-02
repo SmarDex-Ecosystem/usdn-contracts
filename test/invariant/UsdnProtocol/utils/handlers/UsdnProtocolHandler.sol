@@ -89,7 +89,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
         PriceInfo memory price =
             s._oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.InitiateDeposit, "");
         uint256 vaultBalance = s._balanceVault;
-        if (price.timestamp >= s._lastUpdateTimestamp) {
+        if (price.timestamp > s._lastUpdateTimestamp) {
             vaultBalance =
                 Vault.vaultAssetAvailableWithFunding(s, uint128(price.neutralPrice), uint128(price.timestamp));
         }
@@ -120,11 +120,11 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
         PriceInfo memory price =
             s._oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.InitiateDeposit, "");
         uint256 longBalance = s._balanceLong;
-        if (price.timestamp >= s._lastUpdateTimestamp) {
+        if (price.timestamp > s._lastUpdateTimestamp) {
             longBalance = Core.longAssetAvailableWithFunding(s, uint128(price.neutralPrice), uint128(price.timestamp));
         }
         uint256 vaultBalance = s._balanceVault;
-        if (price.timestamp >= s._lastUpdateTimestamp) {
+        if (price.timestamp > s._lastUpdateTimestamp) {
             vaultBalance =
                 Vault.vaultAssetAvailableWithFunding(s, uint128(price.neutralPrice), uint128(price.timestamp));
         }
@@ -142,13 +142,13 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
             "", uint128(block.timestamp), ProtocolAction.InitiateWithdrawal, ""
         );
         uint256 vaultBalance = s._balanceVault;
-        if (price.timestamp >= s._lastUpdateTimestamp) {
+        if (price.timestamp > s._lastUpdateTimestamp) {
             vaultBalance =
                 Vault.vaultAssetAvailableWithFunding(s, uint128(price.neutralPrice), uint128(price.timestamp));
         }
         int256 v = int256(vaultBalance);
         uint256 longBalance = s._balanceLong;
-        if (price.timestamp >= s._lastUpdateTimestamp) {
+        if (price.timestamp > s._lastUpdateTimestamp) {
             longBalance = Core.longAssetAvailableWithFunding(s, uint128(price.neutralPrice), uint128(price.timestamp));
         }
         uint256 longTradingExpo = s._totalExpo - longBalance;
@@ -172,7 +172,11 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
         PriceInfo memory price = s._oracleMiddleware.parseAndValidatePrice(
             "", uint128(block.timestamp), ProtocolAction.InitiateOpenPosition, ""
         );
-        uint128 adjustedPrice = uint128(price.price + price.price * s._positionFeeBps / Constants.BPS_DIVISOR);
+        uint128 lastPrice = s._lastPrice;
+        if (price.timestamp > s._lastUpdateTimestamp) {
+            lastPrice = uint128(price.neutralPrice);
+        }
+        uint128 adjustedPrice = uint128(lastPrice + lastPrice * s._positionFeeBps / Constants.BPS_DIVISOR);
         uint128 liqPriceWithoutPenalty = Utils._getLiquidationPrice(adjustedPrice, uint128(s._minLeverage));
         (tick_,) = Long._getTickFromDesiredLiqPrice(
             liqPriceWithoutPenalty,
@@ -189,7 +193,11 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
         PriceInfo memory price = s._oracleMiddleware.parseAndValidatePrice(
             "", uint128(block.timestamp), ProtocolAction.InitiateOpenPosition, ""
         );
-        uint128 adjustedPrice = uint128(price.price + price.price * s._positionFeeBps / Constants.BPS_DIVISOR);
+        uint128 lastPrice = s._lastPrice;
+        if (price.timestamp > s._lastUpdateTimestamp) {
+            lastPrice = uint128(price.neutralPrice);
+        }
+        uint128 adjustedPrice = uint128(lastPrice + lastPrice * s._positionFeeBps / Constants.BPS_DIVISOR);
         uint128 liqPriceWithoutPenalty = Utils._getLiquidationPrice(adjustedPrice, uint128(s._maxLeverage));
         (tick_,) = Long._getTickFromDesiredLiqPrice(
             liqPriceWithoutPenalty,
@@ -206,11 +214,11 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
             "", uint128(block.timestamp), ProtocolAction.InitiateOpenPosition, ""
         );
         uint256 longBalance = s._balanceLong;
-        if (price.timestamp >= s._lastUpdateTimestamp) {
+        if (price.timestamp > s._lastUpdateTimestamp) {
             longBalance = Core.longAssetAvailableWithFunding(s, uint128(price.neutralPrice), uint128(price.timestamp));
         }
         uint256 vaultBalance = s._balanceVault;
-        if (price.timestamp >= s._lastUpdateTimestamp) {
+        if (price.timestamp > s._lastUpdateTimestamp) {
             vaultBalance =
                 Vault.vaultAssetAvailableWithFunding(s, uint128(price.neutralPrice), uint128(price.timestamp));
         }
@@ -234,12 +242,12 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
         );
         uint256 currentPrice = s._lastPrice;
         uint256 longBalance = s._balanceLong;
-        if (price.timestamp >= s._lastUpdateTimestamp) {
+        if (price.timestamp > s._lastUpdateTimestamp) {
             longBalance = Core.longAssetAvailableWithFunding(s, uint128(price.neutralPrice), uint128(price.timestamp));
             currentPrice = uint128(price.neutralPrice);
         }
         uint256 vaultBalance = s._balanceVault;
-        if (price.timestamp >= s._lastUpdateTimestamp) {
+        if (price.timestamp > s._lastUpdateTimestamp) {
             vaultBalance =
                 Vault.vaultAssetAvailableWithFunding(s, uint128(price.neutralPrice), uint128(price.timestamp));
         }
