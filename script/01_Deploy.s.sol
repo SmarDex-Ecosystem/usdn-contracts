@@ -126,8 +126,10 @@ contract Deploy is Script {
         WstEthOracleMiddleware wstEthOracleMiddleware,
         LiquidationRewardsManager liquidationRewardsManager
     ) internal returns (IUsdnProtocol usdnProtocol_) {
+        vm.stopBroadcast();
         // clean and build contracts for openzeppelin module
         _utils.cleanAndBuildContracts();
+        vm.startBroadcast(_deployerAddress);
 
         // we need to allow external library linking for the openzeppelin module
         Options memory opts;
