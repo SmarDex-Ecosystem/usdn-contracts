@@ -141,32 +141,6 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
         assertEq(protocol.getBalanceVault(), data.vaultAssetAvailable - data.bonus - data.liqRewards, "balance vault");
     }
 
-    function calcRewards(int256 remainingCollateral, uint128 wstEthPrice) public view returns (uint256 rewards_) {
-        uint256 tradingExpoWithFunding = protocol.longTradingExpoWithFunding(wstEthPrice, uint40(block.timestamp));
-        uint128 tickPrice = protocol.getEffectivePriceForTick(
-            posToLiquidate.tick, wstEthPrice, tradingExpoWithFunding, protocol.getLiqMultiplierAccumulator()
-        );
-        uint128 tickPriceWithoutPenalty = protocol.getEffectivePriceForTick(
-            protocol.i_calcTickWithoutPenalty(posToLiquidate.tick, tickToLiquidateData.liquidationPenalty),
-            wstEthPrice,
-            tradingExpoWithFunding,
-            protocol.getLiqMultiplierAccumulator()
-        );
-
-        LiqTickInfo[] memory liquidatedTicks = new LiqTickInfo[](1);
-        liquidatedTicks[0] = LiqTickInfo({
-            totalPositions: tickToLiquidateData.totalPos,
-            totalExpo: tickToLiquidateData.totalExpo,
-            remainingCollateral: int256(uint256(remainingCollateral)),
-            tickPrice: tickPrice,
-            priceWithoutPenalty: tickPriceWithoutPenalty
-        });
-
-        rewards_ = liquidationRewardsManager.getLiquidationRewards(
-            liquidatedTicks, wstEthPrice, false, RebalancerAction.Opened, ProtocolAction.None, "", ""
-        );
-    }
-
     /**
      * @custom:scenario The imbalance is high enough so that the rebalancer tries to trigger but can't because of the
      * zero close limit
@@ -244,6 +218,37 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
         );
         vm.expectEmit(address(rebalancer));
         emit PositionVersionUpdated(newPositionVersion, defaultAccMultiplier, amount, expectedPositionId);
+    }
+
+    /**
+     * @dev Calculate the rewards for the liquidation
+     * @param remainingCollateral The remaining collateral after the liquidation
+     * @param wstEthPrice The price of the asset
+     */
+    function calcRewards(int256 remainingCollateral, uint128 wstEthPrice) public view returns (uint256 rewards_) {
+        uint256 tradingExpoWithFunding = protocol.longTradingExpoWithFunding(wstEthPrice, uint40(block.timestamp));
+        uint128 tickPrice = protocol.getEffectivePriceForTick(
+            posToLiquidate.tick, wstEthPrice, tradingExpoWithFunding, protocol.getLiqMultiplierAccumulator()
+        );
+        uint128 tickPriceWithoutPenalty = protocol.getEffectivePriceForTick(
+            protocol.i_calcTickWithoutPenalty(posToLiquidate.tick, tickToLiquidateData.liquidationPenalty),
+            wstEthPrice,
+            tradingExpoWithFunding,
+            protocol.getLiqMultiplierAccumulator()
+        );
+
+        LiqTickInfo[] memory liquidatedTicks = new LiqTickInfo[](1);
+        liquidatedTicks[0] = LiqTickInfo({
+            totalPositions: tickToLiquidateData.totalPos,
+            totalExpo: tickToLiquidateData.totalExpo,
+            remainingCollateral: int256(uint256(remainingCollateral)),
+            tickPrice: tickPrice,
+            priceWithoutPenalty: tickPriceWithoutPenalty
+        });
+
+        rewards_ = liquidationRewardsManager.getLiquidationRewards(
+            liquidatedTicks, wstEthPrice, false, RebalancerAction.Opened, ProtocolAction.None, "", ""
+        );
     }
 
     receive() external payable { }
