@@ -17,12 +17,11 @@ COPY --from=node:20-alpine /usr/local/bin /usr/local/bin
 RUN apk add bash jq
 
 # Install forge, soldeer, and npm
-RUN forge install && \
-    forge soldeer install && \
+RUN forge soldeer install && \
     npm install
 
 # Precompile contracts
-RUN forge build --skip test test_utils
+RUN forge build --skip test
 
 # Append dump command to deployFork.sh
 RUN printf '\necho "$FORK_ENV_DUMP" > .env.fork' >> script/deployFork.sh
