@@ -143,31 +143,28 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
     }
 
     function _maxWithdrawal(uint256 balance) internal returns (uint152 maxWithdrawal_) {
-        // TODO: this formula is probably not 100% correct
-        // for the imbalance checks, the balances in storage are considered (so we extrapolate to the price update
-        // timestamp if needed, otherwise use the stored value)
-        // for the withdrawal amount calculation, the balances should be extrapolated to block.timestamp
         PriceInfo memory price = s._oracleMiddleware.parseAndValidatePrice(
             "", uint128(block.timestamp), ProtocolAction.InitiateWithdrawal, ""
         );
-        uint256 vaultBalance = s._balanceVault;
+        uint128 lastPrice = s._lastPrice;
+        int256 vaultBalanceStorage = int256(s._balanceVault);
+        int256 longBalanceStorage = int256(s._balanceLong);
         if (price.timestamp > s._lastUpdateTimestamp) {
-            vaultBalance =
-                Vault.vaultAssetAvailableWithFunding(s, uint128(price.neutralPrice), uint128(price.timestamp));
+            lastPrice = uint128(price.neutralPrice);
+            vaultBalanceStorage =
+                int256(Vault.vaultAssetAvailableWithFunding(s, uint128(price.neutralPrice), uint128(price.timestamp)));
+            longBalanceStorage = int256(Core.longAssetAvailableWithFunding(s, lastPrice, uint128(price.timestamp)));
         }
-        int256 v = int256(vaultBalance);
-        uint256 longBalance = s._balanceLong;
-        if (price.timestamp > s._lastUpdateTimestamp) {
-            longBalance = Core.longAssetAvailableWithFunding(s, uint128(price.neutralPrice), uint128(price.timestamp));
-        }
-        uint256 longTradingExpo = s._totalExpo - longBalance;
-        int256 l = int256(longTradingExpo);
-        int256 b = int256(Constants.BPS_DIVISOR);
-        int256 t = int256(s._usdn.totalShares());
-        int256 p = int256(s._pendingBalanceVault);
-        int256 f = int256(uint256(s._vaultFeeBps));
-        int256 maxWithdrawal = b * t * (b * (p + v - l) + s._withdrawalExpoImbalanceLimitBps * (p + v))
-            / (v * (b - f) * (b - s._withdrawalExpoImbalanceLimitBps));
+        int256 vaultBalanceExtrapolated =
+            int256(Vault.vaultAssetAvailableWithFunding(s, lastPrice, uint128(block.timestamp)));
+        int256 totalShares = int256(s._usdn.totalShares());
+        int256 totalExpo = int256(s._totalExpo);
+        int256 fee = int256(uint256(s._vaultFeeBps));
+        int256 maxWithdrawal = (
+            totalShares
+                * (longBalanceStorage - totalExpo + (s._withdrawalExpoImbalanceLimitBps + 1) * (vaultBalanceStorage - fee))
+        )
+            / (vaultBalanceExtrapolated * (s._withdrawalExpoImbalanceLimitBps + 1) * (int256(Constants.BPS_DIVISOR) - fee));
         if (maxWithdrawal < 0) {
             return 0;
         }
