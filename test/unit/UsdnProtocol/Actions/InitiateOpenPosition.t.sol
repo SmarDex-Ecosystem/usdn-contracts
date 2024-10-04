@@ -520,17 +520,15 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
     /**
      * @custom:scenario The user initiates an open position action with an entry price between the last price and the
      * user's max price, to be sure than the max price is compared to the adjusted price and not the last price
-     * @custom:given The current price is $2000
+     * @custom:given The current price is $2000 and position fees are enabled
      * @custom:and The user's max price is $2000 and 1 wei
      * @custom:and The adjusted price is greater than the user's max price ($2000.8)
      * @custom:when The user initiates an open position with a userMaxPrice of $2000 and 1 wei
      * @custom:then The protocol reverts with UsdnProtocolSlippageMaxPriceExceeded
      */
     function test_RevertWhen_adjustedPriceGreaterThanLastPrice_lowerThanMaxPrice() public {
-        SetUpParams memory params = DEFAULT_PARAMS;
-        params.flags.enablePositionFees = true;
-        super._setUp(params);
-        wstETH.mintAndApprove(address(this), 10 ether, address(protocol), type(uint256).max);
+        vm.prank(ADMIN);
+        protocol.setPositionFeeBps(800);
 
         uint256 leverage = protocol.getMaxLeverage();
         vm.expectRevert(UsdnProtocolSlippageMaxPriceExceeded.selector);
