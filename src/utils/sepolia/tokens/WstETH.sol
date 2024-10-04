@@ -2,10 +2,11 @@
 pragma solidity 0.8.26;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 
-contract WstETH is ERC20Permit, Ownable {
+contract WstETH is ERC20Permit, Ownable2Step {
     uint256 private _stEthPerToken = 1 ether;
 
     constructor()
