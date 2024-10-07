@@ -3,7 +3,11 @@ FROM ghcr.io/foundry-rs/foundry:latest AS dev
 WORKDIR /usr/app/
 
 # Copy usdn-contracts to /usr/app/
-COPY . .
+COPY script/ src/ \
+    foundry.toml soldeer.lock \
+    package.json package-lock.json \
+    package.json package-lock.json \
+    .
 
 # Add node 20 to foundry image
 COPY --from=node:20-alpine /usr/lib /usr/lib
