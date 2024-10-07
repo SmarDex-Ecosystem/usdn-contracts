@@ -72,7 +72,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
     SetUpParams public params;
     SetUpParams public DEFAULT_PARAMS = SetUpParams({
         initialDeposit: 0, // 0 = auto-calculate to initialize a balanced protocol
-        initialLong: 100 ether,
+        initialLong: 200 ether,
         initialLiqPrice: 1000 ether, // leverage approx 2x, recalculated if forking (to ensure leverage approx 2x)
         initialPrice: 2000 ether, // 2000 USD per wstETH, ignored if forking
         initialTimestamp: 1_704_092_400, // 2024-01-01 07:00:00 UTC
