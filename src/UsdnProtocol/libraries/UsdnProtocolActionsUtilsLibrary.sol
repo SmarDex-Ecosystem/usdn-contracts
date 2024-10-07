@@ -424,7 +424,7 @@ library UsdnProtocolActionsUtilsLibrary {
      * @param balanceLong The balance of long positions (with asset decimals)
      * @param price The price to use for the position value calculation
      * @param liqPriceWithoutPenalty The liquidation price without penalty
-     * @param posExpo The total expo of the position
+     * @param posExpo The total expo to remove from the position
      * @return boundedPosValue_ The amount of assets to remove from the long balance, bound by zero and the available
      * long balance
      */
