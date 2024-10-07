@@ -1,0 +1,32 @@
+name: Release Docker image
+
+on:
+  release:
+    types:
+      - created
+  workflow_dispatch:
+    inputs:
+      release_ref:
+        description: 'Branch or tag to release'
+        required: true
+
+jobs:
+  publish:
+    name: Release Docker image
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # Required for requesting AWS JWT
+      contents: read # Required for actions/checkout and push commit
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.release_ref || '' }}
+
+      - name: Move docker files to root
+        run: mv docker/Dockerfile docker/.dockerignore ./
+
+      - name: Release Docker image
+        uses: Backend-RA2-Tech/composite-workflows/lerna-template/docker-build-publish@main
+        with:
+          working-directory: ./
+          force-target-repository: "usdn-backend"

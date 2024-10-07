@@ -21,7 +21,7 @@ RUN forge soldeer install && \
     npm install
 
 # Precompile contracts
-RUN forge build --skip test
+RUN forge build src script
 
 # Append dump command to deployFork.sh
 RUN printf '\necho "$FORK_ENV_DUMP" > .env.fork' >> script/deployFork.sh
