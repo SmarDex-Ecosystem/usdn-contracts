@@ -68,7 +68,7 @@ contract Utils is Script {
      * @dev Call this function to build the contracts
      */
     function _buildContracts() internal {
-        string[] memory inputs = new string[](4);
+        string[] memory inputs = new string[](3);
         inputs[0] = "forge";
         inputs[1] = "build";
         inputs[2] = "script";
