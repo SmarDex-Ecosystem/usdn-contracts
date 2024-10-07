@@ -5,6 +5,7 @@
   "repository": "git@github.com:SmarDex-Ecosystem/usdn-contracts.git",
   "author": "RA2 Tech",
   "license": "BUSL-1.1",
+  "dockerize": true,
   "scripts": {
     "clean": "rm -rf dist && rm -rf node_modules && rm -rf .coverage && rm -rf out && rm -rf dependencies && forge clean && npm run installDeps",
     "cov:html": "npm run coverage && genhtml --ignore-errors corrupt,inconsistent -o .coverage lcov.info && open .coverage/index.html",
