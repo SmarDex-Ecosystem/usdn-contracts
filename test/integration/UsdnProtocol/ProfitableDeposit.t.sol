@@ -100,8 +100,6 @@ contract TestUsdnProtocolProfitableDeposit is UsdnProtocolBaseIntegrationFixture
         );
     }
 
-    receive() external payable { }
-
     /// @notice Test a user deposit action arbitrage between the pyth price and an outdated higher chainlink price
     function _testWithOracleArbitrage() internal returns (uint256 usdnBalance_) {
         protocol.initiateDeposit{ value: securityDeposit }(
@@ -147,4 +145,6 @@ contract TestUsdnProtocolProfitableDeposit is UsdnProtocolBaseIntegrationFixture
 
         usdnBalance_ = usdn.balanceOf(address(this));
     }
+
+    receive() external payable { }
 }
