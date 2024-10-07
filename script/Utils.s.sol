@@ -46,7 +46,7 @@ contract Utils is Script {
         Vm.FfiResult memory result = vm.tryFfi(inputs);
 
         if (result.exitCode != 0) {
-            revert(string(abi.encodePacked("Failed to run bash command: ", result.stdout)));
+            revert(string(abi.encodePacked("Failed to run bash command: ", result.stdout);
         } else {
             return (result.stdout);
         }
@@ -68,10 +68,11 @@ contract Utils is Script {
      * @dev Call this function to build the contracts
      */
     function _buildContracts() internal {
-        string[] memory inputs = new string[](3);
+        string[] memory inputs = new string[](4);
         inputs[0] = "forge";
         inputs[1] = "build";
-        inputs[2] = "script";
+        inputs[2] = "src";
+        inputs[3] = "script";
         runFfiCommand(inputs);
     }
 
