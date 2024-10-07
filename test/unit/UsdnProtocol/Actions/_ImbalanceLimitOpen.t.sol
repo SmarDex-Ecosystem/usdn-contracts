@@ -26,20 +26,20 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
      * @custom:then The transaction should not revert
      */
     function test_checkImbalanceLimitOpen() public view {
-        (, uint256 longAmount, uint256 totalExpoValueToLimit) = _getOpenLimitValues();
-        protocol.i_checkImbalanceLimitOpen(totalExpoValueToLimit / 2, longAmount);
+        (, uint256 longAmount, uint256 totalExpoValueToLimit, uint256 longAmountAfterFee) = _getOpenLimitValues();
+        protocol.i_checkImbalanceLimitOpen(totalExpoValueToLimit / 2, longAmount, longAmountAfterFee);
     }
 
     /**
-     * @custom:scenario The `_checkImbalanceLimitOpen` function should not revert when the imballance is equal to the
+     * @custom:scenario The `_checkImbalanceLimitOpen` function should not revert when the imbalance is equal to the
      * limit
      * @custom:given The protocol is in a balanced state
      * @custom:when The `_checkImbalanceLimitOpen` function is called with values on the open limit
      * @custom:then The transaction should not revert
      */
     function test_checkImbalanceLimitOpenOnLimit() public view {
-        (, uint256 longAmount, uint256 totalExpoValueToLimit) = _getOpenLimitValues();
-        protocol.i_checkImbalanceLimitOpen(totalExpoValueToLimit - 1, longAmount);
+        (, uint256 longAmount, uint256 totalExpoValueToLimit, uint256 longAmountAfterFee) = _getOpenLimitValues();
+        protocol.i_checkImbalanceLimitOpen(totalExpoValueToLimit - 1, longAmount, longAmountAfterFee);
     }
 
     /**
@@ -49,12 +49,12 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
      * @custom:then The transaction should not revert
      */
     function test_checkImbalanceLimitOpenDisabled() public adminPrank {
-        (, uint256 longAmount, uint256 totalExpoValueToLimit) = _getOpenLimitValues();
+        (, uint256 longAmount, uint256 totalExpoValueToLimit, uint256 longAmountAfterFee) = _getOpenLimitValues();
 
         // disable open limit
         protocol.setExpoImbalanceLimits(0, 200, 600, 600, 500, 300);
 
-        protocol.i_checkImbalanceLimitOpen(totalExpoValueToLimit, longAmount);
+        protocol.i_checkImbalanceLimitOpen(totalExpoValueToLimit, longAmount, longAmountAfterFee);
     }
 
     /**
@@ -65,11 +65,12 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
      * @custom:then The transaction should revert
      */
     function test_RevertWhen_checkImbalanceLimitOpenOutLimit() public {
-        (int256 openLimitBps, uint256 longAmount, uint256 totalExpoValueToLimit) = _getOpenLimitValues();
+        (int256 openLimitBps, uint256 longAmount, uint256 totalExpoValueToLimit, uint256 longAmountAfterFee) =
+            _getOpenLimitValues();
         vm.expectRevert(
             abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, openLimitBps)
         );
-        protocol.i_checkImbalanceLimitOpen(totalExpoValueToLimit, longAmount);
+        protocol.i_checkImbalanceLimitOpen(totalExpoValueToLimit, longAmount, longAmountAfterFee);
     }
 
     /**
@@ -85,7 +86,7 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
         vm.expectRevert(
             abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, type(int256).max)
         );
-        protocol.i_checkImbalanceLimitOpen(0, 0);
+        protocol.i_checkImbalanceLimitOpen(0, 0, 0);
     }
 
     /**
@@ -95,7 +96,7 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
      * @custom:then The transaction should revert with the expected imbalance
      */
     function test_RevertWhen_checkImbalanceLimitOpenPendingVaultActions() public {
-        (, uint256 longAmount, uint256 totalExpoValueToLimit) = _getOpenLimitValues();
+        (, uint256 longAmount, uint256 totalExpoValueToLimit, uint256 longAmountAfterFee) = _getOpenLimitValues();
 
         // this action will affect the vault trading expo once it's validated
         vm.startPrank(DEPLOYER);
@@ -121,7 +122,7 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
                 IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, uint256(expectedImbalance)
             )
         );
-        protocol.i_checkImbalanceLimitOpen(totalExpoValueToLimit, longAmount);
+        protocol.i_checkImbalanceLimitOpen(totalExpoValueToLimit, longAmount, longAmountAfterFee);
     }
 
     /**
@@ -133,7 +134,7 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
     function _getOpenLimitValues()
         private
         view
-        returns (int256 openLimitBps_, uint256 longAmount_, uint256 totalExpoValueToLimit_)
+        returns (int256 openLimitBps_, uint256 longAmount_, uint256 totalExpoValueToLimit_, uint256 amountAfterFee_)
     {
         // current vault expo
         int256 vaultExpo = int256(protocol.getBalanceVault()) + protocol.getPendingBalanceVault();
@@ -146,5 +147,7 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
             longExpoValueToLimit * 10 ** protocol.LEVERAGE_DECIMALS() / protocol.i_getLeverage(2000 ether, 1500 ether);
         // current total expo value to imbalance the protocol
         totalExpoValueToLimit_ = longExpoValueToLimit + longAmount_ + 1;
+
+        amountAfterFee_ = longAmount_ - uint256(longAmount_) * protocol.getPositionFeeBps() / protocol.BPS_DIVISOR();
     }
 }

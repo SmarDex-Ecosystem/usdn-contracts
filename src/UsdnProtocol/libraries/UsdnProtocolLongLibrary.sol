@@ -311,7 +311,7 @@ library UsdnProtocolLongLibrary {
             Utils._calcPositionTotalExpo(params.amount, data_.adjustedPrice, liqPriceWithoutPenalty);
         // the current price is known to be above the liquidation price because we checked the safety margin
         data_.positionValue = Utils.positionValue(data_.positionTotalExpo, lastPrice, liqPriceWithoutPenalty);
-        _checkImbalanceLimitOpen(s, data_.positionTotalExpo, params.amount);
+        _checkImbalanceLimitOpen(s, data_.positionTotalExpo, params.amount, data_.positionValue);
 
         data_.liqMultiplier =
             Utils._calcFixedPrecisionMultiplier(lastPrice, conversionData.tradingExpo, conversionData.accumulator);
@@ -961,12 +961,15 @@ library UsdnProtocolLongLibrary {
      * the open limit on the long side, otherwise revert
      * @param s The storage of the protocol
      * @param openTotalExpoValue The open position expo value
-     * @param openCollatValue The open position collateral value
+     * @param amount The open position collateral value including fee
+     * @param openCollatValue The open position collateral value after fee
      */
-    function _checkImbalanceLimitOpen(Types.Storage storage s, uint256 openTotalExpoValue, uint256 openCollatValue)
-        internal
-        view
-    {
+    function _checkImbalanceLimitOpen(
+        Types.Storage storage s,
+        uint256 openTotalExpoValue,
+        uint256 amount,
+        uint256 openCollatValue
+    ) internal view {
         int256 openExpoImbalanceLimitBps = s._openExpoImbalanceLimitBps;
 
         // early return in case limit is disabled
@@ -974,7 +977,9 @@ library UsdnProtocolLongLibrary {
             return;
         }
 
-        int256 currentVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault);
+        int256 currentVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault).safeAdd(
+            amount.toInt256().safeSub(openCollatValue.toInt256())
+        );
         int256 imbalanceBps = _calcImbalanceOpenBps(
             currentVaultExpo, (s._balanceLong + openCollatValue).toInt256(), s._totalExpo + openTotalExpoValue
         );

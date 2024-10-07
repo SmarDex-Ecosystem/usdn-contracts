@@ -44,6 +44,10 @@ contract TestImbalanceLimitOpenFuzzing is UsdnProtocolBaseFixture {
             );
         }
 
-        protocol.i_checkImbalanceLimitOpen(totalExpoToAdd, openAmount);
+        protocol.i_checkImbalanceLimitOpen(
+            totalExpoToAdd,
+            openAmount,
+            openAmount - uint256(openAmount) * protocol.getPositionFeeBps() / protocol.BPS_DIVISOR()
+        );
     }
 }
