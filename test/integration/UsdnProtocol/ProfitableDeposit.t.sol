@@ -25,7 +25,9 @@ contract TestUsdnProtocolProfitableDeposit is UsdnProtocolBaseIntegrationFixture
     uint256 snapshotId;
 
     function setUp() public {
-        _setUp(DEFAULT_PARAMS);
+        params = DEFAULT_PARAMS;
+        params.initialLong = 200 ether;
+        _setUp(params);
         securityDeposit = protocol.getSecurityDepositValue();
         wstETH.mintAndApprove(USER_1, TOKENS_AMOUNT, address(protocol), type(uint256).max);
         wstETH.mintAndApprove(address(this), TOKENS_AMOUNT, address(protocol), type(uint256).max);
