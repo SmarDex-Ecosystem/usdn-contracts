@@ -17,8 +17,6 @@ export GET_WSTETH=true
 
 forge script --non-interactive --private-key $deployerPrivateKey -f "$rpcUrl" script/01_Deploy.s.sol:Deploy --broadcast
 
-popd >/dev/null
-
 DEPLOYMENT_LOG=$(cat "$SCRIPT_DIR/broadcast/01_Deploy.s.sol/31337/run-latest.json")
 
 USDN_TX_HASH=$(echo "$DEPLOYMENT_LOG" | jq '.transactions[] | select(.contractName == "Usdn" and .transactionType == "CREATE") | .hash')
@@ -43,3 +41,5 @@ EOF
 )
 
 echo "$FORK_ENV_DUMP"
+
+popd >/dev/null
