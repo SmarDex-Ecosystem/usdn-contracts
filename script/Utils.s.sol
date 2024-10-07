@@ -71,7 +71,6 @@ contract Utils is Script {
         string[] memory inputs = new string[](4);
         inputs[0] = "forge";
         inputs[1] = "build";
-        inputs[2] = "src";
         inputs[3] = "script";
         runFfiCommand(inputs);
     }
