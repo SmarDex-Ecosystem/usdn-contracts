@@ -46,7 +46,7 @@ contract Utils is Script {
         Vm.FfiResult memory result = vm.tryFfi(inputs);
 
         if (result.exitCode != 0) {
-            revert(string(abi.encodePacked("Failed to run bash command: ", result.stdout);
+            revert(string(abi.encodePacked("Failed to run bash command: ", result.stdout)));
         } else {
             return (result.stdout);
         }
