@@ -263,14 +263,14 @@ library UsdnProtocolLongLibrary {
             return data_;
         }
 
-        // check slippage
         uint128 lastPrice = s._lastPrice;
-        if (lastPrice > params.userMaxPrice) {
-            revert IUsdnProtocolErrors.UsdnProtocolSlippageMaxPriceExceeded();
-        }
-
         // add position fee
         data_.adjustedPrice = (lastPrice + uint256(lastPrice) * s._positionFeeBps / Constants.BPS_DIVISOR).toUint128();
+
+        // check slippage
+        if (data_.adjustedPrice > params.userMaxPrice) {
+            revert IUsdnProtocolErrors.UsdnProtocolSlippageMaxPriceExceeded();
+        }
 
         // gas savings, we only load the data once and use it for all conversions below
         Types.TickPriceConversionData memory conversionData = Types.TickPriceConversionData({
@@ -358,6 +358,8 @@ library UsdnProtocolLongLibrary {
             if (tickData.totalPos == 0) {
                 // we removed the last position in the tick
                 s._tickBitmap.unset(Utils._calcBitmapIndexFromTick(s, tick));
+                // reset tick penalty
+                tickData.liquidationPenalty = 0;
             }
         }
 
