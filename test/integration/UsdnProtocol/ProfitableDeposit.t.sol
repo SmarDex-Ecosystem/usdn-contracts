@@ -72,7 +72,7 @@ contract TestUsdnProtocolProfitableDeposit is UsdnProtocolBaseIntegrationFixture
         skip(25 minutes);
 
         vm.startPrank(DEPLOYER);
-        mockChainlinkOnChain.setLastPublishTime(block.timestamp - 10 minutes);
+        mockChainlinkOnChain.setLastPublishTime(block.timestamp);
         mockChainlinkOnChain.setLastPrice(CHAINLINK_PRICE / 1e10);
         mockPyth.setLastPublishTime(block.timestamp + oracleMiddleware.getValidationDelay());
         mockPyth.setPrice(int64(PYTH_PRICE / 1e10));
