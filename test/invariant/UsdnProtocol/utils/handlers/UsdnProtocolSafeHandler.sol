@@ -352,9 +352,8 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
     function liquidateTest() external {
         uint256 oracleFee = s._oracleMiddleware.validationCost("", ProtocolAction.Liquidation);
 
-        vm.startPrank(msg.sender);
+        vm.prank(msg.sender);
         LiqTickInfo[] memory liquidatedTicks = this.liquidate{ value: oracleFee }("");
-        vm.stopPrank();
 
         if (liquidatedTicks.length > 0) {
             console.log("liquidated ", liquidatedTicks.length, " ticks");
