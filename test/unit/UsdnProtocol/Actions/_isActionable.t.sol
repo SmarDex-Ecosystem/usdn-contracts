@@ -10,7 +10,7 @@ contract TestUsdnProtocolActionsIsActionable is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Check returned value of the `_isActionable` function when the timestamp is zero
+     * @custom:scenario Check the returned value of the `_isActionable` function when the timestamp is zero
      * @custom:given A call to the `_isActionable` function
      * @custom:when The timestamp is zero
      * @custom:then The function should return `false`
