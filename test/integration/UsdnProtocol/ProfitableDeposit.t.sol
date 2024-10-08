@@ -37,7 +37,7 @@ contract TestUsdnProtocolProfitableDeposit is UsdnProtocolBaseIntegrationFixture
         skip(25 minutes);
 
         vm.startPrank(DEPLOYER);
-        mockChainlinkOnChain.setLastPublishTime(block.timestamp - 10 minutes);
+        mockChainlinkOnChain.setLastPublishTime(block.timestamp);
         mockChainlinkOnChain.setLastPrice(INITIAL_PRICE / 1e10);
         mockPyth.setLastPublishTime(block.timestamp + oracleMiddleware.getValidationDelay());
         mockPyth.setPrice(int64(INITIAL_PRICE / 1e10));
@@ -82,10 +82,11 @@ contract TestUsdnProtocolProfitableDeposit is UsdnProtocolBaseIntegrationFixture
     }
 
     /**
-     * @custom:scenario Test the potential profit of a user deposit with a pending liquidation by doing arbitrage
-     * between oracles
-     * @custom:when The user validates a deposit
-     * @custom:then He shouldn't make profit
+     * @custom:scenario Test the potential profit a user could make when using an outdated Chainlink price
+     * to initiate a deposit with pending liquidations that won't be triggered until validation,
+     * and then using a fresh Pyth price during initialization, which will trigger the liquidation
+     * @custom:when The user validates the deposit
+     * @custom:then The user should not make a profit
      */
     function test_ProfitableDeposit() public {
         uint256 usdnBalanceWithArbitrage = _testWithOracleArbitrage();
@@ -94,8 +95,8 @@ contract TestUsdnProtocolProfitableDeposit is UsdnProtocolBaseIntegrationFixture
         uint256 usdnBalanceWithoutArbitrage = _testWithoutOracleArbitrage();
 
         assertLt(
-            int256(usdnBalanceWithArbitrage) - int256(usdnBalanceWithoutArbitrage),
-            0,
+            usdnBalanceWithArbitrage,
+            usdnBalanceWithoutArbitrage,
             "User shouldn't made usdn profit with oracle arbitrage"
         );
     }
