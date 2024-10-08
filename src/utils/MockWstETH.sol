@@ -26,6 +26,7 @@ contract MockWstETH is IWstETH, ERC4626, ERC20Permit, Ownable {
         ERC4626(IERC20(_underlyingAsset))
     { }
 
+    // slither-disable-next-line reentrancy-eth
     receive() external payable {
         if (msg.value != 0) {
             // need to do that before minting stETH. Otherwise, the totalAsset() will be incorrect. And so, a standard
