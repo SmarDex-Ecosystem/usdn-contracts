@@ -24,10 +24,13 @@ contract TestImbalanceLimitOpenFuzzing is UsdnProtocolBaseFixture {
         leverage = bound(leverage, protocol.getMinLeverage(), protocol.getMaxLeverage());
         // range withdrawalAmount properly
         openAmount = bound(openAmount, 1, type(uint128).max);
+
+        uint256 fee = uint256(openAmount) * protocol.getPositionFeeBps() / protocol.BPS_DIVISOR();
+
         // total expo to add
         uint256 totalExpoToAdd = openAmount * leverage / 10 ** protocol.LEVERAGE_DECIMALS();
 
-        int256 vaultExpo = int256(protocol.getBalanceVault());
+        int256 vaultExpo = int256(protocol.getBalanceVault()) + int256(fee);
         // expected imbalance bps
         int256 imbalanceBps = (
             (int256(protocol.getTotalExpo() + totalExpoToAdd) - int256(protocol.getBalanceLong() + openAmount))
@@ -44,10 +47,6 @@ contract TestImbalanceLimitOpenFuzzing is UsdnProtocolBaseFixture {
             );
         }
 
-        protocol.i_checkImbalanceLimitOpen(
-            totalExpoToAdd,
-            openAmount,
-            openAmount - uint256(openAmount) * protocol.getPositionFeeBps() / protocol.BPS_DIVISOR()
-        );
+        protocol.i_checkImbalanceLimitOpen(totalExpoToAdd, openAmount, openAmount - fee);
     }
 }
