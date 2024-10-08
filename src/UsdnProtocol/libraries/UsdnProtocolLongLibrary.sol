@@ -977,9 +977,8 @@ library UsdnProtocolLongLibrary {
             return;
         }
 
-        int256 currentVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault).safeAdd(
-            amount.toInt256().safeSub(openCollatValue.toInt256())
-        );
+        int256 currentVaultExpo =
+            s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault).safeAdd((amount - openCollatValue).toInt256());
         int256 imbalanceBps = _calcImbalanceOpenBps(
             currentVaultExpo, (s._balanceLong + openCollatValue).toInt256(), s._totalExpo + openTotalExpoValue
         );
