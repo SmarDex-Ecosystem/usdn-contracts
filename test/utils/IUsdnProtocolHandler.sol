@@ -34,6 +34,13 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
 
     function removePendingAction(uint128 rawIndex, address user) external;
 
+    function i_isActionable(
+        uint256 initiateTimestamp,
+        uint256 lowLatencyDeadline,
+        uint256 lowLatencyDelay,
+        uint256 onChainDeadline
+    ) external view returns (bool);
+
     function i_createWithdrawalPendingAction(
         address to,
         address validator,
