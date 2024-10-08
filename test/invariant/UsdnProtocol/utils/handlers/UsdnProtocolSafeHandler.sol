@@ -349,6 +349,30 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         }
     }
 
+    function validateActionablePendingActionsTest(uint256 maxValidations) external {
+        (PendingAction[] memory prevActions, uint128[] memory rawIndices) = this.getActionablePendingActions(msg.sender);
+
+        uint256 validationCost;
+        if (prevActions.length == 0) {
+            console.log("no actionable pending actions");
+            return;
+        } else {
+            for (uint256 i = 0; i < prevActions.length; i++) {
+                validationCost += s._oracleMiddleware.validationCost("", prevActions[i].action);
+            }
+        }
+
+        bytes[] memory priceData = new bytes[](prevActions.length);
+        PreviousActionsData memory previousData = PreviousActionsData({ priceData: priceData, rawIndices: rawIndices });
+
+        vm.startPrank(msg.sender);
+        uint256 validatedActions =
+            this.validateActionablePendingActions{ value: validationCost }(previousData, maxValidations);
+        vm.stopPrank();
+
+        console.log("validated ", validatedActions, " actions");
+    }
+
     /* ------------------------ Invariant testing helpers ----------------------- */
 
     function boundAddress(address addr) public view returns (address payable) {
