@@ -52,6 +52,7 @@
           shellHook = ''
             set -a; source .env; set +a
             npm i
+            forge soldeer install
           '';
 
           RUST_SRC_PATH = "${toolchain}/lib/rustlib/src/rust/library";
