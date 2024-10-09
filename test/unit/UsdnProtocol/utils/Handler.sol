@@ -409,8 +409,12 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         Vault._checkImbalanceLimitWithdrawal(s, withdrawalValue, totalExpo);
     }
 
-    function i_checkImbalanceLimitOpen(uint256 openTotalExpoValue, uint256 openCollatValue) external view {
-        Long._checkImbalanceLimitOpen(s, openTotalExpoValue, openCollatValue);
+    function i_checkImbalanceLimitOpen(
+        uint256 openTotalExpoValue,
+        uint256 collateralAmount,
+        uint256 collateralAmountAfterFees
+    ) external view {
+        Long._checkImbalanceLimitOpen(s, openTotalExpoValue, collateralAmount, collateralAmountAfterFees);
     }
 
     function i_checkImbalanceLimitClose(uint256 posTotalExpoToClose, uint256 posValueToClose) external view {
