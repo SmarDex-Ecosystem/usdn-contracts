@@ -349,6 +349,20 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         }
     }
 
+    function liquidateTest() external {
+        uint256 oracleFee = s._oracleMiddleware.validationCost("", ProtocolAction.Liquidation);
+
+        vm.startPrank(msg.sender);
+        LiqTickInfo[] memory liquidatedTicks = this.liquidate{ value: oracleFee }("");
+        vm.stopPrank();
+
+        if (liquidatedTicks.length > 0) {
+            console.log("liquidated ", liquidatedTicks.length, " ticks");
+        } else {
+            console.log("no liquidations");
+        }
+    }
+
     /* ------------------------ Invariant testing helpers ----------------------- */
 
     function boundAddress(address addr) public view returns (address payable) {
