@@ -200,9 +200,11 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
 
     function i_checkImbalanceLimitWithdrawal(uint256 withdrawalValue, uint256 totalExpo) external view;
 
-    function i_checkImbalanceLimitOpen(uint256 openTotalExpoValue, uint256 amount, uint256 openCollatValue)
-        external
-        view;
+    function i_checkImbalanceLimitOpen(
+        uint256 openTotalExpoValue,
+        uint256 collateralAmount,
+        uint256 collateralAmountAfterFees
+    ) external view;
 
     function i_checkImbalanceLimitClose(uint256 posTotalExpoToClose, uint256 posValueToClose) external view;
 

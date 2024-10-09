@@ -962,13 +962,13 @@ library UsdnProtocolLongLibrary {
      * @param s The storage of the protocol
      * @param openTotalExpoValue The open position expo value
      * @param collateralAmount The collateral amount of the position
-     * @param collateralValueAfterFees The collateral value of the position after fees
+     * @param collateralAmountAfterFees The collateral value of the position after fees
      */
     function _checkImbalanceLimitOpen(
         Types.Storage storage s,
         uint256 openTotalExpoValue,
         uint256 collateralAmount,
-        uint256 collateralValueAfterFees
+        uint256 collateralAmountAfterFees
     ) internal view {
         int256 openExpoImbalanceLimitBps = s._openExpoImbalanceLimitBps;
 
@@ -978,10 +978,10 @@ library UsdnProtocolLongLibrary {
         }
 
         int256 currentVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault).safeAdd(
-            (collateralAmount - collateralValueAfterFees).toInt256()
+            (collateralAmount - collateralAmountAfterFees).toInt256()
         );
         int256 imbalanceBps = _calcImbalanceOpenBps(
-            currentVaultExpo, (s._balanceLong + collateralValueAfterFees).toInt256(), s._totalExpo + openTotalExpoValue
+            currentVaultExpo, (s._balanceLong + collateralAmountAfterFees).toInt256(), s._totalExpo + openTotalExpoValue
         );
 
         if (imbalanceBps > openExpoImbalanceLimitBps) {
