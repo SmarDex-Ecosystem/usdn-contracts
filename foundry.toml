@@ -31,10 +31,10 @@ remappings = [
     "@openzeppelin/contracts-upgradeable/=dependencies/@openzeppelin-contracts-upgradeable-5.0.2/",
     "@openzeppelin/contracts/=dependencies/@openzeppelin-contracts-5.0.2/",
     "@pythnetwork/pyth-sdk-solidity/=dependencies/@pythnetwork-pyth-sdk-solidity-3.1.0/",
-    "@redstone-finance/evm-connector/=dependencies/@redstone-finance-evm-connector-0.6.1/",
+    "@redstone-finance/evm-connector/=dependencies/@redstone-finance-evm-connector-0.6.2/",
     "@uniswap/permit2/=dependencies/@uniswap-permit2-1.0.0/",
     "forge-std/=dependencies/forge-std-1.9.3/src/",
-    "openzeppelin-foundry-upgrades/=dependencies/openzeppelin-foundry-upgrades-0.3.3/src/",
+    "openzeppelin-foundry-upgrades/=dependencies/openzeppelin-foundry-upgrades-0.3.6/src/",
     "solady/src/=dependencies/solady-0.0.228/src/",
 ]
 
@@ -136,15 +136,17 @@ mainnet = { key = "${ETHERSCAN_API_KEY}" }
 # ---------------------------------------------------------------------------- #
 
 [soldeer]
-remappings_generate = false
+remappings_generate = true
+remappings_location = "config"
+remappings_version = true
 
 [dependencies]
 "@chainlink" = { version = "1.2.0", url = "https://github.com/smartcontractkit/chainlink/archive/c3dc764bba9e1c57b3f7933bcb804a1740fab695.zip" }
-"@openzeppelin-contracts-upgradeable" = "5.0.2"
-"@openzeppelin-contracts" = "5.0.2"
-"@pythnetwork-pyth-sdk-solidity" = "3.1.0"
-"@redstone-finance-evm-connector" = "0.6.1"
+"@openzeppelin-contracts-upgradeable" = "5"
+"@openzeppelin-contracts" = "5"
+"@pythnetwork-pyth-sdk-solidity" = "3"
+"@redstone-finance-evm-connector" = "0.6"
 "@uniswap-permit2" = { version = "1.0.0", url = "https://github.com/Uniswap/permit2/archive/cc56ad0f3439c502c246fc5cfcc3db92bb8b7219.zip" }
-forge-std = "1.9.3"
-openzeppelin-foundry-upgrades = "0.3.3"
+forge-std = "1"
+openzeppelin-foundry-upgrades = "0.3"
 solady = "0.0.228"

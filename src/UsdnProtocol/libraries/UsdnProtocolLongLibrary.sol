@@ -358,6 +358,8 @@ library UsdnProtocolLongLibrary {
             if (tickData.totalPos == 0) {
                 // we removed the last position in the tick
                 s._tickBitmap.unset(Utils._calcBitmapIndexFromTick(s, tick));
+                // reset tick penalty
+                tickData.liquidationPenalty = 0;
             }
         }
 

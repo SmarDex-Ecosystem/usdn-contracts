@@ -18,7 +18,7 @@ contract TestUsdnProtocolActionsAssetToRemove is UsdnProtocolBaseFixture {
      * @custom:and The position of amount 1 wstETH has a liquidation price slightly below $500 with leverage 2x
      * (starting price slightly below $1000)
      * @custom:and The current price is $2000
-     * @custom:when the asset to transfer is calculated
+     * @custom:when The asset to transfer is calculated
      * @custom:then Asset to transfer and position value are equal
      * @custom:and The asset to transfer is slightly above 1.5 wstETH
      */
@@ -37,7 +37,7 @@ contract TestUsdnProtocolActionsAssetToRemove is UsdnProtocolBaseFixture {
      * @custom:and The position of amount 100 wstETH has a liquidation price slightly below $500 with leverage 2x
      * (starting price slightly below $1000)
      * @custom:and The current price is $2000
-     * @custom:when the asset to transfer is calculated
+     * @custom:when The asset to transfer is calculated
      * @custom:then Position value is greater than asset to transfer
      * @custom:and The asset to transfer is equal to the long available balance (because we don't have 150 wstETH)
      */
@@ -55,7 +55,7 @@ contract TestUsdnProtocolActionsAssetToRemove is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Check value of the `_assetToRemove` function when the long balance is zero
      * @custom:given The long balance is empty due to funding and price change
-     * @custom:when the asset to transfer is calculated
+     * @custom:when The asset to transfer is calculated
      * @custom:then The asset to transfer is zero
      */
     function test_assetToRemoveZeroBalance() public {
@@ -79,5 +79,24 @@ contract TestUsdnProtocolActionsAssetToRemove is UsdnProtocolBaseFixture {
             100 ether
         );
         assertEq(toRemove, 0, "asset to transfer");
+    }
+
+    /**
+     * @custom:scenario Check value of the `_assetToRemove` function when the position value is negative
+     * @custom:given A position with negative value
+     * @custom:when The asset to remove is calculated
+     * @custom:then The bounded asset to remove is zero
+     */
+    function test_assetToRemove_negativePositionValue() public view {
+        uint256 balanceLong = 100 ether;
+        uint128 price = 1000 ether;
+        uint128 liqPrice = 2000 ether;
+        uint128 posExpo = 200 ether;
+
+        int256 posValue = protocol.i_positionValue(price, liqPrice, posExpo);
+        assertLt(posValue, 0, "position value should be negative");
+
+        uint256 boundedPosValue = protocol.i_assetToRemove(balanceLong, price, liqPrice, posExpo);
+        assertEq(boundedPosValue, 0, "asset to remove should be bounded to zero");
     }
 }
