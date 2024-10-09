@@ -366,9 +366,13 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         PreviousActionsData memory previousData = PreviousActionsData({ priceData: priceData, rawIndices: rawIndices });
 
         vm.startPrank(msg.sender);
+        vm.recordLogs();
+
         uint256 validatedActions =
             this.validateActionablePendingActions{ value: validationCost }(previousData, maxValidations);
+
         vm.stopPrank();
+        _updatePositionsMapping(vm.getRecordedLogs());
 
         console.log("validated ", validatedActions, " actions");
     }
