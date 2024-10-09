@@ -25,7 +25,7 @@ contract TestImbalanceLimitOpenFuzzing is UsdnProtocolBaseFixture {
         // range withdrawalAmount properly
         openAmount = bound(openAmount, 1, type(uint128).max);
 
-        uint256 fee = uint256(openAmount) * protocol.getPositionFeeBps() / protocol.BPS_DIVISOR();
+        uint256 fee = openAmount * protocol.getPositionFeeBps() / protocol.BPS_DIVISOR();
 
         // total expo to add
         uint256 totalExpoToAdd = openAmount * leverage / 10 ** protocol.LEVERAGE_DECIMALS();
