@@ -39,11 +39,13 @@ contract UsdnProtocolImpl is
         int24 tickSpacing,
         address feeCollector,
         Managers memory managers,
-        IUsdnProtocolFallback protocolFallback
+        IUsdnProtocolFallback protocolFallback,
+        string memory eip712Version
     ) public initializer {
         __AccessControlDefaultAdminRules_init_unchained(0, msg.sender);
         __initializeReentrancyGuard_init();
         __Pausable_init_unchained();
+        __EIP712_init_unchained("UsdnProtocol", eip712Version);
 
         // roles
         _setRoleAdmin(SET_EXTERNAL_ROLE, ADMIN_SET_EXTERNAL_ROLE);

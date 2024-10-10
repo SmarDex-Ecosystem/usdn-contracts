@@ -92,7 +92,8 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
                 pauserManager: ADMIN,
                 unpauserManager: ADMIN
             }),
-            IUsdnProtocolFallback(address(0))
+            IUsdnProtocolFallback(address(0)),
+            params.eip712Version
         );
     }
 
@@ -129,7 +130,8 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
                 pauserManager: ADMIN,
                 unpauserManager: ADMIN
             }),
-            IUsdnProtocolFallback(address(0))
+            IUsdnProtocolFallback(address(0)),
+            params.eip712Version
         );
     }
 

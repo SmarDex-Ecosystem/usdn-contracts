@@ -58,6 +58,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         uint256 forkWarp; // warp to this timestamp after forking, before deploying protocol. Zero to disable
         uint256 forkBlock;
         bool enableRoles;
+        string eip712Version;
     }
 
     struct ExpoImbalanceLimitsBps {
@@ -79,7 +80,8 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         fork: false,
         forkWarp: 0,
         forkBlock: 0,
-        enableRoles: true
+        enableRoles: true,
+        eip712Version: "1"
     });
 
     Managers managers = Managers({
@@ -183,7 +185,8 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
                     100, // tick spacing 100 = ~1.005%
                     ADMIN,
                     managers,
-                    protocolFallback
+                    protocolFallback,
+                    params.eip712Version
                 )
             )
         );

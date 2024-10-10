@@ -32,6 +32,7 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
     LiquidationRewardsManager public liquidationRewardsManager;
     RebalancerHandler public rebalancer;
     IUsdnProtocol public usdnProtocol;
+    string constant EIP712_VERSION = "1";
 
     Types.PreviousActionsData internal EMPTY_PREVIOUS_DATA =
         Types.PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
@@ -68,7 +69,8 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
                         pauserManager: ADMIN,
                         unpauserManager: ADMIN
                     }),
-                    protocolFallback
+                    protocolFallback,
+                    EIP712_VERSION
                 )
             )
         );
