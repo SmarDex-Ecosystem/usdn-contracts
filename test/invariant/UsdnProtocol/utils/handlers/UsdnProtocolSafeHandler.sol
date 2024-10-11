@@ -391,6 +391,54 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         }
     }
 
+    function adminFunctionsTest(uint256 functionSeed, uint256 seed1, uint256 seed2, uint256 seed3, uint256 seed4)
+        external
+    {
+        functionSeed %= 20;
+        if (functionSeed == 0) {
+            _setValidatorDeadlines(uint128(seed1), uint128(seed2));
+        } else if (functionSeed == 1) {
+            _setMinLongPosition(seed1);
+        } else if (functionSeed == 2) {
+            _setMinLeverage(seed1);
+        } else if (functionSeed == 4) {
+            _setMinLeverage(seed1);
+        }
+        // else if (functionSeed == 5) {
+        //     this.setLiquidationPenalty();
+        // } else if (functionSeed == 6) {
+        //     this.setEMAPeriod();
+        // } else if (functionSeed == 7) {
+        //     this.setFundingSF();
+        // } else if (functionSeed == 8) {
+        //     this.setProtocolFeeBps();
+        // } else if (functionSeed == 9) {
+        //     this.setPositionFeeBps();
+        // } else if (functionSeed == 10) {
+        //     this.setVaultFeeBps();
+        // } else if (functionSeed == 11) {
+        //     this.setRebalancerBonusBps();
+        // } else if (functionSeed == 12) {
+        //     this.setSdexBurnOnDepositRatio();
+        // } else if (functionSeed == 13) {
+        //     this.setSecurityDepositValue();
+        // } else if (functionSeed == 14) {
+        //     this.setExpoImbalanceLimits();
+        // } else if (functionSeed == 15) {
+        //     this.setSafetyMarginBps();
+        // } else if (functionSeed == 16) {
+        //     this.setLiquidationIteration();
+        // } else if (functionSeed == 17) {
+        //     this.setFeeThreshold();
+        // } else if (functionSeed == 18) {
+        //     this.setTargetUsdnPrice();
+        // } else if (functionSeed == 19) {
+        //     this.setUsdnRebaseThreshold();
+        // } else if (functionSeed == 20) {
+        //     this.setUsdnRebaseInterval();
+        // }
+    }
+
     /* ------------------------ Invariant testing helpers ----------------------- */
 
     function boundAddress(address addr) public view returns (address payable) {
@@ -436,5 +484,43 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
                 }
             }
         }
+    }
+
+    /* ----------------------------- Admin functions ---------------------------- */
+
+    function _setValidatorDeadlines(uint256 seed1, uint256 seed2) internal {
+        uint16 lowLatencyDelay = s._oracleMiddleware.getLowLatencyDelay();
+        uint128 newLowLatencyValidatorDeadline =
+            uint128(bound(seed1, Constants.MIN_VALIDATION_DEADLINE, lowLatencyDelay));
+        uint128 newOnChainValidatorDeadline = uint128(bound(seed2, 0, Constants.MAX_VALIDATION_DEADLINE));
+
+        // todo : admin
+        vm.startPrank(msg.sender);
+        this.setValidatorDeadlines(newLowLatencyValidatorDeadline, newOnChainValidatorDeadline);
+        vm.stopPrank();
+    }
+
+    function _setMinLongPosition(uint256 seed) public {
+        uint128 newMinLongPosition = uint128(bound(seed, 0, 2 ether));
+
+        vm.startPrank(msg.sender);
+        this.setMinLongPosition(newMinLongPosition);
+        vm.stopPrank();
+    }
+
+    function _setMinLeverage(uint256 seed) public {
+        uint256 newMinLeverage = bound(seed, 10 ** Constants.LEVERAGE_DECIMALS, s._maxLeverage - 1);
+
+        vm.startPrank(msg.sender);
+        this.setMinLeverage(newMinLeverage);
+        vm.stopPrank();
+    }
+
+    function _setMaxLeverage(uint256 seed) public {
+        uint256 newMaxLeverage = bound(seed, s._minLeverage + 1, Constants.MAX_LEVERAGE);
+
+        vm.startPrank(msg.sender);
+        this.setMinLeverage(newMaxLeverage);
+        vm.stopPrank();
     }
 }
