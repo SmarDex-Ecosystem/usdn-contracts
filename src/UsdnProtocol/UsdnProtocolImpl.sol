@@ -42,10 +42,10 @@ contract UsdnProtocolImpl is
         IUsdnProtocolFallback protocolFallback,
         string memory eip712Version
     ) public initializer {
-        __AccessControlDefaultAdminRules_init_unchained(0, msg.sender);
+        __AccessControlDefaultAdminRules_init(0, msg.sender);
         __initializeReentrancyGuard_init();
-        __Pausable_init_unchained();
-        __EIP712_init_unchained("UsdnProtocol", eip712Version);
+        __Pausable_init();
+        __EIP712_init("UsdnProtocol", eip712Version);
 
         // roles
         _setRoleAdmin(SET_EXTERNAL_ROLE, ADMIN_SET_EXTERNAL_ROLE);
