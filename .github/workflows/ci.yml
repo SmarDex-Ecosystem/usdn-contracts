@@ -56,7 +56,7 @@ jobs:
         run: npm ci && forge soldeer install
 
       - name: Install slither
-        run: pip install --break-system-packages slither-analyzer
+        run: pip3 install --break-system-packages slither-analyzer
 
       - name: Run slither
         run: |
