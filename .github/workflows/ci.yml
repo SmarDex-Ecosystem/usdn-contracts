@@ -56,11 +56,10 @@ jobs:
       - name: Install deps
         run: npm ci && forge soldeer install
 
-      - name: Install pipx
-        run: apt install pipx
-
       - name: Install slither
-        run: pipx install slither-analyzer
+        uses: threeal/pipx-install-action@v2.0.0
+        with:
+          packages: a-package lither-analyzer
 
       - name: Run slither
         run: |
