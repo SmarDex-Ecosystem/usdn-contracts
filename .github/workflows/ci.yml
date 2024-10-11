@@ -56,8 +56,11 @@ jobs:
       - name: Install deps
         run: npm ci && forge soldeer install
 
+      - name: Install pipx
+        run: apt install pipx
+
       - name: Install slither
-        run: python3 -m pip install slither-analyzer
+        run: pipx install slither-analyzer
 
       - name: Run slither
         run: |
