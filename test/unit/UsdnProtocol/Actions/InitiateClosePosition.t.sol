@@ -630,6 +630,31 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     }
 
     /**
+     * @custom:scenario When the last position in a tick is getting closed, the tick data should be reset
+     * @custom:given A position that was opened with a penalty of 500 ticks
+     * @custom:when The user closes the position
+     * @custom:then The liquidation penalty in the tick data should be reset to 0
+     */
+    function test_initiateCloseResetTickPenalty() public {
+        vm.prank(ADMIN);
+        protocol.setLiquidationPenalty(500);
+
+        PositionId memory newPosId = setUpUserPositionInLong(
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.InitiateClosePosition,
+                positionSize: POSITION_AMOUNT,
+                desiredLiqPrice: params.initialPrice / 4,
+                price: params.initialPrice
+            })
+        );
+
+        TickData memory tickData = protocol.getTickData(newPosId.tick);
+        assertEq(tickData.liquidationPenalty, 0, "penalty should be reset");
+        assertEq(tickData.totalPos, 0, "position was removed from the tick");
+    }
+
+    /**
      * @notice Helper function to set up a mock rebalancer position with two users
      * @param userDeposit Amount to deposit for a single user
      * @return rebalancerPos_ The position ID of the rebalancer position

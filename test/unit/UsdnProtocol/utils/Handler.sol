@@ -51,7 +51,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         address feeCollector,
         Managers memory managers,
         IUsdnProtocolFallback protocolFallback
-    ) public initializer {
+    ) external initializer {
         initializeStorage(
             usdn,
             sdex,
@@ -132,13 +132,22 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         delete s._pendingActions[user];
     }
 
+    function i_isActionable(
+        uint256 initiateTimestamp,
+        uint256 lowLatencyDeadline,
+        uint256 lowLatencyDelay,
+        uint256 onChainDeadline
+    ) external view returns (bool) {
+        return ActionsUtils._isActionable(initiateTimestamp, lowLatencyDeadline, lowLatencyDelay, onChainDeadline);
+    }
+
     function i_createWithdrawalPendingAction(
         address to,
         address validator,
         uint152 usdnShares,
         uint64 securityDepositValue,
         Vault.WithdrawalData memory data
-    ) public returns (uint256 amountToRefund_) {
+    ) external returns (uint256 amountToRefund_) {
         return Vault._createWithdrawalPendingAction(s, to, validator, usdnShares, securityDepositValue, data);
     }
 
@@ -157,7 +166,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         address validator,
         uint64 securityDepositValue,
         InitiateOpenPositionData memory data
-    ) public returns (uint256 amountToRefund_) {
+    ) external returns (uint256 amountToRefund_) {
         return Core._createOpenPendingAction(s, to, validator, securityDepositValue, data);
     }
 
@@ -399,8 +408,12 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         Vault._checkImbalanceLimitWithdrawal(s, withdrawalValue, totalExpo);
     }
 
-    function i_checkImbalanceLimitOpen(uint256 openTotalExpoValue, uint256 openCollatValue) external view {
-        Long._checkImbalanceLimitOpen(s, openTotalExpoValue, openCollatValue);
+    function i_checkImbalanceLimitOpen(
+        uint256 openTotalExpoValue,
+        uint256 collateralAmount,
+        uint256 collateralAmountAfterFees
+    ) external view {
+        Long._checkImbalanceLimitOpen(s, openTotalExpoValue, collateralAmount, collateralAmountAfterFees);
     }
 
     function i_checkImbalanceLimitClose(uint256 posTotalExpoToClose, uint256 posValueToClose) external view {
@@ -622,7 +635,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint256 longBalance,
         uint256 vaultBalance,
         int256 remainingCollateral
-    ) public returns (uint256 longBalance_, uint256 vaultBalance_, Types.RebalancerAction rebalancerAction_) {
+    ) external returns (uint256 longBalance_, uint256 vaultBalance_, Types.RebalancerAction rebalancerAction_) {
         return Long._triggerRebalancer(s, lastPrice, longBalance, vaultBalance, remainingCollateral);
     }
 
@@ -683,7 +696,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint128 amount,
         uint256 sharesOutMin,
         bytes calldata currentPriceData
-    ) public returns (Vault.InitiateDepositData memory data_) {
+    ) external returns (Vault.InitiateDepositData memory data_) {
         return Vault._prepareInitiateDepositData(s, validator, amount, sharesOutMin, currentPriceData);
     }
 
@@ -692,7 +705,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint152 usdnShares,
         uint256 amountOutMin,
         bytes calldata currentPriceData
-    ) public returns (Vault.WithdrawalData memory data_) {
+    ) external returns (Vault.WithdrawalData memory data_) {
         return Vault._prepareWithdrawalData(s, validator, usdnShares, amountOutMin, currentPriceData);
     }
 

@@ -34,6 +34,13 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
 
     function removePendingAction(uint128 rawIndex, address user) external;
 
+    function i_isActionable(
+        uint256 initiateTimestamp,
+        uint256 lowLatencyDeadline,
+        uint256 lowLatencyDelay,
+        uint256 onChainDeadline
+    ) external view returns (bool);
+
     function i_createWithdrawalPendingAction(
         address to,
         address validator,
@@ -200,7 +207,11 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
 
     function i_checkImbalanceLimitWithdrawal(uint256 withdrawalValue, uint256 totalExpo) external view;
 
-    function i_checkImbalanceLimitOpen(uint256 openTotalExpoValue, uint256 openCollatValue) external view;
+    function i_checkImbalanceLimitOpen(
+        uint256 openTotalExpoValue,
+        uint256 collateralAmount,
+        uint256 collateralAmountAfterFees
+    ) external view;
 
     function i_checkImbalanceLimitClose(uint256 posTotalExpoToClose, uint256 posValueToClose) external view;
 
