@@ -35,6 +35,7 @@ jobs:
 
       - name: Run tests
         run: forge test --no-match-test "(FFI|Fork)" --no-match-contract Fork
+
   run-slither:
     runs-on: ubuntu-latest
     steps:
@@ -56,7 +57,7 @@ jobs:
         run: npm ci && forge soldeer install
 
       - name: Install slither
-        run: pip3 install slither-analyzer
+        run: python3 -m pip install slither-analyzer
 
       - name: Run slither
         run: |
