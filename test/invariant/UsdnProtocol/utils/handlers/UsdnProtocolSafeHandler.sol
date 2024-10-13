@@ -407,24 +407,25 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
             _setLiquidationPenalty(seed1);
         } else if (functionSeed == 5) {
             _setEMAPeriod(seed1);
+        } else if (functionSeed == 6) {
+            _setFundingSF(seed1);
+        } else if (functionSeed == 7) {
+            _setProtocolFeeBps(seed1);
+        } else if (functionSeed == 8) {
+            _setPositionFeeBps(seed1);
+        } else if (functionSeed == 9) {
+            _setVaultFeeBps(seed1);
+        } else if (functionSeed == 10) {
+            _setRebalancerBonusBps(seed1);
+        } else if (functionSeed == 11) {
+            _setSdexBurnOnDepositRatio(seed1);
+        } else if (functionSeed == 12) {
+            _setSecurityDepositValue(seed1);
         }
-        // else if (functionSeed == 7) {
-        //     this.setFundingSF();
-        // } else if (functionSeed == 8) {
-        //     this.setProtocolFeeBps();
-        // } else if (functionSeed == 9) {
-        //     this.setPositionFeeBps();
-        // } else if (functionSeed == 10) {
-        //     this.setVaultFeeBps();
-        // } else if (functionSeed == 11) {
-        //     this.setRebalancerBonusBps();
-        // } else if (functionSeed == 12) {
-        //     this.setSdexBurnOnDepositRatio();
-        // } else if (functionSeed == 13) {
-        //     this.setSecurityDepositValue();
-        // } else if (functionSeed == 14) {
-        //     this.setExpoImbalanceLimits();
-        // } else if (functionSeed == 15) {
+        // else if (functionSeed == 13) {
+        //     _setExpoImbalanceLimits();
+        // }
+        //  else if (functionSeed == 15) {
         //     this.setSafetyMarginBps();
         // } else if (functionSeed == 16) {
         //     this.setLiquidationIteration();
@@ -539,4 +540,68 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         this.setEMAPeriod(newEMAPeriod);
         vm.stopPrank();
     }
+
+    function _setFundingSF(uint256 seed) public {
+        uint256 newFundingSF = bound(seed, 0, 10 ** Constants.FUNDING_SF_DECIMALS);
+
+        vm.startPrank(msg.sender);
+        this.setFundingSF(newFundingSF);
+        vm.stopPrank();
+    }
+
+    function _setProtocolFeeBps(uint256 seed) public {
+        uint16 newProtocolFeeBps = uint16(bound(seed, 0, Constants.BPS_DIVISOR));
+
+        vm.startPrank(msg.sender);
+        this.setProtocolFeeBps(newProtocolFeeBps);
+        vm.stopPrank();
+    }
+
+    function _setPositionFeeBps(uint256 seed) public {
+        uint16 newPositionFee = uint16(bound(seed, 0, Constants.MAX_POSITION_FEE_BPS));
+
+        vm.startPrank(msg.sender);
+        this.setPositionFeeBps(newPositionFee);
+        vm.stopPrank();
+    }
+
+    function _setVaultFeeBps(uint256 seed) public {
+        uint16 newVaultFee = uint16(bound(seed, 0, Constants.MAX_VAULT_FEE_BPS));
+
+        vm.startPrank(msg.sender);
+        this.setVaultFeeBps(newVaultFee);
+        vm.stopPrank();
+    }
+
+    function _setRebalancerBonusBps(uint256 seed) public {
+        uint16 newBonus = uint16(bound(seed, 0, Constants.BPS_DIVISOR));
+
+        vm.startPrank(msg.sender);
+        this.setRebalancerBonusBps(newBonus);
+        vm.stopPrank();
+    }
+
+    function _setSdexBurnOnDepositRatio(uint256 seed) public {
+        uint32 newRatio = uint32(bound(seed, 0, Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR / 20));
+
+        vm.startPrank(msg.sender);
+        this.setSdexBurnOnDepositRatio(newRatio);
+        vm.stopPrank();
+    }
+
+    function _setSecurityDepositValue(uint256 seed) public {
+        uint64 securityDepositValue = uint64(bound(seed, 0, Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR / 20));
+
+        vm.startPrank(msg.sender);
+        this.setSecurityDepositValue(securityDepositValue);
+        vm.stopPrank();
+    }
+
+    // function setExpoImbalanceLimits(uint256 seed1, uint256 seed2) public {
+    //     uint64 securityDepositValue = uint64(bound(seed, 0, Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR / 20));
+
+    //     vm.startPrank(msg.sender);
+    //     this.setSecurityDepositValue(securityDepositValue);
+    //     vm.stopPrank();
+    // }
 }
