@@ -401,12 +401,12 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
             _setMinLongPosition(seed1);
         } else if (functionSeed == 2) {
             _setMinLeverage(seed1);
+        } else if (functionSeed == 3) {
+            _setMaxLeverage(seed1);
         } else if (functionSeed == 4) {
-            _setMinLeverage(seed1);
+            _setLiquidationPenalty(seed1);
         }
-        // else if (functionSeed == 5) {
-        //     this.setLiquidationPenalty();
-        // } else if (functionSeed == 6) {
+        //  else if (functionSeed == 6) {
         //     this.setEMAPeriod();
         // } else if (functionSeed == 7) {
         //     this.setFundingSF();
@@ -521,6 +521,14 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
 
         vm.startPrank(msg.sender);
         this.setMinLeverage(newMaxLeverage);
+        vm.stopPrank();
+    }
+
+    function _setLiquidationPenalty(uint256 seed) public {
+        uint24 newLiquidationPenalty = uint24(bound(seed, 0, Constants.MAX_LIQUIDATION_PENALTY));
+
+        vm.startPrank(msg.sender);
+        this.setLiquidationPenalty(newLiquidationPenalty);
         vm.stopPrank();
     }
 }
