@@ -405,10 +405,10 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
             _setMaxLeverage(seed1);
         } else if (functionSeed == 4) {
             _setLiquidationPenalty(seed1);
+        } else if (functionSeed == 5) {
+            _setEMAPeriod(seed1);
         }
-        //  else if (functionSeed == 6) {
-        //     this.setEMAPeriod();
-        // } else if (functionSeed == 7) {
+        // else if (functionSeed == 7) {
         //     this.setFundingSF();
         // } else if (functionSeed == 8) {
         //     this.setProtocolFeeBps();
@@ -529,6 +529,14 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
 
         vm.startPrank(msg.sender);
         this.setLiquidationPenalty(newLiquidationPenalty);
+        vm.stopPrank();
+    }
+
+    function _setEMAPeriod(uint256 seed) public {
+        uint128 newEMAPeriod = uint128(bound(seed, 0, Constants.MAX_EMA_PERIOD));
+
+        vm.startPrank(msg.sender);
+        this.setEMAPeriod(newEMAPeriod);
         vm.stopPrank();
     }
 }
