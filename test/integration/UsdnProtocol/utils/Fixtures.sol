@@ -346,7 +346,17 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         );
     }
 
-    // @dev this function aims to persist the contracts when use vm.rollFork in tests
+    /// @dev Set the provided price and current timestamp in all of the mock oracles
+    function _setOraclePrices(uint128 wstEthPrice) internal {
+        uint128 ethPrice = uint128(wstETH.getWstETHByStETH(wstEthPrice)) / 1e10;
+        mockPyth.setPrice(int64(uint64(ethPrice)));
+        mockPyth.setLastPublishTime(block.timestamp);
+        wstEthPrice = uint128(wstETH.getStETHByWstETH(ethPrice * 1e10));
+        mockChainlinkOnChain.setLastPublishTime(block.timestamp);
+        mockChainlinkOnChain.setLastPrice(int256(uint256(ethPrice)));
+    }
+
+    /// @dev this function aims to persist the contracts when use vm.rollFork in tests
     function persistContracts() internal {
         vm.makePersistent(address(protocol));
         vm.makePersistent(address(implementation));
