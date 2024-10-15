@@ -597,11 +597,30 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         vm.stopPrank();
     }
 
-    // function setExpoImbalanceLimits(uint256 seed1, uint256 seed2) public {
-    //     uint64 securityDepositValue = uint64(bound(seed, 0, Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR / 20));
+    function _setExpoImbalanceLimits(uint256 seedParameter, uint256 seed) public {
+        int256 openExpoImbalanceLimitBps = this.getOpenExpoImbalanceLimitBps();
+        int256 depositExpoImbalanceLimitBps = this.getDepositExpoImbalanceLimitBps();
+        int256 withdrawalExpoImbalanceLimitBps = this.getWithdrawalExpoImbalanceLimitBps();
+        int256 closeExpoImbalanceLimitBps = this.getCloseExpoImbalanceLimitBps();
+        int256 rebalancerCloseExpoImbalanceLimitBps = this.getRebalancerCloseExpoImbalanceLimitBps();
+        int256 longImbalanceTargetBps = this.getLongImbalanceTargetBps();
 
-    //     vm.startPrank(msg.sender);
-    //     this.setSecurityDepositValue(securityDepositValue);
-    //     vm.stopPrank();
-    // }
+        seedParameter %= 6;
+        if (seedParameter == 0) {
+            if (openExpoImbalanceLimitBps != 0) {
+                if (closeExpoImbalanceLimitBps == 0) {
+                    openExpoImbalanceLimitBps = int256(bound(seed, 300, Constants.BPS_DIVISOR));
+                } else {
+                    openExpoImbalanceLimitBps = int256(bound(seed, 300, uint256(closeExpoImbalanceLimitBps)));
+                }
+            }
+        } else if (seedParameter == 1) { } else if (seedParameter == 2) { } else if (seedParameter == 3) { } else if (
+            seedParameter == 4
+        ) { } else if (seedParameter == 5) { }
+        // uint64 securityDepositValue = uint64(bound(seed, 0, Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR / 20));
+
+        // vm.startPrank(msg.sender);
+        // this.setSecurityDepositValue(securityDepositValue);
+        // vm.stopPrank();
+    }
 }
