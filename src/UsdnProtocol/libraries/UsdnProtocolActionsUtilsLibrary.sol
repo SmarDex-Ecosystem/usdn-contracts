@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
@@ -146,14 +148,18 @@ library UsdnProtocolActionsUtilsLibrary {
     ) public returns (Types.ClosePositionData memory data_, bool liquidated_) {
         (data_.pos, data_.liquidationPenalty) = getLongPosition(s, params.posId);
 
-        _checkInitiateClosePosition(s, params.owner, params.to, params.validator, params.amountToClose, data_.pos);
+        bool isDelegation = _checkInitiateClosePosition(s, data_.pos, params);
+
+        if (isDelegation) {
+            s._nonce[data_.pos.user] += 1;
+        }
 
         {
             PriceInfo memory currentPrice = Utils._getOraclePrice(
                 s,
                 Types.ProtocolAction.InitiateClosePosition,
                 block.timestamp,
-                Utils._calcActionId(params.owner, uint128(block.timestamp)),
+                Utils._calcActionId(msg.sender, uint128(block.timestamp)),
                 params.currentPriceData
             );
 
@@ -368,48 +374,62 @@ library UsdnProtocolActionsUtilsLibrary {
      * @dev Reverts if the to address is zero, the position was not validated yet, the position is not owned by the
      * user, the amount to close is higher than the position amount, or the amount to close is zero
      * @param s The storage of the protocol
-     * @param owner The owner of the position
-     * @param to The address that will receive the assets
-     * @param validator The address of the validator
-     * @param amountToClose The amount of collateral to remove from the position's amount
-     * @param pos The position to close
+     * @param params The parameters for the _prepareClosePositionData function
+     * @param params The parameters for the _prepareClosePositionData function
+     * @return isDelegation_ Whether the verification is a delegation
      */
     function _checkInitiateClosePosition(
         Types.Storage storage s,
-        address owner,
-        address to,
-        address validator,
-        uint128 amountToClose,
-        Types.Position memory pos
-    ) internal view {
-        if (to == address(0)) {
+        Types.Position memory pos,
+        Types.PrepareInitiateClosePositionParams calldata params
+    ) internal view returns (bool isDelegation_) {
+        if (params.to == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo();
         }
-        if (validator == address(0)) {
+        if (params.validator == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressValidator();
         }
-        if (pos.user != owner) {
-            revert IUsdnProtocolErrors.UsdnProtocolUnauthorized();
+        if (msg.sender != pos.user) {
+            if (params.delegationData.length == 0) {
+                revert IUsdnProtocolErrors.UsdnProtocolUnauthorized();
+            } else {
+                _verifyInitiateCloseDelegation(
+                    keccak256(abi.encode(params.posId)),
+                    params.amountToClose,
+                    params.userMinPrice,
+                    params.to,
+                    params.validator,
+                    params.deadline,
+                    s._nonce[pos.user],
+                    pos.user,
+                    params.delegationData,
+                    params.domainSeparatorV4
+                );
+
+                isDelegation_ = true;
+            }
         }
         if (!pos.validated) {
             revert IUsdnProtocolErrors.UsdnProtocolPositionNotValidated();
         }
-        if (amountToClose == 0) {
+        if (params.amountToClose == 0) {
             revert IUsdnProtocolErrors.UsdnProtocolZeroAmount();
         }
-        if (amountToClose > pos.amount) {
-            revert IUsdnProtocolErrors.UsdnProtocolAmountToCloseHigherThanPositionAmount(amountToClose, pos.amount);
+        if (params.amountToClose > pos.amount) {
+            revert IUsdnProtocolErrors.UsdnProtocolAmountToCloseHigherThanPositionAmount(
+                params.amountToClose, pos.amount
+            );
         }
 
         // make sure the remaining position is higher than _minLongPosition
         // for the Rebalancer, we allow users to close their position fully in every case
-        uint128 remainingAmount = pos.amount - amountToClose;
+        uint128 remainingAmount = pos.amount - params.amountToClose;
         if (remainingAmount > 0 && remainingAmount < s._minLongPosition) {
             IBaseRebalancer rebalancer = s._rebalancer;
-            if (owner == address(rebalancer)) {
+            if (msg.sender == address(rebalancer)) {
                 // note: the rebalancer always indicates the rebalancer user's address as validator
-                uint128 userPosAmount = rebalancer.getUserDepositData(validator).amount;
-                if (amountToClose != userPosAmount) {
+                uint128 userPosAmount = rebalancer.getUserDepositData(params.validator).amount;
+                if (params.amountToClose != userPosAmount) {
                     revert IUsdnProtocolErrors.UsdnProtocolLongPositionTooSmall();
                 }
             } else {
@@ -444,6 +464,64 @@ library UsdnProtocolActionsUtilsLibrary {
             boundedPosValue_ = balanceLong;
         } else {
             boundedPosValue_ = uint256(positionValue);
+        }
+    }
+
+    /**
+     * @notice Performs the initiateClosePosition delegation on the eip712 signature
+     * @param posIdHash The position id hashed with `keccak256(abi.encode(posId))`
+     * @param amountToClose The amount of collateral to remove from the position's amount
+     * @param userMinPrice The minimum price at which the position can be closed
+     * @param to The address that will receive the assets
+     * @param validator The address of the pending action validator
+     * @param deadline The deadline by which the position can be closed
+     * @param nonce The user nonce
+     * @param positionOwner The position owner
+     * @param delegationData The delegation data
+     * @param domainSeparatorV4 The domain separator v4
+     */
+    function _verifyInitiateCloseDelegation(
+        bytes32 posIdHash,
+        uint128 amountToClose,
+        uint256 userMinPrice,
+        address to,
+        address validator,
+        uint256 deadline,
+        uint256 nonce,
+        address positionOwner,
+        bytes calldata delegationData,
+        bytes32 domainSeparatorV4
+    ) internal view {
+        (Types.InitiateClosePositionDelegation memory delegation, bytes memory signature) =
+            abi.decode(delegationData, (Types.InitiateClosePositionDelegation, bytes));
+
+        if (
+            keccak256(abi.encode(delegation))
+                != keccak256(
+                    abi.encode(
+                        Types.InitiateClosePositionDelegation(
+                            posIdHash,
+                            amountToClose,
+                            userMinPrice,
+                            to,
+                            validator,
+                            deadline,
+                            positionOwner,
+                            msg.sender,
+                            nonce
+                        )
+                    )
+                )
+        ) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidDelegation();
+        }
+
+        bytes32 digest = MessageHashUtils.toTypedDataHash(
+            domainSeparatorV4, keccak256(abi.encode(Utils.INITIATE_CLOSE_TYPEHASH, abi.encode(delegation)))
+        );
+
+        if (ECDSA.recover(digest, signature) != positionOwner) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidRecover();
         }
     }
 }

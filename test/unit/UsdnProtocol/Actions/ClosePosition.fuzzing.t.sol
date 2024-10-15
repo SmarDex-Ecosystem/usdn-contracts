@@ -72,7 +72,8 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
                 payable(address(this)),
                 type(uint256).max,
                 priceData,
-                EMPTY_PREVIOUS_DATA
+                EMPTY_PREVIOUS_DATA,
+                ""
             );
             _waitDelay();
             protocol.i_validateClosePosition(address(this), priceData);
@@ -99,7 +100,8 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
                 payable(address(this)),
                 type(uint256).max,
                 priceData,
-                EMPTY_PREVIOUS_DATA
+                EMPTY_PREVIOUS_DATA,
+                ""
             );
             _waitDelay();
             protocol.i_validateClosePosition(address(this), priceData);

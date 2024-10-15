@@ -46,7 +46,17 @@ contract TestUsdnProtocolActionsPrepareClosePositionData is UsdnProtocolBaseFixt
      */
     function test_prepareClosePositionData() public {
         (ClosePositionData memory data, bool liquidated) = protocol.i_prepareClosePositionData(
-            address(this), address(this), address(this), posId, POSITION_AMOUNT, 0, currentPriceData
+            PrepareInitiateClosePositionParams(
+                address(this),
+                address(this),
+                posId,
+                POSITION_AMOUNT,
+                0,
+                type(uint256).max,
+                currentPriceData,
+                "",
+                bytes32("")
+            )
         );
 
         assertFalse(liquidated, "The position should not have been liquidated");
@@ -65,7 +75,17 @@ contract TestUsdnProtocolActionsPrepareClosePositionData is UsdnProtocolBaseFixt
     function test_prepareClosePositionDataWithALiquidatedPosition() public {
         currentPriceData = abi.encode(liqPrice);
         (ClosePositionData memory data, bool liquidated) = protocol.i_prepareClosePositionData(
-            address(this), address(this), address(this), posId, POSITION_AMOUNT, 0, currentPriceData
+            PrepareInitiateClosePositionParams(
+                address(this),
+                address(this),
+                posId,
+                POSITION_AMOUNT,
+                0,
+                type(uint256).max,
+                currentPriceData,
+                "",
+                bytes32("")
+            )
         );
 
         assertTrue(liquidated, "The position should have been liquidated");
@@ -104,7 +124,17 @@ contract TestUsdnProtocolActionsPrepareClosePositionData is UsdnProtocolBaseFixt
         currentPriceData = abi.encode(liqPrice);
 
         (ClosePositionData memory data, bool liquidated) = protocol.i_prepareClosePositionData(
-            address(this), address(this), address(this), posId, POSITION_AMOUNT, 0, currentPriceData
+            PrepareInitiateClosePositionParams(
+                address(this),
+                address(this),
+                posId,
+                POSITION_AMOUNT,
+                0,
+                type(uint256).max,
+                currentPriceData,
+                "",
+                bytes32("")
+            )
         );
 
         assertFalse(liquidated, "The position should have been liquidated");

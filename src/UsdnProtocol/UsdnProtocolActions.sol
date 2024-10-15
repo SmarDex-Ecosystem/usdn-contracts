@@ -53,20 +53,21 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
         address payable validator,
         uint256 deadline,
         bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData
+        PreviousActionsData calldata previousActionsData,
+        bytes memory delegationData
     ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
         InitiateClosePositionParams memory params = InitiateClosePositionParams({
-            owner: msg.sender,
             to: to,
             validator: validator,
             posId: posId,
             amountToClose: amountToClose,
             userMinPrice: userMinPrice,
             deadline: deadline,
-            securityDepositValue: s._securityDepositValue
+            securityDepositValue: s._securityDepositValue,
+            domainSeparatorV4: _domainSeparatorV4()
         });
 
-        return ActionsLong.initiateClosePosition(s, params, currentPriceData, previousActionsData);
+        return ActionsLong.initiateClosePosition(s, params, currentPriceData, previousActionsData, delegationData);
     }
 
     /// @inheritdoc IUsdnProtocolActions

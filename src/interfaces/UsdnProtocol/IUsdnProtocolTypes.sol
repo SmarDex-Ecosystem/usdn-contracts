@@ -333,27 +333,30 @@ interface IUsdnProtocolTypes {
 
     /**
      * @notice Parameters for the internal `_prepareClosePositionData` function
-     * @param owner The owner of the position
      * @param to The address that will receive the assets
      * @param validator The address of the pending action validator
      * @param posId The unique identifier of the position
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param userMinPrice The minimum price at which the position can be closed
+     * @param deadline The deadline until the position can be closed
      * @param currentPriceData The current price data
+     * @param delegationData The delegation data
+     * @param domainSeparatorV4 The domain separator v4
      */
     struct PrepareInitiateClosePositionParams {
-        address owner;
         address to;
         address validator;
         PositionId posId;
         uint128 amountToClose;
         uint256 userMinPrice;
+        uint256 deadline;
         bytes currentPriceData;
+        bytes delegationData;
+        bytes32 domainSeparatorV4;
     }
 
     /**
      * @notice Parameters for the internal `_initiateClosePosition` function
-     * @param owner The owner of the position
      * @param to The address that will receive the closed amount
      * @param validator The address that will validate the close position
      * @param posId The position id
@@ -361,9 +364,9 @@ interface IUsdnProtocolTypes {
      * @param userMinPrice The minimum price at which the position can be closed
      * @param deadline The deadline of the close position to be initiated
      * @param securityDepositValue The value of the security deposit for the newly created pending action
+     * @param domainSeparatorV4 The domain separator v4
      */
     struct InitiateClosePositionParams {
-        address owner;
         address to;
         address payable validator;
         uint256 deadline;
@@ -371,6 +374,7 @@ interface IUsdnProtocolTypes {
         uint128 amountToClose;
         uint256 userMinPrice;
         uint64 securityDepositValue;
+        bytes32 domainSeparatorV4;
     }
 
     /**
@@ -540,6 +544,31 @@ interface IUsdnProtocolTypes {
     }
 
     /**
+     * @notice Structure of the eip712 delegated `initiateClosePosition`
+     * @param posIdHash The encoded position id
+     * encoded with `keccak256(abi.encode(posId))`
+     * @param amountToClose The amount to close
+     * @param userMinPrice The minimum price at which the position can be closed
+     * @param to The address that will receive the closed amount
+     * @param validator The address that will validate the close position
+     * @param deadline The deadline of the close position to be initiated
+     * @param positionOwner The position owner
+     * @param positionCloser The allowed position closer
+     * @param nonce The current user nonce
+     */
+    struct InitiateClosePositionDelegation {
+        bytes32 posIdHash;
+        uint128 amountToClose;
+        uint256 userMinPrice;
+        address to;
+        address validator;
+        uint256 deadline;
+        address positionOwner;
+        address positionCloser;
+        uint256 nonce;
+    }
+
+    /**
      * @notice Structure to hold the state of the protocol
      * @param _tickSpacing The liquidation tick spacing for storing long positions
      * @dev A tick spacing of 1 is equivalent to a 0.01% increase in liquidation price between ticks. A tick spacing of
@@ -629,6 +658,7 @@ interface IUsdnProtocolTypes {
      * @param _totalLongPositions Cache of the total long positions count
      * @param _tickBitmap The bitmap used to quickly find populated ticks
      * @param _protocolFallbackAddr The address of the fallback contract
+     * @param _nonce The user eip712 nonce
      */
     struct Storage {
         // immutable
@@ -694,5 +724,6 @@ interface IUsdnProtocolTypes {
         uint256 _totalLongPositions;
         LibBitmap.Bitmap _tickBitmap;
         address _protocolFallbackAddr;
+        mapping(address => uint256) _nonce;
     }
 }

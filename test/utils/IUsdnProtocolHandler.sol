@@ -85,9 +85,11 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
 
     function _calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed) external view returns (int256);
 
-    function i_initiateClosePosition(Types.InitiateClosePositionParams memory params, bytes calldata currentPriceData)
-        external
-        returns (uint256 securityDepositValue_, bool isLiquidationPending_, bool liq_);
+    function i_initiateClosePosition(
+        Types.InitiateClosePositionParams memory params,
+        bytes calldata currentPriceData,
+        bytes calldata delegationData
+    ) external returns (uint256 securityDepositValue_, bool isLiquidationPending_, bool liq_);
 
     function i_validateOpenPosition(address user, bytes calldata priceData)
         external
@@ -340,27 +342,17 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         bytes memory priceData
     ) external;
 
-    function i_prepareClosePositionData(
-        address owner,
-        address to,
-        address validator,
-        PositionId memory posId,
-        uint128 amountToClose,
-        uint256 userMinPrice,
-        bytes calldata currentPriceData
-    ) external returns (ClosePositionData memory data_, bool liquidated_);
+    function i_prepareClosePositionData(Types.PrepareInitiateClosePositionParams calldata params)
+        external
+        returns (ClosePositionData memory data_, bool liquidated_);
 
     function i_prepareValidateOpenPositionData(PendingAction memory pending, bytes calldata priceData)
         external
         returns (ValidateOpenPositionData memory data_, bool liquidated_);
 
-    function i_checkInitiateClosePosition(
-        address owner,
-        address to,
-        address validator,
-        uint128 amountToClose,
-        Position memory pos
-    ) external view;
+    function i_checkInitiateClosePosition(Position memory pos, PrepareInitiateClosePositionParams calldata params)
+        external
+        view;
 
     function i_calcBurnUsdn(uint256 usdnShares, uint256 available, uint256 usdnTotalShares, uint256 feeBps)
         external

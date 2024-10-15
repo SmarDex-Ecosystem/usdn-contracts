@@ -59,16 +59,17 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         );
         protocol.i_initiateClosePosition(
             Types.InitiateClosePositionParams({
-                owner: address(this),
                 to: address(this),
                 validator: payable(address(this)),
                 deadline: type(uint256).max,
                 posId: posId,
                 amountToClose: amountToClose,
                 userMinPrice: DISABLE_MIN_PRICE,
-                securityDepositValue: 0
+                securityDepositValue: 0,
+                domainSeparatorV4: bytes32("")
             }),
-            priceData
+            priceData,
+            ""
         );
     }
 
@@ -96,16 +97,17 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         vm.expectRevert(UsdnProtocolLongPositionTooSmall.selector);
         protocol.i_initiateClosePosition(
             Types.InitiateClosePositionParams({
-                owner: address(this),
                 to: address(this),
                 validator: payable(address(this)),
                 deadline: type(uint256).max,
                 posId: posId,
                 amountToClose: amountToClose,
                 userMinPrice: DISABLE_MIN_PRICE,
-                securityDepositValue: 0
+                securityDepositValue: 0,
+                domainSeparatorV4: bytes32("")
             }),
-            priceData
+            priceData,
+            ""
         );
     }
 
@@ -120,16 +122,17 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         vm.prank(USER_1);
         protocol.i_initiateClosePosition(
             Types.InitiateClosePositionParams({
-                owner: USER_1,
                 to: address(this),
                 validator: USER_1,
                 deadline: type(uint256).max,
                 posId: posId,
                 amountToClose: POSITION_AMOUNT,
                 userMinPrice: DISABLE_MIN_PRICE,
-                securityDepositValue: 0
+                securityDepositValue: 0,
+                domainSeparatorV4: bytes32("")
             }),
-            priceData
+            priceData,
+            ""
         );
     }
 
@@ -144,16 +147,17 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         vm.expectRevert(UsdnProtocolInvalidAddressTo.selector);
         protocol.i_initiateClosePosition(
             Types.InitiateClosePositionParams({
-                owner: address(this),
                 to: address(0),
                 validator: payable(address(this)),
                 deadline: type(uint256).max,
                 posId: posId,
                 amountToClose: POSITION_AMOUNT,
                 userMinPrice: DISABLE_MIN_PRICE,
-                securityDepositValue: 0
+                securityDepositValue: 0,
+                domainSeparatorV4: bytes32("")
             }),
-            priceData
+            priceData,
+            ""
         );
     }
 
@@ -169,16 +173,17 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolZeroAmount.selector));
         protocol.i_initiateClosePosition(
             Types.InitiateClosePositionParams({
-                owner: address(this),
                 to: address(this),
                 validator: payable(address(this)),
                 deadline: type(uint256).max,
                 posId: posId,
                 amountToClose: 0,
                 userMinPrice: DISABLE_MIN_PRICE,
-                securityDepositValue: 0
+                securityDepositValue: 0,
+                domainSeparatorV4: bytes32("")
             }),
-            priceData
+            priceData,
+            ""
         );
     }
 
@@ -206,16 +211,17 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         );
         protocol.i_initiateClosePosition(
             Types.InitiateClosePositionParams({
-                owner: address(this),
                 to: address(this),
                 validator: payable(address(this)),
                 deadline: type(uint256).max,
                 posId: posId,
                 amountToClose: POSITION_AMOUNT / 2,
                 userMinPrice: DISABLE_MIN_PRICE,
-                securityDepositValue: 0
+                securityDepositValue: 0,
+                domainSeparatorV4: bytes32("")
             }),
-            priceData
+            priceData,
+            ""
         );
     }
 
@@ -242,7 +248,8 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             payable(address(this)),
             type(uint256).max,
             priceData,
-            EMPTY_PREVIOUS_DATA
+            EMPTY_PREVIOUS_DATA,
+            ""
         );
 
         assertEq(
@@ -289,7 +296,8 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             payable(address(this)),
             type(uint256).max,
             priceData,
-            PreviousActionsData(previousData, rawIndices)
+            PreviousActionsData(previousData, rawIndices),
+            ""
         );
     }
 
@@ -314,7 +322,8 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             payable(address(this)),
             type(uint256).max,
             priceData,
-            EMPTY_PREVIOUS_DATA
+            EMPTY_PREVIOUS_DATA,
+            ""
         );
         assertTrue(success, "success");
     }
@@ -350,7 +359,8 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             payable(address(this)),
             type(uint256).max,
             priceData,
-            EMPTY_PREVIOUS_DATA
+            EMPTY_PREVIOUS_DATA,
+            ""
         );
     }
 
@@ -499,7 +509,8 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             payable(address(this)),
             type(uint256).max,
             abi.encode(params.initialPrice * 2 / 3),
-            EMPTY_PREVIOUS_DATA
+            EMPTY_PREVIOUS_DATA,
+            ""
         );
 
         PendingAction memory pending = protocol.getUserPendingAction(address(this));
@@ -530,7 +541,8 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             DEPLOYER,
             type(uint256).max,
             abi.encode(params.initialPrice / 3),
-            EMPTY_PREVIOUS_DATA
+            EMPTY_PREVIOUS_DATA,
+            ""
         );
         assertFalse(success, "success");
 
@@ -579,16 +591,17 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         );
         protocol.i_initiateClosePosition(
             Types.InitiateClosePositionParams({
-                owner: address(this),
                 to: to,
                 validator: payable(validator),
                 deadline: type(uint256).max,
                 posId: posId,
                 amountToClose: amountToClose,
                 userMinPrice: DISABLE_MIN_PRICE,
-                securityDepositValue: 0
+                securityDepositValue: 0,
+                domainSeparatorV4: bytes32("")
             }),
-            abi.encode(params.initialPrice)
+            abi.encode(params.initialPrice),
+            ""
         );
 
         /* ------------------------- Pending action's state ------------------------- */
@@ -722,7 +735,8 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             USER_1,
             type(uint256).max,
             abi.encode(params.initialPrice),
-            EMPTY_PREVIOUS_DATA
+            EMPTY_PREVIOUS_DATA,
+            ""
         );
     }
 
@@ -752,7 +766,8 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             USER_1,
             type(uint256).max,
             abi.encode(params.initialPrice),
-            EMPTY_PREVIOUS_DATA
+            EMPTY_PREVIOUS_DATA,
+            ""
         );
     }
 
@@ -772,7 +787,8 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             payable(address(this)),
             type(uint256).max,
             abi.encode(params.initialPrice),
-            EMPTY_PREVIOUS_DATA
+            EMPTY_PREVIOUS_DATA,
+            ""
         );
     }
 
@@ -795,7 +811,8 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
                 payable(address(this)),
                 type(uint256).max,
                 abi.encode(params.initialPrice),
-                EMPTY_PREVIOUS_DATA
+                EMPTY_PREVIOUS_DATA,
+                ""
             );
             return;
         }
@@ -822,7 +839,8 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             payable(address(this)),
             type(uint256).max,
             abi.encode(params.initialPrice),
-            EMPTY_PREVIOUS_DATA
+            EMPTY_PREVIOUS_DATA,
+            ""
         );
     }
 
@@ -843,7 +861,8 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             payable(this),
             block.timestamp - 1,
             abi.encode(params.initialPrice),
-            EMPTY_PREVIOUS_DATA
+            EMPTY_PREVIOUS_DATA,
+            ""
         );
     }
 

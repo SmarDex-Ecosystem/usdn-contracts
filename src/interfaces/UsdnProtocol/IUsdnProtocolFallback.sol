@@ -579,6 +579,13 @@ interface IUsdnProtocolFallback {
      */
     function isPaused() external view returns (bool);
 
+    /**
+     * @notice Get the user nonce
+     * @dev This is to uses with eip712 signature
+     * @return The user nonce
+     */
+    function getNonce(address user) external view returns (uint256);
+
     /* -------------------------------------------------------------------------- */
     /*                                   Setters                                  */
     /* -------------------------------------------------------------------------- */

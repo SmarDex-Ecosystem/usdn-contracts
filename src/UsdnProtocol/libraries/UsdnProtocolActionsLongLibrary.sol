@@ -130,7 +130,8 @@ library UsdnProtocolActionsLongLibrary {
         Types.Storage storage s,
         Types.InitiateClosePositionParams memory params,
         bytes calldata currentPriceData,
-        Types.PreviousActionsData calldata previousActionsData
+        Types.PreviousActionsData calldata previousActionsData,
+        bytes calldata delegationData
     ) external returns (bool success_) {
         if (params.deadline < block.timestamp) {
             revert IUsdnProtocolErrors.UsdnProtocolDeadlineExceeded();
@@ -143,7 +144,7 @@ library UsdnProtocolActionsLongLibrary {
         bool liq;
         uint256 validatorAmount;
 
-        (validatorAmount, success_, liq) = _initiateClosePosition(s, params, currentPriceData);
+        (validatorAmount, success_, liq) = _initiateClosePosition(s, params, currentPriceData, delegationData);
 
         uint256 amountToRefund;
         if (success_ || liq) {
@@ -637,6 +638,7 @@ library UsdnProtocolActionsLongLibrary {
      * @param s The storage of the protocol
      * @param params The parameters for the close position initiation
      * @param currentPriceData The current price data
+     * @param delegationData The delegation data
      * @return amountToRefund_ If there are pending liquidations we'll refund the `securityDepositValue`,
      * else we'll only refund the security deposit value of the stale pending action
      * @return isInitiated_ Whether the action is initiated
@@ -645,19 +647,22 @@ library UsdnProtocolActionsLongLibrary {
     function _initiateClosePosition(
         Types.Storage storage s,
         Types.InitiateClosePositionParams memory params,
-        bytes calldata currentPriceData
+        bytes calldata currentPriceData,
+        bytes calldata delegationData
     ) internal returns (uint256 amountToRefund_, bool isInitiated_, bool liquidated_) {
         Types.ClosePositionData memory data;
         (data, liquidated_) = ActionsUtils._prepareClosePositionData(
             s,
             Types.PrepareInitiateClosePositionParams({
-                owner: params.owner,
                 to: params.to,
                 validator: params.validator,
                 posId: params.posId,
                 amountToClose: params.amountToClose,
                 userMinPrice: params.userMinPrice,
-                currentPriceData: currentPriceData
+                deadline: params.deadline,
+                currentPriceData: currentPriceData,
+                delegationData: delegationData,
+                domainSeparatorV4: params.domainSeparatorV4
             })
         );
 

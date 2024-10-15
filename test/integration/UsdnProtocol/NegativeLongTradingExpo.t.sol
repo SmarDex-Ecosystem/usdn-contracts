@@ -102,7 +102,8 @@ contract TestUsdnProtocolNegativeLongTradingExpo is UsdnProtocolBaseIntegrationF
             payable(this),
             type(uint256).max,
             MOCK_PYTH_DATA,
-            EMPTY_PREVIOUS_DATA
+            EMPTY_PREVIOUS_DATA,
+            ""
         );
 
         _waitDelay();

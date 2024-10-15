@@ -216,4 +216,10 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the deadline of the action has been exceeded
     error UsdnProtocolDeadlineExceeded();
+
+    /// @dev Indicates that the delegation is invalid
+    error UsdnProtocolInvalidDelegation();
+
+    /// @dev Indicates that the recover is invalid
+    error UsdnProtocolInvalidRecover();
 }
