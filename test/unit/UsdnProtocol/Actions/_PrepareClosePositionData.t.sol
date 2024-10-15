@@ -56,6 +56,7 @@ contract TestUsdnProtocolActionsPrepareClosePositionData is UsdnProtocolBaseFixt
 
     /**
      * @custom:scenario _prepareClosePositionData is called with a min price above the price with position fees
+     * @custom:given position fees at 1%
      * @custom:when _prepareClosePositionData is called with a min price 1 wei above the price with fees
      * @custom:then The call revert with a UsdnProtocolSlippageMinPriceExceeded error
      * @custom:when _prepareClosePositionData is called with a min price equal to the price with fees
