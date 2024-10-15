@@ -296,9 +296,15 @@ library UsdnProtocolActionsLongLibrary {
 
             return (true, false);
         }
+
+        uint128 liqPriceWithoutPenaltyAndFunding = Utils._getEffectivePriceForTick(
+            Utils.calcTickWithoutPenalty(data.action.tick, data.liquidationPenalty), data.action.liqMultiplier
+        );
+
         // calculate the new total expo
         uint128 expoBefore = data.pos.totalExpo;
-        uint128 expoAfter = Utils._calcPositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenalty);
+        uint128 expoAfter =
+            Utils._calcPositionTotalExpo(data.pos.amount, data.startPrice, liqPriceWithoutPenaltyAndFunding);
 
         // update the total expo of the position
         data.pos.totalExpo = expoAfter;
