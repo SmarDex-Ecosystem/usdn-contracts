@@ -379,7 +379,7 @@ library UsdnProtocolActionsUtilsLibrary {
      * @dev Reverts if the to address is zero, the position was not validated yet, the position is not owned by the
      * user, the amount to close is higher than the position amount, or the amount to close is zero
      * @param s The storage of the protocol
-     * @param params The parameters for the _prepareClosePositionData function
+     * @param pos The position to close
      * @param params The parameters for the _prepareClosePositionData function
      * @return isDelegation_ Whether the verification is a delegation
      */

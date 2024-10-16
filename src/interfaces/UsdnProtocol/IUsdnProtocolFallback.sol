@@ -581,7 +581,7 @@ interface IUsdnProtocolFallback {
 
     /**
      * @notice Get the user nonce
-     * @dev This is to uses with eip712 signature
+     * @dev This is to use with eip712 delegation signature
      * @return The user nonce
      */
     function getNonce(address user) external view returns (uint256);

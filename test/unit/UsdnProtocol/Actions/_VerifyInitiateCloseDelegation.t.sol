@@ -38,7 +38,7 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
 
     /**
      * @custom:scenario Verify a {initiateClosePosition} delegation signature by the owner with the correct values
-     * @custom:given A signed delegation data by the position owner
+     * @custom:given A signed delegation by the position owner
      * @custom:when The function _verifyInitiateCloseDelegation is called with correct values
      * @custom:then The transaction should not revert
      */
@@ -58,7 +58,7 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
 
     /**
      * @custom:scenario Verify a {initiateClosePosition} delegation signature by the owner with a compromised value
-     * @custom:given A signed delegation data by the position owner
+     * @custom:given A signed delegation by the position owner
      * @custom:when The function _verifyInitiateCloseDelegation is called with a compromised value
      * @custom:then The transaction should revert with `UsdnProtocolInvalidDelegation`
      */
@@ -79,7 +79,7 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
 
     /**
      * @custom:scenario Verify a {initiateClosePosition} delegation signature by an attacker
-     * @custom:given A signed delegation data by an attacker
+     * @custom:given A signed delegation by an attacker
      * @custom:when The function _verifyInitiateCloseDelegation is called with correct values
      * @custom:then The transaction should revert with `UsdnProtocolInvalidDelegation`
      */
