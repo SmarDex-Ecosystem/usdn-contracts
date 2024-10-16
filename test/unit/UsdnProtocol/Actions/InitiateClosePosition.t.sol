@@ -866,6 +866,56 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         );
     }
 
+    /**
+     * @custom:scenario A user initiates a delegated close position with the position owner signature
+     * @custom:given A validated long position
+     * @custom:and A valid position owner signature
+     * @custom:when User calls initiateClosePosition with the signature
+     * @custom:then The user initiates a delegated close position
+     */
+    function test_initiateClosePositionDelegation() public {
+        uint256 pk = 1;
+        address user = vm.addr(pk);
+
+        uint256 initialNonce = protocol.getNonce(user);
+
+        posId = setUpUserPositionInLong(
+            OpenParams({
+                user: user,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: POSITION_AMOUNT,
+                desiredLiqPrice: params.initialPrice - (params.initialPrice / 5),
+                price: params.initialPrice
+            })
+        );
+
+        InitiateClosePositionDelegation memory delegation = InitiateClosePositionDelegation({
+            posIdHash: keccak256(abi.encode(posId)),
+            amountToClose: POSITION_AMOUNT,
+            userMinPrice: DISABLE_MIN_PRICE,
+            to: user,
+            deadline: type(uint256).max,
+            positionOwner: user,
+            positionCloser: address(this),
+            nonce: initialNonce
+        });
+
+        bool success = protocol.initiateClosePosition(
+            posId,
+            POSITION_AMOUNT,
+            DISABLE_MIN_PRICE,
+            user,
+            payable(address(this)),
+            type(uint256).max,
+            abi.encode(params.initialPrice),
+            EMPTY_PREVIOUS_DATA,
+            _getDelegationSignature(pk, protocol.i_domainSeparatorV4(), delegation)
+        );
+
+        assertTrue(success, "success");
+        assertEq(protocol.getNonce(user), initialNonce + 1, "User nonce should be incremented");
+    }
+
     /// @dev Allow refund tests
     receive() external payable {
         // test reentrancy

@@ -1,13 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-
 import { USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
-import { UsdnProtocolActionsUtilsLibrary } from
-    "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsUtilsLibrary.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
 /**
@@ -102,39 +98,5 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
             delegationSignature,
             domainSeparatorV4
         );
-    }
-
-    /**
-     * @notice Get the signed delegation data
-     * @param privateKey The signer private key
-     * @param domainSeparator The domain separator v4
-     * @param delegationToSign The delegation struct to sign
-     * @return delegationSignature_ The initiateClosePosition eip712 delegation signature
-     */
-    function _getDelegationSignature(
-        uint256 privateKey,
-        bytes32 domainSeparator,
-        InitiateClosePositionDelegation memory delegationToSign
-    ) internal pure returns (bytes memory delegationSignature_) {
-        bytes32 digest = MessageHashUtils.toTypedDataHash(
-            domainSeparator,
-            keccak256(
-                abi.encode(
-                    UsdnProtocolActionsUtilsLibrary.INITIATE_CLOSE_TYPEHASH,
-                    delegationToSign.posIdHash,
-                    delegationToSign.amountToClose,
-                    delegationToSign.userMinPrice,
-                    delegationToSign.to,
-                    delegationToSign.deadline,
-                    delegationToSign.positionOwner,
-                    delegationToSign.positionCloser,
-                    delegationToSign.nonce
-                )
-            )
-        );
-
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
-
-        delegationSignature_ = abi.encodePacked(r, s, v);
     }
 }
