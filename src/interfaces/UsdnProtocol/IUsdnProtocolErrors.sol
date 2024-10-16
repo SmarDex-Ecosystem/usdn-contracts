@@ -220,6 +220,6 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the delegation is invalid
     error UsdnProtocolInvalidDelegation();
 
-    /// @dev Indicates that the recover is invalid
-    error UsdnProtocolInvalidRecover();
+    /// @dev Indicates that signature is invalid
+    error UsdnProtocolInvalidSignature();
 }

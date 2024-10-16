@@ -455,4 +455,18 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
     ) external pure returns (int24 tickWithPenalty_, uint128 liqPriceWithoutPenalty_);
 
     function i_calcMaxLongBalance(uint256 totalExpo) external pure returns (uint256);
+
+    function i_verifyInitiateCloseDelegation(
+        bytes32 posIdHash,
+        uint128 amountToClose,
+        uint256 userMinPrice,
+        address to,
+        uint256 deadline,
+        address positionOwner,
+        uint256 nonce,
+        bytes memory delegationData,
+        bytes32 domainSeparatorV4
+    ) external view;
+
+    function i_domainSeparatorV4() external view returns (bytes32);
 }

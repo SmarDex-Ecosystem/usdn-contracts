@@ -32,11 +32,6 @@ library UsdnProtocolUtilsLibrary {
     using SafeTransferLib for address;
     using SignedMath for int256;
 
-    /// @notice The eip712 initiateClosePosition typehash
-    bytes32 internal constant INITIATE_CLOSE_TYPEHASH = keccak256(
-        "InitiateClosePositionDelegation(bytes32 posIdHash,uint128 amountToClose,uint256 userMinPrice,address to,address validator,uint256 deadline,address positionOwner,address positionCloser,uint256 nonce)"
-    );
-
     /**
      * @notice Refunds any excess ether to the user to prevent locking ETH in the contract
      * @param securityDepositValue The security deposit value of the action (zero for a validation action)

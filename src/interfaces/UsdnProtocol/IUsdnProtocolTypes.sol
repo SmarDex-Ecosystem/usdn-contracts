@@ -550,7 +550,6 @@ interface IUsdnProtocolTypes {
      * @param amountToClose The amount to close
      * @param userMinPrice The minimum price at which the position can be closed
      * @param to The address that will receive the closed amount
-     * @param validator The address that will validate the close position
      * @param deadline The deadline of the close position to be initiated
      * @param positionOwner The position owner
      * @param positionCloser The allowed position closer
@@ -561,7 +560,6 @@ interface IUsdnProtocolTypes {
         uint128 amountToClose;
         uint256 userMinPrice;
         address to;
-        address validator;
         uint256 deadline;
         address positionOwner;
         address positionCloser;

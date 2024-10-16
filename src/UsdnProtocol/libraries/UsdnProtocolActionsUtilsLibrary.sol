@@ -27,6 +27,11 @@ library UsdnProtocolActionsUtilsLibrary {
     using SafeCast for uint256;
     using SignedMath for int256;
 
+    /// @notice The eip712 initiateClosePosition typehash
+    bytes32 internal constant INITIATE_CLOSE_TYPEHASH = keccak256(
+        "InitiateClosePositionDelegation(bytes32 posIdHash,uint128 amountToClose,uint256 userMinPrice,address to,uint256 deadline,address positionOwner,address positionCloser,uint256 nonce)"
+    );
+
     /**
      * @notice Data structure for the transient state of the `_validateMultipleActionable` function
      * @param pending The candidate pending action to validate
@@ -398,10 +403,9 @@ library UsdnProtocolActionsUtilsLibrary {
                     params.amountToClose,
                     params.userMinPrice,
                     params.to,
-                    params.validator,
                     params.deadline,
-                    s._nonce[pos.user],
                     pos.user,
+                    s._nonce[pos.user],
                     params.delegationData,
                     params.domainSeparatorV4
                 );
@@ -468,15 +472,14 @@ library UsdnProtocolActionsUtilsLibrary {
     }
 
     /**
-     * @notice Performs the initiateClosePosition delegation on the eip712 signature
+     * @notice Performs the initiateClosePosition delegation verification on the eip712 signature
      * @param posIdHash The position id hashed with `keccak256(abi.encode(posId))`
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param userMinPrice The minimum price at which the position can be closed
      * @param to The address that will receive the assets
-     * @param validator The address of the pending action validator
      * @param deadline The deadline by which the position can be closed
-     * @param nonce The user nonce
      * @param positionOwner The position owner
+     * @param nonce The user nonce
      * @param delegationData The delegation data
      * @param domainSeparatorV4 The domain separator v4
      */
@@ -485,11 +488,10 @@ library UsdnProtocolActionsUtilsLibrary {
         uint128 amountToClose,
         uint256 userMinPrice,
         address to,
-        address validator,
         uint256 deadline,
-        uint256 nonce,
         address positionOwner,
-        bytes calldata delegationData,
+        uint256 nonce,
+        bytes memory delegationData,
         bytes32 domainSeparatorV4
     ) internal view {
         (Types.InitiateClosePositionDelegation memory delegation, bytes memory signature) =
@@ -500,15 +502,7 @@ library UsdnProtocolActionsUtilsLibrary {
                 != keccak256(
                     abi.encode(
                         Types.InitiateClosePositionDelegation(
-                            posIdHash,
-                            amountToClose,
-                            userMinPrice,
-                            to,
-                            validator,
-                            deadline,
-                            positionOwner,
-                            msg.sender,
-                            nonce
+                            posIdHash, amountToClose, userMinPrice, to, deadline, positionOwner, msg.sender, nonce
                         )
                     )
                 )
@@ -517,11 +511,24 @@ library UsdnProtocolActionsUtilsLibrary {
         }
 
         bytes32 digest = MessageHashUtils.toTypedDataHash(
-            domainSeparatorV4, keccak256(abi.encode(Utils.INITIATE_CLOSE_TYPEHASH, abi.encode(delegation)))
+            domainSeparatorV4,
+            keccak256(
+                abi.encode(
+                    INITIATE_CLOSE_TYPEHASH,
+                    delegation.posIdHash,
+                    delegation.amountToClose,
+                    delegation.userMinPrice,
+                    delegation.to,
+                    delegation.deadline,
+                    delegation.positionOwner,
+                    delegation.positionCloser,
+                    delegation.nonce
+                )
+            )
         );
 
         if (ECDSA.recover(digest, signature) != positionOwner) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidRecover();
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidSignature();
         }
     }
 }
