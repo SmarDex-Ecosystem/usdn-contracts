@@ -211,9 +211,9 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     function i_initiateClosePosition(
         Types.InitiateClosePositionParams memory params,
         bytes calldata currentPriceData,
-        bytes calldata delegationData
+        bytes calldata delegationSignature
     ) external returns (uint256 securityDepositValue_, bool isLiquidationPending_, bool liq_) {
-        return ActionsLong._initiateClosePosition(s, params, currentPriceData, delegationData);
+        return ActionsLong._initiateClosePosition(s, params, currentPriceData, delegationSignature);
     }
 
     function _calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed) external view returns (int256) {
@@ -815,7 +815,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint256 deadline,
         address positionOwner,
         uint256 nonce,
-        bytes memory delegationData,
+        bytes calldata delegationSignature,
         bytes32 domainSeparatorV4
     ) external view {
         ActionsUtils._verifyInitiateCloseDelegation(
@@ -826,7 +826,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
             deadline,
             positionOwner,
             nonce,
-            delegationData,
+            delegationSignature,
             domainSeparatorV4
         );
     }

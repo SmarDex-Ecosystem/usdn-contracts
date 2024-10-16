@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+
 import { USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
-
-import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 import { UsdnProtocolActionsUtilsLibrary } from
     "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsUtilsLibrary.sol";
@@ -21,7 +21,7 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
 
     InitiateClosePositionDelegation internal delegation;
     bytes32 internal domainSeparatorV4;
-    bytes internal delegationData;
+    bytes internal delegationSignature;
 
     function setUp() public {
         _setUp(DEFAULT_PARAMS);
@@ -37,7 +37,7 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
         );
 
         domainSeparatorV4 = protocol.i_domainSeparatorV4();
-        delegationData = _getDelegationData(POSITION_OWNER_PK, domainSeparatorV4, delegation);
+        delegationSignature = _getDelegationSignature(POSITION_OWNER_PK, domainSeparatorV4, delegation);
     }
 
     /**
@@ -55,7 +55,7 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
             delegation.deadline,
             delegation.positionOwner,
             delegation.nonce,
-            delegationData,
+            delegationSignature,
             domainSeparatorV4
         );
     }
@@ -66,7 +66,7 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
      * @custom:when The function _verifyInitiateCloseDelegation is called with a compromised value
      * @custom:then The transaction should revert with `UsdnProtocolInvalidDelegation`
      */
-    function test_revertWhen_verifyInitiateCloseDelegationChangingParam() public {
+    function test_revertWhen_verifyInitiateCloseDelegationChangeParam() public {
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidDelegation.selector);
         protocol.i_verifyInitiateCloseDelegation(
             delegation.posIdHash,
@@ -76,7 +76,7 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
             delegation.deadline,
             delegation.positionOwner,
             delegation.nonce,
-            delegationData,
+            delegationSignature,
             domainSeparatorV4
         );
     }
@@ -85,12 +85,12 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
      * @custom:scenario Verify a {initiateClosePosition} delegation signature by an attacker
      * @custom:given A signed delegation data by an attacker
      * @custom:when The function _verifyInitiateCloseDelegation is called with correct values
-     * @custom:then The transaction should revert with `UsdnProtocolInvalidSignature`
+     * @custom:then The transaction should revert with `UsdnProtocolInvalidDelegation`
      */
     function test_revertWhen_verifyInitiateCloseDelegationAttackerSignature() public {
-        delegationData = _getDelegationData(ATTACKER_PK, domainSeparatorV4, delegation);
+        delegationSignature = _getDelegationSignature(ATTACKER_PK, domainSeparatorV4, delegation);
 
-        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidSignature.selector);
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidDelegation.selector);
         protocol.i_verifyInitiateCloseDelegation(
             delegation.posIdHash,
             delegation.amountToClose,
@@ -99,7 +99,7 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
             delegation.deadline,
             delegation.positionOwner,
             delegation.nonce,
-            delegationData,
+            delegationSignature,
             domainSeparatorV4
         );
     }
@@ -109,13 +109,13 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
      * @param privateKey The signer private key
      * @param domainSeparator The domain separator v4
      * @param delegationToSign The delegation struct to sign
-     * @return delegationData_ The delegation data
+     * @return delegationSignature_ The initiateClosePosition eip712 delegation signature
      */
-    function _getDelegationData(
+    function _getDelegationSignature(
         uint256 privateKey,
         bytes32 domainSeparator,
         InitiateClosePositionDelegation memory delegationToSign
-    ) internal pure returns (bytes memory delegationData_) {
+    ) internal pure returns (bytes memory delegationSignature_) {
         bytes32 digest = MessageHashUtils.toTypedDataHash(
             domainSeparator,
             keccak256(
@@ -135,6 +135,6 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
 
-        delegationData_ = abi.encode(delegationToSign, abi.encodePacked(r, s, v));
+        delegationSignature_ = abi.encodePacked(r, s, v);
     }
 }

@@ -88,7 +88,7 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
     function i_initiateClosePosition(
         Types.InitiateClosePositionParams memory params,
         bytes calldata currentPriceData,
-        bytes calldata delegationData
+        bytes calldata delegationSignature
     ) external returns (uint256 securityDepositValue_, bool isLiquidationPending_, bool liq_);
 
     function i_validateOpenPosition(address user, bytes calldata priceData)
@@ -464,7 +464,7 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         uint256 deadline,
         address positionOwner,
         uint256 nonce,
-        bytes memory delegationData,
+        bytes memory delegationSignature,
         bytes32 domainSeparatorV4
     ) external view;
 

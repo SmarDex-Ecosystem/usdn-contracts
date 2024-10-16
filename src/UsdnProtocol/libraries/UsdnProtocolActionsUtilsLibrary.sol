@@ -395,7 +395,7 @@ library UsdnProtocolActionsUtilsLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressValidator();
         }
         if (msg.sender != pos.user) {
-            if (params.delegationData.length == 0) {
+            if (params.delegationSignature.length == 0) {
                 revert IUsdnProtocolErrors.UsdnProtocolUnauthorized();
             } else {
                 _verifyInitiateCloseDelegation(
@@ -406,7 +406,7 @@ library UsdnProtocolActionsUtilsLibrary {
                     params.deadline,
                     pos.user,
                     s._nonce[pos.user],
-                    params.delegationData,
+                    params.delegationSignature,
                     params.domainSeparatorV4
                 );
 
@@ -472,7 +472,9 @@ library UsdnProtocolActionsUtilsLibrary {
     }
 
     /**
-     * @notice Performs the initiateClosePosition delegation verification on the eip712 signature
+     * @notice Performs the initiateClosePosition eip712 delegation signature verification
+     * @dev Reverts if the function arguments doesn't match those included into the signature
+     * and if signer isn't the position owner
      * @param posIdHash The position id hashed with `keccak256(abi.encode(posId))`
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param userMinPrice The minimum price at which the position can be closed
@@ -480,7 +482,7 @@ library UsdnProtocolActionsUtilsLibrary {
      * @param deadline The deadline by which the position can be closed
      * @param positionOwner The position owner
      * @param nonce The user nonce
-     * @param delegationData The delegation data
+     * @param delegationSignature The eip712 initiateClosePosition delegation signature
      * @param domainSeparatorV4 The domain separator v4
      */
     function _verifyInitiateCloseDelegation(
@@ -491,44 +493,28 @@ library UsdnProtocolActionsUtilsLibrary {
         uint256 deadline,
         address positionOwner,
         uint256 nonce,
-        bytes memory delegationData,
+        bytes calldata delegationSignature,
         bytes32 domainSeparatorV4
     ) internal view {
-        (Types.InitiateClosePositionDelegation memory delegation, bytes memory signature) =
-            abi.decode(delegationData, (Types.InitiateClosePositionDelegation, bytes));
-
-        if (
-            keccak256(abi.encode(delegation))
-                != keccak256(
-                    abi.encode(
-                        Types.InitiateClosePositionDelegation(
-                            posIdHash, amountToClose, userMinPrice, to, deadline, positionOwner, msg.sender, nonce
-                        )
-                    )
-                )
-        ) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidDelegation();
-        }
-
         bytes32 digest = MessageHashUtils.toTypedDataHash(
             domainSeparatorV4,
             keccak256(
                 abi.encode(
                     INITIATE_CLOSE_TYPEHASH,
-                    delegation.posIdHash,
-                    delegation.amountToClose,
-                    delegation.userMinPrice,
-                    delegation.to,
-                    delegation.deadline,
-                    delegation.positionOwner,
-                    delegation.positionCloser,
-                    delegation.nonce
+                    posIdHash,
+                    amountToClose,
+                    userMinPrice,
+                    to,
+                    deadline,
+                    positionOwner,
+                    msg.sender,
+                    nonce
                 )
             )
         );
 
-        if (ECDSA.recover(digest, signature) != positionOwner) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidSignature();
+        if (ECDSA.recover(digest, delegationSignature) != positionOwner) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidDelegation();
         }
     }
 }

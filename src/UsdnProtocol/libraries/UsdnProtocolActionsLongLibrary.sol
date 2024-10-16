@@ -131,7 +131,7 @@ library UsdnProtocolActionsLongLibrary {
         Types.InitiateClosePositionParams memory params,
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData,
-        bytes calldata delegationData
+        bytes calldata delegationSignature
     ) external returns (bool success_) {
         if (params.deadline < block.timestamp) {
             revert IUsdnProtocolErrors.UsdnProtocolDeadlineExceeded();
@@ -144,7 +144,7 @@ library UsdnProtocolActionsLongLibrary {
         bool liq;
         uint256 validatorAmount;
 
-        (validatorAmount, success_, liq) = _initiateClosePosition(s, params, currentPriceData, delegationData);
+        (validatorAmount, success_, liq) = _initiateClosePosition(s, params, currentPriceData, delegationSignature);
 
         uint256 amountToRefund;
         if (success_ || liq) {
@@ -638,7 +638,7 @@ library UsdnProtocolActionsLongLibrary {
      * @param s The storage of the protocol
      * @param params The parameters for the close position initiation
      * @param currentPriceData The current price data
-     * @param delegationData The delegation data
+     * @param delegationSignature The eip712 initiateClosePosition delegation signature
      * @return amountToRefund_ If there are pending liquidations we'll refund the `securityDepositValue`,
      * else we'll only refund the security deposit value of the stale pending action
      * @return isInitiated_ Whether the action is initiated
@@ -648,7 +648,7 @@ library UsdnProtocolActionsLongLibrary {
         Types.Storage storage s,
         Types.InitiateClosePositionParams memory params,
         bytes calldata currentPriceData,
-        bytes calldata delegationData
+        bytes calldata delegationSignature
     ) internal returns (uint256 amountToRefund_, bool isInitiated_, bool liquidated_) {
         Types.ClosePositionData memory data;
         (data, liquidated_) = ActionsUtils._prepareClosePositionData(
@@ -661,7 +661,7 @@ library UsdnProtocolActionsLongLibrary {
                 userMinPrice: params.userMinPrice,
                 deadline: params.deadline,
                 currentPriceData: currentPriceData,
-                delegationData: delegationData,
+                delegationSignature: delegationSignature,
                 domainSeparatorV4: params.domainSeparatorV4
             })
         );

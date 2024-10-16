@@ -54,7 +54,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
         uint256 deadline,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData,
-        bytes memory delegationData
+        bytes memory delegationSignature
     ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
         InitiateClosePositionParams memory params = InitiateClosePositionParams({
             to: to,
@@ -67,7 +67,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
             domainSeparatorV4: _domainSeparatorV4()
         });
 
-        return ActionsLong.initiateClosePosition(s, params, currentPriceData, previousActionsData, delegationData);
+        return ActionsLong.initiateClosePosition(s, params, currentPriceData, previousActionsData, delegationSignature);
     }
 
     /// @inheritdoc IUsdnProtocolActions
