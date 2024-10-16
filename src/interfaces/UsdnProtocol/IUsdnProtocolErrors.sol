@@ -219,7 +219,4 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the delegation is invalid
     error UsdnProtocolInvalidDelegation();
-
-    /// @dev Indicates that signature is invalid
-    error UsdnProtocolInvalidSignature();
 }
