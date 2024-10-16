@@ -51,7 +51,8 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         int24 tickSpacing,
         address feeCollector,
         Managers memory managers,
-        IUsdnProtocolFallback protocolFallback
+        IUsdnProtocolFallback protocolFallback,
+        string memory eip712Version
     ) external initializer {
         initializeStorage(
             usdn,
@@ -62,7 +63,8 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
             tickSpacing,
             feeCollector,
             managers,
-            protocolFallback
+            protocolFallback,
+            eip712Version
         );
     }
 

@@ -21,6 +21,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
     uint128 public constant INITIAL_DEPOSIT = 100 ether;
     uint128 public constant INITIAL_POSITION = 100 ether;
     uint128 public constant INITIAL_PRICE = 3000 ether;
+    string public constant EIP712_VERSION = "1";
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
@@ -51,7 +52,8 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
                         pauserManager: address(this),
                         unpauserManager: address(this)
                     }),
-                    protocolFallback
+                    protocolFallback,
+                    EIP712_VERSION
                 )
             )
         );

@@ -3,6 +3,7 @@ pragma solidity >=0.8.0;
 
 import { IAccessControlDefaultAdminRules } from
     "@openzeppelin/contracts/access/extensions/IAccessControlDefaultAdminRules.sol";
+import { IERC5267 } from "@openzeppelin/contracts/interfaces/IERC5267.sol";
 import { IERC5313 } from "@openzeppelin/contracts/interfaces/IERC5313.sol";
 
 import { IUsdnProtocolErrors } from "./IUsdnProtocolErrors.sol";
@@ -16,7 +17,8 @@ interface IUsdnProtocolStorage is
     IUsdnProtocolEvents,
     IUsdnProtocolErrors,
     IAccessControlDefaultAdminRules,
-    IERC5313
+    IERC5313,
+    IERC5267
 {
     /* -------------------------------------------------------------------------- */
     /*                                  Constants                                 */

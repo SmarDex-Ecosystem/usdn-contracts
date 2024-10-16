@@ -59,6 +59,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         uint128 initialPrice;
         uint256 initialTimestamp;
         uint256 initialBlock;
+        string eip712Version;
         Flags flags;
     }
 
@@ -69,6 +70,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         initialPrice: 2000 ether, // 2000 USD per wstETH
         initialTimestamp: 1_704_092_400, // 2024-01-01 07:00:00 UTC,
         initialBlock: block.number,
+        eip712Version: "1",
         flags: Flags({
             enablePositionFees: false,
             enableProtocolFees: false,
@@ -166,7 +168,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
                     _tickSpacing,
                     address(feeCollector),
                     managers,
-                    protocolFallback
+                    protocolFallback,
+                    params.eip712Version
                 )
             )
         );

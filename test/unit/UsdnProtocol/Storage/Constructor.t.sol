@@ -132,7 +132,8 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
                     tickSpacing,
                     feeCollector,
                     manager,
-                    protocolFallback
+                    protocolFallback,
+                    params.eip712Version
                 )
             )
         );
