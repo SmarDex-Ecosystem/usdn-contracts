@@ -97,9 +97,8 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, Ownable2Step {
             gasUsed += rewardsParameters.rebalancerGasUsed;
         }
 
-        uint256 totalRewardETH =
-            _calcGasPrice(rewardsParameters.baseFeeOffset) * gasUsed * rewardsParameters.gasMultiplierBps / BPS_DIVISOR;
-        totalRewardETH += rewardsParameters.fixedReward;
+        uint256 totalRewardETH = rewardsParameters.fixedReward
+            + _calcGasPrice(rewardsParameters.baseFeeOffset) * gasUsed * rewardsParameters.gasMultiplierBps / BPS_DIVISOR;
 
         uint256 wstEthBonus =
             _calcPositionSizeBonus(liquidatedTicks, currentPrice, rewardsParameters.positionBonusMultiplierBps);
@@ -109,6 +108,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, Ownable2Step {
         if (totalRewardETH > rewardsParameters.maxReward) {
             totalRewardETH = rewardsParameters.maxReward;
         }
+
         // convert to wstETH
         wstETHRewards_ = _wstEth.getWstETHByStETH(totalRewardETH);
     }
