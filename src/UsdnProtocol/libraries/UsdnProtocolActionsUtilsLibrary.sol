@@ -166,6 +166,13 @@ library UsdnProtocolActionsUtilsLibrary {
             params.currentPriceData
         );
 
+        uint256 version = s._tickVersion[params.posId.tick];
+        if (version != params.posId.tickVersion) {
+            // the current tick version doesn't match the version from the position,
+            // that means that the position has been liquidated in this transaction
+            return (data_, true);
+        }
+
         if (data_.isLiquidationPending) {
             return (data_, false);
         }
@@ -178,15 +185,7 @@ library UsdnProtocolActionsUtilsLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolSlippageMinPriceExceeded();
         }
 
-        uint256 version = s._tickVersion[params.posId.tick];
-        if (version != params.posId.tickVersion) {
-            // the current tick version doesn't match the version from the position,
-            // that means that the position has been liquidated in this transaction
-            return (data_, true);
-        }
-
         data_.totalExpoToClose = (uint256(data_.pos.totalExpo) * params.amountToClose / data_.pos.amount).toUint128();
-
         data_.longTradingExpo = Core.longTradingExpoWithFunding(s, data_.lastPrice, uint128(block.timestamp));
         data_.liqMulAcc = s._liqMultiplierAccumulator;
 
