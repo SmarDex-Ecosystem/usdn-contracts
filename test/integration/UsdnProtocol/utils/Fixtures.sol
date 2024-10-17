@@ -27,6 +27,7 @@ import {
     WSTETH
 } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
+import { IEventsErrors } from "../../../utils/IEventsErrors.sol";
 import { IUsdnProtocolHandler } from "../../../utils/IUsdnProtocolHandler.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
@@ -47,7 +48,7 @@ import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUs
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 
-contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProtocolEvents {
+contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProtocolEvents, IEventsErrors {
     struct SetUpParams {
         uint128 initialDeposit;
         uint128 initialLong;
@@ -350,11 +351,11 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
     }
 
     /// @dev Set the provided price and current timestamp in all of the mock oracles
-    function _setOraclePrices(uint128 wstEthPrice) internal {
+    function _setOraclePrices(uint128 wstEthPrice) internal returns (uint128 wstEthPrice_) {
         uint128 ethPrice = uint128(wstETH.getWstETHByStETH(wstEthPrice)) / 1e10;
         mockPyth.setPrice(int64(uint64(ethPrice)));
         mockPyth.setLastPublishTime(block.timestamp);
-        wstEthPrice = uint128(wstETH.getStETHByWstETH(ethPrice * 1e10));
+        wstEthPrice_ = uint128(wstETH.getStETHByWstETH(ethPrice * 1e10));
         mockChainlinkOnChain.setLastPublishTime(block.timestamp);
         mockChainlinkOnChain.setLastPrice(int256(uint256(ethPrice)));
     }
