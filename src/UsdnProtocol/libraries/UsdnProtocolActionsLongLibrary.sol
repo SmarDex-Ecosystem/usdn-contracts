@@ -601,19 +601,25 @@ library UsdnProtocolActionsLongLibrary {
             return (data_, false);
         }
 
+        data_.lastPrice = s._lastPrice;
+        uint128 liqPriceWithPenalty = Utils.getEffectivePriceForTick(s, data_.action.tick);
+        // A user that triggers this condition will be stuck in a validation loop. The price it provided is not fresh,
+        // therefore liquidations cannot be triggered, but at the same time, the latest price known by the protocol
+        // indicates that the position should be liquidated. So the owner of this position needs to wait for another
+        // user to update the `lastPrice` to a higher amount, thus dodging the liquidation, or a lower amount, thus
+        // eventually liquidating this position
+        if (data_.lastPrice < liqPriceWithPenalty) {
+            // the position should be liquidated
+            data_.isLiquidationPending = true;
+            return (data_, false);
+        }
+
         // get the position
         data_.pos = s._longPositions[data_.tickHash][data_.action.index];
         // re-calculate leverage
         data_.liquidationPenalty = s._tickData[data_.tickHash].liquidationPenalty;
         data_.liqPriceWithoutPenalty =
             Utils.getEffectivePriceForTick(s, Utils.calcTickWithoutPenalty(data_.action.tick, data_.liquidationPenalty));
-
-        data_.lastPrice = s._lastPrice;
-        if (data_.lastPrice < data_.liqPriceWithoutPenalty) {
-            // the position must be liquidated
-            data_.isLiquidationPending = true;
-            return (data_, false);
-        }
 
         // reverts if liqPriceWithoutPenalty >= startPrice
         data_.leverage = Utils._getLeverage(data_.startPrice, data_.liqPriceWithoutPenalty);
