@@ -148,44 +148,44 @@ library UsdnProtocolActionsUtilsLibrary {
 
         _checkInitiateClosePosition(s, params.owner, params.to, params.validator, params.amountToClose, data_.pos);
 
-        {
-            PriceInfo memory currentPrice = Utils._getOraclePrice(
-                s,
-                Types.ProtocolAction.InitiateClosePosition,
-                block.timestamp,
-                Utils._calcActionId(params.owner, uint128(block.timestamp)),
-                params.currentPriceData
-            );
+        PriceInfo memory currentPrice = Utils._getOraclePrice(
+            s,
+            Types.ProtocolAction.InitiateClosePosition,
+            block.timestamp,
+            Utils._calcActionId(params.owner, uint128(block.timestamp)),
+            params.currentPriceData
+        );
 
-            (, data_.isLiquidationPending) = Long._applyPnlAndFundingAndLiquidate(
-                s,
-                currentPrice.neutralPrice,
-                currentPrice.timestamp,
-                s._liquidationIteration,
-                false,
-                Types.ProtocolAction.InitiateClosePosition,
-                params.currentPriceData
-            );
+        (, data_.isLiquidationPending) = Long._applyPnlAndFundingAndLiquidate(
+            s,
+            currentPrice.neutralPrice,
+            currentPrice.timestamp,
+            s._liquidationIteration,
+            false,
+            Types.ProtocolAction.InitiateClosePosition,
+            params.currentPriceData
+        );
 
-            data_.lastPrice = s._lastPrice;
-            if (data_.lastPrice < params.userMinPrice) {
-                revert IUsdnProtocolErrors.UsdnProtocolSlippageMinPriceExceeded();
-            }
-
-            uint256 version = s._tickVersion[params.posId.tick];
-            if (version != params.posId.tickVersion) {
-                // the current tick version doesn't match the version from the position,
-                // that means that the position has been liquidated in this transaction
-                return (data_, true);
-            }
+        uint256 version = s._tickVersion[params.posId.tick];
+        if (version != params.posId.tickVersion) {
+            // the current tick version doesn't match the version from the position,
+            // that means that the position has been liquidated in this transaction
+            return (data_, true);
         }
 
         if (data_.isLiquidationPending) {
             return (data_, false);
         }
 
-        data_.totalExpoToClose = (uint256(data_.pos.totalExpo) * params.amountToClose / data_.pos.amount).toUint128();
+        data_.lastPrice = s._lastPrice;
+        // add the position fee
+        uint256 adjustedPrice =
+            (data_.lastPrice - data_.lastPrice * s._positionFeeBps / Constants.BPS_DIVISOR).toUint128();
+        if (adjustedPrice < params.userMinPrice) {
+            revert IUsdnProtocolErrors.UsdnProtocolSlippageMinPriceExceeded();
+        }
 
+        data_.totalExpoToClose = (uint256(data_.pos.totalExpo) * params.amountToClose / data_.pos.amount).toUint128();
         data_.longTradingExpo = Core.longTradingExpoWithFunding(s, data_.lastPrice, uint128(block.timestamp));
         data_.liqMulAcc = s._liqMultiplierAccumulator;
 
