@@ -296,9 +296,16 @@ library UsdnProtocolActionsLongLibrary {
 
             return (true, false);
         }
+
+        // Calculate the liquidation price using the multiplier state at T+24 to avoid the influence of later funding
+        uint128 liqPriceWithoutPenaltyNorFunding = Utils._getEffectivePriceForTick(
+            Utils.calcTickWithoutPenalty(data.action.tick, data.liquidationPenalty), data.action.liqMultiplier
+        );
+
         // calculate the new total expo
         uint128 expoBefore = data.pos.totalExpo;
-        uint128 expoAfter = Utils._calcPositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenalty);
+        uint128 expoAfter =
+            Utils._calcPositionTotalExpo(data.pos.amount, data.startPrice, liqPriceWithoutPenaltyNorFunding);
 
         // update the total expo of the position
         data.pos.totalExpo = expoAfter;
