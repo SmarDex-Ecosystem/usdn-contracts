@@ -730,7 +730,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     function i_checkInitiateClosePosition(
         Types.Position memory pos,
         Types.PrepareInitiateClosePositionParams calldata params
-    ) external view {
+    ) external {
         ActionsUtils._checkInitiateClosePosition(s, pos, params);
     }
 
@@ -808,26 +808,9 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_verifyInitiateCloseDelegation(
-        bytes32 posIdHash,
-        uint128 amountToClose,
-        uint256 userMinPrice,
-        address to,
-        uint256 deadline,
         address positionOwner,
-        uint256 nonce,
-        bytes calldata delegationSignature,
-        bytes32 domainSeparatorV4
-    ) external view {
-        ActionsUtils._verifyInitiateCloseDelegation(
-            posIdHash,
-            amountToClose,
-            userMinPrice,
-            to,
-            deadline,
-            positionOwner,
-            nonce,
-            delegationSignature,
-            domainSeparatorV4
-        );
+        Types.PrepareInitiateClosePositionParams calldata params
+    ) external {
+        ActionsUtils._verifyInitiateCloseDelegation(s, positionOwner, params);
     }
 }

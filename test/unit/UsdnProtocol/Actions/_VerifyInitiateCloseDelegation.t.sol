@@ -18,18 +18,22 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
     InitiateClosePositionDelegation internal delegation;
     bytes32 internal domainSeparatorV4;
     bytes internal delegationSignature;
+    PositionId internal posId = PositionId(10_589, 1, 45);
+    uint256 initialNonce;
 
     function setUp() public {
         _setUp(DEFAULT_PARAMS);
+        initialNonce = protocol.getNonce(positionOwner);
+
         delegation = InitiateClosePositionDelegation(
-            keccak256(abi.encode(PositionId(10_589, 1, 45))),
+            keccak256(abi.encode(posId)),
             100 ether,
             4000 ether,
             USER_1,
             type(uint256).max,
             positionOwner,
             address(this),
-            121
+            initialNonce
         );
 
         domainSeparatorV4 = protocol.domainSeparatorV4();
@@ -42,18 +46,23 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
      * @custom:when The function _verifyInitiateCloseDelegation is called with correct values
      * @custom:then The transaction should not revert
      */
-    function test_verifyInitiateCloseDelegation() public view {
+    function test_verifyInitiateCloseDelegation() public {
         protocol.i_verifyInitiateCloseDelegation(
-            delegation.posIdHash,
-            delegation.amountToClose,
-            delegation.userMinPrice,
-            delegation.to,
-            delegation.deadline,
             delegation.positionOwner,
-            delegation.nonce,
-            delegationSignature,
-            domainSeparatorV4
+            PrepareInitiateClosePositionParams(
+                delegation.to,
+                address(this),
+                posId,
+                delegation.amountToClose,
+                delegation.userMinPrice,
+                delegation.deadline,
+                "",
+                delegationSignature,
+                domainSeparatorV4
+            )
         );
+
+        assertEq(protocol.getNonce(positionOwner), initialNonce + 1, "Nonce should be incremented");
     }
 
     /**
@@ -65,15 +74,18 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
     function test_revertWhen_verifyInitiateCloseDelegationChangeParam() public {
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidDelegation.selector);
         protocol.i_verifyInitiateCloseDelegation(
-            delegation.posIdHash,
-            delegation.amountToClose,
-            delegation.userMinPrice,
-            address(this), // the compromised value
-            delegation.deadline,
             delegation.positionOwner,
-            delegation.nonce,
-            delegationSignature,
-            domainSeparatorV4
+            PrepareInitiateClosePositionParams(
+                address(this), // the compromised value
+                address(this),
+                posId,
+                delegation.amountToClose,
+                delegation.userMinPrice,
+                delegation.deadline,
+                "",
+                delegationSignature,
+                domainSeparatorV4
+            )
         );
     }
 
@@ -88,15 +100,18 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
 
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidDelegation.selector);
         protocol.i_verifyInitiateCloseDelegation(
-            delegation.posIdHash,
-            delegation.amountToClose,
-            delegation.userMinPrice,
-            delegation.to,
-            delegation.deadline,
             delegation.positionOwner,
-            delegation.nonce,
-            delegationSignature,
-            domainSeparatorV4
+            PrepareInitiateClosePositionParams(
+                delegation.to,
+                address(this),
+                posId,
+                delegation.amountToClose,
+                delegation.userMinPrice,
+                delegation.deadline,
+                "",
+                delegationSignature,
+                domainSeparatorV4
+            )
         );
     }
 }

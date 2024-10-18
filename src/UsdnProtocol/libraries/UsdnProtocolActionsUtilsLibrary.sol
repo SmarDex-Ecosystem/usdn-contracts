@@ -157,11 +157,7 @@ library UsdnProtocolActionsUtilsLibrary {
     ) public returns (Types.ClosePositionData memory data_, bool liquidated_) {
         (data_.pos, data_.liquidationPenalty) = getLongPosition(s, params.posId);
 
-        bool isDelegation = _checkInitiateClosePosition(s, data_.pos, params);
-
-        if (isDelegation) {
-            s._nonce[data_.pos.user] += 1;
-        }
+        _checkInitiateClosePosition(s, data_.pos, params);
 
         {
             PriceInfo memory currentPrice = Utils._getOraclePrice(
@@ -385,13 +381,12 @@ library UsdnProtocolActionsUtilsLibrary {
      * @param s The storage of the protocol
      * @param pos The position to close
      * @param params The parameters for the _prepareClosePositionData function
-     * @return isDelegation_ Whether the verification is a delegation
      */
     function _checkInitiateClosePosition(
         Types.Storage storage s,
         Types.Position memory pos,
         Types.PrepareInitiateClosePositionParams calldata params
-    ) internal view returns (bool isDelegation_) {
+    ) internal {
         if (params.to == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo();
         }
@@ -430,19 +425,7 @@ library UsdnProtocolActionsUtilsLibrary {
             if (params.delegationSignature.length == 0) {
                 revert IUsdnProtocolErrors.UsdnProtocolUnauthorized();
             } else {
-                _verifyInitiateCloseDelegation(
-                    keccak256(abi.encode(params.posId)),
-                    params.amountToClose,
-                    params.userMinPrice,
-                    params.to,
-                    params.deadline,
-                    pos.user,
-                    s._nonce[pos.user],
-                    params.delegationSignature,
-                    params.domainSeparatorV4
-                );
-
-                isDelegation_ = true;
+                _verifyInitiateCloseDelegation(s, pos.user, params);
             }
         }
     }
@@ -480,46 +463,36 @@ library UsdnProtocolActionsUtilsLibrary {
      * @notice Performs the initiateClosePosition eip712 delegation signature verification
      * @dev Reverts if the function arguments don't match those included in the signature
      * and if the signer isn't the owner of the position
-     * @param posIdHash The position id hashed with `keccak256(abi.encode(posId))`
-     * @param amountToClose The amount of collateral to remove from the position's amount
-     * @param userMinPrice The minimum price at which the position can be closed
-     * @param to The address that will receive the assets
-     * @param deadline The deadline by which the position can be closed
+     * @param s The storage of the protocol
      * @param positionOwner The position owner
-     * @param nonce The user nonce
-     * @param delegationSignature The eip712 initiateClosePosition delegation signature
-     * @param domainSeparatorV4 The domain separator v4
+     * @param params The parameters for the _prepareClosePositionData function
      */
     function _verifyInitiateCloseDelegation(
-        bytes32 posIdHash,
-        uint128 amountToClose,
-        uint256 userMinPrice,
-        address to,
-        uint256 deadline,
+        Types.Storage storage s,
         address positionOwner,
-        uint256 nonce,
-        bytes calldata delegationSignature,
-        bytes32 domainSeparatorV4
-    ) internal view {
+        Types.PrepareInitiateClosePositionParams calldata params
+    ) internal {
         bytes32 digest = MessageHashUtils.toTypedDataHash(
-            domainSeparatorV4,
+            params.domainSeparatorV4,
             keccak256(
                 abi.encode(
                     INITIATE_CLOSE_TYPEHASH,
-                    posIdHash,
-                    amountToClose,
-                    userMinPrice,
-                    to,
-                    deadline,
+                    keccak256(abi.encode(params.posId)),
+                    params.amountToClose,
+                    params.userMinPrice,
+                    params.to,
+                    params.deadline,
                     positionOwner,
                     msg.sender,
-                    nonce
+                    s._nonce[positionOwner]
                 )
             )
         );
 
-        if (ECDSA.recover(digest, delegationSignature) != positionOwner) {
+        if (ECDSA.recover(digest, params.delegationSignature) != positionOwner) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidDelegation();
         }
+
+        s._nonce[positionOwner] += 1;
     }
 }
