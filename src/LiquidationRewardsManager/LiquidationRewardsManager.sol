@@ -183,7 +183,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, Ownable2Step {
      * @param liquidatedTicks Information about the liquidated ticks
      * @param currentPrice The current price of the asset
      * @param multiplier The bonus multiplier
-     * @return bonus_ The bonus for liquidated all the ticks (in native currency, will be converted to wstETH)
+     * @return bonus_ The bonus for liquidating all the ticks (in _wstEth)
      */
     function _calcPositionSizeBonus(
         Types.LiqTickInfo[] calldata liquidatedTicks,
