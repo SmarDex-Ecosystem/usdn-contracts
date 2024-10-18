@@ -110,7 +110,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
         uint256 deadline,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData,
-        bytes memory delegationSignature
+        bytes calldata delegationSignature
     ) external payable returns (bool success_);
 
     /**
