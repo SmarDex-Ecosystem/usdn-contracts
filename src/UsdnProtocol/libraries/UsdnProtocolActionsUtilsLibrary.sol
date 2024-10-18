@@ -27,7 +27,11 @@ library UsdnProtocolActionsUtilsLibrary {
     using SafeCast for uint256;
     using SignedMath for int256;
 
-    /// @notice The eip712 initiateClosePosition typehash
+    /**
+     * @notice The eip712 initiateClosePosition typehash
+     * @dev By including this hash into the EIP712 message for this domain, this can be used together with
+     * {ECDSA-recover} to obtain the signer of a message
+     */
     bytes32 internal constant INITIATE_CLOSE_TYPEHASH = keccak256(
         "InitiateClosePositionDelegation(bytes32 posIdHash,uint128 amountToClose,uint256 userMinPrice,address to,uint256 deadline,address positionOwner,address positionCloser,uint256 nonce)"
     );
@@ -473,8 +477,8 @@ library UsdnProtocolActionsUtilsLibrary {
 
     /**
      * @notice Performs the initiateClosePosition eip712 delegation signature verification
-     * @dev Reverts if the function arguments doesn't match those included into the signature
-     * and if signer isn't the position owner
+     * @dev Reverts if the function arguments don't match those included in the signature
+     * and if the signer isn't the owner of the position
      * @param posIdHash The position id hashed with `keccak256(abi.encode(posId))`
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param userMinPrice The minimum price at which the position can be closed

@@ -467,6 +467,4 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         bytes memory delegationSignature,
         bytes32 domainSeparatorV4
     ) external view;
-
-    function i_domainSeparatorV4() external view returns (bytes32);
 }

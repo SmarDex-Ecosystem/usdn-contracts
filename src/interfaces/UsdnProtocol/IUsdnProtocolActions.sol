@@ -97,8 +97,8 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * @param deadline The deadline of the close position to be initiated
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions
-     * @param delegationSignature The eip712 initiateClosePosition delegation signature
-     * Should be encoded with `abi.encodePacked(r, s, v)` for delegation otherwise should be empty
+     * @param delegationSignature An optional eip712 signature to provide when closing a position on the owner's behalf
+     * If used, it needs to be encoded with `abi.encodePacked(r, s, v)`
      * @return success_ Whether the closing was initiated
      */
     function initiateClosePosition(

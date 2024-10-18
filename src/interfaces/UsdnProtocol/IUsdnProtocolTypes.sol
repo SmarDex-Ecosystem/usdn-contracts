@@ -340,7 +340,8 @@ interface IUsdnProtocolTypes {
      * @param userMinPrice The minimum price at which the position can be closed
      * @param deadline The deadline until the position can be closed
      * @param currentPriceData The current price data
-     * @param delegationSignature The eip712 delegation signature
+     * @param delegationSignature An EIP712 signature that proves the caller is authorized by the owner of the position
+     * to close it on its behalf
      * @param domainSeparatorV4 The domain separator v4
      */
     struct PrepareInitiateClosePositionParams {
