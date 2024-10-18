@@ -909,7 +909,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             type(uint256).max,
             abi.encode(params.initialPrice),
             EMPTY_PREVIOUS_DATA,
-            _getDelegationSignature(pk, protocol.i_domainSeparatorV4(), delegation)
+            _getDelegationSignature(pk, protocol.domainSeparatorV4(), delegation)
         );
 
         assertTrue(success, "success");

@@ -830,8 +830,4 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
             domainSeparatorV4
         );
     }
-
-    function i_domainSeparatorV4() external view returns (bytes32) {
-        return _domainSeparatorV4();
-    }
 }

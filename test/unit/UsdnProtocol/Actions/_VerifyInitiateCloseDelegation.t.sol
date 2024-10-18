@@ -32,7 +32,7 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
             121
         );
 
-        domainSeparatorV4 = protocol.i_domainSeparatorV4();
+        domainSeparatorV4 = protocol.domainSeparatorV4();
         delegationSignature = _getDelegationSignature(POSITION_OWNER_PK, domainSeparatorV4, delegation);
     }
 
