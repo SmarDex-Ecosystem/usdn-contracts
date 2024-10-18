@@ -398,25 +398,7 @@ library UsdnProtocolActionsUtilsLibrary {
         if (params.validator == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressValidator();
         }
-        if (msg.sender != pos.user) {
-            if (params.delegationSignature.length == 0) {
-                revert IUsdnProtocolErrors.UsdnProtocolUnauthorized();
-            } else {
-                _verifyInitiateCloseDelegation(
-                    keccak256(abi.encode(params.posId)),
-                    params.amountToClose,
-                    params.userMinPrice,
-                    params.to,
-                    params.deadline,
-                    pos.user,
-                    s._nonce[pos.user],
-                    params.delegationSignature,
-                    params.domainSeparatorV4
-                );
 
-                isDelegation_ = true;
-            }
-        }
         if (!pos.validated) {
             revert IUsdnProtocolErrors.UsdnProtocolPositionNotValidated();
         }
@@ -442,6 +424,26 @@ library UsdnProtocolActionsUtilsLibrary {
                 }
             } else {
                 revert IUsdnProtocolErrors.UsdnProtocolLongPositionTooSmall();
+            }
+        }
+
+        if (msg.sender != pos.user) {
+            if (params.delegationSignature.length == 0) {
+                revert IUsdnProtocolErrors.UsdnProtocolUnauthorized();
+            } else {
+                _verifyInitiateCloseDelegation(
+                    keccak256(abi.encode(params.posId)),
+                    params.amountToClose,
+                    params.userMinPrice,
+                    params.to,
+                    params.deadline,
+                    pos.user,
+                    s._nonce[pos.user],
+                    params.delegationSignature,
+                    params.domainSeparatorV4
+                );
+
+                isDelegation_ = true;
             }
         }
     }
