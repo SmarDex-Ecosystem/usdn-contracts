@@ -168,7 +168,7 @@ library UsdnProtocolActionsUtilsLibrary {
                 s,
                 Types.ProtocolAction.InitiateClosePosition,
                 block.timestamp,
-                Utils._calcActionId(msg.sender, uint128(block.timestamp)),
+                Utils._calcActionId(params.validator, uint128(block.timestamp)),
                 params.currentPriceData
             );
 
@@ -398,7 +398,6 @@ library UsdnProtocolActionsUtilsLibrary {
         if (params.validator == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressValidator();
         }
-
         if (!pos.validated) {
             revert IUsdnProtocolErrors.UsdnProtocolPositionNotValidated();
         }
