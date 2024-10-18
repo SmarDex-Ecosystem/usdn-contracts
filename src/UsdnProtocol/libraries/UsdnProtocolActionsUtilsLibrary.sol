@@ -490,7 +490,7 @@ library UsdnProtocolActionsUtilsLibrary {
         );
 
         if (ECDSA.recover(digest, params.delegationSignature) != positionOwner) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidDelegation();
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidDelegationSignature();
         }
 
         s._nonce[positionOwner] += 1;

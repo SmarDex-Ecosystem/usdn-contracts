@@ -69,10 +69,10 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
      * @custom:scenario Verify a {initiateClosePosition} delegation signature by the owner with a compromised value
      * @custom:given A signed delegation by the position owner
      * @custom:when The function _verifyInitiateCloseDelegation is called with a compromised value
-     * @custom:then The transaction should revert with `UsdnProtocolInvalidDelegation`
+     * @custom:then The transaction should revert with `UsdnProtocolInvalidDelegationSignature`
      */
     function test_revertWhen_verifyInitiateCloseDelegationChangeParam() public {
-        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidDelegation.selector);
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidDelegationSignature.selector);
         protocol.i_verifyInitiateCloseDelegation(
             delegation.positionOwner,
             PrepareInitiateClosePositionParams(
@@ -93,12 +93,12 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
      * @custom:scenario Verify a {initiateClosePosition} delegation signature by an attacker
      * @custom:given A signed delegation by an attacker
      * @custom:when The function _verifyInitiateCloseDelegation is called with correct values
-     * @custom:then The transaction should revert with `UsdnProtocolInvalidDelegation`
+     * @custom:then The transaction should revert with `UsdnProtocolInvalidDelegationSignature`
      */
     function test_revertWhen_verifyInitiateCloseDelegationAttackerSignature() public {
         delegationSignature = _getDelegationSignature(ATTACKER_PK, domainSeparatorV4, delegation);
 
-        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidDelegation.selector);
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidDelegationSignature.selector);
         protocol.i_verifyInitiateCloseDelegation(
             delegation.positionOwner,
             PrepareInitiateClosePositionParams(
