@@ -47,15 +47,7 @@ contract TestUsdnProtocolActionsPrepareClosePositionData is UsdnProtocolBaseFixt
     function test_prepareClosePositionData() public {
         (ClosePositionData memory data, bool liquidated) = protocol.i_prepareClosePositionData(
             PrepareInitiateClosePositionParams(
-                address(this),
-                address(this),
-                posId,
-                POSITION_AMOUNT,
-                0,
-                type(uint256).max,
-                currentPriceData,
-                "",
-                bytes32("")
+                address(this), address(this), posId, POSITION_AMOUNT, 0, type(uint256).max, currentPriceData, "", ""
             )
         );
 
@@ -76,15 +68,7 @@ contract TestUsdnProtocolActionsPrepareClosePositionData is UsdnProtocolBaseFixt
         currentPriceData = abi.encode(liqPrice);
         (ClosePositionData memory data, bool liquidated) = protocol.i_prepareClosePositionData(
             PrepareInitiateClosePositionParams(
-                address(this),
-                address(this),
-                posId,
-                POSITION_AMOUNT,
-                0,
-                type(uint256).max,
-                currentPriceData,
-                "",
-                bytes32("")
+                address(this), address(this), posId, POSITION_AMOUNT, 0, type(uint256).max, currentPriceData, "", ""
             )
         );
 
@@ -125,15 +109,7 @@ contract TestUsdnProtocolActionsPrepareClosePositionData is UsdnProtocolBaseFixt
 
         (ClosePositionData memory data, bool liquidated) = protocol.i_prepareClosePositionData(
             PrepareInitiateClosePositionParams(
-                address(this),
-                address(this),
-                posId,
-                POSITION_AMOUNT,
-                0,
-                type(uint256).max,
-                currentPriceData,
-                "",
-                bytes32("")
+                address(this), address(this), posId, POSITION_AMOUNT, 0, type(uint256).max, currentPriceData, "", ""
             )
         );
 

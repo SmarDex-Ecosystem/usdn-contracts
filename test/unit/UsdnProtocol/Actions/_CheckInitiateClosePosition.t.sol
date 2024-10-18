@@ -36,7 +36,7 @@ contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture, 
         );
         (pos,) = protocol.getLongPosition(posId);
         prepareParams = IUsdnProtocolTypes.PrepareInitiateClosePositionParams(
-            USER_1, USER_2, posId, AMOUNT, 0, type(uint256).max, "", "", bytes32("")
+            USER_1, USER_2, posId, AMOUNT, 0, type(uint256).max, "", "", ""
         );
     }
 

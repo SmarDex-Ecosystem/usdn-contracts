@@ -66,7 +66,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
                 amountToClose: amountToClose,
                 userMinPrice: DISABLE_MIN_PRICE,
                 securityDepositValue: 0,
-                domainSeparatorV4: bytes32("")
+                domainSeparatorV4: ""
             }),
             priceData,
             ""
@@ -104,7 +104,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
                 amountToClose: amountToClose,
                 userMinPrice: DISABLE_MIN_PRICE,
                 securityDepositValue: 0,
-                domainSeparatorV4: bytes32("")
+                domainSeparatorV4: ""
             }),
             priceData,
             ""
@@ -129,7 +129,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
                 amountToClose: POSITION_AMOUNT,
                 userMinPrice: DISABLE_MIN_PRICE,
                 securityDepositValue: 0,
-                domainSeparatorV4: bytes32("")
+                domainSeparatorV4: ""
             }),
             priceData,
             ""
@@ -154,7 +154,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
                 amountToClose: POSITION_AMOUNT,
                 userMinPrice: DISABLE_MIN_PRICE,
                 securityDepositValue: 0,
-                domainSeparatorV4: bytes32("")
+                domainSeparatorV4: ""
             }),
             priceData,
             ""
@@ -180,7 +180,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
                 amountToClose: 0,
                 userMinPrice: DISABLE_MIN_PRICE,
                 securityDepositValue: 0,
-                domainSeparatorV4: bytes32("")
+                domainSeparatorV4: ""
             }),
             priceData,
             ""
@@ -218,7 +218,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
                 amountToClose: POSITION_AMOUNT / 2,
                 userMinPrice: DISABLE_MIN_PRICE,
                 securityDepositValue: 0,
-                domainSeparatorV4: bytes32("")
+                domainSeparatorV4: ""
             }),
             priceData,
             ""
@@ -598,7 +598,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
                 amountToClose: amountToClose,
                 userMinPrice: DISABLE_MIN_PRICE,
                 securityDepositValue: 0,
-                domainSeparatorV4: bytes32("")
+                domainSeparatorV4: ""
             }),
             abi.encode(params.initialPrice),
             ""
