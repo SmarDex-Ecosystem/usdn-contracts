@@ -28,15 +28,6 @@ library UsdnProtocolActionsUtilsLibrary {
     using SignedMath for int256;
 
     /**
-     * @notice The eip712 initiateClosePosition typehash
-     * @dev By including this hash into the EIP712 message for this domain, this can be used together with
-     * {ECDSA-recover} to obtain the signer of a message
-     */
-    bytes32 internal constant INITIATE_CLOSE_TYPEHASH = keccak256(
-        "InitiateClosePositionDelegation(bytes32 posIdHash,uint128 amountToClose,uint256 userMinPrice,address to,uint256 deadline,address positionOwner,address positionCloser,uint256 nonce)"
-    );
-
-    /**
      * @notice Data structure for the transient state of the `_validateMultipleActionable` function
      * @param pending The candidate pending action to validate
      * @param frontRawIndex The raw index of the front of the queue
@@ -51,6 +42,15 @@ library UsdnProtocolActionsUtilsLibrary {
         bool executed;
         bool liq;
     }
+
+    /**
+     * @notice The eip712 initiateClosePosition typehash
+     * @dev By including this hash into the EIP712 message for this domain, this can be used together with
+     * {ECDSA-recover} to obtain the signer of a message
+     */
+    bytes32 public constant INITIATE_CLOSE_TYPEHASH = keccak256(
+        "InitiateClosePositionDelegation(bytes32 posIdHash,uint128 amountToClose,uint256 userMinPrice,address to,uint256 deadline,address positionOwner,address positionCloser,uint256 nonce)"
+    );
 
     /* -------------------------------------------------------------------------- */
     /*                             External functions                             */
