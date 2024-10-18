@@ -111,7 +111,7 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
 
         uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
 
-        data.liqRewards = calcRewards(int256(uint256(data.remainingCollateral)), wstEthPrice);
+        data.liqRewards = _calcRewards(int256(uint256(data.remainingCollateral)), wstEthPrice);
 
         _expectEmits(wstEthPrice, amountInRebalancer, data.bonus, liqPriceWithoutPenalty, expectedTick, 1);
         protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA);
@@ -225,7 +225,7 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
      * @param remainingCollateral The remaining collateral after the liquidation
      * @param wstEthPrice The price of the asset
      */
-    function calcRewards(int256 remainingCollateral, uint128 wstEthPrice) public view returns (uint256 rewards_) {
+    function _calcRewards(int256 remainingCollateral, uint128 wstEthPrice) internal view returns (uint256 rewards_) {
         uint256 tradingExpoWithFunding = protocol.longTradingExpoWithFunding(wstEthPrice, uint40(block.timestamp));
         uint128 tickPrice = protocol.getEffectivePriceForTick(
             posToLiquidate.tick, wstEthPrice, tradingExpoWithFunding, protocol.getLiqMultiplierAccumulator()

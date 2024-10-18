@@ -527,7 +527,11 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     }
 
     /// @inheritdoc IBaseRebalancer
-    function updatePosition(Types.PositionId calldata newPosId, uint128 previousPosValue) external onlyProtocol {
+    function updatePosition(Types.PositionId calldata newPosId, uint128 previousPosValue)
+        external
+        onlyProtocol
+        nonReentrant
+    {
         uint128 positionVersion = _positionVersion;
         PositionData memory previousPositionData = _positionData[positionVersion];
         // set the multiplier accumulator to 1 by default

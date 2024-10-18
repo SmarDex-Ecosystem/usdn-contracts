@@ -178,45 +178,48 @@ library UsdnProtocolActionsUtilsLibrary {
                 params.currentPriceData
             );
 
-            data_.lastPrice = s._lastPrice;
-            if (data_.lastPrice < params.userMinPrice) {
-                revert IUsdnProtocolErrors.UsdnProtocolSlippageMinPriceExceeded();
-            }
-
             uint256 version = s._tickVersion[params.posId.tick];
             if (version != params.posId.tickVersion) {
                 // the current tick version doesn't match the version from the position,
                 // that means that the position has been liquidated in this transaction
                 return (data_, true);
             }
+
+            if (data_.isLiquidationPending) {
+                return (data_, false);
+            }
+
+            data_.lastPrice = s._lastPrice;
+            // add the position fee
+            uint256 adjustedPrice =
+                (data_.lastPrice - data_.lastPrice * s._positionFeeBps / Constants.BPS_DIVISOR).toUint128();
+            if (adjustedPrice < params.userMinPrice) {
+                revert IUsdnProtocolErrors.UsdnProtocolSlippageMinPriceExceeded();
+            }
+
+            data_.totalExpoToClose =
+                (uint256(data_.pos.totalExpo) * params.amountToClose / data_.pos.amount).toUint128();
+            data_.longTradingExpo = Core.longTradingExpoWithFunding(s, data_.lastPrice, uint128(block.timestamp));
+            data_.liqMulAcc = s._liqMultiplierAccumulator;
+
+            // the approximate value position to remove is calculated with `_lastPrice`, so not taking into account
+            // any fees. This way, the removal of the position doesn't affect the liquidation multiplier calculations
+
+            // to have maximum precision, we do not pre-compute the liquidation multiplier with a fixed
+            // precision just now, we will store it in the pending action later, to be used in the validate action
+            int24 tick = Utils.calcTickWithoutPenalty(params.posId.tick, data_.liquidationPenalty);
+            uint128 liqPriceWithoutPenalty =
+                Utils.getEffectivePriceForTick(tick, data_.lastPrice, data_.longTradingExpo, data_.liqMulAcc);
+
+            uint256 balanceLong = s._balanceLong;
+
+            data_.tempPositionValue =
+                _assetToRemove(balanceLong, data_.lastPrice, liqPriceWithoutPenalty, data_.totalExpoToClose);
+
+            // we perform the imbalance check with the full position value subtracted from the long side, which is
+            // representative of the state of the balances after this initiate action
+            _checkImbalanceLimitClose(s, data_.totalExpoToClose, data_.tempPositionValue);
         }
-
-        if (data_.isLiquidationPending) {
-            return (data_, false);
-        }
-
-        data_.totalExpoToClose = (uint256(data_.pos.totalExpo) * params.amountToClose / data_.pos.amount).toUint128();
-
-        data_.longTradingExpo = Core.longTradingExpoWithFunding(s, data_.lastPrice, uint128(block.timestamp));
-        data_.liqMulAcc = s._liqMultiplierAccumulator;
-
-        // the approximate value position to remove is calculated with `_lastPrice`, so not taking into account
-        // any fees. This way, the removal of the position doesn't affect the liquidation multiplier calculations
-
-        // to have maximum precision, we do not pre-compute the liquidation multiplier with a fixed
-        // precision just now, we will store it in the pending action later, to be used in the validate action
-        int24 tick = Utils.calcTickWithoutPenalty(params.posId.tick, data_.liquidationPenalty);
-        uint128 liqPriceWithoutPenalty =
-            Utils.getEffectivePriceForTick(tick, data_.lastPrice, data_.longTradingExpo, data_.liqMulAcc);
-
-        uint256 balanceLong = s._balanceLong;
-
-        data_.tempPositionValue =
-            _assetToRemove(balanceLong, data_.lastPrice, liqPriceWithoutPenalty, data_.totalExpoToClose);
-
-        // we perform the imbalance check with the full position value subtracted from the long side, which is
-        // representative of the state of the balances after this initiate action
-        _checkImbalanceLimitClose(s, data_.totalExpoToClose, data_.tempPositionValue);
     }
 
     /**

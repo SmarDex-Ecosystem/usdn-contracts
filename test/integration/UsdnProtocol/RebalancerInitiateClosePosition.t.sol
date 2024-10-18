@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { MOCK_PYTH_DATA } from "../../unit/Middlewares/utils/Constants.sol";
@@ -336,6 +337,87 @@ contract TestRebalancerInitiateClosePosition is
         // try to withdraw from the rebalancer again
         vm.expectRevert(IRebalancerErrors.RebalancerUserLiquidated.selector);
         rebalancer.initiateClosePosition{ value: securityDeposit + 1 ether }(
+            amountInRebalancer, address(this), DISABLE_MIN_PRICE, type(uint256).max, MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA
+        );
+    }
+
+    /**
+     * @custom:scenario The imbalance is high enough so that the rebalancer is triggered during the liquidations inside
+     * a rebalancer's initiateClosePosition call
+     * @custom:given The rebalancer has been triggered once already and has an open position
+     * @custom:and An imbalance high enough after a liquidation to trigger the rebalancer
+     * @custom:when A user calls initiateClosePosition from the rebalancer
+     * @custom:then The call reverts with a InitializableReentrancyGuardReentrantCall
+     */
+    function test_RevertWhen_rebalancerTriggerDuringInitClose() public {
+        vm.prank(SET_PROTOCOL_PARAMS_MANAGER);
+        protocol.setExpoImbalanceLimits(0, 0, 0, 350, 0, 0);
+
+        // deposit assets in the protocol to imbalance it
+        uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.ValidateDeposit);
+        uint256 securityDeposit = protocol.getSecurityDepositValue();
+        protocol.initiateDeposit{ value: securityDeposit }(
+            100 ether,
+            DISABLE_SHARES_OUT_MIN,
+            payable(address(this)),
+            payable(address(this)),
+            type(uint256).max,
+            "",
+            EMPTY_PREVIOUS_DATA
+        );
+
+        _waitDelay();
+
+        mockPyth.setLastPublishTime(block.timestamp - 1);
+
+        protocol.validateDeposit{ value: oracleFee }(payable(address(this)), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
+
+        // open a position on the same tick as the rebalancer to avoid an underflow in case of regression
+        (, PositionId memory tempPosId) = protocol.initiateOpenPosition{ value: securityDeposit }(
+            protocolPosition.amount * 2, // put enough fund to avoid an underflow
+            protocol.getEffectivePriceForTick(prevPosId.tick) + 10, // + 10 is enough to compensate the rounding down
+            type(uint128).max,
+            protocol.getMaxLeverage(),
+            payable(address(this)),
+            payable(address(this)),
+            type(uint256).max,
+            "",
+            EMPTY_PREVIOUS_DATA
+        );
+
+        assertEq(prevPosId.tick, tempPosId.tick, "The opened position should be on the same tick as the rebalancer");
+
+        _waitDelay();
+        oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.ValidateOpenPosition);
+        protocol.validateOpenPosition{ value: oracleFee }(payable(address(this)), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
+
+        // open a position to liquidate and trigger the rebalancer
+        // put a high price to avoid liquidating other ticks later
+        _setOraclePrices(2000 ether);
+        (bool success,) = protocol.initiateOpenPosition{ value: securityDeposit }(
+            2 ether,
+            1750 ether,
+            type(uint128).max,
+            protocol.getMaxLeverage(),
+            payable(address(this)),
+            payable(address(this)),
+            type(uint256).max,
+            "",
+            EMPTY_PREVIOUS_DATA
+        );
+
+        assertTrue(success, "Position should have been opened");
+
+        _waitDelay();
+        protocol.validateOpenPosition{ value: oracleFee }(payable(address(this)), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
+
+        skip(5 minutes);
+
+        // set a price that liquidates the previously opened position
+        _setOraclePrices(1700 ether);
+
+        vm.expectRevert(ReentrancyGuard.ReentrancyGuardReentrantCall.selector);
+        rebalancer.initiateClosePosition{ value: securityDeposit + oracleFee }(
             amountInRebalancer, address(this), DISABLE_MIN_PRICE, type(uint256).max, MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA
         );
     }

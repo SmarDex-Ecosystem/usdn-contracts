@@ -57,6 +57,51 @@ contract TestUsdnProtocolActionsPrepareClosePositionData is UsdnProtocolBaseFixt
     }
 
     /**
+     * @custom:scenario _prepareClosePositionData is called with a min price above the price with position fees
+     * @custom:given position fees at 1%
+     * @custom:when _prepareClosePositionData is called with a min price 1 wei above the price with fees
+     * @custom:then The call revert with a UsdnProtocolSlippageMinPriceExceeded error
+     * @custom:when _prepareClosePositionData is called with a min price equal to the price with fees
+     * @custom:then The call should not revert
+     */
+    function test_RevertWhen_prepareClosePositionDataWithPriceBelowMinPrice() public {
+        vm.prank(ADMIN);
+        protocol.setPositionFeeBps(100);
+
+        // the price including the position fees should be used for the slippage check
+        uint256 adjustedPrice = params.initialPrice - params.initialPrice * 100 / BPS_DIVISOR;
+        vm.expectRevert(UsdnProtocolSlippageMinPriceExceeded.selector);
+        protocol.i_prepareClosePositionData(
+            PrepareInitiateClosePositionParams(
+                address(this),
+                address(this),
+                posId,
+                POSITION_AMOUNT,
+                adjustedPrice + 1,
+                type(uint256).max,
+                currentPriceData,
+                "",
+                ""
+            )
+        );
+
+        // should not revert
+        protocol.i_prepareClosePositionData(
+            PrepareInitiateClosePositionParams(
+                address(this),
+                address(this),
+                posId,
+                POSITION_AMOUNT,
+                adjustedPrice,
+                type(uint256).max,
+                currentPriceData,
+                "",
+                ""
+            )
+        );
+    }
+
+    /**
      * @custom:scenario _prepareClosePositionData is called with a price that would liquidate the position
      * @custom:given A current price below the position's liquidation price
      * @custom:when _prepareClosePositionData is called
