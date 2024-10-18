@@ -217,6 +217,6 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the deadline of the action has been exceeded
     error UsdnProtocolDeadlineExceeded();
 
-    /// @dev Indicates that the delegation is invalid
+    /// @dev Indicates that the delegation is invalid (invalid signature or arguments mismatch)
     error UsdnProtocolInvalidDelegation();
 }
