@@ -67,6 +67,17 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         Flags flags;
     }
 
+    struct InitiateClosePositionDelegation {
+        bytes32 posIdHash;
+        uint128 amountToClose;
+        uint256 userMinPrice;
+        address to;
+        uint256 deadline;
+        address positionOwner;
+        address positionCloser;
+        uint256 nonce;
+    }
+
     SetUpParams public params;
     SetUpParams public DEFAULT_PARAMS = SetUpParams({
         initialDeposit: 0, // 0 = auto-calculate to reach equilibrium

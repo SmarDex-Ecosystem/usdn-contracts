@@ -545,29 +545,6 @@ interface IUsdnProtocolTypes {
     }
 
     /**
-     * @notice Structure of the eip712 delegated `initiateClosePosition`
-     * @param posIdHash The encoded position id
-     * encoded with `keccak256(abi.encode(posId))`
-     * @param amountToClose The amount to close
-     * @param userMinPrice The minimum price at which the position can be closed
-     * @param to The address that will receive the closed amount
-     * @param deadline The deadline of the close position to be initiated
-     * @param positionOwner The position owner
-     * @param positionCloser The allowed position closer
-     * @param nonce The current user nonce
-     */
-    struct InitiateClosePositionDelegation {
-        bytes32 posIdHash;
-        uint128 amountToClose;
-        uint256 userMinPrice;
-        address to;
-        uint256 deadline;
-        address positionOwner;
-        address positionCloser;
-        uint256 nonce;
-    }
-
-    /**
      * @notice Structure to hold the state of the protocol
      * @param _tickSpacing The liquidation tick spacing for storing long positions
      * @dev A tick spacing of 1 is equivalent to a 0.01% increase in liquidation price between ticks. A tick spacing of
