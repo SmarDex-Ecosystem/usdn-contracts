@@ -4,6 +4,19 @@ pragma solidity 0.8.26;
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
+import { LiquidationRewardsManager } from "../../../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
+import { Usdn } from "../../../../src/Usdn/Usdn.sol";
+import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
+import { UsdnProtocolActionsUtilsLibrary as ActionUtils } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsUtilsLibrary.sol";
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
+import { UsdnProtocolUtilsLibrary as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
+import { UsdnProtocolVaultLibrary as Vault } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
+import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
+import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
+import { FeeCollector } from "../../../../src/utils/FeeCollector.sol";
 import {
     ADMIN,
     CRITICAL_FUNCTIONS_MANAGER,
@@ -24,19 +37,6 @@ import { WstETH } from "../../../utils/WstEth.sol";
 import { RebalancerHandler } from "../../Rebalancer/utils/Handler.sol";
 import { UsdnProtocolHandler } from "./Handler.sol";
 import { MockOracleMiddleware } from "./MockOracleMiddleware.sol";
-
-import { LiquidationRewardsManager } from "../../../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
-import { Usdn } from "../../../../src/Usdn/Usdn.sol";
-import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
-
-import { UsdnProtocolActionsUtilsLibrary as ActionUtils } from
-    "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsUtilsLibrary.sol";
-import { UsdnProtocolUtilsLibrary as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
-import { UsdnProtocolVaultLibrary as Vault } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
-import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
-import { FeeCollector } from "../../../../src/utils/FeeCollector.sol";
 
 /**
  * @title UsdnProtocolBaseFixture
@@ -65,17 +65,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         uint256 initialBlock;
         string eip712Version;
         Flags flags;
-    }
-
-    struct InitiateClosePositionDelegation {
-        bytes32 posIdHash;
-        uint128 amountToClose;
-        uint256 userMinPrice;
-        address to;
-        uint256 deadline;
-        address positionOwner;
-        address positionCloser;
-        uint256 nonce;
     }
 
     SetUpParams public params;
@@ -107,6 +96,17 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         uint128 positionSize;
         uint128 desiredLiqPrice;
         uint256 price;
+    }
+
+    struct InitiateClosePositionDelegation {
+        bytes32 posIdHash;
+        uint128 amountToClose;
+        uint256 userMinPrice;
+        address to;
+        uint256 deadline;
+        address positionOwner;
+        address positionCloser;
+        uint256 nonce;
     }
 
     Usdn public usdn;
@@ -541,7 +541,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             domainSeparator,
             keccak256(
                 abi.encode(
-                    ActionUtils.INITIATE_CLOSE_TYPEHASH,
+                    Constants.INITIATE_CLOSE_TYPEHASH,
                     delegationToSign.posIdHash,
                     delegationToSign.amountToClose,
                     delegationToSign.userMinPrice,

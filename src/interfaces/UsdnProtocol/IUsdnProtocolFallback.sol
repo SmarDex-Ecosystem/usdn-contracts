@@ -592,6 +592,12 @@ interface IUsdnProtocolFallback {
      */
     function domainSeparatorV4() external view returns (bytes32);
 
+    /**
+     * @notice Get The EIP712 {initiateClosePosition} typehash
+     * @return The {initiateClosePosition} typehash
+     */
+    function getInitiateCloseTypehash() external pure returns (bytes32);
+
     /* -------------------------------------------------------------------------- */
     /*                                   Setters                                  */
     /* -------------------------------------------------------------------------- */

@@ -27,4 +27,13 @@ library UsdnProtocolConstantsLibrary {
     // After some checks, 1% would mean a user with a position with 10x leverage needs the price to 900x before it
     // limits the position's PnL. We think it's unlikely enough so we don't consider it a problem
     uint256 internal constant MIN_LONG_TRADING_EXPO_BPS = 100;
+
+    /**
+     * @notice The EIP712 {initiateClosePosition} typehash
+     * @dev By including this hash into the EIP712 message for this domain, this can be used together with
+     * {ECDSA-recover} to obtain the signer of a message
+     */
+    bytes32 internal constant INITIATE_CLOSE_TYPEHASH = keccak256(
+        "InitiateClosePositionDelegation(bytes32 posIdHash,uint128 amountToClose,uint256 userMinPrice,address to,uint256 deadline,address positionOwner,address positionCloser,uint256 nonce)"
+    );
 }

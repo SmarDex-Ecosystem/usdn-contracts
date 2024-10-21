@@ -481,6 +481,11 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
         return _domainSeparatorV4();
     }
 
+    /// @inheritdoc IUsdnProtocolFallback
+    function getInitiateCloseTypehash() external pure returns (bytes32) {
+        return Constants.INITIATE_CLOSE_TYPEHASH;
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                              SET_EXTERNAL_ROLE                             */
     /* -------------------------------------------------------------------------- */

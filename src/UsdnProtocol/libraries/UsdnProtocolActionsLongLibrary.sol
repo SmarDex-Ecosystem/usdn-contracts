@@ -646,7 +646,7 @@ library UsdnProtocolActionsLongLibrary {
      * @param params The parameters for the close position initiation
      * @param currentPriceData The current price data
      * @param delegationSignature An EIP712 signature that proves the caller is authorized by the owner of the position
-     * to close it on its behalf
+     * to close it on their behalf
      * @return amountToRefund_ If there are pending liquidations we'll refund the `securityDepositValue`,
      * else we'll only refund the security deposit value of the stale pending action
      * @return isInitiated_ Whether the action is initiated

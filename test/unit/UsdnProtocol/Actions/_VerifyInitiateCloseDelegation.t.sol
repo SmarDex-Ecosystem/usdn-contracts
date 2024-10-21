@@ -7,7 +7,7 @@ import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
 /**
- * @custom:feature Test the _verifyInitiateCloseDelegation internal function
+ * @custom:feature Test the {_verifyInitiateCloseDelegation} internal function
  * @custom:given A initiated protocol
  */
 contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixture {
@@ -43,7 +43,7 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
     /**
      * @custom:scenario Verify a {initiateClosePosition} delegation signature by the owner with the correct values
      * @custom:given A signed delegation by the position owner
-     * @custom:when The function _verifyInitiateCloseDelegation is called with correct values
+     * @custom:when The function {_verifyInitiateCloseDelegation} is called with correct values
      * @custom:then The transaction should not revert
      */
     function test_verifyInitiateCloseDelegation() public {

@@ -43,15 +43,6 @@ library UsdnProtocolActionsUtilsLibrary {
         bool liq;
     }
 
-    /**
-     * @notice The eip712 initiateClosePosition typehash
-     * @dev By including this hash into the EIP712 message for this domain, this can be used together with
-     * {ECDSA-recover} to obtain the signer of a message
-     */
-    bytes32 public constant INITIATE_CLOSE_TYPEHASH = keccak256(
-        "InitiateClosePositionDelegation(bytes32 posIdHash,uint128 amountToClose,uint256 userMinPrice,address to,uint256 deadline,address positionOwner,address positionCloser,uint256 nonce)"
-    );
-
     /* -------------------------------------------------------------------------- */
     /*                             External functions                             */
     /* -------------------------------------------------------------------------- */
@@ -159,67 +150,64 @@ library UsdnProtocolActionsUtilsLibrary {
 
         _checkInitiateClosePosition(s, data_.pos, params);
 
-        {
-            PriceInfo memory currentPrice = Utils._getOraclePrice(
-                s,
-                Types.ProtocolAction.InitiateClosePosition,
-                block.timestamp,
-                Utils._calcActionId(params.validator, uint128(block.timestamp)),
-                params.currentPriceData
-            );
+        PriceInfo memory currentPrice = Utils._getOraclePrice(
+            s,
+            Types.ProtocolAction.InitiateClosePosition,
+            block.timestamp,
+            Utils._calcActionId(params.validator, uint128(block.timestamp)),
+            params.currentPriceData
+        );
 
-            (, data_.isLiquidationPending) = Long._applyPnlAndFundingAndLiquidate(
-                s,
-                currentPrice.neutralPrice,
-                currentPrice.timestamp,
-                s._liquidationIteration,
-                false,
-                Types.ProtocolAction.InitiateClosePosition,
-                params.currentPriceData
-            );
+        (, data_.isLiquidationPending) = Long._applyPnlAndFundingAndLiquidate(
+            s,
+            currentPrice.neutralPrice,
+            currentPrice.timestamp,
+            s._liquidationIteration,
+            false,
+            Types.ProtocolAction.InitiateClosePosition,
+            params.currentPriceData
+        );
 
-            uint256 version = s._tickVersion[params.posId.tick];
-            if (version != params.posId.tickVersion) {
-                // the current tick version doesn't match the version from the position,
-                // that means that the position has been liquidated in this transaction
-                return (data_, true);
-            }
-
-            if (data_.isLiquidationPending) {
-                return (data_, false);
-            }
-
-            data_.lastPrice = s._lastPrice;
-            // add the position fee
-            uint256 adjustedPrice =
-                (data_.lastPrice - data_.lastPrice * s._positionFeeBps / Constants.BPS_DIVISOR).toUint128();
-            if (adjustedPrice < params.userMinPrice) {
-                revert IUsdnProtocolErrors.UsdnProtocolSlippageMinPriceExceeded();
-            }
-
-            data_.totalExpoToClose =
-                (uint256(data_.pos.totalExpo) * params.amountToClose / data_.pos.amount).toUint128();
-            data_.longTradingExpo = Core.longTradingExpoWithFunding(s, data_.lastPrice, uint128(block.timestamp));
-            data_.liqMulAcc = s._liqMultiplierAccumulator;
-
-            // the approximate value position to remove is calculated with `_lastPrice`, so not taking into account
-            // any fees. This way, the removal of the position doesn't affect the liquidation multiplier calculations
-
-            // to have maximum precision, we do not pre-compute the liquidation multiplier with a fixed
-            // precision just now, we will store it in the pending action later, to be used in the validate action
-            int24 tick = Utils.calcTickWithoutPenalty(params.posId.tick, data_.liquidationPenalty);
-            uint128 liqPriceWithoutPenalty =
-                Utils.getEffectivePriceForTick(tick, data_.lastPrice, data_.longTradingExpo, data_.liqMulAcc);
-
-            uint256 balanceLong = s._balanceLong;
-
-            data_.tempPositionValue =
-                _assetToRemove(balanceLong, data_.lastPrice, liqPriceWithoutPenalty, data_.totalExpoToClose);
-
-            // we perform the imbalance check with the full position value subtracted from the long side, which is
-            // representative of the state of the balances after this initiate action
-            _checkImbalanceLimitClose(s, data_.totalExpoToClose, data_.tempPositionValue);
+        uint256 version = s._tickVersion[params.posId.tick];
+        if (version != params.posId.tickVersion) {
+            // the current tick version doesn't match the version from the position,
+            // that means that the position has been liquidated in this transaction
+            return (data_, true);
         }
+
+        if (data_.isLiquidationPending) {
+            return (data_, false);
+        }
+
+        data_.lastPrice = s._lastPrice;
+        // add the position fee
+        uint256 adjustedPrice =
+            (data_.lastPrice - data_.lastPrice * s._positionFeeBps / Constants.BPS_DIVISOR).toUint128();
+        if (adjustedPrice < params.userMinPrice) {
+            revert IUsdnProtocolErrors.UsdnProtocolSlippageMinPriceExceeded();
+        }
+
+        data_.totalExpoToClose = (uint256(data_.pos.totalExpo) * params.amountToClose / data_.pos.amount).toUint128();
+        data_.longTradingExpo = Core.longTradingExpoWithFunding(s, data_.lastPrice, uint128(block.timestamp));
+        data_.liqMulAcc = s._liqMultiplierAccumulator;
+
+        // the approximate value position to remove is calculated with `_lastPrice`, so not taking into account
+        // any fees. This way, the removal of the position doesn't affect the liquidation multiplier calculations
+
+        // to have maximum precision, we do not pre-compute the liquidation multiplier with a fixed
+        // precision just now, we will store it in the pending action later, to be used in the validate action
+        int24 tick = Utils.calcTickWithoutPenalty(params.posId.tick, data_.liquidationPenalty);
+        uint128 liqPriceWithoutPenalty =
+            Utils.getEffectivePriceForTick(tick, data_.lastPrice, data_.longTradingExpo, data_.liqMulAcc);
+
+        uint256 balanceLong = s._balanceLong;
+
+        data_.tempPositionValue =
+            _assetToRemove(balanceLong, data_.lastPrice, liqPriceWithoutPenalty, data_.totalExpoToClose);
+
+        // we perform the imbalance check with the full position value subtracted from the long side, which is
+        // representative of the state of the balances after this initiate action
+        _checkImbalanceLimitClose(s, data_.totalExpoToClose, data_.tempPositionValue);
     }
 
     /**
@@ -383,7 +371,7 @@ library UsdnProtocolActionsUtilsLibrary {
      * user, the amount to close is higher than the position amount, or the amount to close is zero
      * @param s The storage of the protocol
      * @param pos The position to close
-     * @param params The parameters for the _prepareClosePositionData function
+     * @param params The parameters for the {_prepareClosePositionData} function
      */
     function _checkInitiateClosePosition(
         Types.Storage storage s,
@@ -408,6 +396,14 @@ library UsdnProtocolActionsUtilsLibrary {
             );
         }
 
+        if (msg.sender != pos.user) {
+            if (params.delegationSignature.length == 0) {
+                revert IUsdnProtocolErrors.UsdnProtocolUnauthorized();
+            } else {
+                _verifyInitiateCloseDelegation(s, pos.user, params);
+            }
+        }
+
         // make sure the remaining position is higher than _minLongPosition
         // for the Rebalancer, we allow users to close their position fully in every case
         uint128 remainingAmount = pos.amount - params.amountToClose;
@@ -421,14 +417,6 @@ library UsdnProtocolActionsUtilsLibrary {
                 }
             } else {
                 revert IUsdnProtocolErrors.UsdnProtocolLongPositionTooSmall();
-            }
-        }
-
-        if (msg.sender != pos.user) {
-            if (params.delegationSignature.length == 0) {
-                revert IUsdnProtocolErrors.UsdnProtocolUnauthorized();
-            } else {
-                _verifyInitiateCloseDelegation(s, pos.user, params);
             }
         }
     }
@@ -463,12 +451,12 @@ library UsdnProtocolActionsUtilsLibrary {
     }
 
     /**
-     * @notice Performs the initiateClosePosition eip712 delegation signature verification
+     * @notice Performs the {initiateClosePosition} EIP712 delegation signature verification
      * @dev Reverts if the function arguments don't match those included in the signature
      * and if the signer isn't the owner of the position
      * @param s The storage of the protocol
      * @param positionOwner The position owner
-     * @param params The parameters for the _prepareClosePositionData function
+     * @param params The parameters for the {_prepareClosePositionData} function
      */
     function _verifyInitiateCloseDelegation(
         Types.Storage storage s,
@@ -479,7 +467,7 @@ library UsdnProtocolActionsUtilsLibrary {
             params.domainSeparatorV4,
             keccak256(
                 abi.encode(
-                    INITIATE_CLOSE_TYPEHASH,
+                    Constants.INITIATE_CLOSE_TYPEHASH,
                     keccak256(abi.encode(params.posId)),
                     params.amountToClose,
                     params.userMinPrice,

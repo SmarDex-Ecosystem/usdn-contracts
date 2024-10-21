@@ -341,7 +341,7 @@ interface IUsdnProtocolTypes {
      * @param deadline The deadline until the position can be closed
      * @param currentPriceData The current price data
      * @param delegationSignature An EIP712 signature that proves the caller is authorized by the owner of the position
-     * to close it on its behalf
+     * to close it on their behalf
      * @param domainSeparatorV4 The domain separator v4
      */
     struct PrepareInitiateClosePositionParams {
@@ -365,7 +365,7 @@ interface IUsdnProtocolTypes {
      * @param userMinPrice The minimum price at which the position can be closed
      * @param deadline The deadline of the close position to be initiated
      * @param securityDepositValue The value of the security deposit for the newly created pending action
-     * @param domainSeparatorV4 The domain separator v4
+     * @param domainSeparatorV4 The domain separator v4 for EIP712 signature
      */
     struct InitiateClosePositionParams {
         address to;
@@ -634,7 +634,7 @@ interface IUsdnProtocolTypes {
      * @param _totalLongPositions Cache of the total long positions count
      * @param _tickBitmap The bitmap used to quickly find populated ticks
      * @param _protocolFallbackAddr The address of the fallback contract
-     * @param _nonce The user eip712 nonce
+     * @param _nonce The user EIP712 nonce
      */
     struct Storage {
         // immutable
