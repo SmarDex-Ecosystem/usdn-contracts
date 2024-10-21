@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
@@ -47,7 +47,6 @@ contract MultiMinter is IMultiMinter, Ownable2Step {
         WSTETH = IWstETH(asset);
     }
 
-    // ensure compatibility with old impl.
     function mint(address adrs, uint256 amountSDEX, uint256 amountWSTETH) external onlyOwner {
         mint(adrs, amountSDEX, amountWSTETH, 0);
     }
