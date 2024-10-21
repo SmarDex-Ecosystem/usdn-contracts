@@ -15,12 +15,8 @@ contract DeployMultiMint is Script {
     function run() external returns (MultiMinter MultiMinter_) {
         address deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
         address lastMultiMintOwnerAddress = vm.envAddress("LAST_MULTIMINT_OWNER_ADDRESS");
-        uint64 nonceDeployer = vm.getNonce(deployerAddress);
-        uint64 nonce = vm.getNonce(lastMultiMintOwnerAddress);
 
         require(block.chainid == 11_155_111, "DeployMultiMint: allowed only on the test environment");
-        require(nonceDeployer == 0, "nonceDeployer must be 0");
-        require(nonce == 0, "nonce must be 0");
 
         vm.broadcast(deployerAddress);
 
