@@ -391,9 +391,7 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         }
     }
 
-    function adminFunctionsTest(uint256 functionSeed, uint256 seed1, uint256 seed2, uint256 seed3, uint256 seed4)
-        external
-    {
+    function adminFunctionsTest(uint256 functionSeed, uint256 seed1, uint256 seed2, int256 seed3) external {
         functionSeed %= 20;
         if (functionSeed == 0) {
             _setValidatorDeadlines(uint128(seed1), uint128(seed2));
@@ -421,10 +419,9 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
             _setSdexBurnOnDepositRatio(seed1);
         } else if (functionSeed == 12) {
             _setSecurityDepositValue(seed1);
+        } else if (functionSeed == 13) {
+            _setExpoImbalanceLimits(seed1, seed2, seed3);
         }
-        // else if (functionSeed == 13) {
-        //     _setExpoImbalanceLimits();
-        // }
         //  else if (functionSeed == 15) {
         //     this.setSafetyMarginBps();
         // } else if (functionSeed == 16) {
@@ -597,7 +594,7 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         vm.stopPrank();
     }
 
-    function _setExpoImbalanceLimits(uint256 seedParameter, uint256 seed) public {
+    function _setExpoImbalanceLimits(uint256 seedParameter, uint256 seed, int256 seedInt) public {
         int256 openExpoImbalanceLimitBps = this.getOpenExpoImbalanceLimitBps();
         int256 depositExpoImbalanceLimitBps = this.getDepositExpoImbalanceLimitBps();
         int256 withdrawalExpoImbalanceLimitBps = this.getWithdrawalExpoImbalanceLimitBps();
@@ -607,32 +604,34 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
 
         seedParameter %= 6;
         if (seedParameter == 0) {
-            if (openExpoImbalanceLimitBps != 0) {
-                if (withdrawalExpoImbalanceLimitBps == 0) {
-                    openExpoImbalanceLimitBps = int256(bound(seed, 300, Constants.BPS_DIVISOR));
-                } else {
-                    openExpoImbalanceLimitBps = int256(bound(seed, 300, uint256(withdrawalExpoImbalanceLimitBps)));
-                }
-            }
+            // change openExpoImbalanceLimitBps
+            // min = 3% and max = 100%
+            openExpoImbalanceLimitBps = int256(bound(seed, 300, Constants.BPS_DIVISOR));
         } else if (seedParameter == 1) {
-            if (depositExpoImbalanceLimitBps != 0) {
-                if (closeExpoImbalanceLimitBps == 0) {
-                    depositExpoImbalanceLimitBps = int256(bound(seed, 300, Constants.BPS_DIVISOR));
-                } else {
-                    depositExpoImbalanceLimitBps = int256(bound(seed, 300, uint256(closeExpoImbalanceLimitBps)));
-                }
-            }
+            // change depositExpoImbalanceLimitBps
+            // min = 3% and max = 100%
+            depositExpoImbalanceLimitBps = bound(int256(seed), 300, int256(Constants.BPS_DIVISOR));
         } else if (seedParameter == 2) {
-            if (withdrawalExpoImbalanceLimitBps != 0) {
-                withdrawalExpoImbalanceLimitBps =
-                    int256(bound(seed, uint256(openExpoImbalanceLimitBps), Constants.BPS_DIVISOR));
-            }
+            // change withdrawalExpoImbalanceLimitBps
+            // min = openExpoImbalanceLimitBps and max = 100%
+            withdrawalExpoImbalanceLimitBps =
+                int256(bound(seed, uint256(openExpoImbalanceLimitBps), Constants.BPS_DIVISOR));
         } else if (seedParameter == 3) {
-            if (closeExpoImbalanceLimitBps != 0) {
-                closeExpoImbalanceLimitBps =
-                    int256(bound(seed, uint256(depositExpoImbalanceLimitBps), Constants.BPS_DIVISOR));
-            }
-        } else if (seedParameter == 4) { } else if (seedParameter == 5) { }
+            // change closeExpoImbalanceLimitBps
+            // min = depositExpoImbalanceLimitBps and max = 100%
+            closeExpoImbalanceLimitBps =
+                int256(bound(seed, uint256(depositExpoImbalanceLimitBps), Constants.BPS_DIVISOR));
+        } else if (seedParameter == 4) {
+            // change rebalancerCloseExpoImbalanceLimitBps
+            // min = 3% and max = closeExpoImbalanceLimitBps
+            rebalancerCloseExpoImbalanceLimitBps = int256(bound(seed, 300, uint256(closeExpoImbalanceLimitBps)));
+        } else if (seedParameter == 5) {
+            // min = max(-50%,-withdrawalExpoImbalanceLimitBps) and max = closeExpoImbalanceLimitBps
+            int256 min = -500 > -withdrawalExpoImbalanceLimitBps ? -500 : -withdrawalExpoImbalanceLimitBps;
+            uint256 max = uint256(closeExpoImbalanceLimitBps);
+
+            longImbalanceTargetBps = bound(seedInt, min, closeExpoImbalanceLimitBps);
+        }
 
         vm.startPrank(msg.sender);
         this.setExpoImbalanceLimits(
