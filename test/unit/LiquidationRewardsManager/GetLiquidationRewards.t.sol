@@ -48,8 +48,10 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
      * UsdnProtocolActions.liquidate(bytes)
      */
     function test_getLiquidationRewardsFor1Tick() public view {
-        uint256 posBonus = (_singleLiquidatedTick[0].tickPrice - CURRENT_PRICE) * _singleLiquidatedTick[0].totalExpo
-            * 500 / (BPS_DIVISOR * CURRENT_PRICE);
+        uint256 posBonusWstEth = (_singleLiquidatedTick[0].tickPrice - CURRENT_PRICE)
+            * _singleLiquidatedTick[0].totalExpo * 500 / (BPS_DIVISOR * CURRENT_PRICE);
+
+        uint256 posBonus = wsteth.getStETHByWstETH(posBonusWstEth);
 
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(
             _singleLiquidatedTick, CURRENT_PRICE, false, Types.RebalancerAction.None, Types.ProtocolAction.None, "", ""
@@ -142,12 +144,14 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
             priceWithoutPenalty: 980 ether
         });
 
-        uint256 posBonus = (threeLiquidatedTicks[0].tickPrice - CURRENT_PRICE) * threeLiquidatedTicks[0].totalExpo * 500
+        uint256 posBonusWstEth = (threeLiquidatedTicks[0].tickPrice - CURRENT_PRICE) * threeLiquidatedTicks[0].totalExpo
+            * 500 / (BPS_DIVISOR * CURRENT_PRICE);
+        posBonusWstEth += (threeLiquidatedTicks[1].tickPrice - CURRENT_PRICE) * threeLiquidatedTicks[1].totalExpo * 500
             / (BPS_DIVISOR * CURRENT_PRICE);
-        posBonus += (threeLiquidatedTicks[1].tickPrice - CURRENT_PRICE) * threeLiquidatedTicks[1].totalExpo * 500
+        posBonusWstEth += (threeLiquidatedTicks[2].tickPrice - CURRENT_PRICE) * threeLiquidatedTicks[2].totalExpo * 500
             / (BPS_DIVISOR * CURRENT_PRICE);
-        posBonus += (threeLiquidatedTicks[2].tickPrice - CURRENT_PRICE) * threeLiquidatedTicks[2].totalExpo * 500
-            / (BPS_DIVISOR * CURRENT_PRICE);
+
+        uint256 posBonus = wsteth.getStETHByWstETH(posBonusWstEth);
 
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(
             threeLiquidatedTicks, CURRENT_PRICE, false, Types.RebalancerAction.None, Types.ProtocolAction.None, "", ""
@@ -235,8 +239,10 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
      */
     function test_getLiquidationRewardsUserPriorityFee() public {
         vm.txGasPrice(41 gwei); // 11 gwei priority fee
-        uint256 posBonus = (_singleLiquidatedTick[0].tickPrice - CURRENT_PRICE) * _singleLiquidatedTick[0].totalExpo
-            * 500 / (BPS_DIVISOR * CURRENT_PRICE);
+        uint256 posBonusWstEth = (_singleLiquidatedTick[0].tickPrice - CURRENT_PRICE)
+            * _singleLiquidatedTick[0].totalExpo * 500 / (BPS_DIVISOR * CURRENT_PRICE);
+
+        uint256 posBonus = wsteth.getStETHByWstETH(posBonusWstEth);
 
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(
             _singleLiquidatedTick, CURRENT_PRICE, false, Types.RebalancerAction.None, Types.ProtocolAction.None, "", ""
@@ -282,8 +288,10 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
      */
     function test_getLiquidationRewardsWithTxGasPrice() public {
         vm.txGasPrice(31 gwei); // priority fee 1 gwei
-        uint256 posBonus = (_singleLiquidatedTick[0].tickPrice - CURRENT_PRICE) * _singleLiquidatedTick[0].totalExpo
-            * 500 / (BPS_DIVISOR * CURRENT_PRICE);
+        uint256 posBonusWstEth = (_singleLiquidatedTick[0].tickPrice - CURRENT_PRICE)
+            * _singleLiquidatedTick[0].totalExpo * 500 / (BPS_DIVISOR * CURRENT_PRICE);
+
+        uint256 posBonus = wsteth.getStETHByWstETH(posBonusWstEth);
 
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(
             _singleLiquidatedTick, CURRENT_PRICE, false, Types.RebalancerAction.None, Types.ProtocolAction.None, "", ""
