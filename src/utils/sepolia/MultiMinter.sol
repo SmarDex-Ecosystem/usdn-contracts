@@ -31,6 +31,8 @@ interface IMultiMinter {
 
     function transferOwnershipOf(address contractAdr, address newOwner) external;
 
+    function acceptOwnershipOf(address contractAdr) external;
+
     function sweep(address to) external;
 
     function aggregateOnlyOwner(Call[] calldata calls)
