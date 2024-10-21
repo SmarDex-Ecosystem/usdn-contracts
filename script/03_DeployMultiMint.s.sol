@@ -18,7 +18,7 @@ contract DeployMultiMint is Script {
 
         require(block.chainid == 11_155_111, "DeployMultiMint: allowed only on the test environment");
 
-        vm.broadcast(deployerAddress);
+        vm.startBroadcast(deployerAddress);
 
         WstETHSepolia wstEth_ = new WstETHSepolia();
         MultiMinter_ = new MultiMinter(SDEX_SEPOLIA, address(wstEth_));
@@ -26,12 +26,13 @@ contract DeployMultiMint is Script {
 
         vm.stopBroadcast();
 
-        vm.broadcast(lastMultiMintOwnerAddress);
+        vm.startBroadcast(lastMultiMintOwnerAddress);
         IMultiMinter(MULTIMINT_SEPOLIA).transferOwnershipOf(IOwnable(SDEX_SEPOLIA), address(MultiMinter_));
         vm.stopBroadcast();
 
         console.log("WstETHSepolia address", address(wstEth_));
         console.log("SdexSepolia address", SDEX_SEPOLIA);
         console.log("MultiMinter address", address(MultiMinter_));
+        console.log("owner of MultiMinter", MultiMinter_.owner());
     }
 }
