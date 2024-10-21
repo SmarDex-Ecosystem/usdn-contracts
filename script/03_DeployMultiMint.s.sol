@@ -23,13 +23,19 @@ contract DeployMultiMint is Script {
         WstETHSepolia wstEth_ = new WstETHSepolia();
         MultiMinter_ = new MultiMinter(SDEX_SEPOLIA, address(wstEth_));
         wstEth_.transferOwnership(address(MultiMinter_));
+        MultiMinter_.acceptOwnershipOf(address(wstEth_));
 
         vm.stopBroadcast();
 
         vm.startBroadcast(lastMultiMintOwnerAddress);
-        IMultiMinter(MULTIMINT_SEPOLIA).transferOwnershipOf(IOwnable(SDEX_SEPOLIA), address(MultiMinter_));
+        IMultiMinter(MULTIMINT_SEPOLIA).transferOwnershipOf(SDEX_SEPOLIA, address(MultiMinter_));
         vm.stopBroadcast();
 
+        require(wstEth_.owner() == address(MultiMinter_), "DeployMultiMint: WstETH owner is not MultiMinter");
+        require(
+            SdexSepolia(SDEX_SEPOLIA).owner() == address(MultiMinter_), "DeployMultiMint: Sdex owner is not MultiMinter"
+        );
+        require(MultiMinter_.owner() == deployerAddress, "DeployMultiMint: MultiMinter owner is not the deployer");
         console.log("WstETHSepolia address", address(wstEth_));
         console.log("SdexSepolia address", SDEX_SEPOLIA);
         console.log("MultiMinter address", address(MultiMinter_));

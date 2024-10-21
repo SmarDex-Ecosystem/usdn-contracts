@@ -14,6 +14,7 @@ interface IWstETH is IMintable {
 
 interface IOwnable {
     function transferOwnership(address newOwner) external;
+    function acceptOwnership() external;
 }
 
 interface IMultiMinter {
@@ -28,7 +29,7 @@ interface IMultiMinter {
 
     function setStEthPerToken(uint256 stEthAmount) external;
 
-    function transferOwnershipOf(IOwnable contractAdr, address newOwner) external;
+    function transferOwnershipOf(address contractAdr, address newOwner) external;
 
     function sweep(address to) external;
 
@@ -70,8 +71,12 @@ contract MultiMinter is IMultiMinter, Ownable2Step {
         WSTETH.setStEthPerToken(stEthAmount);
     }
 
-    function transferOwnershipOf(IOwnable contractAdr, address newOwner) external onlyOwner {
-        contractAdr.transferOwnership(newOwner);
+    function transferOwnershipOf(address contractAdr, address newOwner) external onlyOwner {
+        IOwnable(contractAdr).transferOwnership(newOwner);
+    }
+
+    function acceptOwnershipOf(address contractAdr) external onlyOwner {
+        IOwnable(contractAdr).acceptOwnership();
     }
 
     function sweep(address to) external onlyOwner {
