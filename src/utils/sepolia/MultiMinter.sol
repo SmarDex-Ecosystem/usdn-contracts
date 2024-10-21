@@ -84,6 +84,12 @@ contract MultiMinter is IMultiMinter, Ownable2Step {
         require(success, "Error while sending Ether");
     }
 
+    /**
+     * @notice Aggregate multiple calls in one transaction
+     * @param calls The calls to aggregate
+     * @return blockNumber The block number of the call
+     * @return returnData The return data of each call
+     */
     function aggregateOnlyOwner(Call[] calldata calls)
         external
         payable
