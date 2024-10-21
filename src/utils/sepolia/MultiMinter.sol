@@ -42,26 +42,26 @@ contract MultiMinter is IMultiMinter, Ownable2Step {
     IMintable immutable SDEX;
     IWstETH immutable WSTETH;
 
-    constructor(address sdex, address asset) Ownable(msg.sender) {
+    constructor(address sdex, address wsteth) Ownable(msg.sender) {
         SDEX = IMintable(sdex);
-        WSTETH = IWstETH(asset);
+        WSTETH = IWstETH(wsteth);
     }
 
-    function mint(address adrs, uint256 amountSDEX, uint256 amountWSTETH) external onlyOwner {
-        mint(adrs, amountSDEX, amountWSTETH, 0);
+    function mint(address to, uint256 amountSDEX, uint256 amountWSTETH) external onlyOwner {
+        mint(to, amountSDEX, amountWSTETH, 0);
     }
 
-    function mint(address adrs, uint256 amountSDEX, uint256 amountWSTETH, uint256 amountETH) public payable onlyOwner {
+    function mint(address to, uint256 amountSDEX, uint256 amountWSTETH, uint256 amountETH) public payable onlyOwner {
         if (amountSDEX != 0) {
-            SDEX.mint(adrs, amountSDEX);
+            SDEX.mint(to, amountSDEX);
         }
 
         if (amountWSTETH != 0) {
-            WSTETH.mint(adrs, amountWSTETH);
+            WSTETH.mint(to, amountWSTETH);
         }
 
         if (amountETH != 0) {
-            (bool success,) = adrs.call{ value: amountETH }("");
+            (bool success,) = to.call{ value: amountETH }("");
             require(success, "Error while sending Ether");
         }
     }
@@ -79,7 +79,6 @@ contract MultiMinter is IMultiMinter, Ownable2Step {
         require(success, "Error while sending Ether");
     }
 
-    // just in case...
     function aggregateOnlyOwner(Call[] calldata calls)
         external
         payable
