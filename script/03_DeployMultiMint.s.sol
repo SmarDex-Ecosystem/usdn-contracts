@@ -4,7 +4,7 @@ pragma solidity 0.8.26;
 import { console } from "forge-std/Script.sol";
 import { Script } from "forge-std/Script.sol";
 
-import { IMultiMinter, IOwnable, MultiMinter } from "../src/utils/MultiMinter.sol";
+import { IMultiMinter, IOwnable, MultiMinter } from "../src/utils/sepolia/MultiMinter.sol";
 import { Sdex as SdexSepolia } from "../src/utils/sepolia/tokens/Sdex.sol";
 import { WstETH as WstETHSepolia } from "../src/utils/sepolia/tokens/WstETH.sol";
 
