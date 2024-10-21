@@ -546,7 +546,6 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
 
     /// @inheritdoc IUsdnProtocolFallback
     function setMinLeverage(uint256 newMinLeverage) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        // zero minLeverage
         if (newMinLeverage <= 10 ** Constants.LEVERAGE_DECIMALS) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidMinLeverage();
         }

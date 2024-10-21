@@ -498,16 +498,8 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         vm.stopPrank();
     }
 
-    function _setMinLongPosition(uint256 seed) public {
-        uint128 newMinLongPosition = uint128(bound(seed, 0, 2 ether));
-
-        vm.startPrank(msg.sender);
-        this.setMinLongPosition(newMinLongPosition);
-        vm.stopPrank();
-    }
-
     function _setMinLeverage(uint256 seed) public {
-        uint256 newMinLeverage = bound(seed, 10 ** Constants.LEVERAGE_DECIMALS, s._maxLeverage - 1);
+        uint256 newMinLeverage = bound(seed, 10 ** Constants.LEVERAGE_DECIMALS + 1, s._maxLeverage - 1);
 
         vm.startPrank(msg.sender);
         this.setMinLeverage(newMinLeverage);
@@ -547,7 +539,8 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
     }
 
     function _setProtocolFeeBps(uint256 seed) public {
-        uint16 newProtocolFeeBps = uint16(bound(seed, 0, Constants.BPS_DIVISOR));
+        // max = 10%
+        uint16 newProtocolFeeBps = uint16(bound(seed, 0, 1000));
 
         vm.startPrank(msg.sender);
         this.setProtocolFeeBps(newProtocolFeeBps);
@@ -587,7 +580,8 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
     }
 
     function _setSecurityDepositValue(uint256 seed) public {
-        uint64 securityDepositValue = uint64(bound(seed, 0, Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR / 20));
+        // max 2 ether
+        uint64 securityDepositValue = uint64(bound(seed, 0, 2 ether));
 
         vm.startPrank(msg.sender);
         this.setSecurityDepositValue(securityDepositValue);
@@ -610,25 +604,30 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         } else if (seedParameter == 1) {
             // change depositExpoImbalanceLimitBps
             // min = 3% and max = 100%
-            depositExpoImbalanceLimitBps = bound(int256(seed), 300, int256(Constants.BPS_DIVISOR));
+            depositExpoImbalanceLimitBps = int256(bound(seed, 300, Constants.BPS_DIVISOR));
         } else if (seedParameter == 2) {
             // change withdrawalExpoImbalanceLimitBps
-            // min = openExpoImbalanceLimitBps and max = 100%
-            withdrawalExpoImbalanceLimitBps =
-                int256(bound(seed, uint256(openExpoImbalanceLimitBps), Constants.BPS_DIVISOR));
+            // if != 0, min = openExpoImbalanceLimitBps and max = 100%
+            if (withdrawalExpoImbalanceLimitBps != 0) {
+                withdrawalExpoImbalanceLimitBps =
+                    int256(bound(seed, uint256(openExpoImbalanceLimitBps), Constants.BPS_DIVISOR));
+            }
         } else if (seedParameter == 3) {
             // change closeExpoImbalanceLimitBps
-            // min = depositExpoImbalanceLimitBps and max = 100%
-            closeExpoImbalanceLimitBps =
-                int256(bound(seed, uint256(depositExpoImbalanceLimitBps), Constants.BPS_DIVISOR));
+            // if != 0, min = depositExpoImbalanceLimitBps and max = 100%
+            if (closeExpoImbalanceLimitBps != 0) {
+                closeExpoImbalanceLimitBps =
+                    int256(bound(seed, uint256(depositExpoImbalanceLimitBps), Constants.BPS_DIVISOR));
+            }
         } else if (seedParameter == 4) {
             // change rebalancerCloseExpoImbalanceLimitBps
-            // min = 3% and max = closeExpoImbalanceLimitBps
-            rebalancerCloseExpoImbalanceLimitBps = int256(bound(seed, 300, uint256(closeExpoImbalanceLimitBps)));
+            // if != 0, min = 3% and max = closeExpoImbalanceLimitBps
+            if (rebalancerCloseExpoImbalanceLimitBps != 0) {
+                rebalancerCloseExpoImbalanceLimitBps = int256(bound(seed, 300, uint256(closeExpoImbalanceLimitBps)));
+            }
         } else if (seedParameter == 5) {
             // min = max(-50%,-withdrawalExpoImbalanceLimitBps) and max = closeExpoImbalanceLimitBps
             int256 min = -500 > -withdrawalExpoImbalanceLimitBps ? -500 : -withdrawalExpoImbalanceLimitBps;
-            uint256 max = uint256(closeExpoImbalanceLimitBps);
 
             longImbalanceTargetBps = bound(seedInt, min, closeExpoImbalanceLimitBps);
         }
@@ -642,6 +641,64 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
             uint256(rebalancerCloseExpoImbalanceLimitBps),
             longImbalanceTargetBps
         );
+        vm.stopPrank();
+    }
+
+    function _setMinLongPosition(uint256 seed) public {
+        uint128 newMinLongPosition = uint128(bound(seed, 0, 2 * 10 ** s._assetDecimals));
+
+        vm.startPrank(msg.sender);
+        this.setMinLongPosition(newMinLongPosition);
+        vm.stopPrank();
+    }
+
+    function _setSafetyMarginBps(uint256 seed) public {
+        uint16 newSafetyMarginBps = uint16(bound(seed, 0, Constants.MAX_SAFETY_MARGIN_BPS));
+
+        vm.startPrank(msg.sender);
+        this.setSafetyMarginBps(newSafetyMarginBps);
+        vm.stopPrank();
+    }
+
+    function _setLiquidationIteration(uint256 seed) public {
+        uint16 newLiquidationIteration = uint16(bound(seed, 0, Constants.MAX_LIQUIDATION_ITERATION));
+
+        vm.startPrank(msg.sender);
+        this.setLiquidationIteration(newLiquidationIteration);
+        vm.stopPrank();
+    }
+
+    function _setFeeThreshold(uint256 seed) public {
+        uint16 newFeeThreshold = uint16(bound(seed, 0, type(uint16).max));
+
+        vm.startPrank(msg.sender);
+        this.setFeeThreshold(newFeeThreshold);
+        vm.stopPrank();
+    }
+
+    function _setTargetUsdnPrice(uint256 seed) public {
+        // min = 1$
+        uint128 newTargetUsdnPrice = uint128(bound(seed, 10 ** s._priceFeedDecimals, s._usdnRebaseThreshold));
+
+        vm.startPrank(msg.sender);
+        this.setTargetUsdnPrice(newTargetUsdnPrice);
+        vm.stopPrank();
+    }
+
+    function _setUsdnRebaseThreshold(uint256 seed) public {
+        // max = 1.1$
+        uint128 newUsdnRebaseThreshold = uint128(bound(seed, s._targetUsdnPrice, 11 * 10 ** (s._priceFeedDecimals - 1)));
+
+        vm.startPrank(msg.sender);
+        this.setUsdnRebaseThreshold(newUsdnRebaseThreshold);
+        vm.stopPrank();
+    }
+
+    function _setUsdnRebaseInterval(uint256 seed) public {
+        uint256 newUsdnRebaseInterval = bound(seed, 0, 365 days);
+
+        vm.startPrank(msg.sender);
+        this.setUsdnRebaseInterval(newUsdnRebaseInterval);
         vm.stopPrank();
     }
 }
