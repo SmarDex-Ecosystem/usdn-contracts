@@ -701,4 +701,16 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         this.setUsdnRebaseInterval(newUsdnRebaseInterval);
         vm.stopPrank();
     }
+
+    function _pauseTest() public {
+        vm.startPrank(msg.sender);
+        this.pause();
+        vm.stopPrank();
+    }
+
+    function _unpauseTest() public {
+        vm.startPrank(msg.sender);
+        this.unpause();
+        vm.stopPrank();
+    }
 }
