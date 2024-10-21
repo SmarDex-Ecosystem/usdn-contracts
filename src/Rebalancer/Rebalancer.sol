@@ -511,7 +511,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         // If the rebalancer received assets, it means it was rewarded for liquidating positions
         // So we need to forward those rewards to the msg.sender
         if (balanceOfAssetAfter > balanceOfAssetBefore) {
-            _asset.transfer(msg.sender, balanceOfAssetAfter - balanceOfAssetBefore);
+            _asset.safeTransfer(msg.sender, balanceOfAssetAfter - balanceOfAssetBefore);
         }
 
         // sent back any ether left in the contract
