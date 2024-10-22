@@ -622,13 +622,13 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         seedParameter %= 6;
         if (seedParameter == 0) {
             // change openExpoImbalanceLimitBps
-            // min = 3% and max = 100%
-            openExpoImbalanceLimitBps = int256(bound(seed, 300, Constants.BPS_DIVISOR));
+            // min = 3% and max = withdrawalExpoImbalanceLimitBps
+            openExpoImbalanceLimitBps = int256(bound(seed, 300, uint256(withdrawalExpoImbalanceLimitBps)));
             console.log("ADMIN: newOpenExpoImbalanceLimitBps", openExpoImbalanceLimitBps);
         } else if (seedParameter == 1) {
             // change depositExpoImbalanceLimitBps
-            // min = 3% and max = 100%
-            depositExpoImbalanceLimitBps = int256(bound(seed, 300, Constants.BPS_DIVISOR));
+            // min = 3% and max = closeExpoImbalanceLimitBps
+            depositExpoImbalanceLimitBps = int256(bound(seed, 300, uint256(closeExpoImbalanceLimitBps)));
             console.log("ADMIN: newDepositExpoImbalanceLimitBps", depositExpoImbalanceLimitBps);
         } else if (seedParameter == 2) {
             // change withdrawalExpoImbalanceLimitBps
@@ -640,10 +640,18 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
             console.log("ADMIN: newWithdrawalExpoImbalanceLimitBps", withdrawalExpoImbalanceLimitBps);
         } else if (seedParameter == 3) {
             // change closeExpoImbalanceLimitBps
-            // if != 0, min = depositExpoImbalanceLimitBps and max = 100%
+            // if != 0,
+            // min = max(depositExpoImbalanceLimitBps,longImbalanceTargetBps,rebalancerCloseExpoImbalanceLimitBps)
+            // and max = 100%
             if (closeExpoImbalanceLimitBps != 0) {
-                closeExpoImbalanceLimitBps =
-                    int256(bound(seed, uint256(depositExpoImbalanceLimitBps), Constants.BPS_DIVISOR));
+                uint256 min = depositExpoImbalanceLimitBps > longImbalanceTargetBps
+                    ? uint256(depositExpoImbalanceLimitBps)
+                    : uint256(longImbalanceTargetBps);
+                min = rebalancerCloseExpoImbalanceLimitBps > int256(min)
+                    ? uint256(rebalancerCloseExpoImbalanceLimitBps)
+                    : min;
+
+                closeExpoImbalanceLimitBps = int256(bound(seed, min, Constants.BPS_DIVISOR));
             }
             console.log("ADMIN: newCloseExpoImbalanceLimitBps", closeExpoImbalanceLimitBps);
         } else if (seedParameter == 4) {

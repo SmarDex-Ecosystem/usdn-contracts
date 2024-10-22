@@ -61,7 +61,7 @@ runs = 10_000
 
 [profile.local.invariant]
 runs = 100
-depth = 250
+depth = 500
 # call_override = true # makes invariant tests hang
 dictionary_weight = 80
 
