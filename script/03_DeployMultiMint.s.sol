@@ -9,7 +9,7 @@ import { WstETH as WstETHSepolia } from "../src/utils/sepolia/tokens/WstETH.sol"
 
 contract DeployMultiMint is Script {
     function run() external returns (MultiMinter newMultiMint) {
-        uint256 deployer = vm.envUint("DEPLOYER_ADDRESS");
+        address deployer = vm.envAddress("DEPLOYER_ADDRESS");
         SdexSepolia sdex = SdexSepolia(vm.envAddress("SDEX_SEPOLIA"));
         WstETHSepolia wstEth = WstETHSepolia(payable(vm.envAddress("WSTETH_SEPOLIA")));
         require(block.chainid == 11_155_111, "DeployMultiMint: allowed only on Sepolia");
@@ -27,6 +27,6 @@ contract DeployMultiMint is Script {
 
         require(wstEth.owner() == address(newMultiMint), "DeployMultiMint: WstETH owner is not MultiMinter");
         require(sdex.owner() == address(newMultiMint), "DeployMultiMint: Sdex owner is not MultiMinter");
-        require(newMultiMint.owner() == vm.addr(deployer), "DeployMultiMint: MultiMinter owner is not the deployer");
+        require(newMultiMint.owner() == deployer, "DeployMultiMint: MultiMinter owner is not the deployer");
     }
 }
