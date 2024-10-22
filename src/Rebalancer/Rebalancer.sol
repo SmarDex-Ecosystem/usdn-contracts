@@ -469,6 +469,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
             + data.amountToCloseWithoutBonus * (data.protocolPosition.amount - data.currentPositionData.amount)
                 / data.currentPositionData.amount;
 
+        uint256 balanceOfAssetBefore = _asset.balanceOf(address(this));
         // slither-disable-next-line reentrancy-eth
         success_ = _usdnProtocol.initiateClosePosition{ value: msg.value }(
             Types.PositionId({
@@ -485,6 +486,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
             previousActionsData,
             ""
         );
+        uint256 balanceOfAssetAfter = _asset.balanceOf(address(this));
 
         if (success_) {
             if (data.remainingAssets == 0) {
@@ -505,6 +507,12 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
             }
 
             emit ClosePositionInitiated(msg.sender, amount, data.amountToClose, data.remainingAssets);
+        }
+
+        // If the rebalancer received assets, it means it was rewarded for liquidating positions
+        // So we need to forward those rewards to the msg.sender
+        if (balanceOfAssetAfter > balanceOfAssetBefore) {
+            _asset.safeTransfer(msg.sender, balanceOfAssetAfter - balanceOfAssetBefore);
         }
 
         // sent back any ether left in the contract
