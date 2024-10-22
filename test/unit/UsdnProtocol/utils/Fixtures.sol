@@ -4,19 +4,6 @@ pragma solidity 0.8.26;
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
-import { LiquidationRewardsManager } from "../../../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
-import { Usdn } from "../../../../src/Usdn/Usdn.sol";
-import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
-import { UsdnProtocolActionsUtilsLibrary as ActionUtils } from
-    "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsUtilsLibrary.sol";
-import { UsdnProtocolConstantsLibrary as Constants } from
-    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
-import { UsdnProtocolUtilsLibrary as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
-import { UsdnProtocolVaultLibrary as Vault } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
-import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
-import { FeeCollector } from "../../../../src/utils/FeeCollector.sol";
 import {
     ADMIN,
     CRITICAL_FUNCTIONS_MANAGER,
@@ -37,6 +24,20 @@ import { WstETH } from "../../../utils/WstEth.sol";
 import { RebalancerHandler } from "../../Rebalancer/utils/Handler.sol";
 import { UsdnProtocolHandler } from "./Handler.sol";
 import { MockOracleMiddleware } from "./MockOracleMiddleware.sol";
+
+import { LiquidationRewardsManager } from "../../../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
+import { Usdn } from "../../../../src/Usdn/Usdn.sol";
+import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
+import { UsdnProtocolActionsUtilsLibrary as ActionUtils } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsUtilsLibrary.sol";
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
+import { UsdnProtocolUtilsLibrary as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
+import { UsdnProtocolVaultLibrary as Vault } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
+import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
+import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
+import { FeeCollector } from "../../../../src/utils/FeeCollector.sol";
 
 /**
  * @title UsdnProtocolBaseFixture
