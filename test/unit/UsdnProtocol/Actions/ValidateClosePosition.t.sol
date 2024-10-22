@@ -131,7 +131,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             payable(address(this)),
             type(uint256).max,
             priceData,
-            EMPTY_PREVIOUS_DATA
+            EMPTY_PREVIOUS_DATA,
+            ""
         );
         _waitDelay();
         protocol.validateClosePosition{ value: 1 ether }(payable(address(this)), priceData, EMPTY_PREVIOUS_DATA);
@@ -171,7 +172,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             payable(address(this)),
             type(uint256).max,
             priceData,
-            EMPTY_PREVIOUS_DATA
+            EMPTY_PREVIOUS_DATA,
+            ""
         );
 
         skip(protocol.getLowLatencyValidatorDeadline());
@@ -202,7 +204,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             payable(address(this)),
             type(uint256).max,
             priceData,
-            EMPTY_PREVIOUS_DATA
+            EMPTY_PREVIOUS_DATA,
+            ""
         );
         bytes32 actionId = oracleMiddleware.lastActionId();
 
@@ -283,7 +286,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             payable(validator),
             type(uint256).max,
             priceData,
-            EMPTY_PREVIOUS_DATA
+            EMPTY_PREVIOUS_DATA,
+            ""
         );
         _waitDelay();
 
@@ -354,7 +358,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             payable(address(this)),
             type(uint256).max,
             data.priceData,
-            EMPTY_PREVIOUS_DATA
+            EMPTY_PREVIOUS_DATA,
+            ""
         );
         _waitDelay();
 
@@ -413,7 +418,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             payable(address(this)),
             type(uint256).max,
             data.priceData,
-            EMPTY_PREVIOUS_DATA
+            EMPTY_PREVIOUS_DATA,
+            ""
         );
         _waitDelay();
         data.action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
@@ -472,7 +478,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
                 payable(address(this)),
                 type(uint256).max,
                 priceData,
-                EMPTY_PREVIOUS_DATA
+                EMPTY_PREVIOUS_DATA,
+                ""
             );
             _waitDelay();
         }
@@ -543,7 +550,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
                 payable(address(this)),
                 type(uint256).max,
                 priceData,
-                EMPTY_PREVIOUS_DATA
+                EMPTY_PREVIOUS_DATA,
+                ""
             );
             _waitDelay();
         }
@@ -614,7 +622,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             payable(address(this)),
             type(uint256).max,
             data.priceData,
-            EMPTY_PREVIOUS_DATA
+            EMPTY_PREVIOUS_DATA,
+            ""
         );
         _waitDelay();
 
@@ -706,7 +715,15 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         (Position memory pos,) = protocol.getLongPosition(PositionId(posId.tick, 0, 0));
         vm.prank(DEPLOYER);
         protocol.initiateClosePosition(
-            posId, pos.amount, DISABLE_MIN_PRICE, DEPLOYER, DEPLOYER, type(uint256).max, priceData, EMPTY_PREVIOUS_DATA
+            posId,
+            pos.amount,
+            DISABLE_MIN_PRICE,
+            DEPLOYER,
+            DEPLOYER,
+            type(uint256).max,
+            priceData,
+            EMPTY_PREVIOUS_DATA,
+            ""
         );
 
         /* ----------------- Validate close position under liq price ---------------- */
@@ -827,7 +844,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             payable(address(this)),
             type(uint256).max,
             priceData,
-            EMPTY_PREVIOUS_DATA
+            EMPTY_PREVIOUS_DATA,
+            ""
         );
         _waitDelay();
         vm.prank(USER_1);

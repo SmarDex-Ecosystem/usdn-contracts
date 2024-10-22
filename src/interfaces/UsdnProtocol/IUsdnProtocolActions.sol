@@ -88,7 +88,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * (and `success_` would be false)
      * @param posId The unique identifier of the position to close
      * @param amountToClose The amount of collateral to remove from the position's amount
-     *  @param userMinPrice The minimum price at which the position can be closed (with _priceFeedDecimals). Note that
+     * @param userMinPrice The minimum price at which the position can be closed (with _priceFeedDecimals). Note that
      * there is no guarantee that the effective price during validation will be below this value. The userMinPrice is
      * compared with the price after confidence interval, penalty, etc... However, if the
      * temporary entry price is below this threshold, the initiate action will revert
@@ -97,6 +97,8 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * @param deadline The deadline of the close position to be initiated
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions
+     * @param delegationSignature An optional EIP712 signature to provide when closing a position on the owner's behalf
+     * If used, it needs to be encoded with `abi.encodePacked(r, s, v)`
      * @return success_ Whether the closing was initiated
      */
     function initiateClosePosition(
@@ -107,7 +109,8 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
         address payable validator,
         uint256 deadline,
         bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData
+        PreviousActionsData calldata previousActionsData,
+        bytes calldata delegationSignature
     ) external payable returns (bool success_);
 
     /**

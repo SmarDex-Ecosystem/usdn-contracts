@@ -208,11 +208,12 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         expo_ = uint256(s._totalExpo.toInt256().safeSub(Utils._longAssetAvailable(s, currentPrice)));
     }
 
-    function i_initiateClosePosition(Types.InitiateClosePositionParams memory params, bytes calldata currentPriceData)
-        external
-        returns (uint256 securityDepositValue_, bool isLiquidationPending_, bool liq_)
-    {
-        return ActionsLong._initiateClosePosition(s, params, currentPriceData);
+    function i_initiateClosePosition(
+        Types.InitiateClosePositionParams memory params,
+        bytes calldata currentPriceData,
+        bytes calldata delegationSignature
+    ) external returns (uint256 securityDepositValue_, bool isLiquidationPending_, bool liq_) {
+        return ActionsLong._initiateClosePosition(s, params, currentPriceData, delegationSignature);
     }
 
     function _calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed) external view returns (int256) {
@@ -712,27 +713,11 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         return Vault._prepareWithdrawalData(s, validator, usdnShares, amountOutMin, currentPriceData);
     }
 
-    function i_prepareClosePositionData(
-        address owner,
-        address to,
-        address validator,
-        PositionId memory posId,
-        uint128 amountToClose,
-        uint256 userMinPrice,
-        bytes calldata currentPriceData
-    ) external returns (ClosePositionData memory data_, bool liquidated_) {
-        return ActionsUtils._prepareClosePositionData(
-            s,
-            Types.PrepareInitiateClosePositionParams({
-                owner: owner,
-                to: to,
-                validator: validator,
-                posId: posId,
-                amountToClose: amountToClose,
-                userMinPrice: userMinPrice,
-                currentPriceData: currentPriceData
-            })
-        );
+    function i_prepareClosePositionData(Types.PrepareInitiateClosePositionParams calldata params)
+        external
+        returns (ClosePositionData memory data_, bool liquidated_)
+    {
+        return ActionsUtils._prepareClosePositionData(s, params);
     }
 
     function i_prepareValidateOpenPositionData(PendingAction memory pending, bytes calldata priceData)
@@ -743,13 +728,10 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_checkInitiateClosePosition(
-        address owner,
-        address to,
-        address validator,
-        uint128 amountToClose,
-        Position memory pos
-    ) external view {
-        ActionsUtils._checkInitiateClosePosition(s, owner, to, validator, amountToClose, pos);
+        Types.Position memory pos,
+        Types.PrepareInitiateClosePositionParams calldata params
+    ) external {
+        ActionsUtils._checkInitiateClosePosition(s, pos, params);
     }
 
     /**
@@ -823,5 +805,12 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
 
     function i_calcMaxLongBalance(uint256 totalExpo) external pure returns (uint256) {
         return Core._calcMaxLongBalance(totalExpo);
+    }
+
+    function i_verifyInitiateCloseDelegation(
+        address positionOwner,
+        Types.PrepareInitiateClosePositionParams calldata params
+    ) external {
+        ActionsUtils._verifyInitiateCloseDelegation(s, positionOwner, params);
     }
 }

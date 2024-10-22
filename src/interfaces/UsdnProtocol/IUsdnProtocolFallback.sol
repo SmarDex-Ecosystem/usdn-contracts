@@ -579,6 +579,25 @@ interface IUsdnProtocolFallback {
      */
     function isPaused() external view returns (bool);
 
+    /**
+     * @notice Get the nonce a user can use to generate a delegation signature
+     * @dev This is to prevent replay attacks when using an eip712 delegation signature
+     * @return The user nonce
+     */
+    function getNonce(address user) external view returns (uint256);
+
+    /**
+     * @notice Get the domain separator v4
+     * @return The domain separator v4
+     */
+    function domainSeparatorV4() external view returns (bytes32);
+
+    /**
+     * @notice Get The EIP712 {initiateClosePosition} typehash
+     * @return The {initiateClosePosition} typehash
+     */
+    function getInitiateCloseTypehash() external pure returns (bytes32);
+
     /* -------------------------------------------------------------------------- */
     /*                                   Setters                                  */
     /* -------------------------------------------------------------------------- */

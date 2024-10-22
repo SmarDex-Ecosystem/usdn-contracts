@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import {
@@ -27,6 +28,10 @@ import { MockOracleMiddleware } from "./MockOracleMiddleware.sol";
 import { LiquidationRewardsManager } from "../../../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
+import { UsdnProtocolActionsUtilsLibrary as ActionUtils } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsUtilsLibrary.sol";
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
@@ -92,6 +97,17 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         uint128 positionSize;
         uint128 desiredLiqPrice;
         uint256 price;
+    }
+
+    struct InitiateClosePositionDelegation {
+        bytes32 posIdHash;
+        uint128 amountToClose;
+        uint256 userMinPrice;
+        address to;
+        uint256 deadline;
+        address positionOwner;
+        address positionCloser;
+        uint256 nonce;
     }
 
     Usdn public usdn;
@@ -397,7 +413,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             payable(openParams.user),
             type(uint256).max,
             priceData,
-            EMPTY_PREVIOUS_DATA
+            EMPTY_PREVIOUS_DATA,
+            ""
         );
         _waitDelay();
         if (openParams.untilAction == ProtocolAction.InitiateClosePosition) return (posId_);
@@ -507,5 +524,39 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
     /// @dev Wait for the required delay to allow mock middleware price update
     function _waitMockMiddlewarePriceDelay() internal {
         skip(30 minutes - oracleMiddleware.getValidationDelay());
+    }
+
+    /**
+     * @notice Get the signed delegation data
+     * @param privateKey The signer private key
+     * @param domainSeparator The domain separator v4
+     * @param delegationToSign The delegation struct to sign
+     * @return delegationSignature_ The initiateClosePosition eip712 delegation signature
+     */
+    function _getDelegationSignature(
+        uint256 privateKey,
+        bytes32 domainSeparator,
+        InitiateClosePositionDelegation memory delegationToSign
+    ) internal pure returns (bytes memory delegationSignature_) {
+        bytes32 digest = MessageHashUtils.toTypedDataHash(
+            domainSeparator,
+            keccak256(
+                abi.encode(
+                    Constants.INITIATE_CLOSE_TYPEHASH,
+                    delegationToSign.posIdHash,
+                    delegationToSign.amountToClose,
+                    delegationToSign.userMinPrice,
+                    delegationToSign.to,
+                    delegationToSign.deadline,
+                    delegationToSign.positionOwner,
+                    delegationToSign.positionCloser,
+                    delegationToSign.nonce
+                )
+            )
+        );
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
+
+        delegationSignature_ = abi.encodePacked(r, s, v);
     }
 }

@@ -84,7 +84,8 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
             USER_1,
             type(uint256).max,
             abi.encode(params.initialPrice),
-            EMPTY_PREVIOUS_DATA
+            EMPTY_PREVIOUS_DATA,
+            ""
         );
 
         // the close action should have USER_1 as the validator

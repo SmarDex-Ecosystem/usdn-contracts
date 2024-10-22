@@ -130,7 +130,8 @@ library UsdnProtocolActionsLongLibrary {
         Types.Storage storage s,
         Types.InitiateClosePositionParams memory params,
         bytes calldata currentPriceData,
-        Types.PreviousActionsData calldata previousActionsData
+        Types.PreviousActionsData calldata previousActionsData,
+        bytes calldata delegationSignature
     ) external returns (bool success_) {
         if (params.deadline < block.timestamp) {
             revert IUsdnProtocolErrors.UsdnProtocolDeadlineExceeded();
@@ -143,7 +144,7 @@ library UsdnProtocolActionsLongLibrary {
         bool liq;
         uint256 validatorAmount;
 
-        (validatorAmount, success_, liq) = _initiateClosePosition(s, params, currentPriceData);
+        (validatorAmount, success_, liq) = _initiateClosePosition(s, params, currentPriceData, delegationSignature);
 
         uint256 amountToRefund;
         if (success_ || liq) {
@@ -644,6 +645,8 @@ library UsdnProtocolActionsLongLibrary {
      * @param s The storage of the protocol
      * @param params The parameters for the close position initiation
      * @param currentPriceData The current price data
+     * @param delegationSignature An EIP712 signature that proves the caller is authorized by the owner of the position
+     * to close it on their behalf
      * @return amountToRefund_ If there are pending liquidations we'll refund the `securityDepositValue`,
      * else we'll only refund the security deposit value of the stale pending action
      * @return isInitiated_ Whether the action is initiated
@@ -652,19 +655,22 @@ library UsdnProtocolActionsLongLibrary {
     function _initiateClosePosition(
         Types.Storage storage s,
         Types.InitiateClosePositionParams memory params,
-        bytes calldata currentPriceData
+        bytes calldata currentPriceData,
+        bytes calldata delegationSignature
     ) internal returns (uint256 amountToRefund_, bool isInitiated_, bool liquidated_) {
         Types.ClosePositionData memory data;
         (data, liquidated_) = ActionsUtils._prepareClosePositionData(
             s,
             Types.PrepareInitiateClosePositionParams({
-                owner: params.owner,
                 to: params.to,
                 validator: params.validator,
                 posId: params.posId,
                 amountToClose: params.amountToClose,
                 userMinPrice: params.userMinPrice,
-                currentPriceData: currentPriceData
+                deadline: params.deadline,
+                currentPriceData: currentPriceData,
+                delegationSignature: delegationSignature,
+                domainSeparatorV4: params.domainSeparatorV4
             })
         );
 

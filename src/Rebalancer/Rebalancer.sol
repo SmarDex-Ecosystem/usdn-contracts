@@ -482,7 +482,8 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
             payable(msg.sender),
             deadline,
             currentPriceData,
-            previousActionsData
+            previousActionsData,
+            ""
         );
 
         if (success_) {

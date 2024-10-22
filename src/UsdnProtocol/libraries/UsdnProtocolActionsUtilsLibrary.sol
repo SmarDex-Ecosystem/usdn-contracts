@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
@@ -146,13 +148,13 @@ library UsdnProtocolActionsUtilsLibrary {
     ) public returns (Types.ClosePositionData memory data_, bool liquidated_) {
         (data_.pos, data_.liquidationPenalty) = getLongPosition(s, params.posId);
 
-        _checkInitiateClosePosition(s, params.owner, params.to, params.validator, params.amountToClose, data_.pos);
+        _checkInitiateClosePosition(s, data_.pos, params);
 
         PriceInfo memory currentPrice = Utils._getOraclePrice(
             s,
             Types.ProtocolAction.InitiateClosePosition,
             block.timestamp,
-            Utils._calcActionId(params.owner, uint128(block.timestamp)),
+            Utils._calcActionId(params.validator, uint128(block.timestamp)),
             params.currentPriceData
         );
 
@@ -368,48 +370,49 @@ library UsdnProtocolActionsUtilsLibrary {
      * @dev Reverts if the to address is zero, the position was not validated yet, the position is not owned by the
      * user, the amount to close is higher than the position amount, or the amount to close is zero
      * @param s The storage of the protocol
-     * @param owner The owner of the position
-     * @param to The address that will receive the assets
-     * @param validator The address of the validator
-     * @param amountToClose The amount of collateral to remove from the position's amount
      * @param pos The position to close
+     * @param params The parameters for the {_prepareClosePositionData} function
      */
     function _checkInitiateClosePosition(
         Types.Storage storage s,
-        address owner,
-        address to,
-        address validator,
-        uint128 amountToClose,
-        Types.Position memory pos
-    ) internal view {
-        if (to == address(0)) {
+        Types.Position memory pos,
+        Types.PrepareInitiateClosePositionParams calldata params
+    ) internal {
+        if (params.to == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo();
         }
-        if (validator == address(0)) {
+        if (params.validator == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressValidator();
-        }
-        if (pos.user != owner) {
-            revert IUsdnProtocolErrors.UsdnProtocolUnauthorized();
         }
         if (!pos.validated) {
             revert IUsdnProtocolErrors.UsdnProtocolPositionNotValidated();
         }
-        if (amountToClose == 0) {
+        if (params.amountToClose == 0) {
             revert IUsdnProtocolErrors.UsdnProtocolZeroAmount();
         }
-        if (amountToClose > pos.amount) {
-            revert IUsdnProtocolErrors.UsdnProtocolAmountToCloseHigherThanPositionAmount(amountToClose, pos.amount);
+        if (params.amountToClose > pos.amount) {
+            revert IUsdnProtocolErrors.UsdnProtocolAmountToCloseHigherThanPositionAmount(
+                params.amountToClose, pos.amount
+            );
+        }
+
+        if (msg.sender != pos.user) {
+            if (params.delegationSignature.length == 0) {
+                revert IUsdnProtocolErrors.UsdnProtocolUnauthorized();
+            } else {
+                _verifyInitiateCloseDelegation(s, pos.user, params);
+            }
         }
 
         // make sure the remaining position is higher than _minLongPosition
         // for the Rebalancer, we allow users to close their position fully in every case
-        uint128 remainingAmount = pos.amount - amountToClose;
+        uint128 remainingAmount = pos.amount - params.amountToClose;
         if (remainingAmount > 0 && remainingAmount < s._minLongPosition) {
             IBaseRebalancer rebalancer = s._rebalancer;
-            if (owner == address(rebalancer)) {
+            if (msg.sender == address(rebalancer)) {
                 // note: the rebalancer always indicates the rebalancer user's address as validator
-                uint128 userPosAmount = rebalancer.getUserDepositData(validator).amount;
-                if (amountToClose != userPosAmount) {
+                uint128 userPosAmount = rebalancer.getUserDepositData(params.validator).amount;
+                if (params.amountToClose != userPosAmount) {
                     revert IUsdnProtocolErrors.UsdnProtocolLongPositionTooSmall();
                 }
             } else {
@@ -445,5 +448,42 @@ library UsdnProtocolActionsUtilsLibrary {
         } else {
             boundedPosValue_ = uint256(positionValue);
         }
+    }
+
+    /**
+     * @notice Performs the {initiateClosePosition} EIP712 delegation signature verification
+     * @dev Reverts if the function arguments don't match those included in the signature
+     * and if the signer isn't the owner of the position
+     * @param s The storage of the protocol
+     * @param positionOwner The position owner
+     * @param params The parameters for the {_prepareClosePositionData} function
+     */
+    function _verifyInitiateCloseDelegation(
+        Types.Storage storage s,
+        address positionOwner,
+        Types.PrepareInitiateClosePositionParams calldata params
+    ) internal {
+        bytes32 digest = MessageHashUtils.toTypedDataHash(
+            params.domainSeparatorV4,
+            keccak256(
+                abi.encode(
+                    Constants.INITIATE_CLOSE_TYPEHASH,
+                    keccak256(abi.encode(params.posId)),
+                    params.amountToClose,
+                    params.userMinPrice,
+                    params.to,
+                    params.deadline,
+                    positionOwner,
+                    msg.sender,
+                    s._nonce[positionOwner]
+                )
+            )
+        );
+
+        if (ECDSA.recover(digest, params.delegationSignature) != positionOwner) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidDelegationSignature();
+        }
+
+        s._nonce[positionOwner] += 1;
     }
 }

@@ -198,7 +198,8 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
             payable(address(this)),
             type(uint256).max,
             priceData,
-            EMPTY_PREVIOUS_DATA
+            EMPTY_PREVIOUS_DATA,
+            ""
         );
 
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
@@ -588,7 +589,8 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
             payable(address(this)),
             type(uint256).max,
             priceData,
-            EMPTY_PREVIOUS_DATA
+            EMPTY_PREVIOUS_DATA,
+            ""
         );
 
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
@@ -630,7 +632,8 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
             payable(address(this)),
             type(uint256).max,
             priceData,
-            EMPTY_PREVIOUS_DATA
+            EMPTY_PREVIOUS_DATA,
+            ""
         );
 
         action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));

@@ -333,27 +333,31 @@ interface IUsdnProtocolTypes {
 
     /**
      * @notice Parameters for the internal `_prepareClosePositionData` function
-     * @param owner The owner of the position
      * @param to The address that will receive the assets
      * @param validator The address of the pending action validator
      * @param posId The unique identifier of the position
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param userMinPrice The minimum price at which the position can be closed
+     * @param deadline The deadline until the position can be closed
      * @param currentPriceData The current price data
+     * @param delegationSignature An EIP712 signature that proves the caller is authorized by the owner of the position
+     * to close it on their behalf
+     * @param domainSeparatorV4 The domain separator v4
      */
     struct PrepareInitiateClosePositionParams {
-        address owner;
         address to;
         address validator;
         PositionId posId;
         uint128 amountToClose;
         uint256 userMinPrice;
+        uint256 deadline;
         bytes currentPriceData;
+        bytes delegationSignature;
+        bytes32 domainSeparatorV4;
     }
 
     /**
      * @notice Parameters for the internal `_initiateClosePosition` function
-     * @param owner The owner of the position
      * @param to The address that will receive the closed amount
      * @param validator The address that will validate the close position
      * @param posId The position id
@@ -361,9 +365,9 @@ interface IUsdnProtocolTypes {
      * @param userMinPrice The minimum price at which the position can be closed
      * @param deadline The deadline of the close position to be initiated
      * @param securityDepositValue The value of the security deposit for the newly created pending action
+     * @param domainSeparatorV4 The domain separator v4 for EIP712 signature
      */
     struct InitiateClosePositionParams {
-        address owner;
         address to;
         address payable validator;
         uint256 deadline;
@@ -371,6 +375,7 @@ interface IUsdnProtocolTypes {
         uint128 amountToClose;
         uint256 userMinPrice;
         uint64 securityDepositValue;
+        bytes32 domainSeparatorV4;
     }
 
     /**
@@ -629,6 +634,7 @@ interface IUsdnProtocolTypes {
      * @param _totalLongPositions Cache of the total long positions count
      * @param _tickBitmap The bitmap used to quickly find populated ticks
      * @param _protocolFallbackAddr The address of the fallback contract
+     * @param _nonce The user EIP712 nonce
      */
     struct Storage {
         // immutable
@@ -694,5 +700,6 @@ interface IUsdnProtocolTypes {
         uint256 _totalLongPositions;
         LibBitmap.Bitmap _tickBitmap;
         address _protocolFallbackAddr;
+        mapping(address => uint256) _nonce;
     }
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
+import { ADMIN } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 /**
@@ -46,7 +46,9 @@ contract TestUsdnProtocolActionsPrepareClosePositionData is UsdnProtocolBaseFixt
      */
     function test_prepareClosePositionData() public {
         (ClosePositionData memory data, bool liquidated) = protocol.i_prepareClosePositionData(
-            address(this), address(this), address(this), posId, POSITION_AMOUNT, 0, currentPriceData
+            PrepareInitiateClosePositionParams(
+                address(this), address(this), posId, POSITION_AMOUNT, 0, type(uint256).max, currentPriceData, "", ""
+            )
         );
 
         assertFalse(liquidated, "The position should not have been liquidated");
@@ -70,12 +72,32 @@ contract TestUsdnProtocolActionsPrepareClosePositionData is UsdnProtocolBaseFixt
         uint256 adjustedPrice = params.initialPrice - params.initialPrice * 100 / BPS_DIVISOR;
         vm.expectRevert(UsdnProtocolSlippageMinPriceExceeded.selector);
         protocol.i_prepareClosePositionData(
-            address(this), address(this), address(this), posId, POSITION_AMOUNT, adjustedPrice + 1, currentPriceData
+            PrepareInitiateClosePositionParams(
+                address(this),
+                address(this),
+                posId,
+                POSITION_AMOUNT,
+                adjustedPrice + 1,
+                type(uint256).max,
+                currentPriceData,
+                "",
+                ""
+            )
         );
 
         // should not revert
         protocol.i_prepareClosePositionData(
-            address(this), address(this), address(this), posId, POSITION_AMOUNT, adjustedPrice, currentPriceData
+            PrepareInitiateClosePositionParams(
+                address(this),
+                address(this),
+                posId,
+                POSITION_AMOUNT,
+                adjustedPrice,
+                type(uint256).max,
+                currentPriceData,
+                "",
+                ""
+            )
         );
     }
 
@@ -90,7 +112,9 @@ contract TestUsdnProtocolActionsPrepareClosePositionData is UsdnProtocolBaseFixt
     function test_prepareClosePositionDataWithALiquidatedPosition() public {
         currentPriceData = abi.encode(liqPrice);
         (ClosePositionData memory data, bool liquidated) = protocol.i_prepareClosePositionData(
-            address(this), address(this), address(this), posId, POSITION_AMOUNT, 0, currentPriceData
+            PrepareInitiateClosePositionParams(
+                address(this), address(this), posId, POSITION_AMOUNT, 0, type(uint256).max, currentPriceData, "", ""
+            )
         );
 
         assertTrue(liquidated, "The position should have been liquidated");
@@ -129,7 +153,9 @@ contract TestUsdnProtocolActionsPrepareClosePositionData is UsdnProtocolBaseFixt
         currentPriceData = abi.encode(liqPrice);
 
         (ClosePositionData memory data, bool liquidated) = protocol.i_prepareClosePositionData(
-            address(this), address(this), address(this), posId, POSITION_AMOUNT, 0, currentPriceData
+            PrepareInitiateClosePositionParams(
+                address(this), address(this), posId, POSITION_AMOUNT, 0, type(uint256).max, currentPriceData, "", ""
+            )
         );
 
         assertFalse(liquidated, "The position should have been liquidated");

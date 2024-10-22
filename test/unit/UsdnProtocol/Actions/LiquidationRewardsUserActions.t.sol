@@ -317,7 +317,8 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
             payable(address(this)),
             type(uint256).max,
             liquidationPriceData,
-            EMPTY_PREVIOUS_DATA
+            EMPTY_PREVIOUS_DATA,
+            ""
         );
 
         uint256 balanceSenderAfter = wstETH.balanceOf(address(this));
