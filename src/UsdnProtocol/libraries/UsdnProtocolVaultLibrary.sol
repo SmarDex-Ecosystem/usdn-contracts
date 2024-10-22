@@ -773,23 +773,7 @@ library UsdnProtocolVaultLibrary {
         uint128 amountAfterFees =
             (deposit.amount - uint256(deposit.amount) * deposit.feeBps / Constants.BPS_DIVISOR).toUint128();
 
-        uint256 balanceVault = deposit.balanceVault;
-        if (currentPrice.price < deposit.assetPrice) {
-            // price decreased: balance of the vault increased
-            int256 available = Utils._vaultAssetAvailable(
-                deposit.totalExpo,
-                deposit.balanceVault,
-                deposit.balanceLong,
-                currentPrice.price.toUint128(),
-                deposit.assetPrice
-            );
-            if (available < 0) {
-                // sanity check, should not happen
-                balanceVault = 0;
-            } else {
-                balanceVault = uint256(available);
-            }
-        }
+        uint256 balanceVault = s._balanceVault;
 
         s._balanceVault += deposit.amount; // we credit the full deposit amount
         s._pendingBalanceVault -= Utils.toInt256(deposit.amount);

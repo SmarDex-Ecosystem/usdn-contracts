@@ -41,7 +41,13 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
      * @custom:and The protocol emits a `ValidatedDeposit` event with the minted amount of 2000 USDN
      */
     function test_validateDepositPriceIncrease() public {
-        _checkValidateDepositWithPrice(2000 ether, 2100 ether, 2000 ether, address(this));
+        uint128 newPrice = 2100 ether;
+        uint256 expectedVaultBalanceWithPnl =
+            protocol.getBalanceVault() + protocol.getBalanceLong() - uint256(protocol.i_longAssetAvailable(newPrice));
+        uint256 expectedSharesAmount = uint256(DEPOSIT_AMOUNT) * usdn.totalShares() / expectedVaultBalanceWithPnl;
+        uint256 expectedMintedAmount = usdn.convertToTokens(expectedSharesAmount);
+
+        _checkValidateDepositWithPrice(params.initialPrice, newPrice, expectedMintedAmount, address(this));
     }
 
     /**
@@ -51,10 +57,8 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
      * @custom:and The price of the asset is $2000 at the moment of initiation
      * @custom:and The price of the asset is $4000 at the moment of validation
      * @custom:and Another user opened a long position
-     * @custom:when The user validates the deposit
-     * @custom:then The user's USDN balance increases by 2000 USDN
-     * @custom:and The USDN total supply increases by 2000 USDN
-     * @custom:and The protocol emits a `ValidatedDeposit` event with the minted amount of 2000 USDN
+     * @custom:when The user tries to validate the deposit
+     * @custom:and The protocol reverts with `UsdnProtocolEmptyVault` error
      */
     function test_validateDepositPriceIncreaseEmptyingVault() public {
         setUpUserPositionInLong(
@@ -68,11 +72,25 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         );
 
         uint128 newPrice = 4000 ether;
-        int256 vaultBalance = protocol.i_vaultAssetAvailable(newPrice);
-        assertLt(vaultBalance, 0, "The assets available in the vault should be less than 0, try increasing `newPrice`");
 
-        // - 407 because the previous long increased the vault balance by 1 wei
-        _checkValidateDepositWithPrice(params.initialPrice, newPrice, 2000 ether - 407, address(this));
+        protocol.initiateDeposit(
+            DEPOSIT_AMOUNT,
+            DISABLE_SHARES_OUT_MIN,
+            address(this),
+            payable(address(this)),
+            type(uint256).max,
+            abi.encode(params.initialPrice),
+            EMPTY_PREVIOUS_DATA
+        );
+
+        // wait the required delay between initiation and validation
+        _waitDelay();
+
+        uint256 vaultBalance = protocol.vaultAssetAvailableWithFunding(newPrice, uint128(block.timestamp));
+        assertEq(vaultBalance, 0, "vault balance");
+
+        vm.expectRevert(UsdnProtocolEmptyVault.selector);
+        protocol.validateDeposit(payable(address(this)), abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -231,7 +249,6 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
             currentPrice,
             EMPTY_PREVIOUS_DATA
         );
-        uint256 vaultBalance = protocol.getBalanceVault(); // save for mint amount calculation in case price increases
         bytes32 actionId = oracleMiddleware.lastActionId();
 
         // wait the required delay between initiation and validation
@@ -240,25 +257,23 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         // set the effective price used for minting USDN
         currentPrice = abi.encode(assetPrice);
 
-        // if price decreases, we need to use the new balance to calculate the minted amount
-        if (assetPrice < initialPrice) {
-            vaultBalance = uint256(protocol.i_vaultAssetAvailable(assetPrice));
-        }
+        uint256 vaultBalance = protocol.vaultAssetAvailableWithFunding(assetPrice, uint128(block.timestamp));
 
         // theoretical minted amount
-        uint256 mintedAmount = uint256(DEPOSIT_AMOUNT) * usdn.totalSupply() / vaultBalance;
-        assertEq(mintedAmount, expectedUsdnAmount, "minted amount");
+        uint256 mintedSharesAmount = uint256(DEPOSIT_AMOUNT) * usdn.totalShares() / vaultBalance;
+        uint256 mintedTokenAmount = usdn.convertToTokens(mintedSharesAmount);
+        assertEq(mintedTokenAmount, expectedUsdnAmount, "minted amount");
 
         vm.expectEmit();
-        emit ValidatedDeposit(to, address(this), DEPOSIT_AMOUNT, mintedAmount, initiateDepositTimestamp);
+        emit ValidatedDeposit(to, address(this), DEPOSIT_AMOUNT, mintedTokenAmount, initiateDepositTimestamp);
         bool success = protocol.validateDeposit(payable(address(this)), currentPrice, EMPTY_PREVIOUS_DATA);
         assertTrue(success, "success");
 
-        assertEq(usdn.balanceOf(to), mintedAmount, "USDN to balance");
+        assertEq(usdn.balanceOf(to), mintedTokenAmount, "USDN to balance");
         if (address(this) != to) {
             assertEq(usdn.balanceOf(address(this)), 0, "USDN user balance");
         }
-        assertEq(usdn.totalSupply(), usdnInitialTotalSupply + mintedAmount, "USDN total supply");
+        assertEq(usdn.totalSupply(), usdnInitialTotalSupply + mintedTokenAmount, "USDN total supply");
         assertEq(oracleMiddleware.lastActionId(), actionId, "middleware action ID");
     }
 
