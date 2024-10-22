@@ -11,7 +11,7 @@ import { Sdex as SdexSepolia } from "../src/utils/sepolia/tokens/Sdex.sol";
 contract DeployMultiMint is Script {
     function run() external returns (MultiMinter newMultiMint) {
         address deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
-        require(block.chainid == 11_155_111, "DeployMultiMint: allowed only on the test environment");
+        require(block.chainid == 11_155_111, "DeployMultiMint: allowed only on Sepolia");
 
         SdexSepolia sdex = SdexSepolia(vm.envAddress("SDEX_SEPOLIA"));
         MockWstETH wstEth = MockWstETH(payable(vm.envAddress("WSTETH_SEPOLIA")));
