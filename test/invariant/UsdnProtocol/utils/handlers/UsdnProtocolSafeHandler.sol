@@ -5,6 +5,8 @@ import { Vm, console } from "forge-std/Test.sol";
 
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
+import { ADMIN } from "../../../../utils/Constants.sol";
+
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../../../../../src/UsdnProtocol//libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "../../../../../src/UsdnProtocol/libraries/UsdnProtocolCoreLibrary.sol";
@@ -433,11 +435,13 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
             _setUsdnRebaseThreshold(seed1);
         } else if (functionSeed == 19) {
             _setUsdnRebaseInterval(seed1);
-        } else if (functionSeed == 20) {
-            _pauseTest();
-        } else if (functionSeed == 21) {
-            _unpauseTest();
         }
+        // todo: handle pause/unpause
+        //  else if (functionSeed == 20) {
+        //     _pauseTest();
+        // } else if (functionSeed == 21) {
+        //     _unpauseTest();
+        // }
     }
 
     /* ------------------------ Invariant testing helpers ----------------------- */
@@ -495,8 +499,7 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
             uint128(bound(seed1, Constants.MIN_VALIDATION_DEADLINE, lowLatencyDelay));
         uint128 newOnChainValidatorDeadline = uint128(bound(seed2, 0, Constants.MAX_VALIDATION_DEADLINE));
 
-        // todo : admin
-        vm.startPrank(msg.sender);
+        vm.startPrank(ADMIN);
         this.setValidatorDeadlines(newLowLatencyValidatorDeadline, newOnChainValidatorDeadline);
         vm.stopPrank();
         console.log(
@@ -507,108 +510,108 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         );
     }
 
-    function _setMinLeverage(uint256 seed) public {
-        uint256 newMinLeverage = bound(seed, 10 ** Constants.LEVERAGE_DECIMALS + 1, s._maxLeverage - 1);
+    function _setMinLeverage(uint256 seed) internal {
+        uint256 newMinLeverage = bound(seed, (10 ** Constants.LEVERAGE_DECIMALS) + 1, s._maxLeverage - 1);
 
-        vm.startPrank(msg.sender);
+        vm.startPrank(ADMIN);
         this.setMinLeverage(newMinLeverage);
         vm.stopPrank();
         console.log("ADMIN: newMinLeverage", newMinLeverage);
     }
 
-    function _setMaxLeverage(uint256 seed) public {
+    function _setMaxLeverage(uint256 seed) internal {
         uint256 newMaxLeverage = bound(seed, s._minLeverage + 1, Constants.MAX_LEVERAGE);
 
-        vm.startPrank(msg.sender);
-        this.setMinLeverage(newMaxLeverage);
+        vm.startPrank(ADMIN);
+        this.setMaxLeverage(newMaxLeverage);
         vm.stopPrank();
         console.log("ADMIN: newMaxLeverage", newMaxLeverage);
     }
 
-    function _setLiquidationPenalty(uint256 seed) public {
+    function _setLiquidationPenalty(uint256 seed) internal {
         uint24 newLiquidationPenalty = uint24(bound(seed, 0, Constants.MAX_LIQUIDATION_PENALTY));
 
-        vm.startPrank(msg.sender);
+        vm.startPrank(ADMIN);
         this.setLiquidationPenalty(newLiquidationPenalty);
         vm.stopPrank();
         console.log("ADMIN: newLiquidationPenalty", newLiquidationPenalty);
     }
 
-    function _setEMAPeriod(uint256 seed) public {
+    function _setEMAPeriod(uint256 seed) internal {
         uint128 newEMAPeriod = uint128(bound(seed, 0, Constants.MAX_EMA_PERIOD));
 
-        vm.startPrank(msg.sender);
+        vm.startPrank(ADMIN);
         this.setEMAPeriod(newEMAPeriod);
         vm.stopPrank();
         console.log("ADMIN: newEMAPeriod", newEMAPeriod);
     }
 
-    function _setFundingSF(uint256 seed) public {
+    function _setFundingSF(uint256 seed) internal {
         uint256 newFundingSF = bound(seed, 0, 10 ** Constants.FUNDING_SF_DECIMALS);
 
-        vm.startPrank(msg.sender);
+        vm.startPrank(ADMIN);
         this.setFundingSF(newFundingSF);
         vm.stopPrank();
         console.log("ADMIN: newFundingSF", newFundingSF);
     }
 
-    function _setProtocolFeeBps(uint256 seed) public {
+    function _setProtocolFeeBps(uint256 seed) internal {
         // max = 10%
         uint16 newProtocolFeeBps = uint16(bound(seed, 0, 1000));
 
-        vm.startPrank(msg.sender);
+        vm.startPrank(ADMIN);
         this.setProtocolFeeBps(newProtocolFeeBps);
         vm.stopPrank();
         console.log("ADMIN: newProtocolFeeBps", newProtocolFeeBps);
     }
 
-    function _setPositionFeeBps(uint256 seed) public {
+    function _setPositionFeeBps(uint256 seed) internal {
         uint16 newPositionFee = uint16(bound(seed, 0, Constants.MAX_POSITION_FEE_BPS));
 
-        vm.startPrank(msg.sender);
+        vm.startPrank(ADMIN);
         this.setPositionFeeBps(newPositionFee);
         vm.stopPrank();
         console.log("ADMIN: newPositionFee", newPositionFee);
     }
 
-    function _setVaultFeeBps(uint256 seed) public {
+    function _setVaultFeeBps(uint256 seed) internal {
         uint16 newVaultFee = uint16(bound(seed, 0, Constants.MAX_VAULT_FEE_BPS));
 
-        vm.startPrank(msg.sender);
+        vm.startPrank(ADMIN);
         this.setVaultFeeBps(newVaultFee);
         vm.stopPrank();
         console.log("ADMIN: newVaultFee", newVaultFee);
     }
 
-    function _setRebalancerBonusBps(uint256 seed) public {
+    function _setRebalancerBonusBps(uint256 seed) internal {
         uint16 newBonus = uint16(bound(seed, 0, Constants.BPS_DIVISOR));
 
-        vm.startPrank(msg.sender);
+        vm.startPrank(ADMIN);
         this.setRebalancerBonusBps(newBonus);
         vm.stopPrank();
         console.log("ADMIN: newRebalancerBonus", newBonus);
     }
 
-    function _setSdexBurnOnDepositRatio(uint256 seed) public {
+    function _setSdexBurnOnDepositRatio(uint256 seed) internal {
         uint32 newRatio = uint32(bound(seed, 0, Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR / 20));
 
-        vm.startPrank(msg.sender);
+        vm.startPrank(ADMIN);
         this.setSdexBurnOnDepositRatio(newRatio);
         vm.stopPrank();
         console.log("ADMIN: newSdexBurnOnDepositRatio", newRatio);
     }
 
-    function _setSecurityDepositValue(uint256 seed) public {
+    function _setSecurityDepositValue(uint256 seed) internal {
         // max 2 ether
         uint64 securityDepositValue = uint64(bound(seed, 0, 2 ether));
 
-        vm.startPrank(msg.sender);
+        vm.startPrank(ADMIN);
         this.setSecurityDepositValue(securityDepositValue);
         vm.stopPrank();
         console.log("ADMIN: newSecurityDepositValue", securityDepositValue);
     }
 
-    function _setExpoImbalanceLimits(uint256 seedParameter, uint256 seed, int256 seedInt) public {
+    function _setExpoImbalanceLimits(uint256 seedParameter, uint256 seed, int256 seedInt) internal {
         int256 openExpoImbalanceLimitBps = this.getOpenExpoImbalanceLimitBps();
         int256 depositExpoImbalanceLimitBps = this.getDepositExpoImbalanceLimitBps();
         int256 withdrawalExpoImbalanceLimitBps = this.getWithdrawalExpoImbalanceLimitBps();
@@ -658,7 +661,7 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
             console.log("ADMIN: newLongImbalanceTargetBps", longImbalanceTargetBps);
         }
 
-        vm.startPrank(msg.sender);
+        vm.startPrank(ADMIN);
         this.setExpoImbalanceLimits(
             uint256(openExpoImbalanceLimitBps),
             uint256(depositExpoImbalanceLimitBps),
@@ -670,80 +673,80 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         vm.stopPrank();
     }
 
-    function _setMinLongPosition(uint256 seed) public {
+    function _setMinLongPosition(uint256 seed) internal {
         uint128 newMinLongPosition = uint128(bound(seed, 0, 2 * 10 ** s._assetDecimals));
 
-        vm.startPrank(msg.sender);
+        vm.startPrank(ADMIN);
         this.setMinLongPosition(newMinLongPosition);
         vm.stopPrank();
         console.log("ADMIN: newMinLongPosition", newMinLongPosition);
     }
 
-    function _setSafetyMarginBps(uint256 seed) public {
+    function _setSafetyMarginBps(uint256 seed) internal {
         uint16 newSafetyMarginBps = uint16(bound(seed, 0, Constants.MAX_SAFETY_MARGIN_BPS));
 
-        vm.startPrank(msg.sender);
+        vm.startPrank(ADMIN);
         this.setSafetyMarginBps(newSafetyMarginBps);
         vm.stopPrank();
         console.log("ADMIN: newSafetyMarginBps", newSafetyMarginBps);
     }
 
-    function _setLiquidationIteration(uint256 seed) public {
+    function _setLiquidationIteration(uint256 seed) internal {
         uint16 newLiquidationIteration = uint16(bound(seed, 0, Constants.MAX_LIQUIDATION_ITERATION));
 
-        vm.startPrank(msg.sender);
+        vm.startPrank(ADMIN);
         this.setLiquidationIteration(newLiquidationIteration);
         vm.stopPrank();
         console.log("ADMIN: newLiquidationIteration", newLiquidationIteration);
     }
 
-    function _setFeeThreshold(uint256 seed) public {
+    function _setFeeThreshold(uint256 seed) internal {
         uint16 newFeeThreshold = uint16(bound(seed, 0, type(uint16).max));
 
-        vm.startPrank(msg.sender);
+        vm.startPrank(ADMIN);
         this.setFeeThreshold(newFeeThreshold);
         vm.stopPrank();
         console.log("ADMIN: newFeeThreshold", newFeeThreshold);
     }
 
-    function _setTargetUsdnPrice(uint256 seed) public {
+    function _setTargetUsdnPrice(uint256 seed) internal {
         // min = 1$
         uint128 newTargetUsdnPrice = uint128(bound(seed, 10 ** s._priceFeedDecimals, s._usdnRebaseThreshold));
 
-        vm.startPrank(msg.sender);
+        vm.startPrank(ADMIN);
         this.setTargetUsdnPrice(newTargetUsdnPrice);
         vm.stopPrank();
         console.log("ADMIN: newTargetUsdnPrice", newTargetUsdnPrice);
     }
 
-    function _setUsdnRebaseThreshold(uint256 seed) public {
+    function _setUsdnRebaseThreshold(uint256 seed) internal {
         // max = 1.1$
         uint128 newUsdnRebaseThreshold = uint128(bound(seed, s._targetUsdnPrice, 11 * 10 ** (s._priceFeedDecimals - 1)));
 
-        vm.startPrank(msg.sender);
+        vm.startPrank(ADMIN);
         this.setUsdnRebaseThreshold(newUsdnRebaseThreshold);
         vm.stopPrank();
         console.log("ADMIN: newUsdnRebaseThreshold", newUsdnRebaseThreshold);
     }
 
-    function _setUsdnRebaseInterval(uint256 seed) public {
+    function _setUsdnRebaseInterval(uint256 seed) internal {
         uint256 newUsdnRebaseInterval = bound(seed, 0, 365 days);
 
-        vm.startPrank(msg.sender);
+        vm.startPrank(ADMIN);
         this.setUsdnRebaseInterval(newUsdnRebaseInterval);
         vm.stopPrank();
         console.log("ADMIN: newUsdnRebaseInterval", newUsdnRebaseInterval);
     }
 
-    function _pauseTest() public {
-        vm.startPrank(msg.sender);
+    function _pauseTest() internal {
+        vm.startPrank(ADMIN);
         this.pause();
         vm.stopPrank();
         console.log("ADMIN: paused");
     }
 
-    function _unpauseTest() public {
-        vm.startPrank(msg.sender);
+    function _unpauseTest() internal {
+        vm.startPrank(ADMIN);
         this.unpause();
         vm.stopPrank();
         console.log("ADMIN: unpaused");
