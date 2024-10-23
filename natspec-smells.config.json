@@ -1,5 +1,11 @@
 {
   "include": "src/**/*.sol",
-  "exclude": ["**/mock/**/*.sol", "src/vendored/**/*.sol", "src/**/*Library.sol", "src/utils/sepolia/**/*.sol"],
+  "exclude": [
+    "**/mock/**/*.sol",
+    "src/vendored/**/*.sol",
+    "src/**/*Library.sol",
+    "src/utils/sepolia/**/*.sol",
+    "src/utils/sepolia/*.sol"
+  ],
   "constructorNatspec": true
 }
