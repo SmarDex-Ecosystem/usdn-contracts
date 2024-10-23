@@ -41,6 +41,11 @@ interface IMultiMinter {
         returns (uint256 blockNumber, bytes[] memory returnData);
 }
 
+/**
+ * @title MultiMinter
+ * @notice Contract to mint SDEX and WstETH tokens
+ * This contract must have the owner of SDEX and WstETH tokens
+ */
 contract MultiMinter is IMultiMinter, Ownable2Step {
     IMintable immutable SDEX;
     IWstETH immutable WSTETH;

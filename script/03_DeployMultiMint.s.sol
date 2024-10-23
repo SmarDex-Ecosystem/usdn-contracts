@@ -7,6 +7,10 @@ import { MultiMinter } from "../src/utils/sepolia/MultiMinter.sol";
 import { Sdex as SdexSepolia } from "../src/utils/sepolia/tokens/Sdex.sol";
 import { WstETH as WstETHSepolia } from "../src/utils/sepolia/tokens/WstETH.sol";
 
+/**
+ * @dev Script to deploy MultiMinter contract. You must have tokens deployed before running this script. This contract
+ * is used to mint SDEX and WstETH tokens. The contract is deployed on Sepolia chain only.
+ */
 contract DeployMultiMint is Script {
     function run() external returns (MultiMinter newMultiMint) {
         address deployer = vm.envAddress("DEPLOYER_ADDRESS");
