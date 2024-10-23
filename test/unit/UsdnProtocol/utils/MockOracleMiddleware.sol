@@ -28,12 +28,8 @@ contract MockOracleMiddleware is IOracleMiddleware, AccessControlDefaultAdminRul
     /// @inheritdoc IOracleMiddleware
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
-    /// @inheritdoc IOracleMiddleware
-    bytes32 public constant PAUSABLE_ROLE = keccak256("PAUSABLE_ROLE");
-
     constructor() AccessControlDefaultAdminRules(0, msg.sender) {
         _grantRole(ADMIN_ROLE, msg.sender);
-        _grantRole(PAUSABLE_ROLE, msg.sender);
     }
 
     /// @inheritdoc IBaseOracleMiddleware
@@ -130,8 +126,4 @@ contract MockOracleMiddleware is IOracleMiddleware, AccessControlDefaultAdminRul
     }
 
     function setLowLatencyDelay(uint16) external { }
-
-    function pausePriceValidation() external { }
-
-    function unpausePriceValidation() external { }
 }

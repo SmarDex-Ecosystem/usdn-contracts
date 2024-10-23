@@ -40,6 +40,11 @@ interface IMultiMinter {
         returns (uint256 blockNumber, bytes[] memory returnData);
 }
 
+/**
+ * @title MultiMinter
+ * @notice Contract to mint SDEX and WstETH tokens
+ * This contract must have the owner of SDEX and WstETH tokens
+ */
 contract MultiMinter is IMultiMinter, Ownable2Step {
     IMintable immutable SDEX;
     IStETH immutable STETH;
@@ -73,8 +78,8 @@ contract MultiMinter is IMultiMinter, Ownable2Step {
         }
     }
 
-    function setStEthPerToken(uint256 stEthAmount, IWstETH wstETH) external onlyOwner {
-        STETH.setStEthPerToken(stEthAmount, wstETH);
+    function setStEthPerToken(uint256 stEthAmount) external onlyOwner {
+        WSTETH.setStEthPerToken(stEthAmount);
     }
 
     function transferOwnershipOf(address contractAdr, address newOwner) external onlyOwner {
