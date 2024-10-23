@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.19.1](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v0.19.0...v0.19.1) (2024-09-24)
+
+
+### Bug Fixes
+
+* changed ts-node to tsx ([#601](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/601)) ([07ab6d1](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/07ab6d160b5a0619c8773767f06fccc7449450f1))
+
 ## [0.19.0](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v0.18.0...v0.19.0) (2024-09-24)
 
 

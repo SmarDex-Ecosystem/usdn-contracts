@@ -279,7 +279,7 @@ library UsdnProtocolActionsLongLibrary {
 
             // adjust the balances to reflect the new value of the position
             uint256 updatedPosValue =
-                Utils.positionValue(data.pos.totalExpo, data.currentPrice, data.liqPriceWithoutPenalty);
+                Utils.positionValue(data.pos.totalExpo, data.lastPrice, data.liqPriceWithoutPenalty);
             _validateOpenPositionUpdateBalances(s, updatedPosValue, data.oldPosValue);
 
             emit IUsdnProtocolEvents.LiquidationPriceUpdated(
@@ -322,7 +322,7 @@ library UsdnProtocolActionsLongLibrary {
         }
 
         // adjust the balances to reflect the new value of the position
-        uint256 newPosValue = Utils.positionValue(expoAfter, data.currentPrice, data.liqPriceWithoutPenalty);
+        uint256 newPosValue = Utils.positionValue(expoAfter, data.lastPrice, data.liqPriceWithoutPenalty);
         _validateOpenPositionUpdateBalances(s, newPosValue, data.oldPosValue);
 
         isValidated_ = true;
@@ -567,7 +567,6 @@ library UsdnProtocolActionsLongLibrary {
             Utils._calcActionId(data_.action.validator, data_.action.timestamp),
             priceData
         );
-        data_.currentPrice = (currentPrice.price).toUint128();
         // apply fees on price
         data_.startPrice =
             (currentPrice.price + currentPrice.price * s._positionFeeBps / Constants.BPS_DIVISOR).toUint128();
@@ -608,15 +607,20 @@ library UsdnProtocolActionsLongLibrary {
         data_.liquidationPenalty = s._tickData[data_.tickHash].liquidationPenalty;
         data_.liqPriceWithoutPenalty =
             Utils.getEffectivePriceForTick(s, Utils.calcTickWithoutPenalty(data_.action.tick, data_.liquidationPenalty));
+
+        data_.lastPrice = s._lastPrice;
+        if (data_.lastPrice < data_.liqPriceWithoutPenalty) {
+            // the position must be liquidated
+            data_.isLiquidationPending = true;
+            return (data_, false);
+        }
+
         // reverts if liqPriceWithoutPenalty >= startPrice
         data_.leverage = Utils._getLeverage(data_.startPrice, data_.liqPriceWithoutPenalty);
         // calculate how much the position that was opened in the initiate is now worth (it might be too large or too
-        // small considering the new entry price). We will adjust the long and vault balances accordingly
-        uint128 lastPrice = s._lastPrice;
-        // multiplication cannot overflow because operands are uint128
-        // lastPrice is larger than liqPriceWithoutPenalty because we performed liquidations above and would early
-        // return in case of liquidation of this position
-        data_.oldPosValue = Utils.positionValue(data_.pos.totalExpo, lastPrice, data_.liqPriceWithoutPenalty);
+        // small considering the new leverage and lastPrice). We will adjust the long and vault balances accordingly
+        // lastPrice is larger than or equal to liqPriceWithoutPenalty so the calc below does not underflow
+        data_.oldPosValue = Utils.positionValue(data_.pos.totalExpo, data_.lastPrice, data_.liqPriceWithoutPenalty);
     }
 
     /**

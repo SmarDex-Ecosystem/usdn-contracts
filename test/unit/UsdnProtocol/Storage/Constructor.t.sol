@@ -28,7 +28,9 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
         setProtocolParamsManager: address(0),
         setUsdnParamsManager: address(0),
         setOptionsManager: address(0),
-        proxyUpgradeManager: address(0)
+        proxyUpgradeManager: address(0),
+        pauserManager: address(0),
+        unpauserManager: address(0)
     });
 
     function setUp() public {

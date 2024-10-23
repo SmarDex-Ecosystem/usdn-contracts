@@ -162,7 +162,9 @@ contract Deploy is Script {
                         setProtocolParamsManager: _deployerAddress,
                         setUsdnParamsManager: _deployerAddress,
                         setOptionsManager: _deployerAddress,
-                        proxyUpgradeManager: _deployerAddress
+                        proxyUpgradeManager: _deployerAddress,
+                        pauserManager: _deployerAddress,
+                        unpauserManager: _deployerAddress
                     }),
                     protocolFallback
                 )

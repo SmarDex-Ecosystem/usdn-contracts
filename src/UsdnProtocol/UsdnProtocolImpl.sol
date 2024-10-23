@@ -43,6 +43,8 @@ contract UsdnProtocolImpl is
     ) public initializer {
         __AccessControlDefaultAdminRules_init_unchained(0, msg.sender);
         __initializeReentrancyGuard_init();
+        __Pausable_init_unchained();
+
         // roles
         _setRoleAdmin(SET_EXTERNAL_ROLE, ADMIN_SET_EXTERNAL_ROLE);
         _setRoleAdmin(CRITICAL_FUNCTIONS_ROLE, ADMIN_CRITICAL_FUNCTIONS_ROLE);
@@ -50,12 +52,16 @@ contract UsdnProtocolImpl is
         _setRoleAdmin(SET_USDN_PARAMS_ROLE, ADMIN_SET_USDN_PARAMS_ROLE);
         _setRoleAdmin(SET_OPTIONS_ROLE, ADMIN_SET_OPTIONS_ROLE);
         _setRoleAdmin(PROXY_UPGRADE_ROLE, ADMIN_PROXY_UPGRADE_ROLE);
+        _setRoleAdmin(PAUSER_ROLE, ADMIN_PAUSER_ROLE);
+        _setRoleAdmin(UNPAUSER_ROLE, ADMIN_UNPAUSER_ROLE);
         _grantRole(SET_EXTERNAL_ROLE, managers.setExternalManager);
         _grantRole(CRITICAL_FUNCTIONS_ROLE, managers.criticalFunctionsManager);
         _grantRole(SET_PROTOCOL_PARAMS_ROLE, managers.setProtocolParamsManager);
         _grantRole(SET_USDN_PARAMS_ROLE, managers.setUsdnParamsManager);
         _grantRole(SET_OPTIONS_ROLE, managers.setOptionsManager);
         _grantRole(PROXY_UPGRADE_ROLE, managers.proxyUpgradeManager);
+        _grantRole(PAUSER_ROLE, managers.pauserManager);
+        _grantRole(UNPAUSER_ROLE, managers.unpauserManager);
 
         // parameters
         s._minLeverage = 10 ** Constants.LEVERAGE_DECIMALS + 10 ** (Constants.LEVERAGE_DECIMALS - 1); // x1.1
@@ -64,18 +70,18 @@ contract UsdnProtocolImpl is
         s._onChainValidatorDeadline = 65 minutes; // slightly more than chainlink's heartbeat
         s._safetyMarginBps = 200; // 2%
         s._liquidationIteration = 1;
-        s._protocolFeeBps = 800;
+        s._protocolFeeBps = 800; // 8%
         s._rebalancerBonusBps = 8000; // 80%
         s._liquidationPenalty = 200; // 200 ticks -> ~2.02%
         s._EMAPeriod = 5 days;
-        s._fundingSF = 12 * 10 ** (Constants.FUNDING_SF_DECIMALS - 2);
+        s._fundingSF = 12 * 10 ** (Constants.FUNDING_SF_DECIMALS - 2); // 0.12
         s._feeThreshold = 1 ether;
-        s._openExpoImbalanceLimitBps = 500;
-        s._withdrawalExpoImbalanceLimitBps = 600;
-        s._depositExpoImbalanceLimitBps = 500;
-        s._closeExpoImbalanceLimitBps = 600;
-        s._rebalancerCloseExpoImbalanceLimitBps = 500;
-        s._longImbalanceTargetBps = 550;
+        s._openExpoImbalanceLimitBps = 500; // 5%
+        s._withdrawalExpoImbalanceLimitBps = 600; // 6%
+        s._depositExpoImbalanceLimitBps = 500; // 5%
+        s._closeExpoImbalanceLimitBps = 600; // 6%
+        s._rebalancerCloseExpoImbalanceLimitBps = 350; // 3.5%
+        s._longImbalanceTargetBps = 400; // 4%
         s._positionFeeBps = 4; // 0.04%
         s._vaultFeeBps = 4; // 0.04%
         s._sdexBurnOnDepositRatio = 1e6; // 1%
@@ -114,7 +120,7 @@ contract UsdnProtocolImpl is
 
         s._targetUsdnPrice = uint128(10_087 * 10 ** (priceFeedDecimals - 4)); // $1.0087
         s._usdnRebaseThreshold = uint128(1009 * 10 ** (priceFeedDecimals - 3)); // $1.009
-        s._minLongPosition = 2 * 10 ** assetDecimals;
+        s._minLongPosition = 2 * 10 ** assetDecimals; // 2 tokens
         s._protocolFallbackAddr = address(protocolFallback);
     }
 

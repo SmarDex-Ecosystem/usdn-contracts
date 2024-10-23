@@ -3,7 +3,6 @@ pragma solidity 0.8.26;
 
 import { AccessControlDefaultAdminRules } from
     "@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol";
-import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IOracleMiddleware } from "../interfaces/OracleMiddleware/IOracleMiddleware.sol";
@@ -23,13 +22,7 @@ import { PythOracle } from "./oracles/PythOracle.sol";
  * It is used by the USDN protocol to get the price of the USDN underlying asset
  * @dev This contract is a middleware between the USDN protocol and the price oracles
  */
-contract OracleMiddleware is
-    IOracleMiddleware,
-    PythOracle,
-    ChainlinkOracle,
-    Pausable,
-    AccessControlDefaultAdminRules
-{
+contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, AccessControlDefaultAdminRules {
     /// @inheritdoc IOracleMiddleware
     uint16 public constant BPS_DIVISOR = 10_000;
 
@@ -41,9 +34,6 @@ contract OracleMiddleware is
 
     /// @inheritdoc IOracleMiddleware
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
-
-    /// @inheritdoc IOracleMiddleware
-    bytes32 public constant PAUSABLE_ROLE = keccak256("PAUSABLE_ROLE");
 
     /**
      * @notice The delay (in seconds) between the moment an action is initiated and the timestamp of the
@@ -72,7 +62,6 @@ contract OracleMiddleware is
         AccessControlDefaultAdminRules(0, msg.sender)
     {
         _grantRole(ADMIN_ROLE, msg.sender);
-        _grantRole(PAUSABLE_ROLE, msg.sender);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -87,7 +76,6 @@ contract OracleMiddleware is
         public
         payable
         virtual
-        whenNotPaused
         returns (PriceInfo memory price_)
     {
         if (action == Types.ProtocolAction.None) {
@@ -443,21 +431,10 @@ contract OracleMiddleware is
         if (to == address(0)) {
             revert OracleMiddlewareTransferToZeroAddress();
         }
-
         // slither-disable-next-line arbitrary-send-eth
         (bool success,) = payable(to).call{ value: address(this).balance }("");
         if (!success) {
             revert OracleMiddlewareTransferFailed(to);
         }
-    }
-
-    /// @inheritdoc IOracleMiddleware
-    function pausePriceValidation() external onlyRole(PAUSABLE_ROLE) {
-        _pause();
-    }
-
-    /// @inheritdoc IOracleMiddleware
-    function unpausePriceValidation() external onlyRole(PAUSABLE_ROLE) {
-        _unpause();
     }
 }
