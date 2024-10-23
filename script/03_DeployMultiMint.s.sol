@@ -3,19 +3,20 @@ pragma solidity 0.8.26;
 
 import { Script } from "forge-std/Script.sol";
 
+import { MockStETH } from "../src/utils/MockStETH.sol";
+import { MockWstETH } from "../src/utils/MockWstETH.sol";
 import { MultiMinter } from "../src/utils/sepolia/MultiMinter.sol";
 import { Sdex as SdexSepolia } from "../src/utils/sepolia/tokens/Sdex.sol";
-import { WstETH as WstETHSepolia } from "../src/utils/sepolia/tokens/WstETH.sol";
 
 /**
  * @dev Script to deploy MultiMinter contract. You must have tokens deployed before running this script. This contract
- * is used to mint SDEX and WstETH tokens. The contract is deployed on Sepolia chain only.
+ * is used to mint SDEX, STETH and WstETH tokens. The contract is deployed on Sepolia chain only.
  */
 contract DeployMultiMint is Script {
     function run() external returns (MultiMinter newMultiMint) {
         address deployer = vm.envAddress("DEPLOYER_ADDRESS");
         SdexSepolia sdex = SdexSepolia(vm.envAddress("SDEX_SEPOLIA"));
-        WstETHSepolia wstEth = WstETHSepolia(payable(vm.envAddress("WSTETH_SEPOLIA")));
+        MockWstETH wstEth = MockWstETH(payable(vm.envAddress("WSTETH_SEPOLIA")));
         MockStETH stEth = MockStETH(payable(vm.envAddress("STETH_SEPOLIA")));
         require(block.chainid == 11_155_111, "DeployMultiMint: allowed only on Sepolia");
 

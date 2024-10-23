@@ -78,8 +78,8 @@ contract MultiMinter is IMultiMinter, Ownable2Step {
         }
     }
 
-    function setStEthPerToken(uint256 stEthAmount) external onlyOwner {
-        WSTETH.setStEthPerToken(stEthAmount);
+    function setStEthPerToken(uint256 stEthAmount, IWstETH wstETH) external onlyOwner {
+        STETH.setStEthPerToken(stEthAmount, wstETH);
     }
 
     function transferOwnershipOf(address contractAdr, address newOwner) external onlyOwner {
