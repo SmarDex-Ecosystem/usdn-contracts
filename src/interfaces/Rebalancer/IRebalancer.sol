@@ -25,6 +25,13 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
     function MAX_ACTION_COOLDOWN() external view returns (uint256);
 
     /**
+     * @notice The EIP712 {initiateClosePosition} typehash
+     * @dev By including this hash into the EIP712 message for this domain, this can be used together with
+     * {ECDSA-recover} to obtain the signer of a message
+     */
+    function INITIATE_CLOSE_TYPEHASH() external view returns (bytes32);
+
+    /**
      * @notice Returns the address of the asset used by the USDN protocol
      * @return The address of the asset used by the USDN protocol
      */
@@ -82,6 +89,19 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
     function getLastLiquidatedVersion() external view returns (uint128);
 
     /**
+     * @notice Get the nonce a user can use to generate a delegation signature
+     * @dev This is to prevent replay attacks when using an eip712 delegation signature
+     * @return The user nonce
+     */
+    function getNonce(address user) external view returns (uint256);
+
+    /**
+     * @notice Get the domain separator v4
+     * @return The domain separator v4
+     */
+    function domainSeparatorV4() external view returns (bytes32);
+
+    /**
      * @notice Deposit assets into this contract to be included in the next position after validation
      * @dev The user must call `validateDepositAssets` between `_timeLimits.validationDelay` and
      * `_timeLimits.validationDeadline` seconds after this action
@@ -134,6 +154,9 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
      * @param deadline The deadline of the close position to be initiated
      * @param currentPriceData The current price data
      * @param previousActionsData The previous action price data
+     * @param delegationData An optional delegation data that include the depositOwner and an EIP712 signature to
+     * provide when closing a position on the owner's behalf
+     * If used, it needs to be encoded with `abi.encode(depositOwner, abi.encodePacked(r, s, v))`
      * @return success_ If the UsdnProtocol's `initiateClosePosition` was successful
      * If false, the action failed because of pending liquidations, check IUsdnProtocolActions:initiateClosePosition for
      * more details
@@ -144,7 +167,8 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
         uint256 userMinPrice,
         uint256 deadline,
         bytes calldata currentPriceData,
-        Types.PreviousActionsData calldata previousActionsData
+        Types.PreviousActionsData calldata previousActionsData,
+        bytes calldata delegationData
     ) external payable returns (bool success_);
 
     /* -------------------------------------------------------------------------- */

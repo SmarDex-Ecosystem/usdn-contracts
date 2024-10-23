@@ -70,7 +70,7 @@ contract TestRebalancerInitiateClosePosition is
     function test_rebalancerNoWithdrawalAfterRebalancerTrigger() public {
         vm.expectPartialRevert(UsdnProtocolImbalanceLimitReached.selector);
         rebalancer.initiateClosePosition{ value: securityDeposit }(
-            amountInRebalancer, address(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA
+            amountInRebalancer, address(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA, ""
         );
     }
 
@@ -104,7 +104,7 @@ contract TestRebalancerInitiateClosePosition is
         vm.expectEmit();
         emit ClosePositionInitiated(address(this), amount, amountToClose, amountInRebalancer - amount);
         (bool success) = rebalancer.initiateClosePosition{ value: securityDeposit }(
-            amount, address(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA
+            amount, address(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA, ""
         );
 
         assertTrue(success, "The rebalancer close should be successful");
@@ -147,7 +147,7 @@ contract TestRebalancerInitiateClosePosition is
 
         vm.expectPartialRevert(UsdnProtocolImbalanceLimitReached.selector);
         rebalancer.initiateClosePosition{ value: securityDeposit }(
-            amount, address(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA
+            amount, address(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA, ""
         );
     }
 
@@ -177,7 +177,7 @@ contract TestRebalancerInitiateClosePosition is
         vm.expectEmit();
         emit ClosePositionInitiated(address(this), amountInRebalancer, amountToClose, 0);
         (bool success) = rebalancer.initiateClosePosition{ value: securityDeposit }(
-            amountInRebalancer, address(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA
+            amountInRebalancer, address(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA, ""
         );
 
         UserDeposit memory depositData = rebalancer.getUserDepositData(address(this));
@@ -266,7 +266,7 @@ contract TestRebalancerInitiateClosePosition is
         vm.expectEmit();
         emit Transfer(address(rebalancer), address(this), liquidationRewards);
         (bool success) = rebalancer.initiateClosePosition{ value: securityDeposit }(
-            amountInRebalancer, address(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA
+            amountInRebalancer, address(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA, ""
         );
 
         UserDeposit memory depositData = rebalancer.getUserDepositData(address(this));
@@ -296,7 +296,7 @@ contract TestRebalancerInitiateClosePosition is
 
         // send more ether than necessary to trigger the refund
         rebalancer.initiateClosePosition{ value: securityDeposit + excessAmount }(
-            amountInRebalancer, address(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA
+            amountInRebalancer, address(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA, ""
         );
 
         assertEq(payable(rebalancer).balance, 0, "There should be no ether left in the rebalancer");
@@ -366,7 +366,7 @@ contract TestRebalancerInitiateClosePosition is
         // but the _lastLiquidatedVersion has not been updated yet
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolOutdatedTick.selector, 1, 0));
         rebalancer.initiateClosePosition{ value: securityDeposit }(
-            1 ether, address(this), DISABLE_MIN_PRICE, type(uint256).max, MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA
+            1 ether, address(this), DISABLE_MIN_PRICE, type(uint256).max, MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA, ""
         );
 
         // wait 1 minute to provide a fresh price
@@ -410,7 +410,13 @@ contract TestRebalancerInitiateClosePosition is
         // try to withdraw from the rebalancer again
         vm.expectRevert(IRebalancerErrors.RebalancerUserLiquidated.selector);
         rebalancer.initiateClosePosition{ value: securityDeposit + 1 ether }(
-            amountInRebalancer, address(this), DISABLE_MIN_PRICE, type(uint256).max, MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA
+            amountInRebalancer,
+            address(this),
+            DISABLE_MIN_PRICE,
+            type(uint256).max,
+            MOCK_PYTH_DATA,
+            EMPTY_PREVIOUS_DATA,
+            ""
         );
     }
 
@@ -490,7 +496,13 @@ contract TestRebalancerInitiateClosePosition is
 
         vm.expectRevert(ReentrancyGuard.ReentrancyGuardReentrantCall.selector);
         rebalancer.initiateClosePosition{ value: securityDeposit + oracleFee }(
-            amountInRebalancer, address(this), DISABLE_MIN_PRICE, type(uint256).max, MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA
+            amountInRebalancer,
+            address(this),
+            DISABLE_MIN_PRICE,
+            type(uint256).max,
+            MOCK_PYTH_DATA,
+            EMPTY_PREVIOUS_DATA,
+            ""
         );
     }
 

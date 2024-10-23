@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
@@ -36,6 +37,18 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
 
     Types.PreviousActionsData internal EMPTY_PREVIOUS_DATA =
         Types.PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
+
+    struct InitiateClosePositionDelegation {
+        uint88 amount;
+        address to;
+        uint256 userMinPrice;
+        uint256 deadline;
+        address depositOwner;
+        address depositCloser;
+        uint256 nonce;
+    }
+
+    InitiateClosePositionDelegation internal delegation;
 
     function _setUp() public virtual {
         vm.startPrank(DEPLOYER);
@@ -76,7 +89,7 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
         );
         usdnProtocol = IUsdnProtocol(proxy);
 
-        rebalancer = new RebalancerHandler(usdnProtocol);
+        rebalancer = new RebalancerHandler(usdnProtocol, EIP712_VERSION);
 
         usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));
@@ -90,5 +103,36 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
         usdnProtocol.acceptDefaultAdminTransfer();
         rebalancer.acceptOwnership();
         vm.stopPrank();
+    }
+
+    /**
+     * @notice Get the delegation signature
+     * @param privateKey The signer private key
+     * @param delegationToSign The delegation struct to sign
+     * @return delegationSignature_ The initiateClosePosition eip712 delegation signature
+     */
+    function _getDelegationSignature(uint256 privateKey, InitiateClosePositionDelegation memory delegationToSign)
+        internal
+        view
+        returns (bytes memory delegationSignature_)
+    {
+        bytes32 digest = MessageHashUtils.toTypedDataHash(
+            rebalancer.domainSeparatorV4(),
+            keccak256(
+                abi.encode(
+                    rebalancer.INITIATE_CLOSE_TYPEHASH(),
+                    delegationToSign.amount,
+                    delegationToSign.to,
+                    delegationToSign.userMinPrice,
+                    delegationToSign.deadline,
+                    delegationToSign.depositOwner,
+                    delegationToSign.depositCloser,
+                    delegationToSign.nonce
+                )
+            )
+        );
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
+        delegationSignature_ = abi.encodePacked(r, s, v);
     }
 }

@@ -11,7 +11,7 @@ import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProt
  * @dev Wrapper to aid in testing the rebalancer
  */
 contract RebalancerHandler is Rebalancer, Test {
-    constructor(IUsdnProtocol usdnProtocol) Rebalancer(usdnProtocol) { }
+    constructor(IUsdnProtocol usdnProtocol, string memory eip712Version) Rebalancer(usdnProtocol, eip712Version) { }
 
     /// @dev Sets the position version to the current one + 1
     function incrementPositionVersion() external {
@@ -28,5 +28,16 @@ contract RebalancerHandler is Rebalancer, Test {
 
     function i_refundEther() external {
         return _refundEther();
+    }
+
+    /// @dev The EIP712 delegation signature verification position
+    function i_verifyInitiateCloseDelegation(
+        uint88 amount,
+        address to,
+        uint256 userMinPrice,
+        uint256 deadline,
+        bytes calldata delegationData
+    ) external returns (address depositOwner_) {
+        depositOwner_ = _verifyInitiateCloseDelegation(amount, to, userMinPrice, deadline, delegationData);
     }
 }

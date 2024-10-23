@@ -6,6 +6,9 @@ import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { EIP712 } from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+
 import { ERC165, IERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
@@ -23,7 +26,7 @@ import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnPro
  * It will manage only one position with enough trading expo to re-balance the protocol after liquidations
  * and close/open again with new and existing funds when the imbalance reaches a certain threshold
  */
-contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback, IRebalancer {
+contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback, IRebalancer, EIP712 {
     using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
 
@@ -36,6 +39,9 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
      * @param amountToCloseWithoutBonus The user amount to close without bonus
      * @param amountToClose The user amount to close including bonus
      * @param protocolPosition The protocol rebalancer position
+     * @param user The initiateClosePosition user
+     * @param balanceOfAssetBefore The balance of asset before the protocol initiateClosePosition
+     * @param balanceOfAssetAfter The balance of asset after the protocol initiateClosePosition
      */
     struct InitiateCloseData {
         UserDeposit userDepositData;
@@ -45,6 +51,9 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         uint256 amountToCloseWithoutBonus;
         uint256 amountToClose;
         Types.Position protocolPosition;
+        address user;
+        uint256 balanceOfAssetBefore;
+        uint256 balanceOfAssetAfter;
     }
 
     /// @notice Modifier to check if the caller is the USDN protocol or the owner
@@ -72,6 +81,11 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
     /// @inheritdoc IRebalancer
     uint256 public constant MAX_ACTION_COOLDOWN = 48 hours;
+
+    /// @inheritdoc IRebalancer
+    bytes32 public constant INITIATE_CLOSE_TYPEHASH = keccak256(
+        "InitiateClosePositionDelegation(uint88 amount,address to,uint256 userMinPrice,uint256 deadline,address depositOwner,address depositCloser,uint256 nonce)"
+    );
 
     /* -------------------------------------------------------------------------- */
     /*                                 Immutables                                 */
@@ -126,8 +140,17 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     /// @notice The data for the specific version of the position
     mapping(uint256 => PositionData) internal _positionData;
 
-    /// @param usdnProtocol The address of the USDN protocol
-    constructor(IUsdnProtocol usdnProtocol) Ownable(msg.sender) {
+    /// @notice The user EIP712 nonce
+    mapping(address => uint256) internal _nonce;
+
+    /**
+     * @param usdnProtocol The address of the USDN protocol
+     * @param eip712Version The EIP712 domain version
+     */
+    constructor(IUsdnProtocol usdnProtocol, string memory eip712Version)
+        Ownable(msg.sender)
+        EIP712("Rebalancer", eip712Version)
+    {
         _usdnProtocol = usdnProtocol;
         IERC20Metadata asset = usdnProtocol.getAsset();
         _asset = asset;
@@ -214,6 +237,16 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     /// @inheritdoc IBaseRebalancer
     function getUserDepositData(address user) external view returns (UserDeposit memory) {
         return _userDeposit[user];
+    }
+
+    /// @inheritdoc IRebalancer
+    function getNonce(address user) external view returns (uint256) {
+        return _nonce[user];
+    }
+
+    /// @inheritdoc IRebalancer
+    function domainSeparatorV4() external view returns (bytes32) {
+        return _domainSeparatorV4();
     }
 
     /// @inheritdoc IRebalancer
@@ -416,14 +449,21 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         uint256 userMinPrice,
         uint256 deadline,
         bytes calldata currentPriceData,
-        Types.PreviousActionsData calldata previousActionsData
+        Types.PreviousActionsData calldata previousActionsData,
+        bytes calldata delegationData
     ) external payable nonReentrant returns (bool success_) {
         if (amount == 0) {
             revert RebalancerInvalidAmount();
         }
 
         InitiateCloseData memory data;
-        data.userDepositData = _userDeposit[msg.sender];
+        if (delegationData.length == 0) {
+            data.user = msg.sender;
+        } else {
+            data.user = _verifyInitiateCloseDelegation(amount, to, userMinPrice, deadline, delegationData);
+        }
+
+        data.userDepositData = _userDeposit[data.user];
 
         if (amount > data.userDepositData.amount) {
             revert RebalancerInvalidAmount();
@@ -469,7 +509,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
             + data.amountToCloseWithoutBonus * (data.protocolPosition.amount - data.currentPositionData.amount)
                 / data.currentPositionData.amount;
 
-        uint256 balanceOfAssetBefore = _asset.balanceOf(address(this));
+        data.balanceOfAssetBefore = _asset.balanceOf(address(this));
         // slither-disable-next-line reentrancy-eth
         success_ = _usdnProtocol.initiateClosePosition{ value: msg.value }(
             Types.PositionId({
@@ -486,13 +526,13 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
             previousActionsData,
             ""
         );
-        uint256 balanceOfAssetAfter = _asset.balanceOf(address(this));
+        data.balanceOfAssetAfter = _asset.balanceOf(address(this));
 
         if (success_) {
             if (data.remainingAssets == 0) {
-                delete _userDeposit[msg.sender];
+                delete _userDeposit[data.user];
             } else {
-                _userDeposit[msg.sender].amount = data.remainingAssets;
+                _userDeposit[data.user].amount = data.remainingAssets;
             }
 
             // safe cast is already made on amountToClose
@@ -506,13 +546,13 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
                 _positionData[data.positionVersion].amount = data.currentPositionData.amount;
             }
 
-            emit ClosePositionInitiated(msg.sender, amount, data.amountToClose, data.remainingAssets);
+            emit ClosePositionInitiated(data.user, amount, data.amountToClose, data.remainingAssets);
         }
 
         // If the rebalancer received assets, it means it was rewarded for liquidating positions
         // So we need to forward those rewards to the msg.sender
-        if (balanceOfAssetAfter > balanceOfAssetBefore) {
-            _asset.safeTransfer(msg.sender, balanceOfAssetAfter - balanceOfAssetBefore);
+        if (data.balanceOfAssetAfter > data.balanceOfAssetBefore) {
+            _asset.safeTransfer(msg.sender, data.balanceOfAssetAfter - data.balanceOfAssetBefore);
         }
 
         // sent back any ether left in the contract
@@ -676,5 +716,48 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
             // user must wait until the cooldown has elapsed, then call `resetDepositAssets` to withdraw the funds
             revert RebalancerActionCooldown();
         }
+    }
+
+    /**
+     * @notice Performs the {initiateClosePosition} EIP712 delegation signature verification
+     * @dev Reverts if the function arguments don't match those included in the signature
+     * and if the signer isn't the owner of the deposit
+     * @param delegationData The delegation data that should include the depositOwner and the delegation signature
+     * @param amount The amount to close relative to the amount deposited
+     * @param to The address that will receive the assets
+     * @param userMinPrice The minimum price at which the position can be closed
+     * @param deadline The deadline of the close position to be initiated
+     * @return depositOwner_ The deposit owner
+     */
+    function _verifyInitiateCloseDelegation(
+        uint88 amount,
+        address to,
+        uint256 userMinPrice,
+        uint256 deadline,
+        bytes calldata delegationData
+    ) internal returns (address depositOwner_) {
+        bytes memory signature;
+        (depositOwner_, signature) = abi.decode(delegationData, (address, bytes));
+
+        bytes32 digest = _hashTypedDataV4(
+            keccak256(
+                abi.encode(
+                    INITIATE_CLOSE_TYPEHASH,
+                    amount,
+                    to,
+                    userMinPrice,
+                    deadline,
+                    depositOwner_,
+                    msg.sender,
+                    _nonce[depositOwner_]
+                )
+            )
+        );
+
+        if (ECDSA.recover(digest, signature) != depositOwner_) {
+            revert RebalancerInvalidDelegationSignature();
+        }
+
+        _nonce[depositOwner_] += 1;
     }
 }

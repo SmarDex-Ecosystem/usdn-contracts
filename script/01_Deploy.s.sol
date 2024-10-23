@@ -285,7 +285,7 @@ contract Deploy is Script {
         if (rebalancerAddress != address(0)) {
             rebalancer_ = Rebalancer(rebalancerAddress);
         } else {
-            rebalancer_ = new Rebalancer(usdnProtocol);
+            rebalancer_ = new Rebalancer(usdnProtocol, vm.envOr("EIP712_VERSION", EIP712_VERSION));
         }
     }
 

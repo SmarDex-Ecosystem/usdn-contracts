@@ -237,7 +237,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         vm.stopPrank();
 
         vm.prank(DEPLOYER);
-        rebalancer = new RebalancerHandler(protocol);
+        rebalancer = new RebalancerHandler(protocol, params.eip712Version);
 
         if (testParams.flags.enableRebalancer) {
             vm.prank(managers.setExternalManager);
