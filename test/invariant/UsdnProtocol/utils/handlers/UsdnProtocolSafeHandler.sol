@@ -394,7 +394,7 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
     }
 
     function adminFunctionsTest(uint256 functionSeed, uint256 seed1, uint256 seed2, int256 seedInt) external {
-        functionSeed %= 22;
+        functionSeed %= 21;
         if (functionSeed == 0) {
             _setValidatorDeadlines(uint128(seed1), uint128(seed2));
         } else if (functionSeed == 1) {
@@ -435,13 +435,9 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
             _setUsdnRebaseThreshold(seed1);
         } else if (functionSeed == 19) {
             _setUsdnRebaseInterval(seed1);
+        } else if (functionSeed == 20) {
+            _pauseTest(seed1);
         }
-        // todo: handle pause/unpause
-        //  else if (functionSeed == 20) {
-        //     _pauseTest();
-        // } else if (functionSeed == 21) {
-        //     _unpauseTest();
-        // }
     }
 
     /* ------------------------ Invariant testing helpers ----------------------- */
@@ -746,14 +742,17 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         console.log("ADMIN: newUsdnRebaseInterval", newUsdnRebaseInterval);
     }
 
-    function _pauseTest() internal {
+    function _pauseTest(uint256 seed) internal {
         vm.startPrank(ADMIN);
         this.pause();
         vm.stopPrank();
         console.log("ADMIN: paused");
-    }
 
-    function _unpauseTest() internal {
+        uint256 blocks = bound(seed, 1, 100);
+        emit log_named_uint("mining blocks", blocks);
+        skip(12 * blocks);
+        vm.roll(block.number + blocks);
+
         vm.startPrank(ADMIN);
         this.unpause();
         vm.stopPrank();
