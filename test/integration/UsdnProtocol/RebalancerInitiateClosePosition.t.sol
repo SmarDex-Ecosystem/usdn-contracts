@@ -2,6 +2,8 @@
 pragma solidity 0.8.26;
 
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+
+import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { MOCK_PYTH_DATA } from "../../unit/Middlewares/utils/Constants.sol";
@@ -33,26 +35,18 @@ contract TestRebalancerInitiateClosePosition is
     uint128 internal wstEthPrice;
     uint128 internal securityDeposit;
 
+    struct InitiateClosePositionDelegation {
+        uint88 amount;
+        address to;
+        uint256 userMinPrice;
+        uint256 deadline;
+        address depositOwner;
+        address depositCloser;
+        uint256 nonce;
+    }
+
     function setUp() public {
-        (, amountInRebalancer,,) = _setUpImbalanced(15 ether);
-        uint256 maxLeverage = protocol.getMaxLeverage();
-        vm.prank(DEPLOYER);
-        rebalancer.setPositionMaxLeverage(maxLeverage);
-        skip(5 minutes);
-
-        wstEthPrice = _setOraclePrices(1490 ether);
-
-        uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
-        protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA);
-
-        version = rebalancer.getPositionVersion();
-        previousPositionData = rebalancer.getPositionData(version);
-        prevPosId = PositionId({
-            tick: previousPositionData.tick,
-            tickVersion: previousPositionData.tickVersion,
-            index: previousPositionData.index
-        });
-        (protocolPosition,) = protocol.getLongPosition(prevPosId);
+        _depositAndTriggerRebalancer(address(this));
         securityDeposit = protocol.getSecurityDepositValue();
     }
 
@@ -504,6 +498,134 @@ contract TestRebalancerInitiateClosePosition is
             EMPTY_PREVIOUS_DATA,
             ""
         );
+    }
+
+    /**
+     * @custom:scenario Closes entirely a rebalancer amount using delegation signature
+     * @custom:when The user calls the rebalancer's `initiateClosePosition` function using delegation signature
+     * @custom:then A ClosePositionInitiated event is emitted
+     * @custom:and The user depositData is deleted
+     * @custom:and The position data is updated
+     * @custom:and The validator initiate close position is pending in protocol
+     */
+    function test_rebalancerInitiateClosePositionDelegation() public {
+        uint256 userPrivateKey = 1;
+        address user = vm.addr(userPrivateKey);
+        _depositAndTriggerRebalancer(user);
+
+        vm.prank(SET_PROTOCOL_PARAMS_MANAGER);
+        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0, 0);
+
+        uint256 amountToCloseWithoutBonus = FixedPointMathLib.fullMulDiv(
+            amountInRebalancer,
+            rebalancer.getPositionData(rebalancer.getPositionVersion()).entryAccMultiplier,
+            rebalancer.getPositionData(rebalancer.getUserDepositData(user).entryPositionVersion).entryAccMultiplier
+        );
+
+        uint256 amountToClose = amountToCloseWithoutBonus
+            + amountToCloseWithoutBonus * (protocolPosition.amount - previousPositionData.amount)
+                / previousPositionData.amount;
+
+        uint256 initialNonce = rebalancer.getNonce(user);
+
+        InitiateClosePositionDelegation memory delegation = InitiateClosePositionDelegation({
+            amount: amountInRebalancer,
+            to: user,
+            userMinPrice: DISABLE_MIN_PRICE,
+            deadline: type(uint256).max,
+            depositOwner: user,
+            depositCloser: address(this),
+            nonce: initialNonce
+        });
+
+        bytes memory signature = _getDelegationSignature(userPrivateKey, delegation);
+        bytes memory delegationData = abi.encode(user, signature);
+        vm.expectEmit();
+        emit ClosePositionInitiated(delegation.depositOwner, delegation.amount, amountToClose, 0);
+        (bool success) = rebalancer.initiateClosePosition{ value: securityDeposit }(
+            delegation.amount,
+            delegation.to,
+            delegation.userMinPrice,
+            delegation.deadline,
+            "",
+            EMPTY_PREVIOUS_DATA,
+            delegationData
+        );
+
+        UserDeposit memory depositData = rebalancer.getUserDepositData(user);
+
+        assertTrue(success, "The rebalancer close should be successful");
+        assertEq(depositData.amount, 0, "The user's deposited amount in rebalancer should be zero");
+        assertEq(depositData.entryPositionVersion, 0, "The user's entry position version should be zero");
+
+        assertEq(
+            rebalancer.getPositionData(version).amount + amountToCloseWithoutBonus,
+            previousPositionData.amount,
+            "The position data should be decreased"
+        );
+
+        assertEq(
+            uint8(protocol.getUserPendingAction(address(this)).action),
+            uint8(ProtocolAction.ValidateClosePosition),
+            "The validator protocol action should pending"
+        );
+    }
+
+    /**
+     * @dev Deposit a user amount into the rebalancer and trigger it
+     * @param user The user that will deposit
+     */
+    function _depositAndTriggerRebalancer(address user) internal {
+        (, amountInRebalancer,,) = _setUpImbalanced(user, 15 ether);
+        uint256 maxLeverage = protocol.getMaxLeverage();
+        vm.prank(DEPLOYER);
+        rebalancer.setPositionMaxLeverage(maxLeverage);
+        skip(5 minutes);
+
+        wstEthPrice = _setOraclePrices(1490 ether);
+
+        uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
+        protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA);
+
+        version = rebalancer.getPositionVersion();
+        previousPositionData = rebalancer.getPositionData(version);
+        prevPosId = PositionId({
+            tick: previousPositionData.tick,
+            tickVersion: previousPositionData.tickVersion,
+            index: previousPositionData.index
+        });
+        (protocolPosition,) = protocol.getLongPosition(prevPosId);
+    }
+
+    /**
+     * @notice Get the delegation signature
+     * @param privateKey The signer private key
+     * @param delegationToSign The delegation struct to sign
+     * @return delegationSignature_ The initiateClosePosition eip712 delegation signature
+     */
+    function _getDelegationSignature(uint256 privateKey, InitiateClosePositionDelegation memory delegationToSign)
+        internal
+        view
+        returns (bytes memory delegationSignature_)
+    {
+        bytes32 digest = MessageHashUtils.toTypedDataHash(
+            rebalancer.domainSeparatorV4(),
+            keccak256(
+                abi.encode(
+                    rebalancer.INITIATE_CLOSE_TYPEHASH(),
+                    delegationToSign.amount,
+                    delegationToSign.to,
+                    delegationToSign.userMinPrice,
+                    delegationToSign.deadline,
+                    delegationToSign.depositOwner,
+                    delegationToSign.depositCloser,
+                    delegationToSign.nonce
+                )
+            )
+        );
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
+        delegationSignature_ = abi.encodePacked(r, s, v);
     }
 
     receive() external payable { }
