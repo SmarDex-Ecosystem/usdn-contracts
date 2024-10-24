@@ -4,8 +4,9 @@ pragma solidity 0.8.26;
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 
-import { IStETH } from "../../interfaces/IStETH.sol";
-import { IWstETH } from "../../interfaces/IWstETH.sol";
+import { StETH } from "../StETH.sol";
+import { Sdex } from "./tokens/Sdex.sol";
+import { WstETH } from "./tokens/WstETH.sol";
 
 interface IMintable {
     function mint(address, uint256) external;
@@ -28,7 +29,7 @@ interface IMultiMinter {
         external
         payable;
 
-    function setStEthPerToken(uint256 stEthAmount, IWstETH wstETH) external;
+    function setStEthPerWstEth(uint256 stEthAmount) external;
 
     function transferOwnershipOf(address contractAdr, address newOwner) external;
 
@@ -48,14 +49,14 @@ interface IMultiMinter {
  * This contract must have the owner of SDEX and WstETH tokens
  */
 contract MultiMinter is IMultiMinter, Ownable2Step {
-    IMintable immutable SDEX;
-    IStETH immutable STETH;
-    IWstETH immutable WSTETH;
+    Sdex immutable SDEX;
+    StETH immutable STETH;
+    WstETH immutable WSTETH;
 
-    constructor(address sdex, address steth, address wsteth) Ownable(msg.sender) {
-        SDEX = IMintable(sdex);
-        STETH = IStETH(steth);
-        WSTETH = IWstETH(wsteth);
+    constructor(Sdex sdex, StETH steth, WstETH wsteth) Ownable(msg.sender) {
+        SDEX = sdex;
+        STETH = steth;
+        WSTETH = wsteth;
     }
 
     function mint(address to, uint256 amountSDEX, uint256 amountWSTETH, uint256 amountSTETH) external onlyOwner {
@@ -88,8 +89,10 @@ contract MultiMinter is IMultiMinter, Ownable2Step {
         }
     }
 
-    function setStEthPerToken(uint256 stEthAmount, IWstETH wstETH) external onlyOwner {
-        STETH.setStEthPerToken(stEthAmount, wstETH);
+    function setStEthPerWstEth(uint256 stEthAmount) external onlyOwner {
+        require(stEthAmount > 0, "Cannot be 0");
+
+        WSTETH.setStEthPerToken(stEthAmount);
     }
 
     function transferOwnershipOf(address contractAdr, address newOwner) external onlyOwner {

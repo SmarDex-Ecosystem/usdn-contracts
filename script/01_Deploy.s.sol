@@ -2,6 +2,7 @@
 pragma solidity 0.8.26;
 
 import { Script } from "forge-std/Script.sol";
+import { console } from "forge-std/Test.sol";
 
 import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
@@ -49,7 +50,6 @@ contract Deploy is Script {
 
     /**
      * @notice Deploy the USDN ecosystem
-     * @return StEth_ The StETH token
      * @return WstETH_ The WstETH token
      * @return Sdex_ The SDEX token
      * @return WstEthOracleMiddleware_ The WstETH oracle middleware
@@ -62,7 +62,6 @@ contract Deploy is Script {
     function run()
         external
         returns (
-            StETHSepolia StEth_,
             WstETH WstETH_,
             Sdex Sdex_,
             WstEthOracleMiddleware WstEthOracleMiddleware_,
@@ -93,7 +92,7 @@ contract Deploy is Script {
         vm.startBroadcast(_deployerAddress);
 
         if (_chainId == ChainId.Sepolia) {
-            (Usdn_, Wusdn_, Sdex_, WstETH_, StEth_) = _handlePeripherySepoliaDeployment(depositAmount + longAmount);
+            (Usdn_, Wusdn_, Sdex_, WstETH_) = _handlePeripherySepoliaDeployment(depositAmount + longAmount);
         } else {
             (Usdn_, Wusdn_, Sdex_, WstETH_) = _handlePeripheryDeployment(depositAmount, longAmount);
         }
@@ -389,7 +388,7 @@ contract Deploy is Script {
      */
     function _handlePeripherySepoliaDeployment(uint256 wstEthNeeded)
         internal
-        returns (Usdn usdn_, Wusdn wusdn_, Sdex sdex_, WstETH wstETH_, StETHSepolia stEth_)
+        returns (Usdn usdn_, Wusdn wusdn_, Sdex sdex_, WstETH wstETH_)
     {
         uint256 stEthPerToken = _utils.getStEthPerTokenMainnet();
 
@@ -405,8 +404,9 @@ contract Deploy is Script {
         if (wstEthAddress != address(0)) {
             wsteth = WstETHSepolia(wstEthAddress);
         } else {
-            stEth_ = new StETHSepolia();
-            wsteth = new WstETHSepolia(address(stEth_));
+            StETHSepolia stEth = new StETHSepolia();
+            console.log("steEth", address(stEth));
+            wsteth = new WstETHSepolia(stEth);
 
             // mint needed wstETH for the initialization to the deployer
             wsteth.mint(_deployerAddress, wstEthNeeded);

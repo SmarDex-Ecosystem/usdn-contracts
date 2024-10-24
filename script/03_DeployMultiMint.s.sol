@@ -23,7 +23,7 @@ contract DeployMultiMint is Script {
 
         vm.startBroadcast(deployer);
 
-        newMultiMint = new MultiMinter(address(sdex), address(stEth), address(wstEth));
+        newMultiMint = new MultiMinter(sdex, stEth, wstEth);
 
         sdex.transferOwnership(address(newMultiMint));
         newMultiMint.acceptOwnershipOf(address(sdex));
