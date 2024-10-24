@@ -9,11 +9,10 @@ import { ERC20Permit, IERC20Permit } from "@openzeppelin/contracts/token/ERC20/e
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { IStETH } from "../interfaces/IStETH.sol";
-import { IWstETH } from "../interfaces/IWstETH.sol";
 
-contract MockStETH is IStETH, ERC20Burnable, ERC20Permit, Ownable2Step {
+contract StETH is IStETH, ERC20Burnable, ERC20Permit, Ownable2Step {
     /// @notice The name of the token
-    string private constant NAME = "Mock Staked Ether";
+    string private constant NAME = "Staked Ether";
 
     /// @notice The symbol of the token
     string private constant SYMBOL = "stETH";
@@ -34,15 +33,6 @@ contract MockStETH is IStETH, ERC20Burnable, ERC20Permit, Ownable2Step {
         return super.nonces(owner);
     }
 
-    /**
-     * @inheritdoc IStETH
-     * @dev Returns the amount of ether of the contract. As the Mock contract can mint without ether, this function
-     * might return a different amount than totalSupply()
-     */
-    function getTotalPooledEther() external view override returns (uint256) {
-        return address(this).balance;
-    }
-
     /// @inheritdoc IStETH
     function mint(address account, uint256 amount) external onlyOwner {
         _mint(account, amount);
@@ -59,20 +49,5 @@ contract MockStETH is IStETH, ERC20Burnable, ERC20Permit, Ownable2Step {
     function sweep(address payable to) external onlyOwner {
         (bool success,) = to.call{ value: address(this).balance }("");
         require(success, "Transfer failed");
-    }
-
-    /// @inheritdoc IStETH
-    function setStEthPerToken(uint256 stEthAmount, IWstETH wstETH) external onlyOwner returns (uint256) {
-        // assuming _decimalOffset is 0 on the wstETH vault
-        uint256 newTotalAsset = Math.mulDiv(stEthAmount, wstETH.totalSupply() + 1, 1 ether) - 1;
-        uint256 balanceWstETH = balanceOf(address(wstETH));
-
-        if (newTotalAsset > balanceWstETH) {
-            _mint(address(wstETH), newTotalAsset - balanceWstETH);
-        } else {
-            _burn(address(wstETH), balanceWstETH - newTotalAsset);
-        }
-
-        return wstETH.stEthPerToken();
     }
 }

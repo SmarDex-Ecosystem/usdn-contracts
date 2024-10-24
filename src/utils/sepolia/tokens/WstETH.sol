@@ -8,12 +8,15 @@ import { ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/ERC2
 
 contract WstETH is ERC20Permit, Ownable2Step {
     uint256 private _stEthPerToken = 1 ether;
+    address private immutable _stETH;
 
-    constructor()
+    constructor(address stETH_)
         Ownable(msg.sender)
         ERC20Permit("Wrapped liquid staked Ether 2.0")
         ERC20("Wrapped liquid staked Ether 2.0", "wstETH")
-    { }
+    {
+        _stETH = stETH_;
+    }
 
     /**
      * @notice Mint `amount` tokens to `to`
