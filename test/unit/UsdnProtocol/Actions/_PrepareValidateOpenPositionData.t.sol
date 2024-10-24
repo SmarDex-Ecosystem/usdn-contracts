@@ -163,7 +163,7 @@ contract TestUsdnProtocolActionsPrepareValidateOpenPositionData is UsdnProtocolB
         vm.prank(USER_2);
         (bool _success,) = protocol.initiateOpenPosition(
             POSITION_AMOUNT,
-            liqPriceWithoutPenalty / 2, // lower than test's main position
+            liqPriceWithoutPenalty / 2,
             type(uint128).max,
             protocol.getMaxLeverage(),
             USER_2,
@@ -196,6 +196,83 @@ contract TestUsdnProtocolActionsPrepareValidateOpenPositionData is UsdnProtocolB
         (data, liquidated) = protocol.i_prepareValidateOpenPositionData(pendingAction, currentPriceData);
         assertFalse(liquidated, "The position should not have been liquidated");
         assertFalse(data.isLiquidationPending, "There should not be pending liquidations anymore");
+    }
+
+    /**
+     * @custom:scenario A user wants to validate its action but the provided price is not fresh and the lastPrice is
+     * below its position's liquidation price
+     * @custom:given Partial liquidations occurred that left the user's tick un-liquidated
+     * @custom:when The user tries to validate its position
+     * @custom:then Nothing happens
+     * @custom:when The lastPrice value is updated and the user tries to validate again
+     * @custom:then The position was not liquidated and matching data is returned
+     */
+    function test_prepareValidateOpenPositionDataWithStartPriceLowerThanLiquidationPrice() public {
+        skip(1 hours);
+
+        // update lastPrice and lastUpdatedTimestamp
+        protocol.liquidate(currentPriceData);
+
+        uint256 vaultBalanceBefore = protocol.getBalanceVault();
+        uint256 longBalanceBefore = protocol.getBalanceLong();
+        uint256 longPositionsBefore = protocol.getTotalLongPositions();
+
+        // price below the liquidation price of the main position
+        uint256 price = protocol.getEffectivePriceForTick(posId.tick);
+        currentPriceData = abi.encode(price);
+
+        vm.expectEmit();
+        emit LiquidatedPosition(address(this), posId, price, price);
+        (ValidateOpenPositionData memory data, bool liquidated) =
+            protocol.i_prepareValidateOpenPositionData(pendingAction, currentPriceData);
+
+        uint24 liquidationPenalty = protocol.getLiquidationPenalty();
+        uint256 positionTotalExpo =
+            protocol.i_calcPositionTotalExpo(POSITION_AMOUNT, params.initialPrice, liqPriceWithoutPenalty);
+
+        /* ------------------------ checking returned values ------------------------ */
+        assertTrue(liquidated, "The position should have been liquidated");
+        assertFalse(data.isLiquidationPending, "There should be pending liquidations");
+        assertEq(data.lastPrice, protocol.getLastPrice(), "The last price attribute should have been set");
+        assertFalse(data.pos.validated, "The corresponding position should not be validated");
+        assertEq(
+            data.pos.timestamp,
+            timestampAtInitiate,
+            "The timestamp should be equal to the timestamp of the initiate action"
+        );
+        assertEq(
+            data.pos.totalExpo, positionTotalExpo, "The total expo of the position should match the expected value"
+        );
+        assertEq(data.pos.user, address(this), "The user should be this contract");
+        assertEq(data.pos.amount, POSITION_AMOUNT, "The amount of the position should match the expected value");
+
+        assertEq(data.liquidationPenalty, liquidationPenalty, "The liquidation penalty should match the expected value");
+        assertEq(
+            data.liqPriceWithoutPenalty, liqPriceWithoutPenalty, "The liquidation price should match the expected value"
+        );
+        assertEq(
+            data.oldPosValue,
+            uint256(protocol.i_positionValue(data.lastPrice, data.liqPriceWithoutPenalty, data.pos.totalExpo)),
+            "The oldPosValue should match the expected value"
+        );
+        assertEq(data.leverage, 0, "The leverage should not have been calculated");
+
+        /* ------------------------- checking protocol state ------------------------ */
+        assertEq(
+            vaultBalanceBefore + data.oldPosValue,
+            protocol.getBalanceVault(),
+            "The position value should have been added to the vault balance"
+        );
+        assertEq(
+            longBalanceBefore - data.oldPosValue,
+            protocol.getBalanceLong(),
+            "The position value should have been subtracted from the long balance"
+        );
+        assertEq(
+            longPositionsBefore - 1,
+            protocol.getTotalLongPositions(),
+            "The position should have been removed from the protocol entirely"
+        );
     }
 
     /// @notice Assert the data in ValidateOpenPositionData depending on `isEarlyReturn`
