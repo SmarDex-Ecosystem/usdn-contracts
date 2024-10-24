@@ -22,9 +22,11 @@ interface IMultiMinter {
         bytes callData;
     }
 
-    function mint(address adrs, uint256 amountSDEX, uint256 amountWSTETH) external;
+    function mint(address adrs, uint256 amountSDEX, uint256 amountWSTETH, uint256 amountSTETH) external;
 
-    function mint(address adrs, uint256 amountSDEX, uint256 amountWSTETH, uint256 amountETH) external payable;
+    function mint(address adrs, uint256 amountSDEX, uint256 amountWSTETH, uint256 amountSTETH, uint256 amountETH)
+        external
+        payable;
 
     function setStEthPerToken(uint256 stEthAmount, IWstETH wstETH) external;
 
@@ -56,11 +58,15 @@ contract MultiMinter is IMultiMinter, Ownable2Step {
         WSTETH = IWstETH(wsteth);
     }
 
-    function mint(address to, uint256 amountSDEX, uint256 amountWSTETH) external onlyOwner {
-        mint(to, amountSDEX, amountWSTETH, 0);
+    function mint(address to, uint256 amountSDEX, uint256 amountWSTETH, uint256 amountSTETH) external onlyOwner {
+        mint(to, amountSDEX, amountWSTETH, amountSTETH, 0);
     }
 
-    function mint(address to, uint256 amountSDEX, uint256 amountWSTETH, uint256 amountETH) public payable onlyOwner {
+    function mint(address to, uint256 amountSDEX, uint256 amountWSTETH, uint256 amountSTETH, uint256 amountETH)
+        public
+        payable
+        onlyOwner
+    {
         if (amountSDEX != 0) {
             SDEX.mint(to, amountSDEX);
         }
@@ -70,6 +76,10 @@ contract MultiMinter is IMultiMinter, Ownable2Step {
             STETH.mint(address(this), stethAmount);
             WSTETH.wrap(stethAmount);
             WSTETH.transfer(to, WSTETH.balanceOf(address(this)));
+        }
+
+        if (amountSTETH != 0) {
+            STETH.mint(to, amountSTETH);
         }
 
         if (amountETH != 0) {
