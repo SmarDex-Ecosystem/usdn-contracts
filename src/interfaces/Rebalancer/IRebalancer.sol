@@ -58,7 +58,7 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
     /**
      * @notice Returns the data of the provided version of the position
      * @param version The version of the position
-     * @return positionData_ The date for the provided version of the position
+     * @return positionData_ The data for the provided version of the position
      */
     function getPositionData(uint128 version) external view returns (PositionData memory positionData_);
 

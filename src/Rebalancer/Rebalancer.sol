@@ -206,6 +206,17 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         positionData_ = _positionData[version];
     }
 
+    /// @inheritdoc IBaseRebalancer
+    function getLastPositionId() external view returns (Types.PositionId memory positionId_) {
+        PositionData memory positionData = _positionData[_positionVersion];
+
+        positionId_ = Types.PositionId({
+            tick: positionData.tick,
+            tickVersion: positionData.tickVersion,
+            index: positionData.index
+        });
+    }
+
     /// @inheritdoc IRebalancer
     function getTimeLimits() external view returns (TimeLimits memory) {
         return _timeLimits;
@@ -553,7 +564,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
                 accMultiplier = FixedPointMathLib.fullMulDiv(
                     previousPosValue, previousPositionData.entryAccMultiplier, previousPositionData.amount
                 );
-            } else {
+            } else if (_lastLiquidatedVersion != positionVersion) {
                 // update the last liquidated version tracker
                 _lastLiquidatedVersion = positionVersion;
             }
@@ -580,6 +591,13 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         }
 
         emit PositionVersionUpdated(positionVersion, accMultiplier, positionAmount, newPosId);
+    }
+
+    /// @inheritdoc IBaseRebalancer
+    function notifyPositionLiquidated() external onlyProtocol {
+        uint128 positionVersion = _positionVersion;
+        _lastLiquidatedVersion = positionVersion;
+        _positionData[positionVersion].tick = Constants.NO_POSITION_TICK;
     }
 
     /* -------------------------------------------------------------------------- */

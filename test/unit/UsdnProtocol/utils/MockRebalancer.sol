@@ -83,4 +83,18 @@ contract MockRebalancer is IBaseRebalancer, IRebalancerTypes {
     function getPositionVersion() external view returns (uint128) {
         return _positionVersion;
     }
+
+    function getLastPositionId() external view returns (Types.PositionId memory positionId_) {
+        PositionData memory positionData = _positionData[_positionVersion];
+
+        positionId_ = Types.PositionId({
+            tick: positionData.tick,
+            tickVersion: positionData.tickVersion,
+            index: positionData.index
+        });
+    }
+
+    function notifyPositionLiquidated() external {
+        _lastLiquidatedVersion = _positionVersion;
+    }
 }

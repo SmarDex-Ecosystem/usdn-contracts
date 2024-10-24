@@ -17,6 +17,12 @@ interface IBaseRebalancer {
         returns (uint128 pendingAssets_, uint256 maxLeverage_, Types.PositionId memory currentPosId_);
 
     /**
+     * @notice Returns the ID of the last version of the position
+     * @return positionId_ The ID for the last version of the position
+     */
+    function getLastPositionId() external view returns (Types.PositionId memory positionId_);
+
+    /**
      * @notice Returns the minimum amount of assets to be deposited by a user
      * @return The minimum amount of assets to be deposited by a user
      */
@@ -36,6 +42,13 @@ interface IBaseRebalancer {
      * @param previousPosValue The amount of assets left in the previous position
      */
     function updatePosition(Types.PositionId calldata newPosId, uint128 previousPosValue) external;
+
+    /**
+     * @notice Notify the rebalancer that its position was liquidated
+     * @dev Will update _lastLiquidatedVersion and the current version' tick to NO_POSITION_TICK
+     * This function can only be called by the USDN protocol
+     */
+    function notifyPositionLiquidated() external;
 
     /* -------------------------------------------------------------------------- */
     /*                                    Admin                                   */
