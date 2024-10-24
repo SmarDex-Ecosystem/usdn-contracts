@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+
 import { RebalancerFixture } from "./utils/Fixtures.sol";
 
 /**
@@ -8,10 +10,21 @@ import { RebalancerFixture } from "./utils/Fixtures.sol";
  * @custom:background Given a rebalancer contract with a 1 ether balance
  */
 contract TestRebalancerVerifyInitiateCloseDelegation is RebalancerFixture {
+    struct InitiateClosePositionDelegation {
+        uint88 amount;
+        address to;
+        uint256 userMinPrice;
+        uint256 deadline;
+        address depositOwner;
+        address depositCloser;
+        uint256 nonce;
+    }
+
     uint256 internal constant PK = 1;
     uint256 internal constant ATTACKER_PK = 2;
     address internal user = vm.addr(PK);
     uint256 internal initialNonce;
+    InitiateClosePositionDelegation internal delegation;
 
     function setUp() public {
         super._setUp();
@@ -84,7 +97,7 @@ contract TestRebalancerVerifyInitiateCloseDelegation is RebalancerFixture {
     /**
      * @custom:scenario Verify a {initiateClosePosition} delegation signature by an attacker
      * @custom:given A signed delegation by an attacker
-     * @custom:when The function {_verifyInitiateCloseDelegation} is called with correct values
+     * @custom:when The function {_verifyInitiateCloseDelegation} is called with the correct values
      * @custom:then The transaction should revert with {RebalancerInvalidDelegationSignature}
      */
     function test_RevertWhen_verifyInitiateCloseDelegationAttackerSignature() public {
@@ -95,5 +108,36 @@ contract TestRebalancerVerifyInitiateCloseDelegation is RebalancerFixture {
         rebalancer.i_verifyInitiateCloseDelegation(
             delegation.amount, delegation.to, delegation.userMinPrice, delegation.deadline, delegationData
         );
+    }
+
+    /**
+     * @notice Get the delegation signature
+     * @param privateKey The signer private key
+     * @param delegationToSign The delegation struct to sign
+     * @return delegationSignature_ The initiateClosePosition eip712 delegation signature
+     */
+    function _getDelegationSignature(uint256 privateKey, InitiateClosePositionDelegation memory delegationToSign)
+        internal
+        view
+        returns (bytes memory delegationSignature_)
+    {
+        bytes32 digest = MessageHashUtils.toTypedDataHash(
+            rebalancer.domainSeparatorV4(),
+            keccak256(
+                abi.encode(
+                    rebalancer.INITIATE_CLOSE_TYPEHASH(),
+                    delegationToSign.amount,
+                    delegationToSign.to,
+                    delegationToSign.userMinPrice,
+                    delegationToSign.deadline,
+                    delegationToSign.depositOwner,
+                    delegationToSign.depositCloser,
+                    delegationToSign.nonce
+                )
+            )
+        );
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
+        delegationSignature_ = abi.encodePacked(r, s, v);
     }
 }

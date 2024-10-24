@@ -507,6 +507,7 @@ contract TestRebalancerInitiateClosePosition is
      * @custom:and The user depositData is deleted
      * @custom:and The position data is updated
      * @custom:and The validator initiate close position is pending in protocol
+     * @custom:and The user nonce should be incremented
      */
     function test_rebalancerInitiateClosePositionDelegation() public {
         uint256 userPrivateKey = 1;
@@ -569,6 +570,8 @@ contract TestRebalancerInitiateClosePosition is
             uint8(ProtocolAction.ValidateClosePosition),
             "The validator protocol action should pending"
         );
+
+        assertEq(rebalancer.getNonce(user), initialNonce + 1, "The user nonce should be incremented");
     }
 
     /**

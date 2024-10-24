@@ -113,6 +113,15 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
     ExpoImbalanceLimitsBps internal defaultLimits;
 
+    struct SetUpImbalancedData {
+        bool success;
+        uint256 messageValue;
+        uint88 amount;
+        uint128 wstEthPrice;
+        uint128 ethPrice;
+        uint256 oracleFee;
+    }
+
     function _setUp(SetUpParams memory testParams) public virtual {
         vm.startPrank(DEPLOYER);
         if (testParams.fork) {
@@ -243,15 +252,6 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         skip(oracleMiddleware.getValidationDelay() + 1);
     }
 
-    struct SetUpImbalancedData {
-        bool success;
-        uint256 messageValue;
-        uint88 amount;
-        uint128 wstEthPrice;
-        uint128 ethPrice;
-        uint256 oracleFee;
-    }
-
     function _setUpImbalanced(address user, uint128 additionalLongAmount)
         internal
         returns (
@@ -289,8 +289,8 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         vm.deal(user, 10_000 ether);
 
         vm.startPrank(user);
-        // mint wstEth to the test contract
         SetUpImbalancedData memory data;
+        // mint wstEth to the test contract
         (data.success,) = address(wstETH).call{ value: 200 ether }("");
         require(data.success, "wstETH mint failed");
         wstETH.approve(address(protocol), type(uint256).max);

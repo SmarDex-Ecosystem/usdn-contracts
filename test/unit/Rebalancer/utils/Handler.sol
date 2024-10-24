@@ -30,7 +30,7 @@ contract RebalancerHandler is Rebalancer, Test {
         return _refundEther();
     }
 
-    /// @dev The EIP712 delegation signature verification position
+    /// @dev Verifies the EIP712 delegation signature
     function i_verifyInitiateCloseDelegation(
         uint88 amount,
         address to,
