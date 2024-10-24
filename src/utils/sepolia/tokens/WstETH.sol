@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { StETH } from "../../StETH.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -8,12 +9,15 @@ import { ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/ERC2
 
 contract WstETH is ERC20Permit, Ownable2Step {
     uint256 private _stEthPerToken = 1 ether;
+    StETH private immutable _stETH;
 
-    constructor()
+    constructor(StETH stETH_)
         Ownable(msg.sender)
         ERC20Permit("Wrapped liquid staked Ether 2.0")
         ERC20("Wrapped liquid staked Ether 2.0", "wstETH")
-    { }
+    {
+        _stETH = stETH_;
+    }
 
     /**
      * @notice Mint `amount` tokens to `to`
@@ -29,7 +33,7 @@ contract WstETH is ERC20Permit, Ownable2Step {
      * @return stETH_ The stETH address
      */
     function stETH() external pure returns (address stETH_) {
-        return stETH_;
+        return address(stETH_);
     }
 
     /**
@@ -98,6 +102,12 @@ contract WstETH is ERC20Permit, Ownable2Step {
         require(success, "wstETH: ETH transfer failed");
 
         return ethAmount;
+    }
+
+    function wrap(uint256 stEthAmount) public returns (uint256 wstEthAmount_) {
+        wstEthAmount_ = getWstETHByStETH(stEthAmount);
+        _stETH.transferFrom(msg.sender, address(this), stEthAmount);
+        _mint(msg.sender, wstEthAmount_);
     }
 
     /**

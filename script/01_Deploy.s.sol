@@ -2,6 +2,7 @@
 pragma solidity 0.8.26;
 
 import { Script } from "forge-std/Script.sol";
+import { console } from "forge-std/Test.sol";
 
 import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
@@ -22,6 +23,7 @@ import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { IWstETH } from "../src/interfaces/IWstETH.sol";
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { StETH as StETHSepolia } from "../src/utils/StETH.sol";
 import { Sdex as SdexSepolia } from "../src/utils/sepolia/tokens/Sdex.sol";
 import { WstETH as WstETHSepolia } from "../src/utils/sepolia/tokens/WstETH.sol";
 
@@ -402,7 +404,9 @@ contract Deploy is Script {
         if (wstEthAddress != address(0)) {
             wsteth = WstETHSepolia(wstEthAddress);
         } else {
-            wsteth = new WstETHSepolia();
+            StETHSepolia stEth = new StETHSepolia();
+            console.log("steEth", address(stEth));
+            wsteth = new WstETHSepolia(stEth);
 
             // mint needed wstETH for the initialization to the deployer
             wsteth.mint(_deployerAddress, wstEthNeeded);
