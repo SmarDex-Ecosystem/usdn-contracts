@@ -2,13 +2,14 @@
 pragma solidity 0.8.26;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { ERC20Permit, IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import { ERC20, ERC4626, IERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 
 import { IStETH } from "../interfaces/IStETH.sol";
 import { IWstETH } from "../interfaces/IWstETH.sol";
 
-contract MockWstETH is IWstETH, ERC4626, ERC20Permit, Ownable {
+contract MockWstETH is IWstETH, ERC4626, ERC20Permit, Ownable2Step {
     /// @notice The name of the token
     string private constant NAME = "Mock Wrapped Staked Ether";
 

@@ -2,6 +2,7 @@
 pragma solidity 0.8.26;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { ERC20Burnable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import { ERC20Permit, IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
@@ -10,7 +11,7 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { IStETH } from "../interfaces/IStETH.sol";
 import { IWstETH } from "../interfaces/IWstETH.sol";
 
-contract MockStETH is IStETH, ERC20Burnable, ERC20Permit, Ownable {
+contract MockStETH is IStETH, ERC20Burnable, ERC20Permit, Ownable2Step {
     /// @notice The name of the token
     string private constant NAME = "Mock Staked Ether";
 

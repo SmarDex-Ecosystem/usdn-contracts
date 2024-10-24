@@ -4,12 +4,11 @@ pragma solidity 0.8.26;
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 
+import { IStETH } from "../../interfaces/IStETH.sol";
+import { IWstETH } from "../../interfaces/IWstETH.sol";
+
 interface IMintable {
     function mint(address, uint256) external;
-}
-
-interface IWstETH is IMintable {
-    function setStEthPerToken(uint256 stEthAmount) external;
 }
 
 interface IOwnable {
@@ -23,11 +22,13 @@ interface IMultiMinter {
         bytes callData;
     }
 
-    function mint(address adrs, uint256 amountSDEX, uint256 amountWSTETH) external;
+    function mint(address adrs, uint256 amountSDEX, uint256 amountWSTETH, uint256 amountSTETH) external;
 
-    function mint(address adrs, uint256 amountSDEX, uint256 amountWSTETH, uint256 amountETH) external payable;
+    function mint(address adrs, uint256 amountSDEX, uint256 amountWSTETH, uint256 amountSTETH, uint256 amountETH)
+        external
+        payable;
 
-    function setStEthPerToken(uint256 stEthAmount) external;
+    function setStEthPerToken(uint256 stEthAmount, IWstETH wstETH) external;
 
     function transferOwnershipOf(address contractAdr, address newOwner) external;
 
@@ -48,24 +49,37 @@ interface IMultiMinter {
  */
 contract MultiMinter is IMultiMinter, Ownable2Step {
     IMintable immutable SDEX;
+    IStETH immutable STETH;
     IWstETH immutable WSTETH;
 
-    constructor(address sdex, address wsteth) Ownable(msg.sender) {
+    constructor(address sdex, address steth, address wsteth) Ownable(msg.sender) {
         SDEX = IMintable(sdex);
+        STETH = IStETH(steth);
         WSTETH = IWstETH(wsteth);
     }
 
-    function mint(address to, uint256 amountSDEX, uint256 amountWSTETH) external onlyOwner {
-        mint(to, amountSDEX, amountWSTETH, 0);
+    function mint(address to, uint256 amountSDEX, uint256 amountWSTETH, uint256 amountSTETH) external onlyOwner {
+        mint(to, amountSDEX, amountWSTETH, amountSTETH, 0);
     }
 
-    function mint(address to, uint256 amountSDEX, uint256 amountWSTETH, uint256 amountETH) public payable onlyOwner {
+    function mint(address to, uint256 amountSDEX, uint256 amountWSTETH, uint256 amountSTETH, uint256 amountETH)
+        public
+        payable
+        onlyOwner
+    {
         if (amountSDEX != 0) {
             SDEX.mint(to, amountSDEX);
         }
 
         if (amountWSTETH != 0) {
-            WSTETH.mint(to, amountWSTETH);
+            uint256 stethAmount = WSTETH.getStETHByWstETH(amountWSTETH);
+            STETH.mint(address(this), stethAmount);
+            WSTETH.wrap(stethAmount);
+            WSTETH.transfer(to, WSTETH.balanceOf(address(this)));
+        }
+
+        if (amountSTETH != 0) {
+            STETH.mint(to, amountSTETH);
         }
 
         if (amountETH != 0) {
@@ -74,8 +88,8 @@ contract MultiMinter is IMultiMinter, Ownable2Step {
         }
     }
 
-    function setStEthPerToken(uint256 stEthAmount) external onlyOwner {
-        WSTETH.setStEthPerToken(stEthAmount);
+    function setStEthPerToken(uint256 stEthAmount, IWstETH wstETH) external onlyOwner {
+        STETH.setStEthPerToken(stEthAmount, wstETH);
     }
 
     function transferOwnershipOf(address contractAdr, address newOwner) external onlyOwner {
