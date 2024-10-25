@@ -629,7 +629,6 @@ library UsdnProtocolActionsLongLibrary {
         data_.liqPriceWithoutPenalty =
             Utils.getEffectivePriceForTick(s, Utils.calcTickWithoutPenalty(data_.action.tick, data_.liquidationPenalty));
 
-        // lastPrice > liqPriceWithoutPenalty so this call won't revert
         // calculate how much the position that was opened in the initiate is now worth (it might be too large or too
         // small considering the new leverage and lastPrice). We will adjust the long and vault balances accordingly
         // lastPrice is larger than or equal to liqPriceWithoutPenalty so the calc below does not underflow
