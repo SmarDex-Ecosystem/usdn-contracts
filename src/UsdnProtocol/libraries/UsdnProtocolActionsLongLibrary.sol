@@ -629,14 +629,18 @@ library UsdnProtocolActionsLongLibrary {
         data_.liqPriceWithoutPenalty =
             Utils.getEffectivePriceForTick(s, Utils.calcTickWithoutPenalty(data_.action.tick, data_.liquidationPenalty));
 
+        // lastPrice > liqPriceWithoutPenalty so this call won't revert
+        // calculate how much the position that was opened in the initiate is now worth (it might be too large or too
+        // small considering the new leverage and lastPrice). We will adjust the long and vault balances accordingly
+        // lastPrice is larger than or equal to liqPriceWithoutPenalty so the calc below does not underflow
+        data_.oldPosValue = Utils.positionValue(data_.pos.totalExpo, data_.lastPrice, data_.liqPriceWithoutPenalty);
+
         // if lastPrice > liqPriceWithPenalty but startPrice <= liqPriceWithPenalty then the user dodged liquidations
         // we still can't let the position open, because we can't calculate the leverage with a start price that is
         // lower than a liquidation price, and we also can't liquidate the whole tick because other users could have
         // opened positions in this tick after the user of the current position.
         // our only choice is to liquidate this position only
         if (data_.startPrice <= liqPriceWithPenalty) {
-            // lastPrice > liqPriceWithoutPenalty so this call won't revert
-            data_.oldPosValue = Utils.positionValue(data_.pos.totalExpo, data_.lastPrice, data_.liqPriceWithoutPenalty);
             s._balanceLong -= data_.oldPosValue;
             s._balanceVault += data_.oldPosValue;
 
@@ -660,10 +664,6 @@ library UsdnProtocolActionsLongLibrary {
 
         // reverts if liqPriceWithoutPenalty >= startPrice
         data_.leverage = Utils._getLeverage(data_.startPrice, data_.liqPriceWithoutPenalty);
-        // calculate how much the position that was opened in the initiate is now worth (it might be too large or too
-        // small considering the new leverage and lastPrice). We will adjust the long and vault balances accordingly
-        // lastPrice is larger than or equal to liqPriceWithoutPenalty so the calc below does not underflow
-        data_.oldPosValue = Utils.positionValue(data_.pos.totalExpo, data_.lastPrice, data_.liqPriceWithoutPenalty);
     }
 
     /**
