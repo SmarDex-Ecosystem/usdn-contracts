@@ -4,6 +4,8 @@ pragma solidity 0.8.26;
 import { USER_1 } from "../../utils/Constants.sol";
 import { RebalancerFixture } from "./utils/Fixtures.sol";
 
+import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+
 /**
  * @custom:feature The `validateWithdrawAssets` function of the rebalancer contract
  * @custom:background Given a user has made a deposit and initiated a withdrawal of their unincluded assets
@@ -260,7 +262,8 @@ contract TestRebalancerValidateWithdrawAssets is RebalancerFixture {
      * @custom:then The call reverts with {RebalancerWithdrawalUnauthorized}
      */
     function test_RevertWhen_validateWithdrawalIncludedInProtocol() public {
-        rebalancer.incrementPositionVersion();
+        vm.prank(address(usdnProtocol));
+        rebalancer.updatePosition(Types.PositionId(0, 0, 0), 0);
 
         vm.expectRevert(RebalancerWithdrawalUnauthorized.selector);
         rebalancer.validateWithdrawAssets(INITIAL_DEPOSIT, address(this));
@@ -269,20 +272,27 @@ contract TestRebalancerValidateWithdrawAssets is RebalancerFixture {
     /**
      * @custom:scenario The user tries to validate a withdrawal but the assets were already in a liquidated position
      * @custom:given The user's deposit was in a position that got liquidated
-     * @custom:when The user tries to validate a withdrawal and the position was liquidated without a new position being
-     * created
-     * @custom:or The user tries to validate a withdrawal and the position was liquidated with a new position being
+     * @custom:when The user tries to validate a withdrawal and the position was liquidated with a new position being
      * created
      * @custom:then The call reverts with {RebalancerWithdrawalUnauthorized}
      */
-    function test_RevertWhen_validateWithdrawalLiquidated() public {
-        rebalancer.incrementPositionVersion();
-        rebalancer.setLastLiquidatedVersion(rebalancer.getPositionVersion());
+    function test_RevertWhen_validateWithdrawalLiquidatedWithNewPosition() public {
+        vm.prank(address(usdnProtocol));
+        rebalancer.updatePosition(Types.PositionId(0, 0, 0), 0);
 
         vm.expectRevert(RebalancerWithdrawalUnauthorized.selector);
         rebalancer.validateWithdrawAssets(INITIAL_DEPOSIT, address(this));
+    }
 
-        rebalancer.incrementPositionVersion();
+    /**
+     * @custom:scenario The user tries to validate a withdrawal but the assets were already in a liquidated position
+     * @custom:given The user's deposit was in a position that got liquidated
+     * @custom:when The user tries to validate a withdrawal and the position was liquidated
+     * @custom:then The call reverts with {RebalancerWithdrawalUnauthorized}
+     */
+    function test_RevertWhen_validateWithdrawalLiquidatedWithNoNewPosition() public {
+        vm.prank(address(usdnProtocol));
+        rebalancer.updatePosition(Types.PositionId(0, 0, 0), 1);
 
         vm.expectRevert(RebalancerWithdrawalUnauthorized.selector);
         rebalancer.validateWithdrawAssets(INITIAL_DEPOSIT, address(this));

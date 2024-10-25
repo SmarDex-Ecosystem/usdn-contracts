@@ -595,9 +595,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
     /// @inheritdoc IBaseRebalancer
     function notifyPositionLiquidated() external onlyProtocol {
-        uint128 positionVersion = _positionVersion;
-        _lastLiquidatedVersion = positionVersion;
-        _positionData[positionVersion].tick = Constants.NO_POSITION_TICK;
+        _lastLiquidatedVersion = _positionVersion;
     }
 
     /* -------------------------------------------------------------------------- */

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { USER_1 } from "../../utils/Constants.sol";
 import { RebalancerFixture } from "./utils/Fixtures.sol";
 
@@ -133,7 +134,8 @@ contract TestRebalancerInitiateWithdrawAssets is RebalancerFixture {
      * @custom:then The call reverts with {RebalancerWithdrawalUnauthorized}
      */
     function test_RevertWhen_initiateWithdrawalIncludedInProtocol() public {
-        rebalancer.incrementPositionVersion();
+        vm.prank(address(usdnProtocol));
+        rebalancer.updatePosition(Types.PositionId(0, 0, 0), 0);
 
         vm.expectRevert(RebalancerWithdrawalUnauthorized.selector);
         rebalancer.initiateWithdrawAssets();
@@ -147,13 +149,11 @@ contract TestRebalancerInitiateWithdrawAssets is RebalancerFixture {
      * @custom:then The call reverts with {RebalancerWithdrawalUnauthorized}
      */
     function test_RevertWhen_initiateWithdrawalLiquidated() public {
-        rebalancer.incrementPositionVersion();
-        rebalancer.setLastLiquidatedVersion(rebalancer.getPositionVersion());
+        vm.prank(address(usdnProtocol));
+        rebalancer.updatePosition(Types.PositionId(0, 0, 0), 0);
 
-        vm.expectRevert(RebalancerWithdrawalUnauthorized.selector);
-        rebalancer.initiateWithdrawAssets();
-
-        rebalancer.incrementPositionVersion();
+        vm.prank(address(usdnProtocol));
+        rebalancer.notifyPositionLiquidated();
 
         vm.expectRevert(RebalancerWithdrawalUnauthorized.selector);
         rebalancer.initiateWithdrawAssets();

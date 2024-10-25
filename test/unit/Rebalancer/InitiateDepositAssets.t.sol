@@ -4,6 +4,8 @@ pragma solidity 0.8.26;
 import { USER_1 } from "../../utils/Constants.sol";
 import { RebalancerFixture } from "./utils/Fixtures.sol";
 
+import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+
 /**
  * @custom:feature The `initiateDepositAssets` function of the rebalancer contract
  * @custom:background Given a rebalancer contract
@@ -60,8 +62,11 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
         skip(rebalancer.getTimeLimits().validationDelay);
         rebalancer.validateDepositAssets();
 
-        rebalancer.incrementPositionVersion();
-        rebalancer.setLastLiquidatedVersion(rebalancer.getPositionVersion());
+        vm.prank(address(usdnProtocol));
+        rebalancer.updatePosition(Types.PositionId(0, 0, 0), 0);
+
+        vm.prank(address(usdnProtocol));
+        rebalancer.notifyPositionLiquidated();
 
         _initiateDepositScenario(INITIAL_DEPOSIT, address(this));
     }
@@ -79,8 +84,11 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
         rebalancer.validateDepositAssets();
         vm.stopPrank();
 
-        rebalancer.incrementPositionVersion();
-        rebalancer.setLastLiquidatedVersion(rebalancer.getPositionVersion());
+        vm.prank(address(usdnProtocol));
+        rebalancer.updatePosition(Types.PositionId(0, 0, 0), 0);
+
+        vm.prank(address(usdnProtocol));
+        rebalancer.notifyPositionLiquidated();
 
         _initiateDepositScenario(INITIAL_DEPOSIT, USER_1);
     }
@@ -111,7 +119,7 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
             "The user should have sent the assets"
         );
         if (to != address(this)) {
-            assertEq(wstETH.balanceOf(to), toBalanceBefore, "The balance of \"to\" should have not changed");
+            assertEq(wstETH.balanceOf(to), toBalanceBefore, "The balance of `to` should have not changed");
         }
         assertEq(rebalancer.getPendingAssetsAmount(), pendingBefore, "Pending assets should not have changed");
 
@@ -197,7 +205,9 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
         rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));
         skip(rebalancer.getTimeLimits().validationDelay);
         rebalancer.validateDepositAssets();
-        rebalancer.incrementPositionVersion();
+
+        vm.prank(address(usdnProtocol));
+        rebalancer.updatePosition(Types.PositionId(0, 0, 0), 0);
 
         vm.expectRevert(RebalancerDepositUnauthorized.selector);
         rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));

@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { DEPLOYER, USER_1 } from "../../../utils/Constants.sol";
+import { ADMIN, DEPLOYER, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { IRebalancerTypes } from "../../../../src/interfaces/Rebalancer/IRebalancerTypes.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
@@ -628,6 +629,57 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // we use `liquidate` instead of `testLiquidate` to avoid testing the "hack" in the handler
         protocol.liquidate{ value: 0.5 ether }(priceData);
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
+    }
+
+    /**
+     * @custom:scenario The user sends too much ether when liquidating positions
+     * @custom:given The user performs a liquidation
+     * @custom:when The user sends 0.5 ether as value in the `liquidate` call
+     * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
+     */
+    function test_liquidateTheRebalancerPositionUpdatesTheRebalancer() public {
+        // disable rewards
+        vm.prank(DEPLOYER);
+        liquidationRewardsManager.setRewardsParameters(0, 0, 0, 0, 0, 0, 0, 0, 0.1 ether);
+
+        uint128 currentPrice = 2000 ether;
+        bytes memory priceData = abi.encode(currentPrice);
+
+        // create a position to liquidate
+        PositionId memory posId = setUpUserPositionInLong(
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 5 ether,
+                desiredLiqPrice: currentPrice * 9 / 10,
+                price: currentPrice
+            })
+        );
+
+        // set the rebalancer
+        vm.prank(ADMIN);
+        protocol.setRebalancer(rebalancer);
+
+        // make the rebalancer believe it was triggered
+        vm.prank(address(protocol));
+        rebalancer.updatePosition(posId, 0);
+
+        uint128 positionVersionBefore = rebalancer.getPositionVersion();
+
+        // price drops
+        skip(1 hours);
+        priceData = abi.encode(currentPrice * 8 / 10);
+
+        vm.expectEmit(true, false, false, false);
+        emit LiquidatedTick(posId.tick, 0, 0, 0, 0);
+        protocol.liquidate(priceData);
+
+        assertEq(positionVersionBefore, rebalancer.getPositionVersion(), "The position version should not have changed");
+        assertEq(
+            positionVersionBefore,
+            rebalancer.getLastLiquidatedVersion(),
+            "The last liquidated version should be equal to the current position version"
+        );
     }
 
     /**

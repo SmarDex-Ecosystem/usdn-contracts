@@ -4,6 +4,8 @@ pragma solidity 0.8.26;
 import { USER_1 } from "../../utils/Constants.sol";
 import { RebalancerFixture } from "./utils/Fixtures.sol";
 
+import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+
 /**
  * @custom:feature The `validateDepositAssets` function of the rebalancer contract
  * @custom:background Given the user initiated a deposit into the contract
@@ -98,7 +100,9 @@ contract TestRebalancerValidateDepositAssets is RebalancerFixture {
     function test_RevertWhen_validateDepositWhenIncludedInPosition() public {
         skip(rebalancer.getTimeLimits().validationDelay);
         rebalancer.validateDepositAssets();
-        rebalancer.incrementPositionVersion();
+
+        vm.prank(address(usdnProtocol));
+        rebalancer.updatePosition(Types.PositionId(0, 0, 0), 0);
 
         vm.expectRevert(RebalancerNoPendingAction.selector);
         rebalancer.validateDepositAssets();
@@ -112,8 +116,9 @@ contract TestRebalancerValidateDepositAssets is RebalancerFixture {
     function test_RevertWhen_validateDepositWhenInLiquidatedPosition() public {
         skip(rebalancer.getTimeLimits().validationDelay);
         rebalancer.validateDepositAssets();
-        rebalancer.incrementPositionVersion();
-        rebalancer.setLastLiquidatedVersion(rebalancer.getPositionVersion());
+
+        vm.prank(address(usdnProtocol));
+        rebalancer.notifyPositionLiquidated();
 
         vm.expectRevert(RebalancerNoPendingAction.selector);
         rebalancer.validateDepositAssets();
