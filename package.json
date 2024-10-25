@@ -5,6 +5,9 @@
   "repository": "git@github.com:SmarDex-Ecosystem/usdn-contracts.git",
   "author": "RA2 Tech",
   "license": "BUSL-1.1",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "dockerize": true,
   "scripts": {
     "clean": "rm -rf dist && rm -rf node_modules && rm -rf .coverage && rm -rf out && rm -rf dependencies && forge clean && npm run installDeps",
@@ -27,11 +30,7 @@
     "test": "forge test -vvv"
   },
   "main": "dist/index.js",
-  "files": [
-    "dist",
-    "broadcast",
-    "docs"
-  ],
+  "files": ["dist", "broadcast", "docs"],
   "devDependencies": {
     "@biomejs/biome": "^1.8.3",
     "@defi-wonderland/natspec-smells": "^1.1.4",
