@@ -66,6 +66,7 @@ contract TestUsdnProtocolVault is UsdnProtocolBaseFixture {
         uint256 id = vm.snapshot();
 
         vm.startPrank(USER_1);
+        usdn.approve(address(protocol), type(uint256).max);
         protocol.initiateWithdrawal{ value: securityDeposit }(
             uint152(user1SharesBefore),
             DISABLE_AMOUNT_OUT_MIN,
@@ -85,6 +86,7 @@ contract TestUsdnProtocolVault is UsdnProtocolBaseFixture {
         vm.revertTo(id);
 
         vm.startPrank(USER_1);
+        usdn.approve(address(protocol), type(uint256).max);
         protocol.initiateWithdrawal{ value: securityDeposit }(
             uint152(user1SharesBefore / 2),
             DISABLE_AMOUNT_OUT_MIN,
@@ -115,7 +117,6 @@ contract TestUsdnProtocolVault is UsdnProtocolBaseFixture {
 
         uint256 user1BalanceTwoWithdraw = wstETH.balanceOf(USER_1);
 
-        emit log_named_uint("user1BalanceOneWithdraw", user1BalanceOneWithdraw);
-        emit log_named_uint("user1BalanceTwoWithdraw", user1BalanceTwoWithdraw);
+        assertEq(user1BalanceOneWithdraw, user1BalanceTwoWithdraw, "Withdrawal amount is not the same");
     }
 }
