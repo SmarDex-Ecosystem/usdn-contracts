@@ -207,7 +207,10 @@ library UsdnProtocolLongLibrary {
                 }
             }
 
-            if (liquidationEffects.liquidatedTicks.length > 0) {
+            if (
+                data.rebalancerAction <= Types.RebalancerAction.NoCloseNoOpen
+                    && liquidationEffects.liquidatedTicks.length > 0
+            ) {
                 IBaseRebalancer rebalancer = s._rebalancer;
                 if (address(rebalancer) != address(0)) {
                     // check if the rebalancer position has been liquidated
