@@ -5,6 +5,8 @@ import { Vm, console } from "forge-std/Test.sol";
 
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
+import { ADMIN } from "../../../../utils/Constants.sol";
+
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../../../../../src/UsdnProtocol//libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "../../../../../src/UsdnProtocol/libraries/UsdnProtocolCoreLibrary.sol";
@@ -391,6 +393,53 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         }
     }
 
+    function adminFunctionsTest(uint256 functionSeed, uint256 seed1, uint256 seed2, int256 seedInt) external {
+        functionSeed %= 21;
+        if (functionSeed == 0) {
+            _setValidatorDeadlines(uint128(seed1), uint128(seed2));
+        } else if (functionSeed == 1) {
+            _setMinLeverage(seed1);
+        } else if (functionSeed == 2) {
+            _setMaxLeverage(seed1);
+        } else if (functionSeed == 3) {
+            _setLiquidationPenalty(seed1);
+        } else if (functionSeed == 4) {
+            _setEMAPeriod(seed1);
+        } else if (functionSeed == 5) {
+            _setFundingSF(seed1);
+        } else if (functionSeed == 6) {
+            _setProtocolFeeBps(seed1);
+        } else if (functionSeed == 7) {
+            _setPositionFeeBps(seed1);
+        } else if (functionSeed == 8) {
+            _setVaultFeeBps(seed1);
+        } else if (functionSeed == 9) {
+            _setRebalancerBonusBps(seed1);
+        } else if (functionSeed == 10) {
+            _setSdexBurnOnDepositRatio(seed1);
+        } else if (functionSeed == 11) {
+            _setSecurityDepositValue(seed1);
+        } else if (functionSeed == 12) {
+            _setExpoImbalanceLimits(seed1, seed2, seedInt);
+        } else if (functionSeed == 13) {
+            _setMinLongPosition(seed1);
+        } else if (functionSeed == 14) {
+            _setSafetyMarginBps(seed1);
+        } else if (functionSeed == 15) {
+            _setLiquidationIteration(seed1);
+        } else if (functionSeed == 16) {
+            _setFeeThreshold(seed1);
+        } else if (functionSeed == 17) {
+            _setTargetUsdnPrice(seed1);
+        } else if (functionSeed == 18) {
+            _setUsdnRebaseThreshold(seed1);
+        } else if (functionSeed == 19) {
+            _setUsdnRebaseInterval(seed1);
+        } else if (functionSeed == 20) {
+            _pauseTest(seed1);
+        }
+    }
+
     /* ------------------------ Invariant testing helpers ----------------------- */
 
     function boundAddress(address addr) public view returns (address payable) {
@@ -436,5 +485,277 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
                 }
             }
         }
+    }
+
+    /* ----------------------------- Admin functions ---------------------------- */
+
+    function _setValidatorDeadlines(uint256 seed1, uint256 seed2) internal {
+        uint16 lowLatencyDelay = s._oracleMiddleware.getLowLatencyDelay();
+        uint128 newLowLatencyValidatorDeadline =
+            uint128(bound(seed1, Constants.MIN_VALIDATION_DEADLINE, lowLatencyDelay));
+        uint128 newOnChainValidatorDeadline = uint128(bound(seed2, 0, Constants.MAX_VALIDATION_DEADLINE));
+
+        vm.startPrank(ADMIN);
+        this.setValidatorDeadlines(newLowLatencyValidatorDeadline, newOnChainValidatorDeadline);
+        vm.stopPrank();
+        console.log(
+            "ADMIN: newLowLatencyValidatorDeadline",
+            newLowLatencyValidatorDeadline,
+            "newOnChainValidatorDeadline",
+            newOnChainValidatorDeadline
+        );
+    }
+
+    function _setMinLeverage(uint256 seed) internal {
+        uint256 newMinLeverage = bound(seed, (10 ** Constants.LEVERAGE_DECIMALS) + 1, s._maxLeverage - 1);
+
+        vm.startPrank(ADMIN);
+        this.setMinLeverage(newMinLeverage);
+        vm.stopPrank();
+        console.log("ADMIN: newMinLeverage", newMinLeverage);
+    }
+
+    function _setMaxLeverage(uint256 seed) internal {
+        uint256 newMaxLeverage = bound(seed, s._minLeverage + 1, Constants.MAX_LEVERAGE);
+
+        vm.startPrank(ADMIN);
+        this.setMaxLeverage(newMaxLeverage);
+        vm.stopPrank();
+        console.log("ADMIN: newMaxLeverage", newMaxLeverage);
+    }
+
+    function _setLiquidationPenalty(uint256 seed) internal {
+        uint24 newLiquidationPenalty = uint24(bound(seed, 0, Constants.MAX_LIQUIDATION_PENALTY));
+
+        vm.startPrank(ADMIN);
+        this.setLiquidationPenalty(newLiquidationPenalty);
+        vm.stopPrank();
+        console.log("ADMIN: newLiquidationPenalty", newLiquidationPenalty);
+    }
+
+    function _setEMAPeriod(uint256 seed) internal {
+        uint128 newEMAPeriod = uint128(bound(seed, 0, Constants.MAX_EMA_PERIOD));
+
+        vm.startPrank(ADMIN);
+        this.setEMAPeriod(newEMAPeriod);
+        vm.stopPrank();
+        console.log("ADMIN: newEMAPeriod", newEMAPeriod);
+    }
+
+    function _setFundingSF(uint256 seed) internal {
+        uint256 newFundingSF = bound(seed, 0, 10 ** Constants.FUNDING_SF_DECIMALS);
+
+        vm.startPrank(ADMIN);
+        this.setFundingSF(newFundingSF);
+        vm.stopPrank();
+        console.log("ADMIN: newFundingSF", newFundingSF);
+    }
+
+    function _setProtocolFeeBps(uint256 seed) internal {
+        // max = 10%
+        uint16 newProtocolFeeBps = uint16(bound(seed, 0, 1000));
+
+        vm.startPrank(ADMIN);
+        this.setProtocolFeeBps(newProtocolFeeBps);
+        vm.stopPrank();
+        console.log("ADMIN: newProtocolFeeBps", newProtocolFeeBps);
+    }
+
+    function _setPositionFeeBps(uint256 seed) internal {
+        uint16 newPositionFee = uint16(bound(seed, 0, Constants.MAX_POSITION_FEE_BPS));
+
+        vm.startPrank(ADMIN);
+        this.setPositionFeeBps(newPositionFee);
+        vm.stopPrank();
+        console.log("ADMIN: newPositionFee", newPositionFee);
+    }
+
+    function _setVaultFeeBps(uint256 seed) internal {
+        uint16 newVaultFee = uint16(bound(seed, 0, Constants.MAX_VAULT_FEE_BPS));
+
+        vm.startPrank(ADMIN);
+        this.setVaultFeeBps(newVaultFee);
+        vm.stopPrank();
+        console.log("ADMIN: newVaultFee", newVaultFee);
+    }
+
+    function _setRebalancerBonusBps(uint256 seed) internal {
+        uint16 newBonus = uint16(bound(seed, 0, Constants.BPS_DIVISOR));
+
+        vm.startPrank(ADMIN);
+        this.setRebalancerBonusBps(newBonus);
+        vm.stopPrank();
+        console.log("ADMIN: newRebalancerBonus", newBonus);
+    }
+
+    function _setSdexBurnOnDepositRatio(uint256 seed) internal {
+        uint32 newRatio = uint32(bound(seed, 0, Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR / 20));
+
+        vm.startPrank(ADMIN);
+        this.setSdexBurnOnDepositRatio(newRatio);
+        vm.stopPrank();
+        console.log("ADMIN: newSdexBurnOnDepositRatio", newRatio);
+    }
+
+    function _setSecurityDepositValue(uint256 seed) internal {
+        // max 2 ether
+        uint64 securityDepositValue = uint64(bound(seed, 0, 2 ether));
+
+        vm.startPrank(ADMIN);
+        this.setSecurityDepositValue(securityDepositValue);
+        vm.stopPrank();
+        console.log("ADMIN: newSecurityDepositValue", securityDepositValue);
+    }
+
+    function _setExpoImbalanceLimits(uint256 seedParameter, uint256 seed, int256 seedInt) internal {
+        int256 openExpoImbalanceLimitBps = this.getOpenExpoImbalanceLimitBps();
+        int256 depositExpoImbalanceLimitBps = this.getDepositExpoImbalanceLimitBps();
+        int256 withdrawalExpoImbalanceLimitBps = this.getWithdrawalExpoImbalanceLimitBps();
+        int256 closeExpoImbalanceLimitBps = this.getCloseExpoImbalanceLimitBps();
+        int256 rebalancerCloseExpoImbalanceLimitBps = this.getRebalancerCloseExpoImbalanceLimitBps();
+        int256 longImbalanceTargetBps = this.getLongImbalanceTargetBps();
+
+        seedParameter %= 6;
+        if (seedParameter == 0) {
+            // change openExpoImbalanceLimitBps
+            // min = 3% and max = withdrawalExpoImbalanceLimitBps
+            openExpoImbalanceLimitBps = int256(bound(seed, 300, uint256(withdrawalExpoImbalanceLimitBps)));
+            console.log("ADMIN: newOpenExpoImbalanceLimitBps", openExpoImbalanceLimitBps);
+        } else if (seedParameter == 1) {
+            // change depositExpoImbalanceLimitBps
+            // min = 3% and max = closeExpoImbalanceLimitBps
+            depositExpoImbalanceLimitBps = int256(bound(seed, 300, uint256(closeExpoImbalanceLimitBps)));
+            console.log("ADMIN: newDepositExpoImbalanceLimitBps", depositExpoImbalanceLimitBps);
+        } else if (seedParameter == 2) {
+            // change withdrawalExpoImbalanceLimitBps
+            // if != 0, min = openExpoImbalanceLimitBps and max = 100%
+            if (withdrawalExpoImbalanceLimitBps != 0) {
+                withdrawalExpoImbalanceLimitBps =
+                    int256(bound(seed, uint256(openExpoImbalanceLimitBps), Constants.BPS_DIVISOR));
+            }
+            console.log("ADMIN: newWithdrawalExpoImbalanceLimitBps", withdrawalExpoImbalanceLimitBps);
+        } else if (seedParameter == 3) {
+            // change closeExpoImbalanceLimitBps
+            // if != 0,
+            // min = max(depositExpoImbalanceLimitBps,longImbalanceTargetBps,rebalancerCloseExpoImbalanceLimitBps)
+            // and max = 100%
+            if (closeExpoImbalanceLimitBps != 0) {
+                uint256 min = depositExpoImbalanceLimitBps > longImbalanceTargetBps
+                    ? uint256(depositExpoImbalanceLimitBps)
+                    : uint256(longImbalanceTargetBps);
+                min = rebalancerCloseExpoImbalanceLimitBps > int256(min)
+                    ? uint256(rebalancerCloseExpoImbalanceLimitBps)
+                    : min;
+
+                closeExpoImbalanceLimitBps = int256(bound(seed, min, Constants.BPS_DIVISOR));
+            }
+            console.log("ADMIN: newCloseExpoImbalanceLimitBps", closeExpoImbalanceLimitBps);
+        } else if (seedParameter == 4) {
+            // change rebalancerCloseExpoImbalanceLimitBps
+            // if != 0, min = 3% and max = closeExpoImbalanceLimitBps
+            if (rebalancerCloseExpoImbalanceLimitBps != 0) {
+                rebalancerCloseExpoImbalanceLimitBps = int256(bound(seed, 300, uint256(closeExpoImbalanceLimitBps)));
+            }
+            console.log("ADMIN: newRebalancerCloseExpoImbalanceLimitBps", rebalancerCloseExpoImbalanceLimitBps);
+        } else if (seedParameter == 5) {
+            // min = max(-50%,-withdrawalExpoImbalanceLimitBps) and max = closeExpoImbalanceLimitBps
+            int256 min = -500 > -withdrawalExpoImbalanceLimitBps ? -500 : -withdrawalExpoImbalanceLimitBps;
+
+            longImbalanceTargetBps = bound(seedInt, min, closeExpoImbalanceLimitBps);
+            console.log("ADMIN: newLongImbalanceTargetBps", longImbalanceTargetBps);
+        }
+
+        vm.startPrank(ADMIN);
+        this.setExpoImbalanceLimits(
+            uint256(openExpoImbalanceLimitBps),
+            uint256(depositExpoImbalanceLimitBps),
+            uint256(withdrawalExpoImbalanceLimitBps),
+            uint256(closeExpoImbalanceLimitBps),
+            uint256(rebalancerCloseExpoImbalanceLimitBps),
+            longImbalanceTargetBps
+        );
+        vm.stopPrank();
+    }
+
+    function _setMinLongPosition(uint256 seed) internal {
+        uint128 newMinLongPosition = uint128(bound(seed, 0, 2 * 10 ** s._assetDecimals));
+
+        vm.startPrank(ADMIN);
+        this.setMinLongPosition(newMinLongPosition);
+        vm.stopPrank();
+        console.log("ADMIN: newMinLongPosition", newMinLongPosition);
+    }
+
+    function _setSafetyMarginBps(uint256 seed) internal {
+        uint16 newSafetyMarginBps = uint16(bound(seed, 0, Constants.MAX_SAFETY_MARGIN_BPS));
+
+        vm.startPrank(ADMIN);
+        this.setSafetyMarginBps(newSafetyMarginBps);
+        vm.stopPrank();
+        console.log("ADMIN: newSafetyMarginBps", newSafetyMarginBps);
+    }
+
+    function _setLiquidationIteration(uint256 seed) internal {
+        uint16 newLiquidationIteration = uint16(bound(seed, 0, Constants.MAX_LIQUIDATION_ITERATION));
+
+        vm.startPrank(ADMIN);
+        this.setLiquidationIteration(newLiquidationIteration);
+        vm.stopPrank();
+        console.log("ADMIN: newLiquidationIteration", newLiquidationIteration);
+    }
+
+    function _setFeeThreshold(uint256 seed) internal {
+        uint16 newFeeThreshold = uint16(bound(seed, 0, type(uint16).max));
+
+        vm.startPrank(ADMIN);
+        this.setFeeThreshold(newFeeThreshold);
+        vm.stopPrank();
+        console.log("ADMIN: newFeeThreshold", newFeeThreshold);
+    }
+
+    function _setTargetUsdnPrice(uint256 seed) internal {
+        // min = 1$
+        uint128 newTargetUsdnPrice = uint128(bound(seed, 10 ** s._priceFeedDecimals, s._usdnRebaseThreshold));
+
+        vm.startPrank(ADMIN);
+        this.setTargetUsdnPrice(newTargetUsdnPrice);
+        vm.stopPrank();
+        console.log("ADMIN: newTargetUsdnPrice", newTargetUsdnPrice);
+    }
+
+    function _setUsdnRebaseThreshold(uint256 seed) internal {
+        // max = 1.1$
+        uint128 newUsdnRebaseThreshold = uint128(bound(seed, s._targetUsdnPrice, 11 * 10 ** (s._priceFeedDecimals - 1)));
+
+        vm.startPrank(ADMIN);
+        this.setUsdnRebaseThreshold(newUsdnRebaseThreshold);
+        vm.stopPrank();
+        console.log("ADMIN: newUsdnRebaseThreshold", newUsdnRebaseThreshold);
+    }
+
+    function _setUsdnRebaseInterval(uint256 seed) internal {
+        uint256 newUsdnRebaseInterval = bound(seed, 0, 365 days);
+
+        vm.startPrank(ADMIN);
+        this.setUsdnRebaseInterval(newUsdnRebaseInterval);
+        vm.stopPrank();
+        console.log("ADMIN: newUsdnRebaseInterval", newUsdnRebaseInterval);
+    }
+
+    function _pauseTest(uint256 seed) internal {
+        vm.startPrank(ADMIN);
+        this.pause();
+        vm.stopPrank();
+        console.log("ADMIN: paused");
+
+        uint256 blocks = bound(seed, 1, 100);
+        emit log_named_uint("mining blocks", blocks);
+        skip(12 * blocks);
+        vm.roll(block.number + blocks);
+
+        vm.startPrank(ADMIN);
+        this.unpause();
+        vm.stopPrank();
+        console.log("ADMIN: unpaused");
     }
 }

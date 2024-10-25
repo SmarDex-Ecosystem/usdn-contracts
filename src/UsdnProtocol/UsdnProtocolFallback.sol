@@ -480,6 +480,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
         if (address(newOracleMiddleware) == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidMiddlewareAddress();
         }
+
         s._oracleMiddleware = newOracleMiddleware;
         emit IUsdnProtocolEvents.OracleMiddlewareUpdated(address(newOracleMiddleware));
     }
@@ -494,14 +495,12 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
         }
 
         s._liquidationRewardsManager = newLiquidationRewardsManager;
-
         emit IUsdnProtocolEvents.LiquidationRewardsManagerUpdated(address(newLiquidationRewardsManager));
     }
 
     /// @inheritdoc IUsdnProtocolFallback
     function setRebalancer(IBaseRebalancer newRebalancer) external onlyRole(SET_EXTERNAL_ROLE) {
         s._rebalancer = newRebalancer;
-
         emit IUsdnProtocolEvents.RebalancerUpdated(address(newRebalancer));
     }
 
@@ -510,6 +509,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
         if (newFeeCollector == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidFeeCollector();
         }
+
         s._feeCollector = newFeeCollector;
         emit IUsdnProtocolEvents.FeeCollectorUpdated(newFeeCollector);
     }
@@ -546,11 +546,9 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
 
     /// @inheritdoc IUsdnProtocolFallback
     function setMinLeverage(uint256 newMinLeverage) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        // zero minLeverage
         if (newMinLeverage <= 10 ** Constants.LEVERAGE_DECIMALS) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidMinLeverage();
         }
-
         if (newMinLeverage >= s._maxLeverage) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidMinLeverage();
         }
@@ -564,8 +562,6 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
         if (newMaxLeverage <= s._minLeverage) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidMaxLeverage();
         }
-
-        // `maxLeverage` greater than 100
         if (newMaxLeverage > Constants.MAX_LEVERAGE) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidMaxLeverage();
         }
@@ -609,49 +605,48 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
         if (newProtocolFeeBps > Constants.BPS_DIVISOR) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidProtocolFeeBps();
         }
+
         s._protocolFeeBps = newProtocolFeeBps;
         emit IUsdnProtocolEvents.FeeBpsUpdated(newProtocolFeeBps);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
     function setPositionFeeBps(uint16 newPositionFee) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        // `newPositionFee` greater than 20%
         if (newPositionFee > Constants.MAX_POSITION_FEE_BPS) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidPositionFee();
         }
+
         s._positionFeeBps = newPositionFee;
         emit IUsdnProtocolEvents.PositionFeeUpdated(newPositionFee);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
     function setVaultFeeBps(uint16 newVaultFee) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        // `newVaultFee` greater than 20%
         if (newVaultFee > Constants.MAX_VAULT_FEE_BPS) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidVaultFee();
         }
+
         s._vaultFeeBps = newVaultFee;
         emit IUsdnProtocolEvents.VaultFeeUpdated(newVaultFee);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
     function setRebalancerBonusBps(uint16 newBonus) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        // `newBonus` greater than 100%
         if (newBonus > Constants.BPS_DIVISOR) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidRebalancerBonus();
         }
+
         s._rebalancerBonusBps = newBonus;
         emit IUsdnProtocolEvents.RebalancerBonusUpdated(newBonus);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
     function setSdexBurnOnDepositRatio(uint32 newRatio) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        // `newRatio` greater than 5%
         if (newRatio > Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR / 20) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidBurnSdexOnDepositRatio();
         }
 
         s._sdexBurnOnDepositRatio = newRatio;
-
         emit IUsdnProtocolEvents.BurnSdexOnDepositRatioUpdated(newRatio);
     }
 
