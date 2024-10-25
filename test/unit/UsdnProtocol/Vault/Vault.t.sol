@@ -53,22 +53,27 @@ contract TestUsdnProtocolVault is UsdnProtocolBaseFixture {
         // inherently lossy due to the same rebase
     }
 
+    /**
+     * @custom:scenario Check that no profit is made when withdrawing from the vault in multiple steps instead of one
+     * @custom:given A vault position
+     * @custom:when The user withdraws from the vault in multiple steps instead of one
+     * @custom:then The amount withdrawn should be the same as if the user withdrew in one step
+     */
     function test_multipleWithdrawAgainstOne() public {
-        // sdex.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
-        // wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
-        bytes memory encodedPrice = abi.encode(params.initialPrice);
         address USER_1_2ND_ADDR = USER_2;
+        bytes memory encodedPrice = abi.encode(params.initialPrice);
 
         setUpUserPositionInVault(USER_1, ProtocolAction.ValidateDeposit, 10 ether, params.initialPrice);
-        uint256 user1SharesBefore = usdn.sharesOf(USER_1);
+        uint256 userUsdnShares = usdn.sharesOf(USER_1);
         uint256 securityDeposit = protocol.getSecurityDepositValue();
+        vm.prank(USER_1);
+        usdn.approve(address(protocol), type(uint256).max);
 
         uint256 id = vm.snapshot();
 
         vm.startPrank(USER_1);
-        usdn.approve(address(protocol), type(uint256).max);
         protocol.initiateWithdrawal{ value: securityDeposit }(
-            uint152(user1SharesBefore),
+            uint152(userUsdnShares),
             DISABLE_AMOUNT_OUT_MIN,
             USER_1,
             payable(USER_1),
@@ -86,9 +91,8 @@ contract TestUsdnProtocolVault is UsdnProtocolBaseFixture {
         vm.revertTo(id);
 
         vm.startPrank(USER_1);
-        usdn.approve(address(protocol), type(uint256).max);
         protocol.initiateWithdrawal{ value: securityDeposit }(
-            uint152(user1SharesBefore / 2),
+            uint152(userUsdnShares / 2),
             DISABLE_AMOUNT_OUT_MIN,
             USER_1,
             payable(USER_1),
@@ -105,15 +109,12 @@ contract TestUsdnProtocolVault is UsdnProtocolBaseFixture {
             encodedPrice,
             EMPTY_PREVIOUS_DATA
         );
-        vm.stopPrank();
-        _waitDelay();
 
-        vm.startPrank(USER_1);
+        _waitDelay();
         protocol.validateWithdrawal(payable(USER_1), encodedPrice, EMPTY_PREVIOUS_DATA);
         vm.stopPrank();
-        vm.startPrank(USER_1_2ND_ADDR);
+        vm.prank(USER_1_2ND_ADDR);
         protocol.validateWithdrawal(payable(USER_1_2ND_ADDR), encodedPrice, EMPTY_PREVIOUS_DATA);
-        vm.stopPrank();
 
         uint256 user1BalanceTwoWithdraw = wstETH.balanceOf(USER_1);
 
