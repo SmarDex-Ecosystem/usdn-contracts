@@ -49,8 +49,9 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
             revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
         }
         IUsdn usdn = s._usdn;
-        uint256 amountAfterFees = amount - FixedPointMathLib.fullMulDiv(amount, s._vaultFeeBps, Constants.BPS_DIVISOR);
-        usdnSharesExpected_ = Utils._calcMintUsdnShares(amountAfterFees, vaultBalance, usdn.totalShares());
+        uint256 fees = FixedPointMathLib.fullMulDiv(amount, s._vaultFeeBps, Constants.BPS_DIVISOR);
+        uint256 amountAfterFees = amount - fees;
+        usdnSharesExpected_ = Utils._calcMintUsdnShares(amountAfterFees, vaultBalance + fees, usdn.totalShares());
         sdexToBurn_ = Utils._calcSdexToBurn(usdn.convertToTokens(usdnSharesExpected_), s._sdexBurnOnDepositRatio);
     }
 

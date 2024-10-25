@@ -568,7 +568,8 @@ library UsdnProtocolVaultLibrary {
 
         // apply fees on amount
         data_.feeBps = s._vaultFeeBps;
-        uint128 amountAfterFees = (amount - uint256(amount) * data_.feeBps / Constants.BPS_DIVISOR).toUint128();
+        uint128 fees = FixedPointMathLib.fullMulDiv(amount, data_.feeBps, Constants.BPS_DIVISOR).toUint128();
+        uint128 amountAfterFees = amount - fees;
 
         data_.totalExpo = s._totalExpo;
         data_.balanceLong = s._balanceLong;
@@ -584,7 +585,7 @@ library UsdnProtocolVaultLibrary {
 
         // calculate the amount of SDEX tokens to burn
         uint256 usdnSharesToMintEstimated =
-            Utils._calcMintUsdnShares(amountAfterFees, data_.balanceVault, data_.usdnTotalShares);
+            Utils._calcMintUsdnShares(amountAfterFees, data_.balanceVault + fees, data_.usdnTotalShares);
         if (usdnSharesToMintEstimated < sharesOutMin) {
             revert IUsdnProtocolErrors.UsdnProtocolAmountReceivedTooSmall();
         }
@@ -770,8 +771,8 @@ library UsdnProtocolVaultLibrary {
         // we calculate the amount of USDN to mint, either considering the vault balance at the time of the initiate
         // action, or the current balance with the new price. We will use the higher of the two to mint. Funding between
         // the initiate and validate actions is ignored
-        uint128 amountAfterFees =
-            (deposit.amount - uint256(deposit.amount) * deposit.feeBps / Constants.BPS_DIVISOR).toUint128();
+        uint128 fees = FixedPointMathLib.fullMulDiv(deposit.amount, deposit.feeBps, Constants.BPS_DIVISOR).toUint128();
+        uint128 amountAfterFees = deposit.amount - fees;
 
         uint256 balanceVault = deposit.balanceVault;
         if (currentPrice.price < deposit.assetPrice) {
@@ -795,7 +796,7 @@ library UsdnProtocolVaultLibrary {
         s._pendingBalanceVault -= Utils.toInt256(deposit.amount);
 
         uint256 mintedTokens = s._usdn.mintShares(
-            deposit.to, Utils._calcMintUsdnShares(amountAfterFees, balanceVault, deposit.usdnTotalShares)
+            deposit.to, Utils._calcMintUsdnShares(amountAfterFees, balanceVault + fees, deposit.usdnTotalShares)
         );
         isValidated_ = true;
         emit IUsdnProtocolEvents.ValidatedDeposit(
