@@ -8,7 +8,7 @@ import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { Sdex } from "../test/utils/Sdex.sol";
 import { WstETH } from "../test/utils/WstEth.sol";
 
-import { Utils } from "./Utils.s.sol";
+import { Utils } from "./utils/Utils.s.sol";
 
 import { LiquidationRewardsManager } from "../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
 import { WstEthOracleMiddleware } from "../src/OracleMiddleware/WstEthOracleMiddleware.sol";
