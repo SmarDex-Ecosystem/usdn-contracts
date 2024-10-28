@@ -9,9 +9,6 @@ green='\033[0;32m'
 blue='\033[0;34m'
 nc='\033[0m'
 
-broadcast="broadcast/00_DeployUsdn.s.sol/1/run-latest.json"
-ledger=false
-
 # Check NodeJS version
 node_version=$(node -v)
 node_version=$((${node_version:1:2})) # Remove the "V", the minor version and then convert to integer
@@ -25,13 +22,24 @@ fi
 read -p $'\n'"Enter the RPC URL : " userRpcUrl
 rpcUrl="$userRpcUrl"
 
+read -p $'\n'"Enter the protocol address : " userProtocolAddress
+protocolAddress="$userProtocolAddress"
+
+adminAddress=$(cast call -r $rpcUrl $protocolAddress "defaultAdmin()")
+adminAddress=$(cast parse-bytes32-address $adminAddress)
+if [[ -z $adminAddress ]]; then
+    printf "\n$red Failed to fetch admin address, values are not correct$nc\n\n"
+    printf "RPC URL : $rpcUrl\n"
+    printf "Protocol address : $protocolAddress\n\n"
+    exit 1
+else
+    printf "\n$green Admin address fetched successfully$nc : $adminAddress\n"
+fi
+
 while true; do
     read -p $'\n'"Do you wish to use a ledger? (Yy/Nn) : " yn
     case $yn in
     [Yy]*)
-        read -p $'\n'"Enter the deployer address : " deployerAddress
-        address=$deployerAddress
-
         printf "\n\n$green Running script in Ledger mode with :\n"
         ledger=true
 
@@ -39,11 +47,11 @@ while true; do
         ;;
     [Nn]*)
         read -s -p $'\n'"Enter the private key : " privateKey
-        deployerPrivateKey=$privateKey
+        ownerPrivateKey=$privateKey
 
-        address=$(cast wallet address $deployerPrivateKey)
-        if [[ -z $address ]]; then
-            printf "\n$red The private key is invalid$nc\n\n"
+        address=$(cast wallet address $ownerPrivateKey)
+        if [ $address != adminAddress]; then
+            printf "\n$red The private key is not the owner of the protocol$nc\n"
             exit 1
         fi
 
@@ -56,13 +64,14 @@ while true; do
 done
 
 while true; do
-    printf "\n$blue Address :$nc $address"
+    printf "\n$blue Protocol address :$nc $protocolAddress"
+    printf "\n$blue Admin address :$nc $adminAddress"
     printf "\n$blue RPC URL :$nc "$rpcUrl"\n"
     read -p $'\n'"Do you wish to continue? (Yy/Nn) : " yn
 
     case $yn in
     [Yy]*)
-        export DEPLOYER_ADDRESS=$address
+        export USDN_PROTOCOL_ADDRESS=$protocolAddress
         break
         ;;
     [Nn]*)
@@ -73,42 +82,35 @@ while true; do
 done
 
 if [ $ledger = true ]; then
-    forge script -l -f "$rpcUrl" script/00_DeployUsdn.s.sol:DeployUsdn --broadcast
+    forge script -l -f "$rpcUrl" script/03_TransferProtocolOwnership.s.sol:TransferProtocolOwnership --broadcast
 else
-    forge script --private-key $deployerPrivateKey -f "$rpcUrl" script/00_DeployUsdn.s.sol:DeployUsdn --broadcast
+    forge script --private-key $ownerPrivateKey -f "$rpcUrl" script/03_TransferProtocolOwnership.s.sol:TransferProtocolOwnership --broadcast
 fi
 
 status=$?
 if [ $status -ne 0 ]; then
-    echo "Failed to deploy USDN contract"
+    echo "Failed to change admin address"
     exit 1
 fi
 
-printf "$green USDN contract has been deployed !\n"
+printf "$green Admin address changed !\n"
 
 for i in {1..15}; do
-    printf "$green Trying to fetch USDN address... (attempt $i/15)$nc\n"
-    USDN_ADDRESS="$(cat $broadcast | jq -r '.returns.Usdn_.value')"
-    usdnCode=$(cast code -r "$rpcUrl" "$USDN_ADDRESS")
+    printf "$green Trying to fetch new owner... (attempt $i/15)$nc\n"
+    adminAddress=$(cast call -r $rpcUrl $protocolAddress "defaultAdmin()")
 
-    if [[ ! -z $usdnCode ]]; then
-        printf "\n$green USDN contract found on blockchain$nc\n\n"
+    if [[ ! -z $adminAddress ]]; then
+        printf "\n$green Change of ownership is confirmed$nc\n\n"
         export USDN_ADDRESS=$USDN_ADDRESS
         break
     fi
 
     if [ $i -eq 15 ]; then
-        printf "\n$red Failed to fetch USDN address$nc\n\n"
+        printf "\n$red Failed to fetch the new owner$nc\n\n"
         exit 1
     fi
 
     sleep 10s
 done
-
-if [ $ledger = true ]; then
-    forge script -l -f "$rpcUrl" script/01_Deploy.s.sol:Deploy --broadcast
-else
-    forge script --private-key $deployerPrivateKey -f "$rpcUrl" script/01_Deploy.s.sol:Deploy --broadcast
-fi
 
 popd >/dev/null
