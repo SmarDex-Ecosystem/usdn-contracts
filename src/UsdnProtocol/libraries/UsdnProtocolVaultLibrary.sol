@@ -1085,7 +1085,9 @@ library UsdnProtocolVaultLibrary {
      * the validator also receives the security deposit
      * Outside of those periods, the security deposit goes to the user validating the pending action
      * @param initiateTimestamp The timestamp at which the action was initiated
+     * @param lowLatencyDeadline The low latency deadline
      * @param lowLatencyDelay The low latency delay of the oracle middleware
+     * @param onChainDeadline The on-chain deadline
      * @return actionable_ Whether the pending action is actionable
      */
     function _isActionable(
