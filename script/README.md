@@ -70,11 +70,10 @@ If you are ready to upgrade the protocol, then you can launch the bash script `s
 
 ## Transfer ownership
 
-Before you launch the transfer ownership script, you need to make sure that required environment variables are set:
+Before you launch the transfer ownership script, you need to make sure that required environment variable is set:
 * `NEW_OWNER_ADDRESS`: the address of the new owner
-* `USDN_PROTOCOL_ADDRESS`: the address of the deployed USDN protocol
 
-This script will prompt you to enter an RPC url and a private key. The address derived from the private key must have the `DEFAULT_ADMIN_ROLE` role.
+This script will prompt you to enter an RPC url, the protocol address and a private key. The address derived from the private key must have the `DEFAULT_ADMIN_ROLE` role.
 
 
 ## Anvil fork configuration
