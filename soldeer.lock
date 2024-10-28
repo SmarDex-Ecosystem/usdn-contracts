@@ -7,17 +7,17 @@ integrity = "015a826e4ca21760bfad5f746ade4e2eff65d2a92d1706ed5f09caa3911102ce"
 
 [[dependencies]]
 name = "@openzeppelin-contracts"
-version = "5.0.2"
-url = "https://soldeer-revisions.s3.amazonaws.com/@openzeppelin-contracts/5_0_2_14-03-2024_06:11:59_contracts.zip"
-checksum = "8bc4f0acc7c187771b878d46f7de4bfad1acad2eb5d096d9d05d34035853f5c3"
-integrity = "55881f6114aa36158566ef52b486d9d96b217c3e47d0e24bbd4994a8cfb5ee7c"
+version = "5.1.0"
+url = "https://soldeer-revisions.s3.amazonaws.com/@openzeppelin-contracts/5_1_0_19-10-2024_10:28:52_contracts.zip"
+checksum = "fd3d1ea561cb27897008aee18ada6e85f248eb161c86e4435272fc2b5777574f"
+integrity = "cb6cf6e878f2943b2291d5636a9d72ac51d43d8135896ceb6cf88d36c386f212"
 
 [[dependencies]]
 name = "@openzeppelin-contracts-upgradeable"
-version = "5.0.2"
-url = "https://soldeer-revisions.s3.amazonaws.com/@openzeppelin-contracts-upgradeable/5_0_2_14-03-2024_06:12:07_contracts-upgradeable.zip"
-checksum = "fb3f8db8541fc01636f91b0e7d9dd6f450f1bf7e2b4a17e96caf6e779ace8f5b"
-integrity = "4bded842e12902cca59a500494d26586b3baea76b59150fd4e2b1d29078a2e71"
+version = "5.1.0"
+url = "https://soldeer-revisions.s3.amazonaws.com/@openzeppelin-contracts-upgradeable/5_1_0_19-10-2024_10:28:58_contracts-upgradeable.zip"
+checksum = "87854223d14941d6fda3d78d900217e79e25755ea5bc48beca035766fa6a4e7e"
+integrity = "826fb621339dcee4261f848b283ec86364743d3c289d61f621747d95e315215a"
 
 [[dependencies]]
 name = "@pythnetwork-pyth-sdk-solidity"
@@ -42,10 +42,10 @@ integrity = "d7750a8f2fe466be9d01016b09377e2d42b686d6e3eecb779d70ad75ff24b1f2"
 
 [[dependencies]]
 name = "forge-std"
-version = "1.9.3"
-url = "https://soldeer-revisions.s3.amazonaws.com/forge-std/1_9_3_30-09-2024_08:27:09_forge-std-1.9.zip"
-checksum = "351b6f9cde3d9476cc07e48c1bca6b7fd93fa16dd9b450e5ad5d169d1dbd5938"
-integrity = "d53734fbd7201cd9e44de730ae045ed8958dd2c7b9493c30b322f6e6c21ca8b2"
+version = "1.9.4"
+url = "https://soldeer-revisions.s3.amazonaws.com/forge-std/1_9_4_25-10-2024_14:36:59_forge-std-1.9.zip"
+checksum = "b5be24beb5e4dab5e42221b2ad1288b64c826bee5ee71b6159ba93ffe86f14d4"
+integrity = "3874463846ab995a6a9a88412913cacec6144f7605daa1af57c2d8bf3f210b13"
 
 [[dependencies]]
 name = "openzeppelin-foundry-upgrades"
