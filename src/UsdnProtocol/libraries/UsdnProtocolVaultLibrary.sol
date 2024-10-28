@@ -1055,7 +1055,8 @@ library UsdnProtocolVaultLibrary {
 
         IUsdn usdn = s._usdn;
         // calculate the amount of asset to transfer with the same fees as recorded during the initiate action
-        uint256 assetToTransferAfterFees = Utils._calcBurnUsdn(shares, available, usdn.totalShares(), withdrawal.feeBps);
+        uint256 assetToTransferAfterFees =
+            Utils._calcBurnUsdn(shares, available, withdrawal.usdnTotalShares, withdrawal.feeBps);
 
         usdn.burnShares(shares);
 
