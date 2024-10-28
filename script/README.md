@@ -68,6 +68,15 @@ Before you launch the upgrade script, there are a few things you need to do:
 
 If you are ready to upgrade the protocol, then you can launch the bash script `script/upgrade.sh`. It will prompt you to enter a RPC url, the address of the deployed USDN protocol, and a private key. The address derived from the private key must have the `PROXY_UPGRADE_ROLE` role.
 
+## Transfer ownership
+
+Before you launch the transfer ownership script, you need to make sure that required environment variables are set:
+* `NEW_OWNER_ADDRESS`: the address of the new owner
+* `USDN_PROTOCOL_ADDRESS`: the address of the deployed USDN protocol
+
+This script will prompt you to enter an RPC url and a private key. The address derived from the private key must have the `DEFAULT_ADMIN_ROLE` role.
+
+
 ## Anvil fork configuration
 
 The `anvil` fork should be launched with at least the following parameters:
