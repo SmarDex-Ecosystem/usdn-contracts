@@ -254,7 +254,7 @@ library UsdnProtocolCoreLibrary {
 
         // calculate new balances (for now, any bad debt has not been repaid, balances could become negative)
         if (fundAsset > 0) {
-            // in case of positive funding, the vault balance must be decremented by the totality of the funding amount
+            // in case of positive funding, the long balance must be decremented by the totality of the funding amount
             // however, since we deducted the fee amount from the total balance, the vault balance will be incremented
             // only by the funding amount minus the fee amount
             data_.tempLongBalance = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAsset);
