@@ -549,8 +549,8 @@ interface IUsdnProtocolTypes {
      * @param _tickSpacing The liquidation tick spacing for storing long positions
      * @dev A tick spacing of 1 is equivalent to a 0.01% increase in liquidation price between ticks. A tick spacing of
      * 100 is equivalent to a ~1.005% increase in liquidation price between ticks
-     * @param _asset The asset ERC20 contract. Assets with a blacklist are not supported. Because the protocol can be
-     * DOS during a revert of a transfer
+     * @param _asset The asset ERC20 contract
+     * Assets with a blacklist are not supported because the protocol would be DoS if transfers revert
      * @param _assetDecimals The asset decimals
      * @param _priceFeedDecimals The price feed decimals (18)
      * @param _usdn The USDN ERC20 contract
