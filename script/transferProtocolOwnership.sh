@@ -15,8 +15,6 @@ node_version=$((${node_version:1:2})) # Remove the "V", the minor version and th
 if [ $node_version -lt 20 ]; then
     printf "\n$red NodeJS version is lower than 20 (it is $node_version), please update it$nc\n"
     exit 1
-else
-    printf "\n$green NodeJS version is $node_version, you are good to go!$nc\n"
 fi
 
 read -p $'\n'"Enter the RPC URL : " userRpcUrl
@@ -35,6 +33,9 @@ if [[ -z $adminAddress ]]; then
 else
     printf "\n$green Admin address fetched successfully$nc : $adminAddress\n"
 fi
+
+read -p $'\n'"Enter the new owner address : " userNewOwner
+newOwner="$userNewOwner"
 
 while true; do
     read -p $'\n'"Do you wish to use a ledger? (Yy/Nn) : " yn
@@ -66,12 +67,14 @@ done
 while true; do
     printf "\n$blue Protocol address :$nc $protocolAddress"
     printf "\n$blue Admin address :$nc $adminAddress"
+    printf "\n$blue New owner address :$nc $newOwner"
     printf "\n$blue RPC URL :$nc "$rpcUrl"\n"
     read -p $'\n'"Do you wish to continue? (Yy/Nn) : " yn
 
     case $yn in
     [Yy]*)
         export USDN_PROTOCOL_ADDRESS=$protocolAddress
+        export NEW_OWNER_ADDRESS=$newOwner
         break
         ;;
     [Nn]*)
