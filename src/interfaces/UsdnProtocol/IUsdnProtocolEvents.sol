@@ -159,7 +159,7 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
 
     /**
      * @notice Emitted when a position is individually liquidated
-     * @param user The validator of the close action, not necessarily the owner of the position
+     * @param user The validator of the action, not necessarily the owner of the position
      * @param posId The unique identifier for the position that was liquidated
      * @param liquidationPrice The asset price at the moment of liquidation
      * @param effectiveTickPrice The effective liquidated tick price
