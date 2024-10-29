@@ -472,6 +472,7 @@ library UsdnProtocolLongLibrary {
             // no need to rebase, the USDN divisor cannot go lower
             return (false, callbackResult_);
         }
+
         uint256 balanceVault = s._balanceVault;
         uint8 assetDecimals = s._assetDecimals;
         uint256 usdnTotalSupply = usdn.totalSupply();
@@ -479,8 +480,10 @@ library UsdnProtocolLongLibrary {
         if (uPrice <= s._usdnRebaseThreshold) {
             return (false, callbackResult_);
         }
+
         uint256 targetTotalSupply = _calcRebaseTotalSupply(balanceVault, assetPrice, s._targetUsdnPrice, assetDecimals);
         uint256 newDivisor = FixedPointMathLib.fullMulDiv(usdnTotalSupply, divisor, targetTotalSupply);
+
         // since the USDN token can call a handler after the rebase, we want to make sure we do not block the user
         // action in case the rebase fails
         try usdn.rebase(newDivisor) returns (bool rebased, uint256, bytes memory callbackResult) {
