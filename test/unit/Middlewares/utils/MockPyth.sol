@@ -25,6 +25,7 @@ contract MockPyth is IMockPythError {
 
     uint64 public lastPublishTime;
     int64 public price = int64(uint64(ETH_PRICE));
+    int64 public unsafePrice = -1;
     uint64 public conf = uint64(ETH_CONF);
     int32 public expo = -8;
 
@@ -62,6 +63,14 @@ contract MockPyth is IMockPythError {
      */
     function setExpo(int32 _expo) external {
         expo = _expo;
+    }
+
+    /**
+     * @notice Update manually the unsafe price
+     * @param _unsafePrice The price to return when calling `getPriceUnsafe`
+     */
+    function setUnsafePrice(int64 _unsafePrice) external {
+        unsafePrice = _unsafePrice;
     }
 
     /**
@@ -117,6 +126,8 @@ contract MockPyth is IMockPythError {
     /// @notice Mock of the real parsePriceFeedUpdatesUnique function.
     /// @return price The fee to update the price.
     function getUpdateFee(bytes[] calldata updateData) public pure returns (uint256) {
+        // if (updateData.length == 1 && updateData[0].length == 0) return 0;
+
         return 1 wei * updateData.length;
     }
 
@@ -124,6 +135,8 @@ contract MockPyth is IMockPythError {
     function getPriceUnsafe(bytes32) public view returns (PythStructs.Price memory price_) {
         if (alwaysRevertOnCall) revert MockedPythError();
 
-        price_.price = -1;
+        price_.price = unsafePrice;
+        price_.expo = expo;
+        price_.publishTime = lastPublishTime;
     }
 }
