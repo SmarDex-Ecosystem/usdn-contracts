@@ -31,7 +31,6 @@ contract Deploy is Script {
     uint256 constant CHAINLINK_PRICE_VALIDITY = 1 hours + 2 minutes;
     uint256 constant CHAINLINK_GAS_PRICE_VALIDITY = 2 hours + 5 minutes;
     string constant EIP712_VERSION = "1";
-    string constant REBALANCER_EIP712_VERSION = "1";
 
     Utils _utils = new Utils();
     address _deployerAddress;
@@ -286,7 +285,7 @@ contract Deploy is Script {
         if (rebalancerAddress != address(0)) {
             rebalancer_ = Rebalancer(rebalancerAddress);
         } else {
-            rebalancer_ = new Rebalancer(usdnProtocol, vm.envOr("REBALANCER_EIP712_VERSION", REBALANCER_EIP712_VERSION));
+            rebalancer_ = new Rebalancer(usdnProtocol);
         }
     }
 

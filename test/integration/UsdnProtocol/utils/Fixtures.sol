@@ -202,7 +202,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         );
         protocol = IUsdnProtocolHandler(proxy);
 
-        rebalancer = new Rebalancer(protocol, params.eip712Version);
+        rebalancer = new Rebalancer(protocol);
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);

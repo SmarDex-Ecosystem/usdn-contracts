@@ -145,14 +145,8 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     /// @notice The user EIP712 nonce
     mapping(address => uint256) internal _nonce;
 
-    /**
-     * @param usdnProtocol The address of the USDN protocol
-     * @param eip712Version The EIP712 domain version
-     */
-    constructor(IUsdnProtocol usdnProtocol, string memory eip712Version)
-        Ownable(msg.sender)
-        EIP712("Rebalancer", eip712Version)
-    {
+    /// @param usdnProtocol The address of the USDN protocol
+    constructor(IUsdnProtocol usdnProtocol) Ownable(msg.sender) EIP712("Rebalancer", "1") {
         _usdnProtocol = usdnProtocol;
         IERC20Metadata asset = usdnProtocol.getAsset();
         _asset = asset;

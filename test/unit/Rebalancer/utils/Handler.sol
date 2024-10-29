@@ -11,7 +11,7 @@ import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProt
  * @dev Wrapper to aid in testing the rebalancer
  */
 contract RebalancerHandler is Rebalancer, Test {
-    constructor(IUsdnProtocol usdnProtocol, string memory eip712Version) Rebalancer(usdnProtocol, eip712Version) { }
+    constructor(IUsdnProtocol usdnProtocol) Rebalancer(usdnProtocol) { }
 
     /// @dev Sets the position version to the current one + 1
     function incrementPositionVersion() external {

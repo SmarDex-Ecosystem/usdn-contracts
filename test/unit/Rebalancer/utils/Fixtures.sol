@@ -76,7 +76,7 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
         );
         usdnProtocol = IUsdnProtocol(proxy);
 
-        rebalancer = new RebalancerHandler(usdnProtocol, EIP712_VERSION);
+        rebalancer = new RebalancerHandler(usdnProtocol);
 
         usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));
