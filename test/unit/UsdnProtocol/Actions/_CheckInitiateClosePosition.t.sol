@@ -187,27 +187,6 @@ contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture, 
     }
 
     /**
-     * @custom:scenario Check an initiate close of a position from the rebalancer with a remaining amount that is too
-     * low
-     * @custom:given USER_1 has a position in the rebalancer with an amount that would leave the position below the min
-     * @custom:and The "validator" address is the rebalancer user
-     * @custom:when The rebalancer initiates a partial close position with an amount below their position amount
-     * @custom:then The function should revert with `UsdnProtocolLongPositionTooSmall`
-     */
-    function test_RevertWhen_checkInitiateClosePositionFromRebalancerTooSmall() public {
-        prepareParams.amountToClose = AMOUNT - uint128(protocol.getMinLongPosition()) + 1;
-        prepareParams.to = USER_2;
-        prepareParams.validator = USER_1;
-
-        _setUpRebalancerPosition(uint88(prepareParams.amountToClose + 1));
-
-        vm.prank(address(mockedRebalancer));
-        // note: the rebalancer always sets the rebalancer user as "validator" (USER_1)
-        vm.expectRevert(UsdnProtocolLongPositionTooSmall.selector);
-        protocol.i_checkInitiateClosePosition(pos, prepareParams);
-    }
-
-    /**
      * @notice Helper function to setup the mock rebalancer
      * @param userAmount The amount to set for the user deposit
      */

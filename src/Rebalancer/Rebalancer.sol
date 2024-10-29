@@ -511,11 +511,6 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
             + data.amountToCloseWithoutBonus * (data.protocolPosition.amount - data.currentPositionData.amount)
                 / data.currentPositionData.amount;
 
-        data.protocolRemainingAmount = data.protocolPosition.amount - data.amountToClose;
-        if (data.protocolRemainingAmount > 0 && data.protocolRemainingAmount < _usdnProtocol.getMinLongPosition()) {
-            revert RebalancerInvalidAmount();
-        }
-
         data.balanceOfAssetBefore = _asset.balanceOf(address(this));
         // slither-disable-next-line reentrancy-eth
         success_ = _usdnProtocol.initiateClosePosition{ value: msg.value }(
