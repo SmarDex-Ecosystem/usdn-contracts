@@ -232,7 +232,7 @@ contract TestUsdnProtocolActionsPrepareValidateOpenPositionData is UsdnProtocolB
 
         /* ------------------------ checking returned values ------------------------ */
         assertTrue(liquidated, "The position should have been liquidated");
-        assertFalse(data.isLiquidationPending, "There should be pending liquidations");
+        assertFalse(data.isLiquidationPending, "There should not be any pending liquidations");
         assertEq(data.lastPrice, protocol.getLastPrice(), "The last price attribute should have been set");
         assertFalse(data.pos.validated, "The corresponding position should not be validated");
         assertEq(

@@ -637,7 +637,7 @@ library UsdnProtocolActionsLongLibrary {
         // if lastPrice > liqPriceWithPenalty but startPrice <= liqPriceWithPenalty then the user dodged liquidations
         // we still can't let the position open, because we can't calculate the leverage with a start price that is
         // lower than a liquidation price, and we also can't liquidate the whole tick because other users could have
-        // opened positions in this tick after the user of the current position.
+        // opened positions in this tick after the user of the current position
         // our only choice is to liquidate this position only
         if (data_.startPrice <= liqPriceWithPenalty) {
             s._balanceLong -= data_.oldPosValue;
