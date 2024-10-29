@@ -498,12 +498,6 @@ interface IUsdnProtocolFallback {
     function getPendingBalanceVault() external view returns (int256);
 
     /**
-     * @notice Get the timestamp when the last USDN rebase check was performed
-     * @return The timestamp of the last USDN rebase check
-     */
-    function getLastRebaseCheck() external view returns (uint256);
-
-    /**
      * @notice Get the exponential moving average of the funding
      * @return The exponential moving average of the funding
      */

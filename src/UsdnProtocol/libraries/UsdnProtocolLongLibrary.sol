@@ -466,7 +466,6 @@ library UsdnProtocolLongLibrary {
         internal
         returns (bool rebased_, bytes memory callbackResult_)
     {
-        s._lastRebaseCheck = block.timestamp;
         IUsdn usdn = s._usdn;
         uint256 divisor = usdn.divisor();
         if (divisor <= s._usdnMinDivisor) {

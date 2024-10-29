@@ -3,11 +3,12 @@ pragma solidity 0.8.26;
 
 import { Vm } from "forge-std/Vm.sol";
 
-import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
+import { DEPLOYER } from "../../../utils/Constants.sol";
 import { RebaseHandler } from "../../USDN/utils/RebaseHandler.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { IUsdnEvents } from "../../../../src/interfaces/Usdn/IUsdnEvents.sol";
+import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The _usdnRebase internal function of the UsdnProtocolVault contract.
@@ -51,7 +52,7 @@ contract TestUsdnProtocolUsdnRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         usdnPrice = protocol.usdnPrice(newPrice);
         assertGt(usdnPrice, 1 ether, "new USDN price compared to initial price");
 
-        (bool rebased, bytes memory result) = protocol.i_usdnRebase(newPrice, true);
+        (bool rebased, bytes memory result) = protocol.i_usdnRebase(newPrice);
         assertTrue(rebased, "rebased");
         (uint256 oldDivisor, uint256 newDivisor) = abi.decode(result, (uint256, uint256));
         assertLt(newDivisor, oldDivisor, "callback worked");
@@ -82,7 +83,7 @@ contract TestUsdnProtocolUsdnRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         usdnPrice = protocol.usdnPrice(newPrice);
         assertGt(usdnPrice, 1 ether, "new USDN price compared to initial price");
 
-        (bool rebased, bytes memory result) = protocol.i_usdnRebase(newPrice, true);
+        (bool rebased, bytes memory result) = protocol.i_usdnRebase(newPrice);
         assertFalse(rebased, "rebased");
         assertEq(result, "", "callback result");
 
@@ -102,7 +103,7 @@ contract TestUsdnProtocolUsdnRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         vm.stopPrank();
         usdn.rebase(usdn.MIN_DIVISOR());
 
-        (bool rebased,) = protocol.i_usdnRebase(params.initialPrice, true);
+        (bool rebased,) = protocol.i_usdnRebase(params.initialPrice);
         assertFalse(rebased, "no rebase");
     }
 
@@ -114,9 +115,7 @@ contract TestUsdnProtocolUsdnRebase is UsdnProtocolBaseFixture, IUsdnEvents {
      * @custom:then The USDN token is not rebased
      */
     function test_rebasePriceLowerThanThreshold() public {
-        // initialize _lastRebaseCheck
-        protocol.i_usdnRebase(params.initialPrice, true);
-        assertGt(protocol.getLastRebaseCheck(), 0, "last rebase check");
+        protocol.i_usdnRebase(params.initialPrice);
         uint256 usdnPrice = protocol.usdnPrice(params.initialPrice);
         assertEq(usdnPrice, 1 ether, "initial price");
 
@@ -127,7 +126,7 @@ contract TestUsdnProtocolUsdnRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         assertLt(usdnPrice, protocol.getUsdnRebaseThreshold(), "new USDN price compared to threshold");
 
         // since the price of USDN didn't reach the threshold, we do not rebase
-        (bool rebased,) = protocol.i_usdnRebase(newPrice, true);
+        (bool rebased,) = protocol.i_usdnRebase(newPrice);
         assertFalse(rebased, "no rebase");
     }
 }

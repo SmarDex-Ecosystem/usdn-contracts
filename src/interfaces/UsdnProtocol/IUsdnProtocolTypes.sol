@@ -617,7 +617,6 @@ interface IUsdnProtocolTypes {
      * @param _pendingActionsQueue The queue of pending actions
      * @param _balanceVault  The balance of deposits (with asset decimals)
      * @param _pendingBalanceVault The unreflected balance change due to pending vault actions (with asset decimals)
-     * @param _lastRebaseCheck The timestamp when the last USDN rebase check was performed
      * @param _EMA The exponential moving average of the funding (0.0003 at initialization)
      * @param _balanceLong The balance of long positions (with asset decimals)
      * @param _totalExpo The total exposure of the long positions (with asset decimals)
@@ -684,7 +683,6 @@ interface IUsdnProtocolTypes {
         // Vault
         uint256 _balanceVault;
         int256 _pendingBalanceVault;
-        uint256 _lastRebaseCheck;
         // Long positions
         int256 _EMA;
         uint256 _balanceLong;

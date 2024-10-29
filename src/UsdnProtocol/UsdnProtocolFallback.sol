@@ -371,11 +371,6 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getLastRebaseCheck() external view returns (uint256) {
-        return s._lastRebaseCheck;
-    }
-
-    /// @inheritdoc IUsdnProtocolFallback
     function getEMA() external view returns (int256) {
         return s._EMA;
     }

@@ -209,7 +209,6 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
         sV1._pendingProtocolFee = protocol.getPendingProtocolFee();
         sV1._balanceVault = protocol.getBalanceVault();
         sV1._pendingBalanceVault = protocol.getPendingBalanceVault();
-        sV1._lastRebaseCheck = protocol.getLastRebaseCheck();
         sV1._EMA = protocol.getEMA();
         sV1._balanceLong = protocol.getBalanceLong();
         sV1._totalExpo = protocol.getTotalExpo();
@@ -261,7 +260,6 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
         assertEq(sV1._pendingProtocolFee, protocol.getPendingProtocolFee());
         assertEq(sV1._balanceVault, protocol.getBalanceVault());
         assertEq(sV1._pendingBalanceVault, protocol.getPendingBalanceVault());
-        assertEq(sV1._lastRebaseCheck, protocol.getLastRebaseCheck());
         assertEq(sV1._EMA, protocol.getEMA());
         assertEq(sV1._balanceLong, protocol.getBalanceLong());
         assertEq(sV1._totalExpo, protocol.getTotalExpo());
