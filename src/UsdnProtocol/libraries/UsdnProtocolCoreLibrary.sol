@@ -400,12 +400,14 @@ library UsdnProtocolCoreLibrary {
                     Types.TickData storage tickData = s._tickData[tHash];
                     --s._totalLongPositions;
                     tickData.totalPos -= 1;
+                    uint256 unadjustedTickPrice =
+                        TickMath.getPriceAtTick(Utils.calcTickWithoutPenalty(open.tick, tickData.liquidationPenalty));
                     if (tickData.totalPos == 0) {
                         // we removed the last position in the tick
                         s._tickBitmap.unset(Utils._calcBitmapIndexFromTick(s, open.tick));
+                        // reset tick penalty
+                        tickData.liquidationPenalty = 0;
                     }
-                    uint256 unadjustedTickPrice =
-                        TickMath.getPriceAtTick(Utils.calcTickWithoutPenalty(open.tick, tickData.liquidationPenalty));
                     s._totalExpo -= pos.totalExpo;
                     tickData.totalExpo -= pos.totalExpo;
                     s._liqMultiplierAccumulator =
