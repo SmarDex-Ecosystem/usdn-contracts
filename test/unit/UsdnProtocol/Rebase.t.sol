@@ -20,7 +20,6 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         super._setUp(params);
 
         vm.prank(ADMIN);
-        protocol.setUsdnRebaseInterval(12 hours);
 
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
         usdn.approve(address(protocol), type(uint256).max);
@@ -115,9 +114,6 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         // initial price is $1
         assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
 
-        // we wait long enough to check for a rebase again
-        skip(protocol.getUsdnRebaseInterval() + 1);
-
         uint128 newPrice = params.initialPrice - 100 ether;
         assertEq(protocol.getLastRebaseCheck(), 0, "rebase never checked");
 
@@ -147,9 +143,6 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         // initial price is $1
         assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
 
-        // we wait long enough to check for a rebase again
-        skip(protocol.getUsdnRebaseInterval() + 1);
-
         uint128 newPrice = params.initialPrice - 100 ether;
 
         // rebase
@@ -171,9 +164,6 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
 
         uint128 newPrice = params.initialPrice - 100 ether;
-
-        // we wait long enough to check for a rebase again
-        skip(protocol.getUsdnRebaseInterval() + 1);
 
         // rebase
         vm.expectEmit(false, false, false, false);
@@ -203,9 +193,6 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
 
         uint128 newPrice = params.initialPrice - 100 ether;
 
-        // we wait long enough to check for a rebase again
-        skip(protocol.getUsdnRebaseInterval() + 1);
-
         // rebase
         vm.expectEmit(false, false, false, false);
         emit Rebase(0, 0);
@@ -221,9 +208,6 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
     function test_usdnRebaseWhenInitiateOpenPosition() public {
         // initial price is $1
         assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
-
-        // we wait long enough to check for a rebase again
-        skip(protocol.getUsdnRebaseInterval() + 1);
 
         uint128 newPrice = params.initialPrice - 100 ether;
         assertEq(protocol.getLastRebaseCheck(), 0, "rebase never checked");
@@ -266,9 +250,6 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
 
         uint128 newPrice = params.initialPrice - 100 ether;
 
-        // we wait long enough to check for a rebase again
-        skip(protocol.getUsdnRebaseInterval() + 1);
-
         // rebase
         vm.expectEmit(false, false, false, false);
         emit Rebase(0, 0);
@@ -296,9 +277,6 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
 
         uint128 newPrice = params.initialPrice - 100 ether;
-
-        // we wait long enough to check for a rebase again
-        skip(protocol.getUsdnRebaseInterval() + 1);
 
         // rebase
         vm.expectEmit(false, false, false, false);
@@ -337,9 +315,6 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
 
         uint128 newPrice = params.initialPrice - 100 ether;
-
-        // we wait long enough to check for a rebase again
-        skip(protocol.getUsdnRebaseInterval() + 1);
 
         // rebase
         vm.expectEmit(false, false, false, false);

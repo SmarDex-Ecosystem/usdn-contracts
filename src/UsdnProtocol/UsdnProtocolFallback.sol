@@ -332,11 +332,6 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getUsdnRebaseInterval() external view returns (uint256) {
-        return s._usdnRebaseInterval;
-    }
-
-    /// @inheritdoc IUsdnProtocolFallback
     function getMinLongPosition() external view returns (uint256) {
         return s._minLongPosition;
     }
@@ -794,12 +789,6 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
         }
         s._usdnRebaseThreshold = newThreshold;
         emit IUsdnProtocolEvents.UsdnRebaseThresholdUpdated(newThreshold);
-    }
-
-    /// @inheritdoc IUsdnProtocolFallback
-    function setUsdnRebaseInterval(uint256 newInterval) external onlyRole(SET_USDN_PARAMS_ROLE) {
-        s._usdnRebaseInterval = newInterval;
-        emit IUsdnProtocolEvents.UsdnRebaseIntervalUpdated(newInterval);
     }
 
     /* -------------------------------------------------------------------------- */

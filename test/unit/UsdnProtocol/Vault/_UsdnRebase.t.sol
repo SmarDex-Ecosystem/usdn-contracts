@@ -28,9 +28,6 @@ contract TestUsdnProtocolUsdnRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         vm.prank(DEPLOYER);
         usdn.setRebaseHandler(rebaseHandler);
 
-        vm.prank(ADMIN);
-        protocol.setUsdnRebaseInterval(12 hours);
-
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
     }
 
@@ -94,34 +91,6 @@ contract TestUsdnProtocolUsdnRebase is UsdnProtocolBaseFixture, IUsdnEvents {
     }
 
     /**
-     * @custom:scenario USDN rebase before the interval has passed
-     * @custom:given An initial USDN price of $1 and a recent rebase check
-     * @custom:when The price of the asset is decreased by $100 but we wait less than the rebase interval
-     * @custom:then The USDN token is not rebased
-     */
-    function test_rebaseCheckInterval() public {
-        skip(1 hours);
-
-        // initialize _lastRebaseCheck
-        protocol.i_usdnRebase(params.initialPrice, true);
-        assertGt(protocol.getLastRebaseCheck(), 0, "last rebase check");
-        uint256 usdnPrice = protocol.usdnPrice(params.initialPrice);
-        assertEq(usdnPrice, 1 ether, "initial price");
-
-        // this new price would normally trigger a rebase
-        uint128 newPrice = params.initialPrice - 100 ether;
-
-        skip(protocol.getUsdnRebaseInterval() - 1);
-        protocol.updateBalances(newPrice);
-
-        usdnPrice = protocol.usdnPrice(newPrice);
-        assertGt(usdnPrice, 1 ether, "new USDN price compared to initial price");
-        // since we checked more recently than `_usdnRebaseInterval`, we do not rebase
-        (bool rebased,) = protocol.i_usdnRebase(newPrice, false);
-        assertFalse(rebased, "no rebase");
-    }
-
-    /**
      * @custom:scenario USDN rebase when the divisor is already MIN_DIVISOR
      * @custom:given A USDN token already set to have its divisor to MIN_DIVISOR
      * @custom:when The rebase function is called
@@ -150,11 +119,6 @@ contract TestUsdnProtocolUsdnRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         assertGt(protocol.getLastRebaseCheck(), 0, "last rebase check");
         uint256 usdnPrice = protocol.usdnPrice(params.initialPrice);
         assertEq(usdnPrice, 1 ether, "initial price");
-
-        // we wait long enough to check for a rebase again
-        skip(protocol.getUsdnRebaseInterval() + 1);
-
-        assertGt(block.timestamp, protocol.getLastRebaseCheck() + protocol.getUsdnRebaseInterval(), "time elapsed");
 
         uint128 newPrice = params.initialPrice - 15 ether;
         protocol.updateBalances(newPrice);

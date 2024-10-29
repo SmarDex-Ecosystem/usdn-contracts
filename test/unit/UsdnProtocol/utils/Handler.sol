@@ -460,8 +460,8 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         Core._updateEMA(s, fundingPerDay, secondsElapsed);
     }
 
-    function i_usdnRebase(uint128 assetPrice, bool ignoreInterval) external returns (bool, bytes memory) {
-        return Long._usdnRebase(s, assetPrice, ignoreInterval);
+    function i_usdnRebase(uint128 assetPrice) external returns (bool, bytes memory) {
+        return Long._usdnRebase(s, assetPrice);
     }
 
     function i_calcUsdnPrice(uint256 vaultBalance, uint128 assetPrice, uint256 usdnTotalSupply, uint8 assetDecimals)

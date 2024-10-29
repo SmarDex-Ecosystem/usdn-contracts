@@ -606,8 +606,6 @@ interface IUsdnProtocolTypes {
      * @param _securityDepositValue The deposit required for a new position
      * @param _targetUsdnPrice The nominal (target) price of USDN (with _priceFeedDecimals)
      * @param _usdnRebaseThreshold The USDN price threshold to trigger a rebase (with _priceFeedDecimals)
-     * @param _usdnRebaseInterval The interval between two automatic rebase checks. Disabled by default
-     * @dev A rebase can be forced (if the `_usdnRebaseThreshold` is exceeded) by calling the `liquidate` function
      * @param _minLongPosition The minimum long position size (with `_assetDecimals`)
      * @param _lastFundingPerDay The funding rate calculated at the last update timestamp
      * @param _lastPrice The price of the asset during the last balances update (with price feed decimals)
@@ -674,7 +672,6 @@ interface IUsdnProtocolTypes {
         uint64 _securityDepositValue;
         uint128 _targetUsdnPrice;
         uint128 _usdnRebaseThreshold;
-        uint256 _usdnRebaseInterval;
         uint256 _minLongPosition;
         // State
         int256 _lastFundingPerDay;

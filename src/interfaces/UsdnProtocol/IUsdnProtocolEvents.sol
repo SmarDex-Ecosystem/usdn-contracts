@@ -325,12 +325,6 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     event UsdnRebaseThresholdUpdated(uint128 threshold);
 
     /**
-     * @notice Emitted when the USDN rebase interval is updated
-     * @param interval The new interval
-     */
-    event UsdnRebaseIntervalUpdated(uint256 interval);
-
-    /**
      * @notice Emitted when imbalance limits are updated
      * @param newOpenLimitBps The new open limit
      * @param newDepositLimitBps The new deposit limit

@@ -202,7 +202,6 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
         sV1._feeCollector = protocol.getFeeCollector();
         sV1._targetUsdnPrice = protocol.getTargetUsdnPrice();
         sV1._usdnRebaseThreshold = protocol.getUsdnRebaseThreshold();
-        sV1._usdnRebaseInterval = protocol.getUsdnRebaseInterval();
         sV1._minLongPosition = protocol.getMinLongPosition();
         sV1._lastFundingPerDay = protocol.getLastFundingPerDay();
         sV1._lastPrice = protocol.getLastPrice();
@@ -255,7 +254,6 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
         assertEq(sV1._feeCollector, protocol.getFeeCollector());
         assertEq(sV1._targetUsdnPrice, protocol.getTargetUsdnPrice());
         assertEq(sV1._usdnRebaseThreshold, protocol.getUsdnRebaseThreshold());
-        assertEq(sV1._usdnRebaseInterval, protocol.getUsdnRebaseInterval());
         assertEq(sV1._minLongPosition, protocol.getMinLongPosition());
         assertEq(sV1._lastFundingPerDay, protocol.getLastFundingPerDay());
         assertEq(sV1._lastPrice, protocol.getLastPrice());

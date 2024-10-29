@@ -555,7 +555,6 @@ library UsdnProtocolVaultLibrary {
             currentPrice.neutralPrice,
             currentPrice.timestamp,
             s._liquidationIteration,
-            false,
             Types.ProtocolAction.InitiateDeposit,
             currentPriceData
         );
@@ -757,7 +756,6 @@ library UsdnProtocolVaultLibrary {
                 currentPrice.neutralPrice,
                 currentPrice.timestamp,
                 s._liquidationIteration,
-                false,
                 Types.ProtocolAction.ValidateDeposit,
                 priceData
             );
@@ -834,7 +832,6 @@ library UsdnProtocolVaultLibrary {
             currentPrice.neutralPrice,
             currentPrice.timestamp,
             s._liquidationIteration,
-            false,
             Types.ProtocolAction.InitiateWithdrawal,
             currentPriceData
         );
@@ -1011,7 +1008,6 @@ library UsdnProtocolVaultLibrary {
             currentPrice.neutralPrice,
             currentPrice.timestamp,
             s._liquidationIteration,
-            false,
             Types.ProtocolAction.ValidateWithdrawal,
             priceData
         );

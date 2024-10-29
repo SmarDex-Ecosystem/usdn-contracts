@@ -584,7 +584,6 @@ library UsdnProtocolActionsLongLibrary {
             currentPrice.neutralPrice,
             currentPrice.timestamp,
             s._liquidationIteration,
-            false,
             Types.ProtocolAction.ValidateOpenPosition,
             priceData
         );
@@ -806,7 +805,6 @@ library UsdnProtocolActionsLongLibrary {
             currentPrice.neutralPrice,
             currentPrice.timestamp,
             s._liquidationIteration,
-            false,
             Types.ProtocolAction.ValidateClosePosition,
             priceData
         );

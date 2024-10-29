@@ -451,12 +451,6 @@ interface IUsdnProtocolFallback {
     function getUsdnRebaseThreshold() external view returns (uint128);
 
     /**
-     * @notice Get the interval between two automatic rebase checks
-     * @return The interval between 2 rebase checks (in seconds)
-     */
-    function getUsdnRebaseInterval() external view returns (uint256);
-
-    /**
      * @notice Get the minimum collateral amount when opening a long position
      * @return The minimum amount (with `_assetDecimals`)
      */
@@ -770,14 +764,6 @@ interface IUsdnProtocolFallback {
      * This value cannot be smaller than `_targetUsdnPrice`
      */
     function setUsdnRebaseThreshold(uint128 newThreshold) external;
-
-    /**
-     * @notice Set the USDN rebase interval
-     * @param newInterval The new interval duration
-     * @dev When the duration since the last rebase check exceeds this value, a rebase check will be performed
-     * When calling `liquidate`, this limit is ignored and the check is always performed
-     */
-    function setUsdnRebaseInterval(uint256 newInterval) external;
 
     /**
      * @notice Pauses related USDN protocol functions
