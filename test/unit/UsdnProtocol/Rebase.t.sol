@@ -9,7 +9,6 @@ import { IUsdnEvents } from "../../../src/interfaces/Usdn/IUsdnEvents.sol";
 /**
  * @custom:feature Test the rebasing of the USDN token depending on its price
  * @custom:background Given a protocol instance that was initialized with more expo in the long side and rebase enabled
- * @custom:and A USDN rebase interval of 12 hours
  */
 contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
     function setUp() public {
@@ -86,8 +85,6 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
             expectedVaultBalance, newPrice, protocol.getTargetUsdnPrice(), protocol.getAssetDecimals()
         );
         uint256 expectedDivisor = usdn.totalSupply() * usdn.divisor() / expectedTotalSupply;
-
-        // we do not need to wait for the rebase interval to pass because `liquidate` overrides the check
 
         // rebase (no liquidation happens)
         vm.expectEmit();

@@ -8,12 +8,10 @@ import { RebaseHandler } from "../../USDN/utils/RebaseHandler.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { IUsdnEvents } from "../../../../src/interfaces/Usdn/IUsdnEvents.sol";
-import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The _usdnRebase internal function of the UsdnProtocolVault contract.
  * @custom:background Given a protocol instance that was initialized with more expo in the long side and rebase enabled
- * @custom:and A USDN rebase interval of 12 hours
  */
 contract TestUsdnProtocolUsdnRebase is UsdnProtocolBaseFixture, IUsdnEvents {
     RebaseHandler rebaseHandler;
