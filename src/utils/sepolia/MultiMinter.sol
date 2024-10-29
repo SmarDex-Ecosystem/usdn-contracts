@@ -4,8 +4,8 @@ pragma solidity 0.8.26;
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 
-import { StETH } from "../StETH.sol";
 import { Sdex } from "./tokens/Sdex.sol";
+import { StETH } from "./tokens/StETH.sol";
 import { WstETH } from "./tokens/WstETH.sol";
 
 interface IMintable {
@@ -75,6 +75,7 @@ contract MultiMinter is IMultiMinter, Ownable2Step {
         if (amountWSTETH != 0) {
             uint256 stethAmount = WSTETH.getStETHByWstETH(amountWSTETH);
             STETH.mint(address(this), stethAmount);
+            STETH.approve(address(WSTETH), stethAmount);
             WSTETH.wrap(stethAmount);
             WSTETH.transfer(to, WSTETH.balanceOf(address(this)));
         }
@@ -106,6 +107,14 @@ contract MultiMinter is IMultiMinter, Ownable2Step {
     function sweep(address to) external onlyOwner {
         (bool success,) = to.call{ value: address(this).balance }("");
         require(success, "Error while sending Ether");
+    }
+
+    function sweepStETH(address payable to) external onlyOwner {
+        STETH.sweep(to);
+    }
+
+    function sweepWstETH(address payable to) external onlyOwner {
+        WSTETH.sweep(to);
     }
 
     /**

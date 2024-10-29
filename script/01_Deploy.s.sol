@@ -23,8 +23,8 @@ import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { IWstETH } from "../src/interfaces/IWstETH.sol";
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { StETH as StETHSepolia } from "../src/utils/StETH.sol";
 import { Sdex as SdexSepolia } from "../src/utils/sepolia/tokens/Sdex.sol";
+import { StETH as StETHSepolia } from "../src/utils/sepolia/tokens/StETH.sol";
 import { WstETH as WstETHSepolia } from "../src/utils/sepolia/tokens/WstETH.sol";
 
 contract Deploy is Script {

@@ -8,7 +8,7 @@ import { ERC20Burnable } from "@openzeppelin/contracts/token/ERC20/extensions/ER
 import { ERC20Permit, IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
-import { IStETH } from "../interfaces/IStETH.sol";
+import { IStETH } from "../../../interfaces/IStETH.sol";
 
 contract StETH is IStETH, ERC20Burnable, ERC20Permit, Ownable2Step {
     /// @notice The name of the token
@@ -43,6 +43,12 @@ contract StETH is IStETH, ERC20Burnable, ERC20Permit, Ownable2Step {
         if (msg.value != 0) {
             _mint(account, msg.value);
         }
+    }
+
+    function withdraw(uint256 amount) external {
+        _burn(msg.sender, amount);
+        (bool success,) = msg.sender.call{ value: amount }("");
+        require(success, "Transfer failed");
     }
 
     /// @inheritdoc IStETH
