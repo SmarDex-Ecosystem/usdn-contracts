@@ -4,8 +4,8 @@ pragma solidity 0.8.26;
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 
-import { StETH } from "../StETH.sol";
 import { Sdex } from "./tokens/Sdex.sol";
+import { StETH } from "./tokens/StETH.sol";
 import { WstETH } from "./tokens/WstETH.sol";
 
 interface IMintable {

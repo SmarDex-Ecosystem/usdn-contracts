@@ -3,9 +3,9 @@ pragma solidity 0.8.26;
 
 import { Script } from "forge-std/Script.sol";
 
-import { StETH as StETHSepolia } from "../src/utils/StETH.sol";
 import { MultiMinter } from "../src/utils/sepolia/MultiMinter.sol";
 import { Sdex as SdexSepolia } from "../src/utils/sepolia/tokens/Sdex.sol";
+import { StETH as StETHSepolia } from "../src/utils/sepolia/tokens/StETH.sol";
 import { WstETH as WstETHSepolia } from "../src/utils/sepolia/tokens/WstETH.sol";
 
 /**

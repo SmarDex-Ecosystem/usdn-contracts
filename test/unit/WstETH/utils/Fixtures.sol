@@ -3,20 +3,19 @@ pragma solidity 0.8.26;
 
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 
-import { IStETH } from "../../../../src/interfaces/IStETH.sol";
-import { MockStETH } from "../../../../src/utils/MockStETH.sol";
-import { MockWstETH } from "../../../../src/utils/MockWstETH.sol";
+import { StETH } from "../../../../src/utils/sepolia/tokens/StETH.sol";
+import { WstETH } from "../../../../src/utils/sepolia/tokens/WstETH.sol";
 
 /**
  * @title WstEthFixture
- * @dev Utils for testing MockStETh.sol
+ * @dev Utils for testing StETh.sol
  */
 contract WstEthFixture is BaseFixture {
-    MockStETH public stETH;
-    MockWstETH public wstETH;
+    StETH public stETH;
+    WstETH public wstETH;
 
     function setUp() public virtual {
-        stETH = new MockStETH();
-        wstETH = new MockWstETH(IStETH(address(stETH)));
+        stETH = new StETH();
+        wstETH = new WstETH(stETH);
     }
 }

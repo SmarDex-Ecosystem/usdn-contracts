@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { StETH } from "../../StETH.sol";
+import { StETH } from "./StETH.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -65,39 +65,30 @@ contract WstETH is ERC20Permit, Ownable2Step {
 
     /**
      * @notice Get amount of wstETH for a given amount of stETH
-     * @param _stETHAmount amount of stETH
+     * @param stETHAmount amount of stETH
      * @return Amount of wstETH for a given stETH amount
      */
-    function getWstETHByStETH(uint256 _stETHAmount) public view returns (uint256) {
-        return _stETHAmount * 1 ether / _stEthPerToken;
+    function getWstETHByStETH(uint256 stETHAmount) public view returns (uint256) {
+        return stETHAmount * 1 ether / _stEthPerToken;
     }
 
     /**
      * @notice Get amount of stETH for a given amount of wstETH
-     * @param _wstETHAmount amount of wstETH
+     * @param wstETHAmount amount of wstETH
      * @return Amount of stETH for a given wstETH amount
      */
-    function getStETHByWstETH(uint256 _wstETHAmount) public view returns (uint256) {
-        return _wstETHAmount * _stEthPerToken / 1 ether;
+    function getStETHByWstETH(uint256 wstETHAmount) public view returns (uint256) {
+        return wstETHAmount * _stEthPerToken / 1 ether;
     }
 
-    /**
-     * @notice Exchanges wstETH to ETH
-     * @param _wstETHAmount amount of wstETH to unwrap in exchange for ETH
-     * @dev LIDO does not allow an instant withdrawal in ETH, this is for test purposes
-     * Requirements:
-     *  - `_wstETHAmount` must be non-zero
-     *  - `address(this).balance` must be superior or equal to getStETHByWstETH(_wstETHAmount)
-     *  - msg.sender must have at least `_wstETHAmount` wstETH.
-     * @return Amount of ETH user receives after unwrap
-     */
-    function withdraw(uint256 _wstETHAmount) external returns (uint256) {
-        require(_wstETHAmount > 0, "wstETH: zero amount unwrap not allowed");
+    function withdraw(uint256 wstETHAmount) external returns (uint256) {
+        require(wstETHAmount > 0, "wstETH: zero amount unwrap not allowed");
 
-        uint256 ethAmount = getStETHByWstETH(_wstETHAmount);
+        uint256 ethAmount = getStETHByWstETH(wstETHAmount);
+        _stETH.withdraw(ethAmount);
         require(address(this).balance >= ethAmount, "wstETH: not enough balance");
 
-        _burn(msg.sender, _wstETHAmount);
+        _burn(msg.sender, wstETHAmount);
         (bool success,) = msg.sender.call{ value: ethAmount }("");
         require(success, "wstETH: ETH transfer failed");
 
@@ -105,9 +96,17 @@ contract WstETH is ERC20Permit, Ownable2Step {
     }
 
     function wrap(uint256 stEthAmount) public returns (uint256 wstEthAmount_) {
+        require(stEthAmount > 0, "wstETH: can't wrap zero stETH");
         wstEthAmount_ = getWstETHByStETH(stEthAmount);
-        _stETH.transferFrom(msg.sender, address(this), stEthAmount);
         _mint(msg.sender, wstEthAmount_);
+        _stETH.transferFrom(msg.sender, address(this), stEthAmount);
+    }
+
+    function unwrap(uint256 wstETHAmount) external returns (uint256 stETHAmount_) {
+        require(wstETHAmount > 0, "wstETH: zero amount unwrap not allowed");
+        stETHAmount_ = getStETHByWstETH(wstETHAmount);
+        _burn(msg.sender, wstETHAmount);
+        _stETH.transfer(msg.sender, stETHAmount_);
     }
 
     /**
@@ -120,6 +119,9 @@ contract WstETH is ERC20Permit, Ownable2Step {
     }
 
     receive() external payable {
-        _mint(msg.sender, getWstETHByStETH(msg.value));
+        if (msg.sender != address(_stETH)) {
+            _stETH.submit{ value: msg.value }(address(this));
+            _mint(msg.sender, getWstETHByStETH(msg.value));
+        }
     }
 }

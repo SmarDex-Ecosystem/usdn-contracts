@@ -3,13 +3,16 @@ pragma solidity 0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 
+import { StETH } from "../../../../../src/utils/sepolia/tokens/StETH.sol";
 import { WstETH } from "../../../../../src/utils/sepolia/tokens/WstETH.sol";
 
 contract TestSepoliaWstETH is Test {
     WstETH internal wstETH;
+    StETH internal stETH;
 
     function setUp() public {
-        wstETH = new WstETH();
+        stETH = new StETH();
+        wstETH = new WstETH(stETH);
         wstETH.setStEthPerToken(1.2 ether);
     }
 
@@ -52,19 +55,6 @@ contract TestSepoliaWstETH is Test {
 
         assertEq(wstETH.balanceOf(address(this)), 0);
         assertApproxEqAbs(balanceBefore + 2 ether, address(this).balance, 1);
-    }
-
-    function test_sweep() public {
-        uint256 ethAmount = 2 ether;
-        (bool success,) = address(wstETH).call{ value: ethAmount }("");
-        assertTrue(success);
-
-        uint256 balanceBefore = address(this).balance;
-        wstETH.sweep();
-
-        assertEq(address(wstETH).balance, 0);
-        assertGt(wstETH.balanceOf(address(this)), 0);
-        assertEq(balanceBefore + 2 ether, address(this).balance);
     }
 
     receive() external payable { }
