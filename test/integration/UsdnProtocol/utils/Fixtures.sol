@@ -252,7 +252,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         skip(oracleMiddleware.getValidationDelay() + 1);
     }
 
-    function _setUpImbalanced(address user, uint128 additionalLongAmount)
+    function _setUpImbalanced(address payable user, uint128 additionalLongAmount)
         internal
         returns (
             int24 tickSpacing_,
@@ -301,28 +301,23 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         data.amount = 3 ether;
 
         // deposit assets in the rebalancer
-        rebalancer.initiateDepositAssets(data.amount, payable(user));
+        rebalancer.initiateDepositAssets(data.amount, user);
         skip(rebalancer.getTimeLimits().validationDelay);
         rebalancer.validateDepositAssets();
         amountInRebalancer_ += data.amount;
 
         // deposit assets in the protocol to imbalance it
         protocol.initiateDeposit{ value: data.messageValue }(
-            30 ether, DISABLE_SHARES_OUT_MIN, user, payable(user), type(uint256).max, "", EMPTY_PREVIOUS_DATA
+            30 ether, DISABLE_SHARES_OUT_MIN, user, user, type(uint256).max, "", EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
 
-        {
-            data.wstEthPrice = 2000 ether;
-            data.ethPrice = uint128(wstETH.getWstETHByStETH(data.wstEthPrice));
-            mockPyth.setPrice(int64(uint64(data.ethPrice / 1e10)));
-            mockPyth.setLastPublishTime(block.timestamp - 1);
-        }
+        _setOraclePrices(2000 ether);
 
         uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.ValidateDeposit);
 
-        protocol.validateDeposit{ value: oracleFee }(payable(user), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit{ value: oracleFee }(user, MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
 
         // open a position to liquidate and trigger the rebalancer
         (, posToLiquidate_) = protocol.initiateOpenPosition{ value: data.messageValue }(
@@ -331,7 +326,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             type(uint128).max,
             protocol.getMaxLeverage(),
             user,
-            payable(user),
+            user,
             type(uint256).max,
             "",
             EMPTY_PREVIOUS_DATA
@@ -342,7 +337,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         mockPyth.setLastPublishTime(block.timestamp);
 
         oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.ValidateOpenPosition);
-        protocol.validateOpenPosition{ value: oracleFee }(payable(user), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition{ value: oracleFee }(user, MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
 
         tickToLiquidateData_ = protocol.getTickData(posToLiquidate_.tick);
         vm.stopPrank();

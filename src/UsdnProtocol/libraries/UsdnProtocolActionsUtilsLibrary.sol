@@ -454,6 +454,7 @@ library UsdnProtocolActionsUtilsLibrary {
         address positionOwner,
         Types.PrepareInitiateClosePositionParams calldata params
     ) internal {
+        uint256 nonce = s._nonce[positionOwner];
         bytes32 digest = MessageHashUtils.toTypedDataHash(
             params.domainSeparatorV4,
             keccak256(
@@ -466,7 +467,7 @@ library UsdnProtocolActionsUtilsLibrary {
                     params.deadline,
                     positionOwner,
                     msg.sender,
-                    s._nonce[positionOwner]
+                    nonce
                 )
             )
         );
@@ -475,6 +476,6 @@ library UsdnProtocolActionsUtilsLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidDelegationSignature();
         }
 
-        s._nonce[positionOwner] += 1;
+        s._nonce[positionOwner] = nonce + 1;
     }
 }

@@ -2,7 +2,6 @@
 pragma solidity 0.8.26;
 
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
@@ -34,6 +33,8 @@ contract TestRebalancerInitiateClosePosition is
     Position internal protocolPosition;
     uint128 internal wstEthPrice;
     uint128 internal securityDeposit;
+    uint256 internal constant USER_PK = 1;
+    address user = vm.addr(USER_PK);
 
     struct InitiateClosePositionDelegation {
         uint88 amount;
@@ -46,7 +47,25 @@ contract TestRebalancerInitiateClosePosition is
     }
 
     function setUp() public {
-        _depositAndTriggerRebalancer(address(this));
+        (, amountInRebalancer,,) = _setUpImbalanced(payable(user), 15 ether);
+        uint256 maxLeverage = protocol.getMaxLeverage();
+        vm.prank(DEPLOYER);
+        rebalancer.setPositionMaxLeverage(maxLeverage);
+        skip(5 minutes);
+
+        wstEthPrice = _setOraclePrices(1490 ether);
+
+        uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
+        protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA);
+
+        version = rebalancer.getPositionVersion();
+        previousPositionData = rebalancer.getPositionData(version);
+        prevPosId = PositionId({
+            tick: previousPositionData.tick,
+            tickVersion: previousPositionData.tickVersion,
+            index: previousPositionData.index
+        });
+        (protocolPosition,) = protocol.getLongPosition(prevPosId);
         securityDeposit = protocol.getSecurityDepositValue();
     }
 
@@ -63,6 +82,7 @@ contract TestRebalancerInitiateClosePosition is
      */
     function test_rebalancerNoWithdrawalAfterRebalancerTrigger() public {
         vm.expectPartialRevert(UsdnProtocolImbalanceLimitReached.selector);
+        vm.prank(user);
         rebalancer.initiateClosePosition{ value: securityDeposit }(
             amountInRebalancer, address(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA, ""
         );
@@ -87,8 +107,7 @@ contract TestRebalancerInitiateClosePosition is
         uint256 amountToCloseWithoutBonus = FixedPointMathLib.fullMulDiv(
             amount,
             previousPositionData.entryAccMultiplier,
-            rebalancer.getPositionData(rebalancer.getUserDepositData(address(this)).entryPositionVersion)
-                .entryAccMultiplier
+            rebalancer.getPositionData(rebalancer.getUserDepositData(user).entryPositionVersion).entryAccMultiplier
         );
 
         uint256 amountToClose = amountToCloseWithoutBonus
@@ -96,7 +115,8 @@ contract TestRebalancerInitiateClosePosition is
                 / previousPositionData.amount;
 
         vm.expectEmit();
-        emit ClosePositionInitiated(address(this), amount, amountToClose, amountInRebalancer - amount);
+        emit ClosePositionInitiated(user, amount, amountToClose, amountInRebalancer - amount);
+        vm.prank(user);
         (bool success) = rebalancer.initiateClosePosition{ value: securityDeposit }(
             amount, address(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA, ""
         );
@@ -105,7 +125,7 @@ contract TestRebalancerInitiateClosePosition is
 
         amountInRebalancer -= amount;
 
-        UserDeposit memory depositData = rebalancer.getUserDepositData(address(this));
+        UserDeposit memory depositData = rebalancer.getUserDepositData(user);
 
         assertEq(
             depositData.amount, amountInRebalancer, "The user's deposited amount in the rebalancer should be updated"
@@ -124,7 +144,7 @@ contract TestRebalancerInitiateClosePosition is
         );
 
         assertEq(
-            uint8(protocol.getUserPendingAction(address(this)).action),
+            uint8(protocol.getUserPendingAction(user).action),
             uint8(ProtocolAction.ValidateClosePosition),
             "The user protocol action should pending"
         );
@@ -138,7 +158,7 @@ contract TestRebalancerInitiateClosePosition is
     function test_RevertWhen_rebalancerInitiateClosePositionPartialTriggerImbalanceLimit() public {
         // choose an amount big enough to trigger imbalance limits
         uint88 amount = amountInRebalancer / 10;
-
+        vm.prank(user);
         vm.expectPartialRevert(UsdnProtocolImbalanceLimitReached.selector);
         rebalancer.initiateClosePosition{ value: securityDeposit }(
             amount, address(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA, ""
@@ -160,21 +180,21 @@ contract TestRebalancerInitiateClosePosition is
         uint256 amountToCloseWithoutBonus = FixedPointMathLib.fullMulDiv(
             amountInRebalancer,
             rebalancer.getPositionData(rebalancer.getPositionVersion()).entryAccMultiplier,
-            rebalancer.getPositionData(rebalancer.getUserDepositData(address(this)).entryPositionVersion)
-                .entryAccMultiplier
+            rebalancer.getPositionData(rebalancer.getUserDepositData(user).entryPositionVersion).entryAccMultiplier
         );
 
         uint256 amountToClose = amountToCloseWithoutBonus
             + amountToCloseWithoutBonus * (protocolPosition.amount - previousPositionData.amount)
                 / previousPositionData.amount;
 
+        vm.prank(user);
         vm.expectEmit();
-        emit ClosePositionInitiated(address(this), amountInRebalancer, amountToClose, 0);
+        emit ClosePositionInitiated(user, amountInRebalancer, amountToClose, 0);
         (bool success) = rebalancer.initiateClosePosition{ value: securityDeposit }(
-            amountInRebalancer, address(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA, ""
+            amountInRebalancer, user, DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA, ""
         );
 
-        UserDeposit memory depositData = rebalancer.getUserDepositData(address(this));
+        UserDeposit memory depositData = rebalancer.getUserDepositData(user);
 
         assertTrue(success, "The rebalancer close should be successful");
         assertEq(depositData.amount, 0, "The user's deposited amount in rebalancer should be zero");
@@ -187,7 +207,7 @@ contract TestRebalancerInitiateClosePosition is
         );
 
         assertEq(
-            uint8(protocol.getUserPendingAction(address(this)).action),
+            uint8(protocol.getUserPendingAction(user).action),
             uint8(ProtocolAction.ValidateClosePosition),
             "The user protocol action should pending"
         );
@@ -211,18 +231,21 @@ contract TestRebalancerInitiateClosePosition is
         // put the eth price a bit higher to avoid liquidating existing position
         wstEthPrice = _setOraclePrices(wstEthPrice * 15 / 10);
 
+        vm.startPrank(user);
         // open a position to liquidate during the initiateClose call
         (, PositionId memory posId) = protocol.initiateOpenPosition{ value: securityDeposit }(
             2 ether,
             wstEthPrice * 9 / 10,
             type(uint128).max,
             protocol.getMaxLeverage(),
-            payable(address(this)),
-            payable(address(this)),
+            address(this),
+            payable(this),
             type(uint256).max,
             "",
             EMPTY_PREVIOUS_DATA
         );
+
+        vm.stopPrank();
 
         skip(1 hours);
         // put the price below the above position's liquidation price
@@ -231,8 +254,7 @@ contract TestRebalancerInitiateClosePosition is
         uint256 amountToCloseWithoutBonus = FixedPointMathLib.fullMulDiv(
             amountInRebalancer,
             rebalancer.getPositionData(rebalancer.getPositionVersion()).entryAccMultiplier,
-            rebalancer.getPositionData(rebalancer.getUserDepositData(address(this)).entryPositionVersion)
-                .entryAccMultiplier
+            rebalancer.getPositionData(rebalancer.getUserDepositData(user).entryPositionVersion).entryAccMultiplier
         );
 
         uint256 amountToClose = amountToCloseWithoutBonus
@@ -256,14 +278,15 @@ contract TestRebalancerInitiateClosePosition is
         vm.expectEmit(false, true, false, false);
         emit LiquidatedTick(posId.tick, 0, 0, 0, 0);
         vm.expectEmit();
-        emit ClosePositionInitiated(address(this), amountInRebalancer, amountToClose, 0);
+        emit ClosePositionInitiated(user, amountInRebalancer, amountToClose, 0);
         vm.expectEmit();
-        emit Transfer(address(rebalancer), address(this), liquidationRewards);
+        emit Transfer(address(rebalancer), user, liquidationRewards);
+        vm.prank(user);
         (bool success) = rebalancer.initiateClosePosition{ value: securityDeposit }(
             amountInRebalancer, address(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA, ""
         );
 
-        UserDeposit memory depositData = rebalancer.getUserDepositData(address(this));
+        UserDeposit memory depositData = rebalancer.getUserDepositData(user);
 
         assertTrue(success, "The rebalancer close should be successful");
         assertEq(depositData.amount, 0, "The user's deposited amount in rebalancer should be zero");
@@ -285,18 +308,17 @@ contract TestRebalancerInitiateClosePosition is
         vm.prank(SET_PROTOCOL_PARAMS_MANAGER);
         protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0, 0);
 
-        uint256 userBalanceBefore = address(this).balance;
+        uint256 userBalanceBefore = user.balance;
         uint256 excessAmount = 1 ether;
 
+        vm.prank(user);
         // send more ether than necessary to trigger the refund
         rebalancer.initiateClosePosition{ value: securityDeposit + excessAmount }(
             amountInRebalancer, address(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA, ""
         );
 
         assertEq(payable(rebalancer).balance, 0, "There should be no ether left in the rebalancer");
-        assertEq(
-            userBalanceBefore - securityDeposit, address(this).balance, "The overpaid amount should have been refunded"
-        );
+        assertEq(userBalanceBefore - securityDeposit, user.balance, "The overpaid amount should have been refunded");
     }
 
     /**
@@ -308,20 +330,22 @@ contract TestRebalancerInitiateClosePosition is
      * @custom:then It should revert with `RebalancerUserLiquidated` error
      */
     function test_RevertWhen_rebalancerUserLiquidated() public {
+        vm.startPrank(user);
         // compensate imbalance to allow rebalancer users to close
         (, PositionId memory newPosId) = protocol.initiateOpenPosition{ value: securityDeposit }(
             10 ether,
             1100 ether,
             type(uint128).max,
             protocol.getMaxLeverage(),
-            payable(address(this)),
-            payable(address(this)),
+            address(this),
+            payable(this),
             type(uint256).max,
             "",
             EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         protocol.validateOpenPosition{ value: securityDeposit }(payable(this), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
+        vm.stopPrank();
         // wait 1 minute to provide a fresh price
         skip(1 minutes);
 
@@ -356,6 +380,7 @@ contract TestRebalancerInitiateClosePosition is
         rebalancer.validateDepositAssets();
         vm.stopPrank();
 
+        vm.startPrank(user);
         // revert with a protocol error as the tick should not be accessible anymore
         // but the _lastLiquidatedVersion has not been updated yet
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolOutdatedTick.selector, 1, 0));
@@ -389,8 +414,8 @@ contract TestRebalancerInitiateClosePosition is
             800 ether,
             type(uint128).max,
             protocol.getMaxLeverage(),
-            payable(address(this)),
-            payable(address(this)),
+            address(this),
+            payable(this),
             type(uint256).max,
             "",
             EMPTY_PREVIOUS_DATA
@@ -412,6 +437,7 @@ contract TestRebalancerInitiateClosePosition is
             EMPTY_PREVIOUS_DATA,
             ""
         );
+        vm.stopPrank();
     }
 
     /**
@@ -428,14 +454,9 @@ contract TestRebalancerInitiateClosePosition is
 
         // deposit assets in the protocol to imbalance it
         uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.ValidateDeposit);
+        vm.startPrank(user);
         protocol.initiateDeposit{ value: securityDeposit }(
-            100 ether,
-            DISABLE_SHARES_OUT_MIN,
-            payable(address(this)),
-            payable(address(this)),
-            type(uint256).max,
-            "",
-            EMPTY_PREVIOUS_DATA
+            100 ether, DISABLE_SHARES_OUT_MIN, address(this), payable(this), type(uint256).max, "", EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
@@ -450,8 +471,8 @@ contract TestRebalancerInitiateClosePosition is
             protocol.getEffectivePriceForTick(prevPosId.tick) + 10, // + 10 is enough to compensate the rounding down
             type(uint128).max,
             protocol.getMaxLeverage(),
-            payable(address(this)),
-            payable(address(this)),
+            address(this),
+            payable(this),
             type(uint256).max,
             "",
             EMPTY_PREVIOUS_DATA
@@ -471,8 +492,8 @@ contract TestRebalancerInitiateClosePosition is
             1750 ether,
             type(uint128).max,
             protocol.getMaxLeverage(),
-            payable(address(this)),
-            payable(address(this)),
+            address(this),
+            payable(this),
             type(uint256).max,
             "",
             EMPTY_PREVIOUS_DATA
@@ -498,6 +519,8 @@ contract TestRebalancerInitiateClosePosition is
             EMPTY_PREVIOUS_DATA,
             ""
         );
+
+        vm.stopPrank();
     }
 
     /**
@@ -510,10 +533,6 @@ contract TestRebalancerInitiateClosePosition is
      * @custom:and The user nonce should be incremented
      */
     function test_rebalancerInitiateClosePositionDelegation() public {
-        uint256 userPrivateKey = 1;
-        address user = vm.addr(userPrivateKey);
-        _depositAndTriggerRebalancer(user);
-
         vm.prank(SET_PROTOCOL_PARAMS_MANAGER);
         protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0, 0);
 
@@ -539,7 +558,7 @@ contract TestRebalancerInitiateClosePosition is
             nonce: initialNonce
         });
 
-        bytes memory signature = _getDelegationSignature(userPrivateKey, delegation);
+        bytes memory signature = _getDelegationSignature(USER_PK, delegation);
         bytes memory delegationData = abi.encode(user, signature);
         vm.expectEmit();
         emit ClosePositionInitiated(delegation.depositOwner, delegation.amount, amountToClose, 0);
@@ -572,32 +591,6 @@ contract TestRebalancerInitiateClosePosition is
         );
 
         assertEq(rebalancer.getNonce(user), initialNonce + 1, "The user nonce should be incremented");
-    }
-
-    /**
-     * @dev Deposit a user amount into the rebalancer and trigger it
-     * @param user The user that will deposit
-     */
-    function _depositAndTriggerRebalancer(address user) internal {
-        (, amountInRebalancer,,) = _setUpImbalanced(user, 15 ether);
-        uint256 maxLeverage = protocol.getMaxLeverage();
-        vm.prank(DEPLOYER);
-        rebalancer.setPositionMaxLeverage(maxLeverage);
-        skip(5 minutes);
-
-        wstEthPrice = _setOraclePrices(1490 ether);
-
-        uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
-        protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA);
-
-        version = rebalancer.getPositionVersion();
-        previousPositionData = rebalancer.getPositionData(version);
-        prevPosId = PositionId({
-            tick: previousPositionData.tick,
-            tickVersion: previousPositionData.tickVersion,
-            index: previousPositionData.index
-        });
-        (protocolPosition,) = protocol.getLongPosition(prevPosId);
     }
 
     /**

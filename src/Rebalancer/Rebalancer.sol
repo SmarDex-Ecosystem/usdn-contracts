@@ -39,7 +39,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
      * @param amountToCloseWithoutBonus The user amount to close without bonus
      * @param amountToClose The user amount to close including bonus
      * @param protocolPosition The protocol rebalancer position
-     * @param user The initiateClosePosition user
+     * @param user The address of the user that deposited the funds in the rebalancer
      * @param balanceOfAssetBefore The balance of asset before the protocol initiateClosePosition
      * @param balanceOfAssetAfter The balance of asset after the protocol initiateClosePosition
      * @param protocolRemainingAmount The remaining amount of the usdn protocol position after the close
@@ -742,17 +742,12 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         bytes memory signature;
         (depositOwner_, signature) = abi.decode(delegationData, (address, bytes));
 
+        uint256 nonce = _nonce[depositOwner_];
+
         bytes32 digest = _hashTypedDataV4(
             keccak256(
                 abi.encode(
-                    INITIATE_CLOSE_TYPEHASH,
-                    amount,
-                    to,
-                    userMinPrice,
-                    deadline,
-                    depositOwner_,
-                    msg.sender,
-                    _nonce[depositOwner_]
+                    INITIATE_CLOSE_TYPEHASH, amount, to, userMinPrice, deadline, depositOwner_, msg.sender, nonce
                 )
             )
         );
@@ -761,6 +756,6 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
             revert RebalancerInvalidDelegationSignature();
         }
 
-        _nonce[depositOwner_] += 1;
+        _nonce[depositOwner_] = nonce + 1;
     }
 }
