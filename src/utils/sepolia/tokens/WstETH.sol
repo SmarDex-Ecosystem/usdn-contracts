@@ -98,8 +98,8 @@ contract WstETH is ERC20Permit, Ownable2Step {
     function wrap(uint256 stEthAmount) public returns (uint256 wstEthAmount_) {
         require(stEthAmount > 0, "wstETH: can't wrap zero stETH");
         wstEthAmount_ = getWstETHByStETH(stEthAmount);
-        _mint(msg.sender, wstEthAmount_);
         _stETH.transferFrom(msg.sender, address(this), stEthAmount);
+        _mint(msg.sender, wstEthAmount_);
     }
 
     function unwrap(uint256 wstETHAmount) external returns (uint256 stETHAmount_) {
@@ -113,9 +113,9 @@ contract WstETH is ERC20Permit, Ownable2Step {
      * @notice Withdraw the ether from the contract
      * @dev To avoid loosing of the ETH after the tests
      */
-    function sweep() external onlyOwner {
-        (bool success,) = msg.sender.call{ value: address(this).balance }("");
-        require(success, "wstETH: ETH transfer failed");
+    function sweep(address payable to) external onlyOwner {
+        (bool success,) = to.call{ value: address(this).balance }("");
+        require(success, "Transfer failed");
     }
 
     receive() external payable {
