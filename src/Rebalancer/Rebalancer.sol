@@ -42,6 +42,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
      * @param user The initiateClosePosition user
      * @param balanceOfAssetBefore The balance of asset before the protocol initiateClosePosition
      * @param balanceOfAssetAfter The balance of asset after the protocol initiateClosePosition
+     * @param protocolRemainingAmount The remaining amount of the usdn protocol position after the close
      */
     struct InitiateCloseData {
         UserDeposit userDepositData;
@@ -54,6 +55,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         address user;
         uint256 balanceOfAssetBefore;
         uint256 balanceOfAssetAfter;
+        uint256 protocolRemainingAmount;
     }
 
     /// @notice Modifier to check if the caller is the USDN protocol or the owner
@@ -508,6 +510,11 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         data.amountToClose = data.amountToCloseWithoutBonus
             + data.amountToCloseWithoutBonus * (data.protocolPosition.amount - data.currentPositionData.amount)
                 / data.currentPositionData.amount;
+
+        data.protocolRemainingAmount = data.protocolPosition.amount - data.amountToClose;
+        if (data.protocolRemainingAmount > 0 && data.protocolRemainingAmount < _usdnProtocol.getMinLongPosition()) {
+            revert RebalancerInvalidAmount();
+        }
 
         data.balanceOfAssetBefore = _asset.balanceOf(address(this));
         // slither-disable-next-line reentrancy-eth

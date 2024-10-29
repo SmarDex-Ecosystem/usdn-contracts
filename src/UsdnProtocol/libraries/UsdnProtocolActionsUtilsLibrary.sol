@@ -408,16 +408,7 @@ library UsdnProtocolActionsUtilsLibrary {
         // for the Rebalancer, we allow users to close their position fully in every case
         uint128 remainingAmount = pos.amount - params.amountToClose;
         if (remainingAmount > 0 && remainingAmount < s._minLongPosition) {
-            IBaseRebalancer rebalancer = s._rebalancer;
-            if (msg.sender == address(rebalancer)) {
-                // note: the rebalancer always indicates the rebalancer user's address as validator
-                uint128 userPosAmount = rebalancer.getUserDepositData(params.validator).amount;
-                if (params.amountToClose != userPosAmount) {
-                    revert IUsdnProtocolErrors.UsdnProtocolLongPositionTooSmall();
-                }
-            } else {
-                revert IUsdnProtocolErrors.UsdnProtocolLongPositionTooSmall();
-            }
+            revert IUsdnProtocolErrors.UsdnProtocolLongPositionTooSmall();
         }
     }
 
