@@ -191,7 +191,7 @@ contract TestRebalancerInitiateClosePosition is
         vm.expectEmit();
         emit ClosePositionInitiated(user, amountInRebalancer, amountToClose, 0);
         (bool success) = rebalancer.initiateClosePosition{ value: securityDeposit }(
-            amountInRebalancer, user, DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA, ""
+            amountInRebalancer, address(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA, ""
         );
 
         UserDeposit memory depositData = rebalancer.getUserDepositData(user);
@@ -621,7 +621,7 @@ contract TestRebalancerInitiateClosePosition is
         vm.prank(user);
         vm.expectRevert(IRebalancerErrors.RebalancerInvalidAmount.selector);
         rebalancer.initiateClosePosition{ value: securityDeposit }(
-            amountToRemove, user, DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA, ""
+            amountToRemove, address(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA, ""
         );
     }
 
