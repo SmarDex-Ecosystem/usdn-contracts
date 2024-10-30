@@ -20,7 +20,6 @@ contract TestSepoliaMultiMint is Test {
         sdex = new Sdex();
         stETH = new StETH();
         wstETH = new WstETH(stETH);
-        wstETH.setStEthPerToken(1.2 ether);
         multiMinter = new MultiMinter(sdex, stETH, wstETH);
         sdex.transferOwnership(address(multiMinter));
         stETH.transferOwnership(address(multiMinter));
@@ -60,5 +59,11 @@ contract TestSepoliaMultiMint is Test {
         assertEq(sdex.balanceOf(USER_1), sdexBalanceBefore + 1 ether);
         assertEq(wstETH.balanceOf(USER_1), wstEthBalanceBefore + 2 ether);
         assertEq(stETH.balanceOf(USER_1), stEthBalanceBefore + 3 ether);
+    }
+
+    function test_setStEthPerWstEth() public {
+        multiMinter.setStEthPerWstEth(0.42 ether);
+        uint256 ratio = wstETH.stEthPerToken();
+        assertEq(ratio, 0.42 ether);
     }
 }
