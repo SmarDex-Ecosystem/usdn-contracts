@@ -18,11 +18,13 @@ import {
 } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { IEventsErrors } from "../../../utils/IEventsErrors.sol";
+import { IUsdnProtocolFallbackHandler } from "../../../utils/IUsdnProtocolFallbackHandler.sol";
 import { IUsdnProtocolHandler } from "../../../utils/IUsdnProtocolHandler.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
 import { RebalancerHandler } from "../../Rebalancer/utils/Handler.sol";
 import { UsdnProtocolHandler } from "./Handler.sol";
+import { UsdnProtocolFallbackHandler } from "./Handler.sol";
 import { MockOracleMiddleware } from "./MockOracleMiddleware.sol";
 
 import { LiquidationRewardsManager } from "../../../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
@@ -170,7 +172,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         }
 
         UsdnProtocolHandler test = new UsdnProtocolHandler();
-        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
+        UsdnProtocolFallbackHandler protocolFallback = new UsdnProtocolFallbackHandler();
         address proxy = UnsafeUpgrades.deployUUPSProxy(
             address(test),
             abi.encodeCall(
@@ -231,7 +233,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         vm.startPrank(managers.setUsdnParamsManager);
         if (!testParams.flags.enableUsdnRebase) {
             // set a high target price to effectively disable rebases
-            protocol.setUsdnRebaseThreshold(type(uint128).max);
+            protocol.i_setUsdnRebaseThreshold(type(uint128).max);
             protocol.setTargetUsdnPrice(type(uint128).max);
         }
         vm.stopPrank();

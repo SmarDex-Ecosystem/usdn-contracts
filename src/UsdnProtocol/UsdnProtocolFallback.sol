@@ -785,6 +785,10 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
         if (newThreshold < s._targetUsdnPrice) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidUsdnRebaseThreshold();
         }
+        if (newThreshold > uint128(2 * 10 ** s._priceFeedDecimals)) {
+            // values greater than $2 are not allowed
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidUsdnRebaseThreshold();
+        }
         s._usdnRebaseThreshold = newThreshold;
         emit IUsdnProtocolEvents.UsdnRebaseThresholdUpdated(newThreshold);
     }

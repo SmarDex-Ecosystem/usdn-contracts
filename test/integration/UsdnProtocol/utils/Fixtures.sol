@@ -37,12 +37,12 @@ import {
     PYTH_DATA_ETH_PRICE,
     PYTH_DATA_TIMESTAMP
 } from "../../Middlewares/utils/Constants.sol";
+import { UsdnProtocolFallbackHandler } from "./Handler.sol";
 
 import { LiquidationRewardsManager } from "../../../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
 import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { Rebalancer } from "../../../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
-import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
@@ -100,7 +100,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
     Sdex public sdex;
     IUsdnProtocolHandler public protocol;
     UsdnProtocolHandler public implementation;
-    UsdnProtocolFallback public protocolFallback;
+    UsdnProtocolFallbackHandler public protocolFallback;
     WstETH public wstETH;
     MockPyth public mockPyth;
     MockChainlinkOnChain public mockChainlinkOnChain;
@@ -172,7 +172,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         }
 
         implementation = new UsdnProtocolHandler();
-        protocolFallback = new UsdnProtocolFallback();
+        protocolFallback = new UsdnProtocolFallbackHandler();
         address proxy = UnsafeUpgrades.deployUUPSProxy(
             address(implementation),
             abi.encodeCall(

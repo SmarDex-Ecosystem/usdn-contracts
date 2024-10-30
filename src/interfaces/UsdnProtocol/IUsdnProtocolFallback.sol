@@ -701,6 +701,7 @@ interface IUsdnProtocolFallback {
      * @notice Set the security deposit value
      * @dev The maximum value of the security deposit is 2^64 - 1 = 18446744073709551615 = 18.4 ethers
      * @param securityDepositValue The security deposit value
+     * @dev This value cannot be greater than MAX_SECURITY_DEPOSIT
      */
     function setSecurityDepositValue(uint64 securityDepositValue) external;
 
@@ -755,7 +756,7 @@ interface IUsdnProtocolFallback {
      * @notice Set the USDN rebase threshold
      * @param newThreshold The new threshold value (with _priceFeedDecimals)
      * @dev When the price of USDN exceeds this value, a rebase might be triggered
-     * This value cannot be smaller than `_targetUsdnPrice`
+     * This value cannot be smaller than `_targetUsdnPrice` or greater than uint128(2 * 10 ** s._priceFeedDecimals)
      */
     function setUsdnRebaseThreshold(uint128 newThreshold) external;
 

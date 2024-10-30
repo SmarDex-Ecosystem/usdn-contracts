@@ -8,6 +8,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
+import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from
     "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsLongLibrary.sol";
@@ -812,5 +813,15 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         Types.PrepareInitiateClosePositionParams calldata params
     ) external {
         ActionsUtils._verifyInitiateCloseDelegation(s, positionOwner, params);
+    }
+}
+
+/**
+ * @title UsdnProtocolFallbackHandler
+ * @dev Wrapper to aid in testing the protocol
+ */
+contract UsdnProtocolFallbackHandler is UsdnProtocolFallback, Test {
+    function i_setUsdnRebaseThreshold(uint128 threshold) external {
+        s._usdnRebaseThreshold = threshold;
     }
 }

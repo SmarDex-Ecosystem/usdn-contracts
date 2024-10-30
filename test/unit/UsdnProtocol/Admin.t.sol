@@ -1041,6 +1041,19 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
     }
 
     /**
+     * @custom:scenario Call "setUsdnRebaseThreshold" from admin
+     * @custom:given The initial usdnProtocol state from admin wallet
+     * @custom:when Admin wallet triggers admin contract function
+     * @custom:then Revert because higher than 10 ** _priceFeedDecimals
+     */
+    function test_RevertWhen_invalidSetUsdnRebaseThreshold() external adminPrank {
+        uint256 priceFeedDecimals = protocol.getPriceFeedDecimals();
+        protocol.setTargetUsdnPrice(uint128(10 ** priceFeedDecimals) + 1);
+        vm.expectRevert(UsdnProtocolInvalidUsdnRebaseThreshold.selector);
+        protocol.setUsdnRebaseThreshold(uint128(2 * 10 ** priceFeedDecimals) + 1);
+    }
+
+    /**
      * @custom:scenario Call `pause` as admin
      * @custom:when The admin call the function
      * @custom:then The pause value should be true

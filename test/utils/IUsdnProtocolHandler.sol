@@ -8,11 +8,13 @@ import { IUsdnProtocolTypes as Types } from "../../src/interfaces/UsdnProtocol/I
 import { HugeUint } from "../../src/libraries/HugeUint.sol";
 import { UsdnProtocolHandler } from "../unit/UsdnProtocol/utils/Handler.sol";
 
+import { IUsdnProtocolFallbackHandler } from "./IUsdnProtocolFallbackHandler.sol";
+
 /**
  * @title IUsdnProtocolHandler
  * @notice Interface for the USDN protocol handler
  */
-interface IUsdnProtocolHandler is IUsdnProtocol {
+interface IUsdnProtocolHandler is IUsdnProtocol, IUsdnProtocolFallbackHandler {
     function resetEMA() external;
 
     function queuePushFront(PendingAction memory action) external returns (uint128 rawIndex_);
