@@ -66,4 +66,14 @@ contract TestSepoliaMultiMint is Test {
         uint256 ratio = wstETH.stEthPerToken();
         assertEq(ratio, 0.42 ether);
     }
+
+    function test_sweep() public {
+        vm.deal(address(multiMinter), 1 ether);
+        vm.deal(address(stETH), 1 ether);
+        vm.deal(address(wstETH), 1 ether);
+
+        multiMinter.sweep(USER_1);
+
+        assertEq(USER_1.balance, 3 ether);
+    }
 }

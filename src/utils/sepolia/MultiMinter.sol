@@ -27,7 +27,7 @@ interface IMultiMinter {
 
     function acceptOwnershipOf(address contractAdr) external;
 
-    function sweep(address to) external;
+    function sweep(address payable to) external;
 
     function aggregateOnlyOwner(Call[] calldata calls) external payable returns (bytes[] memory returnData);
 }
@@ -80,17 +80,11 @@ contract MultiMinter is IMultiMinter, Ownable2Step {
         IOwnable(contractAdr).acceptOwnership();
     }
 
-    function sweep(address to) external onlyOwner {
+    function sweep(address payable to) external onlyOwner {
+        STETH.sweep(to);
+        WSTETH.sweep(to);
         (bool success,) = to.call{ value: address(this).balance }("");
         require(success, "Error while sending Ether");
-    }
-
-    function sweepStETH(address payable to) external onlyOwner {
-        STETH.sweep(to);
-    }
-
-    function sweepWstETH(address payable to) external onlyOwner {
-        WSTETH.sweep(to);
     }
 
     /**
