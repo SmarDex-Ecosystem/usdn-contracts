@@ -61,7 +61,6 @@ library UsdnProtocolActionsUtilsLibrary {
             currentPrice.neutralPrice,
             currentPrice.timestamp,
             Constants.MAX_LIQUIDATION_ITERATION,
-            true,
             Types.ProtocolAction.Liquidation,
             currentPriceData
         );
@@ -163,7 +162,6 @@ library UsdnProtocolActionsUtilsLibrary {
             currentPrice.neutralPrice,
             currentPrice.timestamp,
             s._liquidationIteration,
-            false,
             Types.ProtocolAction.InitiateClosePosition,
             params.currentPriceData
         );
