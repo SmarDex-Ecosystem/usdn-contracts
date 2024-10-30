@@ -663,6 +663,9 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
 
     /// @inheritdoc IUsdnProtocolFallback
     function setSecurityDepositValue(uint64 securityDepositValue) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
+        if (securityDepositValue > Constants.MAX_SECURITY_DEPOSIT) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidSecurityDeposit();
+        }
         s._securityDepositValue = securityDepositValue;
         emit IUsdnProtocolEvents.SecurityDepositValueUpdated(securityDepositValue);
     }

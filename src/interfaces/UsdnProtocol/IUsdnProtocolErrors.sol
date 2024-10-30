@@ -219,4 +219,7 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the signature provided for a delegation is invalid
     error UsdnProtocolInvalidDelegationSignature();
+
+    /// @dev Indicates that the provided security deposit is invalid
+    error UsdnProtocolInvalidSecurityDeposit();
 }

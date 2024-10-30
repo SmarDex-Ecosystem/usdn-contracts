@@ -626,6 +626,17 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
     }
 
     /**
+     * @custom:scenario Call "setSecurityDepositValue" from admin
+     * @custom:given The initial usdnProtocol state
+     * @custom:when Admin wallet triggers the function with a value above the limit
+     * @custom:then The transaction should revert
+     */
+    function test_RevertWhen_invalidSetSecuriyDepositValue() public adminPrank {
+        vm.expectRevert(UsdnProtocolInvalidSecurityDeposit.selector);
+        protocol.setSecurityDepositValue(2 ether + 1);
+    }
+
+    /**
      * @custom:scenario Call "setExpoImbalanceLimits" from admin
      * @custom:given The initial usdnProtocol state from admin wallet
      * @custom:when Admin wallet triggers the function with a value above an int256
