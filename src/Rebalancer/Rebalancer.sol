@@ -43,6 +43,13 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
      * @param balanceOfAssetBefore The balance of asset before the protocol initiateClosePosition
      * @param balanceOfAssetAfter The balance of asset after the protocol initiateClosePosition
      * @param protocolRemainingAmount The remaining amount of the usdn protocol position after the close
+     * @param amount The amount to close relative to the amount deposited
+     * @param to The address that will receive the assets
+     * @param validator The address that will receive the security deposit
+     * @param userMinPrice The minimum price at which the position can be closed
+     * @param deadline The deadline of the close position to be initiated
+     * @param currentPriceData The current price data
+     * @param previousActionsData The previous action price data
      */
     struct InitiateCloseData {
         UserDeposit userDepositData;
@@ -56,6 +63,13 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         uint256 balanceOfAssetBefore;
         uint256 balanceOfAssetAfter;
         uint256 protocolRemainingAmount;
+        uint88 amount;
+        address to;
+        address payable validator;
+        uint256 userMinPrice;
+        uint256 deadline;
+        bytes currentPriceData;
+        Types.PreviousActionsData previousActionsData;
     }
 
     /// @notice Modifier to check if the caller is the USDN protocol or the owner
@@ -442,6 +456,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     function initiateClosePosition(
         uint88 amount,
         address to,
+        address payable validator,
         uint256 userMinPrice,
         uint256 deadline,
         bytes calldata currentPriceData,
@@ -453,19 +468,28 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         }
 
         InitiateCloseData memory data;
+        data.amount = amount;
+        data.to = to;
+        data.validator = validator;
+        data.userMinPrice = userMinPrice;
+        data.deadline = deadline;
+        data.currentPriceData = currentPriceData;
+        data.previousActionsData = previousActionsData;
+
         if (delegationData.length == 0) {
             data.user = msg.sender;
         } else {
-            data.user = _verifyInitiateCloseDelegation(amount, to, userMinPrice, deadline, delegationData);
+            data.user =
+                _verifyInitiateCloseDelegation(data.amount, data.to, data.userMinPrice, data.deadline, delegationData);
         }
 
         data.userDepositData = _userDeposit[data.user];
 
-        if (amount > data.userDepositData.amount) {
+        if (data.amount > data.userDepositData.amount) {
             revert RebalancerInvalidAmount();
         }
 
-        data.remainingAssets = data.userDepositData.amount - amount;
+        data.remainingAssets = data.userDepositData.amount - data.amount;
         if (data.remainingAssets > 0 && data.remainingAssets < _minAssetDeposit) {
             revert RebalancerInvalidAmount();
         }
@@ -487,7 +511,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         data.currentPositionData = _positionData[data.positionVersion];
 
         data.amountToCloseWithoutBonus = FixedPointMathLib.fullMulDiv(
-            amount,
+            data.amount,
             data.currentPositionData.entryAccMultiplier,
             _positionData[data.userDepositData.entryPositionVersion].entryAccMultiplier
         );
@@ -513,6 +537,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         }
 
         data.balanceOfAssetBefore = _asset.balanceOf(address(this));
+
         // slither-disable-next-line reentrancy-eth
         success_ = _usdnProtocol.initiateClosePosition{ value: msg.value }(
             Types.PositionId({
@@ -521,12 +546,12 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
                 index: data.currentPositionData.index
             }),
             data.amountToClose.toUint128(),
-            userMinPrice,
-            to,
-            payable(msg.sender),
-            deadline,
-            currentPriceData,
-            previousActionsData,
+            data.userMinPrice,
+            data.to,
+            data.validator,
+            data.deadline,
+            data.currentPriceData,
+            data.previousActionsData,
             ""
         );
         data.balanceOfAssetAfter = _asset.balanceOf(address(this));
@@ -549,7 +574,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
                 _positionData[data.positionVersion].amount = data.currentPositionData.amount;
             }
 
-            emit ClosePositionInitiated(data.user, amount, data.amountToClose, data.remainingAssets);
+            emit ClosePositionInitiated(data.user, data.amount, data.amountToClose, data.remainingAssets);
         }
 
         // If the rebalancer received assets, it means it was rewarded for liquidating positions

@@ -151,6 +151,7 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
      * side after calling this function
      * @param amount The amount to close relative to the amount deposited
      * @param to The address that will receive the assets
+     * @param validator The address that will receive the security deposit
      * @param userMinPrice The minimum price at which the position can be closed
      * @param deadline The deadline of the close position to be initiated
      * @param currentPriceData The current price data
@@ -165,6 +166,7 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
     function initiateClosePosition(
         uint88 amount,
         address to,
+        address payable validator,
         uint256 userMinPrice,
         uint256 deadline,
         bytes calldata currentPriceData,
