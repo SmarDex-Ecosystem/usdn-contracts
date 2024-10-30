@@ -550,6 +550,7 @@ interface IUsdnProtocolTypes {
      * @dev A tick spacing of 1 is equivalent to a 0.01% increase in liquidation price between ticks. A tick spacing of
      * 100 is equivalent to a ~1.005% increase in liquidation price between ticks
      * @param _asset The asset ERC20 contract
+     * Assets with a blacklist are not supported because the protocol would be DoS if transfers revert
      * @param _assetDecimals The asset decimals
      * @param _priceFeedDecimals The price feed decimals (18)
      * @param _usdn The USDN ERC20 contract
@@ -606,8 +607,6 @@ interface IUsdnProtocolTypes {
      * @param _securityDepositValue The deposit required for a new position
      * @param _targetUsdnPrice The nominal (target) price of USDN (with _priceFeedDecimals)
      * @param _usdnRebaseThreshold The USDN price threshold to trigger a rebase (with _priceFeedDecimals)
-     * @param _usdnRebaseInterval The interval between two automatic rebase checks. Disabled by default
-     * @dev A rebase can be forced (if the `_usdnRebaseThreshold` is exceeded) by calling the `liquidate` function
      * @param _minLongPosition The minimum long position size (with `_assetDecimals`)
      * @param _lastFundingPerDay The funding rate calculated at the last update timestamp
      * @param _lastPrice The price of the asset during the last balances update (with price feed decimals)
@@ -619,7 +618,6 @@ interface IUsdnProtocolTypes {
      * @param _pendingActionsQueue The queue of pending actions
      * @param _balanceVault  The balance of deposits (with asset decimals)
      * @param _pendingBalanceVault The unreflected balance change due to pending vault actions (with asset decimals)
-     * @param _lastRebaseCheck The timestamp when the last USDN rebase check was performed
      * @param _EMA The exponential moving average of the funding (0.0003 at initialization)
      * @param _balanceLong The balance of long positions (with asset decimals)
      * @param _totalExpo The total exposure of the long positions (with asset decimals)
@@ -674,7 +672,6 @@ interface IUsdnProtocolTypes {
         uint64 _securityDepositValue;
         uint128 _targetUsdnPrice;
         uint128 _usdnRebaseThreshold;
-        uint256 _usdnRebaseInterval;
         uint256 _minLongPosition;
         // State
         int256 _lastFundingPerDay;
@@ -687,7 +684,6 @@ interface IUsdnProtocolTypes {
         // Vault
         uint256 _balanceVault;
         int256 _pendingBalanceVault;
-        uint256 _lastRebaseCheck;
         // Long positions
         int256 _EMA;
         uint256 _balanceLong;
