@@ -8,10 +8,6 @@ import { Sdex } from "./tokens/Sdex.sol";
 import { StETH } from "./tokens/StETH.sol";
 import { WstETH } from "./tokens/WstETH.sol";
 
-interface IMintable {
-    function mint(address, uint256) external;
-}
-
 interface IOwnable {
     function transferOwnership(address newOwner) external;
     function acceptOwnership() external;
@@ -23,11 +19,7 @@ interface IMultiMinter {
         bytes callData;
     }
 
-    function mint(address adrs, uint256 amountSDEX, uint256 amountWSTETH, uint256 amountSTETH) external;
-
-    function mint(address adrs, uint256 amountSDEX, uint256 amountWSTETH, uint256 amountSTETH, uint256 amountETH)
-        external
-        payable;
+    function mint(address to, uint256 amountSDEX, uint256 amountSTETH, uint256 amountWSTETH) external;
 
     function setStEthPerWstEth(uint256 stEthAmount) external;
 
@@ -37,15 +29,12 @@ interface IMultiMinter {
 
     function sweep(address to) external;
 
-    function aggregateOnlyOwner(Call[] calldata calls)
-        external
-        payable
-        returns (uint256 blockNumber, bytes[] memory returnData);
+    function aggregateOnlyOwner(Call[] calldata calls) external payable returns (bytes[] memory returnData);
 }
 
 /**
  * @title MultiMinter
- * @notice Contract to mint SDEX and WstETH tokens
+ * @notice Contract to mint SDEX, STETH and WSTETH tokens
  * This contract must have the owner of SDEX and WstETH tokens
  */
 contract MultiMinter is IMultiMinter, Ownable2Step {
@@ -53,21 +42,13 @@ contract MultiMinter is IMultiMinter, Ownable2Step {
     StETH immutable STETH;
     WstETH immutable WSTETH;
 
-    constructor(Sdex sdex, StETH steth, WstETH wsteth) Ownable(msg.sender) {
+    constructor(Sdex sdex, StETH stETH, WstETH wstETH) Ownable(msg.sender) {
         SDEX = sdex;
-        STETH = steth;
-        WSTETH = wsteth;
+        STETH = stETH;
+        WSTETH = wstETH;
     }
 
-    function mint(address to, uint256 amountSDEX, uint256 amountWSTETH, uint256 amountSTETH) external onlyOwner {
-        mint(to, amountSDEX, amountWSTETH, amountSTETH, 0);
-    }
-
-    function mint(address to, uint256 amountSDEX, uint256 amountWSTETH, uint256 amountSTETH, uint256 amountETH)
-        public
-        payable
-        onlyOwner
-    {
+    function mint(address to, uint256 amountSDEX, uint256 amountSTETH, uint256 amountWSTETH) public onlyOwner {
         if (amountSDEX != 0) {
             SDEX.mint(to, amountSDEX);
         }
@@ -82,11 +63,6 @@ contract MultiMinter is IMultiMinter, Ownable2Step {
 
         if (amountSTETH != 0) {
             STETH.mint(to, amountSTETH);
-        }
-
-        if (amountETH != 0) {
-            (bool success,) = to.call{ value: amountETH }("");
-            require(success, "Error while sending Ether");
         }
     }
 
@@ -120,16 +96,9 @@ contract MultiMinter is IMultiMinter, Ownable2Step {
     /**
      * @notice Aggregate multiple calls in one transaction
      * @param calls The calls to aggregate
-     * @return blockNumber The block number of the call
      * @return returnData The return data of each call
      */
-    function aggregateOnlyOwner(Call[] calldata calls)
-        external
-        payable
-        onlyOwner
-        returns (uint256 blockNumber, bytes[] memory returnData)
-    {
-        blockNumber = block.number;
+    function aggregateOnlyOwner(Call[] calldata calls) external payable onlyOwner returns (bytes[] memory returnData) {
         uint256 length = calls.length;
         returnData = new bytes[](length);
         Call calldata call;
