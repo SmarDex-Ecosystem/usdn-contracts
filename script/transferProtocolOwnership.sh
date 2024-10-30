@@ -51,7 +51,7 @@ while true; do
         ownerPrivateKey=$privateKey
 
         address=$(cast wallet address $ownerPrivateKey)
-        if [ $address != adminAddress]; then
+        if [[ $address != $adminAddress ]]; then
             printf "\n$red The private key is not the owner of the protocol$nc\n"
             exit 1
         fi
@@ -84,7 +84,7 @@ while true; do
     esac
 done
 
-if [ $ledger = true ]; then
+if [[ $ledger == true ]]; then
     forge script -l -f "$rpcUrl" script/03_TransferProtocolOwnership.s.sol:TransferProtocolOwnership --broadcast
 else
     forge script --private-key $ownerPrivateKey -f "$rpcUrl" script/03_TransferProtocolOwnership.s.sol:TransferProtocolOwnership --broadcast

@@ -72,7 +72,7 @@ If you are ready to upgrade the protocol, then you can launch the bash script `s
 This bash script will prompt you to enter an RPC url, the protocol address, the new owner address and a private key. The address derived from the private key must have the `DEFAULT_ADMIN_ROLE` role.
 
 ```bash
-./script/transferOwnership.sh
+./script/transferProtocolOwnership.sh
 ```
 
 If you want to run the script with foundry directly, in a standalone mode, you need to make sure that required environment variable is set:
