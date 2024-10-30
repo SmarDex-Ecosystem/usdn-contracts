@@ -169,20 +169,15 @@ contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture, 
 
     /**
      * @custom:scenario Check an initiate close of a position from the rebalancer (partial)
-     * @custom:given USER_1 has a position in the rebalancer with an amount that leaves the position above the min
-     * @custom:and The "validator" address is the rebalancer user
-     * @custom:when The rebalancer initiates a partial close position with a remaining amount that is above the min
+     * @custom:given the user has a position in the rebalancer with an amount that leaves the position above the min
+     * @custom:when The rebalancer initiates a partial close position with a remaining amount that is below the  min
      * @custom:then The function should not revert
      */
     function test_checkInitiateClosePositionFromRebalancer() public {
-        prepareParams.amountToClose = AMOUNT - uint128(protocol.getMinLongPosition());
-        prepareParams.to = USER_2;
-        prepareParams.validator = USER_1;
-
-        _setUpRebalancerPosition(uint88(prepareParams.amountToClose + 1));
+        prepareParams.amountToClose = uint128(AMOUNT - protocol.getMinLongPosition() + 1);
+        _setUpRebalancerPosition(uint88(AMOUNT));
 
         vm.prank(address(mockedRebalancer));
-        // note: the rebalancer always sets the rebalancer user as "validator" (USER_1)
         protocol.i_checkInitiateClosePosition(pos, prepareParams);
     }
 
