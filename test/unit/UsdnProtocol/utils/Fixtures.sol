@@ -4,18 +4,7 @@ pragma solidity 0.8.26;
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
-import {
-    ADMIN,
-    CRITICAL_FUNCTIONS_MANAGER,
-    DEPLOYER,
-    PAUSER_MANAGER,
-    PROXY_UPGRADE_MANAGER,
-    SET_EXTERNAL_MANAGER,
-    SET_OPTIONS_MANAGER,
-    SET_PROTOCOL_PARAMS_MANAGER,
-    SET_USDN_PARAMS_MANAGER,
-    UNPAUSER_MANAGER
-} from "../../../utils/Constants.sol";
+import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { IEventsErrors } from "../../../utils/IEventsErrors.sol";
 import { IUsdnProtocolHandler } from "../../../utils/IUsdnProtocolHandler.sol";
@@ -146,16 +135,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             liquidationRewardsManager.setRewardsParameters(0, 0, 0, 0, 0, 0, 0, 0, 0.1 ether);
         }
 
-        Managers memory managers = Managers({
-            setExternalManager: SET_EXTERNAL_MANAGER,
-            criticalFunctionsManager: CRITICAL_FUNCTIONS_MANAGER,
-            setProtocolParamsManager: SET_PROTOCOL_PARAMS_MANAGER,
-            setUsdnParamsManager: SET_USDN_PARAMS_MANAGER,
-            setOptionsManager: SET_OPTIONS_MANAGER,
-            proxyUpgradeManager: PROXY_UPGRADE_MANAGER,
-            pauserManager: PAUSER_MANAGER,
-            unpauserManager: UNPAUSER_MANAGER
-        });
         if (!testParams.flags.enableRoles) {
             managers = Managers({
                 setExternalManager: ADMIN,
@@ -183,7 +162,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
                     liquidationRewardsManager,
                     _tickSpacing,
                     address(feeCollector),
-                    managers,
                     protocolFallback,
                     params.eip712Version
                 )
@@ -195,29 +173,27 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
 
-        if (!testParams.flags.enableRoles) {
-            protocol.grantRole(protocol.ADMIN_CRITICAL_FUNCTIONS_ROLE(), ADMIN);
-            protocol.grantRole(protocol.ADMIN_SET_EXTERNAL_ROLE(), ADMIN);
-            protocol.grantRole(protocol.ADMIN_SET_PROTOCOL_PARAMS_ROLE(), ADMIN);
-            protocol.grantRole(protocol.ADMIN_SET_USDN_PARAMS_ROLE(), ADMIN);
-            protocol.grantRole(protocol.ADMIN_SET_OPTIONS_ROLE(), ADMIN);
-            protocol.grantRole(protocol.ADMIN_PROXY_UPGRADE_ROLE(), ADMIN);
-            protocol.grantRole(protocol.ADMIN_PAUSER_ROLE(), ADMIN);
-            protocol.grantRole(protocol.ADMIN_UNPAUSER_ROLE(), ADMIN);
-            vm.stopPrank();
-
-            vm.startPrank(ADMIN);
-            protocol.grantRole(protocol.CRITICAL_FUNCTIONS_ROLE(), ADMIN);
-            protocol.grantRole(protocol.SET_EXTERNAL_ROLE(), ADMIN);
-            protocol.grantRole(protocol.SET_PROTOCOL_PARAMS_ROLE(), ADMIN);
-            protocol.grantRole(protocol.SET_USDN_PARAMS_ROLE(), ADMIN);
-            protocol.grantRole(protocol.SET_OPTIONS_ROLE(), ADMIN);
-            protocol.grantRole(protocol.PROXY_UPGRADE_ROLE(), ADMIN);
-            protocol.grantRole(protocol.PAUSER_ROLE(), ADMIN);
-            protocol.grantRole(protocol.UNPAUSER_ROLE(), ADMIN);
-        }
-
+        protocol.grantRole(protocol.ADMIN_CRITICAL_FUNCTIONS_ROLE(), ADMIN);
+        protocol.grantRole(protocol.ADMIN_SET_EXTERNAL_ROLE(), ADMIN);
+        protocol.grantRole(protocol.ADMIN_SET_PROTOCOL_PARAMS_ROLE(), ADMIN);
+        protocol.grantRole(protocol.ADMIN_SET_USDN_PARAMS_ROLE(), ADMIN);
+        protocol.grantRole(protocol.ADMIN_SET_OPTIONS_ROLE(), ADMIN);
+        protocol.grantRole(protocol.ADMIN_PROXY_UPGRADE_ROLE(), ADMIN);
+        protocol.grantRole(protocol.ADMIN_PAUSER_ROLE(), ADMIN);
+        protocol.grantRole(protocol.ADMIN_UNPAUSER_ROLE(), ADMIN);
         vm.stopPrank();
+
+        vm.startPrank(ADMIN);
+        protocol.grantRole(protocol.CRITICAL_FUNCTIONS_ROLE(), managers.criticalFunctionsManager);
+        protocol.grantRole(protocol.SET_EXTERNAL_ROLE(), managers.setExternalManager);
+        protocol.grantRole(protocol.SET_PROTOCOL_PARAMS_ROLE(), managers.setProtocolParamsManager);
+        protocol.grantRole(protocol.SET_USDN_PARAMS_ROLE(), managers.setUsdnParamsManager);
+        protocol.grantRole(protocol.SET_OPTIONS_ROLE(), managers.setOptionsManager);
+        protocol.grantRole(protocol.PROXY_UPGRADE_ROLE(), managers.proxyUpgradeManager);
+        protocol.grantRole(protocol.PAUSER_ROLE(), managers.pauserManager);
+        protocol.grantRole(protocol.UNPAUSER_ROLE(), managers.unpauserManager);
+        vm.stopPrank();
+
         vm.startPrank(managers.setProtocolParamsManager);
         if (!testParams.flags.enablePositionFees) {
             protocol.setPositionFeeBps(0);

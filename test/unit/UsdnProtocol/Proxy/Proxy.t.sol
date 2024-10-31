@@ -82,16 +82,6 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
             liquidationRewardsManager,
             _tickSpacing,
             address(feeCollector),
-            Managers({
-                setExternalManager: ADMIN,
-                criticalFunctionsManager: ADMIN,
-                setProtocolParamsManager: ADMIN,
-                setUsdnParamsManager: ADMIN,
-                setOptionsManager: ADMIN,
-                proxyUpgradeManager: ADMIN,
-                pauserManager: ADMIN,
-                unpauserManager: ADMIN
-            }),
             IUsdnProtocolFallback(address(0)),
             params.eip712Version
         );
@@ -120,16 +110,6 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
             liquidationRewardsManager,
             _tickSpacing,
             address(feeCollector),
-            Managers({
-                setExternalManager: ADMIN,
-                criticalFunctionsManager: ADMIN,
-                setProtocolParamsManager: ADMIN,
-                setUsdnParamsManager: ADMIN,
-                setOptionsManager: ADMIN,
-                proxyUpgradeManager: ADMIN,
-                pauserManager: ADMIN,
-                unpauserManager: ADMIN
-            }),
             IUsdnProtocolFallback(address(0)),
             params.eip712Version
         );

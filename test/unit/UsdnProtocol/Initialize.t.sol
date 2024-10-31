@@ -42,16 +42,6 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
                     liquidationRewardsManager,
                     100, // tick spacing 100 = ~1.005%
                     ADMIN, // Fee collector
-                    Managers({
-                        setExternalManager: address(this),
-                        criticalFunctionsManager: address(this),
-                        setProtocolParamsManager: address(this),
-                        setUsdnParamsManager: address(this),
-                        setOptionsManager: address(this),
-                        proxyUpgradeManager: address(this),
-                        pauserManager: address(this),
-                        unpauserManager: address(this)
-                    }),
                     protocolFallback,
                     EIP712_VERSION
                 )

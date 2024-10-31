@@ -59,16 +59,6 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
                     liquidationRewardsManager,
                     100, // tick spacing 100 = ~1.005%
                     ADMIN, // Fee collector
-                    Types.Managers({
-                        setExternalManager: ADMIN,
-                        criticalFunctionsManager: ADMIN,
-                        setProtocolParamsManager: ADMIN,
-                        setUsdnParamsManager: ADMIN,
-                        setOptionsManager: ADMIN,
-                        proxyUpgradeManager: ADMIN,
-                        pauserManager: ADMIN,
-                        unpauserManager: ADMIN
-                    }),
                     protocolFallback,
                     EIP712_VERSION
                 )

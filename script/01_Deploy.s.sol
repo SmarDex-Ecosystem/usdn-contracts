@@ -129,16 +129,6 @@ contract Deploy is Script {
                     liquidationRewardsManager,
                     100, // tick spacing 100 = 1.05%
                     _feeCollector,
-                    Types.Managers({
-                        setExternalManager: _deployerAddress,
-                        criticalFunctionsManager: _deployerAddress,
-                        setProtocolParamsManager: _deployerAddress,
-                        setUsdnParamsManager: _deployerAddress,
-                        setOptionsManager: _deployerAddress,
-                        proxyUpgradeManager: _deployerAddress,
-                        pauserManager: _deployerAddress,
-                        unpauserManager: _deployerAddress
-                    }),
                     protocolFallback,
                     vm.envOr("EIP712_VERSION", EIP712_VERSION)
                 )

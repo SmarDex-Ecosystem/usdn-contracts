@@ -38,7 +38,6 @@ contract UsdnProtocolImpl is
         IBaseLiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector,
-        Managers memory managers,
         IUsdnProtocolFallback protocolFallback,
         string memory eip712Version
     ) public initializer {
