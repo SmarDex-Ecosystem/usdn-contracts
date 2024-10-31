@@ -126,8 +126,6 @@ contract MockPyth is IMockPythError {
     /// @notice Mock of the real parsePriceFeedUpdatesUnique function.
     /// @return price The fee to update the price.
     function getUpdateFee(bytes[] calldata updateData) public pure returns (uint256) {
-        // if (updateData.length == 1 && updateData[0].length == 0) return 0;
-
         return 1 wei * updateData.length;
     }
 
