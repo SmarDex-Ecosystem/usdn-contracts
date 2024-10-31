@@ -34,8 +34,8 @@ contract TestOracleMiddlewarePythOracle is OracleMiddlewareBaseFixture {
     /**
      * @custom:scenario The Pyth exponent is a positive number
      * @custom:given The exponent is 1 (instead of -8)
-     * @custom:when The `parseAndValidatePrice` function is called
-     * @custom:then The function reverts with the error `OracleMiddlewarePythPositiveExponent`
+     * @custom:when The {parseAndValidatePrice} function is called
+     * @custom:then The function reverts with the error {OracleMiddlewarePythPositiveExponent}
      */
     function test_pythInvalidExponent() public {
         mockPyth.setExpo(1);
@@ -43,6 +43,24 @@ contract TestOracleMiddlewarePythOracle is OracleMiddlewareBaseFixture {
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePythPositiveExponent.selector, 1));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
             "", uint128(block.timestamp), Types.ProtocolAction.Liquidation, MOCK_PYTH_DATA
+        );
+    }
+
+    /**
+     * @custom:scenario The Pyth exponent of the unsafe price is a positive number
+     * @custom:given The exponent is 1 (instead of -8)
+     * @custom:when The {parseAndValidatePrice} function is called
+     * @custom:then The function reverts with the error {OracleMiddlewarePythPositiveExponent}
+     */
+    function test_pythInvalidExponentInUnsafePrice() public {
+        mockPyth.setUnsafePrice(10e8);
+        mockPyth.setExpo(1);
+        mockPyth.setLastPublishTime(block.timestamp);
+        uint256 validationCost = oracleMiddleware.validationCost("", Types.ProtocolAction.InitiateClosePosition);
+
+        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePythPositiveExponent.selector, 1));
+        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
+            "", 0, Types.ProtocolAction.InitiateClosePosition, ""
         );
     }
 }
