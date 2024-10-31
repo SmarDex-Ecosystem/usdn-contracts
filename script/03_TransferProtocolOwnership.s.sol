@@ -40,6 +40,15 @@ contract TransferProtocolOwnership is Script {
 
         vm.startBroadcast(defaultAdmin);
 
+        // revoke roles
+        protocol.revokeRole(roles.externalManagerRole, defaultAdmin);
+        protocol.revokeRole(roles.criticalFunctionsRole, defaultAdmin);
+        protocol.revokeRole(roles.setProtocolParamsRole, defaultAdmin);
+        protocol.revokeRole(roles.setUsdnParamsRole, defaultAdmin);
+        protocol.revokeRole(roles.setOptionsRole, defaultAdmin);
+        protocol.revokeRole(roles.proxyUpgradeRole, defaultAdmin);
+        protocol.revokeRole(roles.pauserRole, defaultAdmin);
+        protocol.revokeRole(roles.unpauserRole, defaultAdmin);
         // transfer roles
         protocol.grantRole(roles.externalManagerRole, newOwner);
         protocol.grantRole(roles.criticalFunctionsRole, newOwner);
@@ -50,6 +59,15 @@ contract TransferProtocolOwnership is Script {
         protocol.grantRole(roles.pauserRole, newOwner);
         protocol.grantRole(roles.unpauserRole, newOwner);
 
+        // revoke admin roles
+        protocol.revokeRole(roles.adminExternalManagerRole, defaultAdmin);
+        protocol.revokeRole(roles.adminCriticalFunctionsRole, defaultAdmin);
+        protocol.revokeRole(roles.adminSetProtocolParamsRole, defaultAdmin);
+        protocol.revokeRole(roles.adminSetUsdnParamsRole, defaultAdmin);
+        protocol.revokeRole(roles.adminSetOptionsRole, defaultAdmin);
+        protocol.revokeRole(roles.adminProxyUpgradeRole, defaultAdmin);
+        protocol.revokeRole(roles.adminPauserRole, defaultAdmin);
+        protocol.revokeRole(roles.adminUnpauserRole, defaultAdmin);
         // transfer admin roles
         protocol.grantRole(roles.adminExternalManagerRole, newOwner);
         protocol.grantRole(roles.adminCriticalFunctionsRole, newOwner);
