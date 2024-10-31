@@ -108,9 +108,6 @@ contract TestRebalancerResetDepositAssets is RebalancerFixture {
         skip(rebalancer.getTimeLimits().validationDelay);
         rebalancer.validateDepositAssets();
 
-        vm.prank(address(usdnProtocol));
-        rebalancer.notifyPositionLiquidated();
-
         vm.expectRevert(RebalancerNoPendingAction.selector);
         rebalancer.resetDepositAssets();
     }

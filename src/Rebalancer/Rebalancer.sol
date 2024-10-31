@@ -242,6 +242,8 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         - included in a liquidated position
             - amount > 0
             - 0 < entryPositionVersion <= _lastLiquidatedVersion
+            OR 
+            - positionData.tickVersion != protocol.getTickVersion(positionData.tick)
         */
         if (to == address(0)) {
             revert RebalancerInvalidAddressTo();
@@ -251,9 +253,17 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         }
 
         UserDeposit memory depositData = _userDeposit[to];
+        uint128 positionVersion = _positionVersion;
 
         if (depositData.entryPositionVersion > _lastLiquidatedVersion) {
-            revert RebalancerDepositUnauthorized();
+            PositionData memory positionData = _positionData[positionVersion];
+            // If the current position was not liquidated, revert
+            if (_usdnProtocol.getTickVersion(positionData.tick) == positionData.tickVersion) {
+                revert RebalancerDepositUnauthorized();
+            }
+
+            _lastLiquidatedVersion = positionVersion;
+            delete depositData;
         } else if (depositData.entryPositionVersion > 0) {
             // if the user was in a position that got liquidated, we should reset the deposit data
             delete depositData;
@@ -591,11 +601,6 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         }
 
         emit PositionVersionUpdated(positionVersion, accMultiplier, positionAmount, newPosId);
-    }
-
-    /// @inheritdoc IBaseRebalancer
-    function notifyPositionLiquidated() external onlyProtocol {
-        _lastLiquidatedVersion = _positionVersion;
     }
 
     /* -------------------------------------------------------------------------- */

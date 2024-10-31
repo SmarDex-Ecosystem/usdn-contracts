@@ -93,8 +93,4 @@ contract MockRebalancer is IBaseRebalancer, IRebalancerTypes {
             index: positionData.index
         });
     }
-
-    function notifyPositionLiquidated() external {
-        _lastLiquidatedVersion = _positionVersion;
-    }
 }

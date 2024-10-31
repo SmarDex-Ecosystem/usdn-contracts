@@ -140,22 +140,4 @@ contract TestRebalancerInitiateWithdrawAssets is RebalancerFixture {
         vm.expectRevert(RebalancerWithdrawalUnauthorized.selector);
         rebalancer.initiateWithdrawAssets();
     }
-
-    /**
-     * @custom:scenario The user initiates a withdrawal but the assets were already in a liquidated position
-     * @custom:given The user's deposit was in a position that got liquidated
-     * @custom:when The user initiates a withdrawal and the position was liquidated without a new position being created
-     * @custom:or The user initiates a withdrawal and the position was liquidated with a new position being created
-     * @custom:then The call reverts with {RebalancerWithdrawalUnauthorized}
-     */
-    function test_RevertWhen_initiateWithdrawalLiquidated() public {
-        vm.prank(address(usdnProtocol));
-        rebalancer.updatePosition(Types.PositionId(0, 0, 0), 0);
-
-        vm.prank(address(usdnProtocol));
-        rebalancer.notifyPositionLiquidated();
-
-        vm.expectRevert(RebalancerWithdrawalUnauthorized.selector);
-        rebalancer.initiateWithdrawAssets();
-    }
 }

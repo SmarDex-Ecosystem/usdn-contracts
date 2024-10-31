@@ -43,13 +43,6 @@ interface IBaseRebalancer {
      */
     function updatePosition(Types.PositionId calldata newPosId, uint128 previousPosValue) external;
 
-    /**
-     * @notice Notify the rebalancer that its position was liquidated
-     * @dev Will update _lastLiquidatedVersion and the current version' tick to NO_POSITION_TICK
-     * This function can only be called by the USDN protocol
-     */
-    function notifyPositionLiquidated() external;
-
     /* -------------------------------------------------------------------------- */
     /*                                    Admin                                   */
     /* -------------------------------------------------------------------------- */

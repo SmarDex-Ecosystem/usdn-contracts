@@ -207,23 +207,6 @@ library UsdnProtocolLongLibrary {
                 }
             }
 
-            if (
-                data.rebalancerAction <= Types.RebalancerAction.NoCloseNoOpen
-                    && liquidationEffects.liquidatedTicks.length > 0
-            ) {
-                IBaseRebalancer rebalancer = s._rebalancer;
-                if (address(rebalancer) != address(0)) {
-                    // check if the rebalancer position has been liquidated
-                    Types.PositionId memory rebalancerPosition = rebalancer.getLastPositionId();
-                    if (
-                        rebalancerPosition.tick != Constants.NO_POSITION_TICK
-                            && s._tickVersion[rebalancerPosition.tick] != rebalancerPosition.tickVersion
-                    ) {
-                        rebalancer.notifyPositionLiquidated();
-                    }
-                }
-            }
-
             s._balanceLong = liquidationEffects.newLongBalance;
             s._balanceVault = liquidationEffects.newVaultBalance;
 
