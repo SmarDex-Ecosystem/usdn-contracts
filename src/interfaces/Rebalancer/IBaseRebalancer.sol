@@ -17,12 +17,6 @@ interface IBaseRebalancer {
         returns (uint128 pendingAssets_, uint256 maxLeverage_, Types.PositionId memory currentPosId_);
 
     /**
-     * @notice Returns the ID of the last version of the position
-     * @return positionId_ The ID for the last version of the position
-     */
-    function getLastPositionId() external view returns (Types.PositionId memory positionId_);
-
-    /**
      * @notice Returns the minimum amount of assets to be deposited by a user
      * @return The minimum amount of assets to be deposited by a user
      */

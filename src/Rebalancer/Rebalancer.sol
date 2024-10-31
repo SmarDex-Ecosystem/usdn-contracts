@@ -206,17 +206,6 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         positionData_ = _positionData[version];
     }
 
-    /// @inheritdoc IBaseRebalancer
-    function getLastPositionId() external view returns (Types.PositionId memory positionId_) {
-        PositionData memory positionData = _positionData[_positionVersion];
-
-        positionId_ = Types.PositionId({
-            tick: positionData.tick,
-            tickVersion: positionData.tickVersion,
-            index: positionData.index
-        });
-    }
-
     /// @inheritdoc IRebalancer
     function getTimeLimits() external view returns (TimeLimits memory) {
         return _timeLimits;
