@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-# Couleurs pour les messages
 red='\033[0;31m'
 green='\033[0;32m'
 blue='\033[0;34m'
@@ -106,14 +105,14 @@ for event in "${events[@]}"; do
                 # Third topic
                 third_topic=$(printf "$topics" | jq -r '.[2]')
                 if [[ -n "$third_topic" ]]; then
-                    address=$(cast parse-bytes32-address "$third_topic") # Correct command usage
+                    address=$(cast parse-bytes32-address "$third_topic")
                     entry=$(printf "$entry" | jq --arg new_topic "$address" '.topics[2] = $new_topic')
                 fi
 
                 # Fourth topic
                 fourth_topic=$(printf "$topics" | jq -r '.[3]')
                 if [[ -n "$fourth_topic" ]]; then
-                    address=$(cast parse-bytes32-address "$fourth_topic") # Correct command usage
+                    address=$(cast parse-bytes32-address "$fourth_topic")
                     entry=$(printf "$entry" | jq --arg new_topic "$address" '.topics[3] = $new_topic')
                 fi
             fi
