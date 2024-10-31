@@ -12,6 +12,16 @@ nc='\033[0m'
 broadcast="broadcast/00_DeployUsdn.s.sol/1/run-latest.json"
 ledger=false
 
+# Check NodeJS version
+node_version=$(node -v)
+node_version=$((${node_version:1:2})) # Remove the "V", the minor version and then convert to integer
+if [ $node_version -lt 20 ]; then
+    printf "\n$red NodeJS version is lower than 20 (it is $node_version), please update it$nc\n"
+    exit 1
+else
+    printf "\n$green NodeJS version is $node_version, you are good to go!$nc\n"
+fi
+
 read -p $'\n'"Enter the RPC URL : " userRpcUrl
 rpcUrl="$userRpcUrl"
 

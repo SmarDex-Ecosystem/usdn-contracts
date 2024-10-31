@@ -216,7 +216,7 @@ library UsdnProtocolActionsLongLibrary {
             _prepareValidateOpenPositionData(s, pending, priceData);
 
         if (liquidated) {
-            return (!data.isLiquidationPending, true);
+            return (false, true);
         }
 
         if (data.isLiquidationPending) {
@@ -584,7 +584,6 @@ library UsdnProtocolActionsLongLibrary {
             currentPrice.neutralPrice,
             currentPrice.timestamp,
             s._liquidationIteration,
-            false,
             Types.ProtocolAction.ValidateOpenPosition,
             priceData
         );
@@ -616,7 +615,7 @@ library UsdnProtocolActionsLongLibrary {
         // indicates that the position should be liquidated. So the owner of this position needs to wait for another
         // user to update the `lastPrice` to a higher amount, thus dodging the liquidation, or a lower amount, thus
         // eventually liquidating this position
-        if (data_.lastPrice < liqPriceWithPenalty) {
+        if (data_.lastPrice <= liqPriceWithPenalty) {
             // the position should be liquidated
             data_.isLiquidationPending = true;
             return (data_, false);
@@ -629,12 +628,40 @@ library UsdnProtocolActionsLongLibrary {
         data_.liqPriceWithoutPenalty =
             Utils.getEffectivePriceForTick(s, Utils.calcTickWithoutPenalty(data_.action.tick, data_.liquidationPenalty));
 
-        // reverts if liqPriceWithoutPenalty >= startPrice
-        data_.leverage = Utils._getLeverage(data_.startPrice, data_.liqPriceWithoutPenalty);
         // calculate how much the position that was opened in the initiate is now worth (it might be too large or too
         // small considering the new leverage and lastPrice). We will adjust the long and vault balances accordingly
         // lastPrice is larger than or equal to liqPriceWithoutPenalty so the calc below does not underflow
         data_.oldPosValue = Utils.positionValue(data_.pos.totalExpo, data_.lastPrice, data_.liqPriceWithoutPenalty);
+
+        // if lastPrice > liqPriceWithPenalty but startPrice <= liqPriceWithPenalty then the user dodged liquidations
+        // we still can't let the position open, because we can't calculate the leverage with a start price that is
+        // lower than a liquidation price, and we also can't liquidate the whole tick because other users could have
+        // opened positions in this tick after the user of the current position
+        // our only choice is to liquidate this position only
+        if (data_.startPrice <= liqPriceWithPenalty) {
+            s._balanceLong -= data_.oldPosValue;
+            s._balanceVault += data_.oldPosValue;
+
+            Long._removeAmountFromPosition(
+                s, data_.action.tick, data_.action.index, data_.pos, data_.pos.amount, data_.pos.totalExpo
+            );
+
+            emit IUsdnProtocolEvents.LiquidatedPosition(
+                data_.action.validator,
+                Types.PositionId({
+                    tick: data_.action.tick,
+                    tickVersion: data_.action.tickVersion,
+                    index: data_.action.index
+                }),
+                data_.startPrice,
+                liqPriceWithPenalty
+            );
+
+            return (data_, true);
+        }
+
+        // reverts if liqPriceWithoutPenalty >= startPrice
+        data_.leverage = Utils._getLeverage(data_.startPrice, data_.liqPriceWithoutPenalty);
     }
 
     /**
@@ -806,7 +833,6 @@ library UsdnProtocolActionsLongLibrary {
             currentPrice.neutralPrice,
             currentPrice.timestamp,
             s._liquidationIteration,
-            false,
             Types.ProtocolAction.ValidateClosePosition,
             priceData
         );

@@ -254,7 +254,7 @@ library UsdnProtocolCoreLibrary {
 
         // calculate new balances (for now, any bad debt has not been repaid, balances could become negative)
         if (fundAsset > 0) {
-            // in case of positive funding, the vault balance must be decremented by the totality of the funding amount
+            // in case of positive funding, the long balance must be decremented by the totality of the funding amount
             // however, since we deducted the fee amount from the total balance, the vault balance will be incremented
             // only by the funding amount minus the fee amount
             data_.tempLongBalance = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAsset);
@@ -400,12 +400,14 @@ library UsdnProtocolCoreLibrary {
                     Types.TickData storage tickData = s._tickData[tHash];
                     --s._totalLongPositions;
                     tickData.totalPos -= 1;
+                    uint256 unadjustedTickPrice =
+                        TickMath.getPriceAtTick(Utils.calcTickWithoutPenalty(open.tick, tickData.liquidationPenalty));
                     if (tickData.totalPos == 0) {
                         // we removed the last position in the tick
                         s._tickBitmap.unset(Utils._calcBitmapIndexFromTick(s, open.tick));
+                        // reset tick penalty
+                        tickData.liquidationPenalty = 0;
                     }
-                    uint256 unadjustedTickPrice =
-                        TickMath.getPriceAtTick(Utils.calcTickWithoutPenalty(open.tick, tickData.liquidationPenalty));
                     s._totalExpo -= pos.totalExpo;
                     tickData.totalExpo -= pos.totalExpo;
                     s._liqMultiplierAccumulator =

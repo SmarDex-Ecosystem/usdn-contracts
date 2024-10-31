@@ -451,12 +451,6 @@ interface IUsdnProtocolFallback {
     function getUsdnRebaseThreshold() external view returns (uint128);
 
     /**
-     * @notice Get the interval between two automatic rebase checks
-     * @return The interval between 2 rebase checks (in seconds)
-     */
-    function getUsdnRebaseInterval() external view returns (uint256);
-
-    /**
      * @notice Get the minimum collateral amount when opening a long position
      * @return The minimum amount (with `_assetDecimals`)
      */
@@ -502,12 +496,6 @@ interface IUsdnProtocolFallback {
      * @return The unreflected balance change due to pending vault actions (in `_assetDecimals`)
      */
     function getPendingBalanceVault() external view returns (int256);
-
-    /**
-     * @notice Get the timestamp when the last USDN rebase check was performed
-     * @return The timestamp of the last USDN rebase check
-     */
-    function getLastRebaseCheck() external view returns (uint256);
 
     /**
      * @notice Get the exponential moving average of the funding
@@ -582,9 +570,10 @@ interface IUsdnProtocolFallback {
     /**
      * @notice Get the nonce a user can use to generate a delegation signature
      * @dev This is to prevent replay attacks when using an eip712 delegation signature
+     * @param owner The address of the position owner
      * @return The user nonce
      */
-    function getNonce(address user) external view returns (uint256);
+    function getNonce(address owner) external view returns (uint256);
 
     /**
      * @notice Get the domain separator v4
@@ -770,14 +759,6 @@ interface IUsdnProtocolFallback {
      * This value cannot be smaller than `_targetUsdnPrice`
      */
     function setUsdnRebaseThreshold(uint128 newThreshold) external;
-
-    /**
-     * @notice Set the USDN rebase interval
-     * @param newInterval The new interval duration
-     * @dev When the duration since the last rebase check exceeds this value, a rebase check will be performed
-     * When calling `liquidate`, this limit is ignored and the check is always performed
-     */
-    function setUsdnRebaseInterval(uint256 newInterval) external;
 
     /**
      * @notice Pauses related USDN protocol functions

@@ -234,6 +234,7 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         assertEq(tickDataAfter.totalExpo, tickDataBefore.totalExpo, "tick total expo");
         assertEq(tickDataAfter.totalPos, tickDataBefore.totalPos, "tick total pos");
         assertEq(tickDataAfter.totalPos, 0, "no more pos in tick");
+        assertEq(tickDataAfter.liquidationPenalty, 0, "liq penalty reset");
         assertFalse(protocol.tickBitmapStatus(posId.tick), "tick bitmap status");
 
         assertEq(protocol.getTotalLongPositions(), totalPosBefore, "total pos");

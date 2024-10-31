@@ -38,6 +38,8 @@ forge soldeer install @openzeppelin-contracts~5.0.2
 
 The last step is to update the remappings array in the `foundry.toml` config file.
 
+You must have `Node.js` >= 20 installed.
+
 ### Nix
 
 If using [`nix`](https://nixos.org/), the repository provides a development shell in the form of a flake.
