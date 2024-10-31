@@ -28,6 +28,7 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
      * @notice The EIP712 {initiateClosePosition} typehash
      * @dev By including this hash into the EIP712 message for this domain, this can be used together with
      * {ECDSA-recover} to obtain the signer of a message
+     * @return The EIP712 {initiateClosePosition} typehash
      */
     function INITIATE_CLOSE_TYPEHASH() external view returns (bytes32);
 
