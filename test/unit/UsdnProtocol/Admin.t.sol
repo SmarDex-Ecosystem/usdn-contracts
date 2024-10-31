@@ -633,7 +633,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      */
     function test_RevertWhen_invalidSetSecuriyDepositValue() public adminPrank {
         vm.expectRevert(UsdnProtocolInvalidSecurityDeposit.selector);
-        protocol.setSecurityDepositValue(2 ether + 1);
+        protocol.setSecurityDepositValue(5 ether + 1);
     }
 
     /**
@@ -895,7 +895,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      */
     function test_RevertWhen_invalidSetMinLongPosition() public adminPrank {
         vm.expectRevert(UsdnProtocolInvalidMinLongPosition.selector);
-        protocol.setMinLongPosition(2 ether + 1);
+        protocol.setMinLongPosition(10 ether + 1);
     }
 
     /**
