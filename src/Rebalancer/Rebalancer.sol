@@ -47,8 +47,6 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
      * @param validator The address that will receive the security deposit
      * @param userMinPrice The minimum price at which the position can be closed
      * @param deadline The deadline of the close position to be initiated
-     * @param currentPriceData The current price data
-     * @param previousActionsData The previous action price data
      */
     struct InitiateCloseData {
         UserDeposit userDepositData;
@@ -67,8 +65,6 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         address payable validator;
         uint256 userMinPrice;
         uint256 deadline;
-        bytes currentPriceData;
-        Types.PreviousActionsData previousActionsData;
     }
 
     /// @notice Modifier to check if the caller is the USDN protocol or the owner
@@ -462,128 +458,14 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         Types.PreviousActionsData calldata previousActionsData,
         bytes calldata delegationData
     ) external payable nonReentrant returns (bool success_) {
-        if (amount == 0) {
-            revert RebalancerInvalidAmount();
-        }
-
         InitiateCloseData memory data;
         data.amount = amount;
         data.to = to;
         data.validator = validator;
         data.userMinPrice = userMinPrice;
         data.deadline = deadline;
-        data.currentPriceData = currentPriceData;
-        data.previousActionsData = previousActionsData;
 
-        if (delegationData.length == 0) {
-            data.user = msg.sender;
-        } else {
-            data.user =
-                _verifyInitiateCloseDelegation(data.amount, data.to, data.userMinPrice, data.deadline, delegationData);
-        }
-
-        data.userDepositData = _userDeposit[data.user];
-
-        if (data.amount > data.userDepositData.amount) {
-            revert RebalancerInvalidAmount();
-        }
-
-        data.remainingAssets = data.userDepositData.amount - data.amount;
-        if (data.remainingAssets > 0 && data.remainingAssets < _minAssetDeposit) {
-            revert RebalancerInvalidAmount();
-        }
-
-        if (data.userDepositData.entryPositionVersion == 0) {
-            revert RebalancerUserPending();
-        }
-
-        if (data.userDepositData.entryPositionVersion <= _lastLiquidatedVersion) {
-            revert RebalancerUserLiquidated();
-        }
-
-        data.positionVersion = _positionVersion;
-
-        if (data.userDepositData.entryPositionVersion > data.positionVersion) {
-            revert RebalancerUserPending();
-        }
-
-        data.currentPositionData = _positionData[data.positionVersion];
-
-        data.amountToCloseWithoutBonus = FixedPointMathLib.fullMulDiv(
-            data.amount,
-            data.currentPositionData.entryAccMultiplier,
-            _positionData[data.userDepositData.entryPositionVersion].entryAccMultiplier
-        );
-
-        (data.protocolPosition,) = _usdnProtocol.getLongPosition(
-            Types.PositionId({
-                tick: data.currentPositionData.tick,
-                tickVersion: data.currentPositionData.tickVersion,
-                index: data.currentPositionData.index
-            })
-        );
-
-        // include bonus
-        data.amountToClose = data.amountToCloseWithoutBonus
-            + data.amountToCloseWithoutBonus * (data.protocolPosition.amount - data.currentPositionData.amount)
-                / data.currentPositionData.amount;
-
-        if (data.remainingAssets > 0) {
-            data.protocolRemainingAmount = data.protocolPosition.amount - data.amountToClose;
-            if (data.protocolRemainingAmount > 0 && data.protocolRemainingAmount < _usdnProtocol.getMinLongPosition()) {
-                revert RebalancerInvalidAmount();
-            }
-        }
-
-        data.balanceOfAssetBefore = _asset.balanceOf(address(this));
-
-        // slither-disable-next-line reentrancy-eth
-        success_ = _usdnProtocol.initiateClosePosition{ value: msg.value }(
-            Types.PositionId({
-                tick: data.currentPositionData.tick,
-                tickVersion: data.currentPositionData.tickVersion,
-                index: data.currentPositionData.index
-            }),
-            data.amountToClose.toUint128(),
-            data.userMinPrice,
-            data.to,
-            data.validator,
-            data.deadline,
-            data.currentPriceData,
-            data.previousActionsData,
-            ""
-        );
-        data.balanceOfAssetAfter = _asset.balanceOf(address(this));
-
-        if (success_) {
-            if (data.remainingAssets == 0) {
-                delete _userDeposit[data.user];
-            } else {
-                _userDeposit[data.user].amount = data.remainingAssets;
-            }
-
-            // safe cast is already made on amountToClose
-            data.currentPositionData.amount -= uint128(data.amountToCloseWithoutBonus);
-
-            if (data.currentPositionData.amount == 0) {
-                PositionData memory newPositionData;
-                newPositionData.tick = Constants.NO_POSITION_TICK;
-                _positionData[data.positionVersion] = newPositionData;
-            } else {
-                _positionData[data.positionVersion].amount = data.currentPositionData.amount;
-            }
-
-            emit ClosePositionInitiated(data.user, data.amount, data.amountToClose, data.remainingAssets);
-        }
-
-        // If the rebalancer received assets, it means it was rewarded for liquidating positions
-        // So we need to forward those rewards to the msg.sender
-        if (data.balanceOfAssetAfter > data.balanceOfAssetBefore) {
-            _asset.safeTransfer(msg.sender, data.balanceOfAssetAfter - data.balanceOfAssetBefore);
-        }
-
-        // sent back any ether left in the contract
-        _refundEther();
+        return _initiateClosePosition(data, currentPriceData, previousActionsData, delegationData);
     }
 
     /**
@@ -781,5 +663,133 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         }
 
         _nonce[depositOwner_] = nonce + 1;
+    }
+
+    /**
+     * @notice Closes a user deposited amount of the current UsdnProtocol rebalancer position
+     * @param data The structure to hold the transient data during `initiateClosePosition`
+     * @param currentPriceData The current price data
+     * @param previousActionsData The previous action price data
+     * @param delegationData An optional delegation data
+     * @return success_ If the UsdnProtocol's `initiateClosePosition` was successful
+     */
+    function _initiateClosePosition(
+        InitiateCloseData memory data,
+        bytes calldata currentPriceData,
+        Types.PreviousActionsData calldata previousActionsData,
+        bytes calldata delegationData
+    ) internal returns (bool success_) {
+        if (data.amount == 0) {
+            revert RebalancerInvalidAmount();
+        }
+        if (delegationData.length == 0) {
+            data.user = msg.sender;
+        } else {
+            data.user =
+                _verifyInitiateCloseDelegation(data.amount, data.to, data.userMinPrice, data.deadline, delegationData);
+        }
+
+        data.userDepositData = _userDeposit[data.user];
+
+        if (data.amount > data.userDepositData.amount) {
+            revert RebalancerInvalidAmount();
+        }
+
+        data.remainingAssets = data.userDepositData.amount - data.amount;
+        if (data.remainingAssets > 0 && data.remainingAssets < _minAssetDeposit) {
+            revert RebalancerInvalidAmount();
+        }
+
+        if (data.userDepositData.entryPositionVersion == 0) {
+            revert RebalancerUserPending();
+        }
+
+        if (data.userDepositData.entryPositionVersion <= _lastLiquidatedVersion) {
+            revert RebalancerUserLiquidated();
+        }
+
+        data.positionVersion = _positionVersion;
+
+        if (data.userDepositData.entryPositionVersion > data.positionVersion) {
+            revert RebalancerUserPending();
+        }
+
+        data.currentPositionData = _positionData[data.positionVersion];
+
+        data.amountToCloseWithoutBonus = FixedPointMathLib.fullMulDiv(
+            data.amount,
+            data.currentPositionData.entryAccMultiplier,
+            _positionData[data.userDepositData.entryPositionVersion].entryAccMultiplier
+        );
+
+        (data.protocolPosition,) = _usdnProtocol.getLongPosition(
+            Types.PositionId({
+                tick: data.currentPositionData.tick,
+                tickVersion: data.currentPositionData.tickVersion,
+                index: data.currentPositionData.index
+            })
+        );
+
+        // include bonus
+        data.amountToClose = data.amountToCloseWithoutBonus
+            + data.amountToCloseWithoutBonus * (data.protocolPosition.amount - data.currentPositionData.amount)
+                / data.currentPositionData.amount;
+
+        if (data.remainingAssets > 0) {
+            data.protocolRemainingAmount = data.protocolPosition.amount - data.amountToClose;
+            if (data.protocolRemainingAmount > 0 && data.protocolRemainingAmount < _usdnProtocol.getMinLongPosition()) {
+                revert RebalancerInvalidAmount();
+            }
+        }
+
+        data.balanceOfAssetBefore = _asset.balanceOf(address(this));
+
+        // slither-disable-next-line reentrancy-eth
+        success_ = _usdnProtocol.initiateClosePosition{ value: msg.value }(
+            Types.PositionId({
+                tick: data.currentPositionData.tick,
+                tickVersion: data.currentPositionData.tickVersion,
+                index: data.currentPositionData.index
+            }),
+            data.amountToClose.toUint128(),
+            data.userMinPrice,
+            data.to,
+            data.validator,
+            data.deadline,
+            currentPriceData,
+            previousActionsData,
+            ""
+        );
+        data.balanceOfAssetAfter = _asset.balanceOf(address(this));
+
+        if (success_) {
+            if (data.remainingAssets == 0) {
+                delete _userDeposit[data.user];
+            } else {
+                _userDeposit[data.user].amount = data.remainingAssets;
+            }
+
+            // safe cast is already made on amountToClose
+            data.currentPositionData.amount -= uint128(data.amountToCloseWithoutBonus);
+
+            if (data.currentPositionData.amount == 0) {
+                PositionData memory newPositionData;
+                newPositionData.tick = Constants.NO_POSITION_TICK;
+                _positionData[data.positionVersion] = newPositionData;
+            } else {
+                _positionData[data.positionVersion].amount = data.currentPositionData.amount;
+            }
+
+            emit ClosePositionInitiated(data.user, data.amount, data.amountToClose, data.remainingAssets);
+        }
+
+        // If the rebalancer received assets, it means it was rewarded for liquidating positions
+        // So we need to forward those rewards to the msg.sender
+        if (data.balanceOfAssetAfter > data.balanceOfAssetBefore) {
+            _asset.safeTransfer(msg.sender, data.balanceOfAssetAfter - data.balanceOfAssetBefore);
+        }
+
+        // sent back any ether left in the contract
+        _refundEther();
     }
 }
