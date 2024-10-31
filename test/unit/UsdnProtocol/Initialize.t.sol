@@ -67,6 +67,8 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         skip(1);
         protocol.acceptDefaultAdminTransfer();
         wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
+
+        _giveRolesAddressThis();
     }
 
     /**
@@ -397,6 +399,28 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         protocol.initialize(
             INITIAL_DEPOSIT, INITIAL_POSITION / 10, (INITIAL_PRICE * 10) / 11, abi.encode(INITIAL_PRICE)
         );
+    }
+
+    function _giveRolesAddressThis() internal {
+        vm.prank(ADMIN);
+        protocol.grantRole(protocol.ADMIN_CRITICAL_FUNCTIONS_ROLE(), address(this));
+        protocol.grantRole(protocol.ADMIN_SET_EXTERNAL_ROLE(), address(this));
+        protocol.grantRole(protocol.ADMIN_SET_PROTOCOL_PARAMS_ROLE(), address(this));
+        protocol.grantRole(protocol.ADMIN_SET_USDN_PARAMS_ROLE(), address(this));
+        protocol.grantRole(protocol.ADMIN_SET_OPTIONS_ROLE(), address(this));
+        protocol.grantRole(protocol.ADMIN_PROXY_UPGRADE_ROLE(), address(this));
+        protocol.grantRole(protocol.ADMIN_PAUSER_ROLE(), address(this));
+        protocol.grantRole(protocol.ADMIN_UNPAUSER_ROLE(), address(this));
+        vm.stopPrank();
+
+        protocol.grantRole(protocol.CRITICAL_FUNCTIONS_ROLE(), address(this));
+        protocol.grantRole(protocol.SET_EXTERNAL_ROLE(), address(this));
+        protocol.grantRole(protocol.SET_PROTOCOL_PARAMS_ROLE(), address(this));
+        protocol.grantRole(protocol.SET_USDN_PARAMS_ROLE(), address(this));
+        protocol.grantRole(protocol.SET_OPTIONS_ROLE(), address(this));
+        protocol.grantRole(protocol.PROXY_UPGRADE_ROLE(), address(this));
+        protocol.grantRole(protocol.PAUSER_ROLE(), address(this));
+        protocol.grantRole(protocol.UNPAUSER_ROLE(), address(this));
     }
 
     receive() external payable { }

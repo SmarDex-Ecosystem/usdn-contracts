@@ -195,6 +195,28 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
 
+        if (!testParams.flags.enableRoles) {
+            protocol.grantRole(protocol.ADMIN_CRITICAL_FUNCTIONS_ROLE(), ADMIN);
+            protocol.grantRole(protocol.ADMIN_SET_EXTERNAL_ROLE(), ADMIN);
+            protocol.grantRole(protocol.ADMIN_SET_PROTOCOL_PARAMS_ROLE(), ADMIN);
+            protocol.grantRole(protocol.ADMIN_SET_USDN_PARAMS_ROLE(), ADMIN);
+            protocol.grantRole(protocol.ADMIN_SET_OPTIONS_ROLE(), ADMIN);
+            protocol.grantRole(protocol.ADMIN_PROXY_UPGRADE_ROLE(), ADMIN);
+            protocol.grantRole(protocol.ADMIN_PAUSER_ROLE(), ADMIN);
+            protocol.grantRole(protocol.ADMIN_UNPAUSER_ROLE(), ADMIN);
+            vm.stopPrank();
+
+            vm.startPrank(ADMIN);
+            protocol.grantRole(protocol.CRITICAL_FUNCTIONS_ROLE(), ADMIN);
+            protocol.grantRole(protocol.SET_EXTERNAL_ROLE(), ADMIN);
+            protocol.grantRole(protocol.SET_PROTOCOL_PARAMS_ROLE(), ADMIN);
+            protocol.grantRole(protocol.SET_USDN_PARAMS_ROLE(), ADMIN);
+            protocol.grantRole(protocol.SET_OPTIONS_ROLE(), ADMIN);
+            protocol.grantRole(protocol.PROXY_UPGRADE_ROLE(), ADMIN);
+            protocol.grantRole(protocol.PAUSER_ROLE(), ADMIN);
+            protocol.grantRole(protocol.UNPAUSER_ROLE(), ADMIN);
+        }
+
         vm.stopPrank();
         vm.startPrank(managers.setProtocolParamsManager);
         if (!testParams.flags.enablePositionFees) {

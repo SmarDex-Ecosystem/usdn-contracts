@@ -158,19 +158,6 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         require(success, "DEPLOYER wstETH mint failed");
         usdn = new Usdn(address(0), address(0));
 
-        if (!testParams.enableRoles) {
-            managers = Managers({
-                setExternalManager: ADMIN,
-                criticalFunctionsManager: ADMIN,
-                setProtocolParamsManager: ADMIN,
-                setUsdnParamsManager: ADMIN,
-                setOptionsManager: ADMIN,
-                proxyUpgradeManager: ADMIN,
-                pauserManager: ADMIN,
-                unpauserManager: ADMIN
-            });
-        }
-
         implementation = new UsdnProtocolHandler();
         protocolFallback = new UsdnProtocolFallback();
         address proxy = UnsafeUpgrades.deployUUPSProxy(
@@ -217,6 +204,36 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         protocol.initialize{ value: oracleMiddleware.validationCost("", ProtocolAction.Initialize) }(
             testParams.initialDeposit, testParams.initialLong, testParams.initialLiqPrice, ""
         );
+
+        protocol.grantRole(protocol.ADMIN_SET_EXTERNAL_ROLE(), DEPLOYER);
+        protocol.grantRole(protocol.ADMIN_CRITICAL_FUNCTIONS_ROLE(), DEPLOYER);
+        protocol.grantRole(protocol.ADMIN_SET_PROTOCOL_PARAMS_ROLE(), DEPLOYER);
+        protocol.grantRole(protocol.ADMIN_SET_USDN_PARAMS_ROLE(), DEPLOYER);
+        protocol.grantRole(protocol.ADMIN_SET_OPTIONS_ROLE(), DEPLOYER);
+        protocol.grantRole(protocol.ADMIN_PROXY_UPGRADE_ROLE(), DEPLOYER);
+        protocol.grantRole(protocol.ADMIN_PAUSER_ROLE(), DEPLOYER);
+        protocol.grantRole(protocol.ADMIN_UNPAUSER_ROLE(), DEPLOYER);
+
+        if (!testParams.enableRoles) {
+            protocol.grantRole(protocol.CRITICAL_FUNCTIONS_ROLE(), ADMIN);
+            protocol.grantRole(protocol.SET_EXTERNAL_ROLE(), ADMIN);
+            protocol.grantRole(protocol.SET_PROTOCOL_PARAMS_ROLE(), ADMIN);
+            protocol.grantRole(protocol.SET_USDN_PARAMS_ROLE(), ADMIN);
+            protocol.grantRole(protocol.SET_OPTIONS_ROLE(), ADMIN);
+            protocol.grantRole(protocol.PROXY_UPGRADE_ROLE(), ADMIN);
+            protocol.grantRole(protocol.PAUSER_ROLE(), ADMIN);
+            protocol.grantRole(protocol.UNPAUSER_ROLE(), ADMIN);
+        } else {
+            protocol.grantRole(protocol.CRITICAL_FUNCTIONS_ROLE(), CRITICAL_FUNCTIONS_MANAGER);
+            protocol.grantRole(protocol.SET_EXTERNAL_ROLE(), SET_EXTERNAL_MANAGER);
+            protocol.grantRole(protocol.SET_PROTOCOL_PARAMS_ROLE(), SET_PROTOCOL_PARAMS_MANAGER);
+            protocol.grantRole(protocol.SET_USDN_PARAMS_ROLE(), SET_USDN_PARAMS_MANAGER);
+            protocol.grantRole(protocol.SET_OPTIONS_ROLE(), SET_OPTIONS_MANAGER);
+            protocol.grantRole(protocol.PROXY_UPGRADE_ROLE(), PROXY_UPGRADE_MANAGER);
+            protocol.grantRole(protocol.PAUSER_ROLE(), PAUSER_MANAGER);
+            protocol.grantRole(protocol.UNPAUSER_ROLE(), UNPAUSER_MANAGER);
+        }
+
         vm.stopPrank();
         vm.prank(managers.setExternalManager);
         protocol.setRebalancer(rebalancer);

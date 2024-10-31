@@ -85,10 +85,35 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
         usdnProtocol.beginDefaultAdminTransfer(ADMIN);
         rebalancer.transferOwnership(ADMIN);
         vm.stopPrank();
+        _giveRolesToAdmin();
         vm.startPrank(ADMIN);
         skip(1);
         usdnProtocol.acceptDefaultAdminTransfer();
         rebalancer.acceptOwnership();
+        vm.stopPrank();
+    }
+
+    function _giveRolesToAdmin() internal {
+        vm.startPrank(DEPLOYER);
+        usdnProtocol.grantRole(usdnProtocol.ADMIN_CRITICAL_FUNCTIONS_ROLE(), ADMIN);
+        usdnProtocol.grantRole(usdnProtocol.ADMIN_SET_EXTERNAL_ROLE(), ADMIN);
+        usdnProtocol.grantRole(usdnProtocol.ADMIN_SET_PROTOCOL_PARAMS_ROLE(), ADMIN);
+        usdnProtocol.grantRole(usdnProtocol.ADMIN_SET_USDN_PARAMS_ROLE(), ADMIN);
+        usdnProtocol.grantRole(usdnProtocol.ADMIN_SET_OPTIONS_ROLE(), ADMIN);
+        usdnProtocol.grantRole(usdnProtocol.ADMIN_PROXY_UPGRADE_ROLE(), ADMIN);
+        usdnProtocol.grantRole(usdnProtocol.ADMIN_PAUSER_ROLE(), ADMIN);
+        usdnProtocol.grantRole(usdnProtocol.ADMIN_UNPAUSER_ROLE(), ADMIN);
+        vm.stopPrank();
+
+        vm.startPrank(ADMIN);
+        usdnProtocol.grantRole(usdnProtocol.CRITICAL_FUNCTIONS_ROLE(), ADMIN);
+        usdnProtocol.grantRole(usdnProtocol.SET_EXTERNAL_ROLE(), ADMIN);
+        usdnProtocol.grantRole(usdnProtocol.SET_PROTOCOL_PARAMS_ROLE(), ADMIN);
+        usdnProtocol.grantRole(usdnProtocol.SET_USDN_PARAMS_ROLE(), ADMIN);
+        usdnProtocol.grantRole(usdnProtocol.SET_OPTIONS_ROLE(), ADMIN);
+        usdnProtocol.grantRole(usdnProtocol.PROXY_UPGRADE_ROLE(), ADMIN);
+        usdnProtocol.grantRole(usdnProtocol.PAUSER_ROLE(), ADMIN);
+        usdnProtocol.grantRole(usdnProtocol.UNPAUSER_ROLE(), ADMIN);
         vm.stopPrank();
     }
 }
