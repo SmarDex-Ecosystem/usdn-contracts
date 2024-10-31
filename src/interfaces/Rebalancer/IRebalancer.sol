@@ -91,7 +91,7 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
     /**
      * @notice Get the nonce a user can use to generate a delegation signature
      * @dev This is to prevent replay attacks when using an EIP712 delegation signature
-     * @param user The user address
+     * @param user The user address of the deposited amount in the rebalancer
      * @return The user nonce
      */
     function getNonce(address user) external view returns (uint256);

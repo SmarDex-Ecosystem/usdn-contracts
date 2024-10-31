@@ -7,7 +7,6 @@ import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC16
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { IBaseRebalancer } from "../../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IOwnershipCallback } from "../../interfaces/UsdnProtocol/IOwnershipCallback.sol";
 import { IUsdnProtocolActions } from "../../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
