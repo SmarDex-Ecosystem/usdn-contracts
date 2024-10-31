@@ -236,7 +236,7 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
 
     function i_updateEMA(int256 fundingPerDay, uint128 secondsElapsed) external;
 
-    function i_usdnRebase(uint128 assetPrice, bool ignoreInterval) external returns (bool, bytes memory);
+    function i_usdnRebase(uint128 assetPrice) external returns (bool, bytes memory);
 
     function i_calcUsdnPrice(uint256 vaultBalance, uint128 assetPrice, uint256 usdnTotalSupply, uint8 assetDecimals)
         external

@@ -163,7 +163,6 @@ library UsdnProtocolLongLibrary {
      * @param neutralPrice The neutral price for the asset
      * @param timestamp The timestamp at which the operation is performed
      * @param iterations The number of iterations for the liquidation process
-     * @param ignoreInterval A boolean indicating whether to ignore the interval for USDN rebase
      * @param action The type of action that is being performed by the user
      * @param priceData The price oracle update data
      * @return liquidatedTicks_ Information about the liquidated ticks
@@ -175,7 +174,6 @@ library UsdnProtocolLongLibrary {
         uint256 neutralPrice,
         uint256 timestamp,
         uint16 iterations,
-        bool ignoreInterval,
         Types.ProtocolAction action,
         bytes calldata priceData
     ) public returns (Types.LiqTickInfo[] memory liquidatedTicks_, bool isLiquidationPending_) {
@@ -210,7 +208,7 @@ library UsdnProtocolLongLibrary {
             s._balanceLong = liquidationEffects.newLongBalance;
             s._balanceVault = liquidationEffects.newVaultBalance;
 
-            (data.rebased, data.callbackResult) = _usdnRebase(s, data.lastPrice, ignoreInterval);
+            (data.rebased, data.callbackResult) = _usdnRebase(s, data.lastPrice);
 
             if (liquidationEffects.liquidatedTicks.length > 0) {
                 _sendRewardsToLiquidator(
@@ -254,7 +252,6 @@ library UsdnProtocolLongLibrary {
             neutralPrice,
             currentPrice.timestamp,
             s._liquidationIteration,
-            false,
             Types.ProtocolAction.InitiateOpenPosition,
             params.currentPriceData
         );
@@ -462,24 +459,20 @@ library UsdnProtocolLongLibrary {
      * @dev Note: only call this function after `_applyPnlAndFunding` has been called to update the balances
      * @param s The storage of the protocol
      * @param assetPrice The current price of the underlying asset
-     * @param ignoreInterval If true, then the price check will be performed regardless of when the last check happened
      * @return rebased_ Whether a rebase was performed
      * @return callbackResult_ The rebase callback result, if any
      */
-    function _usdnRebase(Types.Storage storage s, uint128 assetPrice, bool ignoreInterval)
+    function _usdnRebase(Types.Storage storage s, uint128 assetPrice)
         internal
         returns (bool rebased_, bytes memory callbackResult_)
     {
-        if (!ignoreInterval && block.timestamp - s._lastRebaseCheck < s._usdnRebaseInterval) {
-            return (false, callbackResult_);
-        }
-        s._lastRebaseCheck = block.timestamp;
         IUsdn usdn = s._usdn;
         uint256 divisor = usdn.divisor();
         if (divisor <= s._usdnMinDivisor) {
             // no need to rebase, the USDN divisor cannot go lower
             return (false, callbackResult_);
         }
+
         uint256 balanceVault = s._balanceVault;
         uint8 assetDecimals = s._assetDecimals;
         uint256 usdnTotalSupply = usdn.totalSupply();
@@ -487,8 +480,10 @@ library UsdnProtocolLongLibrary {
         if (uPrice <= s._usdnRebaseThreshold) {
             return (false, callbackResult_);
         }
+
         uint256 targetTotalSupply = _calcRebaseTotalSupply(balanceVault, assetPrice, s._targetUsdnPrice, assetDecimals);
         uint256 newDivisor = FixedPointMathLib.fullMulDiv(usdnTotalSupply, divisor, targetTotalSupply);
+
         // since the USDN token can call a handler after the rebase, we want to make sure we do not block the user
         // action in case the rebase fails
         try usdn.rebase(newDivisor) returns (bool rebased, uint256, bytes memory callbackResult) {

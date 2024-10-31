@@ -61,7 +61,6 @@ library UsdnProtocolActionsUtilsLibrary {
             currentPrice.neutralPrice,
             currentPrice.timestamp,
             Constants.MAX_LIQUIDATION_ITERATION,
-            true,
             Types.ProtocolAction.Liquidation,
             currentPriceData
         );
@@ -163,7 +162,6 @@ library UsdnProtocolActionsUtilsLibrary {
             currentPrice.neutralPrice,
             currentPrice.timestamp,
             s._liquidationIteration,
-            false,
             Types.ProtocolAction.InitiateClosePosition,
             params.currentPriceData
         );
@@ -307,9 +305,9 @@ library UsdnProtocolActionsUtilsLibrary {
      * the validator also receives the security deposit
      * Outside of those periods, the security deposit goes to the user validating the pending action
      * @param initiateTimestamp The timestamp at which the action was initiated
-     * @param lowLatencyDeadline The low latency deadline
-     * @param lowLatencyDelay The low latency delay of the oracle middleware
-     * @param onChainDeadline The on-chain deadline
+     * @param lowLatencyDeadline The deadline after which the action is actionable within a low latency oracle
+     * @param lowLatencyDelay The amount of time the action can be validated with a low latency oracle
+     * @param onChainDeadline The deadline after which the action is actionable with an on-chain oracle
      * @return actionable_ Whether the pending action is actionable
      */
     function _isActionable(
