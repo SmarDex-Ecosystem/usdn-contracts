@@ -8,6 +8,7 @@ import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { IEventsErrors } from "../../../utils/IEventsErrors.sol";
 import { IUsdnProtocolHandler } from "../../../utils/IUsdnProtocolHandler.sol";
+import { RolesUtils } from "../../../utils/RolesUtils.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
 import { RebalancerHandler } from "../../Rebalancer/utils/Handler.sol";
@@ -32,7 +33,7 @@ import { FeeCollector } from "../../../../src/utils/FeeCollector.sol";
  * @title UsdnProtocolBaseFixture
  * @dev Utils for testing the USDN Protocol
  */
-contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErrors, IUsdnProtocolEvents {
+contract UsdnProtocolBaseFixture is BaseFixture, RolesUtils, IUsdnProtocolErrors, IEventsErrors, IUsdnProtocolEvents {
     struct Flags {
         bool enablePositionFees;
         bool enableProtocolFees;
@@ -172,27 +173,9 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
-
-        protocol.grantRole(protocol.ADMIN_CRITICAL_FUNCTIONS_ROLE(), ADMIN);
-        protocol.grantRole(protocol.ADMIN_SET_EXTERNAL_ROLE(), ADMIN);
-        protocol.grantRole(protocol.ADMIN_SET_PROTOCOL_PARAMS_ROLE(), ADMIN);
-        protocol.grantRole(protocol.ADMIN_SET_USDN_PARAMS_ROLE(), ADMIN);
-        protocol.grantRole(protocol.ADMIN_SET_OPTIONS_ROLE(), ADMIN);
-        protocol.grantRole(protocol.ADMIN_PROXY_UPGRADE_ROLE(), ADMIN);
-        protocol.grantRole(protocol.ADMIN_PAUSER_ROLE(), ADMIN);
-        protocol.grantRole(protocol.ADMIN_UNPAUSER_ROLE(), ADMIN);
         vm.stopPrank();
 
-        vm.startPrank(ADMIN);
-        protocol.grantRole(protocol.CRITICAL_FUNCTIONS_ROLE(), managers.criticalFunctionsManager);
-        protocol.grantRole(protocol.SET_EXTERNAL_ROLE(), managers.setExternalManager);
-        protocol.grantRole(protocol.SET_PROTOCOL_PARAMS_ROLE(), managers.setProtocolParamsManager);
-        protocol.grantRole(protocol.SET_USDN_PARAMS_ROLE(), managers.setUsdnParamsManager);
-        protocol.grantRole(protocol.SET_OPTIONS_ROLE(), managers.setOptionsManager);
-        protocol.grantRole(protocol.PROXY_UPGRADE_ROLE(), managers.proxyUpgradeManager);
-        protocol.grantRole(protocol.PAUSER_ROLE(), managers.pauserManager);
-        protocol.grantRole(protocol.UNPAUSER_ROLE(), managers.unpauserManager);
-        vm.stopPrank();
+        _giveRolesTo(managers, protocol);
 
         vm.startPrank(managers.setProtocolParamsManager);
         if (!testParams.flags.enablePositionFees) {

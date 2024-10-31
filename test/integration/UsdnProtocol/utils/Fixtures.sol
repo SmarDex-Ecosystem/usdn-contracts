@@ -21,6 +21,7 @@ import {
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { IEventsErrors } from "../../../utils/IEventsErrors.sol";
 import { IUsdnProtocolHandler } from "../../../utils/IUsdnProtocolHandler.sol";
+import { RolesUtils } from "../../../utils/RolesUtils.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
 import {
@@ -40,7 +41,13 @@ import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUs
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 
-contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProtocolEvents, IEventsErrors {
+contract UsdnProtocolBaseIntegrationFixture is
+    BaseFixture,
+    RolesUtils,
+    IUsdnProtocolErrors,
+    IUsdnProtocolEvents,
+    IEventsErrors
+{
     struct SetUpParams {
         uint128 initialDeposit;
         uint128 initialLong;
@@ -197,27 +204,9 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         protocol.initialize{ value: oracleMiddleware.validationCost("", ProtocolAction.Initialize) }(
             testParams.initialDeposit, testParams.initialLong, testParams.initialLiqPrice, ""
         );
-
-        protocol.grantRole(protocol.ADMIN_SET_EXTERNAL_ROLE(), ADMIN);
-        protocol.grantRole(protocol.ADMIN_CRITICAL_FUNCTIONS_ROLE(), ADMIN);
-        protocol.grantRole(protocol.ADMIN_SET_PROTOCOL_PARAMS_ROLE(), ADMIN);
-        protocol.grantRole(protocol.ADMIN_SET_USDN_PARAMS_ROLE(), ADMIN);
-        protocol.grantRole(protocol.ADMIN_SET_OPTIONS_ROLE(), ADMIN);
-        protocol.grantRole(protocol.ADMIN_PROXY_UPGRADE_ROLE(), ADMIN);
-        protocol.grantRole(protocol.ADMIN_PAUSER_ROLE(), ADMIN);
-        protocol.grantRole(protocol.ADMIN_UNPAUSER_ROLE(), ADMIN);
         vm.stopPrank();
 
-        vm.startPrank(ADMIN);
-        protocol.grantRole(protocol.CRITICAL_FUNCTIONS_ROLE(), managers.criticalFunctionsManager);
-        protocol.grantRole(protocol.SET_EXTERNAL_ROLE(), managers.setExternalManager);
-        protocol.grantRole(protocol.SET_PROTOCOL_PARAMS_ROLE(), managers.setProtocolParamsManager);
-        protocol.grantRole(protocol.SET_USDN_PARAMS_ROLE(), managers.setUsdnParamsManager);
-        protocol.grantRole(protocol.SET_OPTIONS_ROLE(), managers.setOptionsManager);
-        protocol.grantRole(protocol.PROXY_UPGRADE_ROLE(), managers.setUsdnParamsManager);
-        protocol.grantRole(protocol.PAUSER_ROLE(), managers.pauserManager);
-        protocol.grantRole(protocol.UNPAUSER_ROLE(), managers.unpauserManager);
-        vm.stopPrank();
+        _giveRolesTo(managers, protocol);
 
         vm.prank(managers.setExternalManager);
         protocol.setRebalancer(rebalancer);

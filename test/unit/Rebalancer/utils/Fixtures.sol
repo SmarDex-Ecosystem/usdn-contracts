@@ -5,6 +5,7 @@ import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
+import { RolesUtils } from "../../../utils/RolesUtils.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
 import { MockOracleMiddleware } from "../../UsdnProtocol/utils/MockOracleMiddleware.sol";
@@ -24,7 +25,7 @@ import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProt
  * @title RebalancerFixture
  * @dev Utils for testing the rebalancer
  */
-contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, IRebalancerEvents {
+contract RebalancerFixture is BaseFixture, RolesUtils, IRebalancerTypes, IRebalancerErrors, IRebalancerEvents {
     Usdn public usdn;
     Sdex public sdex;
     WstETH public wstETH;
@@ -73,35 +74,13 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
         usdnProtocol.beginDefaultAdminTransfer(ADMIN);
         rebalancer.transferOwnership(ADMIN);
         vm.stopPrank();
-        _giveRolesToAdmin();
+
+        _giveRolesTo(Managers(ADMIN, ADMIN, ADMIN, ADMIN, ADMIN, ADMIN, ADMIN, ADMIN), usdnProtocol);
+
         vm.startPrank(ADMIN);
         skip(1);
         usdnProtocol.acceptDefaultAdminTransfer();
         rebalancer.acceptOwnership();
-        vm.stopPrank();
-    }
-
-    function _giveRolesToAdmin() internal {
-        vm.startPrank(DEPLOYER);
-        usdnProtocol.grantRole(usdnProtocol.ADMIN_CRITICAL_FUNCTIONS_ROLE(), ADMIN);
-        usdnProtocol.grantRole(usdnProtocol.ADMIN_SET_EXTERNAL_ROLE(), ADMIN);
-        usdnProtocol.grantRole(usdnProtocol.ADMIN_SET_PROTOCOL_PARAMS_ROLE(), ADMIN);
-        usdnProtocol.grantRole(usdnProtocol.ADMIN_SET_USDN_PARAMS_ROLE(), ADMIN);
-        usdnProtocol.grantRole(usdnProtocol.ADMIN_SET_OPTIONS_ROLE(), ADMIN);
-        usdnProtocol.grantRole(usdnProtocol.ADMIN_PROXY_UPGRADE_ROLE(), ADMIN);
-        usdnProtocol.grantRole(usdnProtocol.ADMIN_PAUSER_ROLE(), ADMIN);
-        usdnProtocol.grantRole(usdnProtocol.ADMIN_UNPAUSER_ROLE(), ADMIN);
-        vm.stopPrank();
-
-        vm.startPrank(ADMIN);
-        usdnProtocol.grantRole(usdnProtocol.CRITICAL_FUNCTIONS_ROLE(), ADMIN);
-        usdnProtocol.grantRole(usdnProtocol.SET_EXTERNAL_ROLE(), ADMIN);
-        usdnProtocol.grantRole(usdnProtocol.SET_PROTOCOL_PARAMS_ROLE(), ADMIN);
-        usdnProtocol.grantRole(usdnProtocol.SET_USDN_PARAMS_ROLE(), ADMIN);
-        usdnProtocol.grantRole(usdnProtocol.SET_OPTIONS_ROLE(), ADMIN);
-        usdnProtocol.grantRole(usdnProtocol.PROXY_UPGRADE_ROLE(), ADMIN);
-        usdnProtocol.grantRole(usdnProtocol.PAUSER_ROLE(), ADMIN);
-        usdnProtocol.grantRole(usdnProtocol.UNPAUSER_ROLE(), ADMIN);
         vm.stopPrank();
     }
 }
