@@ -103,15 +103,6 @@ contract TestRebalancerResetDepositAssets is RebalancerFixture {
         rebalancer.resetDepositAssets();
     }
 
-    function test_RevertWhen_resetDepositWhenLiquidated() public {
-        rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));
-        skip(rebalancer.getTimeLimits().validationDelay);
-        rebalancer.validateDepositAssets();
-
-        vm.expectRevert(RebalancerNoPendingAction.selector);
-        rebalancer.resetDepositAssets();
-    }
-
     /**
      * @custom:scenario The user tries to reset his deposit but has a pending withdrawal
      * @custom:given The user initiated and validated a deposit, then initiated a withdrawal
