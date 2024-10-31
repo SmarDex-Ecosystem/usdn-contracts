@@ -570,9 +570,10 @@ interface IUsdnProtocolFallback {
     /**
      * @notice Get the nonce a user can use to generate a delegation signature
      * @dev This is to prevent replay attacks when using an eip712 delegation signature
+     * @param owner The address of the position owner
      * @return The user nonce
      */
-    function getNonce(address user) external view returns (uint256);
+    function getNonce(address owner) external view returns (uint256);
 
     /**
      * @notice Get the domain separator v4
