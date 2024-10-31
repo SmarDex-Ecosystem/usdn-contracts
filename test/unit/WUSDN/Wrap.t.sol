@@ -52,6 +52,19 @@ contract TestWusdnWrap is WusdnTokenFixture {
     }
 
     /**
+     * @custom:scenario Revert when wrapping USDN shares equal to less than 1 wei of WUSDN
+     * @custom:when The contract tries to wrap an amount of USDN lower than SHARES_RATIO
+     * @custom:then The transaction should revert with the error {WusdnWrapZeroAmount}
+     */
+    function test_RevertWhen_wrapShares_lowerThanSHARES_RATIO() public returns (uint256 wrappedAmount_) {
+        usdn.approve(address(wusdn), type(uint256).max);
+
+        uint256 sharesRatio = wusdn.SHARES_RATIO();
+        vm.expectRevert(WusdnWrapZeroAmount.selector);
+        wrappedAmount_ = wusdn.wrapShares(sharesRatio - 1, address(this));
+    }
+
+    /**
      * @dev Helper function to test the wrap function
      * @param usdnAmount The amount of USDN to wrap
      * @param to The address to wrap to
