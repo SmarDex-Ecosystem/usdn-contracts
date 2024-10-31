@@ -723,6 +723,9 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
 
     /// @inheritdoc IUsdnProtocolFallback
     function setMinLongPosition(uint256 newMinLongPosition) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
+        if (newMinLongPosition > Constants.MAX_MIN_LONG_POSITION) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidMinLongPosition();
+        }
         s._minLongPosition = newMinLongPosition;
         emit IUsdnProtocolEvents.MinLongPositionUpdated(newMinLongPosition);
 

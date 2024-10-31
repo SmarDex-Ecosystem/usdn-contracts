@@ -712,19 +712,19 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
 
     /**
      * @custom:scenario A rebalancer user closes their position completely
-     * @custom:given The user has deposited 2 ether in the rebalancer
+     * @custom:given The user has deposited 1 ether in the rebalancer
      * @custom:and The rebalancer's position has 4 ether of initial collateral
-     * @custom:and The minimum long position in the protocol is changed to 6 ether
-     * @custom:when The user closes their position completely (2 ether) through a rebalancer partial close
+     * @custom:and The minimum long position in the protocol is changed to 2 ether
+     * @custom:when The user closes their position completely (1 ether) through a rebalancer partial close
      * @custom:then The partial close is authorized and successful
      */
     function test_closePartialFromRebalancerPositionTooSmall() public {
-        uint88 minAssetDeposit = 2 ether;
+        uint88 minAssetDeposit = 1 ether;
 
         PositionId memory rebalancerPos = _setUpMockRebalancerPosition(minAssetDeposit);
 
         vm.prank(ADMIN);
-        protocol.setMinLongPosition(3 * minAssetDeposit);
+        protocol.setMinLongPosition(2 * minAssetDeposit);
 
         vm.prank(address(rebalancer));
         protocol.initiateClosePosition(
@@ -742,19 +742,19 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
 
     /**
      * @custom:scenario A rebalancer user closes their position partially when the position is too small
-     * @custom:given The user has deposited 2 ether in the rebalancer
+     * @custom:given The user has deposited 1 ether in the rebalancer
      * @custom:and The rebalancer's position has 4 ether of initial collateral
-     * @custom:and The minimum long position in the protocol is changed to 6 ether
-     * @custom:when The user closes their position partially (1 ether) through a rebalancer partial close
+     * @custom:and The minimum long position in the protocol is changed to 2 ether
+     * @custom:when The user closes their position partially (0.1 ether) through a rebalancer partial close
      * @custom:then The partial close is unauthorized and reverts with `UsdnProtocolLongPositionTooSmall`
      */
     function test_RevertWhen_closePartialFromRebalancerPartialUserClose() public {
-        uint88 minAssetDeposit = 2 ether;
+        uint88 minAssetDeposit = 1 ether;
 
         PositionId memory rebalancerPos = _setUpMockRebalancerPosition(minAssetDeposit);
 
         vm.prank(ADMIN);
-        protocol.setMinLongPosition(3 * minAssetDeposit);
+        protocol.setMinLongPosition(2 * minAssetDeposit);
 
         vm.expectRevert(UsdnProtocolLongPositionTooSmall.selector);
         vm.prank(address(rebalancer));

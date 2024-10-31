@@ -888,6 +888,17 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
     }
 
     /**
+     * @custom:scenario Call "setMinLongPosition" from admin
+     * @custom:given The initial usdnProtocol state
+     * @custom:when Admin wallet triggers the function with a value above the limit
+     * @custom:then The transaction should revert with the corresponding error
+     */
+    function test_RevertWhen_invalidSetMinLongPosition() public adminPrank {
+        vm.expectRevert(UsdnProtocolInvalidMinLongPosition.selector);
+        protocol.setMinLongPosition(2 ether + 1);
+    }
+
+    /**
      * @custom:scenario Call `setPositionFeeBps` as admin
      * @custom:when The admin sets the position fee between 0 and 2000 bps
      * @custom:then The position fee should be updated

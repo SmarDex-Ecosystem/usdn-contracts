@@ -24,6 +24,7 @@ library UsdnProtocolConstantsLibrary {
     uint256 internal constant MAX_VAULT_FEE_BPS = 2000;
     uint256 internal constant MAX_LEVERAGE = 100 * 10 ** LEVERAGE_DECIMALS;
     uint256 internal constant MAX_SECURITY_DEPOSIT = 2 ether;
+    uint256 internal constant MAX_MIN_LONG_POSITION = 2 ether;
 
     // After some checks, 1% would mean a user with a position with 10x leverage needs the price to 900x before it
     // limits the position's PnL. We think it's unlikely enough so we don't consider it a problem
