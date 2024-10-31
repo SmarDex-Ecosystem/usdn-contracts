@@ -473,8 +473,8 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getNonce(address user) external view returns (uint256) {
-        return s._nonce[user];
+    function getNonce(address owner) external view returns (uint256) {
+        return s._nonce[owner];
     }
 
     /// @inheritdoc IUsdnProtocolFallback

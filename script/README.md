@@ -24,7 +24,7 @@ Environment variables can be used to control the script execution:
 - `CHAINLINK_GAS_PRICE_VALIDITY`: the amount of time (in seconds) we consider the price valid. A tolerance should be added to avoid reverting if chainlink misses the heartbeat by a few minutes
 - `USDN_ADDRESS`: required if running `01_Deploy.s.sol` in a production environment (not fork)
 - `GET_WSTETH`: whether to get wstETH by sending ether to the wstETH contract or not. Only applicable if `WSTETH_ADDRESS` is given.
-- `USDN_EIP712_VERSION`: If provided, overrides the default values for the usdn protocol version. The current major version of the EIP712 signing domain of the usdn protocol. This version must be updated if you wish to break compatibility with previous delegations that have not been used, for example when upgrading contracts that impact delegations logic or when deploying a new version of contracts.
+- `PROTOCOL_EIP712_VERSION`: If provided, overrides the default values for the usdn protocol version. The current version of the EIP712 signing domain of the usdn protocol. This version must be updated if you wish to break compatibility with previous delegations that have not been used, for example when upgrading contracts that impact delegations logic or when deploying a new version of contracts.
 
 Example using the real wstETH and depositing 10 ETH for both vault side and long side for mainnet deployment (with liquidation
 at 1 USD so a leverage close to 1x):
