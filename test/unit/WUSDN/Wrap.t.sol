@@ -52,6 +52,19 @@ contract TestWusdnWrap is WusdnTokenFixture {
     }
 
     /**
+     * @custom:scenario Revert when wrapping USDN to WUSDN
+     * @custom:when The contract tries to wrap more USDN than it has
+     * @custom:then The transaction should revert with the error {WusdnInsufficientBalance}
+     */
+    function test_RevertWhen_wrapShares_lowerThanSHARES_RATIO() public returns (uint256 wrappedAmount_) {
+        usdn.approve(address(wusdn), type(uint256).max);
+
+        uint256 sharesRatio = wusdn.SHARES_RATIO();
+        vm.expectRevert(WusdnWrapZeroAmount.selector);
+        wrappedAmount_ = wusdn.wrapShares(sharesRatio - 1, address(this));
+    }
+
+    /**
      * @dev Helper function to test the wrap function
      * @param usdnAmount The amount of USDN to wrap
      * @param to The address to wrap to
