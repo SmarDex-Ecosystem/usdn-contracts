@@ -85,6 +85,39 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
     }
 
     /**
+     * @custom:scenario The user deposits assets after their previous position got liquidated
+     * @custom:given A user deposited assets and the position gets liquidated
+     * @custom:and Another user updates the last liquidated version before the current user
+     * @custom:when The user deposit assets again
+     * @custom:then The deposit happens as expected
+     */
+    function test_depositAfterBeingLiquidatedAndLiquidatedVersionAlreadyUpdated() public {
+        rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));
+        vm.prank(USER_1);
+        rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, USER_1);
+        skip(rebalancer.getTimeLimits().validationDelay);
+        rebalancer.validateDepositAssets();
+        vm.prank(USER_1);
+        rebalancer.validateDepositAssets();
+
+        vm.prank(address(usdnProtocol));
+        rebalancer.updatePosition(Types.PositionId(0, 0, 0), 0);
+
+        // increase the tick version to simulate the tick being liquidated
+        UsdnProtocolMock(address(usdnProtocol)).setTickVersion(0, 1);
+
+        // first user updates _lastLiquidatedVersion
+        rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));
+        assertEq(
+            rebalancer.getPositionVersion(),
+            rebalancer.getLastLiquidatedVersion(),
+            "The last liquidated version value should be equal to the current position version"
+        );
+
+        _initiateDepositScenario(INITIAL_DEPOSIT, USER_1);
+    }
+
+    /**
      * @custom:scenario The 'to' address deposits assets after their previous position got liquidated
      * @custom:given The 'to' address deposited assets and the position got liquidated
      * @custom:when The user deposit assets again with a 'to' address

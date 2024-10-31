@@ -109,19 +109,6 @@ contract TestRebalancerValidateDepositAssets is RebalancerFixture {
     }
 
     /**
-     * @custom:scenario The user tries to validate a deposit but is in a position that got liquidated
-     * @custom:when The user tries to validate the deposit after being liquidated
-     * @custom:then The call reverts with a {RebalancerNoPendingAction} error
-     */
-    function test_RevertWhen_validateDepositWhenInLiquidatedPosition() public {
-        skip(rebalancer.getTimeLimits().validationDelay);
-        rebalancer.validateDepositAssets();
-
-        vm.expectRevert(RebalancerNoPendingAction.selector);
-        rebalancer.validateDepositAssets();
-    }
-
-    /**
      * @custom:scenario The user tries to validate a deposit but has a pending withdrawal
      * @custom:when The user tries to validate the deposit after initiating a withdrawal
      * @custom:or The user tries to validate the deposit after the validation delay
