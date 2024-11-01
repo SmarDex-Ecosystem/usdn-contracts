@@ -149,23 +149,32 @@ for log in "${logs[@]}"; do
     admin_role=$(printf "$log" | jq -r '.topics[3]')
     event=$(printf "$log" | jq -r '.topics[0]')
 
+    if [[ -z "${addresses[$role]}" ]]; then
+        addresses["$role"]=""
+    fi
+
+    roles["$role"]=1
+
     if [[ "$event" == "RoleGranted(bytes32,address,address)" ]]; then
-        if [[ ! " ${roles[$role]} " =~ " $address " ]]; then
-            roles["$role"]+="$address "
+        if [[ ! " ${addresses[$role]} " =~ " $address " ]]; then
+            addresses["$role"]+="$address "
         fi
     elif [[ "$event" == "RoleAdminChanged(bytes32,bytes32,bytes32)" ]]; then
         admin_roles["$role"]="$admin_role"
     fi
 done
 
-printf "Roles et Adresses:"
+json_output="["
+
 for role in "${!roles[@]}"; do
-    echo "Role: $role"
-    echo "Addresses: ${roles[$role]}"
-    echo "Role_admin: ${admin_roles[$role]}"
-    echo "-----------------------"
+    address_list=$(echo "${addresses[$role]}" | tr ' ' '\n' | jq -R . | jq -s .)
+
+    json_output+=$(jq -n \
+        --arg role "$role" \
+        --arg admin "${admin_roles[$role]}" \
+        --argjson addresses "$address_list" \
+        '{Role: $role, Role_admin: $admin, Addresses: $addresses}'), 
 done
 
-echo "Liste d'adresses uniques:"
-unique_addresses=($(printf '%s\n' "${roles[@]}" | tr ' ' '\n' | sort -u))
-printf '%s\n' "${unique_addresses[@]}"
+json_output="${json_output%,}]"
+echo "$json_output" | jq .
