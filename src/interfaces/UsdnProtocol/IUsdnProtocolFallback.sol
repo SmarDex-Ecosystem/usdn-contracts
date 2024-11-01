@@ -210,6 +210,18 @@ interface IUsdnProtocolFallback {
      */
     function MIN_LONG_TRADING_EXPO_BPS() external pure returns (uint256);
 
+    /**
+     * @notice Get The EIP712 {initiateClosePosition} typehash
+     * @return The {initiateClosePosition} typehash
+     */
+    function INITIATE_CLOSE_TYPEHASH() external pure returns (bytes32);
+
+    /**
+     * @notice Get The EIP712 {transferPositionOwnership} typehash
+     * @return The {transferPositionOwnership} typehash
+     */
+    function TRANSFER_POSITION_OWNERSHIP_TYPEHASH() external pure returns (bytes32);
+
     /* -------------------------------------------------------------------------- */
     /*                                 Immutables getters                         */
     /* -------------------------------------------------------------------------- */
@@ -580,12 +592,6 @@ interface IUsdnProtocolFallback {
      * @return The domain separator v4
      */
     function domainSeparatorV4() external view returns (bytes32);
-
-    /**
-     * @notice Get The EIP712 {initiateClosePosition} typehash
-     * @return The {initiateClosePosition} typehash
-     */
-    function getInitiateCloseTypehash() external pure returns (bytes32);
 
     /* -------------------------------------------------------------------------- */
     /*                                   Setters                                  */

@@ -178,6 +178,16 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
+    function INITIATE_CLOSE_TYPEHASH() external pure returns (bytes32) {
+        return Constants.INITIATE_CLOSE_TYPEHASH;
+    }
+
+    /// @inheritdoc IUsdnProtocolFallback
+    function TRANSFER_POSITION_OWNERSHIP_TYPEHASH() external pure returns (bytes32) {
+        return Constants.TRANSFER_POSITION_OWNERSHIP_TYPEHASH;
+    }
+
+    /// @inheritdoc IUsdnProtocolFallback
     function getTickSpacing() external view returns (int24) {
         return s._tickSpacing;
     }
@@ -470,11 +480,6 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     /// @inheritdoc IUsdnProtocolFallback
     function domainSeparatorV4() external view returns (bytes32) {
         return _domainSeparatorV4();
-    }
-
-    /// @inheritdoc IUsdnProtocolFallback
-    function getInitiateCloseTypehash() external pure returns (bytes32) {
-        return Constants.INITIATE_CLOSE_TYPEHASH;
     }
 
     /* -------------------------------------------------------------------------- */
