@@ -612,7 +612,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
 
     /// @inheritdoc IUsdnProtocolFallback
     function setProtocolFeeBps(uint16 newProtocolFeeBps) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        if (newProtocolFeeBps > Constants.BPS_DIVISOR) {
+        if (newProtocolFeeBps > Constants.MAX_PROTOCOL_FEE_BPS) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidProtocolFeeBps();
         }
         s._protocolFeeBps = newProtocolFeeBps;

@@ -428,12 +428,10 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      * @custom:then Revert because greater than max
      */
     function test_RevertWhen_setFeeBpsWithMax() public adminPrank {
-        // above max value
-        uint16 aboveMax = uint16(protocol.BPS_DIVISOR()) + 1;
         // feeBps greater than max disallowed
         vm.expectRevert(UsdnProtocolInvalidProtocolFeeBps.selector);
         // set feeBps
-        protocol.setProtocolFeeBps(aboveMax);
+        protocol.setProtocolFeeBps(3000 + 1);
     }
 
     /**
