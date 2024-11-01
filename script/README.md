@@ -105,3 +105,9 @@ It can be used like so:
 ```
 npx tsx script/functionClashes.ts UsdnProtocolImpl.sol UsdnProtocolFallback.sol -s UsdnProtocolStorage.sol
 ```
+
+## Verify contracts
+
+The verifying script will work with the latest broadcast script.
+To work, it needs a run-latest.json file.
+It can be an older broadcast file, but you will need to override the run-latest.json file first.
