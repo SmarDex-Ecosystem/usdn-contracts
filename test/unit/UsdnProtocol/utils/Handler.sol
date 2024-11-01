@@ -814,13 +814,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     ) external {
         ActionsUtils._verifyInitiateCloseDelegation(s, positionOwner, params);
     }
-}
 
-/**
- * @title UsdnProtocolFallbackHandler
- * @dev Wrapper to aid in testing the protocol
- */
-contract UsdnProtocolFallbackHandler is UsdnProtocolFallback, Test {
     function i_setUsdnRebaseThreshold(uint128 threshold) external {
         s._usdnRebaseThreshold = threshold;
     }

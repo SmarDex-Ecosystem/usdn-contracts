@@ -8,13 +8,11 @@ import { IUsdnProtocolTypes as Types } from "../../src/interfaces/UsdnProtocol/I
 import { HugeUint } from "../../src/libraries/HugeUint.sol";
 import { UsdnProtocolHandler } from "../unit/UsdnProtocol/utils/Handler.sol";
 
-import { IUsdnProtocolFallbackHandler } from "./IUsdnProtocolFallbackHandler.sol";
-
 /**
  * @title IUsdnProtocolHandler
  * @notice Interface for the USDN protocol handler
  */
-interface IUsdnProtocolHandler is IUsdnProtocol, IUsdnProtocolFallbackHandler {
+interface IUsdnProtocolHandler is IUsdnProtocol {
     function resetEMA() external;
 
     function queuePushFront(PendingAction memory action) external returns (uint128 rawIndex_);
@@ -462,4 +460,6 @@ interface IUsdnProtocolHandler is IUsdnProtocol, IUsdnProtocolFallbackHandler {
         address positionOwner,
         Types.PrepareInitiateClosePositionParams calldata params
     ) external;
+
+    function i_setUsdnRebaseThreshold(uint128 threshold) external;
 }

@@ -18,13 +18,11 @@ import {
 } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { IEventsErrors } from "../../../utils/IEventsErrors.sol";
-import { IUsdnProtocolFallbackHandler } from "../../../utils/IUsdnProtocolFallbackHandler.sol";
 import { IUsdnProtocolHandler } from "../../../utils/IUsdnProtocolHandler.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
 import { RebalancerHandler } from "../../Rebalancer/utils/Handler.sol";
 import { UsdnProtocolHandler } from "./Handler.sol";
-import { UsdnProtocolFallbackHandler } from "./Handler.sol";
 import { MockOracleMiddleware } from "./MockOracleMiddleware.sol";
 
 import { LiquidationRewardsManager } from "../../../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
@@ -172,7 +170,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         }
 
         UsdnProtocolHandler test = new UsdnProtocolHandler();
-        UsdnProtocolFallbackHandler protocolFallback = new UsdnProtocolFallbackHandler();
+        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
         address proxy = UnsafeUpgrades.deployUUPSProxy(
             address(test),
             abi.encodeCall(
