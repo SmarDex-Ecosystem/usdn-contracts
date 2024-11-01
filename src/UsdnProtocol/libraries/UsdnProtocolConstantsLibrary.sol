@@ -36,4 +36,13 @@ library UsdnProtocolConstantsLibrary {
     bytes32 internal constant INITIATE_CLOSE_TYPEHASH = keccak256(
         "InitiateClosePositionDelegation(bytes32 posIdHash,uint128 amountToClose,uint256 userMinPrice,address to,uint256 deadline,address positionOwner,address positionCloser,uint256 nonce)"
     );
+
+    /**
+     * @notice The EIP712 {transferPositionOwnership} typehash
+     * @dev By including this hash into the EIP712 message for this domain, this can be used together with
+     * {ECDSA-recover} to obtain the signer of a message
+     */
+    bytes32 internal constant TRANSFER_POSITION_OWNERSHIP_TYPEHASH = keccak256(
+        "TransferPositionOwnershipDelegation(bytes32 posIdHash,address positionOwner,address newPositionOwner,address delegatedAddress,uint256 nonce)"
+    );
 }

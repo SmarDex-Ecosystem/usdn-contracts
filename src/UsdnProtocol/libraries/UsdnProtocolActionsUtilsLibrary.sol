@@ -85,20 +85,31 @@ library UsdnProtocolActionsUtilsLibrary {
     }
 
     /// @notice See {IUsdnProtocolActions}
-    function transferPositionOwnership(Types.Storage storage s, Types.PositionId calldata posId, address newOwner)
-        external
-    {
+    function transferPositionOwnership(
+        Types.Storage storage s,
+        Types.PositionId calldata posId,
+        bytes calldata delegationSignature,
+        bytes32 domainSeparatorV4,
+        address newOwner
+    ) external {
         (bytes32 tickHash, uint256 version) = Utils._tickHash(s, posId.tick);
         if (posId.tickVersion != version) {
             revert IUsdnProtocolErrors.UsdnProtocolOutdatedTick(version, posId.tickVersion);
         }
         Types.Position storage pos = s._longPositions[tickHash][posId.index];
 
-        if (msg.sender != pos.user) {
-            revert IUsdnProtocolErrors.UsdnProtocolUnauthorized();
-        }
         if (newOwner == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo();
+        }
+
+        if (msg.sender != pos.user) {
+            if (delegationSignature.length == 0) {
+                revert IUsdnProtocolErrors.UsdnProtocolUnauthorized();
+            } else {
+                _verifyTransferPositionOwnershipDelegation(
+                    s, posId, delegationSignature, domainSeparatorV4, pos.user, newOwner
+                );
+            }
         }
 
         pos.user = newOwner;
@@ -398,7 +409,7 @@ library UsdnProtocolActionsUtilsLibrary {
             if (params.delegationSignature.length == 0) {
                 revert IUsdnProtocolErrors.UsdnProtocolUnauthorized();
             } else {
-                _verifyInitiateCloseDelegation(s, pos.user, params);
+                _verifyInitiateCloseDelegation(s, params, pos.user);
             }
         }
 
@@ -453,13 +464,13 @@ library UsdnProtocolActionsUtilsLibrary {
      * @dev Reverts if the function arguments don't match those included in the signature
      * and if the signer isn't the owner of the position
      * @param s The storage of the protocol
-     * @param positionOwner The position owner
      * @param params The parameters for the {_prepareClosePositionData} function
+     * @param positionOwner The position owner
      */
     function _verifyInitiateCloseDelegation(
         Types.Storage storage s,
-        address positionOwner,
-        Types.PrepareInitiateClosePositionParams calldata params
+        Types.PrepareInitiateClosePositionParams calldata params,
+        address positionOwner
     ) internal {
         bytes32 digest = MessageHashUtils.toTypedDataHash(
             params.domainSeparatorV4,
@@ -483,5 +494,47 @@ library UsdnProtocolActionsUtilsLibrary {
         }
 
         s._nonce[positionOwner] += 1;
+    }
+
+    /**
+     * @notice Performs the {transferPositionOwnership} EIP712 delegation signature verification
+     * @dev Reverts if the function arguments don't match those included in the signature
+     * and if the signer isn't the owner of the position
+     * @param s The storage of the protocol
+     * @param posId The unique identifier of the position
+     * @param delegationSignature An EIP712 signature that proves the caller is authorized by the owner of the position
+     * to transfer the ownership to a different address on his behalf
+     * @param domainSeparatorV4 The domain separator v4
+     * @param positionOwner The current position owner
+     * @param newPositionOwner The new position owner
+     */
+    function _verifyTransferPositionOwnershipDelegation(
+        Types.Storage storage s,
+        Types.PositionId calldata posId,
+        bytes calldata delegationSignature,
+        bytes32 domainSeparatorV4,
+        address positionOwner,
+        address newPositionOwner
+    ) internal {
+        uint256 nonce = s._nonce[positionOwner];
+        bytes32 digest = MessageHashUtils.toTypedDataHash(
+            domainSeparatorV4,
+            keccak256(
+                abi.encode(
+                    Constants.TRANSFER_POSITION_OWNERSHIP_TYPEHASH,
+                    keccak256(abi.encode(posId)),
+                    positionOwner,
+                    newPositionOwner,
+                    msg.sender,
+                    nonce
+                )
+            )
+        );
+
+        if (ECDSA.recover(digest, delegationSignature) != positionOwner) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidDelegationSignature();
+        }
+
+        s._nonce[positionOwner] = nonce + 1;
     }
 }

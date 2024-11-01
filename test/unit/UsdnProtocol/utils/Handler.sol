@@ -808,9 +808,9 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_verifyInitiateCloseDelegation(
-        address positionOwner,
-        Types.PrepareInitiateClosePositionParams calldata params
+        Types.PrepareInitiateClosePositionParams calldata params,
+        address positionOwner
     ) external {
-        ActionsUtils._verifyInitiateCloseDelegation(s, positionOwner, params);
+        ActionsUtils._verifyInitiateCloseDelegation(s, params, positionOwner);
     }
 }

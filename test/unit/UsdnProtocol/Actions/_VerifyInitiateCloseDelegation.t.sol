@@ -48,7 +48,6 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
      */
     function test_verifyInitiateCloseDelegation() public {
         protocol.i_verifyInitiateCloseDelegation(
-            delegation.positionOwner,
             PrepareInitiateClosePositionParams(
                 delegation.to,
                 address(this),
@@ -59,7 +58,8 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
                 "",
                 delegationSignature,
                 domainSeparatorV4
-            )
+            ),
+            delegation.positionOwner
         );
 
         assertEq(protocol.getNonce(positionOwner), initialNonce + 1, "Nonce should be incremented");
@@ -74,7 +74,6 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
     function test_revertWhen_verifyInitiateCloseDelegationChangeParam() public {
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidDelegationSignature.selector);
         protocol.i_verifyInitiateCloseDelegation(
-            delegation.positionOwner,
             PrepareInitiateClosePositionParams(
                 address(this), // the compromised value
                 address(this),
@@ -85,7 +84,8 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
                 "",
                 delegationSignature,
                 domainSeparatorV4
-            )
+            ),
+            delegation.positionOwner
         );
     }
 
@@ -100,7 +100,6 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
 
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidDelegationSignature.selector);
         protocol.i_verifyInitiateCloseDelegation(
-            delegation.positionOwner,
             PrepareInitiateClosePositionParams(
                 delegation.to,
                 address(this),
@@ -111,7 +110,8 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
                 "",
                 delegationSignature,
                 domainSeparatorV4
-            )
+            ),
+            delegation.positionOwner
         );
     }
 }

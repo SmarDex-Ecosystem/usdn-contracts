@@ -102,12 +102,12 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
     }
 
     /// @inheritdoc IUsdnProtocolActions
-    function transferPositionOwnership(PositionId calldata posId, address newOwner)
+    function transferPositionOwnership(PositionId calldata posId, bytes calldata delegationSignature, address newOwner)
         external
         whenNotPaused
         initializedAndNonReentrant
     {
-        return ActionsUtils.transferPositionOwnership(s, posId, newOwner);
+        return ActionsUtils.transferPositionOwnership(s, posId, delegationSignature, _domainSeparatorV4(), newOwner);
     }
 
     /// @inheritdoc IUsdnProtocolActions
