@@ -141,7 +141,7 @@ printf "\n$green Event logs retrieval completed.$nc\n"
 
 declare -A roles
 declare -A admin_roles
-declare -a addresses=()
+declare -A addresses
 
 for log in "${logs[@]}"; do
     role=$(printf "$log" | jq -r '.topics[1]')
@@ -150,8 +150,9 @@ for log in "${logs[@]}"; do
     event=$(printf "$log" | jq -r '.topics[0]')
 
     if [[ "$event" == "RoleGranted(bytes32,address,address)" ]]; then
-        roles["$role"]+="$address "
-        addresses+=("$address")
+        if [[ ! " ${roles[$role]} " =~ " $address " ]]; then
+            roles["$role"]+="$address "
+        fi
     elif [[ "$event" == "RoleAdminChanged(bytes32,bytes32,bytes32)" ]]; then
         admin_roles["$role"]="$admin_role"
     fi
@@ -159,11 +160,12 @@ done
 
 printf "Roles et Adresses:"
 for role in "${!roles[@]}"; do
-    printf "Role: $role \n"
-    printf "Addresses: ${roles[$role]} \n"
-    printf "Role_admin: ${admin_roles[$role]} \n"
+    echo "Role: $role"
+    echo "Addresses: ${roles[$role]}"
+    echo "Role_admin: ${admin_roles[$role]}"
     echo "-----------------------"
 done
 
-printf "Liste d'adresses uniques:"
-printf '%s\n' "${addresses[@]}" | sort -u
+echo "Liste d'adresses uniques:"
+unique_addresses=($(printf '%s\n' "${roles[@]}" | tr ' ' '\n' | sort -u))
+printf '%s\n' "${unique_addresses[@]}"
