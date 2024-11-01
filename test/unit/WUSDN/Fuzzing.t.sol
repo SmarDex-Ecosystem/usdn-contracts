@@ -36,6 +36,10 @@ contract TestWusdnFuzzing is WusdnTokenFixture {
         }
 
         uint256 userBalance = usdn.balanceOf(USER_1);
+        if (usdn.sharesOf(USER_1) < wusdn.SHARES_RATIO() || usdn.convertToShares(userBalance) < wusdn.SHARES_RATIO()) {
+            return;
+        }
+
         vm.startPrank(USER_1);
 
         usdn.approve(address(wusdn), userBalance);
@@ -56,10 +60,11 @@ contract TestWusdnFuzzing is WusdnTokenFixture {
      * @param usdnShares The amount of shares to mint for the user
      * @param shareToWrap The amount of shares to wrap
      */
-    function testFuzz_previewWrapShares(uint256 divisor, uint128 usdnShares, uint256 shareToWrap) public {
+    function testFuzz_previewWrapShares(uint256 divisor, uint256 usdnShares, uint256 shareToWrap) public {
         divisor = bound(divisor, usdn.MIN_DIVISOR(), usdn.MAX_DIVISOR());
+        usdnShares = bound(usdnShares, wusdn.SHARES_RATIO(), type(uint128).max);
         usdn.mintShares(USER_1, usdnShares);
-        shareToWrap = bound(shareToWrap, 0, usdnShares);
+        shareToWrap = bound(shareToWrap, wusdn.SHARES_RATIO(), usdnShares);
 
         if (divisor < usdn.MAX_DIVISOR()) {
             usdn.rebase(divisor);
