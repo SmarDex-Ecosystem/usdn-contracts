@@ -460,4 +460,12 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         Types.PrepareInitiateClosePositionParams calldata params,
         address positionOwner
     ) external;
+
+    function i_verifyTransferPositionOwnershipDelegation(
+        Types.PositionId calldata posId,
+        bytes calldata delegationSignature,
+        bytes32 domainSeparatorV4,
+        address positionOwner,
+        address newPositionOwner
+    ) external;
 }

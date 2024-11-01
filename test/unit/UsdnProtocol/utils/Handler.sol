@@ -813,4 +813,16 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     ) external {
         ActionsUtils._verifyInitiateCloseDelegation(s, params, positionOwner);
     }
+
+    function i_verifyTransferPositionOwnershipDelegation(
+        Types.PositionId calldata posId,
+        bytes calldata delegationSignature,
+        bytes32 domainSeparatorV4,
+        address positionOwner,
+        address newPositionOwner
+    ) external {
+        ActionsUtils._verifyTransferPositionOwnershipDelegation(
+            s, posId, delegationSignature, domainSeparatorV4, positionOwner, newPositionOwner
+        );
+    }
 }

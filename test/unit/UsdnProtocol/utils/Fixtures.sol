@@ -110,6 +110,14 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         uint256 nonce;
     }
 
+    struct TransferPositionOwnershipDelegation {
+        bytes32 posIdHash;
+        address positionOwner;
+        address newPositionOwner;
+        address delegatedAddress;
+        uint256 nonce;
+    }
+
     Usdn public usdn;
     Sdex public sdex;
     WstETH public wstETH;
@@ -550,6 +558,37 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
                     delegationToSign.deadline,
                     delegationToSign.positionOwner,
                     delegationToSign.positionCloser,
+                    delegationToSign.nonce
+                )
+            )
+        );
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
+
+        delegationSignature_ = abi.encodePacked(r, s, v);
+    }
+
+    /**
+     * @notice Get the signed delegation signature for {transferPositionOwnership}
+     * @param privateKey The signer private key
+     * @param domainSeparator The domain separator v4
+     * @param delegationToSign The delegation struct to sign
+     * @return delegationSignature_ The initiateClosePosition eip712 delegation signature
+     */
+    function _getTransferPositionDelegationSignature(
+        uint256 privateKey,
+        bytes32 domainSeparator,
+        TransferPositionOwnershipDelegation memory delegationToSign
+    ) internal pure returns (bytes memory delegationSignature_) {
+        bytes32 digest = MessageHashUtils.toTypedDataHash(
+            domainSeparator,
+            keccak256(
+                abi.encode(
+                    Constants.TRANSFER_POSITION_OWNERSHIP_TYPEHASH,
+                    delegationToSign.posIdHash,
+                    delegationToSign.positionOwner,
+                    delegationToSign.newPositionOwner,
+                    delegationToSign.delegatedAddress,
                     delegationToSign.nonce
                 )
             )
