@@ -130,11 +130,11 @@ for event in "${events[@]}"; do
     fi
 done
 
-Print all filtered logs at the end
-printf "\n$green All event logs (filtered):$nc\n"
-for log in "${logs[@]}"; do
-    printf "%s\n" "$log"
-done
+# Print all filtered logs at the end
+# printf "\n$green All event logs (filtered):$nc\n"
+# for log in "${logs[@]}"; do
+#     printf "%s\n" "$log"
+# done
 
 printf "\n$green Event logs retrieval completed.$nc\n"
 
@@ -144,16 +144,16 @@ declare -A admin_roles
 declare -a addresses=()
 
 for log in "${logs[@]}"; do
-    event=$(printf "$log" | jq -r '.topics[0]')
     role=$(printf "$log" | jq -r '.topics[1]')
     address=$(printf "$log" | jq -r '.topics[2]')
-    new_admin_role=$(printf "$log" | jq -r '.topics[3]')
+    admin_role=$(printf "$log" | jq -r '.topics[3]')
+    event=$(printf "$log" | jq -r '.topics[0]')
 
     if [[ "$event" == "RoleGranted(bytes32,address,address)" ]]; then
         roles["$role"]+="$address "
         addresses+=("$address")
     elif [[ "$event" == "RoleAdminChanged(bytes32,bytes32,bytes32)" ]]; then
-        admin_roles["$role"]="$new_admin_role"
+        admin_roles["$role"]="$admin_role"
     fi
 done
 
@@ -161,7 +161,7 @@ printf "Roles et Adresses:"
 for role in "${!roles[@]}"; do
     printf "Role: $role \n"
     printf "Addresses: ${roles[$role]} \n"
-    printf "Role_admin: ${new_admin_roles[$role]} \n"
+    printf "Role_admin: ${admin_roles[$role]} \n"
     echo "-----------------------"
 done
 
