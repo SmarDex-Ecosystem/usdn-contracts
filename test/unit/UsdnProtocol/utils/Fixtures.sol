@@ -231,7 +231,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         vm.startPrank(managers.setUsdnParamsManager);
         if (!testParams.flags.enableUsdnRebase) {
             // set a high target price to effectively disable rebases
-            protocol.setUsdnRebaseThreshold(type(uint128).max);
+            protocol.i_setUsdnRebaseThreshold(type(uint128).max);
             protocol.setTargetUsdnPrice(type(uint128).max);
         }
         vm.stopPrank();
