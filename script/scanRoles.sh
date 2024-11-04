@@ -38,25 +38,30 @@ declare -a events=(
 )
 
 # Map of bytes32 to associated role
-declare -A topic_map=(
-    ["0x0000000000000000000000000000000000000000000000000000000000000000"]="DEFAULT_ADMIN_ROLE"
-    ["0xe066b764dbc472e706cbc2f8733ab0fcee541dd01136dc6512dca8f6dc61b692"]="ADMIN_SET_EXTERNAL_ROLE"
-    ["0xe7b4cf829186f8c4eae56184e8b39efd89f053da9890202c466f766239b5c06d"]="ADMIN_CRITICAL_FUNCTIONS_ROLE"
-    ["0x668144e07fd661d09cc13a56f823a5cecc9ddd81fac15e0f66a794e2048f7eeb"]="ADMIN_SET_PROTOCOL_PARAMS_ROLE"
-    ["0x750ec48621e602bf6e87efd3f05aacefc0afaaf02ef76bf2316cd7d61322e136"]="ADMIN_SET_USDN_PARAMS_ROLE"
-    ["0x98de2855152060acaf991c6c67bcd523513322d493b38e46544cf92e3fee8334"]="ADMIN_SET_OPTIONS_ROLE"
-    ["0x5afc0553d94a015add162f99e64d9f1e7954cb5168d8eb6c93ee26a783968d8a"]="ADMIN_PROXY_UPGRADE_ROLE"
-    ["0x365fccb66c62533ad1447fec73f7b764cf03ac69d512070f7c0aa889025cec19"]="ADMIN_PAUSER_ROLE"
-    ["0xe7747964bba14b1d51bb4f84f826a6ba3ef37d424902280c5a01c99b837c970d"]="ADMIN_UNPAUSER_ROLE"
-    ["0x112a81abbbc0a642a71c01ee707237745fdf9150a36cd6c341a77a82b042fcfe"]="SET_EXTERNAL_ROLE"
-    ["0x02f5b57e73f7374270c293a6c0f8f21b963fcb794517ca371178f1ebf3e0ea7d"]="CRITICAL_FUNCTIONS_ROLE"
-    ["0xa33d215b27d5ec861579769ea5343a0a14da1a34a49b09fa343facf13bf852ba"]="SET_PROTOCOL_PARAMS_ROLE"
-    ["0x2332b7708e4d211430c3d07e50a5483bc31f86f1a3c7c79e159a5bab63060e82"]="SET_USDN_PARAMS_ROLE"
-    ["0x5fdbe07c81484705bc90cbf005feb2ecc66822288a5ac5d3cf89e384fa6fdd47"]="SET_OPTIONS_ROLE"
-    ["0x233d5d22cfc2df30a1764cac21e2207537a3711647f2c29fe3702201f65c1444"]="PROXY_UPGRADE_ROLE"
-    ["0x65d7a28e3265b37a6474929f336521b332c1681b933f6cb9f3376673440d862a"]="PAUSER_ROLE"
-    ["0x427da25fe773164f88948d3e215c94b6554e2ed5e5f203a821c9f2f6131cf75a"]="UNPAUSER_ROLE"
-)
+declare -A abi_roles_map=()
+abi_roles_map["0x0000000000000000000000000000000000000000000000000000000000000000"]="DEFAULT_ADMIN_ROLE"
+
+abi=$(cat "out/UsdnProtocolStorage.sol/UsdnProtocolStorage.json")
+abi_roles=$(echo "$abi" | jq -r '
+  .abi[] |
+  select(
+    .type == "function" and 
+    .stateMutability == "view" and 
+    (.inputs | length == 0) and 
+    (.outputs | length == 1) and
+    (.outputs[0] | .name == "" and .type == "bytes32" and .internalType == "bytes32")
+  ) |
+  .name
+')
+for abi_role in $abi_roles; do
+    hash=$(cast keccak "$abi_role" | awk '{print $1}')
+    abi_roles_map["$hash"]="$abi_role"
+done
+
+echo "Roles scanned on abi:"
+for key in "${!abi_roles_map[@]}"; do
+    echo "Hash: $key, Role: ${abi_roles_map[$key]}"
+done
 
 # Extract and sort logs for each event
 
@@ -88,8 +93,8 @@ for event in "${events[@]}"; do
             # Second topic
             second_topic=$(printf "$topics" | jq -r '.[1]')
             # Replace the second topic with the associated string
-            if [[ -n "${topic_map[$second_topic]}" ]]; then
-                new_second_topic=${topic_map[$second_topic]}
+            if [[ -n "${abi_roles_map[$second_topic]}" ]]; then
+                new_second_topic=${abi_roles_map[$second_topic]}
                 # Replace in the JSON entry
                 entry=$(printf "$entry" | jq --arg new_topic "$new_second_topic" '.topics[1] = $new_topic')
             fi
@@ -100,16 +105,16 @@ for event in "${events[@]}"; do
             if [[ "$first_topic" == "RoleAdminChanged(bytes32,bytes32,bytes32)" ]]; then
                 # Third topic
                 third_topic=$(printf "$topics" | jq -r '.[2]')
-                if [[ -n "${topic_map[$third_topic]}" ]]; then
-                    new_third_topic=${topic_map[$third_topic]}
+                if [[ -n "${abi_roles_map[$third_topic]}" ]]; then
+                    new_third_topic=${abi_roles_map[$third_topic]}
                     # Replace in the JSON entry
                     entry=$(printf "$entry" | jq --arg new_topic "$new_third_topic" '.topics[2] = $new_topic')
                 fi  
 
                 # Fourth topic
                 fourth_topic=$(printf "$topics" | jq -r '.[3]')
-                if [[ -n "${topic_map[$fourth_topic]}" ]]; then
-                    new_fourth_topic=${topic_map[$fourth_topic]}
+                if [[ -n "${abi_roles_map[$fourth_topic]}" ]]; then
+                    new_fourth_topic=${abi_roles_map[$fourth_topic]}
                     # Replace in the JSON entry
                     entry=$(printf "$entry" | jq --arg new_topic "$new_fourth_topic" '.topics[3] = $new_topic')
                 fi  
@@ -200,10 +205,10 @@ for role in "${!roles[@]}"; do
 done
 
 # Add roles that have not been granted to any address
-for role in "${!topic_map[@]}"; do
-    if [[ -z "${roles[${topic_map[$role]}]}" ]]; then
+for role in "${!abi_roles_map[@]}"; do
+    if [[ -z "${roles[${abi_roles_map[$role]}]}" ]]; then
         json_output+=$(jq -n \
-            --arg role "${topic_map[$role]}" \
+            --arg role "${abi_roles_map[$role]}" \
             --arg admin "DEFAULT_ADMIN_ROLE" \
             --argjson addresses '["DEFAULT_ADMIN_ROLE"]' \
             '{Role: $role, Role_admin: $admin, Addresses: $addresses}'), 
