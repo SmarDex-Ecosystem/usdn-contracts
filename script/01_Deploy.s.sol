@@ -30,7 +30,6 @@ contract Deploy is Script {
     address constant CHAINLINK_ETH_PRICE_MAINNET = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
     uint256 constant CHAINLINK_PRICE_VALIDITY = 1 hours + 2 minutes;
     uint256 constant CHAINLINK_GAS_PRICE_VALIDITY = 2 hours + 5 minutes;
-    string constant PROTOCOL_EIP712_VERSION = "1";
 
     Utils _utils = new Utils();
     address _deployerAddress;
@@ -130,7 +129,7 @@ contract Deploy is Script {
                     100, // tick spacing 100 = 1.05%
                     _feeCollector,
                     protocolFallback,
-                    vm.envOr("PROTOCOL_EIP712_VERSION", PROTOCOL_EIP712_VERSION)
+                    "1"
                 )
             ),
             opts
