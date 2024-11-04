@@ -62,8 +62,8 @@ declare -a logs=()
 for event in "${events[@]}"; do
     printf "\n$blue Fetching logs for event:$nc $event\n"
 
-    # Run cast to get logs for each event and capture output in log_output variable
-    log_output=$(cast logs --rpc-url "$rpcUrl" --from-block 0 --to-block latest "$event" --address "$usdnProtocolAddress" -j)
+    # Run cast to get logs for each event and capture output in logs_cast variable
+    logs_cast=$(cast logs --rpc-url "$rpcUrl" --from-block 0 --to-block latest "$event" --address "$usdnProtocolAddress" -j)
     status=$?
 
     # Check if the command executed successfully
@@ -72,60 +72,55 @@ for event in "${events[@]}"; do
     else
         printf "\n$green Logs fetched successfully for event:$nc $event\n"
         # Filter the output to only include topics, blockNumber and logIndex using jq
-        filtered_output=$(printf "$log_output" | jq -c '.[] | {topics: .topics, blockNumber: .blockNumber, logIndex: .logIndex}')
+        logs_filtered=$(printf "$logs_cast" | jq -c '.[] | {topics: .topics, blockNumber: .blockNumber, logIndex: .logIndex}')
 
         # Process each filtered output
-        for entry in $filtered_output; do
+        for log in $logs_filtered; do
             # Extract the topics array
-            topics=$(printf "$entry" | jq -r '.topics')
+            topics=$(printf "$log" | jq -r '.topics')
             
-            # First topic
-            entry=$(printf "$entry" | jq --arg new_topic "$event" '.topics[0] = $new_topic')
+            # Add first topic to the log
+            log=$(printf "$log" | jq --arg new_topic "$event" '.topics[0] = $new_topic')
 
             # Other topics
-            first_topic=$(printf "$entry" | jq -r '.topics[0]')
+            first_topic=$(printf "$log" | jq -r '.topics[0]')
             second_topic=$(printf "$topics" | jq -r '.[1]')
             third_topic=$(printf "$topics" | jq -r '.[2]')
             fourth_topic=$(printf "$topics" | jq -r '.[3]')
 
 
-            # Replace the second topic with the associated string
-            if [[ -n "${abi_roles_map[$second_topic]}" ]]; then
-                new_second_topic=${abi_roles_map[$second_topic]}
-                # Replace in the JSON entry
-                entry=$(printf "$entry" | jq --arg new_topic "$new_second_topic" '.topics[1] = $new_topic')
-            fi
+            # Replace the second topic with the associated string and add it to the log
+            new_second_topic=${abi_roles_map[$second_topic]}
+            log=$(printf "$log" | jq --arg new_topic "$new_second_topic" '.topics[1] = $new_topic')
 
+            # Replace the third and fourth topics instead of the hash with the associated role or address and add it to the log
             if [[ "$first_topic" == "RoleAdminChanged(bytes32,bytes32,bytes32)" ]]; then
-                new_third_topic=${abi_roles_map[$third_topic]}
-                # Replace in the JSON entry
-                entry=$(printf "$entry" | jq --arg new_topic "$new_third_topic" '.topics[2] = $new_topic')
+                role=${abi_roles_map[$third_topic]}
+                log=$(printf "$log" | jq --arg new_topic "$role" '.topics[2] = $new_topic')
 
-                new_fourth_topic=${abi_roles_map[$fourth_topic]}
-                # Replace in the JSON entry
-                entry=$(printf "$entry" | jq --arg new_topic "$new_fourth_topic" '.topics[3] = $new_topic')
+                role=${abi_roles_map[$fourth_topic]}
+                log=$(printf "$log" | jq --arg new_topic "$role" '.topics[3] = $new_topic')
                 
             elif [ "$first_topic" == "RoleGranted(bytes32,address,address)" ] || [ "$first_topic" == "RoleRevoked(bytes32,address,address)" ]; then
                 address=$(cast parse-bytes32-address "$third_topic")
-                entry=$(printf "$entry" | jq --arg new_topic "$address" '.topics[2] = $new_topic')
+                log=$(printf "$log" | jq --arg new_topic "$address" '.topics[2] = $new_topic')
 
                 address=$(cast parse-bytes32-address "$fourth_topic")
-                entry=$(printf "$entry" | jq --arg new_topic "$address" '.topics[3] = $new_topic')
+                log=$(printf "$log" | jq --arg new_topic "$address" '.topics[3] = $new_topic')
             fi
 
-            # Convert blockNumber from hex to decimal and replace the blockNumber in the entry
-            block_number=$(printf "$entry" | jq -r '.blockNumber')
+            # Convert blockNumber from hex to decimal and replace the blockNumber in the log
+            block_number=$(printf "$log" | jq -r '.blockNumber')
             decimal_block_number=$((block_number))
-            entry=$(printf "$entry" | jq --argjson new_block_number "$decimal_block_number" '.blockNumber = $new_block_number')
+            log=$(printf "$log" | jq --argjson new_block_number "$decimal_block_number" '.blockNumber = $new_block_number')
 
-            # Convert logIndex from hex to decimal and replace the logIndex in the entry
-            log_index=$(printf "$entry" | jq -r '.logIndex')
+            # Convert logIndex from hex to decimal and replace the logIndex in the log
+            log_index=$(printf "$log" | jq -r '.logIndex')
             decimal_log_index=$((log_index))
-            entry=$(printf "$entry" | jq --argjson new_log_index "$decimal_log_index" '.logIndex = $new_log_index')
+            log=$(printf "$log" | jq --argjson new_log_index "$decimal_log_index" '.logIndex = $new_log_index')
 
-
-            # Append the modified entry to the logs array
-            logs+=("$entry")
+            # Append the modified log to the logs array
+            logs+=("$log")
         done
     fi
 done
