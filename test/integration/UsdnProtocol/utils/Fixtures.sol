@@ -12,23 +12,16 @@ import { UsdnProtocolHandler } from "../../../unit/UsdnProtocol/utils/Handler.so
 import {
     ADMIN,
     CHAINLINK_ORACLE_ETH,
-    CRITICAL_FUNCTIONS_MANAGER,
     DEPLOYER,
-    PAUSER_MANAGER,
-    PROXY_UPGRADE_MANAGER,
     PYTH_ETH_USD,
     PYTH_ORACLE,
     SDEX,
-    SET_EXTERNAL_MANAGER,
-    SET_OPTIONS_MANAGER,
-    SET_PROTOCOL_PARAMS_MANAGER,
-    SET_USDN_PARAMS_MANAGER,
-    UNPAUSER_MANAGER,
     WSTETH
 } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { IEventsErrors } from "../../../utils/IEventsErrors.sol";
 import { IUsdnProtocolHandler } from "../../../utils/IUsdnProtocolHandler.sol";
+import { RolesUtils } from "../../../utils/RolesUtils.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
 import {
@@ -48,7 +41,13 @@ import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUs
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 
-contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProtocolEvents, IEventsErrors {
+contract UsdnProtocolBaseIntegrationFixture is
+    BaseFixture,
+    RolesUtils,
+    IUsdnProtocolErrors,
+    IUsdnProtocolEvents,
+    IEventsErrors
+{
     struct SetUpParams {
         uint128 initialDeposit;
         uint128 initialLong;
@@ -85,17 +84,6 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         eip712Version: "1"
     });
 
-    Managers managers = Managers({
-        setExternalManager: SET_EXTERNAL_MANAGER,
-        criticalFunctionsManager: CRITICAL_FUNCTIONS_MANAGER,
-        setProtocolParamsManager: SET_PROTOCOL_PARAMS_MANAGER,
-        setUsdnParamsManager: SET_USDN_PARAMS_MANAGER,
-        setOptionsManager: SET_OPTIONS_MANAGER,
-        proxyUpgradeManager: PROXY_UPGRADE_MANAGER,
-        pauserManager: PAUSER_MANAGER,
-        unpauserManager: UNPAUSER_MANAGER
-    });
-
     Usdn public usdn;
     Sdex public sdex;
     IUsdnProtocolHandler public protocol;
@@ -123,6 +111,19 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
     }
 
     function _setUp(SetUpParams memory testParams) public virtual {
+        if (!testParams.enableRoles) {
+            managers = Managers({
+                setExternalManager: ADMIN,
+                criticalFunctionsManager: ADMIN,
+                setProtocolParamsManager: ADMIN,
+                setUsdnParamsManager: ADMIN,
+                setOptionsManager: ADMIN,
+                proxyUpgradeManager: ADMIN,
+                pauserManager: ADMIN,
+                unpauserManager: ADMIN
+            });
+        }
+
         vm.startPrank(DEPLOYER);
         if (testParams.fork) {
             string memory url = vm.rpcUrl("mainnet");
@@ -167,19 +168,6 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         require(success, "DEPLOYER wstETH mint failed");
         usdn = new Usdn(address(0), address(0));
 
-        if (!testParams.enableRoles) {
-            managers = Managers({
-                setExternalManager: ADMIN,
-                criticalFunctionsManager: ADMIN,
-                setProtocolParamsManager: ADMIN,
-                setUsdnParamsManager: ADMIN,
-                setOptionsManager: ADMIN,
-                proxyUpgradeManager: ADMIN,
-                pauserManager: ADMIN,
-                unpauserManager: ADMIN
-            });
-        }
-
         implementation = new UsdnProtocolHandler();
         protocolFallback = new UsdnProtocolFallback();
         address proxy = UnsafeUpgrades.deployUUPSProxy(
@@ -194,7 +182,6 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
                     liquidationRewardsManager,
                     100, // tick spacing 100 = ~1.005%
                     ADMIN,
-                    managers,
                     protocolFallback,
                     params.eip712Version
                 )
@@ -227,6 +214,9 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             testParams.initialDeposit, testParams.initialLong, testParams.initialLiqPrice, ""
         );
         vm.stopPrank();
+
+        _giveRolesTo(managers, protocol);
+
         vm.prank(managers.setExternalManager);
         protocol.setRebalancer(rebalancer);
         params = testParams;

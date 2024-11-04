@@ -428,12 +428,10 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      * @custom:then Revert because greater than max
      */
     function test_RevertWhen_setFeeBpsWithMax() public adminPrank {
-        // above max value
-        uint16 aboveMax = uint16(protocol.BPS_DIVISOR()) + 1;
         // feeBps greater than max disallowed
         vm.expectRevert(UsdnProtocolInvalidProtocolFeeBps.selector);
         // set feeBps
-        protocol.setProtocolFeeBps(aboveMax);
+        protocol.setProtocolFeeBps(3000 + 1);
     }
 
     /**
@@ -623,6 +621,17 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         // set security deposit to 0
         protocol.setSecurityDepositValue(0);
         assertEq(protocol.getSecurityDepositValue(), 0);
+    }
+
+    /**
+     * @custom:scenario Call "setSecurityDepositValue" from admin
+     * @custom:given The initial usdnProtocol state
+     * @custom:when Admin wallet triggers the function with a value above the limit
+     * @custom:then The transaction should revert
+     */
+    function test_RevertWhen_invalidSetSecuriyDepositValue() public adminPrank {
+        vm.expectRevert(UsdnProtocolInvalidSecurityDeposit.selector);
+        protocol.setSecurityDepositValue(5 ether + 1);
     }
 
     /**
@@ -877,6 +886,17 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
     }
 
     /**
+     * @custom:scenario Call "setMinLongPosition" from admin
+     * @custom:given The initial usdnProtocol state
+     * @custom:when Admin wallet triggers the function with a value above the limit
+     * @custom:then The transaction should revert with the corresponding error
+     */
+    function test_RevertWhen_invalidSetMinLongPosition() public adminPrank {
+        vm.expectRevert(UsdnProtocolInvalidMinLongPosition.selector);
+        protocol.setMinLongPosition(10 ether + 1);
+    }
+
+    /**
      * @custom:scenario Call `setPositionFeeBps` as admin
      * @custom:when The admin sets the position fee between 0 and 2000 bps
      * @custom:then The position fee should be updated
@@ -1027,6 +1047,19 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         uint128 minThreshold = protocol.getTargetUsdnPrice();
         vm.expectRevert(UsdnProtocolInvalidUsdnRebaseThreshold.selector);
         protocol.setUsdnRebaseThreshold(minThreshold - 1);
+    }
+
+    /**
+     * @custom:scenario Call "setUsdnRebaseThreshold" from admin
+     * @custom:given The initial usdnProtocol state from admin wallet
+     * @custom:when Admin wallet triggers admin contract function
+     * @custom:then Revert because higher than 2 * 10 ** _priceFeedDecimals
+     */
+    function test_RevertWhen_invalidSetUsdnRebaseThreshold() external adminPrank {
+        uint256 priceFeedDecimals = protocol.getPriceFeedDecimals();
+        protocol.setTargetUsdnPrice(uint128(10 ** priceFeedDecimals) + 1);
+        vm.expectRevert(UsdnProtocolInvalidUsdnRebaseThreshold.selector);
+        protocol.setUsdnRebaseThreshold(uint128(2 * 10 ** priceFeedDecimals) + 1);
     }
 
     /**

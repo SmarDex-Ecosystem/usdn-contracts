@@ -16,6 +16,28 @@ contract BaseFixture is Test {
     uint256 internal constant DISABLE_SHARES_OUT_MIN = 0;
     uint256 internal constant DISABLE_AMOUNT_OUT_MIN = 0;
 
+    struct Managers {
+        address setExternalManager;
+        address criticalFunctionsManager;
+        address setProtocolParamsManager;
+        address setUsdnParamsManager;
+        address setOptionsManager;
+        address proxyUpgradeManager;
+        address pauserManager;
+        address unpauserManager;
+    }
+
+    Managers managers = Managers({
+        setExternalManager: constants.SET_EXTERNAL_MANAGER,
+        criticalFunctionsManager: constants.CRITICAL_FUNCTIONS_MANAGER,
+        setProtocolParamsManager: constants.SET_PROTOCOL_PARAMS_MANAGER,
+        setUsdnParamsManager: constants.SET_USDN_PARAMS_MANAGER,
+        setOptionsManager: constants.SET_OPTIONS_MANAGER,
+        proxyUpgradeManager: constants.PROXY_UPGRADE_MANAGER,
+        pauserManager: constants.PAUSER_MANAGER,
+        unpauserManager: constants.UNPAUSER_MANAGER
+    });
+
     modifier ethMainnetFork() {
         string memory url = vm.rpcUrl("mainnet");
         vm.createSelectFork(url);

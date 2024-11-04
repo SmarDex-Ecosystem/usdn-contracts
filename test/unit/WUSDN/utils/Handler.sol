@@ -60,13 +60,14 @@ contract WusdnHandler is Wusdn, Test {
         uint256 usdnSharesUser = _usdn.sharesOf(msg.sender);
         uint256 totalUsdnShares = this.totalUsdnShares();
 
-        if (usdnSharesUser == 0) {
+        if (usdnSharesUser < SHARES_RATIO) {
             return;
         }
 
         console2.log("bound wrap amount");
         usdnAmount = bound(usdnAmount, 0, usdnBalanceUser);
         uint256 previewShares = _usdn.convertToShares(usdnAmount);
+        if (previewShares < SHARES_RATIO) return;
         if (previewShares > usdnSharesUser) previewShares = usdnSharesUser;
         previewShares = previewShares / SHARES_RATIO * SHARES_RATIO;
 
@@ -88,12 +89,12 @@ contract WusdnHandler is Wusdn, Test {
         uint256 usdnSharesUser = _usdn.sharesOf(msg.sender);
         uint256 totalUsdnShares = this.totalUsdnShares();
 
-        if (usdnSharesUser == 0) {
+        if (usdnSharesUser < SHARES_RATIO) {
             return;
         }
 
         console2.log("bound wrap amount");
-        usdnShares = bound(usdnShares, 0, usdnSharesUser);
+        usdnShares = bound(usdnShares, SHARES_RATIO, usdnSharesUser);
         uint256 wrappedAmountPreview = this.previewWrapShares(usdnShares);
 
         console2.log("bound to address");
