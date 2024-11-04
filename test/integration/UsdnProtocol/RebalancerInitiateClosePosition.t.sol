@@ -9,6 +9,8 @@ import { MOCK_PYTH_DATA } from "../../unit/Middlewares/utils/Constants.sol";
 import { DEPLOYER, SET_EXTERNAL_MANAGER, SET_PROTOCOL_PARAMS_MANAGER, USER_1 } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IBaseRebalancer } from "../../../src/interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IRebalancer } from "../../../src/interfaces/Rebalancer/IRebalancer.sol";
 import { IRebalancerErrors } from "../../../src/interfaces/Rebalancer/IRebalancerErrors.sol";
@@ -647,7 +649,7 @@ contract TestRebalancerInitiateClosePosition is
         protocol.setRebalancer(IRebalancer(address(0)));
 
         vm.startPrank(SET_PROTOCOL_PARAMS_MANAGER);
-        protocol.setMinLongPosition(type(uint256).max);
+        protocol.setMinLongPosition(Constants.MAX_MIN_LONG_POSITION);
         protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0, 0);
         vm.stopPrank();
 
