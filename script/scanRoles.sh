@@ -24,6 +24,7 @@ get_input() {
 
 get_input "Enter the USDN Protocol's address" usdnProtocolAddress
 get_input "Enter the RPC URL" rpcUrl
+get_input "Enter the block number where the USDN Protocol was deployed" usdnProtocolBirthBlock
 
 # Map of bytes32 to associated role
 declare -A abi_roles_map=()
@@ -63,7 +64,7 @@ for event in "${events[@]}"; do
     printf "\n$blue Fetching logs for event:$nc $event\n"
 
     # Run cast to get logs for each event and capture output in logs_cast variable
-    logs_cast=$(cast logs --rpc-url "$rpcUrl" --from-block 0 --to-block latest "$event" --address "$usdnProtocolAddress" -j)
+    logs_cast=$(cast logs --rpc-url "$rpcUrl" --from-block "$usdnProtocolBirthBlock" --to-block latest "$event" --address "$usdnProtocolAddress" -j)
     status=$?
 
     # Check if the command executed successfully
@@ -83,7 +84,7 @@ for event in "${events[@]}"; do
             
             # Add first topic to the log
             log=$(printf "$log" | jq --arg new_topic "$event" '.topics[0] = $new_topic')
-            
+
             # Replace the second topic with the associated string and add it to the log
             new_second_topic=${abi_roles_map[$second_topic]}
             log=$(printf "$log" | jq --arg new_topic "$new_second_topic" '.topics[1] = $new_topic')
