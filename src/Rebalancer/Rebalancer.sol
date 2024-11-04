@@ -151,7 +151,10 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     /// @notice The data for the specific version of the position
     mapping(uint256 => PositionData) internal _positionData;
 
-    /// @notice The user EIP712 nonce
+    /**
+     * @notice The user EIP712 nonce
+     * @dev Check {getNonce} in {IRebalancer} for the documentation
+     */
     mapping(address => uint256) internal _nonce;
 
     /// @param usdnProtocol The address of the USDN protocol
@@ -667,9 +670,10 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
     /**
      * @notice Closes a user deposited amount of the current UsdnProtocol rebalancer position
-     * @param data The structure to hold the transient data during `initiateClosePosition`
-     * @param currentPriceData The current price data
-     * @param previousActionsData The previous action price data
+     * @param data The structure to hold the transient data during {initiateClosePosition}
+     * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
+     * pending validation)
+     * @param previousActionsData The data needed to validate actionable pending actions
      * @param delegationData An optional delegation data
      * @return success_ If the UsdnProtocol's `initiateClosePosition` was successful
      */

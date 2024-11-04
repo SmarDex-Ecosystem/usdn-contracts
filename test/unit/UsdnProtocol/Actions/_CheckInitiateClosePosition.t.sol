@@ -169,7 +169,7 @@ contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture, 
 
     /**
      * @custom:scenario Check an initiate close of a position from the rebalancer (partial)
-     * @custom:given the user has a position in the rebalancer with an amount that leaves the position above the min
+     * @custom:given The user has a position in the rebalancer with an amount that leaves the position above the min
      * @custom:when The rebalancer initiates a partial close position with a remaining amount that is below the  min
      * @custom:then The function should not revert
      */

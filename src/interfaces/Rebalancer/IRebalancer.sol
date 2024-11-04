@@ -152,11 +152,12 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
      * side after calling this function
      * @param amount The amount to close relative to the amount deposited
      * @param to The address that will receive the assets
-     * @param validator The address that will receive the security deposit
+     * @param validator The address that should validate the open position
      * @param userMinPrice The minimum price at which the position can be closed
      * @param deadline The deadline of the close position to be initiated
-     * @param currentPriceData The current price data
-     * @param previousActionsData The previous action price data
+     * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
+     * pending validation)
+     * @param previousActionsData The data needed to validate actionable pending actions
      * @param delegationData An optional delegation data that include the depositOwner and an EIP712 signature to
      * provide when closing a position on the owner's behalf
      * If used, it needs to be encoded with `abi.encode(depositOwner, abi.encodePacked(r, s, v))`
