@@ -85,8 +85,6 @@ if [ $status -ne 0 ]; then
 fi
 
 printf "$green USDN contract has been deployed !\n"
-printf " Waiting for confirmation... (12s) $nc\n"
-sleep 12s
 
 for i in {1..15}; do
     printf "$green Trying to fetch USDN address... (attempt $i/15)$nc\n"
@@ -104,7 +102,7 @@ for i in {1..15}; do
         exit 1
     fi
 
-    sleep 2s
+    sleep 10s
 done
 
 if [ $ledger = true ]; then

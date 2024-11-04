@@ -5,7 +5,7 @@ import { Script } from "forge-std/Script.sol";
 
 import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
-import { Utils } from "./Utils.s.sol";
+import { Utils } from "./utils/Utils.s.sol";
 
 import { UsdnProtocolFallback } from "../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";

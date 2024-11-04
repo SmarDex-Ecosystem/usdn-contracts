@@ -51,7 +51,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         ILiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector,
-        Managers memory managers,
         IUsdnProtocolFallback protocolFallback,
         string memory eip712Version
     ) external initializer {
@@ -63,7 +62,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
             liquidationRewardsManager,
             tickSpacing,
             feeCollector,
-            managers,
             protocolFallback,
             eip712Version
         );
