@@ -639,7 +639,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
      * @param to The address that will receive the assets
      * @param userMinPrice The minimum price at which the position can be closed
      * @param deadline The deadline of the close position to be initiated
-     * @return depositOwner_ The deposit owner
+     * @return depositOwner_ The owner of the rebalancer deposit position
      */
     function _verifyInitiateCloseDelegation(
         uint88 amount,
@@ -674,7 +674,8 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
      * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
      * pending validation)
      * @param previousActionsData The data needed to validate actionable pending actions
-     * @param delegationData An optional delegation data
+     * @param delegationData An optional delegation data that include the depositOwner and an EIP712 signature to
+     * provide when closing a position on the owner's behalf
      * @return success_ If the UsdnProtocol's `initiateClosePosition` was successful
      */
     function _initiateClosePosition(
