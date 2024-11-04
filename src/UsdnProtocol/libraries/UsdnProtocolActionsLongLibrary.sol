@@ -660,11 +660,12 @@ library UsdnProtocolActionsLongLibrary {
             return (data_, true);
         }
 
-        uint128 liqPriceWithoutPenaltyNorFunding_ = Utils._getEffectivePriceForTick(
+        uint128 liqPriceWithoutPenaltyNorFunding = Utils._getEffectivePriceForTick(
             Utils.calcTickWithoutPenalty(data_.action.tick, data_.liquidationPenalty), data_.action.liqMultiplier
         );
-        // reverts if liqPriceWithoutPenalty >= startPrice
-        data_.leverage = Utils._getLeverage(data_.startPrice, liqPriceWithoutPenaltyNorFunding_);
+        // calculate the leverage of the position without considering the penalty nor the funding
+        // reverts if liqPriceWithoutPenaltyNorFunding >= startPrice
+        data_.leverage = Utils._getLeverage(data_.startPrice, liqPriceWithoutPenaltyNorFunding);
     }
 
     /**
