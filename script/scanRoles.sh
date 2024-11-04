@@ -101,7 +101,21 @@ for event in "${events[@]}"; do
                     entry=$(printf "$entry" | jq --arg new_topic "$new_fourth_topic" '.topics[3] = $new_topic')
                 fi  
                 
-            else
+            elif [[ "$first_topic" == "RoleGranted(bytes32,address,address)" ]]; then
+                # Third topic
+                third_topic=$(printf "$topics" | jq -r '.[2]')
+                if [[ -n "$third_topic" ]]; then
+                    address=$(cast parse-bytes32-address "$third_topic")
+                    entry=$(printf "$entry" | jq --arg new_topic "$address" '.topics[2] = $new_topic')
+                fi
+
+                # Fourth topic
+                fourth_topic=$(printf "$topics" | jq -r '.[3]')
+                if [[ -n "$fourth_topic" ]]; then
+                    address=$(cast parse-bytes32-address "$fourth_topic")
+                    entry=$(printf "$entry" | jq --arg new_topic "$address" '.topics[3] = $new_topic')
+                fi
+            elif [[ "$first_topic" == "RoleRevoked(bytes32,address,address)" ]]; then
                 # Third topic
                 third_topic=$(printf "$topics" | jq -r '.[2]')
                 if [[ -n "$third_topic" ]]; then
@@ -130,17 +144,17 @@ for event in "${events[@]}"; do
     fi
 done
 
-# Print all filtered logs at the end
-# printf "\n$green All event logs (filtered):$nc\n"
-# for log in "${logs[@]}"; do
-#     printf "%s\n" "$log"
-# done
+Print all filtered logs at the end
+printf "\n$green All event logs (filtered):$nc\n"
+for log in "${logs[@]}"; do
+    printf "%s\n" "$log"
+done
 
 printf "\n$green Event logs retrieval completed.$nc\n"
 
 
 declare -A roles
-declare -A admin_roles
+declare -A admin_role
 declare -A addresses
 
 for log in "${logs[@]}"; do
@@ -149,10 +163,6 @@ for log in "${logs[@]}"; do
     admin_role=$(printf "$log" | jq -r '.topics[3]')
     event=$(printf "$log" | jq -r '.topics[0]')
 
-    if [[ -z "${addresses[$role]}" ]]; then
-        addresses["$role"]=""
-    fi
-
     roles["$role"]=1
 
     if [[ "$event" == "RoleGranted(bytes32,address,address)" ]]; then
@@ -160,7 +170,11 @@ for log in "${logs[@]}"; do
             addresses["$role"]+="$address "
         fi
     elif [[ "$event" == "RoleAdminChanged(bytes32,bytes32,bytes32)" ]]; then
-        admin_roles["$role"]="$admin_role"
+        admin_role["$role"]="$admin_role"
+    elif [[ "$event" == "RoleRevoked(bytes32,address,address)" ]]; then
+        addresses["$role"]=$(echo "${addresses[$role]}" | sed "s/\b$address\b//g")
+        addresses["$role"]=$(echo "${addresses[$role]}" | xargs)
+
     fi
 done
 
@@ -169,11 +183,26 @@ json_output="["
 for role in "${!roles[@]}"; do
     address_list=$(echo "${addresses[$role]}" | tr ' ' '\n' | jq -R . | jq -s .)
 
+    admin_value="${admin_role[$role]}"
+    if [[ -z "$admin_value" ]]; then
+        admin_role[$role]="DEFAULT_ADMIN_ROLE"
+    fi
+    
     json_output+=$(jq -n \
         --arg role "$role" \
-        --arg admin "${admin_roles[$role]}" \
+        --arg admin "${admin_role[$role]}" \
         --argjson addresses "$address_list" \
         '{Role: $role, Role_admin: $admin, Addresses: $addresses}'), 
+done
+
+for role in "${!topic_map[@]}"; do
+    if [[ -z "${roles[${topic_map[$role]}]}" ]]; then
+        json_output+=$(jq -n \
+            --arg role "${topic_map[$role]}" \
+            --arg admin "DEFAULT_ADMIN_ROLE" \
+            --argjson addresses '["DEFAULT_ADMIN_ROLE"]' \
+            '{Role: $role, Role_admin: $admin, Addresses: $addresses}'), 
+    fi
 done
 
 json_output="${json_output%,}]"
