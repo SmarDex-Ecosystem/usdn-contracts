@@ -663,7 +663,8 @@ library UsdnProtocolActionsLongLibrary {
         uint128 liqPriceWithoutPenaltyNorFunding = Utils._getEffectivePriceForTick(
             Utils.calcTickWithoutPenalty(data_.action.tick, data_.liquidationPenalty), data_.action.liqMultiplier
         );
-        // calculate the leverage of the position without considering the penalty nor the funding
+        // calculate the leverage of the position without considering the penalty nor the funding by using the
+        // multiplier state at T+24
         // reverts if liqPriceWithoutPenaltyNorFunding >= startPrice
         data_.leverage = Utils._getLeverage(data_.startPrice, liqPriceWithoutPenaltyNorFunding);
     }
