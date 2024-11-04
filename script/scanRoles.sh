@@ -11,7 +11,7 @@ get_input() {
 
     while true; do
         read -p $'\n'"$prompt: " user_input
-        user_input=$(echo "$user_input" | xargs)
+        user_input=$(printf "$user_input" | xargs)
         if [[ -z "$user_input" ]]; then
             printf "\n${red}This input is required.${nc}\n"
         else
@@ -24,13 +24,6 @@ get_input() {
 
 get_input "Enter the USDN Protocol's address" usdnProtocolAddress
 get_input "Enter the RPC URL" rpcUrl
-
-# Events in IAccessControl.sol from OpenZeppelin
-declare -a events=(
-    "RoleGranted(bytes32,address,address)"
-    "RoleRevoked(bytes32,address,address)"
-    "RoleAdminChanged(bytes32,bytes32,bytes32)"
-)
 
 # Map of bytes32 to associated role
 declare -A abi_roles_map=()
@@ -53,13 +46,17 @@ for abi_role in $abi_roles; do
     abi_roles_map["$hash"]="$abi_role"
 done
 
-echo "Roles scanned on abi:"
+printf "Roles scanned on abi:\n"
 for key in "${!abi_roles_map[@]}"; do
-    echo "Hash: $key, Role: ${abi_roles_map[$key]}"
+    printf "Hash: $key, Role: ${abi_roles_map[$key]}\n"
 done
 
-# Extract and sort logs for each event
-
+# Events in IAccessControl.sol from OpenZeppelin
+declare -a events=(
+    "RoleGranted(bytes32,address,address)"
+    "RoleRevoked(bytes32,address,address)"
+    "RoleAdminChanged(bytes32,bytes32,bytes32)"
+)
 declare -a logs=()
 # Loop over each event to fetch logs
 for event in "${events[@]}"; do
@@ -85,8 +82,13 @@ for event in "${events[@]}"; do
             # First topic
             entry=$(printf "$entry" | jq --arg new_topic "$event" '.topics[0] = $new_topic')
 
-            # Second topic
+            # Other topics
+            first_topic=$(printf "$entry" | jq -r '.topics[0]')
             second_topic=$(printf "$topics" | jq -r '.[1]')
+            third_topic=$(printf "$topics" | jq -r '.[2]')
+            fourth_topic=$(printf "$topics" | jq -r '.[3]')
+
+
             # Replace the second topic with the associated string
             if [[ -n "${abi_roles_map[$second_topic]}" ]]; then
                 new_second_topic=${abi_roles_map[$second_topic]}
@@ -94,40 +96,21 @@ for event in "${events[@]}"; do
                 entry=$(printf "$entry" | jq --arg new_topic "$new_second_topic" '.topics[1] = $new_topic')
             fi
 
-            # First topic
-            first_topic=$(printf "$entry" | jq -r '.topics[0]')
-
             if [[ "$first_topic" == "RoleAdminChanged(bytes32,bytes32,bytes32)" ]]; then
-                # Third topic
-                third_topic=$(printf "$topics" | jq -r '.[2]')
-                if [[ -n "${abi_roles_map[$third_topic]}" ]]; then
-                    new_third_topic=${abi_roles_map[$third_topic]}
-                    # Replace in the JSON entry
-                    entry=$(printf "$entry" | jq --arg new_topic "$new_third_topic" '.topics[2] = $new_topic')
-                fi  
+                new_third_topic=${abi_roles_map[$third_topic]}
+                # Replace in the JSON entry
+                entry=$(printf "$entry" | jq --arg new_topic "$new_third_topic" '.topics[2] = $new_topic')
 
-                # Fourth topic
-                fourth_topic=$(printf "$topics" | jq -r '.[3]')
-                if [[ -n "${abi_roles_map[$fourth_topic]}" ]]; then
-                    new_fourth_topic=${abi_roles_map[$fourth_topic]}
-                    # Replace in the JSON entry
-                    entry=$(printf "$entry" | jq --arg new_topic "$new_fourth_topic" '.topics[3] = $new_topic')
-                fi  
+                new_fourth_topic=${abi_roles_map[$fourth_topic]}
+                # Replace in the JSON entry
+                entry=$(printf "$entry" | jq --arg new_topic "$new_fourth_topic" '.topics[3] = $new_topic')
                 
             elif [ "$first_topic" == "RoleGranted(bytes32,address,address)" ] || [ "$first_topic" == "RoleRevoked(bytes32,address,address)" ]; then
-                # Third topic
-                third_topic=$(printf "$topics" | jq -r '.[2]')
-                if [[ -n "$third_topic" ]]; then
-                    address=$(cast parse-bytes32-address "$third_topic")
-                    entry=$(printf "$entry" | jq --arg new_topic "$address" '.topics[2] = $new_topic')
-                fi
+                address=$(cast parse-bytes32-address "$third_topic")
+                entry=$(printf "$entry" | jq --arg new_topic "$address" '.topics[2] = $new_topic')
 
-                # Fourth topic
-                fourth_topic=$(printf "$topics" | jq -r '.[3]')
-                if [[ -n "$fourth_topic" ]]; then
-                    address=$(cast parse-bytes32-address "$fourth_topic")
-                    entry=$(printf "$entry" | jq --arg new_topic "$address" '.topics[3] = $new_topic')
-                fi
+                address=$(cast parse-bytes32-address "$fourth_topic")
+                entry=$(printf "$entry" | jq --arg new_topic "$address" '.topics[3] = $new_topic')
             fi
 
             # Convert blockNumber from hex to decimal and replace the blockNumber in the entry
