@@ -148,14 +148,14 @@ for event in "${events[@]}"; do
 done
 
 # Exit if no logs were found
-if [[ -z "$sorted_logs" || "$sorted_logs" == "[]" ]]; then
+if [[ -z "$logs" || "$logs" == "[]" ]]; then
     printf "\n${red}No logs were found. Exiting the script. Verify the RPC URL and contract address.${nc}\n"
     exit 1
 fi
 
 # Sort the logs by block number and log index
 sorted_logs=$(printf "%s\n" "${logs[@]}" | jq -s 'sort_by(.blockNumber, .logIndex)')
-printf "\n$green Sorted logs by block number:$nc\n"
+printf "\n$green Sorted logs by block number and logIndex:$nc\n"
 printf "$sorted_logs" | jq -c '.[]'
 mapfile -t sorted_logs <<< "$(printf "$sorted_logs" | jq -c '.[]')"
 
