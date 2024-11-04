@@ -17,12 +17,14 @@ if [[ -z "$rpcUrl" ]]; then
     exit 1
 fi
 
+# Events in IAccessControl.sol from OpenZeppelin
 declare -a events=(
     "RoleGranted(bytes32,address,address)"
     "RoleRevoked(bytes32,address,address)"
     "RoleAdminChanged(bytes32,bytes32,bytes32)"
 )
 
+# Map of bytes32 to associated role
 declare -A topic_map=(
     ["0x0000000000000000000000000000000000000000000000000000000000000000"]="DEFAULT_ADMIN_ROLE"
     ["0x112a81abbbc0a642a71c01ee707237745fdf9150a36cd6c341a77a82b042fcfe"]="SET_EXTERNAL_ROLE"
@@ -43,12 +45,13 @@ declare -A topic_map=(
     ["0xe7747964bba14b1d51bb4f84f826a6ba3ef37d424902280c5a01c99b837c970d"]="ADMIN_UNPAUSER_ROLE"
 )
 
-# Array to store logs
-declare -a logs=()
 
 contractAddress="0x59891a8f6a60fA55053Aff265b95B1264Cd0fc69"
 rpcUrl="127.0.0.1:8545"
 
+# Extract and sort logs for each event
+
+declare -a logs=()
 # Loop over each event to fetch logs
 for event in "${events[@]}"; do
     printf "\n$blue Fetching logs for event:$nc $event\n"
@@ -62,8 +65,8 @@ for event in "${events[@]}"; do
         printf "\n$red Failed to retrieve logs for event:$nc $event\n"
     else
         printf "\n$green Logs fetched successfully for event:$nc $event\n"
-        # Filter the output to only include topics and blockNumber using jq
-        filtered_output=$(printf "$log_output" | jq -c '.[] | {topics: .topics, blockNumber: .blockNumber}')
+        # Filter the output to only include topics, blockNumber and logIndex using jq
+        filtered_output=$(printf "$log_output" | jq -c '.[] | {topics: .topics, blockNumber: .blockNumber, logIndex: .logIndex}')
 
         # Process each filtered output
         for entry in $filtered_output; do
@@ -82,8 +85,9 @@ for event in "${events[@]}"; do
                 entry=$(printf "$entry" | jq --arg new_topic "$new_second_topic" '.topics[1] = $new_topic')
             fi
 
-            # Use jq to extract the first topic for comparison
+            # First topic
             first_topic=$(printf "$entry" | jq -r '.topics[0]')
+
             if [[ "$first_topic" == "RoleAdminChanged(bytes32,bytes32,bytes32)" ]]; then
                 # Third topic
                 third_topic=$(printf "$topics" | jq -r '.[2]')
@@ -101,21 +105,7 @@ for event in "${events[@]}"; do
                     entry=$(printf "$entry" | jq --arg new_topic "$new_fourth_topic" '.topics[3] = $new_topic')
                 fi  
                 
-            elif [[ "$first_topic" == "RoleGranted(bytes32,address,address)" ]]; then
-                # Third topic
-                third_topic=$(printf "$topics" | jq -r '.[2]')
-                if [[ -n "$third_topic" ]]; then
-                    address=$(cast parse-bytes32-address "$third_topic")
-                    entry=$(printf "$entry" | jq --arg new_topic "$address" '.topics[2] = $new_topic')
-                fi
-
-                # Fourth topic
-                fourth_topic=$(printf "$topics" | jq -r '.[3]')
-                if [[ -n "$fourth_topic" ]]; then
-                    address=$(cast parse-bytes32-address "$fourth_topic")
-                    entry=$(printf "$entry" | jq --arg new_topic "$address" '.topics[3] = $new_topic')
-                fi
-            elif [[ "$first_topic" == "RoleRevoked(bytes32,address,address)" ]]; then
+            elif [ "$first_topic" == "RoleGranted(bytes32,address,address)" ] || [ "$first_topic" == "RoleRevoked(bytes32,address,address)" ]; then
                 # Third topic
                 third_topic=$(printf "$topics" | jq -r '.[2]')
                 if [[ -n "$third_topic" ]]; then
@@ -136,52 +126,50 @@ for event in "${events[@]}"; do
             decimal_block_number=$((block_number))
             entry=$(printf "$entry" | jq --argjson new_block_number "$decimal_block_number" '.blockNumber = $new_block_number')
 
+            # Convert logIndex from hex to decimal and replace the logIndex in the entry
+            log_index=$(printf "$entry" | jq -r '.logIndex')
+            decimal_log_index=$((log_index))
+            entry=$(printf "$entry" | jq --argjson new_log_index "$decimal_log_index" '.logIndex = $new_log_index')
+
 
             # Append the modified entry to the logs array
-            # printf "\n$blue Logs:$nc $entry\n"
             logs+=("$entry")
         done
     fi
 done
 
-Print all filtered logs at the end
-printf "\n$green All event logs (filtered):$nc\n"
-for log in "${logs[@]}"; do
-    printf "%s\n" "$log"
-done
+sorted_logs=$(printf "%s\n" "${logs[@]}" | jq -s 'sort_by(.blockNumber, .logIndex)')
+printf "\n$green Sorted logs by block number:$nc\n"
+printf "$sorted_logs" | jq -c '.[]'
+mapfile -t sorted_logs <<< "$(printf "$sorted_logs" | jq -c '.[]')"
 
-printf "\n$green Event logs retrieval completed.$nc\n"
 
+# Create a json and csv output with the roles, admin role and addresses granted
 
 declare -A roles
 declare -A admin_role
 declare -A addresses
 
-for log in "${logs[@]}"; do
+for log in "${sorted_logs[@]}"; do
+    event=$(printf "$log" | jq -r '.topics[0]')
     role=$(printf "$log" | jq -r '.topics[1]')
     address=$(printf "$log" | jq -r '.topics[2]')
     admin_role=$(printf "$log" | jq -r '.topics[3]')
-    event=$(printf "$log" | jq -r '.topics[0]')
 
     roles["$role"]=1
-
     if [[ "$event" == "RoleGranted(bytes32,address,address)" ]]; then
-        if [[ ! " ${addresses[$role]} " =~ " $address " ]]; then
-            addresses["$role"]+="$address "
-        fi
+        addresses["$role"]+="$address "
     elif [[ "$event" == "RoleAdminChanged(bytes32,bytes32,bytes32)" ]]; then
         admin_role["$role"]="$admin_role"
     elif [[ "$event" == "RoleRevoked(bytes32,address,address)" ]]; then
-        addresses["$role"]=$(echo "${addresses[$role]}" | sed "s/\b$address\b//g")
-        addresses["$role"]=$(echo "${addresses[$role]}" | xargs)
-
+        addresses["$role"]="${addresses[$role]//"$address "/}"
     fi
 done
 
 json_output="["
 
 for role in "${!roles[@]}"; do
-    address_list=$(echo "${addresses[$role]}" | tr ' ' '\n' | jq -R . | jq -s .)
+    address_list=$(printf "${addresses[$role]}" | tr ' ' '\n' | jq -R . | jq -s .)
 
     admin_value="${admin_role[$role]}"
     if [[ -z "$admin_value" ]]; then
@@ -195,6 +183,7 @@ for role in "${!roles[@]}"; do
         '{Role: $role, Role_admin: $admin, Addresses: $addresses}'), 
 done
 
+# Add roles that have not been granted to any address
 for role in "${!topic_map[@]}"; do
     if [[ -z "${roles[${topic_map[$role]}]}" ]]; then
         json_output+=$(jq -n \
@@ -205,5 +194,39 @@ for role in "${!topic_map[@]}"; do
     fi
 done
 
+# JSON output
+
+# Ask the user if they want to save to a file or display on screen
+printf "Do you want to save the JSON to a file (y) or display the result (d) or do nothing (n)?"
+read -r choice
+
 json_output="${json_output%,}]"
-echo "$json_output" | jq .
+if [[ "$choice" == "y" || "$choice" == "Y" ]]; then
+    # Save the JSON to a file
+    output_file="roles.json"
+    printf "%s" "$json_output" | jq . > "$output_file"
+    printf "JSON saved to file: %s\n" "$output_file"
+elif [[ "$choice" == "d" || "$choice" == "D" ]]; then 
+    # Display the JSON on the screen
+    printf "%s" "$json_output" | jq .
+fi
+
+
+# CSV output
+
+# Ask the user if they want to save to a file or display on screen
+csv_output+=$(printf "$json_output" | jq -r '.[] | [.Role, .Role_admin, (.Addresses | join(","))] | @csv')
+printf "Do you want to save the CSV to a file (y) or display the result (d) or do nothing (n)?"
+read -r csv_choice
+
+if [[ "$csv_choice" == "y" || "$csv_choice" == "Y" ]]; then
+    # Save the CSV to a file
+    output_file="roles.csv"
+    printf "Role,Role_admin,Addresses\n" > "$output_file"
+    printf "%s" "$csv_output" >> "$output_file"
+    printf "CSV saved to file: %s\n" "$output_file"
+elif [[ "$choice" == "d" || "$choice" == "D" ]]; then 
+    # Display the CSV on the screen
+    printf "%s\n" "Role,Role_admin,Addresses"
+    printf "%s\n" "$csv_output"
+fi
