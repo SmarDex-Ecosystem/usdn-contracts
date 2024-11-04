@@ -44,7 +44,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
      * @param protocolRemainingAmount The remaining amount of the usdn protocol position after the close
      * @param amount The amount to close relative to the amount deposited
      * @param to The address that will receive the assets
-     * @param validator The address that will receive the security deposit
+     * @param validator The address that should validate the open position
      * @param userMinPrice The minimum price at which the position can be closed
      * @param deadline The deadline of the close position to be initiated
      */
