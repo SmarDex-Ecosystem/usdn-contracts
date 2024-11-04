@@ -1,38 +1,4 @@
-# Deployments
-
-## Set parameters
-
-Environment variables can be used to control the script execution:
-
-#### Required
-- `INIT_DEPOSIT_AMOUNT`: amount to use for the `initialize` function call
-- `INIT_LONG_AMOUNT`: amount to use for the `initialize` function call
-
-#### Optional
-- `DEPLOYER_ADDRESS`: required only for fork deployment, the address of the deployer
-- `FEE_COLLECTOR`: set to `DEPLOYER_ADDRESS` if not set, the receiver of all protocol fees
-- `SDEX_ADDRESS`: if provided, skips deployment of the SDEX token
-- `WSTETH_ADDRESS`: if provided, skips deployment of the wstETH token
-- `MIDDLEWARE_ADDRESS`: if provided, skips deployment of the oracle middleware
-- `PYTH_ADDRESS`: the contract address of the pyth oracle
-- `PYTH_ETH_FEED_ID`: the price ID of the ETH pyth oracle
-- `REDSTONE_ETH_FEED_ID`: the feed ID of the ETH Redstone oracle
-- `CHAINLINK_ETH_PRICE_ADDRESS`: the address of the ETH chainlink oracle
-- `CHAINLINK_ETH_PRICE_VALIDITY`: the amount of time (in seconds) we consider the price valid. A tolerance should be added to avoid reverting if chainlink misses the heartbeat by a few minutes
-- `LIQUIDATION_REWARDS_MANAGER_ADDRESS`: if provided, skips deployment of the liquidation rewards manager
-- `REBALANCER_ADDRESS`: if provided, skips deployment of the rebalancer
-- `CHAINLINK_GAS_PRICE_VALIDITY`: the amount of time (in seconds) we consider the price valid. A tolerance should be added to avoid reverting if chainlink misses the heartbeat by a few minutes
-- `USDN_ADDRESS`: required if running `01_Deploy.s.sol` in a production environment (not fork)
-- `GET_WSTETH`: whether to get wstETH by sending ether to the wstETH contract or not. Only applicable if `WSTETH_ADDRESS` is given.
-
-Example using the real wstETH and depositing 10 ETH for both vault side and long side for mainnet deployment (with liquidation
-at 1 USD so a leverage close to 1x):
-
-```
-export INIT_DEPOSIT_AMOUNT=10000000000000000000
-export INIT_LONG_AMOUNT=10000000000000000000
-export GET_WSTETH=true
-```
+# Scripts
 
 ## Deploy protocol
 
@@ -51,6 +17,40 @@ contract so that there is enough balance.
 ./script/deployFork.sh
 ```
 
+Environment variables can be used to control the script execution:
+
+#### Required
+- `INIT_DEPOSIT_AMOUNT`: amount to use for the `initialize` function call
+- `INIT_LONG_AMOUNT`: amount to use for the `initialize` function call
+
+#### Optional
+- `DEPLOYER_ADDRESS`: required only for fork deployment, the address of the deployer
+- `FEE_COLLECTOR`: the receiver of all protocol fees (set to `DEPLOYER_ADDRESS` if not set in the environment)
+- `SDEX_ADDRESS`: if provided, skips deployment of the SDEX token
+- `WSTETH_ADDRESS`: if provided, skips deployment of the wstETH token
+- `MIDDLEWARE_ADDRESS`: if provided, skips deployment of the oracle middleware
+- `PYTH_ADDRESS`: the contract address of the pyth oracle
+- `PYTH_ETH_FEED_ID`: the price ID of the ETH pyth oracle
+- `REDSTONE_ETH_FEED_ID`: the feed ID of the ETH Redstone oracle
+- `CHAINLINK_ETH_PRICE_ADDRESS`: the address of the ETH chainlink oracle
+- `CHAINLINK_ETH_PRICE_VALIDITY`: the amount of time (in seconds) we consider the price valid. A tolerance should be added to avoid reverting if chainlink misses the heartbeat by a few minutes
+- `LIQUIDATION_REWARDS_MANAGER_ADDRESS`: if provided, skips deployment of the liquidation rewards manager
+- `REBALANCER_ADDRESS`: if provided, skips deployment of the rebalancer
+- `CHAINLINK_GAS_PRICE_VALIDITY`: the amount of time (in seconds) we consider the price valid. A tolerance should be added to avoid reverting if chainlink misses the heartbeat by a few minutes
+- `USDN_ADDRESS`: required if running `01_Deploy.s.sol` in a production environment (not fork)
+- `GET_WSTETH`: whether to get wstETH by sending ether to the wstETH contract or not. Only applicable if `WSTETH_ADDRESS` is given.
+- `PROTOCOL_EIP712_VERSION`: If provided, overrides the default values for the usdn protocol version. The current version of the EIP712 signing domain of the usdn protocol. This version must be updated if you wish to break compatibility with previous delegations that have not been used, mostly when upgrading contracts that impact delegations logic.
+
+Example using the real wstETH and depositing 10 ETH for both vault side and long side for mainnet deployment (with liquidation
+at 1 USD so a leverage close to 1x):
+
+```
+export INIT_DEPOSIT_AMOUNT=10000000000000000000
+export INIT_LONG_AMOUNT=10000000000000000000
+export GET_WSTETH=true
+```
+
+
 ## Upgrade protocol
 
 Before you launch the upgrade script, there are a few things you need to do:
@@ -67,6 +67,22 @@ Before you launch the upgrade script, there are a few things you need to do:
   * If needed, comment the line that re-deploy the fallback contract
 
 If you are ready to upgrade the protocol, then you can launch the bash script `script/upgrade.sh`. It will prompt you to enter a RPC url, the address of the deployed USDN protocol, and a private key. The address derived from the private key must have the `PROXY_UPGRADE_ROLE` role.
+
+## Transfer ownership
+
+This bash script will prompt you to enter an RPC url, the protocol address, the new owner address and a private key. The address derived from the private key must have the `DEFAULT_ADMIN_ROLE` role.
+
+```bash
+./script/transferProtocolOwnership.sh
+```
+
+If you want to run the script with foundry directly, in a standalone mode, you need to make sure that required environment variable is set:
+* `NEW_OWNER_ADDRESS`: the address of the new owner
+* `USDN_PROTOCOL_ADDRESS`: the address of the deployed USDN protocol
+
+```solidity
+forge script script/03_TransferProtocolOwnership.s.sol -f YOUR_RPC_URL --private-key YOUR_PRIVATE_KEY --broadcast
+```
 
 ## Anvil fork configuration
 
@@ -89,7 +105,7 @@ The script first requires that the ABIs have been exported with `npm run exportA
 Then, it can be used like so:
 
 ```
-npx tsx script/logsAnalysis.ts -r https://fork-rpc-url.com/ --protocol 0x24EcC5E6EaA700368B8FAC259d3fBD045f695A08 --usdn 0x0D92d35D311E54aB8EEA0394d7E773Fc5144491a --middleware 0x4278C5d322aB92F1D876Dd7Bd9b44d1748b88af2
+npx tsx script/utils/logsAnalysis.ts -r https://fork-rpc-url.com/ --protocol 0x24EcC5E6EaA700368B8FAC259d3fBD045f695A08 --usdn 0x0D92d35D311E54aB8EEA0394d7E773Fc5144491a --middleware 0x4278C5d322aB92F1D876Dd7Bd9b44d1748b88af2
 ```
 
 The parameters are the RPC URL and the deployed addresses of the 3 main contracts.
@@ -102,5 +118,5 @@ We can specify a common base contract to filter wanted duplications with the `-s
 It can be used like so:
 
 ```
-npx tsx script/functionClashes.ts UsdnProtocolImpl.sol UsdnProtocolFallback.sol -s UsdnProtocolStorage.sol
+npx tsx script/utils/functionClashes.ts UsdnProtocolImpl.sol UsdnProtocolFallback.sol -s UsdnProtocolStorage.sol
 ```

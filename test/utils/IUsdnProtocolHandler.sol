@@ -460,4 +460,6 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         address positionOwner,
         Types.PrepareInitiateClosePositionParams calldata params
     ) external;
+
+    function i_setUsdnRebaseThreshold(uint128 threshold) external;
 }

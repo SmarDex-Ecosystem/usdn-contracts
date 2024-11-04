@@ -11,4 +11,11 @@ interface IWusdnErrors {
      * @param usdnAmount The amount of USDN the user attempted to wrap
      */
     error WusdnInsufficientBalance(uint256 usdnAmount);
+
+    /**
+     * @dev Indicates that the user is attempting to wrap an amount of USDN shares
+     * that is lower than the minimum SHARES_RATIO required by the WUSDN token
+     * This results in a wrapped amount of zero WUSDN
+     */
+    error WusdnWrapZeroAmount();
 }

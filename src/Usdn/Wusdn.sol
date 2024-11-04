@@ -151,6 +151,10 @@ contract Wusdn is ERC20Permit, IWusdn {
         // slither-disable-next-line divide-before-multiply
         wrappedAmount_ = usdnShares / SHARES_RATIO;
 
+        if (wrappedAmount_ == 0) {
+            revert WusdnWrapZeroAmount();
+        }
+
         _mint(to, wrappedAmount_);
         uint256 sharesToTransfer = wrappedAmount_ * SHARES_RATIO;
         USDN.transferSharesFrom(msg.sender, address(this), sharesToTransfer);

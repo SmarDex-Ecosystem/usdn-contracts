@@ -4,11 +4,11 @@ pragma solidity 0.8.26;
 import { Script } from "forge-std/Script.sol";
 import { Vm } from "forge-std/Vm.sol";
 
-import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
+import { UsdnProtocolImpl } from "../../src/UsdnProtocol/UsdnProtocolImpl.sol";
 
 contract Utils is Script {
-    string constant FUNC_CLASHES_SCRIPT_PATH = "script/functionClashes.ts";
-    string constant IMPL_INITIALIZATION_SCRIPT_PATH = "script/checkImplementationInitialization.ts";
+    string constant FUNC_CLASHES_SCRIPT_PATH = "script/utils/functionClashes.ts";
+    string constant IMPL_INITIALIZATION_SCRIPT_PATH = "script/utils/checkImplementationInitialization.ts";
 
     // to run the script in standalone mode
     function run() external {
@@ -68,11 +68,10 @@ contract Utils is Script {
      * @dev Call this function to build the contracts
      */
     function _buildContracts() internal {
-        string[] memory inputs = new string[](4);
+        string[] memory inputs = new string[](3);
         inputs[0] = "forge";
         inputs[1] = "build";
-        inputs[2] = "src";
-        inputs[3] = "script";
+        inputs[2] = "script";
         runFfiCommand(inputs);
     }
 

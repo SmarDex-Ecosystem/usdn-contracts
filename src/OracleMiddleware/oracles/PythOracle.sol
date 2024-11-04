@@ -178,6 +178,11 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
         if (pythPrice.price <= 0) {
             return price_;
         }
+
+        if (pythPrice.expo > 0) {
+            revert OracleMiddlewarePythPositiveExponent(pythPrice.expo);
+        }
+
         price_ = _formatPythPrice(pythPrice, middlewareDecimals);
     }
 }
