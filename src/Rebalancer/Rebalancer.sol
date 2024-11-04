@@ -671,7 +671,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     /**
      * @notice Closes a user deposited amount of the current UsdnProtocol rebalancer position
      * @param data The structure to hold the transient data during {initiateClosePosition}
-     * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
+     * @param currentPriceData The current price data (used to calculate the temporary leverage and entry price,
      * pending validation)
      * @param previousActionsData The data needed to validate actionable pending actions
      * @param delegationData An optional delegation data that include the depositOwner and an EIP712 signature to
